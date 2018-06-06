@@ -90,7 +90,7 @@
           <input type="hidden" id="cdcooper" name="cdcooper">
           <input type="hidden" id="nmrescop" name="nmrescop">
 
-          <label style="width: 300px; " for="contigen"><?php echo utf8ToHtml('Habilita Contigência Esteira:') ?></label>
+          <label style="width: 300px; " for="contigen"><?php echo utf8ToHtml('Habilita Contigência:') ?></label>
           <select id="contigen" name="contigen">
             <option value="<? echo utf8ToHtml('SIM') ?>"><? echo utf8ToHtml(' Sim') ?></option> 
             <option value="<? echo utf8ToHtml('NAO') ?>"><? echo utf8ToHtml(' Não') ?></option>
@@ -98,7 +98,7 @@
         
           <br style="clear:both" />
 
-          <label style="width: 300px; " for="anlautom"><?php echo utf8ToHtml('Habilita Contigência Motor:') ?></label>
+          <label style="width: 300px; " for="anlautom"><?php echo utf8ToHtml('Analise Automática da Esteira:') ?></label>
           <select id="anlautom" name="anlautom">
             <option value="SIM"><? echo utf8ToHtml(' Sim') ?></option> 
             <option value="<? echo utf8ToHtml('NAO') ?>"><? echo utf8ToHtml(' Não') ?></option>
@@ -106,8 +106,13 @@
           
           <br style="clear:both" class="nparaTodos"/>	
         
-          <label style="width: 300px; " for="nmregmpf" class="nparaTodos">Regra An&aacute;lise  Autom&aacute;tica:</label>
+          <label style="width: 300px; " for="nmregmpf" class="nparaTodos">Regra An&aacute;lise  Autom&aacute;tica PF:</label>
           <input type="text" id="nmregmpf" name="nmregmpf" class="campo nparaTodos" title="Somente letras, n&uacute;meros e '_' neste campo">
+        
+          <br style="clear:both" class="nparaTodos"/>	
+		  
+		  <label style="width: 300px; " for="nmregmpf" class="nparaTodos">Regra An&aacute;lise  Autom&aacute;tica PJ:</label>
+          <input type="text" id="nmregmpj" name="nmregmpj" class="campo nparaTodos" title="Somente letras, n&uacute;meros e '_' neste campo">
         
           <br style="clear:both" class="nparaTodos"/>	
 

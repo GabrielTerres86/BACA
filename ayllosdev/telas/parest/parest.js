@@ -311,7 +311,33 @@ function controlaFoco() {
           $('#qtmesemp', '#divAlteracao').habilitaCampo();
 	    }
 	    return false;
-	});  	
+	});
+
+    $('#anlautom', '#divAlteracao04').unbind('change').bind('change', function (e) {
+
+	    if ($(this).val() == 'NAO') {
+	      $('#nmregmpf', '#divAlteracao04').desabilitaCampo();
+          $('#nmregmpj', '#divAlteracao04').desabilitaCampo();
+          $('#qtsstime', '#divAlteracao04').desabilitaCampo();
+          $('#qtmeschq', '#divAlteracao04').desabilitaCampo();
+          $('#qtmesest', '#divAlteracao04').desabilitaCampo();
+          $('#qtmesemp', '#divAlteracao04').desabilitaCampo();
+	      $('#nmregmpf', '#divAlteracao04').val('');
+          $('#nmregmpj', '#divAlteracao04').val('');
+          $('#qtsstime', '#divAlteracao04').val('0');
+          $('#qtmeschq', '#divAlteracao04').val('0');
+          $('#qtmesest', '#divAlteracao04').val('0');
+          $('#qtmesemp', '#divAlteracao04').val('0');
+	    } else {
+	      $('#nmregmpf', '#divAlteracao04').habilitaCampo();
+          $('#nmregmpj', '#divAlteracao04').habilitaCampo();
+          $('#qtsstime', '#divAlteracao04').habilitaCampo();
+          $('#qtmeschq', '#divAlteracao04').habilitaCampo();
+          $('#qtmesest', '#divAlteracao04').habilitaCampo();
+          $('#qtmesemp', '#divAlteracao04').habilitaCampo();
+	    }
+	    return false;
+	}); 	
   
 	// Permitir somente letras, números e o caractere "_"
 	$('#nmregmpf', '#divAlteracao').keyup(function(e) {
@@ -427,7 +453,7 @@ function manterRotina(cdopcao) {
         var contigen = $('#contigen', '#frmParest04' ).val()== "SIM" ? 1 : 0;       
         var anlautom = $('#anlautom', '#frmParest04' ).val()== "SIM" ? 1 : 0; 
         var nmregmpf = $('#nmregmpf',  '#frmParest04').val();
-        //var nmregmpj = $('#nmregmpj', '#frmParest04').val();
+        var nmregmpj = $('#nmregmpj', '#frmParest04').val();
         var qtsstime = $('#qtsstime', '#frmParest04').val();
         var qtmeschq = $('#qtmeschq', '#frmParest04').val();
         var qtmesest = $('#qtmesest', '#frmParest04').val();
@@ -505,7 +531,7 @@ function formataResultado() {
     arrayAlinha[0] = 'left';
     arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
-    arrayAlinha[3] = 'center';
+    arrayAlinha[3] = 'left';
     arrayAlinha[4] = 'left';
     arrayAlinha[5] = 'left';
 

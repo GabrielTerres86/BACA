@@ -110,8 +110,8 @@ if ( $cdopcao == 'C') {
 	$xmlObj = getObjectXML($xmlResult);
 
 } else {
-	if($tpproduto == 4)
-		$nmregmpj = "teste";
+	//if($tpproduto == 4)
+		//$nmregmpj = "teste";
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
@@ -202,12 +202,13 @@ if ( $cddopcao == 'C') {
 			echo 'hideMsgAguardo();';
 		}else if($tpproduto == 4){
 			
-			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","qtsstime","qtmeschq","qtmesest","qtmesemp");
+			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","nmregmpj","qtsstime","qtmeschq","qtmesest","qtmesemp");
 			foreach ($registros as $r) {
 				foreach($labels as $label){
 					echo '$("#'. $label.'", "#divAlteracao04").val("'.getByTagName($r->tags,  $label).'"); ';
 				}
 			}
+			
 			//echo " /* $xmlResult  */ ";
 			echo '$("#divBotoes").css({ "display": "block" });';
 			echo '$("#divAlteracao04").css({ "display": "block" });';

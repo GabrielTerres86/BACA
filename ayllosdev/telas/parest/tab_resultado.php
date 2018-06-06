@@ -31,6 +31,8 @@ if($tpproduto == 0)
 
 
     foreach ($registros as $r) {
+		
+		echo "console.log('1--> ".getByTagName($r->tags, 'nmregmpj')."');";
 
         $tabela .= "<tr>";
 
@@ -66,22 +68,25 @@ if($tpproduto == 0)
     $tabela .= "<thead>";
     $tabela .= "<tr>";
     $tabela .= "<th class=\'coop04\'>Coop.</th>";
-    $tabela .= "<th class=\'confME04\'>Contig. Esteira</th>";
-    $tabela .= "<th class=\'coopBancoob04\'>Contig. Motor</th>";
-    $tabela .= "<th class=\'Regras04\'>".utf8ToHtml("Regras para Análise")."</th>";
+    $tabela .= "<th class=\'confME04\'>Contig.</th>";
+    $tabela .= "<th class=\'coopBancoob04\'>Analise Aut.</th>";
+    $tabela .= "<th class=\'Regras04\'>Regras PF</th>";
+	$tabela .= "<th class=\'PJ04\'>Regras PJ</th>";
     $tabela .= "</tr>";
     $tabela .= "</thead>";
     $tabela .= "<tbody>";
 
    foreach ($registros as $r) {
-
+	   
+	   echo "console.log('2--> ".getByTagName($r->tags, 'nmregmpj')."');";
+   
         $tabela .= "<tr>";
 
         $tabela .= "<td class=\'coop04\'>" . getByTagName($r->tags, 'nmrescop') . "</td>";
         $tabela .= "<td class=\'confME04\'>" . getByTagName($r->tags, 'contigen') . "</td>";
         $tabela .= "<td class=\'coopBancoob04\'>" . getByTagName($r->tags, 'anlautom') . "</td>";
         $tabela .= "<td class=\'Regras04\'>" . getByTagName($r->tags, 'nmregmpf') .  "</td>";
-        
+		$tabela .= "<td class=\'PJ04\'>" . getByTagName($r->tags, 'nmregmpj') .  "</td>";
 
         $tabela .= "</tr>";
     }
@@ -99,10 +104,11 @@ if($tpproduto == 0)
     echo 'formataResultado();';
 
     echo("$('.ordemInicial').css('width','10px');");
-    echo("$('.coop04').css('width','100px');");
-    echo("$('.confME04').css('width','100px');");
-    echo("$('.coopBancoob04').css('width','100px');");
-    echo("$('.Regras04').css('width','100px');");
+    echo("$('.coop04').css('width','80px');");
+    echo("$('.confME04').css('width','40');");
+    echo("$('.coopBancoob04').css('width','40');");
+    echo("$('.Regras04').css('width','120px');");
+	echo("$('.PJ04').css('width','120px');");
     // Esconde botão Continuar
     echo '$("#btContinuar","#divBotoes").hide();';
 }
