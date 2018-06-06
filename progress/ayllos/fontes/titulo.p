@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Setembro/2000                   Ultima alteracao: 22/09/2014
+   Data    : Setembro/2000                   Ultima alteracao: 07/02/2018
 
    Dados referentes ao programa:
 
@@ -173,6 +173,11 @@
 
 		       08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
 			                do departamento pelo código do mesmo (Renato Darosci)
+
+			   07/02/2018 - Ajustado horario limite para digitacao dos titulos ate 22
+							(Adriano - SD 845726).
+                            
+
 ............................................................................ */
 
 { includes/var_online.i }
@@ -352,7 +357,7 @@ FORM tel_cdagenci      LABEL "  PA  "
      SKIP(3)
      tel_nrdhhini AT  1 LABEL "Limite para digitacao dos titulos" 
                         FORMAT "99" AUTO-RETURN
-                        HELP "Entre com a hora limite (12:00 a 20:00)."
+                        HELP "Entre com a hora limite (12:00 a 22:00)."
      ":"          AT 38 
      tel_nrdmmini AT 39 NO-LABEL FORMAT "99" 
                         HELP "Entre com os minutos (0 a 59)."
@@ -718,7 +723,7 @@ DO WHILE TRUE:
                                        WITH FRAME f_fechamento.
                        END.
 
-                  IF   tel_nrdhhini < 10 OR tel_nrdhhini > 20 THEN
+                  IF   tel_nrdhhini < 10 OR tel_nrdhhini > 22 THEN
                        DO:
                            glb_cdcritic = 687.
                            NEXT.
@@ -730,7 +735,7 @@ DO WHILE TRUE:
                            NEXT.
                        END.
 
-                  IF   tel_nrdhhini = 20 AND tel_nrdmmini > 0 THEN
+                  IF   tel_nrdhhini = 22 AND tel_nrdmmini > 0 THEN
                        DO:
                            glb_cdcritic = 687.
                            NEXT.
