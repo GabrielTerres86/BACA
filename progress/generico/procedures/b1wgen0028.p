@@ -3260,6 +3260,12 @@ PROCEDURE cadastra_novo_cartao:
     DEF  VAR   h-b1wgen9999       AS HANDLE                         NO-UNDO.
     DEF  VAR   h-b1wgen0110       AS HANDLE                         NO-UNDO.
     DEF  VAR   aux_cdlimcrd       AS INTEGER                        NO-UNDO.
+    DEF  VAR   aux_achou          AS INTEGER                        NO-UNDO.
+    DEF  VAR   aux_possui_registro  AS INTEGER                      NO-UNDO.
+    DEF  VAR   aux_diasdebito       AS CHAR                         NO-UNDO.
+    DEF  VAR   aux_vllimite_minimo  AS INTEGER                      NO-UNDO.
+    DEF  VAR   aux_vllimite_maximo  AS INTEGER                      NO-UNDO.
+    DEF  VAR   aux_flpiloto       AS LOGICAL                        NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     DEF BUFFER crabavt FOR crapavt.
@@ -3486,6 +3492,10 @@ PROCEDURE cadastra_novo_cartao:
             ASSIGN aux_flgprcrd = 0.
         END.
 
+       /* Procedimento temporario - valicao Piloto */
+       RUN verifica-pa-piloto-ws-bancob (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         OUTPUT aux_flpiloto).
 
         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
         IF par_cdagenci = 0 THEN
@@ -3532,8 +3542,10 @@ PROCEDURE cadastra_novo_cartao:
                crawcrd.dtpropos    = par_dtmvtolt
                crawcrd.cdoperad    = par_cdoperad
                crawcrd.cdmotivo    = 0
+               /* Manter assim apos remocao codigo temporario
+               crawcrd.insitcrd    = 0 */
                
-                           crawcrd.insitcrd    = IF par_cdadmcrd >= 10 AND par_cdadmcrd < 81 THEN
+               crawcrd.insitcrd    = IF par_cdadmcrd >= 10 AND par_cdadmcrd < 81 AND NOT aux_flpiloto THEN
                                         1 /*Aprovado*/
                                      ELSE 
                                         0 /*Estudo*/
@@ -8722,7 +8734,7 @@ PROCEDURE altera_limcred_cartao:
                                INPUT-OUTPUT aux_dscritic).
 
                 UNDO TRANS_ALTERACAO, RETURN "NOK".
- 
+
             END.
 
                       /* Para o LOG */
@@ -8784,7 +8796,7 @@ PROCEDURE altera_limcred_cartao:
                                                                       
                              UNDO TRANS_ALTERACAO, RETURN "NOK".
                          END.
-
+        
         DO aux_contador = 1 TO 10:
     
            FIND  crapcrd WHERE crapcrd.cdcooper = par_cdcooper      AND
@@ -18266,7 +18278,7 @@ PROCEDURE busca_dddebito:
   DEF VAR contador AS INTE                       NO-UNDO.
   DEF VAR aux_flgfirst AS LOG                    NO-UNDO.
   
-
+  
   IF f_verifica_adm(par_cdadmcrd) = 2 THEN
       DO:
         FOR EACH craptlc WHERE craptlc.cdcooper = par_cdcooper   AND
@@ -18275,7 +18287,7 @@ PROCEDURE busca_dddebito:
 						 craptlc.dddebito <> 27 /*Removido vencimento para o dia 27 SD: 636445*/ NO-LOCK:
 
             ASSIGN aux[craptlc.dddebito] = craptlc.dddebito.
-            
+          
           END. 
       END.
   ELSE
@@ -24478,4 +24490,44 @@ PROCEDURE grava_dados_senha_letras_taa:
    
 END.
 
+PROCEDURE verifica-pa-piloto-ws-bancob:
+   DEF  INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                NO-UNDO.
+   DEF  INPUT PARAM par_cdagenci LIKE crapage.cdagenci                NO-UNDO.
+    
+   DEF OUTPUT PARAM par_flpiloto AS LOGICAL.   
 
+   /* Verificar se esta configurado para funcionar apenas no piloto */
+   FIND FIRST crapprm 
+        WHERE crapprm.cdcooper = 0            AND
+				      crapprm.nmsistem = "CRED"       AND
+							crapprm.cdacesso = "BANCOOB_USA_PA_PILOTO"
+							NO-LOCK NO-ERROR.
+
+   /* Se nao existir ou nao estiver configurado, vamos considerar todos como piloto */
+	 IF NOT AVAILABLE crapprm THEN
+      ASSIGN par_flpiloto = TRUE.
+   ELSE
+      DO:
+        IF TRIM(crapprm.dsvlrprm) = "1" THEN
+           DO:
+               /* Se for apenas para piloto, vamos ver se o PA eh piloto naquela coop. */
+               FIND FIRST crapprm 
+                    WHERE crapprm.cdcooper = par_cdcooper AND
+                          crapprm.nmsistem = "CRED"       AND
+                          crapprm.cdacesso = "BANCOOB_PILOTO_WS_PA"
+                    NO-LOCK NO-ERROR.
+               
+               IF NOT AVAILABLE crapprm THEN
+                  ASSIGN par_flpiloto = FALSE.
+               ELSE
+                  IF (par_cdagenci = INT(crapprm.dsvlrprm)) AND
+                     (INT(crapprm.dsvlrprm) > 0) THEN
+                    ASSIGN par_flpiloto = TRUE.
+                  ELSE
+                    ASSIGN par_flpiloto = FALSE.
+           END.
+        ELSE
+           ASSIGN par_flpiloto = TRUE.
+      END.
+   
+END.
