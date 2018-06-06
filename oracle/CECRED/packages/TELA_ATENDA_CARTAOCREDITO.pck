@@ -35,6 +35,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
                                    
+  --> Retornar uma lista com as sugestões do motor para alteracao de limite
+  PROCEDURE pc_busca_sugestao_motor_alt(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+                                   ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE     --> Nr. proposta do cartao
+                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
   --> Retornar uma lista com as sugestões do motor para cartão de crédito
   PROCEDURE pc_valida_operador_alt_limite(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -114,6 +124,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_nrdconta      IN tbgen_webservice_aciona.nrdconta%TYPE
                                           ,pr_nrctrcrd      IN tbgen_webservice_aciona.nrctrprp%TYPE
                                           ,pr_dsprotoc      IN tbgen_webservice_aciona.dsprotocolo%TYPE
+                                          ,pr_dsjustif      IN crawcrd.dsjustif%TYPE
                                           ,pr_idproces      IN VARCHAR2
                                           ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
@@ -137,6 +148,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_nrctrcrd      IN CRAWCRD.nrctrcrd%TYPE
                                           ,pr_ds_justif     IN CRAWCRD.dsjustif%TYPE
                                           ,pr_inupgrad      IN CRAWCRD.inupgrad%TYPE
+                                          ,pr_cdadmnov      IN crawcrd.cdadmcrd%TYPE
                                           ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
                                           ,pr_dscritic      OUT VARCHAR2             --> Descrição da crítica
@@ -160,7 +172,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
                                         
-  --> Rotina responsavel por gerar a inclusao da proposta para a esteira
+  --> Rotina responsavel por gerar a inclusao da proposta para a estra
   PROCEDURE pc_incluir_proposta_est_wb(pr_nrdconta  IN crawcrd.nrdconta%TYPE
                                       ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
                                       ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
@@ -169,6 +181,75 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                       ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                       ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
                                       ,pr_des_erro  OUT VARCHAR2);
+
+  PROCEDURE pc_busca_credito_config_bck(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
+                                         ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
+                                         ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
+                                         ,pr_vllimite_maximo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE
+                                         ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
+                                         ,pr_possui_registro  OUT NUMBER);
+                                         
+  --> Chama rotina para criar proposta de Alteração de Limite
+  PROCEDURE pc_altera_limite_crd_wb(pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                   ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                   ,pr_vllimite  IN crawcrd.vllimcrd%TYPE
+                                   ,pr_dsprotoc  IN crawcrd.dsprotoc%TYPE
+                                   ,pr_dsjustif  IN crawcrd.dsjustif%TYPE
+                                   ,pr_flgtplim  IN VARCHAR2
+                                   ,pr_tpsituac  IN NUMBER
+                                   ,pr_insitdec  IN NUMBER
+                                   ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);
+
+  --> Chama rotina para criar proposta de Alteração de Limite
+  PROCEDURE pc_altera_limite_crd(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                ,pr_cdoperad  IN crapope.cdoperad%TYPE
+                                ,pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                ,pr_vllimite  IN crawcrd.vllimcrd%TYPE
+                                ,pr_dsprotoc  IN crawcrd.dsprotoc%TYPE
+                                ,pr_dsjustif  IN crawcrd.dsjustif%TYPE
+                                ,pr_flgtplim  IN VARCHAR2
+                                ,pr_idorigem  IN NUMBER
+                                ,pr_tpsituac  IN NUMBER
+                                ,pr_insitdec  IN NUMBER
+                                ,pr_nmdatela  IN craptel.nmdatela%TYPE  --> Nome da Tela
+                                ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                ,pr_des_erro  OUT VARCHAR2);
+  
+  --Valida se possui cartões com valores diferenciados                              
+  PROCEDURE pc_valida_limite_diferenciado(pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr. da Conta
+                                         ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr. do Cartão
+                                         ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                         ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                         ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                         ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                         ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+                                         
+  --Rotina para validar se é titular da conta
+  PROCEDURE pc_valida_eh_titular(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+                                ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr. do Cartão
+                                ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+                                
+  --Rotina para verificar os cartões que o cooperado já possui
+  PROCEDURE pc_verifica_cartoes(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
 END TELA_ATENDA_CARTAOCREDITO;
 /
@@ -239,16 +320,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_cont_tag PLS_INTEGER := 0;
 
   BEGIN
-    -- Extrai os dados vindos do XML
-  /*  GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);*/
 
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -338,7 +409,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
         Observacao: -----
 
-        Alteracoes:
+        Alteracoes: Alterado para sempre solicitar a sugestao do motor conforme
+                    solicitacao do negocio (Anderson)
     ..............................................................................*/
     
     ---------> CURSORES <--------
@@ -352,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND cdoperad = 'MOTOR'
          AND nrdconta = pr_nrdconta
          AND tpacionamento = 2 --> Apenas Retorno
-         AND cdorigem  = 9     --> Apenas Ayllos Web
+         AND cdorigem  = 5     --> Apenas Ayllos Web
          AND tpproduto = 4     --> Apenas Cartão de Crédito
          AND nrctrprp IS NULL
          AND dhacionamento = (SELECT MAX(dhacionamento)
@@ -361,7 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                  AND cdoperad = 'MOTOR'
                                  AND nrdconta = pr_nrdconta
                                  AND tpacionamento = 2 --> Apenas Retorno
-                                 AND cdorigem  = 9     --> Apenas Ayllos Web
+                                 AND cdorigem  = 5     --> Apenas Ayllos Web
                                  AND tpproduto = 4     --> Apenas Cartão de Crédito
                                  AND nrctrprp IS NULL
                                  AND trunc(dhacionamento) BETWEEN (trunc(SYSDATE) - 10) and trunc(SYSDATE))
@@ -371,7 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000); --> Desc. Erro
-    vr_dsmensag VARCHAR2(1000);
+    vr_dsmensag VARCHAR2(32767);
 
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -386,7 +458,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_idorigem VARCHAR2(100);
 
     vr_contador NUMBER := 0;
-    vr_flgsug   BOOLEAN := FALSE;
     
   BEGIN
     pr_des_erro := 'OK';
@@ -407,8 +478,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
 
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'sugestoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
+    -- Solicita sugestão ao motor
+    este0005.pc_solicita_sugestao_mot(pr_cdcooper  => vr_cdcooper
+                                     ,pr_cdagenci  => vr_cdagenci
+                                     ,pr_cdoperad  => vr_cdoperad
+                                     ,pr_cdorigem  => vr_idorigem
+                                     ,pr_nrdconta  => pr_nrdconta
+                                     ,pr_dtmvtolt  => TRUNC(SYSDATE)
+                                     ---- OUT ----
+                                     ,pr_dsmensag => vr_dsmensag
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic );
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
     OPEN cr_acionamento(pr_cdcooper => vr_cdcooper
                         ,pr_nrdconta => pr_nrdconta);
     FETCH cr_acionamento INTO rw_acionamento;
@@ -416,18 +508,159 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     IF cr_acionamento%FOUND THEN
       CLOSE cr_acionamento;
       
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestoes', pr_posicao => 0, pr_tag_nova => 'sugestao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'json', pr_tag_cont => rw_acionamento.dsconteudo_requisicao, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'idacionamento', pr_tag_cont => rw_acionamento.idacionamento, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestoes',pr_posicao => 0          , pr_tag_nova => 'sugestao'         ,pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'json'             ,pr_tag_cont => rw_acionamento.dsconteudo_requisicao, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'idacionamento'    ,pr_tag_cont => rw_acionamento.idacionamento, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'mensagem'         ,pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
+    END IF;
+    
+    IF (UPPER(vr_dsmensag) LIKE '%CONTINGENCIA%') THEN
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_ibra',pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_mot' ,pr_tag_cont => ''  , pr_des_erro => vr_dscritic);
+    ELSIF (UPPER(vr_dsmensag) LIKE '%NAO HABILITADA%') THEN
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_ibra',pr_tag_cont => ''  , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_mot' ,pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
     ELSE
-      CLOSE cr_acionamento;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
       
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina na procedure TELA_ATENDA_CARTAO_CREDITO.pc_busca_sugestao_motor. Erro: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_busca_sugestao_motor;
+  
+  --> Retornar uma lista com as sugestões do motor para cartão de crédito
+  PROCEDURE pc_busca_sugestao_motor_alt(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+                                   ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE     --> Nr. proposta do cartao
+                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_busca_sugestao_motor
+        Sistema : CECRED
+        Sigla   : CRD
+        Autor   : Paulo Silva - supero
+        Data    : Abril/2018                 Ultima atualizacao: 06/04/2018
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Retornar uma lista com as sugestões do motor para cartão de crédito
+
+        Observacao: -----
+
+        Alteracoes: Alterado para sempre solicitar a sugestao do motor conforme
+                    solicitacao do negocio (Anderson)
+    ..............................................................................*/
+
+    ---------> CURSORES <--------
+    --> Buscar sugestões na tela de acionamento
+    CURSOR cr_acionamento(pr_cdcooper crapass.cdcooper%TYPE
+                         ,pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT idacionamento
+            ,dsconteudo_requisicao
+        FROM tbgen_webservice_aciona
+       WHERE cdcooper = pr_cdcooper
+         AND cdoperad = 'MOTOR'
+         AND nrdconta = pr_nrdconta
+         AND tpacionamento = 2 --> Apenas Retorno
+         AND cdorigem  = 5     --> Apenas Ayllos Web
+         AND tpproduto = 4     --> Apenas Cartão de Crédito
+         AND nrctrprp IS NULL
+         AND dhacionamento = (SELECT MAX(dhacionamento)
+                                FROM tbgen_webservice_aciona
+                               WHERE cdcooper = pr_cdcooper
+                                 AND cdoperad = 'MOTOR'
+                                 AND nrdconta = pr_nrdconta
+                                 AND tpacionamento = 2 --> Apenas Retorno
+                                 AND cdorigem  = 5     --> Apenas Ayllos Web
+                                 AND tpproduto = 4     --> Apenas Cartão de Crédito
+                                 AND nrctrprp IS NULL
+                                 AND trunc(dhacionamento) BETWEEN (trunc(SYSDATE) - 10) and trunc(SYSDATE))
+      ORDER BY dhacionamento;
+    rw_acionamento cr_acionamento%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    vr_dsmensag VARCHAR2(32767);
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    vr_contador NUMBER := 0;
+    
+  BEGIN
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'sugestoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+
+    -- Solicita sugestão ao motor
       este0005.pc_solicita_sugestao_mot(pr_cdcooper  => vr_cdcooper
                                        ,pr_cdagenci  => vr_cdagenci
                                        ,pr_cdoperad  => vr_cdoperad
                                        ,pr_cdorigem  => vr_idorigem
                                        ,pr_nrdconta  => pr_nrdconta
                                        ,pr_dtmvtolt  => TRUNC(SYSDATE)
+                                     ,pr_tpproces  => 'A' -- Alteracao
+                                     ,pr_nrctrcrd  => pr_nrctrcrd
                                        ---- OUT ----
                                        ,pr_dsmensag => vr_dsmensag
                                        ,pr_cdcritic => vr_cdcritic
@@ -437,13 +670,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
         RAISE vr_exc_saida;
-      ELSE
-        vr_flgsug := TRUE;
       END IF;
-    END IF;
     
-    --Se rotina de sugestão foi executada sem erros, busca os acionamentos para verificar se gerou a sugestão.
-    IF vr_flgsug THEN
       OPEN cr_acionamento(pr_cdcooper => vr_cdcooper
                          ,pr_nrdconta => pr_nrdconta);
       FETCH cr_acionamento INTO rw_acionamento;
@@ -454,7 +682,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestoes', pr_posicao => 0, pr_tag_nova => 'sugestao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'json', pr_tag_cont => rw_acionamento.dsconteudo_requisicao, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'idacionamento', pr_tag_cont => rw_acionamento.idacionamento, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'mensagem', pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
       END IF;
+    
+    IF (UPPER(vr_dsmensag) LIKE '%CONTINGENCIA%') THEN
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_ibra',pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_mot' ,pr_tag_cont => '', pr_des_erro => vr_dscritic);
+    ELSIF (UPPER(vr_dsmensag) LIKE '%NAO HABILITADA%') THEN
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_ibra',pr_tag_cont => '', pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'sugestao', pr_posicao => vr_contador, pr_tag_nova => 'contingencia_mot' ,pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
     END IF;
 
   EXCEPTION
@@ -485,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
 
-  END pc_busca_sugestao_motor;
+  END pc_busca_sugestao_motor_alt;
   
   --> Validar se o operador está alterando o limite da sua própria conta
   PROCEDURE pc_valida_operador_alt_limite(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
@@ -524,11 +760,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         FROM crapttl              ttl
             ,tbcadast_colaborador col
             ,crapope              ope
-       WHERE ope.cdcooper = pr_cdcooper
-         AND ope.cdoperad = pr_cdoperad
+       /* Comentado a cooperativa devido aos usuários da Cooper 3 - Cecred
+          terem contas nas mais diversas cooperativas */
+       WHERE --ope.cdcooper = pr_cdcooper and
+             ope.cdoperad = pr_cdoperad
          AND col.cdcooper = ope.cdcooper
          AND col.cdusured = ope.cdoperad
-         AND ttl.cdcooper = col.cdcooper
+         AND ttl.cdcooper = pr_cdcooper
          AND ttl.nrcpfcgc = col.nrcpfcgc
          AND ttl.nrdconta = pr_nrdconta;
 
@@ -572,6 +810,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       -- Levanta exceção
       RAISE vr_exc_saida;
     END IF;
+
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
 
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'contas', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
@@ -701,6 +942,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
 
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'cartoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     FOR rw_oper_entrega IN cr_oper_entrega(pr_cdcooper => vr_cdcooper
@@ -822,6 +1066,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
 
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'administradoras', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     FOR rw_admin IN cr_admin(pr_cdcooper => vr_cdcooper) LOOP      
@@ -894,18 +1141,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     CURSOR cr_crawcrd(pr_cdcooper crapass.cdcooper%TYPE
                      ,pr_nrdconta IN crawcrd.nrdconta%TYPE
                      ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE) IS
-      SELECT decode(crd.insitdec,
+      SELECT crd.nrcrcard
+            ,crd.dtpropos
+            ,crd.insitdec
+            ,decode(crd.insitdec,
                    1,'Sem Aprovacao',
                    2,'Aprovada Auto',
                    3,'Aprovada Manual',
                    4,'Erro',
-                   5,'Rejeitada',
+                   5,'Rejeitada Manual',
                    6,'Refazer',
                    7,'Expirada','') dssitdec
         FROM crawcrd crd
        WHERE crd.cdcooper = pr_cdcooper
          AND crd.nrdconta = pr_nrdconta
          AND crd.nrctrcrd = pr_nrctrcrd;
+    rw_crawcrd cr_crawcrd%ROWTYPE;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -923,7 +1174,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
 
+    --Gerais
     vr_contador NUMBER := 0;
+    vr_dtcorte  DATE;
+    vr_dssitdec VARCHAR2(100);
+    vr_dssitest VARCHAR2(100);
     
   BEGIN
     pr_des_erro := 'OK';
@@ -944,16 +1199,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
 
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'cartoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
 
-    FOR rw_crawcrd IN cr_crawcrd(pr_cdcooper => vr_cdcooper
+    vr_dtcorte := to_date(gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DATA_PROJETO_CARTAO'),'DD/MM/YYYY');
+
+    OPEN cr_crawcrd(pr_cdcooper => vr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta
-                                ,pr_nrctrcrd => pr_nrctrcrd) LOOP      
+                   ,pr_nrctrcrd => pr_nrctrcrd);
+    FETCH cr_crawcrd INTO rw_crawcrd;
+    CLOSE cr_crawcrd;
 
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cartoes', pr_posicao => 0, pr_tag_nova => 'situacao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cartoes', pr_posicao => vr_contador, pr_tag_nova => 'descricao', pr_tag_cont => rw_crawcrd.dssitdec, pr_des_erro => vr_dscritic);
+    IF rw_crawcrd.dtpropos < vr_dtcorte AND rw_crawcrd.nrcrcard IS NOT NULL THEN
+      vr_dssitdec := NULL;
+      vr_dssitest := NULL;
+    ELSE
+      vr_dssitdec := rw_crawcrd.dssitdec;
    
-    END LOOP;
+      IF rw_crawcrd.insitdec IN (2,3,4,5,6) THEN
+        vr_dssitest := 'Analise Finalizada';
+      ELSIF rw_crawcrd.insitdec = 1 THEN
+        vr_dssitest := 'Enviada Analise Manual';
+      ELSIF rw_crawcrd.insitdec = 7 THEN
+        vr_dssitest := 'Expirada';
+      END IF;
+    END IF;
+
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'cartoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cartoes', pr_posicao => vr_contador, pr_tag_nova => 'sitdec', pr_tag_cont => vr_dssitdec, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cartoes', pr_posicao => vr_contador, pr_tag_nova => 'sitest', pr_tag_cont => vr_dssitest, pr_des_erro => vr_dscritic);
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -1062,14 +1336,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     
     CURSOR cr_crawcrd (pr_cdcooper crawcrd.cdcooper%TYPE) IS
       SELECT insitcrd
+            ,inupgrad
+            ,dsprotoc
+            ,dsjustif
         FROM crawcrd
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrctrcrd = pr_nrctrcrd;
+    rw_crawcrd cr_crawcrd%ROWTYPE;
     
     vr_assinou  VARCHAR2(1);
     vr_idxctr   PLS_INTEGER;
-    vr_insitcrd crawcrd.insitcrd%TYPE;
     
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1113,10 +1390,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
     
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'representantes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     OPEN cr_crawcrd(pr_cdcooper => vr_cdcooper);
-    FETCH cr_crawcrd INTO vr_insitcrd;
+    FETCH cr_crawcrd INTO rw_crawcrd;
     CLOSE cr_crawcrd;
     
     --Busca dados do associado
@@ -1177,9 +1457,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'nome'    , pr_tag_cont => vr_tab_crapavt(vr_cont_reg).nmdavali, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'assinou' , pr_tag_cont => vr_assinou                          , pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'idastcjt', pr_tag_cont => rw_crapass.idastcjt                 , pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'nrdctato', pr_tag_cont => vr_tab_crapavt(vr_cont_reg).nrdctato, pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'insitcrd', pr_tag_cont => vr_insitcrd                         , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'nrdctato', pr_tag_cont => pr_nrdconta, pr_des_erro => vr_dscritic);
               
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'insitcrd', pr_tag_cont => rw_crawcrd.insitcrd                  , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'inupgrad', pr_tag_cont => rw_crawcrd.inupgrad                  , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'dsprotoc', pr_tag_cont => rw_crawcrd.dsprotoc                  , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'dsjustif', pr_tag_cont => rw_crawcrd.dsjustif                  , pr_des_erro => vr_dscritic);
+
           vr_contador := vr_contador + 1;
             
         END LOOP;
@@ -1200,12 +1484,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         END IF;
                 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representantes', pr_posicao => 0, pr_tag_nova => 'representante'    , pr_tag_cont => NULL               , pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'nrcpfcgf', pr_tag_cont => rw_crapass.nrcpfcgc, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'nome'    , pr_tag_cont => rw_crapass.nmprimtl, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'assinou' , pr_tag_cont => vr_assinou         , pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'idastcjt', pr_tag_cont => rw_crapass.idastcjt, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'nrdctato', pr_tag_cont => rw_crapass.nrdconta, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'insitcrd', pr_tag_cont => vr_insitcrd        , pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'nrcpfcgf', pr_tag_cont => rw_crapass.nrcpfcgc, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'nome'    , pr_tag_cont => rw_crapass.nmprimtl, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'assinou' , pr_tag_cont => vr_assinou         , pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'idastcjt', pr_tag_cont => rw_crapass.idastcjt, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'nrdctato', pr_tag_cont => rw_crapass.nrdconta, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'insitcrd', pr_tag_cont => rw_crawcrd.insitcrd, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'inupgrad', pr_tag_cont => rw_crawcrd.inupgrad, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'dsprotoc', pr_tag_cont => rw_crawcrd.dsprotoc, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'dsjustif', pr_tag_cont => rw_crawcrd.dsjustif, pr_des_erro => vr_dscritic);
       END IF;
         
     END LOOP;
@@ -1374,11 +1661,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_idorigem VARCHAR2(100);
 
     vr_contador NUMBER := 0;
-    vr_cont_reg NUMBER := 0;
-    
-    vr_tab_crapavt cada0001.typ_tab_crapavt_58; --Tabela Avalistas
-    vr_tab_bens    cada0001.typ_tab_bens;          --Tabela bens
-    vr_tab_erro    gene0001.typ_tab_erro;
     
   BEGIN
     pr_des_erro := 'OK';
@@ -1400,6 +1682,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
     
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'aprovadores', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     -- Buscar dados assinatura
@@ -1457,6 +1742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_nrdconta      IN tbgen_webservice_aciona.nrdconta%TYPE
                                           ,pr_nrctrcrd      IN tbgen_webservice_aciona.nrctrprp%TYPE
                                           ,pr_dsprotoc      IN tbgen_webservice_aciona.dsprotocolo%TYPE
+                                          ,pr_dsjustif      IN crawcrd.dsjustif%TYPE
                                           ,pr_idproces      IN VARCHAR2
                                           ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
@@ -1465,6 +1751,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_nmdcampo      OUT VARCHAR2             --> Nome do campo com erro
                                           ,pr_des_erro      OUT VARCHAR2) IS         --> Erros do processo
                                     
+    --Verifica se Proposta já possui Justificativa
+    CURSOR cr_crawcrd IS
+      SELECT dsjustif
+        FROM crawcrd
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrcrd = pr_nrctrcrd;
+    
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000); --> Desc. Erro
@@ -1472,10 +1766,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
     
+    --Gerais
     vr_contador NUMBER := 0;
+    vr_dsjustif crawcrd.dsjustif%TYPE;
                                     
   BEGIN 
     IF pr_idproces = 'S' THEN --Solicitação/Alteração
+      OPEN cr_crawcrd;
+      FETCH cr_crawcrd INTO vr_dsjustif;
+      CLOSE cr_crawcrd;
+      
       -- Atualiza Contrato 
       BEGIN
         UPDATE tbgen_webservice_aciona
@@ -1484,6 +1784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          
         UPDATE crawcrd
            SET dsprotoc = pr_dsprotoc
+              ,dsjustif = nvl(pr_dsjustif,vr_dsjustif)
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrctrcrd = pr_nrctrcrd;
@@ -1591,6 +1892,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND cdadmcrd between 10 and 80; --Apenas Bancoob
     rw_crapcrd cr_crapcrd%ROWTYPE;
     
+	CURSOR cr_crapass IS
+      SELECT cdsitdct
+        FROM crapass
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta;
+    vr_cdsitdct crapass.cdsitdct%TYPE;
+
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000); --> Desc. Erro
@@ -1609,8 +1917,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
     vr_contador NUMBER := 0;
     vr_senha    VARCHAR2(1000);
-    vr_inpessoa crapass.inpessoa%TYPE;
-    vr_nrdconta crapass.nrdconta%TYPE;
     
   BEGIN
     pr_des_erro := 'OK';
@@ -1632,6 +1938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_saida;
     END IF;
     
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'senhas', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     -- Verifica se existe senha cartão magnético
@@ -1695,8 +2004,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       END IF;
     END IF;
     
+	OPEN cr_crapass;
+    FETCH cr_crapass INTO vr_cdsitdct;
+	CLOSE cr_crapass;
+
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'senhas', pr_posicao => 0, pr_tag_nova => 'senha', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'senha', pr_posicao => vr_contador, pr_tag_nova => 'status'  , pr_tag_cont => vr_senha  , pr_des_erro => vr_dscritic);
+	gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'senha', pr_posicao => vr_contador, pr_tag_nova => 'cdsitdct'  , pr_tag_cont => vr_cdsitdct  , pr_des_erro => vr_dscritic);
       
   EXCEPTION
     WHEN OTHERS THEN
@@ -1712,11 +2026,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
   END pc_possui_senha_aprov_crd;
   
   --> Atualiza a justificativa
-  PROCEDURE pc_atualiza_just_updown_cartao(pr_cdcooper      IN CRAWCRD.cdcooper%TYPE
-                                          ,pr_nrdconta      IN CRAWCRD.nrdconta%TYPE
-                                          ,pr_nrctrcrd      IN CRAWCRD.nrctrcrd%TYPE
-                                          ,pr_ds_justif     IN CRAWCRD.dsjustif%TYPE
-                                          ,pr_inupgrad      IN CRAWCRD.inupgrad%TYPE
+  PROCEDURE pc_atualiza_just_updown_cartao(pr_cdcooper      IN crawcrd.cdcooper%TYPE
+                                          ,pr_nrdconta      IN crawcrd.nrdconta%TYPE
+                                          ,pr_nrctrcrd      IN crawcrd.nrctrcrd%TYPE
+                                          ,pr_ds_justif     IN crawcrd.dsjustif%TYPE
+                                          ,pr_inupgrad      IN crawcrd.inupgrad%TYPE
+                                          ,pr_cdadmnov      IN crawcrd.cdadmcrd%TYPE
                                           ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
                                           ,pr_dscritic      OUT VARCHAR2             --> Descrição da crítica
@@ -1731,21 +2046,93 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
     
+    --Geral
     vr_contador NUMBER := 0;
+    vr_nrdrowid ROWID;
+    vr_dsmensag VARCHAR2(1000);
                                     
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Verifica se é titular
+    CURSOR cr_crawcrd IS
+      select cdadmcrd
+            ,flgprcrd
+            ,nrcctitg
+        FROM crawcrd
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrcrd = pr_nrctrcrd;
+    rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+    CURSOR cr_crawcrd_up(pr_nrcctitg crawcrd.nrcctitg%TYPE,
+                         pr_cdadmcrd crawcrd.cdadmcrd%TYPE) IS
+      select nrctrcrd
+            ,rowid
+        FROM crawcrd
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcctitg = pr_nrcctitg
+         AND cdadmcrd = pr_cdadmcrd
+         AND insitdec = 1 -- Sem aprovacao
+         AND inupgrad = 1 -- Flag upgrade
+         AND flgprcrd = 1 -- Cartao titular
+    ORDER BY nrctrcrd desc;
+    rw_crawcrd_up cr_crawcrd_up%ROWTYPE;
+
   BEGIN 
-    -- Inserir 
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
+    /* O cartao que esta vindo no parametro na verdade é o original,
+      que estah sendo realizado o upgrade / dowgrade */
+    OPEN cr_crawcrd;
+    FETCH cr_crawcrd INTO rw_crawcrd;
+    CLOSE cr_crawcrd;
+    
+    /* Busca proposta de upgrade/downgrade criada */
+    OPEN cr_crawcrd_up(pr_nrcctitg => rw_crawcrd.nrcctitg
+                      ,pr_cdadmcrd => pr_cdadmnov);
+    FETCH cr_crawcrd_up INTO rw_crawcrd_up;
+
+    IF cr_crawcrd_up%NOTFOUND THEN
+      CLOSE cr_crawcrd_up;
+      vr_dscritic := 'Nao foi encontrado proposta de upgrade/downgrade';
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_crawcrd_up;    
+    
+    -- Atualizar
     BEGIN
       UPDATE CRAWCRD t
       SET    t.dsjustif = pr_ds_justif
-            ,t.inupgrad = nvl(pr_inupgrad,1)
             ,t.dtmvtolt = SYSDATE
-      WHERE  t.cdcooper = pr_cdcooper
-      AND    t.nrdconta = pr_nrdconta
-      AND    t.nrctrcrd = pr_nrctrcrd;
+      WHERE  t.rowid = rw_crawcrd_up.rowid;
                                     
-      COMMIT;
-       
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
@@ -1753,18 +2140,78 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         RAISE vr_exc_saida;
     END;
     
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    IF rw_crawcrd.flgprcrd = 1 AND rw_crawcrd.cdadmcrd < pr_cdadmnov THEN
+      
+      este0005.pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdagenci => vr_cdagenci
+                                      ,pr_cdoperad => vr_cdoperad
+                                      ,pr_cdorigem => vr_idorigem
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctrcrd => rw_crawcrd_up.nrctrcrd
+                                      ,pr_dsmensag => vr_dsmensag
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+                                          
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
+
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                         pr_cdoperad => vr_cdoperad, 
+                         pr_dscritic => NULL, 
+                         pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem), 
+                         pr_dstransa => 'Upgrade/Downgrade de Cartao', 
+                         pr_dttransa => trunc(SYSDATE),
+                         pr_flgtrans =>  1, -- True
+                         pr_hrtransa => gene0002.fn_busca_time, 
+                         pr_idseqttl => rw_crawcrd.flgprcrd, 
+                         pr_nmdatela => vr_nmdatela, 
+                         pr_nrdconta => pr_nrdconta, 
+                         pr_nrdrowid => vr_nrdrowid);
+                             
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'ds_justif', 
+                              pr_dsdadant => NULL, 
+                              pr_dsdadatu => pr_ds_justif);
+                              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'inupgrad', 
+                              pr_dsdadant => NULL, 
+                              pr_dsdadatu => pr_inupgrad);
+                              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'cdoperad', 
+                              pr_dsdadant => NULL, 
+                              pr_dsdadatu => vr_cdoperad);
+ 
+    COMMIT;
+    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'atualizacoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'atualizacoes', pr_posicao => 0, pr_tag_nova => 'atualizacao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'atualizacao', pr_posicao => vr_contador, pr_tag_nova => 'status'  , pr_tag_cont => 'Atualização realizada com sucesso', pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'atualizacao', pr_posicao => vr_contador, pr_tag_nova => 'status'  , pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
       
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+      pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
     WHEN OTHERS THEN
+
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_just_updown_cartao: ' || SQLERRM;
+      pr_dscritic := 'Erro geral na rotina na procedure TELA_ATENDA_CARTAO_CREDITO.pc_possui_senha_aprov_crd. Erro: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');    
       ROLLBACK;
 
   END pc_atualiza_just_updown_cartao;
@@ -1839,17 +2286,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       pr_dscritic => vr_dscritic);
 
       -- Se retornou alguma crítica
-      IF TRIM(vr_dscritic) IS NOT NULL
-        THEN
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
             RAISE vr_exc_saida;
     END IF;
+
+      gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                                 pr_action => vr_nmeacao);
 
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'cartoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     FOR rw_admin IN cr_admin(pr_cdcooper => vr_cdcooper) LOOP
 
-    --gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cartoes', pr_posicao => 0, pr_tag_nova => 'cartao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cartoes', pr_posicao => vr_contador, pr_tag_nova => 'cartao', pr_tag_cont => rw_admin.nrcrcard, pr_des_erro => vr_dscritic);
 
     END LOOP;
@@ -1913,7 +2361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
         Alteracoes:
     ..............................................................................*/
-
+    
     vr_cdcooper INTEGER;
     vr_cdoperad VARCHAR2(100);
     vr_nmdatela VARCHAR2(100);
@@ -1921,11 +2369,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-
+    
     -- Variavel de criticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(10000);
-
+    
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
     
@@ -1950,44 +2398,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         RAISE vr_exc_saida;
       END IF;
       
-      -- Por padrao, nao eh piloto;
-      vr_retorno := 0;
-      
-      -- Verificar se está ativo o parametro de PA piloto.
-      vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                           ,pr_cdcooper => pr_cdcooper
-                                           ,pr_cdacesso => 'BANCOOB_USA_PA_PILOTO');      
-      
-      vr_usa_pilo := nvl(trim(vr_param),0);
-      BEGIN
-        vr_usa_pilo := nvl(trim(vr_param),0);
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_usa_pilo := 0;
-      END;
-      
-      IF vr_usa_pilo = 1 THEN
-        
-        -- Verificar qual o PA piloto, passando a cooperativa.
-        vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                             ,pr_cdcooper => pr_cdcooper
-                                             ,pr_cdacesso => 'BANCOOB_PILOTO_WS_PA');
-        BEGIN
-          vr_papiloto := nvl(trim(vr_param),0);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_papiloto := 0;
-        END;
-          
-        -- Se for o PA piloto, ativa parametro
-        IF (pr_cdagenci = vr_papiloto) and (vr_papiloto > 0) THEN
-          vr_retorno := 1;
-        END IF;
-      ELSE
-        --Se não estiver ativo, ok, liberado para todo mundo
-        vr_retorno := 1;
-      END IF;
-
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -2003,23 +2413,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                             ,pr_tag_nova => 'ativo'
                             ,pr_tag_cont => vr_retorno
                             ,pr_des_erro => vr_dscritic);
-
+                                    
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-
+        
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_busca_parametro_pa_cartao: ' || SQLERRM;
-
+        
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
-
+    
   END pc_busca_parametro_pa_cartao;
   
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira
@@ -2063,6 +2473,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     
+    vr_dsmensag VARCHAR2(1000);
+
   BEGIN    
     
     pr_des_erro := 'OK';
@@ -2083,6 +2495,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       RAISE vr_exc_erro;
     END IF;
     
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+    
+    IF vr_cdagenci = 0 THEN
+      vr_cdagenci := 1;
+    END IF;
+
     este0005.pc_incluir_proposta_est(pr_cdcooper => vr_cdcooper
                                     ,pr_cdagenci => vr_cdagenci
                                     ,pr_cdoperad => vr_cdoperad
@@ -2090,7 +2509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrctrcrd => pr_nrctrcrd
                                      ---- OUT ----
-                                    ,pr_dsmensag => pr_des_erro
+                                    ,pr_dsmensag => vr_dsmensag
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);
       
@@ -2118,9 +2537,181 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                            pr_tag_pai  => 'inf',
                            pr_posicao  => 0,
                            pr_tag_nova => 'mensagem',
-                           pr_tag_cont => pr_des_erro,
+                           pr_tag_cont => vr_dsmensag,
                            pr_des_erro => vr_dscritic);
     
+    COMMIT;   
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Análise de Crédito: '||SQLERRM;
+      pr_des_erro := 'NOK';
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_incluir_proposta_est_wb;                                   
+  
+  /* Funcao por precaucao caso matem a minha funcao na cada0004 */
+  PROCEDURE pc_busca_credito_config_bck(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
+                                         ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
+                                         ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
+                                         ,pr_vllimite_maximo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE
+                                         ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
+                                         ,pr_possui_registro  OUT NUMBER) IS
+
+    CURSOR cur_config_categ IS
+      SELECT tbcc.vllimite_minimo
+            ,tbcc.vllimite_maximo
+            ,tbcc.dsdias_debito
+      FROM   TBCRD_CONFIG_CATEGORIA tbcc
+      WHERE  tbcc.cdcooper = pr_cdcooper
+      AND    tbcc.cdadmcrd = pr_cdadmcrd;
+
+    vr_possui_registro    NUMBER:=0;
+
+  BEGIN
+    --
+    pr_possui_registro := vr_possui_registro;
+    --
+    FOR r001 IN cur_config_categ LOOP
+        pr_vllimite_minimo := r001.vllimite_minimo;
+        pr_vllimite_maximo := r001.vllimite_maximo;
+        pr_diasdebito      := r001.dsdias_debito;
+        pr_possui_registro := 1;
+    END LOOP;
+    --
+  END pc_busca_credito_config_bck;
+  
+  --> Chama rotina para criar proposta de Alteração de Limite
+  PROCEDURE pc_altera_limite_crd_wb(pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                   ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                   ,pr_vllimite  IN crawcrd.vllimcrd%TYPE
+                                   ,pr_dsprotoc  IN crawcrd.dsprotoc%TYPE
+                                   ,pr_dsjustif  IN crawcrd.dsjustif%TYPE
+                                   ,pr_flgtplim  IN VARCHAR2
+                                   ,pr_tpsituac  IN NUMBER
+                                   ,pr_insitdec  IN NUMBER
+                                   ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS
+
+    /* ..........................................................................
+    
+      Programa : pc_altera_limite_crd_wb   
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Paulo Silva (Supero)
+      Data     : Maio/2018.                   Ultima atualizacao: 17/05/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Chama rotina para criar proposta de Alteração de Limite
+      Alteração : 
+                  
+    ..........................................................................*/
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+  BEGIN    
+    
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
+    tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => vr_cdcooper
+                                                  ,pr_cdoperad => vr_cdoperad
+                                                  ,pr_nrdconta => pr_nrdconta
+                                                  ,pr_nrctrcrd => pr_nrctrcrd
+                                                  ,pr_vllimite => pr_vllimite
+                                                  ,pr_dsprotoc => pr_dsprotoc
+                                                  ,pr_dsjustif => pr_dsjustif
+                                                  ,pr_flgtplim => pr_flgtplim
+                                                  ,pr_idorigem => vr_idorigem
+                                                  ,pr_tpsituac => pr_tpsituac
+                                                  ,pr_insitdec => pr_insitdec
+                                                  ,pr_nmdatela => vr_nmdatela
+                                                  ---- OUT ----
+                                                  ,pr_cdcritic => vr_cdcritic
+                                                  ,pr_dscritic => vr_dscritic
+                                                  ,pr_des_erro => pr_des_erro);
+
+    -- verificar se retornou critica
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+    
+    --Gera retorno para tela
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Dados',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'inf',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'inf',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'mensagem',
+                           pr_tag_cont => pr_des_erro,
+                           pr_des_erro => vr_dscritic);
+
     COMMIT;   
     
   EXCEPTION
@@ -2138,8 +2729,893 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Análise de Crédito: '||SQLERRM;
-  END pc_incluir_proposta_est_wb;                                   
+      pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Alteração de Limite de Crédito: '||SQLERRM;
+  END pc_altera_limite_crd_wb;
   
+  --> Chama rotina para criar proposta de Alteração de Limite
+  PROCEDURE pc_altera_limite_crd(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                ,pr_cdoperad  IN crapope.cdoperad%TYPE
+                                ,pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                ,pr_vllimite  IN crawcrd.vllimcrd%TYPE
+                                ,pr_dsprotoc  IN crawcrd.dsprotoc%TYPE
+                                ,pr_dsjustif  IN crawcrd.dsjustif%TYPE
+                                ,pr_flgtplim  IN VARCHAR2
+                                ,pr_idorigem  IN NUMBER
+                                ,pr_tpsituac  IN NUMBER
+                                ,pr_insitdec  IN NUMBER
+                                ,pr_nmdatela  IN craptel.nmdatela%TYPE  --> Nome da Tela
+                                ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                ,pr_des_erro  OUT VARCHAR2) IS
+
+    /* ..........................................................................
+    
+      Programa : pc_altera_limite_crd 
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Paulo Silva (Supero)
+      Data     : Maio/2018.                   Ultima atualizacao: 17/05/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Chama rotina para criar proposta de Alteração de Limite
+      Alteração : 
+                  
+    ..........................................................................*/
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic PLS_INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+    
+    --Geral
+    vr_nrdrowid  ROWID;
+    vr_idseqttl  crapttl.idseqttl%TYPE;
+    vr_dtretorno DATE;
+    vr_dsorigem  VARCHAR2(100);
+    vr_vllimite crawcrd.vllimcrd%TYPE;
+    vr_vllimite_ant NUMBER;
+    
+    -----------> CURSORES <-----------
+    --Busca dados da proposta do cartão
+    CURSOR cr_crawcrd IS
+      SELECT crd.nrcctitg
+            ,crd.vllimcrd
+            ,crd.cdadmcrd
+        FROM crawcrd crd
+       WHERE crd.cdcooper = pr_cdcooper
+         AND crd.nrdconta = pr_nrdconta
+         AND crd.nrctrcrd = pr_nrctrcrd;
+    rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+    CURSOR cr_limatu IS
+      SELECT a.*
+        FROM tbcrd_limite_atualiza a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.idatualizacao = (SELECT MAX(b.idatualizacao)
+                                  FROM tbcrd_limite_atualiza b
+                                 WHERE b.cdcooper = pr_cdcooper
+                                   AND b.nrdconta = pr_nrdconta);
+    rw_limatu cr_limatu%ROWTYPE;
+    
+    CURSOR cr_vallim IS
+      SELECT wrd1.vllimcrd
+        FROM crawcrd wrd1
+       WHERE wrd1.cdcooper = pr_cdcooper
+         AND wrd1.nrdconta = pr_nrdconta
+         AND wrd1.insitcrd IN (2,3,4)
+         AND wrd1.flgprcrd = 1
+         AND wrd1.nrcctitg = (SELECT wrd2.nrcctitg
+                                FROM crawcrd wrd2
+                               WHERE wrd2.cdcooper = wrd1.cdcooper
+                                 AND wrd2.nrdconta = wrd1.nrdconta
+                                 AND wrd2.insitcrd IN (2,3,4)
+                                 AND wrd2.nrctrcrd = pr_nrctrcrd);
+    vr_vllimtit crawcrd.vllimcrd%TYPE;
+    
+  BEGIN    
+    
+    pr_des_erro := 'OK';
+    
+    --Valida se o valor do limite do adicional é menor ou igual o valor do Titular
+    IF pr_flgtplim = 'A' THEN
+      OPEN cr_vallim;
+      FETCH cr_vallim INTO vr_vllimtit;
+      CLOSE cr_vallim;
+      
+      IF pr_vllimite > vr_vllimtit THEN
+        vr_dscritic := 'Valor do limite do cartão adicional deve ser menor ou igual ao valor do limite do cartão titular.';
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    
+    --Busca dados da proposta do cartão
+    OPEN cr_crawcrd;
+    FETCH cr_crawcrd INTO rw_crawcrd;
+    CLOSE cr_crawcrd;
+    
+    --Busca última atualização
+    OPEN cr_limatu;
+    FETCH cr_limatu INTO rw_limatu;
+    CLOSE cr_limatu;
+    
+    vr_vllimite_ant := rw_crawcrd.vllimcrd;
+    
+    IF pr_tpsituac = 3 THEN
+      vr_dtretorno := SYSDATE;
+      vr_vllimite_ant := rw_limatu.vllimite_anterior;
+    ELSIF pr_tpsituac = 4 THEN
+      vr_vllimite := rw_crawcrd.vllimcrd;
+    END IF;
+    
+    IF pr_flgtplim = 'G' THEN
+      vr_idseqttl := 1;
+    ELSE
+      vr_idseqttl := 0;
+    END IF;
+
+    --Insere registro de Alteração de Limite
+    BEGIN
+      INSERT INTO tbcrd_limite_atualiza(idatualizacao
+                                       ,cdcooper
+                                       ,nrdconta
+                                       ,nrconta_cartao
+                                       ,dtalteracao
+                                       ,dtretorno
+                                       ,tpsituacao
+                                       ,vllimite_anterior
+                                       ,vllimite_alterado
+                                       ,cdcanal
+                                       ,cdadmcrd
+                                       ,cdoperad
+                                       ,insitdec
+                                       ,dsprotocolo
+                                       ,dsjustificativa)
+                                 VALUES(seq_crd_limite_atualiza_id.nextval
+                                       ,pr_cdcooper
+                                       ,pr_nrdconta
+                                       ,rw_crawcrd.nrcctitg
+                                       ,SYSDATE
+                                       ,vr_dtretorno
+                                       ,pr_tpsituac
+                                       ,vr_vllimite_ant
+                                       ,nvl(vr_vllimite,pr_vllimite)
+                                       ,pr_idorigem --Ayllos
+                                       ,rw_crawcrd.cdadmcrd
+                                       ,pr_cdoperad
+                                       ,nvl(pr_insitdec,rw_limatu.insitdec)
+                                       ,nvl(pr_dsprotoc,rw_limatu.dsprotocolo)
+                                       ,nvl(pr_dsjustif,rw_limatu.dsjustificativa));
+    EXCEPTION
+      WHEN dup_val_on_index THEN
+        vr_dscritic := 'Proposta de Alteração de Limite já existente para essas condições.';
+        RAISE vr_exc_erro;
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir Proposta de Alteração de Limite. Erro: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+    IF pr_idorigem = 15 THEN
+      vr_dsorigem := 'BANCOOB';
+    ELSE
+      vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+    END IF;
+    
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                         pr_cdoperad => pr_cdoperad, 
+                         pr_dscritic => NULL, 
+                         pr_dsorigem => vr_dsorigem, 
+                         pr_dstransa => 'Alteracao Limite Cartao', 
+                         pr_dttransa => trunc(SYSDATE),
+                         pr_flgtrans =>  1, -- True
+                         pr_hrtransa => gene0002.fn_busca_time, 
+                         pr_idseqttl => vr_idseqttl, 
+                         pr_nmdatela => pr_nmdatela, 
+                         pr_nrdconta => pr_nrdconta, 
+                         pr_nrdrowid => vr_nrdrowid);
+                             
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'tpsituacao', 
+                              pr_dsdadant => rw_limatu.tpsituacao,
+                              pr_dsdadatu => pr_tpsituac);
+                              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'cdoperad', 
+                              pr_dsdadant => rw_limatu.cdoperad, 
+                              pr_dsdadatu => pr_cdoperad);
+                              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                              pr_nmdcampo => 'insitdec', 
+                              pr_dsdadant => rw_limatu.insitdec,
+                              pr_dsdadatu => pr_insitdec);
+    
+    COMMIT;   
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Alteração de Limite de Crédito: '||SQLERRM;
+      pr_des_erro := 'NOK';
+  END pc_altera_limite_crd;
+  
+  --Valida se possui cartões com valores diferenciados
+  PROCEDURE pc_valida_limite_diferenciado(pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr. da Conta
+                                         ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr. do Cartão
+                                         ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                         ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                         ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                         ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                         ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_valida_limite_diferenciado
+        Sistema : CECRED
+        Sigla   : CRD
+        Autor   : Paulo Silva - supero
+        Data    : Abril/2018                 Ultima atualizacao: 06/04/2018
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Validar se o operador que solicitou o cartão é o mesmo que está entregando
+
+        Observacao: -----
+
+        Alteracoes:
+    ..............................................................................*/
+
+    ---------> CURSORES <--------
+    --> Valida se o operador é o titular da conta
+    CURSOR cr_crawcrd (pr_cdcooper IN crawcrd.cdcooper%TYPE) IS
+      SELECT 'S'
+        FROM crawcrd wrd1
+       WHERE wrd1.cdcooper = pr_cdcooper
+         AND wrd1.nrdconta = pr_nrdconta
+         AND wrd1.insitcrd IN (2,3,4)
+         AND wrd1.vllimcrd <> (SELECT DISTINCT wrd2.vllimcrd
+                                FROM crawcrd wrd2
+                               WHERE wrd2.cdcooper = 1--wrd1.cdcooper
+                                 AND wrd2.nrdconta = wrd1.nrdconta
+                                 AND wrd2.insitcrd IN (2,3,4)
+                                 AND wrd2.nrcctitg = wrd1.nrcctitg
+                                 AND wrd2.nrctrcrd = pr_nrctrcrd
+                                 AND wrd2.flgprcrd = 1);
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Geral
+    vr_contador    NUMBER := 0;
+    vr_limitedifer VARCHAR2(1);
+
+  BEGIN
+
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+    
+    OPEN cr_crawcrd(pr_cdcooper => vr_cdcooper);
+    FETCH cr_crawcrd INTO vr_limitedifer;
+    IF cr_crawcrd%NOTFOUND THEN
+      vr_limitedifer := 'N';
+    END IF;
+    CLOSE cr_crawcrd;
+
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'limiteDifer', pr_tag_cont => vr_limitedifer, pr_des_erro => vr_dscritic);
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina na procedure TELA_ATENDA_CARTAO_CREDITO.pc_valida_limite_diferenciado. Erro: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_valida_limite_diferenciado;
+  
+  --Rotina para validar se é titular da conta
+  PROCEDURE pc_valida_eh_titular(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+                                ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr. do Cartão
+                                ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_valida_eh_titular
+        Sistema : CECRED
+        Sigla   : CRD
+        Autor   : Paulo Silva - supero
+        Data    : Maio/2018                 Ultima atualizacao: 22/05/2018
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Validar se eh o titular da conta
+
+        Observacao: -----
+
+        Alteracoes:
+    ..............................................................................*/
+
+    ---------> CURSORES <--------
+    --Verifica se é titular
+    CURSOR cr_crawcrd(pr_cdcooper crawcrd.cdcooper%TYPE) IS
+      select flgprcrd
+            ,vllimcrd
+            ,nrcctitg
+        FROM crawcrd
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrcrd = pr_nrctrcrd;
+    rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+    CURSOR cr_crawcrd_tit(pr_cdcooper crawcrd.cdcooper%TYPE
+                         ,pr_nrdconta crawcrd.nrdconta%TYPE
+                         ,pr_nrcctitg crawcrd.nrcctitg%TYPE) IS
+      SELECT crd.vllimcrd
+        FROM crawcrd crd
+       WHERE crd.cdcooper = pr_cdcooper
+         AND crd.nrdconta = pr_nrdconta
+         AND crd.nrcctitg = pr_nrcctitg
+         AND crd.insitcrd = 4
+         AND crd.flgprcrd = 1;
+    rw_crawcrd_tit cr_crawcrd_tit%ROWTYPE;
+    
+    vr_ehtitular VARCHAR2(1) := 'N';
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    vr_contador NUMBER := 0;
+
+  BEGIN
+
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+
+    /* Busca dados do cartao */
+    OPEN cr_crawcrd(pr_cdcooper => vr_cdcooper);
+    FETCH cr_crawcrd INTO rw_crawcrd;
+    CLOSE cr_crawcrd;
+    
+    /* eh titular */
+    IF rw_crawcrd.flgprcrd = 1 THEN
+      vr_ehtitular := 'S';
+    ELSE 
+      vr_ehtitular := 'N';
+    END IF;
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'contas', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'contas', pr_posicao => 0, pr_tag_nova => 'conta', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'conta', pr_posicao => vr_contador, pr_tag_nova => 'titular', pr_tag_cont => NVL(vr_ehtitular,'N'), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'conta', pr_posicao => vr_contador, pr_tag_nova => 'limiteatual', pr_tag_cont => rw_crawcrd.vllimcrd, pr_des_erro => vr_dscritic);
+
+    IF (vr_ehtitular = 'N') THEN
+      /* Busca cartao titular */
+      OPEN cr_crawcrd_tit(pr_cdcooper => vr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrcctitg => rw_crawcrd.nrcctitg);
+      FETCH cr_crawcrd_tit INTO rw_crawcrd_tit;
+      IF cr_crawcrd_tit%FOUND THEN
+         CLOSE cr_crawcrd_tit;
+         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'conta', pr_posicao => vr_contador, pr_tag_nova => 'limitetitular', pr_tag_cont => rw_crawcrd_tit.vllimcrd, pr_des_erro => vr_dscritic);
+      ELSE 
+         CLOSE cr_crawcrd_tit;
+      END IF;
+      
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina na procedure TELA_ATENDA_CARTAO_CREDITO.pc_valida_eh_titular. Erro: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_valida_eh_titular;
+  
+  --Rotina para verificar os cartões que o cooperado já possui
+  PROCEDURE pc_verifica_cartoes(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da Conta
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                               
+    /* .............................................................................
+
+        Programa: pc_verifica_cartoes
+        Sistema : CECRED
+        Sigla   : CRD
+        Autor   : Paulo Silva - supero
+        Data    : Maio/2018                 Ultima atualizacao: 23/05/2018
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Verificar os cartões que o cooperado já possui
+
+        Observacao: -----
+
+        Alteracoes:
+    ..............................................................................*/
+
+    ---------> CURSORES <--------
+    --Verifica se é titular
+    CURSOR cr_crawcrd(pr_cdcooper crawcrd.cdcooper%TYPE) IS
+      select cdadmcrd
+            ,flgprcrd
+            ,nrctrcrd
+            ,vllimcrd
+            ,dddebito
+            ,tpdpagto
+            ,dsprotoc
+            ,flgdebit
+            ,nmempcrd
+        FROM crawcrd
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND insitcrd <> 6 --Náo está cancelado
+         AND cdadmcrd BETWEEN 10 and 80; --CECRED
+    rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+    CURSOR cr_crapass(pr_cdcooper crawcrd.cdcooper%TYPE) IS
+      SELECT idastcjt
+        FROM crapass
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta;
+    vr_idastcjt crapass.idastcjt%TYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Gerais
+    vr_contador NUMBER := 0;
+    vr_debitoti crawcrd.cdadmcrd%TYPE;
+    vr_debitoad crawcrd.cdadmcrd%TYPE;
+    vr_multesti crawcrd.cdadmcrd%TYPE;
+    vr_multesad crawcrd.cdadmcrd%TYPE;
+    vr_multmati crawcrd.cdadmcrd%TYPE;
+    vr_multmaad crawcrd.cdadmcrd%TYPE;
+    vr_nrctrdeb crawcrd.nrctrcrd%TYPE;
+    vr_nrctress crawcrd.nrctrcrd%TYPE;
+    vr_nrctrmul crawcrd.nrctrcrd%TYPE;
+    vr_vllimdeb crawcrd.vllimcrd%TYPE;
+    vr_vllimess crawcrd.vllimcrd%TYPE;
+    vr_vllimmul crawcrd.vllimcrd%TYPE;
+    vr_ddebideb crawcrd.vllimcrd%TYPE;
+    vr_ddebiess crawcrd.vllimcrd%TYPE;
+    vr_ddebimul crawcrd.vllimcrd%TYPE;
+    vr_tppagdeb crawcrd.tpdpagto%TYPE;
+    vr_tppagess crawcrd.tpdpagto%TYPE;
+    vr_tppagmul crawcrd.tpdpagto%TYPE;
+    vr_flgdebit crawcrd.flgdebit%TYPE;
+    vr_nmempdeb crawcrd.nmempcrd%TYPE;
+    vr_nmempess crawcrd.nmempcrd%TYPE;
+    vr_nmempmul crawcrd.nmempcrd%TYPE;
+
+  BEGIN
+
+    pr_des_erro := 'OK';
+    
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+    
+    OPEN cr_crapass(pr_cdcooper => vr_cdcooper);
+    FETCH cr_crapass INTO vr_idastcjt;
+    CLOSE cr_crapass;
+
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'Dados'
+                          ,pr_posicao => 0
+                          ,pr_tag_nova => 'cartoes'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+    
+    FOR rw_crawcrd IN cr_crawcrd(pr_cdcooper => vr_cdcooper) LOOP
+    
+      --Se Cartão Débito
+      IF rw_crawcrd.cdadmcrd IN (16,17) THEN
+        IF rw_crawcrd.flgprcrd = 1 THEN
+          vr_debitoti := rw_crawcrd.cdadmcrd;
+          vr_nrctrdeb := rw_crawcrd.nrctrcrd;
+          vr_vllimdeb := rw_crawcrd.vllimcrd;
+          vr_ddebideb := rw_crawcrd.dddebito;
+          vr_tppagdeb := rw_crawcrd.tpdpagto;
+          vr_nmempdeb := rw_crawcrd.nmempcrd;
+        ELSE
+          vr_debitoad := rw_crawcrd.cdadmcrd;
+        END IF;
+      --Se Essencial
+      ELSIF rw_crawcrd.cdadmcrd = 11 THEN
+        IF rw_crawcrd.flgprcrd = 1 THEN
+          vr_multesti := rw_crawcrd.cdadmcrd;
+          vr_nrctress := rw_crawcrd.nrctrcrd;
+          vr_vllimess := rw_crawcrd.vllimcrd;
+          vr_ddebiess := rw_crawcrd.dddebito;
+          vr_tppagess := rw_crawcrd.tpdpagto;
+          vr_nmempess := rw_crawcrd.nmempcrd;
+        ELSE
+          vr_multesad := rw_crawcrd.cdadmcrd;
+        END IF;
+      --Se demais
+      ELSE
+        IF rw_crawcrd.flgprcrd = 1 THEN
+          vr_multmati := rw_crawcrd.cdadmcrd;
+          vr_nrctrmul := rw_crawcrd.nrctrcrd;
+          vr_vllimmul := rw_crawcrd.vllimcrd;
+          vr_ddebimul := rw_crawcrd.dddebito;
+          vr_tppagmul := rw_crawcrd.tpdpagto;
+          vr_flgdebit := rw_crawcrd.flgdebit;
+          vr_nmempmul := rw_crawcrd.nmempcrd;
+        ELSE
+          vr_multmaad := rw_crawcrd.cdadmcrd;
+        END IF;
+      END IF;
+                            
+    END LOOP;
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartoes'
+                          ,pr_posicao => 0
+                          ,pr_tag_nova => 'cartao'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+                              
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'debito_tit'
+                          ,pr_tag_cont => vr_debitoti
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'debito_adi'
+                          ,pr_tag_cont => vr_debitoad
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'nrctrdeb'
+                          ,pr_tag_cont => vr_nrctrdeb
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'vllimdeb'
+                          ,pr_tag_cont => vr_vllimdeb
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'ddebideb'
+                          ,pr_tag_cont => vr_ddebideb
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'tppagtodeb'
+                          ,pr_tag_cont => vr_tppagdeb
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'nmempdeb'
+                          ,pr_tag_cont => vr_nmempdeb
+                          ,pr_des_erro => vr_dscritic);
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'multesseti'
+                          ,pr_tag_cont => vr_multesti
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'multessead'
+                          ,pr_tag_cont => vr_multesad
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'nrctress'
+                          ,pr_tag_cont => vr_nrctress
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'vllimess'
+                          ,pr_tag_cont => vr_vllimess
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'ddebiess'
+                          ,pr_tag_cont => vr_ddebiess
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'nmempess'
+                          ,pr_tag_cont => vr_nmempess
+                          ,pr_des_erro => vr_dscritic);
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'tppagtoess'
+                          ,pr_tag_cont => vr_tppagess
+                          ,pr_des_erro => vr_dscritic);
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'multmastti'
+                          ,pr_tag_cont => vr_multmati
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'multmastad'
+                          ,pr_tag_cont => vr_multmaad
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'nrctrmul'
+                          ,pr_tag_cont => vr_nrctrmul
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'vllimmul'
+                          ,pr_tag_cont => vr_vllimmul
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'ddebimul'
+                          ,pr_tag_cont => vr_ddebimul
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'tppagtomul'
+                          ,pr_tag_cont => vr_tppagmul
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'nmempmul'
+                          ,pr_tag_cont => vr_nmempmul
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'protocolo'
+                          ,pr_tag_cont => rw_crawcrd.dsprotoc
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'idastcjt'
+                          ,pr_tag_cont => vr_idastcjt
+                          ,pr_des_erro => vr_dscritic);
+                          
+    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                          ,pr_tag_pai => 'cartao'
+                          ,pr_posicao => vr_contador
+                          ,pr_tag_nova => 'flgdebit'
+                          ,pr_tag_cont => vr_flgdebit
+                          ,pr_des_erro => vr_dscritic);
+                          
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina na procedure TELA_ATENDA_CARTAO_CREDITO.pc_verifica_cartoes. Erro: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_verifica_cartoes;
+
 END TELA_ATENDA_CARTAOCREDITO;
 /
