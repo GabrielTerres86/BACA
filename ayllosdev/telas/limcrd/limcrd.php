@@ -14,6 +14,7 @@ require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 require_once('supfn.php');
+include("../../includes/carrega_permissoes.php");
 isPostMethod();
 
 ?>
@@ -27,7 +28,8 @@ isPostMethod();
         limiteMin: "<? echo utf8ToHtml("Limite Mínimo") ?>",
         limiteMax: "<? echo utf8ToHtml("Limite Máximo") ?>",
         diasDBT: "<? echo utf8ToHtml("Dias Débito") ?>" ,
-        ctaMae: "<? echo utf8ToHtml("Conta Mãe") ?>" 
+        ctaMae: "<? echo utf8ToHtml("Conta Mãe") ?>" ,
+		alertaLinhaExistente: "<? echo utf8ToHtml("A linha de crédito solicitada já existe, por favor, selecione a opção de editar.") ?>"
     };
     </script>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">

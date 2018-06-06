@@ -78,7 +78,7 @@
     $xml .= "</Root>";
 
     
-    $xmlResult = mensageria($xml, "TELA_LIMCRD", "SALVA_LIMCRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "TELA_LIMCRD", "SALVA_LIMCRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $obj = simplexml_load_string($xmlResult);
     echo "/* req: $xml \n resp: $xmlResult*/";
     echo "hideMsgAguardo();";
@@ -86,7 +86,8 @@
        echo "success = false;"; 
        exibirErro('error',preg_replace( "/\r|\n/", "<br>", utf8ToHtml($obj->Erro->Registro->cdcritic." ".$obj->Erro->Registro->dscritic)),'Alerta - Ayllos',$funcaoAposErro,false);
     }else{
-        echo "success = true;message ='".utf8ToHtml($obj->Dados->status)."'";
+		$status = str_replace("Ã§","ç",$obj->Dados->status);
+        echo "success = true;message ='".utf8ToHtml($status)."'";
     }
 	echo "/* nmdeacao: \n enviado \n $xml   \n recebido \n $xmlResult \n */";
     //echo "$xmlResult";

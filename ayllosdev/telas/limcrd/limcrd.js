@@ -76,14 +76,38 @@ function triggerBtnOK() {
         btnVoltar.show();
         var opt = $("#cddotipo").val();
         if (opt == "I") {
-            carregarFormulario();
-            $(".tableform").show();
-            $(".campoTelaSemBorda").removeAttr("readonly");
-            $(".campoTelaSemBorda").removeAttr("disabled");//frmck
-            $(".frmck").removeAttr("disabled");
-            btnExcluir.hide();
-            btnConcluir.show();
-            globalEdit = true;
+			var madm = parseInt($("#mainAdmCrd").val());
+			if(madm > 10 && madm < 18){				
+				$.post("busca_limites.php", {"action": "C", "admcrd": madm}, function (resp) {
+					
+					if(resp[0].totalregistros > 0){
+						//alertaLinhaExistente
+						showError("error",labels.alertaLinhaExistente , "Alerta - Ayllos", "");
+						btVoltar.click();
+					}else{
+						carregarFormulario();
+						$(".tableform").show();
+						$(".campoTelaSemBorda").removeAttr("readonly");
+						$(".campoTelaSemBorda").removeAttr("disabled");//frmck
+						$(".frmck").removeAttr("disabled");
+						btnExcluir.hide();
+						btnConcluir.show();
+						globalEdit = true;
+					}
+				});
+			}else{
+				
+				carregarFormulario();
+				$(".tableform").show();
+				$(".campoTelaSemBorda").removeAttr("readonly");
+				$(".campoTelaSemBorda").removeAttr("disabled");//frmck
+				$(".frmck").removeAttr("disabled");
+				btnExcluir.hide();
+				btnConcluir.show();
+				globalEdit = true;
+			}
+			
+            
         }
         else if (opt == "C") 
         {
