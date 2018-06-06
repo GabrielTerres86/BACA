@@ -672,24 +672,10 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				break;
 			}
 			case "SITUACAO_PREVIDENCIA": {
+				$nomeRotina = "Situa&ccedil;&atilde;o da Previd&ecirc;ncia"; 
                 $urlRotina = "";
+				$strValue = ( isset($valores[22]->cdata) ) ? $valores[22]->cdata == "0" ? "NAO" : "SIM" : "NAO"; 
 				$telaPermitadaAcessoBacen = 0;
-				$nomeRotina = " ";						
-				$strValue = " ";
-				if ((isset($valores[22]->cdata)) AND ($valores[22]->cdata!=""))  {
-					$nomeRotina = "Situa&ccedil;&atilde;o da Previd&ecirc;ncia"; 
-					switch ($valores[22]->cdata) {
-						case "0":
-							$strValue = "INATIVA";
-							break;
-						case "1":
-							$strValue = "ATIVA";
-							break;
-						case "2":
-							$strValue = "PENDENTE";
-							break;
-					}
-				}
 				break;
 			}
 			default: {
