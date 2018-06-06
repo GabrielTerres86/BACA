@@ -7,6 +7,7 @@
 	* --------------
 	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
 	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+	*                26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts
 	*                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
     *                             Diego Simas - AMcom  
 	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
@@ -297,6 +298,17 @@
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
+					<!-- Início PJ 416 - BacenJud -->									
+					<td>
+						<label for="indutblq">Considerar para Bloquei Judicial?</label>
+						<select id="indutblq" name="indutblq">
+							<option value="S">Sim </option>
+							<option value="N">N&atilde;o </option>
+						</select>
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<input type="hidden" name="operauto" id="operauto" value="">
+					</td>
+                    <!-- Fim PJ 416 - BacenJud -->
 				</tr>
 				<tr>
 					<td>
@@ -332,7 +344,7 @@
 						</select>
 						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
 						<!-- <input type="hidden" name="operauto" id="operauto" value=""> -->
-					</td>	
+					</td>
                     <!-- Inicio SM 5 - 364 - RMM -->					
 				</tr>
 			</table>
