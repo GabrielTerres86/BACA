@@ -15,22 +15,25 @@
 		$nrctrcrd       = $_POST['nrctrcrd'];
 		$nrdconta       = $_POST['nrdconta'];
 		$idacionamento  =  $_POST['idacionamento'];
+		$dsjustif  		=  $_POST['dsjustif'];
 		$idproces       = $_POST['idproces'];
 		$cdadmcrd       = $_POST['cdadmcrd'];
-		if(!($cdadmcrd == 16 || $cdadmcrd == 17 )){
+		//if(!($cdadmcrd == 16 || $cdadmcrd == 17)){
+		if(TRUE){
 			$updContratoXML .= "<Root>";
 			$updContratoXML .= " <Dados>";
 			$updContratoXML .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 			$updContratoXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
 			$updContratoXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
 			$updContratoXML .= "   <dsprotoc>".$idacionamento."</dsprotoc>";
+			$updContratoXML .= "   <dsjustif>".$dsjustif."</dsjustif>";
 			$updContratoXML .= "   <idproces>".$idproces."</idproces>";
 			$updContratoXML .= " </Dados>";
 			$updContratoXML .= "</Root>";
 			$admresult = mensageria($updContratoXML, "ATENDA_CRD",
 													"ATUALIZAR_CONTRATO_SUGEST_MOTOR",
 													$glbvars["cdcooper"], 
-													$glbvars["cdagenci"], 
+													$glbvars["cdpactra"], 
 													$glbvars["nrdcaixa"], 
 													$glbvars["idorigem"], 
 													$glbvars["cdoperad"], 

@@ -1,22 +1,22 @@
 <?
 /*!
  * FONTE        : cadastrar_novo_cartao.php
- * CRIA«√O      : Guilherme (CECRED)
- * DATA CRIA«√O : MarÁo/2007
- * OBJETIVO     : Cadastrar Novo Cart„o de CrÈdito - rotina de Cart„o de CrÈdito da tela ATENDA
+ * CRIA√á√ÉO      : Guilherme (CECRED)
+ * DATA CRIA√á√ÉO : Mar√ßo/2007
+ * OBJETIVO     : Cadastrar Novo Cart√£o de Cr√©dito - rotina de Cart√£o de Cr√©dito da tela ATENDA
  * --------------
- * ALTERA«’ES   :
+ * ALTERA√á√ïES   :
  * --------------
- * 000: [04/11/2010] David           (CECRED) : AdaptaÁ„o para Cart„o PJ
- * 001: [06/05/2011] Rodolpho Telmo     (DB1) : AdaptaÁ„o para Zoom EndereÁo e Avalista genÈrico
+ * 000: [04/11/2010] David           (CECRED) : Adapta√ß√£o para Cart√£o PJ
+ * 001: [06/05/2011] Rodolpho Telmo     (DB1) : Adapta√ß√£o para Zoom Endere√ßo e Avalista gen√©rico
  * 002: [08/09/2011] Adriano		 (CECRED) : Incluido a chamada para a procedure alerta_fraude.
  * 003: [18/06/2012] Jorge Hamaguchi (CECRED) : Adiicionado confirmacao para gerar impressao.
- * 004: [10/07/2012] Guilherme Maba  (CECRED) : IncluÌdo par‚metro nmextttl no xml da requisiÁ„o.
- * 005: [16/07/2012] Jorge Hamaguchi (CECRED) : Ajustado eval de saÌda, quando ocorrer erro e saida normal.
+ * 004: [10/07/2012] Guilherme Maba  (CECRED) : Inclu√≠do par√¢metro nmextttl no xml da requisi√ß√£o.
+ * 005: [16/07/2012] Jorge Hamaguchi (CECRED) : Ajustado eval de sa√≠da, quando ocorrer erro e saida normal.
  * 006: [12/04/2013] Adriano		 (CECRED) : Retirado a chamada da procedure alerta_fraude
  * 007: [02/05/2014] Jean Michel     (CECRED) : Incluido novos parametros para cartoes bancoob
- * 008: [03/07/2014] Lucas Lunelli   (CECRED) : AlteraÁ„o para impedir impress„o quando cart„o BANCOOB.
- * 009: [24/09/2014] Renato - Supero (CECRED) : Adicionar parametro nmempres no cadastro de novos cartıes
+ * 008: [03/07/2014] Lucas Lunelli   (CECRED) : Altera√ß√£o para impedir impress√£o quando cart√£o BANCOOB.
+ * 009: [24/09/2014] Renato - Supero (CECRED) : Adicionar parametro nmempres no cadastro de novos cart√µes
  * 010: [09/10/2015] Gabriel         (RKAM)   : Reformulacao cadastral.
  * 013: [13/10/2015] James           (CECRED) : Desenvolvimento do projeto 126.
          17/06/2016 - M181 - Alterar o CDAGENCI para          
@@ -33,12 +33,12 @@
 	
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';	
 	
-	// Verifica permiss„o
+	// Verifica permiss√£o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
 	}	
 	
-	// Verifica se os par‚metros necess·rios foram informados
+	// Verifica se os par√¢metros necess√°rios foram informados
 	$params = array('nrdconta','inpessoa','dsgraupr','nrcpfcgc','nmtitcrd','nmempres','nrdoccrd','dtnasccr','dsadmcrd','cdadmcrd','dscartao',
                     'vlsalari','vlsalcon','vloutras','vlalugue','dddebito','vllimpro','flgimpnp','vllimdeb','nrrepinc',
                     'nrctaav1','nmdaval1','nrcpfav1','tpdocav1','dsdocav1','nmdcjav1','cpfcjav1','tdccjav1','doccjav1','ende1av1','ende2av1','nrcepav1','nmcidav1','cdufava1','nrfonav1','emailav1',
@@ -122,64 +122,64 @@
 	
 	$executandoProdutos = $_POST['executandoProdutos'];
 	
-	// Verifica se n˙mero da conta È um inteiro v·lido
+	// Verifica se n√∫mero da conta √© um inteiro v√°lido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se tipo de pessoa È um inteiro v·lido
+	// Verifica se tipo de pessoa √© um inteiro v√°lido
 	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se a data de nascimento do titular do cart„o È uma data v·lida
+	// Verifica se a data de nascimento do titular do cart√£o √© uma data v√°lida
 	if (!validaData($dtnasccr)) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se o cÛdigo da admi È um inteiro v·lido
+	// Verifica se o c√≥digo da admi √© um inteiro v√°lido
 	if (!validaInteiro($cdadmcrd)) exibirErro('error','C&oacute;digo da Administradora inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se valor do sal·rio do titular da conta È um decimal v·lido
+	// Verifica se valor do sal√°rio do titular da conta √© um decimal v√°lido
 	if (!validaDecimal($vlsalari)) exibirErro('error','Valor do Sal&aacute;rio do Titular inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se valor do sal·rio do conjuge È um decimal v·lido
+	// Verifica se valor do sal√°rio do conjuge √© um decimal v√°lido
 	if (!validaDecimal($vlsalcon)) exibirErro('error','Valor do Sal&aacute;rio do C&ocirc;njuge inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 
-	// Verifica se valor de outras È um decimal v·lido
+	// Verifica se valor de outras √© um decimal v√°lido
 	if (!validaDecimal($vloutras)) exibirErro('error','Valor de Outras Rendas inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se valor do aluguel È um decimal v·lido
+	// Verifica se valor do aluguel √© um decimal v√°lido
 	if (!validaDecimal($vlalugue)) exibirErro('error','Valor do Aluguel inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 
-	// Verifica se valor do limite proposto È um decimal v·lido
+	// Verifica se valor do limite proposto √© um decimal v√°lido
 	if (!validaDecimal($vllimpro)) exibirErro('error','Valor do Limite Proposto inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Valida impress„o de nota promissÛria
+	// Valida impress√£o de nota promiss√≥ria
 	if ($flgimpnp <> "yes" && $flgimpnp <> "no") exibirErro('error','Indicador de impress&atilde;o da nota promiss&oacute;ria inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 
-	// Verifica se valor do limite de dÈbito È um decimal v·lido
+	// Verifica se valor do limite de d√©bito √© um decimal v√°lido
 	if (!validaDecimal($vllimdeb) && $vllimdeb != 0 ) exibirErro('error','Valor do Limite de D&eacute;bito inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CPF do representante È um inteiro v·lido
+	// Verifica se CPF do representante √© um inteiro v√°lido
 	if (!validaInteiro($nrrepinc)) exibirErro('error','CPF do representante inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 
-	// Verifica se n˙mero da conta do 1∞ avalista È um inteiro v·lido
+	// Verifica se n√∫mero da conta do 1¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($nrctaav1)) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se n˙mero da conta do 2∞ avalista È um inteiro v·lido
+	// Verifica se n√∫mero da conta do 2¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CPF do 1∞ avalista È um inteiro v·lido
+	// Verifica se CPF do 1¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CPF do ConjugÍ do 1∞ avalista È um inteiro v·lido
+	// Verifica se CPF do Conjug√™ do 1¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do C&ocirc;njuge do 1o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CPF do 2∞ avalista È um inteiro v·lido
+	// Verifica se CPF do 2¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CPF do ConjugÍ do 2∞ avalista È um inteiro v·lido
+	// Verifica se CPF do Conjug√™ do 2¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do C&ocirc;njuge do 2o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CEP do 2∞ avalista È um inteiro v·lido
+	// Verifica se CEP do 2¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($nrcepav1)) exibirErro('error','CEP do 1o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se CEP do 2∞ avalista È um inteiro v·lido
+	// Verifica se CEP do 2¬∞ avalista √© um inteiro v√°lido
 	if (!validaInteiro($nrcepav2)) exibirErro('error','CEP do 2o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
 	// Verifica se o CPF/CNPJ &eacute; um inteiro v&aacute;lido
@@ -272,26 +272,63 @@
 	$xmlSetCartao .= "		<flgdebit>".$flgdebit."</flgdebit>";	
 	$xmlSetCartao .= "	</Dados>";
 	$xmlSetCartao .= "</Root>";
-
+	
+	
+	// Executa script para envio do XML
+	//echo $xmlSetCartao."<br>";
+	
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlSetCartao);
 
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjCartao = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {		
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
 	} 	
 
-	// Mostra se BO retornar mensagem de atualizaÁ„o de cadastro
+	// Mostra se BO retornar mensagem de atualiza√ß√£o de cadastro
 	$idconfir = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;
 	$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[1]->cdata;
 	
-	// N˙mero do novo contrato
+	// N√∫mero do novo contrato
 	$nrctrcrd = $xmlObjCartao->roottag->tags[1]->tags[0]->tags[0]->cdata;
+	
+	
+	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
+	   Procedimento temporario ate que todas as cooperativas utilizem */
+	$adxml = "<Root>";
+	$adxml .= " <Dados>";
+	$adxml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$adxml .= "   <cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+	$adxml .= " </Dados>";
+	$adxml .= "</Root>";
 
-	// Efetua a impress„o PF ou PJ
+	$result = mensageria($adxml, "ATENDA_CRD", "BUSCA_PARAMETRO_PA_CARTAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$oObj = simplexml_load_string($result);
+	$bAtivoPiloto = false;
+	if($oObj->Dados->ativo){
+		$bAtivoPiloto = ($oObj->Dados->ativo == '1');
+	}
+	/* FIM procedimento temporario */
+	
+	
+	
+	$cecredCartoes = array(11,12,13,14,15,16,17,18);
+	if(in_array(  intval($cdadmcrd),$cecredCartoes) && $bAtivoPiloto){
+
+		echo "hideMsgAguardo();";
+		if(isset($nrctrcrd) && isset($cdadmcrd))
+			echo "solicitaSenha($nrctrcrd, $cdadmcrd);";
+		else{
+			exibirErro('error',utf8ToHtml("O Contrato n√£o p√¥de ser gerado."),'Alerta - Ayllos',$funcaoAposErro,false);
+		}
+			
+		echo "/* $xmlResult   */";
+		return;
+	}
+	// Efetua a impress√£o PF ou PJ
 	if ($inpessoa == "1") {
 		$opcao = "3";
 	} else {
@@ -312,7 +349,7 @@
 	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";	
 	$msgdconf = 'showConfirmacao("'.$confmsg.'","'.$conftit.'","'.$confsim.'",callafterCartaoCredito,"sim.gif","nao.gif");';	
 	
-	// Mostra a mensagem de informaÁ„o para verificar atualizaÁ„o cadastral se for adm BB
+	// Mostra a mensagem de informa√ß√£o para verificar atualiza√ß√£o cadastral se for adm BB
 	if ($idconfir == 1) {
 		$evalresponse = "showError('inform','".$dsmensag."','Alerta - Ayllos','".$msgdconf."');";
 	}else{

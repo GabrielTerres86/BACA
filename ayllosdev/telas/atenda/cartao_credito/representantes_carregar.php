@@ -72,14 +72,14 @@
 	if ($cddopcao == "N") { // Opção NOVO
 		// Alimenta e configura campos	
 		if ($bfexiste == "yes") { // CPF pertence a um associado			
-			echo '$("#nmtitcrd","#frmNovoCartao").val("'.$nmprimtl.'").removeProp("disabled").attr("class","campo");';
-			echo '$("#nmextttl","#frmNovoCartao").val("'.$nmprimtl.'").removeProp("disabled").attr("class","campo");';
-			echo '$("#dtnasccr","#frmNovoCartao").val("'.$dtnasctl.'").prop("disabled",true).attr("class","campoTelaSemBorda");';
+			echo '$("#nmtitcrd","#frmNovoCartao").val("'.$nmprimtl.'").removeProp("disabled").removeProp("readonly").attr("class","campo");';
+			echo '$("#nmextttl","#frmNovoCartao").val("'.$nmprimtl.'").attr("disabled","true").attr("readonly",true).attr("class","campo");';
+			echo '$("#dtnasccr","#frmNovoCartao").val("'.$dtnasctl.'").prop("disabled",true).attr("readonly",true).attr("class","campoTelaSemBorda");';
 			$dsidfoco = "dsadmcrd";
 		} else {					
-			echo '$("#nmtitcrd","#frmNovoCartao").val("").removeProp("disabled").attr("class","campo");';
-			echo '$("#nmextttl","#frmNovoCartao").val("").removeProp("disabled").attr("class","campo");';
-			echo '$("#dtnasccr","#frmNovoCartao").val("").removeProp("disabled").attr("class","campo");';		
+			echo '$("#nmtitcrd","#frmNovoCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';
+			echo '$("#nmextttl","#frmNovoCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';
+			echo '$("#dtnasccr","#frmNovoCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';		
 			$dsidfoco = "dtnasccr";
 		}
 		
@@ -96,7 +96,7 @@
 		}
 		
 		// Alimenta e configura campos	
-		if ($bfexiste == "yes") { // CPF pertence a um associado
+		if ($bfexiste == "yes") { // CPF pertence a um associado 
 			if ($idrepres == 1) {
 				$dsidfoco = "nrcpfseg";
 			} else if ($idrepres == 2) {
@@ -105,8 +105,8 @@
 				$dsidfoco = "btnVoltarHabilita";
 			}
 			
-			echo '$("#nmpes'.$dsidrepr.'","#frmHabilitaCartao").val("'.$nmprimtl.'").prop("disabled",true).attr("class","campoTelaSemBorda");';
-			echo '$("#dtnas'.$dsidrepr.'","#frmHabilitaCartao").val("'.$dtnasctl.'").prop("disabled",true).attr("class","campoTelaSemBorda");';		
+			echo '$("#nmpes'.$dsidrepr.'","#frmHabilitaCartao").val("'.$nmprimtl.'").prop("disabled",true).attr("readonly",true).attr("class","campoTelaSemBorda");';
+			echo '$("#dtnas'.$dsidrepr.'","#frmHabilitaCartao").val("'.$dtnasctl.'").prop("disabled",true).attr("readonly",true).attr("class","campoTelaSemBorda");';		
 		} else {		
 			if ($idrepres == 1) {
 				$dsidfoco = "nmpespri";
@@ -116,8 +116,8 @@
 				$dsidfoco = "nmpester";
 			}
 			
-			echo '$("#nmpes'.$dsidrepr.'","#frmHabilitaCartao").val("").removeProp("disabled").attr("class","campo");';
-			echo '$("#dtnas'.$dsidrepr.'","#frmHabilitaCartao").val("").removeProp("disabled").attr("class","campo");';		
+			echo '$("#nmpes'.$dsidrepr.'","#frmHabilitaCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';
+			echo '$("#dtnas'.$dsidrepr.'","#frmHabilitaCartao").val("").removeProp("disabled").removeProp("readonly").attr("class","campo");';		
 		}
 		
 		echo 'eval("cpf'.$dsidrepr.'at = \''.formataNumericos("999.999.999-99",$nrcpfrep,".-").'\'");';

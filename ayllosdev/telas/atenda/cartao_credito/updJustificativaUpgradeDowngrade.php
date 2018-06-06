@@ -17,6 +17,7 @@ $nrdconta =  $_POST['nrdconta'];
 $nrctrcrd = $_POST['nrctrcrd'];
 $ds_justif =  $_POST['ds_justif'];
 $inupgrad = $_POST['inupgrad'];
+$cdadmnov = $_POST['cdadmnov'];
 
 $updContratoXML .= "<Root>";
 $updContratoXML .= " <Dados>";
@@ -25,18 +26,23 @@ $updContratoXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
 $updContratoXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
 $updContratoXML .= "   <ds_justif>".$ds_justif."</ds_justif>";
 $updContratoXML .= "   <inupgrad>".$inupgrad."</inupgrad>";
+$updContratoXML .= "   <cdadmnov>".$cdadmnov."</cdadmnov>";
 $updContratoXML .= " </Dados>";
 $updContratoXML .= "</Root>";
-$admresult = mensageria($updContratoXML, "ATENDA_CRD", "ATUALIZAR_JUSTIF_UPGR_DOWNGR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$admresult = mensageria($updContratoXML, "ATENDA_CRD", "ATUALIZAR_JUSTIF_UPGR_DOWNGR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $procXML = simplexml_load_string($admresult);
 $xmlObject = getObjectXML($admresult);
 if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;		
-	echo "error = true;showError(\"error\", \"$msg.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+	echo "/* $admresult */";
+	echo "error = true;showError(\"error\", \" ".preg_replace( "/\r|\n/", "", addslashes($msg) )." \", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 	exit();
+}else{
+	echo" /* \n $admresult \n */";
+	echo 'showError("inform"," '.utf8ToHtml("Solicitação enviada para a Esteira de Crédito.").' ","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 }
+echo '  acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
 
-echo "/*".$admresult."  >". isset($procXML->Erro)."<*/";
 ?>
 
 

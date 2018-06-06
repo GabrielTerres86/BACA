@@ -1,3 +1,4 @@
+
 <?
 /*!
  * FONTE        : consultar_dados_cartao_avais.php
@@ -46,15 +47,28 @@
 
 	$filter = "";
 	$filtroAtivo = true;
+	$adicional = false;
+	$bandeirasPermitidas;
 	if(isset($_POST["tipo"])){
 		$tipo = $_POST["tipo"];
-	
+		$dadosTitular = $_POST['dadostit'];
 		if($tipo == "bb")
 			$filter = "BB";
 		else if($tipo == "dbt")
 			$filter = "DEB";
 		else if($tipo == "all")
 			$filtroAtivo = false;
+		else if($tipo == "cecred"){
+			
+			$filter ="cecred";
+			$adicional = true;
+			if($adicional && isset($_POST['cdadmcrd']))
+				$bandeirasPermitidas = explode("#",$_POST['cdadmcrd']);
+			echo "<!--  >>>  \n";
+			print_r($dadosTitular);
+			echo " \n -->";
+				
+		}
 	}
 	
 	$nrdconta = $_POST["nrdconta"];
@@ -147,7 +161,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
-	//$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	//$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 
 	echo "<!--  $xmlResult  -->";
@@ -176,11 +190,11 @@
 <div id="stepRequest">
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">	
 	<div id="divDadosNovoCartao">
-		<fieldset>
+		<fieldset style="padding-left: 30px;">
 			<legend><? echo utf8ToHtml('Novo Cartão de Crédito') ?></legend>
 							
 			<label for="dsadmcrd"><? echo utf8ToHtml('Administradora:') ?></label>
-			<select name="dsadmcrd" id="dsadmcrd" onblur="" onchange="alteraDiaDebito(); alteraLimiteProposto();  alteraFuncaoDebito(); CarregaTitulares(this.value);" class="campo" >
+			<select name="dsadmcrd" id="dsadmcrd" onblur="" onchange="alteraDiaDebito(); alteraLimiteProposto();  alteraFuncaoDebito(); CarregaTitulares(this.value); configIniValues();" class="campo" >
 			<?php
 				// Obtém administradoras disponíveis
 				$eDSADMCRD = explode(",",$dsadmcrd);										
@@ -192,14 +206,21 @@
                 $eNMBANDEI = explode(",",$nmbandei);
 				$eCDADMCRD =  explode(",",$cdadmcrd);
                 $aRepresentanteOutros = explode(",",$dsoutros);
-				
+				echo "<!--";
+				print_r($bandeirasPermitidas);
+				echo "-->";
 				for ($i = 0; $i < count($eDSADMCRD); $i++){
 					// pega o código da adm
-					if($filtroAtivo){
+					if($filtroAtivo && !$adicional){
 						$pos = strrpos($eDSADMCRD[$i], $filter);
 						if (is_bool($pos) && !$pos) {
 							continue;
 						}
+					}else if($adicional){
+						echo "<!-- verificando código:".$eCDADMCRD[$i]." -->";
+						if(!in_array($eCDADMCRD[$i],$bandeirasPermitidas))
+							continue;
+						
 					}
 					$e_cd_ADMINISTRADORA[$i] = $eCDADMCRD[$i];				
 		
@@ -229,13 +250,16 @@
 			</div>
 						
 			<div id="titularidade">
-				<label for="dsgraupr"><? echo utf8ToHtml('Titularidade:') ?></label>
-				<select name="dsgraupr" id="dsgraupr" onblur="buscaDados('<?echo $cdtipcta;?>','<?echo formataNumericos("999.999.999-99",$nrcpfstl,".-");?>','<?echo $inpessoa;?>','<?echo $dtnasstl ;?>','<?echo str_replace('\'','',$nrdocstl);?>','<?echo str_replace('\'','',$nmconjug); ?>','<?echo $dtnasccj ;?>','<?echo str_replace('\'','',$nmtitcrd); ?>','<?echo formataNumericos("999.999.999-99",$nrcpfcgc,".-");?>','<?echo $dtnasctl;?>','<?echo str_replace('\'','',$nrdocptl); ?>','<?echo number_format(str_replace(",",".",$vlsalari),2,",","."); ?>','<?echo str_replace('\'','',$nmsegntl);?>');" class="campo" style="width: 100px;">
+				<label for="dsgraupr"><? echo utf8ToHtml('Titularidade:') ?>:</label>
+				<select name="dsgraupr" id="dsgraupr" onchange="buscaDados('<?echo $cdtipcta;?>','<?echo formataNumericos("999.999.999-99",$nrcpfstl,".-");?>','<?echo $inpessoa;?>','<?echo $dtnasstl ;?>','<?echo str_replace('\'','',$nrdocstl);?>','<?echo str_replace('\'','',$nmconjug); ?>','<?echo $dtnasccj ;?>','<?echo str_replace('\'','',$nmtitcrd); ?>','<?echo formataNumericos("999.999.999-99",$nrcpfcgc,".-");?>','<?echo $dtnasctl;?>','<?echo str_replace('\'','',$nrdocptl); ?>','<?echo number_format(str_replace(",",".",$vlsalari),2,",","."); ?>','<?echo str_replace('\'','',$nmsegntl);?>');" class="campo" style="width: 100px;">
 				<?php
 				$eDSGRAUPR = explode(",",$dsgraupr);
 				$eCDGRAUPR = explode(",",$cdgraupr);
 				for ($i = 0; $i < count($eDSGRAUPR); $i++){
-					?><option value="<?echo $eCDGRAUPR[$i] ?>"<?if ($i == 3) { echo " selected"; } ?>><?echo $eDSGRAUPR[$i] ?></option><?php
+					if($adicional && ($eCDGRAUPR[$i]== 1 || $eCDGRAUPR[$i]== 3 || $eCDGRAUPR[$i]== 4 || $eCDGRAUPR[$i]== 5)){
+						continue; 
+					}
+					?><option value="<?echo $eCDGRAUPR[$i] ?>"    <?if ($i == 3 && !$adicional) { echo " selected"; } ?>><?echo $eDSGRAUPR[$i] ?></option><?php
 				
 				}
 				?>
@@ -309,16 +333,23 @@
 			<br />
 			
 			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:') ?></label>
-			<select class='campo' id='vllimpro' name='vllimpro'>
-				<?php
-				for ($i = 0; $i < count($cdLimite); $i++){
-					?><option value="<?echo $cdLimite[$i]; ?>"<?if ($i == 0) { echo " selected"; } ?>><?echo formataMoeda($cdLimite[$i]) ?></option><?php
+			<div id="limiteDiv">
+				<? if($adicional || $tipo == "dbt"){?>
+				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
+					<?php
+					//for ($i = 0; $i < count($cdLimite); $i++){
+						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option><?php
+					//}
+				}else{
+					?>
+					<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' value='<? echo number_format( 0,2,",",".");?>'>
+					<?
 				}
-				?>
-			</select>			
-			
+					?>
+				</select>			
+			</div>
 			<label for="flgdebit"><? echo utf8ToHtml('Habilita função débito:') ?></label>
-			<input type="checkbox" name="flgdebit" id="flgdebit" class="campo" value="" />
+			<input type="checkbox" name="flgdebit" id="flgdebit" class="campo" value="" onclick='confirmaPurocredito();'/>
 			
 			<br />
 			
@@ -347,13 +378,14 @@
 		
 		<div id="divBotoes" >
 			<input class="btnVoltar" type="image" src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick="opcaoNovo(1);return false;" />
-			<input type="image" id="btnProsseguir" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" />
+			<input type="image" id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" />
 			<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
-				cdagenci="<?php echo $glbvars['cdoperad']; ?>" 
+				cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 				nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
 				idorigem="<?php echo $glbvars['idorigem']; ?>" 
 				cdoperad="<?php echo $glbvars['cdoperad']; ?>"
 				dsdircop="<?php echo $glbvars['dsdircop']; ?>"
+
 				href="#" class="botao" id="emiteTermoBTN" onclick="imprimirTermoDeAdesao(this);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
 
 		</div>
@@ -468,23 +500,113 @@
 			?>
 			
 			$("#dscartao").val("INTERNACIONAL");
-
+			$("#vllimdeb").attr("disabled",true);
+			desativa('vllimdeb');
 			$("#dscartao").attr("disabled",true);
 			$("#dtnasccr").removeAttr("disabled");
 			$("#tpdpagto").val(1);
+			$("#flgdebit").attr("disabled",'true');
 			$("#tpdpagto").attr("disabled",true);
+			
 
 			<?php
 		}else{
 			?>
-
+				
 				
 			<?
 		}
+		if($adicional){
+				?>
+					
+					//$("#nmempres").attr("disabled","true");
+					function configIniValues(){
+						
+						console.log("call");
+							if($("#dsadmcrd").val().split(";")[0] == 11)
+									selecionaEssencial();
+							else{
+								$("#flgdebit").removeAttr("disabled");
+								$("#tpdpagto").removeAttr("disabled");
+								$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;'>");
+								
+								$("#dddebito").removeAttr("disabled");
+								var ddDebit = '<? echo strlen($dadosTitular['ddebimul']) > 0 ? $dadosTitular['ddebimul'] : '' ; ?>';
+								
+								$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
+								$("#dddebito").attr("disabled",true);
+								
+								$("#vllimpro").attr("disabled",true);
+								$("#vllimpro").val("<? echo number_format( $dadosTitular['vllimmul'],2,",",".");?>");
+								desativa('vllimpro');
+								//tppagtomul
+								$("#tpdpagto").attr("disabled",true);
+								$("#tpdpagto").val("<? echo $dadosTitular['tppagtomul'];?>");
+							}
+							
+					}	
+					function selecionaEssencial(){
+							$("#flgdebit").removeAttr("disabled");
+							$("#tpdpagto").removeAttr("disabled");
+							//$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
+							
+							$("#dddebito").removeAttr("disabled");
+							var ddDebit = '<? echo strlen($dadosTitular['ddebiess']) > 0 ? $dadosTitular['ddebiess'] : '' ; ?>';
+							
+							$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
+							$("#dddebito").attr("disabled",true);
+							
+							$("#vllimpro").attr("disabled",true);
+							desativa("vllimpro");
+							$("#vllimpro").val("<? echo number_format( $dadosTitular['vllimess'],2,",",".");?>");
+							//tppagtomul
+							$("#tpdpagto").attr("disabled",true);
+							$("#tpdpagto").val("<? echo $dadosTitular['tppagtoess'];?>");
+					}
+					globalesteira = false;
+					glbadc = 's';
+				<?
+		} else {
+			?>
+				function configIniValues(){ }
+			<?
+		}
+		
 	?>
-	
+	function confirmaPurocredito(){
+		if(idastcjt == 1 )
+			return;
+		dbt = $("#flgdebit").attr("dtb");
+		var chk = $("#flgdebit").attr("checked");
+		if(chk && chk=="checked" && dbt =='1'){
+			showConfirmacao('<? echo utf8ToHtml("Deseja solicitar um Cartão Puro crédito?");?>', 'Confirma&ccedil;&atilde;o - Ayllos', '$("#flgdebit").removeAttr("checked");$("#flgdebit").attr("dtb",0);', "", 'sim.gif', 'nao.gif');
+		}
+		$("#flgdebit").attr("checked",true);
+		$("#flgdebit").attr("dtb",1);
+	}
+
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
 	$('#dsadmcrd','#frmNovoCartao').focus();
 	$(".lock").attr("disabled",true);
+	/*globalesteira = false;
+	glbadc = 's';*/
+	<?
+		if($tipo == "dbt"){
+			?>
+			
+			$("#vllimpro").attr("disabled","disabled");
+			desativa('vllimpro');
+			$("#vllimpro").attr("value","0,00");
+			<?
+		}
+		if($adicional){
+		}
+		if($filter == "DEB"){
+			echo " \n glbadc = 'n' \n";
+		}
+		echo "/* filtroo = $filter*/"
+	?>
+	
+	contigenciaAtiva = false;
 </script>

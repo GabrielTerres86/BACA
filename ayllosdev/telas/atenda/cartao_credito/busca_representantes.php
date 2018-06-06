@@ -36,6 +36,10 @@
 		$nrdconta = $_POST["nrdconta"];
 		$tpctrato = $_POST["tpctrato"];
 		$dsoutros = $_POST["dsoutros"];
+		$cdadmcrd = $_POST['cdadmcrd'];
+		$inpessoa = $_POST['inpessoa'];
+		$idastcjt = $_POST['idastcjt'];
+		
 		$nrcpfcgc = !isset($_POST["nrcpfcgc"]) ? 0 : $_POST["nrcpfcgc"];
 		
 		// Verifica se número da conta ou tpctrato é um inteiro válido
@@ -51,7 +55,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$xmlResult = mensageria($xml, "ATENDA", "CONPRO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA", "CONPRO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 	
 	//----------------------------------------------------------------------------------------------------------------------------------	
@@ -88,9 +92,18 @@
 		<? 
 		
 			$i++;
-		}			
-
-		if ($dsoutros == 'OUTROS'){ 
+		}		
+		//empresa, assinatura conjunta e cartão múltiplo
+		if( ($inpessoa == 2) && ($idastcjt == 1) && ($cdadmcrd == 15)){
+			?>
+				$("#flgdebit").removeAttr("checked");
+				desativa("flgdebit");
+				
+			<?
+		}
+		
+		
+		if ($dsoutros == 'OUTROS' && $cdadmcrd == 15){ 
 			?>				
 				ObjRepresent = new Object(); 		
 				ObjRepresent.nmdavali = '';

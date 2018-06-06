@@ -24,6 +24,7 @@
 
     $inpesoa = $_GET['inpessoa'];
 
+	
     $nrdconta = $_POST['nrdconta'];
     $nrctrcrd = $_POST['nrctrcrd'];
 
@@ -33,8 +34,14 @@
     $glbvars['idorigem'] = $_POST['idorigem'];
     $glbvars['cdoperad'] = $_POST['cdoperad'];
     $glbvars['dsdircop'] = $_POST['dsdircop'];
+	$nmArqui = $_POST['nmarqui'];
 
-
+	if(isset($nmArqui) && strlen($nmArqui) > 0){
+		
+		visualizaPDF($nmArqui);
+		//visualizaPDF("pcc");
+		return;
+	}
     $xmlpdf .= "<Root>";
     $xmlpdf .= " <Dados>";
     $xmlpdf.= "   <nrdconta>". $nrdconta."</nrdconta>";
@@ -54,5 +61,6 @@
         // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
         $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
         // Chama função para mostrar PDF do impresso gerado no browser
-        visualizaPDF($nmarqpdf);
+		//echo $nmarqpdf ;
+       visualizaPDF($nmarqpdf);
 ?>

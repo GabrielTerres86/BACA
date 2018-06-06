@@ -25,7 +25,7 @@ session_start();
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$admresult = mensageria($xml, "ATENDA_CRD", "VALIDA_ENTREGA_OPERADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$admresult = mensageria($xml, "ATENDA_CRD", "VALIDA_ENTREGA_OPERADOR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$admxmlObj = getObjectXML($admresult);
 	$xml_adm =  simplexml_load_string($admresult);
 	$nm = $xml_adm->Dados->cartoes->cartao->operador;

@@ -1,4 +1,4 @@
-
+﻿
 <?php 
     /*!
     * FONTE        : aprovacao_representantes.php
@@ -37,13 +37,16 @@
             $xml .= " </Dados>";
             $xml .= "</Root>";
             $admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-            $objectResult = simplexml_load_string( $admresult );
-            $podeEnviar = 1;
-            $alguemAssinou = false;
-            $alguemNaoAssinou = false;
-            $idastcjt = null;
-            $insitcrd = false;
-
+		$objectResult = simplexml_load_string( $admresult );
+		$podeEnviar = 1;
+		$alguemAssinou = false;
+		$alguemNaoAssinou = false;
+		$idastcjt = null;
+		$insitcrd = false;
+		$inupgrad = false;
+		$temJustificativa = false;
+			
+			
             if($tpacao == "verificaAutorizacoes"){
 
                 foreach($objectResult->Dados->representantes->representante as $representante){   
@@ -52,17 +55,25 @@
                     }
                     if($representante->insitcrd){
                         $insitcrd = $representante->insitcrd;
-                    }                     
+                    }
+					if($representante->inupgrad){
+                        $inupgrad = $representante->inupgrad;
+                    }
                     if( ($representante->assinou == "S")){
                        $alguemAssinou = true;
                     }else{
                         $alguemNaoAssinou = true;
                     }
+					if(!$temJustificativa && (isset($representante->dsjustif) && strlen($representante->dsjustif) > 0)){
+						$temJustificativa = true;
+						echo "\n justificativaCartao ='"+$representante->dsjustif+"' ;\n";
+						echo "\n globalesteira = true; \n";
+					}
                 }
 
                 
 
-                if(($alguemAssinou && !$alguemNaoAssinou) || ($alguemAssinou && $idastcjt =='0') &&($insitcrd != 0) )
+                if(($alguemAssinou && !$alguemNaoAssinou) || (($alguemAssinou && $idastcjt =='0') &&($insitcrd != 0)) || ($insitcrd == 5) || ($inupgrad == 1))
                     echo "autorizado = true;";
                 else if(($alguemAssinou && $idastcjt =='1') || ($alguemNaoAssinou && !$alguemAssinou)){
                     // Montar o xml de Requisicao
@@ -81,14 +92,14 @@
                 
                     if(isset($idacionamento))
                         echo "protocolo = '$idacionamento';";
-                    echo "autorizado = false;/* $xmlResult */";
+                    echo "autorizado = false; /* \n $xmlResult \n*/";
                 }
                 return;
             }
         ?>
     
         <br>
-        <p>Selecione o respectivo representante e disponibilize o pinpad para que digite a senha.</p>
+        <p><? echo utf8ToHtml("Selecione o representante desejado e solicite a digitação da senha do TA ou da Internet.") ;?></p>
         <br>
         
         <table class="tituloRegistros">
@@ -161,7 +172,7 @@
                 }else{
                     ?>
                         <a href="#" class="botao" id="" onclick="<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;"> Sair</a>
-                        <a href="#" class="botao" id="" onclick="validarSenha(<?php echo $nrctrcrd; ?>)"> Validar</a>
+                        <a href="#" class="botao" id="" onclick="validarSenha(<?php echo $nrctrcrd; ?>)" > Validar</a>
                     <?                   
                 }
             ?>

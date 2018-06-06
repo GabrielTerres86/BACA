@@ -60,7 +60,8 @@ $xmlGetNovoCartao .= "</Root>";
 // Executa script para envio do XML
 $xmlResult = getDataXML($xmlGetNovoCartao);
 
-//echo $xmlResult;
+
+
 // Cria objeto para classe de tratamento de XML
 $xmlObjNovoCartao = getObjectXML($xmlResult);
 
@@ -85,7 +86,7 @@ function pegar_nome_adm($cod,$glbvars){
 	$adxml .= "   <cdadmcrd>$cod</cdadmcrd>";
 	$adxml .= " </Dados>";
 	$adxml .= "</Root>";
-	$admresult = mensageria($adxml, "ATENDA_CRD", "BUSCAR_DESCRI_OPERADORA_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$admresult = mensageria($adxml, "ATENDA_CRD", "BUSCAR_DESCRI_OPERADORA_CC", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$admxmlObj = getObjectXML($admresult);//
 	$xml_adm =  simplexml_load_string($admresult);
 	$nm = $xml_adm->Dados->administradoras->nome;
@@ -94,16 +95,60 @@ function pegar_nome_adm($cod,$glbvars){
 }
 
 
-$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
+$objXml = simplexml_load_string($xmlResult);
+echo "<!-- SUGESTAO_LIMITE_CRD:\n";
+print_r($objXml);
+echo " \n -->";
 
 $json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
-echo "<!-- $xmlResult -->";
-echo "<!-- "; print_r($json_sugestoes['indicadoresGeradosRegra']['sugestaoCartaoCecred']); 
-echo "-->";
-//$idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
 
-//$json_sugestoes = json_decode(html_entity_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata));
+$erro = $objXml->Erro->Registro->dscritic;
+if(strlen($erro) > 0){
+	echo"<script>showError('error', '".utf8ToHtml($erro)."', 'Alerta - Ayllos', 'voltaDiv(0, 1, 4);') </script>";
+}
+
+$mensagem = $objXml->Dados->sugestoes->sugestao->mensagem;
+$contingenciaIbra = trim($objXml->Dados->sugestoes->sugestao->contingencia_ibra);
+
+$contingenciaMoto = trim($objXml->Dados->sugestoes->sugestao->contingencia_mot);
+
+
+
+$contigenciaAtiva = false;//(strlen(contingenciaIbra) > 0)||(strlen($contingenciaMoto) > 0);
+
+
+if(($contingenciaMoto!="") || ($contingenciaIbra!="")){
+	$msgconti = "";
+	if(strlen($contingenciaIbra) > 0){
+		$msgconti .="$contingenciaIbra";
+	}
+	if(strlen($contingenciaMoto) > 0){
+		$msgconti .= (strlen($msgconti) >0)? "<br> $contingenciaMoto":"$contingenciaMoto";
+	}
+	$contigenciaAtiva = true;
+	echo"<script>showError('inform', '".utf8ToHtml($msgconti)."', 'Alerta - Ayllos', ''); globalesteira = true; </script>";
+}
+$mensagem =utf8ToHtml( str_replace("Ã§Ã£","ção",$mensagem));
+//utf8ToHtml($mensagem)
+$arMessage = explode("###", $mensagem);
+$dsmensag1 = '<div style=\"text-align:left;\">'.$arMessage[0].'</div>';
+$dsmensag2 = '';
+if (count($arMessage) > 1) {
+	$dsmensag2 = $arMessage[1];
+	$dsmensag2 = str_replace('[APROVAR]',  '<img src=\"../../../imagens/geral/motor_APROVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+	$dsmensag2 = str_replace('[DERIVAR]',  '<img src=\"../../../imagens/geral/motor_DERIVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+	$dsmensag2 = str_replace('[INFORMAR]', '<img src=\"../../../imagens/geral/motor_INFORMAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+	$dsmensag2 = str_replace('[REPROVAR]', '<img src=\"../../../imagens/geral/motor_REPROVAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+	$dsmensag2 = '<div style=\"text-align:left; height:100px; overflow-x:hidden; padding-right:25px; font-size:11px; font-weight:normal;\">'.$dsmensag2.'</div>';
+}
+        
+        
+if(strlen($mensagem) > 0 && !$contigenciaAtiva){
+	echo '<script> showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");</script>';
+	//echo"<script>showError('error', '".utf8ToHtml($mensagem)."', 'Alerta - Ayllos', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));') </script>";
+}
 
 $idacionamento = $json_sugestoes['protocolo'];
 $cartoes = $json_sugestoes["categoriasCartaoCecred"];
@@ -111,9 +156,16 @@ $sugestoes = $json_sugestoes['indicadoresGeradosRegra']["sugestaoCartaoCecred"];
 $qtdSugestoes =  count($sugestoes);
 $sugestoesMotor = array();
 for($j = 0; $j < $qtdSugestoes; $j++){
-    $sugestao = $sugestoes[$j];
-    $sugestoesMotor[ $sugestao['codigoCategoria']] = $sugestao['vlLimite'];
+	$tmp = $sugestoes[$j];
+    $sugestoesMotor[ $tmp['codigoCategoria']] = $tmp['vlLimite'];
 }
+$counter = count($cartoes);
+/*
+if($conter == 0){
+	exibirErro('error','Conta sem sugestões.','Alerta - Ayllos','voltaDiv(0, 1, 4);');
+	return; 
+}*/
+
 
 $dados = $xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags;
 // Dados Cadastrais
@@ -162,6 +214,28 @@ $cdAdmLimite   		 = explode("#",$dslimite);
 $aListaLimite	     = explode(";",$cdAdmLimite[0]);
 $cdLimite			 = explode("@",$aListaLimite[1]);
 
+
+$adicionalXML .= "<Root>";
+$adicionalXML .= " <Dados>";
+$adicionalXML .= "   <nrdconta>$nrdconta</nrdconta>";
+$adicionalXML .= " </Dados>";
+$adicionalXML .= "</Root>";
+$resultAdicionalXML = mensageria($adicionalXML, "ATENDA_CRD", "VERIFICAR_CARTOES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlAdicionalResult = simplexml_load_string($resultAdicionalXML);
+
+$opcoesAdicional = array();
+$paramsKeys = array("nrctrmul","vllimmul","ddebimul","tppagtomul","nrctress","vllimess","ddebiess","tppagtoess");
+$crdParams = "{";
+$temMultiplo = false;
+$temCabal = false;
+foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => $value){
+	if(($key == "multmastti") && (strlen($value) > 0)){
+		$temMultiplo = true;
+	}else if(($key == "multesseti") && (strlen($value) > 0)){//multesseti
+		$temCabal = true;
+	}
+}
+
 ?>
 
 <style>
@@ -202,11 +276,17 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
     function manageSelect(){
 
         if(stepSelect == 1){
-            stepSelect = 2;
+            
             if($('input[name=dsadmcrdcc]:checked').val() == "outro"){
                 var select = $("#listType").val().split(";");
                 $("#dsadmcrd").val(select[0]);
                 $("#cdadmcrd").val(select[1]);
+				var vlSugMotor = select[2];
+				while(vlSugMotor.indexOf(".") > -1)
+					vlSugMotor = vlSugMotor.replace(".","");
+				vlSugMotor = vlSugMotor.replace(",",".");
+				var vlMaxlimcrd = select[3];
+				
                 if($("#valorLimite").val().length < 1){
                     showError("error", '<? echo utf8ToHtml("Por favor, preencha o valor de limite desejado.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
                     return;
@@ -215,6 +295,32 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                     showError("error", '<? echo utf8ToHtml("Por favor, preencha a justificativa");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
                     return;
                 }
+				var limiteSolicitado = $("#valorLimite").val();
+				while(limiteSolicitado.indexOf(".") > -1)
+					limiteSolicitado = limiteSolicitado.replace(".","");
+				limiteSolicitado = parseFloat(limiteSolicitado.replace(",","."));
+				if(limiteSolicitado == 0){
+					var permiteZero = !(select[1] != 12) ;
+					if( !permiteZero){
+						showError("error", '<? echo utf8ToHtml("Limite R$0 não permitido para a bandeira solicitada.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+						return;
+					}
+					
+				}
+				
+				if(limiteSolicitado > vlMaxlimcrd){
+					showError("error", '<? echo utf8ToHtml("Não é possível solictar limite acima do máximo da categoria");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
+                    return;
+                }
+				
+				if(limiteSolicitado <= parseFloat(vlSugMotor) && !permiteZero && select[4] == 't'){					
+					showError("error", '<? echo utf8ToHtml("Limite solicitado dentro dos valores sugeridos, por favor utilize as caixas de seleção.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
+                    return;
+				}else if(select[4] == 'n' && limiteSolicitado < parseFloat(vlSugMotor) && !permiteZero){
+					showError("error", '<? echo utf8ToHtml("Limite solicitado abaixo do limite mínimo da categoria.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");						
+					return;
+				}
+				
                 $("#vllimpro").val($("#valorLimite").val());
             }else{
                 var tpcard = $('input[name=dsadmcrdcc]:checked').val();
@@ -224,8 +330,11 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 				var value = $(inputLimite).val().replace('.', "").replace(",",".");
 				var min = $(inputLimite ).attr("min");
 				var max = $(inputLimite ).attr("max").replace('.', "").replace(",",".");
+				if(parseFloat(value) == 0 && $(inputLimite ).attr("cdadm") != 11){
+					showError("error", '<? echo utf8ToHtml("Limite com valor R$0 deve ser enviado para análise da esteira.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+					return;
+				}
 				if(parseFloat(value) > parseFloat(max)){
-
 					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				} else if(parseFloat(value) < parseFloat(min)){
@@ -239,14 +348,15 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 					showError("error", '<? echo utf8ToHtml("Valor inferior ao mínimo do cartão.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				}
-
+		
 				$("#dsadmcrd").val($(inputLimite ).attr("nmadm"));
                 $("#cdadmcrd").val($(inputLimite ).attr("cdadm"));
 				 $("#vllimpro").val($(inputLimite).val());
                 console.log($(inputLimite).val());
 				
             }
-
+			
+			stepSelect = 2;
             //var select = $("#listType").val().split(";");
             $('#btnProsseguir').hide();
             $('#btnsaveRequest').show();
@@ -273,7 +383,7 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">
     <div id="divDadosNovoCartao">
-        <fieldset  class="selectStep">
+        <fieldset  class="selectStep" style="padding-left: 30px;">
             <legend><? echo utf8ToHtml('Novo Cartão de Crédito') ?></legend>
             <script>
                 $('.optCard').click(function (elem) {
@@ -340,6 +450,11 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 				$pessoaFisica = true;
                 
                 $labels = array(utf8ToHtml("CECRED Clássico"),utf8ToHtml("CECRED Essêncial"),utf8ToHtml("CECRED Gold"),utf8ToHtml("CECRED Platinum"),utf8ToHtml("CECRED Black"));
+				$idsMultiplo = array(12,13,14);
+				echo "<!-- sugestoes \n";
+				print_r($sugestoesMotor);
+				echo "\n -->";
+				
                 for ($i = 0; $i < $counter; $i++){
                     // pega o código da adm
                    
@@ -356,29 +471,39 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                     if(isset($sugestoesMotor[$cartao['codigo']]))
                         $valor_sugerido = number_format($sugestoesMotor[$cartao['codigo']],2,",",".");
                     else
-                     $valor_sugerido = 0;
+						$valor_sugerido = 0;
                     $classes = "";
-                    if($valor_sugerido == 0 ){
-                        $classes = "divDisabled";
-                        $optionList = $optionList."<option value='$nmAdm;$id_administradora'>". $nmAdm." </option>";
-                    }else{
-                        $optionList = $optionList."<option value='$nmAdm;$id_administradora;$valor_sugerido'>". $nmAdm." </option>";
-                    }
-                    $limiteMinimo = $cartao['vlLimiteMinimo'];
+					$vlLimiteMaximo = $cartao['vlLimiteMaximo'];
+					$limiteMinimo = $cartao['vlLimiteMinimo'];
+					echo "<!-- \n Vlor minimo: $limiteMinimo  \n -->";
+					
+					if(!($temMultiplo && in_array($id_administradora,$idsMultiplo )) && !($temCabal && $id_administradora ==11)){
+						if($valor_sugerido == 0 || $contigenciaAtiva){
+							$classes = "divDisabled";
+							$optionList = $optionList."<option value='$nmAdm;$id_administradora;$limiteMinimo;$vlLimiteMaximo;n'>". $nmAdm." </option>";
+						}else{
+							$optionList = $optionList."<option value='$nmAdm;$id_administradora;$valor_sugerido;$vlLimiteMaximo;t'>". $nmAdm." </option>";
+						}
+					}
+					$classes = ($contigenciaAtiva || $valor_sugerido == 0 || ($temMultiplo && in_array($id_administradora,$idsMultiplo ))  || ($temCabal && $id_administradora ==11) ) ? "divDisabled":"";
+					// fix limite 
+					$sugestao = $sugestoes[$j];                  
                     $limiteMaximo = $valor_sugerido;
-
+					
                     if($registers % 2 == 0){
                         $outPut = "<tr><td class='optCard $classes' style=\"padding-top:5px\"> .mess. </td>";
                     }else{
                         $outPut = "<td class='optCard $classes' style=\"padding-top:5px\"> .mess. </td></tr>";
                     }
                     $registers++;
+					if($valor_sugerido == 0)
+						$valor_sugerido = number_format(0,2,",",".");
                     $message ="<fieldset class=\"selectorCard $classes \" style='cursor:pointer'>"
                         ." <legend align=\"center\">". $nmAdm ."</legend>"
                         ."<br><div  style='float: left;$uniqueLeft'> "
                         ."<input type='radio' class='optradio $classes' value='".$nmAdm.";$id_administradora;".$valor_sugerido."' id='dsadmcrdcc' name='dsadmcrdcc' onChange='changeRadio(this)' >"
                         ."</div>"
-                        ."<div style='float: right;$uniqueRight ".($pessoaFisica? " ":"width: 150px")."'>"
+                        ."<div style='float: right;$uniqueRight ".($pessoaFisica? " ":"width: 200px")."'>"
                         .utf8ToHtml("Limite Mínimo")." R$".number_format($limiteMinimo,2,",",".")."<br>"
                         .utf8ToHtml("Limite Sugerido")." R$".$valor_sugerido."<br>"
                         ."<input title='".utf8ToHtml('Informe um valor entre o limite mínimo e o sugerido.')."' placeholder='Valor solicitado' cdAdm='".$id_administradora."' nmAdm='".$nmAdm."' min='".$limiteMinimo."' max='".$valor_sugerido."' class='$classes valorLimite campo' style='float:left; width:85px;    margin-left: 0px; background:white' value='". $valor_sugerido."'><br>"
@@ -432,10 +557,10 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 
                     <div id="conteudoPJ">
                         <label for="nmprimtl"><? echo utf8ToHtml('Razão Social:') ?></label>
-                        <input type="text" name="nmprimtl" id="nmprimtl" class="campoTelaSemBorda" style="width: 400px;" value="<?echo $nmtitcrd; ?>" disabled>
+                        <input type="text" name="nmprimtl" id="nmprimtl" class="campoTelaSemBorda" style="width: 400px;" value="<?echo $nmtitcrd; ?>" disabled readonly>
                         <br />
                         <label for="nrcpfcpf"><? echo utf8ToHtml('CNPJ:') ?></label>
-                        <input type="text" name="nrcpfcpf" id="nrcpfcpf" class="campoTelaSemBorda" style="width: 120px;" value="<?echo formataNumericos("99.999.999/9999-99",$nrcpfcgc,"./-"); ?>" disabled>
+                        <input type="text" name="nrcpfcpf" id="nrcpfcpf" class="campoTelaSemBorda" style="width: 120px;" value="<?echo formataNumericos("99.999.999/9999-99",$nrcpfcgc,"./-"); ?>" disabled readonly>
                         <br />
                         <label for="dsrepinc"><? echo utf8ToHtml('Representante:') ?></label>
                         <select name="dsrepinc" id="dsrepinc" class="campo" style="width: 325px;" onblur="" onchange="selecionaRepresentante();"  >
@@ -504,10 +629,10 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                     <input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
                     <br />
                     <label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:') ?></label>
-                    <input  class='campo' id='vllimpro' name='vllimpro' disabled>
+                    <input  class='campo' id='vllimpro' name='vllimpro' disabled readonly>
 
                     <label for="flgdebit"><? echo utf8ToHtml('Habilita função débito:') ?></label>
-                    <input type="checkbox" name="flgdebit" id="flgdebit" class="campo" value="" />
+                    <input type="checkbox" name="flgdebit" id="flgdebit" class="campo" dtb="1" onclick='confirmaPurocredito();' />
                     <br />
                     <label for="flgimpnp"><? echo utf8ToHtml('Promissória:') ?></label>
                     <select name="flgimpnp" id="flgimpnp" class="campo">
@@ -534,11 +659,11 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 				
                     <input class="btnVoltar" id="backChoose" type="image" style='display:none' src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick=" manageSelect();" />
                     <!-- <input class="" type="image" style='display:none' id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="validarNovoCartao solicitaSenha solicitaSenhaMagnetico('enviaSolicitacao()','643750','','sim.gif','nao.gif');" /> solicitaSenha-->
-                    <input class="" type="image" style='display:none' id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="validarNovoCartao();" />
+                    <input class="" type="image" style='display:none' id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onclick="verificaEfetuaGravacao();" />
 
                 
 					<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
-					cdagenci="<?php echo $glbvars['cdoperad']; ?>" 
+					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
 					idorigem="<?php echo $glbvars['idorigem']; ?>" 
 					cdoperad="<?php echo $glbvars['cdoperad']; ?>"
@@ -622,7 +747,7 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
             if ($(this).val() == cpfpriat) {
                 return true;
             }
-            alert($(this).val());
+            
             if (!validaCpfCnpj(retiraCaracteres($(this).val(),"0123456789",true),1)) {
                 showError("error","CPF inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
                 return false;
@@ -639,7 +764,8 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
 
         return true;
     });
-
+	
+	$("#vllimdeb").attr("disabled","true");
     // Seta a mácara do cpf
     $("#nrcpfcgc","#frmNovoCartao").trigger("blur");
 
@@ -665,13 +791,30 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
         $("#flgdebit").attr("checked",true);
         $("#flgdebit").attr("disabled",true);
         $("#dtnasccr").removeAttr("disabled");
+		$("#vllimdeb").attr("disabled",true);
         $("#nrcpfcgc").attr("disabled",true);
        
         $("#tpenvcrd").attr("disabled",true);
     }
 
-    
+    $("#flgdebit").attr("checked",true);
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
     $('#dsadmcrd','#frmNovoCartao').focus();
+	globalesteira = false;
+	glbadc = 'n';
+	
+	function confirmaPurocredito(){
+		if(idastcjt == 1 )
+			return;
+		dbt = $("#flgdebit").attr("dtb");
+		var chk = $("#flgdebit").attr("checked");
+		if(chk && chk=="checked" && dbt =='1'){
+			showConfirmacao('<? echo utf8ToHtml("Deseja solicitar um Cartão Puro crédito?");?>', 'Confirma&ccedil;&atilde;o - Ayllos', '$("#flgdebit").removeAttr("checked");$("#flgdebit").attr("dtb",0);', "", 'sim.gif', 'nao.gif');
+		}
+		$("#flgdebit").attr("checked",true);
+		$("#flgdebit").attr("dtb",1);
+	}
+	
+	contigenciaAtiva = false;
 </script>

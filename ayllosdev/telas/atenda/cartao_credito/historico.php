@@ -77,13 +77,20 @@ $counter = count($response->Dados->inf );
 															$class =  "odd corPar";
 														}
 														$key++;
+														echo "<!-- \n  "; print_r($tem); echo" \n -->";
+														$dsprotocolo = $tem->dsprotocolo;
+														
 													?>
 													
 													<tr class="<? echo $class." ".$key; ?>">
 													<td style="    width: 70px;" key="<? echo $key; ?>"><?php echo $tem->acionamento; ?> </td>
 													<td style="    width: 90px;"><?php echo utf8ToHtml($tem->nmagenci); ?> </td>
-													<td style="    width: 103px;"><?php echo utf8ToHtml($tem->cdoperad); ?> </td>
-													<td style="    width: 108px;"><?php echo utf8ToHtml($tem->operacao); ?> </td>
+													<td style="    width: 103px;"><?php echo utf8ToHtml($tem->cdoperad); ?>  </td>
+													<td style="    width: 108px;">
+														<? if(isset($dsprotocolo) && strlen($dsprotocolo)>0 && strpos(strtoupper($tem->cdoperad),'MOTOR') >-1){ ?><a style="cursor:pointer; color:blue" onclick="abreProtocoloAcionamento('<?echo $dsprotocolo;?>');"><?}?>
+															<?php echo utf8ToHtml($tem->operacao); ?> 
+														<? if(isset($dsprotocolo) && strlen($dsprotocolo)>0){ ?> </a><?}?>
+													</td>
 													<td><?php echo utf8ToHtml($tem->dtmvtolt); ?> </td>
 													<td style="    width: 87px;"><?php echo utf8ToHtml($tem->retorno); ?> </td>
 													</tr>
@@ -98,8 +105,33 @@ $counter = count($response->Dados->inf );
 
                                 <div id="divBotoes" style='border-top:1px solid #777'>								    
 									<a href="#" onclick="consultaCartao();"  class="botao" id="btVoltar">Voltar</a>
-									<a href="#" onclick="enviarBancoob(<?php echo $nrctrcrd; ?>);" class="botao" id="btRenviar">Xunxo reenvio</a>
-									<a href="#" onclick="verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);" class="botao" id="btRenviar">Xunxo retorno</a>
+									
+									<a 	href="#" 
+										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
+										class="botao" 
+										id="btRenviar">Reenviar Proposta</a>
+									
+									<a href="#" 
+										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
+									   class="botao" 
+									   id="btRenviar">Solicitar Retorno</a>
+									
+									<a 
+										href="#" 
+										onclick="showConfirmacao('<? echo utf8ToHtml("Deseja reenviar a proposta para a esteira de crédito"); ;?>', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviaEsteira(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   										
+										class="botao" 
+										id="btRenviar">Reenvia Esteira</a>
+									
+									
+									
+									<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
+										cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
+										nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
+										idorigem="<?php echo $glbvars['idorigem']; ?>" 
+										cdoperad="<?php echo $glbvars['cdoperad']; ?>"
+										dsdircop="<?php echo $glbvars['dsdircop']; ?>"
+										   href="#" class="botao imprimeTermoBTN" id="emiteTermoBTN" onclick="imprimirTermoDeAdesao(this,true);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
+										 
                                 </div>
                             </div>
                         </td>

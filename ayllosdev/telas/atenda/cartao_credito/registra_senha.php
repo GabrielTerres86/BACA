@@ -24,6 +24,28 @@
 		$nrctrcrd = $_POST['nrctrcrd'];
 		$nrcpf =  $_POST['nrcpf'];
 		$nmaprovador =  $_POST['nmaprovador'];
+		$glbadc     = $_POST['glbadc'];
+		$inpessoa    = $_POST['inpessoa'];
+		$dsgraupr   = $_POST['dsgraupr'];
+		echo "/* param \n  nm:$nmaprovador      cpf:$nrcpf  \n */";
+		if($inpessoa == 1 && $dsgraupr != 5){
+			$xml .= "<Root>";
+            $xml .= " <Dados>";
+            $xml .= "   <nrctrcrd>$nrctrcrd</nrctrcrd>";
+            $xml .= "   <nrdconta>$nrdconta</nrdconta>";
+            $xml .= " </Dados>";
+            $xml .= "</Root>";
+            $admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $objectResult = simplexml_load_string( $admresult );
+			
+			foreach($objectResult->Dados->representantes->representante as $representante){
+				$nmaprovador = $representante->nome;
+				$nrcpf       = $representante->nrcpfcgf;
+				echo "/* Novos\n  nm:$nmaprovador      cpf:$nrcpf  \n */";
+				break;
+			}
+			
+		}
 
 		$now = getdate();
 		$data =formatnumber($now['mday'])."/".formatnumber($now['mon'])."/".$now['year'];

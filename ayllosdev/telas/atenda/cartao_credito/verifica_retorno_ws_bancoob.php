@@ -21,10 +21,11 @@
 		$bancoobXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
 		$bancoobXML .= " </Dados>";
 		$bancoobXML .= "</Root>";
+		echo "/* \n envio \n $bancoobXML \n */";
 		$admresult = mensageria($bancoobXML, "CCRD0007", "RETORNO_WS_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$procXML = simplexml_load_string($admresult);
 
-		echo "/*".$bancoobXML."*/";
+		echo "/* \n ".$admresult." \n*/";
 		$erro = false;
 		if($procXML->Erro)
 		{			
@@ -34,12 +35,14 @@
 			}
 		}
 		if($erro)
-			echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Ayllos\", \"voltaDiv(0, 1, 4);\");";
+			echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Ayllos\", \"\");";
 		else{
+			echo "nrctrcrd =  $nrctrcrd;";
+			echo "showError(\"error\", \"".utf8ToHtml(str_replace("Ã£",'a', $procXML->Dados->inf->mensagem))."\", \"Alerta - Ayllos\", \" carregaHistorico(0);\");";
 			?>	
-				$("#emiteTermoBTN").attr("nrctrcrd","<? echo $nrctrcrd;?>");
-				$("#emiteTermoBTN").click();
-				voltarParaTelaPrincipal();
+				//$("#emiteTermoBTN").attr("nrctrcrd","<? echo $nrctrcrd;?>");
+				//$("#emiteTermoBTN").click();
+				//voltarParaTelaPrincipal();
 				/*
 					<?
 						echo $admresult;
