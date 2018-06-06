@@ -32,6 +32,11 @@
 	
 	$nrdconta = $_POST["nrdconta"];
 	$nrcrcard = $_POST["nrcrcard"];
+	$nrctrcrd = $_POST['nrctrcrd'];
+		
+	if (!is_titular_card($nrctrcrd, $nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Upgrade/Downgrade nao permitido para cartao adicional."),'Alerta - Ayllos',$funcaoAposErro);
+
+	
 		
 	// Verifica se o número do cartao é um inteiro válido
 	if (!validaInteiro($nrcrcard)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
@@ -40,6 +45,60 @@
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
 	
 
+	function is_titular_card($nrctrcrd, $nrdconta,$glbvars)
+	{
+		/*$xmlGetDadosCartao  = "";
+		$xmlGetDadosCartao .= "<Root>";
+		$xmlGetDadosCartao .= "	<Cabecalho>";
+		$xmlGetDadosCartao .= "		<Bo>b1wgen0028.p</Bo>";
+		$xmlGetDadosCartao .= "		<Proc>consulta_dados_cartao</Proc>";
+		$xmlGetDadosCartao .= "	</Cabecalho>";
+		$xmlGetDadosCartao .= "	<Dados>";
+		$xmlGetDadosCartao .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xmlGetDadosCartao .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+		$xmlGetDadosCartao .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+		$xmlGetDadosCartao .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+		$xmlGetDadosCartao .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlGetDadosCartao .= "		<nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$xmlGetDadosCartao .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
+		$xmlGetDadosCartao .= "		<idseqttl>1</idseqttl>";
+		$xmlGetDadosCartao .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+		$xmlGetDadosCartao .= "	</Dados>";
+		$xmlGetDadosCartao .= "</Root>";
+		$xmlResult = getDataXML($xmlGetDadosCartao);
+
+		//Cria objeto para classe de tratamento de XML
+		$xmlObjNovoCartao = getObjectXML($xmlResult);
+		
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObjNovoCartao->roottag->tags[0]->name) == "ERRO") {
+			exibeErro($xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		}
+		$dados = $xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags;
+		$dsgraupr = strlen( getByTagName($dados,"dsgraupr")); 
+		if($dsgraupr > 0 && getByTagName($dados, "dsgraupr")!="Primeiro Titular")
+			return false;
+		else*/
+		$logXML  = "<Root>";
+		$logXML .= " <Dados>";
+		$logXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$logXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$logXML .= " </Dados>";
+		$logXML .= "</Root>";
+		$admresult = mensageria($logXML, "ATENDA_CRD", "VALIDAR_EH_TITULAR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		
+		$procXML = simplexml_load_string($admresult);
+
+		$titular = $procXML->Dados->contas->conta->titular;
+		//echo "/* \n É titular: $titular \n */ ";
+		if($titular == 'S')
+			return true;
+		else
+			return false;
+
+}
+	
+	
 	// Monta o xml de requisição
 	$xmlGetCartao  = "";
 	$xmlGetCartao .= "<Root>";
@@ -96,7 +155,7 @@
 				<tr>
 					<td><label for="dsadmant"><? echo utf8ToHtml('Nova Administradora:') ?></label></td>
 					<td>
-						<select name="dsadmant" id="dsadmant" class="campo">
+						<select name="dsadmant" id="dsadmant" class="campo" onchange="triggerAdm();">
 							<option value="0">Selecione uma Administradora</option>
 							<?php
 								for ($i = 0; $i <= count($arradmno); $i++){
@@ -113,6 +172,14 @@
 						</select>
 					</td>
 				</tr>
+				<tr>
+					<td><label for="dsjustificativa"><? echo utf8ToHtml('Justificativa:') ?></label></td>
+					<td><!-- <input type="text" name="dsjustificativa" id="dsjustificativa" class="campo" style="width:252px" /> -->
+						<select name="dsjustificativa" id="dsjustificativa" class="campo" style="width:252px">
+						
+						</select>
+					</td>
+				</tr>	
 			</table>
 			
 			<div id="divBotoes" >
@@ -124,7 +191,39 @@
 </form>
 
 <script type="text/javascript">
-
+var justificativa=[];
+//upgrade
+justificativa[0] = {
+		'<?php echo ("Modalidade do cartao nao atende as necessidades."); ?>':"<?php echo ("Modalidade do cartao não atende as necessidades."); ?>",
+		'<?php echo ("Beneficios do produto nao atendem as necessidades."); ?>':"<?php echo ("Benefacios do produto nao atendem as necessidades."); ?>",
+		'<?php echo ("Atualizacao da Renda."); ?>':"<?php echo ("Atualizacao da Renda."); ?>"	
+};
+//downgrade
+justificativa[1] = {
+		'<?php echo ("Nao possui interesse nos benefícios do produto."); ?>':"<?php echo ("Nao possui interesse nos benefícios do produto."); ?>",
+		'<?php echo ("Valor da anuidade."); ?>':"<?php echo ("Valor da anuidade."); ?>",
+		'<?php echo ("Atualizacao de renda."); ?>':"<?php echo ("Atualizacao de renda."); ?>"	
+};
+function triggerAdm(){
+	var admAnt = <?echo $cdcadmat;?>;
+	var adm   = $('#dsadmant').val();
+	if(parseInt(admAnt) < parseInt(adm))
+		populaSelect("dsjustificativa",justificativa[0]);
+	else
+		populaSelect("dsjustificativa",justificativa[1]);
+}
+function populaSelect(id, dataset){
+    $("#"+id).empty();
+	if(dataset == undefined){
+		$('#'+id).append("<option value='' selected='selected'>Por favor selecione uma Administradora antes de selecionar uma justificativa.</option>");
+		return;		
+	}
+	$('#'+id).append("<option value='' selected='selected'>Selecione uma justificativa</option>");	
+    for(var data in dataset ){
+        $('#'+id).append('<option value="'+data+'" >'+dataset[data]+'</option>');
+    }
+}
+populaSelect("dsjustificativa",undefined);
 // Mostra o div da Tela da opção
 $("#divOpcoesDaOpcao1").css("display","block");
 // Esconde os cartões

@@ -71,6 +71,7 @@
 	$tpdpagto = $_POST["tpdpagto"];
 	$dsrepres = $_POST["dsrepres"];
 	$nmempres = $_POST["nmempres"];
+	$flgdebit = $_POST['flgdebit'];
 	
 	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
 	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Ayllos',$funcaoAposErro,false);
@@ -127,9 +128,11 @@
 	$xmlSetCartao .= "		<nrdoccrd>".$nrdoccrd."</nrdoccrd>";
 	$xmlSetCartao .= "		<dsrepinc>".$dsrepinc."</dsrepinc>";
 	$xmlSetCartao .= "		<dsrepres>".$dsrepres."</dsrepres>";
+	$xmlSetCartao .= "		<flgdebit>".$flgdebit."</flgdebit>";
 	$xmlSetCartao .= "	</Dados>";
 	$xmlSetCartao .= "</Root>";
 
+	echo "/* \n $xmlSetCartao \n*/";
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlSetCartao);
 

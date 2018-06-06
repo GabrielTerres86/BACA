@@ -169,8 +169,9 @@
 ?>
 
 <div id="divResultadoConsulta">
+	<div id="frmDadosCartaodiv"> 
 	<form action="" method="post" name="frmDadosCartao" id="frmDadosCartao">
-		<fieldset>
+			<fieldset style="padding-left: 50px;">
 			<legend><? echo utf8ToHtml('Dados do Cartão:') ?></legend>
 			
 			<label for="nrcrcard"><? echo utf8ToHtml('Cartão:') ?></label>
@@ -307,8 +308,8 @@
 			<label for="qtanuida"><? echo utf8ToHtml('Anuidades Pagas:') ?></label>
 			<input type="text" name="qtanuida" id="qtanuida" value="<?php echo $qtanuida; ?>" />
 			
-			<br />
-		
+				<br/>
+				<br>
 			<label for="nmoperad"><? echo utf8ToHtml('Alterado Por:') ?></label>
 			<input type="text" name="nmoperad" id="nmoperad" value="<?php echo $nmoperad; ?>" />
 			
@@ -333,9 +334,12 @@
 		
 		</fieldset>
 	</form>
+	</div>
+	<div id="ValidaSenha">
+	</div>
 	<div id="divBotoes">
-		<!--input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"          onClick="voltaDiv(0,1,4);return false;">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/avais.gif"           onClick="mostraAvais();return false;">
+		<!--input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"          onClick="voltarParaTelaPrincipal();return false;">
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/avais.gif"           onClick="mostraAvais();return false;">voltaDiv(0,1,4); return false;
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/ultimos_debitos.gif" onClick="mostraUltDebitos();return false;"-->
 		
 		<a href="#" class="botao" id="btvoltar" onClick="voltaDiv(0,1,4);return false;">Voltar</a>
@@ -344,15 +348,34 @@
 		<? if (($cdadmcrd >= 10) && ($cdadmcrd <= 80)){ ?>
 		<a href="#" class="botao" id="bthislim" onClick="mostraHisLimite(); return false;">Hist. Limite</a>
 		<? } ?>
+				<a href="#" class="botao" id="btHistoricoProposta" onclick="carregaHistorico(0);"> <? echo utf8ToHtml("Hist. Proposta");?></a>
+				<?php
+				//Desabilitar o botão Imprimir Termo de Adesão para os cartões BB
+				if ($cdadmcrd!=83&&$cdadmcrd!=85&&$cdadmcrd!=87):?>
+					<a id="continuaAprovacaoBTN" style="display:none "  class="botao" onclick="solicitaSenha(nrctrcrd) ;" ><? echo utf8ToHtml("Continuar Aprovação");?> </a>
+					<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
+					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
+					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
+					idorigem="<?php echo $glbvars['idorigem']; ?>" 
+					cdoperad="<?php echo $glbvars['cdoperad']; ?>"
+					dsdircop="<?php echo $glbvars['dsdircop']; ?>"
+					   href="#" class="botao imprimeTermoBTN" id="emiteTermoBTN" onclick="imprimirTermoDeAdesao(this);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
+					   
+				<?php endif; ?>	   
 	</div>
 </div>
 
 <script type="text/javascript">
 	$("#divOpcoesDaOpcao1").css("display","block");
 	$("#divConteudoCartoes").css("display","none");
+	if($("#dssituac").val() == "Em uso" || $("#dssituac").val() == "Aprov."){
+		$(".imprimeTermoBTN").show();
+		hideMsgAguardo();
+		bloqueiaFundo(divRotina);
+	}else{
+		verificaAutorizacoes();
 	
+	}
 	controlaLayout('frmDadosCartao');
 
-	hideMsgAguardo();
-	bloqueiaFundo(divRotina);
 </script>
