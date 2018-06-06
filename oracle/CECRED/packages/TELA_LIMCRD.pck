@@ -27,7 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LIMCRD  IS
                                     ,pr_retxml    IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2           --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);         --> Erros do processo
-                                      
+
   PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE       --> Cooperativa
                                     ,pr_cdadmcrd  IN CRAPTLC.CDADMCRD%TYPE       --> Administradora
                                     ,pr_vllimite_min IN TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE --> Valor limite minimo
@@ -61,7 +61,7 @@ PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcoo
                                     ,pr_retxml    IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2           --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
-                          
+
   CURSOR cur_lmt_cred(prm_pagenumber IN NUMBER
                      ,prm_pagesize   IN NUMBER) IS
     SELECT * FROM
@@ -82,16 +82,16 @@ PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcoo
           AND    CDCOOPER = nvl(pr_cdcooper,CDCOOPER)
           AND    CDADMCRD = nvl(pr_cdadmcrd,CDADMCRD)
           UNION ALL
-          SELECT crap.CDCOOPER 
-                  ,crap.CDADMCRD 
+          SELECT crap.CDCOOPER
+                  ,crap.CDADMCRD
                   ,0 AS vl_lmt_minimo
                   ,crap.vllimcrd AS vl_lmt_maximo
                    ,regexp_replace(
                           LISTAGG(crap.dddebito,',') WITHIN GROUP (ORDER BY crap.cdadmcrd,crap.dddebito)
                            ,'([^,]+)(,\1)*(,|$)', '\1\3'
                     ) dias_debito
-                   ,crap.cdlimcrd 
-                   ,crap.nrctamae 
+                   ,crap.cdlimcrd
+                   ,crap.nrctamae
                    ,crap.tpcartao
             FROM   CRAPTLC crap
             WHERE  crap.CDADMCRD NOT BETWEEN 10 AND 80
@@ -103,7 +103,7 @@ PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcoo
                                FROM   TBCRD_CONFIG_CATEGORIA tca
                                WHERE  tca.cdcooper = crap.cdcooper
                                AND    tca.cdadmcrd = crap.cdadmcrd
-                               )              
+                               )
             GROUP BY crap.CDCOOPER ,crap.CDADMCRD,crap.vllimcrd,crap.cdlimcrd,crap.nrctamae,crap.tpcartao
           ) a
         WHERE 1=1
@@ -120,10 +120,10 @@ PROCEDURE pc_busca_limite_cartao_crd(pr_cdcooper  IN tbcrd_limite_atualiza.cdcoo
 
   -- Variaveis gerais
   vr_cont_tag PLS_INTEGER := 0;
-  
+
   -- Total de registros
   vr_totalregistros     NUMBER:=0;
-            
+
 BEGIN
   pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -144,7 +144,7 @@ BEGIN
                           ,pr_tag_nova => 'limite'
                           ,pr_tag_cont => NULL
                           ,pr_des_erro => vr_dscritic);
-                          
+
     -- Insere o código da cooperativa
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
@@ -152,68 +152,68 @@ BEGIN
                           ,pr_tag_nova => 'cdcooper'
                           ,pr_tag_cont => rw_lmt_cred.cdcooper
                           ,pr_des_erro => vr_dscritic);
-    
-    -- Insere o código da administradora                      
+
+    -- Insere o código da administradora
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'cdadmcrd'
                           ,pr_tag_cont => rw_lmt_cred.cdadmcrd
-                          ,pr_des_erro => vr_dscritic); 
-    
-    -- Insere o valor do limite mínimo                      
+                          ,pr_des_erro => vr_dscritic);
+
+    -- Insere o valor do limite mínimo
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'vllimite_minimo'
                           ,pr_tag_cont => rw_lmt_cred.vllimite_minimo
-                          ,pr_des_erro => vr_dscritic); 
-    
-    -- Insere o valor do limite máximo                      
+                          ,pr_des_erro => vr_dscritic);
+
+    -- Insere o valor do limite máximo
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'vllimite_maximo'
                           ,pr_tag_cont => rw_lmt_cred.vllimite_maximo
-                          ,pr_des_erro => vr_dscritic); 
-    
-    -- Insere o valor de dias de debito                      
+                          ,pr_des_erro => vr_dscritic);
+
+    -- Insere o valor de dias de debito
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'dsdias_debito'
                           ,pr_tag_cont => rw_lmt_cred.dsdias_debito
                           ,pr_des_erro => vr_dscritic);
-    
-    -- Insere o código de limite de crédito                    
+
+    -- Insere o código de limite de crédito
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'cdlimcrd'
                           ,pr_tag_cont => rw_lmt_cred.cdlimcrd
-                          ,pr_des_erro => vr_dscritic);  
-    
-    -- Insere a conta mãe                      
+                          ,pr_des_erro => vr_dscritic);
+
+    -- Insere a conta mãe
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'nrctamae'
                           ,pr_tag_cont => rw_lmt_cred.nrctamae
-                          ,pr_des_erro => vr_dscritic);                                                                                                                                                       
-                          
-     -- Insere a conta mãe                      
+                          ,pr_des_erro => vr_dscritic);
+
+     -- Insere a conta mãe
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'limite'
                           ,pr_posicao  => vr_cont_tag
                           ,pr_tag_nova => 'tpcartao'
                           ,pr_tag_cont => rw_lmt_cred.tpcartao
-                          ,pr_des_erro => vr_dscritic);                                                                                                                                                       
-  
+                          ,pr_des_erro => vr_dscritic);
+
     -- Incrementa o contador de tags
     vr_cont_tag := vr_cont_tag + 1;
-                          
+
   END LOOP;
-  
+
   BEGIN
     SELECT COUNT(*) total
     INTO   vr_totalregistros
@@ -235,23 +235,23 @@ BEGIN
                              FROM   TBCRD_CONFIG_CATEGORIA tca
                              WHERE  tca.cdcooper = crap.cdcooper
                              AND    tca.cdadmcrd = crap.cdadmcrd
-                             )              
+                             )
             GROUP BY crap.CDCOOPER ,  crap.CDADMCRD, crap.cdlimcrd,crap.nrctamae
           );
   EXCEPTION
     WHEN OTHERS THEN
       vr_dscritic := SQLERRM;
-      RAISE vr_exc_saida;    
+      RAISE vr_exc_saida;
   END;
-  
+
   -- Insere o total de registros
   GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                         ,pr_tag_pai  => 'Dados'
                         ,pr_posicao  => 0
                         ,pr_tag_nova => 'totalregistros'
                         ,pr_tag_cont => vr_totalregistros
-                        ,pr_des_erro => vr_dscritic);           
-                          
+                        ,pr_des_erro => vr_dscritic);
+
 EXCEPTION
   WHEN vr_exc_saida THEN
 
@@ -268,15 +268,15 @@ EXCEPTION
     -- Existe para satisfazer exigência da interface.
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                    '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    ROLLBACK;  
+    ROLLBACK;
   WHEN OTHERS THEN
     pr_dscritic := 'Erro na rotina pc_busca_limite_cartao_crd: ' || SQLERRM;
 
     -- Carregar XML padrão para variavel de retorno
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                    '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    ROLLBACK;                          
-END pc_busca_limite_cartao_crd;                                      
+    ROLLBACK;
+END pc_busca_limite_cartao_crd;
 
 PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE       --> Cooperativa
                                     ,pr_cdadmcrd  IN CRAPTLC.CDADMCRD%TYPE       --> Administradora
@@ -296,25 +296,25 @@ PROCEDURE pc_salva_limite_cartao_crd(pr_cdcooper  IN CRAPTLC.cdcooper%TYPE      
                                     ,pr_nmdcampo OUT VARCHAR2           --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
   -- Tratamento de erros
-  vr_exc_saida EXCEPTION;    
-  
+  vr_exc_saida EXCEPTION;
+
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-  vr_dscritic VARCHAR2(1000); --> Desc. Erro 
-  
-  vr_insert   BOOLEAN; 
-  vr_update   BOOLEAN; 
-  vr_delete   BOOLEAN; 
+  vr_dscritic VARCHAR2(1000); --> Desc. Erro
+
+  vr_insert   BOOLEAN;
+  vr_update   BOOLEAN;
+  vr_delete   BOOLEAN;
   --
-  vr_cont_tag PLS_INTEGER := 0; 
-  vr_achou    NUMBER;                           
+  vr_cont_tag PLS_INTEGER := 0;
+  vr_achou    NUMBER;
 BEGIN
-  
+
   pr_des_erro := 'OK';
-  
+
   -- Se código de credito for nulo, limites não são da cecred
   IF pr_cdadmcrd NOT BETWEEN 10 AND 80 THEN
-    
+
     --Se Alteração ou Inserção
     IF pr_tpproces IN ('A','I') THEN
       BEGIN
@@ -325,21 +325,21 @@ BEGIN
         AND    t.cdcooper = pr_cdcooper
         AND    t.cdlimcrd = pr_cdlimcrd
         AND    t.tpcartao = pr_tpcartao
-        AND    t.dddebito = pr_dddebito;  
-      
+        AND    t.dddebito = pr_dddebito;
+
         UPDATE CRAPTLC t
         SET    t.nrctamae = nvl(pr_nrctamae,t.nrctamae) -- conta mae
               ,t.insittab = nvl(pr_insittab,t.insittab) -- situação
-              ,t.vllimcrd = nvl(pr_vllimite,t.vllimcrd) -- valor limite 
+              ,t.vllimcrd = nvl(pr_vllimite,t.vllimcrd) -- valor limite
         WHERE  t.cdadmcrd = pr_cdadmcrd
         AND    t.cdcooper = pr_cdcooper
         AND    t.cdlimcrd = pr_cdlimcrd
         AND    t.tpcartao = pr_tpcartao
-        AND    ((pr_dddebito IS NULL AND t.dddebito IS NULL) OR 
+        AND    ((pr_dddebito IS NULL AND t.dddebito IS NULL) OR
                 (pr_dddebito IS NOT NULL AND t.dddebito = pr_dddebito));
-        
+
         vr_update := TRUE;
-        
+
       EXCEPTION
         WHEN no_data_found THEN
           BEGIN
@@ -359,16 +359,16 @@ BEGIN
                                ,pr_tpcartao
                                ,pr_dddebito
                                ,pr_cdlimcrd);
-                               
-            vr_insert := TRUE;                   
+
+            vr_insert := TRUE;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := SQLERRM;
               RAISE vr_exc_saida;
-          END;          
+          END;
         WHEN OTHERS THEN
           vr_dscritic := SQLERRM;
-          RAISE vr_exc_saida;           
+          RAISE vr_exc_saida;
       END;
     ELSE
       BEGIN
@@ -377,14 +377,14 @@ BEGIN
         AND    t.cdcooper = pr_cdcooper
         AND    t.cdlimcrd = pr_cdlimcrd
         AND    t.tpcartao = pr_tpcartao
-        AND    ((pr_dddebito IS NULL AND t.dddebito IS NULL) OR 
+        AND    ((pr_dddebito IS NULL AND t.dddebito IS NULL) OR
                 (pr_dddebito IS NOT NULL AND t.dddebito = pr_dddebito));
-        
+
         vr_delete := TRUE;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := SQLERRM;
-          RAISE vr_exc_saida;           
+          RAISE vr_exc_saida;
       END;
     END IF;
   ELSE
@@ -395,17 +395,17 @@ BEGIN
         INTO   vr_achou
         FROM   TBCRD_CONFIG_CATEGORIA t
         WHERE  t.cdadmcrd = pr_cdadmcrd
-        AND    t.cdcooper = pr_cdcooper;  
-      
+        AND    t.cdcooper = pr_cdcooper;
+
         UPDATE TBCRD_CONFIG_CATEGORIA t
-        SET    t.vllimite_minimo = nvl(pr_vllimite_min,t.vllimite_minimo) 
-              ,t.vllimite_maximo = nvl(pr_vllimite_max,t.vllimite_maximo) 
+        SET    t.vllimite_minimo = nvl(pr_vllimite_min,t.vllimite_minimo)
+              ,t.vllimite_maximo = nvl(pr_vllimite_max,t.vllimite_maximo)
               ,t.dsdias_debito = nvl(pr_dddebito,t.dsdias_debito)
         WHERE  t.cdadmcrd = pr_cdadmcrd
         AND    t.cdcooper = pr_cdcooper;
-        
+
          vr_update := TRUE;
-         
+
       EXCEPTION
         WHEN no_data_found THEN
           BEGIN
@@ -419,42 +419,42 @@ BEGIN
                                ,pr_dddebito
                                ,pr_vllimite_min
                                ,pr_vllimite_max);
-            
+
             vr_insert := TRUE;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := SQLERRM;
               RAISE vr_exc_saida;
-          END;          
+          END;
         WHEN OTHERS THEN
           vr_dscritic := SQLERRM;
-          RAISE vr_exc_saida;           
+          RAISE vr_exc_saida;
       END;
     ELSE
       BEGIN
         DELETE FROM tbcrd_config_categoria t
         WHERE  t.cdadmcrd = pr_cdadmcrd
         AND    t.cdcooper = pr_cdcooper;
-        
+
         vr_delete := TRUE;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := SQLERRM;
-          RAISE vr_exc_saida;           
+          RAISE vr_exc_saida;
       END;
     END IF;
   END IF;
-  
+
   COMMIT;
-  
+
   IF vr_insert THEN
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'status', pr_tag_cont => 'Cadastro realizado com sucesso', pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'status', pr_tag_cont => 'Cadastro realizado com sucesso', pr_des_erro => vr_dscritic);
   ELSIF vr_update THEN
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'status', pr_tag_cont => 'Atualizaçao realizada com sucesso', pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'status', pr_tag_cont => 'Atualizaçao realizada com sucesso', pr_des_erro => vr_dscritic);
   ELSE
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'status', pr_tag_cont => 'Exclusao realizada com sucesso', pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'status', pr_tag_cont => 'Exclusao realizada com sucesso', pr_des_erro => vr_dscritic);
   END IF;
-   
+
 EXCEPTION
   WHEN vr_exc_saida THEN
 
@@ -471,7 +471,7 @@ EXCEPTION
     -- Existe para satisfazer exigência da interface.
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                    '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    ROLLBACK;  
+    ROLLBACK;
 
   WHEN OTHERS THEN
     pr_dscritic := 'Erro na rotina pc_salva_limite_cartao_crd: ' || SQLERRM;
@@ -479,8 +479,8 @@ EXCEPTION
     -- Carregar XML padrão para variavel de retorno
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                    '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    ROLLBACK;  
-END pc_salva_limite_cartao_crd; 
+    ROLLBACK;
+END pc_salva_limite_cartao_crd;
 
 
 END;
