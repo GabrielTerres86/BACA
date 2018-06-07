@@ -407,6 +407,25 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
     $xmlGetFolha = getObjectXML($xmlResult);
     $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
 }
+
+
+   /* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
+	   Procedimento temporario ate que todas as cooperativas utilizem */
+	$adxml = "<Root>";
+	$adxml .= " <Dados>";
+	$adxml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$adxml .= "   <cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+	$adxml .= " </Dados>";
+	$adxml .= "</Root>";
+
+	$result = mensageria($adxml, "ATENDA_CRD", "BUSCA_PARAMETRO_PA_CARTAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$oObj = simplexml_load_string($result);
+	$bAtivaOld = false;
+	if($oObj->Dados->ativo){
+		$bAtivaOld = ($oObj->Dados->ativo == '0');
+	}
+	/* FIM procedimento temporario */
+
 		
 	// Mostra resumo de dados das rotinas (saldos, situações, etc) ...
 	$contRotina = 0;	
@@ -430,7 +449,11 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			}
 			case "CARTAO CRED": {
 				$nomeRotina = "Cart&otilde;es de Cr&eacute;dito";  
-                $urlRotina = "cartao_credito";
+                if ($bAtivaOld) {
+					$urlRotina = "cartao_credito_prod";
+				} else {
+					$urlRotina = "cartao_credito";
+				}
                 $strValue = ( isset($valores[14]->cdata) ) ? number_format(str_replace(",", ".", $valores[14]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
 				break;
