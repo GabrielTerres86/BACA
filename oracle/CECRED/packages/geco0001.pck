@@ -126,6 +126,30 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
+
+PROCEDURE pc_forma_grupo(pr_cdcooper    IN PLS_INTEGER                       --> Código da cooperativa
+                                    ,pr_cdagenci    IN PLS_INTEGER DEFAULT 0             --> Código da agência
+                                    ,pr_nrdcaixa    IN PLS_INTEGER                       --> Número do caixa
+                                    ,pr_cdoperad    IN VARCHAR2                          --> Cooperado
+                                    ,pr_cdprogra    IN VARCHAR2                          --> Programa em execução
+                                    ,pr_idorigem    IN PLS_INTEGER                       --> Identificação de origem
+                                    ,pr_persocio    IN NUMBER                            --> Sócio
+                                    ,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE          --> Pool de consulta de datas do sistema
+                                    ,pr_tab_grupo   IN OUT NOCOPY typ_tab_crapgrp        --> PL Table para armazenar grupos econômicos
+                                    ,pr_cdcritic    OUT PLS_INTEGER                      --> Código da crítica
+                                    ,pr_dscritic    OUT VARCHAR2);                     --> Descrição da crítica
+    
+PROCEDURE pc_grupo(pr_cdcooper  IN INTEGER                    --> Codigo da cooperativa
+                   ,pr_cdagenci    IN PLS_INTEGER DEFAULT 0             --> Código da agência
+                   ,pr_nrdcaixa    IN PLS_INTEGER                       --> Número do caixa
+                   ,pr_cdoperad    IN VARCHAR2                          --> Cooperado
+                   ,pr_cdprogra    IN VARCHAR2                          --> Programa em execução
+                   ,pr_idorigem    IN PLS_INTEGER                       --> Identificação de origem
+                   ,pr_persocio    IN NUMBER                            --> Sócio
+                   --,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE          --> Pool de consulta de datas do sistema
+                   --,pr_tab_grupo   IN OUT NOCOPY typ_tab_crapgrp        --> PL Table para armazenar grupos econômicos
+                   ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
+                   ,pr_dscritic OUT VARCHAR2) ;               --> Descricao da critica    
   
 END geco0001;
 /
@@ -856,7 +880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                        AND epr.inprejuz = 1
                        AND epr.vlsdprej > 0
                    ) = 1 OR cp.dtelimin IS NULL);
-
+ 
       /* Buscar dados de associados */
       CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE) IS  --> Código da cooperativa
         SELECT cs.cdcooper
@@ -874,7 +898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
         FROM crapass cs
         WHERE cs.cdcooper = pr_cdcooper;
-
+        
       /* Buscar dados de pessoas jurídicas */
       CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE) IS  --> Código da cooperativa
         SELECT cr.natjurid
@@ -1767,16 +1791,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           END IF;
       END LOOP;
 
-      -- Mesclar grupos
+      /*-- Mesclar grupos
       pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
                        ,pr_nrdgrupo => 0
                        ,pr_cdcritic => pr_cdcritic
-                       ,pr_des_erro => pr_dscritic);
+                       ,pr_des_erro => pr_dscritic);*/
 
       -- Verifica se ocorreram erros
-      IF pr_dscritic IS NOT NULL THEN
+      /*IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;
+      END IF;*/
 
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
@@ -2837,5 +2861,1879 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
     
   END pc_calc_endivid_grupo; 
   
+  PROCEDURE pc_forma_grupo(pr_cdcooper    IN PLS_INTEGER                       --> Código da cooperativa
+                                    ,pr_cdagenci    IN PLS_INTEGER DEFAULT 0             --> Código da agência
+                                    ,pr_nrdcaixa    IN PLS_INTEGER                       --> Número do caixa
+                                    ,pr_cdoperad    IN VARCHAR2                          --> Cooperado
+                                    ,pr_cdprogra    IN VARCHAR2                          --> Programa em execução
+                                    ,pr_idorigem    IN PLS_INTEGER                       --> Identificação de origem
+                                    ,pr_persocio    IN NUMBER                            --> Sócio
+                                    ,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE          --> Pool de consulta de datas do sistema
+                                    ,pr_tab_grupo   IN OUT NOCOPY typ_tab_crapgrp        --> PL Table para armazenar grupos econômicos
+                                    ,pr_cdcritic    OUT PLS_INTEGER                      --> Código da crítica
+                                    ,pr_dscritic    OUT VARCHAR2) IS                     --> Descrição da crítica
+  /* .............................................................................
+
+   Programa: pc_forma_grupo_economico       (Antigo: b1wgen0138.p --> forma-grupo-economico)
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Petter
+   Data    : Setembro/2013.                        Ultima atualizacao: 28/03/2018
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Controla formação de grupo economico
+
+   Alteracoes: 13/09/2013 - Conversão Progress >> Oracle (PLSQL) (Petter - Supero)
+
+               18/12/2017 - Melhorias performance 
+                          - Padronização mensagens (crapcri, pc_gera_log (tbgen))
+                          - Padronização erros comandos DDL
+                          - Pc_set_modulo, cecred.pc_internal_exception
+                          - Tratamento erros others
+                          - Incluída validação para restringir a query: cp.dtdemiss IS NULL
+                           (Ana - Envolti - Chamado 813390 / 813391)
+
+	           14/03/2018 - Ajuste para considear contas em prejuízo com data de 
+                            eliminação preenchida. (Reginaldo - AMcom)
+
+               28/03/2018 - Ajuste nos cursores para manter o DTELIMIN e o prejuízo.
+                            (Reginaldo - AMcom)
+  ............................................................................. */
+  BEGIN
+    DECLARE
+      /* PL Table para manter os dados da tabela CRAPASS */
+      TYPE typ_reg_crapass IS
+        RECORD(cdcooper crapass.cdcooper%TYPE
+              ,nrdconta crapass.nrdconta%TYPE
+              ,nrcpfcgc crapass.nrcpfcgc%TYPE
+              ,cdagenci crapass.cdagenci%TYPE
+              ,dtelimin crapass.dtelimin%TYPE
+              ,inpessoa crapass.inpessoa%TYPE);
+      TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY VARCHAR2(40);
+
+      /* PL Table para manter os dados da tabela CRAPJUR */
+      TYPE typ_reg_crapjur IS
+        RECORD(natjurid crapjur.natjurid%TYPE);
+      TYPE typ_tab_crapjur IS TABLE OF typ_reg_crapjur INDEX BY VARCHAR2(15);
+
+      /* PL Table para manter os dados da tabela CRAPTTL */
+      TYPE typ_reg_crapttl IS
+        RECORD(cdcooper crapttl.cdcooper%TYPE
+              ,nrdconta crapttl.nrdconta%TYPE
+              ,inhabmen crapttl.inhabmen%TYPE
+              ,dtnasttl crapttl.dtnasttl%TYPE);
+      TYPE typ_tab_crapttl IS TABLE OF typ_reg_crapttl INDEX BY VARCHAR2(20);
+
+      /* PL table para manter os dados da tabela CRAPCRL */
+      TYPE typ_reg_crapcrl IS
+        RECORD(nrdconta  crapcrl.nrdconta%TYPE
+              ,nrctamen  crapcrl.nrctamen%TYPE
+              ,nrcpfmen  crapcrl.nrcpfmen%TYPE
+              ,nrctamena crapcrl.nrctamen%TYPE);
+      TYPE typ_tab_crapcrl IS TABLE OF typ_reg_crapcrl INDEX BY VARCHAR2(30);
+
+      vr_nrdgrupo     PLS_INTEGER := 0;  --> Número do grupo
+      vr_nrultgrp     PLS_INTEGER := 0;  --> Número do último grupo
+      vr_nrdeanos     PLS_INTEGER;       --> Número de anos
+      vr_nrdmeses     PLS_INTEGER;       --> Número de meses
+      vr_dsdidade     VARCHAR2(100);     --> Descrição idade
+      vr_nrdconta     PLS_INTEGER;       --> Número da conta
+      vr_nrctasoc     PLS_INTEGER;       --> Número conta de associado
+      vr_nrcpfcgc     NUMBER;            --> Número de CPF/CNPJ
+      vr_inpessoa     PLS_INTEGER;       --> Pessoa
+      vr_cdagenci     PLS_INTEGER;       --> Código agência
+      opt_vlendivi    NUMBER;            --> Opção para valor de dívida
+      opt_dsdrisco    VARCHAR2(400);     --> Opção para descrição de risco
+      vr_dstextab     craptab.dstextab%type; --> Descriçao do texto do parametro
+      vr_tab_crapass  typ_tab_crapass;   --> PL Table para tabela CRAPASS
+      vr_tab_brapass  typ_tab_crapass;   --> PL Table para tabela CRAPASS em buffer
+      vr_tab_crapjur  typ_tab_crapjur;   --> PL Table para tabela CRAPJUR
+      vr_tab_gncdntj  typ_tab_gncdntj;   --> PL Table para tabela gncdntj
+      vr_tab_crapttl  typ_tab_crapttl;   --> PL Table para tabela CRAPTTL
+      vr_tab_crapcrl  typ_tab_crapcrl;   --> PL Table para tabela CRAPCRL
+      vr_tab_crapcrf  typ_tab_crapcrl;   --> PL Table para tabela CRAPCRL
+      vr_index        PLS_INTEGER := 0;  --> Contador genérico para índice
+      vr_indexf       PLS_INTEGER := 0;  --> Contador genérico para índice
+      vr_vindex       VARCHAR2(100);     --> Indice para PL Table
+      vr_erro         EXCEPTION;         --> Controle de erros - não grava log
+      vr_exc_erro     EXCEPTION;         --> grava log
+      vr_cdcritic     PLS_INTEGER;
+
+      /* Buscar dados de empresas com ações societárias em outras empresas */
+      CURSOR cr_crapepa(pr_cdcooper IN crapepa.cdcooper%TYPE      --> Código da cooperativa
+                       ,pr_persocio IN crapepa.persocio%TYPE) IS  --> Percentual do socio
+        SELECT ca.cdcooper
+              ,ca.nrdconta
+              ,ca.nrctasoc
+              ,ca.nrdocsoc
+              ,cp.nrcpfcgc
+              ,cp.cdagenci
+							,DECODE(NVL((SELECT max(inprejuz)
+                             FROM crapepr epr
+                            WHERE epr.cdcooper = cp.cdcooper
+                              AND epr.nrdconta = cp.nrdconta
+                              AND epr.inprejuz = 1
+                              AND epr.vlsdprej > 0
+                       ),0),1,NULL,cp.dtelimin) dtelimin
+
+        FROM crapepa ca, crapass cp
+        WHERE ca.cdcooper = pr_cdcooper
+          AND ca.persocio >= pr_persocio
+          AND ca.cdcooper = cp.cdcooper
+          AND ca.nrdconta = cp.nrdconta
+          AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR cp.dtelimin IS NULL)
+            AND NOT EXISTS (SELECT *
+            FROM crapgrp c
+            WHERE c.cdcooper = ca.cdcooper
+              AND c.nrdconta = ca.nrdconta
+              AND c.cdagenci = cp.cdagenci
+              AND c.nrcpfcgc = cp.nrcpfcgc
+              and c.cdcooper = pr_cdcooper
+        );                   
+                   
+
+      /* Buscar dados de associados */
+      CURSOR cr_crapass(pr_cdcooper IN crapepa.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cs.cdcooper
+              ,cs.nrdconta
+              ,cs.nrcpfcgc
+              ,cs.cdagenci
+              ,cs.inpessoa
+							,DECODE(NVL((SELECT max(inprejuz)
+                             FROM crapepr epr
+                            WHERE epr.cdcooper = cs.cdcooper
+                              AND epr.nrdconta = cs.nrdconta
+                              AND epr.inprejuz = 1
+                              AND epr.vlsdprej > 0
+                       ),0),1,NULL,cs.dtelimin) dtelimin
+
+        FROM crapass cs
+        WHERE cs.cdcooper = pr_cdcooper;
+        /*AND NOT EXISTS (SELECT *
+            FROM crapgrp c
+            WHERE c.cdcooper = cs.cdcooper
+              AND c.nrdconta = cs.nrdconta
+              AND c.cdagenci = cs.cdagenci
+              AND c.nrcpfcgc = cs.nrcpfcgc
+              and c.cdcooper = pr_cdcooper);*/
+
+      /* Buscar dados de pessoas jurídicas */
+      CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cr.natjurid
+              ,cr.nrdconta
+        FROM crapjur cr
+        WHERE cr.cdcooper = pr_cdcooper;
+
+      /* Buscar dados de tipos de natureza de operação */
+      CURSOR cr_gncdntj IS
+        SELECT gn.cdnatjur
+              ,gn.flgprsoc
+        FROM gncdntj gn;
+
+      /* Buscar dados da formação de grupos */
+      CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE      --> Código da cooperativa
+                       ,pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE) IS  --> CNPJ/CPF
+        SELECT cg.nrdgrupo
+        FROM crapgrp cg
+        WHERE cg.cdcooper = pr_cdcooper
+          AND cg.nrcpfcgc = pr_nrcpfcgc
+          AND rownum = 1
+        ORDER BY cg.cdcooper
+                ,cg.nrdgrupo
+                ,cg.nrcpfcgc
+                ,cg.nrctasoc
+                ,cg.progress_recid;
+      rw_crapgrp cr_crapgrp%ROWTYPE;
+      rw_crapgrb cr_crapgrp%ROWTYPE;
+
+      /* Buscar dados de titulares da conta */
+      CURSOR cr_crapttl(pr_cdcooper IN crapavt.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cl.cdcooper
+              ,cl.nrdconta
+              ,LAG(cl.nrdconta) OVER(ORDER BY cl.nrdconta) nrdcontaLag
+              ,inhabmen
+              ,dtnasttl
+        FROM crapttl cl
+        WHERE cl.cdcooper = pr_cdcooper
+        ORDER BY cl.nrdconta
+                ,cl.progress_recid;
+
+      /* Buscar dados do cadastro do representante legal */
+      CURSOR cr_crapcrl(pr_cdcooper IN crapavt.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cl.nrdconta
+              ,LAG(cl.nrctamen) OVER(ORDER BY cl.nrctamen,cl.nrcpfmen) nrctamenAnt
+              ,cl.nrctamen
+        FROM crapcrl cl
+        WHERE cl.cdcooper = pr_cdcooper
+        ORDER BY cl.nrctamen;
+
+      /* Buscar dados do cadastro do representante legal com nova ordenação */
+      CURSOR cr_crapcrlb(pr_cdcooper IN crapavt.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cl.nrdconta
+              ,LAG(cl.nrctamen) OVER(ORDER BY cl.nrctamen,cl.nrcpfmen) nrctamenAnt
+              ,cl.nrctamen
+              ,LAG(cl.nrcpfmen) OVER(ORDER BY cl.nrctamen,cl.nrcpfmen) nrcpfmenAnt
+              ,TRUNC(cl.nrcpfmen) nrcpfmen
+        FROM crapcrl cl
+        WHERE cl.cdcooper = pr_cdcooper
+        ORDER BY cl.nrctamen
+                ,cl.nrcpfmen;
+
+      /* Buscar dados da formação de grupos */
+      CURSOR cr_crapgrpb(pr_cdcooper IN crapgrp.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cg.nrdgrupo
+              ,NVL((LAG(cg.nrdgrupo) OVER(ORDER BY cg.nrdgrupo)), 0) nrdgrupoa
+        FROM crapgrp cg
+        WHERE cg.cdcooper = pr_cdcooper
+        ORDER BY cg.nrdgrupo;
+
+      /* Join das tabelas CRAPASS e CRAPAVT para buscar dados os proprietários por juros e condição economica */
+      CURSOR cr_vtass(pr_cdcooper IN crapavt.cdcooper%TYPE      --> Código da cooperativa
+                     ,pr_persocio IN crapavt.persocio%TYPE) IS  --> Percentual do sócio
+        SELECT cp.nrdconta
+              ,ct.cdcooper
+              ,ct.inhabmen
+              ,ct.nrdctato
+              ,ct.nrcpfcgc
+              ,cp.nrcpfcgc nrcpfcgccp
+              ,cp.inpessoa
+              ,cp.cdagenci
+              ,ct.dtnascto
+							,DECODE(NVL((SELECT max(inprejuz)
+                             FROM crapepr epr
+                            WHERE epr.cdcooper = cp.cdcooper
+                              AND epr.nrdconta = cp.nrdconta
+                              AND epr.inprejuz = 1
+                              AND epr.vlsdprej > 0
+                      ),0),1,NULL,cp.dtelimin) dtelimin
+
+        FROM crapavt ct, crapass cp
+        WHERE ct.cdcooper = pr_cdcooper
+          AND ct.tpctrato = 6
+          AND ct.persocio >= pr_persocio
+          --AND ct.flgdepec = 1  -- Não deverá mais ser considerada a opção “Dependência Econômica”, ou seja, deverá ser considerado para o Grupo mesmo que no campo houver a marcação “Não”.
+          AND cp.cdcooper = ct.cdcooper
+          AND cp.nrdconta = ct.nrdconta
+          AND ((SELECT max(inprejuz)
+                      FROM crapepr epr
+                     WHERE epr.cdcooper = cp.cdcooper
+                       AND epr.nrdconta = cp.nrdconta
+                       AND epr.inprejuz = 1
+                       AND epr.vlsdprej > 0
+                   ) = 1 OR (cp.dtelimin IS NULL AND cp.dtdemiss IS NULL))
+            AND NOT EXISTS (SELECT *
+            FROM crapgrp c
+            WHERE c.cdcooper = cp.cdcooper
+              AND c.nrdconta = cp.nrdconta
+              AND c.cdagenci = cp.cdagenci
+              AND c.nrcpfcgc = cp.nrcpfcgc
+              and c.cdcooper = pr_cdcooper);
+
+    BEGIN
+
+      -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+      -- Limpar variáveis
+      pr_cdcritic := 0;
+      pr_dscritic := '';
+
+      -- Buscar valores de parâmetros
+      vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'USUARI'
+                                               ,pr_cdempres => 11
+                                               ,pr_cdacesso => 'RISCOBACEN'
+                                               ,pr_tpregist => 0);
+
+      -- Verifica se foram retornados parametros
+      IF vr_dstextab IS NULL THEN
+        pr_cdcritic := 1069;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||' CRAPTAB.';
+        RAISE vr_exc_erro;
+      END IF;-- Executar LOG da simulação
+
+      -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+      pc_log_simula_perc(pr_cdcooper => pr_cdcooper
+                        ,pr_dtmvtolt => SYSDATE
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_persocio => pr_persocio
+                        ,pr_cdprogra => pr_cdprogra);
+
+
+      -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+      -- Eliminar todos os grupos da cooperativa
+      --DELETE FROM crapgrp cp WHERE cp.cdcooper = pr_cdcooper;
+
+      -- Carregar PL Table da tabela CRAPASS
+      IF vr_tab_crapass.count = 0 THEN
+        FOR registro IN cr_crapass(pr_cdcooper) LOOP
+          IF registro.dtelimin IS NULL THEN
+            vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).cdcooper := registro.cdcooper;
+            vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).nrdconta := registro.nrdconta;
+            vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).nrcpfcgc := registro.nrcpfcgc;
+            vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).cdagenci := registro.cdagenci;
+            vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).dtelimin := registro.dtelimin;
+            vr_tab_crapass(lpad(registro.nrdconta, 40, '0')).inpessoa := registro.inpessoa;
+
+            -- Criar registro duplicado por CNPJ/CPF para atender tabela de buffer
+            vr_tab_crapass(lpad(registro.nrdconta, 20, '0') || lpad(registro.nrcpfcgc, 20, '0')).nrcpfcgc := registro.nrcpfcgc;
+          END IF;
+
+          vr_tab_brapass(lpad(registro.nrdconta, 40, '0')).cdcooper := registro.cdcooper;
+          vr_tab_brapass(lpad(registro.nrdconta, 40, '0')).nrdconta := registro.nrdconta;
+          vr_tab_brapass(lpad(registro.nrdconta, 40, '0')).nrcpfcgc := registro.nrcpfcgc;
+          vr_tab_brapass(lpad(registro.nrdconta, 40, '0')).cdagenci := registro.cdagenci;
+          vr_tab_brapass(lpad(registro.nrdconta, 40, '0')).dtelimin := registro.dtelimin;
+          vr_tab_brapass(lpad(registro.nrdconta, 40, '0')).inpessoa := registro.inpessoa;
+        END LOOP;
+      END IF;
+
+      -- Caregar PL Table da tabela CRAPJUR
+      IF vr_tab_crapjur.count = 0 THEN
+        FOR registro IN cr_crapjur(pr_cdcooper) LOOP
+          vr_tab_crapjur(lpad(registro.nrdconta, 15, '0')).natjurid := registro.natjurid;
+        END LOOP;
+      END IF;
+
+      -- Carregar PL Table da tabela GNCDNTJ
+      IF vr_tab_gncdntj.count = 0 THEN
+        FOR registro IN cr_gncdntj LOOP
+          vr_tab_gncdntj(lpad(registro.cdnatjur, 19, '0') || lpad(registro.flgprsoc, 1, '0')).cdnatjur := registro.cdnatjur;
+        END LOOP;
+      END IF;
+
+      -- Carregar PL Tabl da tabela CRAPTTL
+      IF vr_tab_crapttl.count = 0 THEN
+        FOR registro IN cr_crapttl(pr_cdcooper) LOOP
+          IF registro.nrdconta <> nvl(registro.nrdcontalag, 0) THEN
+            vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).nrdconta := registro.nrdconta;
+            vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).cdcooper := registro.cdcooper;
+            vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).inhabmen := registro.inhabmen;
+            vr_tab_crapttl(lpad(registro.nrdconta, 20, '0')).dtnasttl := registro.dtnasttl;
+          END IF;
+        END LOOP;
+      END IF;
+
+      -- Carregar PL Table da tabela CRAPCRL
+      IF vr_tab_crapcrl.count = 0 THEN
+        FOR registro IN cr_crapcrl(pr_cdcooper) LOOP
+          IF registro.nrctamen <> nvl(registro.nrctamenant, 0) THEN
+            vr_index := 1;
+          ELSE
+            vr_index := vr_index + 1;
+          END IF;
+
+          vr_tab_crapcrl(lpad(registro.nrctamen, 20 ,'0') || lpad(vr_index, 10, '0')).nrdconta := registro.nrdconta;
+          vr_tab_crapcrl(lpad(registro.nrctamen, 20 ,'0') || lpad(vr_index, 10, '0')).nrctamen := registro.nrctamen;
+          vr_tab_crapcrl(lpad(registro.nrctamen, 20 ,'0') || lpad(vr_index, 10, '0')).nrctamena := registro.nrctamenAnt;
+        END LOOP;
+      END IF;
+
+      -- Carregar PL Table da tabela CRAPCRL com outros campos e ordenação
+      IF vr_tab_crapcrf.count = 0 THEN
+        FOR registro IN cr_crapcrlb(pr_cdcooper) LOOP
+          IF registro.nrcpfmen <> nvl(registro.nrcpfmenAnt, 0) THEN
+            vr_indexf := 1;
+          ELSE
+            vr_indexf := vr_indexf + 1;
+          END IF;
+
+          vr_tab_crapcrf(lpad(registro.nrcpfmen, 20 ,'0') || lpad(vr_indexf, 10, '0')).nrdconta := registro.nrdconta;
+          vr_tab_crapcrf(lpad(registro.nrcpfmen, 20 ,'0') || lpad(vr_indexf, 10, '0')).nrctamen := registro.nrctamen;
+          vr_tab_crapcrf(lpad(registro.nrcpfmen, 20 ,'0') || lpad(vr_indexf, 10, '0')).nrcpfmen := registro.nrcpfmen;
+        END LOOP;
+      END IF;
+
+      -- Empresas sociais de outras empresas
+      FOR rw_crapepa IN cr_crapepa(pr_cdcooper => pr_cdcooper, pr_persocio => pr_persocio) LOOP
+        if rw_crapepa.nrdconta = 122270 then
+          DBMS_OUTPUT.PUT_LINE (rw_crapepa.nrdconta  );   
+        end if;
+        -- Verifica se existe registro como pessoa jurídica
+        IF vr_tab_crapjur.EXISTS(lpad(rw_crapepa.nrdconta, 15, '0')) THEN
+          -- Verifica se existe registro de natureza de operações
+          IF vr_tab_gncdntj.EXISTS(lpad(vr_tab_crapjur(lpad(rw_crapepa.nrdconta, 15, '0')).natjurid, 19, '0') || '1') THEN
+            -- Não é formado grupo se a empresa sócia proprietaria nao possuir c/c na cooperativa
+            IF rw_crapepa.nrctasoc = 0 AND NOT vr_tab_crapass.exists(lpad(rw_crapepa.nrctasoc, 40, '0')) THEN
+              CONTINUE;
+            END IF;
+
+            -- Não é formado o grupo se a empresa socia proprietaria não tiver percentual de soc. obrigatoria
+            IF vr_tab_crapjur.exists(lpad(rw_crapepa.nrctasoc, 15, '0')) THEN
+              IF vr_tab_gncdntj.exists(lpad(vr_tab_crapjur(lpad(rw_crapepa.nrctasoc, 15, '0')).natjurid, 19, '0') || '0') THEN
+                CONTINUE;
+              END IF;
+            END IF;
+
+            -- Não é formado grupo se a empresa socia proprietaria não possuir c/c na cooperativa
+            IF NOT vr_tab_crapass.exists(lpad(rw_crapepa.nrctasoc, 40, '0')) THEN
+              CONTINUE;
+            ELSE
+			  -- Verifica se a data de eliminação do associado é nula
+              IF vr_tab_crapass(LPad(rw_crapepa.nrctasoc, 40, '0')).dtelimin IS NOT NULL THEN
+                 CONTINUE;
+              END IF;
+            END IF;
+
+            -- Verifica se o CNPJ da empresa ja pertence a outro grupo
+            OPEN cr_crapgrp(rw_crapepa.cdcooper,rw_crapepa.nrcpfcgc);
+            FETCH cr_crapgrp INTO rw_crapgrp;
+
+            -- Verifica se o CNPJ já está em outro grupo
+            IF cr_crapgrp%FOUND THEN
+              CLOSE cr_crapgrp;
+              if rw_crapgrp.nrdgrupo is null then
+                 -- obtem o ultimo numero de grupo.
+                 select max(nrdgrupo) into vr_nrdgrupo from crapgrp ;
+                vr_nrdgrupo := vr_nrdgrupo + 1; 
+              else
+                 vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+              end if;
+            ELSE
+              CLOSE cr_crapgrp;
+
+              
+              
+                
+                -- obtem o ultimo numero de grupo.
+                 select max(nrdgrupo) into vr_nrdgrupo from crapgrp ;
+                vr_nrdgrupo := vr_nrdgrupo + 1; 
+
+				        -- Assimila valores para as variáveis
+                --vr_nrultgrp := vr_nrultgrp + 1;
+                --vr_nrdgrupo := vr_nrultgrp;
+                --vr_nrultgrp := vr_nrdgrupo;
+                vr_nrdconta := rw_crapepa.nrdconta;
+                vr_nrctasoc := rw_crapepa.nrdconta;
+                vr_nrcpfcgc := rw_crapepa.nrcpfcgc;
+                vr_inpessoa := 2;
+                vr_cdagenci := rw_crapepa.cdagenci;
+              
+            END IF;
+
+            -- Cria a formadora de grupo
+            BEGIN
+              INSERT INTO crapgrp(cdcooper
+                                 ,nrdgrupo
+                                 ,nrdconta
+                                 ,nrctasoc
+                                 ,nrcpfcgc
+                                 ,inpessoa
+                                 ,idseqttl
+                                 ,cdagenci
+                                 ,dtmvtolt)
+                 VALUES(rw_crapepa.cdcooper
+                       ,vr_nrdgrupo
+                       ,rw_crapepa.nrdconta
+                       ,rw_crapepa.nrdconta
+                       ,rw_crapepa.nrcpfcgc
+                       ,2
+                       ,999
+                       ,rw_crapepa.cdagenci
+                       ,pr_tab_crapdat.dtmvtolt);
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                pr_cdcritic := 1034;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                               ||' cdcooper:'||rw_crapepa.cdcooper
+                               ||', nrdgrupo:'||vr_nrdgrupo
+                               ||', nrdconta:'||rw_crapepa.nrdconta
+                               ||', nrctasoc:'||rw_crapepa.nrdconta
+                               ||', nrcpfcgc:'||rw_crapepa.nrcpfcgc
+                               ||', inpessoa:2, idseqttl:999'
+                               ||', cdagenci:'||rw_crapepa.cdagenci
+                               ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                               ||'. '||SQLERRM;
+                RAISE vr_exc_erro;
+            END;
+
+            -- Monta a ligação de contas desta empresa no grupo
+            pc_monta_arvore(pr_cdcooper    => rw_crapepa.cdcooper
+                           ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                           ,pr_nrdgrupo    => vr_nrdgrupo
+                           ,pr_nrdconta    => rw_crapepa.nrdconta
+                           ,pr_nrcpfcgc    => rw_crapepa.nrcpfcgc
+                           ,pr_des_erro    => pr_dscritic);
+
+            -- Verifica se ocorreram erros na formação dos grupos
+            IF pr_dscritic <> 'OK' THEN
+              RAISE vr_erro;
+            END IF;
+
+            -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+            -- Cria registro do grupo
+            BEGIN
+              INSERT INTO crapgrp(cdcooper
+                                 ,nrdgrupo
+                                 ,nrdconta
+                                 ,nrctasoc
+                                 ,nrcpfcgc
+                                 ,inpessoa
+                                 ,idseqttl
+                                 ,cdagenci
+                                 ,dtmvtolt)
+                 VALUES(rw_crapepa.cdcooper
+                       ,vr_nrdgrupo
+                       ,rw_crapepa.nrdconta
+                       ,rw_crapepa.nrctasoc
+                       ,rw_crapepa.nrdocsoc
+                       ,2
+                       ,997
+                       ,vr_tab_brapass(lpad(rw_crapepa.nrctasoc, 40, '0')).cdagenci
+                       ,pr_tab_crapdat.dtmvtolt);
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                pr_cdcritic := 1034;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                               ||' cdcooper:'||rw_crapepa.cdcooper
+                               ||', nrdgrupo:'||vr_nrdgrupo
+                               ||', nrdconta:'||rw_crapepa.nrdconta
+                               ||', nrctasoc:'||rw_crapepa.nrdconta
+                               ||', nrcpfcgc:'||rw_crapepa.nrdocsoc
+                               ||', inpessoa:2, idseqttl:997'
+                               ||', cdagenci:'||vr_tab_brapass(lpad(rw_crapepa.nrctasoc, 40, '0')).cdagenci
+                               ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                               ||'. '||SQLERRM;
+                RAISE vr_exc_erro;
+            END;
+
+            -- Monta a ligação de contas desta empresa no grupo
+            pc_monta_arvore(pr_cdcooper    => rw_crapepa.cdcooper
+                           ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                           ,pr_nrdgrupo    => vr_nrdgrupo
+                           ,pr_nrdconta    => rw_crapepa.nrctasoc
+                           ,pr_nrcpfcgc    => rw_crapepa.nrdocsoc
+                           ,pr_des_erro    => pr_dscritic);
+
+            -- Verifica se ocorreram erros na formação dos grupos
+            IF pr_dscritic <> 'OK' THEN
+              RAISE vr_erro;
+            END IF;
+
+            -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+          END IF;
+        END IF;
+      END LOOP;
+
+      -- Procuradores/socio proprietario da empresa
+      FOR rw_vtass IN cr_vtass(pr_cdcooper,pr_persocio) LOOP
+        
+         if rw_vtass.nrdconta = 212911 then
+           DBMS_OUTPUT.PUT_LINE (rw_vtass.nrdconta );     
+         end if;
+          -- Verifica se existe registro de pessoa jurídica
+          IF vr_tab_crapjur.exists(lpad(rw_vtass.nrdconta, 15, '0')) THEN
+            -- Verifica se existe registro de natureza de operação
+            IF vr_tab_gncdntj.exists(lpad(vr_tab_crapjur(lpad(rw_vtass.nrdconta, 15, '0')).natjurid, 19, '0') || '1') THEN
+              -- Verifica se o CNPJ ja pertence a outro grupo
+              OPEN cr_crapgrp(rw_vtass.cdcooper,rw_vtass.nrcpfcgccp);
+              FETCH cr_crapgrp INTO rw_crapgrp;
+
+              -- Verifica se a empresa pertence para outro grupo
+              IF cr_crapgrp%FOUND THEN
+                CLOSE cr_crapgrp;
+
+                if rw_crapgrb.nrdgrupo is null  then
+                  select max(nrdgrupo) into vr_nrdgrupo from crapgrp ;
+                  vr_nrdgrupo := vr_nrdgrupo + 1; 
+                else
+                   vr_nrdgrupo := rw_crapgrb.nrdgrupo;
+                end if;
+              ELSE
+                CLOSE cr_crapgrp;
+                
+                -- obtem o ultimo numero de grupo.
+                 select max(nrdgrupo) into vr_nrdgrupo from crapgrp ;
+                vr_nrdgrupo := vr_nrdgrupo + 1; 
+
+				        -- Assimila valores para as variáveis
+                --vr_nrultgrp := vr_nrultgrp + 1;
+                --vr_nrdgrupo := vr_nrultgrp;
+                --vr_nrultgrp := vr_nrdgrupo;
+                vr_nrdconta := rw_vtass.nrdconta;
+                vr_nrctasoc := rw_vtass.nrdconta;
+                vr_nrcpfcgc := rw_vtass.nrcpfcgccp;
+                vr_inpessoa := 2;
+                vr_cdagenci := rw_vtass.cdagenci;
+              END IF;
+
+              -- Buscar dados do socio/proprietário para validar responsável legal
+              IF vr_tab_crapttl.exists(lpad(rw_vtass.nrdctato, 20, '0')) THEN
+                -- Não é formado grupo se o rep.procurador não possuir c/c na cooperativa
+                IF NOT vr_tab_brapass.exists(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')) THEN
+                  CONTINUE;
+                ELSE
+                  IF vr_tab_brapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).dtelimin IS NOT NULL THEN
+                    CONTINUE;
+                  END IF;
+                END IF;
+
+                -- Buscar idade
+                IF vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).inhabmen = 0  OR vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).inhabmen = 2 THEN
+                  -- Verifica a idade
+                  cada0001.pc_busca_idade(pr_dtnasctl => vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).dtnasttl
+                                         ,pr_dtmvtolt => pr_tab_crapdat.dtmvtolt
+                                         ,pr_nrdeanos => vr_nrdeanos
+                                         ,pr_nrdmeses => vr_nrdmeses
+                                         ,pr_dsdidade => vr_dsdidade
+                                         ,pr_des_erro => pr_dscritic);
+                  -- Verficia se ocorreram erros
+                  IF pr_dscritic IS NOT NULL THEN
+                    CONTINUE;
+                  END IF;
+
+                  -- Se for menor de idade o integrante do grupo é o representante/responsavel do menor
+                  IF vr_nrdeanos < 18 OR vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).inhabmen = 2 THEN
+                    vr_vindex := lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 20, '0') || lpad('1', 10, '0');
+
+                    -- Iterar sobre registros para a conta
+                    LOOP
+                      EXIT WHEN vr_vindex IS NULL;
+
+                      -- Renato - verificar esta situação para ver se deve ser tratado desta forma mesmo
+                      IF vr_tab_crapcrl.EXISTS(vr_vindex) THEN
+                      -- Consulta o registro da conta do associado
+                      IF vr_tab_crapass.exists(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')) THEN
+                        IF vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).dtelimin IS NULL THEN
+                          -- Detecta primeiro registro para conta formadora
+                          IF vr_tab_crapcrl(vr_vindex).nrctamen <> NVL(vr_tab_crapcrl(vr_vindex).nrctamena, 9999999) THEN
+                            -- Inserir novo grupo
+                            BEGIN
+                              INSERT INTO crapgrp(cdcooper
+                                                 ,nrdgrupo
+                                                 ,nrdconta
+                                                 ,nrctasoc
+                                                 ,nrcpfcgc
+                                                 ,inpessoa
+                                                 ,idseqttl
+                                                 ,cdagenci
+                                                 ,dtmvtolt)
+                                VALUES(rw_vtass.cdcooper
+                                      ,vr_nrdgrupo
+                                      ,vr_nrdconta
+                                      ,vr_nrctasoc
+                                      ,vr_nrcpfcgc
+                                      ,vr_inpessoa
+                                      ,999
+                                      ,vr_cdagenci
+                                      ,pr_tab_crapdat.dtmvtolt);
+                            EXCEPTION
+                              WHEN OTHERS THEN
+                                  -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                                  pr_cdcritic := 1034;
+                                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                                                 ||' cdcooper:'||rw_vtass.cdcooper
+                                                 ||', nrdgrupo:'||vr_nrdgrupo
+                                                 ||', nrdconta:'||vr_nrdconta
+                                                 ||', nrctasoc:'||vr_nrctasoc
+                                                 ||', nrcpfcgc:'||vr_nrcpfcgc
+                                                 ||', inpessoa:'||vr_inpessoa||', idseqttl:999'
+                                                 ||', cdagenci:'||vr_cdagenci
+                                                 ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                                                 ||'. '||SQLERRM;
+                                  RAISE vr_exc_erro;
+                            END;
+
+                            -- Monta a ligação de contas desta empresa no grupo
+                            pc_monta_arvore(pr_cdcooper    => rw_vtass.cdcooper
+                                           ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                                           ,pr_nrdgrupo    => vr_nrdgrupo
+                                           ,pr_nrdconta    => vr_nrdconta
+                                           ,pr_nrcpfcgc    => vr_nrcpfcgc
+                                           ,pr_des_erro    => pr_dscritic);
+
+                            -- Verifica se ocorreram erros
+                            IF pr_dscritic <> 'OK' THEN
+                              RAISE vr_erro;
+                            END IF;
+
+                              -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+                              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+                          END IF;
+
+                          -- Cria novo grupo "filho"
+                          BEGIN
+                            INSERT INTO crapgrp(cdcooper
+                                               ,nrdgrupo
+                                               ,nrdconta
+                                               ,nrctasoc
+                                               ,nrcpfcgc
+                                               ,inpessoa
+                                               ,idseqttl
+                                               ,cdagenci
+                                               ,dtmvtolt)
+                              VALUES(rw_vtass.cdcooper
+                                    ,vr_nrdgrupo
+                                    ,rw_vtass.nrdconta
+                                    ,vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrdconta
+                                    ,vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                    ,1
+                                    ,996
+                                    ,vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).cdagenci
+                                    ,pr_tab_crapdat.dtmvtolt);
+                          EXCEPTION
+                            WHEN OTHERS THEN
+                                -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                                pr_cdcritic := 1034;
+                                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                                               ||' cdcooper:'||rw_vtass.cdcooper
+                                               ||', nrdgrupo:'||vr_nrdgrupo
+                                               ||', nrdconta:'||rw_vtass.nrdconta
+                                               ||', nrctasoc:'||vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrdconta
+                                               ||', nrcpfcgc:'||vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                               ||', inpessoa:1, idseqttl:996'
+                                               ||', cdagenci:'||vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).cdagenci
+                                               ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                                               ||'. '||SQLERRM;
+                                RAISE vr_exc_erro;
+                          END;
+
+                          -- Monta a ligação de titulares deste responsável no grupo,
+                          -- Utiliza metodo de recursão para varrer todos os titulares
+                          pc_monta_arvore(pr_cdcooper    => pr_cdcooper
+                                         ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                                         ,pr_nrdgrupo    => vr_nrdgrupo
+                                         ,pr_nrdconta    => vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrdconta
+                                         ,pr_nrcpfcgc    => vr_tab_crapass(lpad(vr_tab_crapcrl(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                         ,pr_des_erro    => pr_dscritic);
+
+                          -- Verifica se ocorreram erros
+                          IF pr_dscritic <> 'OK' THEN
+                            RAISE vr_erro;
+                          END IF;
+
+                            -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+                            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+                        END IF;
+                      END IF;
+                      END IF;
+                      -- Gerar novo índice para iteração
+                      IF vr_tab_crapcrl.next(vr_vindex) IS NOT NULL AND vr_tab_crapcrl(vr_tab_crapcrl.next(vr_vindex)).nrctamen = vr_tab_crapcrl(vr_vindex).nrctamen THEN
+                        vr_vindex := vr_tab_crapcrl.next(vr_vindex);
+                      ELSE
+                        vr_vindex := NULL;
+                      END IF;
+                    END LOOP;
+
+                    -- Vai para o próximo pois termina o processo no responsável
+                    CONTINUE;
+                  END IF;
+                  END IF;
+                ELSE
+                  -- Buscar idade
+                  IF rw_vtass.inhabmen = 0 OR rw_vtass.inhabmen = 2 THEN
+                    -- Verifica se é menor de idade
+                    cada0001.pc_busca_idade(pr_dtnasctl => rw_vtass.dtnascto
+                                           ,pr_dtmvtolt => pr_tab_crapdat.dtmvtolt
+                                           ,pr_nrdeanos => vr_nrdeanos
+                                           ,pr_nrdmeses => vr_nrdmeses
+                                           ,pr_dsdidade => vr_dsdidade
+                                           ,pr_des_erro => pr_dscritic);
+
+                    -- Verficia se ocorreram erros
+                    IF pr_dscritic IS NOT NULL THEN
+                      CONTINUE;
+                    END IF;
+
+                    -- Se for menor de idade
+                    IF vr_nrdeanos < 18 OR rw_vtass.inhabmen = 2 THEN
+                      -- Busca as contas/CPFs que sao responsável pelo menor
+                      vr_vindex := lpad(rw_vtass.nrcpfcgc, 20, '0') || lpad('1', 10, '0');
+
+                      -- Itera sobre os registros
+                      LOOP
+                        EXIT WHEN vr_vindex IS NULL;
+                        
+                        -- Renato Darosci - verifficar tratamento - Erro indice: nrctamen = 00000000009550354903
+                        IF vr_tab_crapcrf.EXISTS(vr_vindex) THEN
+                        -- Consulta o registro da conta do associado
+                        IF vr_tab_crapass.exists(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')) THEN
+                          IF vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).dtelimin IS NULL THEN
+                            -- Detecta primeiro registro para conta formadora
+                            IF vr_vindex = lpad(rw_vtass.nrcpfcgc, 20, '0') || lpad('1', 10, '0') THEN
+                              -- Inserir novo grupo formador
+                              BEGIN
+                                INSERT INTO crapgrp(cdcooper
+                                                   ,nrdgrupo
+                                                   ,nrdconta
+                                                   ,nrctasoc
+                                                   ,nrcpfcgc
+                                                   ,inpessoa
+                                                   ,idseqttl
+                                                   ,cdagenci
+                                                   ,dtmvtolt)
+                                  VALUES(rw_vtass.cdcooper
+                                        ,vr_nrdgrupo
+                                        ,vr_nrdconta
+                                        ,vr_nrctasoc
+                                        ,vr_nrcpfcgc
+                                        ,vr_inpessoa
+                                        ,999
+                                        ,vr_cdagenci
+                                        ,pr_tab_crapdat.dtmvtolt);
+                              EXCEPTION
+                                WHEN OTHERS THEN
+                                  -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                                  pr_cdcritic := 1034;
+                                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                                                 ||' cdcooper:'||rw_vtass.cdcooper
+                                                 ||', nrdgrupo:'||vr_nrdgrupo
+                                                 ||', nrdconta:'||vr_nrdconta
+                                                 ||', nrctasoc:'||vr_nrctasoc
+                                                 ||', nrcpfcgc:'||vr_nrcpfcgc
+                                                 ||', inpessoa:'||vr_inpessoa||', idseqttl:999'
+                                                 ||', cdagenci:'||vr_cdagenci
+                                                 ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                                                 ||'. '||SQLERRM;
+                                  RAISE vr_exc_erro;
+                              END;
+
+                              -- Monta a ligação de contas desta empresa no grupo
+                              pc_monta_arvore(pr_cdcooper    => rw_vtass.cdcooper
+                                             ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                                             ,pr_nrdgrupo    => vr_nrdgrupo
+                                             ,pr_nrdconta    => vr_nrdconta
+                                             ,pr_nrcpfcgc    => vr_nrcpfcgc
+                                             ,pr_des_erro    => pr_dscritic);
+
+                              -- Verifica se ocorreram erros
+                              IF pr_dscritic <> 'OK' THEN
+                                RAISE vr_erro;
+                              END IF;
+
+                              -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+                              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+                            END IF;
+
+                            -- Inserir novo membro no grupo
+                            BEGIN
+                              INSERT INTO crapgrp(cdcooper
+                                                 ,nrdgrupo
+                                                 ,nrdconta
+                                                 ,nrctasoc
+                                                 ,nrcpfcgc
+                                                 ,inpessoa
+                                                 ,idseqttl
+                                                 ,cdagenci
+                                                 ,dtmvtolt)
+                                VALUES(rw_vtass.cdcooper
+                                      ,vr_nrdgrupo
+                                      ,rw_vtass.nrdconta
+                                      ,vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrdconta
+                                      ,vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                      ,1
+                                      ,996
+                                      ,vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).cdagenci
+                                      ,pr_tab_crapdat.dtmvtolt);
+                            EXCEPTION
+                              WHEN OTHERS THEN
+                                -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                                pr_cdcritic := 1034;
+                                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                                               ||' cdcooper:'||rw_vtass.cdcooper
+                                               ||', nrdgrupo:'||vr_nrdgrupo
+                                               ||', nrdconta:'||rw_vtass.nrdconta
+                                               ||', nrctasoc:'||vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrdconta
+                                               ||', nrcpfcgc:'||vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                               ||', inpessoa:1, idseqttl:996'
+                                               ||', cdagenci:'||vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).cdagenci
+                                               ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                                               ||'. '||SQLERRM;
+                                RAISE vr_exc_erro;
+                            END;
+
+                            -- Monta a ligação de titulares deste responsável no grupo,
+                            -- Utiliza metodo de recursão para varrer todos os titulares
+                            pc_monta_arvore(pr_cdcooper    => pr_cdcooper
+                                           ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                                           ,pr_nrdgrupo    => vr_nrdgrupo
+                                           ,pr_nrdconta    => vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrdconta
+                                           ,pr_nrcpfcgc    => vr_tab_crapass(lpad(vr_tab_crapcrf(vr_vindex).nrdconta, 40, '0')).nrcpfcgc
+                                           ,pr_des_erro    => pr_dscritic);
+
+                            -- Verifica se ocorreram erros
+                            IF pr_dscritic <> 'OK' THEN
+                              RAISE vr_erro;
+                            END IF;
+
+                            -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+                            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+                          END IF;
+                        END IF;
+                        END IF;
+                        
+                        -- Gera o índice do próximo registro
+                        IF vr_tab_crapcrf.EXISTS(vr_vindex) THEN
+                          IF vr_tab_crapcrf.next(vr_vindex) IS NOT NULL AND vr_tab_crapcrf(vr_tab_crapcrf.next(vr_vindex)).nrcpfmen = vr_tab_crapcrf(vr_vindex).nrcpfmen THEN
+                            vr_vindex := vr_tab_crapcrf.next(vr_vindex);
+                          ELSE
+                            vr_vindex := NULL;
+                          END IF;
+                        ELSE
+                          vr_vindex := NULL;
+                        END IF;
+                      END LOOP;
+
+                      -- Parte para o próximo pois termina o processo no responsável
+                      CONTINUE;
+                    ELSE
+                      -- Parte para o próximo pois sócio/proc sem conta não entra no grupo
+                      CONTINUE;
+                    END IF;
+                  ELSE
+                    -- Parte para o próximo pois sócio/proc sem conta não entra no grupo
+                    CONTINUE;
+                  END IF;
+                END IF;
+
+                -- Inserir conta formadora
+                BEGIN
+                  INSERT INTO crapgrp(cdcooper
+                                     ,nrdgrupo
+                                     ,nrdconta
+                                     ,nrctasoc
+                                     ,nrcpfcgc
+                                     ,inpessoa
+                                     ,idseqttl
+                                     ,cdagenci
+                                     ,dtmvtolt)
+                    VALUES(rw_vtass.cdcooper
+                          ,vr_nrdgrupo
+                          ,vr_nrdconta
+                          ,vr_nrctasoc
+                          ,vr_nrcpfcgc
+                          ,vr_inpessoa
+                          ,999
+                          ,vr_cdagenci
+                          ,pr_tab_crapdat.dtmvtolt);
+                EXCEPTION
+                  WHEN OTHERS THEN
+                  -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                  pr_cdcritic := 1034;
+                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                                 ||' cdcooper:'||rw_vtass.cdcooper
+                                 ||', nrdgrupo:'||vr_nrdgrupo
+                                 ||', nrdconta:'||vr_nrdconta
+                                 ||', nrctasoc:'||vr_nrctasoc
+                                 ||', nrcpfcgc:'||vr_nrcpfcgc
+                                 ||', inpessoa:'||vr_inpessoa||', idseqttl:999'
+                                 ||', cdagenci:'||vr_cdagenci
+                                 ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                                 ||'. '||SQLERRM;
+                  RAISE vr_exc_erro;
+                END;
+
+                -- Monta a ligação de contas desta empresa no grupo
+                pc_monta_arvore(pr_cdcooper    => rw_vtass.cdcooper
+                               ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                               ,pr_nrdgrupo    => vr_nrdgrupo
+                               ,pr_nrdconta    => vr_nrdconta
+                               ,pr_nrcpfcgc    => vr_nrcpfcgc
+                               ,pr_des_erro    => pr_dscritic);
+
+                -- Verifica se ocasionou erro
+                IF pr_dscritic <> 'OK' THEN
+                  RAISE vr_erro;
+                END IF;
+
+              -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+                -- Cria o relacionamento no grupo
+                BEGIN
+                  INSERT INTO crapgrp(cdcooper
+                                     ,nrdgrupo
+                                     ,nrdconta
+                                     ,nrctasoc
+                                     ,nrcpfcgc
+                                     ,inpessoa
+                                     ,idseqttl
+                                     ,cdagenci
+                                     ,dtmvtolt)
+                    VALUES(rw_vtass.cdcooper
+                          ,vr_nrdgrupo
+                          ,rw_vtass.nrdconta
+                          ,vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).nrdconta
+                          ,vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).nrcpfcgc
+                          ,vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).inpessoa
+                          ,998
+                          ,vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).cdagenci
+                          ,pr_tab_crapdat.dtmvtolt);
+                EXCEPTION
+                  WHEN OTHERS THEN
+                  -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+                  pr_cdcritic := 1034;
+                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'CRAPGRP:' 
+                                 ||' cdcooper:'||rw_vtass.cdcooper
+                                 ||', nrdgrupo:'||vr_nrdgrupo
+                                 ||', nrdconta:'||rw_vtass.nrdconta
+                                 ||', nrctasoc:'||vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).nrdconta
+                                 ||', nrcpfcgc:'||vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).nrcpfcgc
+                                 ||', inpessoa:'||vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).inpessoa
+                                 ||', idseqttl:998'
+                                 ||', cdagenci:'||vr_tab_crapass(lpad(vr_tab_crapttl(lpad(rw_vtass.nrdctato, 20, '0')).nrdconta, 40, '0')).cdagenci
+                                 ||', dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                                 ||'. '||SQLERRM;
+                  RAISE vr_exc_erro;
+                END;
+
+                -- Monta a ligação de titulares no grupo, Utiliza método de recursão para varrer todos os titulares
+                pc_monta_arvore(pr_cdcooper    => pr_cdcooper
+                               ,pr_dtmvtolt    => pr_tab_crapdat.dtmvtolt
+                               ,pr_nrdgrupo    => vr_nrdgrupo
+                               ,pr_nrdconta    => rw_vtass.nrdctato
+                               ,pr_nrcpfcgc    => rw_vtass.nrcpfcgc
+                               ,pr_des_erro    => pr_dscritic);
+
+                -- Verifica se ocorreram erros e passa para a próximo iteração
+                IF pr_dscritic <> 'OK' THEN
+                  CONTINUE;
+                END IF;
+
+              -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+            END IF;
+          END IF;
+      END LOOP;
+
+      -- Mesclar grupos
+      pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdgrupo => 0
+                       ,pr_cdcritic => pr_cdcritic
+                       ,pr_des_erro => pr_dscritic);
+
+      -- Verifica se ocorreram erros
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+      -- Processar grupos para cálculo de risco
+      FOR rw_crapgrpb IN cr_crapgrpb(pr_cdcooper) LOOP
+        -- Verifica se é o primeiro registro do grupo
+        IF rw_crapgrpb.nrdgrupo <> rw_crapgrpb.nrdgrupoa THEN
+
+		  -- Calcular endividamento do grupo
+          pc_calc_endivid_risco_grupo(pr_cdcooper    => pr_cdcooper
+                                     ,pr_cdagenci    => pr_cdagenci
+                                     ,pr_nrdcaixa    => pr_nrdcaixa
+                                     ,pr_cdoperad    => pr_cdoperad
+                                     ,pr_cdprogra    => pr_cdprogra
+                                     ,pr_idorigem    => pr_idorigem
+                                     ,pr_nrdgrupo    => rw_crapgrpb.nrdgrupo
+                                     ,pr_tpdecons    => TRUE
+                                     ,pr_tab_crapdat => pr_tab_crapdat
+                                     ,pr_tab_grupo   => pr_tab_grupo
+                                     ,pr_dstextab    => vr_dstextab
+                                     ,pr_dsdrisco    => opt_dsdrisco
+                                     ,pr_vlendivi    => opt_vlendivi
+                                     ,pr_des_erro    => pr_dscritic);
+
+          -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+        END IF;
+      END LOOP;
+
+      -- Finalização com sucesso
+      pr_dscritic := 'OK';
+
+      -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
+    EXCEPTION
+      WHEN vr_erro THEN
+        --Não grava log porque é gravado na rotina chamada
+        pr_dscritic := pr_dscritic;
+
+      WHEN vr_exc_erro THEN
+        pr_dscritic := pr_dscritic;
+
+        --Log - Chamado 883190
+        pc_gera_log(pr_cdcooper      => pr_cdcooper
+                   ,pr_cdprogra      => pr_cdprogra
+                   ,pr_dstiplog      => 'E'
+                   ,pr_dscritic      => pr_dscritic
+                   ,pr_cdcriticidade => 1
+                   ,pr_cdmensagem    => pr_cdcritic
+                   ,pr_tpocorrencia  => 2);  --grava 1
+
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 18/12/2017 - Ch 813390 / 813391
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+        vr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_forma_grupo_economico. '|| SQLERRM;
+
+        --Log - Chamado 883190
+        pc_gera_log(pr_cdcooper      => pr_cdcooper
+                   ,pr_cdprogra      => pr_cdprogra
+                   ,pr_dstiplog      => 'E'
+                   ,pr_dscritic      => pr_dscritic
+                   ,pr_cdcriticidade => 2
+                   ,pr_cdmensagem    => vr_cdcritic
+                   ,pr_tpocorrencia  => 3);  --grava 2
+    END;
+  END pc_forma_grupo;
+  
+PROCEDURE pc_grupo(pr_cdcooper     IN INTEGER                    --> Codigo da cooperativa
+                   ,pr_cdagenci    IN PLS_INTEGER DEFAULT 0             --> Código da agência
+                   ,pr_nrdcaixa    IN PLS_INTEGER                       --> Número do caixa
+                   ,pr_cdoperad    IN VARCHAR2                          --> Cooperado
+                   ,pr_cdprogra    IN VARCHAR2                          --> Programa em execução
+                   ,pr_idorigem    IN PLS_INTEGER                       --> Identificação de origem
+                   ,pr_persocio    IN NUMBER                            --> Sócio
+                   ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
+                   ,pr_dscritic OUT VARCHAR2) IS               --> Descricao da critica
+    -- Exceções
+      vr_exc_erro EXCEPTION;
+    
+    -- Variaveis gerais
+      vr_cdcritic          crapcri.cdcritic%TYPE;          --> Codigo da critica
+      vr_dscritic          VARCHAR2(2000);                 --> Descricao da critica    
+      vr_nrdgrupo     PLS_INTEGER := 0;  --> Número do grupo
+      vr_nrultgrp     PLS_INTEGER := 0;  --> Número do último grupo
+      vr_dstextab     craptab.dstextab%type; --> Descriçao do texto do parametro
+      opt_dsdrisco    VARCHAR2(400);     --> Opção para descrição de risco
+      opt_vlendivi    NUMBER;            --> Opção para valor de dívida
+      rw_crapdat           btch0001.cr_crapdat%rowtype;    --> Dados para fetch de cursor genérico
+      vr_tab_crapgrp geco0001.typ_tab_crapgrp;  --> PL Table para grupo economico
+      vr_nrdeanos     PLS_INTEGER;       --> Número de anos
+      vr_nrdmeses     PLS_INTEGER;       --> Número de meses
+      vr_dsdidade     VARCHAR2(100);     --> Descrição idade
+      vr_seqttl       PLS_INTEGER := 0;       -- sequencial de contas do grupo.
+    -- Cursor para buscar os segmentos cdc
+  CURSOR cr_formadoraPJ IS
+
+      SELECT epa.cdcooper
+      ,epa.nrdconta
+      ,ass.nrcpfcgc
+      ,ass.cdagenci
+      ,epa.nrctasoc
+      ,epa.nrdocsoc
+      ,ntj.flgprsoc
+      ,dat.dtmvtolt
+      ,DECODE(NVL((
+            SELECT max(inprejuz)
+            FROM crapepr epr
+            WHERE epr.cdcooper = ass.cdcooper
+              AND epr.nrdconta = ass.nrdconta
+              AND epr.inprejuz = 1
+              AND epr.vlsdprej > 0
+            ), 0), 1, NULL, ass.dtelimin) dtelimin
+    FROM crapepa epa 	,-- (CDCOOPER, NRDOCSOC, NRDCONTA)empresas com participacao societária 
+      crapass ass   	,-- (CDCOOPER, NRDCONTA)associados
+      crapjur cpj   	,-- (CDCOOPER, NRDCONTA)pessoas juridicas
+      gncdntj ntj     ,-- (CDNATJUR) natureza da operacao juridica
+      crapdat dat
+    WHERE epa.cdcooper = ass.cdcooper
+      AND epa.nrdconta = ass.nrdconta
+      AND cpj.cdcooper = epa.cdcooper
+      AND cpj.nrdconta = epa.nrdconta
+      AND cpj.cdcooper = ass.cdcooper
+      AND cpj.nrdconta = ass.nrdconta
+      AND cpj.natjurid = ntj.cdnatjur --empresa socia proprietaria com percentual de soc. obrigatoria
+      AND ntj.flgprsoc = 1            -- Contem o indicador do percentual societario obrigatorio.
+      AND epa.nrctasoc <> 0           -- empresa sócia proprietaria tem possuir c/c na cooperativa
+      AND ass.dtelimin IS NULL        -- somente associados não eliminados
+      AND epa.persocio >= pr_persocio -- percentual societario.
+      AND epa.cdcooper = pr_cdcooper
+      AND epa.cdcooper = dat.cdcooper
+      AND NOT EXISTS (SELECT *
+        FROM crapgrp c
+        WHERE c.cdcooper = epa.cdcooper
+          AND c.nrdconta = epa.nrdconta
+          AND c.cdagenci = ass.cdagenci
+          AND c.nrcpfcgc = ass.nrcpfcgc
+        )
+      AND (DECODE(NVL((
+              SELECT max(inprejuz)
+              FROM crapepr epr
+              WHERE epr.cdcooper = ass.cdcooper
+                AND epr.nrdconta = ass.nrdconta
+                AND epr.inprejuz = 1
+                AND epr.vlsdprej > 0
+              ), 0), 1, NULL, ass.dtelimin)) IS NULL
+      AND EXISTS (
+        SELECT 1
+        FROM crapass cs
+        WHERE cs.cdcooper = pr_cdcooper
+          AND cs.nrdconta = epa.nrctasoc);
+          
+  -- cursor formadora pf com titulares        
+  Cursor cr_formadoraPF_Com_Titular is
+  
+  SELECT avt.cdcooper
+  ,ass.nrdconta
+  ,ass.nrdconta as nrctasoc
+  ,ass.nrcpfcgc
+  ,ass.cdagenci
+  ,2 as inpessoa
+  ,ntj.flgprsoc
+  ,dat.dtmvtolt
+  ,avt.inhabmen
+  ,ass.dtnasctl
+  ,avt.nrdctato
+    from  crapavt avt, -- (CDCOOPER, TPCTRATO, NRDCONTA, NRCTREMP, NRCPFCGC)Cadastro de avalistas terceiros, contatos da pessoa fisica e referencias comerciais e bancarias da pessoa juridica.
+          crapass ass, -- (CDCOOPER, NRDCONTA)associados
+          crapjur cpj,  -- (CDCOOPER, NRDCONTA)pessoas juridicas
+          gncdntj ntj, -- (CDNATJUR)natureza da operacao juridica
+          crapdat dat
+    where avt.cdcooper = ass.cdcooper    --Numero da conta da pessoa para contato.
+      and avt.nrdconta = ass.nrdconta
+      and avt.cdcooper = cpj.cdcooper
+      and avt.nrdconta = cpj.nrdconta
+
+      and cpj.natjurid = ntj.cdnatjur  --empresa socia proprietaria com percentual de soc. obrigatoria
+      and ass.dtelimin is null      -- somente associados não eliminados
+      and avt.tpctrato = 6            --tipo(1-empr/2-descto chq/3-chq esp/4-cartao/5-cont/6-jur/9-inter. anuente/10-resp. cartao outros)
+      and avt.persocio >= pr_persocio-- percentual societario.
+      and avt.flgdepec = 1           -- situacao da dependencia economica (1 - sim, 0 - nao).      
+      and dat.cdcooper = avt.cdcooper     
+      and avt.cdcooper = pr_cdcooper
+      and ((select max(inprejuz)
+                  from crapepr epr
+                 where epr.cdcooper = ass.cdcooper
+                   and epr.nrdconta = ass.nrdconta
+                   and ass.cdcooper = pr_cdcooper
+                   and epr.inprejuz = 1
+                   and epr.vlsdprej > 0
+               ) = 1 or (ass.dtelimin is null and ass.dtdemiss is null))
+      AND NOT EXISTS (SELECT *    -- verifica se já possue grupo formado.
+        FROM crapgrp c
+        WHERE c.cdcooper = avt.cdcooper
+          AND c.nrdconta = avt.nrdconta
+          AND c.cdagenci = ass.cdagenci
+          AND c.nrcpfcgc = ass.nrcpfcgc
+          and c.cdcooper = pr_cdcooper
+        )
+   AND  EXISTS ( SELECT  a.cdcooper, a.cdagenci, a.nrdconta, a.nrctacto,t.idseqttl, t.inhabmen, a.dtelimin, t.dtnasttl
+    FROM crapttl t, -- (CDCOOPER, NRDCONTA, IDSEQTTL) -- Cadastro de titulares da conta
+         crapass a -- (CDCOOPER, NRDCONTA) -- Cadastro de associados
+    WHERE t.cdcooper = a.cdcooper
+    and   t.nrdconta = a.nrctacto
+    and   t.cdcooper = pr_cdcooper
+    and   a.dtelimin is null  -- Data de eliminacao dos valores (Saldo e capital).
+    AND   t.nrdconta = avt.nrdctato); --Contem a conta da pessoa de contato.
+
+  -- cursor formadora pf sem titulares        
+  Cursor cr_formadoraPF_Sem_Titular is
+  
+  SELECT avt.cdcooper
+  ,ass.nrdconta
+  ,ass.nrdconta as nrctasoc
+  ,ass.nrcpfcgc
+  ,ass.cdagenci
+  ,2 as inpessoa
+  ,ntj.flgprsoc
+  ,dat.dtmvtolt
+  ,avt.inhabmen
+  ,ass.dtnasctl
+  ,avt.nrdctato
+    from  crapavt avt, -- (CDCOOPER, TPCTRATO, NRDCONTA, NRCTREMP, NRCPFCGC)Cadastro de avalistas terceiros, contatos da pessoa fisica e referencias comerciais e bancarias da pessoa juridica.
+          crapass ass, -- (CDCOOPER, NRDCONTA)associados
+          crapjur cpj,  -- (CDCOOPER, NRDCONTA)pessoas juridicas
+          gncdntj ntj, -- (CDNATJUR)natureza da operacao juridica
+          crapdat dat
+    where avt.cdcooper = ass.cdcooper    --Numero da conta da pessoa para contato.
+      and avt.nrdconta = ass.nrdconta
+      and avt.cdcooper = cpj.cdcooper
+      and avt.nrdconta = cpj.nrdconta
+
+      and cpj.natjurid = ntj.cdnatjur  --empresa socia proprietaria com percentual de soc. obrigatoria
+      and ass.dtelimin is null      -- somente associados não eliminados
+      and avt.tpctrato = 6            --tipo(1-empr/2-descto chq/3-chq esp/4-cartao/5-cont/6-jur/9-inter. anuente/10-resp. cartao outros)
+      and avt.persocio >= pr_persocio -- percentual societario.
+      and avt.flgdepec = 1           -- situacao da dependencia economica (1 - sim, 0 - nao).      
+      and dat.cdcooper = avt.cdcooper     
+      and avt.cdcooper = pr_cdcooper
+      and ((select max(inprejuz)
+                  from crapepr epr
+                 where epr.cdcooper = ass.cdcooper
+                   and epr.nrdconta = ass.nrdconta
+                   and ass.cdcooper = pr_cdcooper
+                   and epr.inprejuz = 1
+                   and epr.vlsdprej > 0
+               ) = 1 or (ass.dtelimin is null and ass.dtdemiss is null))
+      AND NOT EXISTS (SELECT *    -- verifica se já possue grupo formado.
+        FROM crapgrp c
+        WHERE c.cdcooper = avt.cdcooper
+          AND c.nrdconta = avt.nrdconta
+          AND c.cdagenci = ass.cdagenci
+          AND c.nrcpfcgc = ass.nrcpfcgc
+          and c.cdcooper = pr_cdcooper
+        )
+   AND NOT EXISTS ( SELECT  a.cdcooper, a.cdagenci, a.nrdconta, a.nrctacto,t.idseqttl, t.inhabmen, a.dtelimin, t.dtnasttl
+    FROM crapttl t, -- (CDCOOPER, NRDCONTA, IDSEQTTL) -- Cadastro de titulares da conta
+         crapass a -- (CDCOOPER, NRDCONTA) -- Cadastro de associados
+    WHERE t.cdcooper = a.cdcooper
+    and   t.nrdconta = a.nrctacto
+    and   t.cdcooper = pr_cdcooper
+    and   a.dtelimin is null  -- Data de eliminacao dos valores (Saldo e capital).
+    AND t.nrdconta = avt.nrdctato); --Contem a conta da pessoa de contato.
+
+  -- busca o titular da conta            
+  Cursor cr_busca_titular(pr_cdcooper IN crapass.cdcooper%TYPE      --> Código da cooperativa
+                         ,pr_nrdconta IN crapass.nrdconta%TYPE) is
+        SELECT cl.cdcooper
+              ,cl.nrdconta
+              ,LAG(cl.nrdconta) OVER(ORDER BY cl.nrdconta) nrdcontaLag
+              ,inhabmen
+              ,dtnasttl
+        FROM crapttl cl            -- Cadastro de titulares da conta
+        WHERE cl.cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta --(usa o avt.nrdctato)
+        ORDER BY cl.nrdconta
+                ,cl.progress_recid;
+                
+ -- busca o representante legal do menor            
+  Cursor cr_busca_representante(pr_cdcooper IN crapass.cdcooper%TYPE      --> Código da cooperativa
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE) is
+        SELECT cl.nrdconta
+              ,LAG(cl.nrctamen) OVER(ORDER BY cl.nrctamen,cl.nrcpfmen) nrctamenAnt
+              ,cl.nrctamen
+        FROM crapcrl cl         -- Tabela para cadastro do representante legal
+        WHERE cl.cdcooper = pr_cdcooper
+          AND cl.nrctamen = pr_nrdconta -- (Usa o ttl.nrdconta para encontrar crl.nrctamen)
+        ORDER BY cl.nrctamen;
+       rw_crapcrl cr_busca_representante%rowtype;
+   -- busca a conta associada ao representante legal 
+   Cursor cr_associado_representante(pr_cdcooper IN crapass.cdcooper%TYPE      --> Código da cooperativa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE) is 
+                                     
+   select c.nrdconta,c.nrcpfcgc,c.inpessoa,c.cdagenci
+   from crapass c 
+   where  c.cdcooper = pr_cdcooper
+   and    c.nrdconta = pr_nrdconta;     
+   rw_crapass cr_associado_representante%ROWTYPE;  
+     
+  
+    
+	Cursor cr_contas_grupo_sem_titular(pr_cdcooper IN crapass.cdcooper%TYPE      --> Código da cooperativa
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE) is
+    SELECT  a.cdcooper, a.cdagenci, a.nrdconta, a.nrctacto, a.dtelimin,  r.nrctamen, a.dtnasctl, a.nrcpfcgc, r.nrcpfmen
+    FROM crapass a, -- (CDCOOPER, NRDCONTA) -- Cadastro de associados
+         crapcrl r --(CDCOOPER, NRCTAMEN, NRCPFMEN, IDSEQMEN, NRDCONTA, NRCPFCGC)
+    where a.cdcooper = r.cdcooper
+    and   a.nrctacto = r.nrdconta
+    and   a.dtelimin is null  -- Data de eliminacao dos valores (Saldo e capital).
+    and   a.nrdconta = pr_nrdconta
+    and   a.cdcooper = pr_cdcooper;     
+
+    /* Buscar dados da formação de grupos */
+      CURSOR cr_crapgrpb(pr_cdcooper IN crapgrp.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT cg.nrdgrupo
+              ,NVL((LAG(cg.nrdgrupo) OVER(ORDER BY cg.nrdgrupo)), 0) nrdgrupoa
+        FROM crapgrp cg
+        WHERE cg.cdcooper = pr_cdcooper
+        ORDER BY cg.nrdgrupo;
+        
+   /* Buscar dados da formação de grupos */
+      CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE      --> Código da cooperativa
+                       ,pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE) IS  --> CNPJ/CPF
+        SELECT cg.nrdgrupo
+        FROM crapgrp cg
+        WHERE cg.cdcooper = pr_cdcooper
+          AND cg.nrcpfcgc = pr_nrcpfcgc
+          AND rownum = 1
+        ORDER BY cg.cdcooper
+                ,cg.nrdgrupo
+                ,cg.nrcpfcgc
+                ,cg.nrctasoc
+                ,cg.progress_recid;
+      rw_crapgrp cr_crapgrp%ROWTYPE;
+      rw_crapgrb cr_crapgrp%ROWTYPE;        
+  
+  BEGIN
+  
+  -- Selecionar informacoes das datas
+  OPEN btch0001.cr_crapdat (pr_cdcooper => pr_cdcooper);
+  FETCH btch0001.cr_crapdat INTO rw_crapdat;
+  CLOSE btch0001.cr_crapdat;
+
+  -- Nao rodar na mensal
+  IF to_char(rw_crapdat.dtmvtolt,'mm') <> to_char(rw_crapdat.dtmvtopr,'mm') THEN
+    --Inclusão tratamento para datas diferntes - Chamado 813391
+    vr_cdcritic := 1068;
+    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
+                   ||' '||to_char(rw_crapdat.dtmvtolt,'MM')||' <> '||to_char(rw_crapdat.dtmvtopr,'MM');
+    RAISE vr_exc_erro;
+  END IF;
+
+    -- Buscar valores de parâmetros
+      vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'USUARI'
+                                               ,pr_cdempres => 11
+                                               ,pr_cdacesso => 'RISCOBACEN'
+                                               ,pr_tpregist => 0);
+
+    -- Loop sobre a tabela de formadoras
+    FOR rw_formadoraPJ IN cr_formadoraPJ LOOP
+            -- Verifica se o CNPJ da empresa ja pertence a outro grupo
+            OPEN cr_crapgrp(rw_formadoraPJ.cdcooper,rw_formadoraPJ.nrcpfcgc);
+            FETCH cr_crapgrp INTO rw_crapgrp;
+            -- Verifica se o CNPJ já está em outro grupo
+            IF cr_crapgrp%FOUND THEN
+              CLOSE cr_crapgrp;
+              vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+            ELSE
+              CLOSE cr_crapgrp;
+               -- Assimila valores para as variáveis
+                vr_nrultgrp := vr_nrultgrp + 1;
+                vr_nrdgrupo := vr_nrultgrp;
+                vr_nrultgrp := vr_nrdgrupo;
+              END IF;
+
+    -- insere a conta formadora
+         INSERT INTO crapgrp(cdcooper
+                                   ,nrdgrupo
+                                   ,nrdconta
+                                   ,nrctasoc
+                                   ,nrcpfcgc
+                                   ,inpessoa
+                                   ,idseqttl
+                                   ,cdagenci
+                                   ,dtmvtolt)
+                   VALUES(rw_formadoraPJ.Cdcooper
+                         ,vr_nrdgrupo
+                         ,rw_formadoraPJ.nrdconta
+                         ,rw_formadoraPJ.nrdconta
+                         ,rw_formadoraPJ.nrcpfcgc
+                         ,2
+                         ,999  -- 999 formadora do grupo
+                         ,rw_formadoraPJ.cdagenci
+                         ,rw_formadoraPJ.dtmvtolt);
+                         
+            -- Monta a ligação de contas desta empresa no grupo
+            pc_monta_arvore(pr_cdcooper    => rw_formadoraPJ.cdcooper
+                           ,pr_dtmvtolt    => rw_formadoraPJ.dtmvtolt
+                           ,pr_nrdgrupo    => vr_nrdgrupo
+                           ,pr_nrdconta    => rw_formadoraPJ.nrdconta
+                           ,pr_nrcpfcgc    => rw_formadoraPJ.nrcpfcgc
+                           ,pr_des_erro    => pr_dscritic);     
+                           
+            -- Cria registro do grupo
+              INSERT INTO crapgrp(cdcooper
+                                 ,nrdgrupo
+                                 ,nrdconta
+                                 ,nrctasoc
+                                 ,nrcpfcgc
+                                 ,inpessoa
+                                 ,idseqttl
+                                 ,cdagenci
+                                 ,dtmvtolt)
+                 VALUES(rw_formadoraPJ.cdcooper
+                       ,vr_nrdgrupo
+                       ,rw_formadoraPJ.nrdconta
+                       ,rw_formadoraPJ.nrctasoc
+                       ,rw_formadoraPJ.nrdocsoc
+                       ,2
+                       ,997 -- 997 empresas proprietarias
+                       ,rw_formadoraPJ.cdagenci
+                       ,rw_formadoraPJ.dtmvtolt);   
+            -- Monta a ligação de contas desta empresa no grupo
+            pc_monta_arvore(pr_cdcooper    => rw_formadoraPJ.cdcooper
+                           ,pr_dtmvtolt    => rw_formadoraPJ.dtmvtolt
+                           ,pr_nrdgrupo    => vr_nrdgrupo
+                           ,pr_nrdconta    => rw_formadoraPJ.nrctasoc
+                           ,pr_nrcpfcgc    => rw_formadoraPJ.nrdocsoc
+                           ,pr_des_erro    => pr_dscritic);                                                                   
+
+    END LOOP;
+    
+    FOR rw_formadoraPF_Com_Titular IN cr_formadoraPF_Com_Titular LOOP
+        -- Verifica se encontrou o CNPJ em outros grupos
+            OPEN cr_crapgrp(rw_formadoraPF_Com_Titular.cdcooper,rw_formadoraPF_Com_Titular.nrcpfcgc);
+            FETCH cr_crapgrp INTO rw_crapgrp;
+            -- Verifica se o CNPJ já está em outro grupo
+            IF cr_crapgrp%FOUND THEN
+              CLOSE cr_crapgrp;
+              vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+            ELSE
+              CLOSE cr_crapgrp;
+               -- Assimila valores para as variáveis
+                vr_nrultgrp := vr_nrultgrp + 1;
+                vr_nrdgrupo := vr_nrultgrp;
+                vr_nrultgrp := vr_nrdgrupo;
+            END IF;
+            
+       if rw_formadoraPF_Com_Titular.Nrdctato = 3679683 then
+         DBMS_OUTPUT.PUT_LINE (rw_formadoraPF_Com_Titular.Nrdconta );   
+       end if;
+
+        -- testa se é menor de idade ou tem incapacidade social
+       if rw_formadoraPF_Com_Titular.inhabmen = 0 or rw_formadoraPF_Com_Titular.inhabmen = 2 then
+                    
+            cada0001.pc_busca_idade(pr_dtnasctl => rw_formadoraPF_Com_Titular.Dtnasctl
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_nrdeanos => vr_nrdeanos
+                                         ,pr_nrdmeses => vr_nrdmeses
+                                         ,pr_dsdidade => vr_dsdidade
+                                         ,pr_des_erro => pr_dscritic);
+            IF pr_dscritic IS NOT NULL THEN
+               CONTINUE;
+            END IF;    
+                  
+            IF vr_nrdeanos < 18 or rw_formadoraPF_Com_Titular.inhabmen = 2  THEN
+              
+               -- insere a conta formadora 
+               INSERT INTO crapgrp(cdcooper
+                                ,nrdgrupo
+                                ,nrdconta
+                                ,nrctasoc
+                                ,nrcpfcgc
+                                ,inpessoa
+                                ,idseqttl
+                                ,cdagenci
+                                ,dtmvtolt)
+                     VALUES(rw_formadoraPF_Com_Titular.Cdcooper
+                               ,vr_nrdgrupo
+                               ,rw_formadoraPF_Com_Titular.nrdconta
+                               ,rw_formadoraPF_Com_Titular.nrctasoc
+                               ,rw_formadoraPF_Com_Titular.nrcpfcgc
+                               ,rw_formadoraPF_Com_Titular.Inpessoa
+                               ,999
+                               ,rw_formadoraPF_Com_Titular.cdagenci
+                               ,rw_formadoraPF_Com_Titular.dtmvtolt);
+                                           
+                    -- Monta a ligação de contas desta empresa no grupo
+                    pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Com_Titular.cdcooper
+                                   ,pr_dtmvtolt    => rw_formadoraPF_Com_Titular.dtmvtolt
+                                   ,pr_nrdgrupo    => vr_nrdgrupo
+                                   ,pr_nrdconta    => rw_formadoraPF_Com_Titular.nrdconta
+                                   ,pr_nrcpfcgc    => rw_formadoraPF_Com_Titular.nrcpfcgc
+                                   ,pr_des_erro    => pr_dscritic);   
+            
+                -- busca representante legal
+               
+                for rw_crapttl in cr_busca_titular( rw_formadoraPF_Com_Titular.cdcooper, rw_formadoraPF_Com_Titular.Nrdctato)loop
+                  
+                  OPEN cr_busca_representante(pr_cdcooper, rw_crapttl.nrdconta);
+                  FETCH cr_busca_representante INTO rw_crapcrl;
+                  IF cr_busca_representante%FOUND THEN
+                     CLOSE cr_busca_representante;
+                     -- busca associado
+                     OPEN cr_associado_representante(pr_cdcooper, rw_crapcrl.nrctamen);
+                     FETCH cr_associado_representante INTO rw_crapass;
+                     IF cr_associado_representante%FOUND THEN
+                     CLOSE cr_associado_representante;
+                     -- Cria novo grupo "filho" ou seja o represente do menor entra no grupo formador pelo menor 
+                     INSERT INTO crapgrp(cdcooper
+                                ,nrdgrupo
+                                ,nrdconta
+                                ,nrctasoc
+                                ,nrcpfcgc
+                                ,inpessoa
+                                ,idseqttl
+                                ,cdagenci
+                                ,dtmvtolt)
+                     VALUES(rw_formadoraPF_Com_Titular.Cdcooper
+                               ,vr_nrdgrupo
+                               ,rw_formadoraPF_Com_Titular.nrdconta
+                               ,rw_crapass.nrdconta
+                               ,rw_crapass.nrcpfcgc
+                               ,1
+                               ,996
+                               ,rw_crapass.cdagenci
+                               ,rw_formadoraPF_Com_Titular.dtmvtolt);
+                                           
+                    -- Monta a ligação de contas do representante
+                    pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Com_Titular.cdcooper
+                                   ,pr_dtmvtolt    => rw_formadoraPF_Com_Titular.dtmvtolt
+                                   ,pr_nrdgrupo    => vr_nrdgrupo
+                                   ,pr_nrdconta    => rw_crapass.nrdconta
+                                   ,pr_nrcpfcgc    => rw_crapass.nrcpfcgc
+                                   ,pr_des_erro    => pr_dscritic);     
+                   else
+                      CLOSE cr_associado_representante;                                       
+                   end if;  
+                  else
+                    close cr_busca_representante;
+                  END IF;
+                  
+                end loop; 
+            end if;      
+        else
+            -- insere a conta formadora 
+               INSERT INTO crapgrp(cdcooper
+                                ,nrdgrupo
+                                ,nrdconta
+                                ,nrctasoc
+                                ,nrcpfcgc
+                                ,inpessoa
+                                ,idseqttl
+                                ,cdagenci
+                                ,dtmvtolt)
+                     VALUES(rw_formadoraPF_Com_Titular.Cdcooper
+                               ,vr_nrdgrupo
+                               ,rw_formadoraPF_Com_Titular.nrdconta
+                               ,rw_formadoraPF_Com_Titular.nrctasoc
+                               ,rw_formadoraPF_Com_Titular.nrcpfcgc
+                               ,rw_formadoraPF_Com_Titular.Inpessoa
+                               ,999
+                               ,rw_formadoraPF_Com_Titular.cdagenci
+                               ,rw_formadoraPF_Com_Titular.dtmvtolt);
+                                           
+                              -- Monta a ligação de contas desta empresa no grupo
+                    pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Com_Titular.cdcooper
+                                   ,pr_dtmvtolt    => rw_formadoraPF_Com_Titular.dtmvtolt
+                                   ,pr_nrdgrupo    => vr_nrdgrupo
+                                   ,pr_nrdconta    => rw_formadoraPF_Com_Titular.nrdconta
+                                   ,pr_nrcpfcgc    => rw_formadoraPF_Com_Titular.nrcpfcgc
+                                   ,pr_des_erro    => pr_dscritic);       
+        
+        end if;                    
+    END LOOP;
+    
+    FOR rw_formadoraPF_Sem_Titular IN cr_formadoraPF_Sem_Titular LOOP
+        -- Verifica se encontrou o CNPJ em outros grupos
+            OPEN cr_crapgrp(rw_formadoraPF_Sem_Titular.cdcooper,rw_formadoraPF_Sem_Titular.nrcpfcgc);
+            FETCH cr_crapgrp INTO rw_crapgrp;
+            -- Verifica se o CNPJ já está em outro grupo
+            IF cr_crapgrp%FOUND THEN
+              CLOSE cr_crapgrp;
+              vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+            ELSE
+              CLOSE cr_crapgrp;
+               -- Assimila valores para as variáveis
+                vr_nrultgrp := vr_nrultgrp + 1;
+                vr_nrdgrupo := vr_nrultgrp;
+                vr_nrultgrp := vr_nrdgrupo;
+              END IF;
+       if rw_formadoraPF_Sem_Titular.Nrdctato= 3679683 then
+         DBMS_OUTPUT.PUT_LINE (rw_formadoraPF_Sem_Titular.Nrdconta );   
+       
+       end if;              
+              
+      if rw_formadoraPF_Sem_Titular.Inhabmen = 0 or  rw_formadoraPF_Sem_Titular.Inhabmen = 2 then
+         cada0001.pc_busca_idade(pr_dtnasctl => rw_formadoraPF_Sem_Titular.Dtnasctl
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_nrdeanos => vr_nrdeanos
+                                         ,pr_nrdmeses => vr_nrdmeses
+                                         ,pr_dsdidade => vr_dsdidade
+                                         ,pr_des_erro => pr_dscritic);
+            IF pr_dscritic IS NOT NULL THEN
+               CONTINUE;
+            END IF;          
+      
+      
+            if vr_nrdeanos < 18 or rw_formadoraPF_Sem_Titular.Inhabmen = 2 then
+              
+               -- insere a conta formadora
+               INSERT INTO crapgrp(cdcooper
+                          ,nrdgrupo
+                          ,nrdconta
+                          ,nrctasoc
+                          ,nrcpfcgc
+                          ,inpessoa
+                          ,idseqttl
+                          ,cdagenci
+                          ,dtmvtolt)
+               VALUES(rw_formadoraPF_Sem_Titular.Cdcooper
+                         ,vr_nrdgrupo
+                         ,rw_formadoraPF_Sem_Titular.nrdconta
+                         ,rw_formadoraPF_Sem_Titular.nrctasoc
+                         ,rw_formadoraPF_Sem_Titular.nrcpfcgc
+                         ,2
+                         ,999
+                         ,rw_formadoraPF_Sem_Titular.cdagenci
+                         ,rw_formadoraPF_Sem_Titular.dtmvtolt);
+                                 
+                    -- Monta a ligação de contas desta empresa no grupo
+                    pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Sem_Titular.cdcooper
+                               ,pr_dtmvtolt    => rw_formadoraPF_Sem_Titular.dtmvtolt
+                               ,pr_nrdgrupo    => vr_nrdgrupo
+                               ,pr_nrdconta    => rw_formadoraPF_Sem_Titular.nrdconta
+                               ,pr_nrcpfcgc    => rw_formadoraPF_Sem_Titular.nrcpfcgc
+                               ,pr_des_erro    => pr_dscritic);                  
+       
+                -- busca representante legal
+                for rw_crapcrl in cr_busca_representante( rw_formadoraPF_Sem_Titular.cdcooper, rw_formadoraPF_Sem_Titular.Nrdctato)loop
+                  -- busca conta associada ao representante legal
+                  OPEN cr_associado_representante(pr_cdcooper,rw_crapcrl.nrdconta);
+                  FETCH cr_associado_representante INTO rw_crapass;
+                  IF cr_associado_representante%FOUND THEN
+                     CLOSE cr_associado_representante;
+                     -- Cria novo grupo "filho" ou seja o represente do menor entra no grupo formador pelo menor 
+                     INSERT INTO crapgrp(cdcooper
+                                ,nrdgrupo
+                                ,nrdconta
+                                ,nrctasoc
+                                ,nrcpfcgc
+                                ,inpessoa
+                                ,idseqttl
+                                ,cdagenci
+                                ,dtmvtolt)
+                     VALUES(rw_formadoraPF_Sem_Titular.Cdcooper
+                               ,vr_nrdgrupo
+                               ,rw_formadoraPF_Sem_Titular.nrdconta
+                               ,rw_crapass.nrdconta
+                               ,rw_crapass.nrcpfcgc
+                               ,1
+                               ,996
+                               ,rw_crapass.cdagenci
+                               ,rw_formadoraPF_Sem_Titular.dtmvtolt);
+                                           
+                    -- Monta a ligação de contas do representante
+                    pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Sem_Titular.cdcooper
+                                   ,pr_dtmvtolt    => rw_formadoraPF_Sem_Titular.dtmvtolt
+                                   ,pr_nrdgrupo    => vr_nrdgrupo
+                                   ,pr_nrdconta    => rw_crapass.nrdconta
+                                   ,pr_nrcpfcgc    => rw_crapass.nrcpfcgc
+                                   ,pr_des_erro    => pr_dscritic);                                            
+                     
+                  ELSE
+                     CLOSE cr_associado_representante;
+                  END IF;
+                end loop;
+                
+            else
+                 -- insere a conta formadora
+               INSERT INTO crapgrp(cdcooper
+                          ,nrdgrupo
+                          ,nrdconta
+                          ,nrctasoc
+                          ,nrcpfcgc
+                          ,inpessoa
+                          ,idseqttl
+                          ,cdagenci
+                          ,dtmvtolt)
+               VALUES(rw_formadoraPF_Sem_Titular.Cdcooper
+                         ,vr_nrdgrupo
+                         ,rw_formadoraPF_Sem_Titular.nrdconta
+                         ,rw_formadoraPF_Sem_Titular.nrctasoc
+                         ,rw_formadoraPF_Sem_Titular.nrcpfcgc
+                         ,2
+                         ,999
+                         ,rw_formadoraPF_Sem_Titular.cdagenci
+                         ,rw_formadoraPF_Sem_Titular.dtmvtolt);
+                                 
+                    -- Monta a ligação de contas desta empresa no grupo
+                    pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Sem_Titular.cdcooper
+                               ,pr_dtmvtolt    => rw_formadoraPF_Sem_Titular.dtmvtolt
+                               ,pr_nrdgrupo    => vr_nrdgrupo
+                               ,pr_nrdconta    => rw_formadoraPF_Sem_Titular.nrdconta
+                               ,pr_nrcpfcgc    => rw_formadoraPF_Sem_Titular.nrcpfcgc
+                               ,pr_des_erro    => pr_dscritic);                  
+             end if;
+        else
+          
+     -- insere a conta formadora
+                 INSERT INTO crapgrp(cdcooper
+                            ,nrdgrupo
+                            ,nrdconta
+                            ,nrctasoc
+                            ,nrcpfcgc
+                            ,inpessoa
+                            ,idseqttl
+                            ,cdagenci
+                            ,dtmvtolt)
+                 VALUES(rw_formadoraPF_Sem_Titular.Cdcooper
+                           ,vr_nrdgrupo
+                           ,rw_formadoraPF_Sem_Titular.nrdconta
+                           ,rw_formadoraPF_Sem_Titular.nrctasoc
+                           ,rw_formadoraPF_Sem_Titular.nrcpfcgc
+                           ,2
+                           ,999
+                           ,rw_formadoraPF_Sem_Titular.cdagenci
+                           ,rw_formadoraPF_Sem_Titular.dtmvtolt);
+                                   
+                      -- Monta a ligação de contas desta empresa no grupo
+                      pc_monta_arvore(pr_cdcooper    => rw_formadoraPF_Sem_Titular.cdcooper
+                                 ,pr_dtmvtolt    => rw_formadoraPF_Sem_Titular.dtmvtolt
+                                 ,pr_nrdgrupo    => vr_nrdgrupo
+                                 ,pr_nrdconta    => rw_formadoraPF_Sem_Titular.nrdconta
+                                 ,pr_nrcpfcgc    => rw_formadoraPF_Sem_Titular.nrcpfcgc
+                                 ,pr_des_erro    => pr_dscritic);                  
+        
+        end if;
+    END LOOP; 
+    -- Mesclar grupos
+      pc_mesclar_grupos(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdgrupo => 0
+                       ,pr_cdcritic => pr_cdcritic
+                       ,pr_des_erro => pr_dscritic);
+                       
+   -- Processar grupos para cálculo de risco
+      FOR rw_crapgrpb IN cr_crapgrpb(pr_cdcooper) LOOP
+        -- Verifica se é o primeiro registro do grupo
+        IF rw_crapgrpb.nrdgrupo <> rw_crapgrpb.nrdgrupoa THEN
+
+		      -- Calcular endividamento do grupo
+          pc_calc_endivid_risco_grupo(pr_cdcooper    => pr_cdcooper
+                                     ,pr_cdagenci    => pr_cdagenci
+                                     ,pr_nrdcaixa    => pr_nrdcaixa
+                                     ,pr_cdoperad    => pr_cdoperad
+                                     ,pr_cdprogra    => pr_cdprogra
+                                     ,pr_idorigem    => pr_idorigem
+                                     ,pr_nrdgrupo    => rw_crapgrpb.nrdgrupo
+                                     ,pr_tpdecons    => TRUE
+                                     ,pr_tab_crapdat => rw_crapdat
+                                     ,pr_tab_grupo   => vr_tab_crapgrp
+                                     ,pr_dstextab    => vr_dstextab
+                                     ,pr_dsdrisco    => opt_dsdrisco
+                                     ,pr_vlendivi    => opt_vlendivi
+                                     ,pr_des_erro    => pr_dscritic);
+
+          -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
+        END IF;
+      END LOOP;
+
+  EXCEPTION
+    
+   WHEN vr_exc_erro THEN          
+     pr_dscritic := 'Erro na formação do grupo : ' || SQLERRM;  
+   WHEN OTHERS THEN
+     -- Montar descrição de erro não tratado
+     pr_dscritic := 'Erro não tratado : ' || SQLERRM;
+     
+  END pc_grupo;  
+  
+
 END geco0001;
 /
