@@ -13,6 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
 --                13/01/2017 - Jean Calao - Mout´S - Melhorias envio informacoes CYBER - alteraçao das procedures 
 --                             pc_consultar_param_histor e pc_manter_param_histor - inclusão do campo cdtrscyb na
 --							   tabela CRAPHIS. Inclusão dos campos flgjudic e flextjud na tabela TBCOBRAN_ASSESSORIAS
+--    
+--                05/06/2018 - Adicionado procedure para inserir registro na tabela tbdsct_titulo_cyber (Paulo Penteado (GFT))
 ---------------------------------------------------------------------------------------------------------------
 
   /* Rotina para consultar as assessorias cadastradas */
@@ -119,6 +121,14 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                      ,pr_tbdsct_nrtitulo OUT tbdsct_titulo_cyber.nrtitulo%TYPE --> Numero do titulo
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);
+                                     
+  PROCEDURE pc_inserir_titulo_cyber(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                   ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero do titulo em atraso no cyber
+                                   ,pr_nrtitulo  IN craptdb.nrtitulo%TYPE --> Numero do titulo em atraso no cyber
+                                   ,pr_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto de titulo a ser enviado para o cyber
+                                   ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
+                                   
 END CYBE0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
@@ -132,8 +142,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 --
   --  Objetivo  : Package referente aos cadastros do CYBER
 --
---    Alteracoes: 
+--    Alteracoes: ??/08/2015 - Criação (Douglas Quisinski)
 --    
+--                05/06/2018 - Adicionado procedure para inserir registro na tabela tbdsct_titulo_cyber (Paulo Penteado (GFT))
 ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_consultar_assessorias(pr_cdassess   IN INTEGER            --> Código da Assessoria
@@ -1112,13 +1123,98 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     rw_tbdsct_titulo_cybe cr_tbdsct_titulo_cyber%ROWTYPE;
       
     BEGIN
+      OPEN cr_tbdsct_titulo_cyber();
+      FETCH cr_tbdsct_titulo_cyber INTO rw_tbdsct_titulo_cybe;
+      CLOSE cr_tbdsct_titulo_cyber;
       
-    vr_dscritic := '';
-    
-    pr_tbdsct_nrborder := rw_tbdsct_titulo_cybe.nrborder;
-    pr_tbdsct_nrtitulo := rw_tbdsct_titulo_cybe.;
-                                
+      pr_tbdsct_nrborder := rw_tbdsct_titulo_cybe.nrborder;
+      pr_tbdsct_nrtitulo := rw_tbdsct_titulo_cybe.nrtitulo;
+              
   END pc_buscar_tbdsct_titulo;
+  
+  PROCEDURE pc_inserir_titulo_cyber(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                   ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero do titulo em atraso no cyber
+                                   ,pr_nrtitulo  IN craptdb.nrtitulo%TYPE --> Numero do titulo em atraso no cyber
+                                   ,pr_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto de titulo a ser enviado para o cyber
+                                   ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                   ) IS
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_inserir_titulo_cyber
+      Sistema  : CRED
+      Sigla    : DSCT0003
+      Autor    : Paulo Penteado (GFT)
+      Data     : Junho/2018
+      
+      Objetivo  : Inserir registros da CYBER do borderô na tabela tbdsct_titulo_cyber
+
+      Alteração : 05/06/2018 - Criação (Paulo Penteado (GFT))
+
+    ---------------------------------------------------------------------------------------------------------------------*/
+    vr_nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE; 
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    CURSOR cr_crapbdt IS
+    SELECT 1
+    FROM   crapbdt bdt
+    WHERE  bdt.nrdconta = pr_nrdconta
+    AND    bdt.nrborder = pr_nrborder
+    AND    bdt.cdcooper = pr_cdcooper;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+
+  BEGIN
+    OPEN  cr_crapbdt;
+    FETCH cr_crapbdt INTO rw_crapbdt;
+    IF    cr_crapbdt%NOTFOUND THEN
+          CLOSE cr_crapbdt;
+          pr_dscritic := 'Borderô '||pr_nrborder||' não encontrado.';
+          RAISE vr_exc_erro;
+    END   IF;
+    CLOSE cr_crapbdt;
+  
+    /* Buscar a proxima sequencia tbdsct_titulo_cyber.nrctrdsc */
+    pc_sequence_progress(pr_nmtabela => 'TBDSCT_TITULO_CYBER'
+                        ,pr_nmdcampo => 'NRCTRDSC'
+                        ,pr_dsdchave => pr_cdcooper
+                        ,pr_flgdecre => 'N'
+                        ,pr_sequence => vr_nrctrdsc);
+
+    BEGIN
+      INSERT INTO tbdsct_titulo_cyber
+             (/*01*/ cdcooper
+             ,/*02*/ nrdconta
+             ,/*03*/ nrborder
+             ,/*04*/ nrtitulo
+             ,/*05*/ nrctrdsc )
+      VALUES (/*01*/ pr_cdcooper
+             ,/*02*/ pr_nrdconta
+             ,/*03*/ pr_nrborder
+             ,/*04*/ pr_nrtitulo
+             ,/*05*/ vr_nrctrdsc );
+    EXCEPTION
+      WHEN OTHERS THEN
+           vr_dscritic := 'Erro ao inserir o titulo cyber do borderô: '||SQLERRM;
+           RAISE vr_exc_erro;
+    END; 
+    
+    pr_nrctrdsc := vr_nrctrdsc;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+         pr_dscritic := 'Erro geral na rotina cybe0003.pc_inserir_titulo_cyber: '||SQLERRM;
+
+  END pc_inserir_titulo_cyber;
 
 END CYBE0003;
 /

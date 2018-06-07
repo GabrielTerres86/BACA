@@ -1,3 +1,194 @@
+CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
+
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa:  DSCT0001                       Antiga: generico/procedures/b1wgen0153.p
+  --  Autor   : Alisson
+  --  Data    : Julho/2013                     Ultima Atualizacao: 16/02/2018
+  --
+  --  Dados referentes ao programa:
+  --
+  --  Objetivo  : Package para rotinas envolvendo desconto titulos
+  --              titulos.
+  --
+  --  Alteracoes: 17/07/2013 - Conversao Progress para oracle (Alisson - AMcom)
+  --
+  --              26/02/2016 - Criacao das procedures pc_efetua_baixa_tit_car e
+  --                           pc_efetua_baixa_tit_car_job melhoria 116
+  --                           (Tiago/Rodrigo).
+  --
+  --              15/02/2018 - Incluido nome do módulo logado
+  --                           No caso de erro de programa gravar tabela especifica de log 
+  --                           Ajuste mensagem de erro:
+  --                           - Incluindo codigo e eliminando descrições fixas
+  --                           - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
+  --                          (Belli - Envolti - Chamado 851591)    
+  --
+  --              16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+  --                          (Gustavo Sene - GFT)
+  --
+  ---------------------------------------------------------------------------------------------------------------
+ 
+  -- Constantes
+  vr_cdhistor_resgate           CONSTANT craphis.cdhistor%TYPE := 687;
+  vr_cdhistor_resgcta_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2676; --RESGATE C/C
+  vr_cdhistor_resopcr_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2677; --RESGATE Operacao Credito
+  vr_cdhistor_resbaix_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2678; --RESGATE Baixa da carteira
+  vr_cdhistor_resreap_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2679; --RESGATE Baixa rendas a apropriar
+ 
+  --Tipo de Desconto de Títulos
+  TYPE typ_tot_descontos IS RECORD --(b1wgen0030tt.i/tt-tot_descontos)
+    (vldscchq NUMBER
+    ,qtdscchq INTEGER
+    ,vldsctit NUMBER
+    ,vllimtit NUMBER
+    ,vllimchq NUMBER
+    ,qtdsctit INTEGER
+    ,vlmaxtit NUMBER
+    ,qttotdsc INTEGER
+    ,vltotdsc NUMBER);
+
+  --Tipo de Tabela de Desconto de Títulos
+  TYPE typ_tab_tot_descontos IS TABLE OF typ_tot_descontos INDEX BY PLS_INTEGER;
+
+  --Tipo de Lancamento Tarifa
+  TYPE typ_tot_tarifa IS RECORD 
+    (cdcooper crapcop.cdcooper%TYPE
+    ,nrdconta crapass.nrdconta%TYPE
+    ,qtdtarcr INTEGER
+    ,qtdtarsr INTEGER);
+
+  --Tipo de Tabela de Lancamento Tarifa
+  TYPE typ_tab_tarifa IS TABLE OF typ_tot_tarifa INDEX BY VARCHAR2(13); 
+
+  TYPE typ_dados_tarifa IS RECORD 
+    (cdfvlcop crapcop.cdcooper%TYPE
+    ,cdhistor craphis.cdhistor%TYPE
+    ,vlrtarif NUMBER
+    ,vltottar NUMBER);
+
+  --Tipo de Tabela de Lancamento Tarifa
+  TYPE typ_tab_dados_tarifa IS TABLE OF typ_dados_tarifa INDEX BY VARCHAR2(4);
+
+  PROCEDURE pc_efetua_baixa_tit_car(pr_cdcooper    IN crapcop.cdcooper%TYPE      --Codigo Cooperativa
+                                   ,pr_cdagenci    IN INTEGER                    --Codigo Agencia
+                                   ,pr_nrdcaixa    IN INTEGER                    --Numero Caixa
+                                   ,pr_idorigem    IN INTEGER                    --Origem sistema
+                                   ,pr_cdoperad    IN VARCHAR2                   --Codigo operador
+                                   ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE      --Data Movimento
+                                   ,pr_dtmvtoan    IN crapdat.dtmvtoan%TYPE      --Data Movimento Anterior
+                                   ,pr_cdcritic    OUT INTEGER                   --Codigo Critica
+                                   ,pr_dscritic    OUT VARCHAR2                  --Descricao Critica
+                                   ,pr_tab_erro    OUT GENE0001.typ_tab_erro);
+
+  PROCEDURE pc_efetua_baixa_tit_car_job;
+  
+  /* Procedure para efetuar a baixa do titulo por pagamento ou vencimento */
+  PROCEDURE pc_efetua_baixa_titulo (pr_cdcooper    IN INTEGER --Codigo Cooperativa
+                                   ,pr_cdagenci    IN INTEGER --Codigo Agencia
+                                   ,pr_nrdcaixa    IN INTEGER --Numero Caixa
+                                   ,pr_cdoperad    IN VARCHAR2 --Codigo operador
+                                   ,pr_dtmvtolt    IN DATE     --Data Movimento
+                                   ,pr_idorigem    IN INTEGER  --Identificador Origem pagamento
+                                   ,pr_nrdconta    IN INTEGER  --Numero da conta
+                                   ,pr_indbaixa    IN INTEGER  --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                   ,pr_tab_titulos IN PAGA0001.typ_tab_titulos --Titulos a serem baixados
+                                   ,pr_dtintegr    IN DATE         --Data da integração do pagamento - Merge 1 - 15/02/2018 - Chamado 851591
+                                   ,pr_cdcritic    OUT INTEGER     --Codigo Critica
+                                   ,pr_dscritic    OUT VARCHAR2     --Descricao Critica
+                                   ,pr_tab_erro    OUT GENE0001.typ_tab_erro); --Tabela erros
+
+  /* Procedure para efetuar resgate de titulos de um determinado bordero */
+  PROCEDURE pc_efetua_resgate_tit_bord (pr_cdcooper    IN craplot.cdcooper%TYPE  --> Codigo Cooperativa
+                                       ,pr_cdagenci    IN craplot.cdagenci%TYPE  --> Codigo Agencia
+                                       ,pr_nrdcaixa    IN craplot.nrdcaixa%TYPE  --> Numero Caixa
+                                       ,pr_cdoperad    IN craplot.cdoperad%TYPE  --> Codigo operador
+                                       ,pr_dtmvtolt    IN craplot.dtmvtolt%TYPE  --> Data Movimento
+                                       ,pr_dtmvtoan    IN craplot.dtmvtolt%TYPE  --> Data anterior do movimento
+                                       ,pr_inproces    IN crapdat.inproces%TYPE  --> Indicador processo
+                                       ,pr_dtresgat    IN craplot.dtmvtolt%TYPE  --> Data do resgate
+                                       ,pr_idorigem    IN INTEGER                --> Identificador Origem pagamento
+                                       ,pr_nrdconta    IN craplcm.nrdconta%TYPE  --> Numero da conta
+                                       ,pr_cdbccxlt    IN craplot.cdbccxlt%TYPE  --> codigo do banco
+                                       ,pr_nrdolote    IN craplot.nrdolote%TYPE  --> Numero do lote                                       
+                                       ,pr_tab_titulos IN PAGA0001.typ_tab_titulos --> Titulos a serem resgatados
+                                       
+                                       ,pr_cdcritic    OUT INTEGER                 --> Codigo Critica
+                                       ,pr_dscritic    OUT VARCHAR2                --> Descricao Critica
+                                       );
+                                       
+  /* Rotina referente a consulta de avalistas, procuradores e representantes */
+  PROCEDURE pc_busca_total_descto_lim(pr_cdcooper IN INTEGER  --Codigo Cooperativa
+                                     ,pr_cdagenci IN INTEGER  --Codigo da agencia
+                                     ,pr_nrdcaixa IN INTEGER  --Numero do caixa
+                                     ,pr_cdoperad IN VARCHAR2 --codigo do operador
+                                     ,pr_dtmvtolt IN DATE     --Data do movimento
+                                     ,pr_nrdconta IN INTEGER  --Numero da conta
+                                     ,pr_idseqttl IN INTEGER  --idseqttl
+                                     ,pr_idorigem IN INTEGER  --Codigo da origem
+                                     ,pr_nmdatela IN VARCHAR2 --Nome da tela
+                                     ,pr_nrctrlim IN VARCHAR2 --Numero do contrato
+                                     ,pr_tab_tot_descontos OUT dsct0001.typ_tab_tot_descontos --Tabela Desconto de Títulos
+                                     ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2    --> Descrição da crítica
+                                     ,pr_tab_erro OUT GENE0001.typ_tab_erro); --Tabela erros
+  
+  /* Buscar a soma total de descontos (titulos + cheques)  */
+  PROCEDURE pc_busca_total_descontos(pr_cdcooper IN INTEGER        --> Codigo Cooperativa
+                                     ,pr_cdagenci IN INTEGER       --> Codigo da agencia
+                                     ,pr_nrdcaixa IN INTEGER       --> Numero do caixa
+                                     ,pr_cdoperad IN VARCHAR2      --> codigo do operador
+                                     ,pr_dtmvtolt IN DATE          --> Data do movimento
+                                     ,pr_nrdconta IN INTEGER       --> Numero da conta
+                                     ,pr_idseqttl IN INTEGER       --> idseqttl
+                                     ,pr_idorigem IN INTEGER       --> Codigo da origem
+                                     ,pr_nmdatela IN VARCHAR2      --> Nome da tela
+                                     ,pr_flgerlog IN VARCHAR2      --> identificador se deve gerar log S-Sim e N-Nao
+                                     ,pr_cdcritic OUT PLS_INTEGER  --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2     --> Descrição da crítica
+                                     ,pr_tab_tot_descontos OUT typ_tab_tot_descontos); --Totais de desconto
+
+  /* Procedure para efetuar estorno da baixa do titulo por pagamento - Demetrius Wolff - Mouts */
+  PROCEDURE pc_efetua_estorno_baixa_titulo (pr_cdcooper    IN INTEGER --Codigo Cooperativa
+                                           ,pr_cdagenci    IN INTEGER --Codigo Agencia
+                                           ,pr_nrdcaixa    IN INTEGER --Numero Caixa
+                                           ,pr_cdoperad    IN VARCHAR2 --Codigo operador
+                                           ,pr_dtmvtolt    IN DATE     --Data Movimento
+                                           ,pr_idorigem    IN INTEGER  --Identificador Origem pagamento
+                                           ,pr_nrdconta    IN INTEGER  --Numero da conta
+                                           ,pr_tab_titulos IN PAGA0001.typ_tab_titulos --Titulos a serem baixados
+                                           ,pr_cdcritic    OUT INTEGER     --Codigo Critica
+                                           ,pr_dscritic    OUT VARCHAR2     --Descricao Critica
+                                           ,pr_tab_erro    OUT GENE0001.typ_tab_erro); --Tabela erros
+
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                                 ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                                 ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                                 ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                                 ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                                 ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                                 ,pr_nmrotina IN VARCHAR2 DEFAULT 'DSCT0001'
+                                 ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                                 );
+                                 
+  /* Procedure para efetuar a liquidacao do bordero */
+  PROCEDURE pc_efetua_liquidacao_bordero (pr_cdcooper IN INTEGER --Codigo Cooperativa
+                                         ,pr_cdagenci IN INTEGER --Codigo Agencia
+                                         ,pr_nrdcaixa IN INTEGER --Numero do Caixa
+                                         ,pr_cdoperad IN VARCHAR2 --Codigo Operador
+                                         ,pr_dtmvtolt IN DATE     --Data Movimento
+                                         ,pr_idorigem IN INTEGER  --Identificador Origem
+                                         ,pr_nrdconta IN INTEGER  --Numero da Conta
+                                         ,pr_nrborder IN INTEGER  --Numero do Bordero
+                                         ,pr_tab_erro OUT GENE0001.typ_tab_erro --Tabela de erros
+                                         ,pr_des_erro OUT VARCHAR2 --identificador de erro
+                                         ,pr_cdcritic OUT VARCHAR2 --Codigo do erro
+                                         ,pr_dscritic OUT VARCHAR2 --Descricao do erro                              
+                                         );
+                                          
+END  DSCT0001;
+/
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -56,8 +247,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
                            (Gustavo Sene - GFT)
                27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
-                            quando chamado pelo CRPS538. (Mário- AMcom)
-
+			                quando chamado pelo CRPS538. (Mário- AMcom)
+                           
+               24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
+                            1) Na conta corrente do cooperado (tabela CRAPLCM)
+                               Valor do título descontando juros proporcional (histórico 2676 - RESGATE DE TITULO DESCONTADO)
+                            2) Nas movimentações da operação de desconto (tabela tbdsct_lancamento_bordero)
+                               Valor líquido do título (histórico 2677 - RESGATE DE TITULO DESCONTADO)
+                               Valor bruto do título (histórico 2678 - RESGATE DE TITULO DESCONTADO) --> Baixa da carteira
+                               Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
+                            (Paulo Penteado (GFT))
+    
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
@@ -4094,7 +4294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 15/02/2018
+    --  Data     : Maio/2016.                   Ultima atualizacao: 24/05/2018
     --
     --  Dados referentes ao programa:
     --
@@ -4112,6 +4312,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                           - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
     --                           - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
     --                          (Belli - Envolti - Chamado 851591)
+    --
+    --           24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
+    --                        1) Na conta corrente do cooperado (tabela CRAPLCM)
+    --                           Valor do título descontando juros proporcional (histórico 2676 - RESGATE DE TITULO DESCONTADO)
+    --                        2) Nas movimentações da operação de desconto (tabela tbdsct_lancamento_bordero)
+    --                           Valor líquido do título (histórico 2677 - RESGATE DE TITULO DESCONTADO)
+    --                           Valor bruto do título (histórico 2678 - RESGATE DE TITULO DESCONTADO) --> Baixa da carteira
+    --                           Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
+    --                        (Paulo Penteado (GFT))
     --
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
@@ -4147,6 +4356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             ,crapbdt.insitbdt
             ,crapbdt.txmensal
             ,crapbdt.dtlibbdt
+            ,crapbdt.flverbor -- Indicativo da versao das funcionalidades de bordero (0-Versao antiga/1-Versao nova)
             ,crapbdt.rowid
         FROM crapbdt
        WHERE crapbdt.cdcooper = pr_cdcooper
@@ -4289,7 +4499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cdhisest     INTEGER;
       vr_dtdivulg     DATE;
       vr_dtvigenc     DATE;
-      vr_cdhistor     INTEGER;
+      vr_cdhistortari INTEGER;
+      vr_cdhistorresg craphis.cdhistor%TYPE;
       vr_cdfvlcop     INTEGER;
       vr_vltarres     NUMBER(32,8);
       vr_rowid_craplat ROWID;
@@ -4506,7 +4717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                             ,pr_cdbattar  => vr_cdbattar  --Codigo Tarifa
                                             ,pr_vllanmto  => 1            --Valor Lancamento
                                             ,pr_cdprogra  => NULL         --Codigo Programa
-                                            ,pr_cdhistor  => vr_cdhistor  --Codigo Historico
+                                            ,pr_cdhistor  => vr_cdhistortari  --Codigo Historico
                                             ,pr_cdhisest  => vr_cdhisest  --Historico Estorno
                                             ,pr_vltarifa  => vr_vltarres  --Valor tarifa
                                             ,pr_dtdivulg  => vr_dtdivulg  --Data Divulgacao
@@ -4529,7 +4740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
                                          ,pr_nrdconta => rw_craptdb.nrdconta  --Numero da Conta
                                          ,pr_dtmvtolt => pr_dtresgat          --Data Lancamento
-                                         ,pr_cdhistor => vr_cdhistor          --Codigo Historico
+                                         ,pr_cdhistor => vr_cdhistortari      --Codigo Historico
                                          ,pr_vllanaut => vr_vltarres          --Valor lancamento automatico
                                          ,pr_cdoperad => pr_cdoperad          --Codigo Operador
                                          ,pr_cdagenci => 1                    --Codigo Agencia
@@ -4563,6 +4774,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       END IF;
 
       --**** RECALCULO DO TITULO(COBRANCA DE JUROS DE RESGATE) ****
+      IF  rw_crapbdt.flverbor = 1 THEN
+          vr_vlliqori := rw_craptdb.vlliquid;
+
+          dsct0003.pc_calcula_juros_simples_tit(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => rw_craptdb.nrborder
+                                               ,pr_nrborder => rw_craptdb.nrdconta
+                                               ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                               ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                               ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                               ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                               ,pr_vltitulo => rw_craptdb.vltitulo
+                                               ,pr_dtvencto => rw_craptdb.dtvencto
+                                               ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
+                                               ,pr_txmensal => rw_crapbdt.txmensal
+                                               ,pr_vldjuros => vr_vldjuros
+                                               ,pr_dtrefere => vr_dtultdat
+                                               ,pr_dscritic => vr_dscritic );
+
+          vr_vlliqnov := rw_craptdb.vltitulo - vr_vldjuros; 
+          
+          -- Lançar operação de desconto, Valor dos juros do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistor_resreap_dscto_tit
+                                                ,pr_vllanmto => vr_vldjuros
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF  vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+          END IF;
+      ELSE
       IF rw_craptdb.dtvencto > pr_dtmvtoan AND
          rw_craptdb.dtvencto < pr_dtresgat THEN
         vr_qtdprazo := rw_craptdb.dtvencto - rw_crapbdt.dtlibbdt;
@@ -4700,6 +4945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_vlliqori := rw_craptdb.vlliquid;
         vr_vlliqnov := rw_craptdb.vltitulo;
       END IF;-- Fim IF vr_qtdprazo > 0 THEN
+      END IF;
 
       --Selecionar lancamento juros desconto titulo
       FOR rw_craplj IN cr_crapljt2 ( pr_cdcooper => pr_cdcooper
@@ -4791,7 +5037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,10300         -- nrdolote
                         ,1             -- tplotmov
                         ,pr_cdoperad   -- cdoperad
-                        ,687           -- cdhistor
+                        ,vr_cdhistor_resgate -- cdhistor
                         ,pr_cdcooper)  -- cdcooper
                RETURNING craplot.rowid,
                          craplot.dtmvtolt,
@@ -4817,7 +5063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            ', nrdolote:' || '10300'     ||
                            ', tplotmov:' || '1'         ||
                            ', cdoperad:' || pr_cdoperad ||
-                           ', cdhistor:' || '687'       ||
+                           ', cdhistor:' || vr_cdhistor_resgate ||
                            ', cdcooper:' || pr_cdcooper ||
                            '. ' ||sqlerrm;
             RAISE vr_exc_erro;
@@ -4854,6 +5100,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           RAISE vr_exc_erro;
       END;
 
+      IF  rw_crapbdt.flverbor = 1 THEN
+          vr_cdhistorresg := vr_cdhistor_resgcta_dscto_tit;
+
+          -- Lançar operação de desconto, Valor líquido do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistor_resopcr_dscto_tit
+                                                ,pr_vllanmto => vr_vlliqori
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          
+          -- Lançar operação de desconto, Valor bruto do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistor_resbaix_dscto_tit
+                                                ,pr_vllanmto => rw_craptdb.vltitulo
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF  vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+          END IF;
+      ELSE
+          vr_cdhistorresg := vr_cdhistor_resgate;
+      END IF;  
+      
       --> Cria lancamento da conta do associado ..................
       BEGIN
         INSERT INTO craplcm
@@ -4877,7 +5157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     ,rw_craptdb.nrdconta               -- nrdconta
                     ,rw_craplot.nrseqdig               -- nrdocmto
                     ,vr_vllanmto                       -- vllanmto
-                    ,687                               -- cdhistor
+                    ,vr_cdhistorresg                   -- cdhistor
                     ,rw_craplot.nrseqdig               -- nrseqdig
                     ,rw_craptdb.nrdconta               -- nrdctabb
                     ,0                                 -- nrautdoc
@@ -4899,7 +5179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                          ', nrdconta:' || rw_craptdb.nrdconta ||
                          ', nrdocmto:' || rw_craplot.nrseqdig ||
                          ', vllanmto:' || vr_vllanmto         ||
-                         ', cdhistor:' || '687'               ||
+                         ', cdhistor:' || vr_cdhistorresg     ||
                          ', nrseqdig:' || rw_craplot.nrseqdig ||
                          ', nrdctabb:' || rw_craptdb.nrdconta ||
                          ', nrautdoc:' || '0'                 ||
@@ -6369,3 +6649,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   END pc_controla_log_batch;
 
 END  DSCT0001;
+/

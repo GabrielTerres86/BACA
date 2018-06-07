@@ -749,6 +749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
       13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôes (Luis Fernando (GFT)
       23/04/2018 - Alteração para que quando seja adicionado um titulo ao bordero, alterar o status do bordero para 'Em estudo' (Vitor (GFT))
       25/04/2018 - Alterado o calculo das porcentagens da Liquidez (Vitor (GFT))
+      21/05/2018 - Adicionada procedure para trazer se a esteira e o motor estão em contingencia (Luis Fernando (GFT))
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -2461,6 +2462,8 @@ PROCEDURE pc_analisar_proposta(pr_tpenvest in varchar2               --> Tipo do
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_dsmensag varchar2(32767);
+   vr_dtmvtolt DATE;
+   
 
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2483,6 +2486,8 @@ BEGIN
    pr_des_erro := pr_xmllog; -- somente para não haver hint, caso for usado, pode remover essa linha
    pr_des_erro := 'OK';
    pr_nmdcampo := null;
+
+   vr_dtmvtolt := to_date(pr_dtmovito, 'DD/MM/RRRR');
 
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
@@ -2507,7 +2512,7 @@ BEGIN
                                       ,pr_nrctrlim => pr_nrctrlim
                                       ,pr_tpctrlim => pr_tpctrlim
                                       ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtmovito => pr_dtmovito
+                                      ,pr_dtmvtolt => vr_dtmvtolt
                                       ,pr_dsmensag => vr_dsmensag
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic
@@ -2597,6 +2602,7 @@ PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  crawlim.nrctrlim%type --> Nu
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_dsmensag varchar2(32767);
+   vr_dtmvtolt DATE;
    
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2620,6 +2626,8 @@ BEGIN
    pr_des_erro := 'OK';
    pr_nmdcampo := null;
 
+   vr_dtmvtolt := to_date(pr_dtmovito, 'DD/MM/RRRR');
+
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
                            ,pr_nmdatela => vr_nmdatela
@@ -2637,7 +2645,7 @@ BEGIN
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrctrlim => pr_nrctrlim
                                     ,pr_tpctrlim => pr_tpctrlim
-                                    ,pr_dtmvtolt => pr_dtmovito
+                                    ,pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_nmarquiv => null
                                     ,vr_flgdebug => 'N'
                                     ,pr_dsmensag => vr_dsmensag
@@ -3207,7 +3215,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.tpctrlim = lim.tpctrlim and
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
-   where  case --   mostrar propostas em situações de analise (em estudo) ou canceladas dentro de x dias
+   where  case --   mostrar propostas em situações de analise (em estudo) e canceladas dentro de x dias
                when lim.insitlim in (1,3,5,6) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and
@@ -5044,59 +5052,58 @@ BEGIN
     END LOOP;
     
 
-        /*INSERE UM NOVO BORDERÔ*/
-        INSERT INTO
-               crapbdt
-               (nrborder,
-                nrctrlim,
-                cdoperad,
-                dtmvtolt,
-                cdagenci,
-                cdbccxlt,
-                nrdolote,
-                nrdconta,
-                dtlibbdt,
-                cdopelib,
-                insitbdt,
-                hrtransa,
-                txmensal,
-                cddlinha,
-                cdcooper,
-                flgdigit,
-                PROGRESS_RECID,
-                cdopeori,
-                cdageori,
-                dtinsori,
-                cdopcolb,
-                cdopcoan,
-                dtrefatu,
-                nrseqtdb
-                )
-                VALUES(vr_nrborder,
-                rw_craplim.nrctrlim,
-                pr_cdoperad,
-                pr_dtmvtolt,
-                pr_cdagenci,
-                700,
-                vr_nrdolote,
-                pr_nrdconta,
-                null,
-                null,
-                1,        -- A principio o status inicial é EM ESTUDO
-                to_char(SYSDATE, 'SSSSS'),
-                rw_crapldc.txmensal,
-                rw_craplim.cddlinha,
-                pr_cdcooper,
-                null,
-                null,
-                pr_cdoperad,
-                pr_cdagenci,
-                sysdate,
-                pr_cdoperad,
-                pr_cdagenci,
-                null,
-                vr_qtregist
-                );
+    /*INSERE UM NOVO BORDERÔ*/
+    INSERT INTO crapbdt
+           (/*01*/ nrborder
+           ,/*02*/ nrctrlim
+           ,/*03*/ cdoperad
+           ,/*04*/ dtmvtolt
+           ,/*05*/ cdagenci
+           ,/*06*/ cdbccxlt
+           ,/*07*/ nrdolote
+           ,/*08*/ nrdconta
+           ,/*09*/ dtlibbdt
+           ,/*10*/ cdopelib
+           ,/*11*/ insitbdt
+           ,/*12*/ hrtransa
+           ,/*13*/ txmensal
+           ,/*14*/ cddlinha
+           ,/*15*/ cdcooper
+           ,/*16*/ flgdigit
+           ,/*17*/ progress_recid
+           ,/*18*/ cdopeori
+           ,/*19*/ cdageori
+           ,/*20*/ dtinsori
+           ,/*21*/ cdopcolb
+           ,/*22*/ cdopcoan
+           ,/*23*/ dtrefatu
+           ,/*24*/ nrseqtdb
+           ,/*25*/ flverbor )
+    VALUES (/*01*/ vr_nrborder
+           ,/*02*/ rw_craplim.nrctrlim
+           ,/*03*/ pr_cdoperad
+           ,/*04*/ pr_dtmvtolt
+           ,/*05*/ pr_cdagenci
+           ,/*06*/ 700
+           ,/*07*/ vr_nrdolote
+           ,/*08*/ pr_nrdconta
+           ,/*09*/ NULL
+           ,/*10*/ NULL
+           ,/*11*/ 1        -- A principio o status inicial é EM ESTUDO
+           ,/*12*/ to_char(SYSDATE, 'SSSSS')
+           ,/*13*/ rw_crapldc.txmensal
+           ,/*14*/ rw_craplim.cddlinha
+           ,/*15*/ pr_cdcooper
+           ,/*16*/ NULL
+           ,/*17*/ NULL
+           ,/*18*/ pr_cdoperad
+           ,/*19*/ pr_cdagenci
+           ,/*20*/ SYSDATE
+           ,/*21*/ pr_cdoperad
+           ,/*22*/ pr_cdagenci
+           ,/*23*/ NULL
+           ,/*24*/ vr_qtregist
+           ,/*25*/ 1 );
       
       pr_tab_borderos(1).nrborder := vr_nrborder;
                 
