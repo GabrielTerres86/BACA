@@ -998,14 +998,14 @@ create or replace package body cecred.PAGA0002 is
 
                   12/04/2016 - Remocao Aprovacao Favorecido. (Jaison/Marcos - SUPERO)
 
-                  19/05/2016 - Ajuste na mensagem de retorno para agendamentos
+          19/05/2016 - Ajuste na mensagem de retorno para agendamentos
                    (Adriano - M117.)
 
                   03/06/2016 - Ajuste para chamar a rotina de monitoramento somente quando
                                operação de TED
                                (Adriano).
 
-                  06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
+          06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                                (Adriano - SD509480).
 
                   21/11/2016 - Inclusao de parametros na chamada da rotina pc_executa_envio_ted.
@@ -3206,7 +3206,7 @@ create or replace package body cecred.PAGA0002 is
     END IF;
 
     -- se for para verificar o saldo
-    IF pr_versaldo = 1 AND pr_nrcpfope = 0 AND vr_idastcjt = 0 THEN
+    IF pr_idagenda = 1 AND pr_versaldo = 1 AND pr_nrcpfope = 0 AND vr_idastcjt = 0 THEN
       -- Definir descrição da transação
 
       -- Buscar limite de credito
@@ -8552,7 +8552,7 @@ create or replace package body cecred.PAGA0002 is
                   END IF;
                 END IF;
 
-              END LOOP;
+    END LOOP;
 
           END LOOP;
 
