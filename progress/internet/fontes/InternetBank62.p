@@ -273,8 +273,12 @@ FOR EACH tt-titulos-sacado-dda NO-LOCK:
                           "zzz,zzz,zzz,zz9.99")) + "</vljurcal>" +
            "<vlmulcal>" + TRIM(STRING(tt-titulos-sacado-dda.vlmulcal,
                           "zzz,zzz,zzz,zz9.99")) + "</vlmulcal>" +
-           "<vltotcob>" + TRIM(STRING(tt-titulos-sacado-dda.vltotcob,
-                          "zzz,zzz,zzz,zz9.99")) + "</vltotcob>" +
+           "<vltotcob>" + (IF tt-titulos-sacado-dda.vltotcob <> 0 THEN 
+                             TRIM(STRING(tt-titulos-sacado-dda.vltotcob,
+                                  "zzz,zzz,zzz,zz9.99"))
+                           ELSE
+                             TRIM(STRING(tt-titulos-sacado-dda.vlliquid,
+                                  "zzz,zzz,zzz,zz9.99"))) + "</vltotcob>" +
            "<dtlimpgt>" + (IF  tt-titulos-sacado-dda.dtlimpgt = ?  THEN 
                                ""
                            ELSE 

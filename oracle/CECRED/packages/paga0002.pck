@@ -3199,7 +3199,7 @@ create or replace package body cecred.PAGA0002 is
     END IF;
 
     -- se for para verificar o saldo
-    IF pr_versaldo = 1 AND pr_nrcpfope = 0 AND vr_idastcjt = 0 THEN
+    IF pr_idagenda = 1 AND pr_versaldo = 1 AND pr_nrcpfope = 0 AND vr_idastcjt = 0 THEN
       -- Definir descrição da transação
 
       -- Buscar limite de credito

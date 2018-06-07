@@ -201,7 +201,8 @@ EMPTY TEMP-TABLE xml_operacao146.
                                    "<qtdlinok>" + aux_qtdlinok + "</qtdlinok>" +
                                    "<qtlinerr>" + aux_qtlinerr + "</qtlinerr>" +
                                    "<qtlintot>" + aux_qtlintot + "</qtlintot>" +
-                                   "<dtrefere>" + aux_dtrefere + "</dtrefere>" .
+                                   "<dtrefere>" + aux_dtrefere + "</dtrefere>" +
+                                   "<nmarquiv>" + pr_dsarquiv + "</nmarquiv>".
   
     FOR EACH xml_operacao146 WHERE INT (xml_operacao146.nrseqpag) <= 15 NO-LOCK:   
       

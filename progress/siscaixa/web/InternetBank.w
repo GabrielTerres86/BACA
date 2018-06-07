@@ -713,6 +713,8 @@
 				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
                               ObterDetalheTituloCobranca (PRJ285 - Novo IB)
 
+                 01/06/2018 - Adicionar o parametro dstelsms no IB66 para que seja consumido ao 
+                              processar a instruça o95. Prj. 285 - Nova Conta Online (Douglas)
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -4799,7 +4801,8 @@ PROCEDURE proc_operacao66:
            aux_vlabatim = DECI(GET-VALUE("vlabatim"))
            aux_cdtpinsc = INTE(GET-VALUE("inpessoa"))
            aux_vldescto = DECI(GET-VALUE("vldescto"))
-           aux_inavisms = INTE(GET-VALUE("inavisms")).
+           aux_inavisms = INTE(GET-VALUE("inavisms"))
+           aux_nrcelsac = DECI(GET-VALUE("dstelsms")).
 
     RUN sistema/internet/fontes/InternetBank66.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -4814,6 +4817,7 @@ PROCEDURE proc_operacao66:
                                                   INPUT aux_cdtpinsc,
                                                   INPUT aux_vldescto,
                                                   INPUT aux_inavisms,
+                                                  INPUT aux_nrcelsac,
                                                  OUTPUT aux_dsinserr).
 
     {&out} aux_dsinserr. 
