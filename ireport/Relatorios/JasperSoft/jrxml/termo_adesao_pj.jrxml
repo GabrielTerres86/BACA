@@ -1,0 +1,1023 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-06-01T09:30:56 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pj.rxml" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="32817cf7-217d-4d56-9fe9-f759e1107bf2">
+	<queryString language="xPath">
+		<![CDATA[/raiz]]>
+	</queryString>
+	<field name="postoAtendimento" class="java.lang.String">
+		<fieldDescription><![CDATA[postoAtendimento]]></fieldDescription>
+	</field>
+	<field name="contaCorrente" class="java.lang.String">
+		<fieldDescription><![CDATA[contaCorrente]]></fieldDescription>
+	</field>
+	<field name="tipoCartao" class="java.lang.String">
+		<fieldDescription><![CDATA[tipoCartao]]></fieldDescription>
+	</field>
+	<field name="razaoSocial" class="java.lang.String">
+		<fieldDescription><![CDATA[razaoSocial]]></fieldDescription>
+	</field>
+	<field name="cnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[cnpj]]></fieldDescription>
+	</field>
+	<field name="nomeFantasia" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeFantasia]]></fieldDescription>
+	</field>
+	<field name="dataConstituicao" class="java.lang.String">
+		<fieldDescription><![CDATA[dataConstituicao]]></fieldDescription>
+	</field>
+	<field name="nomeImpresso" class="java.lang.String">
+		<fieldDescription><![CDATA[nomeImpresso]]></fieldDescription>
+	</field>
+	<field name="faturamentoAnual" class="java.lang.String">
+		<fieldDescription><![CDATA[faturamentoAnual]]></fieldDescription>
+	</field>
+	<field name="foneComercial" class="java.lang.String">
+		<fieldDescription><![CDATA[foneComercial]]></fieldDescription>
+	</field>
+	<field name="formaPagamento" class="java.lang.String">
+		<fieldDescription><![CDATA[formaPagamento]]></fieldDescription>
+	</field>
+	<field name="diaPagamento" class="java.lang.String">
+		<fieldDescription><![CDATA[diaPagamento]]></fieldDescription>
+	</field>
+	<field name="nrctrd" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctrd]]></fieldDescription>
+	</field>
+	<field name="foneCelular" class="java.lang.String">
+		<fieldDescription><![CDATA[foneCelular]]></fieldDescription>
+	</field>
+	<field name="rendimentos" class="java.lang.String">
+		<fieldDescription><![CDATA[rendimentos]]></fieldDescription>
+	</field>
+	<field name="limiteSugerido" class="java.lang.String">
+		<fieldDescription><![CDATA[limiteSugerido]]></fieldDescription>
+	</field>
+	<field name="localEData" class="java.lang.String">
+		<fieldDescription><![CDATA[localEData]]></fieldDescription>
+	</field>
+	<field name="dadosSolicitacao" class="java.lang.String">
+		<fieldDescription><![CDATA[dadosSolicitacao]]></fieldDescription>
+	</field>
+	<field name="dadosAprovacao" class="java.lang.String">
+		<fieldDescription><![CDATA[dadosAprovacao]]></fieldDescription>
+	</field>
+	<field name="dataAprovacao" class="java.lang.String">
+		<fieldDescription><![CDATA[dataAprovacao]]></fieldDescription>
+	</field>
+	<field name="horaAssinatura" class="java.lang.String">
+		<fieldDescription><![CDATA[horaAssinatura]]></fieldDescription>
+	</field>
+	<field name="spc" class="java.lang.String">
+		<fieldDescription><![CDATA[spc]]></fieldDescription>
+	</field>
+	<field name="serasa" class="java.lang.String">
+		<fieldDescription><![CDATA[serasa]]></fieldDescription>
+	</field>
+	<field name="cdgraupr" class="java.lang.String">
+		<fieldDescription><![CDATA[cdgraupr]]></fieldDescription>
+	</field>
+	<field name="limiteEsteira" class="java.lang.String">
+		<fieldDescription><![CDATA[limiteEsteira]]></fieldDescription>
+	</field>
+	<field name="limiteContratado" class="java.lang.String">
+		<fieldDescription><![CDATA[limiteContratado]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="773" splitType="Stretch">
+			<rectangle>
+				<reportElement x="0" y="346" width="550" height="35" uuid="fc69613b-72b9-4884-bdbd-0aa2a06716a2">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Solid"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="0" y="0" width="550" height="60" backcolor="#E0AD04" uuid="13a4f2e2-6300-4696-91fd-e6489294398c"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="187" y="20" width="249" height="30" forecolor="#FAF7F7" uuid="67bbfe29-cd58-49a7-9251-f4fe795ac9d6"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Termo de Adesão Pessoa Jurídica]]></text>
+			</staticText>
+			<image>
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" mode="Transparent" x="7" y="20" width="180" height="30" uuid="c49488c0-e568-4f8f-8b0b-58e8e7e7bbd0"/>
+				<imageExpression><![CDATA["/logo-cecred-cartoes.png"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="0" y="94" width="280" height="15" uuid="3edc6185-0950-443f-98ce-b64d5db5a9b9"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[1.1 Posto de Atendimento:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="280" y="94" width="270" height="15" uuid="608ac760-2e30-4db6-b7a6-b08741a61cf1"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[1.2 Conta corrente:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="280" y="109" width="270" height="20" uuid="8378fde8-ffbc-4e3c-8d33-88a8d0c9c8f6"/>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{contaCorrente}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="109" width="280" height="20" uuid="173c5897-fcfe-414d-87d5-0733446e2851"/>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{postoAtendimento}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="0" y="152" width="550" height="20" uuid="5c43ec4b-b3aa-42d7-9dd9-45f28d1f67ab">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Solid"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="49" y="153" width="90" height="18" uuid="226d34f7-e476-454a-873d-396e4471ea97">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[2.1 CECRED Empresas]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="200" y="153" width="130" height="18" uuid="70545890-9790-47ab-b842-92b02923417a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[2.2 CECRED Empresas - Débito]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="376" y="153" width="159" height="18" uuid="26302e28-0fd9-4a20-b3a6-5db790479ccf">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[2.3 CECRED Empresas - Puro Crédito]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="30" y="156" width="15" height="13" uuid="be385b0e-5107-49a3-8602-65f8bb8341cb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{tipoCartao}.equalsIgnoreCase( "15" ) &&!( $F{cdgraupr}.equals("9")))? "X":""]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="181" y="156" width="15" height="13" uuid="b7cc300a-1b61-4a2b-b4d7-3d3e2e6f6e42">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tipoCartao}.equalsIgnoreCase( "17" )? "X":""]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="358" y="156" width="15" height="13" uuid="5f407c6a-590e-406d-8b56-ff87e0d2ce72">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{tipoCartao}.equalsIgnoreCase( "15" ) && $F{cdgraupr}.equals("9"))? "X":""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="196" width="350" height="15" uuid="9e3463cf-4338-47b8-b5e5-110ac90672f7"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.1 Razão social:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="350" y="196" width="200" height="15" uuid="7f7b6986-1d22-4136-b49a-78a1630908da"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.2 CNPJ:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="350" y="211" width="200" height="15" uuid="e17b3168-7237-49f9-9e4a-b97c83bc575f"/>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{cnpj}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="211" width="350" height="15" uuid="8b2109eb-b3d6-4863-86e7-00f751b73a5e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{razaoSocial}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="350" y="241" width="200" height="15" uuid="bb04be49-9cd6-42a8-83d4-91fb4438a0e5"/>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{dataConstituicao}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="241" width="350" height="15" uuid="a5b9edce-94c8-425b-936b-62345f0e8050">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{nomeFantasia}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="226" width="350" height="15" uuid="6bcffb95-d160-4438-b595-42b5f68a7204"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.3 Nome Fantasia:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="350" y="226" width="200" height="15" uuid="5f71ee0a-1fd1-4e1c-b289-c3d9c3051966"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.4 Data da constituição:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="271" width="550" height="15" uuid="453ab3d4-022a-49c3-ab0a-e2d225aa8359">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{nomeImpresso}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="256" width="550" height="15" uuid="98a19f84-d2c7-4799-a48b-3952ae9e8f12"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.5 Nome a ser impresso no cartão:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="301" width="550" height="15" uuid="f0a4027e-d5a3-4888-b42e-bea51d03a832">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{faturamentoAnual}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="286" width="550" height="15" uuid="15b6c61b-e1c5-4b59-8c16-bd5995536e10">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.6 Faturamento anual (R$):]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="331" width="275" height="15" uuid="f50eda46-34c3-464a-ae55-2f3d656a74e9">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{foneComercial}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="316" width="275" height="15" uuid="6d2466dc-07cc-43ff-b9ef-466c8e0ec9b7"/>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.7 Telefone comercial:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="275" y="331" width="275" height="15" uuid="aa960ee7-77f9-4e1e-a8db-28a4a2c28a13">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{foneCelular}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="275" y="316" width="275" height="15" uuid="8626f451-c7af-4a1b-8302-aa3a69f2a371"/>
+				<box leftPadding="10">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.8 Celular:]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="0" y="398" width="275" height="20" uuid="addd8818-8ba5-459f-9de6-1b33267e1310">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="280" y="398" width="270" height="20" uuid="42a1cacb-5dfa-4441-8847-764578694c8a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<textField>
+				<reportElement x="2" y="403" width="13" height="13" uuid="060f270e-98a1-47fe-b708-a61f3f639e26">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{formaPagamento}.equalsIgnoreCase( "debitoTotal" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="17" y="403" width="75" height="13" uuid="377b5a27-963b-4f75-bb4b-244ef4977372">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box topPadding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[4.1 Débito aut. (total)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="109" y="403" width="85" height="13" uuid="74d627fe-52f1-40b8-b6a4-0533c7335504">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box topPadding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[4.2 Débito aut. (mínimo)]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="94" y="403" width="13" height="13" uuid="968162d0-d523-4153-82dd-c87599cd02f5">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{formaPagamento}.equalsIgnoreCase( "debitoMinimo" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="208" y="403" width="65" height="13" uuid="ac9a68fd-3e19-4316-964d-22cf40b69e3e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box topPadding="1"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[4.3 Fatura (Boleto)]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="193" y="403" width="13" height="13" uuid="f0deac71-12c2-403e-9e21-aeaf962d9678">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{formaPagamento}.equalsIgnoreCase( "fatura" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="298" y="403" width="20" height="13" uuid="7b344b90-bacd-4cb1-8609-3ddef368a422">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[03]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="282" y="403" width="15" height="13" uuid="ad907ef1-b923-4af9-bb03-87707d166648">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{diaPagamento}.equalsIgnoreCase( "3" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="353" y="403" width="20" height="13" uuid="54142b54-0314-4243-a667-35e187a6dfe5">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[07]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="337" y="403" width="15" height="13" uuid="05e87c0d-b1bd-4d23-98be-1a4d54f270a5">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{diaPagamento}.equalsIgnoreCase( "7" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="416" y="403" width="20" height="13" uuid="e8249ccd-03f5-4db6-9042-39b0a6620ef5">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[11]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="400" y="403" width="15" height="13" uuid="350d32b3-1ee2-414d-84d9-78028e68a9cf">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{diaPagamento}.equalsIgnoreCase( "11" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="475" y="403" width="20" height="13" uuid="c3b5ce78-3314-4180-9f9a-3e448e5e5687">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[19]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="459" y="403" width="15" height="13" uuid="3dffb041-a741-423c-a7bd-d7489297ca97">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{diaPagamento}.equalsIgnoreCase( "19" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="527" y="403" width="20" height="13" uuid="ffd29162-cf6d-42e0-b801-d41042cf6a83">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[22]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="511" y="403" width="15" height="13" uuid="dacc822a-4a06-4eeb-a906-f97fa68c7254">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{diaPagamento}.equalsIgnoreCase( "22" )? "X" : ""]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="438" y="20" width="100" height="30" forecolor="#F5100C" backcolor="#FFFFFF" uuid="eda9651e-d87d-4ff2-b6e9-cd344d873e2b"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrctrd}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="346" width="550" height="15" uuid="797dfbed-cf1a-46e8-bedf-7ca263e4714d"/>
+				<box topPadding="1" leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3.9 Restrições:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="139" y="365" width="15" height="13" uuid="e5762a0a-1552-4731-9b2b-755831f534d9">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{spc}.equalsIgnoreCase("S")? "X":" "]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="157" y="362" width="83" height="18" uuid="50d581a5-64c5-4b3b-a7c2-215c71b01e23">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[SPC]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="353" y="365" width="15" height="13" uuid="48c890f9-9ec1-4b8f-85f6-adf81cc12a3f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{serasa}.equalsIgnoreCase("S")? "X":" "]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="372" y="362" width="86" height="18" uuid="f106fc89-0259-4a43-af60-4cdce7711ca0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[SERASA]]></text>
+			</staticText>
+			<subreport>
+				<reportElement x="0" y="438" width="550" height="20" uuid="93ebf435-8f30-4fbf-abb3-c867d1525319">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//portadores/portador")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["termo_adesao_pj_portadores.jasper"]]></subreportExpression>
+			</subreport>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="79" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="4bcb78bd-1164-4e45-8163-4b4cfe177267">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[1 - Cooperativa]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="138" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="b15dc94e-3a93-41b5-a352-fb6c6b1d00ea">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[2 - Tipo de Cartão CECRED]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="181" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="66086b0b-b4b9-4c21-9515-1085e6cd9751">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[3 - Dados do(a) Cooperado(a)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="386" width="275" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="cdeadab6-aef4-43e2-9ee0-e55a64fca173">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[4 - Forma de pagamento de seu Cartão CECRED]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="280" y="386" width="270" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="9550a7fa-3eef-40a5-85ac-7b4f9ef6e3b9">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[5 - Dia para pagamento
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="423" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="4ed6d342-2caf-4883-8a5d-4dec567fa61d">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[6 - Portadores]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" mode="Opaque" x="0" y="459" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="3a386bbe-4e95-4995-b357-dcc76a112d5d">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[7 - Declarações gerais]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="0" y="474" width="550" height="201" uuid="6edd9156-6ca2-4ac2-9aa6-f903721952a7">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box topPadding="5" leftPadding="5" rightPadding="5">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Justified" verticalAlignment="Justified">
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[O(A) Cooperado(a) declara conhecer e aceitar as cláusulas e condições gerais constantes no Instrumento Particular de Prestação de Serviços de Emissão, Administração e Utilização do Cartão CECRED, registradas no Cartório do 1º Ofício de Registro de Títulos e Documentos de Brasília-DF, sob o número 879311 em 03 de junho de 2014. Tal instrumento encontra-se disponível para consulta no site da Cooperativa. Havendo aprovação desta proposta, o(a) Cooperado(a) declara aceitar o limite de crédito concedido pela Cooperativa, no valor constante neste Termo, para o fim exclusivo de utilização do Cartão CECRED, sabendo que o limite de compra à vista será em valor equivalente. Os valores representados nas faturas mensais, correspondentes à utilização do cartão, inclusive os apurados em decorrência de seu financiamento/parcelamento automático, são considerados líquidos, certos e exigíveis. O(a) Cooperado(a) assume o pagamento dos valores relativos à anuidade do Cartão CECRED, podendo a Cooperativa isentar ou proporcionar desconto na referida cobrança, conforme tabela “Vantagem Progressiva” publicada em site específico para acesso do(a) Cooperado(a). A eventual redução e/ou isenção nas tarifas pactuadas, por iniciativa da Cooperativa, não importará em direito adquirido do(a) Cooperado(a), podendo essa, a qualquer tempo, restabelecer a cobrança das tarifas pela prestação do serviço. O(a) Cooperado(a) autoriza a Cooperativa debitar de sua conta acima identificada, o valor decorrente do uso do Cartão CECRED, quando houver escolha das opções constantes nos itens 4.1 ou 4.2. Nestes casos, não havendo saldo disponível para pagamento da fatura na data do vencimento, o débito será realizado pelo prazo de 01 (um) dia, com objetivo de atingir o valor correspondente. Declara estar ciente que na hipótese de inadimplemento de 03 (três) faturas, o saldo devedor acrescido das parcelas vincendas será debitado da conta indicada neste Termo. Na ausência de saldo suficiente para pagamento integral, a Cooperativa verificará diariamente a existência de saldos e, a partir do momento em que a conta apresentar saldo disponível, independentemente do valor, realizará o débito total ou parcial, até o limite disponível na conta corrente, utilizando limite de crédito, se contratado. Caso não seja verificado o pagamento, o(a) Cooperado(a) estará inadimplente no cumprimento das obrigações contratuais do Cartão CECRED, podendo a Cooperativa inscrever o nome do(a) Cooperado(a) nos Órgãos de Proteção ao Crédito. O limite de crédito e a modalidade do Cartão CECRED poderão ser alterados unilateralmente pela Cooperativa ou mediante solicitação do(a) cooperado(a), dispensando a necessidade de assinatura de novo termo de adesão, sendo que a utilização do novo limite e/ou modalidade é considerada aceitação tácita. Declara, ainda, estar ciente que, quando optar pelo cancelamento do Cartão CECRED diretamente em seu Posto de Atendimento, deverá formalizar tal pedido, através de termo devidamente assinado. Todos os atos praticados pelo(a) Cooperado(a) na conta online (site da Cooperativa) ou no Posto de Atendimento, mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidas, para todos os fins de direito, como válidos, verdadeiros, processados por meios seguros e como assinatura digital. Por fim, declara que, eventuais cartões adicionais solicitados posteriormente à assinatura do presente Termo de Adesão, reger-se-ão pelas mesmas regras e condições ora definidas.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="0" y="675" width="550" height="15" uuid="602d13ca-43ad-4e10-bb57-f46bfcb79510">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[Local e Data:]]></text>
+			</staticText>
+			<textField>
+				<reportElement positionType="Float" x="0" y="690" width="550" height="15" uuid="21705d8e-375d-4df7-8ecd-db876227cc19">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{localEData}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="194">
+			<staticText>
+				<reportElement x="0" y="28" width="138" height="15" uuid="48477376-98ec-4298-a898-094547a7cbfd">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8.1 Rendimentos:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="43" width="138" height="15" uuid="05098ad3-001a-4b15-8bfa-8197fc1b02db">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{rendimentos}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="138" y="28" width="137" height="15" uuid="2565096e-0a96-4e8e-b9de-cecfe21d30d4">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8.2 Limite Sugerido:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="138" y="43" width="137" height="15" uuid="b1d56031-077f-48b5-9a07-06c4b87d4fa3">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{limiteSugerido}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="275" y="73" width="275" height="49" uuid="314387ea-56f8-4583-bc81-412808019f95">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{dadosAprovacao}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="73" width="275" height="49" uuid="24f57be5-51c4-4d6d-8aa3-1d9591f75ef4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{dadosSolicitacao}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="58" width="275" height="15" uuid="83407f05-a129-43bc-b351-fff08b2bf0da">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8.5 Responsável pela solicitação:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="275" y="58" width="275" height="15" uuid="f6367644-8975-4829-bde1-4b6402c8d854">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8.6 Responsável pela aprovação:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="13" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="5d04c675-8fb6-48ab-8700-678043d340f8">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8 - Para uso exclusivo da coperativa
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="129" width="550" height="15" forecolor="#FFFFFF" backcolor="#E0AD40" uuid="4945d865-c1c9-40c6-a029-00dc4649d3a4">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<topPen lineWidth="0.5" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[9 -Assinatura do cooperado]]></text>
+			</staticText>
+			<subreport>
+				<reportElement stretchType="RelativeToTallestObject" x="-20" y="124" width="550" height="70" uuid="f807a9c1-09d4-4434-ab6b-e5f87297cc12">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//assinaturas/assinatura")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["termo_adesao_pj_assinaturas.jasper"]]></subreportExpression>
+			</subreport>
+			<staticText>
+				<reportElement x="413" y="28" width="137" height="15" uuid="2b8e75b3-4524-47da-9d3a-5434ac1be850">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8.4 Limite Esteira:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="413" y="43" width="137" height="15" uuid="d9b1d6ee-ec4c-46be-b7d7-add79488db96">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{limiteEsteira}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="275" y="28" width="138" height="15" uuid="1fd4fc41-af33-4958-9139-4c3ff84f0a3d">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="10">
+					<leftPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<text><![CDATA[8.3 Limite Contratado:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="275" y="43" width="138" height="15" uuid="6569c8b3-f655-43dc-85cf-026aec6bec2f">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box leftPadding="15">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{limiteContratado}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
