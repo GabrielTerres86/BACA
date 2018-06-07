@@ -29,6 +29,13 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   ---------------------------------------------------------------------------------------------------------------
 
+  -- Constantes
+  vr_cdhistor_resgate           CONSTANT craphis.cdhistor%TYPE := 687;
+  vr_cdhistor_resgcta_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2676; --RESGATE C/C
+  vr_cdhistor_resopcr_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2677; --RESGATE Operacao Credito
+  vr_cdhistor_resbaix_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2678; --RESGATE Baixa da carteira
+  vr_cdhistor_resreap_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2679; --RESGATE Baixa rendas a apropriar
+ 
   --Tipo de Desconto de Títulos
   TYPE typ_tot_descontos IS RECORD --(b1wgen0030tt.i/tt-tot_descontos)
     (vldscchq NUMBER
@@ -164,6 +171,22 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
                                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'DSCT0001'
                                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
                                  );
+                                 
+  /* Procedure para efetuar a liquidacao do bordero */
+  PROCEDURE pc_efetua_liquidacao_bordero (pr_cdcooper IN INTEGER --Codigo Cooperativa
+                                         ,pr_cdagenci IN INTEGER --Codigo Agencia
+                                         ,pr_nrdcaixa IN INTEGER --Numero do Caixa
+                                         ,pr_cdoperad IN VARCHAR2 --Codigo Operador
+                                         ,pr_dtmvtolt IN DATE     --Data Movimento
+                                         ,pr_idorigem IN INTEGER  --Identificador Origem
+                                         ,pr_nrdconta IN INTEGER  --Numero da Conta
+                                         ,pr_nrborder IN INTEGER  --Numero do Bordero
+                                         ,pr_tab_erro OUT GENE0001.typ_tab_erro --Tabela de erros
+                                         ,pr_des_erro OUT VARCHAR2 --identificador de erro
+                                         ,pr_cdcritic OUT VARCHAR2 --Codigo do erro
+                                         ,pr_dscritic OUT VARCHAR2 --Descricao do erro                              
+                                         );
+                                          
 END  DSCT0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
@@ -225,6 +248,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            (Gustavo Sene - GFT)               
                27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
 			                quando chamado pelo CRPS538. (Mário- AMcom)
+                           
+               24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
+                            1) Na conta corrente do cooperado (tabela CRAPLCM)
+                               Valor do título descontando juros proporcional (histórico 2676 - RESGATE DE TITULO DESCONTADO)
+                            2) Nas movimentações da operação de desconto (tabela tbdsct_lancamento_bordero)
+                               Valor líquido do título (histórico 2677 - RESGATE DE TITULO DESCONTADO)
+                               Valor bruto do título (histórico 2678 - RESGATE DE TITULO DESCONTADO) --> Baixa da carteira
+                               Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
+                            (Paulo Penteado (GFT))
     
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -540,6 +572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,pr_nrborder IN crapbdt.nrborder%type) IS
         SELECT crapbdt.txmensal
               ,crapbdt.vltaxiof
+              ,crapbdt.flverbor
         FROM crapbdt
         WHERE crapbdt.cdcooper = pr_cdcooper
         AND   crapbdt.nrborder = pr_nrborder;
@@ -1081,6 +1114,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                   ,pr_dtrefere => vr_dtrefere
                                   ,pr_insittit => 4) LOOP
 
+        /*#########BUSCAR BDT BORDERO##################################*/
+        --Selecionar Bordero de titulos
+        OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
+                        ,pr_nrborder => rw_craptdb.nrborder);
+        --Posicionar no proximo registro
+        FETCH cr_crapbdt INTO rw_crapbdt;
+        --Se nao encontrar
+        IF cr_crapbdt%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_crapbdt;
+          --Mensagem de erro
+          --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
+          vr_cdcritic := 1166; --Bordero nao encontrado.
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_crapbdt;
+        /*#########FIM BUSCAR BDT BORDERO##################################*/
+        
+        /* Projeto 403 - Desconto de Títulos
+           Somente os títulos de borderôs inclusos na versão antiga devem ser considerados aqui */
+        
+        IF rw_crapbdt.flverbor = 1 THEN
+          CONTINUE;
+        END IF;
+        
         -- Condicao para verificar se permite incluir as linhas parametrizadas
         IF INSTR(',' || vr_dsctajud || ',',',' || rw_craptdb.nrdconta || ',') > 0 THEN
           CONTINUE;
@@ -1295,27 +1356,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         else
         vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
         end if;
-
-        /*#########BUSCAR BDT BORDERO##################################*/
-        --Selecionar Bordero de titulos
-        OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
-                        ,pr_nrborder => rw_craptdb.nrborder);
-        --Posicionar no proximo registro
-        FETCH cr_crapbdt INTO rw_crapbdt;
-        --Se nao encontrar
-        IF cr_crapbdt%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_crapbdt;
-          --Mensagem de erro
-          --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-          vr_cdcritic := 1166; --Bordero nao encontrado.
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
-        --Fechar Cursor
-        CLOSE cr_crapbdt;
-        /*#########FIM BUSCAR BDT BORDERO##################################*/
 
         ------------------------------------------------------------------------------------------
         -- Inicio Efetuar o Lancamento de IOF
@@ -4254,7 +4294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 15/02/2018
+    --  Data     : Maio/2016.                   Ultima atualizacao: 24/05/2018
     --
     --  Dados referentes ao programa:
     --
@@ -4272,6 +4312,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                           - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
     --                           - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
     --                          (Belli - Envolti - Chamado 851591) 
+    --
+    --           24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
+    --                        1) Na conta corrente do cooperado (tabela CRAPLCM)
+    --                           Valor do título descontando juros proporcional (histórico 2676 - RESGATE DE TITULO DESCONTADO)
+    --                        2) Nas movimentações da operação de desconto (tabela tbdsct_lancamento_bordero)
+    --                           Valor líquido do título (histórico 2677 - RESGATE DE TITULO DESCONTADO)
+    --                           Valor bruto do título (histórico 2678 - RESGATE DE TITULO DESCONTADO) --> Baixa da carteira
+    --                           Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
+    --                        (Paulo Penteado (GFT))
     --
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
@@ -4307,6 +4356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             ,crapbdt.insitbdt
             ,crapbdt.txmensal
             ,crapbdt.dtlibbdt
+            ,crapbdt.flverbor -- Indicativo da versao das funcionalidades de bordero (0-Versao antiga/1-Versao nova)
             ,crapbdt.rowid
         FROM crapbdt
        WHERE crapbdt.cdcooper = pr_cdcooper
@@ -4449,7 +4499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cdhisest     INTEGER;
       vr_dtdivulg     DATE;
       vr_dtvigenc     DATE;
-      vr_cdhistor     INTEGER;
+      vr_cdhistortari INTEGER;
+      vr_cdhistorresg craphis.cdhistor%TYPE;
       vr_cdfvlcop     INTEGER;
       vr_vltarres     NUMBER(32,8);
       vr_rowid_craplat ROWID;
@@ -4666,7 +4717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                             ,pr_cdbattar  => vr_cdbattar  --Codigo Tarifa
                                             ,pr_vllanmto  => 1            --Valor Lancamento
                                             ,pr_cdprogra  => NULL         --Codigo Programa
-                                            ,pr_cdhistor  => vr_cdhistor  --Codigo Historico
+                                            ,pr_cdhistor  => vr_cdhistortari  --Codigo Historico
                                             ,pr_cdhisest  => vr_cdhisest  --Historico Estorno
                                             ,pr_vltarifa  => vr_vltarres  --Valor tarifa
                                             ,pr_dtdivulg  => vr_dtdivulg  --Data Divulgacao
@@ -4689,7 +4740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
                                          ,pr_nrdconta => rw_craptdb.nrdconta  --Numero da Conta
                                          ,pr_dtmvtolt => pr_dtresgat          --Data Lancamento
-                                         ,pr_cdhistor => vr_cdhistor          --Codigo Historico
+                                         ,pr_cdhistor => vr_cdhistortari      --Codigo Historico
                                          ,pr_vllanaut => vr_vltarres          --Valor lancamento automatico
                                          ,pr_cdoperad => pr_cdoperad          --Codigo Operador
                                          ,pr_cdagenci => 1                    --Codigo Agencia
@@ -4723,6 +4774,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       END IF;
 
       --**** RECALCULO DO TITULO(COBRANCA DE JUROS DE RESGATE) ****
+      IF  rw_crapbdt.flverbor = 1 THEN
+          vr_vlliqori := rw_craptdb.vlliquid;
+
+          dsct0003.pc_calcula_juros_simples_tit(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => rw_craptdb.nrborder
+                                               ,pr_nrborder => rw_craptdb.nrdconta
+                                               ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                               ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                               ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                               ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                               ,pr_vltitulo => rw_craptdb.vltitulo
+                                               ,pr_dtvencto => rw_craptdb.dtvencto
+                                               ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
+                                               ,pr_txmensal => rw_crapbdt.txmensal
+                                               ,pr_vldjuros => vr_vldjuros
+                                               ,pr_dtrefere => vr_dtultdat
+                                               ,pr_dscritic => vr_dscritic );
+
+          vr_vlliqnov := rw_craptdb.vltitulo - vr_vldjuros; 
+          
+          -- Lançar operação de desconto, Valor dos juros do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistor_resreap_dscto_tit
+                                                ,pr_vllanmto => vr_vldjuros
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF  vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+          END IF;
+      ELSE
       IF rw_craptdb.dtvencto > pr_dtmvtoan AND
          rw_craptdb.dtvencto < pr_dtresgat THEN
         vr_qtdprazo := rw_craptdb.dtvencto - rw_crapbdt.dtlibbdt;
@@ -4860,6 +4945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_vlliqori := rw_craptdb.vlliquid;
         vr_vlliqnov := rw_craptdb.vltitulo;
       END IF;-- Fim IF vr_qtdprazo > 0 THEN
+      END IF;
 
       --Selecionar lancamento juros desconto titulo
       FOR rw_craplj IN cr_crapljt2 ( pr_cdcooper => pr_cdcooper
@@ -4951,7 +5037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,10300         -- nrdolote
                         ,1             -- tplotmov
                         ,pr_cdoperad   -- cdoperad
-                        ,687           -- cdhistor
+                        ,vr_cdhistor_resgate -- cdhistor
                         ,pr_cdcooper)  -- cdcooper
                RETURNING craplot.rowid,
                          craplot.dtmvtolt,
@@ -4977,7 +5063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            ', nrdolote:' || '10300'     ||
                            ', tplotmov:' || '1'         ||
                            ', cdoperad:' || pr_cdoperad ||
-                           ', cdhistor:' || '687'       ||
+                           ', cdhistor:' || vr_cdhistor_resgate ||
                            ', cdcooper:' || pr_cdcooper ||
                            '. ' ||sqlerrm; 
             RAISE vr_exc_erro;
@@ -5014,6 +5100,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           RAISE vr_exc_erro;
       END;
 
+      IF  rw_crapbdt.flverbor = 1 THEN
+          vr_cdhistorresg := vr_cdhistor_resgcta_dscto_tit;
+
+          -- Lançar operação de desconto, Valor líquido do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistor_resopcr_dscto_tit
+                                                ,pr_vllanmto => vr_vlliqori
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          
+          -- Lançar operação de desconto, Valor bruto do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistor_resbaix_dscto_tit
+                                                ,pr_vllanmto => rw_craptdb.vltitulo
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF  vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+          END IF;
+      ELSE
+          vr_cdhistorresg := vr_cdhistor_resgate;
+      END IF;  
+      
       --> Cria lancamento da conta do associado ..................
       BEGIN
         INSERT INTO craplcm
@@ -5037,7 +5157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     ,rw_craptdb.nrdconta               -- nrdconta
                     ,rw_craplot.nrseqdig               -- nrdocmto
                     ,vr_vllanmto                       -- vllanmto
-                    ,687                               -- cdhistor
+                    ,vr_cdhistorresg                   -- cdhistor
                     ,rw_craplot.nrseqdig               -- nrseqdig
                     ,rw_craptdb.nrdconta               -- nrdctabb
                     ,0                                 -- nrautdoc
@@ -5059,7 +5179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                          ', nrdconta:' || rw_craptdb.nrdconta ||
                          ', nrdocmto:' || rw_craplot.nrseqdig ||
                          ', vllanmto:' || vr_vllanmto         ||
-                         ', cdhistor:' || '687'               ||
+                         ', cdhistor:' || vr_cdhistorresg     ||
                          ', nrseqdig:' || rw_craplot.nrseqdig ||
                          ', nrdctabb:' || rw_craptdb.nrdconta ||
                          ', nrautdoc:' || '0'                 ||

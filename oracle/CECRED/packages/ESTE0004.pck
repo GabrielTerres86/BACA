@@ -65,6 +65,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                   Referentes a proposta. (Lindon Carlos Pecile - GFT)
   
   ---------------------------------------------------------------------------------------------------------------*/
+  CURSOR cr_craplim(pr_cdcooper IN crapass.cdcooper%TYPE
+                   ,pr_nrdconta IN crapass.nrdconta%TYPE
+                   ) IS
+  SELECT lim.vllimite
+  FROM   craplim lim
+  WHERE  lim.insitlim = 2
+  AND    lim.tpctrlim = 3
+  AND    lim.nrdconta = pr_nrdconta
+  AND    lim.cdcooper = pr_cdcooper;
+  rw_craplim cr_craplim%ROWTYPE;
+  
 
   FUNCTION fn_des_tpctrato(pr_tpctrato IN NUMBER) RETURN VARCHAR2 IS
   /* ---------------------------------------------------------------------------------------------------------------
@@ -457,6 +468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_vlpreemp      crapepr.vlpreemp%TYPE;
     vr_txcetano      NUMBER;
     vr_txcetmes      NUMBER;
+    vr_vllimati      craplim.vllimite%TYPE;
       
   BEGIN
   
@@ -504,6 +516,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     ELSE
     CLOSE cr_crapopf;
     END IF;
+  
+    rw_crapass := NULL;
+    --> Buscar dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapass;
+
+   OPEN  cr_craplim(pr_cdcooper
+                   ,pr_nrdconta);
+   FETCH cr_craplim INTO rw_craplim;
+   CLOSE cr_craplim;
   
    -- Montar os atributos de 'configuracoes'
    vr_obj_generico := json();
@@ -557,6 +588,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_obj_generico.put('primeiroVencto', este0002.fn_data_ibra_motor(rw_crawlim.dtfimvig));
     vr_obj_generico.put('valorParcela'  , ESTE0001.fn_decimal_ibra(rw_crawlim.vlpreemp));
 
+    vr_vllimati := nvl(rw_craplim.vllimite,0);
+    IF  vr_vllimati > 0 THEN
+        vr_obj_generico.put('valorLimiteAtivo', vr_vllimati);
+    END IF;
+
+    --  valor que está sendo marjorado
+    IF  rw_crawlim.tpproduto = 'MJ' THEN
+        vr_obj_generico.put('valorLimiteMaximoPermitido', rw_crawlim.vllimite - vr_vllimati);
+    END IF;
+    
     vr_obj_generico.put('renegociacao', nvl(rw_crawlim.flgreneg,0) = 1);
 
     vr_obj_generico.put('qualificaOperacaoCodigo',rw_crawlim.idquapro );
@@ -686,20 +727,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
        
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
-    
-    rw_crapass := NULL;
-    --> Buscar dados do associado
-    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
-                    pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    
-    -- Caso nao encontrar abortar proceso
-    IF cr_crapass%NOTFOUND THEN
-      CLOSE cr_crapass;
-      vr_cdcritic := 9;
-      RAISE vr_exc_erro;
-    END IF;
-    CLOSE cr_crapass;
     
     --> Para Pessoa Fisica iremos buscar seu Conjuge
     IF rw_crapass.inpessoa = 1 THEN 
@@ -1524,6 +1551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%type;
   vr_dsdirarq  varchar2(1000);
   vr_dscomando varchar2(1000);
+  vr_vllimati     craplim.vllimite%TYPE;
 
   BEGIN
 
@@ -1557,6 +1585,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
      end   if;
      close cr_crawlim;
 
+     OPEN  cr_craplim(pr_cdcooper
+                     ,pr_nrdconta);
+     FETCH cr_craplim INTO rw_craplim;
+     CLOSE cr_craplim;
+
      --> Criar objeto json para agencia da proposta
      vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
      vr_obj_agencia.put('PACodigo', pr_cdagenci);
@@ -1588,7 +1621,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
      vr_obj_proposta.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra(rw_crawlim.dtvencto));
      vr_obj_proposta.put('parcelaValor'       , rw_crawlim.vlpreemp);
 
-     --> Data e hora da inclusao da proposta
+     vr_vllimati := nvl(rw_craplim.vllimite,0);
+     IF  vr_vllimati > 0 THEN
+         vr_obj_proposta.put('valorLimiteAtivo', vr_vllimati);
+     END IF;
+     
+     --  valor que está sendo marjorado
+     IF  rw_crawlim.tpproduto = 'MJ' THEN
+         vr_obj_proposta.put('valorLimiteMaximoPermitido', rw_crawlim.vllimite - vr_vllimati);
+     END IF;
+
      vr_data_aux := to_date(to_char(rw_crapass.dtmvtolt,'DD/MM/RRRR') ||' '||
                             to_char(to_date(rw_crawlim.hrinclus,'SSSSS'),'HH24:MI:SS'),
                            'DD/MM/RRRR HH24:MI:SS');
@@ -1727,7 +1769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                               ,pr_dtmvtopr => rw_crapdat.dtmvtopr
                                               ,pr_inproces => rw_crapdat.inproces
-                                              ,pr_idimpres => 2 --Gerar impressao do contrato do limite de desconto de titulo
+                                              ,pr_idimpres => 3 --Gerar impressao da proposta do limite de desconto de titulo
                                               ,pr_nrctrlim => pr_nrctrlim
                                               ,pr_dsiduser => vr_dsiduser
                                               ,pr_flgemail => 0

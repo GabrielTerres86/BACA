@@ -389,6 +389,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                         ,pr_dtmvtolt  IN craplcm.dtmvtolt%TYPE --> Data do movimento atual
                                         ,pr_txmensal  IN crapbdt.txmensal%TYPE --> Taxa mensal
                                         ,pr_vldjuros OUT crapljt.vldjuros%TYPE --> Valor do juros calculado
+                                        ,pr_dtrefere OUT DATE                  --> Data de referencia da atualizacao dos juros
                                         ,pr_dscritic OUT VARCHAR2              --> Descrição da critica
                                         );
 END  DSCT0003;
@@ -1231,6 +1232,7 @@ END pc_inserir_lancamento_bordero;
                                         ,pr_dtmvtolt  IN craplcm.dtmvtolt%TYPE --> Data do movimento atual
                                         ,pr_txmensal  IN crapbdt.txmensal%TYPE --> Taxa mensal
                                         ,pr_vldjuros OUT crapljt.vldjuros%TYPE --> Valor do juros calculado
+                                        ,pr_dtrefere OUT DATE                  --> Data de referencia da atualizacao dos juros
                                         ,pr_dscritic OUT VARCHAR2              --> Descrição da critica
                                         ) IS
     /*---------------------------------------------------------------------------------------------------------------------
@@ -1277,8 +1279,9 @@ END pc_inserir_lancamento_bordero;
     rw_crapljt cr_crapljt%rowtype;
 
   BEGIN
-    vr_qtd_dias := ccet0001.fn_diff_datas(pr_dtvencto, pr_dtmvtolt);
+    vr_qtd_dias := ccet0001.fn_diff_datas(to_date(pr_dtvencto,'DD/MM/RRRR'), to_date(pr_dtmvtolt,'DD/MM/RRRR'));
     vr_vldjuros := 0;
+    vr_dtrefere := last_day(pr_dtmvtolt);
 
     --  Percorre a quantidade de dias baseado na data atual até o vencimento do título
     FOR vr_dia IN 0..vr_qtd_dias LOOP
@@ -1329,6 +1332,7 @@ END pc_inserir_lancamento_bordero;
     END LOOP;
         
     pr_vldjuros := vr_vldjuros;
+    pr_dtrefere := vr_dtrefere;
   EXCEPTION
     WHEN vr_exc_erro THEN
          pr_dscritic := vr_dscritic;
@@ -1371,6 +1375,7 @@ END pc_inserir_lancamento_bordero;
     vr_vltotbrt number;
     vr_vltotjur NUMBER;
     vr_dtmvtolt DATE;
+    vr_dtrefere DATE;
     
     vr_exc_erro exception;
     vr_des_erro varchar2(4000);
@@ -1464,6 +1469,7 @@ END pc_inserir_lancamento_bordero;
                                     ,pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_txmensal => rw_crapbdt.txmensal
                                     ,pr_vldjuros => vr_vldjuros
+                                    ,pr_dtrefere => vr_dtrefere
                                     ,pr_dscritic => vr_dscritic );
           
         -- Aproveita o loop do cursor de títulos do borderô para atualizar as informações no banco

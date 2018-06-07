@@ -91,7 +91,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 13/03/2018
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 05/06/2018
   --
   -- Dados referentes ao programa:
   --
@@ -123,6 +123,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
   -- 
   --             02/04/2018 - Gravar usuario cyber no cancelamento de acordo. Chamado 868775 (Heitor - Mouts)
+  --
+  --             05/06/2018 - Adicionado calculo do saldo devedor do desconto de títulos (Paulo Penteado (GFT)) 
   -- 
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
@@ -178,6 +180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Observacao: -----
    Alteracoes: 19/09/2016 - Alterado soma de saldo acumulado, Prj. 302 (Jean Michel).
 
+               05/06/2018 - Adicionado tratamento para saldo devedor do desconto de titulos (Paulo Penteado (GFT)) 
+
    ..............................................................................*/                                    
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
@@ -198,6 +202,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_tab_dados_epr empr0001.typ_tab_dados_epr;
     vr_qtregist    INTEGER;
     
+    CURSOR cr_titcyb IS
+    SELECT vlsldtit vlsdeved
+          ,0 vlsdprej
+          ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlatraso
+    FROM   craptdb tdb
+          ,tbdsct_titulo_cyber titcyb
+    WHERE  tdb.dtresgat    IS NULL
+    AND    tdb.dtlibbdt    IS NOT NULL
+    AND    tdb.dtdpagto    IS NULL
+    AND    tdb.nrtitulo    = titcyb.nrtitulo
+    AND    tdb.nrborder    = titcyb.nrborder
+    AND    tdb.nrdconta    = titcyb.nrdconta
+    AND    tdb.cdcooper    = titcyb.cdcooper
+    AND    titcyb.nrctrdsc = pr_nrctremp
+    AND    titcyb.nrdconta = pr_nrdconta
+    AND    titcyb.cdcooper = pr_cdcooper;
+    rw_titcyb cr_titcyb%ROWTYPE;
     
   BEGIN
       
@@ -342,6 +363,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
       END IF;
         
+    ---> DESCONTO DE TITULO <---
+    ELSIF pr_cdorigem = 4 THEN
+          OPEN  cr_titcyb;
+          FETCH cr_titcyb INTO rw_titcyb;
+          IF    cr_titcyb%FOUND THEN
+                -- Saldo Devedor
+                pr_vlsdeved := rw_titcyb.vlsdeved;
+                -- Saldo Prejuizo
+                pr_vlsdprej := rw_titcyb.vlsdprej;
+                -- Valor em Atraso
+                pr_vlatraso := rw_titcyb.vlatraso;
+          END   IF;
+          CLOSE cr_titcyb;
     END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN    
