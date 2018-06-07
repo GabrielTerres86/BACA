@@ -24,6 +24,9 @@ $nriniseq = isset($_POST["nriniseq"]) ? $_POST["nriniseq"] : 1;
 $dtvencto = isset($_POST["dtvencto"]) ? $_POST["dtvencto"] : '';
 $nrborder = isset($_POST["nrborder"]) ? $_POST["nrborder"] : '';
 $nrcpfava = isset($_POST["nrcpfava"]) ? $_POST["nrcpfava"] : '';
+$nrctacob = (isset($_POST['nrctacob'])) ? $_POST['nrctacob'] : '';
+$nrcnvcob = (isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : '';
+$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
 
 if (!isset($operacao) || $operacao=='') {
     exibeErro(htmlentities('Opera&ccedil;&atilde;o n&atilde;o encontrada'));
@@ -186,6 +189,8 @@ switch ($operacao){
         $dtvenctf = (isset($_POST['dtvenctf'])) ? $_POST['dtvenctf'] : '';
         $dtpagtoi = (isset($_POST['dtpagtoi'])) ? $_POST['dtpagtoi'] : '';
         $dtpagtof = (isset($_POST['dtpagtof'])) ? $_POST['dtpagtof'] : '';
+        $nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : '';
+        $nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : '';
 
         $xml .= "<Root>";
         $xml .= " <Dados>";
@@ -209,16 +214,16 @@ switch ($operacao){
         $xmlResult = mensageria($xml, "COBTIT", "BUSCAR_BOLETOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
         $xmlObj = getClassXML($xmlResult);
         $root = $xmlObj->roottag;
-        $dados = $root->dados;
-
         // Se ocorrer um erro, mostra crítica
         $json = array();
         if ($root->erro){
             $json['status'] = 'erro';
             $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
         }else{
+            $dados = $root->dados;
+            $qtregist = $dados->getAttribute("QTREGIST");
             ob_start();
-            require_once("manutencao/tab_boletos.php");
+            require_once("tab_boletos.php");
             $html = ob_get_clean();
             $json['status'] = 'sucesso';
             $json['html'] = $html;
@@ -226,9 +231,6 @@ switch ($operacao){
         echo json_encode($json);
     break;
     case "BAIXAR_BOLETO":
-        $nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
-        $nrctacob = (isset($_POST['nrctacob'])) ? $_POST['nrctacob'] : '';
-        $nrcnvcob = (isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : '';
         $dsjustif = (isset($_POST['dsjustif'])) ? utf8_decode($_POST['dsjustif']) : '';
         $dtmvtolt = $glbvars["dtmvtolt"];
         
@@ -256,12 +258,59 @@ switch ($operacao){
             $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
         }else{
             ob_start();
-            require_once("manutencao/tab_boletos.php");
+            require_once("tab_boletos.php");
             $html = ob_get_clean();
             $json['status'] = 'sucesso';
             $json['mensagem'] = 'Boleto n&#186;'.$nrdocmto.' baixado com Sucesso';
         }
         echo json_encode($json);
+    break;
+    case "ENVIAR_BOLETO":
+        $dsdemail = (isset($_POST['dsdemail'])) ? $_POST['dsdemail'] : '';
+        // 1 - Email ou 2 - SMS
+        $tpdenvio = (isset($_POST['tpdenvio'])) ? $_POST['tpdenvio'] : 0;
+
+        $indretor = (isset($_POST['indretor'])) ? $_POST['indretor'] : 0;
+        $textosms = (isset($_POST['textosms'])) ? $_POST['textosms'] : '';
+        $nrdddtfc = (isset($_POST['nrdddtfc'])) ? $_POST['nrdddtfc'] : '';
+        $nrtelefo = (isset($_POST['nrtelefo'])) ? $_POST['nrtelefo'] : '';
+        $nmpescto = (isset($_POST['nmpescto'])) ? $_POST['nmpescto'] : '';
+        if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X",false)) <> "") {
+            exibeErro($msgError);       
+        }   
+        // Montar o xml de Requisicao
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+        $xml .= "   <nrborder>" . $nrborder . "</nrborder>";
+        $xml .= "   <nrctacob>" . $nrctacob . "</nrctacob>";
+        $xml .= "   <nrcnvcob>" . $nrcnvcob . "</nrcnvcob>";
+        $xml .= "   <nrdocmto>" . $nrdocmto . "</nrdocmto>";
+        $xml .= "   <nmcontat>" . $nmpescto . "</nmcontat>";
+        $xml .= "   <tpdenvio>" . $tpdenvio . "</tpdenvio>";
+        $xml .= "   <dsdemail>" . $dsdemail . "</dsdemail>";
+        $xml .= "   <indretor>" . $indretor . "</indretor>";
+        $xml .= "   <nrdddsms>" . $nrdddtfc . "</nrdddsms>";
+        $xml .= "   <nrtelsms>" . $nrtelefo . "</nrtelsms>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        // Chamada mensageria
+        $xmlResult = mensageria($xml, "COBTIT", "ENVIAR_BOLETO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getObjectXML($xmlResult);
+
+        // Tratamento de erro
+        if (strtoupper($xmlObj->roottag->tags [0]->name == 'ERRO')) {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+            if ($msgErro == null || $msgErro == '') {
+                $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            }
+            exibirErro('error', $msgErro, 'Alerta - Ayllos', '', false);
+
+            exit();
+        } else {
+            echo 'showError("inform","Operacao Efetuada com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divRotina\'));;");';
+        }
     break;
 }
 ?>

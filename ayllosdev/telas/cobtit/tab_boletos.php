@@ -38,6 +38,7 @@
                         <input type="hidden" id="nrdocmto" name="nrdocmto" value="<?php echo $r->nrdocmto ?>" />
                         <input type="hidden" id="nrctacob" name="nrctacob" value="<?php echo $r->nrctacob ?>" />
                         <input type="hidden" id="nrcnvcob" name="nrcnvcob" value="<?php echo $r->nrcnvcob ?>" />
+                        <input type="hidden" id="lindigit" name="lindigit" value="<?php echo $r->lindigit ?>" />
                     </td>
                     <td><?php echo $r->nrdconta ?></td>
                     <td><?php echo $r->nrborder ?></td>

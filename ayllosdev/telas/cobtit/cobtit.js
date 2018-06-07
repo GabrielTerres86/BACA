@@ -113,7 +113,7 @@ function estadoInicial() {
     cCddopcao.val(cddopcao);
 
     removeOpacidade('divTela');
-    unblockBackground();
+    bloqueiaFundo(divRotina);
     hideMsgAguardo();
 
     // Desativa campos do cabeçalho
@@ -281,27 +281,43 @@ function controlaFoco() {
         if (e.keyCode == 9 || e.keyCode == 13) {
             continuarC();
         }
-    });
+    }).unbind("change").bind("change",function(){
+        if($(this).val()!=''){
+            continuarC();
+        }
+    })
+    ;
 
     // frmManutencao
     $('#nrdconta', '#frmManutencao').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            nomeforma = "frmManutencao";
-            $('#nrdconta', '#frmManutencao').removeClass('campoErro');
-            if ($('#nrdconta', '#frmManutencao').val() != '') {
-                buscaAssociado(function(){
-                    $("#nrborder","#frmManutencao").focus();
-                });
-                return false;
-            }
+            contaManutencao();
         }
+    }).unbind("change").bind("change",function(e){
+        contaManutencao();
     });
+
     $('#dtpagtof', '#frmManutencao').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             continuarM();
         }
     });
     return false;
+}
+
+function contaManutencao(){
+    nomeForm = "frmManutencao";
+    $('#nmprimtl', '#' + nomeForm).val('');
+    $('#nrdconta', '#frmManutencao').removeClass('campoErro');
+    if ($('#nrdconta', '#frmManutencao').val() != '') {
+        buscaAssociado(function(){
+            $("#nrborder","#frmManutencao").focus();
+        });
+        return false;
+    }
+    else{
+        $("#nrborder","#frmManutencao").focus();
+    }
 }
 
 function continuarC(){
@@ -320,7 +336,7 @@ function continuarC(){
         });
         return false;
     } else {
-        showError("error", "Numero da Conta deve ser informado.", "Alerta - Ayllos", "$('#nrdconta', '#frmBorderos').focus()", false);
+        showError("error", "N&uacute;mero da Conta deve ser informado.", "Alerta - Ayllos", "$('#nrdconta', '#frmBorderos').focus()", false);
         return false;
     }
 }
@@ -328,14 +344,14 @@ function continuarC(){
 function continuarM(){
     if (cCddopcao.val() == 'M') {
         var nrdconta = normalizaNumero($('#nrdconta', '#frmManutencao').val());
-        var nrctremp = normalizaNumero($('#nrctremp', '#frmManutencao').val());
+        var nrborder = normalizaNumero($('#nrborder', '#frmManutencao').val());
         var dtbaixai = $('#dtbaixai', '#frmManutencao').val();
         var dtemissi = $('#dtemissi', '#frmManutencao').val();
         var dtvencti = $('#dtvencti', '#frmManutencao').val();
         var dtpagtoi = $('#dtpagtoi', '#frmManutencao').val();
         if (nrdconta == '') {
-            if (nrctremp != '') {
-                showError("error", "Numero da Conta deve ser informado.", "Alerta - Ayllos", "$('#nrdconta', '#frmContratos').focus()", false);
+            if (nrborder != '') {
+                showError("error", "N&uacute;mero da Conta deve ser informado.", "Alerta - Ayllos", "$('#nrdconta', '#frmManutencao').focus()", false);
             } else {
                 if ((dtbaixai == '') && (dtemissi == '') && (dtvencti == '') && (dtpagtoi == '')) {
                     showError("error", "Pelo menos uma opcao de Data deve ser Informada!.", "Alerta - Ayllos", "$('#dtbaixai', '#frmManutencao').focus()", false);
@@ -351,9 +367,8 @@ function continuarM(){
 
 }
 
-function formataContratosManutencao() {
-
-    $('#divRotina').css('width', '640px');
+function formataBorderosManutencao() {
+    $('#divRotina').css('width','1000');
 
     var divRegistro = $('div.divRegistros', '#divTabfrmManutencao');
     var tabela = $('table', divRegistro);
@@ -365,28 +380,28 @@ function formataContratosManutencao() {
     ordemInicial = [[0, 0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '30px';
+    arrayLargura[0] = '35px';
     arrayLargura[1] = '75px';
-    arrayLargura[2] = '50px';
-    arrayLargura[3] = '75px';
-    arrayLargura[4] = '50px';
-    arrayLargura[5] = '75px';
-    arrayLargura[6] = '75px';
+    arrayLargura[2] = '55px';
+    arrayLargura[3] = '70px';
+    arrayLargura[4] = '60px';
+    arrayLargura[5] = '70px';
+    arrayLargura[6] = '70px';
     arrayLargura[7] = '70px';
-    arrayLargura[8] = '75px';
-    arrayLargura[9] = '60px';
-    arrayLargura[10] = '60px';
+    arrayLargura[8] = '70px';
+    arrayLargura[9] = '70px';
+    arrayLargura[10] = '';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'right';
+    arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
     arrayAlinha[5] = 'center';
-    arrayAlinha[6] = 'center';
+    arrayAlinha[6] = 'right';
     arrayAlinha[7] = 'center';
-    arrayAlinha[8] = 'center';
+    arrayAlinha[8] = 'right';
     arrayAlinha[9] = 'center';
     arrayAlinha[10] = 'center';
 
@@ -402,6 +417,7 @@ function formataContratosManutencao() {
         nrdocmto = $(this).find('#nrdocmto').val();
         nrctacob = $(this).find('#nrctacob').val();
         nrcnvcob = $(this).find('#nrcnvcob').val();
+        lindigit = $(this).find("#lindigit").val();
     });
 
     $('table > tbody > tr:eq(0)', divRegistro).click();
@@ -424,25 +440,19 @@ function buscaBoletos(nriniseq, nrregist){
     var dtpagtoi = '';
     var dtpagtof = '';
 
-    if (cddopcao == 'M') {
+    nrdconta = normalizaNumero($('#nrdconta', '#frmManutencao').val());
+    nrborder = normalizaNumero($('#nrborder', '#frmManutencao').val());
 
-        nrdconta = normalizaNumero($('#nrdconta', '#frmManutencao').val());
-        nrborder = normalizaNumero($('#nrborder', '#frmManutencao').val());
+    cdagenci = $('#cdagenci', '#frmManutencao').val();
 
-        cdagenci = $('#cdagenci', '#frmManutencao').val();
-
-        dtbaixai = $('#dtbaixai', '#frmManutencao').val();
-        dtbaixaf = $('#dtbaixaf', '#frmManutencao').val();
-        dtemissi = $('#dtemissi', '#frmManutencao').val();
-        dtemissf = $('#dtemissf', '#frmManutencao').val();
-        dtvencti = $('#dtvencti', '#frmManutencao').val();
-        dtvenctf = $('#dtvenctf', '#frmManutencao').val();
-        dtpagtoi = $('#dtpagtoi', '#frmManutencao').val();
-        dtpagtof = $('#dtpagtof', '#frmManutencao').val();
-
-    } else {
-        nrdconta = normalizaNumero($('#nrdconta', '#frmContratos').val());
-    }
+    dtbaixai = $('#dtbaixai', '#frmManutencao').val();
+    dtbaixaf = $('#dtbaixaf', '#frmManutencao').val();
+    dtemissi = $('#dtemissi', '#frmManutencao').val();
+    dtemissf = $('#dtemissf', '#frmManutencao').val();
+    dtvencti = $('#dtvencti', '#frmManutencao').val();
+    dtvenctf = $('#dtvenctf', '#frmManutencao').val();
+    dtpagtoi = $('#dtpagtoi', '#frmManutencao').val();
+    dtpagtof = $('#dtpagtof', '#frmManutencao').val();
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando consulta ...");
@@ -476,32 +486,30 @@ function buscaBoletos(nriniseq, nrregist){
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function(response) {
-            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
-                try {
-                    var r = $.parseJSON(response);
+            try {
+                var r = $.parseJSON(response);
+                if(r.status=='erro'){
+                    hideMsgAguardo();
+                    showError("error",r.mensagem,'Alerta - Ayllos','$("#nrdconta", "#frmManutencao").focus();');
+                    bloqueiaFundo($("#divError"));
+                    $("#divTabfrmManutencao").html('');
+                }
+                else{
                     $("#divTabfrmManutencao").html(r.html);
                     $('#divTabfrmManutencao').css({'display': 'block'});
                     $('#divBotoesfrmManutencao').css({'display': 'block'});
                     $('#divBotoes').css({'display': 'none'});
                     
-                    formataContratosManutencao();
+                    formataBorderosManutencao();
 
                     $('#divPesquisaRodape', '#divTabfrmManutencao').formataRodapePesquisa();
                      cTodosFrmManutencao.desabilitaCampo();
-                    
                     hideMsgAguardo();
-                    return false;
-                } catch (error) {
-                    hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
                 }
-            } else {
-                try {
-                    eval(response);
-                } catch (error) {
-                    hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
-                }
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
             }
         }
     });
@@ -510,9 +518,9 @@ function buscaBoletos(nriniseq, nrregist){
 }
 
 function buscaAssociado(callback) {
-    var nrdconta = normalizaNumero($('#nrdconta', '#' + nomeForm).val());
+    var cNrdconta = $("#nrdconta",'#'+nomeForm);
+    var nrdconta = normalizaNumero(cNrdconta.val());
     var nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#' + nomeForm).val());
-
     showMsgAguardo('Aguarde, buscando dados ...');
     $.ajax({
         type: 'POST',
@@ -531,12 +539,12 @@ function buscaAssociado(callback) {
             	hideMsgAguardo();
             	var r = $.parseJSON(response);
             	if(r.status=='erro'){
-            		showError("error",r.mensagem,'Alerta - Ayllos','cNrdconta.focus();');
+            		showError("error",r.mensagem,'Alerta - Ayllos','$("#nrdconta","#"+nomeForm).focus();');
                     $("#nrdconta",'#'+nomeForm).val('');
 	            	$("#nmprimtl",'#'+nomeForm).val('');
             	}
             	else{
-                    $("#nrdconta",'#'+nomeForm).val(r.nrdconta);
+                    $("#nrdconta",'#'+nomeForm).val(r.nrdconta).keyup();
                     $("#nmprimtl",'#'+nomeForm).val(r.nmprimtl);
 	            	callback();
             	}
@@ -603,7 +611,7 @@ function gerarBoleto() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;atilde;o.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
             hideMsgAguardo();
@@ -965,13 +973,13 @@ function consultarTelefone(nriniseq, nrregist) {
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/cobtit/consultas/consultar_telefone.php',
+        url: UrlSite + 'telas/cobtit/consultar_telefone.php',
         data: {
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -985,7 +993,7 @@ function montarFormConsultaTelefone(nriniseq, nrregist) {
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/cobtit/consultas/tab_consulta_telefone.php',
+        url: UrlSite + 'telas/cobtit/tab_consulta_telefone.php',
         data: {
             nrdconta: normalizaNumero(nrdconta),
             nriniseq: nriniseq,
@@ -994,7 +1002,7 @@ function montarFormConsultaTelefone(nriniseq, nrregist) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);");
         },
         success: function(response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -1010,7 +1018,7 @@ function montarFormConsultaTelefone(nriniseq, nrregist) {
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             } else {
                 try {
@@ -1018,7 +1026,7 @@ function montarFormConsultaTelefone(nriniseq, nrregist) {
                     controlaFoco();
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             }
         }
@@ -1075,13 +1083,13 @@ function consultarEmail(nriniseq, nrregist) {
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/cobtit/consultas/consultar_email.php',
+        url: UrlSite + 'telas/cobtit/consultar_email.php',
         data: {
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -1095,7 +1103,7 @@ function montarFormConsultaEmail(nriniseq, nrregist) {
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/cobtit/consultas/tab_consulta_email.php',
+        url: UrlSite + 'telas/cobtit/tab_consulta_email.php',
         data: {
             nrdconta: normalizaNumero(nrdconta),
             nriniseq: nriniseq,
@@ -1104,7 +1112,7 @@ function montarFormConsultaEmail(nriniseq, nrregist) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);");
         },
         success: function(response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -1120,7 +1128,7 @@ function montarFormConsultaEmail(nriniseq, nrregist) {
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             } else {
                 try {
@@ -1128,7 +1136,7 @@ function montarFormConsultaEmail(nriniseq, nrregist) {
                     controlaFoco();
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             }
         }
@@ -1160,24 +1168,26 @@ function formataFormConsultaEmail() {
 }
 
 function pesquisaEmail() {
-    procedure = 'BUSCAR_EMAIL';
+    procedure = 'COBTIT_BUSCAR_EMAIL';
     titulo = 'Consulta E-mail';
     qtReg = '20';
-    filtrosPesq = 'E-mail;dsdemail;200px;S;;;descricao|Conta;nrdconta;100px;S;' + normalizaNumero($('#nrdconta', '#frmBorderos').val()) + ';N';
+    filtrosPesq = 'E-mail;dsdemail;200px;S;;N|Conta;nrdconta;100px;S;' + normalizaNumero(nrdconta) + ';N';
     colunas = 'E-mail;dsdemail;100%;center';
-    mostraPesquisa('TELA_COBTIT', procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
+    mostraPesquisa('COBTIT', procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
+    $('#btPesquisar', '#formPesquisa').parent().hide();
     return false;
 }
-/*
+
 function pesquisaCelular() {
-    procedure = 'BUSCAR_CELULAR';
+    procedure = 'COBTIT_BUSCAR_TELEFONE';
     titulo = 'Consulta Celular';
     qtReg = '20';
-    filtrosPesq = 'DDD;nrdddtfc;200px;S;;N;descricao|Celular;nrtelefo;200px;S;;N;descricao|Contato;nmpescto;200px;S;;;descricao|Conta;nrdconta;100px;S;' + normalizaNumero($('#nrdconta', '#frmBorderos').val()) + ';N';
+    filtrosPesq = 'DDD;nrdddtfc;200px;S;;N;descricao|Celular;nrtelefo;200px;S;;N;descricao|Contato;nmpescto;200px;S;;;descricao|Conta;nrdconta;100px;S;' + normalizaNumero(nrdconta) + ';N|ApenasCel;flcelula;100px;S;1;N';
     colunas = 'DDD;nrdddtfc;20%;center|Celular;nrtelefo;30%;center|Contato;nmpescto;50%;center';
-    mostraPesquisa('TELA_COBTIT', procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
+    mostraPesquisa('COBTIT', procedure, titulo, qtReg, filtrosPesq, colunas, $('#divRotina'));
+    $('#btPesquisar', '#formPesquisa').parent().hide();
     return false;
-}*/
+}
 
 function controlaPesquisaPac() {
     var cdagenci = 0;
@@ -1204,9 +1214,7 @@ function chamaRotinaManutencao(){
 
 // Botão Enviar E-mail
 function enviarEmail() {
-
     showMsgAguardo('Aguarde, carregando rotina para envio de e-mail...');
-
     // Executa script através de ajax
     $.ajax({
         type: 'POST',
@@ -1217,10 +1225,9 @@ function enviarEmail() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
-            console.log(UrlSite);
             $('#divRotina').html(response);
             buscarDetalheEnvio();
         }
@@ -1238,23 +1245,21 @@ function buscarDetalheEnvio() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);");
         },
         success: function(response) {
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
                     $('#divConteudoOpcao').html(response);
                     exibeRotina($('#divRotina'));
-
                     formataEnvioEmail();
-
                     hideMsgAguardo();
                     bloqueiaFundo($('#divRotina'));
-                    $('#divRotina').setCenterPosition();
+                    $('#divRotina').centralizaRotinaH();
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             } else {
                 try {
@@ -1262,7 +1267,7 @@ function buscarDetalheEnvio() {
                     controlaFoco();
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             }
         }
@@ -1304,10 +1309,8 @@ function confirmaEnvioEmail() {
 }
 
 function processaEnvioEmail() {
-
     var dsdemail = $('#dsdemail', '#frmEnviarEmail').val();
     var indretor = 0;
-
     showMsgAguardo('Aguarde, carregando rotina para envio de email...');
 
     // Executa script através de ajax
@@ -1324,12 +1327,12 @@ function processaEnvioEmail() {
             tpdenvio: 1, // Email
             dsdemail: dsdemail,
             indretor: indretor,
-            operacao: 'ENVIAR_EMAIL',
+            operacao: 'ENVIAR_BOLETO',
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
             try {
@@ -1337,10 +1340,197 @@ function processaEnvioEmail() {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "bloqueiaFundo(divRotina)");
             }
         }
     });
+
+    return false;
+}
+
+function validaEnvioSMS() {
+
+    var nrdddtfc = $('#nrdddtfc', '#frmEnviarSMS').val();
+    var nmpescto = $('#nmpescto', '#frmEnviarSMS').val();
+    var nrtelefo = $('#nrtelefo', '#frmEnviarSMS').val();
+
+    if (nrdddtfc.length < 2) {
+        showError('error', 'DDD deve ser informado!', 'Alerta - Ayllos', "$('#nrdddtfc', '#frmEnviarSMS').focus(); bloqueiaFundo($('#divRotina'))");
+        return false;
+    }
+
+    if (nrtelefo.length < 8) {
+        showError('error', 'Telefone deve ser informado!', 'Alerta - Ayllos', "$('#nrtelefo', '#frmEnviarSMS').focus(); bloqueiaFundo($('#divRotina'))");
+        return false;
+    }
+
+    if (nmpescto.length < 2) {
+        showError('error', 'Nome do Contato deve ser informado!', 'Alerta - Ayllos', "$('#nmpescto', '#frmEnviarSMS').focus(); bloqueiaFundo($('#divRotina'))");
+        return false;
+    }
+
+    confirmaEnvioSMS();
+
+    return false;
+}
+
+function processaEnvioSMS() {
+    var nrdddtfc = $('#nrdddtfc', '#frmEnviarSMS').val();
+    var nmpescto = $('#nmpescto', '#frmEnviarSMS').val();
+    var nrtelefo = $('#nrtelefo', '#frmEnviarSMS').val();
+    var textosms;
+    var indretor = 0;
+
+    showMsgAguardo('Aguarde, carregando rotina para envio de sms...');
+
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/manter_rotina.php',
+        data: {
+            nrdconta: nrdconta,
+            nrborder: nrborder,
+            nrdocmto: nrdocmto,
+            nrctacob: nrctacob,
+            nrcnvcob: nrcnvcob,
+            tpdenvio: 2, // SMS
+            indretor: indretor,
+            nmpescto: nmpescto,
+            nrdddtfc: nrdddtfc,
+            nrtelefo: nrtelefo,
+            textosms: textosms,
+            operacao: 'ENVIAR_BOLETO',
+            redirect: 'html_ajax'
+
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "bloqueiaFundo(divRotina)");
+        },
+        success: function(response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "bloqueiaFundo(divRotina)");
+            }
+        }
+    });
+
+    return false;
+}
+
+function cancelaConfirmacao() {
+    bloqueiaFundo($('#divRotina'));
+    return false;
+}
+
+function confirmaEnvioSMS() {
+
+    showConfirmacao('Confirma o Envio da Linha Digitavel por SMS ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'processaEnvioSMS();', 'cancelaConfirmacao();', 'sim.gif', 'nao.gif');
+
+}
+// Botão Enviar SMS
+function enviarSMS() {
+
+    showMsgAguardo('Aguarde, carregando rotina para envio de e-mail...');
+
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/enviar_sms.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+        },
+        success: function(response) {
+            $('#divRotina').html(response);
+            montarFormEnvioSMS();
+        }
+    });
+
+    return false;
+
+}
+
+function montarFormEnvioSMS() {
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/tab_enviar_sms.php',
+        data: {
+            nrdconta: nrdconta,
+            lindigit: lindigit,
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);");
+        },
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divConteudoOpcao').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataFormEnvioSMS();
+                    hideMsgAguardo();
+                    bloqueiaFundo($('#divRotina'));
+                    $('#divRotina').centralizaRotinaH();
+                    return false;
+                } catch (error) {
+                    console.log(error);
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                }
+            } else {
+                try {
+                    eval(response);
+                    controlaFoco();
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                }
+            }
+        }
+    });
+    return false;
+}
+
+function formataFormEnvioSMS() {
+
+    // Ajusta tamanho do form
+    $('#divRotina').css('width', '600px');
+
+    var frmEnviarSMS = "frmEnviarSMS";
+
+    // Rotulos
+    var rNrdddtfc = $('label[for="nrdddtfc"]', '#' + frmEnviarSMS);
+    var rNrtelefo = $('label[for="nrtelefo"]', '#' + frmEnviarSMS);
+    var rNmpescto = $('label[for="nmpescto"]', '#' + frmEnviarSMS);
+
+    rNrdddtfc.addClass('rotulo').css('width', '50px');
+    rNrtelefo.addClass('rotulo-linha').css('width', '60px');
+    rNmpescto.addClass('rotulo-linha').css('width', '60px');
+
+    // Campos
+    var cNrdddtfc = $('#nrdddtfc', '#' + frmEnviarSMS);
+    var cNrtelefo = $('#nrtelefo', '#' + frmEnviarSMS);
+    var cNmpescto = $('#nmpescto', '#' + frmEnviarSMS);
+
+    cNrdddtfc.addClass('inteiro').attr('maxlength', '3').css('width', '40px');
+    cNrtelefo.addClass('inteiro').attr('maxlength', '10').css('width', '97px');
+    cNmpescto.addClass('alphanum').attr('maxlength', '30').css('width', '220px');
+
+    layoutPadrao();
+    hideMsgAguardo();
+
+    cNrdddtfc.focus();
 
     return false;
 }
@@ -1362,7 +1552,7 @@ function abreJustificativaBaixa() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -1375,7 +1565,6 @@ function abreJustificativaBaixa() {
 }
 
 function montarFormJustificativa() {
-
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1386,25 +1575,21 @@ function montarFormJustificativa() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);");
         },
         success: function(response) {
-
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
                     $('#divConteudoOpcao').html(response);
                     exibeRotina($('#divRotina'));
-
-                    formataFormJustificativa();
-
+                    formataEnvioEmail();
                     hideMsgAguardo();
                     bloqueiaFundo($('#divRotina'));
-                    $('#divRotina').setCenterPosition();
-                    highlightObjFocus($('#frmJustificativa'));
+                    $('#divRotina').centralizaRotinaH();
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             } else {
                 try {
@@ -1412,7 +1597,7 @@ function montarFormJustificativa() {
                     controlaFoco();
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
                 }
             }
         }
@@ -1448,7 +1633,6 @@ function baixarBoleto() {
     showMsgAguardo('Aguarde, carregando rotina de baixa...');
 
     var dsjustif = $('#dsjustifica_baixa', '#frmJustificativa').val();
-
     // Executa script através de ajax
     $.ajax({
         type: 'POST',
@@ -1466,17 +1650,17 @@ function baixarBoleto() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "bloqueiaFundo(divRotina)");
         },
         success: function(response) {
             try {
                 hideMsgAguardo();
                 var r = $.parseJSON(response);
                 if(r.status=='erro'){
-                    showError("error",r.mensagem,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaManutencao();fechaRotina($(\'#divRotina\'));');
+                    showError("error",r.mensagem,'Alerta - Ayllos','bloqueiaFundo(divRotina);carregaManutencao();fechaRotina($(\'#divRotina\'));');
                 }
                 else{
-                    showError("inform",r.mensagem,'Alerta - Ayllos',"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaManutencao();fechaRotina($(\'#divRotina\'));");
+                    showError("inform",r.mensagem,'Alerta - Ayllos',"bloqueiaFundo(divRotina);carregaManutencao();fechaRotina($(\'#divRotina\'));");
                 }
                 return false;
             } catch (error) {
@@ -1514,7 +1698,7 @@ function carregarImpressoBoleto() {
     // Agora insiro os devidos valores nos inputs criados
     $('#nrcnvcob1', '#' + vr_nmform).val(nrcnvcob);
     $('#nrdocmto1', '#' + vr_nmform).val(nrdocmto);
-    $('#nrdconta1', '#' + vr_nmform).val(nrdconta);
+    $('#nrdconta1', '#' + vr_nmform).val(nrctacob);
     $('#sidlogin', '#' + vr_nmform).val($('#sidlogin', '#frmMenu').val());
 
 
@@ -1524,6 +1708,128 @@ function carregarImpressoBoleto() {
     var controle = '';
 
     carregaImpressaoAyllos(vr_nmform, action, controle);
+
+    return false;
+}
+
+
+
+function controlafrmEnviarSMS() {
+    $("#frmEnviarSMS .navigation").bind("keypress",(function(e) {
+        nextField(e,this);
+    }));
+
+    $('#nmpescto', '#frmEnviarSMS').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            validaEnvioSMS();
+            return false;
+        }
+    });
+    return false;
+
+}
+
+function copiarTextoSMS(){
+    $('#textosms', '#frmEnviarSMS').focus();
+    $('#textosms', '#frmEnviarSMS').select();
+    document.execCommand('copy');
+    return false;
+}
+
+
+// Botão Log
+function consultarLog(nriniseq, nrregist) {
+    showMsgAguardo('Aguarde, carregando Consulta de Log...');
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/consultar_log.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+        },
+        success: function(response) {
+            $('#divRotina').html(response);
+            montarFormConsultaLog(nriniseq, nrregist);
+        }
+    });
+    return false;
+}
+
+function montarFormConsultaLog(nriniseq, nrregist) {
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/tab_consulta_log.php',
+        data: {
+            nrdconta: nrctacob,
+            nrborder: nrborder,
+            nrdocmto: nrdocmto,
+            nrctacob: nrctacob,
+            nrcnvcob: nrcnvcob,
+            nriniseq: nriniseq,
+            nrregist: nrregist,
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);");
+        },
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divConteudoOpcao').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataFormConsultaLog();
+                    $('#divPesquisaRodape', '#telaConsultaLog').formataRodapePesquisa();
+                    hideMsgAguardo();
+                    bloqueiaFundo($('#divRotina'));
+                    $('#btVoltar', '#divBotoesLog').focus();
+                    $('#divRotina').centralizaRotinaH();
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                }
+            } else {
+                try {
+                    eval(response);
+                    controlaFoco();
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                }
+            }
+        }
+    });
+    return false;
+}
+
+function formataFormConsultaLog() {
+    $('#divRotina').css('width', '740px');
+    var divRegistro = $('div.divRegistros', '#divLogs');
+    var tabela = $('table', divRegistro);
+    divRegistro.css({'height': '240px', 'width': '100%'});
+
+    var ordemInicial = new Array();
+    ordemInicial = [[0, 0]];
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '110px';
+    arrayLargura[1] = '430px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'center';
+
+    var metodoTabela = '';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
     return false;
 }

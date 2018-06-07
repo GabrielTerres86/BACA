@@ -1,8 +1,8 @@
 <?php
 /* !
  * FONTE        : tab_justificativa.php
- * CRIAÇÃO      : Jaison Fernando
- * DATA CRIAÇÃO : 06/03/2017
+ * CRIAÇÃO      : Vitor Shimada Assanuma
+ * DATA CRIAÇÃO : 04/06/2018
  * OBJETIVO     : Rotina para justificativa de baixa.
  */
 ?>

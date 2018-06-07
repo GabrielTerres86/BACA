@@ -8,10 +8,10 @@
 ?>
 <?php
 session_start();
-require_once('../../../includes/config.php');
-require_once('../../../includes/funcoes.php');
-require_once('../../../includes/controla_secao.php');
-require_once('../../../class/xmlfile.php');
+require_once('../../includes/config.php');
+require_once('../../includes/funcoes.php');
+require_once('../../includes/controla_secao.php');
+require_once('../../class/xmlfile.php');
 isPostMethod();
 
 $nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
@@ -33,7 +33,7 @@ $root = $xmlObj->roottag;
 // Se ocorrer um erro, mostra crítica
  
 if ($root->erro){
-    exibirErro('error', $root->erro->registro->dscritic->cdata, 'Alerta - Ayllos', '', false);
+    echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Ayllos","hideMsgAguardo();");';
     exit;
 }
 $registros = $root->dados->find("email");

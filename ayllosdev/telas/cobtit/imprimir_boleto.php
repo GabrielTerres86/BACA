@@ -2,8 +2,8 @@
 
 /* !
  * FONTE        : imprimir_boleto.php
- * CRIAÇÃO      : Daniel Zimmermann       
- * DATA CRIAÇÃO : 01/09/2015
+ * CRIAÇÃO      : Vitor Shimada Assanuma
+ * DATA CRIAÇÃO : 04/06/2018
  * OBJETIVO     : Rotina para impressão de boleto.
  * --------------
  * ALTERAÇÕES   :  								    			

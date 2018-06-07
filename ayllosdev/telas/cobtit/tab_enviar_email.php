@@ -2,7 +2,7 @@
 /* !
  * FONTE        : tab_enviar_email.php
  * CRIAÇÃO      : Vitor Shimada Assanuma
- * DATA CRIAÇÃO : 04.06.2018
+ * DATA CRIAÇÃO : 04/06/2018
  * OBJETIVO     : Rotina para envio de email.
  */
 ?>

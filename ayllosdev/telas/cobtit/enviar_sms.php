@@ -1,22 +1,22 @@
 <?php
 /* !
- * FONTE        : consultar_email.php
+ * FONTE        : enviar_sms.php
  * CRIAÇÃO      : Luis Fernando (GFT)
- * DATA CRIAÇÃO : 02/06/2018
- * OBJETIVO     : Tela do formulario de consulta Email
+ * DATA CRIAÇÃO : 06/06/2018
+ * OBJETIVO     : Tela do formulario de envio de sms
  */
 ?>
 
 <?php
 session_start();
-require_once('../../../includes/config.php');
-require_once('../../../includes/funcoes.php');
-require_once('../../../includes/controla_secao.php');
-require_once('../../../class/xmlfile.php');
+require_once('../../includes/config.php');
+require_once('../../includes/funcoes.php');
+require_once('../../includes/controla_secao.php');
+require_once('../../class/xmlfile.php');
 isPostMethod();
 ?>
 
-<table width="100%" id='telaConsultaEmail' cellpadding="0" cellspacing="0" border="0" >
+<table width="100%" id='telaEnviarSMS' cellpadding="0" cellspacing="0" border="0" >
     <tr>
         <td align="center">		
             <table width="100%" border="0" cellpadding="0" cellspacing="0"  >
@@ -25,9 +25,9 @@ isPostMethod();
                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                             <tr>
                                 <td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-                                <td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><?php echo utf8ToHtml('Consulta de E-mail') ?></td>
+                                <td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><?php echo utf8ToHtml('Enviar SMS') ?></td>
                                 <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divRotina'));
-                                        return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+                                                                        return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
                                 <td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
                             </tr>
                         </table>     
