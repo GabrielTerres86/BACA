@@ -1231,6 +1231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_vlsldppr_aux NUMBER(18,2);
       vr_vlsldapl_aux NUMBER(18,2);
       vr_vlbloque_pp crapblj.vlbloque%TYPE;
+      vr_documento VARCHAR(100);
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
             
       --PlTables auxiliares
@@ -1652,6 +1653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       SELECT ass.nrdconta conta, 
              ass.nmprimtl nome,
              ass.nrcpfcgc documento,
+             ass.inpessoa tipo_pessoa,
              emp.nrctremp contrato
         FROM crapavl ava, 
              crapass ass,        
@@ -1663,7 +1665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
          AND emp.nrctremp = ava.nrctravd
          AND emp.inliquid = 0
          AND ass.cdcooper = emp.cdcooper
-          AND ass.nrdconta = emp.nrdconta;
+         AND ass.nrdconta = emp.nrdconta;
       rw_crapavl_contas cr_crapavl_contas%ROWTYPE;
 
       -- Buscar ultimas ocorrências de Cheques Devolvidos
@@ -3361,8 +3363,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Criar objeto para as contas avalizadas e enviar suas informações
         vr_obj_generic3 := json();
         vr_obj_generic3.put('contaAval', rw_crapavl_contas.conta);
-        vr_obj_generic3.put('nomeAval', rw_crapavl_contas.nome);
-        vr_obj_generic3.put('documentoAval', rw_crapavl_contas.documento);
+        vr_obj_generic3.put('nomeAval', rw_crapavl_contas.nome);        
+        vr_documento := fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavl_contas.documento
+                                        ,pr_inpessoa => rw_crapavl_contas.tipo_pessoa);
+        vr_obj_generic3.put('documentoAval', vr_documento);
         vr_obj_generic3.put('contratoAval', rw_crapavl_contas.contrato);
         -- Adicionar contas avalizadas na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
@@ -4744,7 +4748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;
     
     -- Buscar IOF
-    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                ,pr_inpessoa => rw_crawepr.inpessoa
