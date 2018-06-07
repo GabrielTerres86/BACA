@@ -1188,6 +1188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_vlsldppr_aux NUMBER(18,2);
       vr_vlsldapl_aux NUMBER(18,2);
       vr_vlbloque_pp crapblj.vlbloque%TYPE;
+      vr_documento VARCHAR(100);
       --vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
       			
 			--PlTables auxiliares
@@ -1609,6 +1610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       SELECT ass.nrdconta conta, 
              ass.nmprimtl nome,
              ass.nrcpfcgc documento,
+             ass.inpessoa tipo_pessoa,
              emp.nrctremp contrato
         FROM crapavl ava, 
              crapass ass,        
@@ -3319,7 +3321,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic3 := json();
         vr_obj_generic3.put('contaAval', rw_crapavl_contas.conta);
         vr_obj_generic3.put('nomeAval', rw_crapavl_contas.nome);
-        vr_obj_generic3.put('documentoAval', rw_crapavl_contas.documento);
+        vr_documento := fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavl_contas.documento
+                                        ,pr_inpessoa => rw_crapavl_contas.tipo_pessoa);
+        vr_obj_generic3.put('documentoAval', vr_documento);
         vr_obj_generic3.put('contratoAval', rw_crapavl_contas.contrato);
         -- Adicionar contas avalizadas na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
