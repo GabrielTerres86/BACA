@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 04/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 06/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -260,6 +260,11 @@ BEGIN
 			  04/06/2018 - Ajuste para colocar o uppper na leitura da tabela craptvl, pois está impactando
 			               na performance do programa (Adriano - INC0016439).
 
+        06/06/2018 - Ajustes efetuados:
+				     > Substituir caracteres especiais;
+					 > Ajuste par anão gerar devolução STR0048 indevidamente;
+                     (Adriano - INC0016740/INC0016813).
+        
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -956,6 +961,15 @@ BEGIN
         pr_dscritic := 'Erro nao tratado com a conta --> '||sqlerrm;
     END;
 
+    -- Rotina para substituir caracteres
+    FUNCTION fn_getValue(pr_conteudo IN xmldom.DOMNode)RETURN VARCHAR2 IS
+      
+    BEGIN
+    
+      RETURN gene0007.fn_caract_controle(xmldom.getNodeValue(pr_conteudo));
+      
+    END fn_getValue;
+    
     -- Rotina para verificar se o processo ainda está rodando
     FUNCTION fn_verifica_processo RETURN BOOLEAN IS
       -- Variavies auxiliares
@@ -1852,7 +1866,7 @@ BEGIN
                         ||   '<Hist>' || pr_dsdehist || '</Hist>'
                         ||   '<DtMovto>' || vr_aux_DtMovto || '</DtMovto>'
                         || '</PAG0111>';
-      ELSE
+      ELSIF vr_aux_CodMsg = 'STR0047R2' THEN 
         vr_aux_cdMsg_dev := 'STR0048';
         -- Continuar XML
         vr_aux_dsarqenv := vr_aux_dsarqenv
@@ -2130,12 +2144,12 @@ BEGIN
           IF vr_node_name_cabinf = 'CodMsg' THEN
             -- Buscar valor da TAG
             vr_valu_node_cabinf := xmldom.getFirstChild(vr_item_node_cabinf);
-            vr_aux_CodMsg       := xmldom.getNodeValue(vr_valu_node_cabinf);
+            vr_aux_CodMsg       := fn_getValue(vr_valu_node_cabinf);
           -- Para a tag NumCtrlIF
           ELSIF vr_node_name_cabinf = 'NumCtrlIF' THEN
             -- Buscar valor da TAG
             vr_valu_node_cabinf := xmldom.getFirstChild(vr_item_node_cabinf);
-            vr_aux_NumCtrlIF    := xmldom.getNodeValue(vr_valu_node_cabinf);
+            vr_aux_NumCtrlIF    := fn_getValue(vr_valu_node_cabinf);
           -- Erro de Inconsistencia
           ELSIF vr_node_name_cabinf = 'GrupoTagErro' THEN
             -- Buscar Nodos Filhos
@@ -2156,14 +2170,14 @@ BEGIN
               IF vr_node_name_grperr = 'CodErro' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grperr := xmldom.getFirstChild(vr_item_node_grperr);
-                vr_aux_msgderro     := vr_aux_msgderro||', '||xmldom.getNodeValue(vr_valu_node_grperr);
+                vr_aux_msgderro     := vr_aux_msgderro||', '||fn_getValue(vr_valu_node_grperr);
                 -- Remover virgula a esquerda que fica quando é a primeira atribuição
                 vr_aux_msgderro := LTRIM(vr_aux_msgderro,', ');
               -- Para o node TagErro
               ELSIF vr_node_name_grperr = 'TagErro' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grperr := xmldom.getFirstChild(vr_item_node_grperr);
-                vr_aux_msgderro     := vr_aux_msgderro||', '||xmldom.getNodeValue(vr_valu_node_grperr);
+                vr_aux_msgderro     := vr_aux_msgderro||', '||fn_getValue(vr_valu_node_grperr);
                 -- Remover virgula a esquerda que fica quando é a primeira atribuição
                 vr_aux_msgderro := LTRIM(vr_aux_msgderro,', ');
               END IF;
@@ -2240,18 +2254,18 @@ BEGIN
               IF vr_node_name_grpsit = 'ISPBIF' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_tab_situacao_if(vr_idx_grpsit).nrispbif := GENE0002.fn_char_para_number(xmldom.getNodeValue(vr_valu_node_grpsit));
+                vr_tab_situacao_if(vr_idx_grpsit).nrispbif := GENE0002.fn_char_para_number(fn_getValue(vr_valu_node_grpsit));
               -- Outros
               ELSE
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_tab_situacao_if(vr_idx_grpsit).cdsitope := GENE0002.fn_char_para_number(xmldom.getNodeValue(vr_valu_node_grpsit));
+                vr_tab_situacao_if(vr_idx_grpsit).cdsitope := GENE0002.fn_char_para_number(fn_getValue(vr_valu_node_grpsit));
               END IF;
             END LOOP;
           ELSE
             -- Buscar primeiro filho do nó para buscar seu valor em lógica única
             vr_valu_node := xmldom.getFirstChild(vr_item_node);
-            vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+            vr_aux_descrica := fn_getValue(vr_valu_node);
             -- Copiar para a respectiva variavel conforme nome da tag
             IF vr_node_name = 'CodMsg' THEN
               vr_aux_CodMsg := vr_aux_descrica;
@@ -2333,7 +2347,7 @@ BEGIN
               IF vr_node_name_grpsit = 'CtDebtd' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_CtDebtd := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_CtDebtd := fn_getValue(vr_valu_node_grpsit);
               END IF;
             END LOOP;
           -- Para AgeFinCre
@@ -2356,23 +2370,23 @@ BEGIN
               IF vr_node_name_grpsit = 'CtCredtd' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_CtCredtd     := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_CtCredtd     := fn_getValue(vr_valu_node_grpsit);
               -- CNPJ
               ELSIF vr_node_name_grpsit = 'CNPJCliCredtd' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_CNPJ_CPFCred := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_CNPJ_CPFCred := fn_getValue(vr_valu_node_grpsit);
               -- Nome
               ELSIF vr_node_name_grpsit = 'NomCliCredtd' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_NomCliCredtd := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_NomCliCredtd := fn_getValue(vr_valu_node_grpsit);
               END IF;
             END LOOP;
           ELSE
             -- Buscar primeiro filho do nó para buscar seu valor em lógica única
             vr_valu_node := xmldom.getFirstChild(vr_item_node);
-            vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+            vr_aux_descrica := fn_getValue(vr_valu_node);
             -- Copiar para a respectiva variavel conforme nome da tag
             IF vr_node_name = 'NumCtrlSTR' THEN
               vr_aux_NumCtrlRem := vr_aux_descrica;
@@ -2465,23 +2479,23 @@ BEGIN
               IF vr_node_name_grpsit = 'Catg' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_tab_numerario(vr_idx_numerario).cdcatego := gene0002.fn_char_para_number(xmldom.getNodeValue(vr_valu_node_grpsit));
+                vr_tab_numerario(vr_idx_numerario).cdcatego := gene0002.fn_char_para_number(fn_getValue(vr_valu_node_grpsit));
               -- Para o node VlrDen
               ELSIF vr_node_name_grpsit = 'VlrDen' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_tab_numerario(vr_idx_numerario).vlrdenom := gene0002.fn_char_para_number(xmldom.getNodeValue(vr_valu_node_grpsit));
+                vr_tab_numerario(vr_idx_numerario).vlrdenom := gene0002.fn_char_para_number(fn_getValue(vr_valu_node_grpsit));
               -- Outros
               ELSE
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_tab_numerario(vr_idx_numerario).qtddenom := gene0002.fn_char_para_number(xmldom.getNodeValue(vr_valu_node_grpsit));
+                vr_tab_numerario(vr_idx_numerario).qtddenom := gene0002.fn_char_para_number(fn_getValue(vr_valu_node_grpsit));
               END IF;
             END LOOP;
           ELSE
             -- Buscar primeiro filho do nó para buscar seu valor em lógica única
             vr_valu_node := xmldom.getFirstChild(vr_item_node);
-            vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+            vr_aux_descrica := fn_getValue(vr_valu_node);
             -- Copiar para a respectiva variavel conforme nome da tag
             IF vr_node_name = 'CodMsg' THEN
               vr_aux_CodMsg := vr_aux_descrica;
@@ -2550,7 +2564,7 @@ BEGIN
 
           -- Buscar primeiro filho do nó para buscar seu valor em lógica única
           vr_valu_node := xmldom.getFirstChild(vr_item_node);
-          vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+          vr_aux_descrica := fn_getValue(vr_valu_node);
           -- Copiar para a respectiva variavel conforme nome da tag
           IF vr_node_name = 'CodMsg' THEN
             vr_aux_CodMsg := vr_aux_descrica;
@@ -2608,7 +2622,7 @@ BEGIN
 
           -- Buscar primeiro filho do nó para buscar seu valor em lógica única
           vr_valu_node := xmldom.getFirstChild(vr_item_node);
-          vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+          vr_aux_descrica := fn_getValue(vr_valu_node);
           -- Copiar para a respectiva variavel conforme nome da tag
           IF vr_node_name = 'CodMsg' THEN
             vr_aux_CodMsg := vr_aux_descrica;
@@ -2671,7 +2685,7 @@ BEGIN
           END IF;
           -- Buscar primeiro filho do nó para buscar seu valor em lógica única
           vr_valu_node := xmldom.getFirstChild(vr_item_node);
-          vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+          vr_aux_descrica := fn_getValue(vr_valu_node);
 
           -- Gravar variaveis conforme tag em leitura
           IF vr_node_name = 'CodMsg' THEN
@@ -2861,10 +2875,10 @@ BEGIN
               IF vr_node_name_grpsit = 'DtLiquid' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_DtLiquid := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_DtLiquid := fn_getValue(vr_valu_node_grpsit);
               ELSIF vr_node_name_grpsit = 'NumSeqCicloLiquid' THEN
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_NumSeqCicloLiquid := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_NumSeqCicloLiquid := fn_getValue(vr_valu_node_grpsit);
               ELSIF vr_node_name_grpsit = 'Grupo_SLC0001_Prodt' THEN
                   -- Busca filhos
                   vr_elem_node_grpsit1 := xmldom.makeElement(vr_item_node_grpsit);
@@ -2882,7 +2896,7 @@ BEGIN
                     END IF;
                     IF vr_node_name_grpsit1 = 'CodProdt' THEN
                        vr_valu_node_grpsit1 := xmldom.getFirstChild(vr_item_node_grpsit1);
-                       vr_aux_CodProdt := xmldom.getNodeValue(vr_valu_node_grpsit1);
+                       vr_aux_CodProdt := fn_getValue(vr_valu_node_grpsit1);
                     ELSIF vr_node_name_grpsit1 = 'Grupo_SLC0001_LiquidProdt' THEN
                        -- Busca filhos
                        vr_elem_node_grpsit2 := xmldom.makeElement(vr_item_node_grpsit1);
@@ -2900,32 +2914,32 @@ BEGIN
                          END IF;
                          IF vr_node_name_grpsit2 = 'IdentdLinhaBilat' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_IdentdLinhaBilat := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_IdentdLinhaBilat := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'TpDeb_Cred' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_TpDeb_Cred := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_TpDeb_Cred := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'ISPBIFCredtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_ISPBIFCredtd := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_ISPBIFCredtd := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'ISPBIFDebtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_ISPBIFDebtd := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_ISPBIFDebtd := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'VlrLanc' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_DsVlrLanc := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_DsVlrLanc := fn_getValue(vr_valu_node_grpsit2);
                             vr_aux_VlrLanc := gene0002.fn_char_para_number(vr_aux_DsVlrLanc);
                          ELSIF vr_node_name_grpsit2 = 'CNPJNLiqdantDebtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_CNPJNLiqdantDebtd := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_CNPJNLiqdantDebtd := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'NomCliDebtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_NomCliDebtd := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_NomCliDebtd := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'CNPJNLiqdantCredtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_CNPJNLiqdantCredtd := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_CNPJNLiqdantCredtd := fn_getValue(vr_valu_node_grpsit2);
                          ELSIF vr_node_name_grpsit2 = 'NomCliCredtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
-                            vr_aux_NomCliCredtd := xmldom.getNodeValue(vr_valu_node_grpsit2);
+                            vr_aux_NomCliCredtd := fn_getValue(vr_valu_node_grpsit2);
 
                             IF  vr_aux_TpInf = 'D' THEN -- Apenas para mensagens com tipo = D - Definitiva
 
@@ -2974,7 +2988,7 @@ BEGIN
       ELSE
          -- Buscar primeiro filho do nó para buscar seu valor em lógica única
          vr_valu_node := xmldom.getFirstChild(vr_item_node);
-         vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+         vr_aux_descrica := fn_getValue(vr_valu_node);
          -- Copiar para a respectiva variavel conforme nome da tag
          IF vr_node_name = 'NumCtrlSLC' THEN
             -- Numero de Controle do Remetente
@@ -3047,7 +3061,7 @@ BEGIN
         
         -- Buscar primeiro filho do nó para buscar seu valor em lógica única
         vr_valu_node := xmldom.getFirstChild(vr_item_node);
-        vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+        vr_aux_descrica := fn_getValue(vr_valu_node);
         
         -- Numero de Controle do Remetente 
         vr_aux_CodProdt := vr_aux_descrica;
@@ -3056,7 +3070,7 @@ BEGIN
         
         -- Buscar primeiro filho do nó para buscar seu valor em lógica única
         vr_valu_node := xmldom.getFirstChild(vr_item_node);
-        vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+        vr_aux_descrica := fn_getValue(vr_valu_node);
         
         vr_aux_DtRef := vr_aux_descrica;
       
@@ -3096,16 +3110,16 @@ BEGIN
               IF vr_node_name_grpsit = 'CodGrdLDL' THEN
                 -- Buscar valor da TAG
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_CodGrdLDL := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_CodGrdLDL := fn_getValue(vr_valu_node_grpsit);
               ELSIF vr_node_name_grpsit = 'DtHrAbert' THEN
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_DtHrAbert := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_DtHrAbert := fn_getValue(vr_valu_node_grpsit);
               ELSIF vr_node_name_grpsit = 'DtHrFcht' THEN
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                vr_aux_DtHrFcht := xmldom.getNodeValue(vr_valu_node_grpsit);
+                vr_aux_DtHrFcht := fn_getValue(vr_valu_node_grpsit);
               ELSIF vr_node_name_grpsit = 'TpHrio' THEN
                   vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
-                  vr_aux_TpHrio := xmldom.getNodeValue(vr_valu_node_grpsit);
+                  vr_aux_TpHrio := fn_getValue(vr_valu_node_grpsit);
                   
                   IF  vr_aux_CodProdt='SLC' and vr_aux_CodGrdLDL in ('PAG94','PAGE3','PAGD3')  THEN
                       cecred.ccrd0006.pc_insere_horario_grade(vr_aux_codmsg
@@ -3323,7 +3337,7 @@ END;
             IF vr_node_name_segcab = 'NR_OPERACAO' THEN
               -- Buscar valor da TAG
               vr_valu_node_segcab := xmldom.getFirstChild(vr_item_node_segcab);
-              vr_aux_NrOperacao   := xmldom.getNodeValue(vr_valu_node_segcab);
+              vr_aux_NrOperacao   := fn_getValue(vr_valu_node_segcab);
             END IF;
           END LOOP;
         ELSE
