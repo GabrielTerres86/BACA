@@ -40,6 +40,8 @@ DEF VAR aux_qtregist AS INTE                                           NO-UNDO.
 
 DEF VAR aux_lsdconta AS CHAR                                           NO-UNDO.
 DEF VAR aux_lscontra AS CHAR                                           NO-UNDO.
+DEF VAR aux_lsborder AS CHAR                                           NO-UNDO.
+DEF VAR aux_lstitulo AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsjudici AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsextjud AS CHAR                                           NO-UNDO.
@@ -99,6 +101,8 @@ FOR EACH tt-param:
 
             WHEN "lsdconta" THEN aux_lsdconta = tt-param.valorCampo.
             WHEN "lscontra" THEN aux_lscontra = tt-param.valorCampo.
+            WHEN "lsborder" THEN aux_lsborder = tt-param.valorCampo.
+            WHEN "lstitulo" THEN aux_lstitulo = tt-param.valorCampo.
             WHEN "lsorigem" THEN aux_lsorigem = tt-param.valorCampo.
             WHEN "lsjudici" THEN aux_lsjudici = tt-param.valorCampo.
             WHEN "lsextjud" THEN aux_lsextjud = tt-param.valorCampo.
@@ -187,6 +191,8 @@ PROCEDURE grava-dados-crapcyc:
                                     INPUT aux_idseqttl,
                                     INPUT aux_lsdconta,
                                     INPUT aux_lscontra,
+                                    INPUT aux_lsborder,
+                                    INPUT aux_lstitulo,
                                     INPUT aux_lsorigem,
                                     INPUT aux_lsjudici,
                                     INPUT aux_lsextjud,

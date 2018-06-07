@@ -179,15 +179,15 @@ PROCEDURE valida-cadcyb:
 
                             /* verifica a existencia do bordero */       
                             FIND FIRST crapbdt WHERE 
-                                        crapbdt.cdcooper = par_cdcooper AND
-                                        crapbdt.nrdconta = par_nrdconta AND 
-                                        crapbdt.nrborder = par_nrborder
-                                        NO-LOCK NO-ERROR NO-WAIT.
+                                       crapbdt.cdcooper = par_cdcooper AND
+                                       crapbdt.nrdconta = par_nrdconta AND 
+                                       crapbdt.nrborder = par_nrborder
+                                       NO-LOCK NO-ERROR NO-WAIT.
                             
                              IF  NOT AVAIL crapbdt THEN
                                  DO:
                                      ASSIGN aux_cdcritic = 0
-                                            aux_dscritic = "Borderô não encontrado!".
+                                            aux_dscritic = "Bordero nao encontrado!".
                                     
                                      RUN gera_erro (INPUT par_cdcooper,
                                                     INPUT par_cdagenci,
@@ -221,7 +221,7 @@ PROCEDURE valida-cadcyb:
                              IF  NOT AVAIL craptdb THEN
                                  DO:
                                      ASSIGN aux_cdcritic = 0
-                                            aux_dscritic = "Título não encontrado!".
+                                            aux_dscritic = "Titulo nao encontrado!".
                                     
                                      RUN gera_erro (INPUT par_cdcooper,
                                                     INPUT par_cdagenci,
@@ -326,6 +326,8 @@ PROCEDURE grava-dados-crapcyc:
     DEF INPUT PARAM par_idseqttl AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_lsdconta AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsnrctrc AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_lsnrbord AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_lsnrtitu AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsorigem AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsjudici AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsextjud AS CHAR                               NO-UNDO.
@@ -344,6 +346,8 @@ PROCEDURE grava-dados-crapcyc:
     DEF VAR par_cdorigem AS CHAR                                       NO-UNDO.
     DEF VAR par_nrdconta AS INTE                                       NO-UNDO.
     DEF VAR par_nrctremp AS INTE                                       NO-UNDO.
+    DEF VAR par_nrborder AS INTE                                       NO-UNDO.
+    DEF VAR par_nrtitulo AS INTE                                       NO-UNDO.
     DEF VAR par_flgjudic AS CHAR                                       NO-UNDO.
     DEF VAR par_flextjud AS CHAR                                       NO-UNDO.
     DEF VAR par_flgehvip AS CHAR                                       NO-UNDO.
@@ -353,7 +357,8 @@ PROCEDURE grava-dados-crapcyc:
     DEF VAR aux_dtenvcbr AS DATE                                       NO-UNDO.
     DEF VAR aux_cdassess AS INTE                                       NO-UNDO.
     DEF VAR aux_cdmotcin AS INTE                                       NO-UNDO.
-
+    DEF VAR aux_nrctrdsc AS INTE                                       NO-UNDO.
+    
     DEF VAR aux_conta    AS  INTE                                      NO-UNDO.
     DEF VAR aux_contaok  AS  INTE                                      NO-UNDO.
     DEF VAR aux_contanok AS  INTE                                      NO-UNDO.
@@ -375,6 +380,12 @@ PROCEDURE grava-dados-crapcyc:
         /* Contrato  */
         par_nrctremp = INTE(ENTRY(aux_conta,par_lsnrctrc,';')).    
         
+        /* Bordero  */
+        par_nrborder = INTE(ENTRY(aux_conta,par_lsnrbord,';')).    
+        
+        /* Titulo  */
+        par_nrtitulo = INTE(ENTRY(aux_conta,par_lsnrtitu,';')).    
+        
         /* Origem,Conta ou Contrato */
         par_cdorigem = ENTRY(aux_conta,par_lsorigem,';').                
         
@@ -387,6 +398,15 @@ PROCEDURE grava-dados-crapcyc:
         /* Flag Vip */
         par_flgehvip = ENTRY(aux_conta,par_lsgehvip,';').
         
+        /* data de envio para cobrança */
+        aux_dtenvcbr = DATE(ENTRY(aux_conta,par_lsdtenvc,';')).
+        
+        /* assessoria */
+        aux_cdassess = INTE(ENTRY(aux_conta,par_lsassess,';')).
+        
+        /* motivo CIN */
+        aux_cdmotcin = INTE(ENTRY(aux_conta,par_lsmotcin,';')).
+
         IF  par_flgjudic MATCHES "*Nao*" THEN
             ASSIGN aux_flgjudic = FALSE.
         ELSE
@@ -402,25 +422,59 @@ PROCEDURE grava-dados-crapcyc:
         ELSE
             ASSIGN aux_flgehvip = TRUE.
         
-         /* 1 - Conta, 3 - Contrato */
-        IF  par_cdorigem MATCHES "*Conta*" THEN
-            ASSIGN aux_cdorigem = 1.
-        ELSE
-            ASSIGN aux_cdorigem = 3.
 
-        /* data de envio para cobrança */
-        aux_dtenvcbr = DATE(ENTRY(aux_conta,par_lsdtenvc,';')).
-        /* assessoria */
-        aux_cdassess = INTE(ENTRY(aux_conta,par_lsassess,';')).
-        /* motivo CIN */
-        aux_cdmotcin = INTE(ENTRY(aux_conta,par_lsmotcin,';')).
+
+         /* 1 - Conta, 3 - Contrato, 4 - Desconto de Titulos */
+        IF  par_cdorigem MATCHES "*Conta*" THEN
+          DO:
+            ASSIGN par_nrctremp = INTE(par_nrdconta)
+                   aux_cdorigem = 1.
+          END.
+        ELSE
+        IF  par_cdorigem MATCHES "*Titulo*" THEN
+          DO:
+            ASSIGN aux_cdorigem = 4.
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_inserir_titulo_cyber
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,INPUT par_nrborder
+                                                    ,INPUT par_nrtitulo
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT "").
+
+            CLOSE STORED-PROC pc_inserir_titulo_cyber
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_dscritic  = pc_inserir_titulo_cyber.pr_dscritic WHEN pc_inserir_titulo_cyber.pr_dscritic <> ?.
+
+            IF aux_dscritic <> "" THEN
+             DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+               RETURN "NOK".
+            END. 
+
+            /* Substitui o numero do contrato de emprestimo com o sequencial especifico do desconto de titulos */
+            ASSIGN par_nrctremp = INT(pc_inserir_titulo_cyber.pr_nrctrdsc).
+          END.
+       ELSE
+            ASSIGN aux_cdorigem = 3.
+          
 
         FIND FIRST crapcyc WHERE crapcyc.cdcooper = par_cdcooper AND
                                  crapcyc.cdorigem = aux_cdorigem AND
                                  crapcyc.nrdconta = par_nrdconta AND
                                  crapcyc.nrctremp = par_nrctremp
                                  NO-LOCK NO-ERROR.
-
+        
         IF  NOT AVAIL crapcyc THEN
             DO:
 
@@ -550,6 +604,8 @@ PROCEDURE grava-dados-crapcyc:
                               STRING(crapcyc.nrdconta,"zzzz,zzz,z") +
                               " com contrato: "                     +
                               STRING(crapcyc.nrctremp,"zz,zzz,zz9")  +
+                              " do tipo: "                     +
+                              par_cdorigem  +
                               " ja cadastrados. <br> ". 
                     END.
                 ELSE
@@ -559,6 +615,8 @@ PROCEDURE grava-dados-crapcyc:
                                STRING(crapcyc.nrdconta,"zzzz,zzz,z") +
                                " com contrato: "                     +
                                STRING(crapcyc.nrctremp,"zz,zzz,zz9")  + 
+                               " do tipo: "                     +
+                               par_cdorigem  +
                                " ja cadastrados. <br> ".
                           
                     END.
@@ -590,7 +648,7 @@ PROCEDURE grava-dados-crapcyc:
         DO: 
             ASSIGN aux_dscritic = tt-msg.dscritic                         +
                                   STRING(aux_contaok,"zzz,zzz,zz9")       +
-                                  " Contas/Contratos foram incluidos com" +
+                                  " Contas/Contratos/Titulos foram incluidos com" +
                                   " sucesso.".
 
             RUN gera_erro (INPUT par_cdcooper,

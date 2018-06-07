@@ -47,7 +47,7 @@
 		<br style="clear:both" />
 
 		
-		<label for="nrborder">Bordero:</label>
+		<label for="nrborder">Borderô:</label>
 		<input type="text" id="nrborder" name="nrborder" value="" />
 
 		<label for="nrtitulo">T&iacute;tulo:</label>

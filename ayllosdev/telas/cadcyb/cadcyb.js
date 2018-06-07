@@ -14,10 +14,11 @@
  *                19/01/2017 - PRJ 432 - Melhorias Envio CYber - incluída validação para verificar se assessoria estiver preenchida,
                                os campos flgjudic e flextjud não podem er nulos (Jean/Mout´S).
  *                15/02/2017 - Alteracao para habilitar btnOk quando chamado funcao estadoInicial. (Jaison/James)
+ *				  04/06/2018 - Projeto 403 - Inclusão de tratativas para a inclusão de títulos vencidos na Cyber (Lucas - GFT)	
  * -----------------------------------------------------------------------
  */
 
-var arrAssociado, arrPesqAssociado, glbTabNrdconta, glbTabNrctremp;
+var arrAssociado, arrPesqAssociado, glbTabCdorigem, glbTabNrdconta, glbTabNrctremp, glbTabNrdconta, glbTabNrtitulo;
 var flgjudic, flextjud, flgehvip, flgmsger, dtenvcbr;	 
  
 var arrayConsulta = new Array();
@@ -44,6 +45,7 @@ $.fn.extend({
 
 function estadoInicial() {
 
+	$("#divTela").css({"width":"720px","padding-bottom":"2px"});
 	$('#divTela').fadeTo(0,0.1);
 	
 	arrAssociado = new Array();
@@ -59,6 +61,7 @@ function estadoInicial() {
 	$('#divOpcoes2').css({'display':'none'});
 	$('#divPesquisaRodape').css({'display':'none'});
 	$('#frmCab').css({'display':'block'});
+
 
 	removeOpacidade('divTela');
 	$('#btGravar' ,'#divBotoes').hide();
@@ -353,6 +356,8 @@ function gravarOperacao() {
 	
 	var strNrdconta = '';
 	var strNrctremp = '';
+	var strNrborder = '';
+	var strNrtitulo = '';
 	var	strCdorigem = '';
 	var strFlgjudic = '';
 	var strFlextjud = '';
@@ -372,6 +377,8 @@ function gravarOperacao() {
 	for(var i=0,len=arrAssociado.length; i<len; i++){
 		strNrdconta = strNrdconta + arrAssociado[i].nrdconta + ';';
 		strNrctremp = strNrctremp + arrAssociado[i].nrctremp + ';';
+		strNrborder = strNrborder + arrAssociado[i].nrborder + ';';
+		strNrtitulo = strNrtitulo + arrAssociado[i].nrtitulo + ';';
 		strCdorigem = strCdorigem + arrAssociado[i].cdorigem + ';';
 		strFlgjudic = strFlgjudic + arrAssociado[i].flgjudic + ';';
 		strFlextjud = strFlextjud + arrAssociado[i].flextjud + ';';
@@ -386,6 +393,12 @@ function gravarOperacao() {
 	
 	$.trim(strNrctremp);
 	strNrctremp = strNrctremp.substr(0,strNrctremp.length - 1);
+	
+	$.trim(strNrborder);
+	strNrborder = strNrborder.substr(0,strNrborder.length - 1);
+	
+	$.trim(strNrtitulo);
+	strNrtitulo = strNrtitulo.substr(0,strNrtitulo.length - 1);
 	
 	$.trim(strCdorigem);
 	strCdorigem = strCdorigem.substr(0,strCdorigem.length - 1);
@@ -415,6 +428,8 @@ function gravarOperacao() {
 		data: {
 			strNrdconta: strNrdconta,
 			strNrctremp: strNrctremp,
+			strNrborder: strNrborder,
+			strNrtitulo: strNrtitulo,
 			strCdorigem: strCdorigem,
 			strFlgjudic: strFlgjudic,
 			strFlextjud: strFlextjud,
@@ -507,8 +522,10 @@ function controlaBotao() {
 function btnContinuar() {
 
 	// Armazena o número da conta na variável global
-	var nrctremp;
 	var nrdconta = normalizaNumero( $("#nrdconta","#frmCab").val() );
+	var nrctremp = $("#nrctremp","#frmCab").val();
+	var nrborder = $("#nrborder","#frmCab").val();
+	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	var operacao = $("#cddopcao","#frmCab").val();
 	var cdorigem = $("#cdorigem","#frmCab").val();
 	var dtenvcbr = $("#dtenvcbr","#frmCab").val();
@@ -517,12 +534,16 @@ function btnContinuar() {
 	var nrborder = $("#nrborder","#frmCab").val();
 	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	
+	/*
 	if (cdorigem == "1") {
 		nrctremp = nrdconta;
+	}else if (cdorigem == "4") {
+		nrctremp = $("#nrborder","#frmCab").val() + " - " + $("#nrborder","#frmCab").val();
 	}else{
 		nrctremp = $("#nrctremp","#frmCab").val();
 	}	
-	
+	*/
+
 	// Verifica se o número da conta é vazio
 	if ( nrdconta == '' ) { 
 		showError('error','Conta/dv Inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmCab\');'); 
@@ -599,7 +620,7 @@ function btnContinuar() {
 					try { 
 						hideMsgAguardo();
 						eval(response);
-						
+						formataTabela();
 						if (operacao == 'I') {
 							limparCamposCabecalho();
 						} else if (operacao == 'A') {
@@ -750,7 +771,7 @@ function carregaTabela(){
 	for(var i=0,len=arrAssociado.length; i<len; i++){
 		$('#regAssociado').append( 
 					'<tr>' +    
-						'<td><span>'+arrAssociado[i].cdorigem+'</span>'
+						'<td id="cdorigem"><span>'+arrAssociado[i].cdorigem+'</span>'
 							      +arrAssociado[i].cdorigem+
 						'</td>'+
 						'<td id="nrdconta"><span>'+arrAssociado[i].nrdconta+'</span>'
@@ -758,6 +779,12 @@ function carregaTabela(){
 						'</td>'+
 						'<td id="nrctremp"><span>'+arrAssociado[i].nrctremp+'</span>'
 							      +arrAssociado[i].nrctremp+
+						'</td>'+
+						'<td id="nrborder"><span>'+arrAssociado[i].nrborder+'</span>'
+							      +arrAssociado[i].nrborder+
+						'</td>'+
+						'<td id="nrtitulo"><span>'+arrAssociado[i].nrtitulo+'</span>'
+							      +arrAssociado[i].nrtitulo+
 						'</td>'+
 						'<td><span>'+arrAssociado[i].flgjudic+'</span>'
 							      +arrAssociado[i].flgjudic+
@@ -793,35 +820,38 @@ function formataTabela() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '135px';
+	arrayLargura[0] = '110px';
 	arrayLargura[1] = '62px';
 	arrayLargura[2] = '70px';
 	arrayLargura[3] = '61px';
-	arrayLargura[4] = '91px';
-	arrayLargura[5] = '54px';
-
-	// AXAO
-	//arrayLargura[6] = '70px';
-	//arrayLargura[7] = '70px';
+	arrayLargura[4] = '61px';
+	arrayLargura[5] = '70px';
+	arrayLargura[6] = '90px';
+	arrayLargura[7] = '50px';
 
 	var arrayAlinha = new Array();
-	arrayAlinha[0] = 'right';
+	arrayAlinha[0] = 'center';
 	arrayAlinha[1] = 'right';
 	arrayAlinha[2] = 'right';
-	arrayAlinha[3] = 'center';
-	arrayAlinha[4] = 'center';
+	arrayAlinha[3] = 'right';
+	arrayAlinha[4] = 'right';
 	arrayAlinha[5] = 'center';
-
-	// AXAO
-	//arrayAlinha[6] = 'center';
-	//arrayAlinha[7] = 'center';
+	arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'center';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 	
+	glbTabCdorigem = '';
 	glbTabNrdconta = '';
 	glbTabNrctremp = '';
+	glbTabNrborder = '';
+	glbTabNrtitulo = '';
 	
 	// seleciona o registro que é clicado
+	$('table > tbody > tr', divRegistro).click( function() {
+		glbTabCdorigem = $(this).find('#cdorigem > span').text() ;
+	});
+
 	$('table > tbody > tr', divRegistro).click( function() {
 		glbTabNrdconta = $(this).find('#nrdconta > span').text() ;
 	});
@@ -830,12 +860,20 @@ function formataTabela() {
 		glbTabNrctremp = $(this).find('#nrctremp > span').text() ;
 	});
 
+	$('table > tbody > tr', divRegistro).click( function() {
+		glbTabNrborder = $(this).find('#nrborder > span').text() ;
+	});
+
+	$('table > tbody > tr', divRegistro).click( function() {
+		glbTabNrtitulo = $(this).find('#nrtitulo > span').text() ;
+	});
+
 	$('table > tbody > tr:eq(0)', divRegistro).click();
 	
 	return false;
 }
 
-function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
+function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
 
 	var judicial, extjudic, coopvip, dsorigem; 
 	if (flgjudic == 'false') {
@@ -858,7 +896,9 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, flgjudic, flextjud, f
 	
 	if (cdorigem == "1") {
 		dsorigem = 'Conta';
-	} else { 
+	} else if (cdorigem == "4") { 
+		dsorigem = 'Desconto de Titulo'; 
+	} else { 	
 		dsorigem = 'Emprestimo'; 
 	}
 	
@@ -866,21 +906,29 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, flgjudic, flextjud, f
 	
 	for(var i=0,len=arrAssociado.length; i<len; i++){ 
 		// Verifica se conta já foi incluida, evitando assim duplicidade de registros.
-		if  ( ( arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrctremp == nrctremp) ) {
-			flgCria = false;			
+		if  ( ((dsorigem == "Conta") 	  	      && (arrAssociado[i].nrdconta == nrdconta)) || 
+			  ((dsorigem == "Emprestimo") 		  && (arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrctremp == nrctremp)) || 
+			  ((dsorigem == "Desconto de Titulo") && (arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrborder == nrborder) && (arrAssociado[i].nrtitulo == nrtitulo)) ) {
+			flgCria = false;
+			break;			
 		}
 	}
 	
 	if ( flgCria == true ) { 
-		var objAssociado = new associado(dsorigem, nrdconta, nrctremp, judicial, extjudic, coopvip, dtenvcbr, cdassess, cdmotcin);
+		var objAssociado = new associado(dsorigem, nrdconta, nrctremp, nrborder, nrtitulo, judicial, extjudic, coopvip, dtenvcbr, cdassess, cdmotcin);
 		arrAssociado.push( objAssociado );
+	} else {
+		//showError("error",$msgErro,"Alerta - Ayllos","limparCamposCabecalho();",NaN);
+		showError("error","Registro já inserido na tabela!","Alerta - Ayllos","limparCamposCabecalho();",NaN);
 	}
 }
 
-function associado(cdorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
+function associado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
 	this.cdorigem=cdorigem;
 	this.nrdconta=nrdconta;
 	this.nrctremp=nrctremp;
+	this.nrborder=nrborder;
+	this.nrtitulo=nrtitulo;
 	this.flgjudic=flgjudic;
 	this.flextjud=flextjud;
 	this.flgehvip=flgehvip;
@@ -901,7 +949,11 @@ function btnExcluir() {
 function excluirRegistro() {
 	
 	for(x=0;x<arrAssociado.length;x++) {
-		if  ( ( arrAssociado[x].nrdconta == glbTabNrdconta ) && (arrAssociado[x].nrctremp == glbTabNrctremp ) ) {
+		if  ( (arrAssociado[x].cdorigem == glbTabCdorigem) && 
+			  (arrAssociado[x].nrdconta == glbTabNrdconta) && 
+			  (arrAssociado[x].nrctremp == glbTabNrctremp) && 
+			  (arrAssociado[x].nrborder == glbTabNrborder) && 
+			  (arrAssociado[x].nrtitulo == glbTabNrtitulo) ) {
 			arrAssociado.splice(x,1);
 		}		
 	}
@@ -917,18 +969,20 @@ function buscaConsulta(nriniseq, nrregist)  {
 	
 	hideMsgAguardo();
 
-	var nrctremp;
 	var nrdconta = normalizaNumero( $("#nrdconta","#frmCab").val() );
+	var nrctremp = $("#nrctremp","#frmCab").val();
 	var cdorigem = $("#cdorigem","#frmCab").val();
 	var cdassess = $("#cdassessoria","#frmCab").val();
 	var cdmotcin = $("#cdmotivocin","#frmCab").val();
 	
+	/*
 	if (cdorigem == "1") {
 		nrctremp = nrdconta;
 	}else{
 		nrctremp = $("#nrctremp","#frmCab").val();
 	}	
-	
+	*/
+
 	var mensagem = 'Aguarde, buscando dados da conta ...';
 	showMsgAguardo( mensagem );	
 

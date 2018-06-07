@@ -70,67 +70,70 @@
 		} else {
 			exibirErro("error",$msgErro,"Alerta - Ayllos","estadoInicial();",false);
 		}
-	}
+	} else {
 	
-	if ($operacao == "I") {
-		echo "criaObjetoAssociado('" . $cdorigem 
-                              ."', '". $nrdconta 
-                              ."', '". $nrctremp 
-                              ."', '". $flgjudic 
-                              ."', '". $flextjud 
-                              ."', '". $flgehvip 
-                              ."', '". $dtenvcbr
-                              ."', '". $cdassess 
-                              ."', '".  $cdmotcin ."');";
-		echo "carregaTabela();";
-		echo "formataTabela();";
-		echo "zebradoLinhaTabela($('#tbCadcyb > tbody > tr'));";
-	}
-
-	if ($operacao == "A" || $operacao == "E" ) {
-		$judicial = $xmlObjetoContrato->roottag->tags[0]->attributes["FLGJUDIC"];
-		$extjudic = $xmlObjetoContrato->roottag->tags[0]->attributes["FLEXTJUD"];
-		$ehvip    = $xmlObjetoContrato->roottag->tags[0]->attributes["FLGEHVIP"];
-		$flgmsger = $xmlObjetoContrato->roottag->tags[0]->attributes["FLGMSGER"];
-		$dtenvcbr = $xmlObjetoContrato->roottag->tags[0]->attributes["DTENVCBR"];
-		$cdassess = $xmlObjetoContrato->roottag->tags[0]->attributes["CDASSESS"];
-		$nmassess = $xmlObjetoContrato->roottag->tags[0]->attributes["NMASSESS"];
-		$cdmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["CDMOTCIN"];
-		$dsmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["DSMOTCIN"];
-		
-		if ($judicial == "SIM") {
-			echo "$('#flgjudic','#frmCab').prop('checked',true);";			
-		} else {
-			 echo "$('#flgjudic','#frmCab').prop('checked',false);";
-		}
-		
-		if ($extjudic == "SIM") {
-			echo "$('#flextjud','#frmCab').prop('checked',true);";
-		} else {
-			 echo "$('#flextjud','#frmCab').prop('checked',false);";
-		}
-		
-		if ($ehvip == "SIM") {
-			echo "$('#flgehvip','#frmCab').prop('checked',true);";
-		} else {
-			echo "$('#flgehvip','#frmCab').prop('checked',false);";
-		}
-		
-		echo "$('#dtenvcbr','#frmCab').val('".$dtenvcbr."');";
-		if($cdassess != "0"){
-			echo "$('#cdassessoria','#frmCab').val('".$cdassess."');";
-			echo "$('#nmassessoria','#frmCab').val('".$nmassess."');";
-		}
-		if($cdmotcin != "0") {
-			echo "$('#cdmotivocin','#frmCab').val('".$cdmotcin."');";
-			echo "$('#dsmotivocin','#frmCab').val('".$dsmotcin."');";
+		if ($operacao == "I") {
+			echo "criaObjetoAssociado('" . $cdorigem 
+	                              ."', '". $nrdconta 
+	                              ."', '". $nrctremp 
+	                              ."', '". $nrborder 
+	                              ."', '". $nrtitulo 
+	                              ."', '". $flgjudic 
+	                              ."', '". $flextjud 
+	                              ."', '". $flgehvip 
+	                              ."', '". $dtenvcbr
+	                              ."', '". $cdassess 
+	                              ."', '". $cdmotcin ."');";
+			echo "carregaTabela();";
+			echo "formataTabela();";
+			//echo "zebradoLinhaTabela($('#tbCadcyb > tbody > tr'));";
 		}
 
-		if ($operacao == "E") {
-			if ($flgmsger == "yes") {
-				echo "showConfirmacao('Contrato j&aacute; enviado para cobran&ccedil;a, confirma exslusão do registro?','Confirma&ccedil;&atilde;o - Ayllos','excluirCrapcyc(\'".$flgmsger."\');','','sim.gif','nao.gif');";
-			}else{
-				echo "$('#btExclusao','#divBotoes').focus();";
+		if ($operacao == "A" || $operacao == "E" ) {
+			$judicial = $xmlObjetoContrato->roottag->tags[0]->attributes["FLGJUDIC"];
+			$extjudic = $xmlObjetoContrato->roottag->tags[0]->attributes["FLEXTJUD"];
+			$ehvip    = $xmlObjetoContrato->roottag->tags[0]->attributes["FLGEHVIP"];
+			$flgmsger = $xmlObjetoContrato->roottag->tags[0]->attributes["FLGMSGER"];
+			$dtenvcbr = $xmlObjetoContrato->roottag->tags[0]->attributes["DTENVCBR"];
+			$cdassess = $xmlObjetoContrato->roottag->tags[0]->attributes["CDASSESS"];
+			$nmassess = $xmlObjetoContrato->roottag->tags[0]->attributes["NMASSESS"];
+			$cdmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["CDMOTCIN"];
+			$dsmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["DSMOTCIN"];
+			
+			if ($judicial == "SIM") {
+				echo "$('#flgjudic','#frmCab').prop('checked',true);";			
+			} else {
+				 echo "$('#flgjudic','#frmCab').prop('checked',false);";
+			}
+			
+			if ($extjudic == "SIM") {
+				echo "$('#flextjud','#frmCab').prop('checked',true);";
+			} else {
+				 echo "$('#flextjud','#frmCab').prop('checked',false);";
+			}
+			
+			if ($ehvip == "SIM") {
+				echo "$('#flgehvip','#frmCab').prop('checked',true);";
+			} else {
+				echo "$('#flgehvip','#frmCab').prop('checked',false);";
+			}
+			
+			echo "$('#dtenvcbr','#frmCab').val('".$dtenvcbr."');";
+			if($cdassess != "0"){
+				echo "$('#cdassessoria','#frmCab').val('".$cdassess."');";
+				echo "$('#nmassessoria','#frmCab').val('".$nmassess."');";
+			}
+			if($cdmotcin != "0") {
+				echo "$('#cdmotivocin','#frmCab').val('".$cdmotcin."');";
+				echo "$('#dsmotivocin','#frmCab').val('".$dsmotcin."');";
+			}
+
+			if ($operacao == "E") {
+				if ($flgmsger == "yes") {
+					echo "showConfirmacao('Contrato j&aacute; enviado para cobran&ccedil;a, confirma exslusão do registro?','Confirma&ccedil;&atilde;o - Ayllos','excluirCrapcyc(\'".$flgmsger."\');','','sim.gif','nao.gif');";
+				}else{
+					echo "$('#btExclusao','#divBotoes').focus();";
+				}
 			}
 		}
 	}
