@@ -695,7 +695,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				break;
 			}
 			case "SITUACAO_PREVIDENCIA": {
-				$nomeRotina = "Situa&ccedil;&atilde;o da Previd&ecirc;ncia"; 
+				$nomeRotina = "Previd&ecirc;ncia"; 
 				$urlRotina = "";
 				$strValue = ( isset($valores[22]->cdata) ) ? ($valores[22]->cdata == "1" OR $valores[22]->cdata == "2")  ? "SIM" : "NAO" : "NAO"; 
 				$telaPermitadaAcessoBacen = 0;
