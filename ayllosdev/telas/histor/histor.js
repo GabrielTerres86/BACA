@@ -156,7 +156,7 @@ function formataCadastroHistorico() {
     $('#inhistor', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '2').setMask('INTEGER', 'zz', '', '');
     $('#dsexthst', '#frmHistorico').css({ 'width': '455px' }).attr('maxlength', '50');
     $('#dsextrat', '#frmHistorico').css({ 'width': '200px' }).attr('maxlength', '21');
-    $('#nmestrut', '#frmHistorico').css({ 'width': '200px' }).attr('maxlength', '32');
+    $('#nmestrut', '#frmHistorico').css({ 'width': '250px' }).attr('maxlength', '32');
 	// PJ416
     $('#indutblq', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '1'); 
 	
