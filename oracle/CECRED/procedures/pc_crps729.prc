@@ -2697,6 +2697,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 		vr_cdcomarc tbcobran_confirmacao_ieptb.cdcomarc%TYPE;
     vr_cdcartor tbcobran_confirmacao_ieptb.cdcartorio%TYPE;
     vr_qtregist NUMBER;
+		vr_qtcartor NUMBER;
     vr_qtnumarq NUMBER;
     vr_dsdlinha VARCHAR2(600);
     vr_qtregtra NUMBER;
@@ -2716,6 +2717,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
     pc_controla_log_batch(1, 'Início pc_crps729.pc_gera_cancelamento');
     -- Inicializa variáveis
     vr_qtregist  := 1;
+		vr_qtcartor  := 1;
     vr_qtnumarq  := 0;
     vr_vlsomseg  := 0;
     vr_idgercab  := TRUE;
@@ -2752,12 +2754,14 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 				vr_arquivo := vr_arquivo || '<comarca><CodMun>' || trim(rw_craprem.cdcomarc) || '</CodMun>';
 				--
 				vr_cdcomarc := rw_craprem.cdcomarc;
+				vr_qtcartor := 1;
+				vr_cdcartor := 0;
 				--
 			END IF;
 			-- Verifica se precisa inicializar um novo cartório
       IF nvl(vr_cdcartor, 0) <> to_number(rw_craprem.cdcartor) THEN
         --
-        IF vr_qtregist > 1 THEN
+        IF vr_qtcartor > 1 THEN
 					--
 					vr_arquivo := vr_arquivo || '</cartorio>' ;
 					--
@@ -2765,6 +2769,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 				--
 				vr_arquivo := vr_arquivo || '<cartorio><numero_cartorio>' || trim(rw_craprem.cdcartor) || '</numero_cartorio>';
 				vr_cdcartor := rw_craprem.cdcartor;
+				vr_qtcartor := vr_qtcartor + 1;
         --
       END IF;
 			--
@@ -2805,11 +2810,23 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
 																												 ,pr_dtmvtolt => vr_dtmvtolt -- IN
 																												 );
-    -- temporario RC7                                                         
-		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
+		
+		-- temporario RC7                                                         
+		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'    -- IN
 																												 ,pr_dtmvtolt => SYSDATE -- IN
 																												 );
-                                                         
+    
+		-- Faz o envelopamento SOAP
+		vr_arquivo := '<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:protesto_brIntf-Iprotesto_br">'
+               || '<soapenv:Header/>'
+               || '<soapenv:Body>'
+               || '<urn:Cancelamento soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+							 || '<user_arq xsi:type="xsd:string">' || vr_nmarqtxt || '</user_arq>'
+							 || '<user_dados xsi:type="xsd:string">' || htf.escape_sc(vr_arquivo) || '</user_dados>'
+							 || '</urn:Cancelamento>'
+               || '</soapenv:Body>'
+               || '</soapenv:Envelope>';
+		
 		-- Diretório onde deverá gerar o arquivo de cancelamento
 		--vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
 		vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
@@ -2918,6 +2935,12 @@ BEGIN
 	-- Geracao do novo layout do arquivo de cancelamento
 	pc_gera_cancelamento_ieptb(pr_dscritic => pr_dscritic -- OUT
                             );
+	--
+	IF pr_dscritic IS NOT NULL THEN
+    --
+    RAISE vr_exc_erro;
+    --
+  END IF;
 	-- Envia os arquivos para o IEPTB
 	wprt0001.pc_enviar_remessa(pr_cdcooper => 3           -- IN -- Fixo Central
 	                          ,pr_dscritic => pr_dscritic -- OUT

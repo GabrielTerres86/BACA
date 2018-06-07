@@ -97,6 +97,32 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 	TYPE typ_tab_coop IS TABLE OF typ_reg_coop INDEX BY PLS_INTEGER;
 	-- Tabela que contem as cooperativas
 	vr_tab_coop typ_tab_coop;
+	
+	-- Tipo de registro TED
+	TYPE typ_reg_ted IS RECORD
+    (vr_cdcooper crapcop.cdcooper%TYPE                             -- Cooperativa
+		,vr_cdagenci tbfin_recursos_movimento.cdagenci_debitada%TYPE   -- Agencia Remetente
+		,vr_nrdconta tbfin_recursos_movimento.dsconta_debitada%TYPE    -- Conta Remetente
+		,vr_tppessoa tbfin_recursos_movimento.inpessoa_debitada%TYPE   -- Tipo de pessoa Remetente
+		,vr_origem   INTEGER                                           -- Fixo 7 -- Processo automático
+		,vr_nrispbif tbfin_recursos_movimento.nrispbif%TYPE            -- Banco destino
+		,vr_cdageban tbfin_recursos_movimento.cdagenci_creditada%TYPE  -- Agencia destino
+		,vr_nrctatrf tbfin_recursos_movimento.dsconta_creditada%TYPE   -- Conta destino                          
+		,vr_nmtitula tbfin_recursos_movimento.nmtitular_creditada%TYPE -- Nnome do titular destino
+		,vr_nrcpfcgc tbfin_recursos_movimento.nrcnpj_creditada%TYPE    -- CPF do titular destino
+		,vr_intipcta tbfin_recursos_movimento.tpconta_creditada%TYPE   -- Tipo de conta destino
+		,vr_inpessoa tbfin_recursos_movimento.inpessoa_debitada%TYPE   -- Tipo de pessoa destino
+		,vr_vllanmto tbfin_recursos_movimento.vllanmto%TYPE            -- Valor do lançamento
+		,vr_cdfinali INTEGER                                           -- Finalidade TED
+		,vr_operador VARCHAR2(2)                                       -- Fixo 1 -- Processo automático
+		,vr_cdhistor tbfin_recursos_movimento.cdhistor%TYPE            -- Código do histórico
+		);
+	-- Tabela de tipo TED
+	TYPE typ_tab_ted IS TABLE OF typ_reg_ted INDEX BY PLS_INTEGER;
+	-- Tabela que contem as TEDs
+	vr_tab_ted typ_tab_ted;
+	-- Registro de TED
+	vr_reg_ted typ_reg_ted;
 	 
   vr_exc_erro     EXCEPTION;
   
@@ -503,17 +529,23 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
   END pc_insere_registro;
    
   -- Rotina que carrega os arquivos de confirmação
-  PROCEDURE pc_carrega_arquivo_confirmacao(pr_dscritic OUT VARCHAR2
+  PROCEDURE pc_carrega_arquivo_confirmacao(pr_cdcooper IN  crapcop.cdcooper%TYPE
+		                                      ,pr_dscritic OUT VARCHAR2
                                           ) IS
     --
     vr_tab_confirmacao TYP_SIMPLESTRINGARRAY := TYP_SIMPLESTRINGARRAY();
     vr_pesq            VARCHAR2(500)         := NULL;
-    vr_dsdireto        VARCHAR2(500)         := '/micros/cecred/ieptb/retorno/';
+    vr_dsdireto        VARCHAR2(500);--         := '/micros/cecred/ieptb/retorno/';
     --vr_nmarquiv        VARCHAR2(500)         := NULL;
     vr_cdcritic        NUMBER;
     vr_dscritic        VARCHAR2(4000);
     --
   BEGIN
+		--
+		vr_dsdireto := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																						,pr_cdcooper => pr_cdcooper
+																						,pr_cdacesso => 'DIR_IEPTB_RETORNO'
+																						);
     -- Buscar arquivos de confirmação
     vr_pesq := 'C%%%%%%%.%%%';
     -- Buscar a lista de arquivos do diretorio
@@ -611,17 +643,23 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 	END pc_atualiza_retorno;
   
   -- Rotina que carrega os arquivos de retorno
-  PROCEDURE pc_carrega_arquivo_retorno(pr_dscritic OUT VARCHAR2
+  PROCEDURE pc_carrega_arquivo_retorno(pr_cdcooper IN  crapcop.cdcooper%TYPE
+		                                  ,pr_dscritic OUT VARCHAR2
                                       ) IS
     --
     vr_tab_retorno TYP_SIMPLESTRINGARRAY := TYP_SIMPLESTRINGARRAY();
     vr_pesq            VARCHAR2(500)         := NULL;
-    vr_dsdireto        VARCHAR2(500)         := '/micros/cecred/ieptb/retorno/';
+    vr_dsdireto        VARCHAR2(500);--         := '/micros/cecred/ieptb/retorno/';
     vr_nmarquiv        VARCHAR2(500)         := NULL;
     vr_cdcritic        NUMBER;
     vr_dscritic        VARCHAR2(4000);
     --
   BEGIN
+		--
+		vr_dsdireto := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																						,pr_cdcooper => pr_cdcooper
+																						,pr_cdacesso => 'DIR_IEPTB_RETORNO'
+																						);
     -- Buscar arquivos de retorno
     vr_pesq := 'R%%%%%%%.%%%';
     -- Buscar a lista de arquivos do diretorio
@@ -938,6 +976,56 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 		WHEN OTHERS THEN
 			pr_dscritic := 'Erro na pc_totaliza_cooperativa: ' || SQLERRM;
 	END pc_totaliza_cooperativa;
+	
+	-- Processa as TED geradas em memória e realiza o envio das mesmas
+	PROCEDURE pc_envia_teds(pr_dscritic OUT VARCHAR2
+		                     ) IS
+		--
+		vr_index_ted NUMBER  := 0;
+		--
+		vr_idlancto  tbfin_recursos_movimento.idlancto%TYPE;
+		vr_nrdocmto  NUMBER;
+		vr_cdcritic  NUMBER;
+    vr_dscritic  VARCHAR2(4000);
+		--
+	BEGIN
+		--
+		IF vr_tab_ted.count() > 0 THEN
+			--
+			WHILE vr_index_ted IS NOT NULL LOOP
+				--
+				cobr0011.pc_enviar_ted_IEPTB(pr_cdcooper => vr_tab_ted(vr_index_ted).vr_cdcooper
+				                            ,pr_cdagenci => vr_tab_ted(vr_index_ted).vr_cdagenci
+																		,pr_nrdconta => vr_tab_ted(vr_index_ted).vr_nrdconta
+																		,pr_tppessoa => vr_tab_ted(vr_index_ted).vr_tppessoa
+																		,pr_origem   => vr_tab_ted(vr_index_ted).vr_origem
+																		,pr_nrispbif => vr_tab_ted(vr_index_ted).vr_nrispbif
+																		,pr_cdageban => vr_tab_ted(vr_index_ted).vr_cdageban
+																		,pr_nrctatrf => vr_tab_ted(vr_index_ted).vr_nrctatrf
+																		,pr_nmtitula => vr_tab_ted(vr_index_ted).vr_nmtitula
+																		,pr_nrcpfcgc => vr_tab_ted(vr_index_ted).vr_nrcpfcgc
+																		,pr_intipcta => vr_tab_ted(vr_index_ted).vr_intipcta
+																		,pr_inpessoa => vr_tab_ted(vr_index_ted).vr_inpessoa
+																		,pr_vllanmto => vr_tab_ted(vr_index_ted).vr_vllanmto
+																		,pr_cdfinali => vr_tab_ted(vr_index_ted).vr_cdfinali
+																		,pr_operador => vr_tab_ted(vr_index_ted).vr_operador
+																		,pr_cdhistor => vr_tab_ted(vr_index_ted).vr_cdhistor
+																		,pr_idlancto => vr_idlancto
+																		,pr_nrdocmto => vr_nrdocmto
+																		,pr_cdcritic => vr_cdcritic
+																		,pr_dscritic => vr_dscritic
+																		);
+				-- Próximo registro
+				vr_index_ted := vr_tab_ted.next(vr_index_ted);
+				--
+			END LOOP;
+			--
+		END IF;
+		--
+		pr_dscritic := vr_dscritic;
+		--
+	END pc_envia_teds;
+	
   -- Processa os arquivos de confirmação e retorno
   PROCEDURE pc_processa_arquivos(pr_idtipprc IN  VARCHAR2
 		                            ,pr_dscritic OUT VARCHAR2
@@ -1107,6 +1195,8 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 		--
   BEGIN
     --
+		vr_tab_coop.delete;
+		
     vr_index_reg := 0;
     --
 		IF vr_tab_arquivo.count() > 0 THEN
@@ -2677,7 +2767,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							--
 						ELSE
 							--
-							vr_tot_outros_cra := nvl(vr_tot_sp_cra, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele);
+							vr_tot_outros_cra := nvl(vr_tot_outros_cra, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele);
 							--
 						END IF;
 						--
@@ -2913,7 +3003,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 				-- Envia a TED para o IEPTB com o total das custas e tarifas cobradas
 			  IF nvl(vr_tot_sp_cra, 0) > 0 THEN
 					--
-					OPEN cr_conta(10000003
+					OPEN cr_conta(20000006
 		                   );
 					--
 					FETCH cr_conta INTO rw_conta;
@@ -2925,31 +3015,24 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 						--
 					ELSE
 						--
-						cobr0011.pc_enviar_ted_ieptb(pr_cdcooper => 3 -- IN -- Fixo -- Cooperativa
-																				,pr_cdagenci => rw_conta.cdagenci -- IN -- Agencia Remetente
-																				,pr_nrdconta => rw_conta.nrdconta -- IN -- Conta Remetente
-																				,pr_tppessoa => 2 -- IN -- Fixo -- Tipo de pessoa Remetente
-																				,pr_origem   => 7 -- IN -- Fixo -- Origem do processo
-							                          
-																				,pr_nrispbif => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 1) -- IN -- Banco destino
-																				,pr_cdageban => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2) -- IN -- Agencia destino
-																				,pr_nrctatrf => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3) -- IN -- Conta destino
-																				,pr_nmtitula => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4) -- IN -- Nome do titular destino
-																				,pr_nrcpfcgc => fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)) -- IN -- CPF do titular destino
-																				,pr_intipcta => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6) -- IN -- Tipo de conta destino
-																				,pr_inpessoa => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7) -- IN -- Tipo de pessoa destino
-
-																				,pr_vllanmto => vr_tot_sp_cra -- IN
-																				,pr_cdfinali => 10 -- IN -- Fixo -- Finalidade TED
-																				,pr_operador => 1 -- IN -- Fixo
-																				,pr_cdhistor => 2642 -- IN -- Fixo
-
-																				-- saida
-																				,pr_idlancto => vr_idlancto -- OUT -- ID do lançamento
-																				,pr_nrdocmto => vr_nrdocmto -- OUT -- Documento TED
-																				,pr_cdcritic => vr_cdcritic -- OUT
-																				,pr_dscritic => vr_dscritic -- OUT
-																				);
+						vr_reg_ted.vr_cdcooper := 3;                                                       -- Cooperativa
+						vr_reg_ted.vr_cdagenci := rw_conta.cdagenci;                                       -- Agencia Remetente
+						vr_reg_ted.vr_nrdconta := rw_conta.nrdconta;                                       -- Conta Remetente
+						vr_reg_ted.vr_tppessoa := 2;                                                       -- Tipo de Pessoa Remetente
+						vr_reg_ted.vr_origem   := 7;                                                       -- Origem do Processo
+						vr_reg_ted.vr_nrispbif := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 1); -- Banco Destino
+						vr_reg_ted.vr_cdageban := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2); -- Agencia Destino
+						vr_reg_ted.vr_nrctatrf := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3); -- Conta Destino
+						vr_reg_ted.vr_nmtitula := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4); -- Nome do Titular Destino 
+						vr_reg_ted.vr_nrcpfcgc := fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)); -- CPF do Titular Destino
+						vr_reg_ted.vr_intipcta := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6); -- Tipo de Conta Destino
+						vr_reg_ted.vr_inpessoa := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7); -- Tipo de Pessoa Destino
+						vr_reg_ted.vr_vllanmto := vr_tot_sp_cra;
+						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
+						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
+						vr_reg_ted.vr_cdhistor := 2642;                                                    -- Fixo
+						--
+						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
 					END IF;
 					--
@@ -2961,7 +3044,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 				--
 				IF nvl(vr_tot_outros_cra, 0) > 0 THEN
 					--
-					OPEN cr_conta(20000006
+					OPEN cr_conta(10000003
 		                   );
 					--
 					FETCH cr_conta INTO rw_conta;
@@ -2973,31 +3056,24 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 						--
 					ELSE
 						--
-						cobr0011.pc_enviar_ted_ieptb(pr_cdcooper => 3 -- IN -- Fixo -- Cooperativa
-																				,pr_cdagenci => rw_conta.cdagenci -- IN -- Agencia Remetente
-																				,pr_nrdconta => rw_conta.nrdconta -- IN -- Conta Remetente
-																				,pr_tppessoa => 2 -- IN -- Fixo -- Tipo de pessoa Remetente
-																				,pr_origem   => 7 -- IN -- Fixo -- Origem do processo
-							                          
-																				,pr_nrispbif => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 1) -- IN -- Banco destino
-																				,pr_cdageban => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2) -- IN -- Agencia destino
-																				,pr_nrctatrf => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3) -- IN -- Conta destino
-																				,pr_nmtitula => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4) -- IN -- Nome do titular destino
-																				,pr_nrcpfcgc => fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)) -- IN -- CPF do titular destino
-																				,pr_intipcta => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6) -- IN -- Tipo de conta destino
-																				,pr_inpessoa => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7) -- IN -- Tipo de pessoa destino
-
-																				,pr_vllanmto => vr_tot_sp_cra -- IN
-																				,pr_cdfinali => 10 -- IN -- Fixo -- Finalidade TED
-																				,pr_operador => 1 -- IN -- Fixo
-																				,pr_cdhistor => 2642 -- IN -- Fixo
-
-																				-- saida
-																				,pr_idlancto => vr_idlancto -- OUT -- ID do lançamento
-																				,pr_nrdocmto => vr_nrdocmto -- OUT -- Documento TED
-																				,pr_cdcritic => vr_cdcritic -- OUT
-																				,pr_dscritic => vr_dscritic -- OUT
-																				);
+						vr_reg_ted.vr_cdcooper := 3;                                                       -- Cooperativa
+						vr_reg_ted.vr_cdagenci := rw_conta.cdagenci;                                       -- Agencia Remetente
+						vr_reg_ted.vr_nrdconta := rw_conta.nrdconta;                                       -- Conta Remetente
+						vr_reg_ted.vr_tppessoa := 2;                                                       -- Tipo de Pessoa Remetente
+						vr_reg_ted.vr_origem   := 7;                                                       -- Origem do Processo
+						vr_reg_ted.vr_nrispbif := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 1); -- Banco Destino
+						vr_reg_ted.vr_cdageban := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2); -- Agencia Destino
+						vr_reg_ted.vr_nrctatrf := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3); -- Conta Destino
+						vr_reg_ted.vr_nmtitula := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4); -- Nome do Titular Destino 
+						vr_reg_ted.vr_nrcpfcgc := fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)); -- CPF do Titular Destino
+						vr_reg_ted.vr_intipcta := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6); -- Tipo de Conta Destino
+						vr_reg_ted.vr_inpessoa := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7); -- Tipo de Pessoa Destino
+						vr_reg_ted.vr_vllanmto := vr_tot_outros_cra;
+						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
+						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
+						vr_reg_ted.vr_cdhistor := 2642;                                                    -- Fixo
+						--
+						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
 					END IF;
 					--
@@ -3017,6 +3093,89 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
     WHEN OTHERS THEN
       pr_dscritic := 'Erro ao processar os arquivos de confirmação/retorno: ' || SQLERRM;
   END pc_processa_arquivos;
+	
+	-- Rotina para mover os arquivos processados
+	PROCEDURE pc_move_arquivos(pr_cdcooper IN  crapcop.cdcooper%TYPE
+		                        ,pr_dscritic OUT VARCHAR2
+		                        ) IS
+		--
+		vr_tab_arquivo TYP_SIMPLESTRINGARRAY := TYP_SIMPLESTRINGARRAY();
+    vr_dsdireto    VARCHAR2(500);--         := '/micros/cecred/ieptb/retorno/';
+		vr_drsalvar    VARCHAR2(500);
+		vr_pesq        VARCHAR2(500);
+		--
+		vr_exc_erro    EXCEPTION;
+		--
+	BEGIN
+		--
+		vr_dsdireto := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																						,pr_cdcooper => pr_cdcooper
+																						,pr_cdacesso => 'DIR_IEPTB_RETORNO'
+																						);
+    --
+		vr_drsalvar := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => '/salvar'
+																				);
+		-- Buscar arquivos de confirmação
+    vr_pesq := 'C%%%%%%%.%%%';
+    -- Buscar a lista de arquivos do diretorio
+    gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_arquivo
+                              ,pr_path          => vr_dsdireto
+                              ,pr_pesq          => vr_pesq
+                              );
+    --
+    IF vr_tab_arquivo.COUNT() > 0 THEN
+      --
+      FOR idx IN 1..vr_tab_arquivo.COUNT() LOOP
+        -- Move o arquivo
+        wprt0001.pc_atualiza_arquivo(pr_arquivo   => vr_dsdireto || '/' || vr_tab_arquivo(idx)
+																		,pr_nvarquivo => vr_drsalvar || '/' || vr_tab_arquivo(idx)
+																		,pr_dscritic  => pr_dscritic
+																		);
+        -- Se retornou erro
+        IF TRIM(pr_dscritic) IS NOT NULL THEN
+          --
+          RAISE vr_exc_erro;
+          --
+        END IF;
+        --
+      END LOOP;
+      --
+    END IF;
+		-- Buscar arquivos de retorno
+    vr_pesq := 'P%%%%%%%.%%%';
+    -- Buscar a lista de arquivos do diretorio
+    gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_arquivo
+                              ,pr_path          => vr_dsdireto
+                              ,pr_pesq          => vr_pesq
+                              );
+    --
+    IF vr_tab_arquivo.COUNT() > 0 THEN
+      --
+      FOR idx IN 1..vr_tab_arquivo.COUNT() LOOP
+        -- Move o arquivo
+        wprt0001.pc_atualiza_arquivo(pr_arquivo   => vr_dsdireto || '/' || vr_tab_arquivo(idx)
+																	  ,pr_nvarquivo => vr_drsalvar || '/' || vr_tab_arquivo(idx)
+																	  ,pr_dscritic  => pr_dscritic
+																	  );
+        -- Se retornou erro
+        IF TRIM(pr_dscritic) IS NOT NULL THEN
+          --
+          RAISE vr_exc_erro;
+          --
+        END IF;
+        --
+      END LOOP;
+      --
+    END IF;
+		--
+	EXCEPTION
+		WHEN vr_exc_erro THEN
+			NULL;
+		WHEN OTHERS THEN
+			pr_dscritic := 'Erro ao mover os arquivos: ' || SQLERRM;
+	END pc_move_arquivos;
 	--
 begin
   -- Incluido controle de Log inicio programa
@@ -3039,7 +3198,8 @@ begin
   -- temporario RC7
   vr_dtmvtolt := trunc(SYSDATE);
   
-	/*wprt0001.pc_obtem_retorno(pr_cdcooper => 3
+	/*
+	wprt0001.pc_obtem_retorno(pr_cdcooper => 3
 													 ,pr_cdbandoc => 85
 													 ,pr_dtmvtolt => vr_dtmvtolt
 													 ,pr_dscritic => pr_dscritic
@@ -3051,7 +3211,8 @@ begin
     --
   END IF;
 	--
-  pc_carrega_arquivo_confirmacao(pr_dscritic => pr_dscritic -- OUT
+  pc_carrega_arquivo_confirmacao(pr_cdcooper => 3           -- IN
+	                              ,pr_dscritic => pr_dscritic -- OUT
                                 );
   --
   IF pr_dscritic IS NOT NULL THEN
@@ -3070,7 +3231,8 @@ begin
     --
   END IF;
   --
-  pc_carrega_arquivo_retorno(pr_dscritic => pr_dscritic -- OUT
+  pc_carrega_arquivo_retorno(pr_cdcooper => 3           -- IN
+	                          ,pr_dscritic => pr_dscritic -- OUT
                             );
   --
   IF pr_dscritic IS NOT NULL THEN
@@ -3090,7 +3252,7 @@ begin
   END IF;
 	
 	-- Executa a conciliação automática
-	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
+	--tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
@@ -3099,7 +3261,7 @@ begin
   END IF;
 	
 	-- Gera as movimentações
-	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
+	--cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
@@ -3111,6 +3273,12 @@ begin
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> Finalizado o processamento dos retornos.'); -- Texto para escrita
   --
 --	COMMIT;
+  -- Faz o envio das TEDs
+	pc_envia_teds(pr_dscritic => pr_dscritic);
+	-- Move os arquivos processados
+	pc_move_arquivos(pr_cdcooper => 3           -- IN
+									,pr_dscritic => pr_dscritic -- OUT
+									);
 	--
 EXCEPTION
   WHEN vr_exc_erro THEN

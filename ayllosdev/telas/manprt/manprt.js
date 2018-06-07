@@ -990,7 +990,7 @@ function verificaCheckbox(elem, valorCheckbox) {
 function validaConciliacao() {
     //showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')", 'estadoInicial();', 'sim.gif', 'nao.gif');
 	//pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')
-	showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "efetuaConciliacao();", 'estadoInicial();', 'sim.gif', 'nao.gif');
+	showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', "efetuaConciliacao();", ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 
     /* parcial, não será feito, caso, volte, descomentar bloco abaixo: */
     // if (converteMoedaFloat($('#vltitulos').val()) < converteMoedaFloat($('#vltotal').val())) {
@@ -1058,4 +1058,203 @@ function filtraConciliacao(elem) {
             verificaCheckbox();
         }
     });
+}
+
+function abrirModalDevolverTED() {
+
+    if (registro == null)
+        return;
+
+    showMsgAguardo("Aguarde ...");			
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manprt/modal_devolver_ted.php",
+		data: {
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+		},
+		success: function (response) {
+            hideMsgAguardo();
+            $('#divRotina').html(response);
+            exibeRotina($('#divRotina'));
+            $('#divRotina').css('left','50%');
+            $('#divRotina').css('margin-left','-'+(parseInt($('#divRotina table').css('width'))/2)+'px');
+        }				
+	});
+}
+
+function validarCartorioTED() {
+
+    if (registro == null)
+        return;
+
+    var idlancto = $('#idlancto', registro).val();
+
+    showMsgAguardo("Aguarde ...");			
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manprt/estornar_ted.php",
+		data: {
+			redirect: "html_ajax",
+            acao: "validar_cartorio",
+            idlancto: idlancto
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+		},
+		success: function (response) {
+            hideMsgAguardo();
+            eval(response);
+        }				
+	});
+}
+
+function retornarTitulo() {
+
+    var cooperativa = $('#cooperativa', '#modalEstorno').val(),
+        convenio = $('#convenio', '#modalEstorno').val(),
+        conta = $('#nrdconta', '#modalEstorno').val(),
+        documento = $('#documento', '#modalEstorno').val();
+
+    showMsgAguardo("Aguarde ...");			
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manprt/estornar_ted.php",
+		data: {
+			redirect: "html_ajax",
+            acao: "retornar_titulo",
+            cooperativa: cooperativa,
+            convenio: convenio,
+            conta: conta,
+            documento: documento
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+		},
+		success: function (response) {
+            hideMsgAguardo();
+            eval(response);
+        }				
+	});
+}
+
+function validarValorTEDCustas() {
+    var valorCustas = $('#custas').val(),
+        valorTed = $('#valor', registro).val();
+
+    if (valorCustas != valorTed) {
+        showError("error","O valor da TED selecionada &eacute; diferente do valor das custas.","Alerta - Ayllos","");
+        return false;
+    }
+    return true;
+}
+
+function abrirModalEstornarTED() {
+
+    if (registro == null)
+        return;
+
+    showMsgAguardo("Aguarde ...");			
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manprt/modal_estornar_ted.php",
+		data: {
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+		},
+		success: function (response) {
+            hideMsgAguardo();
+            $('#divRotina').html(response);
+            exibeRotina($('#divRotina'));
+            $('#divRotina').css('left','50%');
+            $('#divRotina').css('margin-left','-'+(parseInt($('#divRotina table').css('width'))/2)+'px');
+        }				
+	});
+}
+
+function solicitaEstornoTED() {
+    var idretorno = $('#idretorno').val();
+
+    if(!validarValorTEDCustas())
+        return;
+
+    if (idretorno == "") {
+        showError("error","Favor realizar consulta.","Alerta - Ayllos","");
+        return;
+    }
+
+    //pedeSenhaCoordenador(2,'estornarTED()','');
+	estornarTED();
+
+}
+
+function estornarTED() {
+
+    showMsgAguardo("Aguarde ...");
+    
+    var idlancto = $('#idlancto', registro).val(),
+    idretorno = $('#idretorno').val();
+
+    $.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manprt/estornar_ted.php",
+		data: {
+			redirect: "html_ajax",
+            acao: "estornar_ted",
+            idlancto: idlancto,
+            idretorno: idretorno
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+		},
+		success: function (response) {
+            hideMsgAguardo();
+            
+        }				
+	});
+}
+
+function devolverTED() {
+    showMsgAguardo("Aguarde ...");
+    var idlancto = $('#idlancto', registro).val(),
+    motivo = $('#devted_motivo').val(),
+    descricao = $('#devted_descricao').val();
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manprt/devolver_ted.php",
+		data: {
+            idlancto: idlancto,
+            motivo: motivo,
+            descricao: descricao,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+		},
+		success: function (response) {
+            hideMsgAguardo();
+			eval(response);
+        }				
+	});
 }

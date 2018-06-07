@@ -2111,6 +2111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob_novo.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob_novo.rowid  --ROWID da cobranca
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -2780,6 +2781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                        ,pr_nrcnvcob => rw_crapcob_ret.nrcnvcob --Numero Convenio
                                        ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
                                        ,pr_cdoperad => pr_cdoperad --Codigo Operador
+																			 ,pr_idregcob => rw_crapcob_ret.rowid --ROWID da cobranca
                                        ,pr_nrremret => vr_nrremret --Numero Remessa
                                        ,pr_rowid_ret => vr_rowid_ret --ROWID Remessa Retorno
                                        ,pr_nrseqreg => vr_nrseqreg --Numero Sequencial registro
@@ -2837,6 +2839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                         ,pr_nrcnvcob => rw_crapcob_ret.nrcnvcob --Numero Convenio
                                         ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
                                         ,pr_cdoperad => pr_cdoperad --Codigo Operador
+                                        ,pr_idregcob => rw_crapcob_ret.rowid
                                         ,pr_nrremret => vr_nrremret --Numero Remessa
                                         ,pr_rowid_ret => vr_rowid_ret --ROWID Remessa Retorno
                                         ,pr_nrseqreg => vr_nrseqreg --Numero Sequencial registro
@@ -3338,7 +3341,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                        ,pr_des_erro => vr_des_erro   --Indicador erro
                                        ,pr_dscritic => vr_dscritic); --Descricao erro                              
           
-        WHEN 1 THEN -- c/ confirmacao de inst de protesto
+					-- Deve gerar baixa
+					IF pr_idgerbai = 1 THEN
+						--
+						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
+																								,pr_cdocorre            => pr_cdocorre
+																								,pr_dtmvtolt            => pr_dtmvtolt
+																								,pr_cdoperad            => 2 -- Baixa
+																								,pr_nrremass            => pr_nrremass
+																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+																								,pr_cdcritic            => vr_cdcritic
+																								,pr_dscritic            => vr_dscritic
+																								);
+						 -- Verifica se ocorreu erro durante a execucao
+						IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+							RAISE vr_exc_erro;
+						END IF;
+						--
+					END IF;
+					--
+				WHEN 1 THEN -- c/ confirmacao de inst de protesto
           
           BEGIN            
             -- excluir inst de protestar
@@ -3389,13 +3411,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           pr_tab_lat_consolidada(vr_index_lat).cdmotivo:= 'E1';  -- Envio do cancelamento de protesto
           pr_tab_lat_consolidada(vr_index_lat).vllanmto:= rw_crapcob.vltitulo;                                      
           
-        WHEN 2 THEN -- titulo enviado a cartorio          
+          -- Deve gerar baixa
+					IF pr_idgerbai = 1 THEN
+						--
+						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
+																								,pr_cdocorre            => pr_cdocorre
+																								,pr_dtmvtolt            => pr_dtmvtolt
+																								,pr_cdoperad            => 2 -- Baixa
+																								,pr_nrremass            => pr_nrremass
+																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+																								,pr_cdcritic            => vr_cdcritic
+																								,pr_dscritic            => vr_dscritic
+																								);
+						 -- Verifica se ocorreu erro durante a execucao
+						IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+							RAISE vr_exc_erro;
+						END IF;
+						--
+					END IF;
+					--
+				WHEN 2 THEN -- titulo enviado a cartorio          
           -- Registra Instrucao Alter Dados / Protesto
           -- gerar solicitacao de sustar protesto no dia seguinte
           PAGA0001.pc_prep_remessa_banco (pr_cdcooper => rw_crapcob.cdcooper --Codigo Cooperativa
                                          ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtopr --Data movimento
                                          ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																				 ,pr_idregcob => rw_crapcob.rowid
                                          ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                          ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                          ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -3522,6 +3564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                          ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                          ,pr_dtmvtolt => pr_dtmvtolt --Data movimento
                                          ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																				 ,pr_idregcob => rw_crapcob.rowid
                                          ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                          ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                          ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -3537,6 +3580,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             vr_cdocorre := 11; -- sustar e manter
           ELSE
             vr_cdocorre := 10; -- sustar e baixar
+						-- LOG de processo
+						PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
+																				 ,pr_cdoperad => pr_cdoperad   --Operador
+																				 ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+																				 ,pr_dsmensag => 'Instrução de Baixa - Aguardando cancelamento do Protesto' --Descricao Mensagem
+																				 ,pr_des_erro => vr_des_erro   --Indicador erro
+																				 ,pr_dscritic => vr_dscritic); --Descricao erro
+					  --
           END IF;
           --Incrementar Sequencial
           vr_nrseqreg:= nvl(vr_nrseqreg,0) + 1;
@@ -3625,6 +3676,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           -- Recusar a instrucao
           vr_dscritic := 'Boleto Sustado - Canc. Protesto nao efetuado!';
           RAISE vr_exc_erro;
+					
+					-- Deve gerar baixa
+					IF pr_idgerbai = 1 THEN
+						--
+						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
+																								,pr_cdocorre            => pr_cdocorre
+																								,pr_dtmvtolt            => pr_dtmvtolt
+																								,pr_cdoperad            => 2 -- Baixa
+																								,pr_nrremass            => pr_nrremass
+																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+																								,pr_cdcritic            => vr_cdcritic
+																								,pr_dscritic            => vr_dscritic
+																								);
+						 -- Verifica se ocorreu erro durante a execucao
+						IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+							RAISE vr_exc_erro;
+						END IF;
+						--
+					END IF;
 
         WHEN 5 THEN -- titulo protestado
 
@@ -3814,25 +3884,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           RAISE vr_exc_erro;
         END IF;
           
-      END IF;
-    
-      -- Deve gerar baixa
-      IF pr_idgerbai = 1 THEN
-        --
-        cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-                                            ,pr_cdocorre            => pr_cdocorre
-                                            ,pr_dtmvtolt            => pr_dtmvtolt
-                                            ,pr_cdoperad            => 2 -- Baixa
-                                            ,pr_nrremass            => pr_nrremass
-                                            ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
-                                            ,pr_cdcritic            => vr_cdcritic
-                                            ,pr_dscritic            => vr_dscritic
-                                            );
-         -- Verifica se ocorreu erro durante a execucao
-        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-        --
       END IF;                
     --
     END IF;
@@ -6176,6 +6227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
                                      ,pr_cdoperad => pr_cdoperad --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret --Numero Remessa
                                      ,pr_rowid_ret => vr_rowid_ret --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg --Numero Sequencial registro
@@ -6735,6 +6787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                        ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                        ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                        ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																			 ,pr_idregcob => rw_crapcob.rowid
                                        ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                        ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                        ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -7293,6 +7346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -7950,6 +8004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -8501,6 +8556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -9683,6 +9739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -10460,6 +10517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -10689,19 +10747,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --
     ELSIF rw_crapcob.cdbandoc = 001 THEN
       --
-      pc_inst_cancel_protesto_bb(pr_cdcooper            => pr_cdcooper
-                                ,pr_nrdconta            => pr_nrdconta
-                                ,pr_nrcnvcob            => pr_nrcnvcob
-                                ,pr_nrdocmto            => pr_nrdocmto
-                                ,pr_cdocorre            => pr_cdocorre
-                                ,pr_dtmvtolt            => pr_dtmvtolt
-                                ,pr_cdoperad            => pr_cdoperad
-                                ,pr_nrremass            => pr_nrremass
-                                ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
-                                ,pr_cdcritic            => pr_cdcritic
-                                ,pr_dscritic            => pr_dscritic
-                                );
-      --
+			IF rw_crapcob.insitcrt = 0 THEN
+			  --
+				pc_inst_cancel_protesto_bb(pr_cdcooper            => pr_cdcooper
+																	,pr_nrdconta            => pr_nrdconta
+																	,pr_nrcnvcob            => pr_nrcnvcob
+																	,pr_nrdocmto            => pr_nrdocmto
+																	,pr_cdocorre            => 41 -- pr_cdocorre
+																	,pr_dtmvtolt            => pr_dtmvtolt
+																	,pr_cdoperad            => pr_cdoperad
+																	,pr_nrremass            => pr_nrremass
+																	,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+																	,pr_cdcritic            => pr_cdcritic
+																	,pr_dscritic            => pr_dscritic
+																	);
+        --
+			ELSE
+				--
+				pc_inst_sustar_manter(pr_cdcooper            => pr_cdcooper
+														 ,pr_nrdconta            => pr_nrdconta
+														 ,pr_nrcnvcob            => pr_nrcnvcob
+														 ,pr_nrdocmto            => pr_nrdocmto
+														 ,pr_cdocorre            => 11 -- pr_cdocorre
+														 ,pr_dtmvtolt            => pr_dtmvtolt
+														 ,pr_cdoperad            => pr_cdoperad
+														 ,pr_nrremass            => pr_nrremass
+														 ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+														 ,pr_cdcritic            => pr_cdcritic
+														 ,pr_dscritic            => pr_dscritic
+														 );
+				--
+			END IF;
+			--
     ELSE 
       --
       pr_dscritic:= 'Banco ' || to_char(rw_crapcob.cdbandoc) || ' nao tratado!';
@@ -10910,21 +10987,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     BEGIN
       --
       -- 1) consultar limite minimo e maximo de prazo de cancelamento do cooperado
-      SELECT crapceb.qtlimmip
-            ,crapceb.qtlimaxp
-            ,crapceb.flprotes
-            ,crapcco.insrvprt
-        INTO vr_qtlimmip
-            ,vr_qtlimaxp
-            ,vr_flprotes
-            ,vr_insrvprt
-        FROM crapceb
-				    ,crapcco
-       WHERE crapceb.cdcooper = crapcco.cdcooper
-			   AND crapceb.nrconven = crapcco.nrconven
-			   AND crapceb.cdcooper = pr_cdcooper
-         AND crapceb.nrdconta = pr_nrdconta
-         AND crapceb.nrconven = pr_nrcnvcob;         
+			BEGIN
+				--
+				SELECT crapceb.qtlimmip
+							,crapceb.qtlimaxp
+							,crapceb.flprotes
+							,crapcco.insrvprt
+					INTO vr_qtlimmip
+							,vr_qtlimaxp
+							,vr_flprotes
+							,vr_insrvprt
+					FROM crapceb
+							,crapcco
+				 WHERE crapceb.cdcooper = crapcco.cdcooper
+					 AND crapceb.nrconven = crapcco.nrconven
+					 AND crapceb.cdcooper = pr_cdcooper
+					 AND crapceb.nrdconta = pr_nrdconta
+					 AND crapceb.nrconven = pr_nrcnvcob;
+		  EXCEPTION
+				WHEN no_data_found THEN
+					NULL;
+				WHEN OTHERS THEN
+					vr_dscritic := 'Erro ao buscar a parametrização dos dias min e max de limite para protesto: ' || SQLERRM;
+					RAISE vr_exc_erro;
+			END;       
          
       -- 2) se o cooperado não possuir os limites, então consultar os limites da cooperativa
       IF vr_qtlimmip = 0 AND 
@@ -11451,6 +11537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                    ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                    ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                    ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																	 ,pr_idregcob => rw_crapcob.rowid
                                    ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                    ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                    ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial
@@ -12332,6 +12419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenio
                                      ,pr_dtmvtolt => pr_dtmvtolt         --Data movimento
                                      ,pr_cdoperad => pr_cdoperad         --Codigo Operador
+																		 ,pr_idregcob => rw_crapcob.rowid
                                      ,pr_nrremret => vr_nrremret         --Numero Remessa Retorno
                                      ,pr_rowid_ret => vr_rowid_ret       --ROWID Remessa Retorno
                                      ,pr_nrseqreg => vr_nrseqreg         --Numero Sequencial

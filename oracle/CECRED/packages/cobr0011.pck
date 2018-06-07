@@ -477,6 +477,19 @@ create or replace package body cecred.cobr0011 IS
 				vr_posini := 0;
 				vr_posfim := INSTR(vr_dsvlrprm, ';', 1, 1)-1;
 				vr_result := SUBSTR(vr_dsvlrprm, vr_posini, vr_posfim);
+				--
+				BEGIN
+					--
+					SELECT crapban.nrispbif
+					  INTO vr_result
+						FROM crapban
+					 WHERE crapban.cdbccxlt = vr_result;
+				  --
+				EXCEPTION
+					WHEN OTHERS THEN
+						vr_result := NULL;
+						raise_application_error(-20012, 'Erro ao buscar o nr ISPB do banco: ' || SQLERRM);
+				END;
 			-- Agencia destino
 			WHEN pr_idoption = 2 THEN
 				--
@@ -753,18 +766,11 @@ create or replace package body cecred.cobr0011 IS
         -- retornar numero do documento
         pr_nrdocmto := vr_nrseqted;
         
-        /* Comentado em 31/05/2018
-				\* Se alterar numero de controle, ajustar procedure atualiza-doc-ted *\
-        vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
+				-- Se alterar numero de controle, ajustar procedure atualiza-doc-ted
+        vr_nrctrlif := '9'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
                           ||to_char(rw_crapcop.cdagectl,'fm0000')
-                          ||to_char(pr_nrdocmto,'fm00000000');
-        
-        IF pr_origem = 1 THEN \* Origem BacenJud - Ayllos *\
-          vr_nrctrlif := vr_nrctrlif ||'A';
-        ELSE \* Canal InternetBank *\
-          vr_nrctrlif := vr_nrctrlif ||'I';
-        END IF;
-				*/
+                          ||to_char(pr_nrdocmto,'fm00000000')
+													|| 'P';
 
         /* Verifica se a TED é destinada a uma conta administradora de recursos */
         OPEN cr_tbfin_rec_con(pr_cdcooper => pr_cdcooper
@@ -911,39 +917,40 @@ create or replace package body cecred.cobr0011 IS
         CLOSE cr_crapban;
         
         SSPB0001.pc_proc_envia_tec_ted
-                          (pr_cdcooper => pr_cdcooper
-                          ,pr_cdagenci => pr_cdagenci
-                          ,pr_nrdcaixa => 1
-                          ,pr_cdoperad => pr_operador
-                          ,pr_titulari => FALSE                   -- Mesma titularidade
-                          ,pr_vldocmto => pr_vllanmto
-                          ,pr_nrctrlif => vr_nrctrlif
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_cdbccxlt => vr_cddbanco
-                          ,pr_cdagenbc => pr_cdageban
-                          ,pr_nrcctrcb => pr_nrctatrf
-                          ,pr_cdfinrcb => pr_cdfinali
-                          ,pr_tpdctadb => rw_tbfin_rec_con.tpconta
-                          ,pr_tpdctacr => pr_intipcta
-                          ,pr_nmpesemi => rw_tbfin_rec_con.nmtitular
-                          ,pr_nmpesde1 => NULL                     -- Nome de 2TTL
-                          ,pr_cpfcgemi => pr_nrcpfcgc
-                          ,pr_cpfcgdel => 0                        -- CPF sec TTL
-                          ,pr_nmpesrcb => pr_nmtitula
-                          ,pr_nmstlrcb => NULL                     -- Nome para 2TTL
-                          ,pr_cpfcgrcb => pr_nrcpfcgc
-                          ,pr_cpstlrcb => 0                        -- CPF para 2TTL
-                          ,pr_tppesemi => pr_tppessoa              
-                          ,pr_tppesrec => pr_inpessoa              
-                          ,pr_flgctsal => FALSE                    -- CC Sal
-                          ,pr_cdidtran => ''
-                          ,pr_cdorigem => pr_origem
-                          ,pr_dtagendt => NULL                     -- Data agendamento
-                          ,pr_nrseqarq => 0                        -- Nr. seq arq.
-                          ,pr_cdconven => 0                        -- Cod convenio
-                          ,pr_dshistor => pr_cdhistor
-                          ,pr_hrtransa => to_char(sysdate,'sssss') -- Hora transacao
-                          ,pr_cdispbif => pr_nrispbif
+                          (pr_cdcooper => pr_cdcooper -- INTEGER
+                          ,pr_cdagenci => pr_cdagenci -- INTEGER
+                          ,pr_nrdcaixa => 1           -- INTEGER
+                          ,pr_cdoperad => pr_operador -- VARCHAR2
+                          ,pr_titulari => FALSE       -- BOOLEAN            -- Mesma titularidade
+                          ,pr_vldocmto => pr_vllanmto -- NUMBER
+                          ,pr_nrctrlif => vr_nrctrlif -- VARCHAR2
+                          ,pr_nrdconta => pr_nrdconta -- INTEGER
+                          ,pr_cdbccxlt => vr_cddbanco -- INTEGER
+                          ,pr_cdagenbc => pr_cdageban -- INTEGER
+                          ,pr_nrcctrcb => pr_nrctatrf -- NUMBER
+                          ,pr_cdfinrcb => pr_cdfinali -- INTEGER
+                          ,pr_tpdctadb => 1 -- CC     -- INTEGER
+                          ,pr_tpdctacr => 1 -- CC     -- INTEGER
+                          ,pr_nmpesemi => rw_tbfin_rec_con.nmtitular -- VARCHAR2
+                          ,pr_nmpesde1 => NULL        -- VARCHAR2             -- Nome de 2TTL
+                          ,pr_cpfcgemi => pr_nrcpfcgc -- NUMBER
+                          ,pr_cpfcgdel => 0           -- NUMBER             -- CPF sec TTL
+                          ,pr_nmpesrcb => pr_nmtitula -- VARCHAR2
+                          ,pr_nmstlrcb => NULL        -- VARCHAR2             -- Nome para 2TTL
+                          ,pr_cpfcgrcb => pr_nrcpfcgc -- NUMBER
+                          ,pr_cpstlrcb => 0           -- NUMBER             -- CPF para 2TTL
+													,pr_tppesemi => pr_tppessoa -- INTEGER             
+                          ,pr_tppesrec => pr_inpessoa -- INTEGER 
+													,pr_flgctsal => FALSE       -- BOOLEAN             -- CC Sal
+                          ,pr_cdidtran => ''          -- VARCHAR2
+													,pr_cdorigem => pr_origem   -- INTEGER
+                          ,pr_dtagendt => NULL        -- DATE             -- Data agendamento
+                          ,pr_nrseqarq => 0           -- INTEGER             -- Nr. seq arq.
+                          ,pr_cdconven => 0           -- INTEGER             -- Cod convenio
+                          ,pr_dshistor => pr_cdhistor -- VARCHAR2
+                          ,pr_hrtransa => to_number(to_char(sysdate,'sssss')) -- INTEGER -- Hora transacao
+                          ,pr_cdispbif => pr_nrispbif -- INTEGER
+													
                           -- SAIDA
                           ,pr_cdcritic =>  vr_cdcritic     --> Codigo do erro
                           ,pr_dscritic =>  vr_dscritic);   --> Descricao do erro
@@ -965,7 +972,7 @@ create or replace package body cecred.cobr0011 IS
         pr_dscritic := vr_dscritic;
       
       WHEN OTHERS THEN
-        pr_dscritic := 'Não foi possivel enviar a TED: '||SQLERRM;
+        pr_dscritic := 'Não foi possivel enviar a TED: ' || nvl(vr_dscritic, SQLERRM);
 
   END pc_enviar_ted_IEPTB;
   
@@ -2908,7 +2915,7 @@ create or replace package body cecred.cobr0011 IS
 												 ) VALUES(pr_craplot.cdagenci         -- cdagenci
 																 ,pr_craplot.cdbccxlt         -- cdbccxlt
 																 ,3                           -- cdcooper -- Fixo
-																 ,pr_craplot.cdhistor         -- cdhistor
+																 ,pr_cdhistor -- pr_craplot.cdhistor         -- cdhistor
 																 ,pr_craplot.cdoperad         -- cdoperad
 																 ,TRIM(pr_nmarqtxt)           -- cdpesqbb
 																 ,pr_craplot.dtmvtolt         -- dtmvtolt

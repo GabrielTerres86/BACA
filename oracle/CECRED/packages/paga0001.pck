@@ -1061,6 +1061,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                   ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE  --Numero Convenio
                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data movimento
                                   ,pr_cdoperad IN crapope.cdoperad%TYPE  --Codigo Operador
+																	,pr_idregcob IN ROWID DEFAULT '0'      --ROWID da cobranca
                                   ,pr_nrremret OUT INTEGER               --Numero Remessa Retorno
                                   ,pr_rowid_ret OUT ROWID                --ROWID Remessa Retorno
                                   ,pr_nrseqreg OUT INTEGER               --Numero Sequencial
@@ -16434,6 +16435,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                                 ,pr_vldescto => pr_vldescto   --Valor Desconto
                                                 ,pr_vljurmul => pr_vlrjuros   --Valor juros multa
                                                 ,pr_vlrpagto => pr_vlrpagto   --Valor pagamento
+																								,pr_vloutcre => pr_vloutcre   --Valor outros creditos
                                                 ,pr_flgdesct => vr_flgdesct   --Flag para titulo descontado
                                                 ,pr_flcredit => vr_flcredit   --Flag Credito
                                                 ,pr_nrretcoo => pr_ret_nrremret --Numero Retorno Cooperativa
@@ -16919,6 +16921,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                   ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE  --Numero Convenio
                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data movimento
                                   ,pr_cdoperad IN crapope.cdoperad%TYPE  --Codigo Operador
+																	,pr_idregcob IN ROWID DEFAULT '0'      --ROWID da cobranca
                                   ,pr_nrremret OUT INTEGER               --Numero Remessa Retorno
                                   ,pr_rowid_ret OUT ROWID                --ROWID Remessa Retorno
                                   ,pr_nrseqreg OUT INTEGER               --Numero Sequencial
@@ -16930,12 +16933,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 05/06/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para preparar remessa para banco
+		--
+		--   Alteração : 03/05/2018 - Ajustes para atender ao PRJ352
   BEGIN
     DECLARE
       -- Selecionar controle retorno titulos bancarios
@@ -16983,12 +16988,42 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_des_erro VARCHAR2(4000);
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
+			vr_dtmvtolt DATE;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
+			
+			IF pr_idregcob <> '0' THEN
+				--Selecionar registro cobranca
+				OPEN cr_crapcob (pr_rowid => pr_idregcob);
+				--Posicionar no proximo registro
+				FETCH cr_crapcob INTO rw_crapcob;
+				--Se nao encontrar
+				IF cr_crapcob%FOUND THEN
+					-- Valida se usa o serviço de protesto do IEPTB, se usar, valida o horário para gerar na data de movimento correta -- PRJ352
+					IF rw_crapcob.cdbandoc = 85 AND
+						 rw_crapcob.insrvprt = 1 THEN
+						--
+						vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => rw_crapcob.cdcooper);
+						--
+					ELSE
+						--
+						vr_dtmvtolt := pr_dtmvtolt;
+						--
+					END IF;
+					--
+				END IF;
+				--Fechar Cursor
+				CLOSE cr_crapcob;
+				--
+			ELSE
+				--
+				vr_dtmvtolt := pr_dtmvtolt;
+				--
+			END IF;
 
       --Selecionar Dados da Cooperativa
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -17008,7 +17043,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       /*** Localiza o ultimo CRE desta data ***/
       OPEN cr_crapcre (pr_cdcooper => pr_cdcooper
                       ,pr_nrcnvcob => pr_nrcnvcob
-                      ,pr_dtmvtolt => pr_dtmvtolt
+                      ,pr_dtmvtolt => vr_dtmvtolt --pr_dtmvtolt
                       ,pr_intipmvt => 1
                       ,pr_flgproce => 0);
       --Posicionar no proximo registro
@@ -17034,7 +17069,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         CLOSE cr_crapcre2;
 
         --Montar Nome Arquivo
-        vr_nmarquiv:= 'CBR'||to_char(pr_dtmvtolt,'MMDD')||
+        vr_nmarquiv:= 'CBR'||to_char(vr_dtmvtolt/*pr_dtmvtolt*/,'MMDD')||
                       '_'||gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
                       '_'||gene0002.fn_mask(pr_nrcnvcob,'9999999')||
                       '_'||gene0002.fn_mask(pr_nrremret,'99999')||'.REM';
@@ -17054,7 +17089,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           VALUES
              (pr_cdcooper
              ,pr_nrcnvcob
-             ,pr_dtmvtolt
+             ,vr_dtmvtolt -- pr_dtmvtolt
              ,pr_nrremret
              ,1
              ,vr_nmarquiv
@@ -17142,74 +17177,49 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_des_erro     VARCHAR2(4000);
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
-			--
-			vr_dtmvtolt craprem.dtaltera%TYPE;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
-      --Selecionar registro cobranca
-      OPEN cr_crapcob (pr_rowid => pr_idregcob);
-      --Posicionar no proximo registro
-      FETCH cr_crapcob INTO rw_crapcob;
-      --Se nao encontrar
-      IF cr_crapcob%FOUND THEN
-				-- Valida se usa o serviço de protesto do IEPTB, se usar, valida o horário para gerar na data de movimento correta -- PRJ352
-				IF rw_crapcob.cdbandoc = 85 AND
-					 rw_crapcob.insrvprt = 1 THEN
-					--
-					vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => rw_crapcob.cdcooper);
-					--
-				ELSE
-					--
-					vr_dtmvtolt := pr_dtmvtolt;
-					--
-				END IF;
-        --Fechar Cursor
-        CLOSE cr_crapcob;
-        --Inserir Remessa
-        BEGIN
-          INSERT INTO CRAPREM
-             (craprem.cdcooper
-             ,craprem.nrcnvcob
-             ,craprem.nrdconta
-             ,craprem.nrdocmto
-             ,craprem.nrremret
-             ,craprem.nrseqreg
-             ,craprem.cdocorre
-             ,craprem.dtdprorr
-             ,craprem.cdmotivo
-             ,craprem.vlabatim
-             ,craprem.cdoperad
-             ,craprem.dtaltera
-             ,craprem.hrtransa)
-          VALUES
-             (rw_crapcob.cdcooper
-             ,rw_crapcob.nrcnvcob
-             ,rw_crapcob.nrdconta
-             ,rw_crapcob.nrdocmto
-             ,pr_nrremret
-             ,pr_nrseqreg
-             ,pr_cdocorre
-             ,pr_dtdprorr
-             ,pr_cdmotivo
-             ,pr_vlabatim
-             ,pr_cdoperad
-             ,vr_dtmvtolt -- pr_dtmvtolt
-             ,gene0002.fn_busca_time);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao inserir na tabela craprem. '||sqlerrm;
-            RAISE vr_exc_erro;
-        END;
-      END IF;
-      --Fechar Cursor
-      IF cr_crapcob%ISOPEN THEN
-        CLOSE cr_crapcob;
-      END IF;
+			--Inserir Remessa
+			BEGIN
+				INSERT INTO CRAPREM
+					 (craprem.cdcooper
+					 ,craprem.nrcnvcob
+					 ,craprem.nrdconta
+					 ,craprem.nrdocmto
+					 ,craprem.nrremret
+					 ,craprem.nrseqreg
+					 ,craprem.cdocorre
+					 ,craprem.dtdprorr
+					 ,craprem.cdmotivo
+					 ,craprem.vlabatim
+					 ,craprem.cdoperad
+					 ,craprem.dtaltera
+					 ,craprem.hrtransa)
+				VALUES
+					 (rw_crapcob.cdcooper
+					 ,rw_crapcob.nrcnvcob
+					 ,rw_crapcob.nrdconta
+					 ,rw_crapcob.nrdocmto
+					 ,pr_nrremret
+					 ,pr_nrseqreg
+					 ,pr_cdocorre
+					 ,pr_dtdprorr
+					 ,pr_cdmotivo
+					 ,pr_vlabatim
+					 ,pr_cdoperad
+					 ,pr_dtmvtolt
+					 ,gene0002.fn_busca_time);
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_cdcritic:= 0;
+					vr_dscritic:= 'Erro ao inserir na tabela craprem. '||sqlerrm;
+					RAISE vr_exc_erro;
+			END;
+      --
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;

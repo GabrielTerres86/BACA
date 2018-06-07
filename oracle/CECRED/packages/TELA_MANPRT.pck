@@ -394,7 +394,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
    CURSOR cr_tbcobran_ted(pr_idlancto IN tbfin_recursos_movimento.idlancto%TYPE) IS
    SELECT tr.cdagenci_debitada
          ,tr.dsconta_debitada
-         ,tr.inpessoa_debitada         
+         ,tr.inpessoa_debitada
+				 ,tr.nmtitular_debitada
+				 ,tr.nrcnpj_debitada
+				 ,tpconta_debitada
          ,tr.nrispbif
          ,tr.cdagenci_creditada
          ,tr.dsconta_creditada
@@ -1505,6 +1508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
            ret.nrdocmto,
            to_char(ret.dtocorre,'dd/mm/yyyy') dtocorre,
            ret.vltitulo,
+					 ret.vlsaldo_titulo,
            count(1) over() as rcount
       FROM tbcobran_retorno_ieptb ret
            INNER JOIN crapmun mun ON mun.cdcomarc = ret.cdcomarc
@@ -1517,9 +1521,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                (pr_dtinicial IS NULL AND ret.dtocorre IS NOT NULL)
            )
        AND (
-               (pr_vlfinal IS NOT NULL AND ret.vltitulo <= pr_vlfinal)
+               (pr_vlfinal IS NOT NULL AND ret.vlsaldo_titulo <= pr_vlfinal)
            OR
-               (pr_vlfinal IS NULL AND ret.vltitulo IS NOT NULL)
+               (pr_vlfinal IS NULL AND ret.vlsaldo_titulo IS NOT NULL)
            );
 
     rw_titulos cr_titulos%ROWTYPE;
@@ -1632,6 +1636,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                               ,pr_posicao => vr_contador
                               ,pr_tag_nova => 'vltitulo'
                               ,pr_tag_cont => rw_titulos.vltitulo
+                              ,pr_des_erro => vr_dscritic);
+															
+		    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'inf'
+                              ,pr_posicao => vr_contador
+                              ,pr_tag_nova => 'vltitulo_saldo'
+                              ,pr_tag_cont => rw_titulos.vlsaldo_titulo
                               ,pr_des_erro => vr_dscritic);
                               
         vr_contador := vr_contador + 1;
@@ -1901,28 +1912,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
 
     -- Chamar envio c/ dados do retorno
     COBR0011.pc_enviar_ted_IEPTB(pr_cdcooper => pr_cdcooper
-                                ,pr_cdagenci => rw_tbcobran_ted.cdagenci_debitada
-                                ,pr_nrdconta => rw_tbcobran_ted.dsconta_debitada
-                                ,pr_tppessoa => rw_tbcobran_ted.inpessoa_debitada
-                                ,pr_origem => 1 --> Ayllos
+                                ,pr_cdagenci => rw_tbcobran_ted.cdagenci_creditada
+                                ,pr_nrdconta => rw_tbcobran_ted.dsconta_creditada
+                                ,pr_tppessoa => rw_tbcobran_ted.inpessoa_creditada
+                                ,pr_origem   => 1 --> Ayllos
                                 ,pr_nrispbif => rw_tbcobran_ted.nrispbif
-                                ,pr_cdageban => rw_tbcobran_ted.cdagenci_creditada
-                                ,pr_nrctatrf => rw_tbcobran_ted.dsconta_creditada
-                                ,pr_nmtitula => rw_tbcobran_ted.nmtitular_creditada
-                                ,pr_nrcpfcgc => rw_tbcobran_ted.nrcnpj_creditada
-                                ,pr_intipcta => rw_tbcobran_ted.tpconta_creditada
-                                ,pr_inpessoa => rw_tbcobran_ted.inpessoa_creditada
+                                ,pr_cdageban => rw_tbcobran_ted.cdagenci_debitada
+                                ,pr_nrctatrf => rw_tbcobran_ted.dsconta_debitada
+                                ,pr_nmtitula => rw_tbcobran_ted.nmtitular_debitada
+                                ,pr_nrcpfcgc => rw_tbcobran_ted.nrcnpj_debitada
+                                ,pr_intipcta => rw_tbcobran_ted.tpconta_debitada
+                                ,pr_inpessoa => rw_tbcobran_ted.inpessoa_debitada
                                 ,pr_vllanmto => rw_tbcobran_ted.vllanmto
                                 ,pr_cdfinali => 1 --> Devolução
                                 ,pr_operador => pr_cdoperad
-                                ,pr_cdhistor => rw_tbcobran_ted.cdhistor
+                                ,pr_cdhistor => 2663 --arw_tbcobran_ted.cdhistor
 
                                 ,pr_idlancto => vr_idlancto
                                 ,pr_nrdocmto => vr_nrdocmto
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
     
-    IF vr_dscritic IS NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       raise vr_exc_erro;
     END IF;
     
@@ -2010,7 +2021,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                               ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
                               
     --                          
-    IF vr_dscritic IS NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       raise vr_exc_erro;
     END IF;
     --
@@ -2025,7 +2036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao devolver TED : '||SQLERRM;  	                                                                                     
+      pr_dscritic := 'Erro ao devolver TED : ' || nvl(vr_dscritic, SQLERRM);
   END pc_devolver_ted;
   
   PROCEDURE pc_gera_conciliacao_auto(pr_dscritic  OUT VARCHAR2) IS
@@ -2246,6 +2257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       SELECT ret.idretorno,
              ret.dtconciliacao,
              ret.vltitulo,
+						 ret.vlsaldo_titulo,
              ret.dtocorre,
              ret.cdcomarc,
              ret.cdcartorio             
@@ -2346,7 +2358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       
       -- Validações
       -- Valida se o valor do título excede o valor da TED
-      IF rw_titulos.vltitulo > rw_ted.vllanmto THEN
+      IF rw_titulos.vlsaldo_titulo > rw_ted.vllanmto THEN
         vr_dscritic := 'Valor do título não pode exceder o valor da TED. Favor verificar!';
         RAISE vr_exc_saida;
       END IF;
@@ -2357,7 +2369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
         RAISE vr_exc_saida;
       END IF;
 
-      vr_sum_titulos := vr_sum_titulos + rw_titulos.vltitulo;
+      vr_sum_titulos := vr_sum_titulos + rw_titulos.vlsaldo_titulo;
 
       IF vr_sum_titulos > rw_ted.vllanmto THEN
         vr_dscritic := 'Valor total de títulos execede o valor da TED. Favor verificar!';
