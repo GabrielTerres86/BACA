@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 03/04/2018
+       Data    : Agosto/2010                       Ultima atualizacao: 07/06/2018
 
        Dados referentes ao programa:
 
@@ -325,26 +325,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  central de risco para os contratos em prejuizo, devido a auditoria do Bacen.
                                  (Odirlei-AMcom/Oscar) 
 																 
-								    09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
+                    09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
                                  erro reportado pelos plantonistas (Jean Michel)
 
                     24/01/2018 - Inclusão de consistência do novo campo para identificação da qualificação da operação(crapepr.idquaprc)
                                  (Daniel-AMcom)
 
-                   20/02/2018 - Incluso procedimento para atender ao Projeto Ligeirinho. Foi necessário incluir
-                                procedimento de paralelismo para ganho de performance. - Mauro Amancio (Amcom).                                              
-                                 
-                   02/04/2018 - Inclusão de envio de Carac Espec=19 para ATIVO PROBLEMÁTICO - Daniel(AMcom)
+                    20/02/2018 - Incluso procedimento para atender ao Projeto Ligeirinho. Foi necessário incluir
+                                 procedimento de paralelismo para ganho de performance. - Mauro Amancio (Amcom).
 
-                   17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
-                                ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
-                                CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
-								
-                   09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
-								
-                   10/05/2018 - Ajuste na proc pc_garantia_cobertura_opera para nao enviar atricuto Ident 
-                                da tag Gar quando tipo for "0104" ou "0105". PRJ366 (Lombardi)
-				   
+                    02/04/2018 - Inclusão de envio de Carac Espec=19 para ATIVO PROBLEMÁTICO - Daniel(AMcom)
+
+                    17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
+                                 ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
+                                 CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
+
+                    09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
+
+                    10/05/2018 - Ajuste na proc pc_garantia_cobertura_opera para nao enviar atricuto Ident 
+                                 da tag Gar quando tipo for "0104" ou "0105". PRJ366 (Lombardi)
+
+                    07/06/2018 - P450 - Considerar contrato Limite/ADP na Qtde Contratos(qtctrliq) (Guilherme/AMcom)
+
 .............................................................................................................................*/
 
     DECLARE
@@ -455,7 +457,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                wpr.nrctrliq##7+
                wpr.nrctrliq##8+
                wpr.nrctrliq##9+
-               wpr.nrctrliq##10 qtctrliq -- Se houver qq contrato, teremos a soma + 0          
+               wpr.nrctrliq##10+
+               wpr.nrliquid     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
               ,wpr.idquapro
               ,epr.idquaprc
           from crapepr epr
@@ -4447,275 +4450,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           END IF;
         END IF;
       END;    
-      
-      -- **
-      -- Verifica Ativo Problemático - Daniel(AMcom)
-      PROCEDURE pc_verif_ativo_problematico(pr_cdcooper    IN NUMBER       -- Cooperativa
-                                           ,pr_nrdconta    IN NUMBER       -- Conta
-                                           ,pr_nrctremp    IN NUMBER       -- Contrato
-                                           ,pr_atvprobl   OUT NUMBER       -- Identificador de Ativo Problemático
-                                           ,pr_reestrut   OUT NUMBER       -- 1-ComReestruturação 0-SemReestruturação
-                                           ,pr_dtatvprobl OUT VARCHAR2     -- Data da Reestruturação
-                                           ,pr_cdcritic   OUT PLS_INTEGER  -- Código da crítica
-                                           ,pr_dscritic   OUT VARCHAR2) IS -- Erros do processo
-        -- ** Motivos contemplados(TBGEN_MOTIVO) ** --
-        -- select * from tbgen_motivo where cdproduto = 42
-        --
-        -- 57 - REESTRUTURAÇÃO
-        -- 58 - ATRASO > 90 DIAS
-        -- 59 - PREJUIZO
-        -- 60 - SOCIO FALECIDO
-        -- 61 - ACAO CONTRA
-        -- 62 - COOPERADO PRESO
-        -- 63 - FALENCIA PJ
-        -- 64 - RECUPERACAO JUDICIAL PJ
-        -- 65 - OUTROS
 
-        -- Variáveis
-        vr_cdcooper     NUMBER(5)    := NULL;
-        vr_nrdconta     NUMBER(10)   := NULL;
-        vr_nrctremp     NUMBER(10)   := NULL;
-        vr_dtinreg      DATE         := NULL;
-        vr_cdmotivo     NUMBER(5)    := NULL;
-        vr_idtipo_envio NUMBER(5)    := NULL;
-
-        -- Cursor REESTRUTURAÇÃO
-        CURSOR cr_atvprb_reest(pr_cdcooper IN NUMBER
-                              ,pr_nrdconta IN NUMBER
-                              ,pr_nrctremp IN NUMBER) IS
-          SELECT dtinreg
-               , cdcooper
-               , nrdconta
-               , nrctremp
-               , cdmotivo
-               , idtipo_envio
-               , idatvprobl
-               , idreestrut
-            FROM (SELECT DISTINCT
-                         ris.cdcooper
-                       , ris.nrdconta
-                       , ris.nrctremp
-                       , 57 cdmotivo -- 57 - REESTRUTURAÇÃO
-                       , 1 idtipo_envio
-                       , 1 idatvprobl
-                       , 1 idreestrut
-                       , ris.dtinictr dtinreg
-                    FROM crapris ris, crapepr epr
-                   WHERE epr.idquaprc IN (3, 4) -- Somente contrato 3-Renegociação
-                                                --                  4-Composição de Dívida
-                     AND ris.cdcooper  = epr.cdcooper
-                     AND ris.nrdconta  = epr.nrdconta
-                     AND ris.nrctremp  = epr.nrctremp
-                     AND ris.cdcooper  = pr_cdcooper
-                     AND ris.nrdconta  = pr_nrdconta
-                     AND ris.nrctremp  = pr_nrctremp
-                    AND ris.dtrefere  = rw_crapdat.dtultdma)
-           WHERE dtinreg IS NOT NULL
-             AND ROWNUM = 1
-        ORDER BY dtinreg;
-         rw_atvprb_reest cr_atvprb_reest%ROWTYPE;
-
-        -- Cursor PRINCIPAL
-        CURSOR cr_atvprb(pr_cdcooper IN NUMBER
-                        ,pr_nrdconta IN NUMBER
-                        ,pr_nrctremp IN NUMBER) IS
-          SELECT dtinreg
-               , cdcooper
-               , nrdconta
-               , nrctremp
-               , cdmotivo
-               , idtipo_envio
-               , idatvprobl
-               , idreestrut
-            FROM (SELECT DISTINCT
-                         ris.cdcooper
-                       , ris.nrdconta
-                       , ris.nrctremp
-                       , 58 cdmotivo -- 58 - ATRASO > 90 DIAS
-                       , 1 idtipo_envio
-                       , 1 idatvprobl
-                       , 0 idreestrut
-                       , ris.dtinictr dtinreg
-                  FROM crapris ris, crapepr epr
-                 WHERE ris.qtdiaatr >= 90
-                   AND epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
-                                                     --                            4-Composição de Dívida
-                   AND ris.cdcooper  = epr.cdcooper(+)
-                   AND ris.nrdconta  = epr.nrdconta(+)
-                   AND ris.nrctremp  = epr.nrctremp(+)
-                   AND ris.cdcooper  = pr_cdcooper
-                   AND ris.nrdconta  = pr_nrdconta
-                   AND ris.nrctremp  = pr_nrctremp
-                   AND ris.dtrefere  = rw_crapdat.dtultdma
-                   AND ris.innivris <> 10 -- Prejuízo
-                 UNION
-                SELECT DISTINCT
-                         ris.cdcooper
-                       , ris.nrdconta
-                       , ris.nrctremp
-                       , 59 cdmotivo -- 59 - PREJUIZO
-                       , 1 idtipo_envio
-                       , 1 idatvprobl
-                       , 0 idreestrut
-                       , ris.dtinictr dtinreg
-                  FROM crapris ris, crapepr epr
-                 WHERE epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
-                                                     --                            4-Composição de Dívida
-                   AND ris.cdcooper  = epr.cdcooper(+)
-                   AND ris.nrdconta  = epr.nrdconta(+)
-                   AND ris.nrctremp  = epr.nrctremp(+)
-                   AND ris.cdcooper  = pr_cdcooper
-                   AND ris.nrdconta  = pr_nrdconta
-                   AND ris.nrctremp  = pr_nrctremp
-                   AND ris.dtrefere  = rw_crapdat.dtultdma
-                   AND ris.innivris  >= 10
-                 UNION
-                SELECT DISTINCT
-                         a.cdcooper
-                       , a.nrdconta
-                       , pr_nrctremp nrctremp
-                       , 60 cdmotivo -- 60 - SOCIO FALECIDO
-                       , 1 idtipo_envio
-                       , 1 idatvprobl
-                       , 0 idreestrut
-                       , a.dtasitct dtinreg
-                  FROM crapass a
-                 WHERE a.cdcooper = pr_cdcooper
-                   AND a.nrdconta = pr_nrdconta
-                   AND a.cdsitdct = 8
-                 UNION
-                SELECT DISTINCT
-                       cyc.cdcooper
-                     , cyc.nrdconta
-                     , cyc.nrctremp
-                     , 61 cdmotivo -- 61 - ACAO CONTRA
-                     , 1 idtipo_envio
-                     , 1 idatvprobl
-                     , 0 idreestrut
-                     , nvl(cyc.dtinclus, cyc.dtaltera) dtinreg
-                  from crapcyc cyc
-                 where cyc.cdmotcin in (2,7)
-                   and cyc.cdcooper = pr_cdcooper
-                   AND cyc.nrdconta = pr_nrdconta
-                   AND cyc.nrctremp = pr_nrctremp -- Ativo
-                 UNION
-                SELECT DISTINCT
-                         ap.cdcooper
-                       , ap.nrdconta
-                       , ap.nrctremp
-                       , ap.cdmotivo
-                       , 2 idtipo_envio
-                       , 1 idatvprobl
-                       , 0 idreestrut
-                       , ap.dtinclus dtinreg
-                  FROM TBCADAST_ATIVO_PROBL AP
-                 WHERE ap.cdcooper = pr_cdcooper
-                   AND ap.nrdconta = pr_nrdconta
-                   AND ap.nrctremp = pr_nrctremp
-                   AND ap.dtexclus is null
-                   AND ap.cdmotivo IN( 62  -- COOPERADO PRESO
-                                     , 63  -- FALENCIA PJ
-                                     , 64  -- RECUPERACAO JUDICIAL PJ
-                                     , 65) -- OUTROS
-                   AND ap.idativo  = 1) -- Registro Ativo
-           WHERE dtinreg IS NOT NULL
-             AND ROWNUM = 1
-        ORDER BY dtinreg;
-        rw_atvprb cr_atvprb%ROWTYPE;
-
-      BEGIN
-       -- ** INÍCIO VERIFICAÇÃO ATIVO PROBLEMÁTICO ** --
-       -- Inicializa variáveis de retorno
-       pr_atvprobl   := 0;
-       pr_reestrut   := 0;
-       pr_dtatvprobl := NULL;
-       pr_cdcritic   := NULL;
-       pr_dscritic   := NULL;
-
-       OPEN cr_atvprb_reest(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => pr_nrdconta
-                           ,pr_nrctremp => pr_nrctremp);
-      FETCH cr_atvprb_reest
-       INTO rw_atvprb_reest;
-      CLOSE cr_atvprb_reest;
-
-      -- Verifica se existe Ativo Problemático para Reestruturação
-      if rw_atvprb_reest.cdcooper is not null then
-        -- Move informações para as variáveis de RETORNO
-        pr_atvprobl   := rw_atvprb_reest.idatvprobl;
-        pr_reestrut   := rw_atvprb_reest.idreestrut;
-        pr_dtatvprobl := TO_CHAR(rw_atvprb_reest.dtinreg, 'YYYY-MM-DD');
-        -- Move informações para as variáveis de INSERT
-        vr_cdcooper     := rw_atvprb_reest.cdcooper;
-        vr_nrdconta     := rw_atvprb_reest.nrdconta;
-        vr_nrctremp     := rw_atvprb_reest.nrctremp;
-        vr_dtinreg      := rw_atvprb_reest.dtinreg;
-        vr_cdmotivo     := rw_atvprb_reest.cdmotivo;
-        vr_idtipo_envio := rw_atvprb_reest.idtipo_envio;
-      end if;
-
-      -- Se não encontrou REESTRUTURAÇÃO, verifica os outros motivos
-      if pr_reestrut = 0 and pr_atvprobl = 0 then
-        --
-        OPEN cr_atvprb(pr_cdcooper => pr_cdcooper
-                      ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrctremp => pr_nrctremp);
-       FETCH cr_atvprb
-        INTO rw_atvprb;
-       CLOSE cr_atvprb;
-
-        -- Move informações para as variáveis de RETORNO
-        pr_atvprobl   := rw_atvprb.idatvprobl;
-        pr_reestrut   := 0;
-        pr_dtatvprobl := NULL;
-         -- Move informações para as variáveis de INSERT
-        vr_cdcooper     := rw_atvprb.cdcooper;
-        vr_nrdconta     := rw_atvprb.nrdconta;
-        vr_nrctremp     := rw_atvprb.nrctremp;
-        vr_dtinreg      := rw_atvprb.dtinreg;
-        vr_cdmotivo     := rw_atvprb.cdmotivo;
-        vr_idtipo_envio := rw_atvprb.idtipo_envio;
-      end if;
-       -- 
-       
-        --
-        -- Gravar HISTORICO se existir um registro de Ativo Problemático
-        if pr_atvprobl = 1 then
-          BEGIN
-              INSERT INTO TBHIST_ATIVO_PROBL(cdcooper
-                                            ,nrdconta
-                                            ,nrctremp
-                                            ,dtinreg
-                                            ,dthistreg
-                                            ,cdmotivo
-                                            ,dsobserv
-                                            ,idtipo_envio)
-                                      VALUES (vr_cdcooper
-                                             ,vr_nrdconta
-                                             ,vr_nrctremp
-                                             ,vr_dtinreg
-                                             ,rw_crapdat.dtultdma  -- dthistreg
-                                             ,vr_cdmotivo
-                                             ,NULL                 -- dsobserv
-                                             ,vr_idtipo_envio);
-        --
-          EXCEPTION
-            WHEN OTHERS THEN
-              pr_cdcritic := 0;
-              pr_dscritic := 'Erro INSERT HISTORICO ATIVO PROBLEMATICO: '||SQLERRM;
-              -- Efetuar rollback
-              ROLLBACK;
-          END;
-        end if;
-        --
-      EXCEPTION
-        WHEN OTHERS THEN
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro PC_VERIF_ATIVO_PROBLEMATICO: '||SQLERRM;
-          -- Efetuar rollback
-          ROLLBACK;
-      END pc_verif_ativo_problematico;
-      
       -- **
       -- Verifica Ativo Problemático - Daniel(AMcom)
       PROCEDURE pc_verif_ativo_problematico(pr_cdcooper    IN NUMBER       -- Cooperativa
