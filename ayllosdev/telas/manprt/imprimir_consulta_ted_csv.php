@@ -53,6 +53,7 @@
 	$xml .= "   <cartorio>".$dscartor."</cartorio>";
 	$xml .= "   <nrregist>".$nrregist."</nrregist>";
 	$xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
+	$xml .= "   <flgcon>0</flgcon>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

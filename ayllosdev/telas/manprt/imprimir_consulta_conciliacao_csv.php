@@ -53,12 +53,12 @@
 	$xml .= "   <cartorio>".$dscartor."</cartorio>";
 	$xml .= "   <nrregist>".$nrregist."</nrregist>";
 	$xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
+	$xml .= "   <flgcon>1</flgcon>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
 	$xmlResult = mensageria($xml, "TELA_MANPRT", "EXPORTA_CONCILIACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
-	print_r($xmlObjeto);
 
 	// Se ocorrer um erro, mostra critica
 	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
