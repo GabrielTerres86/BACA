@@ -22,7 +22,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<? foreach( $registros as $r ) { ?>
+				<? for ($x = 0; $x < (count($registros) - 1); $x++) { $r = $registros[$x]; ?>
 					<tr>
 						
 						<td>
