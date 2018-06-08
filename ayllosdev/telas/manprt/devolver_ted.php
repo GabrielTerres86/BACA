@@ -49,7 +49,9 @@
 	// Se ocorrer um erro, mostra critica
 	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
 		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);		 
+		exit;
 	}
+	echo "showError('inform', 'Devolu&ccedil;&atilde;o efetuada com sucesso!', 'Notifica&ccedil;&atilde;o - Ayllos', 'fechaRotina($(\'#divRotina\'));realizaoConsultaTed(nriniseq, nrregist);');";
 
 	// Fun��o para exibir erros na tela atrav�s de javascript
 	function exibeErro($msgErro) { 

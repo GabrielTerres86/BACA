@@ -789,8 +789,8 @@ create or replace package body cecred.cobr0011 IS
         IF vr_aux_flgreccon THEN
                
           vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
-                         'nrseqdig',''||rw_crapdat.dtmvtocd
-                         ||';'||pr_nrdconta||';'||to_char(vr_aux_dtmvtolt,'dd/mm/yyyy')||'');
+                             'nrseqdig',''||pr_cdcooper
+                             ||';'||pr_nrdconta||';'||to_char(rw_crapdat.dtmvtocd,'dd/mm/yyyy')||'');
                                                         
           -- Gerar lançamento em conta (confirmar)
           BEGIN
@@ -2555,6 +2555,7 @@ create or replace package body cecred.cobr0011 IS
 		vr_tab_lcm_consolidada PAGA0001.typ_tab_lcm_consolidada;
 		rw_crapdat             btch0001.cr_crapdat%ROWTYPE;
 		rw_craplot             cobr0011.cr_craplot%ROWTYPE;
+		vr_aux_nrseqdig        VARCHAR2(500);
 		--
 		vr_exc_erro EXCEPTION;
 		--
@@ -2731,6 +2732,10 @@ create or replace package body cecred.cobr0011 IS
 																,pr_dsdchave => 'IDLANCTO'
 																);
 			--
+			vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
+																		 'nrseqdig',''||3
+																		 ||';'||rw_crapcop.nrctactl||';'||to_char(rw_craplot.dtmvtolt,'dd/mm/yyyy')||'');
+			--
 			INSERT INTO tbfin_recursos_movimento(cdcooper
 																					,nrdconta
 																					,dtmvtolt
@@ -2844,6 +2849,7 @@ create or replace package body cecred.cobr0011 IS
 		vr_cdhistor craplot.cdhistor%TYPE;
 		vr_sqdoclan NUMBER;
 		vr_idlancto NUMBER;
+		vr_aux_nrseqdig VARCHAR2(500);
 		--
 		vr_exc_erro EXCEPTION;
 		--
@@ -2985,6 +2991,10 @@ create or replace package body cecred.cobr0011 IS
 													 		  ,pr_nmdcampo => 'IDLANCTO'
 																,pr_dsdchave => 'IDLANCTO'
 																);
+			--
+			vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
+																		 'nrseqdig',''||3
+																		 ||';'||pr_nrdconta||';'||to_char(pr_craplot.dtmvtolt,'dd/mm/yyyy')||'');
 			--
 			INSERT INTO tbfin_recursos_movimento(cdcooper
 																					,nrdconta
@@ -3346,11 +3356,11 @@ create or replace package body cecred.cobr0011 IS
 					RAISE vr_exc_erro;
 			END;
 			--
-			IF nvl(rw_conciliados.vlliquid, 0) > 0 THEN
+			IF nvl(rw_conciliados.vlsaldo_titulo, 0) > 0 THEN
 				--
 				pc_totaliza_cooperativa(pr_cdcooper => rw_conciliados.cdcooper         -- IN
                                ,pr_nrdconta => rw_conciliados.nrdconta_trm     -- Conta Recurso movimento
-															 ,pr_vlpagmto => nvl(rw_conciliados.vlliquid, 0) -- IN
+															 ,pr_vlpagmto => nvl(rw_conciliados.vlsaldo_titulo, 0) -- IN
 															 ,pr_dscritic => pr_dscritic                     -- OUT
 															 );
 				--

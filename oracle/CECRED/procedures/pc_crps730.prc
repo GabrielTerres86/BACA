@@ -737,13 +737,13 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
     vr_nrseqarq INTEGER;
   BEGIN
     --
-    -- temporario RC7
+    /*-- temporario RC7
     vr_nrseqarq := fn_sequence(pr_nmtabela => 'TBCOBRAN_CONFIRMACAO_IEPTB'
 															 ,pr_nmdcampo => 'NRSEQARQ'
 															 ,pr_dsdchave => to_char(pr_cdcooper) || ';' || 
                                                to_char(pr_dtmvtolt) || ';' ||
                                                to_char(pr_cdcomarc) || ';' || 
-                                               to_char(pr_nrseqrem));
+                                               to_char(pr_nrseqrem));*/
 
     INSERT INTO tbcobran_confirmacao_ieptb(cdcooper
                                           ,dtmvtolt
@@ -773,7 +773,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
                                                   ,pr_dtmvtolt
                                                   ,pr_cdcomarc
                                                   ,pr_nrseqrem
-                                                  ,vr_nrseqarq
+                                                  ,pr_nrseqarq
                                                   ,pr_nrdconta
                                                   ,pr_nrcnvcob
                                                   ,pr_nrdocmto
@@ -838,13 +838,13 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 															 ,pr_dsdchave => 'IDRETORNO'
 															 );
                                
-    -- temporario RC7
+    /*-- temporario RC7
     vr_nrseqarq := fn_sequence(pr_nmtabela => 'TBCOBRAN_RETORNO_IEPTB'
 															 ,pr_nmdcampo => 'NRSEQARQ'
 															 ,pr_dsdchave => to_char(pr_cdcooper) || ';' || 
                                                to_char(pr_dtmvtolt) || ';' ||
                                                to_char(pr_cdcomarc) || ';' || 
-                                               to_char(pr_nrseqrem));
+                                               to_char(pr_nrseqrem));*/
                                
 		--
     INSERT INTO tbcobran_retorno_ieptb(cdcooper
@@ -876,7 +876,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
                                               ,pr_dtmvtolt
                                               ,pr_cdcomarc
                                               ,pr_nrseqrem
-                                              ,vr_nrseqarq
+                                              ,pr_nrseqarq
                                               ,pr_nrdconta
                                               ,pr_nrcnvcob
                                               ,pr_nrdocmto
@@ -927,18 +927,18 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					--
 					vr_achou := TRUE;
 					--
-					vr_tab_coop(vr_index_coop).vlcustas := vr_tab_coop(vr_index_coop).vlcustas + pr_vlcustas;
-					vr_tab_coop(vr_index_coop).vltarifa := vr_tab_coop(vr_index_coop).vltarifa + pr_vltarifa;
+					vr_tab_coop(vr_index_coop).vlcustas := nvl(vr_tab_coop(vr_index_coop).vlcustas, 0) + nvl(pr_vlcustas, 0);
+					vr_tab_coop(vr_index_coop).vltarifa := nvl(vr_tab_coop(vr_index_coop).vltarifa, 0) + nvl(pr_vltarifa, 0);
 					--
 					IF pr_cdfedera = 'SP' THEN
 						--
-						vr_tab_coop(vr_index_coop).vlcustas_sp := vr_tab_coop(vr_index_coop).vlcustas_sp + pr_vlcustas;
-					  vr_tab_coop(vr_index_coop).vltarifa_sp := vr_tab_coop(vr_index_coop).vltarifa_sp + pr_vltarifa;
+						vr_tab_coop(vr_index_coop).vlcustas_sp := nvl(vr_tab_coop(vr_index_coop).vlcustas_sp, 0) + nvl(pr_vlcustas, 0);
+					  vr_tab_coop(vr_index_coop).vltarifa_sp := nvl(vr_tab_coop(vr_index_coop).vltarifa_sp, 0) + nvl(pr_vltarifa, 0);
 						--
 					ELSE
 						--
-						vr_tab_coop(vr_index_coop).vlcustas_outros := vr_tab_coop(vr_index_coop).vlcustas_outros + pr_vlcustas;
-					  vr_tab_coop(vr_index_coop).vltarifa_outros := vr_tab_coop(vr_index_coop).vltarifa_outros + pr_vltarifa;
+						vr_tab_coop(vr_index_coop).vlcustas_outros := nvl(vr_tab_coop(vr_index_coop).vlcustas_outros, 0) + nvl(pr_vlcustas, 0);
+					  vr_tab_coop(vr_index_coop).vltarifa_outros := nvl(vr_tab_coop(vr_index_coop).vltarifa_outros, 0) + nvl(pr_vltarifa, 0);
 						--
 					END IF;
 					--
@@ -1187,8 +1187,10 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 		vr_index_coop  NUMBER;
 		vr_total_ieptb NUMBER;
 		--
-		vr_tot_outros_cra NUMBER;
-		vr_tot_sp_cra     NUMBER;
+		vr_tot_outros_cra_custas NUMBER;
+		vr_tot_outros_cra_tarifa NUMBER;
+		vr_tot_sp_cra_custas     NUMBER;
+		vr_tot_sp_cra_tarifa     NUMBER;
 		--
 		vr_idlancto       tbfin_recursos_movimento.idlancto%TYPE;
 		vr_nrdocmto       NUMBER;
@@ -2760,14 +2762,32 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					END CASE;
 					--
 					IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele) > 0 THEN
-						--
-						IF vr_tab_arquivo(vr_index_reg).campot30 = 'SP' THEN
+						-- Somatório de Custas por CRA
+						IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes) > 0 THEN
 							--
-							vr_tot_sp_cra := nvl(vr_tot_sp_cra, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele);
+							IF vr_tab_arquivo(vr_index_reg).campot30 = 'SP' THEN
+								--
+								vr_tot_sp_cra_custas := nvl(vr_tot_sp_cra_custas, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes);
+								--
+							ELSE
+								--
+								vr_tot_outros_cra_custas := nvl(vr_tot_outros_cra_custas, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes);
+								--
+							END IF;
 							--
-						ELSE
+						END IF;
+						-- Somatório de Tarifas por CRA
+						IF (vr_vlgraele) > 0 THEN
 							--
-							vr_tot_outros_cra := nvl(vr_tot_outros_cra, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele);
+							IF vr_tab_arquivo(vr_index_reg).campot30 = 'SP' THEN
+								--
+								vr_tot_sp_cra_tarifa := nvl(vr_tot_sp_cra_tarifa, 0) + vr_vlgraele;
+								--
+							ELSE
+								--
+								vr_tot_outros_cra_tarifa := nvl(vr_tot_outros_cra_tarifa, 0) + vr_vlgraele;
+								--
+							END IF;
 							--
 						END IF;
 						--
@@ -3000,8 +3020,8 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					vr_index_coop := vr_tab_coop.next(vr_index_coop);
 					--
 				END LOOP;
-				-- Envia a TED para o IEPTB com o total das custas e tarifas cobradas
-			  IF nvl(vr_tot_sp_cra, 0) > 0 THEN
+				-- Envia a TED para o CRA SP com o total das custas cobradas
+			  IF nvl(vr_tot_sp_cra_custas, 0) > 0 THEN
 					--
 					OPEN cr_conta(20000006
 		                   );
@@ -3027,7 +3047,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 						vr_reg_ted.vr_nrcpfcgc := fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)); -- CPF do Titular Destino
 						vr_reg_ted.vr_intipcta := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6); -- Tipo de Conta Destino
 						vr_reg_ted.vr_inpessoa := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7); -- Tipo de Pessoa Destino
-						vr_reg_ted.vr_vllanmto := vr_tot_sp_cra;
+						vr_reg_ted.vr_vllanmto := vr_tot_sp_cra_custas;
 						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
 						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
 						vr_reg_ted.vr_cdhistor := 2642;                                                    -- Fixo
@@ -3041,8 +3061,8 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 				END IF;
 				--
 				rw_conta := NULL;
-				--
-				IF nvl(vr_tot_outros_cra, 0) > 0 THEN
+				-- Envia a TED para o Outros CRAs com o total das custas cobradas
+				IF nvl(vr_tot_outros_cra_custas, 0) > 0 THEN
 					--
 					OPEN cr_conta(10000003
 		                   );
@@ -3068,10 +3088,92 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 						vr_reg_ted.vr_nrcpfcgc := fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)); -- CPF do Titular Destino
 						vr_reg_ted.vr_intipcta := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6); -- Tipo de Conta Destino
 						vr_reg_ted.vr_inpessoa := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7); -- Tipo de Pessoa Destino
-						vr_reg_ted.vr_vllanmto := vr_tot_outros_cra;
+						vr_reg_ted.vr_vllanmto := vr_tot_outros_cra_custas;
 						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
 						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
 						vr_reg_ted.vr_cdhistor := 2642;                                                    -- Fixo
+						--
+						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
+						--
+					END IF;
+					--
+					CLOSE cr_conta;
+					--
+				END IF;
+				--
+				rw_conta := NULL;
+				-- Envia a TED para o CRA SP com o total das tarifas cobradas
+			  IF nvl(vr_tot_sp_cra_tarifa, 0) > 0 THEN
+					--
+					OPEN cr_conta(20000006
+		                   );
+					--
+					FETCH cr_conta INTO rw_conta;
+					--
+					IF cr_conta%NOTFOUND THEN
+						--
+						pr_dscritic := 'Conta nao cadastrada para o CRA SP!';
+						RAISE vr_exc_erro;
+						--
+					ELSE
+						--
+						vr_reg_ted.vr_cdcooper := 3;                                                       -- Cooperativa
+						vr_reg_ted.vr_cdagenci := rw_conta.cdagenci;                                       -- Agencia Remetente
+						vr_reg_ted.vr_nrdconta := rw_conta.nrdconta;                                       -- Conta Remetente
+						vr_reg_ted.vr_tppessoa := 2;                                                       -- Tipo de Pessoa Remetente
+						vr_reg_ted.vr_origem   := 7;                                                       -- Origem do Processo
+						vr_reg_ted.vr_nrispbif := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 1); -- Banco Destino
+						vr_reg_ted.vr_cdageban := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2); -- Agencia Destino
+						vr_reg_ted.vr_nrctatrf := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3); -- Conta Destino
+						vr_reg_ted.vr_nmtitula := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4); -- Nome do Titular Destino 
+						vr_reg_ted.vr_nrcpfcgc := fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)); -- CPF do Titular Destino
+						vr_reg_ted.vr_intipcta := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6); -- Tipo de Conta Destino
+						vr_reg_ted.vr_inpessoa := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7); -- Tipo de Pessoa Destino
+						vr_reg_ted.vr_vllanmto := vr_tot_sp_cra_tarifa;
+						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
+						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
+						vr_reg_ted.vr_cdhistor := 2646;                                                    -- Fixo
+						--
+						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
+						--
+					END IF;
+					--
+					CLOSE cr_conta;
+					--
+				END IF;
+				--
+				rw_conta := NULL;
+				-- Envia a TED para o Outros CRAs com o total das tarifas cobradas
+				IF nvl(vr_tot_outros_cra_tarifa, 0) > 0 THEN
+					--
+					OPEN cr_conta(10000003
+		                   );
+					--
+					FETCH cr_conta INTO rw_conta;
+					--
+					IF cr_conta%NOTFOUND THEN
+						--
+						pr_dscritic := 'Conta nao cadastrada para o CRA Nacional!';
+						RAISE vr_exc_erro;
+						--
+					ELSE
+						--
+						vr_reg_ted.vr_cdcooper := 3;                                                       -- Cooperativa
+						vr_reg_ted.vr_cdagenci := rw_conta.cdagenci;                                       -- Agencia Remetente
+						vr_reg_ted.vr_nrdconta := rw_conta.nrdconta;                                       -- Conta Remetente
+						vr_reg_ted.vr_tppessoa := 2;                                                       -- Tipo de Pessoa Remetente
+						vr_reg_ted.vr_origem   := 7;                                                       -- Origem do Processo
+						vr_reg_ted.vr_nrispbif := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 1); -- Banco Destino
+						vr_reg_ted.vr_cdageban := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2); -- Agencia Destino
+						vr_reg_ted.vr_nrctatrf := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3); -- Conta Destino
+						vr_reg_ted.vr_nmtitula := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4); -- Nome do Titular Destino 
+						vr_reg_ted.vr_nrcpfcgc := fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)); -- CPF do Titular Destino
+						vr_reg_ted.vr_intipcta := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6); -- Tipo de Conta Destino
+						vr_reg_ted.vr_inpessoa := cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7); -- Tipo de Pessoa Destino
+						vr_reg_ted.vr_vllanmto := vr_tot_outros_cra_tarifa;
+						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
+						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
+						vr_reg_ted.vr_cdhistor := 2646;                                                    -- Fixo
 						--
 						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
@@ -3144,7 +3246,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
       --
     END IF;
 		-- Buscar arquivos de retorno
-    vr_pesq := 'P%%%%%%%.%%%';
+    vr_pesq := 'R%%%%%%%.%%%';
     -- Buscar a lista de arquivos do diretorio
     gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_arquivo
                               ,pr_path          => vr_dsdireto

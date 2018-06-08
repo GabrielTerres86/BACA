@@ -1227,7 +1227,7 @@ function estornarTED() {
 		},
 		success: function (response) {
             hideMsgAguardo();
-            
+            eval(response);
         }				
 	});
 }
