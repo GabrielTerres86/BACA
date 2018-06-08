@@ -24,9 +24,7 @@
                 </tr>
             </thead>
             <?php
-            $conta = 0;
             foreach ($dados->find("inf") as $r) {
-                $conta++;
                 ?>
                 <tr>
                     <td><?php echo $r->dtmvtolt ?>
@@ -46,7 +44,7 @@
             ?>
             </tbody>
         </table>
-        <input type="hidden" id="qtdreg" name="qtdreg" value="<?php echo $conta; ?>" />
+        <input type="hidden" id="qtdreg" name="qtdreg" value="<?php echo $qtregist; ?>" />
     </div>
 </div>
 

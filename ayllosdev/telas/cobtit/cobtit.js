@@ -836,7 +836,7 @@ function changeCheckbox(obj){
         /*Verifica se possui proxima linha*/
         /*Verifica se a próxima está desabilitada*/
         if(next.find("input.pagarTitulo").prop("checked")){
-            showError("error", "Por favor deselecione na ordem de data de vencimento.", "Alerta - Ayllos", "bloqueiaFundo(divRotina);", false);
+            showError("error", "Por favor remova a sele&ccedil;&atilde;o na ordem de data de vencimento.", "Alerta - Ayllos", "bloqueiaFundo(divRotina);", false);
             $(obj).prop("checked",true);
             return false;
         }

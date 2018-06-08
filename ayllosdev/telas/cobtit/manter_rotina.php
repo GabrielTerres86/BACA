@@ -69,13 +69,14 @@ switch ($operacao){
         $xmlObj = getClassXML($xmlResult);
         $root = $xmlObj->roottag;
         // Se ocorrer um erro, mostra crítica
-        $dados = $root->dados;
         $json = array();
         if ($root->erro){
             $json['status'] = 'erro';
             $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
         }
         else{
+            $dados = $root->dados;
+            $qtregist = $dados->getAttribute("QTREGIST");
             ob_start();
             require_once("tab_borderos.php");
             $html = ob_get_clean();

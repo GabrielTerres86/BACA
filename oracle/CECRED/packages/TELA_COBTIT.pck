@@ -29,6 +29,17 @@ create or replace package cecred.TELA_COBTIT is
 
   TYPE typ_tab_dados_borderos IS TABLE OF typ_rec_dados_borderos INDEX BY BINARY_INTEGER;
   
+  /*Tabela de retorno dos titulos do log*/
+  TYPE typ_rec_dados_log
+       IS RECORD (dtaltera crapcol.dtaltera%TYPE,
+                  hrtransa crapcol.hrtransa%TYPE,
+                  dslogtit crapcol.dslogtit%TYPE,
+                  cdoperad crapcol.cdoperad%TYPE,
+                  nmoperad VARCHAR2(4000)
+                  );
+
+  TYPE typ_tab_dados_log IS TABLE OF typ_rec_dados_log INDEX BY BINARY_INTEGER;
+  
   TYPE typ_rec_dados_feriados
        IS RECORD (dtferiad crapfer.dtferiad%TYPE
                  ,cdcooper crapfer.cdcooper%TYPE
@@ -180,8 +191,9 @@ create or replace package cecred.TELA_COBTIT is
                            ,pr_des_erro OUT VARCHAR2);
 
   PROCEDURE pc_buscar_telefone_web(pr_nrdconta IN INTEGER
-                              ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
-                              ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
+                              ,pr_flcelula IN INTEGER DEFAULT 0 --> Define se é apenas celular ou tudo           
+                              ,pr_nriniseq IN INTEGER DEFAULT 1 --> Registro inicial da listagem
+                              ,pr_nrregist IN INTEGER DEFAULT 15 --> Numero de registros p/ paginaca
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -242,6 +254,45 @@ create or replace package cecred.TELA_COBTIT is
                              ,pr_retxml   IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2                      --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);    
+
+  PROCEDURE pc_enviar_boleto_web (pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+																,pr_nrborder IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+																,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+																,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+																,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+																,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+																,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+																,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+																,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+																,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+																,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+																,pr_xmllog   IN VARCHAR2                                  --> XML com informações de LOG
+																,pr_cdcritic OUT PLS_INTEGER                              --> Código da crítica
+																,pr_dscritic OUT VARCHAR2                                 --> Descrição da crítica
+																,pr_retxml   IN OUT NOCOPY XMLType                        --> Arquivo de retorno do XML
+																,pr_nmdcampo OUT VARCHAR2                                 --> Nome do campo com erro
+																,pr_des_erro OUT VARCHAR2);
+                                
+  PROCEDURE pc_busca_texto_sms_web(pr_nrdconta IN INTEGER
+                              ,pr_lindigit IN VARCHAR2
+                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2);                                                                
+                              
+  PROCEDURE pc_buscar_log_web(pr_nrdconta IN INTEGER
+                         ,pr_nrdocmto IN INTEGER
+                         ,pr_nrcnvcob IN INTEGER
+                         ,pr_nriniseq IN INTEGER                 --> Registro inicial da listagem
+                         ,pr_nrregist IN INTEGER                 --> Numero de registros p/ paginaca
+                         ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                         ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                         ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                         ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                         ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                         ,pr_des_erro OUT VARCHAR2);
 end TELA_COBTIT;
 /
 create or replace package body cecred.TELA_COBTIT is
@@ -1684,7 +1735,7 @@ create or replace package body cecred.TELA_COBTIT is
       vr_dscritic VARCHAR2(10000);       -- Desc. crítica
 
       -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
+      vr_exc_erro EXCEPTION;
 
 			-- Variaveis locais
 			vr_qtmaxbol INTEGER;
@@ -1873,7 +1924,7 @@ create or replace package body cecred.TELA_COBTIT is
         -- Fecha cursor
 				CLOSE cr_crapcob;
 				-- Levanta exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
       END IF;
       -- Fecha cursor
 			CLOSE cr_crapcob;
@@ -1888,7 +1939,7 @@ create or replace package body cecred.TELA_COBTIT is
         -- Montar mensagem de critica
         vr_cdcritic := 1;
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
       CLOSE btch0001.cr_crapdat;      
 
@@ -1904,7 +1955,7 @@ create or replace package body cecred.TELA_COBTIT is
         -- Fecha cursor
 				CLOSE cr_crapret;
 				-- Levanta exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
       END IF;
       -- Fecha cursor
 			CLOSE cr_crapret;      
@@ -1928,7 +1979,7 @@ create or replace package body cecred.TELA_COBTIT is
 				vr_cdcritic := 0;
 				vr_dscritic := 'Foi atingido a quantidade maxima (' || vr_qtmaxbol || ') de boletos emitidos para este contrato.';
 				-- Levanta exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
 			END IF;
 
  			-- Busca quantidade máxima de boletos emitidos por contrato da cooperativa
@@ -1961,7 +2012,7 @@ create or replace package body cecred.TELA_COBTIT is
         vr_dscritic := 'Favor aguardar ' || to_char(vr_dtconsec - rw_crapdat.dtmvtolt)
 				            || ' dias para emissao de um novo boleto.';
 				-- Levanta exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
  		  END IF;
       
       -- verificar se o contrato esta ativo no Cyber
@@ -1985,7 +2036,7 @@ create or replace package body cecred.TELA_COBTIT is
                 vr_cdcritic := 0;
                 vr_dscritic := 'Não é permitido gerar boleto de títulos em Cobranca Judicial.';
                 -- Levanta exceção
-                RAISE vr_exc_saida;              
+                RAISE vr_exc_erro;              
               END IF;
                               
               IF nvl(rw_cyc.flextjud,0) = 1 THEN
@@ -1993,7 +2044,7 @@ create or replace package body cecred.TELA_COBTIT is
                 vr_cdcritic := 0;
                 vr_dscritic := 'Não é permitido gerar boleto de títulos em Cobranca Extrajudicial.';
                 -- Levanta exceção
-                RAISE vr_exc_saida;              
+                RAISE vr_exc_erro;              
               END IF;
                               
               IF nvl(rw_cyc.flgehvip,0) = 1 THEN
@@ -2001,7 +2052,7 @@ create or replace package body cecred.TELA_COBTIT is
                 vr_cdcritic := 0;
                 vr_dscritic := 'Não é permitido gerar boleto de títulos VIP.';
                 -- Levanta exceção
-                RAISE vr_exc_saida;              
+                RAISE vr_exc_erro;              
               END IF;                       
             ELSE
               CLOSE cr_cyc;                             
@@ -2012,7 +2063,7 @@ create or replace package body cecred.TELA_COBTIT is
       CLOSE cr_cyb;
 
 		EXCEPTION
-			WHEN vr_exc_saida THEN
+			WHEN vr_exc_erro THEN
 				-- Se possui código de crítica e não foi informado a descrição
 				IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
 					 -- Busca descrição da crítica
@@ -2068,6 +2119,7 @@ create or replace package body cecred.TELA_COBTIT is
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND dsemail IS NOT NULL
+           AND dsemail <> ' '
            AND tpproduto = 3;
            
       rw_emails cr_emails%ROWTYPE;
@@ -2173,8 +2225,9 @@ create or replace package body cecred.TELA_COBTIT is
   END pc_buscar_email_web;
 
   PROCEDURE pc_buscar_telefone_web(pr_nrdconta IN INTEGER
-                              ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
-                              ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
+                              ,pr_flcelula IN INTEGER DEFAULT 0 --> Define se é apenas celular ou tudo                 
+                              ,pr_nriniseq IN INTEGER DEFAULT 1 --> Registro inicial da listagem
+                              ,pr_nrregist IN INTEGER DEFAULT 15 --> Numero de registros p/ paginaca
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -2203,6 +2256,7 @@ create or replace package body cecred.TELA_COBTIT is
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrtelefo > 0
+           AND (cdopetfn > 0 OR pr_flcelula=0)
         UNION
         SELECT DISTINCT nrddd_sms, nrtel_sms, 0 ramal, 0, nmcontato, 0
           FROM tbrecup_cobranca
@@ -2502,7 +2556,7 @@ create or replace package body cecred.TELA_COBTIT is
       vr_dscritic VARCHAR2(10000);
 
       -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
+      vr_exc_erro EXCEPTION;
 
 			vr_ind_cde INTEGER := 0;
 
@@ -2568,7 +2622,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Baixa.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 			  END IF;
 
 			  -- Gera exceção se informar data de inicio e não informar data final e vice-versa
@@ -2578,7 +2632,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Emissao.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 			  END IF;
 
 			  -- Gera exceção se informar data de inicio e não informar data final e vice-versa
@@ -2588,7 +2642,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Vencimento.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 			  END IF;
 
 			  -- Gera exceção se informar data de inicio e não informar data final e vice-versa
@@ -2598,7 +2652,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Pagto.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 			  END IF;
 
 				-- Gera exceção se a data inicial informada for maior que a final
@@ -2607,7 +2661,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Baixa inicial deve ser menor ou igual a final.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				-- Gera exceção se a data inicial informada for maior que a final
@@ -2616,7 +2670,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Emissao inicial deve ser menor ou igual a final.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				-- Gera exceção se a data inicial informada for maior que a final
@@ -2625,7 +2679,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Vencimento inicial deve ser menor ou igual a final.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				-- Gera exceção se a data inicial informada for maior que a final
@@ -2634,7 +2688,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Pagto inicial deve ser menor ou igual a final.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				-- Gera exceção se a data final ultrapassar 30 dias da data inicial
@@ -2643,7 +2697,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Baixa final nao deve ultrapassar 30 dias da data inicial.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				-- Gera exceção se a data final ultrapassar 30 dias da data inicial
@@ -2652,7 +2706,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Emissao final nao deve ultrapassar 30 dias da data inicial.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 			  -- Gera exceção se a data final ultrapassar 30 dias da data inicial
@@ -2661,7 +2715,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Data Vencimento final nao deve ultrapassar 30 dias da data inicial.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 			  -- Gera exceção se a data final ultrapassar 30 dias da data inicial
@@ -2670,7 +2724,7 @@ create or replace package body cecred.TELA_COBTIT is
 				   vr_cdcritic := 0;
 					 vr_dscritic := 'Data Pagto final nao deve ultrapassar 30 dias da data inicial.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				IF (pr_cdagenci > 0) AND
@@ -2682,7 +2736,7 @@ create or replace package body cecred.TELA_COBTIT is
 				   vr_cdcritic := 0;
 					 vr_dscritic := 'Ao informar o PA, deve ser informado alguma data.';
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				-- Abre cursor para atribuir os registros encontrados na PL/Table
@@ -2726,7 +2780,7 @@ create or replace package body cecred.TELA_COBTIT is
                                             ,pr_tab_cob  => vr_tab_cob);
 
           IF pr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-             RAISE vr_exc_saida;
+             RAISE vr_exc_erro;
           END IF;
 
           IF vr_tab_cob.EXISTS(1) IS NOT NULL THEN
@@ -2735,11 +2789,15 @@ create or replace package body cecred.TELA_COBTIT is
 
 				END LOOP;
         
+        IF (vr_ind_cde=0) THEN
+          vr_dscritic := 'Dados nao encontrados!';
+          RAISE vr_exc_erro;
+        END IF;
         -- Quantidade de Registros
         pr_qtregist := vr_ind_cde;
 
 			EXCEPTION
-        WHEN vr_exc_saida THEN
+        WHEN vr_exc_erro THEN
           -- Se possui código de crítica e não foi informado a descrição
           IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
              -- Busca descrição da crítica
@@ -2753,7 +2811,7 @@ create or replace package body cecred.TELA_COBTIT is
         WHEN OTHERS THEN
           -- Atribui exceção para os parametros de crítica
           pr_cdcritic := vr_cdcritic;
-          pr_dscritic := 'Erro nao tratado na EMPR0007.pc_buscar_boletos_contratos: ' || SQLERRM;
+          pr_dscritic := 'Erro nao tratado na TELA_COBTIT.pc_buscar_boletos: ' || SQLERRM;
 
 			END;
 	END pc_buscar_boletos;
@@ -2906,6 +2964,7 @@ create or replace package body cecred.TELA_COBTIT is
                           '<dtdpagto>' || to_char(vr_tab_cde(vr_index).dtdpagto, 'DD/MM/RRRR')  || '</dtdpagto>' ||
                           '<vldpagto>' || vr_tab_cde(vr_index).vldpagto  || '</vldpagto>' ||
                           '<dsparcelas>' || vr_tab_cde(vr_index).dsparcel  || '</dsparcelas>' ||
+                          '<lindigit>' || vr_tab_cde(vr_index).lindigit  || '</lindigit>' ||
                         '</inf>'
                       );
           /* buscar proximo */
@@ -2976,7 +3035,7 @@ create or replace package body cecred.TELA_COBTIT is
 			vr_des_erro VARCHAR(3);                   --> Retorno da procedure
 		
 		  -- Tratamento de erros
-		  vr_exc_saida EXCEPTION;			
+		  vr_exc_erro EXCEPTION;			
 			
 			-- Pl/Table utilizada na procedure de baixa
 			vr_tab_lat_consolidada paga0001.typ_tab_lat_consolidada;
@@ -3025,7 +3084,7 @@ create or replace package body cecred.TELA_COBTIT is
 				vr_cdcritic := 0;
 				vr_dscritic := 'Operacao nao permitida';
 				-- Gera exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
 			END IF;
 			
 			OPEN cr_crapcob;
@@ -3040,13 +3099,13 @@ create or replace package body cecred.TELA_COBTIT is
 					vr_cdcritic := 0;
 					vr_dscritic := 'Boleto ja foi baixado.';					
 					-- Gera exceção
-					RAISE vr_exc_saida;
+					RAISE vr_exc_erro;
 				ELSIF rw_crapcob.incobran = 5 THEN
    				-- Atribui crítica
 					vr_cdcritic := 0;
 					vr_dscritic := 'Boleto ja foi liquidado.';
 					-- Gera exceção
-					RAISE vr_exc_saida;
+					RAISE vr_exc_erro;
 				END IF;
 				
 				-- Efetua baixa
@@ -3060,7 +3119,7 @@ create or replace package body cecred.TELA_COBTIT is
 																		 ,pr_dscritic => vr_dscritic);
 				-- Se retornou alguma crítica							 
 		    IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-					RAISE vr_exc_saida;
+					RAISE vr_exc_erro;
 				END IF;
 				
 		    -- Gera log na lgm
@@ -3111,11 +3170,11 @@ create or replace package body cecred.TELA_COBTIT is
 				IF vr_des_erro <> 'OK' AND
 					 trim(vr_dscritic) IS NOT NULL THEN
 					 -- Levanta exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				COMMIT;
-                npcb0002.pc_libera_sessao_sqlserver_npc('EMPR0007_1');
+                npcb0002.pc_libera_sessao_sqlserver_npc('COBTIT_1');
 				
 			ELSE
 				-- Fecha cursor
@@ -3124,11 +3183,11 @@ create or replace package body cecred.TELA_COBTIT is
 				vr_cdcritic := 0;
 				vr_dscritic := 'Boleto nao encontrado';
 				-- Gera exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
 			END IF;
 			
 		EXCEPTION	
-		  WHEN vr_exc_saida THEN
+		  WHEN vr_exc_erro THEN
       begin
 				-- Se possui código de crítica e não foi informado a descrição
 				IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
@@ -3141,7 +3200,7 @@ create or replace package body cecred.TELA_COBTIT is
 				pr_dscritic := vr_dscritic;
 
         ROLLBACK;
-        npcb0002.pc_libera_sessao_sqlserver_npc('EMPR0007_2');
+        npcb0002.pc_libera_sessao_sqlserver_npc('COBTIT_2');
       end;
 			WHEN OTHERS THEN  				
       begin
@@ -3171,7 +3230,7 @@ create or replace package body cecred.TELA_COBTIT is
 
       Programa: pc_baixa_boleto_web
       Sistema : CECRED
-      Sigla   : EMPR
+      Sigla   : CRED
       Autor   : Vitor Shimada Assanuma
       Data    : Junho/2018                               Ultima atualizacao: --/--/----
 
@@ -3189,7 +3248,7 @@ create or replace package body cecred.TELA_COBTIT is
       vr_dscritic VARCHAR2(1000);               --> Desc. Erro
 
 		  -- Tratamento de erros
-		  vr_exc_saida EXCEPTION;
+		  vr_exc_erro EXCEPTION;
 
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
@@ -3254,19 +3313,19 @@ create or replace package body cecred.TELA_COBTIT is
 			-- Se retornou alguma crítica
 			IF trim(vr_dscritic) IS NOT NULL THEN
 				-- Levanta exceção
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
 			END IF;
 
       vr_dsjustif := fn_normalizar(GENE0007.fn_remove_cdata(pr_dsjustif));
       
       IF LENGTH(vr_dsjustif) < 5 THEN
         vr_dscritic := 'Justificativa da Baixa deve ser informada!';
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
 
       IF LENGTH(vr_dsjustif) > 200 THEN
         vr_dscritic := 'Justificativa da Baixa deve respeitar o tamanho maximo de 200 caracteres!';
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
 			END IF;
 
       pc_baixa_boleto(pr_cdcooper => vr_cdcooper
@@ -3286,7 +3345,7 @@ create or replace package body cecred.TELA_COBTIT is
 			IF vr_cdcritic <> 0 OR
 				 trim(vr_dscritic) IS NOT NULL THEN
 				 -- Levanta exceção
-			   RAISE vr_exc_saida;
+			   RAISE vr_exc_erro;
 		  END IF;
 
       -- Atualiza a Justificativa
@@ -3303,11 +3362,11 @@ create or replace package body cecred.TELA_COBTIT is
 	  EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Problema ao alterar dados na tabela tbrecup_cobranca: ' || SQLERRM;
-          RAISE vr_exc_saida;
+          RAISE vr_exc_erro;
       END;
 
 	  EXCEPTION
-      WHEN vr_exc_saida THEN
+      WHEN vr_exc_erro THEN
 
         IF vr_cdcritic <> 0 THEN
           pr_cdcritic := vr_cdcritic;
@@ -3353,20 +3412,15 @@ create or replace package body cecred.TELA_COBTIT is
 
 		Programa: pc_gerar_pdf_boletos
 		Sistema : CECRED
-		Sigla   : EMPR
-		Autor   : Lucas Reinert
-		Data    : Outubro/15.                    Ultima atualizacao: 27/09/2016
+		Sigla   : CRED
+		Autor   : Luis Fernando (GFT)
+		Data    : Junho/2018
 
 		Dados referentes ao programa:
-
 		Frequencia: Sempre que for chamado
-
 		Objetivo  : Rotina para gerar a impressao do boleto em pdf
-
 		Observacao: -----
 
-		Alteracoes: 27/09/2016 - Incluida verificacao de contratos de acordo,
-                             Prj. 302 (Jean Michel).
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -3375,7 +3429,7 @@ create or replace package body cecred.TELA_COBTIT is
 			vr_dscritic VARCHAR2(10000);
 
 			-- Tratamento de erros
-			vr_exc_saida EXCEPTION;
+			vr_exc_erro EXCEPTION;
 			vr_tab_erro  gene0001.typ_tab_erro;
 
 			-- PL/Table com as informações do boleto
@@ -3431,13 +3485,13 @@ create or replace package body cecred.TELA_COBTIT is
         -- Verifica se retornou alguma crítica
 				IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 					 -- Gera exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 
 				IF NOT vr_tab_cob.EXISTS(vr_tab_cob.FIRST) THEN
 					 vr_cdcritic := 0;
 					 vr_dscritic := 'Dados nao encontrados';
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
 				
 				-- Abre cursor de boleto de cobrança de emprestimo
@@ -3453,15 +3507,15 @@ create or replace package body cecred.TELA_COBTIT is
 					vr_cdcritic := 0;
 					vr_dscritic := 'Boleto nao encontrado';
 					-- Gera exceção
-					RAISE vr_exc_saida;
+					RAISE vr_exc_erro;
 				END IF;
 				
          -- Verifica se retornou alguma crítica
 				IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 					 -- Gera exceção
-					 RAISE vr_exc_saida;
+					 RAISE vr_exc_erro;
 				END IF;
-
+/*
         -- Verifica contratos de acordo
         RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
@@ -3473,14 +3527,14 @@ create or replace package body cecred.TELA_COBTIT is
 
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           -- Gerar exceção
-          RAISE vr_exc_saida;
+          RAISE vr_exc_erro;
         END IF;
             
         IF vr_flgativo = 1 THEN
-          vr_dscritic := 'Geracao do boleto nao permitido, emprestimo em acordo.';
+          vr_dscritic := 'Geracao do boleto nao permitido, bordero em acordo.';
           -- Gerar exceção
-          RAISE vr_exc_saida;
-        END IF;
+          RAISE vr_exc_erro;
+        END IF;*/
 
 				-- Busca do diretório base da cooperativa para a geração de relatórios
 				vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'          --> /usr/coop
@@ -3627,7 +3681,7 @@ create or replace package body cecred.TELA_COBTIT is
 																		 ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
                                      
           IF vr_dscritic IS NOT NULL THEN             
-             RAISE vr_exc_saida;
+             RAISE vr_exc_erro;
           END IF;
 					
 				ELSE                  
@@ -3649,7 +3703,7 @@ create or replace package body cecred.TELA_COBTIT is
 					 -- Verifica se retornou alguma crítica
 					IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 						 -- Gera exceção
-						 RAISE vr_exc_saida;
+						 RAISE vr_exc_erro;
 					END IF;
 
 					-- Gera impressão do boleto
@@ -3672,7 +3726,7 @@ create or replace package body cecred.TELA_COBTIT is
 					--Se ocorreu erro no relatorio
 					IF vr_dscritic IS NOT NULL THEN
 						--Levantar Excecao
-						RAISE vr_exc_saida;
+						RAISE vr_exc_erro;
 					END IF;
 					
 					gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper    --Codigo Cooperativa
@@ -3691,7 +3745,7 @@ create or replace package body cecred.TELA_COBTIT is
 							vr_dscritic:= 'Erro ao enviar arquivo para web.';
 						END IF;
 					  --Sair
-					  RAISE vr_exc_saida;
+					  RAISE vr_exc_erro;
 				  END IF;
 												 
 					-- Remover relatorio da pasta rl apos gerar
@@ -3705,7 +3759,7 @@ create or replace package body cecred.TELA_COBTIT is
 						 OR vr_dscritic IS NOT null THEN
 						-- Concatena o erro que veio
 						vr_dscritic := 'Erro ao remover arquivo: ' || vr_dscritic;
-						RAISE vr_exc_saida;
+						RAISE vr_exc_erro;
 					END IF;
 
         END IF;
@@ -3717,7 +3771,7 @@ create or replace package body cecred.TELA_COBTIT is
         pr_des_erro := 'OK';
 
 		EXCEPTION
-			WHEN vr_exc_saida THEN
+			WHEN vr_exc_erro THEN
 
 				-- Busca descrição da crítica se houver código
 				IF vr_cdcritic <> 0 THEN
@@ -3752,9 +3806,9 @@ create or replace package body cecred.TELA_COBTIT is
 
 		Programa: pc_gerar_pdf_boleto_web
 		Sistema : CECRED
-		Sigla   : EMPR
-		Autor   : Lucas Reinert
-		Data    : Agosto/15.                    Ultima atualizacao:
+		Sigla   : CRED
+		Autor   : Luis Fernando (GFT)
+		Data    : Junho/2018
 
 		Dados referentes ao programa:
 
@@ -3762,9 +3816,7 @@ create or replace package body cecred.TELA_COBTIT is
 
 		Objetivo  : Rotina para gerar a impressao do boleto em pdf
 
-		Observacao: -----
 
-		Alteracoes:
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -3773,7 +3825,7 @@ create or replace package body cecred.TELA_COBTIT is
 			vr_dscritic VARCHAR2(10000);
 
 			-- Tratamento de erros
-			vr_exc_saida EXCEPTION;
+			vr_exc_erro EXCEPTION;
 
 			 -- Variaveis de log
 			vr_cdcooper INTEGER;
@@ -3816,7 +3868,7 @@ create or replace package body cecred.TELA_COBTIT is
 																	 ,pr_des_erro => vr_des_reto);
 
       IF vr_des_reto <> 'OK' THEN
-				RAISE vr_exc_saida;
+				RAISE vr_exc_erro;
 			END IF;
 
 			-- Criar XML de retorno
@@ -3824,7 +3876,7 @@ create or replace package body cecred.TELA_COBTIT is
 																		 vr_nmarqpdf || '</nmarqpdf>');
 
 		EXCEPTION
-			WHEN vr_exc_saida THEN
+			WHEN vr_exc_erro THEN
 
 				-- Busca descrição da crítica se houver código
 				IF vr_cdcritic <> 0 THEN
@@ -3852,6 +3904,957 @@ create or replace package body cecred.TELA_COBTIT is
 
 		END;
 	END pc_gerar_pdf_boleto_web;
+  
+  PROCEDURE pc_enviar_boleto(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE              --> Cooperativa
+		                        ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+														,pr_nrborder IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+														,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+														,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+														,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+														,pr_cdoperad IN tbrecup_cobranca.cdoperad_envio%TYPE        --> Cód. Operador
+														,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+														,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+														,pr_nmdatela IN VARCHAR2                                  --> Nome da tela
+														,pr_idorigem IN INTEGER                                   --> ID Origem
+														,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+														,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+														,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+														,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+														,pr_cdcritic OUT crapcri.cdcritic%TYPE                    --> Cód. Crítica
+														,pr_dscritic OUT crapcri.dscritic%TYPE) IS                --> Desc. Crítica
+	BEGIN
+ 	  /* .............................................................................
+
+      Programa: pc_enviar_boleto
+      Sistema : CECRED
+      Sigla   : COBTIT
+      Autor   : Luis Fernando (GFT)
+      Data    : Junho/2018
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+
+      Objetivo  : Rotina para enviar os boletos por E-mail e SMS
+    ..............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;        --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);               --> Desc. Erro
+		  vr_des_erro VARCHAR2(3);                  --> Indicador erro
+
+		  -- Tratamento de erros
+      vr_exc_update	EXCEPTION;
+		  vr_exc_saida EXCEPTION;
+      vr_exc_erro EXCEPTION;
+
+			-- Variaveis locais
+			vr_dstransa VARCHAR2(1000);
+			vr_dsmensag VARCHAR2(1000);
+			vr_nrdrowid ROWID;
+			vr_dsorigem VARCHAR2(1000) := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
+			vr_nmarqpdf VARCHAR2(1000);
+      vr_flgativo INTEGER := 0;
+
+			-- PL/Table com os dados retornados da COBR0005.pc_buscar_titulo_cobranca
+			vr_tab_cob cobr0005.typ_tab_cob;
+      
+      -- cursores
+      CURSOR cr_boleto (pr_cdcooper IN crapcob.cdcooper%TYPE
+                ,pr_nrdconta IN crapcob.nrdconta%TYPE
+                ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
+                ,pr_nrdocmto IN crapcob.nrdocmto%TYPE) IS
+         SELECT incobran,
+                decode(incobran,0,'aberto',3,'baixado',5,'pago') dscobran
+           FROM crapcob cob
+          WHERE cob.cdcooper = pr_cdcooper
+            AND cob.nrdconta = pr_nrdconta
+            AND cob.nrcnvcob = pr_nrcnvcob
+            AND cob.nrdocmto = pr_nrdocmto;
+      rw_boleto cr_boleto%ROWTYPE;                       
+
+		BEGIN
+			BEGIN
+        /*
+        -- Verifica contratos de acordo
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrborder => pr_nrborder
+                                         ,pr_cdorigem => 3
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Gerar exceção
+          RAISE vr_exc_erro;
+        END IF;
+            
+        IF vr_flgativo = 1 THEN
+          IF pr_tpdenvio = 1 THEN
+            vr_dscritic := 'Envio de e-mail nao permitido, emprestimo em acordo.';
+          ELSIF pr_tpdenvio = 2 THEN
+            vr_dscritic := 'Envio de SMS nao permitido, emprestimo em acordo.';
+          ELSIF pr_tpdenvio = 3 THEN
+            vr_dscritic := 'Impressao nao permitida, emprestimo em acordo.';    
+          END IF;
+          -- Gerar exceção
+          RAISE vr_exc_erro;
+        END IF;
+                */
+        -- verificar estado do boleto antes de imprimir ou enviar boleto        
+        OPEN cr_boleto(pr_cdcooper
+                      ,pr_nrctacob
+                      ,pr_nrcnvcob
+                      ,pr_nrdocmto);
+        FETCH cr_boleto INTO rw_boleto;
+        IF rw_boleto.incobran IN (3,5) THEN
+           CLOSE cr_boleto;
+           vr_dscritic := 'Nao e permitido imprimir/enviar boleto ' || rw_boleto.dscobran || '.';
+           RAISE vr_exc_erro;
+        ELSE
+           CLOSE cr_boleto;
+        END IF;        
+        
+				CASE pr_tpdenvio
+					-- EMAIL
+					WHEN 1 THEN
+						UPDATE tbrecup_cobranca cde
+							 SET cde.dsemail        = pr_dsdemail
+									,cde.nmcontato      = pr_nmcontat
+						 WHERE cde.cdcooper = pr_cdcooper
+							 AND cde.nrdconta = pr_nrdconta
+							 AND cde.nrctremp = pr_nrborder
+							 AND cde.nrdconta_cob = pr_nrctacob
+							 AND cde.nrcnvcob = pr_nrcnvcob
+							 AND cde.nrboleto = pr_nrdocmto
+               AND cde.tpproduto = 3;
+            
+            IF SQL%ROWCOUNT = 0 THEN 
+               vr_dscritic := 'Erro ao atualizar boleto. Boleto nao encontrado.';
+               RAISE vr_exc_erro;
+            END IF;   
+               
+						vr_dstransa := 'Enviado boleto por e-mail refente ao borderô nr: ' || to_char(pr_nrborder);
+						vr_dsmensag := 'Boleto enviado por e-mail ' || pr_dsdemail;
+						
+						-- Gerar boleto e enviar por email
+						pc_gerar_pdf_boletos(pr_cdcooper => pr_cdcooper
+						                    ,pr_nrdconta => pr_nrctacob
+																,pr_nrcnvcob => pr_nrcnvcob
+																,pr_nrdocmto => pr_nrdocmto
+																,pr_cdoperad => pr_cdoperad
+																,pr_idorigem => pr_idorigem
+																,pr_tpdenvio => pr_tpdenvio
+																,pr_dsdemail => pr_dsdemail
+																,pr_nmarqpdf => vr_nmarqpdf
+																,pr_cdcritic => vr_cdcritic
+																,pr_dscritic => vr_dscritic
+																,pr_des_erro => vr_des_erro);
+						
+						-- Se retorno for diferente de OK
+						IF vr_des_erro <> 'OK' THEN
+							-- Gera exceção
+							RAISE vr_exc_erro;
+						END IF;
+					   
+					-- SMS
+					WHEN 2 THEN
+						UPDATE tbrecup_cobranca cde
+							 SET cde.tpenvio        = pr_tpdenvio
+									,cde.cdoperad_envio = pr_cdoperad
+									,cde.dhenvio        = SYSDATE
+									,cde.nrddd_sms      = pr_nrdddsms
+									,cde.nrtel_sms      = pr_nrtelsms
+									,cde.cdenvio_sms    = GENE0002.fn_char_para_number(fn_sequence('tbrecup_cobranca','CDENVIO_SMS',TO_CHAR(pr_cdcooper) ||
+																																									 TO_CHAR(SYSDATE, 'RRRR') ||
+																																									 TO_CHAR(SYSDATE, 'MM') ||
+																																									 TO_CHAR(SYSDATE, 'DD')))
+									,cde.nmcontato      = pr_nmcontat
+									,cde.indretorno     = pr_indretor
+						 WHERE cde.cdcooper = pr_cdcooper
+							 AND cde.nrdconta = pr_nrdconta
+							 AND cde.nrctremp = pr_nrborder
+							 AND cde.nrdconta_cob = pr_nrctacob
+							 AND cde.nrcnvcob = pr_nrcnvcob
+							 AND cde.nrboleto = pr_nrdocmto
+               AND cde.tpproduto = 3;
+						vr_dstransa := 'Enviado boleto por SMS refente ao bordero nr: ' || to_char(pr_nrborder);
+						vr_dsmensag := 'Boleto enviado por SMS (' || to_char(pr_nrdddsms, '000') || ') ' ||
+						               to_char(pr_nrtelsms, '9999g9999','nls_numeric_characters=.-');
+					-- IMPRESSAO
+					WHEN 3 THEN
+ 						vr_dstransa := 'Boleto impresso refente ao bordero nr: ' || to_char(pr_nrborder);
+						vr_dsmensag := 'Boleto impresso pela tela ' || pr_nmdatela;
+					ELSE
+   					-- Levanta exceção
+					  RAISE vr_exc_update;
+						
+				END CASE;
+
+				-- Se nao atualizou nenhum registro
+				IF SQL%ROWCOUNT = 0 THEN
+					-- Levanta exceção
+					RAISE vr_exc_update;
+				END IF;
+
+			EXCEPTION
+        WHEN vr_exc_erro THEN
+					-- Atribui exceção devido a um erro tratado
+					vr_cdcritic := 0;
+					RAISE vr_exc_saida;
+          
+			  WHEN vr_exc_update THEN
+					-- Atribui exceção caso nao seja atualizado nenhum registro
+					vr_cdcritic := 0;
+					vr_dscritic := 'Erro ao atualizar tabela tbrecup_cobranca: Dados nao encontrados.';
+					RAISE vr_exc_saida;
+				WHEN OTHERS THEN
+          -- Atribui exceção para os parametros de crítica
+          vr_cdcritic := vr_cdcritic;
+          vr_dscritic := 'Erro nao tratado ao atualizar tabela tbrecup_cobranca' ||
+					               ' na TELA_COBTIT.pc_enviar_boleto: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;
+
+		  -- Gera log na lgm
+			gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+				                   pr_cdoperad => pr_cdoperad,
+													 pr_dscritic => '',
+													 pr_dsorigem => vr_dsorigem,
+													 pr_dstransa => vr_dstransa,
+													 pr_dttransa => TRUNC(SYSDATE),
+													 pr_flgtrans => 1,
+													 pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+													 pr_idseqttl => 0,
+													 pr_nmdatela => pr_nmdatela,
+													 pr_nrdconta => pr_nrdconta,
+													 pr_nrdrowid => vr_nrdrowid);
+
+      -- Buscar tabela de boletos de cobrança
+      COBR0005.pc_buscar_titulo_cobranca(pr_cdcooper => pr_cdcooper,
+																				 pr_nrdconta => pr_nrctacob,
+																				 pr_nrcnvcob => pr_nrcnvcob,
+																				 pr_nrdocmto => pr_nrdocmto,
+										                     pr_cdoperad => pr_cdoperad,
+                                         pr_nriniseq => 1,
+                                         pr_nrregist => 1,
+																				 pr_cdcritic => vr_cdcritic,
+																				 pr_dscritic => vr_dscritic,
+																				 pr_tab_cob  => vr_tab_cob);
+
+			-- Se retornou alguma crítica
+			IF vr_cdcritic <> 0 OR
+				 trim(vr_dscritic) IS NOT NULL THEN
+				 -- Levanta exceção
+			   RAISE vr_exc_saida;
+		  END IF;
+
+		  -- Contrato
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Bordero',
+																pr_dsdadant => '',
+																pr_dsdadatu => pr_nrborder);
+			-- Nr. do Boleto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Nr. do Boleto',
+																pr_dsdadant => '',
+																pr_dsdadatu => vr_tab_cob(1).nrdocmto);
+			-- Vencimento
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Vencimento',
+																pr_dsdadant => '',
+																pr_dsdadatu => TO_CHAR(vr_tab_cob(1).dtvencto, 'DD/MM/RRRR'));
+
+			-- Valor do Boleto
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Vlr do boleto',
+																pr_dsdadant => '',
+																pr_dsdadatu => to_char(vr_tab_cob(1).vltitulo, 'fm999g999g990d00', 'NLS_NUMERIC_CHARACTERS = '',.'''));
+
+			-- Linha Digitável
+			gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																pr_nmdcampo => 'Linha digitavel',
+																pr_dsdadant => '',
+																pr_dsdadatu => vr_tab_cob(1).lindigit);
+
+
+		  -- Gera log de itens
+			CASE pr_tpdenvio
+				-- Email
+				WHEN 1 THEN
+					-- E-mail
+				  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																		pr_nmdcampo => 'E-mail',
+																		pr_dsdadant => '',
+																		pr_dsdadatu => vr_tab_cob(1).dsdemail);
+				-- SMS
+				WHEN 2 THEN
+					-- Telefone
+				  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+																		pr_nmdcampo => 'Telefone',
+																		pr_dsdadant => '',
+																		pr_dsdadatu => '(' || to_char(pr_nrdddsms, '000') || ')' ||
+						                                       to_char(pr_nrtelsms, '9999g9999','nls_numeric_characters=.-'));
+																									 
+			  ELSE
+					NULL;
+
+			END CASE;
+
+			-- Cria log de cobrança
+			PAGA0001.pc_cria_log_cobranca(pr_idtabcob => vr_tab_cob(1).rowidcob,
+			                              pr_cdoperad => pr_cdoperad,
+																		pr_dtmvtolt => trunc(SYSDATE),
+																		pr_dsmensag => vr_dsmensag,
+																		pr_des_erro => vr_des_erro,
+																		pr_dscritic => vr_dscritic);
+
+			-- Se retornou algum erro
+		  IF vr_des_erro <> 'OK' AND
+				 trim(vr_dscritic) IS NOT NULL THEN
+				 -- Levanta exceção
+				 RAISE vr_exc_saida;
+		  END IF;
+
+      COMMIT;
+
+		EXCEPTION
+      WHEN vr_exc_saida THEN
+				-- Se possui código de crítica e não foi informado a descrição
+				IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					 -- Busca descrição da crítica
+					 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+				-- Atribui exceção para os parametros de crítica
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+
+        ROLLBACK;
+			WHEN OTHERS THEN
+				-- Atribui exceção para os parametros de crítica
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := 'Erro nao tratado na TELA_COBTIT.pc_enviar_boleto: ' || SQLERRM;
+        ROLLBACK;
+		END;
+
+	END pc_enviar_boleto;
+  
+  PROCEDURE pc_enviar_boleto_web (pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+																,pr_nrborder IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+																,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+																,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+																,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+																,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+																,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+																,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+																,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+																,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+																,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+																,pr_xmllog   IN VARCHAR2                                  --> XML com informações de LOG
+																,pr_cdcritic OUT PLS_INTEGER                              --> Código da crítica
+																,pr_dscritic OUT VARCHAR2                                 --> Descrição da crítica
+																,pr_retxml   IN OUT NOCOPY XMLType                        --> Arquivo de retorno do XML
+																,pr_nmdcampo OUT VARCHAR2                                 --> Nome do campo com erro
+																,pr_des_erro OUT VARCHAR2) IS                  --> Erros do processo
+
+  BEGIN
+
+	/* .............................................................................
+
+		Programa: pc_enviar_boleto_web
+		Sistema : CECRED
+		Sigla   : CRED
+		Autor   : Luis Fernando (GFT)
+		Data    : Junho/2018
+
+		Dados referentes ao programa:
+
+		Frequencia: Sempre que for chamado
+		Objetivo  : Rotina para gerar enviar o boleto por SMS ou email
+
+
+	..............................................................................*/
+		DECLARE
+			----------------------------- VARIAVEIS ---------------------------------
+			-- Variável de críticas
+			vr_cdcritic crapcri.cdcritic%TYPE;
+			vr_dscritic VARCHAR2(10000);
+
+			-- Tratamento de erros
+			vr_exc_erro EXCEPTION;
+
+			 -- Variaveis de log
+			vr_cdcooper INTEGER;
+			vr_cdoperad VARCHAR2(100);
+			vr_nmdatela VARCHAR2(100);
+			vr_nmeacao  VARCHAR2(100);
+			vr_cdagenci VARCHAR2(100);
+			vr_nrdcaixa VARCHAR2(100);
+			vr_idorigem VARCHAR2(100);
+
+			vr_nmarqpdf   VARCHAR2(1000);
+	    
+			---------------------------- CURSORES -----------------------------------
+		BEGIN
+
+			---------------------------------- VALIDACOES INICIAIS --------------------------
+
+			GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+      -- Chama rotina para gerar o pdf do boleto
+      pc_enviar_boleto(pr_cdcooper => vr_cdcooper
+			                             ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrborder => pr_nrborder
+                                   ,pr_nrctacob => pr_nrctacob
+																	 ,pr_nrcnvcob => pr_nrcnvcob
+																	 ,pr_nrdocmto => pr_nrdocmto
+																	 ,pr_cdoperad => vr_cdoperad
+                                   ,pr_nmcontat => pr_nmcontat
+																	 ,pr_idorigem => vr_idorigem
+                                   ,pr_tpdenvio => pr_tpdenvio
+                                   ,pr_nmdatela => vr_nmdatela
+                                   ,pr_dsdemail => pr_dsdemail
+                                   ,pr_indretor => pr_indretor
+                                   ,pr_nrdddsms => pr_nrdddsms
+                                   ,pr_nrtelsms => pr_nrtelsms
+																	 ,pr_cdcritic => vr_cdcritic
+																	 ,pr_dscritic => vr_dscritic);
+                                   
+      IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
+				RAISE vr_exc_erro;
+			END IF;
+
+			-- Criar XML de retorno
+			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
+																		 vr_nmarqpdf || '</nmarqpdf>');
+
+		EXCEPTION
+			WHEN vr_exc_erro THEN
+
+				-- Busca descrição da crítica se houver código
+				IF vr_cdcritic <> 0 THEN
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+				ELSE
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := vr_dscritic;
+				END IF;
+
+				-- Carregar XML padrão para variável de retorno não utilizada.
+				-- Existe para satisfazer exigência da interface.
+				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																			 '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+		WHEN OTHERS THEN
+
+			pr_cdcritic := vr_cdcritic;
+			pr_dscritic := 'Erro geral na rotina da tela TELA_COBEMP: ' || SQLERRM;
+
+			-- Carregar XML padrão para variável de retorno não utilizada.
+			-- Existe para satisfazer exigência da interface.
+			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																		 '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+		END;
+	END pc_enviar_boleto_web;
+  
+  
+  PROCEDURE pc_busca_texto_sms(pr_cdcooper IN crapcob.cdcooper%TYPE 
+                              ,pr_nrdconta IN crapcob.nrdconta%TYPE
+                              ,pr_lindigit IN VARCHAR2
+                              ,pr_textosms OUT VARCHAR2
+                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                              ) IS
+  BEGIN
+
+    /* .............................................................................
+    Programa: pc_busca_texto_sms
+    Sistema : Cobrança - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Luis Fernando (GFT)
+    Data    : Junho/2018.
+
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina buscar texto a ser utilizado no envio de sms cobrança
+    ..............................................................................*/
+    DECLARE
+
+      CURSOR cr_crapass IS
+      SELECT nmprimtl
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper
+         AND crapass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+
+      -- Cursor para buscar os dados da cooperativa
+      CURSOR cr_crapcop is
+        select crapcop.nmextcop,
+               crapcop.cdageitg,
+               crapcop.cdagebcb,
+               crapcop.cdagectl,
+               crapcop.cdbcoctl,
+               crapcop.nmrescop,
+               crapcop.dsendcop,
+               crapcop.nrendcop,
+               crapcop.nmbairro,
+               crapcop.nrtelvoz,
+               crapcop.nmcidade,
+               crapcop.cdufdcop
+          from crapcop
+         where crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+      
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      vr_texto_sms VARCHAR2(4000);
+      vr_nmextcop VARCHAR2(100);
+      vr_nmprimtl VARCHAR2(100);
+
+    BEGIN
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+
+      FETCH btch0001.cr_crapdat
+        INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      -- Busca os dados da cooperativa
+      OPEN cr_crapcop;
+      FETCH cr_crapcop INTO rw_crapcop;
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        pr_cdcritic := 651;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_crapcop;
+
+      -- Busca os dados do associado
+      OPEN cr_crapass;
+      FETCH cr_crapass INTO rw_crapass;
+      CLOSE cr_crapass;
+
+      vr_nmprimtl := rw_crapass.nmprimtl;
+      vr_nmextcop := rw_crapcop.nmrescop;
+
+
+      /*@TODO  Criar um para cobtit*/
+      vr_texto_sms:= gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_cdacesso => 'COBEMP_TXT_SMS');
+
+      vr_texto_sms := REPLACE(vr_texto_sms,'#Cooperativa#',vr_nmextcop);
+      vr_texto_sms := REPLACE(vr_texto_sms,'#Cooperado#',vr_nmprimtl);
+      vr_texto_sms := REPLACE(vr_texto_sms,'#LinhaDigitavel#',pr_lindigit);
+
+      pr_textosms := vr_texto_sms;
+                     
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela TELA_COBTIT.pc_busca_texto_sms: ' || SQLERRM;
+
+    END;
+
+  END pc_busca_texto_sms;
+  
+  PROCEDURE pc_busca_texto_sms_web(pr_nrdconta IN INTEGER
+                              ,pr_lindigit IN VARCHAR2
+                              ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+    Programa: pc_busca_texto_sms_web
+    Sistema : Cobrança - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Luis Fernando (GFT)
+    Data    : Junho/2018.
+
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina buscar texto a ser utilizado no envio de sms cobrança
+    ..............................................................................*/
+    DECLARE
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+      
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      vr_texto_sms VARCHAR2(4000);
+
+    BEGIN
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      pc_busca_texto_sms(pr_cdcooper => vr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_lindigit => pr_lindigit
+                              ,pr_textosms => vr_texto_sms
+                              ,pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+                              
+      IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+                              
+
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados >');
+
+      pc_escreve_xml('<textosms>'||vr_texto_sms||'</textosms>');
+      
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela TELA_COBTIT.pc_busca_texto_sms: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_busca_texto_sms_web;
+  
+  
+  PROCEDURE pc_buscar_log(pr_cdcooper IN crapcob.cdcooper%TYPE --> Cooperativa
+                         ,pr_nrdconta IN crapcob.nrdconta%TYPE --> Conta
+                         ,pr_nrdocmto IN crapcob.nrdocmto%TYPE --> Numero do boleto
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE --> convenio
+                         ,pr_nriniseq IN INTEGER                 --> Registro inicial da listagem
+                         ,pr_nrregist IN INTEGER                 --> Numero de registros p/ paginaca
+                         ,pr_qtregist OUT INTEGER                 --> total de logs encontrados
+                         ,pr_tab_log  OUT typ_tab_dados_log --> Saída dos dados de log
+                         ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                         ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                         ) IS
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_buscar_log
+    Sistema : CRED
+    Sigla   : TELA
+    Autor   : Luis Fernando (GFT)
+    Data    : 07/06/2018
+
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina busca de log boletos.
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados de indexadores pelo nome
+      CURSOR cr_crapcol IS
+        SELECT col.dtaltera,
+               col.hrtransa,
+               col.dslogtit,
+               col.cdoperad,
+               nvl(ope.nmoperad,col.cdoperad) nmoperad
+          FROM crapcol col,
+               crapope ope
+         WHERE col.cdcooper = pr_cdcooper
+           AND col.nrdconta = pr_nrdconta
+           AND col.nrdocmto = pr_nrdocmto
+           AND col.nrcnvcob = pr_nrcnvcob
+           AND ope.cdcooper (+) = col.cdcooper
+           AND ope.cdoperad (+) = col.cdoperad
+           ORDER BY col.dtaltera DESC, col.hrtransa DESC;
+      rw_crapcol cr_crapcol%ROWTYPE;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      vr_index    PLS_INTEGER;
+    BEGIN
+      vr_index := 0;
+      OPEN cr_crapcol;
+      LOOP 
+        FETCH cr_crapcol INTO rw_crapcol;
+        vr_index := vr_index+1;
+        EXIT WHEN cr_crapcol%NOTFOUND OR vr_index < pr_nriniseq OR vr_index >= (pr_nriniseq + pr_nrregist);
+        pr_tab_log(vr_index).dtaltera := rw_crapcol.dtaltera;
+        pr_tab_log(vr_index).hrtransa := rw_crapcol.hrtransa;
+        pr_tab_log(vr_index).dslogtit := rw_crapcol.dslogtit;
+        pr_tab_log(vr_index).cdoperad := rw_crapcol.cdoperad;
+        pr_tab_log(vr_index).nmoperad := rw_crapcol.nmoperad;
+      END LOOP;
+      pr_qtregist := vr_index;
+      IF (vr_index=0) THEN
+        vr_dscritic := 'Nenhum log localizados.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela COBEMP: ' || SQLERRM;
+    END;
+
+  END pc_buscar_log;
+  
+  PROCEDURE pc_buscar_log_web(pr_nrdconta IN INTEGER
+                         ,pr_nrdocmto IN INTEGER
+                         ,pr_nrcnvcob IN INTEGER
+                         ,pr_nriniseq IN INTEGER                 --> Registro inicial da listagem
+                         ,pr_nrregist IN INTEGER                 --> Numero de registros p/ paginaca
+                         ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                         ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                         ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                         ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                         ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                         ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_buscar_log_web
+    Sistema : CRED
+    Sigla   : TELA
+    Autor   : Luis Fernando (GFT)
+    Data    : 07/06/2018
+
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina busca de log boletos.
+
+    Observacao: -----
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados de indexadores pelo nome
+      CURSOR cr_crapcol(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                        pr_nrdconta IN crapass.nrdconta%TYPE,
+                        pr_nrdocmto IN crapcob.nrdocmto%TYPE,
+                        pr_nrcnvcob IN crapcob.nrcnvcob%TYPE) IS
+        SELECT col.dtaltera,
+               col.hrtransa,
+               col.dslogtit,
+               col.cdoperad,
+               nvl(ope.nmoperad,col.cdoperad) nmoperad
+          FROM crapcol col,
+               crapope ope
+         WHERE col.cdcooper = pr_cdcooper
+           AND col.nrdconta = pr_nrdconta
+           AND col.nrdocmto = pr_nrdocmto
+           AND col.nrcnvcob = pr_nrcnvcob
+           AND ope.cdcooper (+) = col.cdcooper
+           AND ope.cdoperad (+) = col.cdoperad
+           ORDER BY col.dtaltera DESC, col.hrtransa DESC;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_contador INTEGER := 0; -- Contador p/ posicao no XML
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+      vr_flgresgi BOOLEAN := FALSE;
+
+      vr_tab_log  typ_tab_dados_log;
+      vr_index    PLS_INTEGER;
+      vr_qtregist INTEGER;
+    BEGIN
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      pc_buscar_log(pr_cdcooper => vr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdocmto => pr_nrdocmto
+                         ,pr_nrcnvcob => pr_nrcnvcob
+                         ,pr_nriniseq => pr_nriniseq
+                         ,pr_nrregist => pr_nrregist
+                         ,pr_qtregist => vr_qtregist
+                         ,pr_tab_log  => vr_tab_log
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic
+                         );
+                         
+      IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados qtregist="' || vr_qtregist ||'" >');
+
+      -- ler os registros de titulos e incluir no xml
+      vr_index := vr_tab_log.first;
+      while vr_index is not null loop
+         pc_escreve_xml('<log>'||
+                           '<dtaltera>' || TO_CHAR(vr_tab_log(vr_index).dtaltera, 'dd/mm/RRRR') || '</dtaltera>' ||
+                           '<hrtransa>' || GENE0002.fn_converte_time_data(vr_tab_log(vr_index).hrtransa) || '</hrtransa>' ||
+                           '<dslogtit>' || vr_tab_log(vr_index).dslogtit || '</dslogtit>' ||
+                           '<nmoperad>' || vr_tab_log(vr_index).nmoperad || '</nmoperad>' ||
+                        '</log>'
+                      );
+          /* buscar proximo */
+          vr_index := vr_tab_log.next(vr_index);
+      end loop;
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da procedure TELA_COBTIT.pc_buscar_log_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_buscar_log_web;
   
 end TELA_COBTIT;
 /
