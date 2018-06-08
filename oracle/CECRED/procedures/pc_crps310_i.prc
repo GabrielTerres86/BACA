@@ -1580,7 +1580,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             AND lcm.nrdconta   = pr_nrdconta--77135
             AND lcm.dtmvtolt   > pr_dtcorte
             AND his.indebcre   ='D'
-            AND his.inconta_redutora =1;
+            AND his.cdhistor IN(37,38,57);
 
             rw_craplcm_ccjuros60 cr_craplcm_ccjuros60%ROWTYPE;
 
