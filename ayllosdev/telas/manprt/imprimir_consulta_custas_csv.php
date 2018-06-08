@@ -31,7 +31,7 @@
 	// Recebe o POST
 	$inidtpro 			= $_POST['inidtpro'] ;
 	$fimdtpro 			= $_POST['fimdtpro'];
-    $cdcooper 			= (isset($_POST['cdcooper']))  ? $_POST['cdcooper'] : null;
+    $cdcooper 			= (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : 3;
     $nrdconta 			= (!empty($_POST["nrdconta"])) ? $_POST["nrdconta"] : null;
 	$cduflogr 			= (isset($_POST['cduflogr']))  ? $_POST['cduflogr'] : null;
     $dscartor 			= (isset($_POST['dscartor']))  ? $_POST['dscartor'] : null;
