@@ -3370,12 +3370,31 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                             ,pr_cdcooper => 3   --> Cooperativa
                                             ,pr_nmsubdir => 'abbc');
 
+      /* Remove os arquivos CCF dos dias anteriores */
+      vr_comando:= 'rm '||vr_dir_local ||'/CCF*';
+
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_des_erro);
+     
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+        RAISE vr_exc_saida;
+      END IF;
+
       vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
 
       -- Forma o nome do arquivo CCG627XX.YYY
       --XX  -> Dia do movimento
       --YYY -> Sequencial da remessa, sera sempre 001
+      --Se INPROCES = 1 ja acabou o batch, posso utilizar dtmvtoan, senao devo utilizar dtmvtolt
+      IF rw_crapdat.inproces = 1 THEN
       vr_nmarquiv := 'CCF627' || to_char(rw_crapdat.dtmvtoan, 'DD') || '.001';
+      ELSE
+        vr_nmarquiv := 'CCF627' || to_char(rw_crapdat.dtmvtolt, 'DD') || '.001';
+      END IF;
 
       pc_download_ftp(pr_serv_ftp   => vr_serv_ftp
                      ,pr_user_ftp   => vr_user_ftp

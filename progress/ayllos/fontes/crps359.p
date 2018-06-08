@@ -34,7 +34,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Mirtes
-   Data    : Outubro/2003                      Ultima atualizacao: 03/05/2017
+   Data    : Outubro/2003                      Ultima atualizacao: 24/05/2018
 
    Dados referentes ao programa:
 
@@ -174,6 +174,8 @@
                       
                03/05/2017 - #601794 Inclusao dos parametros de criacao de 
                             chamado (Carlos)
+               24/05/2018 - feito tratamento no lote emprestimo condiginado, para 
+			                quando tiver 7 e 4 digitos, atualizar corretamente o lote. Alcemir (Mout's) (SCTASK0015071).
                             
 ............................................................................. */
 
@@ -334,12 +336,21 @@ DO TRANSACTION ON ERROR UNDO, RETURN.
                          craptab.cdacesso = "NUMLOTECOT" OR
                          craptab.cdacesso = "NUMLOTEEMP"  THEN
                          DO:
-                             IF  LENGTH(craptab.dstextab) = 6 THEN
+
+                            CASE LENGTH(craptab.dstextab):
+                                WHEN 5 THEN
+                                    ASSIGN craptab.dstextab =
+                                       SUBSTRING(craptab.dstextab,1,4) + "0".	
+                                WHEN 6 THEN  
                                  ASSIGN craptab.dstextab =
                                         SUBSTRING(craptab.dstextab,1,5) + "0".
-                             ELSE
+                                WHEN 7 THEN  
+                                    ASSIGN craptab.dstextab =
+                                       SUBSTRING(craptab.dstextab,1,6) + "0".
+								OTHERWISE
                                  ASSIGN craptab.dstextab =
                                         SUBSTRING(craptab.dstextab,1,3) + "0".
+                            END CASE.
                          END.
                      ELSE
                           ASSIGN craptab.dstextab =
