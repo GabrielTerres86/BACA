@@ -161,17 +161,8 @@
 						<tbody>
 							<?php foreach($criticas->tags AS $c) {?>
 								<tr>
-									<td><? echo getByTagName($c->tags,'dsc'); ?></td>
-									<td>
-										<?php 
-										 	$varint = getByTagName($c->tags,'int'); 
-										 	if($varint > 0){
-										 		echo $varint;
-										 	} else {
-										 		echo formataMoeda(getByTagName($c->tags,'per')).'%';
-										 	}
-										?>
-									</td>
+									<td><?php echo getByTagName($c->tags,'dsc'); ?></td>
+									<td><?php echo getByTagName($c->tags,'vlr');?></td>
 								</tr>
 							<?} // Fim do foreach ?>	
 						</tbody>

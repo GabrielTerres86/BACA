@@ -62,7 +62,7 @@
 	$detalhe = $dados->tags[2];
 	$criticas = $dados->tags[3];
 
-	
+
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -169,16 +169,7 @@
 							<?php foreach($criticas->tags AS $c) {?>
 								<tr>
 									<td><? echo getByTagName($c->tags,'dsc'); ?></td>
-									<td>
-										<?php 
-										 	$varint = getByTagName($c->tags,'int'); 
-										 	if($varint > 0){
-										 		echo $varint;
-										 	} else {
-										 		echo formataMoeda(getByTagName($c->tags,'per')).'%';
-										 	}
-										?>
-									</td>
+									<td><?php echo getByTagName($c->tags,'vlr');?></td>
 								</tr>
 							<?} // Fim do foreach ?>	
 						</tbody>
