@@ -997,6 +997,8 @@ PROCEDURE atualiza_browser:
               ASSIGN aux_dstpdcto = "CADASTRO DE LIMIRE CREDITO".          
           WHEN 22 THEN
               ASSIGN aux_dstpdcto = "DOCUMENTO CÔNJUGE".
+          WHEN 26 THEN
+              ASSIGN aux_dstpdcto = "IMUNIDADE TRIBUTARIA".
           WHEN 37 THEN
               ASSIGN aux_dstpdcto = "PESSOA EXP. POL. - PEP".
           WHEN 40 THEN 
