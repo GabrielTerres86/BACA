@@ -3597,7 +3597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                 vr_lin_dscep := NULL;
               ELSE
                 IF LENGTH(TRIM(vr_lin_dscep)) < 9 THEN
-                  '(pr_idarquivo => rw_arquivo.idarquivo,
+                  pc_inclui_critica(pr_idarquivo => rw_arquivo.idarquivo,
                                     pr_idboleto  => vr_idboleto,
                                     pr_idmotivo  => 66, -- CEP nao informado.
                                     pr_vlrcampo  => vr_lin_dscep);
