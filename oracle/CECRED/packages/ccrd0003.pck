@@ -7462,8 +7462,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
          WHERE craptlc.cdcooper = pr_cdcooper
            AND craptlc.cdadmcrd = pr_cdadmcrd
            AND craptlc.vllimcrd = pr_vllimcrd
-           AND craptlc.cdadmcrd < 10
-           AND craptlc.cdadmcrd > 80
            AND craptlc.dddebito = 0           
            AND ROWNUM = 1;
       rw_craptlc cr_craptlc%ROWTYPE;
@@ -7476,8 +7474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         FROM       TBCRD_CONFIG_CATEGORIA tbcc
         WHERE      tbcc.cdcooper = pr_cdcooper
         AND        tbcc.cdadmcrd = pr_cdadmcrd
-        AND        pr_vllimcrd between tbcc.vllimite_minimo AND tbcc.vllimite_maximo
-        AND        tbcc.dsdias_debito = 0;
+        AND        pr_vllimcrd between tbcc.vllimite_minimo AND tbcc.vllimite_maximo;
       rw_craptlc_cecred cr_craptlc_cecred%ROWTYPE;
       
       -- Buscar o telefone celular do cooperado
@@ -7825,26 +7822,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             
             -- Somente a administadora diferente de MAESTRO que ira ter Limite cadastrado
             IF UPPER(rw_crapadc.nmbandei) <> 'MAESTRO' THEN
+			        vr_cdlimcrd := 0;
+
               -- Para cada cartao, vamos buscar o valor de limite de credito cadastrado
-              --OUTROS
               OPEN cr_craptlc(pr_cdcooper => pr_cdcooper,
                               pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd,
                               pr_vllimcrd => pr_vllimcrd);
               FETCH cr_craptlc INTO rw_craptlc;
               vr_craptlc := cr_craptlc%FOUND;
               CLOSE cr_craptlc;
-              -- CECRED
-              OPEN cr_craptlc_cecred(pr_cdcooper => pr_cdcooper,
-                                     pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd,
-                                     pr_vllimcrd => pr_vllimcrd);
-              FETCH cr_craptlc_cecred INTO rw_craptlc_cecred;
-              vr_craptlc := cr_craptlc_cecred%FOUND;
-              CLOSE cr_craptlc_cecred;
-              
-              vr_cdlimcrd := rw_craptlc.cdlimcrd;
+			  
+              -- Se nao encontrou, vamos tentar buscar os limites na nova tabela
+              IF NOT vr_craptlc THEN
+                -- CECRED
+                OPEN cr_craptlc_cecred(pr_cdcooper => pr_cdcooper,
+                            pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd,
+                            pr_vllimcrd => pr_vllimcrd);
+                FETCH cr_craptlc_cecred INTO rw_craptlc_cecred;
+                vr_craptlc := cr_craptlc_cecred%FOUND;
+                CLOSE cr_craptlc_cecred;
+              ELSE
+                  vr_cdlimcrd := rw_craptlc.cdlimcrd;
+              END IF;
             ELSE
               vr_craptlc := TRUE;  
-            END IF;  
+            END IF;
             
           END IF; /* END IF rw_crawcrd_limite.nrseqreg = 1 THEN */
           

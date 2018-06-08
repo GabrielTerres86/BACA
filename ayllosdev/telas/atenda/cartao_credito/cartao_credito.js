@@ -4554,7 +4554,12 @@ function validarUpDown() {
 			
 			eval(response);	
 			if(!error)
-				atualizaUpgradeDowngrade();
+			    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+			    if (iPiloto == 1) {
+			        atualizaUpgradeDowngrade();
+			    } else {
+			        showError("inform", "Operacao realizada com sucesso.", "Alerta - Ayllos", "voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
+			    }
 		}				
 	});
 }

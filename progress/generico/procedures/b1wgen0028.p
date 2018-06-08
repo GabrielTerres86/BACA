@@ -17829,6 +17829,7 @@ PROCEDURE contrato_cecred_bdn_visa:
       END.
          
     ELSE
+	  DO:
          RUN valor-extenso IN h-b1wgen9999 (INPUT craphcj.vllimglb,
                                             INPUT 45,
                                             INPUT 73,
