@@ -203,14 +203,47 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)
      VALUES (SEQRDR_NRSEQRDR.NEXTVAL, 'COBTIT', SYSDATE);
 
-INSERT INTO CRAPACA (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCAR_BORDEROS_VENCIDOS', 'TELA_COBTIT', 'pc_buscar_bordero_vencido_web', 'pr_nrdconta,pr_nriniseq,pr_nrregist', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'LISTAR_FERIADOS', 'TELA_COBTIT', 'pc_listar_feriados_web', 'pr_dtmvtolt,pr_dtfinal', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'LISTAR_TITULOS', 'TELA_COBTIT', 'pc_buscar_titulo_vencido_web', 'pr_nrdconta,pr_nrborder,pr_dtvencto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'GERAR_BOLETO', 'TELA_COBTIT', 'pc_gerar_boleto_web', 'pr_nrdconta,pr_nrborder,pr_nrtitulo,pr_dtvencto,pr_nrcpfava ', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'LISTA_AVALISTAS', 'TELA_COBTIT', 'pc_lista_avalista_web', 'pr_nrdconta,pr_nrborder ', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_BUSCAR_EMAIL', 'TELA_COBTIT', 'pc_buscar_email_web', 'pr_nrdconta,pr_nriniseq,pr_nrregist ', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_BUSCAR_TELEFONE', 'TELA_COBTIT', 'pc_buscar_telefone_web', 'pr_nrdconta,pr_flcelula,pr_nriniseq,pr_nrregist ', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_BUSCA_LISTA_PA', 'TELA_COBTIT', 'pc_lista_pa_web', 'pr_cdagenci,pr_nriniseq,pr_nrregist ', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCAR_BOLETOS', 'TELA_COBTIT', 'pc_buscar_boletos_web', 'pr_cdagenci,pr_nrborder,pr_nrdconta,pr_dtbaixai,pr_dtbaixaf,pr_dtemissi,pr_dtemissf,pr_dtvencti,pr_dtvenctf,pr_dtpagtoi,pr_dtpagtof,pr_nriniseq,pr_nrregist', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT') );
 
-INSERT INTO CRAPACA (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'EFETUAR_BAIXA_BOLETO', 'TELA_COBTIT', 'pc_baixa_boleto_web', 'pr_nrdconta,pr_nrborder,pr_nrctacob,pr_nrcnvcob,pr_nrdocmto,pr_dtmvtolt,pr_dsjustif', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
 
-INSERT INTO CRAPACA (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'IMPRIMIR_BOLETO_PDF', 'TELA_COBTIT', 'pc_gerar_pdf_boleto_web', 'pr_nrdconta, pr_nrcnvcob, pr_nrdocmto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'ENVIAR_BOLETO', 'TELA_COBTIT', 'pc_enviar_boleto_web', 'pr_nrdconta, pr_nrborder, pr_nrctacob, pr_nrcnvcob, pr_nrdocmto, pr_nmcontat, pr_tpdenvio, pr_dsdemail, pr_indretor, pr_nrdddsms, pr_nrtelsms', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCAR_TEXTO_SMS', 'TELA_COBTIT', 'pc_busca_texto_sms_web', 'pr_nrdconta, pr_lindigit', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_BUSCAR_LOG', 'TELA_COBTIT', 'pc_buscar_log_web', 'pr_nrdconta,pr_nrdocmto,pr_nrcnvcob,pr_nriniseq,pr_nrregist', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
 
 commit;
 end;
