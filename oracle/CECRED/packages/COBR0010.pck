@@ -24,6 +24,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                               pr_dtvencto     IN crapcob.dtvencto%TYPE,
                               pr_vldescto     IN crapcob.vldescto%TYPE,
                               pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,
+                              pr_nrcelsac     IN crapsab.nrcelsac%TYPE,
                               pr_xml_dsmsgerr OUT VARCHAR2,
                               pr_cdcritic     OUT INTEGER,
                               pr_dscritic     OUT VARCHAR2);
@@ -64,6 +65,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                               pr_dtvencto     IN crapcob.dtvencto%TYPE,
                               pr_vldescto     IN crapcob.vldescto%TYPE,
                               pr_cdtpinsc     IN crapcob.cdtpinsc%TYPE,
+                              pr_nrcelsac     IN crapsab.nrcelsac%TYPE,
                               pr_xml_dsmsgerr OUT VARCHAR2,
                               pr_cdcritic     OUT INTEGER,
                               pr_dscritic     OUT VARCHAR2) IS
@@ -124,6 +126,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                   08/12/2017 - Inclusão de commit/rollback para finalizar a transação
                                e possibilitar a chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                                (SD#791193 - AJFink)
+
+                  01/06/2018 - Adicionar o Numero de Celular do Sacado como parametro, para que seja 
+                               processado na instrução 95. PRJ285 - Nova Conta Online (Douglas)
 
      .................................................................................*/
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -324,7 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     vr_tab_instrucao(1).insmsant := rw_crapcob.insmsant;
     vr_tab_instrucao(1).insmsvct := rw_crapcob.insmsvct;
     vr_tab_instrucao(1).insmspos := rw_crapcob.insmspos;
-    vr_tab_instrucao(1).nrcelsac := NULL; -- Celular do Sacado   rw_crapsab.nrcelsac;
+    vr_tab_instrucao(1).nrcelsac := pr_nrcelsac; -- Celular do Sacado   rw_crapsab.nrcelsac;
 
     -- Carregar todas as informacoes do Header
     pr_rec_header.nrremass := 0; --vr_nrremass;

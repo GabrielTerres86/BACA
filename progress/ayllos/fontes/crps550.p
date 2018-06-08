@@ -226,7 +226,7 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
     UNIX SILENT VALUE("dos2ux " + aux_nmarquiv + " > " +
                       aux_nmarqdat + " 2> /dev/null").
 
-    UNIX SILENT VALUE("rm " + aux_nmarquiv + " 2> /dev/null").
+    /*UNIX SILENT VALUE("rm " + aux_nmarquiv + " 2> /dev/null").*/
 
     UNIX SILENT VALUE("quoter " + aux_nmarqdat + " > " + 
                       aux_nmarqdat + ".q 2> /dev/null").

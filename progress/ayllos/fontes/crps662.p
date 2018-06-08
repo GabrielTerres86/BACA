@@ -511,7 +511,7 @@ FOR EACH crapcop WHERE crapcop.flgativo = TRUE NO-LOCK:
             
         /*Criar solicitacao na crapsol dependedo do arquivo que for ser
           gerado ("RELACIONAMENTO", "CCF", "CONTRA-ORDEM", "CUSTODIA") 
-                *"RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS" */
+                *"RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS,IMP CCF" */
 
         RUN cria_solicitacao(INPUT glb_cdcooper,
                              INPUT glb_dtmvtolt,
@@ -528,7 +528,7 @@ FOR EACH crapcop WHERE crapcop.flgativo = TRUE NO-LOCK:
                      INPUT glb_dtmvtolt).
 
         /*Limpar solicitacao na crapsol dependedo do arquivo que for ser
-          gerado ("RELACIONAMENTO", "CCF", "CONTRA-ORDEM", "CUSTODIA") 
+          gerado ("RELACIONAMENTO", "CCF", "IMP CCF", "CONTRA-ORDEM", "CUSTODIA") 
                 *"RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS" */
         RUN limpa_solicitacao(INPUT glb_cdcooper,
                               INPUT glb_dtmvtolt,
@@ -1287,7 +1287,7 @@ PROCEDURE cria_solicitacao:
 
     /* Criar solicitacao para estes tipos de programas 
        "RELACIONAMENTO,CCF,CONTRA-ORDEM,CUSTODIA" */
-    IF  CAN-DO("RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS,DEVOLU,IMP CONTRA-ORDEM/CCF,CAF,ARQUIVOS SICREDI",par_nmprgexe)  THEN
+    IF  CAN-DO("RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS,DEVOLU,IMP CONTRA-ORDEM/CCF,CAF,ARQUIVOS SICREDI,IMP CCF",par_nmprgexe)  THEN
         DO:
         
             DO TRANSACTION:
@@ -1332,7 +1332,7 @@ PROCEDURE limpa_solicitacao:
     
 
     /* Limpar solicitacao feita anteriormente */
-    IF  CAN-DO("RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS,DEVOLU,ARQUIVOS SICREDI",par_nmprgexe)  THEN
+    IF  CAN-DO("RELACIONAMENTO,CONTRA-ORDEM E CCF,ARQUIVOS NOTURNOS,DEVOLU,ARQUIVOS SICREDI,IMP CCF",par_nmprgexe)  THEN
         DO: 
             DO TRANSACTION:
                 /* Limpa solicitacao se existente */
@@ -3107,7 +3107,7 @@ PROCEDURE imp_arq:
 
     /* Criar solicitacao para estes tipos de programas */
     /*"RELACIONAMENTO,IMP CONTRA-ORDEM/CCF,CAF"*/
-    IF  CAN-DO("IMP CONTRA-ORDEM/CCF,CAF", par_nmprgexe)  THEN
+    IF  CAN-DO("IMP CONTRA-ORDEM/CCF,CAF,IMP CCF", par_nmprgexe)  THEN
         DO:
            /*
             DO TRANSACTION:
@@ -3607,7 +3607,7 @@ PROCEDURE imp_arq:
 
      /* Criar solicitacao para estes tipos de programas */
      /* RELACIONAMENTO,CCF,CONTRA-ORDEM,CAF */
-     IF  CAN-DO("CCF,CONTRA-ORDEM,CAF",
+     IF  CAN-DO("CCF,CONTRA-ORDEM,CAF,IMP CCF",
                 par_nmprgexe)  THEN
          DO:
             RUN limpa_solicitacao(INPUT glb_cdcooper,

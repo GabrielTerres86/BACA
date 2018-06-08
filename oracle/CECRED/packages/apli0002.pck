@@ -1112,8 +1112,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dtmvtopr OUT crapdat.dtmvtopr%TYPE   --> Proxima data movimento
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
-														
 
+  
   PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
@@ -3366,7 +3366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_hrlimini INTEGER;
 	    vr_hrlimfim INTEGER;
 			vr_idesthor INTEGER;
-      
+
       -- Rowid tabela de log
       vr_nrdrowid ROWID;
     
@@ -6287,7 +6287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       pr_nrdocmto := vr_nrdocmto;
 			-- e o protocolo
 			pr_dsprotoc := vr_dsprotoc;
-      
+
       --Gerar log                                                  
       IF pr_flgerlog = 1 THEN
             
@@ -9966,7 +9966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
                                   ,pr_nrdconta => pr_nrdconta
-                                  ,pr_nraplica => 1
+                                  ,pr_nraplica => 0
                                   ,pr_idseqttl => pr_idseqttl
                                   ,pr_cdprogra => pr_nmdatela
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -17488,7 +17488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                 ,pr_vlsldinv => pr_vlsldinv
                                 ,pr_des_reto => vr_des_reto
                                 ,pr_tab_erro => vr_tab_erro);
-      
+  
       -- Verifica se houve erro recuperando informacoes de log                              
       IF vr_des_reto = 'NOK' THEN
         -- Tenta buscar o erro no vetor de erro
@@ -17820,7 +17820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
-          
+
         END LOOP;
 
         CLOSE cr_crapaar;
@@ -19374,9 +19374,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
-        END IF;
-        
+      END IF;   
       
+
       BEGIN
         
         -- Inserir lancamento do resgate solicitado
@@ -20536,7 +20536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     BEGIN
    
       vr_nrdocsrc := TO_CHAR(pr_nrdolote,'fm00000')||TO_CHAR(pr_nrdocmto,'fm0000000000')||'%';
-  
+
       OPEN cr_crapaar(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrdocmto => pr_nrdocmto);
@@ -22730,7 +22730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao ' || vr_dscritic || ' - APLI0002.pc_processa_lote_resgt: '||SQLERRM;
       END;  
-      
+
   END pc_processa_lote_resgt;
   
 END APLI0002;

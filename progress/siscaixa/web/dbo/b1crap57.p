@@ -1530,9 +1530,11 @@ PROCEDURE atualiza-deposito-com-captura:
     DEF OUTPUT PARAM  p-ult-sequencia-autentica AS INTE     NO-UNDO.
     DEF OUTPUT PARAM  p-nro-docto               AS INTE     NO-UNDO.
 
-    DEF VAR flg_ci       AS LOG INIT NO                     NO-UNDO.
-    DEF VAR i-tplotmov   LIKE craplot.tplotmov              NO-UNDO.
-    DEF VAR aux_dtrefere AS DATE                            NO-UNDO.
+    DEF VAR flg_ci        AS LOG INIT NO                     NO-UNDO.
+    DEF VAR i-tplotmov    LIKE craplot.tplotmov              NO-UNDO.
+    DEF VAR aux_dtrefere  AS DATE                            NO-UNDO.
+    DEF VAR aux_flcrialot AS LOGICAL INIT NO                 NO-UNDO.
+    DEF VAR aux_contador  AS INTEGER                         NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
     
@@ -1702,32 +1704,71 @@ PROCEDURE atualiza-deposito-com-captura:
                      RETURN "NOK".
                  END.
          END.
-  
     
     ASSIGN c-docto-salvo = STRING(TIME).
-  
-    FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
-                       craplot.cdagenci = p-cod-agencia     AND
-                       craplot.cdbccxlt = 11                AND  /* Fixo */
-                       craplot.nrdolote = i-nro-lote 
-                       EXCLUSIVE-LOCK NO-ERROR.
-                       
-    IF   NOT AVAIL craplot   THEN 
+
+     DO aux_contador = 1 TO 10:
+    
+        c-desc-erro = "".
+        
+        FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
+                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.cdagenci = p-cod-agencia     AND
+                           craplot.cdbccxlt = 11                AND  /* Fixo */
+                           craplot.nrdolote = i-nro-lote 
+                           EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                                 
+        IF  NOT AVAILABLE craplot  THEN
+            DO:
+                IF  LOCKED craplot  THEN
+                    DO:
+                        c-desc-erro = "Lote " + STRING(i-nro-lote) + " ja esta sendo alterado. " +
+                                      "Tente novamente.".
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    DO:
+                        aux_flcrialot = TRUE. 
+                        LEAVE.
+                    END.
+            END.
+    
+        aux_flcrialot = FALSE.
+    
+        LEAVE.
+        
+     END. /* Fim do DO ... TO */
+
+     IF  c-desc-erro <> "" THEN      
          DO:
-             CREATE craplot.
-             ASSIGN craplot.cdcooper = crapcop.cdcooper
-                    craplot.dtmvtolt = crapdat.dtmvtolt
-                    craplot.cdagenci = p-cod-agencia   
-                    craplot.cdbccxlt = 11              
-                    craplot.nrdolote = i-nro-lote
-                    craplot.tplotmov = i-tplotmov
-                    craplot.cdoperad = p-cod-operador
-                    craplot.cdhistor = 0 /* 700 */
-                    craplot.nrdcaixa = p-nro-caixa
-                    craplot.cdopecxa = p-cod-operador.
+              ASSIGN i-cod-erro  = 0.
+         
+              RUN cria-erro (INPUT p-cooper,
+                             INPUT p-cod-agencia,
+                             INPUT p-nro-caixa,
+                             INPUT i-cod-erro,
+                             INPUT c-desc-erro,
+                             INPUT YES).
+              RETURN "NOK".
+          
          END.
-  
+
+     IF aux_flcrialot = TRUE THEN  
+        DO:
+           CREATE craplot.
+           ASSIGN craplot.cdcooper = crapcop.cdcooper
+                  craplot.dtmvtolt = crapdat.dtmvtolt
+                  craplot.cdagenci = p-cod-agencia   
+                  craplot.cdbccxlt = 11              
+                  craplot.nrdolote = i-nro-lote
+                  craplot.tplotmov = i-tplotmov
+                  craplot.cdoperad = p-cod-operador
+                  craplot.cdhistor = 0 /* 700 */
+                  craplot.nrdcaixa = p-nro-caixa
+                  craplot.cdopecxa = p-cod-operador.
+        END.
+    
     ASSIGN de-valor = 0.
           
     FIND FIRST crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper    AND
@@ -1885,7 +1926,9 @@ PROCEDURE atualiza-deposito-com-captura:
                   END.
        
          END. /* IF  AVAIL crapmrw */
-   
+         
+    RELEASE craplot.
+    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND 
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -2134,8 +2177,7 @@ PROCEDURE atualiza-deposito-com-captura:
                    LEAVE.
                END.
      END.
-
-     RELEASE craplot.
+     
      RETURN "OK".
 END PROCEDURE.
 
@@ -2148,7 +2190,15 @@ PROCEDURE gera-tabela-resumo-dinheiro:
      DEF INPUT PARAM  p-nro-conta      AS INTE NO-UNDO.
      DEF INPUT PARAM  p-valor          AS DEC  NO-UNDO. /* Valor Dinheiro */
    
+     DEF VAR aux_contador              AS INT  NO-UNDO.
+     DEF VAR aux_flcriarw              AS LOGICAL NO-UNDO.
+   
+   
      FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
+
+     RUN elimina-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa).
 
      ASSIGN p-nro-conta = DEC(REPLACE(STRING(p-nro-conta),".","")).
 
@@ -2165,22 +2215,63 @@ PROCEDURE gera-tabela-resumo-dinheiro:
               ASSIGN p-nro-conta = crapass.nrdconta.
           END.
      
-     FIND FIRST crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper   AND
-                              crapmrw.cdagenci = p-cod-agencia      AND
-                              crapmrw.nrdcaixa = p-nro-caixa   
-                              EXCLUSIVE-LOCK NO-ERROR.
-                              
-     IF   NOT AVAIL crapmrw   THEN  
-          DO:
-              CREATE crapmrw.
-              ASSIGN crapmrw.cdcooper = crapcop.cdcooper
-                     crapmrw.cdagenci = p-cod-agencia 
-                     crapmrw.nrdcaixa = p-nro-caixa   
-                     crapmrw.nrdconta = p-nro-conta.
-          END.
+     DO aux_contador = 1 TO 10:
+    
+        c-desc-erro = "".
+        
+        FIND FIRST crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper   AND
+                                 crapmrw.cdagenci = p-cod-agencia      AND
+                                 crapmrw.nrdcaixa = p-nro-caixa   
+                                 EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                                 
+        IF  NOT AVAILABLE crapmrw  THEN
+            DO:
+                IF  LOCKED crapmrw  THEN
+                    DO:
+                        c-desc-erro = "Resumo do dinheiro ja esta sendo alterado. " +
+                                       "Tente novamente.".
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    DO:
+                        aux_flcriarw = TRUE. 
+                        LEAVE.
+                    END.
+            END.
+    
+        aux_flcriarw = FALSE.
+    
+        LEAVE.
+        
+     END. /* Fim do DO ... TO */
+
+     IF  c-desc-erro <> "" THEN  
+     DO:
+       ASSIGN i-cod-erro  = 0.
+              
+       RUN cria-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa,
+                      INPUT i-cod-erro,
+                      INPUT c-desc-erro,
+                      INPUT YES).
+     
+       RETURN "NOK".      
+     END.
+
+     IF aux_flcriarw = TRUE THEN  
+        DO:
+            CREATE crapmrw.
+            ASSIGN crapmrw.cdcooper = crapcop.cdcooper
+                   crapmrw.cdagenci = p-cod-agencia 
+                   crapmrw.nrdcaixa = p-nro-caixa   
+                   crapmrw.nrdconta = p-nro-conta.
+        END.
 
      ASSIGN crapmrw.cdopecxa = p-cod-operador
             crapmrw.vldepdin = p-valor.
+     
      VALIDATE crapmrw.
       
      RETURN "OK".
@@ -2194,7 +2285,17 @@ PROCEDURE gera-tabela-resumo-cheques:
      DEF INPUT PARAM  p-cod-operador   AS CHAR NO-UNDO.
      DEF INPUT PARAM  p-nro-conta      AS INT  NO-UNDO.
       
+     DEF VAR aux_contador              AS INT  NO-UNDO.
+     DEF VAR aux_flcriarw              AS LOGICAL NO-UNDO.
+     DEF VAR aux_vlcompel              LIKE crapmdw.vlcompel NO-UNDO.
+     
+     
+      
      ASSIGN p-nro-conta = DEC(REPLACE(STRING(p-nro-conta),".","")).
+
+     RUN elimina-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa).
 
      FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
       
@@ -2214,34 +2315,80 @@ PROCEDURE gera-tabela-resumo-cheques:
      FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
                               NO-LOCK NO-ERROR.
 
-     FIND FIRST crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper   AND
-                              crapmrw.cdagenci = p-cod-agencia      AND
-                              crapmrw.nrdcaixa = p-nro-caixa 
-                              EXCLUSIVE-LOCK  NO-ERROR.
+     
+    DO aux_contador = 1 TO 10:
+    
+        c-desc-erro = "".
+        
+        FIND FIRST crapmrw WHERE crapmrw.cdcooper = crapcop.cdcooper   AND
+                                 crapmrw.cdagenci = p-cod-agencia      AND
+                                 crapmrw.nrdcaixa = p-nro-caixa 
+                                 EXCLUSIVE-LOCK  NO-WAIT NO-ERROR.        
+                                 
+        IF  NOT AVAILABLE crapmrw  THEN
+            DO:
+                IF  LOCKED crapmrw  THEN
+                    DO:
+                        c-desc-erro = "Resumo do cheque ja esta sendo alterado. " +
+                                      "Tente novamente.".
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    DO:
+                        aux_flcriarw = TRUE. 
+                        LEAVE.
+                    END.
+            END.
+    
+        aux_flcriarw = FALSE.
+    
+        LEAVE.
+        
+    END. /* Fim do DO ... TO */
 
-     IF   NOT AVAIL crapmrw   THEN  
-          DO:
-              CREATE crapmrw.
-              ASSIGN crapmrw.cdcooper = crapcop.cdcooper
-                     crapmrw.cdagenci = p-cod-agencia 
-                     crapmrw.nrdcaixa = p-nro-caixa   
-                     crapmrw.nrdconta = p-nro-conta.
-          END.
+    IF  c-desc-erro <> "" THEN      
+    DO:
+       ASSIGN i-cod-erro  = 0.
+              
+       RUN cria-erro (INPUT p-cooper,
+                      INPUT p-cod-agencia,
+                      INPUT p-nro-caixa,
+                      INPUT i-cod-erro,
+                      INPUT c-desc-erro,
+                      INPUT YES).
+    
+       RETURN "NOK".      
+    END.
+
+    IF aux_flcriarw = TRUE THEN  
+       DO:
+          CREATE crapmrw.
+          ASSIGN crapmrw.cdcooper = crapcop.cdcooper
+                 crapmrw.cdagenci = p-cod-agencia 
+                 crapmrw.nrdcaixa = p-nro-caixa   
+                 crapmrw.nrdconta = p-nro-conta.
+       END.
+
      ASSIGN crapmrw.cdopecxa = p-cod-operador
             crapmrw.vlchqcop = 0
             crapmrw.vlchqspr = 0
             crapmrw.vlchqipr = 0
             crapmrw.vlchqsfp = 0
-            crapmrw.vlchqifp = 0.
-     VALIDATE crapmrw.
+            crapmrw.vlchqifp = 0
+            aux_vlcompel = 0.
 
      FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper     AND
                             crapmdw.cdagenci = p-cod-agencia        AND
                             crapmdw.nrdcaixa = p-nro-caixa 
-                            EXCLUSIVE-LOCK:
-                            
-         ASSIGN crapmrw.vlchqipr  = crapmrw.vlchqipr   + crapmdw.vlcompel.
+                            NO-LOCK:
+         ASSIGN aux_vlcompel = aux_vlcompel + crapmdw.vlcompel.
      END. /* FOR EACH crapmdw */
+     
+     ASSIGN crapmrw.vlchqipr  = aux_vlcompel.
+     
+     VALIDATE crapmrw.
+     
      
      RETURN "OK".
 END PROCEDURE.
@@ -2331,7 +2478,6 @@ PROCEDURE gera_nrdconta.
     
                         
 END PROCEDURE.
-
 
 /* b1crap57.p */
 

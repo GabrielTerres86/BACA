@@ -6234,23 +6234,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                              ,pr_texto_completo => vr_arq_tmp
                              ,pr_texto_novo     => '<retorno><arquivo>' || vr_nmarquiv || '</arquivo>');
 
-      --Percorrer cada linha do arquivo
-      LOOP
-        BEGIN
-          -- Verifica se o arquivo está aberto
-          IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
-            -- Le os dados em pedaços e escreve no Clob
-            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquivo --> Handle do arquivo aberto
-                                        ,pr_des_text => vr_setlinha); --> Texto lido
+        --Percorrer cada linha do arquivo
+        LOOP
+          BEGIN
+            -- Verifica se o arquivo está aberto
+            IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
+              -- Le os dados em pedaços e escreve no Clob
+              gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquivo --> Handle do arquivo aberto
+                                          ,pr_des_text => vr_setlinha); --> Texto lido
 
-            gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
-                                   ,pr_texto_completo => vr_arq_tmp
-                                   ,pr_texto_novo     => '<linha>' || vr_setlinha || '</linha>');
-          END IF;
-        EXCEPTION
-          WHEN NO_DATA_FOUND THEN -- Quando chegar na ultima linha do arquivo
-             EXIT;
-        END;
+              gene0002.pc_escreve_xml(pr_xml            => pr_dsarquiv
+                                     ,pr_texto_completo => vr_arq_tmp
+                                     ,pr_texto_novo     => '<linha>' || REPLACE(REPLACE(vr_setlinha,CHR(10),''),CHR(13),'') || '</linha>');
+            END IF;
+          EXCEPTION
+            WHEN NO_DATA_FOUND THEN -- Quando chegar na ultima linha do arquivo
+               EXIT;
+          END;
 
       END LOOP;
 

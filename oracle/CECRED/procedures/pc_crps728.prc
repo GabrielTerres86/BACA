@@ -13,7 +13,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
     Frequencia : Diario (JOB).
     Objetivo   : Importar arquivo de retorno de arrecadacao Bancoob
 
-    Alteracoes : 
+    Alteracoes : 05/06/2018 - Ajustes para mover arquivo pdf independente da sua data de geração.
+                              PRJ406 - FGTS(Odirlei - AMcom)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -43,6 +44,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
   
   vr_dsdircon     VARCHAR2(400);
   vr_nmarquiv     VARCHAR2(400);
+  vr_nmarqpdf     VARCHAR2(400);
   vr_listarq      VARCHAR2(32000);
   vr_tab_arquiv   gene0002.typ_split;
   vr_tab_linhas   gene0009.typ_tab_linhas;
@@ -57,7 +59,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
   -- Código do programa
   vr_cdprogra           CONSTANT crapprg.cdprogra%TYPE := 'CRPS728';
   vr_nomdojob           CONSTANT VARCHAR2(30)          := 'JBCONV_BANCOOB_PROTOCOLOS';
-  vr_flgerlog           BOOLEAN;
+  vr_flgerlog           BOOLEAN  := FALSE;
   
   ---------------------------------- CURSORES  ----------------------------------
 
@@ -198,6 +200,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
       BEGIN
         -->>>>> Caso alterado nome do arquivo de retorno, necessario alterar package tela_tab057 <<<<--
         vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%'||rw_crapcop_central.nmrescop||'%';
+        vr_nmarqpdf := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||'%'||rw_crapcop_central.nmrescop||'%';
         
         --> Buscar arquivos 
         gene0001.pc_lista_arquivos(pr_path     => vr_dsdircon||'/recebe', 
@@ -454,7 +457,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
 
         END IF;
         
+        IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdircon||'/recebe/'||replace(vr_nmarqpdf,'%','*')||'.PDF') THEN
+          pc_move_arq(pr_nmarquiv => replace(vr_nmarqpdf,'%','*')||'.PDF',
+                      pr_dsdirori => vr_dsdircon||'/recebe',
+                      pr_dsdirdes => '/usr/sistemas/bancoob/convenios/recebidos');
         
+        END IF;
       EXCEPTION
         WHEN vr_exc_erro THEN
           --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
