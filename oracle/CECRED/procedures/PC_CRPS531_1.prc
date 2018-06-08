@@ -589,6 +589,7 @@ BEGIN
       SELECT inpessoa
             ,nrcpfcgc
             ,dtelimin
+            ,cdsitdct
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta

@@ -4468,7 +4468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
              WHERE param.cdcooper = pr_cdcooper
                AND param.nrdconta = pr_nrdconta
              AND param.flglibera_pre_aprv = 0 -- Não liberado...
-             AND param.idmotivo = 66;         -- ... e com motivo 66 (bloqueio por situação de conta)
+             AND param.idmotivo = 67;         -- ... e com motivo 67 (bloqueio por situação de conta)
           EXCEPTION
             WHEN OTHERS THEN
             vr_dscritic := 'Erro ao liberar pre-aprovado: '||SQLERRM;
@@ -4479,7 +4479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           -- Bloqueado pre aprovado
           UPDATE tbepr_param_conta param
              SET param.flglibera_pre_aprv = 0
-                ,param.idmotivo = 66
+                ,param.idmotivo = 67
                 ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
            WHERE param.cdcooper = pr_cdcooper
              AND param.nrdconta = pr_nrdconta
@@ -4497,7 +4497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                                            ,pr_nrdconta    -- nrdconta
                                            ,0              -- flglibera_pre_aprv
                                            ,TRUNC(SYSDATE) -- dtatualiza_pre_aprv
-                                           ,66 );          -- idmotivo
+                                           ,67 );          -- idmotivo
         EXCEPTION
           WHEN OTHERS THEN
                 vr_dscritic := 'Erro incluir bloqueio pre-aprovado: '||SQLERRM;

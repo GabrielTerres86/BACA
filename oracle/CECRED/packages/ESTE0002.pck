@@ -65,10 +65,6 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
                             pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                             RETURN VARCHAR2;
   
-  --> Rotina para retornar descrição de situacao da conta
-  FUNCTION fn_des_cdsitdct (pr_cdsitdct  IN NUMBER) --> Codigo de situacao da conta
-                            RETURN VARCHAR2;
-  
   --> Rotina para retornar descrição de indicador
   FUNCTION fn_des_incasprp (pr_incasprp  IN NUMBER) --> Codigo indicador
                             RETURN VARCHAR2;
