@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 21/05/2018
+    Data      : Abril/2012                      Ultima Atualizacao: 06/06/2018
     
     Dados referentes ao programa:
 
@@ -320,9 +320,13 @@
                      
                 11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).    
 				
-                
+                     
                 21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
                              na opção todos (Carlos).
+
+                06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
+                             chamada pelo crps620, verifica os documentos digitalizados do
+                             dia apenas (Carlos)
 
 .............................................................................*/
 
@@ -1304,9 +1308,18 @@ PROCEDURE efetua_batimento_ged_cadastro:
 
     END.
 
-    /* Adicionar intervalo de data, 3 em 3 meses */
+    /* Chamado pelo CRPS, pegar digitalizados apenas do dia */
+    IF par_inchamad = 0 THEN
+    DO:
+      ASSIGN aux_dtinidoc = TODAY
+             aux_dtfimdoc = TODAY.
+    END.
+    ELSE
+    DO:
+      /* Adicionar intervalo de data, 2 em 2 meses */
     ASSIGN aux_dtinidoc = par_datainic
            aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,02,'months').
+    END.
         
     periodo:
     DO  WHILE TRUE:
@@ -1355,7 +1368,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                   
            IF  aux_dtfimdoc >= TODAY THEN
                aux_dtfimdoc = TODAY.
-       END.                              
+
+    END. /* end do while */
 
         /* UTILIZADO LACO NA DATA PARA MELHORAR PERFORMANCE NAS LEITURAS */
         DO aux_data = par_datainic TO par_datafina:
