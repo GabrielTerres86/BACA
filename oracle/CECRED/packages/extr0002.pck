@@ -794,6 +794,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
                      pois haviam casos em que não estavamos entrando na rotina
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
+
+        21/05/2018 - Alterações relacionadas a SM4 - PRJ364 - Paulo Martins - Mout´s
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -5494,6 +5496,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(1);
+          -- SM4 - Paulo Martins - Mout´s
+          pr_tab_lancamento_futuro(vr_index).cdhistor:= 37;
+          if rw_crapass.cdsitdct  = 7 then
+            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+          else
+            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+          end if;		  
         END IF;
         END IF;
         --Saldo
@@ -5578,6 +5587,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(2);
+          -- SM4 - Paulo Martins - Mout´s
+          pr_tab_lancamento_futuro(vr_index).cdhistor:= 38;
+          if rw_crapass.cdsitdct  = 7 then
+            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+          else
+            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+          end if;     		  
           END IF;
         END IF; --crapsld.vlsmnesp <> 0
         --Valor Bloqueado
@@ -5639,6 +5655,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
             pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
             pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
+            -- SM4 - Paulo Martins - Mout´s
+            pr_tab_lancamento_futuro(vr_index).cdhistor:= 2323;
+            if rw_crapass.cdsitdct  = 7 then
+              pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+            else
+              pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+            end if;     			
           END IF;   
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
