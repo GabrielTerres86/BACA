@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LAUTOM IS
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
                                     ,pr_nrseqdig  IN craplau.nrseqdig%TYPE --> Sequencia de digitacao
                                     ,pr_vllanmto  IN NUMBER                --> Valor do lancamento
+                                    ,pr_idlautom  IN NUMBER DEFAULT 0      --> Sequencial da craplau
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
@@ -41,7 +42,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
   --  Programa : TELA_LAUTOM
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Maio - 2016                 Ultima atualizacao: 01/03/2017
+  --  Data     : Maio - 2016                 Ultima atualizacao: 11/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -52,7 +53,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
   --                          Adicionar origem ADIOFJUROS para podermos efetuar o 
   --                          debito do registro na procedure pc_valida_lancamento 
   --                          (Lucas Ranghetti M338.1)
+  --
+  --             24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
+  --                          Heitor (Mouts) - Melhoria 440
+  --
+  --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+  --
+  --             11/12/2017 - Padronização pc_set_modulo, tratamento exception insert, mensagens de crítica
+  --                          Chamado 788828 - Ana Volles (Envolti)
   ---------------------------------------------------------------------------
+
+  vr_cdprogra    VARCHAR2(40) := 'TELA_LAUTOM';
+  vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;
+
 
 	PROCEDURE pc_valida_lancamento(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
@@ -70,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_valida_lancamento
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 01/03/2017
+    Data    : Maio/2016                 Ultima atualizacao: 11/12/2017
 
     Dados referentes ao programa:
 
@@ -80,6 +93,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
     Alteracoes: 01/03/2017 - Adicionar origem ADIOFJUROS para podermos efetuar o 
                              debito do registro (Lucas Ranghetti M338.1)
+
+                11/12/2017 - Padronização pc_set_modulo, tratamento exception insert, mensagens de crítica
+                             Chamado 788828 - Ana Volles (Envolti)
     ..............................................................................*/
     DECLARE
 
@@ -148,10 +164,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
       vr_vet_dados GENE0002.typ_split;
 
     BEGIN
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_valida_lancamento');
 
       -- Se NAO foi selecionado nada
       IF TRIM(pr_vlcampos) IS NULL THEN
-        vr_dscritic := 'Nenhum lançamento futuro selecionado!';
+        vr_cdcritic := 1061; --Nenhum lancamento futuro selecionado
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         RAISE vr_exc_erro;
       END IF;
       
@@ -182,13 +201,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         CLOSE cr_craplau;
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
-          vr_dscritic := 'Lançamento futuro não encontrado!';
+          vr_cdcritic := 501; --Lancamento nao encontrado
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
 
         -- Se nao for origem TRMULTAJUROS e ADIOFJUROS
         IF rw_craplau.dsorigem NOT IN('TRMULTAJUROS','ADIOFJUROS') THEN
-          vr_dscritic := 'Débito de lançamento futuro não permitido!';
+          vr_cdcritic := 1062; --Débito de lançamento futuro não permitido
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
 
@@ -222,15 +243,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                  ,pr_tab_sald   => vr_tab_saldos
                                  ,pr_tipo_busca => 'A'
                                  ,pr_tab_erro   => vr_tab_erro);
+
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_valida_lancamento');
+
       -- Buscar Indice
       vr_index := vr_tab_saldos.FIRST;
       IF vr_index IS NOT NULL THEN
         -- Saldo Disponivel
         vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index).vlsddisp, 0) +
                              NVL(vr_tab_saldos(vr_index).vlsdchsl, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdbloq, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdblpr, 0) +
-                             NVL(vr_tab_saldos(vr_index).vlsdblfp, 0) +
                              NVL(vr_tab_saldos(vr_index).vllimcre, 0),2);
       END IF;
 
@@ -248,6 +270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
           vr_cdcritic := 67;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
 
@@ -256,26 +279,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
         -- Valor Diferenca Maior Limite Pagamento Cheque
         IF vr_vldifpag > NVL(rw_crapope.vlpagchq, 0) THEN
-          vr_dscritic := 'Saldo alçada do operador insuficiente.';
+          vr_cdcritic := 1063; --Saldo alçada do operador insuficiente
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
 
         pr_inconfir := 1;
-        pr_dsmensag := 'Saldo em conta insuficiente. Confirma o lançamento?';
+
+        vr_cdcritic := 717; --Nao ha saldo suficiente para a operacao.
+        pr_dsmensag := gene0001.fn_busca_critica(vr_cdcritic)||' Confirma o lançamento?';
       END IF;
 
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic <> 0 THEN
+        IF vr_cdcritic <> 0 AND vr_dscritic IS NULL THEN
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+        --Não gera log aqui, só na rotina chamadora
+
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 1, 
+                               pr_cdcriticidade => 1, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
 
       WHEN OTHERS THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela LAUTOM: ' || SQLERRM;
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'TELA_LAUTOM.pc_valida_lancamento. '||sqlerrm;
+
+        --Não gera log aqui, só na rotina chamadora
+        -- No caso de erro de programa gravar tabela especifica de log - 11/12/2017 - Ch 788828 
+        CECRED.pc_internal_exception;   
     END;
 
   END pc_valida_lancamento;
@@ -285,7 +330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                     ,pr_xmllog       IN VARCHAR2       --> XML com informacoes de LOG
                                     ,pr_cdcritic    OUT PLS_INTEGER    --> Codigo da critica
                                     ,pr_dscritic    OUT VARCHAR2       --> Descricao da critica
-                                    ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                    ,pr_retxml       IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                     ,pr_nmdcampo    OUT VARCHAR2       --> Nome do campo com erro
                                     ,pr_des_erro    OUT VARCHAR2) IS   --> Erros do processo
   BEGIN
@@ -295,7 +340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_valida_lancamento_web
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao: 11/12/2017
 
     Dados referentes ao programa:
 
@@ -303,7 +348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
     Objetivo  : Rotina para validar os registros selecionados.
 
-    Alteracoes: 
+    Alteracoes: 11/12/2017 - Padronização pc_set_modulo, tratamento exception insert, mensagens de crítica
+                             Chamado 788828 - Ana Volles (Envolti)
     ..............................................................................*/
     DECLARE
 
@@ -329,6 +375,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
       vr_dsmensag VARCHAR2(4000);
 
     BEGIN
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_valida_lancamento_web');
+
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -355,6 +404,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         RAISE vr_exc_erro;
       END IF;
 
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_valida_lancamento_web');
+
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -365,36 +417,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                             ,pr_tag_cont => NULL
                             ,pr_des_erro => vr_dscritic);
 
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'inconfir'
-                              ,pr_tag_cont => vr_inconfir
-                              ,pr_des_erro => vr_dscritic);
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'inconfir'
+                            ,pr_tag_cont => vr_inconfir
+                            ,pr_des_erro => vr_dscritic);
 
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'dsmensag'
-                              ,pr_tag_cont => vr_dsmensag
-                              ,pr_des_erro => vr_dscritic);
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'dsmensag'
+                            ,pr_tag_cont => vr_dsmensag
+                            ,pr_des_erro => vr_dscritic);
 
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic <> 0 THEN
+        IF vr_cdcritic <> 0 AND vr_dscritic IS NULL THEN
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => vr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 1, 
+                               pr_cdcriticidade => 1, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
+
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela TELA_LAUTOM: ' || SQLERRM;
+        --Tratamento de mensagem
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'TELA_LAUTOM.pc_valida_lancamento_web '||sqlerrm;
+
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => vr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 2, 
+                               pr_cdcriticidade => 2, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
+
+        -- No caso de erro de programa gravar tabela especifica de log - 11/12/2017 - Ch 788828 
+        CECRED.pc_internal_exception;   
 
         -- Carregar XML padrão para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -415,6 +497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
                                     ,pr_nrseqdig  IN craplau.nrseqdig%TYPE --> Sequencia de digitacao
                                     ,pr_vllanmto  IN NUMBER                --> Valor do lancamento
+                                    ,pr_idlautom  IN NUMBER DEFAULT 0      --> Sequencial da craplau
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
   BEGIN
@@ -424,7 +507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_efetiva_lcto_pendente
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 
+    Data    : Maio/2016                 Ultima atualizacao: 11/12/2017
 
     Dados referentes ao programa:
 
@@ -432,7 +515,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
     Objetivo  : Rotina para efetivar o lancamento na conta.
 
-    Alteracoes: 
+    Alteracoes: 05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+
+                11/12/2017 - Padronização pc_set_modulo, tratamento exception insert, mensagens de crítica
+                             Chamado 788828 - Ana Volles (Envolti)
     ..............................................................................*/
     DECLARE
 
@@ -446,6 +532,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
       vr_tab_erro GENE0001.typ_tab_erro;
 
     BEGIN
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_efetiva_lcto_pendente');
 
       -- Criar o lancamento da CRAPLAU
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
@@ -461,6 +549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                     ,pr_nrparepr => 0             --> Numero parcelas emprestimo
                                     ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
                                     ,pr_nrseqava => 0             --> Pagamento: Sequencia do avalista
+                                    ,pr_idlautom => pr_idlautom   --> Sequencial da craplau
                                     ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro); --> Tabela de erros
       -- Se ocorreu erro
@@ -470,10 +559,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
           vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
         ELSE
-          vr_dscritic := 'Erro ao criar o lancamento da TELA_LAUTOM.';
+          vr_cdcritic := 1064;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
         RAISE vr_exc_erro;
       END IF;
+
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_efetiva_lcto_pendente');
 
       -- Atualiza o registro na tabela CRAPLAU
       BEGIN          
@@ -488,22 +581,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
            AND nrseqdig = pr_nrseqdig;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || SQLERRM;
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplau:'||
+                         ' insitlau:2, dtdebito:'||pr_dtmvtolt||
+                         ' com cdcooper:'||pr_cdcooper||', dtmvtolt:'||pr_dtrefere||
+                         ', cdagenci:'||pr_cdagenci||', cdbccxlt:'||pr_cdbccxlt||
+                         ', nrdolote:'||pr_nrdolote||', nrseqdig:'||pr_nrseqdig||'. '||sqlerrm;
+
+          -- No caso de erro de programa gravar tabela especifica de log - 11/12/2017 - Ch 788828 
+          CECRED.pc_internal_exception;   
           RAISE vr_exc_erro;
       END;
 
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic <> 0 THEN
+        IF vr_cdcritic <> 0 AND vr_dscritic IS NULL THEN
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 1, 
+                               pr_cdcriticidade => 1, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
+
       WHEN OTHERS THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela LAUTOM: ' || SQLERRM;
+        --Tratamento de mensagem
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'TELA_LAUTOM.pc_efetiva_lcto_pendente '||sqlerrm;
+
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 2, 
+                               pr_cdcriticidade => 2, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
+
+        -- No caso de erro de programa gravar tabela especifica de log - 11/12/2017 - Ch 788828 
+        CECRED.pc_internal_exception;   
     END;
 
   END pc_efetiva_lcto_pendente;
@@ -513,7 +644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                 ,pr_xmllog       IN VARCHAR2              --> XML com informacoes de LOG
                                 ,pr_cdcritic    OUT PLS_INTEGER           --> Codigo da critica
                                 ,pr_dscritic    OUT VARCHAR2              --> Descricao da critica
-                                ,pr_retxml   IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+                                ,pr_retxml       IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
                                 ,pr_nmdcampo    OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro    OUT VARCHAR2) IS          --> Erros do processo
   BEGIN
@@ -523,7 +654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Programa: pc_efetua_lancamento
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Maio/2016                 Ultima atualizacao: 01/03/2017
+    Data    : Maio/2016                 Ultima atualizacao: 11/12/2017
 
     Dados referentes ao programa:
 
@@ -532,6 +663,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
     Objetivo  : Rotina para efetuar os lancamentos selecionados.
 
     Alteracoes: 01/03/2017 - Adicionar update da tbcc_lautom_controle (Lucas Ranghetti M338.1)
+    
+                05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+
+                11/12/2017 - Padronização pc_set_modulo, tratamento exception insert, mensagens de crítica
+                             Chamado 788828 - Ana Volles (Envolti)
     ..............................................................................*/
     DECLARE
 
@@ -599,7 +735,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
       -- Array para guardar o split dos dados
       vr_vet_dados GENE0002.typ_split;
 
+      vr_idprglog tbgen_prglog.idprglog%type := 0;
+
     BEGIN
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_efetua_lancamento');
+
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -626,6 +767,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         RAISE vr_exc_erro;
       END IF;
 
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_efetua_lancamento');
+
       -- Busca dados do cooperado
       OPEN cr_crapass(pr_cdcooper => vr_cdcooper
                      ,pr_nrdconta => pr_nrdconta);
@@ -642,7 +786,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                                ,pr_delimit => ';');
       -- Para cada registro encontrado
       FOR vr_pos IN 1..vr_vet_dados.COUNT LOOP
-
         -- Retorna lancamento futuro
         OPEN cr_craplau(pr_cdcooper => vr_cdcooper
                        ,pr_dtmvtolt => TO_DATE(GENE0002.fn_busca_entrada(1,vr_vet_dados(vr_pos),','),'dd/mm/rrrr')
@@ -651,13 +794,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                        ,pr_nrdolote => GENE0002.fn_busca_entrada(4,vr_vet_dados(vr_pos),',')
                        ,pr_nrseqdig => GENE0002.fn_busca_entrada(5,vr_vet_dados(vr_pos),','));
         FETCH cr_craplau INTO rw_craplau;
+
         -- Alimenta a booleana
         vr_blnfound := cr_craplau%FOUND;
         -- Fechar o cursor
         CLOSE cr_craplau;
         -- Se NAO encontrar
         IF NOT vr_blnfound THEN
-          vr_dscritic := 'Lançamento futuro não encontrado!';
+          vr_cdcritic := 501; --Lancamento nao encontrado
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
 
@@ -674,12 +819,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                 ,pr_nrctremp => rw_craplau.nrctremp
                                 ,pr_nrseqdig => rw_craplau.nrseqdig
                                 ,pr_vllanmto => rw_craplau.vllanaut
+                                ,pr_idlautom => rw_craplau.idlancto
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
+
         -- Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+
+        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'TELA_LAUTOM.pc_efetua_lancamento');
 
         BEGIN 
           UPDATE tbcc_lautom_controle tbcc
@@ -687,31 +837,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
            WHERE tbcc.idlautom = rw_craplau.idlancto;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Problema ao atualizar registro na tabela TBCC_LAUTOM_CONTROLE: ' || SQLERRM;
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbcc_lautom_controle:'||
+                           ' insit_lancto:2'||
+                           ' com idlautom:'||rw_craplau.idlancto||'. '||sqlerrm;
+
+            -- No caso de erro de programa gravar tabela especifica de log - 11/12/2017 - Ch 788828 
+            CECRED.pc_internal_exception;   
             RAISE vr_exc_erro;
         END;
 
-        -- Geral LOG de debito efetuado
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratado
-                                  ,pr_nmarqlog     => 'lautom.log'
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'dd/mm/rrrr hh24:mi:ss') ||
-                                                      ' --> Operador ' || vr_cdoperad || ' - ' ||
-                                                      'Lancamento de debito na conta' ||
-                                                      '. Conta: ' || LTRIM(RTRIM(GENE0002.fn_mask(pr_nrdconta, 'zzzz.zzz.9'))) ||
-                                                      '. Historico: ' || rw_craplau.cdhistor || '.');
-      END LOOP;
+        -- Gerar LOG de debito efetuado
+        CECRED.pc_log_programa(pr_dstiplog      => 'E',
+                               pr_cdprograma    => vr_cdprogra, 
+                               pr_cdcooper      => vr_cdcooper, 
+                               pr_tpexecucao    => 3, -- Online  
+                               pr_tpocorrencia  => 4, -- Alerta 
+                               pr_cdcriticidade => 1, -- Media 
+                               pr_dsmensagem    => gene0001.fn_busca_critica(1065)||  --Lancamento de debito na conta
+                                                    ' Conta: ' || LTRIM(RTRIM(pr_nrdconta)) ||
+                                                    ', Historico: ' || rw_craplau.cdhistor || '.',                             
+                               pr_idprglog      => vr_idprglog, 
+                               pr_nmarqlog      => NULL,
+                               pr_cdmensagem    => 1065);
 
+      END LOOP;
       COMMIT;
 
+      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 11/12/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic <> 0 THEN
+        IF vr_cdcritic <> 0 AND vr_dscritic IS NULL THEN
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => vr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 1, 
+                               pr_cdcriticidade => 1, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
 
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -719,8 +893,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
         ROLLBACK;
 
       WHEN OTHERS THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela LAUTOM: ' || SQLERRM;
+        --Tratamento de mensagem
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'TELA_LAUTOM.pc_efetua_lancamento '||sqlerrm;
+
+        -- Log de erro de execucao
+        cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                               pr_cdprograma    => vr_cdprogra,
+                               pr_cdcooper      => vr_cdcooper, 
+                               pr_tpexecucao    => 3, --Online
+                               pr_tpocorrencia  => 2, 
+                               pr_cdcriticidade => 2, 
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               pr_idprglog      => vr_idprglog);
+
+        -- No caso de erro de programa gravar tabela especifica de log - 11/12/2017 - Ch 788828 
+        CECRED.pc_internal_exception;   
 
         -- Carregar XML padrão para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
