@@ -198,7 +198,7 @@
 								onFocus="<? echo $mtdClick; ?>"
 								onClick="<? echo $mtdClick; ?>"
 								>
-
+								<input type='hidden' name='selecionados' value='<? echo $t->tags[0]->cdata; ?>;<? echo $t->tags[7]->cdata; ?>;<? echo $t->tags[6]->cdata; ?>;<? echo $t->tags[2]->cdata; ?>'/>
 								<td><?php echo $t->tags[3]->cdata;?></td> 
 								<td><?php echo $t->tags[10]->cdata; ?></td> 
 								<td><?php echo number_format(str_replace(",",".",$t->tags[8]->cdata),2,",",".");?></td> 

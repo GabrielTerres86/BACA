@@ -2465,15 +2465,18 @@ function mostrarBorderoResumoResgatar() {
 function mostrarDetalhesPagador() {
     if(tituloSelecionadoResumo){
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
-
+        var id = 'titulo_'+tituloSelecionadoResumo;
+        var tr = $("#"+id,"#divResumoBordero");
+        var selecionados = $("input[name*='selecionados'",tr).val();
         var nrdconta = $("#nrdconta","#divResumoBordero").val();
+
         $.ajax({
             type: "POST",
             url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_detalhe.php",
             dataType: "html",
             data: {
                 nrdconta:nrdconta,
-                nrnosnum:tituloSelecionadoResumo,
+                selecionados:selecionados,
                 redirect: "html_ajax"
             },
             error: function (objAjax, responseError, objExcept) {
@@ -2658,6 +2661,10 @@ function confirmarResgate(){
 function selecionarTituloDeBordero(id, qtd, pr_nossonum) {
     var cor = "";
 
+    var id = 'trTitBordero'+id;
+    var tr = $("#"+id,"#divTitulosBorderos");
+    selecionados = $("input[name*='selecionados'",tr).val();
+
     nossonum = pr_nossonum
     // Formata cor da linha da tabela que lista os borderos de descto titulos
     for (var i = 1; i <= qtd; i++) {
@@ -2682,14 +2689,14 @@ function visualizarTituloDeBordero() {
 
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
     var nrdconta = $("#nrdconta","#divTitulosBorderos").val();
-
+    
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_visualizar_titulo.php",
         dataType: "html",
         data: {
             nrdconta: nrdconta,
-            nrnosnum: nossonum,
+            selecionados: selecionados,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -3215,7 +3222,7 @@ function mostrarBorderoLiberar() {
     return false;
 }
 
-function mostrarBorderoRejeitar() {
+function mostrarBorderoRejeitar(contingencia) {
     if (contingencia){
         showConfirmacao("An&aacute;lise em conting&ecirc;ncia. Deseja rejeitar?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
     }else{

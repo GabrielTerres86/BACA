@@ -32,17 +32,17 @@
 	}	
 
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrnosnum"])) {
+	if (!isset($_POST["selecionados"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
-	$nrnosnum = $_POST["nrnosnum"];
+	$selecionados = $_POST["selecionados"];
 	$nrdconta = $_POST["nrdconta"];
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$nrnosnum."</nrnosnum>";
+    $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -50,7 +50,6 @@
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_DETALHE_TITULO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
-   
 	$dados = $xmlObj->roottag->tags[0];
 	$pagador = $dados->tags[0];
 	$biros = $dados->tags[1];
