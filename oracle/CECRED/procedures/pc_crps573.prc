@@ -458,7 +458,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                wpr.nrctrliq##8+
                wpr.nrctrliq##9+
                wpr.nrctrliq##10+
-               wpr.nrliquid     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
+               NVL(wpr.nrliquid,0)     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
               ,wpr.idquapro
               ,epr.idquaprc
           from crapepr epr
