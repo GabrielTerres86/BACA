@@ -470,6 +470,11 @@
 			                Manutencao, registros que possuam o campo cdmensag com o valor nulo.
 			                Chamado INC0011898 - Gabriel (Mouts).
 
+               08/06/2018 - Cobranças com campo "dtvctori" nulo não eram apresentados no Internet Banking
+                            na Tela: Cobrancas Bancarias >> Manutencao. Logica alterada para verificar
+                            o campo, caso ele seja nulo, utilizar dtvencto, se não utilizar o proprio campo.
+                            Chamado INC0016935 - Gabriel (Mouts).
+
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -9438,7 +9443,7 @@ PROCEDURE calcula_multa_juros_boleto:
         IF aux_npc_cip = 1 THEN
           DO:
               RUN p_calc_codigo_barras(INPUT tt-consulta-blt.cdbandoc,
-                                       INPUT par_dtvctori,
+                                       INPUT (IF par_dtvctori = ? THEN par_dtvencto ELSE par_dtvctori),
                                        INPUT tt-consulta-blt.vldocmto_boleto,
                                        INPUT tt-consulta-blt.nrcnvcob,
                                        INPUT tt-consulta-blt.nrnosnum,
