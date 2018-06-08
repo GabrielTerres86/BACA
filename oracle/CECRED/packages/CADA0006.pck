@@ -3602,8 +3602,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         RETURN;
       ELSE -- Se nao gera critica
         IF pr_idorigem NOT IN(1,5) THEN 
-           vr_dscritic := 'Valor contratado deve estar entre ' || to_char(rw_produto.vlminimo_adesao,'FM999G999G990D00') || 
-                                                         ' e ' || to_char(rw_produto.vlmaximo_adesao,'FM999G999G990D00') || '.';
+           vr_dscritic := 'Valor contratado deve estar entre ' || to_char(rw_produto.vlminimo_adesao,'FM999G999G999G990D00') || 
+                                                         ' e ' || to_char(rw_produto.vlmaximo_adesao,'FM999G999G999G990D00') || '.';
         ELSE
           IF vr_vlcontra < rw_produto.vlminimo_adesao THEN 
             vr_dscritic := 'Valor abaixo do minimo permitido para o tipo de conta. Necessario liberacao do coordenador.';
