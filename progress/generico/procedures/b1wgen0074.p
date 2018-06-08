@@ -3256,6 +3256,25 @@ PROCEDURE Grava_Dados_Altera:
         IF aux_cdmodali <> 2    AND 
            crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
+        IF par_cdtipcta <> crabass.cdtipcta  AND 
+           (aux_cdmodali = 2 OR aux_cdmodali = 3) THEN    
+        DO:
+          /* Caso foi alterado o tipo de conta e a novo tipo 
+             for da modalidade salario e aplicaçao, deve excluir a pendencia
+             caso exista */
+          FIND FIRST crapdoc 
+               WHERE crapdoc.cdcooper = par_cdcooper AND
+                     crapdoc.nrdconta = par_nrdconta AND
+                     crapdoc.tpdocmto = 5            AND
+                     crapdoc.dtmvtolt = par_dtmvtolt AND
+                     crapdoc.idseqttl = par_idseqttl
+                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+          IF AVAILABLE crapdoc THEN
+          DO:
+            DELETE crapdoc.          
+          END.
+        
+        END.
 
         /* Se estiver alterando o tipo de conta ou estiver cadastrando ... */
         IF par_cdtipcta <> crabass.cdtipcta   OR
