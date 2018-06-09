@@ -255,12 +255,12 @@
 	<?php
 		$vlmedtit_cr = doubleval($vlrtotal_cr / $qtTitulos_cr);
 	?>
-	<table width="860px" border="0" cellpadding="1" cellspacing="2">
+	<table width="95%" border="0" cellpadding="1" cellspacing="2" style="margin: 10px 0 0 0">
 			<tbody>
 			<tr>
-					<td width="120" align="center" class="txtNormal">TOTAL(REGIST) ==></td>
-					<td width="130" align="left"   class="txtNormal"><?php if($qtTitulos_cr <= 1){ echo $qtTitulos_cr." T&Iacute;TULO";}else{ echo $qtTitulos_cr." T&Iacute;TULOS";};?></td>
-					<td width="80"  align="right"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vlrtotal_cr),2,",","."); ?></td>
+					<td width="140" align="center" class="txtNormal">TOTAL(REGIST) ==></td>
+					<td width="65"  align="center"   class="txtNormal"><?php if($qtTitulos_cr <= 1){ echo $qtTitulos_cr." T&Iacute;TULO";}else{ echo $qtTitulos_cr." T&Iacute;TULOS";};?></td>
+					<td width="65"  align="center"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vlrtotal_cr),2,",","."); ?></td>
 					<td width="80"  align="right"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vltotliq_cr),2,",","."); ?></td>
 					<td 			align="right"  class="txtNormal"></td>
 					<td width="100" align="right"  class="txtNormal">VAL. M&Eacute;DIO: <?php echo number_format(str_replace(",",".",$vlmedtit_cr),2,",","."); ?></td>			
