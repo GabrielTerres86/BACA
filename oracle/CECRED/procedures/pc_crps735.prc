@@ -24,7 +24,7 @@ BEGIN
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Codigo do programa
-    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'CRPSYYY';
+    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'CRPS735';
 
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -57,7 +57,7 @@ BEGIN
     --  Busca todos os títulos liberados que estão vencidos e pendentes de pagamento
     CURSOR cr_craptdb(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-      SELECT ROWID,
+      SELECT craptdb.ROWID,
              craptdb.cdcooper,
              craptdb.nrdconta,
              craptdb.nrborder,
@@ -77,33 +77,68 @@ BEGIN
              craptdb.vlmratit,
              craptdb.vlpagmra,
              craptdb.vlliquid
-        FROM craptdb
-       WHERE craptdb.cdcooper  = pr_cdcooper
-         AND craptdb.dtvencto  < pr_dtmvtolt
-         AND craptdb.insittit  = 4 -- liberado
-       ORDER BY dtvencto, vlsldtit desc;
-       
-    -- Busca o borderô para verificar a qual versão ele pertence
-    CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%type
-                      ,pr_nrborder IN crapbdt.nrborder%type) IS
-      SELECT crapbdt.txmensal
-            ,crapbdt.vltaxiof
-            ,crapbdt.flverbor
-            ,crapbdt.vltxmult
-            ,crapbdt.vltxmora 
-      FROM crapbdt
-      WHERE crapbdt.cdcooper = pr_cdcooper
-      AND   crapbdt.nrborder = pr_nrborder;
-    rw_crapbdt cr_crapbdt%ROWTYPE;
+        FROM craptdb, crapbdt
+       WHERE craptdb.cdcooper =  crapbdt.cdcooper
+         AND craptdb.nrdconta =  crapbdt.nrdconta
+         AND craptdb.nrborder =  crapbdt.nrborder
+         AND craptdb.cdcooper =  pr_cdcooper
+         AND craptdb.dtvencto <= pr_dtmvtolt
+         AND craptdb.insittit =  4 -- liberado
+         AND crapbdt.flverbor =  1 -- bordero liberado na nova versão
+       ORDER BY dtvencto, vlsldtit desc; -- define a ordem de prioridade da raspada
+    
+    -- Cursor para verificar se existe algum boleto em aberto (emitido pela tela COBTIT)
+    CURSOR cr_cde (pr_cdcooper IN crapcob.cdcooper%TYPE
+                  ,pr_nrdconta IN crapcob.nrdconta%TYPE
+                  ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+         SELECT cob.nrdocmto
+           FROM crapcob cob
+          WHERE cob.cdcooper = pr_cdcooper
+            AND cob.incobran = 0
+            AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrdocmto) IN
+                (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrboleto
+                   FROM tbrecup_cobranca cde
+                  WHERE cde.cdcooper  = pr_cdcooper
+                    AND cde.nrdconta  = pr_nrdconta
+                    AND cde.nrctremp  = pr_nrborder
+                    AND cde.tpproduto = 3); -- desconto de titulo
+    rw_cde cr_cde%ROWTYPE;
 
+    -- Cursor para verificar se existe algum boleto pago pendente de processamento (emitido pela tela COBTIT)
+    CURSOR cr_ret (pr_cdcooper IN crapcob.cdcooper%TYPE
+                  ,pr_nrdconta IN crapcob.nrdconta%TYPE
+                  ,pr_nrborder IN crapbdt.nrborder%TYPE
+                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+        SELECT cob.nrdocmto
+          FROM crapcob cob, crapret ret
+         WHERE cob.cdcooper = pr_cdcooper
+           AND cob.incobran = 5
+           AND cob.dtdpagto = pr_dtmvtolt
+           AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrdocmto) IN
+               (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrboleto
+                  FROM tbrecup_cobranca cde
+                 WHERE cde.cdcooper  = pr_cdcooper
+                   AND cde.nrdconta  = pr_nrdconta
+                   AND cde.nrctremp  = pr_nrborder
+                   AND cde.tpproduto = 3) -- Desconto de título
+           AND ret.cdcooper = cob.cdcooper
+           AND ret.nrdconta = cob.nrdconta
+           AND ret.nrcnvcob = cob.nrcnvcob
+           AND ret.nrdocmto = cob.nrdocmto
+           AND ret.dtocorre = cob.dtdpagto
+           AND ret.cdocorre = 6
+           AND ret.flcredit = 0;
+    rw_ret cr_ret%ROWTYPE;
+    
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
     
 
     ------------------------------- VARIAVEIS -------------------------------
     
-    vr_dsctajud     crapprm.dsvlrprm%TYPE; -- Armazena as conta que possuem alguma ação judicial
-    vr_dtultdia     DATE;                  -- Variavel para armazenar o ultimo dia util do ano
+    vr_dsctajud      crapprm.dsvlrprm%TYPE; -- Armazena as conta que possuem alguma ação judicial
+    vr_dtultdia      DATE;                  -- Variavel para armazenar o ultimo dia util do ano
+    vr_dtvencto_util DATE;                  -- Variavel para o proximo dia util dps do vencimento
     
     vr_tab_saldos EXTR0001.typ_tab_saldos;
 
@@ -115,7 +150,9 @@ BEGIN
     vr_des_reto VARCHAR2(10);
     vr_tab_erro GENE0001.typ_tab_erro;
     vr_vlsldisp NUMBER;  
-    vr_flgcrass BOOLEAN;    
+    
+    -- Parametro de bloqueio de resgate de valores em c/c
+    vr_blqresg_cc       VARCHAR2(1);
     
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
@@ -162,22 +199,15 @@ BEGIN
       ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
     END CASE;
     
+    -- Parametro de bloqueio de resgate de valores em c/c
+    -- ref ao pagto de boletos emitidos pela COBTIT
+    vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                               pr_cdcooper => pr_cdcooper,
+                                               pr_cdacesso => 'COBTIT_BLQ_RESG_CC');
+    
     -- Loop principal dos títulos vencidos
     FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-
-      -- Valida existência do borderô do respectivo título
-      OPEN cr_crapbdt (pr_cdcooper => pr_cdcooper
-                      ,pr_nrborder => rw_craptdb.nrborder);
-      FETCH cr_crapbdt INTO rw_crapbdt;
-
-      IF cr_crapbdt%NOTFOUND THEN
-        vr_cdcritic := 1166; --Bordero nao encontrado. Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        CLOSE cr_crapbdt;
-      RAISE vr_exc_saida;
-      END IF;
-      CLOSE cr_crapbdt;
       
       --Verifica se a conta existe
       OPEN cr_crapass(pr_cdcooper => pr_cdcooper
@@ -192,19 +222,13 @@ BEGIN
       END IF;
       CLOSE cr_crapass;
       
-      /* Somente os títulos de borderôs inclusos na versão nova devem ser considerados aqui */
-      IF rw_crapbdt.flverbor = 0 THEN
-        CONTINUE;
-      END IF;
-      
       -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || rw_craptdb.nrdconta || ',') > 0 THEN
         CONTINUE;
       END IF;
       
-      /* Caso o titulo venca num feriado ou fim de semana, pula pois sera pego no proximo dia util */
-      IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                     pr_dtmvtolt => rw_craptdb.dtvencto) > rw_crapdat.dtmvtoan THEN
+      -- Caso o titulo venca num feriado ou fim de semana, pula pois sera pego no proximo dia util 
+      IF rw_craptdb.dtvencto > rw_crapdat.dtmvtoan AND rw_craptdb.dtvencto < rw_crapdat.dtmvtolt THEN
         CONTINUE;
       END IF;
       
@@ -223,19 +247,48 @@ BEGIN
       END IF;
       -- #################################################################################################
       
-      -- OBS: Adicionar regra para verificar emissão de boletos pela COBTIT
-      
-      -- Verificar se o BATCH esta rodando
-      IF rw_crapdat.inproces <> 1 THEN
-        -- Se estiver no BATCH, utiliza a verificacao da conta a partir do vetor de contas
-        -- que se nao estiver carregado fara a leitura de todas as contas da cooperativa
-        -- Quando eh BATCH mantem o padrao TRUE
-        vr_flgcrass := TRUE;
-      ELSE 
-        -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
-        vr_flgcrass := FALSE;
+      -- Os títulos que estão vencendo na data atual do sistema só podem ser raspados durante o batch norturno
+      IF rw_craptdb.dtvencto = rw_crapdat.dtmvtolt AND
+         rw_crapdat.inproces <> 3 THEN
+         CONTINUE;
       END IF;
       
+      /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
+      /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
+      IF vr_blqresg_cc = 'S' THEN
+
+        -- inicializar rows de cursores
+        rw_cde := NULL;
+        rw_ret := NULL;
+
+        /* 2º se permitir, verificar se possui boletos em aberto */
+        OPEN cr_cde( pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => rw_craptdb.nrdconta
+                    ,pr_nrborder => rw_craptdb.nrborder);
+        FETCH cr_cde INTO rw_cde;
+        CLOSE cr_cde;
+
+        /* 3º se existir boleto de contrato em aberto, nao debitar */
+        IF nvl(rw_cde.nrdocmto,0) > 0 THEN
+           --vr_dsobservacao := vr_dsobservacao||'Boleto de contrato em aberto, nao debitar; ';
+           CONTINUE;
+        ELSE
+           /* 4º cursor para verificar se existe boleto pago pendente de processamento, nao debitar */
+           OPEN cr_ret( pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => rw_craptdb.nrdconta
+                       ,pr_nrborder => rw_craptdb.nrborder
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+           FETCH cr_ret INTO rw_ret;
+           CLOSE cr_ret;
+
+           /* 6º se existir boleto de contrato pago pendente de processamento, nao debitar */
+           IF nvl(rw_ret.nrdocmto,0) > 0 THEN
+              --vr_dsobservacao := vr_dsobservacao||'Boleto de contrato pago pendente de processamento, nao debitar; ';
+              CONTINUE;
+           END IF;
+
+        END IF;
+      END IF;
       
       -- Limpar tabela saldos
       vr_tab_saldos.DELETE;

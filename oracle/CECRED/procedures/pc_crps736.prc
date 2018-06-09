@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps734(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps736(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                              ,pr_stprogra OUT PLS_INTEGER               --> Saida de termino da execucao
                                              ,pr_infimsol OUT PLS_INTEGER               --> Saida de termino da solicitacao
                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps734(pr_cdcooper  IN crapcop.cdcooper%T
 BEGIN
   /* .............................................................................
 
-     Programa: pc_crps734
+     Programa: pc_crps736
      Sistema : Crédito - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lazari (GFT)
@@ -24,8 +24,7 @@ BEGIN
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Codigo do programa
-    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS734';
-    vr_dtultdia DATE;                  -- Variavel para armazenar o ultimo dia util do ano
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS736';
     
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -46,7 +45,10 @@ BEGIN
              craptdb.cdbandoc,
              craptdb.nrcnvcob,
              craptdb.nrdctabb,
-             craptdb.nrdocmto
+             craptdb.nrdocmto,
+             craptdb.vlmratit,
+             craptdb.vlpagmra,
+             craptdb.nrtitulo
         FROM craptdb, crapbdt
        WHERE craptdb.cdcooper =  crapbdt.cdcooper
          AND craptdb.nrdconta =  crapbdt.nrdconta
@@ -55,25 +57,6 @@ BEGIN
          AND craptdb.dtvencto <= pr_dtmvtolt
          AND craptdb.insittit =  4  -- liberado
          AND crapbdt.flverbor =  1; -- bordero liberado na nova versão
-    
-    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
-    
-    TYPE typ_reg_craptdb IS RECORD
-      (vlmtatit craptdb.vlmtatit%TYPE
-      ,vlmratit craptdb.vlmratit%TYPE
-      ,vlioftit craptdb.vliofcpl%TYPE
-      ,vr_rowid ROWID);
-      
-    TYPE typ_tab_craptdb IS TABLE OF typ_reg_craptdb INDEX BY PLS_INTEGER;
-    vr_tab_craptdb  typ_tab_craptdb;
-    
-    ------------------------------- VARIAVEIS -------------------------------
-    vr_index            PLS_INTEGER;
-    
-    vr_vlmtatit NUMBER;
-    vr_vlmratit NUMBER;
-    vr_vlioftit NUMBER;
-    vr_qtdiaatr NUMBER;
     
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
@@ -106,16 +89,6 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
     
-    -- Rotina para achar o ultimo dia útil do ano
-    vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;    
-    CASE to_char(vr_dtultdia,'d') 
-      WHEN '1' THEN vr_dtultdia := vr_dtultdia - 2;
-      WHEN '7' THEN vr_dtultdia := vr_dtultdia - 1;
-      ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
-    END CASE;
-    
-    vr_qtdiaatr := (rw_crapdat.dtmvtolt - rw_crapdat.dtmvtoan);
-    
     -- Loop principal dos títulos vencidos
     FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
@@ -125,64 +98,27 @@ BEGIN
         CONTINUE;
       END IF;
       
-      -- #################################################################################################
-      --   REGRA PARA NÃO DEBITAR TÍTULOS VENCIDOS NO PRIMEIRO DIA UTIL DO ANO E QUE VENCERAM NO
-      --   DIA UTIL ANTERIOR.
-      --   Ex: Boleto com vencto  = 29/12/2017  (ultimo dia útil do ano)
-      --       Se o movimento for = 02/01/2018  (primeiro dia util do ano) -- nao debitar --
-      --       Se o movimento for = 03/01/2018  (segundo dia util do ano)  -- debitar --
-      -- #################################################################################################        
-      -- se o titulo vencer no último dia útil do ano e também no dia útil anterior,
-      -- entao "não" deverá debitar o título
-      IF rw_craptdb.dtvencto = vr_dtultdia AND
-         rw_craptdb.dtvencto = rw_crapdat.dtmvtoan THEN
-         CONTINUE;
-      END IF;
-      -- #################################################################################################
+      -- Lança os juros de mora mensal na operação de desconto de titulos
+      DSCT0003.pc_inserir_lancamento_bordero( pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_craptdb.nrdconta
+                                             ,pr_nrborder => rw_craptdb.nrborder
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                             ,pr_cdorigem => 7 -- batch
+                                             ,pr_cdhistor => DSCT0003.vr_cdhistordsct_pgtojurosopc
+                                             ,pr_vllanmto => (rw_craptdb.vlmratit - rw_craptdb.vlpagmra)
+                                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                             ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                             ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                             ,pr_nrtitulo => rw_craptdb.nrtitulo
+                                             ,pr_dscritic => vr_dscritic );
       
-      -- Calcula os valores de atraso do título    
-      DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper    
-                                    ,pr_nrdconta => rw_craptdb.nrdconta    
-                                    ,pr_nrborder => rw_craptdb.nrborder    
-                                    ,pr_cdbandoc => rw_craptdb.cdbandoc    
-                                    ,pr_nrdctabb => rw_craptdb.nrdctabb    
-                                    ,pr_nrcnvcob => rw_craptdb.nrcnvcob    
-                                    ,pr_nrdocmto => rw_craptdb.nrdocmto    
-                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt    
-                                    ,pr_qtdiaatr => vr_qtdiaatr 
-                                    ,pr_vlmtatit => vr_vlmtatit    
-                                    ,pr_vlmratit => vr_vlmratit    
-                                    ,pr_vlioftit => vr_vlioftit    
-                                    ,pr_cdcritic => vr_cdcritic    
-                                    ,pr_dscritic => vr_dscritic);
-      
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
-      vr_index := vr_tab_craptdb.COUNT + 1;
-      
-      vr_tab_craptdb(vr_index).vlmtatit := vr_vlmtatit;
-      vr_tab_craptdb(vr_index).vlmratit := vr_vlmratit;
-      vr_tab_craptdb(vr_index).vlioftit := vr_vlioftit;
-      vr_tab_craptdb(vr_index).vr_rowid := rw_craptdb.ROWID;   
+        
     END LOOP;
     
-    -- Atualiza os valores de multa, juros de mora e iof de do atraso do título
-    BEGIN
-      FORALL idx IN INDICES OF vr_tab_craptdb SAVE EXCEPTIONS
-        UPDATE craptdb
-           SET craptdb.vlmtatit = vr_tab_craptdb(idx).vlmtatit,    
-               craptdb.vlmratit = vr_tab_craptdb(idx).vlmratit,    
-               craptdb.vliofcpl = vr_tab_craptdb(idx).vlioftit   
-         WHERE ROWID = vr_tab_craptdb(idx).vr_rowid;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar craptdb: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
-        RAISE vr_exc_saida;
-    END;
-
     -- Processo OK, devemos chamar a fimprg
     BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra
@@ -213,5 +149,5 @@ BEGIN
 
   END;
 
-END pc_crps734;
+END pc_crps736;
 /
