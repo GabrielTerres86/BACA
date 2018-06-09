@@ -28,9 +28,9 @@ DELETE FROM craprdr WHERE nmprogra = 'TITCTO';
 
 -- PARÂMETROS
 
--- parâmetro que indica a virada de versão das funcionalidades do borderô
 INSERT INTO crapprm (SELECT 'CRED',cdcooper,'FL_VIRADA_BORDERO','Guarda se uma cooperativa está trabalhando com os borderos novos ou velhos','0',NULL FROM crapcop where flgativo = 1);
 INSERT INTO crapprm (SELECT 'CRED',cdcooper,'PERCENTUAL_MULTA_DSCT','Percentual de multa sobre atraso de títulos descontados vencidos','2',NULL FROM crapcop where flgativo = 1);
+INSERT INTO crapprm (SELECT 'CRED',cdcooper,'COBTIT_BLQ_RESG_CC','Bloqueio de resgate de debitos c/c (crps735)','N',NULL FROM crapcop where flgativo = 1);
 
 -- parâmetro de data do cálculo de juros (REMOVER ESTE PARÂMETRO DA IMPLEMENTAÇÃO!)
 /*
