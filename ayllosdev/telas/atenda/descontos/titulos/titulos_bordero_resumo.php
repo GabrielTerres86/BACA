@@ -85,7 +85,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","bloqueiaFundo(divRotina)");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo '</script>';
 	}
 	

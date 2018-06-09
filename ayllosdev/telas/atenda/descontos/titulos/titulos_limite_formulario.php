@@ -332,7 +332,13 @@
 	});
 	
 	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+		if(flctgmot){
+			dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+		}
+		else{
+			$('#divBotoesRenda').css('display','block');
+			dscShowHideDiv('divDscTit_Renda','divDscTit_Observacao;divBotoesObs');
+		}
 		return false;
 	});
 	

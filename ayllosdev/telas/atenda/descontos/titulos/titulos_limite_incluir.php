@@ -120,6 +120,7 @@
 		exit;
 	}
 	$flctgmot = $root->dados->flctgmot;
+	$flctgest = $root->dados->flctgest;
 
 	// Variável que armazena código da opção para utilização na include titulos_limite_formulario.php
 	$cddopcao = "I";
