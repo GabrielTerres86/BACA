@@ -40,7 +40,8 @@ create or replace package cecred.TELA_APRDES is
                   nrdocmto craptdb.nrdocmto%TYPE,
                   nrdctabb craptdb.nrdctabb%TYPE,
                   cdbandoc craptdb.cdbandoc%TYPE,
-                  insitmch craptdb.insitmch%TYPE
+                  insitmch craptdb.insitmch%TYPE,
+                  flgenvmc craptdb.flgenvmc%TYPE
                   );
 
   TYPE typ_tab_dados_titulos IS TABLE OF typ_rec_dados_titulos INDEX BY BINARY_INTEGER;
@@ -197,54 +198,6 @@ create or replace package body cecred.TELA_APRDES is
  vr_des_xml         clob;
  vr_texto_completo  varchar2(32600);
  vr_index           pls_integer;
- 
- FUNCTION fn_busca_situacao_bordero (pr_insitbdt crapbdt.insitbdt%TYPE) RETURN VARCHAR2 IS
-  /*---------------------------------------------------------------------------------------------------------------------
-    Programa : fn_busca_situacao_bordero
-    Sistema  : CRED
-    Sigla    : TELA_APRDES
-    Autor    : Luis Fernando (GFT)
-    Data     : Abril/2018
-    Frequencia: Sempre que for chamado
-    Objetivo  : Função que retorna a descrição dos status do borderô.
-  ---------------------------------------------------------------------------------------------------------------------*/
-   BEGIN 
-     RETURN (
-       CASE 
-         WHEN pr_insitbdt=1 THEN 'Em Estudo'
-         WHEN pr_insitbdt=2 THEN 'Analisado'
-         WHEN pr_insitbdt=3 THEN 'Liberado'
-         WHEN pr_insitbdt=4 THEN 'Liquidado'
-         WHEN pr_insitbdt=5 THEN 'Rejeitado'
-       END
-     );
- END fn_busca_situacao_bordero;
- 
- FUNCTION fn_busca_decisao_bordero (pr_insitapr crapbdt.insitapr%TYPE) RETURN VARCHAR2 IS
-  /*---------------------------------------------------------------------------------------------------------------------
-    Programa : fn_busca_decisao_bordero
-    Sistema  : CRED
-    Sigla    : TELA_APRDES
-    Autor    : Luis Fernando (GFT)
-    Data     : Abril/2018
-    Frequencia: Sempre que for chamado
-    Objetivo  : Função que retorna a descrição das decisoes do borderô.
-  ---------------------------------------------------------------------------------------------------------------------*/
-   BEGIN
-     RETURN (
-       CASE 
-         WHEN pr_insitapr=0 THEN 'Aguardando Análise'
-         WHEN pr_insitapr=1 THEN 'Aguardando Checagem'
-         WHEN pr_insitapr=2 THEN 'Checagem'
-         WHEN pr_insitapr=3 THEN 'Aprovado Automaticamente'
-         WHEN pr_insitapr=4 THEN 'Aprovado'
-         WHEN pr_insitapr=5 THEN 'Não aprovado'
-         WHEN pr_insitapr=6 THEN 'Enviado Esteira'
-         WHEN pr_insitapr=7 THEN 'Prazo expirado'
-       END
-     );
-     
- END fn_busca_decisao_bordero;
  
  -- Rotina para escrever texto na variável CLOB do XML
  PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
@@ -443,8 +396,8 @@ create or replace package body cecred.TELA_APRDES is
                               '<nrdconta>' || vr_tab_dados_borderos(vr_index).nrdconta || '</nrdconta>' ||
                               '<vlborder>' || vr_tab_dados_borderos(vr_index).vlborder || '</vlborder>' ||
                               '<dsctrlim>' || 'Desconto de Título' || '</dsctrlim>' ||
-                              '<dsinsbdt>' || fn_busca_situacao_bordero(vr_tab_dados_borderos(vr_index).insitbdt) || '</dsinsbdt>' ||
-                              '<dsinsapr>' || fn_busca_decisao_bordero(vr_tab_dados_borderos(vr_index).insitapr) || '</dsinsapr>' ||
+                              '<dsinsbdt>' || dsct0003.fn_busca_situacao_bordero(vr_tab_dados_borderos(vr_index).insitbdt) || '</dsinsbdt>' ||
+                              '<dsinsapr>' || dsct0003.fn_busca_decisao_bordero(vr_tab_dados_borderos(vr_index).insitapr) || '</dsinsapr>' ||
                               '<insitbdt>' || vr_tab_dados_borderos(vr_index).insitbdt || '</insitbdt>' ||
                               '<insitapr>' || vr_tab_dados_borderos(vr_index).insitapr || '</insitapr>' ||
                               '<cdoperad>' || nvl(vr_tab_dados_borderos(vr_index).cdoperad,'Internet') || '</cdoperad>' || --caso não tenha, mostrar 'internet'
@@ -506,15 +459,24 @@ create or replace package body cecred.TELA_APRDES is
    vr_dscritic varchar2(1000);        --> Desc. Erro
    vr_exc_erro EXCEPTION;
     
-   CURSOR cr_craptdb IS
+   rw_crapdat  btch0001.rw_crapdat%TYPE;
+   CURSOR cr_crapass IS
+     SELECT * FROM crapass
+     WHERE cdcooper = pr_cdcooper
+     AND nrdconta = pr_nrdconta;
+   rw_crapass cr_crapass%ROWTYPE;
+   
+   CURSOR cr_craptdb (pr_dtiniliq crapdat.dtmvtolt%TYPE
+                     ,pr_dtfimliq crapdat.dtmvtolt%TYPE
+                     ,pr_carencia INTEGER) IS
      SELECT
           sab.nmdsacad,
           sab.nrcelsac,
           cob.nrnosnum,
           tdb.vltitulo,
           tdb.dtvencto,
-          DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,sab.nrinssac,sab.cdtpinsc) AS nrliqpag,
-          DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,sab.nrinssac) AS nrconcen,
+          DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,sab.nrinssac,pr_dtiniliq, pr_dtfimliq, pr_carencia) AS nrliqpag,
+          DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,sab.nrinssac,pr_dtiniliq, pr_dtfimliq, pr_carencia) AS nrconcen,
           nvl((SELECT 
                   decode(inpossui_criticas,1,'S','N')
                   FROM 
@@ -527,7 +489,8 @@ create or replace package body cecred.TELA_APRDES is
           tdb.nrdocmto,
           tdb.nrdctabb,
           tdb.cdbandoc,
-          tdb.insitmch
+          tdb.insitmch,
+          tdb.flgenvmc
      FROM
           craptdb tdb
           INNER JOIN crapcob cob ON cob.cdcooper = tdb.cdcooper AND
@@ -546,9 +509,37 @@ create or replace package body cecred.TELA_APRDES is
      rw_craptdb cr_craptdb%ROWTYPE;
      
      vr_index PLS_INTEGER;
+     
+     vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
+     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;  
    BEGIN
+     --    Leitura do calendário da cooperativa
+     OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+     FETCH btch0001.cr_crapdat into rw_crapdat;
+     CLOSE btch0001.cr_crapdat;
+     
+     -- Leitura tipo de pessoa
+     OPEN  cr_crapass();
+     FETCH cr_crapass into rw_crapass;
+     CLOSE cr_crapass;
+        
+     -- Busca dos valores para calcular a liquidez a partir dos valores da TAB052
+     DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                   ,pr_inpessoa          => rw_crapass.inpessoa
+                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                   ,pr_cdcritic          => vr_cdcritic
+                                   ,pr_dscritic          => vr_dscritic);
      pr_qtregist := 0 ;
-     OPEN cr_craptdb;
+     OPEN cr_craptdb(pr_dtiniliq => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                    ,pr_dtfimliq => rw_crapdat.dtmvtolt
+                    ,pr_carencia => vr_tab_dados_dsctit(1).cardbtit_c);
      LOOP
        	FETCH cr_craptdb INTO rw_craptdb;
         EXIT WHEN cr_craptdb%NOTFOUND;
@@ -580,6 +571,7 @@ create or replace package body cecred.TELA_APRDES is
           pr_tab_dados_titulos(vr_index).nrdctabb := rw_craptdb.nrdctabb;
           pr_tab_dados_titulos(vr_index).cdbandoc := rw_craptdb.cdbandoc;
           pr_tab_dados_titulos(vr_index).insitmch := rw_craptdb.insitmch;
+          pr_tab_dados_titulos(vr_index).flgenvmc := rw_craptdb.flgenvmc;
      END LOOP;
      
      exception
@@ -685,6 +677,7 @@ create or replace package body cecred.TELA_APRDES is
                               '<nrdctabb>' || vr_tab_dados_titulos(vr_index).nrdctabb || '</nrdctabb>' ||
                               '<cdbandoc>' || vr_tab_dados_titulos(vr_index).cdbandoc || '</cdbandoc>' ||
                               '<insitmch>' || vr_tab_dados_titulos(vr_index).insitmch || '</insitmch>' ||
+                              '<flgenvmc>' || vr_tab_dados_titulos(vr_index).flgenvmc || '</flgenvmc>' ||
                            '</inf>'
                           );
           /* buscar proximo */
@@ -815,8 +808,8 @@ create or replace package body cecred.TELA_APRDES is
                       '<insitapr>' || rw_crapbdt.insitapr || '</insitapr>' ||
                       '<nmoperad>' || rw_crapbdt.nmoperad || '</nmoperad>' ||
                       '<cdoperad>' || rw_crapbdt.cdoperad || '</cdoperad>' ||
-                      '<dsinsbdt>' || fn_busca_situacao_bordero(rw_crapbdt.insitbdt) || '</dsinsbdt>' ||
-                      '<dsinsapr>' || fn_busca_decisao_bordero(rw_crapbdt.insitapr) || '</dsinsapr>' ||
+                      '<dsinsbdt>' || dsct0003.fn_busca_situacao_bordero(rw_crapbdt.insitbdt) || '</dsinsbdt>' ||
+                      '<dsinsapr>' || dsct0003.fn_busca_decisao_bordero(rw_crapbdt.insitapr) || '</dsinsapr>' ||
                       '<dtenvmch>' || to_char(rw_crapbdt.dtenvmch,'dd/mm/rrrr') || '</dtenvmch>' ||
                     '</bordero>'
                    );
@@ -1020,6 +1013,9 @@ create or replace package body cecred.TELA_APRDES is
    vr_qtregist         number;
    vr_des_reto varchar2(3);
    
+   -- rowid tabela de log
+   vr_nrdrowid ROWID;
+   
    -- variaveis de entrada vindas no xml
    vr_cdcooper integer;
    vr_cdoperad varchar2(100);
@@ -1046,6 +1042,7 @@ create or replace package body cecred.TELA_APRDES is
    rw_crapdat  btch0001.rw_crapdat%TYPE;
    vr_em_contingencia_ibratan BOOLEAN;
    vr_aprovar BOOLEAN;
+   vr_msgfinal VARCHAR2(1000);
    
    -- Criticas diferentes da do CNAE
    CURSOR cr_craptdb_restri  IS
@@ -1078,6 +1075,7 @@ create or replace package body cecred.TELA_APRDES is
           AND crapbdt.cdcooper = vr_cdcooper;
    rw_crapbdt cr_crapbdt%rowtype;
    
+   vr_qtd_aprovados INTEGER;
    BEGIN
      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
@@ -1181,6 +1179,13 @@ create or replace package body cecred.TELA_APRDES is
      ELSE /*Nenhum titulo aprovado muda a decisao para nao aprovado*/
        vr_insitbdt := 1;
        vr_insitapr := 5;
+       
+       -- Se alguns dos titulos já estiver aprovado, a situação do bordero deve ser EM ESTUDO e decisão EM ANÁLISE
+       SELECT COUNT(*) INTO vr_qtd_aprovados FROM craptdb WHERE cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta AND nrborder = pr_nrborder AND insitapr = 1;
+       IF vr_qtd_aprovados > 0 THEN
+         vr_insitbdt := 1;
+         vr_insitapr := 0;
+       END IF;
      END IF;
      /*FAZ O UPDATE NO BORDERO SETANDO CONFORME AS VARIAVEIS.. SE O INSITBDT FOR 6 IGNORA O UPDATE NO BORDERO*/
      IF (vr_insitapr<>6) THEN
@@ -1203,22 +1208,38 @@ create or replace package body cecred.TELA_APRDES is
                     '<root><dados>');
      -- ler os registros de titulos e inclui
      IF (vr_insitbdt=2) THEN
-       IF (vr_insitapr=4 AND vr_em_contingencia_ibratan) THEN
-         pc_escreve_xml('Borderô analisado. Esteria de crédito em contingência');
-       ELSE
-         pc_escreve_xml('Borderô analisado e aprovado com sucesso');
-       END IF;
+         vr_msgfinal := 'Borderô n ' || pr_nrborder ||' analisado e aprovado com sucesso';
      ELSE 
-       IF (vr_insitbdt=1) THEN
-         pc_escreve_xml('Borderô não Aprovado.');
+       IF (vr_insitbdt=1 ) THEN
+         IF (vr_em_contingencia_ibratan) THEN
+           vr_msgfinal := 'Borderô n ' || pr_nrborder ||' analisado. Esteria de crédito em contingência';
+         ELSE
+           vr_msgfinal := 'Borderô n ' || pr_nrborder ||' não Aprovado.';
+         END IF;
        ELSE 
          IF (vr_insitbdt=6) THEN
-           pc_escreve_xml('Borderô analisado com sucesso. Processou seguiu para esteria de crédito');
+           vr_msgfinal := 'Borderô n ' || pr_nrborder ||' analisado com sucesso. Processou seguiu para esteria de crédito';
          END IF;
        END IF;
      END IF;
+     pc_escreve_xml (vr_msgfinal);
      pc_escreve_xml ('</dados></root>',true);
      pr_retxml := xmltype.createxml(vr_des_xml);
+     
+     -- Escreve na log
+     gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => vr_msgfinal
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'APRDES'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+
       /* liberando a memória alocada pro clob */
      dbms_lob.close(vr_des_xml);
      dbms_lob.freetemporary(vr_des_xml);
@@ -1637,8 +1658,18 @@ create or replace package body cecred.TELA_APRDES is
       END IF; 
       
       --> Preenche liquidez e concentração
-      pr_tab_dados_detalhe(0).liqpagcd := DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,vr_nrinssac,vr_cdtpinsc);
-      pr_tab_dados_detalhe(0).concpaga := DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,vr_nrinssac);
+      pr_tab_dados_detalhe(0).liqpagcd := DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper
+                                                                              ,pr_nrdconta
+                                                                              ,vr_nrinssac
+                                                                              ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                                                                              ,rw_crapdat.dtmvtolt
+                                                                              ,vr_tab_dados_dsctit(1).cardbtit_c);
+      pr_tab_dados_detalhe(0).concpaga := DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper
+                                                                                 ,pr_nrdconta
+                                                                                 ,vr_nrinssac
+                                                                                 ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                                                                                 ,rw_crapdat.dtmvtolt
+                                                                                 ,vr_tab_dados_dsctit(1).cardbtit_c);
       pr_tab_dados_detalhe(0).liqgeral := DSCT0003.fn_calcula_liquidez_geral(pr_nrdconta 
                                                                                  ,pr_cdcooper             
                                                                                  ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30

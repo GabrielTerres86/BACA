@@ -33,17 +33,17 @@
 	}	
 
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrnosnum"])) {
+	if (!isset($_POST["selecionados"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
-	$nrnosnum = $_POST["nrnosnum"];
+	$selecionados = $_POST["selecionados"];
 	$nrdconta = $_POST["nrdconta"];
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$nrnosnum."</nrnosnum>";
+    $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -51,12 +51,18 @@
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_DETALHE_TITULO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
+    // Se ocorrer um erro, mostra cr&iacute;tica
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	} 
    
 	$dados = $xmlObj->roottag->tags[0];
 	$pagador = $dados->tags[0];
 	$biros = $dados->tags[1];
 	$detalhe = $dados->tags[2];
 	$criticas = $dados->tags[3];
+
+
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -163,16 +169,7 @@
 							<?php foreach($criticas->tags AS $c) {?>
 								<tr>
 									<td><? echo getByTagName($c->tags,'dsc'); ?></td>
-									<td>
-										<?php 
-										 	$varint = getByTagName($c->tags,'int'); 
-										 	if($varint > 0){
-										 		echo $varint;
-										 	} else {
-										 		echo formataMoeda(getByTagName($c->tags,'per')).'%';
-										 	}
-										?>
-									</td>
+									<td><?php echo getByTagName($c->tags,'vlr');?></td>
 								</tr>
 							<?} // Fim do foreach ?>	
 						</tbody>

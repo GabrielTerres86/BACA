@@ -41,6 +41,8 @@
 
 				 10/10/2016 - Remover verificacao de digitalizaco para o botao de 
 							  consultar imagem (Lucas Ranghetti #510032)
+
+				07/06/2018 - Inclusão da regra para mostrar a taxa diária dependendo se for bordero novo ou antigo
 	************************************************************************/
 	
 	session_start();
@@ -183,7 +185,11 @@
 	<br />
 	
 	<label for="txdiaria"><? echo utf8ToHtml('Taxa Diária:') ?></label>
-	<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
+	<?php if ($flgverbor == 1){ ?>
+		<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[3]->cdata)/30,7,",","."). " %"; ?>" />
+	<?php }else{ ?>
+		<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
+	<?php } ?>
 	
 	<label for="dsopelib"><? echo utf8ToHtml('') ?></label>
 	<input type="text" name="dsopelib" id="dsopelib" value="<?php echo $bordero[11]->cdata; ?>" />

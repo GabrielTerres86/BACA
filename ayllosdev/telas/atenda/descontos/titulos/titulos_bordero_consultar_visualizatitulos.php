@@ -102,6 +102,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjTits = getObjectXML($xmlResult);
 
+	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjTits->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjTits->roottag->tags[0]->tags[0]->tags[4]->cdata);
@@ -197,7 +198,7 @@
 								onFocus="<? echo $mtdClick; ?>"
 								onClick="<? echo $mtdClick; ?>"
 								>
-
+								<input type='hidden' name='selecionados' value='<? echo $t->tags[0]->cdata; ?>;<? echo $t->tags[7]->cdata; ?>;<? echo $t->tags[6]->cdata; ?>;<? echo $t->tags[2]->cdata; ?>'/>
 								<td><?php echo $t->tags[3]->cdata;?></td> 
 								<td><?php echo $t->tags[10]->cdata; ?></td> 
 								<td><?php echo number_format(str_replace(",",".",$t->tags[8]->cdata),2,",",".");?></td> 
@@ -226,7 +227,7 @@
 										case 0: echo "Pendente";break; 
 										case 1: echo "Resgatado";break; 
 										case 2: echo "Pago";break; 
-										case 3: echo "Vencido";break; 
+										case 3: echo "Pago ap&oacute;s Vencimento";break; 
 										case 4: echo "Liberado";break; 
 										default: "------";break; }
 								?></td>
@@ -235,7 +236,7 @@
 										switch ($t->tags[14]->cdata){ 
 											case 0: echo "Aguardando An&aacute;lise";break;
 											case 1: echo "Aprovado";break;
-											case 2: echo "Reprovado";break;
+											case 2: echo "N&atilde;o Aprovado";break;
 											default: "------";break;
 										}
 									?>	
@@ -254,12 +255,12 @@
 	<?php
 		$vlmedtit_cr = doubleval($vlrtotal_cr / $qtTitulos_cr);
 	?>
-	<table width="860px" border="0" cellpadding="1" cellspacing="2">
+	<table width="95%" border="0" cellpadding="1" cellspacing="2" style="margin: 10px 0 0 0">
 			<tbody>
 			<tr>
-					<td width="120" align="center" class="txtNormal">TOTAL(REGIST) ==></td>
-					<td width="130" align="left"   class="txtNormal"><?php if($qtTitulos_cr <= 1){ echo $qtTitulos_cr." T&Iacute;TULO";}else{ echo $qtTitulos_cr." T&Iacute;TULOS";};?></td>
-					<td width="80"  align="right"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vlrtotal_cr),2,",","."); ?></td>
+					<td width="140" align="center" class="txtNormal">TOTAL(REGIST) ==></td>
+					<td width="65"  align="center"   class="txtNormal"><?php if($qtTitulos_cr <= 1){ echo $qtTitulos_cr." T&Iacute;TULO";}else{ echo $qtTitulos_cr." T&Iacute;TULOS";};?></td>
+					<td width="65"  align="center"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vlrtotal_cr),2,",","."); ?></td>
 					<td width="80"  align="right"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vltotliq_cr),2,",","."); ?></td>
 					<td 			align="right"  class="txtNormal"></td>
 					<td width="100" align="right"  class="txtNormal">VAL. M&Eacute;DIO: <?php echo number_format(str_replace(",",".",$vlmedtit_cr),2,",","."); ?></td>			
