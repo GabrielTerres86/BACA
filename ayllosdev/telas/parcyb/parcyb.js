@@ -47,7 +47,7 @@ function estadoInicial(){
 	
 	//Exibe cabeçalho e define tamanho da tela
 	$("#frmCab").css({"display":"block"});
-	$("#divTela").css({"width":"700px","padding-bottom":"2px"});
+	$("#divTela").css({"width":"720px","padding-bottom":"2px"});
 	
 	//Esconder a tela de assessorias
 	$("#divTelaAssessoria").css({"display":"none"});
@@ -1136,7 +1136,7 @@ function formataFiltrosParametrizarHistorico(){
 	
 	// Campos de Pesquisa do histórico por FILTRO
 	//rotulo
-	$('label[for="rdfiltro1"]',"#frmFiltrosParametrizarHistorico").addClass("rotulo-linha").css({"width":"150px","text-align":"left"}); 
+	$('label[for="rdfiltro1"]',"#frmFiltrosParametrizarHistorico").addClass("rotulo-linha").css({"width":"200px","text-align":"left"}); 
 	$('label[for="rdfiltro2"]',"#frmFiltrosParametrizarHistorico").addClass("rotulo-linha").css({"width":"150px","text-align":"left"}); 
 	$('label[for="rdfiltro3"]',"#frmFiltrosParametrizarHistorico").addClass("rotulo-linha").css({"width":"150px","text-align":"left"}); 
 	//campos
@@ -1180,11 +1180,12 @@ function formataConsultaParametrizarHistorico(){
 	//Define a largura dos campos
 	var arrayLargura = new Array();
     arrayLargura[0] = "70px";
-    arrayLargura[1] = "180px"; 
+    arrayLargura[1] = "130px"; 
     arrayLargura[2] = "100px"; 
     arrayLargura[3] = "100px";
     arrayLargura[4] = "100px";
 	arrayLargura[5] = "100px";
+    arrayLargura[6] = "15px";
     
 	//Define a posição dos elementos nas células da linha
     var arrayAlinha = new Array();
@@ -1194,6 +1195,7 @@ function formataConsultaParametrizarHistorico(){
 	arrayAlinha[3] = "center";
 	arrayAlinha[4] = "center";
 	arrayAlinha[5] = "left";
+	arrayAlinha[6] = "left";
 
 	//Aplica as informações na tabela
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
@@ -1403,7 +1405,7 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 		.append($("<tr>") // Linha
 			.attr("id","id_".concat(cdhistor))
 			.append($("<td>") // Coluna: Código do Histórico
-				.attr("style","width: 70px; text-align:left")
+				.attr("style","width: 77px; text-align:left")
 				.text(cdhistor)
 				.append($("<input>")
 					.attr("type","hidden")
@@ -1413,15 +1415,15 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 				)
 			)
 			.append($("<td>") // Coluna: Descrição do Histórico
-				.attr("style","width: 177px; text-align:left")
+				.attr("style","width: 135px; text-align:left")
 				.text(dshistor)
 			)
 			.append($("<td>") // Coluna: Indicador de Débito e Crédito do Histórico
-				.attr("style","width: 100px; text-align:left")
+				.attr("style","width: 107px; text-align:left")
 				.text(indebcre)
 			)
 			.append($("<td>") // Coluna: Cálculo do Empréstimo
-				.attr("style","width: 100px; text-align:center")
+				.attr("style","width: 154px; text-align:center")
 				.append(field_indcalem)
 				.append($("<input>")
 					.attr("type","hidden")
@@ -1431,7 +1433,7 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 				)
 			)
 			.append($("<td>") // Coluna: Cálculo de Conta Corrente
-				.attr("style","width: 102px; text-align:center")
+				.attr("style","width: 115px; text-align:center")
 				.append(field_indcalcc)
 				.append($("<input>")
 					.attr("type","hidden")					
@@ -1442,7 +1444,7 @@ function criaLinhaParametrizarHistorico(cdhistor,dshistor,indebcre,indcalem,indc
 			)
 		
 			.append($("<td id='cpotrscyb'>") // 13/01/2017 - Jean Calão - criação da Coluna: Código transação CYBER
-				.attr("style","width: 127px; text-align:left")
+				.attr("style","width: 114px; text-align:left")
 				.text(vtexto)
 				.append(field_cdtrscyb)			
                 .append($("<input>")
