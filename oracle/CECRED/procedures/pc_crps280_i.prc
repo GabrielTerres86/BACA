@@ -427,7 +427,7 @@ BEGIN
     --(AWAE) Titulos de Borderos: pl/tables de Titulos
     vr_indice_dados_tdb varchar2(200);
     vr_indice_tdb       varchar2(200);
-    vr_nrctrdsc_tdb     tbdsct_titulo_cyber.nrctrdsc%TYPE;
+    vr_nrctrdsc_tdb     crapcyb.nrctremp%TYPE;
     
     ds_character_separador constant varchar2(1) := '#';
     --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
@@ -538,7 +538,7 @@ BEGIN
             ,vlpagiof craptdb.vlpagiof%TYPE
             ,vlpagmta craptdb.vlpagmta%TYPE
             ,vlpagmra craptdb.vlpagmra%TYPE
-            ,nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE
+            ,nrctrdsc crapcyb.nrctremp%TYPE --
             ,vlatraso craptdb.vltitulo%TYPE);
             
     -- AWAE: Definição de um tipo de tabela com o registro acima
@@ -4550,6 +4550,7 @@ BEGIN
 
                 END IF;
               END IF;
+              vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
 
@@ -4651,6 +4652,7 @@ BEGIN
                 END IF;
                 
               END IF;
+              vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
           
@@ -4832,10 +4834,10 @@ BEGIN
               vr_vlpreapg := 0;
               vr_indice_dados_tdb := vr_tab_craptdb.first;
               WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-                IF vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+                IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
                    vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
                    vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                   vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr THEN
+                    vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr) THEN
 
                   -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
                   IF pr_cdcooper <> 3 THEN
@@ -4873,12 +4875,15 @@ BEGIN
                                                          ,pr_flgpreju => 0                                             -- Esta em prejuizo.
                                                          ,pr_flgconsg => 0                                             --Indicador de valor consignado.
                                                          ,pr_flgresid => 0                                             -- Flag de residuo
+                                                         ,pr_nrborder => vr_tab_craptdb(vr_indice_dados_tdb).nrborder  --> Numero do bordero do titulo em atraso no cyber
+                                                         ,pr_nrtitulo => vr_tab_craptdb(vr_indice_dados_tdb).nrtitulo  --> Numero do titulo em atraso no cyber
                                                          ,pr_dscritic => pr_dscritic);
                     IF pr_dscritic IS NOT NULL  THEN
                       RAISE vr_exc_erro;
                     END IF;
                   END IF;
                 END IF;
+                vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
               END LOOP;
             END IF;
 
@@ -4943,9 +4948,10 @@ BEGIN
                                                          ||LPAD(to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm99999999'),10,' ') || vr_dssepcol_354
                                                          ||LPAD(to_char(NVL(vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit,0),'fm999G999G999G990D00'),18,' ')
                                                          ||chr(10));
-				        END IF;
-		          END LOOP;
-			      END IF; -- fim de titulo do borderô detalhado
+                END IF;
+                vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
+              END LOOP;
+            END IF; -- fim de titulo do borderô detalhado
             
           END IF;
         END IF;
