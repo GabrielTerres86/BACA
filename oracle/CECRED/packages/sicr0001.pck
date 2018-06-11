@@ -47,7 +47,7 @@ create or replace package cecred.SICR0001 is
                              (Adriano - SD 582204).
   
 	            11/04/2017 - Busca o nome resumido (Ricarod Linhares #547566)
-    
+  
 	               15/05/2018 - Ajuste na prc pc efetua debitos da chamada das rotinas  
                               pc efetua debito automatico e pc debita agendto pagto
                               Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas
@@ -93,6 +93,7 @@ create or replace package cecred.SICR0001 is
     TABLE OF typ_reg_agendamentos
     INDEX BY VARCHAR2(100);
 
+	 vr_nrdolote_sms NUMBER := 0;
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
@@ -232,7 +233,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 15/05/2018
+     Data    : Abril/2013                       Ultima atualizacao: 29/05/2018
 
      Dados referentes ao programa:
 
@@ -321,7 +322,7 @@ create or replace package body cecred.SICR0001 is
                  17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                               conta e referencia no mesmo dia(dtmvtolt) porem com valores
                               diferentes (Lucas Ranghetti #684123)                      
-                              
+
                  15/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                             - Padronização erros comandos DDL
                             - Pc_set_modulo, cecred.pc_internal_exception
@@ -338,6 +339,10 @@ create or replace package body cecred.SICR0001 is
                               Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                            
 				                      ( Belli - Envolti - Chamado REQ0014479 )
 							  
+                              
+                 29/05/2018 - Alterar sumario_debsic para somente somar os nao efetivados 
+                              feitos no dia do debito, se ja foi cancelado nao vamos somar 
+                              (bater com informacoes do crrl642) (Lucas Ranghetti INC0016207)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -838,7 +843,7 @@ create or replace package body cecred.SICR0001 is
                                                       pr_dscritic => vr_dscritic);
 
             -- Como esta no mesmo campo erro e motivos não debito, não popular o campo pr_dscritic - 15/05/2018 - Chd REQ0014479
-            -- Verifica se deu erro no processamento do débito
+        -- Verifica se deu erro no processamento do débito
               IF vr_dscritic IS NOT NULL THEN
                 -- Registra o erro ocorrido no registro
                 pr_tab_agendamentos(vr_ind).dscritic := upper(substr(vr_dscritic,1,100));
@@ -905,6 +910,12 @@ create or replace package body cecred.SICR0001 is
           -- Buscar o proximo registro da tabela
           vr_ind := pr_tab_agendamentos.NEXT(vr_ind);
         END LOOP;
+
+		if nvl(vr_nrdolote_sms,0) <> 0 then 
+        ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_nrdolote_sms
+                                      ,pr_dscritic    => vr_dscritic);
+       end if; 
+
 
         -- Retornando a tabela temporaria dos lancamentos atualizada
         pr_tab_agendamentos := vr_tab_aux;
@@ -1239,7 +1250,7 @@ create or replace package body cecred.SICR0001 is
   --                        - Log de alguns retorno de chamadas de procedures sem tratamento
   --                        - Tratamento erros others
   --                          (Ana - Envolti - Chamado 788828)
-  --  
+  --
   --             15/05/2018 - Ajuste na prc pc efetua debitos da chamada das rotinas  
   --                          pc efetua debito automatico e pc debita agendto pagto
   --                          Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                       
@@ -1272,9 +1283,9 @@ create or replace package body cecred.SICR0001 is
     vr_dsdplchv               crapmsg.dsdplchv%TYPE;
     vr_idmotivo               tbconv_motivo_msg.idmotivo%TYPE;
     vr_valores_dinamicos      VARCHAR2(500);
-
-    vr_motivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
     
+    vr_motivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
+
     -- Controle de erro e recuperação de erro - 15/05/2018 - REQ0014479
     vr_cdcrimsg     INTEGER          := NULL;
     vr_dscrimsg     VARCHAR2 (4000)  := NULL;
@@ -1315,7 +1326,7 @@ create or replace package body cecred.SICR0001 is
                             '#Data#='    || to_char(pr_dtmvtopg,'DD/MM/RRRR') ||';'||
                             '#Valor#='   || to_char(pr_vllanaut,'fm999G999G990D00') ||';'||
                             '#Limite#='  || to_char(pr_vlrmaxdb,'fm999G999G990D00');
-
+    
     --> Se for todos ou Msg Ibank
     IF pr_tpdnotif IN (0,1) THEN
       
@@ -1578,7 +1589,7 @@ create or replace package body cecred.SICR0001 is
       vr_dsinfor2     crappro.dsinform##1%TYPE;
       vr_dsinfor3     crappro.dsinform##1%TYPE;
       vr_dsprotoc     crappro.dsprotoc%TYPE;
-      vr_nrdolote_sms NUMBER;
+      --vr_nrdolote_sms NUMBER;
     
       -- Autenticação
       vr_dslitera crapaut.dslitera%TYPE;
@@ -1901,7 +1912,7 @@ create or replace package body cecred.SICR0001 is
     BEGIN
       -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'SICR0001.pc_efetua_debito_automatico');
-
+    
       --Selecionar informacoes das datas
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -1917,7 +1928,7 @@ create or replace package body cecred.SICR0001 is
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-
+    
       -- definir savepoint
       SAVEPOINT TRANS1;
     
@@ -2166,7 +2177,7 @@ create or replace package body cecred.SICR0001 is
                                           pr_cdrefere      => rw_crapatr.cdrefere,
                                           pr_cdhistor      => rw_crapatr.cdhistor,
                                           pr_tpdnotif      => 1 --> Apenas MSG IBank
-                                         ,pr_flfechar_lote => 1 -- Fechar
+                                         ,pr_flfechar_lote => 0 -- Fechar
                                          ,pr_idlote_sms    => vr_nrdolote_sms);
 
                 -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
@@ -2274,7 +2285,7 @@ create or replace package body cecred.SICR0001 is
                                       ,pr_vlrmaxdb  => rw_crapatr.vlrmaxdb
                                       ,pr_cdrefere  => rw_crapatr.cdrefere
                                       ,pr_cdhistor  => rw_crapatr.cdhistor
-                                      ,pr_flfechar_lote => 1 -- Fechar
+                                      ,pr_flfechar_lote => 0 -- Fechar
                                       ,pr_idlote_sms   => vr_nrdolote_sms);
 
             -- Inclui nome do modulo logado - 15/12/2017 - Ch 788828
@@ -2802,7 +2813,7 @@ create or replace package body cecred.SICR0001 is
           END IF;
         END IF;
       END LOOP;
-
+    
     -- Retira nome do modulo logado - 15/12/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
@@ -3843,12 +3854,16 @@ create or replace package body cecred.SICR0001 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Tiago Machado Flor
-    --  Data     : Outubro/2016.                   Ultima atualizacao: 30/01/2018
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 29/05/2018
     --
     --  Dados referentes ao programa:
     --
-    --  Frequencia: Sempre que for chamado
-    --  Objetivo  : Procedure utilizada sumarizar os agendamentos DEBSIC
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure utilizada sumarizar os agendamentos DEBSIC
+    --
+    --  Alteração : 29/05/2018 - Somente somar os nao efetivados feitos no dia do debito, 
+    --                           se ja foi cancelado nao vamos somar (bater com as 
+    --                           informacoes do crrl482) (Lucas Ranghetti INC0016207)
     --
     --  Alteracoes: 15/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
     --                         - Padronização erros comandos DDL
@@ -3878,26 +3893,7 @@ create or replace package body cecred.SICR0001 is
               -- debito automatico sicredi
             OR (craplau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
             AND craplau.cdhistor  = 1019));
-/*                     
                      
-        SELECT  craplau.*
-          FROM  craplau, 
-                craphis
-          WHERE craplau.cdcooper = craphis.cdcooper
-            AND craplau.cdhistor = craphis.cdhistor
-            AND ((craplau.cdcooper >= pr_cdcooper
-            AND craplau.cdcooper <= pr_cdcopfin
-            AND craplau.dtmvtopg = pr_dtmvtopg
-            AND craplau.insitlau = 1
-            AND craplau.dsorigem IN ('INTERNET','TAA','CAIXA')
-            AND craplau.tpdvalor = 1)
-              -- debito automatico sicredi
-            OR (craplau.cdcooper  >= pr_cdcooper
-            AND craplau.cdcooper  <= pr_cdcopfin
-            AND craplau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
-            AND craplau.insitlau  = 1
-            AND craplau.cdhistor  = 1019)); */
-                         
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
       SELECT cop.cdcooper
         FROM crapcop cop
@@ -3997,13 +3993,19 @@ create or replace package body cecred.SICR0001 is
                                         ,pr_insitlau => vr_insitlau
                                         ,pr_dtmvtopg => rw_crapdat.dtmvtolt
                                         ,pr_dtmovini => vr_dtmovini) LOOP
-              CASE rw_craplau.insitlau
 
-                 WHEN 1 THEN vr_qtdpendentes := vr_qtdpendentes + 1; 
-                 WHEN 2 THEN vr_qtefetivados := vr_qtefetivados + 1;
-                 ELSE vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
-
-              END CASE;
+              IF rw_craplau.insitlau = 1 THEN
+                vr_qtdpendentes := vr_qtdpendentes + 1;
+              ELSIF rw_craplau.insitlau = 2 THEN
+                vr_qtefetivados := vr_qtefetivados + 1;
+              ELSE 
+                -- Somente somar os nao efetivados feitos no dia do debito, 
+                -- se ja foi cancelado nao vamos somar (bater com as informacoes do crrl482)
+                IF trunc(rw_craplau.dtrefatu) = rw_craplau.dtmvtopg THEN
+                  vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
+                END IF;
+              END IF;
+                                        
             END LOOP;
           END LOOP;
       END LOOP;
