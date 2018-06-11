@@ -12,7 +12,13 @@
  *                05/04/2018 - PJ 416 - BacenJud - Inclusão do form de senha para confirmação de alteração do bloqueio judicial - Mateus Z (Mouts)
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom
+ *
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+ *
+ *                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
+ *     					       "Debita após o estouro de conta corrente (60 dias)".
+ *							   Diego Simas (AMcom) - Prj 450 
+ *
  * --------------
  */
 
@@ -192,7 +198,7 @@ function formataCadastroHistorico() {
     $('label[for="ingerdeb"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
     $('label[for="nrctatrc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
     $('label[for="nrctatrd"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
-    $('label[for="inestocc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
+    $('label[for="inestocc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '520px' });
 	
 	// CAMPOS - Dados Contabeis
     $('#cdhstctb', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');

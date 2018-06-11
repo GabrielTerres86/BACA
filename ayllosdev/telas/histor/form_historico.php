@@ -11,6 +11,11 @@
 	*                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
     *                             Diego Simas - AMcom  
 	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+	* 
+	*                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
+	*							  "Debita após o estouro de conta corrente (60 dias)".
+	*							  Diego Simas (AMcom) - Prj 450
+	*							  			
 	* --------------
 	*/ 
 
@@ -257,7 +262,7 @@
 				</tr>
 				<tr class='estouraConta'>
 					<td colspan="2">
-						<label for="inestocc">Estourar a conta corrente:</label>
+						<label for="inestocc">Debita ap&oacute;s o estouro de conta corrente (60 dias) :</label>
 						<select id="inestocc" name="inestocc">
 							<option value="0">0 - N&atilde;o</option>
 							<option value="1">1 - Sim</option>
