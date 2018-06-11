@@ -4507,6 +4507,11 @@ BEGIN
             vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
           END IF;
 
+          -- Fechar tag atraso enviando pro XML
+            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
+                                  ,pr_texto_completo => vr_txtauxi_227
+                                  ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+
           -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
           IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
             -- inicializando o valor
@@ -4519,8 +4524,7 @@ BEGIN
                  vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr 
               THEN
                 -- Enviar registro para o XML 1 - para cada um dos títulos.
-                vr_des_xml_gene :='</atraso>' -- Se mudar a chave de titulo na revisão de risco, revalidar o XML
-                                 ||'<atraso>'
+                vr_des_xml_gene := '<atraso>'
                                  ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
                                  ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
                                  ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
@@ -4547,8 +4551,10 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris>'||vr_dsnivris||'</dsnivris>';
                 ELSE
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
-
                 END IF;
+                
+                vr_des_xml_gene := vr_des_xml_gene || ' </atraso>';
+                
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
@@ -4557,7 +4563,7 @@ BEGIN
           -- Fechar tag atraso enviando pro XML
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
                                   ,pr_texto_completo => vr_txtauxi_227
-                                  ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+                                  ,pr_texto_novo     => vr_des_xml_gene);
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4609,6 +4615,11 @@ BEGIN
             vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
           END IF;
 
+          -- Finalmente enviar para o XML
+            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
+                                   ,pr_texto_completo => vr_txtauxi_354
+                                   ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
+                                   
           -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
           IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
             -- inicializando o valor
@@ -4618,11 +4629,10 @@ BEGIN
               IF vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
                  vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
                  vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr 
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr
               THEN
                 -- Enviar registro para o XML 2 - para cada um dos títulos.
-                vr_des_xml_gene :='</divida>' -- Se mudar a chave de titulo na revisão de risco, revalidar o XML
-                                 ||'<divida>'
+                vr_des_xml_gene :='<divida>'
                                  ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
                                  ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
                                  ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
@@ -4642,8 +4652,8 @@ BEGIN
                                  ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
                                  ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
                                  ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
-                                 || '<cdlcremp/>';                
-                         
+                                 || '<cdlcremp/>';
+
                 -- Não enviar nivel em caso de ser AA
                 IF vr_dsnivris <> 'AA' THEN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris>'||vr_dsnivris||'</dsnivris>';
@@ -4651,15 +4661,17 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
+                vr_des_xml_gene := vr_des_xml_gene || ' </divida>';
+                
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
-          
+
           -- Finalmente enviar para o XML
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
                                    ,pr_texto_completo => vr_txtauxi_354
-                                   ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
+                                   ,pr_texto_novo     => vr_des_xml_gene);
 
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
