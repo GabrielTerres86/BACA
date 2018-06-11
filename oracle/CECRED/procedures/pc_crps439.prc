@@ -831,7 +831,7 @@ begin
                                       , pr_cdcritic => vr_cdcritic
                                       , pr_dscritic => vr_dscritic);
 																					
-			IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+			IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
 				IF vr_incrineg = 0 THEN -- Erro de sistema/BD
 					RAISE vr_exc_saida;
 				ELSE -- Não foi possível debitar (crítica de negócio)

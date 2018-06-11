@@ -390,7 +390,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                              , pr_dscritic => vr_dscritic);
 
           -- se não foi possivel debitar, então cancela seguro
-          IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
             IF vr_incrineg = 0 THEN -- Erro de sistema/BD
               RAISE vr_exc_saida;
             ELSE
