@@ -595,11 +595,7 @@ BEGIN
 		WHEN DUP_VAL_ON_INDEX THEN
 			pr_cdcritic := 92; -- Lançamento já existe
       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || 
-                  'nrdconta: ' || pr_nrdconta ||
-                     'Param: ' || pr_CDCOOPER || ' - ' || pr_DTMVTOLT || ' - ' || pr_CDAGENCI
-                      || ' - ' || pr_CDBCCXLT || ' - ' || pr_NRDOLOTE || ' - ' || vr_NRSEQDIG 
---                                    ' pc_gerar_lancamento_conta - '
-                                     || SQLERRM || ')';
+                     ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
