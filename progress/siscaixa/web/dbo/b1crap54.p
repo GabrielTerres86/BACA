@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 24/05/2018
 
    Dados referentes ao programa:
 
@@ -67,6 +67,12 @@
                             
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+
+23/04/2018 - inc0011899 Inclusão de log de liberação de débito sem saldo pelo operador, para
+             possível auditoria, rotina valida-permissao-saldo-conta (Carlos)
+                            
+               24/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom)
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -77,7 +83,6 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
-
 
 DEF VAR i-cod-erro         AS INT                               NO-UNDO.
 DEF VAR c-desc-erro        AS CHAR                              NO-UNDO.
@@ -216,7 +221,7 @@ PROCEDURE valida-cheque-avulso-conta:
              RUN verifica_cartao IN h-b1wgen0025(INPUT crapcop.cdcooper,
                                                  INPUT 0,
                                                  INPUT aux_dscartao, 
-                                                INPUT crapdat.dtmvtolt,
+                                                INPUT crapdat.dtmvtocd,
                                                OUTPUT p-nro-conta,
                                                 OUTPUT aux_cdcooper,
                                                 OUTPUT p-nrcartao,
@@ -647,6 +652,31 @@ PROCEDURE valida-permissao-saldo-conta:
                     RETURN "NOK".
                 END.  /* p-mensagem <> " " */
         
+            /* Registrar liberação do valor pelo operador para possível auditoria */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            RUN STORED-PROCEDURE pc_gera_log_batch aux_handproc = PROC-HANDLE
+                (INPUT crapcop.cdcooper,
+                 INPUT 1, /* ind_tipo_log: 1-mensagem / 2-erro de negócio / 3-erro nao tratado / 4-alerta */
+                 INPUT ("valida-permissao-saldo-conta. " +
+                        " Operador: " + STRING(p-codigo) + " liberou lancamento." + 
+                        " Mensagem: " + p-mensagem +
+                        " PA: "       + STRING(p-cod-agencia) +
+                        " Caixa: "    + STRING(p-nro-caixa) +
+                        " Valor: "    + STRING(p-valor)),
+                 input "",      /* nmarqlog */
+                 input "N",    /* flnovlog - criar novo arquivo? */
+                 input "N",    /* flfinmsg - inserir string '[PL/SQL]' no final da mensagem? */
+                 input "",     /* dsdirlog */
+                 input "E",    /* dstiplog - I inicio, F fim, E erro */
+                 input "B1CRAP54", /* cdprograma */
+                 input 3,      /* tpexecucao 0-Outro/ 1-Batch/ 2-Job/ 3-Online */
+                 input 1,      /* cdcriticidade 0-Baixa/1-Media/2-Alta/3-Critica */
+                 input 0,      /* flgsucesso 0/1 */
+                 input 0       /* Codigo da mensagem ou critica */
+                 ).
+            CLOSE STORED-PROCEDURE pc_gera_log_batch WHERE PROC-HANDLE = aux_handproc.
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }   
+    
         END.
    
     RETURN "OK".
@@ -713,7 +743,7 @@ PROCEDURE atualiza-cheque-avulso:
     DELETE PROCEDURE h-b1crap02.
            
     FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper AND
-                             craplot.dtmvtolt = crapdat.dtmvtolt AND
+                             craplot.dtmvtolt = crapdat.dtmvtocd AND
                              craplot.cdagenci = p-cod-agencia    AND
                              craplot.cdbccxlt = 11               AND /* Fixo */
                              craplot.nrdolote = i-nro-lote       NO-ERROR.
@@ -722,7 +752,7 @@ PROCEDURE atualiza-cheque-avulso:
         DO:
             CREATE craplot.
             ASSIGN craplot.cdcooper = crapcop.cdcooper
-                   craplot.dtmvtolt = crapdat.dtmvtolt
+                   craplot.dtmvtolt = crapdat.dtmvtocd
                    craplot.cdagenci = p-cod-agencia   
                    craplot.cdbccxlt = 11              
                    craplot.nrdolote = i-nro-lote
@@ -734,7 +764,7 @@ PROCEDURE atualiza-cheque-avulso:
         END.
 
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper    AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt    AND 
+                             craplcm.dtmvtolt = crapdat.dtmvtocd    AND 
                              craplcm.cdagenci = p-cod-agencia       AND
                              craplcm.cdbccxlt = 11                  AND
                              craplcm.nrdolote = i-nro-lote          AND
@@ -759,7 +789,7 @@ PROCEDURE atualiza-cheque-avulso:
         END.
 
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper    AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt    AND 
+                             craplcm.dtmvtolt = crapdat.dtmvtocd    AND 
                              craplcm.cdagenci = p-cod-agencia       AND
                              craplcm.cdbccxlt = 11                  AND
                              craplcm.nrdolote = i-nro-lote          AND
@@ -784,7 +814,7 @@ PROCEDURE atualiza-cheque-avulso:
 
     CREATE craplcm.
     ASSIGN craplcm.cdcooper = crapcop.cdcooper
-           craplcm.dtmvtolt = crapdat.dtmvtolt
+           craplcm.dtmvtolt = crapdat.dtmvtocd
            craplcm.cdagenci = p-cod-agencia
            craplcm.cdbccxlt  = 11
            craplcm.nrdolote = i-nro-lote
@@ -881,7 +911,7 @@ PROCEDURE atualiza-cheque-avulso:
     ASSIGN c-literal[1]  = trim(crapcop.nmrescop) + 
      " - " + TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = string(crapdat.dtmvtolt,"99/99/99") +
+           c-literal[3]  = string(crapdat.dtmvtocd,"99/99/99") +
             " " + STRING(TIME,"HH:MM:SS") +  " PAC " + 
                            string(p-cod-agencia,"999") +
                             "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
@@ -1012,7 +1042,7 @@ PROCEDURE atualiza-cheque-avulso:
                                  INPUT p-cod-operador,   /* Codigo do Operador */
                                  INPUT 1,                /* Codigo Agencia */
                                  INPUT 100,              /* Codigo banco caixa */
-                                 INPUT crapdat.dtmvtolt, /* Data de Movimento */
+                                 INPUT crapdat.dtmvtocd, /* Data de Movimento */
                                  INPUT "",               /* Nome da Tela */
                                  INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */   
                                  INPUT p-nro-conta,      /* Numero da Conta */
@@ -1118,7 +1148,7 @@ PROCEDURE atualiza-cheque-avulso:
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_atualiza_operacao_especie
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
-                                             INPUT crapdat.dtmvtolt,
+                                             INPUT crapdat.dtmvtocd,
                                              INPUT p-nro-conta,
                                              INPUT p-valor,
                                              INPUT "", /**CMC7**/
