@@ -4,6 +4,8 @@
  * CRIAÇÃO      : Adriano
  * DATA CRIAÇÃO : 05/12/2011
  * OBJETIVO     : Rotina para gravar os rendimentos.
+ *
+ * ALTERAÇÕES   : 08/06/2018 - Remover caractere invalido no carregamento da justificativa. (PRB0040072 - Kelvin)
  */
 ?>
  
@@ -94,7 +96,7 @@
 	
 	if($tpdrend2 == 6){ 
 		if($dsjusre2 != ''){
-			echo "$('#dsjusren','#frmJustificativa').val('".$dsjusre2."');";
+			echo "$('#dsjusren','#frmJustificativa').val(removeCaracteresInvalidos('".$dsjusre2."'));";
 		}else{
 			echo "$('#dsjusren','#frmJustificativa').val('');";
 		}
