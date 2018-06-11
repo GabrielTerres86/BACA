@@ -84,11 +84,11 @@
 																	<tr>
 																		<td>
 																			<!-- INCLUDE DA TELA DE PESQUISA -->
-																			<? require_once("../../includes/pesquisa/pesquisa.php"); ?>																    
+																			<?php require_once("../../includes/pesquisa/pesquisa.php"); ?>																    
 																			
 																			<div id="divTela">
 																				
-																				<? include('form_cabecalho.php'); ?>
+																				<?php include('form_cabecalho.php'); ?>
 																				
 																				<table id="divAbas" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 25px 0px; display: block;">
 																					<tr>

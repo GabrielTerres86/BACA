@@ -1,4 +1,4 @@
-<?
+<?php
 /*!
  * FONTE        : form_detalhe.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         

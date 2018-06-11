@@ -1,4 +1,4 @@
-<?
+<?php
 /*!
  * FONTE        : form_ativar_processo.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         

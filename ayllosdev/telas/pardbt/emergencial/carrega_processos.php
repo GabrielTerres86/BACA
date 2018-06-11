@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : carrega_processos.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)      
