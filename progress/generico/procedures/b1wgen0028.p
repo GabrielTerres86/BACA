@@ -1,4 +1,4 @@
-﻿/* *****************************************************************************
+/******************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
 +----------------------------------------+-------------------------------------+
@@ -501,9 +501,9 @@
                 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
-                23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
+                23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia        
                              27, conforme solicitado no chamado 636445. (Kelvin)
-							 
+                                                         
                 06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
                              solicitado no chamado 645013. (Kelvin)
                 
@@ -734,10 +734,10 @@ FUNCTION retorna-situacao RETURNS CHAR
                                   "Cancel"
                                ELSE
                                   "Encer."
-						  ELSE
+                                                  ELSE
                           IF   par_insitcrd = 8  THEN 
                                "Em Analise"
-						  ELSE
+                                                  ELSE
                           IF   par_insitcrd = 9  THEN 
                                "Enviado Bancoob"
                           ELSE "??????".  
@@ -1041,9 +1041,9 @@ PROCEDURE carrega_dados_inclusao:
     DEF VAR aux_dslimite AS CHAR                                    NO-UNDO.
     DEF VAR aux_dslimaux AS CHAR                                    NO-UNDO.
     DEF VAR aux_vlrftbru AS DECIMAL                                 NO-UNDO.
-	DEF VAR aux_nrdocstl LIKE crapttl.nrdocttl                      NO-UNDO.
-	DEF VAR aux_dtnasstl LIKE crapttl.dtnasttl                      NO-UNDO.
-	DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc                      NO-UNDO.
+        DEF VAR aux_nrdocstl LIKE crapttl.nrdocttl                      NO-UNDO.
+        DEF VAR aux_dtnasstl LIKE crapttl.dtnasttl                      NO-UNDO.
+        DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc                      NO-UNDO.
     
     DEF VAR aux_dsrepinc AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrrepinc AS CHAR                                    NO-UNDO.
@@ -1076,7 +1076,7 @@ PROCEDURE carrega_dados_inclusao:
                      WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta   
                            NO-LOCK: 
-	END.
+        END.
     
     IF NOT AVAILABLE crapass THEN
        DO:
@@ -1126,8 +1126,8 @@ PROCEDURE carrega_dados_inclusao:
        END. /* END IF crapass.inpessoa = 1 THEN */
     ELSE
     DO:
-	
-		/* Buscar o CNPJ da cooperativa para nao deixar solicitar o cartao */ 
+        
+                /* Buscar o CNPJ da cooperativa para nao deixar solicitar o cartao */ 
         FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
              
         IF crapass.nrcpfcgc = crapcop.nrdocnpj THEN
@@ -1145,7 +1145,7 @@ PROCEDURE carrega_dados_inclusao:
                     
             RETURN "NOK".
         END.
-		
+                
         FOR FIRST crapjfn FIELDS(vlrftbru mesftbru anoftbru)
                           WHERE crapjfn.cdcooper = crapass.cdcooper AND
                                 crapjfn.nrdconta = crapass.nrdconta
@@ -1662,16 +1662,16 @@ PROCEDURE carrega_dados_inclusao:
 
             ASSIGN aux_vlsalari = crapttl.vlsalari.
 
-			FOR FIRST crapttl FIELDS(nmextttl nrdocttl dtnasttl nrcpfcgc) 
-			                  WHERE crapttl.cdcooper = crapass.cdcooper AND
-								    crapttl.nrdconta = crapass.nrdconta AND
+                        FOR FIRST crapttl FIELDS(nmextttl nrdocttl dtnasttl nrcpfcgc) 
+                                          WHERE crapttl.cdcooper = crapass.cdcooper AND
+                                                                    crapttl.nrdconta = crapass.nrdconta AND
                                     crapttl.idseqttl = 2 
                                     NO-LOCK:
 
-		      ASSIGN aux_nmsegntl = crapttl.nmextttl
-				     aux_nrdocstl = crapttl.nrdocttl
-				     aux_dtnasstl = crapttl.dtnasttl
-				     aux_nrcpfstl = crapttl.nrcpfcgc.
+                      ASSIGN aux_nmsegntl = crapttl.nmextttl
+                                     aux_nrdocstl = crapttl.nrdocttl
+                                     aux_dtnasstl = crapttl.dtnasttl
+                                     aux_nrcpfstl = crapttl.nrcpfcgc.
 
         END.
 
@@ -1955,37 +1955,37 @@ PROCEDURE valida_nova_proposta:
     END.
  
   
-	IF crapass.inpessoa = 1 THEN
-	   DO:
-	      FOR FIRST crapttl FIELDS(inhabmen)
-							WHERE crapttl.cdcooper = crapass.cdcooper AND
-								  crapttl.nrdconta = crapass.nrdconta AND
-								  crapttl.idseqttl = 1
-								  NO-LOCK:
+        IF crapass.inpessoa = 1 THEN
+           DO:
+              FOR FIRST crapttl FIELDS(inhabmen)
+                                                        WHERE crapttl.cdcooper = crapass.cdcooper AND
+                                                                  crapttl.nrdconta = crapass.nrdconta AND
+                                                                  crapttl.idseqttl = 1
+                                                                  NO-LOCK:
 
-		  END.
+                  END.
 
-		  IF NOT AVAIL crapttl THEN
-		     DO:
-			    ASSIGN aux_cdcritic = 0
-					   aux_dscritic = "Registro de associado nao encontrado.".
+                  IF NOT AVAIL crapttl THEN
+                     DO:
+                            ASSIGN aux_cdcritic = 0
+                                           aux_dscritic = "Registro de associado nao encontrado.".
 
-			    RUN gera_erro (INPUT par_cdcooper,
-				 			   INPUT par_cdagenci,
-				 			   INPUT par_nrdcaixa,
-				 			   INPUT 1,            /** Sequencia **/
-				 			   INPUT aux_cdcritic,
-				 			   INPUT-OUTPUT aux_dscritic).
+                            RUN gera_erro (INPUT par_cdcooper,
+                                                            INPUT par_cdagenci,
+                                                            INPUT par_nrdcaixa,
+                                                            INPUT 1,            /** Sequencia **/
+                                                            INPUT aux_cdcritic,
+                                                            INPUT-OUTPUT aux_dscritic).
                           
-			    RETURN "NOK".
+                            RETURN "NOK".
 
-			 END.
-		  ELSE
-		     ASSIGN aux_inhabmen = crapttl.inhabmen.
+                         END.
+                  ELSE
+                     ASSIGN aux_inhabmen = crapttl.inhabmen.
 
-	   END.
+           END.
     ELSE
-	   ASSIGN aux_inhabmen = 0.
+           ASSIGN aux_inhabmen = 0.
 
     FIND FIRST crapadc WHERE crapadc.cdcooper = par_cdcooper   AND
                       UPPER(crapadc.nmresadm) = UPPER(par_dsadmcrd) NO-LOCK NO-ERROR.
@@ -14440,7 +14440,7 @@ PROCEDURE exclui_cartao:
               END.               
           
           /* Para cartoes Cecred (Bancoob) verifica se existem cartoes adicionais
-		     (Fabricio). */
+                     (Fabricio). */
           IF f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
             DO:
                 /* Buscar o CPF do titular da conta */
@@ -14459,7 +14459,7 @@ PROCEDURE exclui_cartao:
                                                     crawbcrd.nrdconta  = crawcrd.nrdconta  AND
                                                     crawbcrd.nrctrcrd <> crawcrd.nrctrcrd  AND 
                                                     crawbcrd.cdadmcrd  = crawcrd.cdadmcrd  AND
-													crawbcrd.flgprcrd  = 0
+                                                                                                        crawbcrd.flgprcrd  = 0
                                                     NO-LOCK NO-ERROR.
                                                
                           IF AVAILABLE crawbcrd  THEN
@@ -15702,114 +15702,114 @@ PROCEDURE carrega_dados_proposta:
                
 
     /** Saldo das aplicacoes **/
-	RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT
-		SET h-b1wgen0081.        
+        RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT
+                SET h-b1wgen0081.        
    
-	IF  VALID-HANDLE(h-b1wgen0081)  THEN
-		DO:
-			ASSIGN aux_vlsldtot = 0.
+        IF  VALID-HANDLE(h-b1wgen0081)  THEN
+                DO:
+                        ASSIGN aux_vlsldtot = 0.
 
-			
-			RUN obtem-dados-aplicacoes IN h-b1wgen0081
-									  (INPUT par_cdcooper,
-									   INPUT par_cdagenci,
-									   INPUT 1,
-									   INPUT 1,
-									   INPUT par_nmdatela,
-									   INPUT 1,
-									   INPUT par_nrdconta,
-									   INPUT 1,
-									   INPUT 0,
-									   INPUT par_nmdatela,
-									   INPUT FALSE,
-									   INPUT ?,
-									   INPUT ?,
-									   OUTPUT aux_vlsldrdc,
-									   OUTPUT TABLE tt-saldo-rdca,
-									   OUTPUT TABLE tt-erro).
-		
-			IF  RETURN-VALUE = "NOK"  THEN
-				DO:
-					DELETE PROCEDURE h-b1wgen0081.
-					
-					FIND FIRST tt-erro NO-LOCK NO-ERROR.
-				 
-					IF  AVAILABLE tt-erro  THEN
-						MESSAGE tt-erro.dscritic.
-					ELSE
-						MESSAGE "Erro nos dados das aplicacoes.".
-		
-					NEXT.
-				END.
+                        
+                        RUN obtem-dados-aplicacoes IN h-b1wgen0081
+                                                                          (INPUT par_cdcooper,
+                                                                           INPUT par_cdagenci,
+                                                                           INPUT 1,
+                                                                           INPUT 1,
+                                                                           INPUT par_nmdatela,
+                                                                           INPUT 1,
+                                                                           INPUT par_nrdconta,
+                                                                           INPUT 1,
+                                                                           INPUT 0,
+                                                                           INPUT par_nmdatela,
+                                                                           INPUT FALSE,
+                                                                           INPUT ?,
+                                                                           INPUT ?,
+                                                                           OUTPUT aux_vlsldrdc,
+                                                                           OUTPUT TABLE tt-saldo-rdca,
+                                                                           OUTPUT TABLE tt-erro).
+                
+                        IF  RETURN-VALUE = "NOK"  THEN
+                                DO:
+                                        DELETE PROCEDURE h-b1wgen0081.
+                                        
+                                        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                                 
+                                        IF  AVAILABLE tt-erro  THEN
+                                                MESSAGE tt-erro.dscritic.
+                                        ELSE
+                                                MESSAGE "Erro nos dados das aplicacoes.".
+                
+                                        NEXT.
+                                END.
 
-			DELETE PROCEDURE h-b1wgen0081.
-		END.
-	 
-	   DO TRANSACTION ON ERROR UNDO, RETRY:
-		 /*Busca Saldo Novas Aplicacoes*/
-		 
-		 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-		  RUN STORED-PROCEDURE pc_busca_saldo_aplicacoes
-			aux_handproc = PROC-HANDLE NO-ERROR
-									(INPUT par_cdcooper, /* Código da Cooperativa */
-									 INPUT '1',            /* Código do Operador */
-									 INPUT par_nmdatela, /* Nome da Tela */
-									 INPUT 1,            /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
-									 INPUT par_nrdconta, /* Número da Conta */
-									 INPUT 1,            /* Titular da Conta */
-									 INPUT 0,            /* Número da Aplicação / Parâmetro Opcional */
-									 INPUT par_dtmvtolt, /* Data de Movimento */
-									 INPUT 0,            /* Código do Produto */
-									 INPUT 1,            /* Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas) */
-									 INPUT 0,            /* Identificador de Log (0 – Não / 1 – Sim) */
-									OUTPUT 0,            /* Saldo Total da Aplicação */
-									OUTPUT 0,            /* Saldo Total para Resgate */
-									OUTPUT 0,            /* Código da crítica */
-									OUTPUT "").          /* Descrição da crítica */
-		  
-		  CLOSE STORED-PROC pc_busca_saldo_aplicacoes
-				aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-		  
-		  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        DELETE PROCEDURE h-b1wgen0081.
+                END.
+         
+           DO TRANSACTION ON ERROR UNDO, RETRY:
+                 /*Busca Saldo Novas Aplicacoes*/
+                 
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                  RUN STORED-PROCEDURE pc_busca_saldo_aplicacoes
+                        aux_handproc = PROC-HANDLE NO-ERROR
+                                                                        (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                                         INPUT '1',            /* Código do Operador */
+                                                                         INPUT par_nmdatela, /* Nome da Tela */
+                                                                         INPUT 1,            /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+                                                                         INPUT par_nrdconta, /* Número da Conta */
+                                                                         INPUT 1,            /* Titular da Conta */
+                                                                         INPUT 0,            /* Número da Aplicação / Parâmetro Opcional */
+                                                                         INPUT par_dtmvtolt, /* Data de Movimento */
+                                                                         INPUT 0,            /* Código do Produto */
+                                                                         INPUT 1,            /* Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas) */
+                                                                         INPUT 0,            /* Identificador de Log (0 – Não / 1 – Sim) */
+                                                                        OUTPUT 0,            /* Saldo Total da Aplicação */
+                                                                        OUTPUT 0,            /* Saldo Total para Resgate */
+                                                                        OUTPUT 0,            /* Código da crítica */
+                                                                        OUTPUT "").          /* Descrição da crítica */
+                  
+                  CLOSE STORED-PROC pc_busca_saldo_aplicacoes
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-		  ASSIGN aux_cdcritic = 0
-				 aux_dscritic = ""
-				 aux_vlsldtot = 0
-				 aux_vlsldrgt = 0
-				 aux_cdcritic = pc_busca_saldo_aplicacoes.pr_cdcritic 
-								 WHEN pc_busca_saldo_aplicacoes.pr_cdcritic <> ?
-				 aux_dscritic = pc_busca_saldo_aplicacoes.pr_dscritic
-								 WHEN pc_busca_saldo_aplicacoes.pr_dscritic <> ?
-				 aux_vlsldtot = pc_busca_saldo_aplicacoes.pr_vlsldtot
-								 WHEN pc_busca_saldo_aplicacoes.pr_vlsldtot <> ?
-				 aux_vlsldrgt = pc_busca_saldo_aplicacoes.pr_vlsldrgt
-								 WHEN pc_busca_saldo_aplicacoes.pr_vlsldrgt <> ?.
+                  ASSIGN aux_cdcritic = 0
+                                 aux_dscritic = ""
+                                 aux_vlsldtot = 0
+                                 aux_vlsldrgt = 0
+                                 aux_cdcritic = pc_busca_saldo_aplicacoes.pr_cdcritic 
+                                                                 WHEN pc_busca_saldo_aplicacoes.pr_cdcritic <> ?
+                                 aux_dscritic = pc_busca_saldo_aplicacoes.pr_dscritic
+                                                                 WHEN pc_busca_saldo_aplicacoes.pr_dscritic <> ?
+                                 aux_vlsldtot = pc_busca_saldo_aplicacoes.pr_vlsldtot
+                                                                 WHEN pc_busca_saldo_aplicacoes.pr_vlsldtot <> ?
+                                 aux_vlsldrgt = pc_busca_saldo_aplicacoes.pr_vlsldrgt
+                                                                 WHEN pc_busca_saldo_aplicacoes.pr_vlsldrgt <> ?.
 
-		  IF aux_cdcritic <> 0   OR
-			 aux_dscritic <> ""  THEN
-			 DO:
-				 IF aux_dscritic = "" THEN
-					DO:
-					   FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
-										  NO-LOCK NO-ERROR.
-		
-					   IF AVAIL crapcri THEN
-						  ASSIGN aux_dscritic = crapcri.dscritic.
-		
-					END.
-		
-				 CREATE tt-erro.
-		
-				 ASSIGN tt-erro.cdcritic = aux_cdcritic
-						tt-erro.dscritic = aux_dscritic.
-		  
-				 RETURN "NOK".
-								
-			 END.
-											  
-		 ASSIGN aux_vlsldrdc = aux_vlsldrgt + aux_vlsldrdc.
-	 END.
-	 /*Fim Busca Saldo Novas Aplicacoes*/
+                  IF aux_cdcritic <> 0   OR
+                         aux_dscritic <> ""  THEN
+                         DO:
+                                 IF aux_dscritic = "" THEN
+                                        DO:
+                                           FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                                                                  NO-LOCK NO-ERROR.
+                
+                                           IF AVAIL crapcri THEN
+                                                  ASSIGN aux_dscritic = crapcri.dscritic.
+                
+                                        END.
+                
+                                 CREATE tt-erro.
+                
+                                 ASSIGN tt-erro.cdcritic = aux_cdcritic
+                                                tt-erro.dscritic = aux_dscritic.
+                  
+                                 RETURN "NOK".
+                                                                
+                         END.
+                                                                                          
+                 ASSIGN aux_vlsldrdc = aux_vlsldrgt + aux_vlsldrdc.
+         END.
+         /*Fim Busca Saldo Novas Aplicacoes*/
 
      
     RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT
@@ -16130,15 +16130,15 @@ PROCEDURE carrega_dados_proposta:
                     RETURN "NOK".
                 END.
                
-			FOR FIRST crapttl FIELDS(nmextttl) 
-			                   WHERE crapttl.cdcooper = par_cdcooper AND
-							         crapttl.nrdconta = par_nrdconta AND
-    							     crapttl.idseqttl = 2
-							         NO-LOCK:
+                        FOR FIRST crapttl FIELDS(nmextttl) 
+                                           WHERE crapttl.cdcooper = par_cdcooper AND
+                                                                 crapttl.nrdconta = par_nrdconta AND
+                                                                 crapttl.idseqttl = 2
+                                                                 NO-LOCK:
 
-			  ASSIGN aux_nmsegntl = crapttl.nmextttl.
+                          ASSIGN aux_nmsegntl = crapttl.nmextttl.
 
-			END.
+                        END.
 
             ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                   "99999999999"),"xxx.xxx.xxx-xx").
@@ -17829,7 +17829,7 @@ PROCEDURE contrato_cecred_bdn_visa:
       END.
          
     ELSE
-	  DO:
+          DO:
          RUN valor-extenso IN h-b1wgen9999 (INPUT craphcj.vllimglb,
                                             INPUT 45,
                                             INPUT 73,
@@ -18674,7 +18674,7 @@ PROCEDURE busca_dddebito:
         /**FOR EACH craptlc WHERE craptlc.cdcooper = par_cdcooper   AND
                          craptlc.cdadmcrd = par_cdadmcrd   AND
                          craptlc.dddebito > 0 AND
-						 craptlc.dddebito <> 27 /*Removido vencimento para o dia 27 SD: 636445*/ NO-LOCK:
+                                                 craptlc.dddebito <> 27 /*Removido vencimento para o dia 27 SD: 636445*/ NO-LOCK:
 
             ASSIGN aux[craptlc.dddebito] = craptlc.dddebito.*/
             
@@ -24022,8 +24022,8 @@ PROCEDURE altera_administradora:
              END. /* END IF crawcrd.cdgraupr = 9 THEN */
           
       END. /* END  FOR EACH crawcrd */
-	
-	 END.  /*  Fim da transacao  */
+        
+         END.  /*  Fim da transacao  */
   
    IF aux_flgexist = 0 THEN
       DO:
@@ -25065,12 +25065,12 @@ PROCEDURE verifica-pa-piloto-ws-bancob:
    /* Verificar se esta configurado para funcionar apenas no piloto */
    FIND FIRST crapprm 
         WHERE crapprm.cdcooper = 0            AND
-				      crapprm.nmsistem = "CRED"       AND
-							crapprm.cdacesso = "BANCOOB_USA_PA_PILOTO"
-							NO-LOCK NO-ERROR.
+                                      crapprm.nmsistem = "CRED"       AND
+                                                        crapprm.cdacesso = "BANCOOB_USA_PA_PILOTO"
+                                                        NO-LOCK NO-ERROR.
 
    /* Se nao existir ou nao estiver configurado, vamos considerar todos como piloto */
-	 IF NOT AVAILABLE crapprm THEN
+         IF NOT AVAILABLE crapprm THEN
       ASSIGN par_flpiloto = TRUE.
    ELSE
       DO:

@@ -1,4 +1,4 @@
-﻿/*.............................................................................
+/*............................................................................
 
    Programa: xb1wgen0028.p
    Autor   : Guilherme
@@ -72,9 +72,9 @@
                             
                21/08/2014 - Incluso parametro inpessoa na procedure valida_dados_cartao 
                            (Daniel) - SoftDesk  188116   
-						   
-			   24/09/2014 - Incluir parametro nmempres na chamada da cadastra_novo_cartao
-							(Renato - Supero) - SD 204631
+                                                   
+                           24/09/2014 - Incluir parametro nmempres na chamada da cadastra_novo_cartao
+                                                        (Renato - Supero) - SD 204631
                             
                02/10/2014 - Incluso parametro aux_bthabipj na procedure carrega_dados_inclusao 
                              (Vanessa) 
@@ -85,10 +85,10 @@
                             (James)
                             
                29/07/215 - Inclusao procedure "verifica_acesso_tela_taa". (James)             
-			   
-			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
-			                da descrição do departamento como parametro e 
-							passar o código (Renato Darosci)           
+                           
+                           06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+                                        da descrição do departamento como parametro e 
+                                                        passar o código (Renato Darosci)           
               
                29/03/2018 - Ajustes na proc valida_nova_proposta pra retornar flag
                             aux_solcoord e sempre retornar a temp-table erro.
