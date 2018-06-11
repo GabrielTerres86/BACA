@@ -1,5 +1,42 @@
 CREATE OR REPLACE PACKAGE CECRED.LANC0001 IS
 
+-- Tipo record para declaração de parâmetro de retorno da "pc_gerar_lancamento_conta"
+TYPE typ_reg_retorno IS RECORD (
+    rowidlct           ROWID,        -- rowid do registro do lançamento inserido
+    nmtabela           VARCHAR2(60), -- tabela onde o lançamento foi inserido (CRAPLCM, TBCC_LANCAMENTOS_BLOQUEADOS, ...)
+		progress_recid_lcm craplcm.progress_recid%TYPE,
+		rowidlot ROWID,
+    progress_recid_lot craplot.progress_recid%TYPE
+);
+
+--Buscar informacoes de lote
+CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
+                 ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                 ,pr_cdagenci IN craplot.cdagenci%TYPE
+                 ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                 ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+  SELECT craplot.cdcooper
+        ,craplot.dtmvtolt
+        ,craplot.nrdolote
+        ,craplot.cdagenci
+        ,craplot.nrseqdig
+        ,craplot.cdbccxlt
+        ,craplot.qtcompln
+        ,craplot.qtinfoln
+        ,craplot.vlcompcr
+        ,craplot.vlinfocr
+        ,craplot.vlcompdb
+        ,craplot.vlinfodb
+        ,craplot.tplotmov
+        ,craplot.rowid
+        ,craplot.progress_recid
+    FROM craplot craplot
+   WHERE craplot.cdcooper = pr_cdcooper
+     AND craplot.dtmvtolt = pr_dtmvtolt
+     AND craplot.cdagenci = pr_cdagenci
+     AND craplot.cdbccxlt = pr_cdbccxlt
+     AND craplot.nrdolote = pr_nrdolote;
+
 -- Retorna TRUE ou FALSE indicando se um histórico pode ser debitado de uma conta
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
                        , pr_nrdconta craplcm.nrdconta%TYPE
@@ -44,12 +81,58 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   -------------------------------------------------
                                   -- Dados do lote (Opcional)
                                   -------------------------------------------------
-                                  , pr_proclote IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_inprolot IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
                                   , pr_tplotmov IN  craplot.tplotmov%TYPE DEFAULT 0
-                                  , pr_cdcritic OUT PLS_INTEGER
-                                  , pr_dscritic OUT VARCHAR2
-																	, pr_rowid    OUT ROWID
-																	, pr_tabela   OUT VARCHAR2);
+																	, pr_tab_retorno OUT typ_reg_retorno
+																	, pr_incrineg OUT INTEGER           -- Indicador de crítica de negócio
+																	, pr_cdcritic OUT PLS_INTEGER
+                                  , pr_dscritic OUT VARCHAR2);
+
+-- Versão adaptada da procedure para chamadas em programas Progress
+PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
+                                  , pr_cdagenci IN  craplcm.cdagenci%TYPE
+                                  , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+                                  , pr_nrdolote IN  craplcm.nrdolote%TYPE
+                                  , pr_nrdconta IN  craplcm.nrdconta%TYPE
+                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                  , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                  , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
+                                  , pr_vllanmto IN  craplcm.vllanmto%TYPE
+                                  , pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+                                  , pr_cdpesqbb IN  craplcm.cdpesqbb%TYPE
+                                  , pr_vldoipmf IN  craplcm.vldoipmf%TYPE
+                                  , pr_nrautdoc IN  craplcm.nrautdoc%TYPE
+                                  , pr_nrsequni IN  craplcm.nrsequni%TYPE
+                                  , pr_cdbanchq IN  craplcm.cdbanchq%TYPE
+                                  , pr_cdcmpchq IN  craplcm.cdcmpchq%TYPE
+                                  , pr_cdagechq IN  craplcm.cdagechq%TYPE
+                                  , pr_nrctachq IN  craplcm.nrctachq%TYPE
+                                  , pr_nrlotchq IN  craplcm.nrlotchq%TYPE
+                                  , pr_sqlotchq IN  craplcm.sqlotchq%TYPE
+                                  , pr_dtrefere IN  craplcm.dtrefere%TYPE
+                                  , pr_hrtransa IN  craplcm.hrtransa%TYPE
+                                  , pr_cdoperad IN  craplcm.cdoperad%TYPE
+                                  , pr_dsidenti IN  craplcm.dsidenti%TYPE
+                                  , pr_cdcooper IN  craplcm.cdcooper%TYPE
+                                  , pr_nrdctitg IN  craplcm.nrdctitg%TYPE
+                                  , pr_dscedent IN  craplcm.dscedent%TYPE
+                                  , pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE
+                                  , pr_cdagetfn IN  craplcm.cdagetfn%TYPE
+                                  , pr_nrterfin IN  craplcm.nrterfin%TYPE
+                                  , pr_nrparepr IN  craplcm.nrparepr%TYPE
+                                  , pr_nrseqava IN  craplcm.nrseqava%TYPE
+                                  , pr_nraplica IN  craplcm.nraplica%TYPE
+                                  , pr_cdorigem IN  craplcm.cdorigem%TYPE
+                                  , pr_idlautom IN  craplcm.idlautom%TYPE
+                                  -------------------------------------------------
+                                  -- Dados do lote (Opcional)
+                                  -------------------------------------------------
+                                  , pr_inprolot  IN  INTEGER           -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE
+																	, pr_dsretorn_xml  OUT CLOB          -- Retorno em formato xml
+																	, pr_incrineg  OUT INTEGER           -- Indicador de crítica de negócio
+																	, pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2);        -- Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
 -- Inclui/Altera CRAPLOT (migrada da EMPR0001)
 PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
@@ -103,7 +186,7 @@ PROCEDURE pc_incluir_lote(pr_dtmvtolt   IN  craplot.dtmvtolt%TYPE DEFAULT NULL
                         , pr_nrautdoc   IN  craplot.nrautdoc%TYPE default 0
                         , pr_flgltsis   IN  craplot.flgltsis%TYPE default 0
                         , pr_cdcooper   IN  craplot.cdcooper%TYPE default 0
-                        , pr_rw_craplot OUT craplot%ROWTYPE -- Retorna o registro inserido na CRAPLOT
+                        , pr_rw_craplot OUT cr_craplot%ROWTYPE -- Retorna o registro inserido na CRAPLOT
                         , pr_cdcritic   OUT PLS_INTEGER
                         , pr_dscritic   OUT VARCHAR2);
 
@@ -139,36 +222,15 @@ TYPE typ_tab_atraso IS TABLE OF crapsld.qtddsdev%TYPE INDEX BY VARCHAR2(18);
 
 vr_tab_atraso typ_tab_atraso; -- tabela para manter os dias de atraso (estouro) da conta
 
---Buscar informacoes de lote
-CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
-                 ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
-                 ,pr_cdagenci IN craplot.cdagenci%TYPE
-                 ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
-                 ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
-  SELECT craplot.cdcooper
-        ,craplot.dtmvtolt
-        ,craplot.nrdolote
-        ,craplot.cdagenci
-        ,craplot.nrseqdig
-        ,craplot.cdbccxlt
-        ,craplot.qtcompln
-        ,craplot.qtinfoln
-        ,craplot.vlcompcr
-        ,craplot.vlinfocr
-        ,craplot.vlcompdb
-        ,craplot.vlinfodb
-        ,craplot.tplotmov
-        ,craplot.rowid
-    FROM craplot craplot
-   WHERE craplot.cdcooper = pr_cdcooper
-         AND craplot.dtmvtolt = pr_dtmvtolt
-         AND craplot.cdagenci = pr_cdagenci
-         AND craplot.cdbccxlt = pr_cdbccxlt
-         AND craplot.nrdolote = pr_nrdolote;
 rw_craplot cr_craplot%ROWTYPE;
 
+-- Indica se as regras de negócio do tratamento do prejuízo já estão ativas
+vr_inatvprj BOOLEAN := NVL(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                         ,pr_nmsistem => 'CRED'
+                                                         ,pr_cdacesso => 'DT_CORTE_REGCRE'), 'N') = 'S';
+
 -- Obtém dados do histórico (CRAPHIS)
-FUNCTION fn_get_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
+FUNCTION fn_obtem_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
                               , pr_cdhistor craplcm.cdhistor%TYPE)
   RETURN typ_reg_historico AS vr_reg_historico typ_reg_historico;
 
@@ -197,10 +259,10 @@ BEGIN
      END IF;
 
      RETURN vr_reg_historico;
-END fn_get_dados_historico;
+END fn_obtem_dados_historico;
 
 -- Obtém dias em atraso da conta (estouro)
-FUNCTION fn_get_dias_atraso(pr_cdcooper crapsld.cdcooper%TYPE
+FUNCTION fn_obtem_dias_atraso(pr_cdcooper crapsld.cdcooper%TYPE
                           , pr_nrdconta crapsld.nrdconta%TYPE)
   RETURN crapsld.qtddsdev%TYPE AS vr_dias_atraso crapsld.qtddsdev%TYPE;
 
@@ -210,47 +272,50 @@ FUNCTION fn_get_dias_atraso(pr_cdcooper crapsld.cdcooper%TYPE
     FROM crapsld sld
    WHERE sld.cdcooper = pr_cdcooper
      AND sld.nrdconta = pr_nrdconta;
-		 
+
 	vr_chvconta VARCHAR2(18);  -- Chave para indexação da tabela de dias de atraso
-		 
+
 BEGIN
 	vr_chvconta := lpad(pr_cdcooper, 3, '0') || lpad(pr_nrdconta, 15, '0');
-	
+
 	IF vr_tab_atraso.exists(vr_chvconta) THEN
 		vr_dias_atraso := vr_tab_atraso(vr_chvconta);
 	ELSE
 		OPEN cr_saldo;
     FETCH cr_saldo INTO vr_dias_atraso;
     CLOSE cr_saldo;
-		
+
 		vr_tab_atraso(vr_chvconta) := vr_dias_atraso;
 	END IF;
-	
+
 	RETURN vr_dias_atraso;
-END fn_get_dias_atraso ;
+END fn_obtem_dias_atraso ;
 
 -- Verifica se pode debitar um histórico em uma conta
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
                        , pr_nrdconta craplcm.nrdconta%TYPE
                        , pr_cdhistor craplcm.cdhistor%TYPE)
-  RETURN BOOLEAN AS vr_pode_debitar BOOLEAN;  
+  RETURN BOOLEAN AS vr_pode_debitar BOOLEAN;
 
   ----- >>> VARIÁVEIS <<<-----
-  vr_qtd_dias_estouro crapsld.qtddsdev%TYPE; -- Quantidade de dias em que a conta está devedora (estourada) para verificação
   vr_reg_historico typ_reg_historico;
 
 BEGIN
-  vr_qtd_dias_estouro := fn_get_dias_atraso(pr_cdcooper, pr_nrdconta);
-
-  vr_reg_historico := fn_get_dados_historico(pr_cdcooper, pr_cdhistor);
-
-  vr_pode_debitar := TRUE;
-
-  -- Se a conta está estourada há 60 dias ou mais e o histórico não permite debitar
-  -- (aumentar o estouro da conta)
-  IF vr_qtd_dias_estouro >= 60 AND vr_reg_historico.inestoura_conta = 0 THEN
-    vr_pode_debitar := FALSE;
-  END IF;
+	vr_pode_debitar := TRUE;
+	
+	-- Se as regras de negócio do prejuízo já estão ativadas
+	IF vr_inatvprj THEN
+		vr_reg_historico := fn_obtem_dados_historico(pr_cdcooper, pr_cdhistor);
+		
+		-- Confere se o histórico em questão é de Débito
+		IF vr_reg_historico.indebcre = 'D' THEN	
+			-- Se a conta está em prejuízo e o histórico não permite aumentar o estouro da conta
+			IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) 
+			AND vr_reg_historico.inestoura_conta = 0 THEN
+				vr_pode_debitar := FALSE;
+			END IF;
+		END IF;
+	END IF;
 
   RETURN vr_pode_debitar;
 END fn_pode_debitar;
@@ -294,12 +359,12 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   -------------------------------------------------
                                   -- Dados do lote (Opcional)
                                   -------------------------------------------------
-                                  , pr_proclote  IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_inprolot  IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
                                   , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0
-                                  , pr_cdcritic  OUT PLS_INTEGER
-                                  , pr_dscritic  OUT VARCHAR2
-																	, pr_rowid     OUT ROWID             -- Rowid do registro inserido 
-																	, pr_tabela    OUT VARCHAR2) IS      -- Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+																	, pr_tab_retorno OUT typ_reg_retorno   -- Record com os dados retornados pela procedure
+																	, pr_incrineg  OUT INTEGER           -- Indicador de crítica de negócio
+																	, pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2) IS      -- Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 BEGIN
    /* ............................................................................
         Programa: pc_gerar_lancamento_conta
@@ -320,143 +385,350 @@ DECLARE
     vr_reg_historico  typ_reg_historico;       -- Registro para armazenar os dados do histórico
     vr_nrseqdig       craplot.nrseqdig%TYPE;   -- Aramazena o valor do campo "nrseqdig" da CRAPLOT para referência na CRAPLCM
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
+		vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
+
     vr_exc_erro       EXCEPTION;
-
 BEGIN
-	-- Inicialização de variáveis/parâmetros
-  pr_cdcritic := 0;
-  pr_dscritic := '';
-	pr_tabela   := 'CRAPLCM'; -- Fluxo padrão insere na CRAPLCM
-  vr_nrseqdig := pr_nrseqdig;
-	
- 
-  vr_reg_historico := fn_get_dados_historico(pr_cdcooper, pr_cdhistor);
+		-- Inicialização de variáveis/parâmetros
+		pr_cdcritic := 0;
+		pr_dscritic := '';
+		pr_incrineg := 0;
+		pr_tab_retorno.nmtabela := 'CRAPLCM'; -- Fluxo padrão insere na CRAPLCM
+		vr_nrseqdig := pr_nrseqdig;
 
-  -- Se o lançamento é um débito e o histórico não permite estourar a conta
-  IF vr_reg_historico.indebcre = 'D' AND vr_reg_historico.inestoura_conta = 0 THEN
-		-- Se a conta está estourada e não permite debitar
-		IF NOT fn_pode_debitar(pr_cdcooper, pr_nrdconta, pr_cdhistor) THEN
-       pr_cdcritic := 1139;
-       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic);
-       RETURN;
-		-- ELSIF vr_reg_historico.indebcre = 'C' AND fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN
+    -- Carrega dados do histórico do lançamento
+		vr_reg_historico := fn_obtem_dados_historico(pr_cdcooper, pr_cdhistor);
+
+		-- Se o lançamento é um débito, o histórico não permite estourar e a conta está em prejuízo
+		-- (e se as regras de negócio do prejuízo já estão ativas)
+		IF vr_reg_historico.indebcre = 'D' AND vr_inatvprj THEN
+			-- Se a conta está estourada e não permite debitar
+			IF NOT fn_pode_debitar(pr_cdcooper, pr_nrdconta, pr_cdhistor) THEN
+				 pr_cdcritic := 1134; -- 1134 - Nao foi possivel realizar debito.
+				 pr_incrineg := 1;    -- Indica que trata-se de crítica de negócio e não erro de BD
+				 RAISE vr_exc_erro;
+			END IF;
 		END IF;
-  END IF;
 
-  IF pr_proclote = 1 THEN -- insere/altera lote
-    IF vr_reg_historico.indebcre = 'C' THEN
-      vr_flgcredi := TRUE;
-    ELSE
-      vr_flgcredi := FALSE;
-    END IF;
+    -- processa lote
+		IF pr_inprolot = 1 THEN
+			IF vr_reg_historico.indebcre = 'C' THEN
+				vr_flgcredi := TRUE;
+			ELSE
+				vr_flgcredi := FALSE;
+			END IF;
 
-    pc_inclui_altera_lote(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
-                         ,pr_dtmvtolt => pr_dtmvtolt   --Data Emprestimo
-                         ,pr_cdagenci => pr_cdagenci   --Codigo Agencia
-                         ,pr_cdbccxlt => pr_cdbccxlt   --Codigo Caixa
-                         ,pr_nrdolote => pr_nrdolote   --Numero Lote
-                         ,pr_tplotmov => pr_tplotmov   --Tipo movimento
-                         ,pr_cdoperad => pr_cdoperad   --Operador
-                         ,pr_cdhistor => pr_cdhistor   --Codigo Historico
-                         ,pr_dtmvtopg => pr_dtmvtolt   --Data Pagamento Emprestimo
-                         ,pr_vllanmto => pr_vllanmto   --Valor Lancamento
-                         ,pr_flgincre => TRUE          --Incremento
-                         ,pr_flgcredi => vr_flgcredi   --Credito
-                         ,pr_nrseqdig => vr_nrseqdig   --Numero Sequencia
-                         ,pr_cdcritic => pr_cdcritic   --Codigo Erro
-                         ,pr_dscritic => pr_dscritic); --Descricao Erro
+			pc_inclui_altera_lote(pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
+													 ,pr_dtmvtolt => pr_dtmvtolt   --Data Emprestimo
+													 ,pr_cdagenci => pr_cdagenci   --Codigo Agencia
+													 ,pr_cdbccxlt => pr_cdbccxlt   --Codigo Caixa
+													 ,pr_nrdolote => pr_nrdolote   --Numero Lote
+													 ,pr_tplotmov => pr_tplotmov   --Tipo movimento
+													 ,pr_cdoperad => pr_cdoperad   --Operador
+													 ,pr_cdhistor => pr_cdhistor   --Codigo Historico
+													 ,pr_dtmvtopg => pr_dtmvtolt   --Data Pagamento Emprestimo
+													 ,pr_vllanmto => pr_vllanmto   --Valor Lancamento
+													 ,pr_flgincre => TRUE          --Incremento
+													 ,pr_flgcredi => vr_flgcredi   --Credito
+													 ,pr_nrseqdig => vr_nrseqdig   --Numero Sequencia
+													 ,pr_cdcritic => pr_cdcritic   --Codigo Erro
+													 ,pr_dscritic => pr_dscritic); --Descricao Erro
 
-    --Se ocorreu erro
-    IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-  END IF;
+			--Se ocorreu erro
+			IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+				RAISE vr_exc_erro;
+			END IF;
 
-  INSERT INTO craplcm (
-      dtmvtolt
-    , cdagenci
-    , cdbccxlt
-    , nrdolote
-    , nrdconta
-    , nrdocmto
-    , cdhistor
-    , nrseqdig
-    , vllanmto
-    , nrdctabb
-    , cdpesqbb
-    , vldoipmf
-    , nrautdoc
-    , nrsequni
-    , cdbanchq
-    , cdcmpchq
-    , cdagechq
-    , nrctachq
-    , nrlotchq
-    , sqlotchq
-    , dtrefere
-    , hrtransa
-    , cdoperad
-    , dsidenti
-    , cdcooper
-    , nrdctitg
-    , dscedent
-    , cdcoptfn
-    , cdagetfn
-    , nrterfin
-    , nrparepr
-    , nrseqava
-    , nraplica
-    , cdorigem
-    , idlautom
-  )
-  VALUES (
-      pr_dtmvtolt
-    , pr_cdagenci
-    , pr_cdbccxlt
-    , pr_nrdolote
-    , pr_nrdconta
-    , pr_nrdocmto
-    , pr_cdhistor
-    , vr_nrseqdig
-    , pr_vllanmto
-    , pr_nrdctabb
-    , pr_cdpesqbb
-    , pr_vldoipmf
-    , pr_nrautdoc
-    , pr_nrsequni
-    , pr_cdbanchq
-    , pr_cdcmpchq
-    , pr_cdagechq
-    , pr_nrctachq
-    , pr_nrlotchq
-    , pr_sqlotchq
-    , pr_dtrefere
-    , pr_hrtransa
-    , pr_cdoperad
-    , pr_dsidenti
-    , pr_cdcooper
-    , pr_nrdctitg
-    , pr_dscedent
-    , pr_cdcoptfn
-    , pr_cdagetfn
-    , pr_nrterfin
-    , pr_nrparepr
-    , pr_nrseqava
-    , pr_nraplica
-    , pr_cdorigem
-    , pr_idlautom
-  )
-	RETURNING ROWID INTO pr_rowid;
+			OPEN cr_craplot(pr_cdcooper => pr_cdcooper
+                 ,pr_dtmvtolt => pr_dtmvtolt
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_cdbccxlt => pr_cdbccxlt
+                 ,pr_nrdolote => pr_nrdolote);
+			FETCH cr_craplot INTO rw_craplot;
+			CLOSE cr_craplot;
 
+			pr_tab_retorno.rowidlot := rw_craplot.rowid;
+      pr_tab_retorno.progress_recid_lot := rw_craplot.progress_recid;
+		END IF;
 
+		INSERT INTO craplcm (
+				dtmvtolt
+			, cdagenci
+			, cdbccxlt
+			, nrdolote
+			, nrdconta
+			, nrdocmto
+			, cdhistor
+			, nrseqdig
+			, vllanmto
+			, nrdctabb
+			, cdpesqbb
+			, vldoipmf
+			, nrautdoc
+			, nrsequni
+			, cdbanchq
+			, cdcmpchq
+			, cdagechq
+			, nrctachq
+			, nrlotchq
+			, sqlotchq
+			, dtrefere
+			, hrtransa
+			, cdoperad
+			, dsidenti
+			, cdcooper
+			, nrdctitg
+			, dscedent
+			, cdcoptfn
+			, cdagetfn
+			, nrterfin
+			, nrparepr
+			, nrseqava
+			, nraplica
+			, cdorigem
+			, idlautom
+		)
+		VALUES (
+				pr_dtmvtolt
+			, pr_cdagenci
+			, pr_cdbccxlt
+			, pr_nrdolote
+			, pr_nrdconta
+			, pr_nrdocmto
+			, pr_cdhistor
+			, vr_nrseqdig
+			, pr_vllanmto
+			, pr_nrdctabb
+			, pr_cdpesqbb
+			, pr_vldoipmf
+			, pr_nrautdoc
+			, pr_nrsequni
+			, pr_cdbanchq
+			, pr_cdcmpchq
+			, pr_cdagechq
+			, pr_nrctachq
+			, pr_nrlotchq
+			, pr_sqlotchq
+			, pr_dtrefere
+			, pr_hrtransa
+			, pr_cdoperad
+			, pr_dsidenti
+			, pr_cdcooper
+			, pr_nrdctitg
+			, pr_dscedent
+			, pr_cdcoptfn
+			, pr_cdagetfn
+			, pr_nrterfin
+			, pr_nrparepr
+			, pr_nrseqava
+			, pr_nraplica
+			, pr_cdorigem
+			, pr_idlautom
+		)
+		RETURNING
+		  ROWID, progress_recid
+		INTO
+		  pr_tab_retorno.rowidlct, pr_tab_retorno.progress_recid_lcm;
+
+    -- Se é um lançamento de crédito e a conta corrente está em prejuízo
+		-- (e se as regras de negócio do prejuízo já estão ativas)
+    IF vr_reg_historico.indebcre = 'C' AND vr_inatvprj THEN
+			-- Identifica se a conta está em prejuízo
+  		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
+			
+			IF vr_inprejuz THEN
+				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
+
+				-- Realizar lançamento referente ao débito na CRAPLOT
+				-- Realizar lançamento de débito na CRAPLCM
+
+				-- Realizar lançamento de crédito na TBCC_PREJUIZO_LANCAMENTO
+			END IF;
+		END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := 'Erro: ' || ' pc_gerar_lancamento_conta - ' || pr_dscritic || ')';
+			-- Apenas retornar a variável de saida
+			pr_cdcritic := NVL(pr_cdcritic, 0);
+
+			IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
+				pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+			END IF;
+		WHEN DUP_VAL_ON_INDEX THEN
+			pr_cdcritic := 92; -- Lançamento já existe
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
   END;
 END pc_gerar_lancamento_conta;
+
+-- Versão adaptada da procedure para chamadas em programas Progress
+PROCEDURE pc_gerar_lancto_conta_prog(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
+                                  , pr_cdagenci IN  craplcm.cdagenci%TYPE
+                                  , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+                                  , pr_nrdolote IN  craplcm.nrdolote%TYPE
+                                  , pr_nrdconta IN  craplcm.nrdconta%TYPE
+                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                  , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                  , pr_nrseqdig IN  craplcm.nrseqdig%TYPE
+                                  , pr_vllanmto IN  craplcm.vllanmto%TYPE
+                                  , pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+                                  , pr_cdpesqbb IN  craplcm.cdpesqbb%TYPE
+                                  , pr_vldoipmf IN  craplcm.vldoipmf%TYPE
+                                  , pr_nrautdoc IN  craplcm.nrautdoc%TYPE
+                                  , pr_nrsequni IN  craplcm.nrsequni%TYPE
+                                  , pr_cdbanchq IN  craplcm.cdbanchq%TYPE
+                                  , pr_cdcmpchq IN  craplcm.cdcmpchq%TYPE
+                                  , pr_cdagechq IN  craplcm.cdagechq%TYPE
+                                  , pr_nrctachq IN  craplcm.nrctachq%TYPE
+                                  , pr_nrlotchq IN  craplcm.nrlotchq%TYPE
+                                  , pr_sqlotchq IN  craplcm.sqlotchq%TYPE
+                                  , pr_dtrefere IN  craplcm.dtrefere%TYPE
+                                  , pr_hrtransa IN  craplcm.hrtransa%TYPE
+                                  , pr_cdoperad IN  craplcm.cdoperad%TYPE
+                                  , pr_dsidenti IN  craplcm.dsidenti%TYPE
+                                  , pr_cdcooper IN  craplcm.cdcooper%TYPE
+                                  , pr_nrdctitg IN  craplcm.nrdctitg%TYPE
+                                  , pr_dscedent IN  craplcm.dscedent%TYPE
+                                  , pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE
+                                  , pr_cdagetfn IN  craplcm.cdagetfn%TYPE
+                                  , pr_nrterfin IN  craplcm.nrterfin%TYPE
+                                  , pr_nrparepr IN  craplcm.nrparepr%TYPE
+                                  , pr_nrseqava IN  craplcm.nrseqava%TYPE
+                                  , pr_nraplica IN  craplcm.nraplica%TYPE
+                                  , pr_cdorigem IN  craplcm.cdorigem%TYPE
+                                  , pr_idlautom IN  craplcm.idlautom%TYPE
+                                  -------------------------------------------------
+                                  -- Dados do lote (Opcional)
+                                  -------------------------------------------------
+                                  , pr_inprolot  IN  INTEGER           -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE
+																	, pr_dsretorn_xml  OUT CLOB          -- Retorno em formato xml
+																	, pr_incrineg  OUT INTEGER           -- Indicador de crítica de negócio
+																	, pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2) IS      -- Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+   /* ............................................................................
+        Programa: pc_gerar_lancto_conta_prog
+        Sistema : Ayllos
+        Sigla   : CRED
+        Autor   : Reginaldo/AMcom
+        Data    : Abril/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Versão adaptada da procedure para chamada em programas Progress
+        Observacao: -----
+        Alteracoes:
+    ..............................................................................*/
+  --------------> VARIAVEIS <-----------------
+  vr_cdcritic PLS_INTEGER;
+  vr_dscritic VARCHAR2(1000);
+  vr_exc_erro EXCEPTION;
+
+  vr_rec_retorno  typ_reg_retorno; -- Registro com os dados retornados pela procedure "pc_gerar_lancamento_conta"
+  vr_dstexto      VARCHAR2(32767);
+  vr_string       VARCHAR2(32767);
+
+BEGIN
+		pc_gerar_lancamento_conta(pr_dtmvtolt => pr_dtmvtolt
+															, pr_cdagenci => pr_cdagenci
+															, pr_cdbccxlt => pr_cdbccxlt
+															, pr_nrdolote => pr_nrdolote
+															, pr_nrdconta => pr_nrdconta
+															, pr_nrdocmto => pr_nrdocmto
+															, pr_cdhistor => pr_cdhistor
+															, pr_nrseqdig => pr_nrseqdig
+															, pr_vllanmto => pr_vllanmto
+															, pr_nrdctabb => pr_nrdctabb
+															, pr_cdpesqbb => pr_cdpesqbb
+															, pr_vldoipmf => pr_vldoipmf
+															, pr_nrautdoc => pr_nrautdoc
+															, pr_nrsequni => pr_nrsequni
+															, pr_cdbanchq => pr_cdbanchq
+															, pr_cdcmpchq => pr_cdcmpchq
+															, pr_cdagechq => pr_cdagechq
+															, pr_nrctachq => pr_nrctachq
+															, pr_nrlotchq => pr_nrlotchq
+															, pr_sqlotchq => pr_sqlotchq
+															, pr_dtrefere => pr_dtrefere
+															, pr_hrtransa => pr_hrtransa
+															, pr_cdoperad => pr_cdoperad
+															, pr_dsidenti => pr_dsidenti
+															, pr_cdcooper => pr_cdcooper
+															, pr_nrdctitg => pr_nrdctitg
+															, pr_dscedent => pr_dscedent
+															, pr_cdcoptfn => pr_cdcoptfn
+															, pr_cdagetfn => pr_cdagetfn
+															, pr_nrterfin => pr_nrterfin
+															, pr_nrparepr => pr_nrparepr
+															, pr_nrseqava => pr_nrseqava
+															, pr_nraplica => pr_nraplica
+															, pr_cdorigem => pr_cdorigem
+															, pr_idlautom => pr_idlautom
+															, pr_inprolot => pr_inprolot
+															, pr_tplotmov => pr_tplotmov
+                              , pr_tab_retorno => vr_rec_retorno
+															, pr_incrineg => pr_incrineg
+															, pr_cdcritic => vr_cdcritic
+															, pr_dscritic => vr_dscritic);
+
+  IF TRIM(vr_dscritic) IS NOT NULL OR
+     nvl(vr_cdcritic,0) > 0 THEN
+    RAISE vr_exc_erro;
+  END IF;
+	
+	COMMIT;
+
+  -- Criar documento XML
+  dbms_lob.createtemporary(pr_dsretorn_xml, TRUE);
+  dbms_lob.open(pr_dsretorn_xml, dbms_lob.lob_readwrite);
+  vr_dstexto := NULL;
+
+  -- Insere o cabeçalho do XML
+  gene0002.pc_escreve_xml(pr_xml            => pr_dsretorn_xml
+                         ,pr_texto_completo => vr_dstexto
+                         ,pr_texto_novo     => '<root>');
+
+  --Listar dados
+  vr_string := '<lancamento>'||
+                   '<rowid_lcm> '|| vr_rec_retorno.rowidlct  ||'</rowid_lcm>'||
+                   '<recid_lcm> '|| vr_rec_retorno.progress_recid_lcm  ||'</recid_lcm>'||
+                   '<nmtabela>  '|| vr_rec_retorno.nmtabela  ||'</nmtabela>'||
+                   '<rowid_lot> '|| vr_rec_retorno.rowidlot  ||'</rowid_lot>'||
+                   '<recid_lot> '|| vr_rec_retorno.progress_recid_lot  ||'</recid_lot>'||
+               '</lancamento>';
+
+  -- Escrever no XML
+  gene0002.pc_escreve_xml(pr_xml            => pr_dsretorn_xml
+                         ,pr_texto_completo => vr_dstexto
+                         ,pr_texto_novo     => vr_string
+                         ,pr_fecha_xml      => FALSE);
+
+  -- Encerrar a tag raiz
+  gene0002.pc_escreve_xml(pr_xml            => pr_dsretorn_xml
+                         ,pr_texto_completo => vr_dstexto
+                         ,pr_texto_novo     => '</root>'
+                         ,pr_fecha_xml      => TRUE);
+
+
+EXCEPTION
+  WHEN vr_exc_erro THEN
+    -- Se foi retornado apenas código
+    IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    END IF;
+    --Variavel de erro recebe erro ocorrido
+    pr_cdcritic := nvl(vr_cdcritic,0);
+    pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+
+    -- Montar descrição de erro não tratado
+    pr_dscritic := 'Erro não tratado na pc_gerar_lancto_conta_prog ' ||
+                   SQLERRM;
+END pc_gerar_lancto_conta_prog;
 
 -- Incluir ou atualizar o lote (versão resumida - migrada da EMPR0001)
 PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
@@ -489,6 +761,7 @@ BEGIN
      Objetivo  : Rotina para Incluir ou atualizar o lote
 
      Alteracoes: 25/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
+		             10/05/2018 - Migração da package EMPR0001 para a LANC0001 (Reginaldo - AMcom)
 
   ............................................................................. */
 
@@ -698,7 +971,7 @@ PROCEDURE pc_incluir_lote(pr_dtmvtolt   IN  craplot.dtmvtolt%TYPE DEFAULT NULL
                         , pr_nrautdoc   IN  craplot.nrautdoc%TYPE default 0
                         , pr_flgltsis   IN  craplot.flgltsis%TYPE default 0
                         , pr_cdcooper   IN  craplot.cdcooper%TYPE default 0
-                        , pr_rw_craplot OUT craplot%ROWTYPE -- Retorna o registro inserido na CRAPLOT
+                        , pr_rw_craplot OUT cr_craplot%ROWTYPE -- Retorna dados do registro inserido na CRAPLOT
                         , pr_cdcritic   OUT PLS_INTEGER
                         , pr_dscritic   OUT VARCHAR2) IS
 
@@ -716,15 +989,6 @@ BEGIN
         Observacao: -----
         Alteracoes:
     ..............................................................................*/
-DECLARE
-
-  -- Recupera o registro inserido na CRAPLOT para retornar no parâmetro "pr_rw_craplot"
-  CURSOR cr_craplot(pr_progress_recid craplot.progress_recid%TYPE) IS
-  SELECT lot.*
-    FROM craplot lot
-   WHERE lot.progress_recid = pr_progress_recid;
-
-  vr_progress_recid craplot.progress_recid%TYPE; -- Guarda o PROGRESS_RECID do registro inserido na CRAPLOT
 
 BEGIN
   pr_cdcritic := 0;
@@ -802,79 +1066,37 @@ BEGIN
     , pr_flgltsis
     , pr_cdcooper
   )
-  RETURNING
-	  dtmvtolt
-    , cdagenci
-    , cdbccxlt
-    , nrdolote
-    , nrseqdig
-    , qtcompln
-    , qtinfoln
-    , tplotmov
-    , vlcompcr
-    , vlcompdb
-    , vlinfodb
-    , vlinfocr
-    , dtmvtopg
-    , tpdmoeda
-    , cdoperad
-    , cdhistor
-    , cdbccxpg
-    , nrdcaixa
-    , cdopecxa
-    , qtinfocc
-    , qtcompcc
-    , vlinfocc
-    , vlcompcc
-    , qtcompcs
-    , qtinfocs
-    , vlcompcs
-    , vlinfocs
-    , qtcompci
-    , qtinfoci
-    , vlcompci
-    , vlinfoci
-    , nrautdoc
-    , flgltsis
-    , cdcooper
-		, progress_recid
+  RETURNING -- Retorna dados do registro inserido
+	     cdcooper
+			,dtmvtolt
+			,nrdolote
+			,cdagenci
+			,nrseqdig
+			,cdbccxlt
+			,qtcompln
+			,qtinfoln
+			,vlcompcr
+			,vlinfocr
+			,vlcompdb
+			,vlinfodb
+			,tplotmov
+			,rowid
 	INTO
-		pr_rw_craplot.dtmvtolt
-    , pr_rw_craplot.cdagenci
-    , pr_rw_craplot.cdbccxlt
-    , pr_rw_craplot.nrdolote
-    , pr_rw_craplot.nrseqdig
-    , pr_rw_craplot.qtcompln
-    , pr_rw_craplot.qtinfoln
-    , pr_rw_craplot.tplotmov
-    , pr_rw_craplot.vlcompcr
-    , pr_rw_craplot.vlcompdb
-    , pr_rw_craplot.vlinfodb
-    , pr_rw_craplot.vlinfocr
-    , pr_rw_craplot.dtmvtopg
-    , pr_rw_craplot.tpdmoeda
-    , pr_rw_craplot.cdoperad
-    , pr_rw_craplot.cdhistor
-    , pr_rw_craplot.cdbccxpg
-    , pr_rw_craplot.nrdcaixa
-    , pr_rw_craplot.cdopecxa
-    , pr_rw_craplot.qtinfocc
-    , pr_rw_craplot.qtcompcc
-    , pr_rw_craplot.vlinfocc
-    , pr_rw_craplot.vlcompcc
-    , pr_rw_craplot.qtcompcs
-    , pr_rw_craplot.qtinfocs
-    , pr_rw_craplot.vlcompcs
-    , pr_rw_craplot.vlinfocs
-    , pr_rw_craplot.qtcompci
-    , pr_rw_craplot.qtinfoci
-    , pr_rw_craplot.vlcompci
-    , pr_rw_craplot.vlinfoci
-    , pr_rw_craplot.nrautdoc
-    , pr_rw_craplot.flgltsis
-    , pr_rw_craplot.cdcooper
-		, pr_rw_craplot.progress_recid
-	; -- Retorna o reigstro inserido
+		 pr_rw_craplot.cdcooper
+		,pr_rw_craplot.dtmvtolt
+		,pr_rw_craplot.nrdolote
+		,pr_rw_craplot.cdagenci
+		,pr_rw_craplot.nrseqdig
+		,pr_rw_craplot.cdbccxlt
+		,pr_rw_craplot.qtcompln
+		,pr_rw_craplot.qtinfoln
+		,pr_rw_craplot.vlcompcr
+		,pr_rw_craplot.vlinfocr
+		,pr_rw_craplot.vlcompdb
+		,pr_rw_craplot.vlinfodb
+		,pr_rw_craplot.tplotmov
+		,pr_rw_craplot.rowid
+	;
 
   EXCEPTION
     WHEN OTHERS THEN
