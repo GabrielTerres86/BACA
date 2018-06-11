@@ -489,8 +489,8 @@ FOR EACH tt-extr-rdca NO-LOCK:
                                        "<dtmvtolt>" + STRING(tt-extr-rdca.dtmvtolt,"99/99/9999") + "</dtmvtolt>" +
                                        "<dshistor>" + TRIM(STRING(tt-extr-rdca.dsextrat)) + "</dshistor>" +
                                        "<nrdocmto>" + (IF  tt-extr-rdca.nrdocmto = 0  THEN " " ELSE TRIM(STRING(tt-extr-rdca.nrdocmto,"zzz,zzz,zz9")) ) + "</nrdocmto>" +
-                                       "<indebcre>" + TRIM(STRING(tt-extr-rdca.indebcre)) + "</indebcre>" +
-                                       "<vllanmto>" + (IF  tt-extr-rdca.vllanmto = 0  THEN " " ELSE TRIM(STRING(tt-extr-rdca.vllanmto,"zzz,zzz,zz9.99-")) ) + "</vllanmto>" +
+                                       "<indebcre>" + TRIM(STRING(tt-extr-rdca.indebcre)) + "</indebcre>" +                                       
+                                       "<vllanmto>" + TRIM(STRING(tt-extr-rdca.vllanmto,"zzz,zzz,zz9.99-")) + "</vllanmto>" +
                                        "<vlsldapl>" + TRIM(STRING(tt-extr-rdca.vlsldapl,"zzz,zzz,zz9.99-")) + "</vlsldapl>" +
                                        "<txaplica>" + (IF  tt-extr-rdca.txaplica = 0  THEN " " ELSE TRIM(STRING(tt-extr-rdca.txaplica,"zz9.999999"))) + "</txaplica>" +
                                        "<sldresga>" + TRIM(STRING(aux_sldresga,"zzz,zzz,zzz,zz9.99-")) + "</sldresga>" +
