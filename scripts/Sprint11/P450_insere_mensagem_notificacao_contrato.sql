@@ -23,7 +23,7 @@ begin
     (VR_CDMENSAGEM + 1,
      8,
      'Aviso sobre seu seguro',
-     'Seguro: Aviso sobre seu seguro. Clique e saiba mais.',
+     'Cancelamento de SEGURO',
      '<p>Cooperado, seu seguro #descseguro foi cancelado por falta de pagamento.</p>
 <p>Duvidas consulte seu posto de atendimento.</p>',
      2,
