@@ -316,7 +316,9 @@
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
                              
-                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).  
+                
+                11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
                      
 .............................................................................*/
 
@@ -5030,6 +5032,7 @@ PROCEDURE retorna_docs_liberados:
 
                     FOR EACH craptdb WHERE craptdb.cdcooper = crapbdt.cdcooper AND  
                                            craptdb.nrdconta = crapbdt.nrdconta AND 
+										   craptdb.dtlibbdt <> ?               AND
                                            craptdb.nrborder = crapbdt.nrborder NO-LOCK:
                         
                         aux_vltittot = aux_vltittot + craptdb.vltitulo.
