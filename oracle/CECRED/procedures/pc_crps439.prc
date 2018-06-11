@@ -207,14 +207,17 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
            crapseg.dtultpag,
            crapseg.dtmvtolt,
 					 crapseg.dtfimvig,
-           crapseg.rowid
-      from crapseg
+           crapseg.rowid,
+           sld.qtddsdev
+      from crapseg, crapsld sld
      where crapseg.cdcooper = pr_cdcooper
        and crapseg.nrdconta > pr_nrctares
        and crapseg.tpseguro >= 11
        and crapseg.indebito = 0
        and (   crapseg.dtdebito <= pr_dtprdebi
             or crapseg.dtprideb = pr_dtmvtolt)
+       AND sld.cdcooper  = crapseg.cdcooper
+       AND sld.nrdconta  = crapseg.nrdconta
      order by dtmvtolt, cdagenci, cdbccxlt, nrdolote, nrdconta, nrctrseg;
   rw_crapseg     cr_crapseg%rowtype;
 	
@@ -812,24 +815,30 @@ begin
     vr_lcm_nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
     vr_lcm_vllanmto := vr_vlpreseg;
 
-    LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
-                                      , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
-                                      , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
-                                      , pr_dtmvtolt => vr_dtmvtolt
-                                      , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
-                                      , pr_nrdconta => rw_crapseg.nrdconta
-                                      , pr_nrdctabb => rw_crapseg.nrdconta
-                                      , pr_nrdctitg => gene0002.fn_mask(rw_crapseg.nrdconta, '99999999')
-                                      , pr_nrdocmto => rw_crapseg.nrctrseg
-                                      , pr_nrdolote => 4151 --rw_craplot.nrdolote
-                                      , pr_cdcooper => pr_cdcooper
-                                      , pr_vllanmto => vr_vlpreseg
-                                      , pr_inprolot => 1   -- processa o lote na própria procedure
-                                      , pr_tplotmov => 1
-                                      , pr_tab_retorno => vr_tab_retorno
-                                      , pr_incrineg => vr_incrineg
-                                      , pr_cdcritic => vr_cdcritic
-                                      , pr_dscritic => vr_dscritic);
+    --debita apenas se qtde de dias devedor < 60
+    IF rw_crapseg.qtddsdev < 60 THEN
+      LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
+                                        , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
+                                        , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+                                        , pr_dtmvtolt => vr_dtmvtolt
+                                        , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                        , pr_nrdconta => rw_crapseg.nrdconta
+                                        , pr_nrdctabb => rw_crapseg.nrdconta
+                                        , pr_nrdctitg => gene0002.fn_mask(rw_crapseg.nrdconta, '99999999')
+                                        , pr_nrdocmto => rw_crapseg.nrctrseg
+                                        , pr_nrdolote => 4151 --rw_craplot.nrdolote
+                                        , pr_cdcooper => pr_cdcooper
+                                        , pr_vllanmto => vr_vlpreseg
+                                        , pr_inprolot => 1   -- processa o lote na própria procedure
+                                        , pr_tplotmov => 1
+                                        , pr_tab_retorno => vr_tab_retorno
+                                        , pr_incrineg => vr_incrineg
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+    ELSE
+      vr_cdcritic := 1134; -- nao foi possivel realizar debito 
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+    END IF;
 																					
 			IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
 				IF vr_incrineg = 0 THEN -- Erro de sistema/BD

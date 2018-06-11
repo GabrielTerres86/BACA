@@ -101,13 +101,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
               ,seg.qtprepag
               ,seg.tpseguro
 							,seg.dtfimvig
-        FROM crapseg seg
+              ,sld.qtddsdev
+        FROM crapseg seg, crapsld sld
         WHERE seg.cdcooper  = pr_cdcooper
           AND seg.nrdconta >= pr_nrdconta
           AND seg.nrctrseg  > nvl(pr_nrctrseg, 0)
           AND seg.tpseguro  = pr_tpseguro
           AND seg.cdsitseg  = pr_cdsitseg
-          AND seg.indebito  = pr_indebito;
+          AND seg.indebito  = pr_indebito
+          AND sld.cdcooper  = seg.cdcooper
+          AND sld.nrdconta  = seg.nrdconta;
       rw_crapseg cr_crapseg%ROWTYPE;
 
       -- Busca dados do associado --
@@ -369,25 +372,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             RAISE vr_exc_saida;
           END IF;
           
-          -- Insere o lançamento de débito no valor do seguro
-          LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => 1 -- rw_craplot.cdagenci
-                                            , pr_cdbccxlt => 100 -- rw_craplot.cdbccxlt
-                                             , pr_cdhistor => vr_cdhistor
-                                             , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
-                                             , pr_nrdconta => rw_crapseg.nrdconta
-                                             , pr_nrdctabb => rw_crapseg.nrdconta
-                                             , pr_nrdctitg => to_char(rw_crapseg.nrdconta)
-                                             , pr_nrdocmto => rw_crapseg.nrctrseg
-                                             , pr_nrdolote => 4154 --rw_craplot.nrdolote
-                                             , pr_vllanmto => rw_crapseg.vlpreseg
-                                             , pr_cdcooper => pr_cdcooper
-                                             , pr_inprolot => 1  -- processa o lote na própria procedure
-                                             , pr_tplotmov => 1
-                                             , pr_tab_retorno => vr_tab_retorno
-                                             , pr_incrineg => vr_incrineg
-                                             , pr_cdcritic => vr_cdcritic
-                                             , pr_dscritic => vr_dscritic);
+          --debita apenas se qtde de dias devedor < 60
+          IF rw_crapseg.qtddsdev < 60 THEN
+              -- Insere o lançamento de débito no valor do seguro
+              LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => 1 -- rw_craplot.cdagenci
+                                                , pr_cdbccxlt => 100 -- rw_craplot.cdbccxlt
+                                                 , pr_cdhistor => vr_cdhistor
+                                                 , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                 , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                                 , pr_nrdconta => rw_crapseg.nrdconta
+                                                 , pr_nrdctabb => rw_crapseg.nrdconta
+                                                 , pr_nrdctitg => to_char(rw_crapseg.nrdconta)
+                                                 , pr_nrdocmto => rw_crapseg.nrctrseg
+                                                 , pr_nrdolote => 4154 --rw_craplot.nrdolote
+                                                 , pr_vllanmto => rw_crapseg.vlpreseg
+                                                 , pr_cdcooper => pr_cdcooper
+                                                 , pr_inprolot => 1  -- processa o lote na própria procedure
+                                                 , pr_tplotmov => 1
+                                                 , pr_tab_retorno => vr_tab_retorno
+                                                 , pr_incrineg => vr_incrineg
+                                                 , pr_cdcritic => vr_cdcritic
+                                                 , pr_dscritic => vr_dscritic);
+            ELSE
+              vr_cdcritic := 1134; -- nao foi possivel realizar debito 
+              vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+            END IF;
 
           -- se não foi possivel debitar, então cancela seguro
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
