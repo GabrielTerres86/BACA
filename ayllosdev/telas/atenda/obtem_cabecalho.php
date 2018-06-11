@@ -417,7 +417,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 
 	$result = mensageria($adxml, "ATENDA_CRD", "BUSCA_PARAMETRO_PA_CARTAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$oObj = simplexml_load_string($result);
-	$bAtivaOld = false;
+	$bAtivaOld = true;
 	if($oObj->Dados->ativo){
 		$bAtivaOld = ($oObj->Dados->ativo == '0');
 	}

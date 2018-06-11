@@ -2438,15 +2438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       ELSE
         --Se não estiver ativo, ok, liberado para todo mundo
         vr_retorno := 1;
-      END IF;      
-
-      -- Para teste em homol, inverter valor
-      IF vr_retorno = 1 THEN
-        vr_retorno := 0;  
-      ELSE  
-        vr_retorno := 1;
       END IF;
-
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
