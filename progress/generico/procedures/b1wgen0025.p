@@ -2550,6 +2550,8 @@ PROCEDURE efetua_saque:
     DEFINE VARIABLE     aux_dscritic    AS CHAR                     NO-UNDO.
     DEFINE VARIABLE     h-b1wgen0011    AS HANDLE                   NO-UNDO.
 
+	DEFINE VARIABLE     aux_dscampos    AS CHAR                     NO-UNDO.
+
     DEFINE BUFFER crabass FOR crapass.
 
 
@@ -2682,6 +2684,31 @@ PROCEDURE efetua_saque:
                          UNDO, RETURN "NOK".
                      END.
             END.
+
+       /* inicio NOTIF */
+       
+        aux_dscampos = "#valorsaque=" + STRING(par_vldsaque,"zzz,zz9.99") + ";#datasaque=" + STRING(TODAY,"99/99/9999").
+        
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_cria_notif_prgs
+        aux_handproc = PROC-HANDLE NO-ERROR 
+            ( INPUT 9                 /* pr_cdorigem_mensagem  */
+             ,INPUT 2                 /* pr_cdmotivo_mensagem  */
+             ,INPUT TODAY             /* pr_dhenvio  */
+             ,INPUT par_cdcooper      /* pr_cdcooper  */
+             ,INPUT par_nrdconta      /* pr_nrdconta  */
+             ,INPUT 0                 /* pr_idseqttl  */
+             ,INPUT aux_dscampos ).   /* pr_variaveis  */
+                                    
+        /* Fechar o procedimento para buscarmos o resultado */ 
+         CLOSE STORED-PROC pc_cria_notif_prgs
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                           
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* fim NOTIF */   
                                                     
         /* Atualiza o registro do lote */
         RUN sistema/generico/procedures/b1craplot.p
