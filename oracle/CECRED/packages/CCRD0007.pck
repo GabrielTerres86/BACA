@@ -450,6 +450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                 pr_tipo_ws = 3 - Alteração de Limite Adicional
                 pr_tipo_ws = 4 - Consultar Dados do Portador
                 pr_tipo_ws = 5 - Consultar Dados do Cartao
+				pr_tipo_ws = 6 - Consultar de Protocolo
 
   ..........................................................................*/
     vr_exc_erro EXCEPTION;
@@ -2855,7 +2856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 
       -- Carregar parametros para a comunicacao com o Bancoob
       pc_carrega_param_bancoob(pr_cdcooper      => pr_cdcooper,         -- Codigo da cooperativa
-                               pr_tipo_ws       => 0, /* WS Antigo*/
+                               pr_tipo_ws       => 6, /* WS Consultar Protocolo */
                                pr_host          => vr_host,             -- Host do Bancoob
                                pr_recurso       => vr_recurso,          -- URI do Bancoob
                                pr_method        => vr_method,
@@ -2868,12 +2869,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
         RAISE vr_exc_erro;
       END IF;
 
-      vr_recurso := vr_recurso||'/consultarResultadoProcessamento';
       vr_request.service_uri := vr_host;
       vr_request.api_route   := vr_recurso;
-      vr_request.method      := 'GET';
+      vr_request.method      := vr_method;
       vr_request.timeout     := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_BANCOOB');
       vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
+      vr_request.headers('User-Key')     := vr_usrkey;
 
       vr_request.parameters('appOrigem') := '5'; --Ayllos Web
       vr_request.parameters('protocolo') := pr_dsprotoc;
@@ -2940,7 +2941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                       pr_tpproduto             => 4, --Cartão de Crédito
                                       pr_tpconteudo            => 1, --Jason
                                       pr_dsoperacao            => 'RETORNO SOLICITACAO BANCOOB',
-                                      pr_dsuriservico          => vr_host||vr_recurso,
+                                      pr_dsuriservico          => vr_host||'/'||vr_recurso,
                                       pr_dtmvtolt              => rw_crapdat.dtmvtolt,
                                       pr_cdstatus_http         => vr_response.status_code,
                                       pr_dsconteudo_requisicao => vr_response.content,
