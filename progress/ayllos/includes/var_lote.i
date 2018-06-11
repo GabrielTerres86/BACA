@@ -82,7 +82,10 @@
                12/03/2012 - Declarado variaveis necessarias para utilizacao
                             da include lelem.i (Tiago).                                                            
                                                        
-               09/08/2013 - Modificado o termo "PAC" para "PA" (Douglas).                  
+               09/08/2013 - Modificado o termo "PAC" para "PA" (Douglas).  
+			   
+			   11/06/2018 - ajuste para o nrlote permitir 7 digitos  (INC0017046) - (Alcemir - Mout's).
+			                   
 ............................................................................. */
 
 DEF BUFFER crablem  FOR craplem.
@@ -94,7 +97,7 @@ DEF {1} SHARED VAR tel_vldifecr AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-" NO-UNDO.
 DEF {1} SHARED VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"          NO-UNDO.
 DEF {1} SHARED VAR tel_cdagenci AS INT     FORMAT "zz9"                 NO-UNDO.
 DEF {1} SHARED VAR tel_cdbccxlt AS INT     FORMAT "zz9"                 NO-UNDO.
-DEF {1} SHARED VAR tel_nrdolote AS INT     FORMAT "zzz,zz9"             NO-UNDO.
+DEF {1} SHARED VAR tel_nrdolote AS INT     FORMAT "zzzz,zz9"             NO-UNDO.
 DEF {1} SHARED VAR tel_cdhistor AS INT     FORMAT "zzz9"                NO-UNDO.
 DEF {1} SHARED VAR tel_cdbccxpg AS INT     FORMAT "zz9"                 NO-UNDO.
 
@@ -120,7 +123,7 @@ DEF {1} SHARED VAR tab_inusatab AS LOGICAL                              NO-UNDO.
 
 DEF {1} SHARED VAR aux_cdagenci AS INT     FORMAT "zz9"                 NO-UNDO.
 DEF {1} SHARED VAR aux_cdbccxlt AS INT     FORMAT "zz9"                 NO-UNDO.
-DEF {1} SHARED VAR aux_nrdolote AS INT     FORMAT "zzz,zz9"             NO-UNDO.
+DEF {1} SHARED VAR aux_nrdolote AS INT     FORMAT "zzzz,zz9"             NO-UNDO.
 DEF {1} SHARED VAR aux_tplotmov AS INT     FORMAT "z9"                  NO-UNDO.
 DEF {1} SHARED VAR aux_dtmvtopg AS DATE                                 NO-UNDO.
 DEF {1} SHARED VAR aux_contador AS INT     FORMAT "z9"                  NO-UNDO.
