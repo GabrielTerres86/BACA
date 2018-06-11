@@ -3915,7 +3915,7 @@ PROCEDURE valida-dados-gerais:
                         IF  AVAIL crawepr   THEN
                             DO:
                                 IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) OR 
-                                    CAN-DO("100,800,900,6901", STRING(crawepr.cdlcremp)) /* CDC */
+                                    CAN-DO("100,800,900,6901", STRING(crawepr.cdlcremp)) OR /* CDC */
                                     CAN-DO("2,4", STRING(crawepr.idquapro)) THEN
                                     aux_valida_adesao = TRUE.
                                 ELSE 
