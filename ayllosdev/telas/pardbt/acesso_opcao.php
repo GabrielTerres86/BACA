@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : acesso_opcao.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         

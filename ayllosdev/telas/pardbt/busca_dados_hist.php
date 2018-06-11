@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : busca_dados_hist.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)

@@ -1,4 +1,4 @@
-<?
+<?php
 /*!
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Reginaldo Rubens da Silva (AMcom)         

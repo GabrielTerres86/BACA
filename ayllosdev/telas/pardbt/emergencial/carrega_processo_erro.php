@@ -17,32 +17,33 @@
 	require_once('../../../includes/controla_secao.php');
 	require_once('../../../class/xmlfile.php');
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
-		$msgErro	= "Acesso n&atilde;o permitido.";
-		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
-	}
+    //----------------------------------------------------------------------------------------------------------------------------------	
+    // Controle de Erros
+    //----------------------------------------------------------------------------------------------------------------------------------
+    if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+        $msgErro	= "Acesso n&atilde;o permitido.";
+        exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
+    }
 
 	isPostMethod();		
 
-	$cdcooper = $_POST['cdcooper'];
+    $cdcooper = $_POST['cdcooper'];
 
-	if (empty($cdcooper)) {
-		exibirErro('error','Cooperativa não informada.','Alerta - Ayllos',"$('#cdcooper', '#frmDet').val()",false);
-	}
+    if (empty($cdcooper)) {
+        exibirErro('error','Cooperativa não informada.','Alerta - Ayllos',"$('#cdcooper', '#frmDet').focus();",false);
+    }
 
     // Monta o xml de requisição
 	$xml = "<Root>";
     $xml .= " <Dados>";
-	$xml .= "   <cdcooper>" . $cdcooper . "</cdcooper>";
+    $xml .= "   <cdcooper>" . $cdcooper . "</cdcooper>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    $xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_PR_RES_CONSULTAR", 
+    $xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_PR_BUSCA_ERRO", 
 		$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
-		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");  
+		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");    
+
 
 	$xmlObjeto = getObjectXML($xmlResult);
 
@@ -51,14 +52,13 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 	}
 	
 	$processos = $xmlObjeto->roottag->tags[0]->tags;
-	$tipoExecucao = getByTagName($xmlObjeto->roottag->tags[1]->tags, 'tipoexecucao');
 
-	echo '<input type="hidden" id="tipoExecucao" value="' . $tipoExecucao . '">';
-    echo '<p style="text-align: center; color: grey; padding:7px;">Selecione os processos que deseja executar emergencialmente (' . ($tipoExecucao == 'E' ? 'Programa que ocasionou erro' : utf8ToHtml('Programas específicos')) . ').</p>';
+    
+    echo '<p style="text-align: center; color: grey; padding:7px;">Selecione os processos que deseja executar emergencialmente.</p>';
     
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
@@ -75,7 +75,7 @@
 		echo "<tr>";	
 		echo	"<td>" . getByTagName($processo->tags, 'nrprioridade') . "</td>";
         echo	"<td title=\"" . getByTagName($processo->tags, 'cdprocesso') . "\">" . getByTagName($processo->tags, 'dsprocesso') . "</td>";
-		echo    "<td><input type=\"hidden\" value=\"" . getByTagName($processo->tags, 'cdprocesso') . "\"><input type=\"checkbox\" class=\"checkboxExecutar\" onchange=\"validarProcessoExec(this)\" id=\"exec_" . getByTagName($processo->tags, 'cdprocesso') . "\"></td>";
+		echo    "<td><input type=\"hidden\" value=\"" . getByTagName($processo->tags, 'cdprocesso') . "\"><input type=\"checkbox\" class=\"checkboxExecutar\" id=\"exec_" . getByTagName($processo->tags, 'cdprocesso') . "\"></td>";
 		echo "</tr>";
 	} 	
 			

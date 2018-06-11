@@ -18,7 +18,7 @@
  require_once('../../../includes/controla_secao.php');
  require_once('../../../class/xmlfile.php');
 
- //----------------------------------------------------------------------------------------------------------------------------------	
+//----------------------------------------------------------------------------------------------------------------------------------	
 // Controle de Erros
 //----------------------------------------------------------------------------------------------------------------------------------
 if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
@@ -38,12 +38,14 @@ if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
  $xml .= " </Dados>";
  $xml .= "</Root>";
  
- $xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_HR_CONSULTAR", 
+ $xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_COOP_BUSCAR", 
      $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
      $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");    
  
  
  $xmlObjeto = getObjectXML($xmlResult);
+
+ $cooperativas = $xmlObjeto->roottag->tags[0]->tags;
  
  //----------------------------------------------------------------------------------------------------------------------------------	
  // Controle de Erros
@@ -53,37 +55,20 @@ if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
      exibirErro('error',$msgErro,'Alerta - Ayllos','unblockBackground()',false);
  }
 
-?>
+echo '<form id="frmDet" name="frmDet" class="formulario detalhe" onSubmit="return false;">';
+echo '	<fieldset>';
+echo '		<legend>' . utf8ToHtml('Parâmetros') . '</legend>';
+echo '		<label for="cdcooper">Cooperativa:</label>';
+echo '			<select id="cdcooper" class="campo" onchange="trocaCooperativa()">';
+echo '			<option value="">-----</option>';
 
-                    <form id="frmDet" name="frmDet" class="formulario detalhe" onSubmit="return false;">
-                        <fieldset>
-                            <legend>Ativar programa</legend>
-                            <input type="hidden" id="cdprocesso" name="cdprocesso" value="<?php echo $cdprocesso; ?>">
-                            <label for="dsprocesso"><?php echo utf8ToHtml('Descrição do programa:'); ?></label>
-                            <input type="text" class="campo" id="dsprocesso" name="dsprocesso" value="<?php echo $dsprocesso; ?>" readonly>
-                        </fieldset>
-                    </form>
-<?php	
-	$horarios = $xmlObjeto->roottag->tags[0]->tags;
+foreach($cooperativas as $cooperativa) {
+    echo '<option value="' .getByTagName($cooperativa->tags, 'cdcooper') . '">' .
+        getByTagName($cooperativa->tags, 'nmrescop') . '</option>';
+}
 
-    echo '<p style="text-align: center; color: grey; padding:7px;">' . utf8ToHtml('Selecione os horários para os quais deseja agendar o programa.') . '</p>';
-	
-
-	echo '	<div class="divRegistros">';
-	echo '		<table>';
-	echo '			<thead>';
-	echo '				<tr>';	
-	echo '					<th>'.utf8ToHtml('Horário').'</th>';	
-	echo '				</tr>';
-	echo '			</thead>';
-	echo '			<tbody>';	
-			
-	foreach( $horarios as $horario ) { 	
-		echo "<tr>";	
-		echo	"<td><input type=\"hidden\" value=\"" . getByTagName($horario->tags, 'idhora_processamento') . "\"><input type=\"checkbox\" class=\"checkboxAddHorario\">&nbsp;&nbsp;" .getByTagName($horario->tags, 'dhprocessamento') . "</td>";
-		echo "</tr>";
-	} 	
-			
-	echo '			</tbody>';
-	echo '		</table>';
-	echo '	</div>';
+echo '		</select>';
+echo '	</fieldset>';
+echo '</form>';
+echo '<div id="divProgramas">';
+echo '</div>';
