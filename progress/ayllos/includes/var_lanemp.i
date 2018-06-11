@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 10/03/2015
+   Data    : Janeiro/94.                         Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -54,6 +54,13 @@
 
              10/03/2015 - Alterado o formato do campo nrdocmto para 10
                           posicoes. (Jaison/Gielow - SD: 263692)
+                          
+             15/08/2016 - Inclusa a declaracao da variavel ant_vlsdprej (Renato Darosci - M176).
+
+			 23/09/2016 - Inclusao da variavel aux_flgativo, Prj. 302 (Jean Michel).
+
+             14/02/2017 - Inclusao da variavel aux_flgretativo e aux_flgretquitado. 
+                          (Jaison/James - PRJ302)
 
 ............................................................................. */
 
@@ -112,6 +119,7 @@ DEF {1} SHARED VAR aux_nrdocmto AS INT                                  NO-UNDO.
 DEF {1} SHARED VAR aux_vllanmto AS DECIMAL                              NO-UNDO.
 DEF {1} SHARED VAR aux_indebcre AS CHAR                                 NO-UNDO.
 DEF {1} SHARED VAR aux_inhistor AS INT                                  NO-UNDO.
+DEF {1} SHARED VAR ant_vlsdprej AS DECIMAL                              NO-UNDO.
 
 DEF {1} SHARED VAR aux_dtcalcul AS DATE                                 NO-UNDO.
 DEF {1} SHARED VAR aux_dtultdia AS DATE                                 NO-UNDO.
@@ -143,6 +151,9 @@ DEF {1} SHARED VAR flg_next     AS LOGICAL                              NO-UNDO.
 
 DEF {1} SHARED VAR aux_dtrefere    AS DATE                              NO-UNDO.
 DEF {1} SHARED VAR aux_vlr_arrasto AS DECI                              NO-UNDO.
+
+DEF {1} SHARED VAR aux_flgretativo   AS INTEGER                         NO-UNDO.
+DEF {1} SHARED VAR aux_flgretquitado AS INTEGER                         NO-UNDO.
 
 DEF {1} SHARED FRAME f_lanemp.
 DEF {1} SHARED FRAME f_regant.
