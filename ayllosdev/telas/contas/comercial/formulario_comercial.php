@@ -19,6 +19,9 @@
  *   			   11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  *                 05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
  *                             (Mateus Z - Mouts) 
+				   11/06/2018 - Remover caractere invalido no carregamento da justificativa. (PRB0040072 - Kelvin). Obs: Essa alteração
+								já existia, porém foi removida da produção por algum motivo. Para manter o históricom, estou colocando esse comentário
+								e gerando um changeset.
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
