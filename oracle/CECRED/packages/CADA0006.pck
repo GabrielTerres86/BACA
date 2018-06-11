@@ -514,6 +514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                          ,pr_inpessoa IN crapass.inpessoa%TYPE)IS
         SELECT pro.cdproduto
               ,pro.idfaixa_valor
+              ,pro.dsproduto
           FROM tbcc_produto pro
               ,tbcc_produtos_coop prc
          WHERE prc.cdproduto = pro.cdproduto
@@ -558,7 +559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           END IF;
           
           IF vr_possuipr = 'N' THEN
-            vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino.';
+            vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino ('||rw_produtos.dsproduto||').';
             RAISE vr_exc_saida;
           END IF;
           
@@ -589,7 +590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
             IF vr_vlcontra IS NOT NULL AND
               (vr_vlcontra < rw_proddest.vlminimo_adesao OR
                vr_vlcontra > rw_proddest.vlmaximo_adesao) THEN
-              vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino.';
+              vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino ('||rw_produtos.dsproduto||').';
               RAISE vr_exc_saida;
             END IF;
           
