@@ -45,6 +45,9 @@
                            
                21/02/2018 - Ajustar relatorio e gravar critica na lau caso 
                             tenha alguma (Lucas Ranghetti #852207)
+
+               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -359,7 +362,7 @@ PROCEDURE efetua-debito-consorcio:
             ELSE 
             IF  crapass.cdsitdct = 2 OR 
                 crapass.cdsitdct = 3 OR 
-                crapass.cdsitdct = 9 THEN
+                crapass.cdsitdct = 4 THEN
                 DO: 
                      ASSIGN glb_cdcritic = 64
                             glb_dscritic = "Conta encerrada.".
