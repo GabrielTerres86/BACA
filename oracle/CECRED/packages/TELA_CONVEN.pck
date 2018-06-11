@@ -361,8 +361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                           pr_cdhistor gnconve.cdhiscxa%TYPE) IS
         SELECT con.cdconven 
           FROM gnconve con
-         WHERE con.cdcooper = pr_cdcooper
-           AND con.cdhiscxa = pr_cdhistor;
+         WHERE con.cdhiscxa = pr_cdhistor;
       rw_gnconve cr_gnconve%ROWTYPE;
       
       ----------->>> VARIAVEIS <<<--------
