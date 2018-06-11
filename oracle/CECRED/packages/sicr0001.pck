@@ -731,6 +731,11 @@ create or replace package body cecred.SICR0001 is
       vr_idorigem NUMBER;
       vr_dscritic VARCHAR2(4000); -- Variavel para receber a descrição que pode não ser erro - 15/05/2018 - Chd REQ0014479
 
+	  -- Objetos para armazenar as variáveis da notificação
+      vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+      vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+      vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;      
+	  
       -- CURSORES
       -- Busca dados da cooperativa
       CURSOR cr_crapcop IS
@@ -904,7 +909,23 @@ create or replace package body cecred.SICR0001 is
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
               END IF;
           END;
-
+          --
+          IF TRIM(pr_tab_agendamentos(vr_ind).dscritic) IS NULL THEN
+            --everton
+            vr_notif_origem   := 10;
+            vr_notif_motivo   := 1;
+            vr_variaveis_notif('#valordebito') := pr_tab_agendamentos(vr_ind).vllanaut;
+            vr_variaveis_notif('#datadebito')  := to_char(pr_dtmvtopg,'dd/mm/yyyy');
+            vr_variaveis_notif('#tipodebito')  := pr_tab_agendamentos(vr_ind).dstiptra||'-'||pr_tab_agendamentos(vr_ind).dstransa;
+            -- Cria uma notificação
+            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                        ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                        ,pr_cdcooper => pr_tab_agendamentos(vr_ind).cdcooper
+                                        ,pr_nrdconta => pr_tab_agendamentos(vr_ind).nrdconta
+                                        ,pr_variaveis => vr_variaveis_notif);              
+           --            
+          END IF;
+          --
           -- commit a cada registro
           COMMIT;
           -- Buscar o proximo registro da tabela
