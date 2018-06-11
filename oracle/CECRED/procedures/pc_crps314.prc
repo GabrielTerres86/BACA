@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 28/07/2017
+   Data    : Julho/2001                          Ultima atualizacao: 11/06/2018
 
    Dados referentes ao programa:
 
@@ -155,6 +155,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                28/07/2017 - Incluso tratativa para nao incluir cheques nao aprovados ao compor valor
 			                do bordero de desconto de cheques (Daniel)
 
+			   11/06/2018 - Adicionar filtro para data de liberação diferente de null (Pedro Cruz GFT)
  ............................................................................ */
   --
   -- Dados da cooperativa
@@ -383,7 +384,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
          and crapbdt.nrdconta = crapass.nrdconta
          and craptdb.cdcooper = crapbdt.cdcooper
          and craptdb.nrdconta = crapbdt.nrdconta
-         and craptdb.nrborder = crapbdt.nrborder;
+         and craptdb.nrborder = crapbdt.nrborder
+         and craptdb.dtlibbdt is not null;
     --
   BEGIN
     -- Incluimos os descontos de cheque

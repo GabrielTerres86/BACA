@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Gabriel
-    Data    : Outubro/2008                   Ultima Atualizacao: 06/07/2017
+    Data    : Outubro/2008                   Ultima Atualizacao: 11/06/2018
 
     Dados referente ao programa:
 
@@ -96,6 +96,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
 
                05/07/2017 - #707221 Forçando o index craplim##craplim1 no cursor 
                             cr_craplim_2 (Carlos)
+			   11/06/2018 - Adicionar filtro para data de liberação diferente de null (Pedro Cruz GFT)			
      ............................................................................. */
 
      DECLARE
@@ -260,7 +261,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
          FROM craptdb craptdb
          WHERE craptdb.cdcooper = pr_cdcooper
          AND   craptdb.nrdconta = pr_nrdconta
-         AND   craptdb.nrborder = pr_nrborder;
+         AND   craptdb.nrborder = pr_nrborder
+         AND   craptdb.dtlibbdt is not null;
 
        --Selecionar os titulos do bordero para relatorio crrl494
        CURSOR cr_craptdb_494 (pr_cdcooper IN craptdb.cdcooper%TYPE
