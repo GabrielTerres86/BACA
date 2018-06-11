@@ -427,7 +427,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                          (pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => rw_crapseg.nrdconta
                          ,pr_idseqttl => 1          -- Primeiro titular da conta
-                         ,pr_cdprogra => 'CRPS439'  -- Programa
+                         ,pr_cdprogra => 'CRPS268'  -- Programa
                          ,pr_inpriori => 0          -- prioridade
                          ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. Dúvidas consulte seu posto de atendimento' -- corpo da mensagem
                          ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
@@ -503,23 +503,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic:= 'Erro ao atualizar crapseg. '||SQLERRM;
-              --Sair
-              RAISE vr_exc_saida;
-          END;
-
-          -- Altera o registro de capa de lotes
-          BEGIN
-            UPDATE craplot SET
-                   craplot.nrseqdig = rw_craplot.nrseqdig + 1,
-                   craplot.qtcompln = rw_craplot.qtcompln + 1,
-                   craplot.qtinfoln = rw_craplot.qtcompln,
-                   craplot.vlcompdb = rw_craplot.vlcompdb + rw_crapseg.vlpreseg,
-                   craplot.vlinfodb = rw_craplot.vlcompdb
-             WHERE craplot.rowid = rw_craplot.rowid;
-
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic:= 'Erro ao atualizar craplot. '||SQLERRM;
               --Sair
               RAISE vr_exc_saida;
           END;

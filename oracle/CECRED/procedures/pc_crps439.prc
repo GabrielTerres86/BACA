@@ -934,22 +934,6 @@ begin
         vr_dscritic := 'Erro ao incluir lançamento em depósito a vista: '||sqlerrm;
         raise vr_exc_saida;
     end;
-    -- Atualiza capa do lote
-    begin
-      update craplot
-         set qtinfoln = nvl(qtcompln,0) + 1,
-             qtcompln = nvl(qtcompln,0) + 1,
-             vlinfodb = nvl(vlcompdb,0) + vr_lcm_vllanmto,
-             vlcompdb = nvl(vlcompdb,0) + vr_lcm_vllanmto,
-             nrseqdig = nvl(nrseqdig,0) + 1
-       where craplot.rowid = rw_craplot.rowid
-      returning nrseqdig into rw_craplot.nrseqdig;
-    exception
-      when others then
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro ao atualizar a capa do lote: ' || sqlerrm;
-        raise vr_exc_saida;
-    end;
 
     -- Atualizar dados para update da crapseg
     rw_crapseg.vlprepag:= nvl(rw_crapseg.vlprepag,0) + vr_vlpreseg;
