@@ -4460,21 +4460,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       
       -- Se permitir
       IF vr_possuipr = 'S' THEN
-          BEGIN
-            -- Libera pre aprovado
-            UPDATE tbepr_param_conta param
-               SET param.flglibera_pre_aprv = 1
-                  ,param.idmotivo = NULL
-                  ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
-             WHERE param.cdcooper = pr_cdcooper
-               AND param.nrdconta = pr_nrdconta
+        BEGIN
+          -- Libera pre aprovado
+          UPDATE tbepr_param_conta param
+             SET param.flglibera_pre_aprv = 1
+                ,param.idmotivo = NULL
+                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
+           WHERE param.cdcooper = pr_cdcooper
+             AND param.nrdconta = pr_nrdconta
              AND param.flglibera_pre_aprv = 0 -- Não liberado...
              AND param.idmotivo = 67;         -- ... e com motivo 67 (bloqueio por situação de conta)
-          EXCEPTION
-            WHEN OTHERS THEN
+        EXCEPTION
+          WHEN OTHERS THEN
             vr_dscritic := 'Erro ao liberar pre-aprovado: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
+            RAISE vr_exc_saida;
+        END;
       ELSE
         BEGIN
           -- Bloqueado pre aprovado
@@ -4499,14 +4499,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                                            ,0              -- flglibera_pre_aprv
                                            ,TRUNC(SYSDATE) -- dtatualiza_pre_aprv
                                            ,67 );          -- idmotivo
-        EXCEPTION
-          WHEN OTHERS THEN
+            EXCEPTION
+              WHEN dup_val_on_index THEN
+                -- Caso aconteça estouro de chave é devido ao fato de já existir registro
+                -- de parametro e o mesmo já está indicando bloqueio.
+                NULL;
+              WHEN OTHERS THEN
                 vr_dscritic := 'Erro incluir bloqueio pre-aprovado: '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
           END IF;
         
         EXCEPTION
+          WHEN vr_exc_saida THEN
+            RAISE vr_exc_saida;
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao bloquear pre-aprovado: '||SQLERRM;
             RAISE vr_exc_saida;
