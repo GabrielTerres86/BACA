@@ -4029,7 +4029,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                incluir na tabela tbepr_cobranca. (P210.2 - Lombardi)
                                
                   10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
-                               
+
+                  11/06/2018 - Ajuste no insert da tabela crapsab, limitando o numero de caracteres
+                               para 40, numero maximo permitido por esta tabela.
+							   Chamado PRB0040065 - Gabriel (Mouts).
+
   ..............................................................................*/
 
 		DECLARE
@@ -4699,38 +4703,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			FETCH cr_crapsab INTO rw_crapsab;
 		  -- Se não encontrou registro, cria
 		  IF cr_crapsab%NOTFOUND THEN
-				INSERT INTO crapsab (cdcooper,
-				                     nrdconta,
-														 nrinssac,
-														 cdtpinsc,
-														 nmdsacad,
-														 dsendsac,
-														 nmbaisac,
-														 nrcepsac,
-														 nmcidsac,
-														 cdufsaca,
-														 cdoperad,
-														 hrtransa,
-														 dtmvtolt,
-														 nrendsac,
-														 complend,
-														 cdsitsac)
-										 VALUES (pr_cdcooper,
-										         vr_nrdconta_cob,
-														 vr_nrinssac,
-														 vr_cdtpinsc,
-														 vr_nmprimtl,
-														 vr_dsendere,
-                             vr_nmbairro,
-                             vr_nrcepend,
-                             vr_nmcidade,
-                             vr_cdufende,
-														 pr_cdoperad,
-														 GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
-														 pr_dtmvtolt,
-														 vr_nrendere,
-                             vr_complend,
-                             1);
+            INSERT INTO crapsab (cdcooper,
+                                 nrdconta,
+                                 nrinssac,
+                                 cdtpinsc,
+                                 nmdsacad,
+                                 dsendsac,
+                                 nmbaisac,
+                                 nrcepsac,
+                                 nmcidsac,
+                                 cdufsaca,
+                                 cdoperad,
+                                 hrtransa,
+                                 dtmvtolt,
+                                 nrendsac,
+                                 complend,
+                                 cdsitsac)
+                         VALUES (pr_cdcooper,
+                                 vr_nrdconta_cob,
+                                 vr_nrinssac,
+                                 vr_cdtpinsc,
+                                 vr_nmprimtl,
+                                 vr_dsendere,
+                                 vr_nmbairro,
+                                 vr_nrcepend,
+                                 vr_nmcidade,
+                                 vr_cdufende,
+                                 pr_cdoperad,
+                                 GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+                                 pr_dtmvtolt,
+                                 vr_nrendere,
+                                 trim(substr(trim(vr_complend),1,40)),
+                                 1);
 
 			ELSE
 				-- Se encontrou, atualiza dados de endereço
