@@ -23,6 +23,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 02/04/2018 - Inclusão do record 'typ_rec_tit_bordero' e das procedures 'pc_buscar_tit_bordero' e 'pc_buscar_tit_bordero_web' para listar e buscar detalhes e restrições dos titulos do borderô (Leonardo Oliveira (GFT))
                 04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT)) 
 				26/04/2018 - Ajuste no retorno das propostas 'pc_obtem_dados_proposta_web' (Leonardo Oliveira (GFT))
+		11/06/2018 - No cursor cr_craptdb filtrar apenas titulos aprovados
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /*Tabela de retorno dos titulos do bordero*/
@@ -3795,7 +3796,8 @@ END pc_obtem_proposta_aciona_web;
         AND craptdb.nrdocmto = pr_nrdocmto
         AND craptdb.nrdctabb = pr_nrdctabb
         AND craptdb.nrcnvcob = pr_nrcnvcob
-        AND crapbdt.insitbdt <= 4 ; -- borderos que estao em estudo, analisados, liberados, liquidados
+        AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
+        AND craptdb.insitapr = 1; --Somente titulos aprovados
    rw_craptdb cr_craptdb%ROWTYPE;
    BEGIN
      -- Incluir nome do modulo logado
