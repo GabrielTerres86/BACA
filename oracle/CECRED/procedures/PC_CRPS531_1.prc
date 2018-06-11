@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 06/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 08/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -267,6 +267,9 @@ BEGIN
 					 > Ajuste par anão gerar devolução STR0048 indevidamente;
                      (Adriano - INC0016740/INC0016813).
         
+         08/06/2018 - Ajuste para enviar e-mail referente a TEC salário somente se nas devoluções
+                     (Adriano - REQ0016678).
+                     
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -4988,13 +4991,14 @@ END;
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao criar lancamento de devolucao ou na atualizacao do Lote: '||sqlerrm;
             END;
-            -- Se não houve erro na gravação acima e somente para o produto Folha IB
-            IF vr_dscritic IS NULL AND vr_aux_nrridflp > 0 THEN
+            -- Se não houve erro na gravação acima, nova FOLHAIB e foi Rejeitada pela cabine
+            IF vr_dscritic IS NULL AND nvl(vr_aux_nrridflp,0) <> 0 AND vr_aux_tagCABInf THEN
+              
               -- Buscar dados da conta em transferencia
               OPEN cr_crapccs(rw_crapcop_mensag.cdcooper,vr_aux_nrctacre);
-              FETCH cr_crapccs
-               INTO rw_crapccs;
+              FETCH cr_crapccs INTO rw_crapccs;
               CLOSE cr_crapccs;
+              
               -- Montar email
               vr_aux_dsdemail := 'Ola, houve rejeicao na cabine da seguinte operacao TEC Salario: <br><br>'
                               || ' Conta/Dv: ' || vr_aux_nrctacre || ' <br>'
@@ -5030,6 +5034,7 @@ END;
                 vr_dscritic := null;
               END IF;
             END IF;
+            
           END IF;
         END IF;
 
