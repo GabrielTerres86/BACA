@@ -41,6 +41,12 @@ CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
                        , pr_nrdconta craplcm.nrdconta%TYPE
                        , pr_cdhistor craplcm.cdhistor%TYPE) RETURN BOOLEAN;
+											 
+--> Rotina para verificar se pode realizar o debito - Versão Progress											 
+PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
+                         , pr_nrdconta  IN craplcm.nrdconta%TYPE
+                         , pr_cdhistor  IN craplcm.cdhistor%TYPE
+                         , pr_flpoddeb OUT INTEGER);
 
 -- Faz as críticas aplicáveis e efetua o lançamento na CRAPLCM se for permitido
 PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAULT NULL
@@ -320,6 +326,39 @@ BEGIN
   RETURN vr_pode_debitar;
 END fn_pode_debitar;
 
+--> Rotina para verificar se pode realizar o debito - Versão Progress
+PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
+                         , pr_nrdconta  IN craplcm.nrdconta%TYPE
+                         , pr_cdhistor  IN craplcm.cdhistor%TYPE
+                         , pr_flpoddeb OUT INTEGER )               --> Indica se pode debitat  0-Nao 1-Sim
+                         IS 
+  /* ............................................................................
+        Programa: pc_pode_debitar
+        Sistema : Ayllos
+        Sigla   : CRED
+        Autor   : Odirlei Busana/AMcom
+        Data    : Junho/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para verificar se pode realizar o debito - Versão Progress
+        Observacao: -----
+        Alteracoes:
+    ..............................................................................*/
+
+BEGIN
+
+  -- Verifica se pode debitar um histórico em uma conta
+  IF fn_pode_debitar(pr_cdcooper => pr_cdcooper
+                   , pr_nrdconta => pr_nrdconta
+                   , pr_cdhistor => pr_cdhistor) THEN
+    pr_flpoddeb := 1; -- Sim, pode debitar
+  ELSE
+    pr_flpoddeb := 0; -- Não pode debitar              
+  END IF;
+
+END pc_pode_debitar;
+
 -- Inclui um novo lançamento na CRAPLCM
 PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAULT NULL
                                   , pr_cdagenci IN  craplcm.cdagenci%TYPE default 0
@@ -555,7 +594,12 @@ BEGIN
 			END IF;
 		WHEN DUP_VAL_ON_INDEX THEN
 			pr_cdcritic := 92; -- Lançamento já existe
-      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || 
+                  'nrdconta: ' || pr_nrdconta ||
+                     'Param: ' || pr_CDCOOPER || ' - ' || pr_DTMVTOLT || ' - ' || pr_CDAGENCI
+                      || ' - ' || pr_CDBCCXLT || ' - ' || pr_NRDOLOTE || ' - ' || vr_NRSEQDIG 
+--                                    ' pc_gerar_lancamento_conta - '
+                                     || SQLERRM || ')';
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
