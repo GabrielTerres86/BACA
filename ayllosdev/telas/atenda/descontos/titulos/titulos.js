@@ -2697,6 +2697,7 @@ function visualizarTituloDeBordero() {
         data: {
             nrdconta: nrdconta,
             selecionados: selecionados,
+            nrborder: nrbordero,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

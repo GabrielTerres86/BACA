@@ -39,10 +39,12 @@
 
 	$selecionados = $_POST["selecionados"];
 	$nrdconta = $_POST["nrdconta"];
+	$nrborder = $_POST["nrborder"];
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrborder>".$nrborder."</nrborder>";
     $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";

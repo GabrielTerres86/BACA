@@ -38,14 +38,16 @@
 
 	$selecionados = $_POST["selecionados"];
 	$nrdconta = $_POST["nrdconta"];
+	
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrborder></nrborder>";
     $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
-
+    
     // FAZER O INSERT CRAPRDR e CRAPACA
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_DETALHE_TITULO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
