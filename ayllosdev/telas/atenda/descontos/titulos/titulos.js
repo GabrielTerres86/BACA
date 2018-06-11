@@ -3277,11 +3277,11 @@ function pagarTitulosVencidos(){
     if (arr_nrdocmto.length <= 0){
         showError("error", "Selecione ao menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }else {
-        if(pgto_avalista){ showMsgAguardo('Aguarde, Pagamento com Avalista, calculando saldo em conta...');
+        if(pgto_avalista){ 
+            showMsgAguardo('Aguarde, Pagamento com Avalista, calculando saldo em conta...');
+        }else{
+            showMsgAguardo('Aguarde, calculando saldo em conta...');
         }
-        showMsgAguardo('Aguarde, calculando saldo em conta...');
-    
-        
 
         //Invoca AJAX para verificar se possui Saldo em Conta
         $.ajax({        
@@ -3305,13 +3305,13 @@ function pagarTitulosVencidos(){
                 //Caso nao possua saldo, altera a mensagem
                 if (response == 0){
                     showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                    return false;
                 }
                 else if (response == 2){
                     msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento?";
-                }else{
-                    //Invoca a funcao
-                    showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
                 }
+                //Invoca a funcao
+                showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
             }
         });
        
