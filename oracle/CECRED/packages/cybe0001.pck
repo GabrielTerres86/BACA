@@ -55,6 +55,8 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
   --
   --              03/04/2018 - Inserido a procedure pc_altera_dados_crapcyc - (Chamado 806202)
   --
+  --              05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definir o registro de memória que guardará os dados para atualização
@@ -100,6 +102,8 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
                                     ,pr_flgfolha IN crapcyb.flgfolha%TYPE --O pagamento e por Folha
                                     ,pr_flgpreju IN crapcyb.flgpreju%TYPE --Esta em prejuizo.
                                     ,pr_flgconsg IN crapcyb.flgconsg%TYPE --Indicador de valor consignado.
+                                    ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT NULL --> Numero do bordero do titulo em atraso no cyber
+                                    ,pr_nrtitulo IN craptdb.nrtitulo%TYPE DEFAULT NULL --> Numero do titulo em atraso no cyber
                                     ,pr_dscritic OUT VARCHAR2);
 
 
@@ -188,40 +192,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
     Programa: CYBE0001                        Antiga: generico/procedures/b1wgen0168.p
     Autor   : James Prust Junior
-    Data    : Agosto/2013                     Ultima Atualizacao: 26/04/2017
-  
+    Data    : Agosto/2013                     Ultima Atualizacao: 05/06/2018
+
     Dados referentes ao programa:
-  
+
     Objetivo  : Package referente a regras de geracao de arquivos CYBER
-  
+
     Alteracoes: 30/09/2013 - Conversao Progress para oracle (Gabriel).
-  
+
                 04/10/2013 - Conversao Progress para oracle da rotina pc_atualiza_dados
                              ( Renato-Supero / Odirlei-AMcom )
-  
+
                 05/05/2014 - Removido o parametro dtatufin da procedure "pc_atualiza_dados_financeiro". (James)
-  
+
                 02/06/2014 - Os campos cdestcvl e vlsalari foram removidos da crapass e adicionados
-                             na crapttl, portanto foram removidas as validações para crapass na 
-                             "pc_proc_alteracoes_log". As validações já exitem para crapttl. 
+                             na crapttl, portanto foram removidas as validações para crapass na
+                             "pc_proc_alteracoes_log". As validações já exitem para crapttl.
                              (Douglas - Chamado 131253)
                 10/06/2014 - (Chamado 117414) - Troca do campo crapass.nmconjug por crapcje.nmconjug
-                             (Tiago Castro - RKAM).   
-  
-                22/09/2014 - Inserido o campo FLGFOLHA no UPDATE da procedure 
+                             (Tiago Castro - RKAM).
+
+                22/09/2014 - Inserido o campo FLGFOLHA no UPDATE da procedure
                              "pc_atualiza_dados_financeiro". (Jaison)
-  
+
                 08/12/2014 - #213746 Ajuste nas verificações das alterações dos dados de conjuge (Carlos)
-  
+
                 27/10/2015 - Incluido nova verificacao do campo crapass.indserma na procedure pc_proc_alteracoes_log,
                              Prj. 131 - Assinatura Conjunta. (Jean Michel).
-  
+
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin)
-  
+
                 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).
+                             crapass, crapttl, crapjur (Adriano - P339).
+
+                05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -358,7 +363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     --  Sistema  : Rotinas genericas para a criação da cyber
     --  Sigla    : CYBE
     --  Autor    : Renato/Odirlei(Supero/Amcom)
-    --  Data     : Setembro/2013.                   Ultima atualizacao: 17/09/2013
+    --  Data     : Setembro/2013.                   Ultima atualizacao: 05/06/2018
     --
     --  Dados referentes ao programa:
     --
@@ -366,6 +371,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     --   Objetivo  : Criar registro ou atualizar informações na tabela crapcyb, conforme pl/temp table e cd origem passados por parametro
     --
     --   Alteracoes: 17/09/2013 - Conversao Progress para Oracle - Odirlei (AMcom)
+    --
+    --               05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
     -- .............................................................................
 
     -- CURSORES
@@ -389,7 +396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
   BEGIN
 
     --Validar cdorigem
-    IF pr_cdorigem NOT IN (1,2,3) THEN
+    IF pr_cdorigem NOT IN (1,2,3,4) THEN --Nova Origem: 4 - Desconto de Título
       pr_dscritic := 'Código de origem invalido para a CYBE0001.pc_atualiza_dados';
     END IF;
 
@@ -571,6 +578,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                                     ,pr_flgfolha IN crapcyb.flgfolha%TYPE --O pagamento e por Folha
                                     ,pr_flgpreju IN crapcyb.flgpreju%TYPE --Esta em prejuizo.
                                     ,pr_flgconsg IN crapcyb.flgconsg%TYPE --Indicador de valor consignado.
+                                    ,pr_nrborder IN crapbdt.nrborder%TYPE DEFAULT NULL --> Numero do bordero do titulo em atraso no cyber
+                                    ,pr_nrtitulo IN craptdb.nrtitulo%TYPE DEFAULT NULL --> Numero do titulo em atraso no cyber
                                     ,pr_dscritic OUT VARCHAR2) AS
 
     -- ........................................................................
@@ -598,6 +607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     --                             e update da tabela crapcyb  (Edison-Amcom)
     --
     --                05/05/2014 - Ajuste na validação dos dados. (James)
+    --
+    --                05/06/2018 - Ajuste para adicionar Desconto de Titulos (Andrew Albuquerque - GFT)
     --
     --                05/06/2018 - Adicionado a procedure pc_inserir_titulo_cyber (Paulo Penteado (GFT)) 
     --
@@ -1301,13 +1312,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                             Assinatura Conjunta. (Jean Michel).
 
                17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
-               
+
                24/07/2017 - Alterar cdoedptl para idorgexp.
                             PRJ339-CRM  (Odirlei-AMcom)
 
-			   26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-						   (Adriano - P339).
+         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                      crapass, crapttl, crapjur
+               (Adriano - P339).
     ............................................................................. */
       DECLARE
 
@@ -1748,7 +1759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            
+
             --Ramal Empresa
             IF rw_crapass.nrramemp <> pr_tab_log(vr_index).crapass(1).nrramemp THEN
               --Nome do campo
@@ -1894,7 +1905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            
+
             --UF Emissao Doc. Primeiro titular
             IF rw_crapass.cdufdptl <> pr_tab_log(vr_index).crapass(1).cdufdptl THEN
               --Nome do campo
@@ -1906,7 +1917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            
+
             --Data Emissao Doc. Primeiro titular
             IF rw_crapass.dtemdptl <> pr_tab_log(vr_index).crapass(1).dtemdptl THEN
               --Nome do campo
@@ -1918,7 +1929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            
+
             --Situacao Titular
             IF rw_crapass.cdsitdtl <> pr_tab_log(vr_index).crapass(1).cdsitdtl THEN
               --Nome do campo
@@ -3169,7 +3180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            
+
             --Faturamento Anual
             IF rw_crapjur.vlfatano <> pr_tab_log(vr_index).crapjur(1).vlfatano THEN
               --Nome do campo
@@ -3494,7 +3505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                 vr_dsaltera:= vr_dsaltera || vr_log_nmdcampo || ',';
               END IF;
             END IF;
-            
+
             --Nome Talao
             IF rw_crapttl.nmtalttl <> pr_tab_log(vr_index).crapttl(1).nmtalttl THEN
               --Nome do campo
@@ -6230,7 +6241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                Este arquivo irá atualizar a tabela CRAPCYC com dados de marcação dos contratos.
          A chamada da rotina será efetuada diariamente através de DB JOB, sempre após a atualização do CYBER;
 
-		 20/04/2017 - colocado tratamento de excecao no INSERT da crapcyc, estava abortando o programa - Jean (Mout´s)
+     20/04/2017 - colocado tratamento de excecao no INSERT da crapcyc, estava abortando o programa - Jean (Mout´s)
    */
      vr_exc_erro    EXCEPTION;
      vr_handle_log  utl_file.file_type;
@@ -6290,8 +6301,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                where  cdcooper = pr_cdcooper
                and    cdorigem = decode(pr_cdorigem,2,3,pr_cdorigem)
                and    nrdconta = pr_nrdconta
-               and    nrctremp = pr_nrctremp;                 
-      
+               and    nrctremp = pr_nrctremp;
+
      cursor c_busca_assessoria(pr_cdassessoria varchar2) is
            select t.dstexprm
              from   crapprm t
@@ -6569,9 +6580,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
             open c_busca_assessoria(pr_cdassessoria => vr_cdassessx);
             fetch c_busca_assessoria into vr_cdassess;
-             
+
             if c_busca_assessoria%Notfound then
-               
+
                 if nvl(vr_cdassessx,'        ') = '        ' then
                    vr_cdassess := 0;
                 else
@@ -6581,7 +6592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             else
               close c_busca_assessoria;
             end if;
-           
+
             /*
                Atualizar a tabela CRAPCYC
 
@@ -6597,13 +6608,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             vr_flextjud := 0;
 
             /* Regra 1 - verifica o contrato */
-            
+
             open c_busca_crapcyc(pr_cdcooper => vr_cdcooper
                                 ,pr_nrdconta => vr_nrdconta
                                 ,pr_nrctremp => vr_cdctremp
                                 ,pr_cdorigem => vr_cdorigem);
             fetch c_busca_crapcyc into vr_flgjudic, vr_flgehvip;
-            
+
             if c_busca_crapcyc%notfound then
                  close c_busca_crapcyc;
                  vr_des_log := 'Erro Linha: ' || vr_nrlinha || ' -> Contrato: (Coop:' || vr_cdcooper || ', origem: ' || vr_cdorigem ||
@@ -6634,10 +6645,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                        vr_des_erro := 'Erro no INSERT da CRAPCYC: '|| sqlerrm;
                        raise vr_exc_erro;
                 END;
-            else 
+            else
                close c_busca_crapcyc;
             end if;
-    
+
             /* Regra 2: Se for contrato judicial ou VIP não permite carregar, mas não gera alerta */
             if vr_flgjudic = 1
             or vr_flgehvip = 1 then
@@ -6792,7 +6803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                                    ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                                    ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
                                    ,pr_des_erro    OUT VARCHAR2) IS
-    
+
     vr_dsmsglog craplgm.dscritic%type;
     vr_contador number(2);
     vr_cdcritic crapcri.cdcritic%type;
@@ -6807,7 +6818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     vr_msgfinal varchar2(1000);
     vr_dtmvtolt date;
     vr_dtenvcbr date;
-    
+
     cursor cr_crapope is
       select c.cddepart
         from crapope c
@@ -6836,7 +6847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     vr_cdmotcin := nvl(pr_cdmotcin,0);
     vr_dtmvtolt := to_date(pr_dtmvtolt,'dd/mm/rrrr');
     vr_dtenvcbr := to_date(pr_dtenvcbr,'dd/mm/rrrr');
-    
+
     open cr_crapcyc;
     fetch cr_crapcyc into rw_crapcyc;
     if cr_crapcyc%notfound then
@@ -6909,7 +6920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
     end if;
 
     close cr_crapope;
-    
+
     update crapcyc c
        set c.flgjudic = decode(pr_flgjudic,'true',1,0)
          , c.flextjud = decode(pr_flextjud,'true',1,0)
@@ -6920,7 +6931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
          , c.cdassess = nvl(pr_cdassess,0)
          , c.cdmotcin = vr_cdmotcin
      where c.rowid = rw_crapcyc.rowid;
-    
+
     vr_dsmsglog := 'Contrato: ' || trim(gene0002.fn_mask_contrato(pr_nrctremp)) ||
                    '. Jud.: ' || case pr_flgjudic when 'true' then 'Sim' else 'Nao' end ||
                    '. Extra Jud.: ' || case pr_flextjud when 'true' then 'Sim' else 'Nao' end ||
@@ -6944,11 +6955,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
      where c.cdcooper = pr_cdcooper
        and c.nrdconta = pr_nrdconta
        and c.cdorigem in (1,2,3);
-    
+
     if vr_msgfinal is not null then
       vr_msgfinal := vr_msgfinal||'. ';
     end if;
-    
+
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Msg>' || vr_msgfinal || '</Msg></Root>');
 
@@ -6965,7 +6976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      
+
       rollback;
     when others then
       pr_cdcritic := vr_cdcritic;
@@ -6974,7 +6985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      
+
       rollback;
   end;
 

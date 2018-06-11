@@ -26,6 +26,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                    11/08/2016 - Adicionado novo filtro por tipo de limite de crédito (Linhares)
 
                    01/12/2016 - Fazer tratamento para incorporação. (Oscar)
+
+				   27/04/2018 - Chama rotina LIMI0002.PC_CANCELA_LIMITE_CREDITO de cancelamento de limite - Daniel(AMcom)      
+
+                   06/06/2018 - Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
     ............................................................................ */
 
     DECLARE
@@ -778,7 +782,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
           -- Verifica se o cooperado possui algum emprestimo em atraso no CYBER
           OPEN cr_crapcyb(pr_cdcooper => rw_craplim_crapass.cdcooper,
                           pr_nrdconta => rw_craplim_crapass.nrdconta,
-                          pr_cdorigem => '2,3',
+                          --Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
+                          pr_cdorigem => '2,3,4',
                           pr_qtdiaatr => rw_craprli.qtdiaatr);
           FETCH cr_crapcyb INTO rw_crapcyb;
           IF cr_crapcyb%FOUND THEN
@@ -845,6 +850,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
         END LOOP; /* END LOOP FOR rw_craplim */
       
       END LOOP; /* END LOOP FOR rw_craprli */
+        
+      -- Chama rotina de cancelamento de limite - Daniel(AMcom)
+      LIMI0002.PC_CANCELA_LIMITE_CREDITO(pr_cdcooper => pr_cdcooper   -- Cooperativa
+                                        ,pr_cdcritic => vr_cdcritic   -- Código do erro
+                                        ,pr_dscritic => vr_dscritic); -- Descrição do erro
+        -- Verifica erro
+        IF vr_cdcritic = 0 THEN
+          RAISE vr_exc_saida;
+        END IF;
         
       -- Gerar relatorios dos limites de creditos vencidos que nao foram renovados
       pc_imprime_crrl692(pr_tab_rel692  => vr_tab_rel692,
