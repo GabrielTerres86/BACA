@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS531(pr_cdcooper  IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Diego
-     Data    : Setembro/2009.                     Ultima atualizacao: 01/08/2017
+     Data    : Setembro/2009.                     Ultima atualizacao: 06/06/2018
 
      Dados referentes ao programa:
 
@@ -81,6 +81,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS531(pr_cdcooper  IN crapcop.cdcooper%T
     
                  14/02/2018 - Alteração pc_lista_arquivos em java (Alexandre Borgmann-Mouts)
 
+                 06/06/2018 - Ajuste para efetuar ordenação dos arquivos para serem processados
+                              do mais antigo ao mais novo
+                             (Adriano - INC0016467).
+
+
      ............................................................................ */
     DECLARE
 
@@ -133,6 +138,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS531(pr_cdcooper  IN crapcop.cdcooper%T
       --Tabela para receber arquivos lidos no unix
       vr_tab_crawarq TYP_SIMPLESTRINGARRAY:= TYP_SIMPLESTRINGARRAY();
       vr_qtarqdir   INTEGER;   
+
+      CURSOR cr_arquivos_sort IS
+      SELECT ROWNUM seqreg
+            ,column_value
+        FROM (SELECT column_value
+                FROM (SELECT CAST(vr_tab_crawarq AS typ_simplestringarray)
+                        FROM dual)
+                    ,TABLE (SELECT CAST(vr_tab_crawarq AS
+                                       typ_simplestringarray)
+                             FROM dual)
+               ORDER BY column_value);
 
       -- ID para o paralelismo
       vr_idparale INTEGER;
@@ -306,28 +322,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS531(pr_cdcooper  IN crapcop.cdcooper%T
         vr_qtdjobs := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_PARALE_CRPS531'),10);
 
         -- Para cada mensagem (arquivo) recebido
-        FOR idx IN 1..vr_qtarqdir LOOP
+        FOR rw_arquivos_sort IN cr_arquivos_sort LOOP
 
           -- Cadastra o programa paralelo
           gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
-                                    ,pr_idprogra => LPAD(idx,6,'0') --> Utiliza idx do arquivo
+                                    ,pr_idprogra => LPAD(rw_arquivos_sort.seqReg,6,'0') 
                                     ,pr_des_erro => pr_dscritic);
           -- Testar saida com erro
           IF pr_dscritic IS NOT NULL THEN
             -- Levantar exceçao
             RAISE vr_exc_saida;
           END IF;
+          
+          
           -- Montar o bloco PLSQL que será executado
           -- Ou seja, executaremos a geração dos dados
           -- para a agência atual atraves de Job no banco
+          
+          
           vr_dsplsql := 'DECLARE'||chr(13)
                      || '  vr_cdcritic NUMBER;'||chr(13)
                      || '  vr_dscritic VARCHAR2(4000);'||chr(13)
                      || 'BEGIN'||chr(13)
-                     || '  pc_crps531_1('||pr_cdcooper||','||vr_idparale||','||idx||','''||vr_dsdircop || '/integra/' || vr_tab_crawarq(idx)||''',vr_cdcritic,vr_dscritic);'||chr(13)
+                     || '  pc_crps531_1('||pr_cdcooper||','||vr_idparale||','||rw_arquivos_sort.seqReg||','''||vr_dsdircop || '/integra/' || rw_arquivos_sort.column_value||''',vr_cdcritic,vr_dscritic);'||chr(13)
                      || 'END;';
           -- Montar o prefixo do código do programa para o jobname
-          vr_jobname := 'jb_crps531_'||idx||'$';
+          vr_jobname := 'jb_crps531_'||rw_arquivos_sort.seqReg||'$';
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Código da cooperativa
                                 ,pr_cdprogra  => vr_cdprogra  --> Código do programa
@@ -341,14 +361,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS531(pr_cdcooper  IN crapcop.cdcooper%T
             -- Levantar exceçao
             RAISE vr_exc_saida;
           END IF;
+          
           -- Gerar LOG
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 1 -- Processo normal
                                     ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
                                                      || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra || ' --> '
                                                      || 'Inicio da Execucao Paralela - PID: '
-                                                     || ' - ' || vr_idparale|| ' Seq.: ' || to_char(idx,'fm99990')
-                                                     || ' Mensagem: ' || vr_dsdircop || '/integra/' || vr_tab_crawarq(idx)
+                                                     || ' - ' || vr_idparale|| ' Seq.: ' || to_char(rw_arquivos_sort.seqReg,'fm99990')
+                                                     || ' Mensagem: ' || vr_dsdircop || '/integra/' || rw_arquivos_sort.column_value
                                     ,pr_nmarqlog     => 'crps531_' || to_char(rw_crapdat.dtmvtolt,'ddmmrrrr'));
           -- Chama rotina que irá pausar este processo controlador
           -- caso tenhamos excedido a quantidade de JOBS em execuçao
@@ -360,6 +381,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS531(pr_cdcooper  IN crapcop.cdcooper%T
             -- Levantar exceçao
             RAISE vr_exc_saida;
           END IF;
+          
+          
         END LOOP;
 
         -- Chama rotina de aguardo agora passando 0, para esperarmos
