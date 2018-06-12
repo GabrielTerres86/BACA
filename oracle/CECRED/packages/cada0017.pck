@@ -12,6 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.cada0017 IS
   -- Frequencia: OnLine
   -- Objetivo  :
   --
+  --    Alteracoes:
+  --
+  --  12/06/2018 - Correção da consulta (Cláudio - CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_listar_coop_demitidos(pr_cdcooper  IN NUMBER, -- Codigo da cooperativa
                                      pr_dtinicio  IN DATE, -- Data de Inicio da Pesquisa
@@ -38,6 +41,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0017 IS
   -- Frequencia: OnLine
   -- Objetivo  :
   --
+  --    Alteracoes:
+  --
+  --  12/06/2018 - Correção da consulta (Cláudio - CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_listar_coop_demitidos(pr_cdcooper  IN NUMBER, -- Codigo da cooperativa
                                      pr_dtinicio  IN DATE, -- Data de Inicio da Pesquisa
@@ -84,11 +90,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0017 IS
           FROM crapass A
          WHERE A.CDCOOPER = pr_cdcooper
            AND a.dtdemiss BETWEEN pr_dtinicio and pr_dtfim
-           AND (pr_flgprevi = 1)
-           AND (EXISTS (select nrdconta
+           AND ((EXISTS (select nrdconta
                           from tbprevidencia_conta
                          where nrdconta = a.nrdconta
-                           and CDCOOPER = pr_cdcooper))
+                            and CDCOOPER = pr_cdcooper)) OR
+               pr_flgprevi = 0)
            AND rownum >= pr_posicao
            AND rownum <= pr_registros;
     

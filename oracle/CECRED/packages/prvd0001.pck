@@ -12,7 +12,11 @@ CREATE OR REPLACE PACKAGE CECRED.prvd0001 IS
   -- Frequencia: OnLine
   -- Objetivo  :
   --
+  --    Alteracoes:
+  --
+  --  12/06/2018 - Correção dos valores de update (Cláudio - CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------
+
   PROCEDURE pc_manter_previdencia(pr_cdcooper IN NUMBER, -- Codigo da cooperativa
                                   pr_nrdconta IN crapass.nrdconta%type,
                                   pr_cdoperad IN crapope.cdoperad%type,
@@ -36,6 +40,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.prvd0001 IS
   -- Frequencia: OnLine
   -- Objetivo  :
   --
+  --    Alteracoes:
+  --
+  --  12/06/2018 - Correção dos valores de update (Cláudio - CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_manter_previdencia(pr_cdcooper IN NUMBER, -- Codigo da cooperativa
@@ -124,13 +131,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.prvd0001 IS
         -- Efetua a atualizacao 
         BEGIN
           UPDATE tbprevidencia_conta
-             SET cdcooper = pr_cdcooper,
-                 nrdconta = pr_nrdconta,
-                 dtmvtolt = SYSDATE,
-                 dtadesao = DECODE(pr_insituac, 0, NULL, pr_dtsituac),
-                 cdopeade = DECODE(pr_insituac, 0, NULL, pr_cdoperad),
-                 dtcancel = DECODE(pr_insituac, 0, NULL, pr_dtsituac),
-                 cdopecan = DECODE(pr_insituac, 0, NULL, pr_cdoperad),
+             SET dtmvtolt = SYSDATE,
+                 dtadesao = DECODE(pr_insituac, 1, pr_dtsituac, dtadesao),
+                 cdopeade = DECODE(pr_insituac, 1, pr_cdoperad, cdopeade),
+                 dtcancel = DECODE(pr_insituac, 0, pr_dtsituac, dtcancel),
+                 cdopecan = DECODE(pr_insituac, 0, pr_cdoperad, cdopecan),
                  insituac = pr_insituac
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta;
