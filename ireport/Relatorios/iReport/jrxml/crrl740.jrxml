@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-04-16T14:19:14 -->
+<!-- 2018-06-12T16:57:11 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl740" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="762" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50" whenResourceMissingType="Empty" uuid="6386a198-a31e-4f65-936d-2bc9fe5ac907">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NEW_DATAADAPTER.xml"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -62,6 +62,12 @@
 	</field>
 	<field name="Column5" class="java.lang.String">
 		<fieldDescription><![CDATA[Columns/column5]]></fieldDescription>
+	</field>
+	<field name="Column6" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column6]]></fieldDescription>
+	</field>
+	<field name="Column7" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column7]]></fieldDescription>
 	</field>
 	<title>
 		<band height="126">
@@ -140,14 +146,14 @@
 			</textField>
 			<textField>
 				<reportElement x="0" y="0" width="758" height="22" uuid="1d6b150c-de8f-40ad-8011-0db635963ad2"/>
-				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
+				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +   (new SimpleDateFormat("MMMM", (new Locale("pt","BR")))).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
 	<detail>
 		<band height="38">
 			<textField>
-				<reportElement style="Sans_Bold" x="0" y="4" width="152" height="15" isPrintWhenDetailOverflows="true" uuid="880e92c9-d6cc-4ad4-bc60-7e45887b9fe1"/>
+				<reportElement style="Sans_Bold" x="-1" y="0" width="119" height="15" isPrintWhenDetailOverflows="true" uuid="880e92c9-d6cc-4ad4-bc60-7e45887b9fe1"/>
 				<textElement textAlignment="Center">
 					<font size="11"/>
 				</textElement>
@@ -157,7 +163,7 @@
 				<reportElement x="0" y="20" width="760" height="1" isPrintWhenDetailOverflows="true" uuid="2d5a60ee-3d8d-4f50-ba2a-72f82e76e38e"/>
 			</line>
 			<textField>
-				<reportElement style="Sans_Bold" x="152" y="4" width="152" height="15" isPrintWhenDetailOverflows="true" uuid="c5d7cdb0-d821-4cdd-b3fe-955d28b5e02a">
+				<reportElement style="Sans_Bold" x="120" y="0" width="106" height="15" isPrintWhenDetailOverflows="true" uuid="c5d7cdb0-d821-4cdd-b3fe-955d28b5e02a">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Center">
@@ -166,7 +172,7 @@
 				<textFieldExpression><![CDATA[$F{Column2}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Sans_Bold" x="304" y="4" width="152" height="15" isPrintWhenDetailOverflows="true" uuid="a46de082-b775-4ca8-9fe5-80790ed83eb9">
+				<reportElement style="Sans_Bold" x="228" y="0" width="114" height="15" isPrintWhenDetailOverflows="true" uuid="a46de082-b775-4ca8-9fe5-80790ed83eb9">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Center">
@@ -175,7 +181,7 @@
 				<textFieldExpression><![CDATA[$F{Column3}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="Sans_Bold" x="456" y="4" width="152" height="15" isPrintWhenDetailOverflows="true" uuid="1ad279e9-8a79-4fcd-80e8-edbde521128a"/>
+				<reportElement style="Sans_Bold" x="344" y="0" width="110" height="15" isPrintWhenDetailOverflows="true" uuid="1ad279e9-8a79-4fcd-80e8-edbde521128a"/>
 				<textElement textAlignment="Center">
 					<font size="11"/>
 				</textElement>
@@ -188,14 +194,28 @@
 				<subreportExpression><![CDATA["crrl740_custas.jasper"]]></subreportExpression>
 			</subreport>
 			<line>
-				<reportElement x="0" y="0" width="760" height="1" isPrintWhenDetailOverflows="true" uuid="df57708e-ae5f-44bc-a3d2-c1ea561c443d"/>
+				<reportElement x="0" y="19" width="760" height="1" isPrintWhenDetailOverflows="true" uuid="df57708e-ae5f-44bc-a3d2-c1ea561c443d"/>
 			</line>
 			<textField>
-				<reportElement style="Sans_Bold" x="608" y="4" width="152" height="15" isPrintWhenDetailOverflows="true" uuid="943aed08-85d1-4196-aa7a-613b5fc72e4a"/>
+				<reportElement style="Sans_Bold" x="456" y="0" width="108" height="15" isPrintWhenDetailOverflows="true" uuid="943aed08-85d1-4196-aa7a-613b5fc72e4a"/>
 				<textElement textAlignment="Center">
 					<font size="11"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Column5}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="566" y="0" width="104" height="15" isPrintWhenDetailOverflows="true" uuid="0e6c8bb2-92c9-4a04-beaf-5f82993c0cfb"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column6}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="673" y="0" width="89" height="15" isPrintWhenDetailOverflows="true" uuid="3578a743-fd6e-4a7f-be1e-fdc6d45bc748"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column7}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
