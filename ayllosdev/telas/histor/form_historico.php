@@ -311,7 +311,7 @@
                     <!-- Fim PJ 416 - BacenJud -->
 				</tr>
 				<tr>
-					<td>
+					<td colspan="2">
 						<label for="cdprodut">Produto:</label>
 						<input name="cdprodut" id="cdprodut" type="text"/>
 						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaProduto(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
@@ -319,7 +319,7 @@
 					</td>
 				</tr>
 				<tr>
-					<td>
+					<td colspan="2">
 						<label for="cdagrupa">Agrupamento:</label>
 						<input name="cdagrupa" id="cdagrupa" type="text"/>
 						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaAgrupamento(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
