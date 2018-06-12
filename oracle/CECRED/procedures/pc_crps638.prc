@@ -124,6 +124,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               diferença no relatório contábil mensal (crrl635).
                               (Wagner/Sustentação #TASK0012676)
 
+				 12/06/2018 - Ajuste no index dos relatórios (Andrey Formigari - Mouts) #PRB0040084.
+
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -503,7 +505,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     vr_aux_cdagenci NUMBER;
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
-    vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
+    vr_ind_rel63X := RPAD(pr_nmconven, 30, ' ') || RPAD(pr_dsmeiarr, 15, ' ') || RPAD(pr_cdempres, 5, ' ');
     
     -- 634 emite somente o dial atual 
     IF rw_crapdat.dtmvtolt = pr_dtmvtolt THEN 
