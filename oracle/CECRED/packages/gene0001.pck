@@ -548,6 +548,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             19/02/2018 - #827612 Criado o procedimento pc_mv_arquivo para usar o tipo de comando mv_grid, criado
   --                          na função fn_type_comando. Este tipo de comando foi criado para usar o user grid no
   --                          exec_comando_oracle.sh para ganho de performance (Carlos)
+  --
+  --			 12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -646,10 +648,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- .............................................................................
     BEGIN
       -- Retornar o usuário através da função SYS_CONTEXT
-      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'CECRED');
+      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'AILOS');
     EXCEPTION
       WHEN OTHERS THEN
-        RETURN 'CECRED';
+        RETURN 'AILOS';
     END;
   END fn_OSuser;
 
