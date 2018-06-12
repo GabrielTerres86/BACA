@@ -548,7 +548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 12/06/2018
   --
   -- Dados referentes ao programa:
   --
@@ -632,6 +632,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                   
   --              14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
   --                           da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
+  
+  --              12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -4420,7 +4422,7 @@ END pc_gera_titulos_iptu_prog;
                      CLOSE cr_crapceb4;
                      --Mensagem erro
                      vr_des_erro:= '882 - Convenio '||
-                                   'CECRED nao encontrado. ('||gene0002.fn_mask(vr_nrconvceb,'9999')||')';
+                                   'AILOS nao encontrado. ('||gene0002.fn_mask(vr_nrconvceb,'9999')||')';
                      --Criar erro
                      CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
                                           ,pr_cdagenci => pr_cod_agencia
@@ -5489,7 +5491,7 @@ END pc_gera_titulos_iptu_prog;
           -- Envio de e-mail informando que houve a tentativa
           gene0003.pc_solicita_email(pr_cdcooper => pr_cooper,
                                      pr_cdprogra => 'PAGA0001',
-                                     pr_des_destino => 'prevencaodefraudes@cecred.coop.br',
+                                     pr_des_destino => 'prevencaodefraudes@ailos.coop.br',
                                      pr_des_assunto => 'Tentativa de pagamento cod. barras fraudulento',
                                      pr_des_corpo => vr_des_corpo,
                                      pr_des_anexo => NULL,
