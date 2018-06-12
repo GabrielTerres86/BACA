@@ -8953,7 +8953,7 @@ PROCEDURE cancelar_seguro:
     DO:
         IF par_tpseguro  = 11 AND
             (par_cdmotcan = 0 OR
-             par_cdmotcan > 9) THEN
+             par_cdmotcan > 12) THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado.".
                 LEAVE valida.
