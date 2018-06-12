@@ -3747,7 +3747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
       IF rw_crapcop_2.cdcooper = 3 THEN -- CECRED
         vr_cdcritic := 0;
-        vr_dscritic := 'Cooperativa CECRED nao permitida para transferencias.';
+        vr_dscritic := 'Cooperativa AILOS nao permitida para transferencias.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -3831,7 +3831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     IF pr_intipdif <> 1 THEN
       IF pr_cddbanco = 85 THEN
         vr_dscritic := 0;
-        vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema CECRED.';
+        vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema AILOS.';
         pr_nmdcampo := 'cddbanco';
         RAISE vr_exc_saida;
       END IF;
