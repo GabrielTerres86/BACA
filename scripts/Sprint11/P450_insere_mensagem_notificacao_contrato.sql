@@ -25,7 +25,7 @@ begin
      'Aviso sobre seu seguro',
      'Cancelamento de SEGURO',
      '<p>Cooperado, seu seguro #descseguro foi cancelado por falta de pagamento.</p>
-<p>Duvidas consulte seu posto de atendimento.</p>',
+<p>Dúvidas consulte seu posto de atendimento e/ou entre em contato com o SAC</p>',
      2,
      0,
      null,
