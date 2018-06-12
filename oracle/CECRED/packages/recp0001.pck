@@ -195,6 +195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
   --
   --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
+  --
+  --             12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -261,7 +263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     PRAGMA AUTONOMOUS_TRANSACTION;
     
     -- CONSTANTES
-    vr_dsdemail     CONSTANT VARCHAR2(50) := 'estrategiadecobranca@cecred.coop.br'; -- Email de destino
+    vr_dsdemail     CONSTANT VARCHAR2(50) := 'estrategiadecobranca@ailos.coop.br'; -- Email de destino
     vr_dsassunt     CONSTANT VARCHAR2(10) := 'ACORDO';
     
     -- VARIÁVEIS
