@@ -7618,9 +7618,16 @@ create or replace package body cecred.PAGA0002 is
     --
     --              07/12/2017 - Gravar lote com autonomous transaction para evitar
     --                           conflito com as TEDs (Tiago/Adriano #745339)
+    --              12/06/2018 - Tratamento de Históricos de Credito/Debito Jose(AMcom)
+    --                          
     -- ..........................................................................*/
+    
+    -- variável para histórico de débito/crédito
+    vr_incrineg       INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+    vr_tab_retorno    LANC0001.typ_reg_retorno;
 
     ---------------> CURSORES <-----------------
+    
      /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper  IN crapcop.cdcooper%TYPE,
                       par_cdagetrf IN crapcop.cdagectl%TYPE) IS
@@ -7871,7 +7878,42 @@ create or replace package body cecred.PAGA0002 is
 
          vr_flgerror := 0;
 
-       BEGIN
+            BEGIN
+            -- Inserir lancamento
+              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot.dtmvtolt -- dtmvtolt
+                                                ,pr_cdagenci =>rw_craplot.cdagenci -- cdagenci
+                                                ,pr_cdbccxlt =>rw_craplot.cdbccxlt -- cdbccxlt
+                                                ,pr_nrdolote =>rw_craplot.nrdolote -- nrdolote
+                                                ,pr_nrdconta =>rw_crapccs.nrctatrf -- nrdconta                                                                                                
+                                                ,pr_nrdctabb =>rw_crapccs.nrdconta -- nrdctabb   
+                                                ,pr_nrdctitg =>gene0002.fn_mask(rw_crapccs.nrctatrf,'99999999') -- nrdctitg
+                                                ,pr_nrdocmto => rw_craplcs.nrdocmto -- nrdocmto                                              
+                                                ,pr_cdhistor => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85')                  -- cdhistor                                                
+                                                ,pr_vllanmto => rw_craplcs.vllanmto -- vllanmto                                                
+                                                ,pr_nrseqdig => rw_craplot.nrseqdig -- nrseqdig
+                                                ,pr_cdcooper =>pr_cdcooper
+
+                                                -- OUTPUT --
+                                                ,pr_tab_retorno => vr_tab_retorno
+                                                ,pr_incrineg => vr_incrineg
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+                    
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_erro;
+              END IF;
+              
+              
+
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Não foi possivel atualizar lancamento (craplcm)'
+                               ||' nrdconta: '|| rw_crapccs.nrctatrf
+                               ||' nrdolote: '|| rw_craplot.nrdolote|| ' :'||SQLERRM;
+                RAISE vr_exc_erro;
+            END;
+
+       /*BEGIN
           INSERT INTO craplcm
                      (cdcooper,
                       dtmvtolt,
@@ -7900,7 +7942,7 @@ create or replace package body cecred.PAGA0002 is
                        gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85'),
                        rw_craplcs.vllanmto,
                          rw_craplot.nrseqdig,
-                       vr_dadosdeb, /* Remetente */
+                       vr_dadosdeb,
                        pr_cdoperad,
                        TO_CHAR(SYSDATE, 'SSSSS'),
                        pr_cdcooper)
@@ -7916,7 +7958,7 @@ create or replace package body cecred.PAGA0002 is
             vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
             RAISE vr_exc_erro;
-        END;
+        END;*/
 
         --Atualizar dados do lote no rowtype
         rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
