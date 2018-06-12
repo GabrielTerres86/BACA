@@ -131,8 +131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
     --   22/06/2017 - inclusão da variante de tipo se for erro tratado ou mensagem(alerta) - pr_ind_tipo_log_in 
     --              - Setado modulo pr_ind_tipo_log_in para variar se é erro ou alertar
     --              - Chamado 660286 - (Belli - Envolti)
-    --
-    --
+    --   
+    --   12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
     -- .............................................................................
     --
     -- Tratamento de erros
@@ -598,7 +598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
     -- Mandar email para INSS com o resultado do processo
     gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
                               ,pr_cdprogra        => pr_cdprogra
-                              ,pr_des_destino     => 'inss@cecred.coop.br'
+                              ,pr_des_destino     => 'inss@ailos.coop.br'
                               ,pr_des_assunto     => 'SICREDI - PLANILHA PROVA DE VIDA - LOG'
                               ,pr_des_corpo       => 'Em anexo a PLANILHA e o LOG de processamento.'  ||
                                                      '</br></br>' ||
@@ -645,7 +645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
       -- Mandar email para INSS com o resultado do processo
       gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
                                 ,pr_cdprogra        => pr_cdprogra
-                                ,pr_des_destino     => 'inss@cecred.coop.br'
+                                ,pr_des_destino     => 'inss@ailos.coop.br'
                                 ,pr_des_assunto     => 'SICREDI - PLANILHA PROVA DE VIDA - ERRO'
                                 ,pr_des_corpo       => 'Houve erro no processamento da planilha.</br>' ||
                                                        'Em anexo a PLANILHA e o LOG de processamento.'  ||
@@ -683,7 +683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
       -- Mandar email para INSS com o resultado do processo
       gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
                                 ,pr_cdprogra        => pr_cdprogra
-                                ,pr_des_destino     => 'inss@cecred.coop.br'
+                                ,pr_des_destino     => 'inss@ailos.coop.br'
                                 ,pr_des_assunto     => 'SICREDI - PLANILHA PROVA DE VIDA - ERRO'
                                 ,pr_des_corpo       => 'Houve erro no processamento da planilha.</br>' ||
                                                        'Em anexo a PLANILHA e o LOG de processamento.'  ||
