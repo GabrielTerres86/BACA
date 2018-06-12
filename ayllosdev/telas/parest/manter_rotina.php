@@ -24,6 +24,7 @@ isPostMethod();
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 
 $tlcooper = (isset($_POST['tlcooper'])) ? $_POST['tlcooper'] : 0;
+$tpprodut = (isset($_POST['tpprodut'])) ? $_POST['tpprodut'] : 0;
 $contigen = (isset($_POST['contigen'])) ? $_POST['contigen'] : 0;
 $incomite = (isset($_POST['incomite'])) ? $_POST['incomite'] : 0;
 $anlautom = (isset($_POST['anlautom'])) ? $_POST['anlautom'] : 0;
@@ -51,7 +52,7 @@ if ($anlautom == 1 && $cdopcao == 'A' && $tlcooper <> 0){
     exit();
   }
   
-  if (((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == '')&& $tpproduto == 0){
+  if (((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == '')&& $tpproduto != 4){
     echo 'hideMsgAguardo();';
     echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
     exit();
@@ -101,8 +102,8 @@ if ( $cdopcao == 'C') {
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
-	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= "   <flgativo>1</flgativo>";
+	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -110,12 +111,12 @@ if ( $cdopcao == 'C') {
 	$xmlObj = getObjectXML($xmlResult);
 
 } else {
-	//if($tpproduto == 4)
-		//$nmregmpj = "teste";
+	
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
 	$xml .= "   <flgativo>1</flgativo>";
+	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
     $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
@@ -125,11 +126,9 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
 	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
-	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
-	
 	$xmlResult = mensageria($xml, "PAREST", "PAREST_ALTERA_PARAM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 	
@@ -152,7 +151,7 @@ if ( $cddopcao == 'C') {
 	include('tab_resultado.php');
 } else {
 	if ( $cddopcao == 'X') {
-		if($tpproduto == 0){
+		if($tpproduto !=  4){
 			foreach ($registros as $r) {
 				
 				if ( getByTagName($r->tags, 'contigen') == 'SIM' ) {
@@ -218,7 +217,7 @@ if ( $cddopcao == 'C') {
 
 		}
 	} else {
-		echo 'showError("inform","Parametro alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
+		echo 'showError("inform","Par&acirc;metro Alterado com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	}
 }
 

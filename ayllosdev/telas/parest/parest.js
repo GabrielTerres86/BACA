@@ -56,8 +56,6 @@ function estadoInicial() {
     $('#tlcooper', '#frmCab').val('0');
 	$('label[for="tlcooper"]', '#' + frmCab).hide();
 	$('#tlcooper', '#' + frmCab).hide();
-    /*$('label[for="tpproduto"]', '#' + frmCab).hide();
-	$('#tpproduto', '#' + frmCab).hide();*/
 }
 
 function controlaLayout() {
@@ -90,7 +88,7 @@ function formataCabecalho() {
     // Cabeçalho
     rCddopcao = $('label[for="cddopcao"]', '#' + frmCab);
     rTlcooper = $('label[for="tlcooper"]', '#' + frmCab);
-    rTpproduto = $('label[for="tpproduto"]', '#' + frmCab);    
+    rTpproduto = $('label[for="tpprodut"]', '#' + frmCab);    
 
 	rCddopcao.css('width', '50px');
 	rTlcooper.css('width', '80px');
@@ -101,7 +99,7 @@ function formataCabecalho() {
 	
     btnCab = $('#btOK', '#' + frmCab);
 
-    cCddopcao.css({'width': '300px'});
+    cCddopcao.css({'width': '230px'});
 	cTlcooper.css({'width': '80px'});
 
     cTodosCabecalho.habilitaCampo();
@@ -178,7 +176,15 @@ function controlaFoco() {
 
     $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-			if ($(this).val() == 'C'){
+            $('#tpprodut', '#frmCab').focus();
+            return false;
+        }
+    });
+	
+    $('#tpprodut', '#frmCab').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            
+            if ($('#cddopcao').val() == 'C'){
 				$('#btnOK', '#frmCab').focus();
 			}else{
 				$('#tlcooper', '#frmCab').focus();
@@ -196,7 +202,6 @@ function controlaFoco() {
 
     $('#btnOK', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-			
 			controlaOperacao();
             return false;
         }
@@ -337,7 +342,7 @@ function controlaFoco() {
           $('#qtmesemp', '#divAlteracao04').habilitaCampo();
 	    }
 	    return false;
-	}); 	
+	});  	
   
 	// Permitir somente letras, números e o caractere "_"
 	$('#nmregmpf', '#divAlteracao').keyup(function(e) {
@@ -357,13 +362,13 @@ function controlaFoco() {
 }
 
 function controlaOperacao() {
-    tpproduto = $("#tpproduto").val();  
+    tpproduto = $("#tpprodut").val();  
 	if ( $('#cddopcao', '#frmCab').val() == 'C' ) {
 		LiberaCampos();
 	} else {			
 		LiberaCampos();
 	}
-
+	
 	// Desabilita campo opção
 	cTodosCabecalho = $('input[type="text"],select', '#frmCab');
 	cTodosCabecalho.desabilitaCampo();
@@ -381,7 +386,7 @@ function LiberaCampos() {
     cTodosCabecalho = $('input[type="text"],select', '#frmCab');
     cTodosCabecalho.desabilitaCampo();
    
-    if(tpproduto == '0'){
+    if(tpproduto != '4'){
 	    $('#frmParest').css({'display': 'block'});
     }else if(tpproduto == '4'){
         $('#frmParest04').css({'display': 'block'});
@@ -393,7 +398,7 @@ function LiberaCampos() {
 	    if ($('#tlcooper', '#' + frmCab).val() == 0) { // Todas
 			// Mostra Divs
 	        $('#divBotoes').css({ 'display': 'block' });
-            if(tpproduto == '0')
+            if(tpproduto != '4')
 	            $('#divAlteracao').css({ 'display': 'block' });
             else if(tpproduto == '4'){
                 $('#divAlteracao04').css({ 'display': 'block' });
@@ -436,9 +441,10 @@ function manterRotina(cdopcao) {
     showMsgAguardo(mensagem);
 	
     var tlcooper = normalizaNumero($('#tlcooper', '#' + frmCab).val());
+	var tpprodut = normalizaNumero($('#tpprodut', '#' + frmCab).val());
 	
    
-    if(tpproduto == '0'){
+    if(tpproduto != '4'){
         var contigen = normalizaNumero($('#contigen', '#' + frmParest).val());
         var incomite = normalizaNumero($('#incomite', '#' + frmParest).val());
         var anlautom = normalizaNumero($('#anlautom', '#' + frmParest).val());
@@ -469,6 +475,7 @@ function manterRotina(cdopcao) {
         data: {
             cddopcao: cdopcao,
             tlcooper: tlcooper,
+            tpprodut: tpprodut,
             contigen: contigen,
             anlautom: anlautom,
             incomite: incomite,
@@ -551,7 +558,7 @@ function alteracaoMensagem(){
 
 function confirmaAlteracao() {
 
-    showConfirmacao('Confirma a Altera&ccedil;&atilde;o dos parametros?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'A\');', '', 'sim.gif', 'nao.gif');
+    showConfirmacao('Confirma a Altera&ccedil;&atilde;o dos Par&acirc;metros?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'A\');', '', 'sim.gif', 'nao.gif');
 }
 
 function desbloqueia() {

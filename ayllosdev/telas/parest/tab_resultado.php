@@ -8,23 +8,23 @@
  * ALTERAÇÕES   : 
   ----------------
  */
-if($tpproduto == 0)
+if($tpproduto != 4)
 {
     $search = array('.', '-');
     $tabela = "<fieldset id=\'tabConteudo\'>";
     $tabela .= "<legend>" . utf8ToHtml('Parâmetros da Esteira de Crédito') . "</legend>";
 
-    $tabela .= "<div class=\'divRegistros\'>";
-    $tabela .= "<table>";
-    $tabela .= "<thead>";
-    $tabela .= "<tr>";
-    $tabela .= "<th>Coop.</th>";
-    $tabela .= "<th>Contig.</th>";
-    $tabela .= "<th>Comite</th>";
-    $tabela .= "<th>Analise Aut.</th>";
-    $tabela .= "<th>Regra PF</th>";
-    $tabela .= "<th>Regra PJ</th>";
-    $tabela .= "</tr>";
+$tabela .= "<div class=\'divRegistros\'>";
+$tabela .= "<table>";
+$tabela .= "<thead>";
+$tabela .= "<tr>";
+$tabela .= "<th>Coop.</th>";
+$tabela .= "<th>Conting.</th>";
+$tabela .= "<th>" . utf8ToHtml('Comitê') . "</th>";
+$tabela .= "<th>" . utf8ToHtml('Análise Aut.') . "</th>";
+$tabela .= "<th>Regra PF</th>";
+$tabela .= "<th>Regra PJ</th>";
+$tabela .= "</tr>";
 
     $tabela .= "</thead>";
     $tabela .= "<tbody>";
@@ -34,28 +34,28 @@ if($tpproduto == 0)
 		
 		echo "console.log('1--> ".getByTagName($r->tags, 'nmregmpj')."');";
 
-        $tabela .= "<tr>";
+    $tabela .= "<tr>";
 
-        $tabela .= "<td>" . getByTagName($r->tags, 'nmrescop') . "</td>";
-        $tabela .= "<td>" . getByTagName($r->tags, 'contigen') . "</td>";
-        $tabela .= "<td>" . getByTagName($r->tags, 'incomite') . "</td>";
-        $tabela .= "<td>" . getByTagName($r->tags, 'anlautom') . "</td>";
-        $tabela .= "<td>" . getByTagName($r->tags, 'nmregmpf') . "</td>";
-        $tabela .= "<td>" . getByTagName($r->tags, 'nmregmpj') . "</td>";
-        $tabela .= "</tr>";
-    }
+    $tabela .= "<td>" . getByTagName($r->tags, 'nmrescop') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'contigen') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'incomite') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'anlautom') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'nmregmpf') . "</td>";
+    $tabela .= "<td>" . getByTagName($r->tags, 'nmregmpj') . "</td>";
+    $tabela .= "</tr>";
+}
 
-    $tabela .= "</tbody>";
-    $tabela .= "</table>";
-    $tabela .= "</div>";
+$tabela .= "</tbody>";
+$tabela .= "</table>";
+$tabela .= "</div>";
 
-    $tabela .= "</fieldset>";
+$tabela .= "</fieldset>";
 
-    // Monta tabela
-    echo "$('#divConsulta').html('" . $tabela . "');";
+// Monta tabela
+echo "$('#divConsulta').html('" . $tabela . "');";
 
-    // Efetua formatação do layout da tabela
-    echo 'formataResultado();';
+// Efetua formatação do layout da tabela
+echo 'formataResultado();';
 
     // Esconde botão Continuar
     echo '$("#btContinuar","#divBotoes").hide();';
