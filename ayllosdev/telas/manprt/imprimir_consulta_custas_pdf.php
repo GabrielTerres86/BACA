@@ -31,10 +31,11 @@
 	// Recebe o POST
 	$inidtpro 			= $_POST['inidtpro'] ;
 	$fimdtpro 			= $_POST['fimdtpro'];
-    $cdcooper 			= (!empty($_POST['cdcooper']))  ? $_POST['cdcooper'] : 3;
+    $cdcooper 			= (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : 3;
     $nrdconta 			= (!empty($_POST["nrdconta"])) ? $_POST["nrdconta"] : null;
 	$cduflogr 			= (isset($_POST['cduflogr']))  ? $_POST['cduflogr'] : null;
     $dscartor 			= (isset($_POST['dscartor']))  ? $_POST['dscartor'] : null;
+    $flcustas 			= (!empty($_POST['flcustas'])) ? $_POST['flcustas'] : null;
 
 	$xml  = "";
 	$xml .= "<Root>";
@@ -46,6 +47,7 @@
 	$xml .= "   <dtfinal>".$fimdtpro."</dtfinal>";
 	$xml .= "   <cduflogr>".$cduflogr."</cduflogr>";
 	$xml .= "   <cartorio>".$dscartor."</cartorio>";
+	$xml .= "   <flcustas>".$flcustas."</flcustas>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

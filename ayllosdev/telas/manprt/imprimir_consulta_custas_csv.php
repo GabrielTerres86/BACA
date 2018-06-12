@@ -35,6 +35,7 @@
     $nrdconta 			= (!empty($_POST["nrdconta"])) ? $_POST["nrdconta"] : null;
 	$cduflogr 			= (isset($_POST['cduflogr']))  ? $_POST['cduflogr'] : null;
     $dscartor 			= (isset($_POST['dscartor']))  ? $_POST['dscartor'] : null;
+	$flcustas 			= (!empty($_POST['flcustas'])) ? $_POST['flcustas'] : null;
 
 	$xml  = "";
 	$xml .= "<Root>";
@@ -46,6 +47,7 @@
 	$xml .= "   <dtfinal>".$fimdtpro."</dtfinal>";
 	$xml .= "   <cduflogr>".$cduflogr."</cduflogr>";
 	$xml .= "   <cartorio>".$dscartor."</cartorio>";
+	$xml .= "   <flcustas>".$flcustas."</flcustas>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

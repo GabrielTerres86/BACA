@@ -83,10 +83,12 @@
             <input id="cduflogr" name="cduflogr" alt="Sigla do estado.">
 
 
-            <!--<label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
-            <input type="text" id="dscartor" name="dscartor" value="dscartor"/>
-            <a id="lupaConta" style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaCartorio();return false;">
-            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>-->
+            <label for="flcustas"><? echo utf8ToHtml('Taxas/Custas pagas');  ?>:</label>
+			<select id="flcustas" name="flcustas" class="campo">
+				<option value="">TODAS</option>
+				<option value="1">Sim</option>
+				<option value="0">Não</option>
+			</select>
 		</div>
 	</div>		
 </form>
@@ -105,6 +107,7 @@
 	<input type="hidden" name="cdcooper" id="cdcooper" value="<?php echo $nmrescop; ?>">
 	<input type="hidden" name="nrdconta" id="nrdconta" value="<?php echo $nrdconta; ?>">
 	<input type="hidden" name="dscartor" id="dscartor" value="<?php echo $dscartor; ?>">
+	<input type="hidden" name="flcustas" id="flcustas" value="<?php echo $flcustas; ?>">
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>
 
@@ -114,6 +117,7 @@
 	<input type="hidden" name="cdcooper" id="cdcooper" value="<?php echo $nmrescop; ?>">
 	<input type="hidden" name="nrdconta" id="nrdconta" value="<?php echo $nrdconta; ?>">
 	<input type="hidden" name="dscartor" id="dscartor" value="<?php echo $dscartor; ?>">
+	<input type="hidden" name="flcustas" id="flcustas" value="<?php echo $flcustas; ?>">
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>
 
