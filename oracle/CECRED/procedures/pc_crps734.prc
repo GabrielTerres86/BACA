@@ -114,7 +114,7 @@ BEGIN
       ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
     END CASE;
     
-    vr_qtdiaatr := (rw_crapdat.dtmvtolt - rw_crapdat.dtmvtoan);
+    vr_qtdiaatr := (rw_crapdat.dtmvtopr - rw_crapdat.dtmvtolt);
     
     -- Loop principal dos títulos vencidos
     FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper

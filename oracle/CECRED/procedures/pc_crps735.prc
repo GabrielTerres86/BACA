@@ -302,7 +302,7 @@ BEGIN
                                  ,pr_nrdconta   => rw_craptdb.nrdconta
                                  ,pr_vllimcre   => rw_crapass.vllimcre
                                  ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                 ,pr_flgcrass   => FALSE
+                                 ,pr_flgcrass   => TRUE
                                  ,pr_des_reto   => vr_des_reto
                                  ,pr_tab_sald   => vr_tab_saldos
                                  ,pr_tipo_busca => 'A'
