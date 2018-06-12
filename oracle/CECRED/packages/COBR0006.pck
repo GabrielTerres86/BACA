@@ -461,7 +461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 30/05/2017
+    Data     : Novembro/2015.                   Ultima atualizacao: 12/06/2018
   
    Dados referentes ao programa:
   
@@ -550,6 +550,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              
                 30/05/2017 - Implementado ajustes para nao estourar a chave da crapcob na 
                              pc_processa_titulos(Tiago/Rodrigo #663295)
+                             
+                12/06/2018 - Ajuste para remover caratere especiais do campo dsdinstr que é usado para gravar 
+                             na crapcob campo dsinform : Alcemir - Mout's (PRB0040060) .      
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -1360,7 +1363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).nmdavali := pr_rec_cobranca.nmdavali;
     pr_tab_crapcob(vr_index).nrinsava := pr_rec_cobranca.nrinsava;
     pr_tab_crapcob(vr_index).cdtpinav := pr_rec_cobranca.cdtpinav;
-    pr_tab_crapcob(vr_index).dsdinstr := pr_rec_cobranca.dsdinstr;
+    pr_tab_crapcob(vr_index).dsdinstr := fn_remove_chr_especial(pr_rec_cobranca.dsdinstr);
     pr_tab_crapcob(vr_index).dsusoemp := pr_rec_cobranca.dsusoemp;
     pr_tab_crapcob(vr_index).nrremass := pr_rec_cobranca.nrremass;
     pr_tab_crapcob(vr_index).flgregis := pr_rec_cobranca.flgregis;
@@ -6234,11 +6237,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
 
       /* Concatena instrucoes separadas por _   */
-      pr_rec_cobranca.dsdinstr := pr_tab_linhas('DSMENSG5').texto || '_' ||
-                                  pr_tab_linhas('DSMENSG6').texto || '_' ||
-                                  pr_tab_linhas('DSMENSG7').texto || '_' ||
-                                  pr_tab_linhas('DSMENSG8').texto || '_' ||
-                                  pr_tab_linhas('DSMENSG9').texto;
+      pr_rec_cobranca.dsdinstr := fn_remove_chr_especial(pr_tab_linhas('DSMENSG5').texto || '_' ||
+                                                         pr_tab_linhas('DSMENSG6').texto || '_' ||
+                                                         pr_tab_linhas('DSMENSG7').texto || '_' ||
+                                                         pr_tab_linhas('DSMENSG8').texto || '_' ||
+                                                         pr_tab_linhas('DSMENSG9').texto);
     END IF;
     
     pr_des_reto := 'OK';
@@ -8899,7 +8902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     ELSIF trim(pr_tab_linhas('INDMENSA').texto) IS NULL  THEN
           
-      pr_rec_cobranca.dsdinstr := substr(pr_tab_linhas('OBSMENSA').texto,1,40);
+      pr_rec_cobranca.dsdinstr := fn_remove_chr_especial(substr(pr_tab_linhas('OBSMENSA').texto,1,40));
     
     END IF;
   
@@ -14300,12 +14303,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                vr_tab_campos('IDIMPRES').numero = 3 THEN
 
               /* Concatena instrucoes separadas por _   */
-              vr_dsdinstr := vr_tab_campos('DSMENSG5').texto || '_' ||
-                             vr_tab_campos('DSMENSG5').texto || '_' ||
-                             vr_tab_campos('DSMENSG6').texto || '_' ||
-                             vr_tab_campos('DSMENSG7').texto || '_' ||
-                             vr_tab_campos('DSMENSG8').texto || '_' ||
-                             vr_tab_campos('DSMENSG9').texto;
+              vr_dsdinstr := fn_remove_chr_especial(vr_tab_campos('DSMENSG5').texto || '_' ||
+                                                    vr_tab_campos('DSMENSG5').texto || '_' ||
+                                                    vr_tab_campos('DSMENSG6').texto || '_' ||
+                                                    vr_tab_campos('DSMENSG7').texto || '_' ||
+                                                    vr_tab_campos('DSMENSG8').texto || '_' ||
+                                                    vr_tab_campos('DSMENSG9').texto);
                                           
               IF trim(vr_dsdinstr) IS NULL THEN
                 
