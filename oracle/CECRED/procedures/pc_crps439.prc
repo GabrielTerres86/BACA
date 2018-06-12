@@ -838,6 +838,7 @@ begin
     ELSE
       vr_cdcritic := 1134; -- nao foi possivel realizar debito 
       vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+	  vr_incrineg := 1;
     END IF;
 																					
 			IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
