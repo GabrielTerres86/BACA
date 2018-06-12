@@ -18,9 +18,18 @@
 			   31/05/2016 - Adicionado tratamento de erro para quando estourar
 			               chave da CRAPLCM##3 retornar critica corretamente
 						   (Tiago/Elton SD391162);
+         
+         12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
 ..............................................................................*/
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF TEMP-TABLE cratlcm NO-UNDO LIKE craplcm.
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
+DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
+DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.
 
 
 PROCEDURE inclui-registro:
@@ -60,13 +69,72 @@ PROCEDURE inclui-registro:
              RETURN "NOK".                             
          END.
          
-    /* Cria o registro */
-    CREATE craplcm.
-    BUFFER-COPY cratlcm TO craplcm.
-    VALIDATE craplcm.
+          /* BLOCO DA INSERÇAO DA CRAPLCM */
+          IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+            RUN sistema/generico/procedures/b1wgen0200.p 
+              PERSISTENT SET h-b1wgen0200.
 
-    /*Bloco para tratamento de erro do create da lcm try catch*/
-    CATCH eSysError AS Progress.Lang.SysError:
+          RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+            (INPUT cratlcm.dtmvtolt            /* par_dtmvtolt */
+            ,INPUT cratlcm.cdagenci            /* par_cdagenci */
+            ,INPUT cratlcm.cdbccxlt            /* par_cdbccxlt */
+            ,INPUT cratlcm.nrdolote            /* par_nrdolote */
+            ,INPUT cratlcm.nrdconta            /* par_nrdconta */
+            ,INPUT cratlcm.nrdocmto            /* par_nrdocmto */
+            ,INPUT cratlcm.cdhistor            /* par_cdhistor */
+            ,INPUT cratlcm.nrseqdig            /* par_nrseqdig */
+            ,INPUT cratlcm.vllanmto            /* par_vllanmto */
+            ,INPUT cratlcm.nrdctabb            /* par_nrdctabb */
+            ,INPUT cratlcm.cdpesqbb            /* par_cdpesqbb */
+            ,INPUT cratlcm.vldoipmf            /* par_vldoipmf */
+            ,INPUT cratlcm.nrautdoc            /* par_nrautdoc */
+            ,INPUT cratlcm.nrsequni            /* par_nrsequni */
+            ,INPUT cratlcm.cdbanchq            /* par_cdbanchq */
+            ,INPUT cratlcm.cdcmpchq            /* par_cdcmpchq */
+            ,INPUT cratlcm.cdagechq            /* par_cdagechq */
+            ,INPUT cratlcm.nrctachq            /* par_nrctachq */
+            ,INPUT cratlcm.nrlotchq            /* par_nrlotchq */
+            ,INPUT cratlcm.sqlotchq            /* par_sqlotchq */
+            ,INPUT cratlcm.dtrefere            /* par_dtrefere */
+            ,INPUT cratlcm.hrtransa            /* par_hrtransa */
+            ,INPUT cratlcm.cdoperad            /* par_cdoperad */
+            ,INPUT cratlcm.dsidenti            /* par_dsidenti */
+            ,INPUT cratlcm.cdcooper            /* par_cdcooper */
+            ,INPUT cratlcm.nrdctitg            /* par_nrdctitg */
+            ,INPUT cratlcm.dscedent            /* par_dscedent */
+            ,INPUT cratlcm.cdcoptfn            /* par_cdcoptfn */
+            ,INPUT cratlcm.cdagetfn            /* par_cdagetfn */
+            ,INPUT cratlcm.nrterfin            /* par_nrterfin */
+            ,INPUT cratlcm.nrparepr            /* par_nrparepr */
+            ,INPUT cratlcm.nrseqava            /* par_nrseqava */
+            ,INPUT cratlcm.nraplica            /* par_nraplica */
+            ,INPUT cratlcm.cdorigem            /* par_cdorigem */
+            ,INPUT cratlcm.idlautom            /* par_idlautom */
+            /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+            ,INPUT 0                              /* Processa lote                                 */
+            ,INPUT 0                              /* Tipo de lote a movimentar                     */
+            /* CAMPOS DE SAÍDA                                                                     */                                            
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+  
+            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+              DO:  
+                MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
+                RETURN "NOK".
+              END.   
+              
+            IF  VALID-HANDLE(h-b1wgen0200) THEN
+                DELETE PROCEDURE h-b1wgen0200.
+         
+    /* Cria o registro */
+    /*CREATE craplcm.
+    BUFFER-COPY cratlcm TO craplcm.
+    VALIDATE craplcm.*/
+
+      /*Bloco para tratamento de erro do create da lcm try catch*/
+      CATCH eSysError AS Progress.Lang.SysError:
       /*eSysError:GetMessage(1) Pegar a mensagem de erro do sistema*/
       /*Definindo minha propria critica*/
       par_dscritic = "Transferencia nao efetivada, tente novamente (03).".
