@@ -461,6 +461,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
   --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
   --
+  --             12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
+
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -5210,7 +5212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       --> Enviar Email
       GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
                                 ,pr_cdprogra        => 'COBRANCA'     --> Programa conectado
-                                ,pr_des_destino     => nvl(vr_dsdemail_dst,'segurancacorporativa@cecred.coop.br')  --> Um ou mais detinatários separados por ';' ou ','
+                                ,pr_des_destino     => nvl(vr_dsdemail_dst,'segurancacorporativa@ailos.coop.br')  --> Um ou mais detinatários separados por ';' ou ','
                                 ,pr_des_assunto     => vr_dsAssunt    --> Assunto do e-mail
                                 ,pr_des_corpo       => vr_dsdcorpo    --> Corpo (conteudo) do e-mail
                                 ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
