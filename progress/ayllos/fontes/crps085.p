@@ -123,6 +123,9 @@
                          b1wgen0002.leitura_lem. Cobranca de Multa e
                          Juros de Mora. (Jaison/James)
 
+		    11/06/2018 - Retirado mascara ao gravar lote na craptab, e modificado 
+			             mascaras para o nr do lote (Alcemir -Mout's) - INC0017046.
+
 ............................................................................. */
 
 DEF STREAM str_1.  /*  Para relatorio de criticas da integracao  */
@@ -253,7 +256,7 @@ FORM rel_dsintegr     AT  1 FORMAT "x(25)"      LABEL "TIPO"
      craplot.dtmvtolt AT  1 FORMAT "99/99/9999" LABEL "DATA"
      craplot.cdagenci AT 18 FORMAT "zz9"        LABEL "AGENCIA"
      craplot.cdbccxlt AT 33 FORMAT "zz9"        LABEL "BANCO/CAIXA"
-     craplot.nrdolote AT 52 FORMAT "zzz,zz9"    LABEL "LOTE"
+     craplot.nrdolote AT 52 FORMAT "zzzz,zz9"   LABEL "LOTE"
      craplot.tplotmov AT 66 FORMAT "9"          LABEL "TIPO"
      SKIP(1)
      WITH NO-BOX NO-ATTR-SPACE SIDE-LABELS NO-LABELS  
@@ -658,7 +661,7 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper   AND
                                               glb_dscritic + " EMPRESA = " +
                                               STRING(crapsol.cdempres,"99999")
                                               + " LOTE = " +
-                                              STRING(aux_nrdolote,"999,999") +
+                                              STRING(aux_nrdolote,"9999,999") +
                                               " >> log/proc_batch.log").
 
                             UNIX SILENT VALUE("rm " + aux_nmarqint + 
@@ -681,7 +684,7 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper   AND
                           craplot.cdbccxlt = aux_cdbccxlt
                           craplot.nrdolote = aux_nrdolote
                           craplot.tplotmov = 5
-                          craptab.dstextab = STRING(aux_nrdolote,"999999")
+                          craptab.dstextab = STRING(aux_nrdolote)
                           aux_flgclote     = FALSE
                           craplot.cdcooper = glb_cdcooper.
                    VALIDATE craplot.
@@ -707,7 +710,7 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper   AND
                                               glb_dscritic + " EMPRESA = " +
                                               STRING(crapsol.cdempres,"99999")
                                               + " LOTE = " +
-                                              STRING(aux_nrdolote,"999,999") +
+                                              STRING(aux_nrdolote,"9999,999") +
                                               " >> log/proc_batch.log").
 
                             UNIX SILENT VALUE("rm " + aux_nmarqint + 
@@ -1127,7 +1130,7 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper   AND
                                         glb_dscritic + " EMPRESA = " +
                                         STRING(crapsol.cdempres,"99999") +  
                                         " LOTE = " +
-                                        STRING(aux_nrdolote,"999,999") +
+                                        STRING(aux_nrdolote,"9999,999") +
                                         " >> log/proc_batch.log").
                       RUN fontes/fimprg.p.                
                       UNIX SILENT VALUE("rm " + aux_nmarqint + 
