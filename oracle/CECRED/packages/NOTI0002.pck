@@ -463,6 +463,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
                                        ,pr_xml_ret            OUT CLOB --> Retorno XML
                                         ) IS
   
+    -- 12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
+  
     -- Cursor para obter o estado atual do 
     CURSOR cr_log IS
     SELECT ori.cdorigem_mensagem
@@ -538,14 +540,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
           ,lst.cdorigem_mensagem
           ,lst.inpush_ativo);
       
-      vr_dstransa := 'Alteração das configurações das notificações no Cecred Mobile.';
+      vr_dstransa := 'Alteração das configurações das notificações no Ailos Mobile.';
       vr_dsmsgsuc := 'Configurações alteradas com sucesso.';
     ELSE
       IF pr_recbpush = 1 THEN
-         vr_dstransa := 'Habilitação das notificações no Cecred Mobile.';
+         vr_dstransa := 'Habilitação das notificações no Ailos Mobile.';
          vr_dsmsgsuc := 'Notificações habilitadas com sucesso.';
       ELSE
-         vr_dstransa := 'Desabilitação das notificações no Cecred Mobile.';
+         vr_dstransa := 'Desabilitação das notificações no Ailos Mobile.';
          vr_dsmsgsuc := 'Notificações desabilitadas com sucesso.';
       END IF;
     END IF;
