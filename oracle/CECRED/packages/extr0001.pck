@@ -794,6 +794,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          
          30/05/2018 - Incluido na pc_consulta_extrato carregar historicos, na pc_gera_registro_estrato
                       tratar complemento para incluir na pl_table (Alcemir Mout's - Prj 467).
+		 
+         12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
+					  
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -4721,7 +4724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             
                        || 'O serviço de envio de extrato por e-mail será suspenso a partir do mês de junho.<br>'
                        || 'Utilize os canais de autoatendimento da sua cooperativa para continuar tendo acesso ao seu extrato. '
-                       || 'Você pode consultá-lo por meio dos Caixas Eletrônicos, Conta Online ou ainda pelo aplicativo CECRED Mobile.<br><br>'
+                       || 'Você pode consultá-lo por meio dos Caixas Eletrônicos, Conta Online ou ainda pelo aplicativo AILOS Mobile.<br><br>'
 
                        || 'Caso tenha dúvidas em relação ao acesso a esses canais, entre em contato com o SAC: 0800 647 2200 ou com seu posto de atendimento.<br><br>'
 
