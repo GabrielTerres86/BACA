@@ -358,6 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --
   --             25/01/2017 - Criacao da pc_gera_data_pag_tr. (Jaison/James)
   --
+  --	         12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -7320,7 +7321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																		 ,pr_cdrelato  => '702'                         --> Cód. relatório
                                      ,pr_flg_gerar => 'S'                           --> gerar PDF
  																		 ,pr_dsmailcop  => pr_dsdemail                  --> Email
-																		 ,pr_dsassmail => 'Boleto Bancario - CECRED 085' --> Assunto do e-mail que enviará o arquivo
+																		 ,pr_dsassmail => 'Boleto Bancario - AILOS 085' --> Assunto do e-mail que enviará o arquivo
 																		 ,pr_dscormail => vr_dscorema                   --> Corpor do email
 																		 ,pr_nmformul  => '132col'                      --> Nome do formulário para impressão
 																		 ,pr_nrcopias  => 1                             --> Número de cópias
