@@ -24,6 +24,8 @@
           23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
                        PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
 
+                  28/05/2018 - Incluso impressoa Proposta (GFT)   
+
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -106,6 +108,7 @@
 	
     if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
+		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
         $idimpres == 7) { // BORDERO DE CHEQUES
         $xml  = "<Root>";
