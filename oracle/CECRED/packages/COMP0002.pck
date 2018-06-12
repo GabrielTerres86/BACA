@@ -367,7 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             END IF;
             
             vr_dsprotoc := vr_desc;
-            
+
 			*/
             
           WHEN pr_protocolo.cdtippro in(18, 19) THEN -- Agendamento de DARF / DAS
@@ -1383,22 +1383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_des_erro VARCHAR2(4000); 
       vr_split    gene0002.typ_split := gene0002.typ_split();  
       vr_cdbarras  VARCHAR2(100);
-      vr_cdempcon  VARCHAR2(40);
-      vr_cdsegmto  VARCHAR2(40);
       vr_dsdlinha  VARCHAR2(30000); 
-      vr_dsdcanal  VARCHAR2(100);
-    
-      --> Buscar dados do conbenio
-      CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
-                        ,pr_cdempcon IN crapcon.cdempcon%type
-                        ,pr_cdsegmto IN crapcon.cdsegmto%type) IS
-      SELECT crapcon.tparrecd
-        FROM crapcon
-       WHERE crapcon.cdcooper = pr_cdcooper
-         AND crapcon.cdempcon = pr_cdempcon
-         AND crapcon.cdsegmto = pr_cdsegmto;
-      rw_crapcon cr_crapcon%ROWTYPE;
-    
+      vr_cdorigem  INTEGER; --> Código de origem
+			vr_tparrecd  crapcon.tparrecd%TYPE;
+      
     BEGIN
     
       pr_dsretorn := 'NOK';
@@ -1522,40 +1510,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                  '</infosac>' );
       
         vr_cdbarras := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
-        vr_cdempcon := TO_NUMBER(SUBSTR(vr_cdbarras,16,4));
-        vr_cdsegmto := TO_NUMBER(SUBSTR(vr_cdbarras, 2,1)); 
         
-        --> Buscar dados do convenio
-        rw_crapcon := NULL;
-        OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
-                        ,pr_cdempcon => vr_cdempcon
-                        ,pr_cdsegmto => vr_cdsegmto);
-        FETCH cr_crapcon INTO rw_crapcon;
-        CLOSE cr_crapcon;
+				IF REGEXP_COUNT(vr_protocolo(vr_ind).dsinform##3, '#') > 1 THEN
+          vr_tparrecd := to_number(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')));
+				ELSE
+					vr_tparrecd := 0;
+				END IF;
         
+				gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+															 ,pr_texto_completo => vr_xml_temp      
+															 ,pr_texto_novo     => '<tparrecd>' || to_char(vr_tparrecd) || '</tparrecd>'); 
+																 				        
         -- Caso for um convenio Bancoob
-        IF rw_crapcon.tparrecd = 2 THEN
+        IF vr_tparrecd = 2 THEN
+				
           vr_dsdlinha := NULL;      
           vr_dsdlinha := '<infbancoob>'||
-                           '<dscopcen>'|| vr_protocolo(vr_ind).nmrescop_central ||
-                                          ' – '|| vr_protocolo(vr_ind).nmextcop_central ||'</dscopcen>'||
-                           '<dscopsin>'|| 'COOP.'|| to_char(vr_protocolo(vr_ind).cdagectl,'fm0000') ||
-                                          ' – '||vr_protocolo(vr_ind).nmrescop ||'</dscopsin>';
+												 '<nmrescen>'|| vr_protocolo(vr_ind).nmrescop_central || '</nmrescen>'||
+												 '<nmextcen>'|| vr_protocolo(vr_ind).nmextcop_central || '</nmextcen>'||
+												 '<nmressin>'|| vr_protocolo(vr_ind).nmrescop         || '</nmressin>';
                                           
           --Tipo de Protocolo
-          vr_dsdcanal := NULL;
+          vr_cdorigem := 0;
           IF vr_protocolo(vr_ind).cdtippro = 6 THEN --> TAA
-            vr_dsdcanal := 'TAA';
+            vr_cdorigem := 4;
           ELSIF vr_protocolo(vr_ind).cdtippro = 2 THEN --> Internet 
-            vr_dsdcanal := 'Internet Banking';
+            vr_cdorigem := 3;
           END IF;
           
-          IF vr_dsdcanal IS NOT NULL THEN
-            vr_dsdlinha := vr_dsdlinha || '<dsdcanal>'|| vr_dsdcanal ||'</dsdcanal>';
+          IF vr_cdorigem > 0 THEN
+            vr_dsdlinha := vr_dsdlinha || '<cdorigem>'|| to_char(vr_cdorigem) ||'</cdorigem>';
           END IF;
+					
           vr_dsdlinha := vr_dsdlinha ||     
                            '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
                            '<nrtelouv>'|| vr_protocolo(vr_ind).nrtelouv ||'</nrtelouv>'||
+                           '<cdbarras>'|| vr_cdbarras ||'</cdbarras>'||		
                          '</infbancoob> ';
           
           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -3929,9 +3919,9 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                   ,pr_cdorigem => pr_cdorigem
                                   ,pr_retxml =>   vr_retxml
                                   ,pr_dsretorn => pr_dsretorn);                                  
-                                           
+                                  
           pr_retxml := vr_retxml.getclobval();                                  
-      
+                                           
         WHEN pr_cdtippro = 24 THEN
           pc_detalhe_compr_pag_fgts(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -5054,6 +5044,12 @@ END pc_comprovantes_recebidos;
       vr_split_reg   gene0002.typ_split;
       vr_split_campo gene0002.typ_split;
             
+      --> Buscar dados do conbenio
+      CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+				SELECT crapcop.cdagebcb
+					FROM crapcop
+				 WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
     
   BEGIN
     
@@ -5073,6 +5069,21 @@ END pc_comprovantes_recebidos;
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapass;
+    END IF;
+			
+		-- Buscar dados da cooperativa			
+		OPEN cr_crapcop(pr_cdcooper);
+		FETCH cr_crapcop INTO rw_crapcop;
+
+    IF cr_crapcop%NOTFOUND THEN
+      CLOSE cr_crapcop;
+			        
+      vr_dscritic := 'Cooperativa nao encontrada.';
+      vr_des_erro := 'Erro em pc_detalhe_compr_pag_dae:' || vr_dscritic;
+				
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapcop;
     END IF;
 			
     gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
@@ -5232,6 +5243,7 @@ END pc_comprovantes_recebidos;
       vr_dsdlinha := vr_dsdlinha ||     
                        '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
                        '<nrtelouv>'|| vr_protocolo(vr_ind).nrtelouv ||'</nrtelouv>	'||
+											 '<cdagebcb>'|| rw_crapcop.cdagebcb || '</cdagebcb>' ||
                      '</infbancoob> ';
                      
       gene0002.pc_escreve_xml(pr_xml            => vr_retxml
