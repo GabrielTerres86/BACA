@@ -251,6 +251,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                      
               24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
                            deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
+						   
+              12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
                      
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -3038,7 +3040,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       -- Caso a critica seja a mesma gerada anteriormente (948)
       IF vr_cdcritic IN (948) THEN        
         -- Gravar email destino
-        vr_emaildst := 'segurancacorporativa@cecred.coop.br';
+        vr_emaildst := 'segurancacorporativa@ailos.coop.br';
         -- Conteudo do email
         vr_conteudo := 'Banco: '    || pr_cdbanco  || chr(13) || 
                        'Conta: '    || pr_nrctachq || chr(13) ||
@@ -3187,7 +3189,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 			 a.nrseq_emissao_chq,
 			 DECODE(trim(a.nmreceptor),NULL,'TIT','TER') etg,
 			 DECODE(a.tpcartao,0,'RECIBO','CARTAO') Forma,
-			 DECODE(a.tpcartao,0,' ',1,'MAGNETI','CECRED') tp_cartao,
+			 DECODE(a.tpcartao,0,' ',1,'MAGNETI','AILOS') tp_cartao,
 			 gene0002.fn_mask_cpf_cnpj(a.nrcpf_receptor,1) cpf_terceiro,
 			 a.nmreceptor,
 			 to_char(to_date(a.hrtransacao,'SSSSS'),'HH24:MI') hora
@@ -3214,7 +3216,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 			 to_char(c.nrfinchq,'FM99999.990') nrfinchq,
 			 DECODE(trim(a.nmreceptor),NULL,'TIT','TER') etg,
 			 DECODE(a.tpcartao,0,'RECIBO','CARTAO') Forma,
-			 DECODE(a.tpcartao,0,' ',1,'Magnetico','CECRED') tp_cartao,
+			 DECODE(a.tpcartao,0,' ',1,'Magnetico','AILOS') tp_cartao,
 			 gene0002.fn_mask_cpf_cnpj(a.nrcpf_receptor,1) cpf_terceiro,
 			 a.nmreceptor,
 			 to_char(to_date(a.hrtransacao,'SSSSS'),'HH24:MI') hora
