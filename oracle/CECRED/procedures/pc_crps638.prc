@@ -117,6 +117,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
 
 				 12/03/2018 - Ajustar Relatorio de Despesas para contabilizar a receita liquida da
 				              mesma forma que o 634 e 635 (Everton Mouts #857158)
+
+                 07/05/2018 - Ajustar ordenação de query ao buscar a empresa de arrecadação (cursor cr_crapscn).
+                              Aplicado o mesmo padrão de ordenação já aplicado no programa caixa online (cxon0014).
+                              Desta forma irá retornar a mesma empresa que foi fixada no BI (638), não gerando mais
+                              diferença no relatório contábil mensal (crrl635).
+                              (Wagner/Sustentação #TASK0012676)
+
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -373,7 +380,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
        AND cdsegmto = pr_cdsegmto
        AND dtencemp is null
        AND dsoparre <> 'E' -- DEBAUT
-     ORDER BY DECODE(cdempcon,pr_cdempcon,1,2); -- Trazer primeiro os registros com cdempcon igual e depoois cdempco2
+     ORDER BY crapscn.progress_recid ASC; 
   rw_crapscn cr_crapscn%rowtype;
 
   -- Busca de tributo
@@ -699,7 +706,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-
+    
     -- Validações iniciais do programa
     BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                              ,pr_flgbatch => 1
