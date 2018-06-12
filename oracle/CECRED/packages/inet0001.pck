@@ -629,6 +629,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   --            12/03/2018 - Ajuste na pc_verifica_operacao para impedir agendamentos para data retroativa. (Pablão)
   --
+  --            12/06/2018 - Ajuste nos tratamentos e na forma de atualizar os prepostos da rotina 
+  --                         pc_atu_trans_pend_prep. (Wagner - Sustentação - #PRB0040080).
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -6444,42 +6447,98 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
                                    ,pr_cdcritic   OUT INTEGER              --Código do erro
                                    ,pr_dscritic   OUT VARCHAR2) IS         --Descricao do erro
   BEGIN
-  DECLARE
-    -------------------------> VARIAVEIS <-------------------------
-    vr_exc_erro EXCEPTION;
     
+    DECLARE
+    
+      CURSOR cur_trans_pend IS
+        SELECT ttp.cdtransacao_pendente
+          FROM tbgen_trans_pend ttp
+         WHERE ttp.cdcooper = pr_cdcooper -- cooperativa
+           AND ttp.nrdconta = pr_nrdconta -- conta
+           AND ttp.idsituacao_transacao = 1 -- pendentes       
+         ORDER BY ttp.cdtransacao_pendente;
+    
+      vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+       
     BEGIN
       
       IF pr_tpdsenha =  1 /*Internet*/ AND
          pr_inpessoa > 1 /*PJ*/        AND 
          pr_idastcjt = 0 /*Nao exige Ass.Conj*/ THEN
-         BEGIN
-           UPDATE tbgen_trans_pend
-              SET tbgen_trans_pend.nrcpf_representante = pr_nrcpfcgc
-            WHERE tbgen_trans_pend.cdcooper = pr_cdcooper
-              AND tbgen_trans_pend.nrdconta = pr_nrdconta
-              AND tbgen_trans_pend.idsituacao_transacao = 1;             
+         
+        FOR reg IN cur_trans_pend LOOP          
+          BEGIN
+            UPDATE tbgen_trans_pend
+               SET tbgen_trans_pend.nrcpf_representante  = pr_nrcpfcgc
+             WHERE tbgen_trans_pend.cdtransacao_pendente = reg.cdtransacao_pendente -- pela pk
+               AND tbgen_trans_pend.nrcpf_representante  <> pr_nrcpfcgc; -- CPF diferente apenas, se for o mesmo não atualiza.
+                
+            UPDATE tbgen_aprova_trans_pend
+               SET tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc
+             WHERE tbgen_aprova_trans_pend.cdtransacao_pendente    = reg.cdtransacao_pendente -- por parte da pk
+               AND tbgen_aprova_trans_pend.idsituacao_aprov        = 1 -- somente pendentes
+               AND tbgen_aprova_trans_pend.nrcpf_responsavel_aprov <> pr_nrcpfcgc; -- CPF diferente apenas, se for o mesmo não atualiza.
+                
+          EXCEPTION           
+            WHEN dup_val_on_index THEN
+              -- Conforme constatado com o INC0016955, há casos em que o novo preposto (CPF)
+              -- já existe para a mesma transação, gerando erro de PK.
+              -- Com isso, para não parar o processo iremos desconsiderar erros de PK para essa
+              -- atualização de prepostos.
+              NULL;
               
-           UPDATE tbgen_aprova_trans_pend
-              SET tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc
-            WHERE tbgen_aprova_trans_pend.cdcooper = pr_cdcooper
-              AND tbgen_aprova_trans_pend.nrdconta = pr_nrdconta
-              AND tbgen_aprova_trans_pend.idsituacao_aprov = 1;             
-              
-         EXCEPTION           
-           WHEN OTHERS THEN
-             RAISE vr_exc_erro;
-         END;
+              -- Registra o erro para log
+              cecred.pc_log_programa(pr_dstiplog            => 'E', -- Erro
+                                     pr_cdprograma          => 'INET0001',
+                                     pr_cdcooper            => 3, -- CECRED
+                                     pr_tpexecucao          => 3, -- Online
+                                     pr_tpocorrencia        => 1, -- Erro de negócio
+                                     pr_cdcriticidade       => 0,
+                                     pr_cdmensagem          => 0, -- critica
+                                     pr_dsmensagem          => 'INET0001.pc_atu_trans_pend_prep. Chave duplicada na atualização da tabela tbgen_aprova_trans_pend. Parametros: pr_cdcooper ='||pr_cdcooper||
+                                                               ', pr_nrdconta ='||pr_nrdconta||', pr_nrcpfcgc ='||pr_nrcpfcgc||', pr_inpessoa ='||pr_inpessoa||
+                                                               ', pr_tpdsenha ='||pr_tpdsenha||', pr_idastcjt ='||pr_idastcjt, -- descrição da critica
+                                     pr_flgsucesso          => 1,
+                                     pr_nmarqlog            => NULL,
+                                     pr_flabrechamado       => 0,
+                                     pr_texto_chamado       => NULL,
+                                     pr_destinatario_email  => NULL,
+                                     pr_flreincidente       => 0,
+                                     pr_idprglog            => vr_idprglog);
+          END;
+        END LOOP;
+         
       END IF;
       
     EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;    
+        pr_dscritic := 'Erro geral na rotina INET0001.pc_atu_trans_pend_prep. Descrição: '|| SQLERRM;    
+
+        -- No caso de erro de programa gravar tabela especifica de log  
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                                            
+        
+        -- Registra o erro para log
+        cecred.pc_log_programa(pr_dstiplog            => 'E', -- Erro
+                               pr_cdprograma          => 'INET0001',
+                               pr_cdcooper            => 3, -- CECRED
+                               pr_tpexecucao          => 3, -- Online
+                               pr_tpocorrencia        => 2, -- Erro não tratado
+                               pr_cdcriticidade       => 0,
+                               pr_cdmensagem          => pr_cdcritic, -- critica
+                               pr_dsmensagem          => pr_dscritic||CHR(10)||
+                                                         'INET0001.pc_atu_trans_pend_prep. Parametros: pr_cdcooper ='||pr_cdcooper||
+                                                         ', pr_nrdconta ='||pr_nrdconta||', pr_nrcpfcgc ='||pr_nrcpfcgc||', pr_inpessoa ='||pr_inpessoa||
+                                                         ', pr_tpdsenha ='||pr_tpdsenha||', pr_idastcjt ='||pr_idastcjt, -- descrição da critica
+                               pr_flgsucesso          => 1,
+                               pr_nmarqlog            => NULL,
+                               pr_flabrechamado       => 0,
+                               pr_texto_chamado       => NULL,
+                               pr_destinatario_email  => NULL,
+                               pr_flreincidente       => 0,
+                               pr_idprglog            => vr_idprglog);        
     END;
+    
   END pc_atu_trans_pend_prep;
   
 
