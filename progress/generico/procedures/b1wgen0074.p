@@ -5885,7 +5885,7 @@ PROCEDURE Critica_Cadastro_Pf:
 
     DEF VAR aux_nmdatela AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgconju AS LOG                                     NO-UNDO.
-    DEF VAR aux_flgnrcto AS LOG                                     NO-UNDO.
+    /*DEF VAR aux_flgnrcto AS LOG                                     NO-UNDO.*/
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
 
@@ -6195,6 +6195,8 @@ PROCEDURE Critica_Cadastro_Pf:
                           INPUT "Estado Civil NAO PERMITE Conjuge", 
                           INPUT {&TT-CONJU} ).
 
+            /* RETIRADO A PEDIDO DA SARAH. SEGUNDO ELA ESSA REGRA NAO DEVERIA MAIS ESTAR SENDO UTILIZADA 
+               RENATO DAROSCI - 12/06/2018
             ASSIGN aux_flgnrcto = (IF craxttl.idseqttl <> 1 THEN YES ELSE NO).
             
             Contato: FOR EACH crabavt FIELDS(nrdctato)
@@ -6220,7 +6222,7 @@ PROCEDURE Critica_Cadastro_Pf:
                 RUN Trata_Critica
                    ( INPUT craxttl.idseqttl,
                      INPUT "Falta Cadastrar Contato", 
-                     INPUT {&TT-CTATO} ).
+                     INPUT {&TT-CTATO} ). */
 
             RUN Busca_Idade
                ( INPUT craxttl.dtnasttl, 
