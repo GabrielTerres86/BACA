@@ -467,6 +467,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             
                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
+							
+			   12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1836,7 +1838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         IF vr_envemail THEN
           -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
           gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
-                                    ,pr_des_destino => 'convenios@cecred.coop.br'
+                                    ,pr_des_destino => 'convenios@ailos.coop.br'
                                     ,pr_des_assunto => 'ERRO - Validacao GPS WebService Sicredi'
                                     ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
                                                      ||' WebService do Sicredi.</br></br>'
@@ -2589,7 +2591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         IF vr_envemail THEN
           -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
           gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
-                                    ,pr_des_destino => 'convenios@cecred.coop.br'
+                                    ,pr_des_destino => 'convenios@ailos.coop.br'
                                     ,pr_des_assunto => 'ERRO - Arrecadacao GPS WebService Sicredi'
                                     ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
                                                      ||' WebService do Sicredi.</br></br>'
