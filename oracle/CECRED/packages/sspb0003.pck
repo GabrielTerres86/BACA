@@ -165,6 +165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                              que chamar a procedure devera realizar o tratamento
                              (Douglas - Chamado 524133)
 
+                13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)							 
     ............................................................................. */
     DECLARE
     
@@ -232,7 +233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                        ', Valor: ' || pr_vldocmto || 
                        ', Motivo Erro: ' || pr_dsmotivo_rejeicao ||
                       -- Dados do banco de origem
-                       ', # CECRED - Banco ' || pr_cdbanco_origem ||
+                       ', # AILOS - Banco ' || pr_cdbanco_origem ||
                        ', Agencia: ' || pr_cdagencia_origem ||
                        ', Titular: ' || pr_nmtitular_origem || 
                        ', CPF: ' || pr_nrcpf_origem ||
