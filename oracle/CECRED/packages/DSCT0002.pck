@@ -6970,7 +6970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --               22/12/2016 - Alterado nome do Jasper de "crrl519_bordero"
     --                            para "crrl519_bordero_titulos". PRJ300 (Lombardi)
     --               
-    --               06/06/2018 - Remoção das restrições da impressão do bordero (Vitor Shimada Assanuma - GFT)
+    --               06/06/2018 - Remoção das restrições da impressão do bordero
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -7024,6 +7024,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_idx                     VARCHAR2(50);
     vr_idxrestr                VARCHAR2(100);
     vr_idxsac                  VARCHAR2(100);
+    
+    vr_vldjuros NUMBER;
+    vr_qtd_dias INTEGER;
     
     
     
@@ -7277,7 +7280,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pc_escreve_xml('<titulos>');  
       vr_idxord := vr_tab_tit_bordero_ord.first;
       WHILE vr_idxord IS NOT NULL  LOOP
-      
+        /*Verifica se o valor líquido do título é 0, se for calcula*/
+        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid=0) THEN
+          IF  pr_dtmvtolt > vr_tab_tit_bordero_ord(vr_idxord).dtvencto THEN
+              vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero_ord(vr_idxord).dtvencto, pr_dtmvtolt);
+          ELSE
+              vr_qtd_dias := vr_tab_tit_bordero_ord(vr_idxord).dtvencto -  pr_dtmvtolt;
+          END IF;
+          vr_vldjuros := vr_tab_tit_bordero_ord(vr_idxord).vltitulo * vr_qtd_dias * ((vr_tab_dados_itens_bordero(vr_idxborde).txmensal / 100) / 30);
+          vr_tab_tit_bordero_ord(vr_idxord).vlliquid := ROUND((vr_tab_tit_bordero_ord(vr_idxord).vltitulo - vr_vldjuros),2);
+        END IF;
+        
         IF vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt IS NOT NULL THEN
           vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt;
         ELSE
@@ -7692,6 +7705,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
 --    and    cob.dtdpagto is null
     and    cob.cdcooper = rw_crapsab.cdcooper
     and    cob.nrdconta = rw_crapsab.nrdconta
+    AND    cob.dtvencto < rw_crapdat.dtmvtolt 
     and    cob.nrinssac = rw_crapsab.nrinssac;
     rw_qt_nao_pagos cr_qt_nao_pagos%rowtype;    
 
