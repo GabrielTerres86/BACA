@@ -163,6 +163,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   -- Frequencia: -----
   -- Objetivo  : Rotinas genericas para tratamento de Produtos e Contratos de Riscos
   --             das operações das Filiadas na Central
+  --
+  --           13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Cursor Generico para busca das informações dos domínios
@@ -1882,7 +1884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           -- Importações só podem ser feitas na central
           IF pr_cdcooper <> 3 THEN   
             -- Gerar critica 
-            pr_dscritic := 'Problema na Importacao -> Favor selecionar a Cooperativa 3 - Cecred (Central)!';  
+            pr_dscritic := 'Problema na Importacao -> Favor selecionar a Cooperativa 3 - Ailos (Central)!';  
             RETURN;      
           END IF;
           -- Para Bancoob 
