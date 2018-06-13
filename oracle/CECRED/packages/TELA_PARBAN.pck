@@ -125,7 +125,7 @@ IS
     ELSIF pr_idacao_banner = 1 AND pr_tbgen_banner.DSLINK_ACAO_BANNER IS NULL THEN
     pr_dscritic:= 'URL do banner é obrigatório';
     ELSIF pr_idacao_banner = 2 AND pr_tbgen_banner.CDMENU_ACAO_MOBILE IS NULL THEN
-    pr_dscritic:= 'Tela do Cecred Mobile do Banner é obrigatória';
+    pr_dscritic:= 'Tela do Ailos Mobile do Banner é obrigatória';
     END IF;
   ELSIF pr_tbgen_banner.INEXIBIR_QUANDO = 1 THEN
     IF pr_tbgen_banner.DTEXIBIR_DE > pr_tbgen_banner.DTEXIBIR_ATE THEN
