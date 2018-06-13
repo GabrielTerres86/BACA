@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 26/03/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 21/05/2018
     
    Dados referentes ao programa:
    
@@ -225,6 +225,12 @@
               26/03/2018 - Incluir tratamento no cancelamento e recadastramento, para 
                            quando nao for o ultimo dia util do ano, grave a data como 
                            dia atual (Lucas Ranghetti #860768)
+                           
+              03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
+                           permite a contrataçao do produto. PRJ366 (Lombardi).
+                           
+              21/05/2018 - Alterada consulta da craplau na procedure bloqueia_lancamento para pegar apenas pendentes
+                           pois acontecia as vezes de trazer mais de um registro (Tiago).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1120,6 +1126,7 @@ PROCEDURE valida-dados:
     DEF VAR aux_nrdigito AS INTE                                    NO-UNDO.
     DEF VAR aux_nrrefere AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtdigito AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdprodut AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1150,6 +1157,39 @@ PROCEDURE valida-dados:
                         LEAVE Valida.
                     END.
                               
+                IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
+                    aux_cdprodut = 10. /* Débito Automático */
+                ELSE
+                    aux_cdprodut = 29. /* Débito Automático Fácil */
+                    
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                              
+                RUN STORED-PROCEDURE pc_valida_adesao_produto
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT aux_cdprodut,
+                                             OUTPUT 0,   /* pr_cdcritic */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_valida_adesao_produto
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                
+                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
+                      LEAVE Valida.
+                  END.
+                
                 /* buscar quantidade maxima de digitos aceitos para o convenio */
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                               
@@ -4228,7 +4268,8 @@ PROCEDURE bloqueia_lancamento:
                            craplau.nrdconta = par_nrdconta AND
                            craplau.dtmvtopg = par_dtmvtopg AND
                            craplau.nrdocmto = par_nrdocmto AND
-                           craplau.cdhistor = par_cdhistor
+                           craplau.cdhistor = par_cdhistor AND
+                           craplau.insitlau = 1 /*pendentes*/
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL craplau THEN
