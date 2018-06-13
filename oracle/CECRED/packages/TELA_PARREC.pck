@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
   --    Objetivo  : Package ref. a tela PARREC (Ayllos Web)
   --
   --    Alteracoes:                              
-  --    
+  --                13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 	
   -- Buscar parametros de recarga de celular das cooperativas singulares  
@@ -841,7 +841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 										|| to_char(SYSDATE, 'hh24:mi:ss') 
 										|| ' -->  Operador '|| vr_cdoperad || ' '
 										|| ' inseriu o ISPB ' 
-                    || pr_nrispbif || ' para a cooperativa CECRED.' || chr(10);																 															 
+                    || pr_nrispbif || ' para a cooperativa AILOS.' || chr(10);																 															 
 			ELSE -- Se existir valor, atualizar
 				-- Se valor informado for diferente da base
 				IF vr_nrispbif <> pr_nrispbif THEN
@@ -854,7 +854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 											|| ' -->  Operador '|| vr_cdoperad || ' '
 										  || ' alterou o ISPB ' 
 											|| ' de ' || vr_nrispbif
-											|| ' para ' || pr_nrispbif || ' para a cooperativa CECRED.' || chr(10);																 
+											|| ' para ' || pr_nrispbif || ' para a cooperativa AILOS.' || chr(10);																 
 				END IF;
 			END IF;
 			
@@ -870,7 +870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 										|| to_char(SYSDATE, 'hh24:mi:ss') 
 										|| ' -->  Operador '|| vr_cdoperad || ' '
 										|| ' inseriu a AGENCIA ' 
-                    || NVL(pr_cdageban,'NULO') || ' para a cooperativa CECRED.' || chr(10);																 																 
+                    || NVL(pr_cdageban,'NULO') || ' para a cooperativa AILOS.' || chr(10);																 																 
 															 
 			ELSE -- Se existir valor, atualizar
 				-- Se valor informado for diferente da base
@@ -885,7 +885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 											|| ' -->  Operador '|| vr_cdoperad || ' '
 										  || ' alterou a AGENCIA ' 
 											|| ' de ' || nvl(vr_cdageban, 'NULO')
-											|| ' para ' || nvl(pr_cdageban, 'NULO') || ' para a cooperativa CECRED.' || chr(10);																 																 
+											|| ' para ' || nvl(pr_cdageban, 'NULO') || ' para a cooperativa AILOS.' || chr(10);																 																 
 				END IF;															 
 			END IF;
 			
@@ -901,7 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 										|| to_char(SYSDATE, 'hh24:mi:ss') 
 										|| ' -->  Operador '|| vr_cdoperad || ' '
 										|| ' inseriu a CONTA ' 
-                    || pr_nrdconta || ' para a cooperativa CECRED.' || chr(10);															 
+                    || pr_nrdconta || ' para a cooperativa AILOS.' || chr(10);															 
 			ELSE -- Se existir valor, atualizar
 				-- Se valor informado for diferente da base
 				IF vr_nrdconta <> pr_nrdconta THEN
@@ -915,7 +915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 											|| ' -->  Operador '|| vr_cdoperad || ' '
 										  || ' alterou a CONTA ' 
 											|| ' de ' || vr_nrdconta
-											|| ' para ' || pr_nrdconta || ' para a cooperativa CECRED.' || chr(10);
+											|| ' para ' || pr_nrdconta || ' para a cooperativa AILOS.' || chr(10);
 																 
 				END IF;															 															 
 			END IF;
@@ -932,7 +932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 										|| to_char(SYSDATE, 'hh24:mi:ss') 
 										|| ' -->  Operador '|| vr_cdoperad || ' '
 										|| ' inseriu o CNPJ ' 
-                    || pr_nrdocnpj || ' para a cooperativa CECRED.' || chr(10);																 															 
+                    || pr_nrdocnpj || ' para a cooperativa AILOS.' || chr(10);																 															 
 			ELSE -- Se existir valor, atualizar
 				-- Se valor informado for diferente da base
 				IF vr_nrdocnpj <> pr_nrdocnpj THEN
@@ -946,7 +946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 											|| ' -->  Operador '|| vr_cdoperad || ' '
 										  || ' alterou o CNPJ ' 
 											|| ' de ' || vr_nrdocnpj
-											|| ' para ' || pr_nrdocnpj || ' para a cooperativa CECRED.' || chr(10);																 
+											|| ' para ' || pr_nrdocnpj || ' para a cooperativa AILOS.' || chr(10);																 
 				END IF;															 															 															 
 			END IF;
 
@@ -962,7 +962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 										|| to_char(SYSDATE, 'hh24:mi:ss') 
 										|| ' -->  Operador '|| vr_cdoperad || ' '
 										|| ' inseriu o NOME ' 
-                    || pr_dsdonome || ' para a cooperativa CECRED.' || chr(10);																 															 
+                    || pr_dsdonome || ' para a cooperativa AILOS.' || chr(10);																 															 
 			ELSE -- Se existir valor, atualizar
 				-- Se valor informado for diferente da base
 				IF vr_dsdonome <> pr_dsdonome THEN
@@ -976,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARREC AS
 											|| ' -->  Operador '|| vr_cdoperad || ' '
 										  || ' alterou o NOME ' 
 											|| ' de ' || vr_dsdonome
-											|| ' para ' || pr_dsdonome || ' para a cooperativa CECRED.' || chr(10);																 
+											|| ' para ' || pr_dsdonome || ' para a cooperativa AILOS.' || chr(10);																 
 				END IF;															 															 															 															 
 			END IF;
 			
