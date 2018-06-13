@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634_i(pr_cdcooper    IN NUMBER        
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CECRED
    Autor   : Adriano
-   Data    : Dezembro/2012                     Ultima atualizacao: 13/12/2017
+   Data    : Dezembro/2012                     Ultima atualizacao: 21/03/2018
 
    Dados referentes ao programa:
 
@@ -43,6 +43,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps634_i(pr_cdcooper    IN NUMBER        
                13/12/2017 - Padronização mensagens 
                           - Tratamento erros others: cecred.pc_internal_exception
                            (Ana - Envolti - Chamado 813390)
+
+               21/03/2018 - Substituição da rotina pc_gera_log_batch pela pc_log_programa
+                            para os códigos 1066 e 1067
+                           (Ana - Envolti - Chamado INC0011087)
+
+               13/06/2018 - Substituição da rotina pc_gera_log_batch pela pc_log_programa
+                            para o código 1194
+                           (Ana - Envolti - Chamado REQ0017067)
   ............................................................................. */
 BEGIN
   DECLARE
@@ -61,6 +69,7 @@ BEGIN
     vr_nrcopias    NUMBER;                    --> Número de cópias
     vr_dsparam     VARCHAR2(4000);            --> Parâmetros da rotina para as mensagens
     vr_dscritic    VARCHAR2(4000);            --> Descrição da crítica
+    vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;      
 
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
@@ -98,7 +107,7 @@ BEGIN
     -- Verifica se a tupla retorno registro, senão gera crítica
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
-      pr_cdcritic := 651;
+      pr_cdcritic := 651;  --Falta registro de controle da cooperativa - ERRO DE SISTEMA
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
 
       --Padronização log do erro - Chamado 813390
@@ -127,18 +136,19 @@ BEGIN
 
     --Inclusao log para acompanhamento de tempo de execução - Chamado 813390
     --Registra o início
-    btch0001.pc_gera_log_batch(pr_cdcooper      => rw_crapcop.cdcooper             
-                              ,pr_ind_tipo_log  => 1 -- Mensagem
-                              ,pr_nmarqlog      => 'proc_batch.log'          
-                              ,pr_dstiplog      => 'O'             
-                              ,pr_cdprograma    => vr_cdprogra                      
-                              ,pr_tpexecucao    => 1 -- Batch                       
-                              ,pr_cdcriticidade => 0                      
-                              ,pr_cdmensagem    => 1066
-                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                   ||vr_cdprogra||' --> '||gene0001.fn_busca_critica(1066)
-                                                   ||'pc_forma_grupo_economico '
-                                                   ||rw_crapcop.nmrescop||'. '||vr_dsparam);
+    --Substituicao da rotina pc_gera_log_batch pela pc_log_programa - Chamado INC0011087
+    CECRED.pc_log_programa(pr_dstiplog      => 'O',
+                           pr_cdcooper      => rw_crapcop.cdcooper,
+                           pr_tpocorrencia  => 4,  --Mensagem
+                           pr_cdprograma    => vr_cdprogra,
+                           pr_tpexecucao    => 1, --Batch
+                           pr_cdcriticidade => 0,
+                           pr_cdmensagem    => 1066, -- Inicio execucao
+                           pr_dsmensagem    => gene0001.fn_busca_critica(1066)
+                                               ||'pc_forma_grupo_economico '
+                                               ||rw_crapcop.nmrescop||'. '||vr_dsparam,
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => NULL);
 
     -- Gerar grupos economicos
     geco0001.pc_forma_grupo_economico(pr_cdcooper    => rw_crapcop.cdcooper
@@ -156,8 +166,12 @@ BEGIN
     -- Verifica se ocorreram erros
     IF pr_dscritic <> 'OK' THEN
       -- Verifica se a tabela de formação de grupos retornou sem registros
+      --Aqui, embora tenha sido cadastrado o código 1195 para a mensagem abaixo,
+      --o mesmo não é gravado na vr_cdcritic, pois neste caso, omitiria o retorno da 
+      --pc_forma_grupo_economico. Por isso o conteúdo da variável vr_dscritic tem uma
+      --parte fixa concatenada com o retorno da rotina.
       IF vr_tab_crapgrp.count = 0 THEN
-        pr_dscritic := 'Nao foi possivel realizar a formacao do grupo economico para a ' || rw_crapcop.nmrescop||'. '||pr_dscritic;
+        pr_dscritic := '1195 - Nao foi possivel realizar a formacao do grupo economico para a ' || rw_crapcop.nmrescop||'. '||pr_dscritic;
       END IF;
       --Padronização log do erro - Chamado 813390
       btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
@@ -175,18 +189,19 @@ BEGIN
     ELSE
       --Se executou com sucesso, registra o término na tabela de logs
       --Inclusao log para acompanhamento de tempo de execução - Chamado 813390
-      btch0001.pc_gera_log_batch(pr_cdcooper      => rw_crapcop.cdcooper             
-                                ,pr_ind_tipo_log  => 1 -- Mensagem
-                                ,pr_nmarqlog      => 'proc_batch.log'          
-                                ,pr_dstiplog      => 'O'             
-                                ,pr_cdprograma    => vr_cdprogra                      
-                                ,pr_tpexecucao    => 1 -- Batch                       
-                                ,pr_cdcriticidade => 0                      
-                                ,pr_cdmensagem    => 1067   
-                                ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                     ||vr_cdprogra||' --> '||gene0001.fn_busca_critica(1067)
-                                                     ||'pc_forma_grupo_economico '
-                                                     ||rw_crapcop.nmrescop||'. '||vr_dsparam);
+      --Substituicao da rotina pc_gera_log_batch pela pc_log_programa - Chamado INC0011087
+      CECRED.pc_log_programa(pr_dstiplog      => 'O',
+                             pr_cdcooper      => rw_crapcop.cdcooper,
+                             pr_tpocorrencia  => 4,  --Mensagem
+                             pr_cdprograma    => vr_cdprogra,
+                             pr_tpexecucao    => 1, --Batch
+                             pr_cdcriticidade => 0,
+                             pr_cdmensagem    => 1067, --Termino execucao
+                             pr_dsmensagem    => gene0001.fn_busca_critica(1067)
+                                                 ||'pc_forma_grupo_economico '
+                                                 ||rw_crapcop.nmrescop||'. '||vr_dsparam,
+                             pr_idprglog      => vr_idprglog,
+                             pr_nmarqlog      => NULL);
     END IF;
 
     -- Eliminar registros marcadores da PL Table
@@ -269,9 +284,9 @@ BEGIN
                                      ,pr_dscritic => pr_cdcritic
                                      ,pr_tab_erro => vr_tab_craterr
                                      ,pr_des_erro => pr_dscritic);
-                                     
-    vr_dsparam := 'cdcooper:'||pr_cdcooper||', cdagenci:0, dtmvtolt:'||pr_tab_crapdat.dtmvtolt||
-                  ', nmarqimp:'||vr_nom_dir || '/' || vr_nmarquiv||', nmformul:132col';
+
+    vr_dsparam := 'cdcooper:'||pr_cdcooper||', cdagenci:0, dtmvtolt:'||pr_tab_crapdat.dtmvtolt
+                  ||', nmarqimp:'||vr_nom_dir || '/' || vr_nmarquiv||', nmformul:132col';
 
     -- Verifica se ocorreram erros
     IF pr_dscritic <> 'OK' THEN
@@ -336,16 +351,18 @@ BEGIN
 
     -- Gerar mensagem no LOG indicando sucesso
     --Padronização log do erro - Chamado 813390
-    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
-                              ,pr_ind_tipo_log  => 1 -- Mensagem
-                              ,pr_nmarqlog      => 'proc_batch.log'          
-                              ,pr_dstiplog      => 'E' 
-                              ,pr_cdprograma    => vr_cdprogra                      
-                              ,pr_tpexecucao    => 1 -- Batch                       
-                              ,pr_cdcriticidade => 0                    
-                              ,pr_cdmensagem    => 1194                 
-                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                   ||vr_cdprogra||' --> '||vr_dscritic||vr_dsparam);
+    --Substituicao da rotina pc_gera_log_batch pela pc_log_programa - Chamado REQ0017067
+    CECRED.pc_log_programa(pr_dstiplog      => 'O',
+                           pr_cdcooper      => pr_cdcooper,
+                           pr_tpocorrencia  => 4,  --Mensagem
+                           pr_cdprograma    => vr_cdprogra,
+                           pr_tpexecucao    => 1, --Batch
+                           pr_cdcriticidade => 0,
+                           pr_cdmensagem    => 1194,
+                           pr_dsmensagem    => vr_dscritic
+                                               ||' '||rw_crapcop.nmrescop||'. '||vr_dsparam,
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => NULL);
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -358,7 +375,7 @@ BEGIN
       -- Propagar crítica
       -- Padronização - Chamado 813390
       pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||SQLERRM;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'PC_CRPS634_I. '||SQLERRM||'. '||vr_dsparam;
 
       --Padronização log do erro - Chamado 813390
       btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper             
@@ -374,7 +391,7 @@ BEGIN
 
       -- No caso de erro de programa gravar tabela especifica de log - 13/12/2017 - Chamado 813390
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
-        
+
   END;
 END PC_CRPS634_I;
 /
