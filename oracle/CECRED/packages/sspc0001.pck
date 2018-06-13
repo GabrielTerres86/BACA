@@ -2992,6 +2992,9 @@ PROCEDURE pc_envia_requisicao(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codigo 
     v_ds_url         VARCHAR2(500); --> URL da Ibratan
     vr_nmdecamp      VARCHAR2(100); --> Campo de retorno do cabecalho
     vr_result        VARCHAR2(100); --> Resultado do campo do cabecalho
+	
+	--	             Alterações:
+	--               13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
 
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
@@ -3026,7 +3029,7 @@ PROCEDURE pc_envia_requisicao(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codigo 
     CLOSE cr_crapcop;
 
     -- Concatena a cooperativa no usuario e senha 
-    vr_dsautori := 'CECRED'||lpad(pr_cdcooper,2,'0')||':'||vr_dsautori;
+    vr_dsautori := 'AILOS'||lpad(pr_cdcooper,2,'0')||':'||vr_dsautori;
 
     -- Transforma o xml em variavel clob, para ser enviada para o Biro
     vr_clob := pr_envioxml.getclobval();
