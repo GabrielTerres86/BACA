@@ -1131,7 +1131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
                 08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                              (SD#791193 - AJFink)
-
+							 
+				13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
     ..............................................................................*/
     DECLARE
 
@@ -2214,7 +2215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                         pr_dscritic  => vr_dscritic);
         vr_cdcritic := 0;
         vr_dscritic := 0;
-        vr_dsdmesag := 'Adesão do produto em análise na CECRED. Dúvidas, entre em contato ' || 
+        vr_dsdmesag := 'Adesão do produto em análise na AILOS. Dúvidas, entre em contato ' || 
                        'com a área de cobrança bancária.';
       END IF;
       
