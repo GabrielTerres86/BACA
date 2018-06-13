@@ -84,9 +84,9 @@
                27/11/2014 - (Chamado 190747) - Melhoria na tela BLQJUD,
                             deduzir do capital, o saldo devedor dos 
                             empréstimos/financiamentos realizados pelo cooperado 
-                            (Tiago Castro - RKAM).	
+                            (Tiago Castro - RKAM).        
 
-			   05/12/2014 - Incluido novos parametros na procedure 
+                           05/12/2014 - Incluido novos parametros na procedure 
                             carrega_dados_atenda na b1wgen0001, alterando
                             a RUN da proc carrega_dados_atenda para receber
                             esses novos parametros de entrada. (Daniel)
@@ -99,8 +99,8 @@
                             busca-contas-cooperado que nao sao mais utilizadas.
                             PRJ404-Garantia(Odirlei-AMcom)                            
                             
-			   14/03/2018 - Adicionado parametro que faltava na chamada da procedure
-							consulta-bloqueio-jud. (Kelvin)
+                           14/03/2018 - Adicionado parametro que faltava na chamada da procedure
+                                                        consulta-bloqueio-jud. (Kelvin)
               
          12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)     
               
@@ -140,8 +140,8 @@ DEF VAR h-b1wgen0024 AS HANDLE                                         NO-UNDO.
 /* Variáveis de uso da BO 200 */
 DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
 DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
-DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
-DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.
+/*DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.*/
 
 
 DEF STREAM str_1.
@@ -358,10 +358,10 @@ PROCEDURE inclui-bloqueio-jud:
                     RUN sistema/generico/procedures/b1wgen0200.p 
                       PERSISTENT SET h-b1wgen0200.
                       
-                      IF  rapass.inpessoa = 1 THEN 
-                          aux_cdhistor = 1402 /* PF */
+                      IF  crapass.inpessoa = 1 THEN 
+                         ASSIGN  aux_cdhistor = 1402. /* PF */
                       ELSE 
-                          aux_cdhistor = 1403 /* PJ */
+                         ASSIGN  aux_cdhistor = 1403. /* PJ */
 
                   RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
                     (INPUT par_dtmvtolt                   /* par_dtmvtolt */
@@ -388,7 +388,7 @@ PROCEDURE inclui-bloqueio-jud:
                     ,INPUT ""                             /* par_hrtransa */
                     ,INPUT 0                              /* par_cdoperad */
                     ,INPUT 0                              /* par_dsidenti */
-                    ,INPUT 0par_cdcooper                  /* par_cdcooper */
+                    ,INPUT par_cdcooper                  /* par_cdcooper */
                     ,INPUT crapass.nrdctitg               /* par_nrdctitg */
                     ,INPUT ""                             /* par_dscedent */
                     ,INPUT 0                              /* par_cdcoptfn */
@@ -634,96 +634,96 @@ PROCEDURE inclui-bloqueio-jud:
 END PROCEDURE.
 
 PROCEDURE consulta-bloqueio-jud-oficio:
-	
-	DEF INPUT  PARAM par_cdcooper AS INT                               NO-UNDO.
+        
+        DEF INPUT  PARAM par_cdcooper AS INT                               NO-UNDO.
     DEF INPUT  PARAM par_contacpf AS CHAR                              NO-UNDO.
     DEF INPUT  PARAM par_nroficio AS CHAR                              NO-UNDO.
-	DEF OUTPUT PARAM TABLE FOR tt-dados-blq-oficio.
+        DEF OUTPUT PARAM TABLE FOR tt-dados-blq-oficio.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
-	
-	DEF VAR aux_contacpf AS CHAR                                       NO-UNDO.
-	DEF VAR aux_nmprimtl AS CHAR                                       NO-UNDO.
-	
-	EMPTY TEMP-TABLE tt-dados-blq-oficio.
+        
+        DEF VAR aux_contacpf AS CHAR                                       NO-UNDO.
+        DEF VAR aux_nmprimtl AS CHAR                                       NO-UNDO.
+        
+        EMPTY TEMP-TABLE tt-dados-blq-oficio.
     EMPTY TEMP-TABLE tt-erro.
-	
-	IF  par_nroficio <> "" THEN
-		DO:
-			FIND FIRST crapblj WHERE crapblj.cdcooper = par_cdcooper AND 
-									 crapblj.nroficio = par_nroficio NO-LOCK NO-ERROR.
+        
+        IF  par_nroficio <> "" THEN
+                DO:
+                        FIND FIRST crapblj WHERE crapblj.cdcooper = par_cdcooper AND 
+                                                                         crapblj.nroficio = par_nroficio NO-LOCK NO-ERROR.
 
-			IF  NOT AVAILABLE crapblj  THEN
-				DO:
-						ASSIGN aux_cdcritic = 0
-							   aux_dscritic = "Numero Oficio nao encontrado.".
+                        IF  NOT AVAILABLE crapblj  THEN
+                                DO:
+                                                ASSIGN aux_cdcritic = 0
+                                                           aux_dscritic = "Numero Oficio nao encontrado.".
 
-						RUN gera_erro (INPUT par_cdcooper,
-									   INPUT 1,
-									   INPUT 1,
-									   INPUT 1,            /** Sequencia **/
-									   INPUT aux_cdcritic,
-									   INPUT-OUTPUT aux_dscritic).
-						RETURN "NOK".
-				END.
-			ELSE
-				DO:
-					FOR EACH crapblj WHERE crapblj.cdcooper = par_cdcooper AND 
-									       crapblj.nroficio = par_nroficio
-										   NO-LOCK:
-						
-						FIND FIRST tt-dados-blq-oficio WHERE tt-dados-blq-oficio.nroficio = crapblj.nroficio AND
-													         tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
-															 NO-LOCK NO-ERROR.
-						IF NOT AVAILABLE tt-dados-blq-oficio THEN 
-							DO:
-								CREATE tt-dados-blq-oficio.
-								ASSIGN tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
-									   tt-dados-blq-oficio.vlbloque = IF crapblj.dtblqfim = ? THEN crapblj.vlbloque ELSE 0
-									   tt-dados-blq-oficio.nroficio = crapblj.nroficio.
-							END.
-						ELSE
-							DO:
-								IF crapblj.dtblqfim = ? THEN
-									tt-dados-blq-oficio.vlbloque = tt-dados-blq-oficio.vlbloque + crapblj.vlbloque.
-							END.
-					END.
-				END.
-		END.
-	ELSE
-		DO:
-			IF par_contacpf <> "" THEN
-			DO:
-				ASSIGN aux_contacpf = REPLACE(STRING(par_contacpf,"99999999999999"),"-","").
+                                                RUN gera_erro (INPUT par_cdcooper,
+                                                                           INPUT 1,
+                                                                           INPUT 1,
+                                                                           INPUT 1,            /** Sequencia **/
+                                                                           INPUT aux_cdcritic,
+                                                                           INPUT-OUTPUT aux_dscritic).
+                                                RETURN "NOK".
+                                END.
+                        ELSE
+                                DO:
+                                        FOR EACH crapblj WHERE crapblj.cdcooper = par_cdcooper AND 
+                                                                               crapblj.nroficio = par_nroficio
+                                                                                   NO-LOCK:
+                                                
+                                                FIND FIRST tt-dados-blq-oficio WHERE tt-dados-blq-oficio.nroficio = crapblj.nroficio AND
+                                                                                                                 tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
+                                                                                                                         NO-LOCK NO-ERROR.
+                                                IF NOT AVAILABLE tt-dados-blq-oficio THEN 
+                                                        DO:
+                                                                CREATE tt-dados-blq-oficio.
+                                                                ASSIGN tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
+                                                                           tt-dados-blq-oficio.vlbloque = IF crapblj.dtblqfim = ? THEN crapblj.vlbloque ELSE 0
+                                                                           tt-dados-blq-oficio.nroficio = crapblj.nroficio.
+                                                        END.
+                                                ELSE
+                                                        DO:
+                                                                IF crapblj.dtblqfim = ? THEN
+                                                                        tt-dados-blq-oficio.vlbloque = tt-dados-blq-oficio.vlbloque + crapblj.vlbloque.
+                                                        END.
+                                        END.
+                                END.
+                END.
+        ELSE
+                DO:
+                        IF par_contacpf <> "" THEN
+                        DO:
+                                ASSIGN aux_contacpf = REPLACE(STRING(par_contacpf,"99999999999999"),"-","").
 
-				RUN busca-nrcpfcgc-cooperado(INPUT par_cdcooper,
-											 INPUT aux_contacpf,
-											 OUTPUT aux_nrcpfcgc,
-											 OUTPUT aux_nmprimtl).
-											 
-				FOR EACH crapblj WHERE crapblj.cdcooper = par_cdcooper AND 
+                                RUN busca-nrcpfcgc-cooperado(INPUT par_cdcooper,
+                                                                                         INPUT aux_contacpf,
+                                                                                         OUTPUT aux_nrcpfcgc,
+                                                                                         OUTPUT aux_nmprimtl).
+                                                                                         
+                                FOR EACH crapblj WHERE crapblj.cdcooper = par_cdcooper AND 
                                        crapblj.nrcpfcgc = aux_nrcpfcgc
-									   NO-LOCK:
-						
-						FIND FIRST tt-dados-blq-oficio WHERE tt-dados-blq-oficio.nroficio = crapblj.nroficio AND
-															 tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
-															 NO-LOCK NO-ERROR.
-						IF NOT AVAILABLE tt-dados-blq-oficio THEN 
-						DO:
-							CREATE tt-dados-blq-oficio.
-							ASSIGN tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
-								   tt-dados-blq-oficio.vlbloque = IF crapblj.dtblqfim = ? THEN crapblj.vlbloque ELSE 0
-								   tt-dados-blq-oficio.nroficio = crapblj.nroficio.
-						END.
-						ELSE
-							DO:
-								IF crapblj.dtblqfim = ? THEN
-									tt-dados-blq-oficio.vlbloque = tt-dados-blq-oficio.vlbloque + crapblj.vlbloque.
-							END.
-				END.
-			END.
-		END.
-		
-	RETURN "OK".
+                                                                           NO-LOCK:
+                                                
+                                                FIND FIRST tt-dados-blq-oficio WHERE tt-dados-blq-oficio.nroficio = crapblj.nroficio AND
+                                                                                                                         tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
+                                                                                                                         NO-LOCK NO-ERROR.
+                                                IF NOT AVAILABLE tt-dados-blq-oficio THEN 
+                                                DO:
+                                                        CREATE tt-dados-blq-oficio.
+                                                        ASSIGN tt-dados-blq-oficio.nrdconta = crapblj.nrdconta
+                                                                   tt-dados-blq-oficio.vlbloque = IF crapblj.dtblqfim = ? THEN crapblj.vlbloque ELSE 0
+                                                                   tt-dados-blq-oficio.nroficio = crapblj.nroficio.
+                                                END.
+                                                ELSE
+                                                        DO:
+                                                                IF crapblj.dtblqfim = ? THEN
+                                                                        tt-dados-blq-oficio.vlbloque = tt-dados-blq-oficio.vlbloque + crapblj.vlbloque.
+                                                        END.
+                                END.
+                        END.
+                END.
+                
+        RETURN "OK".
 
 END PROCEDURE.
 
@@ -863,7 +863,7 @@ PROCEDURE consulta-bloqueio-jud:
        BUFFER-COPY crapblj TO tt-dados-blq.
        
         ASSIGN tt-dados-blq.vltotblq = aux_vltotblq
-			   tt-dados-blq.nmrofici = crapblj.nroficio.
+                           tt-dados-blq.nmrofici = crapblj.nroficio.
 
        FIND FIRST crabass WHERE crabass.cdcooper = crapblj.cdcooper AND
                                 crabass.nrdconta = crapblj.nrdconta
@@ -894,9 +894,9 @@ PROCEDURE consulta-bloqueio-jud:
                      "Capital".
        END CASE.
 
-	   ASSIGN tt-dados-blq.idmodali = crapblj.cdmodali
-			  tt-dados-blq.dsblqini = IF crapblj.hrblqini = 0 THEN "" ELSE STRING(crapblj.hrblqini,"HH:MM")
-			  tt-dados-blq.dsblqfim = IF crapblj.hrblqfim = 0 THEN "" ELSE STRING(crapblj.hrblqfim,"HH:MM").
+           ASSIGN tt-dados-blq.idmodali = crapblj.cdmodali
+                          tt-dados-blq.dsblqini = IF crapblj.hrblqini = 0 THEN "" ELSE STRING(crapblj.hrblqini,"HH:MM")
+                          tt-dados-blq.dsblqfim = IF crapblj.hrblqfim = 0 THEN "" ELSE STRING(crapblj.hrblqfim,"HH:MM").
 
        GET NEXT q_crapblj.
     END. 
@@ -1004,29 +1004,29 @@ PROCEDURE altera-bloqueio-jud:
 END PROCEDURE.
 
 PROCEDURE retorna-sld-conta-invt:
-	DEF INPUT  PARAM par_cdcooper AS INT                               NO-UNDO.
+        DEF INPUT  PARAM par_cdcooper AS INT                               NO-UNDO.
     DEF INPUT  PARAM par_nrdconta AS INT                               NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt AS DATE                              NO-UNDO.
-	DEF OUTPUT PARAM ret_vlresblq AS DECI                              NO-UNDO.
-	
-	DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
+        DEF OUTPUT PARAM ret_vlresblq AS DECI                              NO-UNDO.
+        
+        DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
 
-	/* Calcular o ultimo dia do mes */
-	ASSIGN aux_dtcalcul = ((DATE(MONTH(par_dtmvtolt),28,YEAR(par_dtmvtolt)) + 4) -
-							DAY(DATE(MONTH(par_dtmvtolt),28,YEAR(par_dtmvtolt)) + 4)).
-	
-	ASSIGN ret_vlresblq = 0.
-	
-	FIND FIRST crapsli WHERE crapsli.cdcooper = par_cdcooper AND 
-							 crapsli.nrdconta = par_nrdconta AND 
-							 crapsli.dtrefere = aux_dtcalcul
-							 NO-LOCK NO-ERROR.
+        /* Calcular o ultimo dia do mes */
+        ASSIGN aux_dtcalcul = ((DATE(MONTH(par_dtmvtolt),28,YEAR(par_dtmvtolt)) + 4) -
+                                                        DAY(DATE(MONTH(par_dtmvtolt),28,YEAR(par_dtmvtolt)) + 4)).
+        
+        ASSIGN ret_vlresblq = 0.
+        
+        FIND FIRST crapsli WHERE crapsli.cdcooper = par_cdcooper AND 
+                                                         crapsli.nrdconta = par_nrdconta AND 
+                                                         crapsli.dtrefere = aux_dtcalcul
+                                                         NO-LOCK NO-ERROR.
                                       
-	IF AVAILABLE crapsli THEN
-		DO:
-			ASSIGN ret_vlresblq = crapsli.vlsddisp.
-		END.
-	
+        IF AVAILABLE crapsli THEN
+                DO:
+                        ASSIGN ret_vlresblq = crapsli.vlsddisp.
+                END.
+        
 END PROCEDURE.
 
 PROCEDURE retorna-valor-blqjud:
@@ -1111,8 +1111,8 @@ PROCEDURE imprime_bloqueio_jud:
     DEF INPUT  PARAM par_dtmvtolt AS DATE                              NO-UNDO.
     DEF INPUT  PARAM par_nroficio AS CHAR                              NO-UNDO.
     DEF INPUT  PARAM par_nrctacpf AS CHAR                              NO-UNDO.
-	DEF INPUT  PARAM par_operacao AS CHAR                              NO-UNDO.
-	DEF INPUT  PARAM par_cddopcao AS CHAR                              NO-UNDO.
+        DEF INPUT  PARAM par_operacao AS CHAR                              NO-UNDO.
+        DEF INPUT  PARAM par_cddopcao AS CHAR                              NO-UNDO.
     
     DEF OUTPUT PARAM aux_nmarqimp AS CHAR                              NO-UNDO.
     DEF OUTPUT PARAM aux_nmarqpdf AS CHAR                              NO-UNDO.
@@ -1213,7 +1213,7 @@ PROCEDURE imprime_bloqueio_jud:
 
     RUN consulta-bloqueio-jud (INPUT par_cdcooper,
                                INPUT par_operacao,
-							   INPUT par_cddopcao,
+                                                           INPUT par_cddopcao,
                                INPUT par_nrctacpf, 
                                INPUT par_nroficio,
                                OUTPUT TABLE tt-dados-blq,

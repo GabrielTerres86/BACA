@@ -42,8 +42,8 @@ DEF VAR aux_nrdrowid AS ROWID                                        NO-UNDO.
 /* Variáveis de uso da BO 200 */
 DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
 DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
-DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
-DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.
+/*DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.*/
 
 
 
@@ -893,66 +893,66 @@ PROCEDURE cria-lancamento:
     END.  /*  Fim do DO WHILE TRUE  */
 
             /* BLOCO DA INSERÇAO DA CRAPLCM */
-            IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+             IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
               RUN sistema/generico/procedures/b1wgen0200.p 
-                PERSISTENT SET h-b1wgen0200.
+              PERSISTENT SET h-b1wgen0200.
     
-            IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                             INPUT par_cdcooper, 
-                             INPUT par_nrctadst,
-                             INPUT par_cdhistor) THEN
+       IF  DYNAMIC-FUNCTION("PodeDebitar" IN h-b1wgen0200, 
+                                          INPUT par_cdcooper, 
+                                          INPUT par_nrdconta,
+                                          INPUT par_cdhistor) THEN
+                  DO:
+                    RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                    (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+                    ,INPUT craplot.cdagenci               /* par_cdagenci */
+                    ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+                    ,INPUT craplot.nrdolote             /* par_nrdolote */
+                    ,INPUT par_nrdconta                   /* par_nrdconta */
+                    ,INPUT aux_nrdocmto                   /* par_nrdocmto */
+                    ,INPUT par_cdhistor                   /* par_cdhistor */
+                    ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                    ,INPUT par_vllanmto                   /* par_vllanmto */
+                    ,INPUT par_nrdconta                   /* par_nrdctabb */
+                    ,INPUT ""                             /* par_cdpesqbb */
+                    ,INPUT 0                              /* par_vldoipmf */
+                    ,INPUT 0                              /* par_nrautdoc */
+                    ,INPUT 0                              /* par_nrsequni */
+                    ,INPUT 0                              /* par_cdbanchq */
+                    ,INPUT 0                              /* par_cdcmpchq */
+                    ,INPUT 0                              /* par_cdagechq */
+                    ,INPUT 0                              /* par_nrctachq */
+                    ,INPUT 0                              /* par_nrlotchq */
+                    ,INPUT 0                              /* par_sqlotchq */
+                    ,INPUT craplot.dtmvtolt               /* par_dtrefere */
+                    ,INPUT ""                             /* par_hrtransa */
+                    ,INPUT 0                              /* par_cdoperad */
+                    ,INPUT 0                              /* par_dsidenti */
+                    ,INPUT par_cdcooper                   /* par_cdcooper */
+                    ,INPUT ""                             /* par_nrdctitg */
+                    ,INPUT ""                             /* par_dscedent */
+                    ,INPUT 0                              /* par_cdcoptfn */
+                    ,INPUT 0                              /* par_cdagetfn */
+                    ,INPUT 0                              /* par_nrterfin */
+                    ,INPUT 0                              /* par_nrparepr */
+                    ,INPUT 0                              /* par_nrseqava */
+                    ,INPUT 0                              /* par_nraplica */
+                    ,INPUT 0                              /* par_cdorigem */
+                    ,INPUT 0                              /* par_idlautom */
+                    /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                    ,INPUT 0                              /* Processa lote                                 */
+                    ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                    /* CAMPOS DE SAÍDA                                                                     */                                            
+                    ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+                    ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+                    ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+                    ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
 
-                  RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                  (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
-                  ,INPUT craplot.cdagenci               /* par_cdagenci */
-                  ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-                  ,INPUT 0 craplot.nrdolote             /* par_nrdolote */
-                  ,INPUT par_nrdconta                   /* par_nrdconta */
-                  ,INPUT aux_nrdocmto                   /* par_nrdocmto */
-                  ,INPUT par_cdhistor                   /* par_cdhistor */
-                  ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
-                  ,INPUT par_vllanmto                   /* par_vllanmto */
-                  ,INPUT par_nrdconta                   /* par_nrdctabb */
-                  ,INPUT ""                             /* par_cdpesqbb */
-                  ,INPUT 0                              /* par_vldoipmf */
-                  ,INPUT 0                              /* par_nrautdoc */
-                  ,INPUT 0                              /* par_nrsequni */
-                  ,INPUT 0                              /* par_cdbanchq */
-                  ,INPUT 0                              /* par_cdcmpchq */
-                  ,INPUT 0                              /* par_cdagechq */
-                  ,INPUT 0                              /* par_nrctachq */
-                  ,INPUT 0                              /* par_nrlotchq */
-                  ,INPUT 0                              /* par_sqlotchq */
-                  ,INPUT craplot.dtmvtolt               /* par_dtrefere */
-                  ,INPUT ""                             /* par_hrtransa */
-                  ,INPUT 0                              /* par_cdoperad */
-                  ,INPUT 0                              /* par_dsidenti */
-                  ,INPUT par_cdcooper                   /* par_cdcooper */
-                  ,INPUT ""                             /* par_nrdctitg */
-                  ,INPUT ""                             /* par_dscedent */
-                  ,INPUT 0                              /* par_cdcoptfn */
-                  ,INPUT 0                              /* par_cdagetfn */
-                  ,INPUT 0                              /* par_nrterfin */
-                  ,INPUT 0                              /* par_nrparepr */
-                  ,INPUT 0                              /* par_nrseqava */
-                  ,INPUT 0                              /* par_nraplica */
-                  ,INPUT 0                              /* par_cdorigem */
-                  ,INPUT 0                              /* par_idlautom */
-                  /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
-                  ,INPUT 0                              /* Processa lote                                 */
-                  ,INPUT 0                              /* Tipo de lote a movimentar                     */
-                  /* CAMPOS DE SAÍDA                                                                     */                                            
-                  ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
-                  ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
-                  ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
-                  ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-
-                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                    DO:  
-                      MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                      RETURN "NOK".
-                    END.   
-                    
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                        DO:  
+                          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
+                          RETURN "NOK".
+                        END.   
+                  END.  
                   IF  VALID-HANDLE(h-b1wgen0200) THEN
                       DELETE PROCEDURE h-b1wgen0200.
                           
@@ -992,10 +992,10 @@ PROCEDURE cria-lancamento:
                     
                   RETURN "OK".
                           
-       ELSE
-               RETURN "NOK".                      
+       /*ELSE
+               RETURN "NOK".  */                    
                                   
-
+       
 
 
 

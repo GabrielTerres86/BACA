@@ -515,8 +515,8 @@ DEF TEMP-TABLE tt-crapcop LIKE crapcop.
 /* Variáveis de uso da BO 200 */
 DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
 DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
-DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
-DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.
+/*DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR                                NO-UNDO.*/
 
 
 FUNCTION verificacao_bloqueio RETURNS INTEGER
@@ -7134,7 +7134,7 @@ PROCEDURE gera_credito_em_conta:
             ,INPUT 0                              /* par_cdoperad */
             ,INPUT 0                              /* par_dsidenti */
             ,INPUT par_cdcooper                   /* par_cdcooper */
-            ,INPUT ""STRING(crablbi.nrdconta,"99999999")/* par_nrdctitg */
+            ,INPUT STRING(crablbi.nrdconta,"99999999")/* par_nrdctitg */
             ,INPUT ""                             /* par_dscedent */
             ,INPUT 0                              /* par_cdcoptfn */
             ,INPUT 0                              /* par_cdagetfn */
@@ -7323,13 +7323,13 @@ PROCEDURE transfere_beneficio:
         (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
         ,INPUT craplot.cdagenci               /* par_cdagenci */
         ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-        ,INPUT 0 craplot.nrdolote             /* par_nrdolote */
+        ,INPUT craplot.nrdolote             /* par_nrdolote */
         ,INPUT par_nrdconta                   /* par_nrdconta */
         ,INPUT craplot.nrseqdig + 1           /* par_nrdocmto */
         ,INPUT par_cdhistor                   /* par_cdhistor */
         ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
         ,INPUT crablbi.vlliqcre               /* par_vllanmto */
-        ,INPUT 0par_nrdconta                  /* par_nrdctabb */
+        ,INPUT par_nrdconta                  /* par_nrdctabb */
         ,INPUT ""                             /* par_cdpesqbb */
         ,INPUT 0                              /* par_vldoipmf */
         ,INPUT 0                              /* par_nrautdoc */
