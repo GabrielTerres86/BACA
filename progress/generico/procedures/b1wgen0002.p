@@ -4866,23 +4866,24 @@ PROCEDURE proc_qualif_operacao:
                    NO-LOCK NO-ERROR.
 
         IF  AVAIL crabepr THEN DO:
-		FOR FIRST crapris FIELDS(qtdiaatr) 
-            WHERE crapris.cdcooper = par_cdcooper 
-              AND crapris.dtrefere = aux_dtmvtoan
-              AND crapris.inddocto = 1
-			  AND crapris.nrdconta = par_nrdconta
-			  AND crapris.nrctremp = crabepr.nrctremp
-			  AND crapris.cdorigem = 3
-              NO-LOCK: 
+		    FOR FIRST crapris FIELDS(qtdiaatr) 
+                WHERE crapris.cdcooper = par_cdcooper 
+		    	  AND crapris.dtrefere = aux_dtmvtoan
+		    	  AND crapris.inddocto = 1
+		    	  AND crapris.nrdconta = par_nrdconta
+		    	  AND crapris.nrctremp = crabepr.nrctremp
+		    	  AND crapris.cdorigem = 3
+		    	  NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-         END.
-        END.
+            END.
 
-		/* Se contrato a liquidar já é um refinanciamento, força 
-		    qualificação mínima como "Renegociação" 
-		        Reginaldo (AMcom) - Mar/2018                     */
-		IF crabepr.idquaprc > 1 THEN
-			ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+          /* Se contrato a liquidar já é um refinanciamento, força 
+		     qualificação mínima como "Renegociação" 
+		     Reginaldo (AMcom) - Mar/2018                     */
+          IF crabepr.idquaprc > 1 THEN
+			 ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+
+        END.
 
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
