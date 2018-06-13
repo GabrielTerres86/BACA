@@ -403,9 +403,9 @@ PROCEDURE gera_lancamento:
                   
                   
               IF   crapdev.cdalinea <> 0 THEN
-                aux_cdpesqbb = STRING(crapdev.cdalinea)
+                ASSIGN aux_cdpesqbb = STRING(crapdev.cdalinea).
               ELSE 
-                aux_cdpesqbb = "21"
+                ASSIGN aux_cdpesqbb = "21".
 
               RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
                 (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
