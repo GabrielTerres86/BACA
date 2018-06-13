@@ -4518,10 +4518,11 @@ BEGIN
             vr_vlpreapg := 0;
             vr_indice_dados_tdb := vr_tab_craptdb.first;
             WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-              IF vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
                  vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
                  vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
               THEN
                 -- Enviar registro para o XML 1 - para cada um dos títulos.
                 vr_des_xml_gene := '<atraso>'
@@ -4553,17 +4554,16 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
-                vr_des_xml_gene := vr_des_xml_gene || ' </atraso>';
-                
+          -- Fechar tag atraso enviando pro XML
+            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
+                                  ,pr_texto_completo => vr_txtauxi_227
+                                      ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
 
-          -- Fechar tag atraso enviando pro XML
-            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
-                                  ,pr_texto_completo => vr_txtauxi_227
-                                  ,pr_texto_novo     => vr_des_xml_gene);
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4626,10 +4626,11 @@ BEGIN
             vr_vlpreapg := 0;
             vr_indice_dados_tdb := vr_tab_craptdb.first;
             WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-              IF vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
                  vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
                  vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
               THEN
                 -- Enviar registro para o XML 2 - para cada um dos títulos.
                 vr_des_xml_gene :='<divida>'
@@ -4661,17 +4662,15 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
-                vr_des_xml_gene := vr_des_xml_gene || ' </divida>';
+                -- Finalmente enviar para o XML
+                  gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
+                                         ,pr_texto_completo => vr_txtauxi_354
+                                         ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
                 
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
-
-          -- Finalmente enviar para o XML
-            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
-                                   ,pr_texto_completo => vr_txtauxi_354
-                                   ,pr_texto_novo     => vr_des_xml_gene);
 
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
@@ -4849,7 +4848,8 @@ BEGIN
                 IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
                     vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
                     vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                    vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr) THEN
+                    vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND 
+                    vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5)) THEN
 
                   -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
                   IF pr_cdcooper <> 3 THEN
@@ -4931,10 +4931,11 @@ BEGIN
               vr_vlpreapg := 0;
               vr_indice_dados_tdb := vr_tab_craptdb.first;
               WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-                IF vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
                    vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
                    vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                   vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
                 THEN
                   gene0002.pc_escreve_xml(pr_xml => vr_clob_354
                                           ,pr_texto_completo => vr_txtarqui_354
