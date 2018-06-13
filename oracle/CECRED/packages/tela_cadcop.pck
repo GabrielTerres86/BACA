@@ -5,12 +5,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
   --  Sistema  : Rotina acessada pela tela CADCOP
   --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
-  --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Agosto/2016.                   Ultima atualizacao: 13/06/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas utilizadas para a tela CADCOP
+  -- Alterações:
+  -- 13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_consulta_cooperativa(pr_cddopcao  IN VARCHAR2                --> Código da opção
@@ -1462,7 +1464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Coop.COMPE Cecred ja utilizada por outra Cooperativa.';
+      vr_dscritic := 'Coop.COMPE Ailos ja utilizada por outra Cooperativa.';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
 
@@ -1564,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'Favor verificar Agencia CECRED na tela CADPAC';
+      vr_dscritic := 'Favor verificar Agencia AILOS na tela CADPAC';
       pr_nmdcampo := 'cdagectl';
 
       -- volta para o programa chamador
@@ -3195,7 +3197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
                 ,pr_cdoperad => vr_cdoperad -- Operador
-                ,pr_dsdcampo => 'Cod.COMPE Cecred'  --Descrição do campo
+                ,pr_dsdcampo => 'Cod.COMPE Ailos'  --Descrição do campo
                 ,pr_vlrcampo => rw_crapcop.cdbcoctl --Valor antigo
                 ,pr_vlcampo2 => pr_cdbcoctl --Valor atual
                 ,pr_des_erro => vr_des_erro); --Erro
@@ -3331,7 +3333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
                 ,pr_cdoperad => vr_cdoperad -- Operador
-                ,pr_dsdcampo => 'conta na Cecred'  --Descrição do campo
+                ,pr_dsdcampo => 'conta na Ailos'  --Descrição do campo
                 ,pr_vlrcampo => rw_crapcop.nrctactl --Valor antigo
                 ,pr_vlcampo2 => pr_nrctactl --Valor atual
                 ,pr_des_erro => vr_des_erro); --Erro
@@ -3382,7 +3384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
                 ,pr_cdoperad => vr_cdoperad -- Operador
-                ,pr_dsdcampo => 'cta.Compe CECRED'  --Descrição do campo
+                ,pr_dsdcampo => 'cta.Compe AILOS'  --Descrição do campo
                 ,pr_vlrcampo => rw_crapcop.nrctacmp --Valor antigo
                 ,pr_vlcampo2 => pr_nrctacmp --Valor atual
                 ,pr_des_erro => vr_des_erro); --Erro
