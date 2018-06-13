@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Abril/2010                         Ultima atualizacao: 13/01/2014
+   Data    : Abril/2010                         Ultima atualizacao: 13/06/2018
 
    Dados referentes ao programa:
 
@@ -16,6 +16,10 @@
    Alteracoes: 13/01/2014 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
+							
+			   13/06/2018 - Ajustes referente revitalizacao, para que caso ocorra alguma falha
+							no processo, seja gerado log e enviado e-mail para os responsaveis.
+							(SCTASK0013365 - Kelvin)
 
 ..............................................................................*/
 
@@ -44,9 +48,13 @@ DEF  VAR aux_posicao   AS INT                                          NO-UNDO.
 DEF  VAR aux_postpfer  AS INT                                          NO-UNDO.
 DEF  VAR aux_dtferiad  AS DATE                                         NO-UNDO.
 DEF  VAR aux_tpferiad  AS INT    FORMAT "z9"                           NO-UNDO.
+DEF  VAR aux_flgexarq  AS LOGICAL                                      NO-UNDO.
+DEF  VAR aux_dsmoterr  AS CHAR                                          NO-UNDO.
 
+DEF  VAR h-b1wgen0011 AS HANDLE                                  	   NO-UNDO.
 
-ASSIGN glb_cdprogra = "crps566".
+ASSIGN glb_cdprogra = "crps566"
+	   aux_flgexarq	= FALSE.
 
 
 
@@ -69,8 +77,6 @@ IF   NOT AVAILABLE crapcop  THEN
          RUN fontes/fimprg.p.
          RETURN.
      END.
-
-
 
 ASSIGN aux_nmarquiv = "/micros/" + crapcop.dsdircop + 
                       "/abbc/CAF501*".  
@@ -103,6 +109,11 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
     IMPORT STREAM str_2 UNFORMATTED aux_setlinha.
 
     IF SUBSTR(aux_setlinha,7,6) <> "CAF501" THEN DO:
+       
+	   ASSIGN aux_dsmoterr = "Arquivo nao correspondente ao CAF501 (Problemas no HEADER do arquivo)".	          
+	   
+	   RUN enviar_email_erro(aux_dsmoterr).
+	   
        ASSIGN glb_cdcritic = 173.
        RUN fontes/critic.p.
 
@@ -133,7 +144,11 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         IF   aux_cdcidade = 0   THEN DO: 
              ASSIGN glb_dscritic = "Arquivo importado - " + 
-                                   aux_nmarqdat + " - esta corrompido.".
+                                   aux_nmarqdat + " - esta corrompido."
+					aux_dsmoterr = glb_dscritic.
+					
+			 
+			 RUN enviar_email_erro(aux_dsmoterr).
 
              UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                " - " + glb_cdprogra + "' --> '"  +
@@ -215,6 +230,8 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                 LEAVE.
         END.
 
+		ASSIGN aux_flgexarq = TRUE.
+		
     END. /*** Fim do DO WHILE TRUE ***/
      
     FOR EACH crapfsf WHERE crapfsf.dtmvtolt <> glb_dtmvtolt  
@@ -232,10 +249,46 @@ END. /*** Fim do DO WHILE TRUE ***/
 
 INPUT STREAM str_1 CLOSE.
 
- 
+IF aux_flgexarq = FALSE THEN DO:
+
+	ASSIGN aux_dsmoterr = "Arquivo nao foi localizado em: " + aux_nmarquiv.
+	
+	UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + UPPER(glb_cdprogra) + "' --> Arquivo nao encontrado: CAF501 - Cadastro de municipios e feriados'"  +
+                            " >> log/proc_batch.log").	
+		
+	RUN enviar_email_erro(aux_dsmoterr).
+	
+END.
+
+PROCEDURE enviar_email_erro:    
+    DEF  INPUT PARAM par_dsmoterr AS CHAR                           NO-UNDO.    
+	
+	FIND FIRST crapprm WHERE crapprm.cdcooper = 0 
+	                     AND crapprm.cdacesso = 'PRM_EMA_CAF501ECAF502'
+						 AND crapprm.nmsistem = 'CRED' NO-LOCK NO-ERROR.
+	
+	/* envio de email */ 
+	RUN sistema/generico/procedures/b1wgen0011.p
+	  PERSISTENT SET h-b1wgen0011.
+
+	RUN enviar_email_completo IN h-b1wgen0011 (INPUT glb_cdcooper,
+											   INPUT glb_cdprogra,
+											   INPUT "CECRED<cecred@cecred.coop.br>",
+											   INPUT crapprm.dsvlrprm,
+											   INPUT "CAF501 - Cadastro de municipios e feriados - Problemas no processo",
+											   INPUT "",			
+											   INPUT "",
+											   INPUT "\nO programa crps566.p nao conseguiu efetuar o cadastramento dos municipios e feriados."+											         
+											         "\nMotivo: " + par_dsmoterr +	
+													 "\nNecessario efetuar o processo manualmente, atraves da tela PRCCTL.",
+											   INPUT TRUE).
+	
+	 DELETE PROCEDURE h-b1wgen0011.
+	 
+END PROCEDURE. /* enviar_email_erro*/
 
 RUN fontes/fimprg.p.                   
-
 
 PROCEDURE cria_crapfsf:
 
