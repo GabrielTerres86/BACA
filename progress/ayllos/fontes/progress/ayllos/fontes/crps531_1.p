@@ -174,6 +174,8 @@
 
 			   05/01/2017 - Ajuste para retirada de caracterer especiais
 							(Adriano - SD 556053)
+              
+         12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
 							
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -4180,17 +4182,12 @@ PROCEDURE trata_lancamentos.
                                
                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                       DO:  
-                        /*IF aux_incrineg = 1 THEN
-                         DO:
-                          /* Tratativas de negocio */ 
-                          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                         END.
-                        ELSE
-                         DO:*/
-                          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                          RETURN "NOK".
-                         /*END. */
+                        MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
+                        RETURN "NOK".
                       END.   
+                      
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
                       
                           /*CREATE craplcm.
                           ASSIGN craplcm.cdcooper = crabcop.cdcooper
