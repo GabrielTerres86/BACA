@@ -20,7 +20,9 @@
                04/07/2014 - Incluido historicos para deposito em cheque na 
                             procedure acerto-financeiro. (Reinert)  
                             
-               27/10/2014 - Incluído parametro na procedure gera-log (Diego).                          
+               27/10/2014 - Incluído parametro na procedure gera-log (Diego).          
+               
+               12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
                                           
 ............................................................................ */
 
@@ -223,21 +225,14 @@ PROCEDURE tranf-salario-intercooperativa:
       ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
       
       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-      DO:  
-        /*IF aux_incrineg = 1 THEN
-         DO:
-          /* Tratativas de negocio */ 
-          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-         END.
-        ELSE
-         DO:*/
+        DO:  
           MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
           RETURN "NOK".
-         /*END. */
-      END.  
-      
-    IF  VALID-HANDLE(h-b1wgen0200) THEN
-    DELETE PROCEDURE h-b1wgen0200.
+        END.   
+        
+      IF  VALID-HANDLE(h-b1wgen0200) THEN
+          DELETE PROCEDURE h-b1wgen0200.
+
 
         /* Criar o registro de credito do Salario */
        /* CREATE craplcm.
@@ -952,19 +947,14 @@ PROCEDURE cria-lancamento:
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
 
-                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                          DO:  
-                            /*IF aux_incrineg = 1 THEN
-                             DO:
-                              /* Tratativas de negocio */ 
-                              MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                             END.
-                            ELSE
-                             DO:*/
-                              MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                              RETURN "NOK".
-                             /*END. */
-                          END.   
+                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                    DO:  
+                      MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
+                      RETURN "NOK".
+                    END.   
+                    
+                  IF  VALID-HANDLE(h-b1wgen0200) THEN
+                      DELETE PROCEDURE h-b1wgen0200.
                           
                    /*CREATE craplcm.
                   ASSIGN craplcm.cdcooper = par_cdcooper
