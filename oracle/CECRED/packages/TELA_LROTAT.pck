@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LROTAT IS
   --
   -- Alteracoes: 12/07/2016 - Ajustes para finzalização da conversão da tela LROTAT
   --                          (Andrei - RKAM).
+  -- 13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_consulta_lrotat(pr_cddopcao IN VARCHAR2
@@ -1152,7 +1153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
           
           -- Montar mensagem de critica
           vr_cdcritic := 0;
-          vr_dscritic := 'Valor limite maximo CECRED menor que valor vimite maximo operacional.';
+          vr_dscritic := 'Valor limite maximo AILOS menor que valor vimite maximo operacional.';
           
           -- volta para o programa chamador
           RAISE vr_exc_saida; 
@@ -1188,7 +1189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
         IF nvl(pr_vllimmax,0) > nvl(pr_vllmaxce,0) THEN   
           -- Montar mensagem de critica
           vr_cdcritic := 0;
-          vr_dscritic := 'Valor Limite maximo operacional maior que valor limite maximo CECRED.';
+          vr_dscritic := 'Valor Limite maximo operacional maior que valor limite maximo AILOS.';
           
           -- volta para o programa chamador
           RAISE vr_exc_saida;     
@@ -1337,7 +1338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                                   ,pr_nmarqlog     => 'lrotat.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' -->  Operador '|| vr_cdoperad || ' - ' || 
-                                                      'Alterou o/a Quantidade de vezes do capital - CECRED ' || 
+                                                      'Alterou o/a Quantidade de vezes do capital - AILOS ' || 
                                                       to_char(rw_craplrt.qtvcapce,'fm999g999g990d00') || ' para ' || to_char(pr_qtvcapce,'fm999g999g990d00') || ' da linha ' ||
                                                       rw_craplrt.cddlinha || '.');
       
@@ -1365,7 +1366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
                                   ,pr_nmarqlog     => 'lrotat.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                       ' -->  Operador '|| vr_cdoperad || ' - ' || 
-                                                      'Alterou o/a Valor Limite maximo - CECRED ' || 
+                                                      'Alterou o/a Valor Limite maximo - AILOS ' || 
                                                       to_char(rw_craplrt.vllmaxce,'fm999g999g990d00') || ' para ' || to_char(pr_vllmaxce,'fm999g999g990d00') || ' da linha ' ||                                                      
                                                       rw_craplrt.cddlinha || '.');
       
@@ -1611,7 +1612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       IF nvl(pr_vllimmax,0) > nvl(pr_vllmaxce,0) THEN   
         -- Montar mensagem de critica
         vr_cdcritic := 0;
-        vr_dscritic := 'Valor limite maximo operacional maior que valor limite maximo CECRED.';
+        vr_dscritic := 'Valor limite maximo operacional maior que valor limite maximo AILOS.';
           
         -- volta para o programa chamador
         RAISE vr_exc_saida;     
