@@ -5575,7 +5575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				-- Envia email para o spb
 				gene0003.pc_solicita_email(pr_cdcooper        => 3
 																	,pr_cdprogra        => pr_cdprogra
-																	,pr_des_destino     => 'spb@cecred.coop.br'
+																	,pr_des_destino     => 'spb@ailos.coop.br'
 																	,pr_des_assunto     => 'PAG0101 - Erro na atualização da situação operacional da IF'
 																	,pr_des_corpo       => vr_dsdemail
 																	,pr_des_anexo       => ''
@@ -5860,7 +5860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 					-- Envia email para o spb
           gene0003.pc_solicita_email(pr_cdcooper      => 3,
                                      pr_cdprogra      => pr_cdprogra,
-                                     pr_des_destino   => 'spb@cecred.coop.br',
+                                     pr_des_destino   => 'spb@ailos.coop.br',
                                      pr_des_assunto   => 'STR0018 - Erro na exclusao de participante no STR',
                                      pr_des_corpo     => vr_dsdemail,
                                      pr_des_anexo     => '',
