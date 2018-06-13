@@ -396,7 +396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             ELSE
               vr_cdcritic := 1134; -- nao foi possivel realizar debito 
               vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
-			  vr_incrineg : = 1;
+			  vr_incrineg := 1;
             END IF;
 
           -- se não foi possivel debitar, então cancela seguro
