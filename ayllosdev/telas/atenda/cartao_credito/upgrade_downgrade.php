@@ -158,7 +158,7 @@
             </label>
           </td>
           <td>
-            <input type="text" name="dsadmatu" id="dsadmatu" class="campo" value=""<?php echo $cdcadmat . " - " . $dscadmat; ?> " style="width:252px" />
+            <input type="text" name="dsadmatu" id="dsadmatu" class="campo" value="<?php echo $cdcadmat . " - " . $dscadmat; ?> " style="width:252px" />
           </td>
         </tr>
         <tr>
