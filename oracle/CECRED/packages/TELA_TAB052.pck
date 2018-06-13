@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
   -- Objetivo  : Centralizar rotinas relacionadas a Tela TAB052
   --
   -- Alteracoes:
-  --
+  --             13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------
 
   ---------------------------- ESTRUTURAS DE REGISTRO -----------------------
@@ -901,7 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_vllimite > pr_vllimite_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor do Limite Máximo do Contrato deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor do Limite Máximo do Contrato deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vllimite';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -911,7 +911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_vlmaxsac > pr_vlmaxsac_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O Valor Máximo Permitido por Título deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O Valor Máximo Permitido por Título deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vlmaxsac';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -921,7 +921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF pr_qtprzmax > pr_qtprzmax_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtprzmax';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -939,7 +939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     IF to_number(pr_pctolera) > to_number(pr_pctolera_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'pctolera';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1080,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o limite maximo do contrato CECRED de R$ ' ||
+                    pr_dscdolog => 'alterou o limite maximo do contrato AILOS de R$ ' ||
                                     to_char(vr_tab_cecred_dsctit(pr_tpcobran).vllimite,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                     ' para R$ ' || to_char(pr_vllimite_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
 
@@ -1138,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou a qtd. de dias de prazo maximo do titulo CECRED de ' ||
+                    pr_dscdolog => 'alterou a qtd. de dias de prazo maximo do titulo AILOS de ' ||
                                     to_char(vr_tab_cecred_dsctit(pr_tpcobran).qtprzmax) ||
                                     ' para ' || to_char(pr_qtprzmax_c));
 
@@ -1181,7 +1181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o valor maximo permitido por emitente CECRED de R$ ' ||
+                    pr_dscdolog => 'alterou o valor maximo permitido por emitente AILOS de R$ ' ||
                                     to_char(vr_tab_cecred_dsctit(pr_tpcobran).vlmaxsac,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                     ' para R$ ' || to_char(pr_vlmaxsac_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
@@ -1202,7 +1202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o valor maximo permitido por emitente CECRED de R$ ' ||
+                    pr_dscdolog => 'alterou o valor maximo permitido por emitente AILOS de R$ ' ||
                                     to_char(vr_tab_cecred_dsctit(pr_tpcobran).vlminsac,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                     ' para R$ ' || to_char(pr_vlminsac_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
@@ -1222,7 +1222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou Qtd. de Renovacoes CECRED de ' ||
+                    pr_dscdolog => 'alterou Qtd. de Renovacoes AILOS de ' ||
                                     to_char(vr_tab_cecred_dsctit(pr_tpcobran).qtrenova,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                     ' para R$ ' || to_char(pr_qtrenova_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
