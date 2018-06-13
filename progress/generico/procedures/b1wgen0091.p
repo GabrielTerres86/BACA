@@ -7364,21 +7364,13 @@ PROCEDURE transfere_beneficio:
         ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
         ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
         
-      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
         DO:  
-        /*IF aux_incrineg = 1 THEN
-         DO:
-          /* Tratativas de negocio */ 
-          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-         END.
-        ELSE
-         DO:*/
           MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
           RETURN "NOK".
-         /*END. */
         END.   
         
-      IF  VALID-HANDLE(h-b1wgen0200) THEN
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.    
 
     /*CREATE craplcm.
