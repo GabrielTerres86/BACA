@@ -146,16 +146,20 @@
               19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)  
 
-			  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+              13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
                            crapass, crapttl, crapjur (Adriano - P339).
 
               07/03/2018 - Substituida verificado "cdtipcta igual a 1, 2, 7, 8..." por 
                            "cdcatego = 1". PRJ366 (Lombardi).
+
+              02/05/2018 - Verificacao de impedimento de talionario atraves da proc 
+                           pc_ind_impede_talonario. PRJ366 (Lombardi).
                            
                            
 .............................................................................*/
 
 { includes/var_batch.i }  
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -218,6 +222,10 @@ DEF     VAR rel_nmmodulo AS CHAR      FORMAT "x(15)" EXTENT 5
                                   "GENERICO       "]                 NO-UNDO.
 
 DEF     VAR aux_dtabtcc2 AS DATE      FORMAT "99/99/9999"            NO-UNDO.
+
+DEF     VAR aux_imptalio AS INTE                                     NO-UNDO.
+DEF     VAR aux_des_erro AS CHAR                                     NO-UNDO.
+DEF     VAR aux_dscritic AS CHAR                                     NO-UNDO.
 
 DEF NEW SHARED VAR shr_inpessoa AS INT                               NO-UNDO.  
 
@@ -586,11 +594,35 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
     /* registro tipo 1 */
     ASSIGN aux_nrregist = aux_nrregist + 1
            aux_nrtotcli = aux_nrtotcli + 1
-           aux_usatalao = IF crapass.cdsitdct = 1 THEN YES
-                                                  ELSE NO
            aux_dsdlinha = STRING(SUBSTRING(crapass.nrdctitg,1,7),"x(7)") +
                           STRING(SUBSTRING(crapass.nrdctitg,8,1),"x(1)").
                           
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    RUN STORED-PROCEDURE pc_ind_impede_talonario
+      aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT crapass.cdsitdct, /* pr_cdcooper */
+                               INPUT crapass.nrdconta, /* pr_nrdconta */
+                              OUTPUT 0,                /* pr_inimpede_talionario */
+                              OUTPUT "",               /* pr_des_erro */
+                              OUTPUT "").              /* pr_dscritic */
+    CLOSE STORED-PROC pc_ind_impede_talonario
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_imptalio = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_imptalio = pc_ind_impede_talonario.pr_inimpede_talionario 
+                           WHEN pc_ind_impede_talonario.pr_inimpede_talionario <> ?
+           aux_des_erro = pc_ind_impede_talonario.pr_des_erro
+                           WHEN pc_ind_impede_talonario.pr_des_erro <> ?
+           aux_dscritic = pc_ind_impede_talonario.pr_dscritic
+                           WHEN pc_ind_impede_talonario.pr_dscritic <> ?.
+    
+    ASSIGN aux_usatalao = IF aux_imptalio = 0 THEN YES
+                                              ELSE NO.
+           
     IF   crapeca.dscritic MATCHES "*INCLUSAO*"   THEN
          aux_dsdlinha = aux_dsdlinha + "3".
     ELSE
@@ -1375,11 +1407,35 @@ PROCEDURE gera_arquivo:
     
     /* registro tipo 1 */
     ASSIGN aux_nrregist = aux_nrregist + 1
-           aux_nrtotcli = aux_nrtotcli + 1
-           aux_usatalao = IF crapass.cdsitdct = 1 THEN YES
-                                                  ELSE NO
+           aux_nrtotcli = aux_nrtotcli + 1.
+           
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    RUN STORED-PROCEDURE pc_ind_impede_talonario
+      aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT crapass.cdsitdct, /* pr_cdcooper */
+                               INPUT crapass.nrdconta, /* pr_nrdconta */
+                              OUTPUT 0,                /* pr_inimpede_talionario */
+                              OUTPUT "",               /* pr_des_erro */
+                              OUTPUT "").              /* pr_dscritic */
+    CLOSE STORED-PROC pc_ind_impede_talonario
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-           aux_dsdlinha = STRING(SUBSTRING(crapass.nrdctitg,1,7),"x(7)") +
+    ASSIGN aux_imptalio = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_imptalio = pc_ind_impede_talonario.pr_inimpede_talionario 
+                           WHEN pc_ind_impede_talonario.pr_inimpede_talionario <> ?
+           aux_des_erro = pc_ind_impede_talonario.pr_des_erro
+                           WHEN pc_ind_impede_talonario.pr_des_erro <> ?
+           aux_dscritic = pc_ind_impede_talonario.pr_dscritic
+                           WHEN pc_ind_impede_talonario.pr_dscritic <> ?.
+           
+    ASSIGN aux_usatalao = IF aux_imptalio = 0 THEN YES
+                                              ELSE NO.
+
+    ASSIGN aux_dsdlinha = STRING(SUBSTRING(crapass.nrdctitg,1,7),"x(7)") +
                           STRING(SUBSTRING(crapass.nrdctitg,8,1),"x(1)") +
                           STRING(aux_cdaltera,"9") +
                           STRING(aux_bloqueio,"9") +

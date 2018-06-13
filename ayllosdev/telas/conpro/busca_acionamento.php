@@ -2,11 +2,11 @@
 
 /* !
  * FONTE        : busca_acionamento.php
- * CRIA«√O      : Daniel Zimmermann
- * DATA CRIA«√O : 22/03/2016 
+ * CRIA√á√ÉO      : Daniel Zimmermann
+ * DATA CRIA√á√ÉO : 22/03/2016 
  * OBJETIVO     : Rotina para controlar a busca de acionamentos
  * --------------
- * ALTERA«’ES   : 
+ * ALTERA√á√ïES   : 
  * -------------- 
  */
 
@@ -18,13 +18,14 @@ require_once('../../class/xmlfile.php');
 isPostMethod();
 
 
-// Recebe a operaÁ„o que est· sendo realizada
+// Recebe a opera√ß√£o que est√° sendo realizada
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 $nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
 $dtinicio = (isset($_POST['dtinicio'])) ? $_POST['dtinicio'] : '';
 $dtafinal = (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : '';
+$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : '9';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	exibeErroNew($msgError);
@@ -36,10 +37,11 @@ $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
 $xml .= "   <nrctremp>" . $nrctremp . "</nrctremp>";
 $xml .= "   <dtinicio>" . $dtinicio . "</dtinicio>";
 $xml .= "   <dtafinal>" . $dtafinal . "</dtafinal>";
+$xml .= "   <tpproduto>".$tpproduto."</tpproduto>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {

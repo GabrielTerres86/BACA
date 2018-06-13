@@ -2498,7 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     IF pr_des_reto = 'OK' THEN 
       BEGIN
          UPDATE CRAPEPR
-         SET  crapepr.vlprejuz  = vr_vlsdeved + nvl(vr_vljura60,0)
+         SET   crapepr.vlprejuz  = vr_vlsdeved + nvl(vr_vljura60,0)
             ,  crapepr.vlsdprej = vr_vlsdeved + nvl(vr_vljura60,0)
             ,  crapepr.inprejuz = 1 /* Em prejuizo */
             ,  crapepr.inliquid = 1 /* Liquidado   */
@@ -2508,8 +2508,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
             ,  crapepr.vlttjmpr = 0          /* Juros de Mora das Parcelas */
             ,  crapepr.vlpgmupr = 0
             ,  crapepr.vlpgjmpr = 0
-            ,  crapepr.vlsdeved = 0
-            ,  crapepr.vlsdevat = 0
+           -- ,  crapepr.vlsdeved = 0
+           -- ,  crapepr.vlsdevat = 0
          WHERE crapepr.cdcooper = pr_cdcooper
          AND   crapepr.nrdconta = pr_nrdconta
          AND   crapepr.nrctremp = pr_nrctremp;
@@ -4195,141 +4195,542 @@ end pc_gera_prejuizo_cc;*/
          
   END pc_estorno_trf_prejuizo_PP;
     
-     /* Rotina para estornar transferencia prejuizo TR */
-  PROCEDURE pc_estorno_trf_prejuizo_TR(pr_cdcooper in number
-                                      ,pr_cdagenci in number
-                                      ,pr_nrdcaixa in number
-                                      ,pr_cdoperad in varchar2
-                                      ,pr_nrdconta in number
-                                      ,pr_dtmvtolt in date
-                                      ,pr_nrctremp in number
-                                      ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
-                                      ,pr_tab_erro OUT gene0001.typ_tab_erro  ) IS 
-          
+   /* Rotina para estornar transferencia prejuizo TR */
+PROCEDURE pc_estorno_trf_prejuizo_TR(pr_cdcooper in number
+                                    ,pr_cdagenci in number
+                                    ,pr_nrdcaixa in number
+                                    ,pr_cdoperad in varchar2
+                                    ,pr_nrdconta in number
+                                    ,pr_dtmvtolt in date
+                                    ,pr_nrctremp in number
+                                    ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
+                                    ,pr_tab_erro OUT gene0001.typ_tab_erro  ) IS 
+/*..............................................................................
+
+   Programa: PREJ0001                        Antigo: Nao ha
+   Sistema : Cred
+   Sigla   : CRED
+   Autor   : Jean Calão - Mout´S
+   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que chamada
+   Objetivo  : Realizar o estorno de transferência a prejuízo
+
+   Alteracoes: 21/05/2018 - Identação e ajustes de regras no estorno TR 
+               (Rafael - Mout's)
+
+..............................................................................*/          
 
       
-   -- verifica pagamentos
-      cursor cr_craplem(pr_dtmvtolt in date) is
-        select 1 
-        from   craplem
-        where  cdcooper = pr_cdcooper
-        and    nrdconta = pr_nrdconta
-        and    nrctremp = pr_nrctremp
-        and    dtmvtolt >= trunc(pr_dtmvtolt,'MM')
-        and    cdhistor not in (349, 1036,1037,2401,2411,2381,2397, 2410,2404,2406,2409, 2403); /* Transferencia para prejuizo */
- 
-        vr_existePg  integer;
+  -- verifica pagamentos
+  CURSOR cr_craplem(pr_dtmvtolt in date) is
+    SELECT 1 
+      FROM craplem
+    WHERE cdcooper = pr_cdcooper
+      AND nrdconta = pr_nrdconta
+      AND nrctremp = pr_nrctremp
+      AND dtmvtolt >= trunc(pr_dtmvtolt,'MM')
+      AND cdhistor not in (349, 1036,1037,2401,2411,2381,2397, 2410,2404,2406,2409, 2403); /* Transferencia para prejuizo */
+  --
+  CURSOR cr_craplem2(pr_dtmvtolt in date) IS
+    SELECT * 
+      FROM craplem
+     WHERE craplem.cdcooper = pr_cdcooper
+       AND craplem.nrdconta = pr_nrdconta
+       AND craplem.nrctremp = pr_nrctremp
+       AND craplem.dtmvtolt = pr_dtmvtolt
+       AND craplem.cdbccxlt = 200;
   
-       cursor cr_craplem2(pr_dtmvtolt in date) is
-           select * 
-           from   craplem
-           where  craplem.cdcooper = pr_cdcooper
-           and    craplem.nrdconta = pr_nrdconta
-           and    craplem.nrctremp = pr_nrctremp
-           and    craplem.dtmvtolt = pr_dtmvtolt
-           and    craplem.cdbccxlt = 200;
-       
-       rw_craplem cr_craplem2%rowtype;
-    --
-    -- Validar se existe Juros +60 para estornoar
-    CURSOR cr_lanc_lem (prc_cdcooper craplem.cdcooper%TYPE
-                       ,prc_nrdconta craplem.nrdconta%TYPE
-                       ,prc_nrctremp craplem.nrctremp%TYPE) IS                  
-      SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2402) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2404) THEN c.vllanmto ELSE 0 END)),0) sum_jr60_2402,
-             NVL((SUM(CASE WHEN c.cdhistor IN (2406) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2407) THEN c.vllanmto ELSE 0 END)),0) sum_jr60_2406,
-             NVL((SUM(CASE WHEN c.cdhistor IN (2409) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2422) THEN c.vllanmto ELSE 0 END)),0) sum_jratz_2409,
-             NVL((SUM(CASE WHEN c.cdhistor IN (2411) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2423) THEN c.vllanmto ELSE 0 END)),0) sum_jrmulta_2411,
-             NVL((SUM(CASE WHEN c.cdhistor IN (2415) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2416) THEN c.vllanmto ELSE 0 END)),0) sum_jrmora_2415                  
-        FROM craplem c
-       WHERE c.cdcooper = prc_cdcooper
-         AND c.nrdconta = prc_nrdconta
-         AND c.nrctremp = prc_nrctremp
-         AND c.cdhistor in (2402,2404,2406,2407,2409,2422,2411,2423,2415,2416); 
-    --
-    CURSOR cr_vlprincipal (prc_cdcooper craplem.cdcooper%TYPE
-                          ,prc_nrdconta craplem.nrdconta%TYPE
-                          ,prc_nrctremp craplem.nrctremp%TYPE) IS
+  rw_craplem cr_craplem2%rowtype;
+  --
+  -- Validar se existe Juros +60 para estornoar
+  CURSOR cr_lanc_lem (prc_cdcooper craplem.cdcooper%TYPE
+                     ,prc_nrdconta craplem.nrdconta%TYPE
+                     ,prc_nrctremp craplem.nrctremp%TYPE) IS                  
+    SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2402) THEN c.vllanmto ELSE 0 END) - 
+                SUM(CASE WHEN c.cdhistor IN (2404) THEN c.vllanmto ELSE 0 END)),0) sum_jr60_2402,
+           NVL((SUM(CASE WHEN c.cdhistor IN (2406) THEN c.vllanmto ELSE 0 END) - 
+                SUM(CASE WHEN c.cdhistor IN (2407) THEN c.vllanmto ELSE 0 END)),0) sum_jr60_2406,
+           NVL((SUM(CASE WHEN c.cdhistor IN (2409) THEN c.vllanmto ELSE 0 END) - 
+                SUM(CASE WHEN c.cdhistor IN (2422) THEN c.vllanmto ELSE 0 END)),0) sum_jratz_2409,
+           NVL((SUM(CASE WHEN c.cdhistor IN (2411) THEN c.vllanmto ELSE 0 END) - 
+                SUM(CASE WHEN c.cdhistor IN (2423) THEN c.vllanmto ELSE 0 END)),0) sum_jrmulta_2411,
+           NVL((SUM(CASE WHEN c.cdhistor IN (2415) THEN c.vllanmto ELSE 0 END) - 
+                SUM(CASE WHEN c.cdhistor IN (2416) THEN c.vllanmto ELSE 0 END)),0) sum_jrmora_2415                  
+      FROM craplem c
+     WHERE c.cdcooper = prc_cdcooper
+       AND c.nrdconta = prc_nrdconta
+       AND c.nrctremp = prc_nrctremp
+       AND c.cdhistor in (2402,2404,2406,2407,2409,2422,2411,2423,2415,2416); 
+  --
+  CURSOR cr_vlprincipal (prc_cdcooper craplem.cdcooper%TYPE
+                        ,prc_nrdconta craplem.nrdconta%TYPE
+                        ,prc_nrctremp craplem.nrctremp%TYPE) IS
                   
-      SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2401) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2403) THEN c.vllanmto ELSE 0 END)),0) sum_empr_2401 -- Emprestimo
+    SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2401,2405) THEN c.vllanmto ELSE 0 END) - 
+                SUM(CASE WHEN c.cdhistor IN (2403) THEN c.vllanmto ELSE 0 END)),0) sum_empr_2401 -- Emprestimo
 
-        FROM craplem c
-       WHERE c.cdcooper = prc_cdcooper
-         AND c.nrdconta = prc_nrdconta
-         AND c.nrctremp = prc_nrctremp
-         AND c.cdhistor in (2401,2403);
+      FROM craplem c
+     WHERE c.cdcooper = prc_cdcooper
+       AND c.nrdconta = prc_nrdconta
+       AND c.nrctremp = prc_nrctremp
+       AND c.cdhistor in (2401,2405,2403);
      --
-     CURSOR cr_crapepr (prc_cdcooper craplem.cdcooper%TYPE
-                          ,prc_nrdconta craplem.nrdconta%TYPE) IS
-       SELECT DISTINCT 1 existe
-         FROM crapepr epr
-        WHERE epr.cdcooper = prc_cdcooper
-          AND epr.nrdconta = prc_nrdconta 
-          AND epr.inprejuz = 1
-          AND epr.dtprejuz IS NOT NULL
-          AND epr.cdlcremp <> 100;       
+   CURSOR cr_crapepr (prc_cdcooper craplem.cdcooper%TYPE
+                        ,prc_nrdconta craplem.nrdconta%TYPE) IS
+     SELECT DISTINCT 1 existe
+       FROM crapepr epr
+      WHERE epr.cdcooper = prc_cdcooper
+        AND epr.nrdconta = prc_nrdconta 
+        AND epr.inprejuz = 1
+        AND epr.dtprejuz IS NOT NULL
+        AND epr.cdlcremp <> 100;       
 
-      vr_flgtrans        boolean;
-      vr_exc_erro        exception;
-      vr_auxvalor        number;
-      vr_dstransa        varchar2(200);
-      vr_nrdrowid        rowid;
-      vr_dtmvtolt        date;
-      vr_cdhistor1       integer;    
-      vr_vljuro60        NUMBER;
-      vr_vlprinci        NUMBER;   
-      vr_existe_prejuizo NUMBER(1);          
-      vr_cdhisatz  INTEGER;
-      vr_vljratuz  NUMBER;
-      vr_cdhismul  INTEGER;
-      vr_vljrmult  NUMBER;
-      vr_cdhismor  INTEGER;
-      vr_vljrmora  NUMBER;          
+  vr_flgtrans        BOOLEAN;
+  vr_exc_erro        EXCEPTION;
+  vr_auxvalor        NUMBER;
+  vr_dstransa        VARCHAR2(200);
+  vr_nrdrowid        ROWID;
+  vr_dtmvtolt        DATE;
+  vr_cdhistor1       integer;    
+  vr_vljuro60        NUMBER;
+  vr_vlprinci        NUMBER;   
+  vr_existe_prejuizo NUMBER(1);          
+  vr_cdhisatz        INTEGER;
+  vr_vljratuz        NUMBER;
+  vr_cdhismul        INTEGER;
+  vr_vljrmult        NUMBER;
+  vr_cdhismor        INTEGER;
+  vr_vljrmora        NUMBER;     
+  vr_existePg        INTEGER;     
 
-  BEGIN
-         vr_flgtrans := FALSE;
-         pr_des_reto := 'OK';
+BEGIN
+  vr_flgtrans := FALSE;
+  pr_des_reto := 'OK';
          
-         /* Busca data de movimento */
-         open  btch0001.cr_crapdat(pr_cdcooper);
-         fetch btch0001.cr_crapdat into rw_crapdat;
-         close btch0001.cr_crapdat;
+  /* Busca data de movimento */
+  open  btch0001.cr_crapdat(pr_cdcooper);
+  fetch btch0001.cr_crapdat into rw_crapdat;
+  close btch0001.cr_crapdat;
          
-         /* Busca informações do empréstimo */
-         OPEN C_CRAPEPR(pr_cdcooper
-                       ,pr_nrdconta
-                       ,pr_nrctremp);
-         FETCH C_CRAPEPR INTO R_crapepr;
+  /* Busca informações do empréstimo */
+  OPEN C_CRAPEPR(pr_cdcooper
+                ,pr_nrdconta
+                ,pr_nrctremp);
+  FETCH C_CRAPEPR INTO r_crapepr;
 
-         IF C_CRAPEPR%FOUND THEN
-           IF f_valida_pagamento_abono(pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_nrctremp => pr_nrctremp) THEN
+  IF C_CRAPEPR%FOUND THEN
+    IF f_valida_pagamento_abono(pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrctremp => pr_nrctremp) THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Não é possível fazer estorno da tranferência de prejuízo, existem pagamentos para a conta / contrato informado';
+
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => pr_tab_erro);
+
+      pr_des_reto := 'NOK';
+      raise vr_exc_erro;                     
+    END IF;           
+    IF R_crapepr.inprejuz = 0 THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Contrato não esta em prejuizo!';
+
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => pr_tab_erro);
+
+      pr_des_reto := 'NOK';
+      raise vr_exc_erro;
+    ELSE
+      /* Verificar se ocorreram pagamentos */
+      vr_dtmvtolt := R_crapepr.dtprejuz;                                                          
+                      
+      /* Busca Lançamentos Empréstimos (LEM) */
+      FOR rw_craplem in cr_craplem2(vr_dtmvtolt) LOOP
+        vr_auxvalor :=0;
+        IF r_crapepr.vlprejuz > 0 AND rw_craplem.cdhistor IN (349, 2401,2408,2411) THEN 
+          vr_auxvalor := r_crapepr.vlprejuz;
+        END IF;
+      END LOOP;
+      --                       
+      IF r_crapepr.dtprejuz = rw_crapdat.dtmvtolt THEN
+        /* Atualiza o lote */
+        IF vr_auxvalor > 0 THEN
+          BEGIN
+            UPDATE CRAPLOT 
+               SET craplot.nrseqdig = craplot.nrseqdig +  1
+                  ,craplot.qtcompln = craplot.qtcompln -1
+                  ,craplot.qtinfoln = craplot.qtinfoln -1
+                  ,craplot.vlcompcr = craplot.vlcompcr + (vr_auxvalor * -1)
+                  ,craplot.vlinfocr = craplot.vlinfocr + (vr_auxvalor * -1)
+             WHERE craplot.cdcooper = rw_craplem.cdcooper
+               AND craplot.cdagenci = rw_craplem.cdagenci
+               AND craplot.cdbccxlt = rw_craplem.cdbccxlt
+               AND craplot.nrdolote = rw_craplem.nrdolote
+               AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
+               AND craplot.tplotmov = 5;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar lote!' || SQLERRM;
+              pr_des_reto := 'NOK';
+              raise vr_exc_erro;
+          END;
+        END IF;                  
+        /* Excluir lançamentos da CRAPLEM */
+        BEGIN
+           DELETE FROM CRAPLEM
+            WHERE  craplem.cdcooper = pr_cdcooper
+              AND craplem.nrdconta  = pr_nrdconta
+              AND craplem.nrctremp  = pr_nrctremp
+              AND craplem.dtmvtolt  = rw_crapdat.dtmvtolt
+            --and    craplem.cdbccxlt = 200
+              AND craplem.cdhistor in (2401, 2402, 2411, 2415, 2405, 2406);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro na exclusão dos lançamentos!' || sqlerrm;
+            pr_des_reto := 'NOK';
+            RAISE vr_exc_erro;
+        END;
+      ELSE -- Então gerar histórico de estorno
+        --
+        OPEN c_craplcr(pr_cdcooper);
+        FETCH c_craplcr INTO r_craplcr;
+        
+        IF c_CRAPLCR%NOTFOUND THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Linha de Credito nao Cadastrada!';
+          pr_des_reto := 'NOK';
+          raise vr_exc_erro;
+        END IF;
+        CLOSE c_craplcr;
+               
+        -- Gerar Lançamento de estorno para valor Principal
+        FOR rw_vlprincipal IN cr_vlprincipal(pr_cdcooper,
+                                             pr_nrdconta,
+                                             pr_nrctremp) LOOP
+                          
+          IF rw_vlprincipal.sum_empr_2401 > 0 THEN
+            vr_cdhistor1 := 2403;
+            vr_vlprinci := rw_vlprincipal.sum_empr_2401;
+          END IF;
+          --
+          IF vr_vlprinci > 0 THEN
+            -- Realizar o lançamento do estorno para valor principal
+            empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_cdagenci => pr_cdagenci
+                                           ,pr_cdbccxlt => 100
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_cdpactra => pr_cdagenci
+                                           ,pr_tplotmov => 5
+                                           ,pr_nrdolote => 600029
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_cdhistor => vr_cdhistor1
+                                           ,pr_nrctremp => pr_nrctremp
+                                           ,pr_vllanmto => vr_vlprinci
+                                           ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                           ,pr_txjurepr => 0
+                                           ,pr_vlpreemp => 0
+                                           ,pr_nrsequni => 0
+                                           ,pr_nrparepr => 0
+                                           ,pr_flgincre => true
+                                           ,pr_flgcredi => false
+                                           ,pr_nrseqava => 0
+                                           ,pr_cdorigem => 7 -- batch
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+                                                                                   
+            IF vr_dscritic IS NOT NULL THEN
+              vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+              pr_des_reto := 'NOK';
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+        END LOOP;
+        --
+        -- Validar estorno Juros +60
+        -- Gerar Lançamento de estorno para valor Principal
+        FOR rw_lanc_lem IN cr_lanc_lem(pr_cdcooper,
+                                 pr_nrdconta,
+                                 pr_nrctremp) LOOP
+                          
+          IF rw_lanc_lem.sum_jr60_2402 > 0 THEN
+            vr_cdhistor1 := 2404;
+            vr_vljuro60 := rw_lanc_lem.sum_jr60_2402;
+          END IF;
+          --
+          IF rw_lanc_lem.sum_jr60_2406 > 0 THEN
+            vr_cdhistor1 := 2407;
+            vr_vljuro60 := rw_lanc_lem.sum_jr60_2406;
+          END IF;
+          --
+          IF rw_lanc_lem.sum_jratz_2409 > 0 THEN
+            vr_cdhisatz := 2422;
+            vr_vljratuz := rw_lanc_lem.sum_jratz_2409;
+          END IF;
+          --
+          IF rw_lanc_lem.sum_jrmulta_2411 > 0 THEN
+            vr_cdhismul := 2423;
+            vr_vljrmult := rw_lanc_lem.sum_jrmulta_2411;
+          END IF;
+          --
+          IF rw_lanc_lem.sum_jrmora_2415 > 0 THEN
+            vr_cdhismor := 2416;
+            vr_vljrmora := rw_lanc_lem.sum_jrmora_2415;              
+          END IF;         
+          --
+          IF vr_vljuro60 > 0 THEN
+            -- Realizar o lançamento do estorno para valor principal
+            empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_cdagenci => pr_cdagenci
+                                         ,pr_cdbccxlt => 100
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_cdpactra => pr_cdagenci
+                                         ,pr_tplotmov => 5
+                                         ,pr_nrdolote => 600029
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_cdhistor => vr_cdhistor1
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_vllanmto => vr_vljuro60
+                                         ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                         ,pr_txjurepr => 0
+                                         ,pr_vlpreemp => 0
+                                         ,pr_nrsequni => 0
+                                         ,pr_nrparepr => 0
+                                         ,pr_flgincre => true
+                                         ,pr_flgcredi => false
+                                         ,pr_nrseqava => 0
+                                         ,pr_cdorigem => 7 -- batch
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                                                                                   
+            IF vr_dscritic IS NOT NULL THEN
+              vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (Juros +60): ' || vr_dscritic;
+              pr_des_reto := 'NOK';
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+          -- Juros Atualizado
+          IF vr_vljratuz > 0 THEN
+            -- Realizar o lançamento do estorno para valor principal
+            empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_cdagenci => pr_cdagenci
+                                         ,pr_cdbccxlt => 100
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_cdpactra => pr_cdagenci
+                                         ,pr_tplotmov => 5
+                                         ,pr_nrdolote => 600029
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_cdhistor => vr_cdhisatz
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_vllanmto => vr_vljratuz
+                                         ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                         ,pr_txjurepr => 0
+                                         ,pr_vlpreemp => 0
+                                         ,pr_nrsequni => 0
+                                         ,pr_nrparepr => 0
+                                         ,pr_flgincre => true
+                                         ,pr_flgcredi => false
+                                         ,pr_nrseqava => 0
+                                         ,pr_cdorigem => 7 -- batch
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                                                                                   
+            IF vr_dscritic IS NOT NULL THEN
+              vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (Juros Atualizado): ' || vr_dscritic;
+              pr_des_reto := 'NOK';
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+          -- Multa
+          IF vr_vljrmult > 0 THEN
+            -- Realizar o lançamento do estorno para valor principal
+            empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_cdagenci => pr_cdagenci
+                                         ,pr_cdbccxlt => 100
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_cdpactra => pr_cdagenci
+                                         ,pr_tplotmov => 5
+                                         ,pr_nrdolote => 600029
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_cdhistor => vr_cdhismul
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_vllanmto => vr_vljrmult
+                                         ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                         ,pr_txjurepr => 0
+                                         ,pr_vlpreemp => 0
+                                         ,pr_nrsequni => 0
+                                         ,pr_nrparepr => 0
+                                         ,pr_flgincre => true
+                                         ,pr_flgcredi => false
+                                         ,pr_nrseqava => 0
+                                         ,pr_cdorigem => 7 -- batch
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (valor Multa): ' || vr_dscritic;
+              pr_des_reto := 'NOK';
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+          -- Juros Mora
+          IF vr_vljrmora > 0 THEN
+            -- Realizar o lançamento do estorno para valor principal
+            empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_cdagenci => pr_cdagenci
+                                         ,pr_cdbccxlt => 100
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_cdpactra => pr_cdagenci
+                                         ,pr_tplotmov => 5
+                                         ,pr_nrdolote => 600029
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_cdhistor => vr_cdhismor
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_vllanmto => vr_vljrmora
+                                         ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                         ,pr_txjurepr => 0
+                                         ,pr_vlpreemp => 0
+                                         ,pr_nrsequni => 0
+                                         ,pr_nrparepr => 0
+                                         ,pr_flgincre => true
+                                         ,pr_flgcredi => false
+                                         ,pr_nrseqava => 0
+                                         ,pr_cdorigem => 7 -- batch
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                                                                                   
+            IF vr_dscritic IS NOT NULL THEN
+              vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (Juros Mora): ' || vr_dscritic;
+              pr_des_reto := 'NOK';
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;            
+        END LOOP;
+        --
+        BEGIN
+          UPDATE crapcyb cyb
+             SET cyb.vlsdevan = r_crapepr.vlsdeved
+                ,cyb.vlsdeved = r_crapepr.vlsdeved
+                ,cyb.qtprepag = r_crapepr.qtprecal
+                ,cyb.txmensal = r_crapepr.txmensal
+                ,cyb.txdiaria = r_crapepr.txjuremp
+                ,cyb.dtprejuz = null
+                ,cyb.vlsdprej = 0
+                ,cyb.vlpreemp = r_crapepr.vlpreemp
+           WHERE cyb.cdcooper = pr_cdcooper
+             AND cyb.nrdconta = pr_nrdconta
+             AND cyb.nrctremp = pr_nrctremp;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Falha ao atualizar tabela CYBER! PP' || sqlerrm;
+            pr_des_reto := 'NOK';
+            RAISE vr_exc_erro;                    
+        END;                       
+      END IF; -- Fim Condição do dia
+              
+      /* Atualizar Emprestimo */
+      BEGIN
+         UPDATE CRAPEPR
+            SET 
+               -- crapepr.vlsdeved = crapepr.vlprejuz
+               -- ,crapepr.vlsdevat = crapepr.vlsdprej
+                crapepr.vlprejuz = 0
+               ,crapepr.vlsdprej = 0
+               ,crapepr.inprejuz = 0
+               ,crapepr.inliquid = 0
+               ,crapepr.dtprejuz = null
+               ,crapepr.vlttmupr = 0
+               ,crapepr.vlttjmpr = 0
+               ,crapepr.vlpgmupr = 0
+               ,crapepr.vlpgjmpr = 0
+          where crapepr.cdcooper = pr_cdcooper
+          and   crapepr.nrdconta = pr_nrdconta
+          and   crapepr.nrctremp = pr_nrctremp
+          and   crapepr.inprejuz = 1; 
+                         
+       EXCEPTION
+         when others then
              vr_cdcritic := 0;
-             vr_dscritic := 'Não é possível fazer estorno da tranferência de prejuízo, existem pagamentos para a conta / contrato informado';
-
-             gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                     ,pr_cdagenci => pr_cdagenci
-                     ,pr_nrdcaixa => pr_nrdcaixa
-                     ,pr_nrsequen => 1 --> Fixo
-                     ,pr_cdcritic => vr_cdcritic
-                     ,pr_dscritic => vr_dscritic
-                     ,pr_tab_erro => pr_tab_erro);
-
+             vr_dscritic := 'Erro ao atualizar emprestimo!' || sqlerrm;
              pr_des_reto := 'NOK';
-             raise vr_exc_erro;                     
-           
-           END IF;           
-             IF R_crapepr.inprejuz = 0 THEN
-                 vr_cdcritic := 0;
-                 vr_dscritic := 'Contrato não esta em prejuizo!';
+             raise vr_exc_erro;
+       END;
+                       
+       vr_dstransa := 'Data: ' || to_char( pr_dtmvtolt,'DD/MM/YYYY') ||
+                      ' - Estorno de transferencia para prejuizo TR - ' ||
+                      ', Conta:  ' || pr_nrdconta || 
+                      ', Contrato: ' || pr_nrctremp;
+       
+       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => pr_cdoperad
+                           ,pr_dscritic => null
+                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dstransa => vr_dstransa
+                           ,pr_dttransa => pr_dtmvtolt
+                           ,pr_flgtrans => 1
+                           ,pr_hrtransa => to_number(to_char(sysdate,'HH24MISS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'CRPS780'
+                           ,pr_nrdconta => PR_NRDCONTA
+                           ,pr_nrdrowid => VR_NRDROWID);
+       vr_flgtrans := TRUE;
 
-                 gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+    END IF;
+  
+    vr_existe_prejuizo := 0 ;
+    FOR rw_crapepr IN cr_crapepr(pr_cdcooper,
+                                 pr_nrdconta) LOOP
+      vr_existe_prejuizo := 1;
+    END LOOP;
+    --
+    IF vr_existe_prejuizo = 0 THEN
+      rw_crapdat.dtmvtolt := R_crapepr.dtprejuz;
+               
+      pc_reabrir_conta_corrente(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_cdorigem => 3
+                               ,pr_dtprejuz => rw_crapdat.dtmvtolt
+                               ,pr_dscritic => vr_dscritic);
+                                        
+      IF vr_dscritic IS NOT NULL AND vr_dscritic <> 'OK' THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao desbloquear conta corrente. ' || sqlerrm;
+
+          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => pr_tab_erro);
+
+          pr_des_reto := 'NOK';
+       END IF;                    
+    END IF;
+  ELSE
+    vr_cdcritic := 0;
+    vr_dscritic := 'Erro ao estornar prejuizo emprestimo TR: ' || sqlerrm;
+
+    gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                          ,pr_cdagenci => pr_cdagenci
                          ,pr_nrdcaixa => pr_nrdcaixa
                          ,pr_nrsequen => 1 --> Fixo
@@ -4337,396 +4738,16 @@ end pc_gera_prejuizo_cc;*/
                          ,pr_dscritic => vr_dscritic
                          ,pr_tab_erro => pr_tab_erro);
 
-                  pr_des_reto := 'NOK';
-                  raise vr_exc_erro;
-             ELSE
-                 /* Verificar se ocorreram pagamentos */
-                 vr_dtmvtolt := R_crapepr.dtprejuz;                                                          
-                
-                /* Busca Lançamentos Empréstimos (LEM) */
-                for rw_craplem in cr_craplem2(vr_dtmvtolt) loop
-                    vr_auxvalor :=0;
-                    
-                    if  r_crapepr.vlprejuz > 0 
-                    and rw_craplem.cdhistor in (349, 2401,2408,2411) then
-                         vr_auxvalor := r_crapepr.vlprejuz;
-                    end if;
-                       
-                end loop;
-                
-                if r_crapepr.dtprejuz = rw_crapdat.dtmvtolt then
-                         /* Atualiza o lote */
-                        if vr_auxvalor > 0 then
-                           begin
-                             UPDATE CRAPLOT 
-                             SET   craplot.nrseqdig = craplot.nrseqdig +  1
-                                  ,craplot.qtcompln = craplot.qtcompln -1
-                                  ,craplot.qtinfoln = craplot.qtinfoln -1
-                                  ,craplot.vlcompcr = craplot.vlcompcr + (vr_auxvalor * -1)
-                                  ,craplot.vlinfocr = craplot.vlinfocr + (vr_auxvalor * -1)
-                             where craplot.cdcooper = rw_craplem.cdcooper
-                             and   craplot.cdagenci = rw_craplem.cdagenci
-                             and   craplot.cdbccxlt = rw_craplem.cdbccxlt
-                             and   craplot.nrdolote = rw_craplem.nrdolote
-                             and   craplot.dtmvtolt = rw_crapdat.dtmvtolt
-                             and   craplot.tplotmov = 5;
-                           exception
-                             when others then
-                                   vr_cdcritic := 0;
-                                   vr_dscritic := 'Erro ao atualizar lote!' || sqlerrm;
-                                   pr_des_reto := 'NOK';
-                                   raise vr_exc_erro;
-                           end;
-                               
-                        end if;                  
-                    /* Excluir lançamentos da CRAPLEM */
-                    BEGIN
-                       DELETE FROM CRAPLEM
-                       where  craplem.cdcooper = pr_cdcooper
-                       and    craplem.nrdconta = pr_nrdconta
-                       and    craplem.nrctremp = pr_nrctremp
-                       and    craplem.dtmvtolt = rw_crapdat.dtmvtolt
-                       --and    craplem.cdbccxlt = 200
-                       and    craplem.cdhistor in (2401, 2402, 2411, 2415, 2405, 2406);
-                       
-                    EXCEPTION
-                      when others then
-                           vr_cdcritic := 0;
-                           vr_dscritic := 'Erro na exclusão dos lançamentos!' || sqlerrm;
-                           pr_des_reto := 'NOK';
-                           raise vr_exc_erro;
-                    END;
-                    
-                    /* Excluir lançamentos da CRAPLCM */
-                    /*BEGIN
-                       DELETE FROM CRAPLCM
-                       where  craplcm.cdcooper = pr_cdcooper
-                       and    craplcm.nrdconta = pr_nrdconta
-                       and    craplcm.cdhistor = 2408
-                       and    craplcm.dtmvtolt = rw_crapdat.dtmvtolt
-                       and    craplcm.cdbccxlt = 100;
-                       
-                    EXCEPTION
-                      when others then
-                           vr_cdcritic := 0;
-                           vr_dscritic := 'Erro na exclusão dos lançamentos!' || sqlerrm;
-                           pr_des_reto := 'NOK';
-                           raise vr_exc_erro;
-                    END;*/
-                else
-                   open c_craplcr(pr_cdcooper);
-                   fetch c_craplcr into r_craplcr;
+    pr_des_reto := 'NOK';
+  END IF;
+  
+  CLOSE c_crapepr;
 
-                   IF c_CRAPLCR%NOTFOUND THEN
-                      vr_cdcritic := 0;
-                      vr_dscritic := 'Linha de Credito nao Cadastrada!';
-                      pr_des_reto := 'NOK';
-                      raise vr_exc_erro;
-                   END IF;
+  IF NOT vr_flgtrans THEN
+    vr_cdcritic := 0;
+    vr_dscritic := 'Erro ao estornar Prejuizo.';
 
-                   close c_craplcr;
-                  
-                 
-          -- Gerar Lançamento de estorno para valor Principal
-          FOR rw_vlprincipal IN cr_vlprincipal(pr_cdcooper,
-                                               pr_nrdconta,
-                                               pr_nrctremp) LOOP
-            
-            IF rw_vlprincipal.sum_empr_2401 > 0 THEN
-              vr_cdhistor1 := 2403;
-              vr_vlprinci := rw_vlprincipal.sum_empr_2401;
-            END IF;
-            --
-            IF vr_vlprinci > 0 THEN
-              -- Realizar o lançamento do estorno para valor principal
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_cdagenci => pr_cdagenci
-                                             ,pr_cdbccxlt => 100
-                                             ,pr_cdoperad => pr_cdoperad
-                                             ,pr_cdpactra => pr_cdagenci
-                                             ,pr_tplotmov => 5
-                                             ,pr_nrdolote => 600029
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_cdhistor => vr_cdhistor1
-                                             ,pr_nrctremp => pr_nrctremp
-                                             ,pr_vllanmto => vr_vlprinci
-                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                             ,pr_txjurepr => 0
-                                             ,pr_vlpreemp => 0
-                                             ,pr_nrsequni => 0
-                                             ,pr_nrparepr => 0
-                                             ,pr_flgincre => true
-                                             ,pr_flgcredi => false
-                                             ,pr_nrseqava => 0
-                                             ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
-                                                                 
-              IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-          END LOOP;
-          --
-          -- Validar estorno Juros +60
-          -- Gerar Lançamento de estorno para valor Principal
-          FOR rw_lanc_lem IN cr_lanc_lem(pr_cdcooper,
-                                         pr_nrdconta,
-                                         pr_nrctremp) LOOP
-            
-            IF rw_lanc_lem.sum_jr60_2402 > 0 THEN
-              vr_cdhistor1 := 2404;
-              vr_vljuro60 := rw_lanc_lem.sum_jr60_2402;
-            END IF;
-            --
-            IF rw_lanc_lem.sum_jr60_2406 > 0 THEN
-              vr_cdhistor1 := 2407;
-              vr_vljuro60 := rw_lanc_lem.sum_jr60_2406;
-            END IF;
-            --
-            IF rw_lanc_lem.sum_jratz_2409 > 0 THEN
-              vr_cdhisatz := 2422;
-              vr_vljratuz := rw_lanc_lem.sum_jratz_2409;
-            END IF;
-            --
-            IF rw_lanc_lem.sum_jrmulta_2411 > 0 THEN
-              vr_cdhismul := 2423;
-              vr_vljrmult := rw_lanc_lem.sum_jrmulta_2411;
-            END IF;
-            --
-            IF rw_lanc_lem.sum_jrmora_2415 > 0 THEN
-              vr_cdhismor := 2416;
-              vr_vljrmora := rw_lanc_lem.sum_jrmora_2415;              
-            END IF;         
-            --
-            IF vr_vljuro60 > 0 THEN
-              -- Realizar o lançamento do estorno para valor principal
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_cdagenci => pr_cdagenci
-                                             ,pr_cdbccxlt => 100
-                                             ,pr_cdoperad => pr_cdoperad
-                                             ,pr_cdpactra => pr_cdagenci
-                                             ,pr_tplotmov => 5
-                                             ,pr_nrdolote => 600029
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_cdhistor => vr_cdhistor1
-                                             ,pr_nrctremp => pr_nrctremp
-                                             ,pr_vllanmto => vr_vljuro60
-                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                             ,pr_txjurepr => 0
-                                             ,pr_vlpreemp => 0
-                                             ,pr_nrsequni => 0
-                                             ,pr_nrparepr => 0
-                                             ,pr_flgincre => true
-                                             ,pr_flgcredi => false
-                                             ,pr_nrseqava => 0
-                                             ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
-                                                                 
-              IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (Juros +60): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-            -- Juros Atualizado
-            IF vr_vljratuz > 0 THEN
-              -- Realizar o lançamento do estorno para valor principal
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_cdagenci => pr_cdagenci
-                                             ,pr_cdbccxlt => 100
-                                             ,pr_cdoperad => pr_cdoperad
-                                             ,pr_cdpactra => pr_cdagenci
-                                             ,pr_tplotmov => 5
-                                             ,pr_nrdolote => 600029
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_cdhistor => vr_cdhisatz
-                                             ,pr_nrctremp => pr_nrctremp
-                                             ,pr_vllanmto => vr_vljratuz
-                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                             ,pr_txjurepr => 0
-                                             ,pr_vlpreemp => 0
-                                             ,pr_nrsequni => 0
-                                             ,pr_nrparepr => 0
-                                             ,pr_flgincre => true
-                                             ,pr_flgcredi => false
-                                             ,pr_nrseqava => 0
-                                             ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
-                                                                 
-              IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (Juros Atualizado): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-            -- Multa
-            IF vr_vljrmult > 0 THEN
-              -- Realizar o lançamento do estorno para valor principal
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_cdagenci => pr_cdagenci
-                                             ,pr_cdbccxlt => 100
-                                             ,pr_cdoperad => pr_cdoperad
-                                             ,pr_cdpactra => pr_cdagenci
-                                             ,pr_tplotmov => 5
-                                             ,pr_nrdolote => 600029
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_cdhistor => vr_cdhismul
-                                             ,pr_nrctremp => pr_nrctremp
-                                             ,pr_vllanmto => vr_vljrmult
-                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                             ,pr_txjurepr => 0
-                                             ,pr_vlpreemp => 0
-                                             ,pr_nrsequni => 0
-                                             ,pr_nrparepr => 0
-                                             ,pr_flgincre => true
-                                             ,pr_flgcredi => false
-                                             ,pr_nrseqava => 0
-                                             ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
-                                                                 
-              IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (valor Multa): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-            -- Juros Mora
-            IF vr_vljrmora > 0 THEN
-              -- Realizar o lançamento do estorno para valor principal
-              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_cdagenci => pr_cdagenci
-                                             ,pr_cdbccxlt => 100
-                                             ,pr_cdoperad => pr_cdoperad
-                                             ,pr_cdpactra => pr_cdagenci
-                                             ,pr_tplotmov => 5
-                                             ,pr_nrdolote => 600029
-                                             ,pr_nrdconta => pr_nrdconta
-                                             ,pr_cdhistor => vr_cdhismor
-                                             ,pr_nrctremp => pr_nrctremp
-                                             ,pr_vllanmto => vr_vljrmora
-                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                             ,pr_txjurepr => 0
-                                             ,pr_vlpreemp => 0
-                                             ,pr_nrsequni => 0
-                                             ,pr_nrparepr => 0
-                                             ,pr_flgincre => true
-                                             ,pr_flgcredi => false
-                                             ,pr_nrseqava => 0
-                                             ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
-                                                                 
-              IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM TR (Juros Mora): ' || vr_dscritic;
-                pr_des_reto := 'NOK';
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;            
-          END LOOP;
-                --
-                BEGIN
-                  UPDATE crapcyb cyb
-                     SET cyb.vlsdevan = r_crapepr.vlsdeved
-                        ,cyb.vlsdeved = r_crapepr.vlsdeved
-                        ,cyb.qtprepag = r_crapepr.qtprecal
-                        ,cyb.txmensal = r_crapepr.txmensal
-                        ,cyb.txdiaria = r_crapepr.txjuremp
-                        ,cyb.dtprejuz = null
-                        ,cyb.vlsdprej = 0
-                        ,cyb.vlpreemp = r_crapepr.vlpreemp
-                   WHERE cyb.cdcooper = pr_cdcooper
-                     AND cyb.nrdconta = pr_nrdconta
-                     AND cyb.nrctremp = pr_nrctremp;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_cdcritic := 0;
-                    vr_dscritic := 'Falha ao atualizar tabela CYBER! PP' || sqlerrm;
-                    pr_des_reto := 'NOK';
-                    RAISE vr_exc_erro;                    
-                END;                       
-                end if;
-                
-                              
-                /* Atualizar Emprestimo */
-                BEGIN
-                   UPDATE CRAPEPR
-                      SET crapepr.vlsdeved = crapepr.vlprejuz
-                        , crapepr.vlsdevat = crapepr.vlsdprej
-                        ,crapepr.vlprejuz = 0
-                        ,crapepr.vlsdprej = 0
-                        ,crapepr.inprejuz = 0
-                        ,crapepr.inliquid = 0
-                        ,crapepr.dtprejuz = null
-                        ,crapepr.vlttmupr = 0
-                        ,crapepr.vlttjmpr = 0
-                        ,crapepr.vlpgmupr = 0
-                        ,crapepr.vlpgjmpr = 0
-                    where crapepr.cdcooper = pr_cdcooper
-                    and   crapepr.nrdconta = pr_nrdconta
-                    and   crapepr.nrctremp = pr_nrctremp
-                    and   crapepr.inprejuz = 1; 
-                   
-                 EXCEPTION
-                   when others then
-                       vr_cdcritic := 0;
-                       vr_dscritic := 'Erro ao atualizar emprestimo!' || sqlerrm;
-                       pr_des_reto := 'NOK';
-                       raise vr_exc_erro;
-                 END;
-                 
-                 vr_dstransa := 'Data: ' || to_char( pr_dtmvtolt,'DD/MM/YYYY') ||
-                                ' - Estorno de transferencia para prejuizo TR - ' ||
-                                ', Conta:  ' || pr_nrdconta || 
-                                ', Contrato: ' || pr_nrctremp;
- 
-                  gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                                      ,pr_cdoperad => pr_cdoperad
-                                      ,pr_dscritic => null
-                                      ,pr_dsorigem => 'AYLLOS'
-                                      ,pr_dstransa => vr_dstransa
-                                      ,pr_dttransa => pr_dtmvtolt
-                                      ,pr_flgtrans => 1
-                                      ,pr_hrtransa => to_number(to_char(sysdate,'HH24MISS'))
-                                      ,pr_idseqttl => 1
-                                      ,pr_nmdatela => 'CRPS780'
-                                      ,pr_nrdconta => PR_NRDCONTA
-                                      ,pr_nrdrowid => VR_NRDROWID);
-
-                  vr_flgtrans := TRUE;
-
-             END IF;
-             vr_existe_prejuizo := 0 ;
-             FOR rw_crapepr IN cr_crapepr(pr_cdcooper,
-                                          pr_nrdconta) LOOP
-               vr_existe_prejuizo := 1;
-             END LOOP;
-             --
-             IF vr_existe_prejuizo = 0 THEN
-               rw_crapdat.dtmvtolt := R_crapepr.dtprejuz;
-             
-               pc_reabrir_conta_corrente(pr_cdcooper => pr_cdcooper
-                                        ,pr_nrdconta => pr_nrdconta
-                                        ,pr_cdorigem => 3
-                                        ,pr_dtprejuz => rw_crapdat.dtmvtolt
-                                        ,pr_dscritic => vr_dscritic);
-                                      
-               if  vr_dscritic is not null 
-               and vr_dscritic <> 'OK' then
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao desbloquear conta corrente. ' || sqlerrm;
-
-                  gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+    gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                    ,pr_cdagenci => pr_cdagenci
                                    ,pr_nrdcaixa => pr_nrdcaixa
                                    ,pr_nrsequen => 1 --> Fixo
@@ -4734,66 +4755,33 @@ end pc_gera_prejuizo_cc;*/
                                    ,pr_dscritic => vr_dscritic
                                    ,pr_tab_erro => pr_tab_erro);
 
-                  pr_des_reto := 'NOK';
-               end if;                    
-             END IF;
-         ELSE
-             vr_cdcritic := 0;
-             vr_dscritic := 'Erro ao estornar prejuizo emprestimo TR: ' || sqlerrm;
+    pr_des_reto := 'NOK';
 
-             gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => 1 --> Fixo
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic
-                                 ,pr_tab_erro => pr_tab_erro);
-
-             pr_des_reto := 'NOK';
-         END IF;
-
-         close c_crapepr;
-
-      IF NOT vr_flgtrans THEN
-         vr_cdcritic := 0;
-         vr_dscritic := 'Erro ao estornar Prejuizo.';
-
-         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                         ,pr_cdagenci => pr_cdagenci
-                                         ,pr_nrdcaixa => pr_nrdcaixa
-                                         ,pr_nrsequen => 1 --> Fixo
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic
-                                         ,pr_tab_erro => pr_tab_erro);
-
-         pr_des_reto := 'NOK';
-
-      END IF;
-
-    EXCEPTION
-       WHEN vr_exc_erro THEN
-           -- Desfazer alterações
-           ROLLBACK;
-           if vr_dscritic is null then
-              vr_dscritic := 'Erro na rotina pc_estorno_trf_prejuizo_TR: '; 
-           end if;
+  END IF;
+EXCEPTION
+   WHEN vr_exc_erro THEN
+       -- Desfazer alterações
+       ROLLBACK;
+       if vr_dscritic is null then
+          vr_dscritic := 'Erro na rotina pc_estorno_trf_prejuizo_TR: '; 
+       end if;
            
-           -- Retorno não OK
-           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                               ,pr_cdoperad => pr_cdoperad
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_dsorigem => 'INTRANET'
-                               ,pr_dstransa => 'PREJ0001-Estorno transferencia.'
-                               ,pr_dttransa => TRUNC(SYSDATE)
-                               ,pr_flgtrans => 0 --> ERRO/FALSE
-                               ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                               ,pr_idseqttl => 1
-                               ,pr_nmdatela => 'crps780'
-                               ,pr_nrdconta => pr_nrdconta
-                               ,pr_nrdrowid => vr_nrdrowid);
-          -- Commit do LOG
-          COMMIT;
-    END pc_estorno_trf_prejuizo_TR;
+       -- Retorno não OK
+       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => pr_cdoperad
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_dsorigem => 'INTRANET'
+                           ,pr_dstransa => 'PREJ0001-Estorno transferencia.'
+                           ,pr_dttransa => TRUNC(SYSDATE)
+                           ,pr_flgtrans => 0 --> ERRO/FALSE
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'crps780'
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrdrowid => vr_nrdrowid);
+      -- Commit do LOG
+      COMMIT;
+END pc_estorno_trf_prejuizo_TR;
 
 -- Rotina comentada devido a requisito da SM 6 melhria 324    
   /* Rotina para estornar transferencia prejuizo CC */

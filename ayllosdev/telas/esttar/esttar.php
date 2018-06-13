@@ -8,9 +8,7 @@
  * ALTERAÇÕES   : 
  * --------------
  */
-?>
 
-<? 
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');	
@@ -67,7 +65,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('ESTTAR - Estorno/Baixa de Tarifas') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('ESTTAR - Estorno/Baixa/Suspens&atilde;o de Tarifas') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>

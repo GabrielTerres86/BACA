@@ -21,6 +21,9 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --
 --              20/02/2018 - Removido tabela "craptip" do cursor "cr_crapass" na procedure
 --                           pc_integraliza_cotas. PRJ366 (Lombardi).
+--
+--              23/05/2018 - Verificacao de valor minimo de capital quando for a primeira
+--                           integralizacao na proc pc_integraliza_cotas. PRJ366 (Lombardi).
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -439,6 +442,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
        AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
     
+    CURSOR cr_craplct(pr_cdcooper      IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
+    SELECT 1
+      FROM craplct 
+     WHERE craplct.cdcooper = pr_cdcooper
+       AND craplct.nrdconta = pr_nrdconta;
+    rw_craplct cr_craplct%ROWTYPE;
+    
     -- Erros do processo
 
     -- variáveis para consulta de valores
@@ -534,6 +545,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       
       CLOSE cr_crapass;    
 
+      OPEN cr_craplct (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_craplct INTO rw_craplct;
+      
+      IF cr_craplct%FOUND THEN
       CADA0003.pc_busca_valor_minimo_capital(pr_cdcooper  => pr_cdcooper
                                             ,pr_cdagenci  => pr_cdagenci
                                             ,pr_nrdcaixa  => pr_nrdcaixa
@@ -564,6 +580,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           
         --Levantar Excecao
         RAISE vr_exc_erro;
+              
+          END IF;
+        ELSE
+          CADA0006.pc_valor_min_capital(pr_cdcooper         => pr_cdcooper
+                                       ,pr_inpessoa         => rw_crapass.inpessoa
+                                       ,pr_cdtipo_conta     => rw_crapass.cdtipcta
+                                       ,pr_vlminimo_capital => vr_vlminimo
+                                       ,pr_des_erro         => vr_des_reto
+                                       ,pr_dscritic         => vr_dscritic);
+          --Se Ocorreu erro
+          IF vr_des_reto = 'NOK' THEN
+            pr_dscritic := vr_dscritic;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;    
           
       END IF;
       

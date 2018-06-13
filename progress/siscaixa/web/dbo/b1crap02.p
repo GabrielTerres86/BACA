@@ -90,6 +90,12 @@
                15/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
                             PRJ366 (Lombardi)
              
+               17/04/2018 -  Verifica lançamentos/saldo para computar os lançamentos
+                             efetuados no último dia, para que esse saldo esteja 
+                             atualizado para efetivar ou negar a operaçao, utilizado
+							               na abertura do caixa online mesmo quando o processo 
+							               batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
+             
 ........................................................................... */
 
 /*---------------------------------------------------------------*/
@@ -193,6 +199,7 @@ PROCEDURE consulta-conta:
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
     DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
     DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
+    DEF VAR aux_dssitdct   AS CHAR                          NO-UNDO.
     DEF VAR aux_des_erro   AS CHAR                          NO-UNDO.
     DEF VAR aux_dscritic   AS CHAR                          NO-UNDO.
 
@@ -227,11 +234,12 @@ PROCEDURE consulta-conta:
     ASSIGN tt-conta.nome-tit     = crapass.nmprimtl
            tt-conta.magnetico    = 0.
 
+    /*cartao magnético (dtvalcar - validade)*/
     FOR EACH crapcrm WHERE crapcrm.cdcooper = crapcop.cdcooper  AND
                            crapcrm.nrdconta = crapass.nrdconta  NO-LOCK:
                            
         IF  crapcrm.cdsitcar = 2                   AND
-            crapcrm.dtvalcar >= crapdat.dtmvtolt   THEN
+            crapcrm.dtvalcar >= crapdat.dtmvtocd   THEN
             tt-conta.magnetico = tt-conta.magnetico + 1.
     END.
     
@@ -349,24 +357,30 @@ PROCEDURE consulta-conta:
     ELSE
         ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9").
 
-    ASSIGN tt-conta.situacao = STRING(crapass.cdsitdct,"9") + " " +
-                               IF crapass.cdsitdct = 1 THEN
-                                  "NORMAL"
-                               ELSE IF crapass.cdsitdct = 2 THEN
-                                       "ENCERRADA P/ASSOCIADO"
-                                    ELSE IF crapass.cdsitdct = 3 THEN
-                                            "ENCERRADA P/COOP"
-                                         ELSE IF crapass.cdsitdct = 4 THEN
-                                                 "ENCERRADA P/DEMISSAO"
-                                              ELSE IF crapass.cdsitdct = 5 THEN
-                                                      "NAO APROVADA"
-                                                   ELSE 
-                                                   IF crapass.cdsitdct = 6 THEN                                                       "NORMAL - SEM TALAO"
-                                                   ELSE
-                                                      IF crapass.cdsitdct = 9
-                                                         THEN 
-                                                      "ENCERRADA P/OUTRO MOTIVO"
-                                                      ELSE "".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",               /* pr_dssituacao */
+                                        OUTPUT "",               /* pr_des_erro   */
+                                        OUTPUT "").              /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dssitdct = ""
+           aux_des_erro = ""
+           aux_dssitdct = UPPER(pc_descricao_situacao_conta.pr_dssituacao)
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?.
+    
+    IF aux_des_erro = "NOK" THEN 
+        ASSIGN aux_dssitdct = "".
+    
+    ASSIGN tt-conta.situacao = aux_dssitdct.
 
     ASSIGN tt-conta.estouros = 0.
 
@@ -482,20 +496,20 @@ PROCEDURE consulta-conta:
            tab_dtfimpmf = DATE(INT(SUBSTRING(craptab.dstextab,15,2)),
                                INT(SUBSTRING(craptab.dstextab,12,2)),
                                INT(SUBSTRING(craptab.dstextab,18,4)))
-           tab_txcpmfcc = IF  crapdat.dtmvtolt >= tab_dtinipmf  AND
-                              crapdat.dtmvtolt <= tab_dtfimpmf  THEN
+           tab_txcpmfcc = IF  crapdat.dtmvtocd >= tab_dtinipmf  AND
+                              crapdat.dtmvtocd <= tab_dtfimpmf  THEN
                               DECIMAL(SUBSTR(craptab.dstextab,23,13))
                           ELSE
                               0
-           tab_txrdcpmf = IF  crapdat.dtmvtolt >= tab_dtinipmf  AND
-                              crapdat.dtmvtolt <= tab_dtfimpmf  THEN
+           tab_txrdcpmf = IF  crapdat.dtmvtocd >= tab_dtinipmf  AND
+                              crapdat.dtmvtocd <= tab_dtfimpmf  THEN
                               DECIMAL(SUBSTR(craptab.dstextab,38,13))
                           ELSE 
                               1.
 
     FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND
                            craplcm.nrdconta  = crapsld.nrdconta     AND
-                           craplcm.dtmvtolt  = crapdat.dtmvtolt     AND
+                           craplcm.dtmvtolt  = crapdat.dtmvtocd     AND
                            craplcm.cdhistor <> 289                  
                            USE-INDEX craplcm2 NO-LOCK:
 
@@ -725,7 +739,7 @@ PROCEDURE impressao-saldo:
                                                      INPUT 0, 
                                                      INPUT 0, 
                                                      INPUT 2, /*2 - Aplicacao*/
-                                                     INPUT crapdat.dtmvtolt,
+                                                     INPUT crapdat.dtmvtocd,
                                                      OUTPUT aux_vlblqjud,
                                                      OUTPUT aux_vlresblq).
                    
@@ -737,7 +751,7 @@ PROCEDURE impressao-saldo:
                                                      INPUT 0, 
                                                      INPUT 0, 
                                                      INPUT 3, /*3- poup prog*/
-                                                     INPUT crapdat.dtmvtolt,
+                                                     INPUT crapdat.dtmvtocd,
                                                      OUTPUT aux_vlblqpop,
                                                      OUTPUT aux_vlrespop).
                    
@@ -770,7 +784,7 @@ PROCEDURE impressao-saldo:
                                                      INPUT 0, 
                                                      INPUT 0, 
                                                      INPUT 1, /*1- Dep. Vista*/
-                                                     INPUT crapdat.dtmvtolt,
+                                                     INPUT crapdat.dtmvtocd,
                                                      OUTPUT aux_vlblqjud,
                                                      OUTPUT aux_vlresblq).
             
@@ -811,7 +825,7 @@ PROCEDURE impressao-saldo:
            c-literal[1]  = TRIM(crapcop.nmrescop) +  " - " + 
                            TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
+           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PAC " + 
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +
@@ -1167,7 +1181,7 @@ DEF VAR aux_nrdrowid AS ROWID.
                                  INPUT crapass.nrdconta, /* Número da Conta */
                                  INPUT 1,                /* Titular da Conta */
                                  INPUT 0,                /* Número da Aplicação / Parâmetro Opcional */
-                                 INPUT crapdat.dtmvtolt, /* Data de Movimento */
+                                 INPUT crapdat.dtmvtocd, /* Data de Movimento */
                                  INPUT 0,                /* Código do Produto */
                                  INPUT 1,            /* Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas) */
                                  INPUT 0,            /* Identificador de Log (0 – Não / 1 – Sim) */
@@ -1276,7 +1290,7 @@ PROCEDURE calcula_poupanca:
                rpp_vlsdrdpp = craprpp.vlsdrdpp
                rpp_dtcalcul = craprpp.dtiniper
                rpp_dtrefere = craprpp.dtfimper
-               rpp_dtmvtolt = crapdat.dtmvtolt + 1. /*Calculo ate dia do mvto*/
+               rpp_dtmvtolt = crapdat.dtmvtocd + 1. /*Calculo ate dia do mvto*/ 
 
         /*  Leitura dos lancamentos de resgate da aplicacao  */
 

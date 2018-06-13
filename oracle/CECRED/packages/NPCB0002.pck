@@ -1183,7 +1183,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para enviar titulo para CIP de forma online
-      Alteração : 
+      Alteração : 18/05/2018 - Devido a um problema com a transação na b1wnet0001.p
+                               e InternetBank4.p foi ajustado para o job iniciar 10 segundos
+                               após a inclusão do título. Para garantir que a transação tenha
+                               encerrado e o título esteja visível em outra sessão. (INC0013085-AJFink)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1223,7 +1226,7 @@ end;';
     gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper, 
                            pr_cdprogra => 'NPCB0002', 
                            pr_dsplsql  => vr_dsplsql, 
-                           pr_dthrexe  => NULL, 
+                           pr_dthrexe  => to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp)+(10/86400),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR'),
                            pr_interva  => NULL, 
                            pr_jobname  => vr_jobname, 
                            pr_des_erro => vr_dscritic );

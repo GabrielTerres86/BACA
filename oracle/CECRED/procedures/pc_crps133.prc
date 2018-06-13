@@ -97,7 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                28/05/2015 - Realizando a retirada dos tratamentos de restart, pois o programa
                             apresentou erros no processo batch. Os códigos foram comentados e 
                             podem ser removidos em futuras alterações do fonte. (Renato - Supero)
-                            
+
                31/10/2017 - #755898 Correção de sintaxe de uso de índice no cursor cr_craplcm (Carlos)
 
                05/03/2018 - Substituída verificacao do tipo de conta "NOT IN (5,6,7,17,18)" para a 
@@ -494,6 +494,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
   vr_exc_fimprg    exception;
   vr_cdcritic      crapcri.cdcritic%type;
   vr_dscritic      varchar2(4000);
+  vr_des_erro      VARCHAR2(100);
 
   -- Variável para armazenar o saldo médio
   vr_vlsldmed      crapsld.vlsmstre##1%type;
@@ -507,6 +508,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
   vr_dsrestar      crapres.dsrestar%type;
   vr_nrctares      crapres.nrdconta%type;
   vr_inrestar      number(1);
+  
+  -- Variáveis auxiliares
+  vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
+  
   --
   -- Procedimentos internos para manipulação das pl/tables
   --
@@ -1000,7 +1005,17 @@ begin
           vr_tab_emp(vr_indice_emp).vr_qtassoci := vr_tab_emp(vr_indice_emp).vr_qtassoci + 1;
         end if;
         if vr_tab_tipcta(rw_crapass.inpessoa)(rw_crapass.cdtipcta).cdmodali not in (2, 3) then
-          if rw_crapass.cdsitdct = 6 then
+          
+          CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => rw_crapass.nrdconta
+                                          ,pr_inimpede_talionario => vr_inimpede_talionario
+                                          ,pr_des_erro => vr_des_erro
+                                          ,pr_dscritic => vr_dscritic);
+          IF vr_des_erro = 'NOK' THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          if vr_inimpede_talionario = 1 then
             if rw_crapsld.vlsmstre >= vr_vlsldmed then
               vr_tab_pac(vr_indice_pac).vr_qtctacor := vr_tab_pac(vr_indice_pac).vr_qtctacor + 1;
               vr_tab_emp(vr_indice_emp).vr_qtctacor := vr_tab_emp(vr_indice_emp).vr_qtctacor + 1;

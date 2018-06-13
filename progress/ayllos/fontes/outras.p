@@ -24,6 +24,8 @@
              08/03/2018 - Substituida verificacao "cdtipcta <> 5" por codigo 
                           da modalidade <> 2. PRJ366 (Lombardi).
                           
+             02/05/2018 - Buscar dscricao da situacao do oracle. PRJ366 (Lombardi).
+                          
 ............................................................................. */
 
 { sistema/generico/includes/var_oracle.i }
@@ -44,6 +46,7 @@ DEF        VAR aux_regexist AS LOGICAL                               NO-UNDO.
 DEF        VAR aux_flgretor AS LOGICAL                               NO-UNDO.
 DEF        VAR aux_cddopcao AS CHAR                                  NO-UNDO.
 
+DEF        VAR aux_dssituac AS CHAR                                  NO-UNDO.
 DEF        VAR aux_cdmodali AS INT                                   NO-UNDO.
 DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
 DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
@@ -255,13 +258,38 @@ DO WHILE TRUE:
                 
                 IF aux_cdmodali <> 2 THEN 
                      DO:
-                         IF   crapass.cdsitdct = 1   THEN
-                              tel_dsoutsit = "NORMAL".
-                         ELSE
-                         IF   crapass.cdsitdct = 6   THEN
-                              tel_dsoutsit = "SEM TALAO".
-                         ELSE
-                              tel_dsoutsit = "ENCERRADA".
+                         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                         
+                         RUN STORED-PROCEDURE pc_descricao_situacao_conta
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                                             OUTPUT "",               /* pr_dssituacao */
+                                                             OUTPUT "",               /* pr_des_erro   */
+                                                             OUTPUT "").              /* pr_dscritic   */
+                         
+                         CLOSE STORED-PROC pc_descricao_situacao_conta
+                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                         
+                         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+                         
+                         ASSIGN aux_dssituac = ""
+                                aux_des_erro = ""
+                                aux_dscritic = ""
+                                aux_dssituac = pc_descricao_situacao_conta.pr_dssituacao 
+                                               WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+                                aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                                               WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+                                aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                                               WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
+                         
+                         IF aux_des_erro = "NOK"  THEN
+                             DO:
+                                ASSIGN glb_dscritic = aux_dscritic.
+                                NEXT-PROMPT tel_nrdconta WITH FRAME f_outras.
+                                NEXT.
+                             END.
+                         
+                         ASSIGN tel_dsoutsit = UPPER(aux_dssituac).
+                         
                      END.
                ELSE
                     tel_dsoutsit = "".

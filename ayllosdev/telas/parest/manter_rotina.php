@@ -34,6 +34,7 @@ $qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
 $qtmeschq = (isset($_POST['qtmeschq'])) ? $_POST['qtmeschq'] : 0;
 $qtmesest = (isset($_POST['qtmesest'])) ? $_POST['qtmesest'] : 0;
 $qtmesemp = (isset($_POST['qtmesemp'])) ? $_POST['qtmesemp'] : 0;
+$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : 0;
 
 $cdopcao  = '';
 
@@ -51,7 +52,7 @@ if ($anlautom == 1 && $cdopcao == 'A' && $tlcooper <> 0){
     exit();
   }
   
-  if ((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == ''){
+  if (((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == '')&& $tpproduto == 0){
     echo 'hideMsgAguardo();';
     echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
     exit();
@@ -101,6 +102,7 @@ if ( $cdopcao == 'C') {
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
+	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= "   <flgativo>1</flgativo>";
 	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= " </Dados>";
@@ -110,7 +112,8 @@ if ( $cdopcao == 'C') {
 	$xmlObj = getObjectXML($xmlResult);
 
 } else {
-	
+	//if($tpproduto == 4)
+		//$nmregmpj = "teste";
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
@@ -125,9 +128,11 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
 	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
+	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
+	
 	$xmlResult = mensageria($xml, "PAREST", "PAREST_ALTERA_PARAM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 	
@@ -150,7 +155,7 @@ if ( $cddopcao == 'C') {
 	include('tab_resultado.php');
 } else {
 	if ( $cddopcao == 'X') {
-		
+		if($tpproduto == 0){
 		foreach ($registros as $r) {
 			
 			if ( getByTagName($r->tags, 'contigen') == 'SIM' ) {
@@ -198,6 +203,23 @@ if ( $cddopcao == 'C') {
 		echo '$("#contigen", "#divAlteracao").focus();';
 		echo '$("#btContinuar", "#divBotoes").show();';
 		echo 'hideMsgAguardo();';
+		}else if($tpproduto == 4){
+			
+			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","nmregmpj","qtsstime","qtmeschq","qtmesest","qtmesemp");
+			foreach ($registros as $r) {
+				foreach($labels as $label){
+					echo '$("#'. $label.'", "#divAlteracao04").val("'.getByTagName($r->tags,  $label).'"); ';
+				}
+			}
+			
+			//echo " /* $xmlResult  */ ";
+			echo '$("#divBotoes").css({ "display": "block" });';
+			echo '$("#divAlteracao04").css({ "display": "block" });';
+			echo '$("#contigen", "#divAlteracao").focus();';
+			echo '$("#btContinuar", "#divBotoes").show();';
+			echo 'hideMsgAguardo();';
+
+		}
 	} else {
 		echo 'showError("inform","Par&acirc;metro Alterado com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	}

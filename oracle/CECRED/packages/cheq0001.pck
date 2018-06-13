@@ -219,6 +219,14 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 
   PROCEDURE pc_busca_ccf_transabbc;
 
+  PROCEDURE pc_solicita_talonario_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
+                                     ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml    IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo     OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro     OUT VARCHAR2);            --> Erros do processo
+
 END CHEQ0001;
 /
 CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
@@ -228,7 +236,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 01/04/2018
 
    Dados referentes ao programa:
   
@@ -259,6 +267,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                      
               24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
                            deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
+                     
+              01/04/2018 - Ajuste para utilizar cursor com union, para validar se já existe
+                            crapdev criada (Jonata - MOUTS SD 859822).                           
                      
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -326,7 +337,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 21/06/2017
+   Data    : Outubro/94.                     Ultima atualizacao: 01/04/2018
 
    Dados referentes ao programa:
 
@@ -410,6 +421,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             
                21/06/2017 - Remoção de 2 condições que tratam o envio de e-mail referente
                             a cheques VLB. PRJ367 - Compe Sessao Unica (Lombardi)
+                            
+               01/04/2018 - Ajuste para utilizar cursor com union, para validar se já existe
+                            crapdev criada (Jonata - MOUTS SD 859822).
 ............................................................................. */
     DECLARE
 
@@ -909,19 +923,29 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
        ELSIF pr_inchqdev = 2 OR  pr_inchqdev = 4  THEN
 
          --Selecionar devolucoes de cheques
-         OPEN cr_crapdev (pr_cdcooper => pr_cdcooper
+         OPEN cr_crapdev_union (pr_cdcooper => pr_cdcooper
                          ,pr_cdbanchq => vr_aux_cdbanchq
                          ,pr_cdagechq => pr_cdagechq
                          ,pr_nrctachq => pr_nrctachq
                          ,pr_nrcheque => pr_nrdocmto
-                         ,pr_cdhistor => 46);
+                               ,pr_cdhistor => pr_cdhistor);
          --Posicionar no proximo registro
-         FETCH cr_crapdev INTO rw_crapdev;
+         FETCH cr_crapdev_union INTO rw_crapdev_union;
          --Se encontrou
-         IF cr_crapdev%FOUND THEN
+         IF cr_crapdev_union%FOUND THEN
+           
+           --Fechar cursor
+           CLOSE cr_crapdev_union;
+         
            pr_cdcritic:= 415;
            --sair da rotina
            RAISE vr_exc_sair;
+         
+         ELSE
+           
+           --Fechar cursor
+           CLOSE cr_crapdev_union;
+         
          END IF;
 
          /* Se não for uma das alineas listadas insere devolução historico 46 */
@@ -976,9 +1000,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                RAISE vr_exc_erro;
            END;
          END IF; --IF NOT fn_existe_alinea(pr_cdalinea) THEN
-         --Fechar Cursor
-         CLOSE cr_crapdev;
-
 
        ELSIF pr_inchqdev = 3  THEN  /* Transferencia */
 
@@ -3370,7 +3391,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       --YYY -> Sequencial da remessa, sera sempre 001
       --Se INPROCES = 1 ja acabou o batch, posso utilizar dtmvtoan, senao devo utilizar dtmvtolt
       IF rw_crapdat.inproces = 1 THEN
-        vr_nmarquiv := 'CCF627' || to_char(rw_crapdat.dtmvtoan, 'DD') || '.001';
+      vr_nmarquiv := 'CCF627' || to_char(rw_crapdat.dtmvtoan, 'DD') || '.001';
       ELSE
         vr_nmarquiv := 'CCF627' || to_char(rw_crapdat.dtmvtolt, 'DD') || '.001';
       END IF;
@@ -3454,5 +3475,281 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         ROLLBACK;
     END;
   END pc_busca_ccf_transabbc;
+
+
+  PROCEDURE pc_solicita_talonario_web(pr_nrdconta      IN crapass.nrdconta%TYPE --> Numero da conta
+                                     ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml    IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo     OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro     OUT VARCHAR2) IS          --> Erros do processo
+    -- ..........................................................................
+    --
+    --  Programa : pc_solicita_talonario_web
+    --  Sistema  : Rotinas para cadastros Web
+    --  Sigla    : CHEQUE
+    --  Autor    : Lombardi
+    --  Data     : Maio/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para solicita talonario.
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    -- Cursores 
+        
+    -- Buscar conta
+    CURSOR cr_crapass(pr_cdcooper IN crapreq.cdcooper%TYPE
+                     ,pr_nrdconta IN crapreq.nrdconta%TYPE) IS
+      SELECT ass.cdtipcta
+        FROM crapass ass   
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    -- Buscar transferencias
+    CURSOR cr_crapreq(pr_cdcooper IN crapreq.cdcooper%TYPE
+                     ,pr_nrdconta IN crapreq.nrdconta%TYPE
+                     ,pr_cdagenci IN crapreq.cdagenci%TYPE
+                     ,pr_cdtipcta IN crapreq.cdtipcta%TYPE) IS
+      SELECT 1
+        FROM crapreq req
+       WHERE req.cdagenci = pr_cdagenci
+         AND req.cdcooper = pr_cdcooper
+         AND req.nrdconta = pr_nrdconta
+         AND req.cdtipcta = pr_cdtipcta 
+         AND req.insitreq IN (1,4,5); /* nao processadas */
+    rw_crapreq cr_crapreq%ROWTYPE;
+    
+    -- Busca capa do lote da requisição
+    CURSOR cr_craptrq(pr_cdcooper IN craptrq.cdcooper%TYPE
+                     ,pr_cdagelot IN craptrq.cdagelot%TYPE) IS
+      SELECT trq.nrseqdig
+            ,trq.qtinforq
+            ,trq.qtcomprq
+            ,trq.qtinfotl
+            ,trq.qtcomptl
+        FROM craptrq trq 
+       WHERE trq.cdcooper = pr_cdcooper
+         AND trq.cdagelot = pr_cdagelot
+         AND trq.tprequis = 1            
+         AND trq.nrdolote = 10000;
+    rw_craptrq cr_craptrq%ROWTYPE;
+    
+    -- Registro sobre a tabela de datas
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    -- Variáveis Auxiliares
+    vr_foundreg BOOLEAN;
+    vr_nrseqdig craptrq.nrseqdig%TYPE;
+    vr_qtinforq craptrq.qtinforq%TYPE;
+    vr_qtcomprq craptrq.qtcomprq%TYPE;
+    vr_qtinfotl craptrq.qtinfotl%TYPE;
+    vr_qtcomptl craptrq.qtcomptl%TYPE;
+    
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variaveis de erro
+    vr_exc_saida EXCEPTION;    --> Controle de erros de processo
+    vr_cdcritic  crapcri.cdcritic%TYPE;
+    vr_dscritic  crapcri.dscritic%TYPE;
+    
+  BEGIN
+    
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                              ,pr_action => null);
+      
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+      
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Verificar se conta permite adesão do produto
+    CADA0006.pc_valida_adesao_produto(pr_cdcooper => vr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_cdprodut => 38 -- FOLHAS DE CHEQUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    
+    -- Busca a data do sistema
+    OPEN btch0001.cr_crapdat(vr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+    
+    -- Busca conta
+    OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN
+      vr_cdcritic := 9;
+      RAISE vr_exc_saida;
+    END if;
+    CLOSE cr_crapass;
+    
+    -- Verifica se existe uma solicitação pendente
+    OPEN cr_crapreq(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_cdagenci => vr_cdagenci
+                   ,pr_cdtipcta => rw_crapass.cdtipcta);
+    FETCH cr_crapreq INTO rw_crapreq;
+    vr_foundreg := cr_crapreq%FOUND;
+    CLOSE cr_crapreq;
+    IF vr_foundreg THEN
+      vr_dscritic := 'Já existe uma solicitação de talonário pendente para a conta.';
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Verifica se existe capa do lote da requisição
+    OPEN cr_craptrq(pr_cdcooper => vr_cdcooper
+                   ,pr_cdagelot => vr_cdagenci);
+    FETCH cr_craptrq INTO rw_craptrq;
+    vr_foundreg := cr_craptrq%FOUND;
+    CLOSE cr_craptrq;
+    -- Se existir guarda os valores
+    IF vr_foundreg THEN
+      vr_nrseqdig := rw_craptrq.nrseqdig;
+      vr_qtinforq := rw_craptrq.qtinforq;
+      vr_qtcomprq := rw_craptrq.qtcomprq;
+      vr_qtinfotl := rw_craptrq.qtinfotl;
+      vr_qtcomptl := rw_craptrq.qtcomptl;
+      
+    ELSE -- Se nao existir, cria nova capa retornando os valores
+      BEGIN
+        INSERT INTO craptrq (nrdolote
+                            ,tprequis
+                            ,cdagelot
+                            ,cdcooper)
+                     VALUES (10000
+                            ,1
+                            ,vr_cdagenci
+                            ,vr_cdcooper)
+                   RETURNING nrseqdig 
+                            ,qtinforq
+                            ,qtcomprq
+                            ,qtinfotl
+                            ,qtcomptl
+                        INTO vr_nrseqdig
+                            ,vr_qtinforq
+                            ,vr_qtcomprq
+                            ,vr_qtinfotl
+                            ,vr_qtcomptl;
+      EXCEPTION 
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao criar capa do lote da requisição. ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+    END IF;
+    
+    -- Cria Requisicao de talonario
+    BEGIN
+      INSERT INTO crapreq (cdcooper
+                          ,nrdconta
+                          ,nrdctabb
+                          ,cdagenci
+                          ,cdagelot
+                          ,nrdolote
+                          ,cdtipcta
+                          ,dtmvtolt
+                          ,nrseqdig
+                          ,nrinichq
+                          ,insitreq
+                          ,nrfinchq
+                          ,tprequis
+                          ,qtreqtal)
+                   VALUES (vr_cdcooper
+                          ,pr_nrdconta
+                          ,pr_nrdconta
+                          ,vr_cdagenci
+                          ,vr_cdagenci
+                          ,10000
+                          ,rw_crapass.cdtipcta
+                          ,rw_crapdat.dtmvtolt
+                          ,vr_nrseqdig + 1
+                          ,0
+                          ,1 /* Normal */
+                          ,0
+                          ,1
+                          ,1);
+    EXCEPTION 
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao criar requisição de talonário. ' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;
+    
+    -- Atualiza capa do lote
+    BEGIN
+      UPDATE craptrq trq
+         SET trq.nrseqdig = vr_nrseqdig + 1
+            ,trq.qtinforq = vr_qtinforq + 1
+            ,trq.qtcomprq = vr_qtcomprq + 1
+            ,trq.qtinfotl = vr_qtinfotl + 1
+            ,trq.qtcomptl = vr_qtcomptl + 1
+       WHERE trq.cdcooper = vr_cdcooper
+         AND trq.cdagelot = vr_cdagenci
+         AND trq.tprequis = 1          
+         AND trq.nrdolote = 10000;
+    EXCEPTION 
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar capa do lote da requisição. ' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;
+    
+    -- Finaliza com status de sucesso
+    pr_des_erro := 'OK';
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+          
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina pc_solicita_talonario_web: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_solicita_talonario_web;
+            
 END CHEQ0001;
 /

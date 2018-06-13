@@ -75,13 +75,22 @@ DEF VAR aux_nmarqmat AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqter AS CHAR                                           NO-UNDO.
 DEF VAR tel_cdcooper AS CHAR        FORMAT "x(12)"           VIEW-AS COMBO-BOX
                                                        INNER-LINES 11  NO-UNDO.
+DEF VAR tel_cdcooper_A AS CHAR      FORMAT "x(12)"           VIEW-AS COMBO-BOX
+                                                       INNER-LINES 11  NO-UNDO.
 DEF VAR tel_datafina AS DATE        FORMAT "99/99/9999"                NO-UNDO.
 DEF VAR tel_datainic AS DATE        FORMAT "99/99/9999"                NO-UNDO.
 DEF VAR tel_emailbat AS CHAR        FORMAT "x(300)"                    NO-UNDO.
 DEF VAR aux_qtdmeses AS DEC         INIT 0                             NO-UNDO.
 DEF VAR tel_tipopcao AS CHAR        FORMAT "x(12)"           VIEW-AS COMBO-BOX
                                                          INNER-LINES 5 NO-UNDO.
-
+DEFINE VAR tel_nrdconta LIKE crapass.nrdconta                          NO-UNDO.
+DEFINE VAR tel_nmprimtl LIKE crapass.nmprimtl                          NO-UNDO.
+DEFINE VAR tel_nrcpfcgc LIKE crapass.nrcpfcgc                          NO-UNDO.
+DEFINE VAR aux_nmprimtl LIKE crapass.nmprimtl                          NO-UNDO.
+DEFINE VAR aux_nrdrowid AS ROWID                                       NO-UNDO.
+DEFINE VAR aux_qtdpende AS INT                                         NO-UNDO.
+DEFINE VAR aux_dstpdcto AS CHAR                                        NO-UNDO.
+                                                         
 /* variaveis para impressao */
 DEF VAR tel_dsimprim AS CHAR        FORMAT "x(8)" INIT "Imprimir"      NO-UNDO.
 DEF VAR tel_dscancel AS CHAR        FORMAT "x(8)" INIT "Cancelar"      NO-UNDO.
@@ -113,8 +122,8 @@ FORM SPACE(1)
      WITH ROW 4 OVERLAY 16 DOWN WIDTH 80 TITLE glb_tldatela FRAME f_moldura.
 
 FORM glb_cddopcao    AT 03 LABEL "Opcao" AUTO-RETURN
-                           HELP  "Informe a opcao desejada (B, L ou R)."
-                           VALIDATE(CAN-DO("B,L,R",glb_cddopcao), "014 - Opcao errada.")
+                           HELP  "Informe a opcao desejada (B, L, R ou A)."
+                           VALIDATE(CAN-DO("B,L,R,A",glb_cddopcao), "014 - Opcao errada.")
                            WITH ROW 6 COLUMN 2 SIDE-LABELS OVERLAY NO-BOX FRAME f_prcged.
 
 FORM tel_datainic AT 03 LABEL "Data Inicial"
@@ -135,9 +144,69 @@ FORM tel_datainic AT 03 LABEL "Data Inicial"
      SKIP(1)
      WITH ROW 8 COLUMN 2 SIDE-LABELS OVERLAY NO-BOX FRAME f_datas.
 
+FORM tel_cdcooper_A    AT 07 LABEL "Cooperativa"
+                           HELP "Selecione a Cooperativa"
+     SKIP                       
+     tel_nrdconta    AT 07  AUTO-RETURN     LABEL "Conta/dv"
+               HELP "Digite o nro da conta/dv"                                 
+     tel_nrcpfcgc    AT 36  AUTO-RETURN     LABEL "CPF/CNPJ"
+               HELP "Digite o CPF/CNPJ do cooperado ou titular"
+     SKIP 
+     tel_nmprimtl  AT 07 FORMAT "x(40)"  LABEL "Nome"
+     WITH ROW 6 COLUMN 12 SIDE-LABELS OVERLAY NO-BOX FRAME f_altera_baixa.     
+     
+     
+
+DEFINE TEMP-TABLE cratdoc                      NO-UNDO 
+       FIELD nrdconta  AS  DEC     FORMAT "zzzz,zzz,9"
+       FIELD nrcpfcgc  AS  DEC     
+       FIELD idseqttl  AS  INT     FORMAT "zz9"  
+       FIELD nmprittl  AS  CHAR    FORMAT "x(40)"
+       FIELD dtmvtolt  AS  DATE    FORMAT "99/99/9999"
+       FIELD tpdocmto  AS  INT     FORMAT "zzz9"
+       FIELD dstpdcto  AS  CHAR    FORMAT "x(35)"
+       FIELD nrseqdoc  AS  INT     FORMAT "zzz9"
+       FIELD dtbxapen  AS  DATE    FORMAT "99/99/9999"
+       FIELD nrdrowid  AS  ROWID
+       /*INDEX cratneg1  AS  UNIQUE PRIMARY nrseqdig  DESC*/
+       .
+
+DEFINE QUERY q_cratdoc FOR cratdoc.
+                                              
+
+DEFINE BROWSE b_cratdoc QUERY q_cratdoc SHARE-LOCK
+       DISP cratdoc.dtbxapen COLUMN-LABEL "Data Baixa"    FORMAT "99/99/99"                             
+            cratdoc.nrdconta COLUMN-LABEL "Conta."        FORMAT "zzzz,zzz,9"
+            cratdoc.idseqttl COLUMN-LABEL "Tit"           FORMAT "zz9"
+            cratdoc.nrcpfcgc COLUMN-LABEL "CPF/CNPJ"      FORMAT "zzzzzzzzzzzzz9"            
+            cratdoc.nmprittl COLUMN-LABEL "Nome"          FORMAT "x(20)"
+            cratdoc.dtmvtolt COLUMN-LABEL "Dt.Pend."      FORMAT "99/99/99"
+            cratdoc.tpdocmto COLUMN-LABEL "Cod."          FORMAT "zz9" 
+            cratdoc.dstpdcto COLUMN-LABEL "Documento"     FORMAT "x(35)" 
+            cratdoc.nrseqdoc COLUMN-LABEL "seq.Doc"       FORMAT "zz9"
+            WITH 8 DOWN WIDTH 78 SCROLLBAR-VERTICAL.     
+            
+DEF FRAME f_cratdoc
+       b_cratdoc     
+       HELP "Use Barra de Espaco para Marcar p/Baixa e F1 para confirmar" 
+       WITH NO-BOX CENTERED OVERLAY ROW 8. 
+  
+    
 ON RETURN OF tel_cdcooper DO:
 
     ASSIGN tel_cdcooper = tel_cdcooper:SCREEN-VALUE IN FRAME f_cooperativas
+           aux_contador = 0.
+
+    IF   glb_cddopcao = "B"   THEN
+         APPLY "TAB".
+    ELSE
+         APPLY "GO".
+
+END.
+
+ON RETURN OF tel_cdcooper_A DO:
+
+    ASSIGN tel_cdcooper_A = tel_cdcooper_A:SCREEN-VALUE IN FRAME f_altera_baixa
            aux_contador = 0.
 
     IF   glb_cddopcao = "B"   THEN
@@ -188,7 +257,6 @@ DO WHILE TRUE:
             END.
 
        UPDATE glb_cddopcao WITH FRAME f_prcged.
-
        LEAVE.
 
    END.  /*  Fim do DO WHILE TRUE  */
@@ -414,7 +482,171 @@ DO WHILE TRUE:
             NEXT.
 
         END.
+   ELSE
+   IF   glb_cddopcao = "A"   THEN
+      DO:
+          RUN alimenta-selection (INPUT FALSE).
 
+          ASSIGN tel_cdcooper_A:LIST-ITEM-PAIRS IN FRAME f_altera_baixa = aux_nmcooper
+                 tel_cdcooper_A = STRING(glb_cdcooper).
+          
+          IF glb_cdcooper = 3 THEN DO:
+            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+
+               UPDATE tel_cdcooper_A                    
+                      WITH FRAME f_altera_baixa.
+               
+               LEAVE.
+            END.
+          END.
+          ELSE
+            tel_cdcooper_A = STRING(glb_cdcooper).
+
+          ASSIGN tel_cdcooper = tel_cdcooper_A.
+          
+          IF INT(tel_cdcooper) <> 0 THEN   
+          DO:
+            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+               UPDATE tel_nrdconta                    
+                      WITH FRAME f_altera_baixa.
+               
+               LEAVE.
+            END.
+            
+            IF INT(tel_nrdconta) <> 0 THEN   
+            DO:
+               FIND crapass 
+              WHERE crapass.cdcooper = INT(tel_cdcooper)  
+                AND crapass.nrdconta = tel_nrdconta   NO-LOCK
+                    USE-INDEX crapass1 NO-ERROR.
+
+              IF   NOT AVAILABLE crapass THEN
+                    DO:
+                        glb_cdcritic = 009.
+                        NEXT.
+                    END.
+               
+              tel_nmprimtl = crapass.nmprimtl.
+              tel_nrcpfcgc = crapass.nrcpfcgc.
+               
+              DISPLAY tel_nmprimtl 
+                      tel_nrcpfcgc
+              WITH FRAME f_altera_baixa.
+            
+            END.
+            ELSE
+              DO:
+                 DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                     UPDATE tel_nrcpfcgc                    
+                            WITH FRAME f_altera_baixa.
+                     
+                     LEAVE.
+                  END.
+                  
+                  IF  tel_nrcpfcgc = 0 THEN
+                  DO:
+                      glb_dscritic = "Informe conta ou CPF/CNPJ.".
+                      NEXT.
+                  END.
+                  
+                  FIND FIRST crapass 
+                  WHERE crapass.cdcooper = INT(tel_cdcooper)  
+                    AND crapass.nrcpfcgc = tel_nrcpfcgc   
+                        NO-LOCK NO-ERROR.
+
+                  IF AVAILABLE crapass THEN
+                    DO:
+                       tel_nmprimtl = crapass.nmprimtl.
+                         
+                       DISPLAY tel_nmprimtl
+                       WITH FRAME f_altera_baixa.
+                    END.
+                  ELSE
+                    DO:
+                         FIND FIRST crapttl 
+                        WHERE crapttl.cdcooper = INT(tel_cdcooper)  
+                          AND crapttl.nrcpfcgc = tel_nrcpfcgc   NO-LOCK.
+                    
+                     IF AVAILABLE crapass THEN
+                        DO:
+                           tel_nmprimtl = crapttl.nmextttl.
+                             
+                           DISPLAY tel_nmprimtl
+                           WITH FRAME f_altera_baixa.
+                        END. 
+                     ELSE
+                        DO:
+                           glb_cdcritic = 009.
+                           NEXT.
+                        
+                        END.
+                  END.
+              
+              END.
+            
+          END. 
+          
+        
+        RUN atualiza_browser.
+
+        IF NOT AVAILABLE cratdoc THEN
+        DO:
+            glb_cdcritic = 530.
+            NEXT.
+        END.     
+        
+        FIND FIRST cratdoc NO-LOCK.
+        IF AVAILABLE  cratdoc THEN
+        DO:
+        
+          aux_nrdrowid = ROWID(cratdoc).
+          REPOSITION q_cratdoc TO ROWID(aux_nrdrowid).
+
+        END.
+        
+        /* Mensagem para forçar evento e mostrar frame 
+           que nao esta aparecendo automaticamente */
+        MESSAGE aux_qtdpende "Pendencias encontradas." VIEW-AS ALERT-BOX.
+       
+        APPLY "ENTRY" TO b_cratdoc IN FRAME f_cratdoc.
+        ENABLE ALL WITH FRAME f_cratdoc.     
+        
+        
+        /* marcar Pendencias a serem baixadas */
+        ON ANY-KEY OF b_cratdoc DO:
+           
+          /* Barra de espaco */
+          IF  KEY-FUNCTION(LASTKEY) = "" THEN 
+          
+              IF cratdoc.dtbxapen = ? THEN
+                 DO:
+                     ASSIGN cratdoc.dtbxapen = TODAY 
+                            aux_nrdrowid = ROWID(cratdoc).
+                            
+                     OPEN QUERY q_cratdoc FOR EACH cratdoc SHARE-LOCK.
+                     REPOSITION q_cratdoc TO ROWID(aux_nrdrowid).
+                 END.
+               ELSE  
+                 DO:
+                     ASSIGN cratdoc.dtbxapen = ?
+                            aux_nrdrowid = ROWID(cratdoc).
+                            
+                     OPEN QUERY q_cratdoc FOR EACH cratdoc SHARE-LOCK.
+                     REPOSITION q_cratdoc TO ROWID(aux_nrdrowid).
+                 END.
+                 
+          IF   KEYFUNCTION(LASTKEY) = "GO"   THEN    /*   F4 OU FIM   */     
+          DO:          
+            RUN baixar_pendencias.            
+          END.
+          
+        END.
+        
+        ENABLE ALL WITH FRAME f_cratdoc.             
+        WAIT-FOR WINDOW-CLOSE OF DEFAULT-WINDOW.
+    
+         
+      END. 
 END. /* FIM - DO WHILE TRUE */
 
 /* PROCEDURE para gerar batimento */
@@ -688,6 +920,239 @@ PROCEDURE alimenta-selection:
          END.
 
 END PROCEDURE.
+
+
+PROCEDURE atualiza_browser:
+
+   MESSAGE "Aguarde...".
+   EMPTY TEMP-TABLE cratdoc.	   
+   ASSIGN aux_qtdpende = 0.
+      
+   FOR EACH crapdoc 
+      WHERE crapdoc.cdcooper = INT(tel_cdcooper)      
+        AND crapdoc.flgdigit = FALSE
+        AND crapdoc.dtbxapen = ?
+        AND ( crapdoc.nrdconta = tel_nrdconta OR  
+              (tel_nrdconta = 0 AND 
+               crapdoc.nrcpfcgc = tel_nrcpfcgc ) 
+             )
+        NO-LOCK: 
+               
+       /* Buscar nome do cooperado */
+       ASSIGN aux_nmprimtl = "".
+       IF crapdoc.idseqttl > 1 THEN
+         DO:
+            FIND FIRST crapttl 
+                 WHERE crapttl.cdcooper = crapdoc.cdcooper
+                   AND crapttl.nrdconta = crapdoc.nrdconta
+                   AND crapttl.idseqttl = crapdoc.idseqttl                   
+                   NO-LOCK NO-ERROR .
+            IF AVAILABLE crapttl THEN       
+            DO:
+              ASSIGN aux_nmprimtl = crapttl.nmextttl.
+            END.
+         
+         END.
+       ELSE
+         DO:
+            FIND FIRST crapass 
+                 WHERE crapass.cdcooper = crapdoc.cdcooper
+                   AND crapass.nrdconta = crapdoc.nrdconta
+                   NO-LOCK NO-ERROR.
+            IF AVAILABLE crapass THEN       
+            DO:
+              ASSIGN aux_nmprimtl = crapass.nmprimtl.
+            END. 
+         
+         END.
+
+       CASE crapdoc.tpdocmto:
+          WHEN 1 THEN
+              ASSIGN aux_dstpdcto = "CPF - CADASTRO DE PESSOAS FISICAS".
+          WHEN 2 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO IDENTIFICACAO PF".
+          WHEN 3 THEN
+              ASSIGN aux_dstpdcto = "COMPROVANTE DE ENDERECO".
+          WHEN 4 THEN
+              ASSIGN aux_dstpdcto = "COMPROVANTE DE ESTADO CIVIL".
+          WHEN 5 THEN
+              ASSIGN aux_dstpdcto = "COMPROVANTE DE RENDA".
+          WHEN 6 THEN
+              ASSIGN aux_dstpdcto = "CARTAO DE ASSINATURA".
+          WHEN 7 THEN
+              ASSIGN aux_dstpdcto = "FICHA CADASTRAL".
+          WHEN 8 THEN
+              ASSIGN aux_dstpdcto = "MATRICULA".
+          WHEN 9 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO DE IDENTIFICACAO - PROC".
+          WHEN 10 THEN
+              ASSIGN aux_dstpdcto = "CARTAO DE CNPJ".
+          WHEN 11 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO DE IDENTIFICACAO - PJ".
+          WHEN 12 THEN
+              ASSIGN aux_dstpdcto = "DEMONSTRATIVO FINANCEIRO".
+          WHEN 19 THEN
+              ASSIGN aux_dstpdcto = "CADASTRO DE LIMIRE CREDITO".          
+          WHEN 22 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO CÔNJUGE".
+          WHEN 26 THEN
+              ASSIGN aux_dstpdcto = "IMUNIDADE TRIBUTARIA".
+          WHEN 37 THEN
+              ASSIGN aux_dstpdcto = "PESSOA EXP. POL. - PEP".
+          WHEN 40 THEN 
+              ASSIGN aux_dstpdcto = "LICENÇAS SOCIO AMBIENTAIS".
+          WHEN 45 THEN
+              ASSIGN aux_dstpdcto = "CONTRATO ABERTURA DE CONTA PF".
+          WHEN 46 THEN
+              ASSIGN aux_dstpdcto = "CONTRATO ABERTURA DE CONTA PJ".
+          WHEN 47 THEN
+              ASSIGN aux_dstpdcto = "PROCURAÇAO PF".
+          WHEN 48 THEN
+              ASSIGN aux_dstpdcto = "PROCURAÇAO PJ".
+          WHEN 49 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTOS PROCURADORES PJ".
+          WHEN 50 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTOS PROCURADORES PF".
+          WHEN 51 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTOS RESPONSAVEL LEGAL".
+          WHEN 52 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO SÓCIOS/ADMINISTRADORES".
+          WHEN 55 THEN
+              ASSIGN aux_dstpdcto = "DECLARACAO SIMPLES NACIONAL".          
+          WHEN 58 THEN
+              ASSIGN aux_dstpdcto = "TERMO DE ALTERAÇAO DE TITULARIDADE".    
+          WHEN 59 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO DE EMANCIPACAO".                  
+          OTHERWISE
+              ASSIGN aux_dstpdcto = "Nao definido".
+      END CASE.
+
+       CREATE cratdoc.
+       ASSIGN cratdoc.nrdconta = crapdoc.nrdconta
+              cratdoc.nrcpfcgc = crapdoc.nrcpfcgc
+              cratdoc.idseqttl = crapdoc.idseqttl
+              cratdoc.nmprittl = aux_nmprimtl
+              cratdoc.dtmvtolt = crapdoc.dtmvtolt
+              cratdoc.tpdocmto = crapdoc.tpdocmto
+              cratdoc.dstpdcto = aux_dstpdcto
+              cratdoc.nrseqdoc = crapdoc.nrseqdoc
+              cratdoc.dtbxapen = crapdoc.dtbxapen
+              cratdoc.nrdrowid = ROWID(crapdoc).  
+              aux_qtdpende  = aux_qtdpende + 1.
+            
+   END.    /*   Fim do for each crapdoc   */
+      
+   OPEN QUERY q_cratdoc FOR EACH cratdoc SHARE-LOCK.   
+   HIDE MESSAGE NO-PAUSE.
+  
+   
+END.      
+
+PROCEDURE baixar_pendencias:
+
+   HIDE MESSAGE NO-PAUSE.
+
+   ASSIGN glb_cddopcao = "A".
+
+   { includes/acesso.i }
+
+   IF   glb_cdcritic > 0   THEN
+        RETURN.
+   
+   DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+
+      ASSIGN glb_cdcritic = 078                  
+             aux_confirma = "N".
+         
+      RUN fontes/critic.p.
+      BELL.
+      glb_cdcritic = 0.
+      MESSAGE glb_dscritic UPDATE aux_confirma.
+      LEAVE.
+                  
+   END.  /*  Fim do DO WHILE TRUE  */
+
+   IF   KEYFUNCTION(LASTKEY) = "END-ERROR" OR 
+        aux_confirma <> "S" THEN
+        DO:
+            glb_cdcritic = 79.
+            RUN fontes/critic.p.
+            BELL.
+            MESSAGE glb_dscritic.
+            glb_cdcritic = 0.
+            PAUSE 5 NO-MESSAGE.
+            LEAVE.
+        END.
+        
+   glb_cdcritic = 0.
+   glb_dscritic = "".
+   
+   TRANS_DOC:
+   DO TRANSACTION ON ENDKEY UNDO TRANS_DOC, LEAVE TRANS_DOC
+                  ON ERROR  UNDO TRANS_DOC, LEAVE TRANS_DOC:
+   
+     FOR EACH cratdoc NO-LOCK:
+
+       IF cratdoc.dtbxapen <> ? THEN
+       DO:
+                  
+           FIND FIRST crapdoc
+             WHERE ROWID(crapdoc) = cratdoc.nrdrowid
+             EXCLUSIVE-LOCK NO-ERROR.         
+       
+           IF NOT AVAILABLE crapdoc THEN
+           DO:
+               IF LOCKED crapdoc   THEN
+                   DO:
+                       glb_dscritic = 'Registro sendo alterado por outro operador.'.
+                       UNDO TRANS_DOC, LEAVE TRANS_DOC.
+                   END.
+                ELSE
+                     glb_dscritic = 'Registro nao encontrado.'.
+                     UNDO TRANS_DOC, LEAVE TRANS_DOC.
+           
+           END.
+           
+           /* Ja esta com baixa */
+           IF crapdoc.dtbxapen <> ? THEN
+             NEXT.                 
+       
+           ASSIGN crapdoc.dtbxapen = TODAY
+                  crapdoc.cdopebxa = glb_cdoperad
+                  crapdoc.tpbxapen = 3. /* Baixa Manual */                   
+       END.
+     
+     END.
+   
+   
+   END. /* Fim Trans_doc*/
+   
+   IF glb_dscritic <> "" OR 
+      glb_cdcritic <> 0 THEN
+   DO:
+      IF   glb_cdcritic > 0   THEN
+      DO:
+          RUN fontes/critic.p.          
+      END.
+      BELL.
+      MESSAGE glb_dscritic.
+      glb_cdcritic = 0.
+      PAUSE 2 NO-MESSAGE.
+      
+      UPDATE glb_cddopcao WITH FRAME f_prcged.
+      LEAVE.
+
+   END.
+   
+   VALIDATE crapdoc.
+   RELEASE  crapdoc.
+       
+   IF   CURRENT-RESULT-ROW("q_cratdoc") > 1 THEN
+        REPOSITION q_cratdoc TO ROWID(ROWID(cratdoc)).
+   ELSE
+        OPEN QUERY q_cratdoc FOR EACH cratdoc SHARE-LOCK.
+
+END PROCEDURE.   /*   fim da procedure baixar_pendencias   */  
 
 /* .........................................................................*/
 

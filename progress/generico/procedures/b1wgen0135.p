@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0135.p
     Autor(a): Fabricio
-    Data    : Fevereiro/2012                     Ultima atualizacao: 10/04/2018
+    Data    : Fevereiro/2012                     Ultima atualizacao: 17/05/2018
   
     Dados referentes ao programa:
   
@@ -27,6 +27,14 @@
 				19/02/2018 - Ajustado mascara zz,zzz,zz9 para z,zzz,zzz,zz9 no campo NRDOCMTO 
                              alterado o tipo do parametro par_nrdocmto para DECIMAL da procedure 
                              consulta-controle-movimentacao- Antonio R. Junior (mouts) - chamado 851313 
+                            
+                15/05/2018 - Na procedure consulta-transacoes-sem-documento foi ajustado o format
+                             do numero do documento para 13 posicoes pois ocasionava em problemas 
+                             na TRAESP opcao p (Tiago #INC0015114).
+                             
+                17/05/2018 - Na procedure consulta-dados-fechamento modificado a consulta da crapcme
+                             para quebrar os resultados tbem por cooperativa pois estava somando
+                             valores de cooperativas distintas mas com o mesmo cpf (Tiago #SCTASK0014119)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -238,7 +246,7 @@ PROCEDURE consulta-transacoes-sem-documento:
                                tt-transacoes-especie.nmprimtl = crapass.nmprimtl
                                                                 WHEN AVAIL crapass
                                tt-transacoes-especie.nrdocmto = 
-                                            STRING(craplcm.nrdocmto, "z,zzz,zzz,zz9")
+                                            STRING(craplcm.nrdocmto, "z,zzz,zzz,zzz,zz9")
                                tt-transacoes-especie.tpoperac = aux_tpoperac
                                tt-transacoes-especie.vllanmto = 
                                          STRING(craplcm.vllanmto, "zzz,zzz,zz9.99")
@@ -1284,7 +1292,8 @@ PROCEDURE consulta-dados-fechamento:
     FOR EACH crapcme WHERE crapcme.dtmvtolt = par_dtmvtolt,
         EACH crapass WHERE crapass.cdcooper = crapcme.cdcooper AND
                            crapass.nrdconta = crapcme.nrdconta 
-                           BREAK BY crapcme.tpoperac 
+                           BREAK BY crapcme.cdcooper
+                                  BY crapcme.tpoperac 
                                     BY crapass.nrcpfcgc:
                                     
         ASSIGN aux_vllanmto = aux_vllanmto + crapcme.vllanmto.

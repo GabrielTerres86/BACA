@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fernando Hilgenstieler
-   Data    : Julho/2003.                     Ultima atualizacao: 10/04/2018
+   Data    : Julho/2003.                     Ultima atualizacao: 15/05/2018
          
    Dados referentes ao programa:
 
@@ -60,6 +60,8 @@
 
 			   20/02/2018 - Alterado valor do tamanho do campo NRDOCMTO de 10 para 13 caracteres
                             adicionado o format para o campo tel_nrdocmto- Antonio R. Junior (mouts) - chamado 851313
+                            
+               15/05/2018 - No frame f_transacoes modificado para caber nrdocmto com 13 posicoes (Tiago #INC0015114)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -234,8 +236,8 @@ FORM SKIP
      tt-transacoes-especie.cdagenci  AT  1 FORMAT "x(03)"
      tt-transacoes-especie.nrdolote  AT  4 FORMAT "zzz,zz9"
      tt-transacoes-especie.nrdconta  AT 11 FORMAT "x(10)"
-     tt-transacoes-especie.nmprimtl  AT 22 FORMAT "x(26)" 
-     tt-transacoes-especie.nrdocmto  AT 49 FORMAT "x(13)"
+     tt-transacoes-especie.nmprimtl  AT 22 FORMAT "x(24)" 
+     tt-transacoes-especie.nrdocmto  AT 47 FORMAT "x(17)"
      tt-transacoes-especie.tpoperac  AT 66 FORMAT "x(09)"
      SKIP
      tt-transacoes-especie.vllanmto  AT 21 FORMAT "x(14)"

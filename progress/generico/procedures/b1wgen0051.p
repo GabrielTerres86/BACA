@@ -29,6 +29,8 @@
                 06/02/2018 -  Incluido campo cdcatego na tt-cabec. PRJ366 (Lombardi)
 
                 12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. PRJ366 (Lombardi).
+
+                04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -74,6 +76,7 @@ PROCEDURE Busca-Associado:
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dssitcta AS CHAR                                    NO-UNDO.
     DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
     
     DEF VAR h-b1wgen0031 AS HANDLE                                  NO-UNDO.
@@ -102,7 +105,7 @@ PROCEDURE Busca-Associado:
         BUFFER-COPY crapass TO tt-crapass.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+        
         RUN STORED-PROCEDURE pc_descricao_tipo_conta
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT tt-crapass.inpessoa,    /* tipo de pessoa */
                                              INPUT tt-crapass.cdtipcta,    /* tipo de conta */
@@ -142,29 +145,35 @@ PROCEDURE Busca-Associado:
                 LEAVE Busca.
              END.
 
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_descricao_situacao_conta
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT tt-crapass.cdsitdct, /* pr_cdsituacao */
+                                            OUTPUT "",                  /* pr_dssituacao */
+                                            OUTPUT "",                  /* pr_des_erro   */
+                                            OUTPUT "").                 /* pr_dscritic   */
+        
+        CLOSE STORED-PROC pc_descricao_situacao_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dssitcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dssitcta = pc_descricao_situacao_conta.pr_dssituacao 
+                              WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+               aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                              WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                              WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK" THEN 
+            aux_dssitcta = "".
+        
         ASSIGN 
             tt-crapass.dsagenci = CAPS(crapage.nmresage)
-            tt-crapass.dssitdct = IF tt-crapass.cdsitdct = 1
-                                     THEN "NORMAL"
-                                  ELSE
-                                  IF tt-crapass.cdsitdct = 2
-                                     THEN "ENCERRADA PELO ASSOCIADO"
-                                  ELSE
-                                  IF tt-crapass.cdsitdct = 3
-                                     THEN "ENCERRADA PELA COOP"
-                                  ELSE
-                                  IF tt-crapass.cdsitdct = 4
-                                     THEN "ENCERRADA PELA DEMISSAO"
-                                  ELSE
-                                  IF tt-crapass.cdsitdct = 5
-                                     THEN "NAO APROVADA"
-                                  ELSE
-                                  IF tt-crapass.cdsitdct = 6
-                                     THEN "NORMAL - SEM TALAO"
-                                  ELSE
-                                  IF tt-crapass.cdsitdct = 9
-                                     THEN "ENCERRADA P/ OUTRO MOTIVO"
-                                  ELSE "".
+            tt-crapass.dssitdct = UPPER(aux_dssitcta).
 
         /* PESSOA FISICA */
         FOR EACH crapttl WHERE crapttl.cdcooper = par_cdcooper AND
@@ -392,7 +401,7 @@ PROCEDURE obtem-cabecalho:
                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
                aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-
+        
         IF aux_des_erro = "NOK"  THEN
              DO:
                  LEAVE Cabec.
@@ -678,33 +687,37 @@ END PROCEDURE.
 FUNCTION BuscaSitConta RETURNS CHARACTER
     ( INPUT par_cdsitdct AS INTEGER ):
 
-    RETURN (IF par_cdsitdct = 1
-               THEN "NORMAL"
-            ELSE
-            IF par_cdsitdct = 2
-               THEN "ENCERRADA PELO ASSOCIADO"
-            ELSE
-            IF par_cdsitdct = 3
-               THEN "ENCERRADA PELA COOP"
-            ELSE
-            IF par_cdsitdct = 4
-               THEN "ENCERRADA PELA DEMISSAO"
-            ELSE
-            IF par_cdsitdct = 5
-               THEN "NAO APROVADA"
-            ELSE
-            IF par_cdsitdct = 6
-               THEN "NORMAL - SEM TALAO"
-            ELSE
-            IF par_cdsitdct = 7
-               THEN "EM PROC. DEMISSAO"
-			ELSE
-            IF par_cdsitdct = 8
-               THEN "EM PROC. DEMISSAO BACEN"
-            ELSE
-            IF par_cdsitdct = 9
-               THEN "ENCERRADA P/ OUTRO MOTIVO"
-            ELSE "").
+    
+    DEF VAR aux_dssitcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",           /* pr_dssituacao */
+                                        OUTPUT "",           /* pr_des_erro   */
+                                        OUTPUT "").          /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dssitcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dssitcta = pc_descricao_situacao_conta.pr_dssituacao 
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                          WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK" THEN 
+        aux_dssitcta = "".
+    
+    RETURN UPPER(aux_dssitcta).
 
 END FUNCTION.
 

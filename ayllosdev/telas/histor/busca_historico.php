@@ -18,6 +18,8 @@
  *                             Diego Simas - AMcom  
  *
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+ *
+ *                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
  * -------------- 
  */
 ?>
@@ -141,6 +143,10 @@
 	// Inicio PRJ 416 - Mostrar o valor (retornando do banco) do histórico no bloqueio judicial na tela
 	echo "$('#indutblq','#frmHistorico').val('" . getByTagName($historico,'indutblq') . "');";
 	// Fim PRJ 416
+	
+	// Inicio SM 5 - 364 - RMM  - inperdes
+	echo "$('#inperdes','#frmHistorico').val('" . getByTagName($historico,'inperdes') . "');";
+	// Fim SM 5 - 364 - RMM  - inperdes
 	
 	
 	

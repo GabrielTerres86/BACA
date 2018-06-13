@@ -1,17 +1,17 @@
 /*!
  * FONTE        : esttar.js
- * CRIA«√O      : Daniel Zimmermann 
- * DATA CRIA«√O : 13/03/2013
- * OBJETIVO     : Biblioteca de funÁıes da tela ESTTAR
+ * CRIA√á√ÉO      : Daniel Zimmermann 
+ * DATA CRIA√á√ÉO : 13/03/2013
+ * OBJETIVO     : Biblioteca de fun√ß√µes da tela ESTTAR
  * --------------
- * ALTERA«’ES   : 
+ * ALTERA√á√ïES   : 
  * -----------------------------------------------------------------------
  */
 
-//Formul·rios e Tabela
+// Formul√°rios e Tabela
 var frmCab   		= 'frmCab';
 
-//Labels/Campos do cabeÁalho
+//Labels/Campos do cabe√ßalho
 var rNrdconta, cNrdconta, rNmprimtl, cNmprimtl, rDtinicio, cDtinicio, rDtafinal, cDtafinal,
 rCddopcap, cCddopcap, rCdhistor, cCdhistor, rDshistor, cDshistor, cTodosCabecalho, arrTarifa;
 
@@ -113,7 +113,7 @@ function buscaAssociado() {
 	var mensagem = 'Aguarde, buscando associado ...';
 	showMsgAguardo( mensagem );	
 	
-	//Carrega dados da conta atravÈs de ajax
+	//Carrega dados da conta atrav√©s de ajax
 	$.ajax({		
 		type	: 'POST',
 		url		: UrlSite + 'telas/esttar/busca_associado.php', 
@@ -186,7 +186,7 @@ function controlaNavegacao() {
 
 	cNrdconta.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
-		// Se È a tecla ENTER, 
+		// Se √© a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			if ( cNrdconta.val() != '') {
 				buscaAssociado();
@@ -203,7 +203,7 @@ function controlaNavegacao() {
 	
 	cDtinicio.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
-		// Se È a tecla ENTER, 
+		// Se √© a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			cDtafinal.focus();
 			return false;
@@ -212,7 +212,7 @@ function controlaNavegacao() {
 	
 	cDtafinal.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
-		// Se È a tecla ENTER, 
+		// Se √© a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			cCddopcap.focus();
 			return false;
@@ -221,7 +221,7 @@ function controlaNavegacao() {
 	
 	cCddopcap.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
-		// Se È a tecla ENTER, 
+		// Se √© a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			cCdhistor.focus();
 			return false;
@@ -230,7 +230,7 @@ function controlaNavegacao() {
 	
 	cCdhistor.unbind('keypress').bind('keypress', function(e) {
 		if ( divError.css('display') == 'block' ) { return false; }		
-		// Se È a tecla ENTER, 
+		// Se √© a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 			if (cCdhistor.val() == '') {
 				cDshistor.val('TODOS');
@@ -313,9 +313,9 @@ function btnContinuar() {
 	var dtlimest = $('#dtlimest','#frmCab').val();
 	var aux_dtlimest  = parseInt(dtlimest.split("/")[2].toString() + dtlimest.split("/")[1].toString() + dtlimest.split("/")[0].toString()) ; 
 	
-	if (( aux_inicio < aux_dtlimest ) && (cddopcap == 1)){
+	if (( aux_inicio < aux_dtlimest ) && (cddopcap == 1 || cddopcap == 3)){
 		hideMsgAguardo();
-		showError("error","Periodo Inicial maior que o prazo permitido para estorno (" + dtlimest + ").","Alerta - Ayllos","focaCampoErro(\'dtinicio\', \'frmCab\');",false);
+		showError("error","Periodo Inicial maior que o prazo permitido para estorno/suspens&atilde;o (" + dtlimest + ").","Alerta - Ayllos","focaCampoErro(\'dtinicio\', \'frmCab\');",false);
 		return false;
 	}
 
@@ -430,7 +430,7 @@ function buscaHistorico(){
 	var cdhistor = $('#cdhistor','#frmCab').val();
 	cdhistor = normalizaNumero(cdhistor);	
 	
-	// Executa script atravÈs de ajax
+	// Executa script atrav√©s de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/esttar/busca_historico.php", 
@@ -474,7 +474,7 @@ function buscaTarifasConta() {
 	
 	
 	
-	// Carrega dados da conta atravÈs de ajax
+	// Carrega dados da conta atrav√©s de ajax
 	$.ajax({		
 		type	: 'POST',
 		dataType: 'html',
@@ -490,7 +490,7 @@ function buscaTarifasConta() {
 				},
 		error   : function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi possÌvel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi poss√≠vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
 				},
 		success : function(response) {
 					hideMsgAguardo();
@@ -585,11 +585,11 @@ function pesquisaMotivo(valor) {
 	if ( $('#dsmotest'+valor,'#formTabEsttar').css('visibility') == 'hidden' ) { return false; }	
 
 
-	// Vari·vel local para guardar o elemento anterior
+	// Vari√°vel local para guardar o elemento anterior
 	var campoAnterior = '';
 	var bo, procedure, titulo, qtReg, filtros, colunas, cdmotest, titulo_coluna, cdmotests, dsmotest, tpaplica;	
 	
-	// Nome do Formul·rio que estamos trabalhando
+	// Nome do Formul√°rio que estamos trabalhando
 	var nomeFormulario = 'formTabEsttar';
 	
 	var divRotina = 'divTela';
@@ -608,7 +608,7 @@ function pesquisaMotivo(valor) {
 	
 	bo			= 'b1wgen0153.p'; 
 	procedure	= 'lista-met';
-	titulo      = 'Motivos de Estorno Baixa de Tarifas';
+	titulo      = 'Motivos de Estorno Baixa Suspensao de Tarifas';
 	qtReg		= '10';
 	filtros 	= 'Codigo;cdmotest;130px;S;' + cdmotest + ';S|Descricao;dsmotest;100px;S;' + dsmotest + ';N|Aplicacao;tpaplica;100px;N;' + tpaplica + ';N';
 	colunas 	= 'Codigo;cdmotest;20%;right|' + titulo_coluna + ';dsmotest;50%;left';
@@ -666,12 +666,12 @@ function criticaOperacao(){
 function efetuaOperacao() {
 
 	hideMsgAguardo();
-	showMsgAguardo( 'Aguarde, efetuando Estorno/Baixa de LanÁamentos ...' );	
+	showMsgAguardo( 'Aguarde, efetuando Estorno/Baixa/Suspens√£o de Lan√ßamentos ...' );
 	
 	var strCdlantar = '';
 	var strCdmotest = '';
 	
-	// Monta lista de baixa/estorno a serem efetuados.
+	// Monta lista de baixa/estorno/suspensao a serem efetuados.
 	$('input[type="checkbox"],select','#formTabEsttar').each(function(e){				
 			
 		if( $(this).prop("id") != "checkTodos"  ){
@@ -691,7 +691,7 @@ function efetuaOperacao() {
 	var nrdconta = normalizaNumero( cNrdconta.val() );
 	var cddopcap = cCddopcap.val();
 	
-	// Carrega dados da conta atravÈs de ajax
+	// Carrega dados da conta atrav√©s de ajax
 	$.ajax({		
 		type	: 'POST',
 		dataType: 'html',
@@ -725,7 +725,7 @@ function efetuaOperacao() {
 
 function buscaQtdDiasEstorno() {
 
-	// Carrega dados da conta atravÈs de ajax
+	// Carrega dados da conta atrav√©s de ajax
 	$.ajax({		
 		type	: 'POST',
 		dataType: 'html',
@@ -759,11 +759,11 @@ function controlaPesquisaHistorico() {
 		return;
 	}
 	
-	// Vari·vel local para guardar o elemento anterior
+	// Vari√°vel local para guardar o elemento anterior
 	var campoAnterior = '';
 	var bo, procedure, titulo, qtReg, filtros, colunas, cdhistor, titulo_coluna, cdgrupos, dshistor;	
 	
-	// Nome do Formul·rio que estamos trabalhando
+	// Nome do Formul√°rio que estamos trabalhando
 	var nomeFormulario = 'frmCab';
 	
 	var divRotina = 'divTela';

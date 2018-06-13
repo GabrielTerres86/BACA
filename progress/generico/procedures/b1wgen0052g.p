@@ -177,9 +177,16 @@
                 12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
                              parametrizado através da tela CADPAR. PRJ366 (Lombardi).
 
+                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)             
+
+
                 24/04/2018 - Adicionado campo cdcatego na inclusao de nova conta.
                            - Gravar historico de inclusao dos campos cdtipcta,
                              cdsitdct e cdcatego. PRJ366 (Lombardi).
+
+                04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct). 
+                             PRJ366 (Lombardi).		
 
 .............................................................................*/
                                                      
@@ -2707,6 +2714,7 @@ PROCEDURE Altera_Jur PRIVATE :
     DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR h-b1craptfc  AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
 
     DEF BUFFER crabjur FOR crapjur.
 
@@ -2767,52 +2775,26 @@ PROCEDURE Altera_Jur PRIVATE :
             par_nmfansia <> crabjur.nmfansia OR 
             par_cdrmativ <> crabjur.cdrmativ THEN
         	DO:
-        		ContadorDoc10: DO aux_contador = 1 TO 10:
         
-        			FIND FIRST crapdoc WHERE 
-        					   crapdoc.cdcooper = crabjur.cdcooper AND
-        					   crapdoc.nrdconta = crabjur.nrdconta AND
-        					   crapdoc.tpdocmto = 10               AND
-        					   crapdoc.dtmvtolt = par_dtmvtolt     AND
-        					   crapdoc.idseqttl = aux_idseqttl     AND
-                               crapdoc.nrcpfcgc = par_nrcpfcgc
-        					   EXCLUSIVE NO-ERROR.
         
-        			IF  NOT AVAILABLE crapdoc THEN
-        				DO:
-        					IF  LOCKED(crapdoc) THEN
-        						DO:
-        							IF aux_contador = 10 THEN
-        								DO:
-        									ASSIGN par_cdcritic = 341.
-        									LEAVE ContadorDoc10.
-        								END.
-        							ELSE 
-        								DO: 
-        									PAUSE 1 NO-MESSAGE.
-        									NEXT ContadorDoc10.
-        								END.
-        						END.
-        					ELSE        
-        						DO:
-        							CREATE crapdoc.
-        							ASSIGN crapdoc.cdcooper = crabjur.cdcooper
-        								   crapdoc.nrdconta = crabjur.nrdconta
-        								   crapdoc.flgdigit = FALSE
-        								   crapdoc.dtmvtolt = par_dtmvtolt
-        								   crapdoc.tpdocmto = 10
-        								   crapdoc.idseqttl = aux_idseqttl
-                                           crapdoc.nrcpfcgc = par_nrcpfcgc.
-        							VALIDATE crapdoc.
-        						END.
-        				END.
-        			ELSE
-        				DO:
-        					ASSIGN crapdoc.flgdigit = FALSE.
+            IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                RUN sistema/generico/procedures/b1wgen0137.p 
+                PERSISTENT SET h-b1wgen0137.
+              
+            RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                      ( INPUT crabjur.cdcooper,
+                        INPUT crabjur.nrdconta,
+                        INPUT aux_idseqttl,
+                        INPUT par_nrcpfcgc,
+                        INPUT par_dtmvtolt,
+                        INPUT "10", /* CARTAO DE CNPJ */
+                        INPUT par_cdoperad,
+                       OUTPUT par_cdcritic,
+                       OUTPUT par_dscritic).
+
+            IF  VALID-HANDLE(h-b1wgen0137) THEN
+              DELETE OBJECT h-b1wgen0137.
         	
-        					LEAVE ContadorDoc10.
-        				END.
-        		END.
         	END.
 
         IF  par_cdcritic <> 0 OR par_dscritic <> "" THEN
@@ -4440,7 +4422,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,200) 
                        crabass.inconrfb = par_inconrfb 
                        crabass.hrinicad = par_hrinicad 
-                       crabass.cdsitdct = 6  /* Normal S/Talao */
+                       crabass.cdsitdct = 1  /* Em uso */
                        crabass.cdtipcta = INT(crappco.dsconteu)  /* Normal Convenio */
                        /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdopeori = par_cdoperad

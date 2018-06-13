@@ -54,6 +54,9 @@
                24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+                            
+               02/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -286,8 +289,7 @@ DO WHILE TRUE:
                        END.
                   /*** Magui, tarefa 38.488
                   ELSE
-                       IF  (crapass.cdsitdct <> 1 AND   
-                            crapass.cdsitdct <> 6)   AND
+                       IF   crapass.cdsitdct <> 1    AND
                             TRIM(tel_tpvincul) <> "" THEN
                        DO:
                             glb_cdcritic = 64.

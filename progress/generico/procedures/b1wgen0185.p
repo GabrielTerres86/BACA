@@ -43,6 +43,9 @@
               
               05/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+                04/05/2018 - Ajuste para buscar a descricao da situacao de conta do 
+                             oracle. PRJ366 (Lombardi).
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -2063,6 +2066,8 @@ PROCEDURE Gera_Dados_S:
     DEF VAR aux_nmarqimp AS CHAR                                      NO-UNDO.
     DEF VAR aux_nmarqpdf AS CHAR                                      NO-UNDO.
 
+    DEF VAR aux_des_erro AS CHAR                                      NO-UNDO.
+
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -2189,28 +2194,28 @@ PROCEDURE Gera_Dados_S:
 
 	            END.
                 
-	            ASSIGN aux_dssitdct = STRING(crapass.cdsitdct,"9") + " " +
-	            			          IF crapass.cdsitdct = 1 THEN
-	            					     "NORMAL"
-	            					  ELSE
-	            					  IF crapass.cdsitdct = 2 THEN
-	            						 "ENCER.P/ASSOCIADO"
-	            					  ELSE
-	            						 IF crapass.cdsitdct = 3 THEN
-	            						    "ENCER.P/COOP"
-	            					  ELSE
-	            						 IF crapass.cdsitdct = 4 THEN
-	            						    "ENCER.P/DEMISSAO"
-	            					  ELSE
-	            						 IF crapass.cdsitdct = 5 THEN
-	            						    "NAO APROVADA"
-	            					  ELSE
-	            						 IF crapass.cdsitdct = 6 THEN
-	            						    "NORMAL-SEM TL"
-	            					  ELSE
-	            						 IF crapass.cdsitdct = 9 THEN
-	            						    "ENCER.P/OUTRO"
-	            					  ELSE "".
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              
+              RUN STORED-PROCEDURE pc_descricao_situacao_conta
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                                  OUTPUT "",               /* pr_dssituacao */
+                                                  OUTPUT "",               /* pr_des_erro   */
+                                                  OUTPUT "").              /* pr_dscritic   */
+              
+              CLOSE STORED-PROC pc_descricao_situacao_conta
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+              
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+              
+              ASSIGN aux_dssitdct = ""
+                     aux_des_erro = ""
+                     aux_dssitdct = UPPER(pc_descricao_situacao_conta.pr_dssituacao)
+                                    WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+                     aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                                    WHEN pc_descricao_situacao_conta.pr_des_erro <> ?.
+              
+              IF aux_des_erro = "NOK" THEN 
+                  ASSIGN aux_dssitdct = "".
                 
 	            DISPLAY STREAM str_1
 	            	      crapass.cdagenci COLUMN-LABEL "PA"

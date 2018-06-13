@@ -36,10 +36,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                              assim ocorria de ainda nao ter o retorno da transação e acabava
                              pegando da instrução anterior, assim o nrauttit ficava desposiionado.
                              SD722965 (Odirlei-AMcom)
+
+                21/05/2018 - Incluída validação para identificar se o título já foi processado.
+                             Ajuste na gravação do log. Enviar notificação em caso de erro no programa.
+                             Aumentar o prazo para busca dos registros de retorno da Cabine JDNPC.
+                             (INC0013085 - AJFink)
+
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps718';     -- Nome do programa
-  vr_dsarqlog     CONSTANT VARCHAR2(12) := 'crps718.log'; -- Nome do arquivo de log
 
   -- CURSORES 
   -- Buscar as cooperativas para processamento
@@ -55,41 +60,54 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
   
   -- VARIÁVEIS
+  vr_idprglog  tbgen_prglog.idprglog%TYPE := 0;
+  vr_iderro    varchar2(1) := 'N';
   vr_cdcritic           NUMBER;
   vr_dscritic           VARCHAR2(1000);
 
-  vr_flgerlog           BOOLEAN;
   vr_cdcooper           crapcop.cdcooper%TYPE;
   
   -- EXCEPTIONS
   vr_exc_saida          EXCEPTION;               
   
-  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-  PROCEDURE pc_controla_log_batch(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                                  pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+  PROCEDURE pc_controla_log_batch(pr_cdcooper_in   IN crapcop.cdcooper%TYPE
+                                 ,pr_dstiplog      IN VARCHAR2 -- 'I' início; 'F' fim; 'E' erro
+                                 ,pr_dscritic      IN VARCHAR2 DEFAULT NULL
+                                 ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                                 ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0) IS
+    --
+    /*procedure que grava log do programa*/
+    --
+    -- Refeita rotina de log - 10/10/2017 - Ch 758611 
     vr_dscritic_aux VARCHAR2(4000);
+    vr_tpocorrencia tbgen_prglog_ocorrencia.tpocorrencia%type;
   BEGIN
-  
     --> Apenas gerar log se for processo batch/job ou erro  
     IF nvl(pr_nrdconta,0) = 0 OR pr_dstiplog = 'E' THEN
-    
-      vr_dscritic_aux := pr_dscritic;
-      
-      --> Se é erro e possui conta, concatenar o numero da conta no erro
-      IF pr_nrdconta <> 0 THEN
-        vr_dscritic_aux := vr_dscritic_aux||' - Conta: '||pr_nrdconta;
+      --
+      vr_dscritic_aux := pr_dscritic||', cdcooper:'||pr_cdcooper_in||', nrdconta:'||pr_nrdconta;
+      IF pr_dstiplog IN ('O', 'I', 'F') THEN
+        vr_tpocorrencia := 4; 
+      ELSE
+        vr_tpocorrencia := 2;       
       END IF;
-      
       --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
-                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                               ,pr_nomdojob  => vr_cdprogra    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => vr_dscritic_aux    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-  
+      CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E')
+                            ,pr_cdprograma    => vr_cdprogra
+                            ,pr_cdcooper      => pr_cdcooper_in
+                            ,pr_tpexecucao    => 2 --job
+                            ,pr_tpocorrencia  => vr_tpocorrencia
+                            ,pr_cdcriticidade => pr_cdcriticidade
+                            ,pr_cdmensagem    => pr_cdmensagem
+                            ,pr_dsmensagem    => vr_dscritic_aux
+                            ,pr_idprglog      => vr_idprglog
+                            ,pr_nmarqlog      => NULL);
+      --
     END IF;
+    --
+  EXCEPTION  
+    WHEN OTHERS THEN  
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper_in);   
   END pc_controla_log_batch;
   
   PROCEDURE pc_trata_retorno_erro ( pr_idtabcob       IN  ROWID                   --> rowid crapcob 
@@ -134,7 +152,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     
      ---------->>> VARIAVEIS <<<-----------   
     vr_dscritic   VARCHAR2(2000);   
-    vr_dslogmes crapprm.dsvlrprm%TYPE;   
     vr_des_erro   VARCHAR2(100);    
        
   BEGIN
@@ -322,6 +339,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
         
     EXCEPTION
       WHEN OTHERS THEN
+        vr_iderro := 'S';--ocorreu erro no processamento
         vr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
@@ -355,9 +373,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
   
   EXCEPTION
     WHEN vr_exc_erro THEN
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_dscritic := 'Não foi possivel processar retorno de inclusao: '||SQLERRM;  
   END pc_ret_inclusao_tit_npc;
   
@@ -406,12 +426,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     vr_des_erro   VARCHAR2(200);
     vr_exc_erro   EXCEPTION;
     
-    vr_insitpro   crapcob.insitpro%TYPE;
-    vr_inenvcip   crapcob.inenvcip%TYPE;
-    vr_flgcbdda   crapcob.flgcbdda%TYPE;
-    vr_dhenvcip   crapcob.dhenvcip%TYPE;
     vr_dsmensag   crapcol.dslogtit%TYPE;
-    
     
   BEGIN
   
@@ -494,9 +509,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
   
   EXCEPTION
     WHEN vr_exc_erro THEN
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_dscritic := 'Não foi possivel processar retorno de alteracao: '||SQLERRM;  
   END pc_ret_alteracao_tit_npc;
   
@@ -545,12 +562,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     vr_des_erro   VARCHAR2(200);
     vr_exc_erro   EXCEPTION;
     
-    vr_insitpro   crapcob.insitpro%TYPE;
-    vr_inenvcip   crapcob.inenvcip%TYPE;
-    vr_flgcbdda   crapcob.flgcbdda%TYPE;
-    vr_dhenvcip   crapcob.dhenvcip%TYPE;
     vr_dsmensag   crapcol.dslogtit%TYPE;
-    
     
   BEGIN
   
@@ -635,9 +647,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
   
   EXCEPTION
     WHEN vr_exc_erro THEN
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_dscritic := 'Não foi possivel processar retorno de baixa: '||SQLERRM;  
   END pc_ret_baixa_tit_npc;
   
@@ -695,9 +709,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
          AND dat.cdcooper = cop.cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;    
       
+    cursor cr_titulo(pr_crapcob_rowid in rowid) is
+      select cob.idtitleg
+            ,cob.inenvcip
+            ,cob.ininscip
+            ,cob.idopeleg
+            ,ret.cdocorre
+      from crapcob cob
+          ,crapret ret
+          ,crapcco cco
+      where cob.idtitleg > 0
+        and ((cob.inenvcip = 2 and cob.dtmvtolt between (rw_crapcop.dtmvtoan-2) and rw_crapcop.dtmvtolt) or
+             (cob.ininscip = 1 and trunc(cob.dhinscip) between (rw_crapcop.dtmvtoan-2) and rw_crapcop.dtmvtolt))
+        and cob.nrdocmto = ret.nrdocmto
+        and cob.nrdconta = ret.nrdconta
+        and cob.nrcnvcob = ret.nrcnvcob
+        and cob.nrdctabb = cco.nrdctabb
+        and cob.cdbandoc = cco.cddbanco
+        and cob.cdcooper = ret.cdcooper
+        --
+        and ret.dtocorre between (rw_crapcop.dtmvtoan-2) and rw_crapcop.dtmvtolt
+        and ret.nrcnvcob = cco.nrconven
+        and ret.cdcooper = cco.cdcooper
+        --
+        and cco.cddbanco = 85
+        and cco.cdcooper >= 1
+        and cob.rowid = pr_crapcob_rowid;
+    rw_titulo cr_titulo%rowtype;
+
     --Variaveis Locais
-    vr_index     INTEGER;
-    vr_index_ret INTEGER;
+    vr_idregprc  number(1);
+    vr_crapcob_rowid rowid;
+    vr_execcomm  number(1);
     --Variaveis Erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
@@ -711,40 +754,53 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     CLOSE cr_crapcop;      
           
       FOR rw IN (
-
-        SELECT 
-          cob.idtitleg,
-          cob.inenvcip,
-          cob.ininscip,
-          cob.idopeleg,
-          ret.cdocorre
-          FROM crapret ret, 
-               crapcob cob, crapcco cco --, crapceb ceb 
-        WHERE cco.cdcooper > 0
-          AND cco.cddbanco = 85
-          AND ret.cdcooper = cco.cdcooper
-          AND ret.nrcnvcob = cco.nrconven
-          AND ret.dtocorre BETWEEN rw_crapcop.dtmvtoan AND rw_crapcop.dtmvtolt
-          AND cob.cdcooper = ret.cdcooper
-          AND cob.nrcnvcob = ret.nrcnvcob
-          AND cob.nrdconta = ret.nrdconta
-          AND cob.nrdctabb = cco.nrdctabb
-          AND cob.nrdocmto = ret.nrdocmto
-          AND cob.cdbandoc = cco.cddbanco
-          AND cob.idtitleg > 0
-          AND ((cob.inenvcip = 2 AND cob.dtmvtolt BETWEEN rw_crapcop.dtmvtoan AND rw_crapcop.dtmvtolt) OR
-               (cob.ininscip = 1 AND trunc(cob.dhinscip) BETWEEN rw_crapcop.dtmvtoan AND rw_crapcop.dtmvtolt))       
-          AND cob.cdbandoc = 85
-      ) LOOP
-    
+                  select cob.rowid crapcob_rowid
+                  from crapcob cob
+                      ,crapret ret
+                      ,crapcco cco
+                  where cob.idtitleg > 0
+                    and ((cob.inenvcip = 2 and cob.dtmvtolt between (rw_crapcop.dtmvtoan-2) and rw_crapcop.dtmvtolt) or
+                         (cob.ininscip = 1 and trunc(cob.dhinscip) between (rw_crapcop.dtmvtoan-2) and rw_crapcop.dtmvtolt))
+                    and cob.nrdocmto = ret.nrdocmto
+                    and cob.nrdconta = ret.nrdconta
+                    and cob.nrcnvcob = ret.nrcnvcob
+                    and cob.nrdctabb = cco.nrdctabb
+                    and cob.cdbandoc = cco.cddbanco
+                    and cob.cdcooper = ret.cdcooper
+                    --
+                    and ret.dtocorre between (rw_crapcop.dtmvtoan-2) and rw_crapcop.dtmvtolt
+                    and ret.nrcnvcob = cco.nrconven
+                    and ret.cdcooper = cco.cdcooper
+                    --
+                    and cco.cddbanco = 85
+                    and cco.cdcooper >= 1
+                )
+      LOOP
+        --
+        vr_idregprc := 0; --marcar o registro como não processado
+        vr_execcomm := 0; --marcar o registro como não deve haver commit;
+        vr_crapcob_rowid := rw.crapcob_rowid;
+        --
+        open cr_titulo(pr_crapcob_rowid => vr_crapcob_rowid);
+        fetch cr_titulo into rw_titulo;
+        --se o cursor não retornou nada é porque o registro já foi processado por outro job
+        if cr_titulo%notfound then
+          --
+          vr_idregprc := 1; --marcar o registro como processado
+          --
+        end if;
+        close cr_titulo;
+        --
+        if vr_idregprc = 0 then
         --> buscar retornos disponibilizados
         FOR rw_retnpc IN cr_retnpc(pr_cdlegado => 'LEG'
                                   ,pr_nrispbif => '5463212'
-                                  ,pr_idtitleg => rw.idtitleg
-                                  ,pr_idopeleg => rw.idopeleg) LOOP
-                      
+                                    ,pr_idtitleg => rw_titulo.idtitleg
+                                    ,pr_idopeleg => rw_titulo.idopeleg) LOOP
 
-          IF rw_retnpc.tpoperac = 'RI' AND rw.inenvcip = 2 THEN --> Retorno Inclusao          
+            vr_execcomm := 1; --marcar o registro como não haver commit;
+
+            IF rw_retnpc.tpoperac = 'RI' AND rw_titulo.inenvcip = 2 THEN --> Retorno Inclusao          
               --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
               pc_ret_inclusao_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                        ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
@@ -755,7 +811,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                                        ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
                                        ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
                                        
-            ELSIF rw_retnpc.tpoperac = 'RA' AND rw.ininscip = 1 THEN --> Retorno Alteração
+              ELSIF rw_retnpc.tpoperac = 'RA' AND rw_titulo.ininscip = 1 THEN --> Retorno Alteração
               pc_ret_alteracao_tit_npc (pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                        ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
                                        ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
@@ -765,7 +821,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                                        ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
                                        ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
             
-            ELSIF rw_retnpc.tpoperac = 'RB' AND rw.ininscip = 1 THEN --> Retorno Baixa
+              ELSIF rw_retnpc.tpoperac = 'RB' AND rw_titulo.ininscip = 1 THEN --> Retorno Baixa
                pc_ret_baixa_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                      ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
                                      ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
@@ -797,30 +853,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
             vr_dscritic := 'Erro ao processar retorno idtitleg: '||rw_retnpc.idtitleg||' -> '||
                            vr_dscritic;
                       
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 2, 
-                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                      ' - PC_CRPS718 -> ' || vr_dscritic,
-                                       pr_nmarqlog     => vr_dsarqlog);
+              pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper
+                                   ,pr_dstiplog      => 'E'
+                                   ,pr_dscritic      => vr_dscritic
+                                   ,pr_cdcriticidade => 1
+                                   ,pr_cdmensagem    => 0);
              
           END IF; 
                   
         END LOOP; -- loop retnpc
         
+          if vr_execcomm = 1 then
         COMMIT;
+          end if;
+
+        end if;
       
       END LOOP; -- loop rw 
       
-    
   EXCEPTION
     
     WHEN vr_exc_erro THEN     
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       
     WHEN OTHERS THEN     
+    begin
+      --
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
+      vr_dscritic := 'pc_retorno_operacao_tit_npc:'
+                   ||dbms_utility.format_error_backtrace
+            ||' - '||dbms_utility.format_error_stack;
+      --
+      pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper
+                           ,pr_dstiplog      => 'E'
+                           ,pr_dscritic      => vr_dscritic
+                           ,pr_cdcriticidade => 1
+                           ,pr_cdmensagem    => 0);
+      --
       pr_dscritic := vr_dscritic;      
+      --
+    end;
   
   END pc_retorno_operacao_tit_NPC;  
   
@@ -845,7 +920,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     --> Buscar retornos 
     CURSOR cr_retnpc (pr_cdlegado IN tbjdnpcdstleg_jd2lg_optit."CdLeg"@jdnpcbisql%type
                      ,pr_nrispbif IN tbjdnpcdstleg_jd2lg_optit."ISPBAdministrado"@jdnpcbisql%TYPE
-                     ,pr_idtitleg IN tbjdnpcdstleg_jd2lg_optit."IdTituloLeg"@jdnpcbisql%TYPE) IS
+                     ,pr_idtitleg IN tbjdnpcdstleg_jd2lg_optit."IdTituloLeg"@jdnpcbisql%TYPE
+                     ,pr_idopeleg IN tbjdnpcdstleg_jd2lg_optit."IdOpLeg"@jdnpcbisql%TYPE) IS
       SELECT tit."ISPBAdministrado" AS nrispbif
             ,tit."TpOpJD"           AS tpoperac
             ,tit."IdOpJD"           AS idoperac
@@ -860,26 +936,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
        WHERE tit."CdLeg"            = pr_cdlegado
          AND tit."ISPBAdministrado" = pr_nrispbif
          AND tit."IdTituloLeg"      = pr_idtitleg
+         AND tit."IdOpLeg"          = pr_idopeleg
          AND tit."TpOpJD"           IN ('RI','RA','RB')
        ORDER BY tit."DtHrOpJD" ASC;
     rw_retnpc cr_retnpc%ROWTYPE;
       
-    CURSOR cr_crapcop IS
-      SELECT MIN(dat.dtmvtoan) dtmvtoan,
-             MAX(dat.dtmvtolt) dtmvtolt
-        FROM crapcop cop,
-             crapdat dat
-       WHERE cop.cdcooper > 0
-         AND cop.cdcooper <> 3
-         AND cop.flgativo = 1
-         AND dat.cdcooper = cop.cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;    
+    cursor cr_titulo(pr_crapcob_rowid in rowid
+                    ,pr_vltitulo_cr   in crapcob.vltitulo%type) is
+      select cob.idtitleg
+            ,cob.inenvcip
+            ,cob.ininscip
+            ,cob.idopeleg
+      from crapcco cco
+          ,crapcob cob
+      where cco.cddbanco = 85
+        and cco.cddbanco = cob.cdbandoc
+        and cco.nrdctabb = cob.nrdctabb
+        and cco.nrconven = cob.nrcnvcob
+        and cco.cdcooper = cob.cdcooper
+        --
+        and cob.idtitleg > 0
+        and cob.cdbandoc = 85
+        and cob.vltitulo >= pr_vltitulo_cr
+        and cob.dhenvcip >= trunc(sysdate)-7
+        and cob.inregcip in (0,1,2)
+        and cob.inenvcip = 2
+        and cob.cdcooper >= 1
+        and cob.rowid = pr_crapcob_rowid;
+    rw_titulo cr_titulo%rowtype;
       
     --Variaveis Locais
-    vr_index     INTEGER;
-    vr_index_ret INTEGER;
-    vr_dhenvini  DATE := to_date((to_char(SYSDATE, 'DD/MM/RRRR') || ' 00:00:01'),'DD/MM/RRRR HH24:MI:SS');
-    vr_dhenvfin  DATE := to_date((to_char(SYSDATE, 'DD/MM/RRRR') || ' 23:59:59'),'DD/MM/RRRR HH24:MI:SS');
+    vr_idregprc  number(1);
+    vr_crapcob_rowid rowid;
+    vr_execcomm  number(1);
     --Variaveis Erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
@@ -903,42 +992,54 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     IF vr_tab_campos.count > 0 THEN
 
       --> Verificar se esta no dia da carga inicial da faixa de rollout
-      IF to_date(vr_tab_campos(2),'DD/MM/RRRR') = trunc(SYSDATE) THEN  
-    
-        OPEN cr_crapcop;
-        FETCH cr_crapcop INTO rw_crapcop;
-        CLOSE cr_crapcop;      
+      IF  trunc(SYSDATE) >= to_date(vr_tab_campos(2),'DD/MM/RRRR')
+      AND trunc(SYSDATE) <  to_date(vr_tab_campos(2),'DD/MM/RRRR')+7 THEN
               
         FOR rw IN (
-
-          SELECT 
-            cob.idtitleg,
-            cob.inenvcip,
-            cob.ininscip,
-            cob.idopeleg
-            FROM crapcob cob, crapcco cco --, crapceb ceb 
-          WHERE cco.cdcooper > 0
-            AND cco.cddbanco = 85
-            AND cob.cdcooper = cco.cdcooper
-            AND cob.nrcnvcob = cco.nrconven
-            AND cob.nrdctabb = cco.nrdctabb
-            AND cob.cdbandoc = cco.cddbanco
-            AND cob.idtitleg > 0
-            AND cob.inenvcip = 2
-            AND cob.inregcip IN (0,1,2)
-            AND cob.dhenvcip BETWEEN vr_dhenvini AND vr_dhenvfin
-            AND cob.cdbandoc = 85
-            AND cob.vltitulo >= vr_tab_campos(3)
-            
-        ) LOOP
-        
+                    select cob.rowid crapcob_rowid
+                    from crapcco cco
+                        ,crapcob cob
+                    where cco.cddbanco = 85
+                      and cco.cddbanco = cob.cdbandoc
+                      and cco.nrdctabb = cob.nrdctabb
+                      and cco.nrconven = cob.nrcnvcob
+                      and cco.cdcooper = cob.cdcooper
+                      --
+                      and cob.idtitleg > 0
+                      and cob.cdbandoc = 85
+                      and cob.vltitulo >= to_number(vr_tab_campos(3),'999999d99','NLS_NUMERIC_CHARACTERS = ''.,''')
+                      and cob.dhenvcip >= trunc(sysdate)-7
+                      and cob.inregcip in (0,1,2)
+                      and cob.inenvcip = 2
+                      and cob.cdcooper >= 1
+                  )
+        LOOP
+          --
+          vr_idregprc := 0; --marcar o registro como não processado
+          vr_execcomm := 0; --marcar o registro como não deve haver commit;
+          vr_crapcob_rowid := rw.crapcob_rowid;
+          --
+          open cr_titulo(pr_crapcob_rowid => vr_crapcob_rowid
+                        ,pr_vltitulo_cr => to_number(vr_tab_campos(3),'999999d99','NLS_NUMERIC_CHARACTERS = ''.,'''));
+          fetch cr_titulo into rw_titulo;
+          --se o cursor não retornou nada é porque o registro já foi processado por outro job
+          if cr_titulo%notfound then
+            --
+            vr_idregprc := 1; --marcar o registro como processado
+            --
+          end if;
+          close cr_titulo;
+          --
+          if vr_idregprc = 0 then
           --> buscar retornos disponibilizados
           FOR rw_retnpc IN cr_retnpc(pr_cdlegado => 'LEG'
                                     ,pr_nrispbif => '5463212'
-                                    ,pr_idtitleg => rw.idtitleg ) LOOP
-                          
+                                      ,pr_idtitleg => rw_titulo.idtitleg
+                                      ,pr_idopeleg => rw_titulo.idopeleg) LOOP
 
-            IF rw_retnpc.tpoperac = 'RI' AND rw.inenvcip = 2 THEN --> Retorno Inclusao          
+              vr_execcomm := 1; --marcar o registro como deve haver commit;
+
+              IF rw_retnpc.tpoperac = 'RI' AND rw_titulo.inenvcip = 2 THEN --> Retorno Inclusao          
                 --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
                 pc_ret_inclusao_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                          ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
@@ -949,7 +1050,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                                          ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
                                          ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
                                            
-              ELSIF rw_retnpc.tpoperac = 'RA' AND rw.ininscip = 1 THEN --> Retorno Alteração
+                ELSIF rw_retnpc.tpoperac = 'RA' AND rw_titulo.ininscip = 1 THEN --> Retorno Alteração
                 pc_ret_alteracao_tit_npc (pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                          ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
                                          ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
@@ -959,7 +1060,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                                          ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
                                          ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
                 
-              ELSIF rw_retnpc.tpoperac = 'RB' AND rw.ininscip = 1 THEN --> Retorno Baixa
+                ELSIF rw_retnpc.tpoperac = 'RB' AND rw_titulo.ininscip = 1 THEN --> Retorno Baixa
                  pc_ret_baixa_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                        ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
                                        ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
@@ -991,17 +1092,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
               vr_dscritic := 'Erro ao processar retorno idtitleg: '||rw_retnpc.idtitleg||' -> '||
                              vr_dscritic;
                           
-              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                         pr_ind_tipo_log => 2, 
-                                         pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                        ' - PC_CRPS718 -> ' || vr_dscritic,
-                                         pr_nmarqlog     => vr_dsarqlog);
+                pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper
+                                     ,pr_dstiplog      => 'E'
+                                     ,pr_dscritic      => vr_dscritic
+                                     ,pr_cdcriticidade => 1
+                                     ,pr_cdmensagem    => 0);
                  
             END IF; 
                       
           END LOOP; -- loop retnpc
             
+            if vr_execcomm = 1 then
           COMMIT;
+            end if;
+
+          end if;
           
         END LOOP; -- loop rw 
           
@@ -1012,15 +1117,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
   EXCEPTION
     
     WHEN vr_exc_erro THEN     
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       
     WHEN OTHERS THEN     
+    begin
+      --
+      vr_iderro := 'S';--ocorreu erro no processamento
       pr_cdcritic := vr_cdcritic;
+      vr_dscritic := 'pc_retorno_carga_tit_npc:'
+                   ||dbms_utility.format_error_backtrace
+            ||' - '||dbms_utility.format_error_stack;
+      --
+      pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper
+                           ,pr_dstiplog      => 'E'
+                           ,pr_dscritic      => vr_dscritic
+                           ,pr_cdcriticidade => 1
+                           ,pr_cdmensagem    => 0);
+      --
       pr_dscritic := vr_dscritic;      
-  
+      --
+    end;
   END pc_retorno_carga_tit_NPC;  
-  
   
   /**********************************************************/
    
@@ -1030,8 +1149,6 @@ BEGIN
   gene0001.pc_informa_acesso(pr_module => 'PC_'||UPPER(vr_cdprogra),
                              pr_action => vr_cdprogra);
   
-  
- 
   -- Percorrer as cooperativas
   FOR rw_crapcop IN cr_crapcop LOOP
   
@@ -1051,7 +1168,7 @@ BEGIN
     CLOSE BTCH0001.cr_crapdat;
         
     -- Log de início da execução
-    pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
+    pc_controla_log_batch(pr_cdcooper_in  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'I');
     
     --> variavel apenas para controle do log, caso seja abortado o programa
@@ -1082,11 +1199,20 @@ BEGIN
     COMMIT;                                              
     
     -- Log de fim da execução
-    pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
-                          pr_dstiplog  => 'F');    
+    pc_controla_log_batch(pr_cdcooper_in => rw_crapcop.cdcooper
+                         ,pr_dstiplog => 'F');
                                                   
   END LOOP; -- Fim loop cooperativas   
   
+  if vr_iderro = 'S' then
+    --
+    cobr0009.pc_notifica_cobranca(pr_dsassunt => 'CRPS718 - Falha ao receber movimento da cobranca da JD'
+                                 ,pr_dsmensag => 'Ocorreu falhar ao receber movimento da cobranca bancaria da Cabine JD.'
+                                               ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog||'). (PC_CRPS718(1))'
+                                 ,pr_idprglog => vr_idprglog);
+    --
+  end if;
+
 EXCEPTION
   WHEN vr_exc_saida THEN
       
@@ -1098,27 +1224,57 @@ EXCEPTION
     -- Devolvemos código e critica encontradas
     pr_cdcritic := nvl(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
-    
-    -- Log de erro início da execução
-    pc_controla_log_batch(pr_cdcooper  => vr_cdcooper,
-                          pr_dstiplog  => 'F',
-                          pr_dscritic  => pr_dscritic);
-    
-    
+    --
     -- Efetuar rollback
     ROLLBACK;
+    --
+    if vr_iderro = 'S' then
+      --
+      cobr0009.pc_notifica_cobranca(pr_dsassunt => 'CRPS718 - Falha ao receber movimento da cobranca da JD'
+                                   ,pr_dsmensag => 'Ocorreu falhar ao receber movimento da cobranca bancaria da Cabine JD.'
+                                                 ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog||'). (PC_CRPS718(2))'
+                                   ,pr_idprglog => vr_idprglog);
+      --
+      COMMIT;
+      --
+    end if;
+
+    -- Log de erro início da execução
+    pc_controla_log_batch(pr_cdcooper_in  => vr_cdcooper,
+                          pr_dstiplog  => 'F');
+
   WHEN OTHERS THEN
       
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
-    pr_dscritic := SQLERRM;
-    
-    -- Log de erro início da execução
-    pc_controla_log_batch(pr_cdcooper  => vr_cdcooper,
-                          pr_dstiplog  => 'F',
-                          pr_dscritic  => pr_dscritic);
-    
+    vr_dscritic := 'pc_crps718 geral:'
+                 ||dbms_utility.format_error_backtrace
+          ||' - '||dbms_utility.format_error_stack;
+    --
     -- Efetuar rollback
     ROLLBACK;
+    --
+    pc_controla_log_batch(pr_cdcooper_in   => vr_cdcooper
+                         ,pr_dstiplog      => 'E'
+                         ,pr_dscritic      => vr_dscritic
+                         ,pr_cdcriticidade => 1
+                         ,pr_cdmensagem    => 0);
+
+    if vr_iderro = 'S' then
+      --
+      cobr0009.pc_notifica_cobranca(pr_dsassunt => 'CRPS718 - Falha ao receber movimento da cobranca da JD'
+                                   ,pr_dsmensag => 'Ocorreu falhar ao receber movimento da cobranca bancaria da Cabine JD.'
+                                                 ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog||'). (PC_CRPS718(3))'
+                                   ,pr_idprglog => vr_idprglog);
+      --
+      COMMIT;
+      --
+    end if;
+
+    pr_dscritic := vr_dscritic;
+
+    -- Log de erro início da execução
+    pc_controla_log_batch(pr_cdcooper_in  => vr_cdcooper,
+                          pr_dstiplog  => 'F');
 END pc_crps718;
 /

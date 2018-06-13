@@ -235,12 +235,14 @@ BEGIN
 
                  21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                               (Ana - Envolti - Chamado 746134)
-														   
+
                  18/10/2017 - Ajustar para não verificar mais os consorcios nesta rotina
                               e sim no crps663 (Lucas Ranghetti #739738) 
 
                  16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
 							  (Mauricio - Mouts)
+
+                 30/04/2018 - Alterados codigos de situacao "rw_crapass.cdsitdct". PRJ366 (Lombardi).
 
   ............................................................................................*/
   
@@ -1220,7 +1222,7 @@ BEGIN
       vr_nrdolot1 := rw_craplot.nrdolote;
     END IF;
 
-	  -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+	-- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
@@ -1242,10 +1244,10 @@ BEGIN
       vr_auxcdcri := 0;
       vr_nrdolote := vr_nrdolot1;
       vr_cdcooper := pr_cdcooper;
-     vr_cdagenci := rw_craplau.cdagenci;
+      vr_cdagenci := rw_craplau.cdagenci;
       vr_nrdconta := rw_craplau.nrdconta;
 
-	    -- Condicao para verificar se permite incluir as linhas parametrizadas
+	  -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || vr_nrdconta || ',') > 0 THEN
         IF rw_craplau.cdhistor = 38 THEN
 		      CONTINUE;        
@@ -1528,10 +1530,10 @@ BEGIN
 
       -- ATRIBUICAO DE NUMERO DE DOCUMENTO
       vr_nrdocmto := rw_craplau.nrdocmto;
-
+      
       -- TRATAMENTO DÉBITO FÁCIL
       IF vr_cdcritic = 0 AND rw_craplau.flgblqdb = 1 THEN
-
+        
         -- GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS
         CONV0001.pc_gerandb(pr_cdcooper => vr_cdcooper         -- CÓDIGO DA COOPERATIVA
                              ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
@@ -1624,7 +1626,7 @@ BEGIN
       END IF;
 
       -- VERIFICA SE CRITICA NÃO EXISTE E SITUACAO DA CONTA
-      IF vr_cdcritic = 0 AND rw_crapass.cdsitdct IN (2,3,9) THEN
+      IF vr_cdcritic = 0 AND rw_crapass.cdsitdct IN (2,3,4) THEN
 
         vr_cdcritic := 723;                                                   -- CONTA ENCERRADA
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
@@ -2099,7 +2101,7 @@ BEGIN
       --Geração de log de erro - Chamado 709894
       vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                              ' --> ' || 'ERRO: ' ||vr_dscritic ||
-                                                   '. Cdcooper=' || pr_cdcooper ||
+                             '. Cdcooper=' || pr_cdcooper ||
                              ','||vr_dsparam;
 
       --Geração de log de erro - Chamado 709894

@@ -209,6 +209,10 @@
 				15/02/2018 - Ajustado problema que não deixava a tela de poderes abrir pois
 							 havia um FIND retorando mais de um registro. Para solucionar
 							 fiz o filtro com a chave correta. (SD 841137 - Kelvin).
+
+                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)                          
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -3209,6 +3213,8 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
+    
     DEF VAR aux_dsprofan AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgfirst AS LOG                                     NO-UNDO.
     DEF VAR aux_flgtroca AS LOG                                     NO-UNDO.
@@ -3294,158 +3300,27 @@ PROCEDURE Grava_Dados:
 
     IF par_cddopcao = "I" THEN
        DO:  
-           ContadorDoc9: DO TRANSACTION ON ENDKEY UNDO ContadorDoc9, LEAVE ContadorDoc9
-                           ON ERROR  UNDO ContadorDoc9, LEAVE ContadorDoc9
-                           ON STOP   UNDO ContadorDoc9, LEAVE ContadorDoc9: DO aux_contador = 1 TO 10:
     
-                                FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                   crapdoc.nrdconta = par_nrdconta AND
-                                                   crapdoc.tpdocmto = 9            AND
-                                                   crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                   crapdoc.idseqttl = par_idseqttl AND
-                                                   crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+           IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+               RUN sistema/generico/procedures/b1wgen0137.p 
+               PERSISTENT SET h-b1wgen0137.
                 
-                                IF NOT AVAILABLE crapdoc THEN
-                                    DO:
-                                        IF LOCKED(crapdoc) THEN
-                                            DO:
-                                                IF aux_contador = 10 THEN
-                                                    DO:
-                                                        ASSIGN aux_cdcritic = 341.
-                                                        LEAVE ContadorDoc9.
-                                                    END.
-                                                ELSE 
-                                                    DO: 
-                                                        PAUSE 1 NO-MESSAGE.
-                                                        NEXT.
-                                                    END.
-                                            END.
-                                        ELSE
-                                            DO: 
-                                                CREATE crapdoc.
-                                                ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                       crapdoc.nrdconta = par_nrdconta
-                                                       crapdoc.flgdigit = FALSE
-                                                       crapdoc.dtmvtolt = par_dtmvtolt
-                                                       crapdoc.tpdocmto = 9
-                                                       crapdoc.idseqttl = par_idseqttl
-                                                       crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                                VALIDATE crapdoc.        
-                                                LEAVE ContadorDoc9.
-                                            END.
-                                    END.
-                                ELSE
-                                    DO:
-                                        ASSIGN crapdoc.flgdigit = FALSE
-                                               crapdoc.dtmvtolt = par_dtmvtolt.
+           RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                    ( INPUT par_cdcooper,
+                      INPUT par_nrdconta,
+                      INPUT par_idseqttl,
+                      INPUT aux_nrcpfcgc,
+                      INPUT par_dtmvtolt,
+                      /* 9 - DOCUMENTO DE IDENTIFICAÇAO - PROC
+                         6 - CARTAO DE ASSINATURA
+                         7 - FICHA CADASTRAL */
+                      INPUT "9;6;7", 
+                      INPUT par_cdoperad,
+                     OUTPUT aux_cdcritic,
+                     OUTPUT aux_dscritic).
                 
-                                        LEAVE ContadorDoc9.
-                                    END.
-                            END.
-                        END.
-
-            ContadorDoc6: DO TRANSACTION ON ENDKEY UNDO ContadorDoc6, LEAVE ContadorDoc6
-                           ON ERROR  UNDO ContadorDoc6, LEAVE ContadorDoc6
-                           ON STOP   UNDO ContadorDoc6, LEAVE ContadorDoc6: DO aux_contador = 1 TO 10:
-    
-                            FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                               crapdoc.nrdconta = par_nrdconta AND
-                                               crapdoc.tpdocmto = 6            AND
-                                               crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl AND 
-                                               crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            
-                            IF NOT AVAILABLE crapdoc THEN
-                                DO:
-                                    IF LOCKED(crapdoc) THEN
-                                        DO:
-                                            IF aux_contador = 10 THEN
-                                                DO:
-                                                    ASSIGN aux_cdcritic = 341.
-                                                    LEAVE ContadorDoc6.
-                                                END.
-                                            ELSE 
-                                                DO: 
-                                                    PAUSE 1 NO-MESSAGE.
-                                                    NEXT.
-                                                END.
-                                        END.
-                                    ELSE
-                                        DO: 
-                                            CREATE crapdoc.
-                                            ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                   crapdoc.nrdconta = par_nrdconta
-                                                   crapdoc.flgdigit = FALSE
-                                                   crapdoc.dtmvtolt = par_dtmvtolt
-                                                   crapdoc.tpdocmto = 6
-                                                   crapdoc.idseqttl = par_idseqttl
-                                                   crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                            VALIDATE crapdoc.        
-                                            LEAVE ContadorDoc6.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
-                                    ASSIGN crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt.
-            
-                                    LEAVE ContadorDoc6.
-                                END.
-                        END.
-                    END.
-
-           ContadorDoc7: DO TRANSACTION ON ENDKEY UNDO ContadorDoc7, LEAVE ContadorDoc7
-                           ON ERROR  UNDO ContadorDoc7, LEAVE ContadorDoc7
-                           ON STOP   UNDO ContadorDoc7, LEAVE ContadorDoc7: DO aux_contador = 1 TO 10:
-    
-                            FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                               crapdoc.nrdconta = par_nrdconta AND
-                                               crapdoc.tpdocmto = 7            AND
-                                               crapdoc.dtmvtolt = par_dtmvtolt AND
-                                               crapdoc.idseqttl = par_idseqttl AND 
-                                               crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            
-                            IF NOT AVAILABLE crapdoc THEN
-                                DO:
-                                    IF LOCKED(crapdoc) THEN
-                                        DO:
-                                            IF aux_contador = 10 THEN
-                                                DO:
-                                                    ASSIGN aux_cdcritic = 341.
-                                                    LEAVE ContadorDoc7.
-                                                END.
-                                            ELSE 
-                                                DO: 
-                                                    PAUSE 1 NO-MESSAGE.
-                                                    NEXT.
-                                                END.
-                                        END.
-                                    ELSE
-                                        DO: 
-                                            CREATE crapdoc.
-                                            ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                   crapdoc.nrdconta = par_nrdconta
-                                                   crapdoc.flgdigit = FALSE
-                                                   crapdoc.dtmvtolt = par_dtmvtolt
-                                                   crapdoc.tpdocmto = 7
-                                                   crapdoc.idseqttl = par_idseqttl
-                                                   crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                            VALIDATE crapdoc.        
-                                            LEAVE ContadorDoc7.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
-                                    ASSIGN crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt.
-            
-                                    LEAVE ContadorDoc7.
-                                END.
-                        END.
-                    END.
+           IF  VALID-HANDLE(h-b1wgen0137) THEN
+             DELETE OBJECT h-b1wgen0137.            
 
            IF par_nmrotina = "Representante/Procurador" THEN
                 ASSIGN aux_msgdolog = "Incluiu na conta " + 
@@ -3508,56 +3383,25 @@ PROCEDURE Grava_Dados:
                           par_nrdocava <> b-crapavt.nrdocava OR
                           aux_nrcpfcto <> b-crapavt.nrcpfcgc THEN
                           DO:    
-                               ContadorDoc9: DO TRANSACTION ON ENDKEY UNDO ContadorDoc9, LEAVE ContadorDoc9
-                               ON ERROR  UNDO ContadorDoc9, LEAVE ContadorDoc9
-                               ON STOP   UNDO ContadorDoc9, LEAVE ContadorDoc9: DO aux_contador = 1 TO 10:
         
-                                    FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                       crapdoc.nrdconta = par_nrdconta AND
-                                                       crapdoc.tpdocmto = 9            AND
-                                                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                       crapdoc.idseqttl = par_idseqttl AND 
-                                                       crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                               IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                                   RUN sistema/generico/procedures/b1wgen0137.p 
+                                   PERSISTENT SET h-b1wgen0137.
                     
-                                    IF NOT AVAILABLE crapdoc THEN
-                                        DO:
-                                            IF LOCKED(crapdoc) THEN
-                                                DO:
-                                                    IF aux_contador = 10 THEN
-                                                        DO:
-                                                            ASSIGN aux_cdcritic = 341.
-                                                            LEAVE ContadorDoc9.
-                                                        END.
-                                                    ELSE 
-                                                        DO: 
-                                                            PAUSE 1 NO-MESSAGE.
-                                                            NEXT.
-                                                        END.
-                                                END.
-                                            ELSE
-                                                DO: 
-                                                    CREATE crapdoc.
-                                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                           crapdoc.nrdconta = par_nrdconta
-                                                           crapdoc.flgdigit = FALSE
-                                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                                           crapdoc.tpdocmto = 9
-                                                           crapdoc.idseqttl = par_idseqttl
-                                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                                    VALIDATE crapdoc.        
-                                                    LEAVE ContadorDoc9.
-                                                END.
-                                        END.
-                                    ELSE
-                                        DO:
-                                            ASSIGN crapdoc.flgdigit = FALSE
-                                                   crapdoc.dtmvtolt = par_dtmvtolt.
+                               RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                        ( INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_idseqttl,
+                                          INPUT aux_nrcpfcgc,
+                                          INPUT par_dtmvtolt,
+                                          /* 9 - DOCUMENTO DE IDENTIFICAÇAO - PROC */
+                                          INPUT "9", 
+                                          INPUT par_cdoperad,
+                                         OUTPUT aux_cdcritic,
+                                         OUTPUT aux_dscritic).
                     
-                                            LEAVE ContadorDoc9.
-                                        END.
-                                END.
-                            END.
+                               IF  VALID-HANDLE(h-b1wgen0137) THEN
+                                 DELETE OBJECT h-b1wgen0137.                              
 
                             ASSIGN aux_msgdolog = aux_msgdolog + 
                                                    ", Vigencia de "           +
@@ -3666,107 +3510,27 @@ PROCEDURE Grava_Dados:
         
         IF crapass.inpessoa = 1 THEN
         DO:
-            ContadorDoc47: DO TRANSACTION ON ENDKEY UNDO ContadorDoc47, LEAVE ContadorDoc47
-                            ON ERROR  UNDO ContadorDoc47, LEAVE ContadorDoc47
-                            ON STOP   UNDO ContadorDoc47, LEAVE ContadorDoc47: DO aux_contador = 1 TO 10:
       
-                             FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                crapdoc.nrdconta = par_nrdconta AND
-                                                crapdoc.tpdocmto = 47           AND
-                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                crapdoc.idseqttl = par_idseqttl AND 
-                                                crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+               RUN sistema/generico/procedures/b1wgen0137.p 
+               PERSISTENT SET h-b1wgen0137.
              
-                             IF NOT AVAILABLE crapdoc THEN
-                                 DO:
-                                     IF LOCKED(crapdoc) THEN
-                                         DO:
-                                             IF aux_contador = 10 THEN
-                                                 DO:
-                                                     ASSIGN aux_cdcritic = 341.
-                                                     LEAVE ContadorDoc47.
-                                                 END.
-                                             ELSE 
-                                                 DO: 
-                                                     PAUSE 1 NO-MESSAGE.
-                                                     NEXT.
-                                                 END.
-                                         END.
-                                     ELSE
-                                         DO: 
-                                             CREATE crapdoc.
-                                             ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                    crapdoc.nrdconta = par_nrdconta
-                                                    crapdoc.flgdigit = FALSE
-                                                    crapdoc.dtmvtolt = par_dtmvtolt
-                                                    crapdoc.tpdocmto = 47
-                                                    crapdoc.idseqttl = par_idseqttl
-                                                    crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                             VALIDATE crapdoc.        
-                                             LEAVE ContadorDoc47.
-                                         END.
-                                 END.
-                             ELSE
-                                 DO:
-                                     ASSIGN crapdoc.flgdigit = FALSE
-                                            crapdoc.dtmvtolt = par_dtmvtolt.
+            RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                    ( INPUT par_cdcooper,
+                      INPUT par_nrdconta,
+                      INPUT par_idseqttl,
+                      INPUT aux_nrcpfcgc,
+                      INPUT par_dtmvtolt,
+                      /* 47 - PROCURAÇAO PF 
+                         50 - DOCUMENTOS PROCURADORES PF */
+                      INPUT "47;50", 
+                      INPUT par_cdoperad,
+                     OUTPUT aux_cdcritic,
+                     OUTPUT aux_dscritic).
              
-                                     LEAVE ContadorDoc47.
-                                 END.
-                         END.
-                     END.
-
-            ContadorDoc50: DO TRANSACTION ON ENDKEY UNDO ContadorDoc50, LEAVE ContadorDoc50
-                            ON ERROR  UNDO ContadorDoc50, LEAVE ContadorDoc50
-                            ON STOP   UNDO ContadorDoc50, LEAVE ContadorDoc50: DO aux_contador = 1 TO 10:
-      
-                             FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                crapdoc.nrdconta = par_nrdconta AND
-                                                crapdoc.tpdocmto = 50           AND
-                                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                crapdoc.idseqttl = par_idseqttl AND 
-                                                crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            IF  VALID-HANDLE(h-b1wgen0137) THEN
+              DELETE OBJECT h-b1wgen0137.                              
              
-                             IF NOT AVAILABLE crapdoc THEN
-                                 DO:
-                                     IF LOCKED(crapdoc) THEN
-                                         DO:
-                                             IF aux_contador = 10 THEN
-                                                 DO:
-                                                     ASSIGN aux_cdcritic = 341.
-                                                     LEAVE ContadorDoc50.
-                                                 END.
-                                             ELSE 
-                                                 DO: 
-                                                     PAUSE 1 NO-MESSAGE.
-                                                     NEXT.
-                                                 END.
-                                         END.
-                                     ELSE
-                                         DO: 
-                                             CREATE crapdoc.
-                                             ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                    crapdoc.nrdconta = par_nrdconta
-                                                    crapdoc.flgdigit = FALSE
-                                                    crapdoc.dtmvtolt = par_dtmvtolt
-                                                    crapdoc.tpdocmto = 50
-                                                    crapdoc.idseqttl = par_idseqttl
-                                                    crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                             VALIDATE crapdoc.        
-                                             LEAVE ContadorDoc50.
-                                         END.
-                                 END.
-                             ELSE
-                                 DO:
-                                     ASSIGN crapdoc.flgdigit = FALSE
-                                            crapdoc.dtmvtolt = par_dtmvtolt.
-             
-                                     LEAVE ContadorDoc50.
-                                 END.
-                         END.
-                     END.
             END.
 
         IF crapass.inpessoa > 1                 AND
@@ -3774,161 +3538,51 @@ PROCEDURE Grava_Dados:
           DO:
              IF par_dsproftl  = "SOCIO/PROPRIETARIO" THEN
                 DO:
-                   ContadorDoc52: DO TRANSACTION ON ENDKEY UNDO ContadorDoc52, LEAVE ContadorDoc52
-                                  ON ERROR  UNDO ContadorDoc52, LEAVE ContadorDoc52
-                                  ON STOP   UNDO ContadorDoc52, LEAVE ContadorDoc52: DO aux_contador = 1 TO 10:
+                
+                   IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                       RUN sistema/generico/procedures/b1wgen0137.p 
+                       PERSISTENT SET h-b1wgen0137.
 
-                                       FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                          crapdoc.nrdconta = par_nrdconta AND
-                                                          crapdoc.tpdocmto = 52           AND
-                                                          crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                          crapdoc.idseqttl = par_idseqttl AND
-                                                          crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                          EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                   RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                            ( INPUT par_cdcooper,
+                              INPUT par_nrdconta,
+                              INPUT par_idseqttl,
+                              INPUT aux_nrcpfcgc,
+                              INPUT par_dtmvtolt,
+                              /* 52 - DOCUMENTO SÓCIOS/ADMINISTRADORES  */
+                              INPUT "52", 
+                              INPUT par_cdoperad,
+                             OUTPUT aux_cdcritic,
+                             OUTPUT aux_dscritic).
                        
-                                       IF NOT AVAILABLE crapdoc THEN
-                                           DO:
-                                               IF LOCKED(crapdoc) THEN
-                                                   DO:
-                                                       IF aux_contador = 10 THEN
-                                                           DO:
-                                                               ASSIGN aux_cdcritic = 341.
-                                                               LEAVE ContadorDoc52.
-                                                           END.
-                                                       ELSE 
-                                                           DO: 
-                                                               PAUSE 1 NO-MESSAGE.
-                                                               NEXT.
-                                                           END.
-                                                   END.
-                                               ELSE
-                                                   DO: 
-                                                       CREATE crapdoc.
-                                                       ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                              crapdoc.nrdconta = par_nrdconta
-                                                              crapdoc.flgdigit = FALSE
-                                                              crapdoc.dtmvtolt = par_dtmvtolt
-                                                              crapdoc.tpdocmto = 52 /*Documento Sócios/Administradores*/
-                                                              crapdoc.idseqttl = par_idseqttl
-                                                              crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                                       VALIDATE crapdoc.        
-                                                       LEAVE ContadorDoc52.
-                                                   END.
-                                           END.
-                                       ELSE
-                                           DO:
-                                               ASSIGN crapdoc.flgdigit = FALSE
-                                                      crapdoc.dtmvtolt = par_dtmvtolt.
+                   IF  VALID-HANDLE(h-b1wgen0137) THEN
+                      DELETE OBJECT h-b1wgen0137.
                        
-                                               LEAVE ContadorDoc52.
-                                           END.
-                                   END.
-                               END.
                 END.
              ELSE 
                IF par_dsproftl  = "PROCURADOR" THEN
                   DO:
-                     ContadorDoc48: DO TRANSACTION ON ENDKEY UNDO ContadorDoc48, LEAVE ContadorDoc48
-                                     ON ERROR  UNDO ContadorDoc48, LEAVE ContadorDoc48
-                                     ON STOP   UNDO ContadorDoc48, LEAVE ContadorDoc48: DO aux_contador = 1 TO 10:
-
-                                          FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                             crapdoc.nrdconta = par_nrdconta AND
-                                                             crapdoc.tpdocmto = 48           AND
-                                                             crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                             crapdoc.idseqttl = par_idseqttl AND
-                                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                          
-                                          IF NOT AVAILABLE crapdoc THEN
-                                              DO:
-                                                  IF LOCKED(crapdoc) THEN
-                                                      DO:
-                                                          IF aux_contador = 10 THEN
-                                                              DO:
-                                                                  ASSIGN aux_cdcritic = 341.
-                                                                  LEAVE ContadorDoc48.
-                                                              END.
-                                                          ELSE 
-                                                              DO: 
-                                                                  PAUSE 1 NO-MESSAGE.
-                                                                  NEXT.
-                                                              END.
-                                                      END.
-                                                  ELSE
-                                                      DO: 
-                                                          CREATE crapdoc.
-                                                          ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                                 crapdoc.nrdconta = par_nrdconta
-                                                                 crapdoc.flgdigit = FALSE
-                                                                 crapdoc.dtmvtolt = par_dtmvtolt
-                                                                 crapdoc.tpdocmto = 48 /*Procuraçao PJ*/
-                                                                 crapdoc.idseqttl = par_idseqttl
-                                                                 crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                                          VALIDATE crapdoc.        
-                                                          LEAVE ContadorDoc48.
-                                                      END.
-                                              END.
-                                          ELSE
-                                              DO:
-                                                  ASSIGN crapdoc.flgdigit = FALSE
-                                                         crapdoc.dtmvtolt = par_dtmvtolt.
-                          
-                                                  LEAVE ContadorDoc48.
-                                              END.
-                                      END.
-                                  END.
                                   
-                     ContadorDoc49: DO TRANSACTION ON ENDKEY UNDO ContadorDoc49, LEAVE ContadorDoc49
-                                     ON ERROR  UNDO ContadorDoc49, LEAVE ContadorDoc49
-                                     ON STOP   UNDO ContadorDoc49, LEAVE ContadorDoc49: DO aux_contador = 1 TO 10:
+                     IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                         RUN sistema/generico/procedures/b1wgen0137.p 
+                         PERSISTENT SET h-b1wgen0137.
 
-                                          FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                                             crapdoc.nrdconta = par_nrdconta AND
-                                                             crapdoc.tpdocmto = 49           AND
-                                                             crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                             crapdoc.idseqttl = par_idseqttl AND
-                                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                              ( INPUT par_cdcooper,
+                                INPUT par_nrdconta,
+                                INPUT par_idseqttl,
+                                INPUT aux_nrcpfcgc,
+                                INPUT par_dtmvtolt,
+                                /* 48 - PROCURAÇAO PJ  
+                                   49 - DOCUMENTOS PROCURADORES PJ*/
+                                INPUT "48;49", 
+                                INPUT par_cdoperad,
+                               OUTPUT aux_cdcritic,
+                               OUTPUT aux_dscritic).
                           
-                                          IF NOT AVAILABLE crapdoc THEN
-                                              DO:
-                                                  IF LOCKED(crapdoc) THEN
-                                                      DO:
-                                                          IF aux_contador = 10 THEN
-                                                              DO:
-                                                                  ASSIGN aux_cdcritic = 341.
-                                                                  LEAVE ContadorDoc49.
-                                                              END.
-                                                          ELSE 
-                                                              DO: 
-                                                                  PAUSE 1 NO-MESSAGE.
-                                                                  NEXT.
-                                                              END.
-                                                      END.
-                                                  ELSE
-                                                      DO: 
-                                                          CREATE crapdoc.
-                                                          ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                                 crapdoc.nrdconta = par_nrdconta
-                                                                 crapdoc.flgdigit = FALSE
-                                                                 crapdoc.dtmvtolt = par_dtmvtolt
-                                                                 crapdoc.tpdocmto = 49 /*Documentos Procuradores PJ*/
-                                                                 crapdoc.idseqttl = par_idseqttl
-                                                                 crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                                          VALIDATE crapdoc.        
-                                                          LEAVE ContadorDoc49.
-                                                      END.
-                                              END.
-                                          ELSE
-                                              DO:
-                                                  ASSIGN crapdoc.flgdigit = FALSE
-                                                         crapdoc.dtmvtolt = par_dtmvtolt.
+                     IF  VALID-HANDLE(h-b1wgen0137) THEN
+                        DELETE OBJECT h-b1wgen0137.
                           
-                                                  LEAVE ContadorDoc49.
-                                              END.
-                                      END.
-                                  END.
                   END.
           END.
         
@@ -5469,6 +5123,7 @@ PROCEDURE Grava_Dados_Poderes:
     DEF VAR aux_nrcpfcgc AS DECIMAL      NO-UNDO.
 
     DEF VAR h-b1wgen0015 AS HANDLE       NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE       NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     
@@ -5833,53 +5488,23 @@ PROCEDURE Grava_Dados_Poderes:
                     aux_nrcpfcgc = crapass.nrcpfcgc.
               END.
               
-            ContadorDoc6: DO aux_contador = 1 TO 10:
-    
-                FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                   crapdoc.nrdconta = par_nrdconta AND
-                                   crapdoc.tpdocmto = 6            AND
-                                   crapdoc.dtmvtolt = par_dtmvtolt AND
-                                   crapdoc.idseqttl = par_idseqttl AND 
-                                   crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                RUN sistema/generico/procedures/b1wgen0137.p 
+                PERSISTENT SET h-b1wgen0137.
 
-                IF NOT AVAILABLE crapdoc THEN
-                    DO:
-                        IF LOCKED(crapdoc) THEN
-                            DO:
-                                IF aux_contador = 10 THEN
-                                    DO:
-                                        ASSIGN aux_cdcritic = 341.
-                                        LEAVE ContadorDoc6.
-                                    END.
-                                ELSE 
-                                    DO: 
-                                        PAUSE 1 NO-MESSAGE.
-                                        NEXT ContadorDoc6.
-                                    END.
-                            END.
-                        ELSE
-                            DO: 
-                                CREATE crapdoc.
-                                ASSIGN crapdoc.cdcooper = par_cdcooper
-                                       crapdoc.nrdconta = par_nrdconta
-                                       crapdoc.flgdigit = FALSE
-                                       crapdoc.dtmvtolt = par_dtmvtolt
-                                       crapdoc.tpdocmto = 6
-                                       crapdoc.idseqttl = par_idseqttl
-                                       crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                VALIDATE crapdoc.        
-                                LEAVE ContadorDoc6.
-                            END.
-                    END.
-                ELSE
-                    DO:
-                        ASSIGN crapdoc.flgdigit = FALSE
-                               crapdoc.dtmvtolt = par_dtmvtolt.
+            RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                      ( INPUT par_cdcooper,
+                        INPUT par_nrdconta,
+                        INPUT par_idseqttl,
+                        INPUT aux_nrcpfcgc,
+                        INPUT par_dtmvtolt,
+                        INPUT "6", /* CARTAO DE ASSINATURA */
+                        INPUT par_cdoperad,
+                       OUTPUT aux_cdcritic,
+                       OUTPUT aux_dscritic).
 
-                        LEAVE ContadorDoc6.
-                    END.
-            END.
+            IF  VALID-HANDLE(h-b1wgen0137) THEN
+              DELETE OBJECT h-b1wgen0137.  
 
         END. /*transaction*/
 

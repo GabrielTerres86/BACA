@@ -46,6 +46,8 @@
              08/03/2018 - Substituida validacao "cdtipcta = 5, 6, 7, 17, 18" por "cdmodali = 2,3"
                           PRJ366 (Lombardi).
              
+             02/05/2018 - Alteracao nos codigos do campo cdsitdct. PRJ366 (Lombardi).
+             
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -849,7 +851,6 @@ DO WHILE TRUE:
 
                   END.
 
-               
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                RUN STORED-PROCEDURE pc_busca_modalidade_tipo
@@ -905,8 +906,7 @@ DO WHILE TRUE:
 
                   END.
 
-               IF crapass.cdsitdct <> 1   AND 
-                  crapass.cdsitdct <> 6   THEN
+               IF crapass.cdsitdct <> 1   THEN
                   DO:
                       ASSIGN glb_cdcritic = 64.
                       NEXT-PROMPT tel_nrdconta WITH FRAME f_lancrd.

@@ -18,6 +18,7 @@
  * 009: [11/09/2015] James: Ajuste para carregar a data de liberação
  * 010: [04/04/2017] Jaison/James: Adicionado parametros de carencia do produto Pos-Fixado.
  * 011: [15/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
+ * 012: [21/05/2018] Inserção do campo idquapro. PRJ366 (Lombardi)
  */
 ?>
 <?
@@ -60,6 +61,7 @@
 	$idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : 0;
 	$dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '';
 	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
+	$idquapro = (isset($_POST['idquapro'])) ? $_POST['idquapro'] : 0 ;
 	$cddopcao = 'A';
 	
 	if( $operacao == 'TI' ){ $cddopcao = 'I'; }
@@ -116,6 +118,7 @@
     $xml .= "		<idcarenc>".$idcarenc."</idcarenc>";
     $xml .= "		<dtcarenc>".$dtcarenc."</dtcarenc>";
     $xml .= "		<idfiniof>".$idfiniof."</idfiniof>";    
+	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

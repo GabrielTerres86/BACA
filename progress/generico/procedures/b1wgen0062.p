@@ -82,9 +82,12 @@
 				14/03/2018 - Ajuste realizado para que a chamada da procedure 
 							 busca_org_expedidor não esteja com mais inputs que
 						     outputs. (Kelvin)
-
+				 
                 25/04/2018 - P410 - Melhorias IOF (Marcos-Envolti)  
                              
+                             
+                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -143,6 +146,7 @@ PROCEDURE Busca_Impressao:
                                                      FORMAT "x(11)" NO-UNDO.
     
     DEF VAR h-b1wgen0038 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_tempores AS CHAR                                    NO-UNDO.
 
 
@@ -429,51 +433,26 @@ PROCEDURE Busca_Impressao:
           DO:
               ASSIGN crapjur.idimpdsn = 2.
               VALIDATE crapjur.
+              
               /* Grava a informação que o documento deve ser digitalizado no DIGIDOC */
-                ContadorDoc55: DO aux_contador = 1 TO 10:
-                  FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                     crapdoc.nrdconta = par_nrdconta AND
-                                     crapdoc.tpdocmto = 55            AND /* Simples Nac */
-                                     crapdoc.dtmvtolt = par_dtmvtolt AND
-                                     crapdoc.idseqttl = 1 AND
-                                     crapdoc.nrcpfcgc = crapass.nrcpfcgc
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                  IF NOT AVAILABLE crapdoc THEN
-                      DO:
-                          IF LOCKED(crapdoc) THEN
-                              DO:
-                                  IF aux_contador = 10 THEN
-                                      DO:
-                                          ASSIGN aux_cdcritic = 341.
-                                          LEAVE ContadorDoc55.
-                                      END.
-                                  ELSE 
-                                      DO: 
-                                          PAUSE 1 NO-MESSAGE.
-                                          NEXT ContadorDoc55.
-                                      END.
-                              END.
-                          ELSE
-                              DO:
-                                  CREATE crapdoc.
-                                  ASSIGN crapdoc.cdcooper = par_cdcooper
-                                         crapdoc.nrdconta = par_nrdconta
-                                         crapdoc.flgdigit = FALSE
-                                         crapdoc.dtmvtolt = par_dtmvtolt
-                                         crapdoc.tpdocmto = 55 /* Simples Nac */
-                                         crapdoc.idseqttl = 1
-                                         crapdoc.nrcpfcgc = crapass.nrcpfcgc.
-                                  VALIDATE crapdoc.
-                                  LEAVE ContadorDoc55.
-                              END.
-                      END.
-                  ELSE
-                      DO:
-                          ASSIGN crapdoc.flgdigit = FALSE
-                                 crapdoc.dtmvtolt = par_dtmvtolt.
-                          LEAVE ContadorDoc55.
-                      END.
-                END.
+              IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                  RUN sistema/generico/procedures/b1wgen0137.p 
+                  PERSISTENT SET h-b1wgen0137.
+                
+              RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                        ( INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT 0,
+                          INPUT crapass.nrcpfcgc,
+                          INPUT par_dtmvtolt,
+                          INPUT "55", 
+                          INPUT par_cdoperad,
+                         OUTPUT aux_cdcritic,
+                         OUTPUT aux_dscritic).
+
+              IF  VALID-HANDLE(h-b1wgen0137) THEN
+                DELETE OBJECT h-b1wgen0137.  
+                              
           END.
         ASSIGN aux_retorno = "OK".
       END.

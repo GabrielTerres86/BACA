@@ -14,13 +14,15 @@
 							  passar o o código (Renato Darosci)
 
                  05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
-				 
+                 
 				 05/04/2018 - PRJ 416 Bacenjud - Adicionado campo indutblq e operauto - Mateus Z (Mouts)
                  
                  12/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
                               Diego Simas - AMcom
                               
                  16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                              
+                 15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
                               
 ............................................................................*/
 
@@ -99,6 +101,7 @@ DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
 
 DEF VAR aux_idmonpld AS INTE                                         NO-UNDO.
+DEF VAR aux_inperdes AS INTE                                         NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -174,7 +177,7 @@ PROCEDURE valores_entrada:
              WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
              WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
-
+             WHEN "inperdes" THEN aux_inperdes = INTE(tt-param.valorCampo).
 			 WHEN "idmonpld" THEN aux_idmonpld = INTE(tt-param.valorCampo).
 			 
          END CASE.
@@ -385,7 +388,7 @@ PROCEDURE Grava_Dados:
                      
                      INPUT aux_cdgrphis,
                      
-                     INPUT aux_flgsenha,
+                     INPUT aux_flgsenha,     
 					 INPUT aux_indutblq,					 
                      INPUT aux_cdprodut,     
                      INPUT aux_cdagrupa,     
@@ -396,6 +399,7 @@ PROCEDURE Grava_Dados:
                      INPUT aux_vltarcsh,
                      INPUT aux_indebfol,
                      INPUT aux_txdoipmf,
+                     INPUT aux_inperdes,
 					 INPUT aux_operauto,
 					 INPUT aux_idmonpld,
                     OUTPUT aux_nmdcampo,

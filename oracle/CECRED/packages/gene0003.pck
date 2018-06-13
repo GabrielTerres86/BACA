@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 06/11/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
 
     Dados referentes ao programa:
 
@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 06/12/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
 
     Dados referentes ao programa:
 
@@ -222,6 +222,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
                              na leitura dessas mensagens na Conta Online.
                              Heitor (Mouts) - Chamado 807108
+
+               21/05/2018 - Alteração no tamanho da variavel de controle de anexos, de VARCHAR2 500 para 4000 
+                             Belli (Envolti) - Chamado REQ0014900
 
 ..............................................................................*/
 
@@ -574,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_dsnmrepl   crapsle.dsnmrepl%TYPE;
       vr_dsemrepl   crapsle.dsemrepl%TYPE;
       --String com os anexos para gravar no .SH
-      vr_dsanexos varchar2(500);
+      vr_dsanexos varchar2(4000); -- Aumento do tamanho de 500 para 4000 - Chamado REQ0014900 - 21/05/2018
       --Variavel para montar o comando que será salvo no .SH
       vr_dscomdSH varchar2(10000);
       --Diretorio da cooperativa para manter os anexos

@@ -13,6 +13,8 @@
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+ *
+ *                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
  * --------------
  */
 
@@ -231,6 +233,7 @@ function formataCadastroHistorico() {
     $('label[for="cdprodut"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
     $('label[for="cdagrupa"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
 	$('label[for="idmonpld"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
+    $('label[for="inperdes"]', '#frmHistorico').addClass('rotulo').css({ 'width': '190px' });
 
 	// CAMPOS - Outros
     $('#flgsenha', '#frmHistorico').css({ 'width': '60px' });
@@ -239,6 +242,8 @@ function formataCadastroHistorico() {
     $('#cdagrupa', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
     $('#dsagrupa', '#frmHistorico').css({ 'width': '350px' }).desabilitaCampo();
 	$('#idmonpld', '#frmHistorico').css({ 'width': '60px' });
+    $('#inperdes', '#frmHistorico').css({ 'width': '60px' });
+
 	
     $('input[type="text"],select', '#frmHistorico').desabilitaCampo().limpaFormulario().removeClass('campoErro');
 	
@@ -427,6 +432,9 @@ function liberaCadastro() {
 	$('#idmonpld', '#frmHistorico').val("1");
 	//PJ 416
     $('#indutblq', '#frmHistorico').val("S");
+	$('#inperdes', '#frmHistorico').val("0");
+	
+
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
@@ -901,7 +909,7 @@ function controlaCamposCadastroHistorico() {
 				return false;
 			}			
 		}		
-	});
+	});	
 
 	$("#indutblq", "#frmHistorico").unbind('change').bind('change', function () {
 
@@ -909,8 +917,8 @@ function controlaCamposCadastroHistorico() {
 
     	if(indutblq == 'N'){
     		mostraSenha();
-    	}
-		
+}
+
 		return false;
 	});
 }
@@ -1556,9 +1564,11 @@ function manterRotina() {
     var txdoipmf = $('#txdoipmf', '#frmHistorico').val();
 	
 	var idmonpld = $('#idmonpld', '#frmHistorico').val();
+    var inperdes = $('#inperdes', '#frmHistorico').val();
 	
 	// PRJ 416 
     var operauto = $('#operauto', '#frmHistorico').val();	
+	
 	
 	$.ajax({		
         type: 'POST',
@@ -1604,6 +1614,8 @@ function manterRotina() {
 				  vltarcsh : vltarcsh,
 				  indebfol : indebfol,
 				  txdoipmf : txdoipmf,
+				  inperdes : inperdes, 
+
 				  idmonpld : idmonpld,
 				  operauto : operauto,
 				  redirect : 'script_ajax'
@@ -1728,10 +1740,10 @@ function formataSenha() {
 	$('#divRotina').centralizaRotinaH();
 	$('#divRotina').css({ 'top': '300px' });
 	
-	hideMsgAguardo();		
+					hideMsgAguardo();
     bloqueiaFundo($('#divRotina'));
 	cOperador.focus();
-	
+
 	return false;
 }
 
@@ -1759,8 +1771,8 @@ function validarSenha() {
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
 			},
         success: function (response) {
-				try {
-					eval(response);
+					try {
+                eval(response);
 					// se não ocorreu erro, vamos gravar as alçterações
                 if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                     
@@ -1772,11 +1784,11 @@ function validarSenha() {
                 }
 					return false;
             } catch (error) {
-					hideMsgAguardo();
+						hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+					}
 				}
-			}
-		});	
+	});
 		
 	return false;
 }

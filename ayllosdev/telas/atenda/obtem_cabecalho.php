@@ -78,7 +78,7 @@
                               (Jaison/Andrino)
 
 					  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
-	
+				 
 				 09/08/2016 - Adicionado format na data das anotações conforme solicitado
 							  no chamado 490482. (Kelvin)
 	
@@ -214,13 +214,13 @@ if ($flgerlog) {
 		echo 'flgAcessoRotina = false;';
 		exit();	
 	}
-
+	
 $cabecalho = ( isset($xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[0]->tags[0]->tags : '';
 $compCabecalho = ( isset($xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[1]->tags[0]->tags : '';
 $valores = ( isset($xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[2]->tags[0]->tags : null;
 $mensagens = ( isset($xmlObjDadosAtenda->roottag->tags[3]->tags) )  ? $xmlObjDadosAtenda->roottag->tags[3]->tags : array();
 $anotacoes = ( isset($xmlObjDadosAtenda->roottag->tags[4]->tags) ) ? $xmlObjDadosAtenda->roottag->tags[4]->tags : array();
-	
+
 	// Carrega variavel para verificar se existe Pagto de Titulos por Arquivo
 $flconven = (isset($xmlObjDadosAtenda->roottag->tags[4]->attributes['FLCONVEN'])) ? $xmlObjDadosAtenda->roottag->tags[4]->attributes['FLCONVEN'] : null;
 $dscritic = (isset($xmlObjDadosAtenda->roottag->tags[4]->attributes['DSCRITIC'])) ? $xmlObjDadosAtenda->roottag->tags[4]->attributes['DSCRITIC'] : null;
@@ -405,7 +405,24 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
     $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
 }
 		
-	
+
+   /* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
+	   Procedimento temporario ate que todas as cooperativas utilizem */
+	$adxml = "<Root>";
+	$adxml .= " <Dados>";
+	$adxml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$adxml .= "   <cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+	$adxml .= " </Dados>";
+	$adxml .= "</Root>";
+
+	$result = mensageria($adxml, "ATENDA_CRD", "BUSCA_PARAMETRO_PA_CARTAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$oObj = simplexml_load_string($result);
+	$bAtivaOld = true;
+	if($oObj->Dados->ativo){
+		$bAtivaOld = ($oObj->Dados->ativo == '0');
+	}
+	/* FIM procedimento temporario */
+
 		
 	// Mostra resumo de dados das rotinas (saldos, situações, etc) ...
 	$contRotina = 0;	
@@ -429,7 +446,11 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			}
 			case "CARTAO CRED": {
 				$nomeRotina = "Cart&otilde;es de Cr&eacute;dito";  
+                if ($bAtivaOld) {
+					$urlRotina = "cartao_credito_prod";
+				} else {
                 $urlRotina = "cartao_credito";
+				}
                 $strValue = ( isset($valores[14]->cdata) ) ? number_format(str_replace(",", ".", $valores[14]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
 				break;
@@ -741,8 +762,10 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 	$flgMsgAnota = false;
 	
 	if ($glbvars["nmrotina"] == "") {
+
 		// Monta HTML para mostrar mensagens de alerta
 		if (count($mensagens) > 0 && $flgProdutos != 'true') {	
+
 			$flgMsgAnota = true;
 			
 			echo 'var strHTML = \'<table width="445" border="0" cellpadding="1" cellspacing="2">\';';

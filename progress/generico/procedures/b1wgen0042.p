@@ -38,6 +38,8 @@
 
                15/05/2015 - Projeto 158 - Servico Folha de Pagto
                             (Andre Santos - SUPERO)
+                              
+               29/05/2018 - Alterados codigos de situacao "crabass.cdsitdct". PRJ366 (Lombardi).
 *.............................................................................*/
 
 
@@ -3077,6 +3079,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE ON ERROR UNDO, RETURN:
                         crabass.cdcooper  = par_cdcooper AND
                         crabass.nrcadast  = aux_nrdconta AND
                         crabass.nrdconta <> crapass.nrdconta AND
+                        crabass.cdsitdct <> 2 AND
                         crabass.cdsitdct <> 3,
                         FIRST crabttl WHERE
                              crabttl.cdcooper = par_cdcooper     AND

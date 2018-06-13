@@ -19,6 +19,9 @@
                 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
+                             
+                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -252,6 +255,7 @@ PROCEDURE Grava_Dados:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -368,55 +372,26 @@ PROCEDURE Grava_Dados:
         IF  crapjur.dtregemp <> par_dtregemp OR
             crapjur.nrregemp <> par_nrregemp  THEN
             DO:
+              IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+              RUN sistema/generico/procedures/b1wgen0137.p 
+                  PERSISTENT SET h-b1wgen0137.
                
-               ContadorDoc11: DO aux_contador = 1 TO 10:
+              RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                        ( INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT aux_idseqttl,
+                          INPUT crapass.nrcpfcgc,
+                          INPUT par_dtmvtolt,
+                          INPUT "11",
+                          INPUT par_cdoperad,
+                         OUTPUT aux_cdcritic,
+                         OUTPUT aux_dscritic).
         
-                    FIND FIRST crapdoc WHERE 
-                               crapdoc.cdcooper = par_cdcooper AND
-                               crapdoc.nrdconta = par_nrdconta AND
-                               crapdoc.tpdocmto = 11           AND
-                               crapdoc.dtmvtolt = par_dtmvtolt AND
-                               crapdoc.idseqttl = aux_idseqttl AND
-                               crapdoc.nrcpfcgc = crapass.nrcpfcgc
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+              IF  VALID-HANDLE(h-b1wgen0137) THEN
+                DELETE OBJECT h-b1wgen0137.
         
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
-                            IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc11.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT.
-                                        END.
-                                END.
-                            ELSE
-                                DO: 
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.tpdocmto = 11
-                                           crapdoc.idseqttl = aux_idseqttl
-                                           crapdoc.nrcpfcgc = crapass.nrcpfcgc.
-                                    VALIDATE crapdoc.        
-                                    LEAVE ContadorDoc11.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN crapdoc.flgdigit = FALSE
-                                   crapdoc.dtmvtolt = par_dtmvtolt.
-        
-                            LEAVE ContadorDoc11.
-                        END.
-                END.
+              /* Rotina nao gerava critica
+              IF RETURN-VALUE <> "OK" THEN*/
                          
             END.
 

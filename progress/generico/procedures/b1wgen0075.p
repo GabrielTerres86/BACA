@@ -112,6 +112,11 @@
 					 
 			  16/06/2018 - Bloqueio realizado para que nao seja possivel salvar o CNPJ da empresa
 						   com o cpf do titular. (SD 860231 - Kelvin).
+                           
+              13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)
+                             
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -875,6 +880,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_rowidenc AS ROWID                                   NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0021 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
     
     DEF BUFFER crabpla  FOR crappla.
     DEF BUFFER crabavs  FOR crapavs.
@@ -1063,57 +1069,30 @@ PROCEDURE Grava_Dados:
                 { sistema/generico/includes/b1wgenalog.i }
             END.
                    
-        IF crapttl.vlsalari <> par_vlsalari OR 
-           crapttl.nmextemp <> par_nmextemp THEN
+        /* Caso possua valor informardo e for diferente do anterior */
+        IF (par_vlsalari <> 0 OR par_nmextemp <> "") AND  
+           (crapttl.vlsalari <> par_vlsalari OR 
+            crapttl.nmextemp <> par_nmextemp) THEN
             DO:
-                ContadorDoc5: DO aux_contador = 1 TO 10:
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                    PERSISTENT SET h-b1wgen0137.
     
-                    FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                       crapdoc.nrdconta = par_nrdconta AND
-                                       crapdoc.tpdocmto = 5            AND
-                                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl AND 
-                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,
+                            INPUT crapttl.nrcpfcgc,
+                            INPUT par_dtmvtolt,
+                            INPUT "5", /* COMPROVANTE DE RENDA */
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
     
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
-                            IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc5.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT ContadorDoc5.
-                                        END.
-                                END.
-                            ELSE
-                                DO: 
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.tpdocmto = 5
-                                           crapdoc.idseqttl = par_idseqttl
-                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
-                                    VALIDATE crapdoc.        
-                                    LEAVE ContadorDoc5.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN crapdoc.flgdigit = FALSE
-                                   crapdoc.dtmvtolt = par_dtmvtolt.
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.
 
-                            LEAVE ContadorDoc5.
-                        END.
-                END.
-            END. 
+        END.
 
         IF aux_cdcritic <> 0 THEN
             UNDO Grava, LEAVE Grava.
@@ -1181,28 +1160,24 @@ PROCEDURE Grava_Dados:
                     ASSIGN bcrapttl.inpolexp = par_inpolexp.
                                    
                 END.
-            FOR FIRST crapdoc WHERE 
-                      crapdoc.cdcooper = par_cdcooper AND
-                      crapdoc.nrdconta = par_nrdconta AND
-                      crapdoc.tpdocmto = 37           AND
-                      crapdoc.dtmvtolt = par_dtmvtolt AND
-                      crapdoc.idseqttl = par_idseqttl AND 
-                      crapdoc.nrcpfcgc = crapttl.nrcpfcgc
-                      NO-LOCK: END.
+                
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                    PERSISTENT SET h-b1wgen0137.
+                  
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,
+                            INPUT crapttl.nrcpfcgc,
+                            INPUT par_dtmvtolt,
+                            INPUT "37", /* PESSOA EXPOSTA POLITICAMENTE - PEP */
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
 
-            IF NOT AVAILABLE crapdoc THEN
-            DO:
-                CREATE crapdoc.
-                ASSIGN crapdoc.cdcooper = par_cdcooper
-                       crapdoc.nrdconta = par_nrdconta
-                       crapdoc.flgdigit = FALSE
-                       crapdoc.dtmvtolt = par_dtmvtolt
-                       crapdoc.tpdocmto = 37
-                       crapdoc.idseqttl = par_idseqttl
-                       crapdoc.cdoperad = par_cdoperad
-                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
-                VALIDATE crapdoc.
-            END.
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.
 
             END.
         END.   
@@ -2575,6 +2550,7 @@ PROCEDURE Grava_Dados_Ppe:
     DEF OUTPUT PARAM par_msgrvcad           AS CHAR   NO-UNDO.
     DEF OUTPUT PARAM par_cotcance           AS CHAR   NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF VAR h-b1wgen0137 AS HANDLE                    NO-UNDO.
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -2652,28 +2628,25 @@ PROCEDURE Grava_Dados_Ppe:
                 tbcadast_politico_exposto.nrcpf_politico   = par_nrcpf_politico.
             VALIDATE tbcadast_politico_exposto.
 
-            FIND FIRST crapdoc WHERE 
-                crapdoc.cdcooper = crapttl.cdcooper AND
-                crapdoc.nrdconta = crapttl.nrdconta AND
-                crapdoc.tpdocmto = 37               AND
-                crapdoc.dtmvtolt = par_dtmvtolt     AND
-                crapdoc.idseqttl = crapttl.idseqttl AND
-                crapdoc.nrcpfcgc = crapttl.nrcpfcgc
-                NO-LOCK NO-ERROR.
+            
+            IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                RUN sistema/generico/procedures/b1wgen0137.p 
+                PERSISTENT SET h-b1wgen0137.
+              
+            RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                      ( INPUT crapttl.cdcooper,
+                        INPUT crapttl.nrdconta,
+                        INPUT crapttl.idseqttl,
+                        INPUT crapttl.nrcpfcgc,
+                        INPUT par_dtmvtolt,
+                        INPUT "37", /* PESSOA EXPOSTA POLITICAMENTE - PEP  */
+                        INPUT par_cdoperad,
+                       OUTPUT aux_cdcritic,
+                       OUTPUT aux_dscritic).
 
-            IF NOT AVAILABLE crapdoc THEN
-            DO:
-                CREATE crapdoc.
-                ASSIGN crapdoc.cdcooper = crapttl.cdcooper
-                       crapdoc.nrdconta = crapttl.nrdconta
-                       crapdoc.flgdigit = FALSE
-                       crapdoc.dtmvtolt = par_dtmvtolt
-                       crapdoc.tpdocmto = 37
-                       crapdoc.idseqttl = crapttl.idseqttl
-                       crapdoc.cdoperad = par_cdoperad
-                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
-                VALIDATE crapdoc.
-            END.
+            IF  VALID-HANDLE(h-b1wgen0137) THEN
+              DELETE OBJECT h-b1wgen0137.
+
 
         END.                                                  
         ELSE                                                  

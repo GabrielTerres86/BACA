@@ -257,7 +257,7 @@
                             do PDF para envio da esteira (Oscar).
                                                    
                10/10/2016 - Ajuste sempre gerar o PDF para esteira de credito (Oscar).                                    
-			   
+                           
 			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
 						    (Adriano - SD 614408).
                
@@ -274,9 +274,11 @@
                             PRJ339 - CRM (Odirlei-AMcom)  
 
                15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
-                            pois estourava para conta com muitos AVAIS (Marcos-Supero)               
-                            
+                            pois estourava para conta com muitos AVAIS (Marcos-Supero)   
+
                06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
+                            
+               04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi)
                             
 .............................................................................*/
 
@@ -332,6 +334,8 @@ DEF VAR aux_contames AS INTE                                           NO-UNDO.
 DEF VAR aux_dsbranco AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_retorno  AS CHAR                                           NO-UNDO.
+
+DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
 
 DEF VAR rel_nmrescop AS CHAR    EXTENT 2                               NO-UNDO.
 DEF VAR rel_nrdconta AS INTE                                           NO-UNDO.
@@ -3994,16 +3998,17 @@ PROCEDURE impressao-prnf:
    DEF VAR aux_dtultdma AS DATE                                      NO-UNDO.
 
   /* Variaveis para o XML */ 
-  DEF VAR xDoc          AS HANDLE                                      NO-UNDO.   
-  DEF VAR xRoot         AS HANDLE                                      NO-UNDO.  
-  DEF VAR xRoot2        AS HANDLE                                      NO-UNDO.  
-  DEF VAR xField        AS HANDLE                                      NO-UNDO. 
-  DEF VAR xText         AS HANDLE                                      NO-UNDO. 
-  DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
-  DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
-  DEF VAR ponteiro_xml  AS MEMPTR                                      NO-UNDO. 
-  DEF VAR xml_req       AS LONGCHAR								     NO-UNDO.
+   DEF VAR xDoc          AS HANDLE                                   NO-UNDO.   
+   DEF VAR xRoot         AS HANDLE                                   NO-UNDO.  
+   DEF VAR xRoot2        AS HANDLE                                   NO-UNDO.  
+   DEF VAR xField        AS HANDLE                                   NO-UNDO. 
+   DEF VAR xText         AS HANDLE                                   NO-UNDO. 
+   DEF VAR aux_cont_raiz AS INTEGER                                  NO-UNDO. 
+   DEF VAR aux_cont      AS INTEGER                                  NO-UNDO. 
+   DEF VAR ponteiro_xml  AS MEMPTR                                   NO-UNDO. 
+   DEF VAR xml_req       AS LONGCHAR                                 NO-UNDO.
   
+   DEF VAR aux_dssitcta AS CHAR                                      NO-UNDO.
 
    /*  Nota Promissoria .................................................... */
    
@@ -5071,19 +5076,33 @@ PROCEDURE impressao-prnf:
                    aux_par_dsctrliq = " " 
                    aux_par_vlutiliz = 0.
           
-            /* Situacao conta */
-            CASE crapass.cdsitdct:
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_descricao_situacao_conta
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                                OUTPUT "",               /* pr_dssituacao */
+                                                OUTPUT "",               /* pr_des_erro   */
+                                                OUTPUT "").              /* pr_dscritic   */
+            
+            CLOSE STORED-PROC pc_descricao_situacao_conta
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dssitcta = ""
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_dssitcta = pc_descricao_situacao_conta.pr_dssituacao 
+                                  WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+                   aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                                  WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+                   aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                                  WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
           
-                WHEN 1 THEN ASSIGN rel_dssitdct = "1-Normal".
-                WHEN 2 THEN ASSIGN rel_dssitdct = "2-ENCERRADA P/ASSOCIADO".
-                WHEN 3 THEN ASSIGN rel_dssitdct = "3-ENCERRADA P/COOP".
-                WHEN 4 THEN ASSIGN rel_dssitdct = "4-ENCERRADA P/DEMISSAO".
-                WHEN 5 THEN ASSIGN rel_dssitdct = "5-NAO APROVADA".
-                WHEN 6 THEN ASSIGN rel_dssitdct = "6-NORMAL - SEM TALAO".
-                WHEN 9 THEN ASSIGN rel_dssitdct = "9-ENCERRADA P/OUTRO MOTIVO".
-                OTHERWISE rel_dssitdct = "".
+            IF aux_des_erro = "NOK" THEN 
+                aux_dssitcta = "".
           
-            END CASE.
+            ASSIGN rel_dssitdct = STRING(crapass.cdsitdct) +  "-" + UPPER(aux_dssitcta).
 
            IF NOT VALID-HANDLE(h-b1wgen9999) THEN
            RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT
@@ -8403,7 +8422,7 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.nmprimtl =    (xText:NODE-VALUE) WHEN xField:NAME = "nmprimtl". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
                     ASSIGN w-co-responsavel.vlemprst = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlemprst".
-                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved".
                     ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
                     ASSIGN w-co-responsavel.vlprepag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepag".
                     ASSIGN w-co-responsavel.vljurmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljurmes".
@@ -8476,7 +8495,7 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.tipoempr =    (xText:NODE-VALUE) WHEN xField:NAME = "tipoempr". 
                     ASSIGN w-co-responsavel.qtimpctr = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtimpctr". 
                     ASSIGN w-co-responsavel.dtapgoib = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtapgoib".
-
+                    
                         END.
 
            END. 

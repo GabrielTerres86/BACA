@@ -91,6 +91,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%T
                    06/03/2018 - Substituida verificacao "cdtipcta > 11" por tipo de conta possuir o indicador 
                                 de conta corrente integração como Sim (tbcc_tipo_conta.indconta_itg = 1). 
                                 PRJ366 (Lombardi).
+                                
+                   30/04/2018 - Buscar descricao de situacao pela procedure pc_descricao_situacao_conta.
+                                PRJ366 (Lombardi).
     ............................................................................ */
 
     DECLARE
@@ -104,6 +107,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%T
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_des_erro   VARCHAR2(100);
       vr_dtinicio   DATE;
       vr_dttfinal   DATE;
       vr_yymvtolt   NUMBER;
@@ -135,6 +139,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%T
       vr_nmresage crapage.nmresage%TYPE;
       vr_cartaobb NUMBER;
       vr_contaitg NUMBER;
+      vr_dssituacao VARCHAR2(100);
       
       ------------------------------- CURSORES ---------------------------------
 
@@ -563,23 +568,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%T
              FETCH cr_craplcm3 INTO vr_rel_dtmvtolt;
              CLOSE cr_craplcm3;
 
-             --verificar situacao da conta
-             IF rw_crapass2.cdsitdct = 1 THEN
-                vr_rel_dssitdct := 'NORMAL';
-             ELSIF rw_crapass2.cdsitdct = 2 THEN
-                vr_rel_dssitdct := 'ENCERRADA P/ASSOCIADO';
-             ELSIF rw_crapass2.cdsitdct = 3 THEN
-                vr_rel_dssitdct := 'ENCERRADA P/COOP';
-             ELSIF rw_crapass2.cdsitdct = 4 THEN
-                vr_rel_dssitdct := 'ENCERRADA P/DEMISSAO';
-             ELSIF rw_crapass2.cdsitdct = 5 THEN
-                vr_rel_dssitdct := 'NAO APROVADA';
-             ELSIF rw_crapass2.cdsitdct = 6 THEN
-                vr_rel_dssitdct := 'NORMAL - SEM TALAO';
-             ELSIF rw_crapass2.cdsitdct = 9 THEN
-                vr_rel_dssitdct := 'ENCERRADA P/OUTRO MOTIVO';
+             cada0006.pc_descricao_situacao_conta(pr_cdsituacao => rw_crapass2.cdsitdct
+                                                 ,pr_dssituacao => vr_dssituacao
+                                                 ,pr_des_erro   => vr_des_erro
+                                                 ,pr_dscritic   => vr_dscritic);
+             IF vr_des_erro = 'NOK' THEN
+               vr_rel_dssitdct := NULL;
              ELSE
-                vr_rel_dssitdct := NULL;
+               vr_rel_dssitdct := UPPER(vr_dssituacao);
              END IF;
 
              vr_qtchfora := NULL;

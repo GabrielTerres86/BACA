@@ -202,6 +202,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   --                          NOT IN dos tipos de contas que tem a modalidade 3 – Conta Aplicação.
   --                          PRJ366 (Lombardi).
   --
+  --             27/02/2018 - Procedure pc_analise_individual alterada para buscar descricao da situacao 
+  --                          da tabela. PRJ366 (Lombardi).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina que indica se deve habilitar / desabilitar o parecer da analise de credito
@@ -1642,16 +1645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                crapass.nrcpfcgc,
                crapass.cdsitdct,
                crapass.cdagenci,
-               crapass.nmprimtl,
-               decode(crapass.cdsitdct,1,'NORMAL',
-                                       2,'ENCERRADA PELO ASSOCIADO',
-                                       3,'ENCERRADA PELA COOP',
-                                       4,'ENCERRADA PELA DEMISSAO',
-                                       5,'NAO APROVADA',
-                                       6,'NORMAL - SEM TALAO',
-                                       8,'OUTROS MOTIVOS',
-                                       9,'ENCERRADA P/ OUTRO MOTIVO',
-                                         'OUTROS') dssitdct                
+               crapass.nmprimtl
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
@@ -1876,6 +1870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_qtmeschq    PLS_INTEGER;           -- Quantidade de meses para analise de cheques sem fundos
       vr_qtmesest    PLS_INTEGER;           -- Quantidade de meses para analise do estouro da conta
       vr_qtmesatr    PLS_INTEGER;           -- Quantidade de meses para analise do atraso na cooperativa
+      vr_dssitdct    tbcc_situacao_conta.dssituacao%TYPE; -- Descricao da situacao de conta
 
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -2220,7 +2215,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           -- Se for indicador de SITUACAO DA CONTA
           ELSIF rw_crapiac.nrseqiac = 7 THEN
             -- Atualiza o conteudo do parametro 1
-            vr_tab_crapdac.vlparam1 := rw_crapass.cdsitdct||'-'||rw_crapass.dssitdct;
+            
+            CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => rw_crapass.cdsitdct
+                                                ,pr_dssituacao => vr_dssitdct
+                                                ,pr_des_erro   => vr_des_reto
+                                                ,pr_dscritic   => vr_dscritic);
+            
+            IF vr_des_reto <> 'NOK' THEN
+              RAISE vr_exc_saida;
+            END IF;
+            
+            vr_tab_crapdac.vlparam1 := rw_crapass.cdsitdct||'-'||vr_dssitdct;
 
             -- Verifica se o tipo esta dentre os escolhidos
             IF instr(';'||rw_crapqac.vlparam1||';',';'||rw_crapass.cdsitdct||';') <> 0 THEN

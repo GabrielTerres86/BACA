@@ -767,8 +767,12 @@
               
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
+              
+			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
-              24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
+              22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
+                           Incluida validacao das linhas de credito 100,800,900 e 6901 e do campo
+                           par_idquapro. PRJ366 (Lombardi)
 
  ..............................................................................*/
 
@@ -1764,7 +1768,7 @@ PROCEDURE obtem-extrato-emprestimo:
             RETURN "NOK".
         END.
 
-    ASSIGN aux_dshistor = "1032,1033,1034,1035,1048,1049,2566,2567".
+    ASSIGN aux_dshistor = "1032,1033,1034,1035,1048,1049,2566,2567,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476".
 
     FOR EACH craplem WHERE craplem.cdcooper  = par_cdcooper AND
                            craplem.nrdconta  = par_nrdconta AND
@@ -1806,7 +1810,6 @@ PROCEDURE obtem-extrato-emprestimo:
                                                    craplem.vlpreemp,4)
                                          ELSE
                                              0.
-
         /*Historicos que nao vao compor o saldo,
           mas vao aparecer no relatorio*/
         IF  CAN-DO("1048,1049,1050,1051,1717,1720,1708,1711,2566,2567",
@@ -3735,6 +3738,7 @@ PROCEDURE valida-dados-gerais:
     DEF  INPUT PARAM par_idcarenc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcarenc AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idquapro AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -3888,7 +3892,9 @@ PROCEDURE valida-dados-gerais:
     
     DO WHILE TRUE:
 
-        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) THEN /* CDC */
+        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) AND
+            NOT CAN-DO("100,800,900,6901", STRING(par_cdlcremp)) AND /* CDC */
+            NOT CAN-DO("2,4", STRING(par_idquapro)) THEN
             DO:
                 aux_valida_adesao = TRUE.
                 IF par_cddopcao = "A" THEN
@@ -3902,7 +3908,9 @@ PROCEDURE valida-dados-gerais:
                         /* Verifica se valida */
                         IF  AVAIL crawepr   THEN
                             DO:
-                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) THEN
+                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) OR 
+                                    CAN-DO("100,800,900,6901", STRING(crawepr.cdlcremp)) OR /* CDC */
+                                    CAN-DO("2,4", STRING(crawepr.idquapro)) THEN
                                     aux_valida_adesao = TRUE.
                                 ELSE 
                                     aux_valida_adesao = FALSE.
@@ -4765,7 +4773,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
     DEF VAR par_qtprecal          AS INTE                           NO-UNDO.
-    DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
+	DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
 
     DEF BUFFER crabepr FOR crapepr.
 
@@ -4878,7 +4886,7 @@ PROCEDURE proc_qualif_operacao:
 
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
-    END.
+             END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN

@@ -41,6 +41,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 
                  03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
+
+                 27/04/2018 - Removido vetor para armazenar a descrição das situacoes 
+                              da conta. PRJ366 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -227,12 +230,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
-  -- Type para armazenar a descrição das situacoes da conta, auxiliar na antiga (b1wgen0001.p/fgetdssitdct)
-  TYPE typ_dssitdct IS VARRAY(9) OF VARCHAR2(50);
-  vr_tab_dssitdct typ_dssitdct := typ_dssitdct( 'NORMAL','ENCERRADA P/ASSOCIADO','ENCERRADA P/COOP',
-                                                'ENCERRADA ~P/DEMISSAO','NAO APROVADA',
-                                                'NORMAL - SEM TALAO','EM PROC. DEMISSAO','EM PROC. DEMISSAO - BACEN','ENCERRADA P/OUTRO MOTIVO');
-    
 	TYPE typ_reg_cadrest IS
 				RECORD(nrdconta crapass.nrdconta%TYPE
 							,nrcpfcgc crapass.nrcpfcgc%TYPE
@@ -821,6 +818,14 @@ PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> C
                                       ,pr_tab_cabec OUT typ_tab_cabec                 --> Retorna dados do cabecalho da tela ATENDA
                                       ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
                                       ,pr_tab_erro       OUT gene0001.typ_tab_erro);
+
+
+PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
+                                         ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
+                                         ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
+                                         ,pr_vllimite_maximo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE
+                                         ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
+                                         ,pr_possui_registro  OUT NUMBER);
 
 END CADA0004;
 /
@@ -4080,16 +4085,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
+    --              27/04/2018 - Buscar descricao da tabela de situacoes. PRJ366 (Lombardi)
     --
     -- ..........................................................................*/
   BEGIN
+    DECLARE
+      
+      vr_dssituacao tbcc_situacao_conta.dssituacao%TYPE;
+      vr_des_erro   VARCHAR2(10);
+      vr_dscritic   crapcri.dscritic%TYPE;
+    
+    BEGIN
+      CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => pr_cdsitdct
+                                          ,pr_dssituacao => vr_dssituacao
+                                          ,pr_des_erro => vr_des_erro
+                                          ,pr_dscritic => vr_dscritic);
+      
     IF pr_cdsitdct > 0 AND 
-       pr_cdsitdct <= vr_tab_dssitdct.count THEN  
-      RETURN pr_cdsitdct||' '|| vr_tab_dssitdct(pr_cdsitdct);
+         vr_des_erro <> 'NOK' THEN
+        RETURN pr_cdsitdct||' '|| vr_dssituacao;
     ELSE 
       RETURN pr_cdsitdct||' ';
     END IF;
   
+    END;
   END fn_dssitdct;
   
   --Buscar codigo da empresa da pessoa fisica ou juridica
@@ -4255,6 +4274,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- 
     --              20/02/2018 - Alteracao da verificação de tipos de conta individuais, pela 
     --                           verificação da categoria da conta. PRJ366 (Lombardi).
+    --              
+    --              27/04/2018 - Buscar descricao da tabela de situacoes. PRJ366 (Lombardi)
     --              
     -- ..........................................................................*/
     
@@ -4777,6 +4798,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     vr_flgativo INTEGER := 0;
     vr_qtdiaatr INTEGER := 0;
+    
+    vr_dssituacao tbcc_situacao_conta.dssituacao%TYPE;
+    
   BEGIN
   
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -4801,16 +4825,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                           ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
 
+    CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => 7
+                                        ,pr_dssituacao => vr_dssituacao
+                                        ,pr_des_erro => vr_des_reto
+                                        ,pr_dscritic => vr_dscritic);
+    
+    IF vr_des_reto = 'NOK' THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
     --Em processo de Demissão 
     IF rw_crapass.cdsitdct = 7 THEN
-      pc_cria_registro_msg(pr_dsmensag             => 'Em processo de demissao.',
+      pc_cria_registro_msg(pr_dsmensag             => vr_dssituacao,
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
 
     END IF;
 
+    CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => 8
+                                        ,pr_dssituacao => vr_dssituacao
+                                        ,pr_des_erro => vr_des_reto
+                                        ,pr_dscritic => vr_dscritic);
+    
+    IF vr_des_reto = 'NOK' THEN
+      RAISE vr_exc_erro;
+    END IF;
+
 	--Demissão BACEN
     IF rw_crapass.cdsitdct = 8 THEN
-      pc_cria_registro_msg(pr_dsmensag             => 'Em processo de demissao BACEN.',
+      pc_cria_registro_msg(pr_dsmensag             => vr_dssituacao,
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
 
     END IF;
@@ -12171,12 +12213,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
            Dados referentes ao programa:
            Frequencia: Sempre que for chamado.
            Objetivo  : Efetuar a impressao da Declaração de Utilização de Recursos para Isenção de IOF
-           Alteracoes: 
+           
+           Alteracoes: 19/02/2018 - Ajustes na geracao de pendencia de digitalizacao.
+                                    PRJ366 (Odirlei-AMcom)
+             
         ............................................................................. */
 				-- Cursor com os dados do cooperado
 				CURSOR cr_crapass IS
 						SELECT crapass.nrdconta,
 									 gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa) AS nrcpfcgc,
+                   crapass.nrcpfcgc nrcpfcgc_sf, 
 									 crapass.nmprimtl,
 									 crapenc.nrcepend,
 									 crapenc.dsendere,
@@ -12198,14 +12244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 						WHERE crapass.nrdconta = pr_nrdconta
 									AND crapass.nrcpfcgc = pr_nrcpfcgc;
 				rw_crapass cr_crapass%ROWTYPE;
-        -- Cursor da crapdoc
-        CURSOR cr_crapdoc(pr_cdcooper IN crapdoc.cdcooper%TYPE,pr_nrdconta IN crapdoc.nrdconta%TYPE) IS
-               SELECT t.idseqttl
-               FROM crapdoc t
-               WHERE t.cdcooper = pr_cdcooper
-               AND t.nrdconta = pr_nrdconta
-               AND t.tpdocmto = 56;
-        rw_crapdoc cr_crapdoc%ROWTYPE;
+        
 				-- Tratamento de erros
 				vr_exc_saida EXCEPTION;
 				vr_cdcritic PLS_INTEGER;
@@ -12218,11 +12257,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 				vr_nom_direto     VARCHAR2(200); --> Diretório para gravação do arquivo
 				vr_nmarqimp       VARCHAR2(50); --> nome do arquivo PDF
 				vr_temp           VARCHAR2(1000); --> Temporária para gravação do texto XML
+				
+        -- Variaveis de log
+        vr_cdcooper crapcop.cdcooper%TYPE;
+        vr_cdoperad VARCHAR2(100);
+        vr_nmdatela VARCHAR2(100);
+        vr_nmeacao  VARCHAR2(100);
+        vr_cdagenci VARCHAR2(100);
+        vr_nrdcaixa VARCHAR2(100);
+        vr_idorigem VARCHAR2(100);
+        
 				-- variaveis de críticas
 				vr_tab_erro  GENE0001.typ_tab_erro;
 				vr_des_reto  VARCHAR2(10);
 				vr_typ_saida VARCHAR2(3);
 		BEGIN
+    
+        -- Recupera dados de log para consulta posterior
+        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+        vr_dscritic := NULL; 
+        
 				-- Leitura do calendário da cooperativa
 				OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
 				FETCH btch0001.cr_crapdat
@@ -12317,31 +12379,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 				-- Criar XML de retorno para uso na Web
 				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
 																			 vr_nmarqimp || '</nmarqpdf>');
-        -- gravar documento na CRAPDOC para controle de digitalização
-        OPEN cr_crapdoc(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-        FETCH cr_crapdoc INTO rw_crapdoc;
-        IF cr_crapdoc%NOTFOUND THEN
-          BEGIN
-            INSERT INTO crapdoc(cdcooper, 
-            nrdconta, 
-            flgdigit, 
-            dtmvtolt, 
-            tpdocmto, 
-                                idseqttl)
-            VALUES (pr_cdcooper,
-                   pr_nrdconta,
-                   0,
-                   rw_crapdat.dtmvtolt,
-                   56, -- declaraçao PJ cooperativa
-                   1);
-				COMMIT;
-          EXCEPTION
-               WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao inserir CRAPDOC: ' || SQLERRM;
-						        RAISE vr_exc_saida; -- encerra programa
-               END;
+        
+        --> Declaraçao PJ cooperativa
+        DIGI0001.pc_gera_pend_digitalizacao( pr_cdcooper  => pr_cdcooper         --> Codigo da cooperativa 
+                                            ,pr_nrdconta  => pr_nrdconta         --> Nr. da conta
+                                            ,pr_idseqttl  => 1                   --> Indicador de titular
+                                            ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc_sf --> Numero do CPF/CNPJ
+                                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
+                                            ,pr_lstpdoct  => 56                  --> declaraçao PJ cooperativa                   --> lista de Tipo do documento separados por ;
+                                            ,pr_cdoperad  => nvl(vr_cdoperad,' ')--> Codigo do operador
+                                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica
+                                            ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
+      
+            
+        IF nvl(vr_cdcritic,0) > 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
         END IF;
-        CLOSE cr_crapdoc;
+                
 		EXCEPTION
 				WHEN vr_exc_saida THEN
 						-- Se foi retornado apenas código
@@ -12777,6 +12832,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END;
     
   END pc_retorna_cartao_valido;
+  
+  PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
+                                         ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
+                                         ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
+                                         ,pr_vllimite_maximo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE
+                                         ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
+                                         ,pr_possui_registro  OUT NUMBER) IS
+      
+    CURSOR cur_config_categ IS
+      SELECT tbcc.vllimite_minimo
+            ,tbcc.vllimite_maximo
+            ,tbcc.dsdias_debito
+      FROM   TBCRD_CONFIG_CATEGORIA tbcc
+      WHERE  tbcc.cdcooper = pr_cdcooper
+      AND    tbcc.cdadmcrd = pr_cdadmcrd;
+  
+    vr_possui_registro    NUMBER:=0;
+    
+  BEGIN
+    --
+    pr_possui_registro := vr_possui_registro;
+    --
+    FOR r001 IN cur_config_categ LOOP
+        pr_vllimite_minimo := r001.vllimite_minimo;
+        pr_vllimite_maximo := r001.vllimite_maximo;
+        pr_diasdebito      := r001.dsdias_debito;
+        pr_possui_registro := 1;
+    END LOOP;
+    --
+  END pc_busca_credito_config_categ;
   
 END CADA0004;
 /

@@ -212,6 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																		,pr_peracres IN NUMBER DEFAULT 0       --> Percentual de Desconto
                                                                         ,pr_perdesco IN NUMBER DEFAULT 0       --> Percentual de Acrescimo
                                                                         ,pr_vldescto IN NUMBER DEFAULT 0       --> Valor do Desconto
+                                    ,pr_vldevedor IN NUMBER DEFAULT 0
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
 																		,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
 																		);
@@ -1273,7 +1274,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         
         -- Validar se possui valor a ser pago
         -- 5-Saldo Prejuízo/ 6-Parcial Prejuízo/ 7-Saldo Prejuízo Desconto
-        IF rw_cde.tpparcela IN (5,7) THEN -- Saldo Prejuizo
+		-- 4 Quitação do Contrato
+        IF rw_cde.tpparcela IN (4,5,7) THEN -- Saldo Prejuizo
         
       	   
           -- Rotina para pagamento de prejuizo
@@ -3984,6 +3986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																		,pr_peracres IN NUMBER DEFAULT 0       --> Percentual de Desconto
                                     ,pr_perdesco IN NUMBER DEFAULT 0       --> Percentual de Acrescimo
                                     ,pr_vldescto IN NUMBER DEFAULT 0       --> Valor do Desconto
+                                    ,pr_vldevedor IN NUMBER DEFAULT 0
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
 																		,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
 																		) IS
@@ -4027,6 +4030,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   30/03/2017 - Inclusao do parametro pr_idarquiv e pr_idboleto para
                                incluir na tabela tbepr_cobranca. (P210.2 - Lombardi)
+                               
+                  12/12/2017 - Incluso novo parametro pr_vldevedor para gravar na tabela
+				               tbepr_cobranca o valor devedor do emprestimo na geracao do
+							   boleto (Daniel SM 210.2) 
                                
                   10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
                                
@@ -4823,7 +4830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,idboleto
                                  ,peracrescimo
                                  ,perdesconto
-                                 ,vldesconto)
+                                 ,vldesconto
+                                 ,vldevedor)
 													VALUES(pr_cdcooper
 													      ,pr_nrdconta
 																,pr_nrctremp
@@ -4840,7 +4848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                 ,pr_idboleto
                                 ,pr_peracres
                                 ,pr_perdesco
-                                ,pr_vldescto);
+                                ,pr_vldescto
+                                ,pr_vldevedor);
 
 		  -- Gera log na lgm
 			gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,

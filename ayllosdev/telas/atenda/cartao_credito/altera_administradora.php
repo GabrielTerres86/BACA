@@ -30,11 +30,11 @@
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
 	}	
 	
-	$nrdconta = $_POST["nrdconta"];
-	$codaadmi = $_POST["codaadmi"];
-	$codnadmi = $_POST["codnadmi"];
-	$nrcrcard = $_POST["nrcrcard"];
-
+	$nrdconta        = $_POST["nrdconta"];
+	$codaadmi        = $_POST["codaadmi"];
+	$codnadmi        = $_POST["codnadmi"];
+	$nrcrcard        = $_POST["nrcrcard"];
+	$dsjustificativa = $_POST['dsjustificativa'];
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	if (!validaInteiro($codaadmi)) exibirErro('error','Antiga administradora inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
@@ -72,20 +72,21 @@
 		
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
+		echo "error = true;";
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata.".",'Alerta - Ayllos',$funcaoAposErro,false);	
 	}else{
 		$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
+		//echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 	}
 	
 	// Procura indice da opcao "@" - Principal
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
 	
 	// Se o indice da opcao "@" foi encontrado - Carrega o principal novamente.
-	if (!($idPrincipal === false)) {
+	/*if (!($idPrincipal === false)) {
 		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',"'.$glbvars["opcoesTela"][$idPrincipal].'");';
 	}	else {
 		echo 'acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
-	}
+	}*/
 	
 ?>

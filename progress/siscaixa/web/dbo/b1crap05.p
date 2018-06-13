@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 12/12/2017
+   Data    : Marco/2001                      Ultima atualizacao: 10/05/2018
 
    Dados referentes ao programa:
 
@@ -77,6 +77,12 @@
                04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
                             tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
                             
+               18/05/2018 - Adicionada chamada pc_ind_impede_talonario para verificar se a 
+                            situacao de conta permite a solicitacao de talionario. PRJ366 (Lombardi).
+                            
+                            
+               10/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom)
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap05.p - Solicitacao/Liberacoes Taloes Normal                   */
@@ -480,9 +486,9 @@ PROCEDURE valida-dados:
        END.
     ELSE
        DO:
-           /* buscar quantidade maxima de digitos aceitos para o convenio */
+           /* valida adesao do produtos */
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                          
+           
             RUN STORED-PROCEDURE pc_valida_adesao_produto
                 aux_handproc = PROC-HANDLE NO-ERROR
                                         (INPUT crapcop.cdcooper,
@@ -714,9 +720,9 @@ PROCEDURE valida-dados:
                      END.
 
               END.      
-                
+           /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/     
            FIND crapreq WHERE crapreq.cdcooper = crapcop.cdcooper   AND
-                              crapreq.dtmvtolt = crapdat.dtmvtolt   AND
+                              crapreq.dtmvtolt = crapdat.dtmvtocd   AND
                               crapreq.tprequis = p-tprequis         AND
                               crapreq.nrdctabb = p-nro-conta        AND
                               crapreq.nrinichq = p-nro-inicial      AND
@@ -793,6 +799,7 @@ PROCEDURE valida-dados:
                                      "99999999999999")),
                                      "xx.xxx.xxx/xxxx-xx")).
 
+    /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/
     RUN alerta_fraude IN h-b1wgen0110(INPUT crapcop.cdcooper,
                                       INPUT p-cod-agencia,
                                       INPUT p-nro-caixa ,
@@ -801,7 +808,7 @@ PROCEDURE valida-dados:
                                                 "CAIXA-ONLINE"
                                              ELSE
                                                 "LANREQ"),
-                                      INPUT crapdat.dtmvtolt,
+                                      INPUT crapdat.dtmvtocd,
                                       INPUT aux_cdorigem,
                                       INPUT crapass.nrcpfcgc,
                                       INPUT crapass.nrdconta,
@@ -906,6 +913,8 @@ PROCEDURE solicita-entrega-talao:
     DEF VAR aux_contador             AS INT                           NO-UNDO.
     DEF VAR aux_cdcritic             AS INT                           NO-UNDO.
     DEF VAR aux_dscritic             AS CHAR                          NO-UNDO.
+    DEF VAR aux_des_erro             AS CHAR                          NO-UNDO.
+    DEF VAR aux_inimptal             AS INT                           NO-UNDO.
 
     IF p-sistema = "CAIXA"   THEN
        ASSIGN aux_nrdolote = 19000 + p-nro-caixa.
@@ -1037,6 +1046,60 @@ PROCEDURE solicita-entrega-talao:
                          UNDO TRANS_1, LEAVE TRANS_1.
                  END.
 
+                  /* busca indicador impedimento de solicitacao de talionario */
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                  
+                  RUN STORED-PROCEDURE pc_ind_impede_talonario
+                      aux_handproc = PROC-HANDLE NO-ERROR
+                                              (INPUT crapcop.cdcooper, /* pr_cdcooper */
+                                               INPUT aux_nrdconta,     /* pr_nrdconta */
+                                               OUTPUT 0,               /* pr_inimpede_talionario */
+                                               OUTPUT "",              /* pr_des_erro */
+                                               OUTPUT "").             /* pr_dscritic */
+                  
+                  CLOSE STORED-PROC pc_ind_impede_talonario
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  ASSIGN aux_inimptal = 0
+                         aux_des_erro = ""
+                         aux_dscritic = ""
+                         aux_inimptal = pc_ind_impede_talonario.pr_inimpede_talionario
+                                            WHEN pc_ind_impede_talonario.pr_inimpede_talionario <> ?
+                         aux_des_erro = pc_ind_impede_talonario.pr_des_erro
+                                            WHEN pc_ind_impede_talonario.pr_des_erro <> ?
+                         aux_dscritic = pc_ind_impede_talonario.pr_dscritic
+                                            WHEN pc_ind_impede_talonario.pr_dscritic <> ?.
+                  
+                  IF  aux_des_erro = "NOK" THEN
+                      DO:
+                          ASSIGN i-cod-erro  = 0
+                                 c-desc-erro = aux_dscritic.
+                          
+                          RUN cria-erro (INPUT p-cooper,
+                                         INPUT p-cod-agencia,
+                                         INPUT p-nro-caixa,
+                                         INPUT i-cod-erro,
+                                         INPUT c-desc-erro,
+                                         INPUT YES).
+                          RETURN "NOK".
+                      END.
+                  
+                  IF aux_inimptal = 1 THEN
+                      DO:
+                          ASSIGN i-cod-erro  = 0
+                                 c-desc-erro = "Situacao da conta nao permite retirada de talonario.".
+                          
+                          RUN cria-erro (INPUT p-cooper,
+                                         INPUT p-cod-agencia,
+                                         INPUT p-nro-caixa,
+                                         INPUT i-cod-erro,
+                                         INPUT c-desc-erro,
+                                         INPUT YES).
+                          RETURN "NOK".
+                 END.
+
                      /* Cheque inicial sem digito */
               ASSIGN aux_num_cheque_inicial = INT(SUBSTR(STRING(
                                                              tt-taloes.nrinicial,
@@ -1164,7 +1227,8 @@ PROCEDURE solicita-entrega-talao:
      
 
                  /* Atualiza o registro do cheque */
-                 ASSIGN crapfdc.dtretchq = crapdat.dtmvtolt
+                 /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/
+                 ASSIGN crapfdc.dtretchq = crapdat.dtmvtocd
                         crapfdc.cdoperad = p-operador
                         aux_nrdconta     = crapfdc.nrdconta.
    
@@ -1182,6 +1246,7 @@ PROCEDURE solicita-entrega-talao:
     
        CREATE crapreq.
 
+        /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/
        ASSIGN crapreq.nrdconta = aux_nrdconta
               crapreq.nrdctabb = p-nro-conta
               crapreq.cdagelot = p-cod-agencia
@@ -1193,12 +1258,12 @@ PROCEDURE solicita-entrega-talao:
                   crapreq.nrfinchq = tt-taloes.nrfinal
                   crapreq.qtreqtal = IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0
               crapreq.nrseqdig = aux_nrseqdig
-              crapreq.dtmvtolt = crapdat.dtmvtolt
+              crapreq.dtmvtolt = crapdat.dtmvtocd
               crapreq.tprequis = p-tprequis
               crapreq.tpformul = 1
               crapreq.cdcooper = crapcop.cdcooper
               crapreq.cdoperad = p-operador
-              crapreq.dtpedido = crapdat.dtmvtolt
+              crapreq.dtpedido = crapdat.dtmvtocd
     
               craptrq.qtcomprq = craptrq.qtcomprq + 1
                   craptrq.qtcomptl = IF aux_contador = 1 THEN (craptrq.qtcomptl + p-qtde-req-talao) ELSE craptrq.qtcomptl
@@ -1587,10 +1652,11 @@ PROCEDURE retorna-conta-cartao:
      RUN sistema/generico/procedures/b1wgen0025.p 
          PERSISTENT SET h-b1wgen0025.
          
+     /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/
      RUN verifica_cartao IN h-b1wgen0025(INPUT crapcop.cdcooper,
                                          INPUT 0,
                                          INPUT aux_dscartao, 
-                                         INPUT crapdat.dtmvtolt,
+                                         INPUT crapdat.dtmvtocd,
                                         OUTPUT p-nro-conta,
                                         OUTPUT aux_cdcooper,
                                         OUTPUT p-nrcartao,

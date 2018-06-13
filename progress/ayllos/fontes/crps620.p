@@ -41,6 +41,7 @@ DEF VAR aux_nmarqimp AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmarqcre AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmarqmat AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmarqter AS CHAR                                        NO-UNDO.
+DEF BUFFER crabdoc FOR crapdoc.
 
 ASSIGN glb_cdprogra = "crps620"
        glb_dtmvtolt = TODAY.
@@ -126,6 +127,30 @@ FOR EACH crapcop NO-LOCK:
 
                     RUN fontes/imprim_unif.p (INPUT INTE(crapcop.cdcooper)).
                 END.
+
+        FOR EACH crapdoc
+           WHERE crapdoc.cdcooper = crapcop.cdcooper
+             AND crapdoc.dtmvtolt <= glb_dtmvtolt - 180
+             AND crapdoc.flgdigit = FALSE
+             AND crapdoc.tpbxapen = 0
+             NO-LOCK:
+             
+            FIND FIRST crabdoc
+                 WHERE RECID(crabdoc) = RECID(crapdoc)
+                 EXCLUSIVE-LOCK NO-ERROR.
+            /* Caso nao encontre ou esteja em lock, passar para a proxima
+               tentará baixar no proximo dia */
+            IF NOT AVAILABLE crabdoc THEN     
+              NEXT.
+            
+            ASSIGN crabdoc.tpbxapen = 2 /* Decurso de prazo */
+                   crabdoc.cdopebxa = "1" /* super usuario */
+                   crabdoc.dtbxapen = glb_dtmvtolt.
+             
+        END.     
+        
+        VALIDATE crabdoc.
+        RELEASE crabdoc.
 
 
 END.

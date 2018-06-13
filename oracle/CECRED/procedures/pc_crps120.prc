@@ -103,6 +103,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                               dia da dtintegr for anterior ao dia limite para debitos. 
                               (Jaison/Marcos - Supero)
 
+                 29/05/2018 - Alterados codigos de situacao "crapass.cdsitdct". PRJ366 (Lombardi).
+
     ............................................................................ */
 
     DECLARE
@@ -2788,6 +2790,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
            WHERE crapass.cdcooper = pr_cdcooper
              AND crapass.nrcadast = pr_nrdconta
              AND crapass.nrdconta <> pr_nrdconta_ass
+             AND crapass.cdsitdct <> 2
              AND crapass.cdsitdct <> 3
              AND crapttl.cdcooper = pr_cdcooper
              AND crapttl.nrdconta = pr_nrdconta_ass

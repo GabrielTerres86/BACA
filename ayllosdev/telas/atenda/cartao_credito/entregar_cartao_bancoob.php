@@ -32,6 +32,29 @@ $("#divOpcoesDaOpcao1").css("display","block");
 // Esconde os cart&otilde;es
 $("#divConteudoCartoes").css("display","none");
 // Acao do formulario
+$("#nrcarfor").change(function(){
+	alert();
+	var nrcrcard = $(this).val();
+	nrcrcard = nrcrcard.replace(/\./g,"");
+
+	//alert($(this).val());
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/cartao_credito/permite_entrega.php",
+		dataType: "html",
+		data: {
+			nrcrcard: nrcrcard,
+			nrdconta: nrdconta	
+		},		
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+        success: function (response) {
+			eval(response);
+		}				
+	});
+});
 nomeacao = 'ENTREGAR_CARTAO';
 
 controlaLayout('frmEntregaCartaoBancoob');
