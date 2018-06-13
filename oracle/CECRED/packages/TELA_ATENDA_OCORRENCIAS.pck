@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   --  Sistema  : Procedimentos para tela Atenda / Ocorrencias
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Setembro/2016.                
+  --  Data     : Setembro/2016.
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Ocorrencias
@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Ajuste: Criada procedure pc_busca_dados_risco
   --
   ---------------------------------------------------------------------------------------------------------------
-  
+
   /* Busca dados de risco das contas (contratos de empréstimo e limite de crédito) */
   PROCEDURE pc_busca_dados_risco(pr_nrdconta IN crawepr.nrdconta%TYPE --> Número da conta
                                 ,pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da cooperativa
@@ -38,19 +38,20 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
 END TELA_ATENDA_OCORRENCIAS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
+
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : TELA_ATENDA_OCORRENCIAS
-  --  Sistema  : Ayllos
+  --  Sistema  : Procedimentos para tela Atenda / Ocorrencias
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Setembro/2016.                           Última alteração:
+  --  Data     : Setembro/2016.
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Seguros
   --
-  -- Alterações: Criada procedure pc_busca_dados_risco
-  --             23/01/2018 - Reginaldo (AMcom)
+  -- Alterado: 23/01/2018 - Reginaldo (AMcom)
+  -- Ajuste: Criada procedure pc_busca_dados_risco
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -281,64 +282,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
       ---------->> CURSORES <<--------
 
+			-- Dados da conta base
+			CURSOR cr_base(pr_cdcooper INTEGER
+					 , pr_nrdconta INTEGER) IS
+			SELECT cb.cdcooper
+					 , cb.nrdconta
+					 , cb.inpessoa
+					 , cb.nrcpfcgc
+					 , cb.inrisctl
+					 , cb.dtrisctl
+					 , DECODE(cb.inpessoa, 1,
+										 to_char(cb.nrcpfcgc, '00000000000'),
+										 substr(to_char(cb.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+				FROM crapass cb
+			 WHERE cb.cdcooper = pr_cdcooper
+				 AND cb.nrdconta = pr_nrdconta;
+			rw_cbase cr_base%ROWTYPE;
+
       -- Contas de mesmo titular da conta base
-      CURSOR cr_contas_do_titular(rw_cbase IN crapass%ROWTYPE) IS
-      SELECT c.cdcooper
-           , c.nrdconta
-           , gene0002.fn_mask(c.nrcpfcgc, 
-				                    DECODE(c.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
-           , c.inpessoa
-           , c.dsnivris
-					 , CASE WHEN c.nrdconta = rw_cbase.nrdconta THEN 0 ELSE 1 END ordem
-        FROM crapass c
-       WHERE c.cdcooper = rw_cbase.cdcooper
-         AND DECODE(rw_cbase.inpessoa, 1,
-             gene0002.fn_mask(c.nrcpfcgc, '99999999999'),
-             substr(gene0002.fn_mask(c.nrcpfcgc, '99999999999999'), 1, 8)) =
-             DECODE(rw_cbase.inpessoa, 1,
-             gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-             substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-			 ORDER BY ordem;
+      CURSOR cr_contas_do_titular(rw_cbase IN cr_base%ROWTYPE) IS
+			 WITH contas AS (
+					SELECT ass.cdcooper
+							 , ass.nrdconta
+							 , ass.inpessoa
+							 , to_char(ass.nrcpfcgc,
+																		DECODE(ass.inpessoa, 1, '00000000000','00000000000000')) nrcpfcgc
+							 , DECODE(ass.inpessoa, 1,
+										 to_char(ass.nrcpfcgc, '00000000000'),
+										 substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+							 , ass.dsnivris
+						FROM crapass ass
+					 WHERE cdcooper = rw_cbase.cdcooper
+						 AND inpessoa = rw_cbase.inpessoa
+				)
+				SELECT c.cdcooper
+									 , c.nrdconta
+									 , c.nrcpfcgc
+									 , c.inpessoa
+									 , c.dsnivris
+									 , DECODE(c.nrdconta, rw_cbase.nrdconta, 0, 1) ordem
+				FROM contas c
+				WHERE c.nrcpfcgc_compara = rw_cbase.nrcpfcgc_compara
+				ORDER BY ordem;
       rw_contas_do_titular cr_contas_do_titular%ROWTYPE;
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
-    CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
-    SELECT DISTINCT cgr.cdcooper
-         , cgr.nrdconta
-         , gene0002.fn_mask(cgr.nrcpfcgc, 
-				                    DECODE(cgr.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
-         , cgr.inpessoa
-         , cgr.dsnivris
-         , grp.nrdgrupo
-         , grp.dsdrisgp
-      FROM crapass cgr
-         , crapgrp grp
-     WHERE grp.nrdgrupo IN (
-               SELECT aux.nrdgrupo
-                 FROM crapgrp aux
-                WHERE aux.cdcooper = rw_cbase.cdcooper
-                  AND DECODE(aux.inpessoa, 1,
-                         gene0002.fn_mask(aux.nrcpfcgc, '99999999999'),
-                         substr(gene0002.fn_mask(aux.nrcpfcgc, '99999999999999'), 1, 8)) =
-                      DECODE(rw_cbase.inpessoa, 1,
-                         gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                         substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-           )
-       AND grp.cdcooper =  rw_cbase.cdcooper
-       AND DECODE(grp.inpessoa, 1,
-                  gene0002.fn_mask(grp.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(grp.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND DECODE(cgr.inpessoa, 1,
-                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND cgr.cdcooper =  grp.cdcooper
-       AND (cgr.nrdconta =  grp.nrdconta OR cgr.nrdconta = grp.nrctasoc);
+    CURSOR cr_contas_grupo_economico(rw_cbase IN cr_base%ROWTYPE) IS
+		WITH grupos AS (
+				SELECT gr.cdcooper
+						 , gr.nrdconta
+						 , gr.nrctasoc
+						 , gr.inpessoa
+						 , (SELECT to_char(nrcpfcgc,
+																	DECODE(inpessoa, 1, '00000000000','00000000000000')) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc
+						 , DECODE(gr.inpessoa, 1,
+													 to_char(gr.nrcpfcgc, '00000000000'),
+													 substr(to_char(gr.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+						 , gr.nrdgrupo
+						 , gr.dsdrisgp
+						 , (SELECT DECODE(inpessoa, 1,
+													 to_char(nrcpfcgc, '00000000000'),
+													 substr(to_char(nrcpfcgc, '00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc_nrdconta
+						 , (SELECT DECODE(inpessoa, 1,
+													 to_char(nrcpfcgc, '00000000000'),
+													 substr(to_char(nrcpfcgc, '00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrctasoc) nrcpfcgc_nrctasoc
+					FROM crapgrp gr
+				 WHERE gr.cdcooper = rw_cbase.cdcooper
+					 AND gr.nrdgrupo IN (
+							SELECT aux.nrdgrupo
+											 FROM crapgrp aux
+											WHERE aux.cdcooper = rw_cbase.cdcooper
+												AND DECODE(aux.inpessoa, 1,
+															 to_char(aux.nrcpfcgc, '00000000000'),
+															 substr(to_char(aux.nrcpfcgc, '00000000000000'), 1, 8)) =
+															 rw_cbase.nrcpfcgc_compara
+					)
+			)
+			SELECT DISTINCT grp.nrdconta
+					 , grp.nrcpfcgc
+					 , (SELECT dsnivris FROM crapass WHERE cdcooper = grp.cdcooper AND nrdconta = grp.nrdconta) dsnivris
+					 , grp.nrdgrupo
+					 , grp.dsdrisgp
+				FROM grupos grp
+			 WHERE grp.nrcpfcgc_nrdconta <> rw_cbase.nrcpfcgc_compara
+				 AND grp.nrcpfcgc_nrctasoc <> rw_cbase.nrcpfcgc_compara 
+				 ;
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 
 		-- Dados dos riscos
@@ -399,18 +427,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        AND t.tpregist = 000;
     rw_tab cr_tab%ROWTYPE;
 
-    -- Dados da conta base
-    CURSOR cr_base(pr_cdcooper INTEGER
-		     , pr_nrdconta INTEGER) IS
-    SELECT cb.*
-      FROM crapass cb
-     WHERE cb.cdcooper = pr_cdcooper
-       AND cb.nrdconta = pr_nrdconta;
-    rw_cbase cr_base%ROWTYPE;
-
     BEGIN
       pr_des_erro := 'OK';
 
+/*
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
@@ -427,7 +447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
-
+*/
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -453,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       FETCH cr_tab INTO rw_tab;
       CLOSE cr_tab;
 
-      vr_valor_arrasto := TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
+      vr_valor_arrasto := 100; --TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
 
       -- Busca dados da conta base
       OPEN cr_base(pr_cdcooper, pr_nrdconta);
@@ -465,14 +485,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        IN cr_contas_do_titular(rw_cbase) LOOP
           FOR rw_tabrisco_central
 						IN cr_tbrisco_central(pr_cdcooper
-                                 , rw_contas_do_titular.nrdconta
+                                        , rw_contas_do_titular.nrdconta
 																 , rw_dat.dtmvtoan) LOOP
-										-- Adiciona registro para a conta/contrato no XML de retorno
-										pc_monta_reg_conta_xml(pr_retxml
-																				 , vr_auxconta
-																				 , vr_dscritic
-																				 , rw_contas_do_titular.nrdconta
-																				 , rw_contas_do_titular.nrcpfcgc
+					      -- Adiciona registro para a conta/contrato no XML de retorno
+                pc_monta_reg_conta_xml(pr_retxml
+                                     , vr_auxconta
+                                     , vr_dscritic
+                                     , rw_contas_do_titular.nrdconta
+                                     , rw_contas_do_titular.nrcpfcgc
 																	 , rw_tabrisco_central.nrctremp
 																	 , rw_tabrisco_central.risco_inclusao
 																	 , rw_tabrisco_central.risco_grupo
@@ -519,7 +539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																	 , rw_tabrisco_central.risco_final
 																	 , rw_tabrisco_central.tipo_registro);
 
-					   vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 			   END LOOP; -- contratos
       END LOOP; -- contas do grupo econômico
 
@@ -616,7 +636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
            AND tbrecup_acordo.cdsituacao = pr_cdsituacao;
 
       rw_acordo cr_acordo%ROWTYPE;
-     
+
       -- Variavel de criticas
       vr_dscritic VARCHAR2(10000);
 
@@ -663,9 +683,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'nracordo', pr_tag_cont => TO_CHAR(rw_acordo.nracordo), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'dsorigem', pr_tag_cont => TO_CHAR(rw_acordo.dsorigem), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'nrctremp', pr_tag_cont => GENE0002.fn_mask_contrato(rw_acordo.nrctremp), pr_des_erro => vr_dscritic);
-        
+
         vr_contador := vr_contador + 1;
-      END LOOP;    
+      END LOOP;
 
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'qtdregis', pr_tag_cont => TO_CHAR(vr_contador), pr_des_erro => vr_dscritic);
 
