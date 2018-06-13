@@ -17,6 +17,8 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   --                          referentes a proposta. (Lindon Carlos Pecile - GFT)
   --
   --             05/05/2018 - Inclusão da procedure pc_retorno_analise_cartao (Paulo Silva (Supero))
+  --
+  --	         13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------
   PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
                                           ,pr_senha    IN VARCHAR2              --> Senha
@@ -2378,7 +2380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Montar mensagem de critica
         vr_status      := 400;
         vr_cdcritic    := 138;
-        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch CECRED esta em execucao.';
+        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch AILOS esta em execucao.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -2890,7 +2892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         vr_status      := 400;
         vr_cdcritic    := 138;
         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch '
-                       || 'CECRED esta em execucao.';
+                       || 'AILOS esta em execucao.';
         RAISE vr_exc_saida;
       END IF;	
       
@@ -3593,7 +3595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      if  nvl(rw_crapdat.inproces,0) <> 1 then
          vr_status      := 400;
          vr_cdcritic    := 138;
-         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch CECRED esta em execucao.';
+         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch AILOS esta em execucao.';
          raise vr_exc_saida;
      end if;	
         
@@ -4447,7 +4449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Montar mensagem de critica
       vr_status      := 400;
       vr_cdcritic    := 138;
-      vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch CECRED esta em execucao.';
+      vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch AILOS esta em execucao.';
       RAISE vr_exc_saida;
     END IF;
 
