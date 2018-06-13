@@ -1168,7 +1168,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     AND    bdt.cdcooper = pr_cdcooper;
     rw_crapbdt cr_crapbdt%ROWTYPE;
 
+    CURSOR cr_craptdb IS
+    SELECT 1
+    FROM   craptdb tdb
+    WHERE  tdb.nrdconta = pr_nrdconta
+    AND    tdb.nrborder = pr_nrborder
+    AND    tdb.nrtitulo = pr_nrtitulo
+    AND    tdb.cdcooper = pr_cdcooper;
+    rw_craptdb cr_craptdb%ROWTYPE;
+    
+    CURSOR cr_tbdsct_titulo_cyber IS
+      SELECT nrctrdsc
+        FROM tbdsct_titulo_cyber
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrborder = pr_nrborder
+         AND nrtitulo = pr_nrtitulo;
+    rw_tbdsct_titulo_cyber cr_tbdsct_titulo_cyber%ROWTYPE;
+    
   BEGIN
+    
+    -- Valida a existência do bordero
     OPEN  cr_crapbdt;
     FETCH cr_crapbdt INTO rw_crapbdt;
     IF    cr_crapbdt%NOTFOUND THEN
@@ -1178,6 +1198,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     END   IF;
     CLOSE cr_crapbdt;
   
+    -- Valida a existência do titulo
+    OPEN  cr_craptdb;
+    FETCH cr_craptdb INTO rw_craptdb;
+    IF    cr_craptdb%NOTFOUND THEN
+        CLOSE cr_craptdb;
+        pr_dscritic := 'Título '||pr_nrborder||' não encontrado.';
+        RAISE vr_exc_erro;
+    END   IF;
+    CLOSE cr_craptdb;
+    
+    OPEN cr_tbdsct_titulo_cyber;
+    FETCH cr_tbdsct_titulo_cyber INTO rw_tbdsct_titulo_cyber;
+    
+    -- Verifica se o registro do titulo já foi inserido na tabela. 
+    IF cr_tbdsct_titulo_cyber%NOTFOUND THEN
+      
     /* Buscar a proxima sequencia tbdsct_titulo_cyber.nrctrdsc */
     pc_sequence_progress(pr_nmtabela => 'TBDSCT_TITULO_CYBER'
                         ,pr_nmdcampo => 'NRCTRDSC'
@@ -1202,6 +1238,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
            vr_dscritic := 'Erro ao inserir o titulo cyber do borderô: '||SQLERRM;
            RAISE vr_exc_erro;
     END; 
+      
+    ELSE -- Caso o registro já exista, retorna o sequencial já existente
+      
+      vr_nrctrdsc := rw_tbdsct_titulo_cyber.nrctrdsc;     
+    END IF;
+    
+    CLOSE cr_tbdsct_titulo_cyber;
     
     pr_nrctrdsc := vr_nrctrdsc;
   EXCEPTION
