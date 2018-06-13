@@ -390,6 +390,10 @@ function selecionaTabela(tr) {
     dslinha1 = $('#dslinha1', tr).val();
     dslinha2 = $('#dslinha2', tr).val();
     dslinha3 = $('#dslinha3', tr).val();
+    dtinsbor = $('#dtinsbor', tr).val();
+    hrinsbor = $('#hrinsbor', tr).val();
+    qttitbor = $('#qttitbor', tr).val();
+    vltotbor = $('#vltotbor', tr).val();
 
     return false;
 }
@@ -432,6 +436,10 @@ function mostraProtocolo() {
             lndigita: lndigita,
             nrseqaut: nrseqaut,
             nrdocmto: nrdocmto,
+            dtinsbor: dtinsbor,
+            hrinsbor: hrinsbor,
+            qttitbor: qttitbor,
+            vltotbor: vltotbor,
             dslinha1: dslinha1,
             dslinha2: dslinha2,
             dslinha3: dslinha3,
@@ -669,6 +677,12 @@ function formataVerpro() {
     cVldoirrf = $('#vldoirrf', '#' + frmDados);
     cVlaliqir = $('#vlaliqir', '#' + frmDados);
     cVlliquid = $('#vlliquid', '#' + frmDados);
+
+    //Campos do bordero
+    cdtinsbor = $('#dtinsbor', '#' + frmDados);
+    chrinsbor = $('#hrinsbor', '#' + frmDados);
+    cqttitbor = $('#qttitbor', '#' + frmDados);
+    cvltotbor = $('#vltotbor', '#' + frmDados);
 
     cNmprepos.css({'width': '440px'});
     cNmoperad.css({'width': '440px'});

@@ -63,6 +63,12 @@ $dslinha1 = $_POST['dslinha1'];
 $dslinha2 = $_POST['dslinha2'];
 $dslinha3 = $_POST['dslinha3'];
 
+//Bordero
+$dtinsbor = $_POST['dtinsbor'];
+$hrinsbor = $_POST['hrinsbor'];
+$qttitbor = $_POST['qttitbor'];
+$vltotbor = $_POST['vltotbor'];
+
 $aux_dslinha1 = explode('#', $dslinha1);
 $aux_dslinha2 = explode('#', $dslinha2);
 $aux_dslinha3 = explode('#', $dslinha3);
@@ -230,6 +236,10 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                     echo $htmlLinhas;
                                                 } ?>
 
+                                                <?php if($cdtippro == 22){?>
+                                                    <label for="qttitbor"><? echo utf8ToHtml('Qtd. de títulos:') ?></label>
+                                                    <input name="qttitbor" id="qttitbor" type="text" value="<? echo $qttitbor ?>" />
+                                                <?php }?>
 												<? if($cdtippro == 21){?>
 												<label for="nmprepos"><? echo utf8ToHtml('Cadastrado por:') ?></label>
                                                 <input name="nmprepos" id="nmprepos" type="text" value="<? echo $nmprepos ?>" />
