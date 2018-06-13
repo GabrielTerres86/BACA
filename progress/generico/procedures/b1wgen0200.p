@@ -87,7 +87,7 @@ PROCEDURE gerar_lancamento_conta_comple:
     DEF VAR xml_req       AS LONGCHAR                               NO-UNDO.
     
     
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
     RUN STORED-PROCEDURE pc_gerar_lancto_conta_prog
     aux_handproc = PROC-HANDLE
@@ -138,7 +138,7 @@ PROCEDURE gerar_lancamento_conta_comple:
         ).
 
     CLOSE STORED-PROCEDURE pc_gerar_lancto_conta_prog WHERE PROC-HANDLE = aux_handproc.
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
           ASSIGN par_cdcritic = 0
            par_cdcritic = pc_gerar_lancto_conta_prog.pr_cdcritic
@@ -197,7 +197,7 @@ PROCEDURE gerar_lancamento_conta_comple:
                   xField:GET-CHILD(xText,1) NO-ERROR.
                   
                   ASSIGN tt-ret-lancto.rowid_lcm = xText:NODE-VALUE  WHEN xField:NAME = "rowid_lcm" NO-ERROR. 
-                  ASSIGN tt-ret-lancto.recid_lcm = xText:NODE-VALUE  WHEN xField:NAME = "recid_lcm" NO-ERROR.
+                  ASSIGN tt-ret-lancto.recid_lcm = INTEGER(xText:NODE-VALUE)  WHEN xField:NAME = "recid_lcm" NO-ERROR.
                   ASSIGN tt-ret-lancto.nmtabela  = xText:NODE-VALUE  WHEN xField:NAME = "nmtabela" NO-ERROR.
                   ASSIGN tt-ret-lancto.rowid_lot = xText:NODE-VALUE  WHEN xField:NAME = "rowid_lot" NO-ERROR.
                   ASSIGN tt-ret-lancto.recid_lot = xText:NODE-VALUE  WHEN xField:NAME = "recid_lot" NO-ERROR.
@@ -314,5 +314,36 @@ PROCEDURE gerar_lancamento_conta:
     
     RETURN "OK". 
 END.    
+
+/*................................. FUNCTIONS ...............................*/
+
+FUNCTION PodeDebitar RETURNS LOGICAL 
+    (  INPUT par_cdcooper LIKE craplcm.cdcooper
+      ,INPUT par_nrdconta LIKE craplcm.nrdconta
+      ,INPUT par_cdhistor LIKE craplcm.cdhistor):
+    
+    DEF VAR aux_flpoddeb AS INTEGER          NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_pode_debitar
+    aux_handproc = PROC-HANDLE
+       ( INPUT  par_cdcooper  /* pr_cdcooper */
+        ,INPUT  par_nrdconta  /* pr_nrdconta */
+        ,INPUT  par_cdhistor  /* pr_cdhistor */        
+        ,OUTPUT 0             /* pr_flpoddeb */
+        ).
+
+    CLOSE STORED-PROCEDURE pc_pode_debitar WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_flpoddeb = 0
+           aux_flpoddeb = pc_pode_debitar.pr_flpoddeb
+                          WHEN pc_pode_debitar.pr_flpoddeb <> ?.    
+                          
+   
+    RETURN LOGICAL(aux_flpoddeb).
+        
+END FUNCTION.
 
  

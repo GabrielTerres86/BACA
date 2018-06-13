@@ -14,7 +14,7 @@
 
 DEF TEMP-TABLE tt-ret-lancto  
     FIELD rowid_lcm AS CHAR
-    FIELD recid_lcm AS CHAR
+    FIELD recid_lcm AS INTEGER
     FIELD nmtabela  AS CHAR
     FIELD rowid_lot AS CHAR
     FIELD recid_lot AS CHAR.
