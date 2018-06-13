@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_GT0018 IS
   -- Objetivo  : Centralizar rotinas relacionadas a Tela GT0018
   --
   -- Alteracoes:
-  --
+  --             13/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------*/
 
   ---------------------------- ESTRUTURAS DE REGISTRO -----------------------
@@ -341,7 +341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
                            CASE rw_crapcon.tparrecd
                                 WHEN 1 THEN 'Sicredi'
                                 WHEN 2 THEN 'Bancoob'
-                                WHEN 3 THEN 'Cecred'
+                                WHEN 3 THEN 'Ailos'
                                 ELSE 'outros'
                             END                                    
                             ||'.';
