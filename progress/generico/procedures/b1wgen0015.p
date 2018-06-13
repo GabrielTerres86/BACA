@@ -415,6 +415,8 @@
 
 	          30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
                            para trocar a mensagem quando a origem for InternetBank (Anderson).
+            12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+                           
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
