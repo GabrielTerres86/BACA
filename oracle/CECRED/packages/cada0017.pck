@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0017 IS
   --    Alteracoes:
   --
   --  12/06/2018 - Correção da consulta (Cláudio - CIS Corporate)
+  --  13/06/2018 - Alteração dos valores da tag dados_conta (Cláudio - CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_listar_coop_demitidos(pr_cdcooper  IN NUMBER, -- Codigo da cooperativa
                                      pr_dtinicio  IN DATE, -- Data de Inicio da Pesquisa
@@ -44,6 +45,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0017 IS
   --    Alteracoes:
   --
   --  12/06/2018 - Correção da consulta (Cláudio - CIS Corporate)
+  --  13/06/2018 - Alteração dos valores da tag dados_conta (Cláudio - CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_listar_coop_demitidos(pr_cdcooper  IN NUMBER, -- Codigo da cooperativa
                                      pr_dtinicio  IN DATE, -- Data de Inicio da Pesquisa
@@ -68,6 +70,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0017 IS
       vr_exc_erro EXCEPTION;
       pr_flgprevi NUMBER := TO_NUMBER(TRIM(pr_xml_param.extract('/Root/params/flgprevi/text()')
                                            .getstringval())); --> Flag para retornar os registros com previdencia
+      vr_tagpos   PLS_INTEGER := 0;
       vr_posfim   NUMBER := pr_posicao + pr_registros;
     
       -- Cursor para buscar os dados da contas
@@ -100,87 +103,81 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0017 IS
     
     BEGIN
       vr_xml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-    
       FOR r_dados_contas in cr_dados_contas LOOP
+        IF (vr_tagpos = 0) THEN
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'Dados',
                                pr_posicao  => 0,
                                pr_tag_nova => 'dados_conta',
                                pr_tag_cont => NULL,
                                pr_des_erro => pr_dscritic);
-        gene0007.pc_gera_atributo(pr_xml      => vr_xml,
-                                  pr_tag      => 'dados_conta',
-                                  pr_atrib    => 'qtregist',
-                                  pr_atval    => 1,
-                                  pr_numva    => 0,
-                                  pr_des_erro => pr_dscritic);
+        END IF;
+        -- Insere os detalhes
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'dados_conta',
                                pr_posicao  => 0,
                                pr_tag_nova => 'conta',
                                pr_tag_cont => NULL,
                                pr_des_erro => pr_dscritic);
-      
-        -- Insere os detalhes
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'nrdconta',
                                pr_tag_cont => r_dados_contas.nrdconta,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'dtdesligamento',
                                pr_tag_cont => r_dados_contas.dtdesligamento,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'qtanos_desligamento',
                                pr_tag_cont => r_dados_contas.qtanos_desligamento,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'cdmotivo_desligamento',
                                pr_tag_cont => r_dados_contas.cdmotivo_desligamento,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'inrisco_credito',
                                pr_tag_cont => r_dados_contas.inrisco_credito,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'dtrisco_credito',
                                pr_tag_cont => to_char(r_dados_contas.dtrisco_credito,
                                                       'dd/mm/yyyy hh24:mi:ss'),
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'tppessoa',
                                pr_tag_cont => r_dados_contas.tppessoa,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'inpessoa',
                                pr_tag_cont => r_dados_contas.inpessoa,
                                pr_des_erro => pr_dscritic);
         gene0007.pc_insere_tag(pr_xml      => vr_xml,
                                pr_tag_pai  => 'conta',
-                               pr_posicao  => 0,
+                               pr_posicao  => vr_tagpos,
                                pr_tag_nova => 'nrcpfcgc',
                                pr_tag_cont => r_dados_contas.nrcpfcgc,
                                pr_des_erro => pr_dscritic);
+      
+        vr_tagpos := vr_tagpos + 1;
       END LOOP;
-    
       pr_xml_ret := vr_xml;
-    
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Erro já tratado, pr_dscritic já esta populado.
