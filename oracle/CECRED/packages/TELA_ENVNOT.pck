@@ -133,7 +133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
   '<br/>#nomecompleto - Contas PF: Nome completo do titular, Contas PJ: Razão social (Ex.: JOÃO DA SILVA, ou GOOGLE BRASIL INTERNET LTDA)' ||
   '<br/>#nomeresumido - Contas PF: Primeiro nome do titular, Contas PJ: nome fantasia (Ex.: JOÃO, ou GOOGLE)' ||
   '<br/>#cpfcnpj - CPF ou CNPJ da conta do cooperado (Ex.: 099.999.999-01)' ||
-  '<br/>#siglacoop - Sigla da cooperativa (Ex.: CECRED)' ||
+  '<br/>#siglacoop - Sigla da cooperativa (Ex.: AILOS)' ||
   '<br/>#nomecoop - Nome completo da cooperativa (Ex.: COOPERATIVA CENTRAL DE CRÉDITO URBANO)';
      
   --Retorna 1 se OK, ou 0 se NOK
@@ -201,11 +201,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
       pr_dscritic:= 'Conteúdo é obrigatório';
     ELSIF pr_inexibe_botao_acao_mobile = 1 THEN -- Validações refetentes ao botão de ação
       IF pr_dstexto_botao_acao_mobile IS NULL THEN
-      pr_dscritic:= 'O texto do botão de ação do Cecred Mobile é obrigatório';
+      pr_dscritic:= 'O texto do botão de ação do Ailos Mobile é obrigatório';
       ELSIF pr_idacao_botao_acao_mobile = 1 AND pr_dslink_acao_mobile IS NULL THEN
       pr_dscritic:= 'URL do botão de ação é obrigatório';
       ELSIF pr_idacao_botao_acao_mobile = 2 AND pr_cdmenu_acao_mobile IS NULL THEN
-      pr_dscritic:= 'Tela do Cecred Mobile do botão de ação é obrigatória';
+      pr_dscritic:= 'Tela do Ailos Mobile do botão de ação é obrigatória';
       END IF;
     END IF;
     
