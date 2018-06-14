@@ -63,7 +63,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
 
   PROCEDURE pc_altera_parametos(pr_tlcooper IN crapcop.cdcooper%TYPE
                                ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
-                               ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
 															 ,pr_anlautom IN NUMBER
@@ -73,6 +72,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
 															 ,pr_qtmeschq IN NUMBER
                                ,pr_qtmesest IN NUMBER
                                ,pr_qtmesemp IN NUMBER
+							   ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 
   PROCEDURE pc_cons_parametos_web(pr_tlcooper IN crapcop.cdcooper%TYPE
                                  ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
-                                 ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
+                                 ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos / 4 - Cartão de Crédito)
                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -199,7 +199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Daniel Zimmermann
-        Data    : Março/16.                    Ultima atualizacao: --/--/----
+        Data    : Março/16.                    Ultima atualizacao: 12/04/2018
     
         Dados referentes ao programa:
     
@@ -209,7 +209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 12/04/2018 - Inclusão do Tipo Produto 4 - Cartão de Crédito (Paulo - Supero)
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -287,6 +287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                  pr_des_erro => vr_dscritic);
         
           LOOP
+            
             -- Insere as tags
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'Dados',
@@ -306,12 +307,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                    pr_tag_nova => 'nmrescop',
                                    pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).nmrescop,
                                    pr_des_erro => vr_dscritic);
+
+            IF pr_tpprodut in (0,1) THEN
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'inf',
                                    pr_posicao  => vr_auxconta,
                                    pr_tag_nova => 'incomite',
                                    pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).incomite,
                                    pr_des_erro => vr_dscritic);
+            END IF;            
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'inf',
                                    pr_posicao  => vr_auxconta,
@@ -361,8 +365,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                    pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).qtmesemp,
                                    pr_des_erro => vr_dscritic);
 
-          
-					
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
             EXIT WHEN(vr_ind_crapcop = vr_tab_crapcop.LAST);
           
@@ -419,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 
   PROCEDURE pc_cons_parametos(pr_cdcooper    IN crapcop.cdcooper%TYPE
                              ,pr_flgativo    IN crapcop.flgativo%TYPE --> Flag Ativo  
-                             ,pr_tpprodut    IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
+                             ,pr_tpprodut    IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos / 4 - Cartão de Crédito)
                              ,pr_nmdcampo    OUT VARCHAR2
                              ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
                              ,pr_dscritic    OUT crapcri.dscritic%TYPE --> Descrição da crítica
@@ -431,7 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Daniel Zimmermann
-      Data    : Março/16.                    Ultima atualizacao: --/--/----
+      Data    : Março/16.                    Ultima atualizacao: 12/04/2018
     
       Dados referentes ao programa:
     
@@ -441,7 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
     
       Observacao: -----
     
-      Alteracoes:
+      Alteracoes: 12/04/2018 - Inclusão do Tipo de Produto 4 - Cartão de Crédito (Paulo - Supero)
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -452,8 +454,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
     
-      vr_ind_crapcop INTEGER := 0;
+      vr_ind_crapcop      INTEGER := 0;
       vr_ind_crapcop_desc INTEGER := 0;
+      vr_ind_crapcop_crd  INTEGER := 0;
     
       ---------------------------- CURSORES -----------------------------------
       CURSOR cr_crapcop IS
@@ -548,6 +551,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
          ORDER BY cop.cdcooper;
       rw_crapcop_desc cr_crapcop_desc%ROWTYPE;
     
+      CURSOR cr_crapcop_crd IS
+        SELECT DECODE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                pr_cdcooper => cop.cdcooper,
+                                                pr_cdacesso => 'CONTIGENCIA_ESTEIRA_CRD'),
+                      1,
+                      'SIM',
+                      0,'NAO') contigencia,
+               DECODE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                pr_cdcooper => cop.cdcooper,
+                                                pr_cdacesso => 'ANALISE_OBRIG_MOTOR_CRD'),
+                      1,
+                      'SIM',
+                      0,'NAO') analise_autom,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'REGRA_ANL_IBRA_CRD') nmregmpf,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'REGRA_ANL_IBRA_CRD_PJ') nmregmpj,                          
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'TIME_RESP_MOTOR_CRD') qtsstime,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'QTD_MES_HIST_DEVCHQ_CRD') qtmeschq,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'QTD_MES_HIST_EST_CRD') qtmesest,
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'QTD_MES_HIST_EMPRES_CRD') qtmesemp,
+               cdcooper,
+               Initcap(nmrescop) nmrescop
+
+          FROM crapcop cop
+         WHERE (NVL(pr_cdcooper, 0) = 0 OR cop.cdcooper = pr_cdcooper)
+           AND cop.flgativo = pr_flgativo
+         ORDER BY cop.cdcooper;
+      rw_crapcop_crd cr_crapcop_crd%ROWTYPE;
+
     BEGIN
     
       ---------------------------------- VALIDACOES INICIAIS --------------------------
@@ -576,7 +619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         pr_tab_crapcop(vr_ind_crapcop).qtmesemp := rw_crapcop.qtmesemp;																				
       
       END LOOP;
-      ELSE
+      ELSIF pr_tpprodut = 1 THEN -- Desconto de Títulos
         FOR rw_crapcop_desc IN cr_crapcop_desc LOOP
           
           IF rw_crapcop_desc.comite IS NULL THEN
@@ -598,6 +641,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
           pr_tab_crapcop(vr_ind_crapcop_desc).qtmesest := rw_crapcop_desc.qtmesest;               
           pr_tab_crapcop(vr_ind_crapcop_desc).qtmesemp := rw_crapcop_desc.qtmesemp;                                       
         
+        END LOOP;
+      ELSIF pr_tpprodut = 4 THEN --Cartão de Crédito
+        FOR rw_crapcop_crd IN cr_crapcop_crd LOOP
+
+          -- Incrementa contador para utilizar como indice da PL/Table
+          vr_ind_crapcop_crd := vr_ind_crapcop_crd + 1;
+
+          pr_tab_crapcop(vr_ind_crapcop_crd).cdcooper := rw_crapcop_crd.cdcooper;
+          pr_tab_crapcop(vr_ind_crapcop_crd).nmrescop := rw_crapcop_crd.nmrescop;
+          pr_tab_crapcop(vr_ind_crapcop_crd).contigen := rw_crapcop_crd.contigencia;
+          pr_tab_crapcop(vr_ind_crapcop_crd).anlautom := rw_crapcop_crd.analise_autom;
+          pr_tab_crapcop(vr_ind_crapcop_crd).nmregmpf := rw_crapcop_crd.nmregmpf;
+          pr_tab_crapcop(vr_ind_crapcop_crd).nmregmpj := rw_crapcop_crd.nmregmpj;
+          pr_tab_crapcop(vr_ind_crapcop_crd).qtsstime := rw_crapcop_crd.qtsstime;
+          pr_tab_crapcop(vr_ind_crapcop_crd).qtmeschq := rw_crapcop_crd.qtmeschq;
+          pr_tab_crapcop(vr_ind_crapcop_crd).qtmesest := rw_crapcop_crd.qtmesest;
+          pr_tab_crapcop(vr_ind_crapcop_crd).qtmesemp := rw_crapcop_crd.qtmesemp;
+
         END LOOP;
 
       END IF;
@@ -625,7 +686,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 
   PROCEDURE pc_altera_parametos(pr_tlcooper IN crapcop.cdcooper%TYPE
                                ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
-                               ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
 															 ,pr_anlautom IN NUMBER
@@ -635,6 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 															 ,pr_qtmeschq IN NUMBER
                                ,pr_qtmesest IN NUMBER
                                ,pr_qtmesemp IN NUMBER
+							   ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -648,7 +709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Daniel Zimmermann
-      Data    : Março/16.                    Ultima atualizacao: --/--/----
+      Data    : Março/16.                    Ultima atualizacao: 12/04/2018
     
       Dados referentes ao programa:
     
@@ -658,7 +719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
     
       Observacao: -----
     
-      Alteracoes:
+      Alteracoes: 12/04/2018 - Inclusão do Tipo de Produto 4 - Cartão de Crédito (Paulo - Supero)
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -706,7 +767,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         vr_cd_qtmeschq := 'QTD_MES_HIST_DEV_CHEQUES'; 
         vr_cd_qtmesest := 'QTD_MES_HIST_ESTOUROS'; 
         vr_cd_qtmesemp := 'QTD_MES_HIST_EMPREST'; 
-      ELSE -- caso contrário, será desconto de títulos
+      ELSIF pr_tpprodut = 1 THEN -- desconto de títulos
         vr_cd_incomite := 'ENVIA_EMAIL_COMITE_DESC'; 
         vr_cd_contigen := 'CONTIGENCIA_ESTEIRA_DESC'; 
         vr_cd_anlautom := 'ANALISE_OBRIG_MOTOR_DESC'; 
@@ -716,6 +777,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         vr_cd_qtmeschq := 'QTD_MES_HIST_DEVCHQ_DESC'; 
         vr_cd_qtmesest := 'QTD_MES_HIST_EST_DESC'; 
         vr_cd_qtmesemp := 'QTD_MES_HIST_EMPRES_DESC'; 
+      ELSIF pr_tpprodut = 4 THEN -- Cartão de Crédito
+        vr_cd_contigen := 'CONTIGENCIA_ESTEIRA_CRD'; 
+        vr_cd_anlautom := 'ANALISE_OBRIG_MOTOR_CRD';
+        vr_cd_nmregmpf := 'REGRA_ANL_IBRA_CRD';
+        vr_cd_nmregmpj := 'REGRA_ANL_IBRA_CRD_PJ';
+        vr_cd_qtsstime := 'TIME_RESP_MOTOR_CRD';
+        vr_cd_qtmeschq := 'QTD_MES_HIST_DEVCHQ_CRD';
+        vr_cd_qtmesest := 'QTD_MES_HIST_EST_CRD';
+        vr_cd_qtmesemp := 'QTD_MES_HIST_EMPRES_CRD';
       END IF; 
 
       -- Abre cursor para atribuir os registros encontrados na PL/Table
@@ -723,6 +793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
       
         vr_possui_reg := TRUE;
       
+        IF pr_tpprodut IN (0,1) THEN
         BEGIN
           UPDATE crapprm prm
              SET prm.dsvlrprm = pr_incomite
@@ -736,6 +807,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
             RAISE vr_exc_saida;
         END;
       
+        END IF;
+
         BEGIN
           UPDATE crapprm prm
              SET prm.dsvlrprm = pr_contigen

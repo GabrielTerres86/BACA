@@ -8,7 +8,7 @@
  * ALTERAÇÕES   : 
   ----------------
  */
-if($tpproduto == 0)
+if($tpproduto != 4)
 {
 $search = array('.', '-');
 $tabela = "<fieldset id=\'tabConteudo\'>";
