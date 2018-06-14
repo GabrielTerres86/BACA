@@ -1,5 +1,5 @@
 /*!
- * FONTE        : blqjud.js                     Última alteração: 14/03/2018
+ * FONTE        : blqjud.js                     Última alteração: 16/01/2018
  * CRIAÇÃO      : Guilherme / SUPERO
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Biblioteca de funções da tela BLQJUD
@@ -27,11 +27,6 @@
 
                   02/01/2018 - Melhoria 460 - (Diogo - Mouts) - Ajuste no valor de desbloqueio, pois sem a validação, 
                                sempre desbloqueava o valor total
-				  
-				  14/03/2018 - Adicionado parametro que faltava na chamada da procedure
-				     		   consulta-bloqueio-jud. (Kelvin)
-							   
-				  13/06/2018 - Removendo caractere invalido do campo resumo de ordem. (PRB0040070 - Kelvin)
  * --------------
  */
  
@@ -1046,7 +1041,7 @@ function alteraBloqueio() {
 		    nroficio: nroficio,
 			nrproces: nrproces,
 			dsjuizem: dsjuizem, 
-			dsresord: removeCaracteresInvalidos(dsresord), 
+			dsresord: dsresord, 
 			dtenvres: dtenvres, 
 			flblcrft: flblcrft,
 			nrdconta: nrdconta,
@@ -1160,7 +1155,7 @@ function gravarBloqueio() {
 			nroficio: nroficio,
 			nrproces: nrproces,
 			dsjuizem: dsjuizem,
-			dsresord: removeCaracteresInvalidos(dsresord),
+			dsresord: dsresord,
             flblcrft: flblcrft,
             dtenvres: dtenvres,
 			dsinfadc: dsinfadc,
@@ -1205,13 +1200,9 @@ function btnImprimir() {
 	
 	nroficon = cNroficon.val();
 	nrctacon = cNrctacon.val();
-	operacao = cCdoperac.val();
-	cddopcao = cCddopcao.val();	
 	
 	$('#nroficon','#frmImpressao').val( nroficon );
 	$('#nrctacon','#frmImpressao').val( nrctacon );
-	$('#operacao','#frmImpressao').val( operacao );
-	$('#cddopcao','#frmImpressao').val( cddopcao );
 	
 	var action    = UrlSite + 'telas/blqjud/imprime_bloqueio.php';	
 	var callafter = "bloqueiaFundo(divRotina);hideMsgAguardo();";
@@ -1378,7 +1369,7 @@ function efetuaDesbloqueio() {
 		    nroficio: nroficio,
 			nrproces: nrproces,
 			dsjuizem: dsjuizem, 
-			dsresord: removeCaracteresInvalidos(dsresord), 
+			dsresord: dsresord, 
 			dtenvres: dtenvres, 
 			vlbloque: vlbloque, 
 			flblcrft: flblcrft,
