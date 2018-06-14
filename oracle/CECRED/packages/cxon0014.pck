@@ -248,6 +248,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                  ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
+                                 ,pr_idanafrd        IN tbgen_analise_fraude.idanalise_fraude%TYPE DEFAULT NULL -- Identificador de analise de fraude
                                  ,pr_rowidcob        OUT ROWID         --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER       --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER       --Numero Convenio Boleto
@@ -430,6 +431,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                             ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
+                            ,pr_idanafrd      IN tbgen_analise_fraude.idanalise_fraude%TYPE DEFAULT NULL -- Identificador de analise de fraude
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -537,6 +539,24 @@ PROCEDURE pc_ret_ano_barras_darf_car (pr_innumano IN INTEGER,
                                     ,pr_docto         OUT NUMBER     --Numero Documento
                                     ,pr_cdcritic      OUT INTEGER    --Codigo do erro
                                     ,pr_dscritic      OUT VARCHAR2); --Descricao do erro
+
+
+  --> Procedure para estornar faturas
+  PROCEDURE pc_estorna_faturas ( pr_cdcooper      IN INTEGER       --Codigo Cooperativa
+                                ,pr_cdoperad      IN VARCHAR2      --Codigo Operador
+                                ,pr_cdagenci      IN INTEGER       --Codigo Agencia
+                                ,pr_nrdcaixa      IN INTEGER       --Numero Caixa
+                                ,pr_cddbarra      IN VARCHAR2      --Codigo de Barras
+                                ,pr_cdseqfat      IN VARCHAR2      --Codigo sequencial da fatura 
+                                ,pr_cdhistor      OUT INTEGER      --Codigo Historico
+                                ,pr_pg            OUT NUMBER       --Indicador Pago
+                                ,pr_nrdocmto      OUT NUMBER       --Numero Documento
+                                ,pr_cdcritic      OUT INTEGER      --Codigo do erro
+                                ,pr_dscritic      OUT VARCHAR2);   --Descricao do erro 
+                                
+  --> Procedure para gerar a linha digitavel a fatura em base do codigo de barras
+  PROCEDURE pc_calc_lindig_fatura ( pr_cdbarras IN  VARCHAR2
+                                   ,pr_lindigit OUT VARCHAR2);                                
 
 END CXON0014;
 /
@@ -1642,6 +1662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                  ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
+                                 ,pr_idanafrd        IN tbgen_analise_fraude.idanalise_fraude%TYPE DEFAULT NULL -- Identificador de analise de fraude
                                  ,pr_rowidcob        OUT ROWID             --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -2305,7 +2326,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.inpessoa
           ,craptit.nrcpfcgc
           ,craptit.tpbxoper
-          ,craptit.flgconti)
+          ,craptit.flgconti
+          ,craptit.idanafrd
+          ,craptit.idseqttl)
         VALUES
           (rw_crapcop.cdcooper               -- cdcooper
           ,pr_nrdconta                       -- nrdconta
@@ -2342,7 +2365,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,nvl(vr_inpessoa,0)                -- inpessoa
           ,nvl(vr_nrcpfcgc,0)                -- nrcpfcgc
           ,nvl(vr_tpdbaixa,0)                -- tpbxoper      
-          ,nvl(vr_flcontig,0))               -- flgconti   
+          ,nvl(vr_flcontig,0)                -- flgconti   
+          ,NULLIF(pr_idanafrd,0)             -- idanafrd
+          ,pr_idseqttl)                      -- idseqttl
         RETURNING
           craptit.nrseqdig
          ,craptit.nrdocmto
@@ -8745,6 +8770,7 @@ END pc_gera_titulos_iptu_prog;
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                             ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
+                            ,pr_idanafrd      IN tbgen_analise_fraude.idanalise_fraude%TYPE DEFAULT NULL -- Identificador de analise de fraude
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -9246,6 +9272,8 @@ END pc_gera_titulos_iptu_prog;
           ,craplft.nrterfin
           ,craplft.tpcptdoc
           ,craplft.dsnomfon
+          ,craplft.idanafrd
+          ,craplft.idseqttl
           )
         VALUES
           (rw_crapcop.cdcooper
@@ -9269,6 +9297,8 @@ END pc_gera_titulos_iptu_prog;
           ,pr_nrterfin
           ,pr_tpcptdoc
           ,pr_dsnomfon
+          ,NULLIF(pr_idanafrd,0)            -- idanafrd
+          ,pr_idseqttl                       -- idseqttl
           )
         RETURNING
            craplft.ROWID
@@ -12244,5 +12274,472 @@ END pc_gera_titulos_iptu_prog;
        pr_dscritic:= 'Erro ao processar rotina CXON0014.pc_estorna_titulos_iptu. '||SQLERRM;
        
   END pc_estorna_titulos_iptu;
+
+
+
+  --> Procedure para estornar faturas
+  PROCEDURE pc_estorna_faturas ( pr_cdcooper      IN INTEGER       --Codigo Cooperativa
+                                ,pr_cdoperad      IN VARCHAR2      --Codigo Operador
+                                ,pr_cdagenci      IN INTEGER       --Codigo Agencia
+                                ,pr_nrdcaixa      IN INTEGER       --Numero Caixa
+                                ,pr_cddbarra      IN VARCHAR2      --Codigo de Barras
+                                ,pr_cdseqfat      IN VARCHAR2      --Codigo sequencial da fatura 
+                                ,pr_cdhistor      OUT INTEGER      --Codigo Historico
+                                ,pr_pg            OUT NUMBER       --Indicador Pago
+                                ,pr_nrdocmto      OUT NUMBER       --Numero Documento
+                                ,pr_cdcritic      OUT INTEGER      --Codigo do erro
+                                ,pr_dscritic      OUT VARCHAR2) IS --Descricao do erro
+
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_estorna_faturas    Antigo: dbo/b2crap15.p/estorna-faturas
+    Sistema  : CECRED
+    Sigla    : CXON
+    Autor    : Odirlei Busana - AMcom
+    Data     : Abril/2018                   Ultima atualizacao: 05/04/2018
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+  
+   Objetivo  : Procedure para estornar de faturas
+  
+   Alteracoes: 05/04/2018 - Conversão Progress -> Oracle.
+                            PRJ381 - Antifraude. (Odirlei-AMcom)
+  
+  
+  ---------------------------------------------------------------------------------------------------------------*/
+
+      -- Selecionar fatura
+      CURSOR cr_craplft ( pr_cdcooper craplft.cdcooper%TYPE,
+                          pr_dtmvtocd crapdat.dtmvtocd%TYPE,
+                          pr_cdagenci craplft.cdagenci%TYPE,
+                          pr_cdbccxlt craplft.cdbccxlt%TYPE,
+                          pr_nrdolote craplft.nrdolote%TYPE,
+                          pr_cdseqfat craplft.cdseqfat%TYPE ) IS       
+        SELECT lft.vllanmto,
+               lft.insitfat,
+               lft.nrseqdig,
+               lft.cdhistor,
+               lft.rowid
+          FROM craplft lft
+         WHERE lft.cdcooper = pr_cdcooper 
+           AND lft.dtmvtolt = pr_dtmvtocd
+           AND lft.cdagenci = pr_cdagenci
+           AND lft.cdbccxlt = pr_cdbccxlt
+           AND lft.nrdolote = pr_nrdolote
+           AND lft.cdseqfat = pr_cdseqfat;
+      rw_craplft cr_craplft%ROWTYPE;
+
+     --> Buscar lote
+     CURSOR cr_craplot ( pr_cdcooper craplot.cdcooper%TYPE,
+                         pr_dtmvtocd craplot.dtmvtolt%TYPE,
+                         pr_cdagenci craplot.cdagenci%TYPE,
+                         pr_nrdolote craplot.nrdolote%TYPE ) IS
+       SELECT lot.rowid,
+              lot.cdbccxlt,
+              lot.nrdolote,
+              lot.cdagenci,
+              lot.vlcompdb,
+              lot.vlinfodb,
+              lot.vlcompcr,
+              lot.vlinfocr
+         FROM craplot lot
+        WHERE lot.cdcooper = pr_cdcooper
+          AND lot.dtmvtolt = pr_dtmvtocd
+          AND lot.cdagenci = pr_cdagenci
+          AND lot.cdbccxlt = 11 --> Fixo 
+          AND lot.nrdolote = pr_nrdolote;          
+      rw_craplot cr_craplot%ROWTYPE;
+
+
+      --Selecionar Titulos
+      CURSOR cr_craptit3 (pr_cdcooper IN craptit.cdcooper%type
+                         ,pr_dtmvtolt IN craptit.dtmvtolt%TYPE
+                         ,pr_cdagenci IN craptit.cdagenci%type
+                         ,pr_cdbccxlt IN craptit.cdbccxlt%type
+                         ,pr_nrdolote IN craptit.nrdolote%type
+                         ,pr_dscodbar IN craptit.dscodbar%type) IS
+        SELECT /*+ INDEX (craptit craptit##craptit3) */
+               craptit.dscodbar
+              ,craptit.flgpgdda
+              ,craptit.nrdocmto
+              ,craptit.vldpagto
+              ,craptit.cdctrbxo
+              ,craptit.rowid
+        FROM craptit
+        WHERE craptit.cdcooper = pr_cdcooper
+        AND   craptit.dtmvtolt = pr_dtmvtolt
+        AND   craptit.cdagenci = pr_cdagenci
+        AND   craptit.cdbccxlt = pr_cdbccxlt
+        AND   craptit.nrdolote = pr_nrdolote
+        AND   Upper(craptit.dscodbar) = Upper(pr_dscodbar);
+      rw_craptit cr_craptit3%ROWTYPE;
+
+      --Selecionar informacoes titulos descontados bordero
+      CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%type
+                        ,pr_nrdconta IN craptdb.nrdconta%type
+                        ,pr_cdbandoc IN craptdb.cdbandoc%type
+                        ,pr_nrdctabb IN craptdb.nrdctabb%type
+                        ,pr_nrcnvcob IN craptdb.nrcnvcob%type
+                        ,pr_nrdocmto IN craptdb.nrdocmto%type
+                        ,pr_insittit IN craptdb.insittit%type) IS
+        SELECT craptdb.dtvencto
+        FROM craptdb
+        WHERE craptdb.cdcooper = pr_cdcooper
+        AND   craptdb.nrdconta = pr_nrdconta
+        AND   craptdb.cdbandoc = pr_cdbandoc
+        AND   craptdb.nrdctabb = pr_nrdctabb
+        AND   craptdb.nrcnvcob = pr_nrcnvcob
+        AND   craptdb.nrdocmto = pr_nrdocmto
+        AND   craptdb.insittit = pr_insittit;
+      rw_craptdb   cr_craptdb%ROWTYPE;
+      vr_fcraptdb  BOOLEAN;            
+
+      --Selecionar lancamentos
+      CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE
+                        ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                        ,pr_cdagenci IN craplcm.cdagenci%TYPE
+                        ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE
+                        ,pr_nrdolote IN craplcm.nrdolote%TYPE
+                        ,pr_cdhistor IN craplcm.cdhistor%TYPE
+                        ,pr_nrdctabb IN craplcm.nrdctabb%TYPE
+                        ,pr_nrdocmto IN craplcm.nrdocmto%TYPE
+                        ,pr_nrdconta IN craplcm.nrdconta%TYPE) IS
+        SELECT craplcm.vllanmto
+              ,craplcm.rowid
+        FROM craplcm
+        WHERE craplcm.cdcooper = pr_cdcooper
+        AND   craplcm.dtmvtolt = pr_dtmvtolt
+        AND   craplcm.cdagenci = pr_cdagenci
+        AND   craplcm.cdbccxlt = pr_cdbccxlt
+        AND   craplcm.nrdolote = pr_nrdolote
+        AND   craplcm.cdhistor = pr_cdhistor
+        AND   craplcm.nrdctabb = pr_nrdctabb
+        AND   craplcm.nrdocmto = pr_nrdocmto;
+      rw_craplcm cr_craplcm%ROWTYPE;
+
+      --Selecionar informacoes cobranca
+      CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%type
+                        ,pr_cdbandoc IN crapcob.cdbandoc%type
+                        ,pr_nrcnvcob IN crapcob.nrcnvcob%type
+                        ,pr_nrdctabb IN crapcob.nrdctabb%type
+                        ,pr_nrdocmto IN crapcob.nrdocmto%type
+                        ,pr_nrdconta IN crapcob.nrdconta%type) IS
+        SELECT crapcob.cdbandoc
+              ,crapcob.cdcooper
+              ,crapcob.nrcnvcob
+              ,crapcob.nrdconta
+              ,crapcob.nrdocmto
+              ,crapcob.incobran
+              ,crapcob.dtretcob
+              ,crapcob.nrctremp
+              ,crapcob.nrctasac
+              ,crapcob.dtvencto
+              ,crapcob.vltitulo
+              ,crapcob.nrdctabb
+              ,crapcob.flgregis
+              ,crapcob.nrnosnum
+              ,crapcob.dtmvtolt
+              ,crapcob.dsinform
+              ,crapcob.rowid
+              ,crapcob.inemiten
+        FROM crapcob
+        WHERE crapcob.cdcooper = pr_cdcooper
+        AND   crapcob.cdbandoc = pr_cdbandoc
+        AND   crapcob.nrcnvcob = pr_nrcnvcob
+        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.nrdocmto = pr_nrdocmto
+        AND   crapcob.nrdconta = pr_nrdconta;
+      rw_crapcob cr_crapcob%ROWTYPE;
+
+      --Selecionar lancamentos de tarifas
+      CURSOR cr_craplat (pr_cdcooper IN crapcob.cdcooper%type
+                        ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                        ,pr_nrdconta IN crapcob.nrdconta%type
+                        ,pr_nrcnvcob IN crapcob.nrcnvcob%type
+                        ,pr_nrdocmto IN crapcob.nrdocmto%type) IS
+        SELECT craplat.rowid
+          FROM craplat 
+         WHERE craplat.cdcooper = pr_cdcooper
+           AND craplat.dtmvtolt = rw_crapdat.dtmvtolt
+           AND craplat.insitlat = 1 -- pendente
+           AND craplat.nrdconta = pr_nrdconta
+           AND craplat.cdpesqbb = to_char(pr_cdcooper)||';'||
+                                  to_char(pr_nrdconta)||';'||
+                                  to_char(pr_nrcnvcob)||';'||
+                                  to_char(pr_nrdocmto);
+      rw_craplat cr_craplat%ROWTYPE;
+
+      rw_craplot_lcm cr_craplot%ROWTYPE;
+      rw_b_craplot   cr_craplot%ROWTYPE;
+
+
+      --Variaveis Locais
+      vr_cdhistor      craplcm.cdhistor%TYPE;
+      vr_tplotmov      craplot.tplotmov%TYPE;
+      vr_nrdcaixa      INTEGER;
+      vr_nrdconta      INTEGER;  --Numero da Conta
+      vr_insittit      INTEGER;  --Situacao Titulo
+      vr_intitcop      INTEGER;  --Indicador titulo cooperativa
+      vr_convenio      NUMBER;   --Numero Convenio
+      vr_bloqueto      NUMBER;   --Numero Boleto
+      vr_contaconve    INTEGER;  --Conta do Convenio
+      vr_idorigem      INTEGER;
+      vr_flgdesct      BOOLEAN;
+                                      
+
+      --Variaveis de erro
+      vr_cd_erro   crapcri.cdcritic%TYPE;
+      vr_des_erro  VARCHAR2(4000);
+      vr_cdcritic  crapcri.cdcritic%TYPE;
+      vr_dscritic  VARCHAR2(4000);
+      vr_dscriti2  VARCHAR2(4000);
+      vr_nrdolote  INTEGER;
+      vr_index     INTEGER;
+
+      --Tabela de erros
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+      --Tabela de Titulos
+      vr_tab_titulos   PAGA0001.typ_tab_titulos;
+
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+
+
+  BEGIN
+      --Inicializar parametros erro
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+      
+      --Verificar se a cooperativa existe
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        vr_cdcritic:= 651;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_crapcop;
+      
+      --Numero lote
+      vr_nrdolote:= 15000 + pr_nrdcaixa;
+      
+      -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        CLOSE BTCH0001.cr_crapdat;
+        vr_cdcritic := 1;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;      
+      
+      --> Buscar lote
+      OPEN cr_craplot ( pr_cdcooper => rw_crapcop.cdcooper,
+                        pr_dtmvtocd => rw_crapdat.dtmvtocd,
+                        pr_cdagenci => pr_cdagenci,
+                        pr_nrdolote => vr_nrdolote);
+      FETCH cr_craplot INTO rw_craplot;
+      IF cr_craplot%NOTFOUND THEN
+        CLOSE cr_craplot;
+        vr_cdcritic := 60;
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplot;
+      END IF;
+      
+      -- Selecionar fatura
+      OPEN cr_craplft ( pr_cdcooper => rw_crapcop.cdcooper,
+                        pr_dtmvtocd => rw_crapdat.dtmvtocd,
+                        pr_cdagenci => pr_cdagenci,
+                        pr_cdbccxlt => rw_craplot.cdbccxlt,
+                        pr_nrdolote => rw_craplot.nrdolote,
+                        pr_cdseqfat => pr_cdseqfat);
+      FETCH cr_craplft INTO rw_craplft;
+      IF cr_craplft%NOTFOUND THEN
+        CLOSE cr_craplft;
+        vr_cdcritic := 90; -- 090 - Lancamento inexistente.
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplft;      
+      END IF;
+      
+      IF rw_craplft.insitfat <> 1 THEN
+        vr_cdcritic := 103; -- 103 - Lancamento automatico ja efetuado.
+        RAISE vr_exc_erro;
+      END IF;
+      
+      BEGIN
+        DELETE craplft lft
+         WHERE lft.rowid = rw_craplft.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao excluir a fatura(craplft): '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;      
+      
+      -- verificar se lote esta lockado
+      IF cxon0020.fn_verifica_lote_uso(pr_rowid => rw_craplot.rowid ) = 1 THEN
+        vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';  
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Atualizar lote
+      BEGIN
+        UPDATE craplot
+           SET craplot.qtcompln = nvl(craplot.qtcompln,0) - 1,
+               craplot.vlcompcr = nvl(craplot.vlcompcr,0) - rw_craplft.vllanmto,
+               craplot.qtinfoln = nvl(craplot.qtinfoln,0) - 1,
+               craplot.vlinfocr = nvl(craplot.vlinfocr,0) - rw_craplft.vllanmto
+         WHERE craplot.rowid = rw_craplot.rowid
+         RETURNING craplot.vlcompdb, craplot.vlinfodb,
+                   craplot.vlcompcr, craplot.vlinfocr
+              INTO rw_craplot.vlcompdb, rw_craplot.vlinfodb,
+                   rw_craplot.vlcompcr, rw_craplot.vlinfocr; 
+      EXCEPTION 
+        WHEN OTHERS THEN
+          vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot.nrdolote||' :'||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+            
+      pr_pg       := 0;
+      pr_nrdocmto := rw_craplft.nrseqdig;
+      pr_cdhistor := rw_craplft.cdhistor;
+      
+      --> Caso o lote fique zerado
+      IF rw_craplot.vlcompdb = 0 and
+         rw_craplot.vlinfodb = 0 and
+         rw_craplot.vlcompcr = 0 and
+         rw_craplot.vlinfocr = 0 THEN
+        BEGIN
+         
+          DELETE craplot
+           WHERE craplot.rowid = rw_craplot.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao exclui lote '||rw_craplot.nrdolote||' :'||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      END IF;  
+      
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+       
+       IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+       END IF;
+      
+       pr_cdcritic:= vr_cdcritic;
+       pr_dscritic:= vr_dscritic;
+
+    WHEN OTHERS THEN
+      
+       pr_cdcritic:= 0;
+       pr_dscritic:= 'Erro ao processar rotina CXON0014.pc_estorna_faturas. '||SQLERRM;
+       
+  END pc_estorna_faturas;
+  
+  --> Procedure para gerar a linha digitavel a fatura em base do codigo de barras
+  PROCEDURE pc_calc_lindig_fatura ( pr_cdbarras IN  VARCHAR2
+                                   ,pr_lindigit OUT VARCHAR2) IS
+
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_calc_lindig_fatura    
+    Sistema  : CECRED
+    Sigla    : CXON
+    Autor    : Odirlei Busana - AMcom
+    Data     : Abril/2018                   Ultima atualizacao: 05/04/2018
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+  
+   Objetivo  : Procedure para gerar a linha digitavel a fatura em base do codigo de barras
+  
+   Alteracoes:
+  
+  
+  ---------------------------------------------------------------------------------------------------------------*/
+    vr_lindigi1 VARCHAR2(12);
+    vr_lindigi2 VARCHAR2(12);
+    vr_lindigi3 VARCHAR2(12);
+    vr_lindigi4 VARCHAR2(12);
+    vr_cdcalcul VARCHAR2(100);  
+    vr_nrdigito INTEGER;  
+    vr_flgretor BOOLEAN;
+  
+  BEGIN
+  
+    FOR idx IN 1..4 LOOP
+      CASE idx
+        WHEN 1 THEN
+          vr_lindigi1:= SUBSTR(pr_cdbarras, 1, 11);
+          vr_cdcalcul:= TO_NUMBER(vr_lindigi1);
+
+        WHEN 2 THEN
+          vr_lindigi2:= SUBSTR(pr_cdbarras, 12, 11);
+          vr_cdcalcul:= TO_NUMBER(vr_lindigi2);
+
+        WHEN 3 THEN
+          vr_lindigi3:= SUBSTR(pr_cdbarras, 23, 11);
+          vr_cdcalcul:= TO_NUMBER(vr_lindigi3);
+
+        WHEN 4 THEN
+          vr_lindigi4:= SUBSTR(pr_cdbarras, 34, 11);
+          vr_cdcalcul:= TO_NUMBER(vr_lindigi4);
+
+      END CASE;
+
+      IF SUBSTR(pr_cdbarras,3,1) IN ('6','7') THEN
+        /*** Calculo digito verificador pelo modulo 10 ***/
+        CXON0000.pc_calc_digito_iptu_samae (pr_valor    => vr_cdcalcul       --> Valor Calculado
+                                         ,pr_nrdigito => vr_nrdigito    --> Digito Verificador
+                                         ,pr_retorno  => vr_flgretor);  --> Retorno digito correto
+      ELSE
+        /*** Verificacao pelo modulo 11 ***/
+        CXON0014.pc_verifica_digito (pr_nrcalcul => vr_cdcalcul  --Numero a ser calculado
+                          ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
+                                    ,pr_nrdigito => vr_nrdigito); --Digito verificador
+      END IF;
+
+      CASE idx
+        WHEN 1 THEN
+          vr_lindigi1:= TO_NUMBER(gene0002.fn_mask(vr_lindigi1,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+
+        WHEN 2 THEN
+          vr_lindigi2:= TO_NUMBER(gene0002.fn_mask(vr_lindigi2,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+
+        WHEN 3 THEN
+          vr_lindigi3:= TO_NUMBER(gene0002.fn_mask(vr_lindigi3,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+
+        WHEN 4 THEN
+          vr_lindigi4:= TO_NUMBER(gene0002.fn_mask(vr_lindigi4,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+
+      END CASE;
+
+    END LOOP;
+
+
+    /* Monta linha digitavel */
+    pr_lindigit:= SUBSTR(gene0002.fn_mask(vr_lindigi1,'999999999999'),1,11) ||'-'||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi1,'999999999999'),12,1) ||' '||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi2,'999999999999'),1,11) ||'-'||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi2,'999999999999'),12,1) ||' '||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi3,'999999999999'),1,11) ||'-'||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi3,'999999999999'),12,1) ||' '||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi4,'999999999999'),1,11) ||'-'||
+                  SUBSTR(gene0002.fn_mask(vr_lindigi4,'999999999999'),12,1);
+  EXCEPTION
+   WHEN OTHERS THEN
+     --Gravar tabela especifica de log 
+     CECRED.pc_internal_exception;
+     pr_lindigit := NULL;
+  END pc_calc_lindig_fatura;
+
 END CXON0014;
 /

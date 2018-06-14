@@ -1,3 +1,23 @@
+/******************************************************************************
+                ATENCAO!    CONVERSAO PROGRESS - ORACLE
+           ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
+ +---------------------------------------+------------------------------------+
+ | Rotina Progress                       | Rotina Oracle PLSQL                |
+ +---------------------------------------+------------------------------------+
+ | dbo/b1crap15.p                        | CXON0014                           |
+ |  estorna-faturas                      | CXON0014.pc_estorna_faturas        |
+ +---------------------------------------+------------------------------------+
+  
+ TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
+ SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
+  
+ PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
+ PESSOAS:
+  - GUILHERME STRUBE    (CECRED)
+  - MARCOS MARTINI      (SUPERO)
+
+******************************************************************************/
+
 /* .............................................................................
 
    Programa: siscaixa/web/dbo/b1crap15.p
@@ -87,6 +107,9 @@
                05/10/2015 - Adicionado condicao (crapscn.dtencemp  = ?) na leitura
                             da crapscn pois estava permitindo estornar alguns
                             tipos de DARF (Tiago/Elton #337771).
+
+			  23/04/2018 - Conversao da rotina estorna-fatura.
+                           PRJ381 - AntiFraude (Odirlei-AMcom)
 .............................................................................*/
    
 /*------------------------------------------------------------*/
@@ -456,188 +479,77 @@ PROCEDURE estorna-faturas.
     DEF VAR aux_nrseqdig  AS INTE NO-UNDO.
     DEF VAR aux_insitfat  AS INTE NO-UNDO.
     DEF VAR aux_flgfatex  AS LOGI NO-UNDO.
+    
+    DEF VAR aux_pg        AS INTE NO-UNDO.
+    DEF VAR aux_cdcritic  AS INTE NO-UNDO.
+    DEF VAR aux_dscritic  AS CHAR NO-UNDO.
+    
+    RUN elimina-erro (INPUT p-cooper,
+                    INPUT p-cod-agencia,
+                    INPUT p-nro-caixa).
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
-
-    RUN elimina-erro (INPUT p-cooper,
-                      INPUT p-cod-agencia,
-                      INPUT p-nro-caixa).
-
-    /* Lote - 15000 --- Tipo 13 --- FATURAS ---*/
-    ASSIGN i-nro-lote = 15000 + p-nro-caixa. 
     
-    FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
-                             NO-LOCK NO-ERROR.
-    
-    DO  WHILE TRUE:
-       
-        FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtocd  AND
-                           craplot.cdagenci = p-cod-agencia     AND
-                           craplot.cdbccxlt = 11                AND  /* Fixo */
-                           craplot.nrdolote = i-nro-lote       
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_estorna_faturas
+      aux_handproc = PROC-HANDLE NO-ERROR ( INPUT crapcop.cdcooper    /* pr_cdcooper --Codigo Cooperativa */
+                                           ,INPUT p-cod-operador      /* pr_cdoperad --Codigo Operador */
+                                           ,INPUT p-cod-agencia       /* pr_cdagenci --Codigo Agencia */
+                                           ,INPUT p-nro-caixa         /* pr_nrdcaixa --Numero Caixa */
+                                           ,INPUT p-codigo-barras     /* pr_cddbarra --Codigo de Barras */
+                                           ,INPUT STRING(p-cdseqfat)  /* pr_cdseqfat --Codigo sequencial da fatura*/
+                                           ,OUTPUT 0                  /* pr_cdhistor --Codigo Historico */
+                                           ,OUTPUT 0                  /* pr_pg       --Indicador Pago */
+                                           ,OUTPUT 0                  /* pr_nrdocmto --Numero Documento */
+                                           ,OUTPUT 0                  /* pr_cdcritic --Codigo do erro */
+                                           ,OUTPUT "" ).                /* pr_dscritic --Descricao do erro */ 
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_estorna_faturas
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
       
-        IF   NOT AVAILABLE craplot   THEN  
-          DO:
-             IF   LOCKED craplot     THEN 
-               DO:
-                  PAUSE 1 NO-MESSAGE.
-                  NEXT.
-               END.
-             ELSE 
-               DO:
-                  ASSIGN i-cod-erro  = 60
-                         c-desc-erro = " ".           
-                  RUN cria-erro (INPUT p-cooper,
-                                 INPUT p-cod-agencia,
-                                 INPUT p-nro-caixa,
-                                 INPUT i-cod-erro,
-                                 INPUT c-desc-erro,
-                                 INPUT YES).
-                  RETURN "NOK".
-               END.
-          END.
-        LEAVE.
-    END.  /*  DO WHILE */
-
-    ASSIGN aux_dsmvtocd = STRING(DAY(crapdat.dtmvtocd),"99")    +
-                          STRING(MONTH(crapdat.dtmvtocd),"99")  +
-                          STRING(YEAR(crapdat.dtmvtocd),"9999").
-
-    ASSIGN aux_dsconsul = "SELECT craplft.vllanmto, '|', 
-                                  craplft.insitfat, '|', 
-                                  craplft.nrseqdig, '|', 
-                                  craplft.cdhistor FROM craplft WHERE craplft.cdcooper = "  + STRING(crapcop.cdcooper)  + " AND " +
-                                                                     "craplft.dtmvtolt = to_date('" + STRING(aux_dsmvtocd)     + "', 'dd/mm/yyyy') AND " +
-                                                                     "craplft.cdagenci = "  + STRING(craplot.cdagenci)  + " AND " +
-                                                                     "craplft.cdbccxlt = "  + STRING(craplot.cdbccxlt)  + " AND " +
-                                                                     "craplft.nrdolote = "  + STRING(craplot.nrdolote)  + " AND " +
-                                                                     "craplft.cdseqfat = "  + STRING(p-cdseqfat).
-
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-    RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement iHandle = PROC-HANDLE NO-ERROR(aux_dsconsul).
-
-    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = iHandle:
-
-        IF  aux_vllanmto > 0 THEN
-            NEXT.
-
-        /* Registro existe */
-        ASSIGN aux_flgfatex = TRUE
-               aux_vllanmto = DECI(ENTRY(1, proc-text, "|"))
-               aux_insitfat = INTE(ENTRY(2, proc-text, "|"))
-               aux_nrseqdig = INTE(ENTRY(3, proc-text, "|"))
-               aux_cdhistor = INTE(ENTRY(4, proc-text, "|")).
-    END.
-    
-    CLOSE STORED-PROC send-sql-statement WHERE PROC-HANDLE = iHandle.
-
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-    IF  NOT aux_flgfatex THEN
-        DO:
-            ASSIGN i-cod-erro  = 90           
-                   c-desc-erro = " ".
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-        END.
-
-    /* Removido para consulta Oracle, pois DataServer não suporta as mais de 34 posições do campo cdseqfat - Lunelli
-    DO WHILE TRUE:
-
-        FIND   craplft WHERE 
-               craplft.cdcooper = crapcop.cdcooper  AND
-               craplft.dtmvtolt = crapdat.dtmvtocd  AND
-               craplft.cdagenci = craplot.cdagenci  AND
-               craplft.cdbccxlt = craplot.cdbccxlt  AND
-               craplft.nrdolote = craplot.nrdolote  AND
-               craplft.cdseqfat = p-cdseqfat  
-               USE-INDEX craplft1  EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+    /* Busca possíveis erros */ 
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_dscritic = pc_estorna_faturas.pr_dscritic 
+                          WHEN pc_estorna_faturas.pr_dscritic <> ?
+           aux_cdcritic = pc_estorna_faturas.pr_cdcritic 
+                          WHEN pc_estorna_faturas.pr_cdcritic <> ?.
                             
-        IF    NOT AVAILABLE craplft THEN 
-           DO:
-              IF   LOCKED craplft   THEN 
-                DO:
-                   PAUSE 1 NO-MESSAGE.
-                   NEXT.
-                END.
-              ELSE  
-                DO:
-                  ASSIGN i-cod-erro  = 90
-                         c-desc-erro = " ".           
-                  RUN cria-erro (INPUT p-cooper,
-                                 INPUT p-cod-agencia,
-                                 INPUT p-nro-caixa,
-                                 INPUT i-cod-erro,
-                                 INPUT c-desc-erro,
-                                 INPUT YES).
-                  RETURN "NOK".
-                END.
-           END.
-      
-       IF   craplft.insitfat <> 1 THEN 
-          DO:
-            ASSIGN i-cod-erro  = 103
-                   c-desc-erro = " ".           
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-          END.
+                            
+    IF aux_dscritic <> "" OR 
+       aux_cdcritic > 0 THEN
+      DO:
+          ASSIGN i-cod-erro  = aux_cdcritic
+                 c-desc-erro = aux_dscritic.
+          RUN cria-erro (INPUT p-cooper,
+                         INPUT p-cod-agencia,
+                         INPUT p-nro-caixa,
+                         INPUT i-cod-erro,
+                         INPUT c-desc-erro,
+                         INPUT YES).
+          RETURN "NOK".
+      END.                   
 
-       LEAVE.
-    END.  /*  DO WHILE */ */
-                
-    ASSIGN craplot.vlcompcr = craplot.vlcompcr - (aux_vllanmto)
-           craplot.qtcompln = craplot.qtcompln - 1
-
-           craplot.vlinfocr = craplot.vlinfocr - (aux_vllanmto)
-           craplot.qtinfoln = craplot.qtinfoln - 1.
-
-    ASSIGN p-pg     = NO
-           p-docto  = aux_nrseqdig
-           p-histor = aux_cdhistor.
-   
-    /* Não existe mais cursor Progress da craplft - Lunelli 
-    DELETE craplft. */
-
-    ASSIGN aux_dsconsul = "DELETE FROM craplft WHERE craplft.cdcooper = "  + STRING(crapcop.cdcooper)  + " AND " +                                                    
-                                                    "craplft.dtmvtolt = to_date('" + STRING(aux_dsmvtocd)     + "', 'dd/mm/yyyy') AND " +
-                                                    "craplft.cdagenci = "  + STRING(craplot.cdagenci)  + " AND " +
-                                                    "craplft.cdbccxlt = "  + STRING(craplot.cdbccxlt)  + " AND " +
-                                                    "craplft.nrdolote = "  + STRING(craplot.nrdolote)  + " AND " +
-                                                    "craplft.cdseqfat = "  + STRING(p-cdseqfat).
-
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-    RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement iHandle = PROC-HANDLE NO-ERROR(aux_dsconsul).
-
-    FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = iHandle:
-    END.
-    
-    CLOSE STORED-PROC send-sql-statement WHERE PROC-HANDLE = iHandle.
-
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-    IF  craplot.vlcompdb = 0 and
-        craplot.vlinfodb = 0 and
-        craplot.vlcompcr = 0 and
-        craplot.vlinfocr = 0 THEN
-        DELETE craplot.
+    /* Busca possíveis erros */ 
+    ASSIGN p-histor     = 0
+           p-docto      = 0
+           p-histor     = pc_estorna_faturas.pr_cdhistor 
+                          WHEN pc_estorna_faturas.pr_cdhistor <> ?
+           p-docto      = pc_estorna_faturas.pr_nrdocmto 
+                          WHEN pc_estorna_faturas.pr_nrdocmto <> ?
+           aux_pg = pc_estorna_faturas.pr_pg 
+                          WHEN pc_estorna_faturas.pr_pg <> ?.
+                          
+    IF aux_pg = 1 THEN
+      ASSIGN p-pg = TRUE.
     ELSE
-       RELEASE craplot.
-    
-    
+      ASSIGN p-pg = FALSE.
+        
     RETURN "OK".
 
 END PROCEDURE.

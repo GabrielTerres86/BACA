@@ -1760,7 +1760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero
-    --  Data     : Junho/2013.                   Ultima atualização: --/--/----
+    --  Data     : Junho/2013.                   Ultima atualização: 13/04/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1768,6 +1768,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --  Objetivo  : Exclui protocolo.
     --
     --  Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
+    --
+    --              13/04/2018 - Replicado ajustes versao progress e incrementado
+    --                           GPS. PRJ381 - Antifraude(Odirlei-AMcom)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -1857,17 +1860,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         -- Atribui valor de saída
         pr_dsprotoc := rw_crappro.dsprotoc;
 
-        -- Atualiza registro
-        UPDATE crappro co
-        SET co.dsprotoc = co.dsprotoc || ' ' || '*** ESTORNADO (' ||
-                          to_char(pr_dtmvtolt, 'DD/MM/RRRR') || ' - ' ||
-                          to_char(sysdate, 'HH24:MI:SS') || ')'
-        WHERE co.cdcooper = pr_cdcooper
-          AND co.nrdconta = pr_nrdconta
-          AND co.dtmvtolt = pr_dtmvtolt
-          AND co.cdtippro = pr_cdtippro
-          AND co.nrdocmto = pr_nrdocmto;
-      
+        -- 13 - GPS, 23 - DAE, 24 - FGTS
+        -- 17 - DAS,16 - DARF
+        IF pr_cdtippro IN (13,23,24,16,17 )THEN  
+             /* Padrao diferente pois para FGTS e DAE utiliza modelo MD5
+                Gerando protocolo maior, e fazendo que estoure o campo 
+                ao concatenar texto. PRJ406 - FGTS*/
+          -- Atualiza registro
+          UPDATE crappro co
+          SET co.dsprotoc = co.dsprotoc || ' ' || '**ESTORNADO(' ||
+                            to_char(pr_dtmvtolt, 'DD/MM/RR') || '-' ||
+                            to_char(sysdate, 'HH24:MI:SS') || ')'
+          WHERE co.cdcooper = pr_cdcooper
+            AND co.nrdconta = pr_nrdconta
+            AND co.dtmvtolt = pr_dtmvtolt
+            AND co.cdtippro = pr_cdtippro
+            AND co.nrdocmto = pr_nrdocmto;
+             
+        ELSE
+
+          -- Atualiza registro
+          UPDATE crappro co
+          SET co.dsprotoc = co.dsprotoc || ' ' || '*** ESTORNADO (' ||
+                            to_char(pr_dtmvtolt, 'DD/MM/RRRR') || ' - ' ||
+                            to_char(sysdate, 'HH24:MI:SS') || ')'
+          WHERE co.cdcooper = pr_cdcooper
+            AND co.nrdconta = pr_nrdconta
+            AND co.dtmvtolt = pr_dtmvtolt
+            AND co.cdtippro = pr_cdtippro
+            AND co.nrdocmto = pr_nrdocmto;
+        END IF;
       END IF;
 
       -- Retorno para sucesso

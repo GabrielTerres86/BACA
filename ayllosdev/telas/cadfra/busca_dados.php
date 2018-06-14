@@ -43,8 +43,10 @@
     $flretorno = (int) getByTagName($registros->tags,'FLGEMAIL_RETORNO');
     $dscorpent = preg_replace('/\r\n|\r|\n/','\n',getByTagName($registros->tags,'DSCORPO_ENTREGA'));
     $dscorpret = preg_replace('/\r\n|\r|\n/','\n',getByTagName($registros->tags,'DSCORPO_RETORNO'));
-
+    
+    echo "$('#tpretencao',        '#frmCadfra').val('".getByTagName($registros->tags,'TPRETENCAO')."');";
     echo "$('#hrretencao',        '#frmCadfra').val('".getByTagName($registros->tags,'HRRETENCAO')."');";
+    echo "$('#hrretencao5',       '#frmCadfra').val('".getByTagName($registros->tags,'HRRETENCAO')."');";
     echo "$('#".($flentrega ? 'flgYes' : 'flgNo')."',  '#frmCadfra').prop('checked', true);";
     echo "$('#dsemail_entrega',   '#frmCadfra').val('".getByTagName($registros->tags,'DSEMAIL_ENTREGA')."');";
     echo "$('#dsassunto_entrega', '#frmCadfra').val('".getByTagName($registros->tags,'DSASSUNTO_ENTREGA')."');";
@@ -53,6 +55,8 @@
     echo "$('#dsemail_retorno',   '#frmCadfra').val('".getByTagName($registros->tags,'DSEMAIL_RETORNO')."');";
     echo "$('#dsassunto_retorno', '#frmCadfra').val('".getByTagName($registros->tags,'DSASSUNTO_RETORNO')."');";
     echo "$('#dscorpo_retorno',   '#frmCadfra').val('".$dscorpret."');";
+    echo "$('#flgativo',          '#frmCadfra').val('".getByTagName($registros->tags,'FLGATIVO')."');";
+    echo "$('#flgativo_ori',      '#frmCadfra').val('".getByTagName($registros->tags,'FLGATIVO')."');";
 
     if ($cddopcao == 'C') {
         echo "trocaBotao('','','carregaTelaCadfra()');";
@@ -60,18 +64,10 @@
         echo "trocaBotao('".($cddopcao == 'A' ? 'Gravar' : 'Excluir')."','confirmaAcao()','carregaTelaCadfra()');";
     }
 
-    echo "acessaOpcaoAba(0);"; // Carrega aba inicial
-    echo "$('#divTabCampos, #divTipo".$tpoperacao."', '#frmCadfra').show();"; // Exibe os campos
-    echo "$('#".($tpoperacao == 1 ? 'qtdminutos_retencao' : 'hrretencao')."', '#frmCadfra').focus();";
+    echo "acessaOpcaoAba(0);"; // Carrega aba inicial    
+    echo " $('#flgativo, #frmCadfra').focus();";
 
-    if ($cddopcao == 'C' || $cddopcao == 'E') {
-        echo "$('input, select, textarea', '#frmCadfra').desabilitaCampo();";
-        echo "$('#addInterv', '#frmCadfra').hide();";
-    } else {
-        echo "$('input, select, textarea', '#frmCadfra').habilitaCampo();";
-        echo "$('#cdoperacao, #dsoperacao, #tpoperacao', '#frmCadfra').desabilitaCampo();";
-        echo "$('#addInterv', '#frmCadfra').show();";
-    }
+    
 
     // Se for ONLINE busca os intervalos
     if ($tpoperacao == 1) {
@@ -98,5 +94,16 @@
         echo "formataGridHora();";
         echo "carregarStrHoraMinutos();";
 
+    }
+    
+    echo " exibeIntervalo(".$tpoperacao."); ";    
+    
+    if ($cddopcao == 'C' || $cddopcao == 'E') {
+        echo "$('input, select, textarea', '#frmCadfra').desabilitaCampo();";
+        echo "$('#addInterv', '#frmCadfra').hide();";
+    } else {
+        echo "$('input, select, textarea', '#frmCadfra').habilitaCampo();";
+        echo "$('#cdoperacao, #dsoperacao, #tpoperacao', '#frmCadfra').desabilitaCampo();";
+        echo "$('#addInterv', '#frmCadfra').show();";
     }
 ?>

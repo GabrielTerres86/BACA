@@ -31,6 +31,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADFRA IS
                           ,pr_dsemail_retorno   IN tbgen_analise_fraude_param.dsemail_retorno%TYPE --> Endereco de email
                           ,pr_dsassunto_retorno IN tbgen_analise_fraude_param.dsassunto_retorno%TYPE --> Assunto do email
                           ,pr_dscorpo_retorno   IN tbgen_analise_fraude_param.dscorpo_retorno%TYPE --> Corpo do email
+                          ,pr_flgativo          IN tbgen_analise_fraude_param.flgativo%TYPE        --> Flag Ativo
+                          ,pr_tpretencao        IN INTEGER                                         --> Tipo de retencao(1-Intervalo, 2-Fixo)
                           ,pr_xmllog            IN VARCHAR2 --> XML com informacoes de LOG
                           ,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
                           ,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
@@ -75,7 +77,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
          ,flgemail_retorno  tbgen_analise_fraude_param.flgemail_retorno%TYPE
          ,dsemail_retorno   tbgen_analise_fraude_param.dsemail_retorno%TYPE
          ,dsassunto_retorno tbgen_analise_fraude_param.dsassunto_retorno%TYPE
-         ,dscorpo_retorno   tbgen_analise_fraude_param.dscorpo_retorno%TYPE);
+         ,dscorpo_retorno   tbgen_analise_fraude_param.dscorpo_retorno%TYPE
+         ,flgativo          tbgen_analise_fraude_param.flgativo%TYPE
+         ,tpretencao       INTEGER);
 
   TYPE typ_reg_interv IS
   RECORD (hrinicio          tbgen_analise_fraude_interv.hrinicio%TYPE
@@ -126,6 +130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
               ,param.dsemail_retorno
               ,param.dsassunto_retorno
               ,param.dscorpo_retorno
+              ,param.flgativo
+              ,param.tpretencao
           FROM tbgen_analise_fraude_param param
          WHERE param.cdoperacao = pr_cdoperacao
            AND param.tpoperacao = pr_tpoperacao;
@@ -160,6 +166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
         pr_tab_param(0).dsemail_retorno   := rw_param.dsemail_retorno;
         pr_tab_param(0).dsassunto_retorno := rw_param.dsassunto_retorno;
         pr_tab_param(0).dscorpo_retorno   := rw_param.dscorpo_retorno;
+        pr_tab_param(0).flgativo          := rw_param.flgativo;
+        pr_tab_param(0).tpretencao        := rw_param.tpretencao;
 
       END IF;
 
@@ -264,6 +272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
+      vr_hrretencao VARCHAR2(10);
 
       -- Tratamento de erros
       vr_exc_erro EXCEPTION;
@@ -300,11 +309,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                               ,pr_tag_cont => NULL
                               ,pr_des_erro => vr_dscritic);
 
+        IF vr_tab_param(0).tpretencao = 3 THEN
+          vr_hrretencao := vr_tab_param(0).hrretencao;
+        ELSE
+          vr_hrretencao := to_char(GENE0002.fn_converte_time_data(vr_tab_param(0).hrretencao));
+        END IF;
+
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'hrretencao'
-                              ,pr_tag_cont => to_char(GENE0002.fn_converte_time_data(vr_tab_param(0).hrretencao))
+                              ,pr_tag_cont => vr_hrretencao
                               ,pr_des_erro => vr_dscritic);
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -362,6 +377,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                               ,pr_tag_nova => 'dscorpo_retorno'
                               ,pr_tag_cont => vr_tab_param(0).dscorpo_retorno
                               ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'flgativo'
+                              ,pr_tag_cont => vr_tab_param(0).flgativo
+                              ,pr_des_erro => vr_dscritic);
+        
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'tpretencao'
+                              ,pr_tag_cont => vr_tab_param(0).tpretencao
+                              ,pr_des_erro => vr_dscritic);
+   
 
       -- Se NAO encontrou e for consulta ou exclusao
       ELSIF pr_cddopcao IN ('C','E') THEN
@@ -607,7 +637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
 
   PROCEDURE pc_grava_intervalo(pr_cdcooper       IN INTEGER --> Codigo da cooperativa
                               ,pr_cddopcao       IN VARCHAR2 --> Opcao
-                              ,pr_cdoperad       IN INTEGER --> Codigo do operador
+                              ,pr_cdoperad       IN VARCHAR2 --> Codigo do operador
                               ,pr_cdoperacao     IN tbgen_analise_fraude_interv.cdoperacao%TYPE --> Codigo da operacao
                         	    ,pr_tpoperacao     IN tbgen_analise_fraude_interv.tpoperacao%TYPE --> Tipo da operacao
                               ,pr_strhoraminutos IN VARCHAR2 --> Contem os horarios e minutos
@@ -818,6 +848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                           ,pr_dsemail_retorno   IN tbgen_analise_fraude_param.dsemail_retorno%TYPE --> Endereco de email
                           ,pr_dsassunto_retorno IN tbgen_analise_fraude_param.dsassunto_retorno%TYPE --> Assunto do email
                           ,pr_dscorpo_retorno   IN tbgen_analise_fraude_param.dscorpo_retorno%TYPE --> Corpo do email
+                          ,pr_flgativo          IN tbgen_analise_fraude_param.flgativo%TYPE        --> Flag Ativo
+                          ,pr_tpretencao        IN INTEGER                                         --> Tipo de retencao(1-Intervalo, 2-Fixo)
                           ,pr_xmllog            IN VARCHAR2 --> XML com informacoes de LOG
                           ,pr_cdcritic          OUT PLS_INTEGER --> Codigo da critica
                           ,pr_dscritic          OUT VARCHAR2 --> Descricao da critica
@@ -843,6 +875,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
     ..............................................................................*/
     DECLARE
 
+      --> Buscar dados do operador
+      CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE,
+                        pr_cdoperad crapope.cdoperad%TYPE) IS
+        SELECT ope.nmoperad
+          FROM crapope ope
+         WHERE ope.cdcooper = pr_cdcooper
+           AND ope.cdoperad = pr_cdoperad; 
+      rw_crapope cr_crapope%ROWTYPE;
+      
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -865,6 +906,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
       vr_dscorpo_entrega tbgen_analise_fraude_param.dscorpo_entrega%TYPE;
       vr_dscorpo_retorno tbgen_analise_fraude_param.dscorpo_retorno%TYPE;
 
+      vr_dsoperac VARCHAR2(100);
+      vr_dstpoper VARCHAR2(100);
+      vr_dsdcorpo VARCHAR2(4000);
+      
+
     BEGIN
       -- Limpa PLTABLE
       vr_tab_param.DELETE;
@@ -884,10 +930,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
       IF pr_tpoperacao = 1 THEN
 
         -- Se NAO foi informado nada
-        IF TRIM(pr_strhoraminutos) IS NULL THEN
+        IF pr_tpretencao = 1 AND TRIM(pr_strhoraminutos) IS NULL THEN
           vr_dscritic := 'Informe um intervalo.###qtdminutos_retencao###0';
           RAISE vr_exc_saida;
+        ELSIF pr_tpretencao = 2 AND TRIM(pr_hrretencao) IS NULL THEN
+          vr_dscritic := 'Informe o horário.###hrretencao###0';
+          RAISE vr_exc_saida;
+        ELSIF pr_tpretencao = 3 AND nvl(pr_hrretencao,0) = 0 THEN
+          vr_dscritic := 'Informe a quantidade de minutos.###hrretencao5###0';
+          RAISE vr_exc_saida;        
+        ELSIF pr_tpretencao = 0 THEN
+          vr_dscritic := 'Informe o tipo de retenção.###tpretencao###0';
+          RAISE vr_exc_saida;
         END IF;
+        
+        --> Se for tipo de retencao fixo
+        IF pr_tpretencao = 2 THEN
+          -- Valida o horario
+          BEGIN
+            vr_hrretencao := GENE0002.fn_char_para_number(to_char(to_date(pr_hrretencao,'HH24:MI'),'SSSSS'));
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Horário inválido.###hrretencao###0';
+              RAISE vr_exc_saida;
+          END;
+        ELSIF pr_tpretencao = 3 THEN
+          IF pr_hrretencao > 60 THEN
+            vr_dscritic := 'Tempo não deve ultrapassar 60 minutos.###hrretencao5###0';
+              RAISE vr_exc_saida;
+          END IF;
+        
+          -- Valida o horario
+          BEGIN
+            vr_hrretencao := GENE0002.fn_char_para_number(pr_hrretencao);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Horário inválido.###hrretencao5###0';
+              RAISE vr_exc_saida;
+          END;
+        
+        END IF;
+        
 
       -- Se for do tipo Agendada
       ELSIF pr_tpoperacao = 2 THEN
@@ -940,6 +1023,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                 ,dsemail_retorno   = pr_dsemail_retorno
                 ,dsassunto_retorno = pr_dsassunto_retorno
                 ,dscorpo_retorno   = vr_dscorpo_retorno
+                ,flgativo          = pr_flgativo
+                ,tpretencao        = pr_tpretencao
            WHERE cdoperacao        = pr_cdoperacao
              AND tpoperacao        = pr_tpoperacao;
         EXCEPTION
@@ -964,7 +1049,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                      ,flgemail_retorno
                      ,dsemail_retorno
                      ,dsassunto_retorno
-                     ,dscorpo_retorno)
+                     ,dscorpo_retorno
+                     ,flgativo
+                     ,tpretencao)
                VALUES(pr_cdoperacao
                      ,pr_tpoperacao
                      ,vr_hrretencao
@@ -975,7 +1062,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                      ,pr_flgemail_retorno
                      ,pr_dsemail_retorno
                      ,pr_dsassunto_retorno
-                     ,vr_dscorpo_retorno);
+                     ,vr_dscorpo_retorno
+                     ,pr_flgativo
+                     ,pr_tpretencao);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao incluir dados na tabela tbgen_analise_fraude_param: ' || SQLERRM;
@@ -985,7 +1074,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
       END IF; -- vr_tab_param.COUNT > 0
 
       -- Se for do tipo Online
-      IF pr_tpoperacao = 1 THEN
+      IF pr_tpoperacao = 1 AND 
+         -- e tipo de retencao por intervalo 
+         pr_tpretencao = 1 THEN
 
         -- Chama a validacao e gravacao dos intervalos
         pc_grava_intervalo(pr_cdcooper       => vr_cdcooper
@@ -1002,7 +1093,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
         END IF;
 
       -- Se for do tipo Agendada
-      ELSIF pr_tpoperacao = 2 THEN
+      ELSIF pr_tpoperacao = 2 OR 
+            -- ou retencao igual a fixo
+            pr_tpretencao IN (2,3) THEN
 
         pc_item_log(pr_cdcooper   => vr_cdcooper
                    ,pr_cddopcao   => vr_cddopcao
@@ -1014,6 +1107,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                    ,pr_vldepois   => pr_hrretencao);
 
       END IF;
+
+      IF vr_tab_param.COUNT > 0 THEN
+        IF vr_tab_param(0).flgativo = 1 AND 
+           pr_flgativo = 0 THEN
+           
+          vr_dsoperac := gene0010.fn_desc_dominio(pr_nmmodulo => 'CC', 
+                                                  pr_nmdomini => 'CDOPERAC_ANALISE_FRAUDE', 
+                                                  pr_cddomini => pr_cdoperacao); 
+          
+          vr_dstpoper := CASE pr_tpoperacao 
+                            WHEN 1 THEN 'ONLINE'
+                            WHEN 2 THEN 'AGENDADA'
+                            ELSE 'OUTRO'
+                          END ; 
+                                
+          --> Buscar dados do operador
+          rw_crapope := NULL;
+          OPEN cr_crapope(pr_cdcooper => vr_cdoperad,
+                          pr_cdoperad => vr_cdoperad);
+          FETCH cr_crapope INTO rw_crapope;
+          CLOSE cr_crapope;
+                         
+          vr_dsdcorpo:= 'Envio de Analise de Fraude da operação de <b>'|| vr_dsoperac || ' - ' ||vr_dstpoper ||
+                       ' </b>Foi Inativada pelo Operador <b>'||vr_cdoperad ||' - '||nvl(rw_crapope.nmoperad,'Nao Cadastrado')||'</b>'||
+                       ' , operações efetuadas a partir dos proximos minutos não serão enviadas para analise'||
+                       ' e serão aprovadas automaticamente.'||
+                       ' <br>Atenciosamente';
+                        
+          gene0003.pc_solicita_email( pr_cdcooper    => vr_cdcooper, 
+                                      pr_cdprogra    => 'CADFRA', 
+                                      pr_des_destino => pr_dsemail_entrega, 
+                                      pr_des_assunto => 'ANTIFRAUDE - Inativação de Envio de Analise', 
+                                      pr_des_corpo   => vr_dsdcorpo, 
+                                      pr_des_anexo   => NULL, 
+                                      pr_flg_enviar  => 'S', 
+                                      pr_des_erro    => vr_dscritic);
+          vr_dscritic := NULL;
+           
+        END IF;   
+      END IF;
+
 
       pc_item_log(pr_cdcooper   => vr_cdcooper
                  ,pr_cddopcao   => vr_cddopcao
@@ -1086,6 +1220,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                  ,pr_dsdcampo   => 'conteudo do retorno'
                  ,pr_vldantes   => (CASE WHEN vr_tab_param.COUNT > 0 THEN NVL(vr_tab_param(0).dscorpo_retorno,' ') ELSE '' END)
                  ,pr_vldepois   => NVL(vr_dscorpo_retorno,' '));
+      
+      pc_item_log(pr_cdcooper   => vr_cdcooper
+                 ,pr_cddopcao   => vr_cddopcao
+                 ,pr_cdoperad   => vr_cdoperad
+                 ,pr_cdoperacao => pr_cdoperacao
+                 ,pr_tpoperacao => pr_tpoperacao
+                 ,pr_dsdcampo   => 'Envio Analise'
+                 ,pr_vldantes   => (CASE WHEN vr_tab_param.COUNT > 0 THEN NVL(vr_tab_param(0).flgativo,0) ELSE 0 END)
+                 ,pr_vldepois   => NVL(pr_flgativo,0));           
+
+      pc_item_log(pr_cdcooper   => vr_cdcooper
+                 ,pr_cddopcao   => vr_cddopcao
+                 ,pr_cdoperad   => vr_cdoperad
+                 ,pr_cdoperacao => pr_cdoperacao
+                 ,pr_tpoperacao => pr_tpoperacao
+                 ,pr_dsdcampo   => 'Tipo de retencao'
+                 ,pr_vldantes   => (CASE WHEN vr_tab_param.COUNT > 0 THEN NVL(vr_tab_param(0).tpretencao,0) ELSE 0 END)
+                 ,pr_vldepois   => NVL(pr_tpretencao,0));   
 
       COMMIT;
 

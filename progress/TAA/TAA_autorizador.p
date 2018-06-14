@@ -311,6 +311,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                          PRJ404 - Garantia.(Odirlei-AMcom)                 
+
+            21/05/2018 - Inclusao de parametros devido a analise de fraude.
+                         PRJ381 - Antifraude(Odirlei-AMcom)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -3913,6 +3916,8 @@ PROCEDURE efetua_transferencia:
                                  INPUT ' ', /* dshistor */
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
+                                 INPUT '', /* par_iddispos */
+                                 
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
                                 OUTPUT 0,
@@ -4748,6 +4753,9 @@ PROCEDURE paga_titulo:
                                                      INPUT 0,
                                                      INPUT aux_tpcptdoc,
                                                      INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
+                                                     INPUT 0,  /* par_flmobile */
+                                                     INPUT '', /* par_iptransa */
+                                                     INPUT '', /* par_iddispos */
                                                     OUTPUT aux_dstrans1,
                                                     OUTPUT aux_dscritic,
                                                     OUTPUT aux_dsprotoc,
@@ -4799,6 +4807,8 @@ PROCEDURE paga_titulo:
                                                    INPUT ' ', /* dshistor */
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
+                                                   INPUT '', /* pr_iddispos */
+                                                   
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
                                                    OUTPUT 0,
@@ -5276,6 +5286,9 @@ PROCEDURE paga_convenio:
                                                       INPUT aux_nrterfin,
                                                       INPUT 0, /* nrcpfope */
                                                       INPUT aux_tpcptdoc,
+                                                      INPUT 0,  /* par_flmobile */
+                                                      INPUT '', /* par_iptransa */
+                                                      INPUT '', /* par_iddispos */                                                     
                                                      OUTPUT aux_dstransa,
                                                      OUTPUT aux_dscritic,
                                                      OUTPUT aux_dsprotoc,
@@ -5330,6 +5343,8 @@ PROCEDURE paga_convenio:
                                                   INPUT ' ', /* dshistor */
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
+                                                  INPUT '', /* par_iddispos */
+                                                  
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
                                                  OUTPUT 0,
@@ -5822,6 +5837,7 @@ PROCEDURE efetua_agendamento_mensal:
                                     INPUT ' ', /* dstransf */
                                     INPUT ' ', /* dshistor */
                                     INPUT '',  /* iptransa */
+                                    INPUT '',  /* iddispos */ 
                                     OUTPUT "",  /* pr_dstransa */        
                                     OUTPUT "",  /* pr_cdcritic */        
                                     OUTPUT ""). /* pr_dscritic */        
@@ -6179,7 +6195,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
                                               INPUT  0, /* Idlancto */
-											                        INPUT  "TAA", /*Nome da tela*/
+											  INPUT  "TAA", /*Nome da tela*/
                                               INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).

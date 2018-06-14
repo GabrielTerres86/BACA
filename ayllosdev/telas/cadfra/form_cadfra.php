@@ -8,6 +8,9 @@
  * ALTERAÇÕES   : 
  * --------------
  */
+ 
+ $dominios = buscaDominios('CC', 'TPRETENCAO_ANALISE_FRAUDE');
+ 
 ?>
 <form id="frmCadfra" name="frmCadfra" class="formulario">
 <input type="hidden" id="strhoraminutos">
@@ -52,7 +55,26 @@
                 <td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
                     <div id="divAba0" class="clsAbas">
                         <br clear="all" />
-
+                        <input type="hidden" id="flgativo_ori" name="flgativo_ori">
+                        <label for="flgativo">Envio analise:</label>
+                        <select id="flgativo" name="flgativo">
+                            <option value="0">Inativo</option>
+                            <option value="1">Ativo</option>
+                        </select>
+                        
+                        <br clear="all" />                        
+                        <label for="tpretencao">Tipo de retenção:</label>
+                        <select id="tpretencao" name="tpretencao">
+                            <?	
+                            foreach($dominios as $dominio) {
+                                ?> 
+                                <option value="<? echo getByTagName($dominio->tags,'cddominio'); ?>"><? echo getByTagName($dominio->tags,'dscodigo'); ?></option>
+                                <?
+                            }
+                            ?>
+                        </select>
+                        
+                        <br clear="all" />
                         <div id="divTipo1" style="padding-top: 5px;">
                             <div id="addInterv">
                                 <label for="hrretencao2">Aguardar análise por</label>
@@ -97,6 +119,15 @@
                             <br clear="all" />
                             <br clear="all" />
                         </div>
+                        
+                        <div id="divTipo3" style="padding-top: 5px;">
+                            <label for="hrretencao5">Aguardar análise por mais:</label>
+                            <input type="text" id="hrretencao5" name="hrretencao5" />
+                            <label for="hrretencao6">minutos</label>
+                            <br clear="all" />
+                            <br clear="all" />
+                        </div>
+                        
                     </div>
 
                     <div id="divAba1" class="clsAbas">

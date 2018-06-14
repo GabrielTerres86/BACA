@@ -17,6 +17,10 @@
                             
                30/01/2017 - Adicionado o codigo da transacao no xml de resposta
                             (Dionathan).
+                            
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                            de analise de fraude. 
+                            PRJ381 - AntiFraude (Odirlei-AMcom)             
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -39,6 +43,8 @@ DEFINE INPUT  PARAMETER par_indvalid AS INTE        NO-UNDO.
 DEFINE INPUT  PARAMETER par_idseqttl AS INTEGER     NO-UNDO.
 DEFINE INPUT  PARAMETER par_nrcpfope AS DECIMAL     NO-UNDO.
 DEFINE INPUT  PARAMETER par_iptransa AS CHAR        NO-UNDO.
+DEFINE INPUT  PARAMETER par_flmobile AS LOGI        NO-UNDO.
+DEFINE INPUT  PARAMETER par_iddispos AS CHAR        NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -79,6 +85,8 @@ RUN aprova_trans_pend IN h-b1wgen0016 (INPUT par_cdcooper,
                                        INPUT par_indvalid,
                                        INPUT par_nrcpfope,
                                        INPUT par_iptransa,
+                                       INPUT par_flmobile,
+                                       INPUT par_iddispos,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-criticas_transacoes_oper,
                                       OUTPUT out_flgaviso).

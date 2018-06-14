@@ -145,6 +145,10 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                             ,pr_vldocmto IN NUMBER  -- Valor da guia
                             ,pr_idagenda IN INTEGER	-- Indicador de agendamento (1 – Nesta Data / 2 – Agendamento)
                             ,pr_tpleitor IN INTEGER	-- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                            ,pr_flgagend INTEGER     DEFAULT 0 /*1-True,0-False*/  --Flag se é uma efetivação de agendamento
+                            ,pr_flmobile IN INTEGER  DEFAULT 0    -- Identificador de mobile
+                            ,pr_iptransa IN VARCHAR2 DEFAULT NULL -- IP da transação
+                            ,pr_iddispos IN VARCHAR2 DEFAULT NULL -- Identificador do dispositivo mobile    
                             ,pr_dsprotoc OUT VARCHAR2 --Descricao Protocolo
                             ,pr_cdcritic OUT INTEGER	-- Código do erro
                             ,pr_dscritic OUT VARCHAR2	-- Descriçao do erro
@@ -183,6 +187,8 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
 															,pr_vlapagar IN  NUMBER                 -- Indicador de validação do saldo em relação ao valor total
 															,pr_versaldo IN  INTEGER                -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
 															,pr_tpleitor IN  INTEGER                -- Descriçao do erro
+															,pr_iptransa IN VARCHAR2 DEFAULT NULL   -- IP da transação
+                              ,pr_iddispos IN VARCHAR2 DEFAULT NULL   -- Identificador do dispositivo mobile                                  
 															,pr_xml_dsmsgerr    OUT VARCHAR2        -- Retorno XML de critica
                               ,pr_xml_operacao188 OUT CLOB            -- Retorno XML da operação 188
                               								,pr_dsretorn        OUT VARCHAR2 );     -- Retorno de critica (OK ou NOK)
@@ -219,6 +225,9 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 																	,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) 
+                                  ,pr_flmobile IN INTEGER DEFAULT 0     -- Identificador de mobile
+                                  ,pr_iptransa IN VARCHAR2 DEFAULT NULL -- IP da transação
+                                  ,pr_iddispos IN VARCHAR2 DEFAULT NULL -- Identificador do dispositivo mobile    
                                   ,pr_dsprotoc OUT VARCHAR2 --Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
@@ -348,6 +357,8 @@ PROCEDURE pc_processa_tributos (pr_cdcooper IN  crapcop.cdcooper%TYPE  -- Cooper
                                  ,pr_vlapagar IN  NUMBER                 -- Valor total dos pagamentos
                                  ,pr_versaldo IN  INTEGER                -- Indicador de validação do saldo em relação ao valor total
                                  ,pr_tpleitor IN  INTEGER                -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                                 ,pr_iptransa IN VARCHAR2 DEFAULT NULL   -- IP da transação
+                                 ,pr_iddispos IN VARCHAR2 DEFAULT NULL   -- Identificador do dispositivo mobile                                  
                                  ,pr_retxml  OUT CLOB                    -- Retorno XML da operação
                                  ,pr_dscritic OUT VARCHAR2);
                                  
@@ -402,8 +413,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
        19/02/2018 - Tratamento para validacao do pagamento de darf/das em caso que 
                     for através do processo JOB(Lucas Ranghetti #843167)
-..............................................................................*/
 
+       12/04/2018 - Alterada chamada do processo de monitoracao para 
+                    AFRA0004.pc_monitora_tributos
+                    PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
+  ---------------------------------------------------------------------------------------------------------------*/
 
   -- Início -- PRJ406
   -- Tipo de registro linha
@@ -483,7 +497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       WHERE crapstb.cdtribut = pr_cdtribut;
     rw_crapstb cr_crapstb%ROWTYPE;
   
-  PROCEDURE pc_monitoracao_pagamento(pr_cdcooper crapcop.cdcooper%TYPE -- pr_cdcooper
+ /* PROCEDURE pc_monitoracao_pagamento(pr_cdcooper crapcop.cdcooper%TYPE -- pr_cdcooper
                                     ,pr_nrdconta crapass.nrdconta%TYPE -- pr_nrdconta
                                     ,pr_idseqttl crapttl.idseqttl%TYPE -- pr_idseqttl
                                     ,pr_dtmvtocd crapdat.dtmvtocd%TYPE -- rw_crapdat.dtmvtocd
@@ -492,7 +506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                     ,pr_vlfatura IN  NUMBER   -- Valor fatura
                                     ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                     ) IS
-    /* .............................................................................
+    \* .............................................................................
 
      Programa: pc_monitoracao_pagamento
      Autor   : Dionathan
@@ -500,9 +514,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Objetivo  : Procedure de monitoração de pagamentos para evitar fraudes.
 
-     Alteracoes: 
-    ..............................................................................*/
-  /** ------------------------------------------------------------- **
+     Alteracoes: MOVIDA PARA AFRA0004  -- ### TJ
+     
+    ..............................................................................*\
+  \** ------------------------------------------------------------- **
    ** Monitoracao Pagamentos - Antes de alterar verificar com David **
    ** ------------------------------------------------------------- **
    ** Envio de monitoracao sera enviado se for pagto via Internet,  **
@@ -517,7 +532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
    ** - Valor pago for maior ou igual a 3.000,00 independente do ip **
    ** - Valor pago for maior ou igual a 700,00 até 2.999,99 será    **
    ** verificado o IP anterior, caso seja diferente, envia email.   **
-   ** ------------------------------------------------------------- **/
+   ** ------------------------------------------------------------- **\
     
   -- Busca as informações da cooperativa conectada
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -700,13 +715,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       CLOSE cr_crapcop;
       
       --Buscar data do dia
-      vr_datdodia:= trunc(sysdate); /*PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);*/
+      vr_datdodia:= trunc(sysdate); \*PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);*\
       
       --Flag email recebe true
       vr_flgemail:= TRUE;
 
-      /** Soma o total de pagtos efetuados pelo cooperado no dia e armazena
-          esses pagtos para enviar no email **/
+      \** Soma o total de pagtos efetuados pelo cooperado no dia e armazena
+          esses pagtos para enviar no email **\
       IF vr_flgemail THEN
         --Zerar valor pagamentos
         vr_vlpagtos:= 0;
@@ -760,8 +775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           END IF;
         END LOOP; --rw_craplft
 
-        /** Verifica se o valor do pagto eh menor que o parametrizado
-        e total pago no dia eh menor que o parametrizado**/
+        \** Verifica se o valor do pagto eh menor que o parametrizado
+        e total pago no dia eh menor que o parametrizado**\
         IF pr_vlfatura < rw_crapcop.vlinimon AND
            vr_vlpagtos < rw_crapcop.vlinimon THEN
           --Flag email
@@ -833,7 +848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
       END IF; --vr_flgemail
 
-      /** Enviar email para monitoracao se passou pelos filtros **/
+      \** Enviar email para monitoracao se passou pelos filtros **\
       IF vr_flgemail THEN
 				
         vr_conteudo:= 'PA: '||rw_crapass.cdagenci||' - '||rw_crapass.nmresage;
@@ -842,7 +857,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				
         --Se for pessoa fisica
         IF rw_crapass.inpessoa = 1 THEN
-          /** Lista todos os titulares **/
+          \** Lista todos os titulares **\
 
           FOR rw_crapttl IN cr_crapttl (pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -853,7 +868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           END LOOP;
 
         ELSE
-          /** Lista o nome da empresa **/
+          \** Lista o nome da empresa **\
 
           OPEN cr_crapjur (pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
@@ -869,7 +884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           --Concatenar Procuradores/Representantes
           vr_conteudo:= vr_conteudo||'<BR><BR>'||
                         'Procuradores/Representantes: <BR>';
-          /** Lista os procuradores/representantes **/
+          \** Lista os procuradores/representantes **\
           FOR rw_crapavt IN cr_crapavt2 (pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_tpctrato => 6) LOOP
@@ -940,7 +955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       IF pr_dscritic IS NULL THEN
         pr_dscritic := 'Erro ao gerar monitoracao de pagamento DARF/DAS.';
       END IF;
-  END;
+  END; */
   
   PROCEDURE pc_cria_comprovante_tributos(pr_cdcooper IN  crapcop.cdcooper%TYPE -- Código da cooperativa
                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  -- Número da conta
@@ -2260,6 +2275,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                             ,pr_vldocmto IN NUMBER  -- Valor da guia
                             ,pr_idagenda IN INTEGER	-- Indicador de agendamento (1 – Nesta Data / 2 – Agendamento)
                             ,pr_tpleitor IN INTEGER	-- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                            ,pr_flgagend INTEGER     DEFAULT 0 /*1-True,0-False*/  --Flag se é uma efetivação de agendamento
+                            ,pr_flmobile IN INTEGER  DEFAULT 0    -- Identificador de mobile
+                            ,pr_iptransa IN VARCHAR2 DEFAULT NULL -- IP da transação
+                            ,pr_iddispos IN VARCHAR2 DEFAULT NULL -- Identificador do dispositivo mobile    
                             ,pr_dsprotoc OUT VARCHAR2 --Descricao Protocolo
                             ,pr_cdcritic OUT INTEGER	-- Código do erro
                             ,pr_dscritic OUT VARCHAR2	-- Descriçao do erro
@@ -2278,6 +2297,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                               e realizado ajustes para pagamento de FGTS/DAE. 
                               PRJ406-FGTS(Odirlei-AMcom)
                               
+                 12/04/2018 - Alterada chamada do processo de monitoracao para 
+                              AFRA0004.pc_monitora_tributos
+                              (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
     ..............................................................................*/
     CURSOR cr_crappod(pr_cdcooper crapass.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE)IS
@@ -2415,6 +2437,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_flgagend BOOLEAN;
 	  vr_cdtransa VARCHAR2(80);
 	  vr_dssigemp	VARCHAR2(80);
+    vr_idorigem INTEGER;
+    vr_idanalise_fraude   INTEGER;
+    vr_cdprodut           INTEGER;
+    vr_cdoperac           INTEGER;    
+    vr_dstransa           VARCHAR2(100);
+    vr_agendado           INTEGER;
   
   BEGIN
         
@@ -2488,6 +2516,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     --Savepoint para abortar sem alterar
     SAVEPOINT TRANS_UNDO;
         
+    --> Para Tributos de origens InternetBank e Mobile,
+    --> Deve ser gerado o registro de analise de fraude antes de
+    --> realizar a operacao
+    IF pr_idorigem = 3 AND pr_flgagend = 0 THEN
+      
+      IF pr_flmobile = 1 THEN
+        vr_idorigem := 10; --> MOBILE
+      ELSE
+        vr_idorigem := 3; --> InternetBank
+      END IF;
+      
+      IF pr_tpdaguia IN (1,2) THEN
+        vr_cdprodut := 45;  --> Pagamento DARF/DAS
+        vr_cdoperac :=  3;  --> Pagamento DARF/DAS
+        vr_dstransa := 'Pagamento DARF/DAS';
+      ELSIF pr_tpdaguia IN (3,4) THEN
+        vr_cdprodut := 46;  --> Pagamento FGTS/DAE
+        vr_cdoperac :=  4;  --> Pagamento FGTS/DAE
+        vr_dstransa := 'Pagamento FGTS/DAE';
+      END IF;
+      
+     
+      vr_idanalise_fraude := NULL;
+      --> Rotina para Inclusao do registro de analise de fraude
+      AFRA0001.pc_Criar_Analise_Antifraude(pr_cdcooper    => pr_cdcooper
+                                          ,pr_cdagenci    => vr_cdagenci
+                                          ,pr_nrdconta    => pr_nrdconta
+                                          ,pr_cdcanal     => vr_idorigem 
+                                          ,pr_iptransacao => pr_iptransa
+                                          ,pr_dtmvtolt    => rw_crapdat.dtmvtocd
+                                          ,pr_cdproduto   => vr_cdprodut
+                                          ,pr_cdoperacao  => vr_cdoperac
+                                          ,pr_iddispositivo => pr_iddispos 
+                                          ,pr_dstransacao => vr_dstransa
+                                          ,pr_tptransacao => 1 --> online 2-Agendamento
+                                          ,pr_idanalise_fraude => vr_idanalise_fraude
+                                          ,pr_dscritic   => vr_dscritic);
+      vr_dscritic := NULL;
+    END IF;
+    
+    
     --Se a captura for através do código de barras da guia
     IF pr_tpcaptur = 1 THEN
       cxon0014.pc_gera_faturas(pr_cdcooper      => pr_cdcooper      -- Codigo Cooperativa
@@ -2507,6 +2576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                               ,pr_tpcptdoc      => pr_tpleitor      -- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                               ,pr_dsnomfon      => pr_dsnomfon      -- Numero do Telefone
                               ,pr_identificador => pr_nrrefere      -- Identificador FGTS/DAE
+                              ,pr_idanafrd      => vr_idanalise_fraude -- Identificador de analise de fraude
                               ,pr_histor        => vr_cdhistor      -- Codigo Historico
                               ,pr_pg            => vr_flgpagto      -- Indicador Pago
                               ,pr_docto         => vr_nrdocmto      -- Numero Documento
@@ -2539,6 +2609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                            ,pr_vlrmulta => pr_vlrmulta -- Valor da multa
                            ,pr_vlrjuros => pr_vlrjuros -- Valor dos juros
                            ,pr_dsnomfon => pr_dsnomfon -- Nome / Telefone
+                           ,pr_idanafrd => vr_idanalise_fraude -- Identificador de analise de fraude
                            ,pr_foco     => vr_foco
                            ,pr_dscliter => vr_dslitera -- Literal
                            ,pr_cdultseq => vr_sequenci -- Ultima Sequencia
@@ -3049,19 +3120,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
 		-- Monitoração sendo realizada antes das atualizações da craplot para evitar prolongar lock
 		-- Executa monitoração de Pagamentos
-		pc_monitoracao_pagamento(pr_cdcooper => pr_cdcooper
-														,pr_nrdconta => pr_nrdconta
-														,pr_idseqttl => pr_idseqttl
-														,pr_dtmvtocd => rw_crapdat.dtmvtocd
-														,pr_cdagenci => vr_cdagenci
-														,pr_idagenda => pr_idagenda
-														,pr_vlfatura => pr_vlrtotal
-														,pr_dscritic => vr_dscritic
-														);
-	    
-		-- se encontrou erro ao buscar lote, abortar programa
-		IF vr_dscritic IS NOT NULL THEN
-			RAISE vr_exc_erro;
+    -- 12/04/2018 - TJ: modificada chamada devido transporte da rotina para AFRA0004
+    IF NVL(vr_idanalise_fraude, 0) = 0 THEN
+    
+      BEGIN   
+         IF pr_idagenda = 1 Then
+           vr_agendado := 0;
+         Else
+           vr_agendado := 1;
+         End IF;     
+                                 
+         AFRA0004.pc_monitora_operacao (pr_cdcooper   => pr_cdcooper   -- Codigo da cooperativa
+                                       ,pr_nrdconta   => pr_nrdconta   -- Numero da conta
+                                       ,pr_idseqttl   => pr_idseqttl   -- Sequencial titular
+                                       ,pr_vlrtotal   => pr_vlrtotal   -- Valor Lancamento
+                                       ,pr_flgagend   => vr_agendado   -- Flag agendado /* 1-True, 0-False */ 
+                                       ,pr_idorigem   => pr_idorigem   -- Indicador de origem
+                                       ,pr_cdoperacao => 3             -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                       ,pr_idanalis   => NULL          -- ID Analise Fraude
+                                       ,pr_lgprowid   => NULL          -- Rowid craplgp
+                                       ,pr_cdcritic   => vr_cdcritic   -- Codigo da critica
+                                       ,pr_dscritic   => vr_dscritic); -- Descricao da critica
+                                          
+      EXCEPTION
+          WHEN OTHERS THEN NULL;
+      END;                                      
+     
+      vr_cdcritic := NULL;                             
+      vr_dscritic := NULL;                             
 		END IF;	
     
     
@@ -3252,6 +3338,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_vlapagar IN  NUMBER                 -- Valor total dos pagamentos
                                ,pr_versaldo IN  INTEGER                -- Indicador de validação do saldo em relação ao valor total
                                ,pr_tpleitor IN  INTEGER                -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                               ,pr_iptransa IN VARCHAR2 DEFAULT NULL   -- IP da transação
+                               ,pr_iddispos IN VARCHAR2 DEFAULT NULL   -- Identificador do dispositivo mobile                                  
                                ,pr_xml_dsmsgerr    OUT VARCHAR2        -- Retorno XML de critica
                                ,pr_xml_operacao188 OUT CLOB            -- Retorno XML da operação 188
                                ,pr_dsretorn        OUT VARCHAR2 ) IS   -- Retorno de critica (OK ou NOK)
@@ -3834,6 +3922,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_vldocmto => vr_vldocmto,
 																	 pr_idagenda => pr_idagenda,
 																	 pr_tpleitor => pr_tpleitor,
+                                   pr_flmobile => pr_flmobile, -- Identificador de mobile
+                                   pr_iptransa => pr_iptransa, -- IP da transação
+                                   pr_iddispos => pr_iddispos, -- Identificador do dispositivo mobile                                
 																	 pr_dsprotoc => vr_dsprotoc,
 																	 pr_cdcritic => vr_cdcritic,
 																	 pr_dscritic => vr_dscritic);			
@@ -3878,6 +3969,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																pr_dtagenda => vr_dtmvtopg,
 																pr_cdtrapen => 0,
 																pr_tpleitor => pr_tpleitor,
+                                pr_flmobile => pr_flmobile, -- Identificador de mobile
+                                pr_iptransa => pr_iptransa, -- IP da transação
+                                pr_iddispos => pr_iddispos, -- Identificador do dispositivo mobile                                																	 
 																pr_dsprotoc => vr_dsprotoc,
 																pr_cdcritic => vr_cdcritic,
 																pr_dscritic => vr_dscritic);
@@ -3899,7 +3993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				
 				--Representante COM assinatura conjunta
 				IF vr_idastcjt = 1 THEN					
-					vr_dsmsgope := 'Pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
+					vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s)';
 				--Representante SEM assinatura conjunta
 				ELSE 
 					--CPF operador PJ
@@ -3907,7 +4001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 						vr_dsmsgope := 'Pagamento registrado com sucesso. Aguardando aprovação do registro pelo preposto.';
 					--titular
 					ELSE
-						vr_dsmsgope := 'Pagamento efetuado com sucesso.';
+						vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso.';
 				  END IF;
 										
 				END IF;
@@ -3917,15 +4011,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				
 				--Representante COM assinatura conjunta
 				IF vr_idastcjt = 1 THEN					
-					vr_dsmsgope := 'Agendamento de pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
+          vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s)';
+          -- 18/04/2018 - TJ
+					-- vr_dsmsgope := 'Agendamento de pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
 				--Representante SEM assinatura conjunta
 				ELSE					
 					--CPF operador PJ
 				  IF pr_nrcpfope <> 0 THEN
+            -- ### TJ
 						vr_dsmsgope := 'Agendamento de pagamento registrado com sucesso. Aguardando aprovação do registro pelo preposto.';
 					--titular
 					ELSE
-						vr_dsmsgope := 'Pagamento agendado com sucesso para o dia ' || to_char(vr_dtmvtopg,'DD/MM/RRRR');
+            vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso.';
+            -- 18/04/2018 - TJ
+						-- vr_dsmsgope := 'Pagamento agendado com sucesso para o dia ' || to_char(vr_dtmvtopg,'DD/MM/RRRR');
 				  END IF;
 				END IF;
 				
@@ -3988,6 +4087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																												<dttransa>'|| to_char(SYSDATE,'DD/MM/RRRR') ||'</dttransa>
 																												<dsmsgope>'|| nvl(vr_dsmsgope,' ')   ||'</dsmsgope>																												
 																											</DADOS_PAGAMENTO>');  
+                                                                                                         
 			-- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
 														 ,pr_texto_completo => vr_xml_temp 
@@ -4056,6 +4156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
                                   ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                                  ,pr_flmobile IN INTEGER DEFAULT 0     -- Identificador de mobile
+                                  ,pr_iptransa IN VARCHAR2 DEFAULT NULL -- IP da transação
+                                  ,pr_iddispos IN VARCHAR2 DEFAULT NULL -- Identificador do dispositivo mobile    
                                   ,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2) IS -- Descriçao do erro                                   
@@ -4226,6 +4329,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	vr_dsprotoc VARCHAR2(80);
 	vr_cdtransa VARCHAR2(80);
 	vr_dssigemp	VARCHAR2(80);
+  vr_idorigem INTEGER;
+  vr_idanalise_fraude   INTEGER;
+  vr_cdprodut           INTEGER;
+  vr_cdoperac           INTEGER;    
+  vr_dstransa           VARCHAR2(100);
+  
 		
   BEGIN
 	  -- Busca a data da cooperativa
@@ -4457,6 +4566,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         END IF;				
 			END IF;
 			
+      
+      --> Para Tributos de origens InternetBank e Mobile,
+      --> Deve ser gerado o registro de analise de fraude antes de
+      --> realizar a operacao
+      IF pr_idorigem = 3 THEN
+        
+        IF pr_flmobile = 1 THEN
+          vr_idorigem := 10; --> MOBILE
+        ELSE
+          vr_idorigem := 3; --> InternetBank
+        END IF;
+        
+        IF pr_tpdaguia IN (1,2) THEN
+          vr_cdprodut := 45;  --> Pagamento DARF/DAS
+          vr_cdoperac :=  3;  --> Pagamento DARF/DAS
+          vr_dstransa := 'Agendamento DARF/DAS';
+        ELSIF pr_tpdaguia IN (3,4) THEN
+          vr_cdprodut := 46;  --> Pagamento FGTS/DAE
+          vr_cdoperac :=  4;  --> Pagamento FGTS/DAE
+          vr_dstransa := 'Agendamento FGTS/DAE';
+        END IF;       
+       
+        vr_idanalise_fraude := NULL;
+        --> Rotina para Inclusao do registro de analise de fraude
+        AFRA0001.pc_Criar_Analise_Antifraude(pr_cdcooper    => pr_cdcooper
+                                            ,pr_cdagenci    => pr_cdagenci
+                                            ,pr_nrdconta    => pr_nrdconta
+                                            ,pr_cdcanal     => vr_idorigem 
+                                            ,pr_iptransacao => pr_iptransa
+                                            ,pr_dtmvtolt    => rw_crapdat.dtmvtocd
+                                            ,pr_cdproduto   => vr_cdprodut
+                                            ,pr_cdoperacao  => vr_cdoperac
+                                            ,pr_iddispositivo => pr_iddispos 
+                                            ,pr_dstransacao => vr_dstransa
+                                            ,pr_tptransacao => 2 --> 2-Agendamento
+                                            ,pr_idanalise_fraude => vr_idanalise_fraude
+                                            ,pr_dscritic   => vr_dscritic);
+        vr_dscritic := NULL;
+      END IF;
+      
+			
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
 			
 			-- inserção na craplau
@@ -4496,7 +4646,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                     ,craplau.tpdvalor
 					          ,craplau.flmobile
 					          ,craplau.idtipcar
-					          ,craplau.nrcartao)
+					          ,craplau.nrcartao
+                    ,craplau.idanafrd)
              VALUES ( pr_cdcooper               -- craplau.cdcooper
                      ,pr_nrdconta               -- craplau.nrdconta
                      ,pr_idseqttl               -- craplau.idseqttl
@@ -4537,7 +4688,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      ,nvl(vr_tpdvalor,0)        -- craplau.tpdvalor
 					           ,0                         -- craplau.flmobile
                      ,0                         -- craplau.idtipcar
-                     ,0)
+                     ,0                         -- craplau.nrcartao
+                     ,nullif(vr_idanalise_fraude,0)) -- craplau.idanafrd
 						RETURNING craplau.idlancto,
 						          craplau.dtmvtolt,
 											craplau.hrtransa,
@@ -5173,10 +5325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      vr_exc_erro      EXCEPTION;
      vr_dscritic      VARCHAR2(2000);
      
-     vr_dsempcon      NUMBER;
-     vr_dssegmto      VARCHAR2(1);
-     vr_qtexpr        NUMBER;
-     vr_xml_temp      VARCHAR2(32726) := '';
+     
      
      vr_nrdigito      INTEGER;
      
@@ -5591,6 +5740,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                  ,pr_vlapagar IN  NUMBER                 -- Valor total dos pagamentos
                                  ,pr_versaldo IN  INTEGER                -- Indicador de validação do saldo em relação ao valor total
                                  ,pr_tpleitor IN  INTEGER                -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                                 ,pr_iptransa IN VARCHAR2 DEFAULT NULL   -- IP da transação
+                                 ,pr_iddispos IN VARCHAR2 DEFAULT NULL   -- Identificador do dispositivo mobile                                  
                                  ,pr_retxml  OUT CLOB                    -- Retorno XML da operação
                                  ,pr_dscritic OUT VARCHAR2) IS           -- Retorno de critica
     /* ..........................................................................
@@ -6195,6 +6346,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_vldocmto => vr_vldocmto,
 																	 pr_idagenda => pr_idagenda,
 																	 pr_tpleitor => pr_tpleitor,
+                                   pr_flmobile => pr_flmobile, -- Identificador de mobile
+                                   pr_iptransa => pr_iptransa, -- IP da transação
+                                   pr_iddispos => pr_iddispos, -- Identificador do dispositivo mobile                                																	 
 																	 pr_dsprotoc => vr_dsprotoc,
 																	 pr_cdcritic => vr_cdcritic,
 																	 pr_dscritic => vr_dscritic);			
@@ -6239,6 +6393,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																pr_dtagenda => vr_dtmvtopg,
 																pr_cdtrapen => 0,
 																pr_tpleitor => pr_tpleitor,
+                                pr_flmobile => pr_flmobile, -- Identificador de mobile
+                                pr_iptransa => pr_iptransa, -- IP da transação
+                                pr_iddispos => pr_iddispos, -- Identificador do dispositivo mobile                                																	 
 																pr_dsprotoc => vr_dsprotoc,
 																pr_cdcritic => vr_cdcritic,
 																pr_dscritic => vr_dscritic);
@@ -6260,15 +6417,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				
 				--Representante COM assinatura conjunta
 				IF vr_assin_conjunta = 1 THEN					
-					vr_dsmsgope := 'Pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
+          vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s)';
+          -- 18/04/2018 - TJ
+					--vr_dsmsgope := 'Pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
 				--Representante SEM assinatura conjunta
 				ELSE 
 					--CPF operador PJ
 				  IF pr_nrcpfope <> 0 THEN
+            -- ### TJ
 						vr_dsmsgope := 'Pagamento registrado com sucesso. Aguardando aprovação do registro pelo preposto.';
 					--titular
 					ELSE
-						vr_dsmsgope := 'Pagamento efetuado com sucesso.';
+            vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso.';
+            -- 18/04/2018 - TJ
+						--vr_dsmsgope := 'Pagamento efetuado com sucesso.';
 				  END IF;
 										
 				END IF;
@@ -6278,15 +6440,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				
 				--Representante COM assinatura conjunta
 				IF vr_assin_conjunta = 1 THEN					
-					vr_dsmsgope := 'Agendamento de pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
+          vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s)';
+          -- 18/04/2018 - TJ
+					-- vr_dsmsgope := 'Agendamento de pagamento registrado com sucesso. Aguardando aprovação do registro pelos demais responsáveis.';
 				--Representante SEM assinatura conjunta
 				ELSE					
 					--CPF operador PJ
 				  IF pr_nrcpfope <> 0 THEN
+            -- ### TJ
 						vr_dsmsgope := 'Agendamento de pagamento registrado com sucesso. Aguardando aprovação do registro pelo preposto.';
 					--titular
 					ELSE
-						vr_dsmsgope := 'Pagamento agendado com sucesso para o dia ' || to_char(vr_dtmvtopg,'DD/MM/RRRR');
+            -- 18/04/2018 - TJ
+						-- vr_dsmsgope := 'Pagamento agendado com sucesso para o dia ' || to_char(vr_dtmvtopg,'DD/MM/RRRR');
+            vr_dsmsgope := 'Transação(ões) registrada(s) com sucesso.';
 				  END IF;
 				END IF;
 				
@@ -7022,8 +7189,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_cdagenci     crapage.cdagenci%TYPE;
     vr_idorigem     INTEGER;
     vr_dtmvtopg     DATE;
-    vr_flsgproc     BOOLEAN;
-    vr_dstextab     craptab.dstextab%TYPE; 
     vr_tab_agendamentos paga0003.typ_tab_agend_bancoob;
     vr_tab_agen_relat   paga0003.typ_tab_agend_bancoob;
     vr_dstransa     VARCHAR2(4000);

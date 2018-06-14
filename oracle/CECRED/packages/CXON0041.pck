@@ -124,6 +124,7 @@
                         ,pr_vlrmulta IN craplft.vlrmulta%TYPE -- Valor da multa
                         ,pr_vlrjuros IN craplft.vlrjuros%TYPE -- Valor dos juros  
                         ,pr_dsnomfon IN craplft.dsnomfon%TYPE -- Nome / Telefone  
+                        ,pr_idanafrd IN tbgen_analise_fraude.idanalise_fraude%TYPE DEFAULT 0 -- Identificador de analise de fraude
                         ,pr_foco     OUT VARCHAR2             --
                         ,pr_dscliter OUT VARCHAR2             --
                         ,pr_cdultseq OUT INTEGER              --
@@ -1110,6 +1111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                         ,pr_vlrmulta IN craplft.vlrmulta%TYPE -- Valor da multa
                         ,pr_vlrjuros IN craplft.vlrjuros%TYPE -- Valor dos juros   
                         ,pr_dsnomfon IN craplft.dsnomfon%TYPE -- Nome / Telefone 
+                        ,pr_idanafrd IN tbgen_analise_fraude.idanalise_fraude%TYPE DEFAULT 0 -- Identificador de analise de fraude
                         ,pr_foco     OUT VARCHAR2             --                        
                         ,pr_dscliter OUT VARCHAR2             --
                         ,pr_cdultseq OUT INTEGER              --
@@ -1301,7 +1303,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                         ,cdseqfat
                         ,insitfat
                         ,cdhistor
-                        ,dsnomfon)
+                        ,dsnomfon
+                        ,idanafrd
+                        ,idseqttl)
             VALUES(pr_cdcooper
 				  ,pr_nrdconta
                   ,pr_dtapurac
@@ -1326,7 +1330,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,vr_cdseqfat
                   ,1
                   ,1154
-                  ,pr_dsnomfon)
+                  ,pr_dsnomfon
+                  ,nullif(pr_idanafrd,0)
+                  ,pr_idseqttl )
         RETURNING progress_recid INTO vr_progress_recid_lft;
 
       UPDATE craplot

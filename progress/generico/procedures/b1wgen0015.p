@@ -420,6 +420,11 @@
 						   tambem no "WHEN OTHERS THEN" para que nao mostre mais críticas
 						   que o usuário não precise enxergar e então gravando em log. 
 						   (SD 865935 - Kelvin)		   
+              
+              12/04/2018 - Inclusao de novos campo para realizaçao 
+                           de analise de fraude. 
+                           PRJ381 - AntiFraude (Odirlei-AMcom)
+                           
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -2581,6 +2586,7 @@ PROCEDURE executa-envio-ted:
     DEF  INPUT PARAM par_idagenda AS INTEGER                        NO-UNDO.
     DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_iddispos AS CHAR                           NO-UNDO.
     
     DEF OUTPUT PARAM par_dsprotoc LIKE crappro.dsprotoc             NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -2640,6 +2646,7 @@ PROCEDURE executa-envio-ted:
      INPUT par_idagenda,
      INPUT par_iptransa,  /* pr_iptransa */
      INPUT par_dstransa,  /* pr_dstransa */
+                                         INPUT par_iddispos,
 
      
     OUTPUT "",  /*pr_dsprotoc*/
@@ -9773,7 +9780,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
           EMPTY TEMP-TABLE tt-erro.
 
           /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
-               RUN gera_erro (INPUT par_cdcooper,
+             RUN gera_erro (INPUT par_cdcooper,
                             INPUT par_cdagenci,
                             INPUT par_nrdcaixa,
                             INPUT 1,            /** Sequencia **/
@@ -9794,7 +9801,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                              
           RETURN "NOK".
         END.
-        
+      
       
     RETURN "OK".
     

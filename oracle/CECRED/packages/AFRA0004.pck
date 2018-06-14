@@ -141,6 +141,7 @@ create or replace package body CECRED.AFRA0004 is
             ,crappro.nrseqaut
             ,crappro.dscedent
             ,crappro.flgagend
+            ,crappro.vldocmto
        FROM crappro
       WHERE crappro.cdcooper = pr_cdcooper
       AND   crappro.nrdconta = pr_nrdconta
@@ -190,6 +191,23 @@ create or replace package body CECRED.AFRA0004 is
       AND   craplft.cdbccxlt = pr_cdbccxlt
       AND   craplft.nrdolote = pr_nrdolote
       AND   craplft.nrseqdig = pr_nrseqdig;
+
+    -- Selecionar lancamento
+    CURSOR cr_craplgp_1 (pr_cdcooper IN craplft.cdcooper%type
+                        ,pr_dtmvtolt IN craplft.dtmvtolt%type
+                        ,pr_cdagenci IN craplft.cdagenci%type
+                        ,pr_cdbccxlt IN craplft.cdbccxlt%type
+                        ,pr_nrdolote IN craplft.nrdolote%type
+                        ,pr_nrseqdig IN craplft.nrseqdig%type) IS
+      SELECT craplgp.cdbarras
+            ,craplgp.vlrtotal
+      FROM craplgp
+      WHERE craplgp.cdcooper = pr_cdcooper
+      AND   craplgp.dtmvtolt = pr_dtmvtolt
+      AND   craplgp.cdagenci = pr_cdagenci
+      AND   craplgp.cdbccxlt = pr_cdbccxlt
+      AND   craplgp.nrdolote = pr_nrdolote
+      AND   craplgp.nrseqdig = pr_nrseqdig;
 
     -- Selecionar a data de abertura da conta
     CURSOR cr_crapass_data(pr_cdcooper IN craplgm.cdcooper%type,
@@ -388,6 +406,27 @@ create or replace package body CECRED.AFRA0004 is
     -- Variaveis Locais
     vr_cdagenci    INTEGER;
 
+    CURSOR cr_craplgp (pr_idanalis craplgp.idanafrd%TYPE)IS
+      SELECT lgp.vlrtotal,
+             lgp.rowid
+        FROM craplgp lgp
+       WHERE lgp.idanafrd = pr_idanalis; 
+    rw_craplgp cr_craplgp%ROWTYPE;
+    
+    CURSOR cr_craplft (pr_idanalis craplgp.idanafrd%TYPE)IS
+      SELECT lft.vllanmto,
+             lft.rowid
+        FROM craplft lft
+       WHERE lft.idanafrd = pr_idanalis; 
+    rw_craplft cr_craplft%ROWTYPE;
+    
+    CURSOR cr_craptit (pr_idanalis craplgp.idanafrd%TYPE)IS
+      SELECT tit.vldpagto,
+             tit.rowid
+        FROM craptit tit
+       WHERE tit.idanafrd = pr_idanalis; 
+    rw_craptit cr_craptit%ROWTYPE;
+
   BEGIN
     
     /* tratamento para TAA */
@@ -418,10 +457,16 @@ create or replace package body CECRED.AFRA0004 is
     --> chama rotina conforme codigo Operacao (tbcc_dominio_campo, dominio: CDOPERAC_ANALISE_FRAUDE)
     CASE 
       WHEN pr_cdoperacao = 1  THEN  /* TITULOS */
+        IF pr_idanalis > 0 THEN
+          OPEN cr_craptit (pr_idanalis => pr_idanalis);
+          FETCH cr_craptit INTO rw_craptit;
+          CLOSE cr_craptit;                   
+        END IF;
+      
            pc_monitora_titulos (pr_cdcooper => pr_cdcooper           -- Codigo da cooperativ 
                                ,pr_nrdconta => pr_nrdconta           -- Numero da conta
                                ,pr_idseqttl => pr_idseqttl           -- Sequencial titular
-                               ,pr_vllanmto => pr_vlrtotal           -- Valor fatura
+                               ,pr_vllanmto => nvl(pr_vlrtotal,rw_craptit.vldpagto)           -- Valor fatura
                                ,pr_flgagend => pr_flgagend           -- Flag agendado /* 1-T
                                ,pr_cdagenci => vr_cdagenci           -- Codigo da agencia
                                ,pr_dtmvtocd => rw_crapdat.dtmvtocd   -- Data do movimento
@@ -430,10 +475,16 @@ create or replace package body CECRED.AFRA0004 is
                                ,pr_dscritic => pr_dscritic);         -- retorno descricao critica
                                       
       WHEN pr_cdoperacao in (2, 6)  THEN  /* CONVENIOS */
+        IF pr_idanalis > 0 THEN
+          OPEN cr_craplft (pr_idanalis => pr_idanalis);
+          FETCH cr_craplft INTO rw_craplft;
+          CLOSE cr_craplft;                   
+        END IF;
+      
            pc_monitora_convenios (pr_cdcooper => pr_cdcooper          -- Codigo da cooperativa
                                  ,pr_nrdconta => pr_nrdconta          -- Numero da conta
                                  ,pr_idseqttl => pr_idseqttl          -- Sequencial titular
-                                 ,pr_vlfatura => pr_vlrtotal          -- Valor fatura
+                             ,pr_vlfatura => nvl(pr_vlrtotal,rw_craplft.vllanmto)          -- Valor fatura
                                  ,pr_flgagend => pr_flgagend          -- Flag agendado /* 1-True, 0-False */ 
                                  ,pr_cdagenci => vr_cdagenci          -- Codigo da agencia
                                  ,pr_dtmvtocd => rw_crapdat.dtmvtocd  -- Data do movimento                   
@@ -441,10 +492,16 @@ create or replace package body CECRED.AFRA0004 is
                                  ,pr_dscritic => pr_dscritic);        -- retorno descricao critica
 
       WHEN pr_cdoperacao in (3, 4) THEN /* TRIBUTOS: 3-DARF/DAS, 4-FGTS/DAE */
+        IF pr_idanalis > 0 THEN
+          OPEN cr_craplft (pr_idanalis => pr_idanalis);
+          FETCH cr_craplft INTO rw_craplft;
+          CLOSE cr_craplft;                   
+        END IF;
+      
            pc_monitora_tributos (pr_cdcooper => pr_cdcooper          -- Codigo da cooperativa
                                 ,pr_nrdconta => pr_nrdconta          -- Numero da conta
                                 ,pr_idseqttl => pr_idseqttl          -- Sequencial titular     
-                                ,pr_vlfatura => pr_vlrtotal          -- Valor fatura      
+                            ,pr_vlfatura => nvl(pr_vlrtotal,rw_craplft.vllanmto)          -- Valor fatura      
                                 ,pr_flgagend => pr_flgagend          -- Flag agendado /* 1-True, 0-False */   
                                 ,pr_cdagenci => vr_cdagenci          -- Codigo da agencia    
                                 ,pr_dtmvtocd => rw_crapdat.dtmvtocd  -- rw_crapdat.dtmvtocd    
@@ -452,14 +509,21 @@ create or replace package body CECRED.AFRA0004 is
                                 ,pr_dscritic => pr_dscritic);        -- retorno Descriçao da critica      
       
       WHEN pr_cdoperacao = 5  THEN  /* GPS */
+        IF pr_idanalis > 0 THEN
+          OPEN cr_craplgp (pr_idanalis => pr_idanalis);
+          FETCH cr_craplgp INTO rw_craplgp;
+          CLOSE cr_craplgp;           
+        
+        END IF;
+           
            pc_monitora_gps (pr_cdcooper => pr_cdcooper           -- Codigo da cooperativa
                            ,pr_nrdconta => pr_nrdconta           -- Numero da conta
                            ,pr_idseqttl => pr_idseqttl           -- Sequencial titular
-                           ,pr_vlrtotal => pr_vlrtotal           -- Valor total lancamento
+                           ,pr_vlrtotal => nvl(pr_vlrtotal,rw_craplgp.vlrtotal)           -- Valor total lancamento
                            ,pr_flgagend => pr_flgagend           -- Flag agendado /* 1-True, 0-False */ 
                            ,pr_cdagenci => vr_cdagenci           -- Codigo da agencia
                            ,pr_dtmvtocd => rw_crapdat.dtmvtocd   -- Data do movimento 
-                           ,pr_lgprowid => pr_lgprowid           -- ROWID da craplgp
+                           ,pr_lgprowid => nvl(pr_lgprowid,rw_craplgp.rowid)           -- ROWID da craplgp
                            ,pr_cdcritic => pr_cdcritic           -- retorno Codigo da critica
                            ,pr_dscritic => pr_cdcritic);         -- retorno Descricao critica
 
@@ -2765,7 +2829,7 @@ create or replace package body CECRED.AFRA0004 is
           --Posicionar no proximo registro
           FETCH cr_crapaut_sequen INTO rw_crapaut;
           --Se nao encontrar
-          IF cr_crapaut_sequen%NOTFOUND OR rw_crapaut.dsprotoc <> rw_crappro.dsprotoc THEN
+          IF cr_crapaut_sequen%NOTFOUND OR rw_crapaut.vldocmto <> rw_crappro.vldocmto THEN
             --Fechar Cursor
             CLOSE cr_crapaut_sequen;
             --Proximo Registro
@@ -2775,12 +2839,17 @@ create or replace package body CECRED.AFRA0004 is
           --Fechar Cursor
           CLOSE cr_crapaut_sequen;
 
-          --Selecionar Faturas
-          OPEN cr_craplgp (pr_rowid => pr_lgprowid);
+          --Selecionar lancamento
+          OPEN cr_craplgp_1 (pr_cdcooper => rw_crapaut.cdcooper
+                          ,pr_dtmvtolt => rw_crapaut.dtmvtolt
+                          ,pr_cdagenci => rw_crapaut.cdagenci
+                          ,pr_cdbccxlt => 100
+                          ,pr_nrdolote => 31900
+                          ,pr_nrseqdig => To_Number(rw_crapaut.nrdocmto));
           --Posicionar no proximo registro
-          FETCH cr_craplgp INTO rw_craplgp;
+          FETCH cr_craplgp_1 INTO rw_craplgp;
           --Se encontrar
-          IF cr_craplgp%FOUND THEN
+          IF cr_craplgp_1%FOUND THEN          
 
             --Acumular pagamentos
             vr_vlpagtos:= NVL(vr_vlpagtos,0) + rw_craplgp.vlrtotal;
@@ -2803,7 +2872,7 @@ create or replace package body CECRED.AFRA0004 is
 
           END IF;
 
-          CLOSE cr_craplgp; --Fechar Cursor
+          CLOSE cr_craplgp_1; --Fechar Cursor
         END LOOP; --rw_crappro
 
         /** Verifica se o valor do pagto eh menor que o parametrizado
@@ -2985,7 +3054,7 @@ create or replace package body CECRED.AFRA0004 is
 
 
         --Determinar Assunto
-        vr_des_assunto:= 'PAGTO CONVENIOS '||rw_crapcop.nmrescop ||' '||
+        vr_des_assunto:= 'PAGTO GPS '||rw_crapcop.nmrescop ||' '||
                          GENE0002.fn_mask_conta(pr_nrdconta)|| ' R$ '||
                          TRIM(to_char(pr_vlrtotal,'fm999g999g999g999d99'));
 
@@ -3139,41 +3208,23 @@ create or replace package body CECRED.AFRA0004 is
       vr_dsdplchv := 'TED';
     END IF;
     
-    /*
+    
     --> Online
     IF pr_tptransacao = 1 THEN
       IF pr_inpessoa = 1 THEN
         vr_cdtipmsg := 21;
-        -- ews
-         vr_notif_origem   := 5;
-         vr_notif_motivo   := 1; 
-         vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
       ELSE
         vr_cdtipmsg := 18;
-        -- ews
-         vr_notif_origem   := 5;
-         vr_notif_motivo   := 2;  
-         vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);                
       END IF;
     --> Agendada
     ELSIF pr_tptransacao = 2 THEN
       IF pr_inpessoa = 1 THEN
         vr_cdtipmsg := 19;
-        -- ews
-         vr_notif_origem   := 3;
-         vr_notif_motivo   := 10; 
-         vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
-         vr_variaveis_notif('#dtdebito') := fn_buscar_valor('#DTDEBITO#',pr_vldinami);                   
       ELSE
         vr_cdtipmsg := 20;
-        -- ews
-         vr_notif_origem   := 3;
-         vr_notif_motivo   := 11;  
-         vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
-         vr_variaveis_notif('#dtdebito') := fn_buscar_valor('#DTDEBITO#',pr_vldinami);                   
       END IF;
     END IF; 
-    */
+    
     
     IF pr_tptransacao = 1 THEN
       vr_notif_origem   := 5;
@@ -3238,29 +3289,31 @@ create or replace package body CECRED.AFRA0004 is
       vr_vldinami := '#NOME#='||vr_nmprimtl||';'||
                      pr_vldinami;
     
-      --> buscar mensagem 
-      vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
-                                                ,pr_cdproduto         => pr_cdproduto
-                                                ,pr_cdtipo_mensagem   => vr_cdtipmsg
-                                                ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
-                                                ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
+      IF pr_cdproduto = 30 THEN
+        --> buscar mensagem 
+        vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
+                                                  ,pr_cdproduto         => pr_cdproduto
+                                                  ,pr_cdtipo_mensagem   => vr_cdtipmsg
+                                                  ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
+                                                  ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
     
-      --> Criar mensagem
-      GENE0003.pc_gerar_mensagem ( pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta
-                                  ,pr_idseqttl => rw_crapsnh.idseqttl
-                                  ,pr_cdprogra => pr_programa        -- era fixo: 'AFRA0001'
-                                  ,pr_inpriori => 1
-                                  ,pr_dsdmensg => vr_dsdmensg
-                                  ,pr_dsdassun => vr_dsdassun
-                                  ,pr_dsdremet => rw_crapcop.nmrescop
-                                  ,pr_dsdplchv => vr_dsdplchv
-                                  ,pr_cdoperad => ''
-                                  ,pr_cdcadmsg => 0
-                                  ,pr_dscritic => vr_dscritic);
+        --> Criar mensagem
+        GENE0003.pc_gerar_mensagem ( pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_idseqttl => rw_crapsnh.idseqttl
+                                    ,pr_cdprogra => pr_programa        -- era fixo: 'AFRA0001'
+                                    ,pr_inpriori => 1
+                                    ,pr_dsdmensg => vr_dsdmensg
+                                    ,pr_dsdassun => vr_dsdassun
+                                    ,pr_dsdremet => rw_crapcop.nmrescop
+                                    ,pr_dsdplchv => vr_dsdplchv
+                                    ,pr_cdoperad => ''
+                                    ,pr_cdcadmsg => 0
+                                    ,pr_dscritic => vr_dscritic);
      
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
       END IF;
       --
       -- Cria uma notificação
