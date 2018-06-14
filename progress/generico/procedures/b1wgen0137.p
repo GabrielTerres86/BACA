@@ -323,6 +323,9 @@
                      
                 21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
                              na opção todos (Carlos).
+                20/04/2018 - Incluir novos documentos para batime1nto de digitalizaçao.
+                             Projeto 414 - Regulatório FATCA/CRS (Marcelo Telles Coelho - Mouts).
+
 
 .............................................................................*/
 
@@ -1293,7 +1296,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,131,145,146,147,148,149,150,151,152", ENTRY(3,craptab.dstextab,";")) THEN
+        -- DCTOs 172, 173, 174 e 174 - Projeto 414 - Marcelo Telles Coelho - Mouts
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1362,7 +1366,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 52:
+            DO aux_contdocs = 1 TO 63:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1411,6 +1415,15 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
                         ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
+                    WHEN 60 THEN
+                        ASSIGN aux_conttabs = 60. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 61 THEN
+                        ASSIGN aux_conttabs = 61. /*DOCUMENTO NIF*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 62 THEN
+                        ASSIGN aux_conttabs = 62. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 63 THEN
+                        ASSIGN aux_conttabs = 63. /*DOCUMENTO NIF - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+
                     OTHERWISE
                         NEXT.
                 END CASE.
