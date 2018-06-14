@@ -167,7 +167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'dsestado'         , pr_tag_cont => rw_declaracao.dsestado         , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'dscodigo_postal'  , pr_tag_cont => rw_declaracao.dscodigo_postal  , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'nmpais_reportavel', pr_tag_cont => rw_declaracao.nmpais_reportavel, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'inreportavel'     , pr_tag_cont => rw_declaracao.inreportavel     , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'inreportavel'     , pr_tag_cont => 'S'                            , pr_des_erro => vr_dscritic);
       -- Incrementa contador p/ posicao no XML
       vr_auxconta := nvl(vr_auxconta,0) + 1;
 
