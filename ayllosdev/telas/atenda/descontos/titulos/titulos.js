@@ -2558,7 +2558,15 @@ function confirmarInclusao(){
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                eval(response);
+                var r = $.parseJSON(response);
+                nrbordero = r.nrborder;
+                showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
+                    "Confirma&ccedil;&atilde;o - Ayllos",
+                    "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                    "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                    "sim.gif",
+                    "nao.gif"
+                );                
             }
         });
     }
@@ -2593,7 +2601,15 @@ function confirmarAlteracao(){
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                eval(response);
+                var r = $.parseJSON(response);
+               
+                showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
+                    "Confirma&ccedil;&atilde;o - Ayllos",
+                    "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                    "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                    "sim.gif",
+                    "nao.gif"
+                );                
             }
         });
     }
@@ -3278,7 +3294,7 @@ function pagarTitulosVencidos(){
         showError("error", "Selecione ao menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }else {
         if(pgto_avalista){ 
-            showMsgAguardo('Aguarde, Pagamento com Avalista, calculando saldo em conta...');
+            showMsgAguardo('Aguarde, pagamento com avalista calculando saldo em conta...');
         }else{
             showMsgAguardo('Aguarde, calculando saldo em conta...');
         }
@@ -3305,13 +3321,14 @@ function pagarTitulosVencidos(){
                 //Caso nao possua saldo, altera a mensagem
                 if (response == 0){
                     showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-                    return false;
                 }
                 else if (response == 2){
-                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento?";
+                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento com al&ccedil;a?";
+                    showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+                }else{
+                    //Invoca a funcao
+                    showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
                 }
-                //Invoca a funcao
-                showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
             }
         });
        
