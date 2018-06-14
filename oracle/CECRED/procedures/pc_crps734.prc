@@ -114,15 +114,15 @@ BEGIN
       ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
     END CASE;
     
-    vr_qtdiaatr := (rw_crapdat.dtmvtopr - rw_crapdat.dtmvtolt);
-    
     -- Loop principal dos títulos vencidos
     FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
       
       -- Caso o titulo venca num feriado ou fim de semana, pula pois sera pego no proximo dia util 
       IF rw_craptdb.dtvencto > rw_crapdat.dtmvtoan AND rw_craptdb.dtvencto < rw_crapdat.dtmvtolt THEN
-        CONTINUE;
+        vr_qtdiaatr := (rw_crapdat.dtmvtopr - rw_craptdb.dtvencto);
+      ELSE
+        vr_qtdiaatr := (rw_crapdat.dtmvtopr - rw_crapdat.dtmvtolt);
       END IF;
       
       -- #################################################################################################
@@ -149,7 +149,6 @@ BEGIN
                                     ,pr_nrcnvcob => rw_craptdb.nrcnvcob    
                                     ,pr_nrdocmto => rw_craptdb.nrdocmto    
                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt    
-                                    ,pr_qtdiaatr => vr_qtdiaatr 
                                     ,pr_vlmtatit => vr_vlmtatit    
                                     ,pr_vlmratit => vr_vlmratit    
                                     ,pr_vlioftit => vr_vlioftit    
