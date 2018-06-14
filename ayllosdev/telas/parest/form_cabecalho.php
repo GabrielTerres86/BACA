@@ -51,6 +51,7 @@ function exibeErroNew($msgErro) {
 	<select id="tpprodut" name="tpprodut">
 		<option value="0"><? echo utf8ToHtml('Empréstimo e Financiamento') ?></option>
 		<option value="1"><? echo utf8ToHtml('Desconto de Títulos') ?></option>
+	        <option value="4"> <?php echo utf8ToHtml('Cartão')?> </option>
 	</select>
 	
 	  <label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
@@ -68,15 +69,7 @@ function exibeErroNew($msgErro) {
 		}
 		?>
     </select>
-	
-    <label style="width:80px" for="tpproduto">
-            <?php echo utf8ToHtml('Tipo Produto:') ?>
-    </label>
-    <select id="tpproduto" name="tpproduto">
-        <option value="4"> <?php echo utf8ToHtml('Cartão')?> </option>
-        <option value="0"> <?php echo utf8ToHtml('Empréstimo') ?> </option>
-    </select>
-	
+
 	<a href="#" class="botao" id="btnOK" name="btnOK" onClick="controlaOperacao();
             return false;" style = "text-align:right;">OK</a>
 
