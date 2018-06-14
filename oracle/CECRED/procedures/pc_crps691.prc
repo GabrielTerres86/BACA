@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison
-       Data    : Dezembro/2014                     Ultima atualizacao: 04/08/2016
+       Data    : Dezembro/2014                     Ultima atualizacao: 13/06/2018
 
        Dados referentes ao programa:
 
@@ -32,6 +32,10 @@ CREATE OR REPLACE PROCEDURE
 
                    04/08/2016 - Alteracao para pegar as cidades da tabela crapmun.
                                 (Jaison/Anderson)
+                   
+				    13/06/2018 - Ajuste no cursor cr_rep_legal, adicionado clausula where, para 
+				                 restringir a dtinicio <= ultima data do mes de referencia
+								 (Alcemir Mout's) - (PRB0040097). 
 
     ............................................................................ */
 
@@ -148,7 +152,8 @@ CREATE OR REPLACE PROCEDURE
              AND (crapavt.dtvalida BETWEEN TRUNC(pr_dtrefere,'MM') AND pr_dtrefere
                   OR crapavt.dtvalida IS NULL )
 
-          ORDER BY nrcpfcgc, dtinicio, dtvigenc ) t;
+          ORDER BY nrcpfcgc, dtinicio, dtvigenc ) t
+		  WHERE t.dtinicio <= last_day(pr_dtrefere);
 
       -- Listagem dos municipios
       CURSOR cr_crapmun IS
