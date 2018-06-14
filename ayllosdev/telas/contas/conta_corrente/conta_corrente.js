@@ -366,7 +366,7 @@ function controlaLayout(operacao) {
     var cTodos = $('input, select', '#' + nomeForm);
     var cCodigo = $('#cdagepac,#cdsecext', '#' + nomeForm);
     var cRadio = $('input[name="flgiddep"],input[name="tpextcta"],input[name="tpavsdeb"],input[name="flgrestr"],' +
-				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"]', '#' + nomeForm);
+				   'input[name="indserma"],input[name="flgdevolu_autom"],input[name="idastcjt"],input[name="inlbacen"]', '#' + nomeForm);
     var cSelect = $('select', '#' + nomeForm);
     var cDatas = $('#dtabtcoo,#dtabtcct,#dtelimin,#dtdemiss,#dtcnsscr', '#' + nomeForm);
 
@@ -460,19 +460,11 @@ function controlaLayout(operacao) {
         flgfirst = true;
 
         cTipoConta.unbind('change').bind('change', function() {
-            if ($(this).val() == '8' || $(this).val() == '9' || $(this).val() == '10' || $(this).val() == '11') {
                 /* Busca o codigo de banco da IF CECRED */
                 cBcoCheque.val(cdbcoctl);
-            }
 
-            // Utiliza flag para evitar a chamada da função quando o método trigger for acionado
-            if (flgfirst) {
-                flgfirst = false;
-            } else {
-                manterRotina('VE');
-            }
-			
 			var cbTiposConta = '';
+			//var vlCdcatego = cCdcatego.val();
 			
 			if (tiposConta[$(this).val()].idindividual == 1) { cbTiposConta += '<option value="1">Individual</option>'; }
 			if (tiposConta[$(this).val()].idconjunta_solidaria == 1) { cbTiposConta += '<option value="2">Conjunta</option>'; }
@@ -480,8 +472,29 @@ function controlaLayout(operacao) {
 			//if (tiposConta[$(this).val()].idconjunta_nao_solidaria == 1) { cbTiposConta += '<option value="3">Conjunta n&atilde;o solid&aacute;ria</option>'; }
 			
 			cCdcatego.html(cbTiposConta);
-			
+			/*
+            // Utiliza flag para evitar a chamada da função quando o método trigger for acionado
+            if (flgfirst) {
+                flgfirst = false;
+				cCdcatego.val(vlCdcatego);
+            } else {
+                cCdcatego.prop("selectedIndex", -1);
+            }
+			*/
 			cCdcatego.prop("selectedIndex", -1);
+			
+        });
+			
+        cCdcatego.unbind('change').bind('change', function() {
+			/*
+            // Utiliza flag para evitar a chamada da função quando o método trigger for acionado
+            if (flgfirst) {
+                flgfirst = false;
+            } else {
+                
+			}
+			*/
+                manterRotina('VE');
 			
         });
 		
