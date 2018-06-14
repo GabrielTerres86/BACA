@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 17/03/2016 
  * OBJETIVO     : Formulário de exibição da tela CONPRO
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 05/07/2017 - P337 - Prever novas situações criadas pela
+ *                             pela implantação da análise automática (Motor)
  * --------------
  */
 ?>
@@ -47,11 +48,10 @@
             <select id="insitest" name="insitest">
                 <option value="9"> <?php echo utf8ToHtml('Todos') ?> </option> 
                 <option value="3"> <?php echo utf8ToHtml('Analise Finalizada') ?> </option> 
-                <option value="1"> <?php echo utf8ToHtml('Enviada para Analise') ?> </option> 
+                <option value="1"> <?php echo utf8ToHtml('Enviada p/ Analise Aut.') ?> </option> 
+                <option value="2"> <?php echo utf8ToHtml('Enviada p/ Analise Man.') ?> </option> 
                 <option value="4"> <?php echo utf8ToHtml('Expirado') ?> </option> 
                 <option value="0"> <?php echo utf8ToHtml('Não Enviada') ?> </option> 
-                <option value="2"> <?php echo utf8ToHtml('Reenviada para Analise') ?> </option> 
-
             </select>
 
             <label for="insitefe"><?php echo utf8ToHtml('Efetivação:') ?></label>
@@ -65,11 +65,12 @@
             <label for="insitapr"><?php echo utf8ToHtml('Parecer Esteira:') ?></label>
             <select id="insitapr" name="insitapr">
                 <option value="9"> <?php echo utf8ToHtml('Todos') ?></option> 
+                <option value="0"> <?php echo utf8ToHtml('Não Analisado') ?></option> 
                 <option value="1"> <?php echo utf8ToHtml('Aprovado') ?></option> 
                 <option value="3"> <?php echo utf8ToHtml('Com Restrição') ?></option> 
                 <option value="2"> <?php echo utf8ToHtml('Não Aprovado') ?></option> 
-                <option value="0"> <?php echo utf8ToHtml('Não Analisado') ?></option> 
                 <option value="4"> <?php echo utf8ToHtml('Refazer') ?></option> 
+                <option value="5"> <?php echo utf8ToHtml('Erro Consultas') ?></option> 
             </select>
         </fieldset>	
     </div>
