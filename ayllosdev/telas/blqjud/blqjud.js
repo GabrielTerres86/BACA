@@ -30,6 +30,8 @@
 				  
 				  14/03/2018 - Adicionado parametro que faltava na chamada da procedure
 				     		   consulta-bloqueio-jud. (Kelvin)
+							   
+				  13/06/2018 - Removendo caractere invalido do campo resumo de ordem. (PRB0040070 - Kelvin)
  * --------------
  */
  
@@ -1044,7 +1046,7 @@ function alteraBloqueio() {
 		    nroficio: nroficio,
 			nrproces: nrproces,
 			dsjuizem: dsjuizem, 
-			dsresord: dsresord, 
+			dsresord: removeCaracteresInvalidos(dsresord), 
 			dtenvres: dtenvres, 
 			flblcrft: flblcrft,
 			nrdconta: nrdconta,
@@ -1158,7 +1160,7 @@ function gravarBloqueio() {
 			nroficio: nroficio,
 			nrproces: nrproces,
 			dsjuizem: dsjuizem,
-			dsresord: dsresord,
+			dsresord: removeCaracteresInvalidos(dsresord),
             flblcrft: flblcrft,
             dtenvres: dtenvres,
 			dsinfadc: dsinfadc,
@@ -1376,7 +1378,7 @@ function efetuaDesbloqueio() {
 		    nroficio: nroficio,
 			nrproces: nrproces,
 			dsjuizem: dsjuizem, 
-			dsresord: dsresord, 
+			dsresord: removeCaracteresInvalidos(dsresord), 
 			dtenvres: dtenvres, 
 			vlbloque: vlbloque, 
 			flblcrft: flblcrft,
