@@ -1153,7 +1153,7 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:                                 
+            DO:   
                               
                 IF  par_cdrefere = 0 THEN              
                     DO:
@@ -1548,7 +1548,7 @@ PROCEDURE valida-dados:
                             par_cdhistor = 554   OR   /* AGUAS JOINVILLE */
                             par_cdhistor = 961   OR   /* FOZ DO BRASIL */
                             par_cdhistor = 962   OR   /* AGUAS DE MASSARANDUBA */ 
-                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */                           
+                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */
                             DO:        
                                 IF  par_cdrefere > 99999999 THEN /* 8 Dig.*/
                                     DO:
@@ -2075,8 +2075,8 @@ PROCEDURE grava-dados:
                         /* Bancoob nao permite deb.aut. */                                            
                         ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
                         UNDO Grava, LEAVE Grava.
-                    
-                    END.    
+
+                    END.
                     
                 /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
                 IF  par_idorigem = 3 /* IBANK */    OR 
@@ -2413,7 +2413,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                        
+                             
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2551,7 +2551,7 @@ PROCEDURE busca_convenios_codbarras:
         
         /* Cecred */
         ELSE IF  crapcon.tparrecd = 3 THEN
-            DO:      
+            DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2572,14 +2572,14 @@ PROCEDURE busca_convenios_codbarras:
                            crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
                            
-                                         
+
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
-            END.   
+            END.
 
          IF aux_nmresumi <> "" THEN
           ASSIGN aux_nmempcon = aux_nmresumi.    
@@ -4135,7 +4135,7 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-
+                                      
         IF  NOT AVAIL gnconve  AND
             NOT AVAIL crapscn  THEN
             NEXT.
@@ -4202,7 +4202,7 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
-        
+                          
                 IF  NOT AVAIL gnconve  AND
                     NOT AVAIL crapscn  THEN
                     NEXT.
@@ -6039,9 +6039,27 @@ PROCEDURE valida_senha_cooperado:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
            END.
+       END.
+      END. 
+   /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE THEN 
+      DO:
+          FOR EACH crapsnh FIELDS (cddsenha) 
+                           WHERE  crapsnh.cdcooper = par_cdcooper
+                             AND  crapsnh.nrdconta = par_nrdconta
+                             AND  crapsnh.tpdsenha = 1 /*internet*/ 
+                             NO-LOCK:                
+              DO:        
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapsnh.cddsenha) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
    END.
       END. 
 
+      END.
+    END.
+  /*Fim validaçao senha online */
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
@@ -6610,19 +6628,19 @@ PROCEDURE busca_convenio_nome:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-
+   
     DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
-        
+   
     FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                              crapcon.cdempcon = par_cdempcon AND
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
-             
+   
     IF AVAILABLE crapcon THEN    
       DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
       END.
-
+   
     RELEASE crapcon.
   
   RETURN "OK".
-END PROCEDURE.    
+END PROCEDURE.
