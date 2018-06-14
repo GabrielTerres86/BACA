@@ -776,7 +776,6 @@ create or replace package body cecred.TELA_COBTIT is
                                  ,pr_nrcnvcob=>rw_craptdb.nrcnvcob
                                  ,pr_nrdocmto=>rw_craptdb.nrdocmto
                                  ,pr_dtmvtolt=>pr_dtvencto
-                                 ,pr_qtdiaatr=>(pr_dtmvtolt - pr_dtvencto)
                                  ,pr_vlmtatit=>vr_vlmtatit
                                  ,pr_vlmratit=>vr_vlmratit
                                  ,pr_vlioftit=>vr_vliofcpl
