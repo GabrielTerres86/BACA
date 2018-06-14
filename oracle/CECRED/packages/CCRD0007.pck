@@ -3186,7 +3186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     CLOSE cr_tbgen_webservice_aciona;
     vr_dsprotoc := rw_tbgen_webservice_aciona.dsprotocolo;
 
-    IF rw_tbgen_webservice_aciona.dsoperacao like '%SOLICITACAO CARTAO%' THEN
+    IF (rw_tbgen_webservice_aciona.dsoperacao LIKE '%SOLICITACAO CARTAO%') OR
+       (rw_tbgen_webservice_aciona.dsoperacao LIKE '%SOLICITACAO BANCOOB%') THEN
       vr_intipret := 'I';
     ELSE
       vr_intipret := 'A';
@@ -3404,6 +3405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3490,6 +3492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -3691,6 +3694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3758,6 +3762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -3799,6 +3804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3824,6 +3830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3979,6 +3986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4065,6 +4073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -4267,6 +4276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4313,6 +4323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -4354,6 +4365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4379,6 +4391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
