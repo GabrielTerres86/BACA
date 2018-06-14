@@ -2030,7 +2030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         vr_obj_generic2.put('ratingConta', 'A');
         vr_obj_generic2.put('riscoCooperado', 'A');
       END IF;
-      vr_obj_generic2.put('aquiteste',vr_des_reto);
+      --vr_obj_generic2.put('aquiteste',vr_des_reto);
       
 
       -- Buscar risco do grupo econômico (se existir)
@@ -4013,7 +4013,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF pr_tpproces = 'I' THEN --Inclusão
       vr_obj_generico.put('tipoProduto','LM');
     ELSE --Alteração
+      IF rw_crawcrd.vllimcrd = 0 THEN
+        vr_obj_generico.put('tipoProduto','LM');
+      ELSE
       vr_obj_generico.put('tipoProduto','MJ');
+    END IF;
     END IF;
 
     --Campos usados somente em Empréstimo, irão com valor em branco.
@@ -5049,7 +5053,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         FETCH cr_sugret INTO rw_sugret;
         IF cr_sugret%NOTFOUND THEN
           CLOSE cr_sugret;
-          pr_dsmensag := 'Tempo de retorno do Motor excedido. Favor refazer a operação ou enviar para a Esteira.';
+          vr_dscritic := 'Tempo de retorno do Motor excedido. Favor refazer a operacao.';
+          RAISE vr_exc_erro;
         ELSE
           CLOSE cr_sugret;
 
@@ -5253,7 +5258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         FROM crapcop
        WHERE cdcooper = NVL(pr_cdcooper,cdcooper)
          AND flgativo = 1
-         AND gene0001.fn_param_sistema('CRED',cdcooper,'ANALISE_OBRIG_MOTOR_CRED') = 1;
+         AND gene0001.fn_param_sistema('CRED',cdcooper,'ANALISE_OBRIG_MOTOR_CRD') = 1;
 
     -- Proposta sem retorno
     -- Busca acionamentos de retorno de solicitacao de sugestão
@@ -5718,10 +5723,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       SELECT a.vllimite_alterado
             ,a.dsjustificativa
             ,a.dsprotocolo
+            ,a.nrproposta_est
         FROM tbcrd_limite_atualiza a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
          AND a.nrconta_cartao = pr_nrcontacartao
+         AND a.nrctrcrd = pr_nrctrcrd
          AND a.tpsituacao = 6
          AND a.insitdec IN (1,6)   -- Sem Aprovação, Refazer
          AND NOT EXISTS (SELECT 1
@@ -5811,6 +5818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_tpprodut     VARCHAR2(2);
     vr_dsjustif     crawcrd.dsjustif%TYPE;
     vr_vlsugmot     crawcrd.vllimdlr%TYPE;
+    vr_nrctrcrd     crawcrd.nrctrcrd%TYPE;
     
     -- Hora da impressao
     vr_hrimpres NUMBER;
@@ -5870,6 +5878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_tpprodut := 'MJ';
       vr_dsjustif := rw_limatu.dsjustificativa;
       vr_dsprotoc := rw_limatu.dsprotocolo;
+      vr_nrctrcrd := rw_limatu.nrproposta_est;
       IF vr_dsprotoc = '0' THEN
         vr_dsprotoc := null;
       END IF;
@@ -5878,6 +5887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_tpprodut := 'LM';
       vr_dsjustif := rw_crawcrd.dsjustif;
       vr_dsprotoc := rw_crawcrd.dsprotoc;
+      vr_nrctrcrd := pr_nrctrcrd;
     END IF;    
     CLOSE cr_limatu;
     
@@ -5910,7 +5920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_proposta.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
     END IF;
 
-    vr_obj_proposta.put('numero'             , rw_crawcrd.nrctrcrd);    
+    vr_obj_proposta.put('numero'             , vr_nrctrcrd);    
     vr_obj_proposta.put('valor'              , vr_vllimite);
     vr_obj_proposta.put('parcelaQuantidade'  , '');
     vr_obj_proposta.put('parcelaPrimeiroVencimento', '');
@@ -6032,7 +6042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     CLOSE cr_crapadc;
     
     -- Busca limite sugerido pelo motor
-    CCRD0007.pc_busca_valor_sugerido_motor(pr_cdcooper => pr_cdcooper
+    ccrd0007.pc_busca_valor_sugerido_motor(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctrcrd => rw_crawcrd.nrctrcrd
                                           ,pr_dsprotoc => vr_dsprotoc
@@ -6242,7 +6252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     -- Incluiremos os documentos ao json principal
     vr_obj_proposta.put('documentos',vr_lst_doctos);
 
-    vr_obj_proposta.put('contratoNumero',rw_crawcrd.nrctrcrd);
+    vr_obj_proposta.put('contratoNumero',vr_nrctrcrd/*rw_crawcrd.nrctrcrd*/);
 
     -- Verificar se a conta é de colaborador do sistema Cecred
     vr_cddcargo := NULL;
@@ -7041,7 +7051,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
              wepr.cdagenci,
              wepr.cdagenci cdagenci_efet,
              wepr.dtmvtolt,
-             wepr.dtpropos
+             wepr.dtpropos,
+             wepr.dtsolici
         FROM crawcrd wepr
        WHERE 1=1
          AND wepr.cdcooper = pr_cdcooper
@@ -7049,7 +7060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
          AND wepr.nrctrcrd = pr_nrctrcrd;
 
     rw_crawcrd cr_crawcrd%ROWTYPE;   
-    
+/*    
    CURSOR cr_craplem (pr_cdcooper crawcrd.cdcooper%TYPE,
                       pr_nrdconta crawcrd.nrdconta%TYPE,
                       pr_nrctrcrd crawcrd.nrctrcrd%TYPE,
@@ -7062,8 +7073,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
        AND nrctrcrd = pr_nrctrcrd
      --  AND dtmvtolt = pr_dtmvtolt
        AND rownum = 1;
-       
     rw_craplem cr_craplem%ROWTYPE;
+*/
+    CURSOR cr_limatu IS
+      SELECT *
+        FROM tbcrd_limite_atualiza
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrcrd = pr_nrctrcrd;
+    rw_limatu cr_limatu%ROWTYPE;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -7077,6 +7095,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     
     -- Auxiliares
     vr_dsprotocolo  VARCHAR2(1000);
+    vr_nrctrprp     NUMBER(10);
+    vr_cdagenci     crawcrd.cdagenci%TYPE;
+    vr_dtsolici     crawcrd.dtsolici%TYPE;
+    vr_vllimcrd     crawcrd.vllimcrd%TYPE;
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -7117,6 +7139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;
     CLOSE cr_crapass;  
     
+    IF pr_tpregistro = 'I' THEN
     --> Buscar dados da proposta de cartao de credito
     OPEN cr_crawcrd(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta,
@@ -7131,6 +7154,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;
     CLOSE cr_crawcrd;
     
+      vr_nrctrprp := pr_nrctrcrd;
+      vr_cdagenci := rw_crawcrd.cdagenci;
+      vr_dtsolici := rw_crawcrd.dtsolici;
+      vr_vllimcrd := rw_crawcrd.vllimcrd;
+/*    
     --> Buscar dados da proposta de cartao de credito
     OPEN cr_craplem(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta,
@@ -7146,11 +7174,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_craplem;
+*/
+    ELSE
+      OPEN cr_limatu;
+      FETCH cr_limatu INTO rw_limatu;
+      IF cr_limatu%FOUND THEN
+        vr_nrctrprp := rw_limatu.nrproposta_est;
+        vr_cdagenci := pr_cdagenci;
+        vr_dtsolici := rw_limatu.dtretorno;
+        vr_vllimcrd := rw_limatu.vllimite_alterado;
+      ELSE
+        vr_nrctrprp := pr_nrctrcrd;
+        vr_cdagenci := pr_cdagenci;
+        vr_dtsolici := pr_dtmvtolt;
+      END IF;
+      CLOSE cr_limatu;
+    END IF;
     
     --> Criar objeto json para agencia da proposta
     /***************** VERIFICAR *********************/
     vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
-    vr_obj_agencia.put('PACodigo', rw_crawcrd.cdagenci);
+    vr_obj_agencia.put('PACodigo', vr_cdagenci);
     vr_obj_efetivar.put('PA' ,vr_obj_agencia);
     vr_obj_agencia := json();
     
@@ -7171,16 +7215,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_efetivar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
     END IF;
     
-    vr_obj_efetivar.put('numero'                 , pr_nrctrcrd);
+    vr_obj_efetivar.put('numero'                 , vr_nrctrprp);
     vr_obj_efetivar.put('operadorEfetivacaoLogin', '');
     vr_obj_efetivar.put('operadorEfetivacaoNome' , '');
      --> Criar objeto json para agencia do cooperado
     vr_obj_agencia.put('cooperativaCodigo'       , pr_cdcooper);
-    vr_obj_agencia.put('PACodigo'                , rw_crawcrd.cdagenci_efet);    
+    vr_obj_agencia.put('PACodigo'                , vr_cdagenci);
     vr_obj_efetivar.put('operadorEfetivacaoPA'   , vr_obj_agencia);    
-    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(COALESCE(rw_craplem.dtsolici, SYSDATE))) ; 
-    vr_obj_efetivar.put('contratoNumero'         , pr_nrctrcrd);
-    vr_obj_efetivar.put('valor'                  , rw_crawcrd.vllimcrd);
+    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(COALESCE(vr_dtsolici, SYSDATE))) ; 
+    vr_obj_efetivar.put('contratoNumero'         , vr_nrctrprp);
+    vr_obj_efetivar.put('valor'                  , vr_vllimcrd);
     vr_obj_efetivar.put('parcelaQuantidade'      , ''); -- TODO descomentar
     --vr_obj_efetivar.put('parcelaQuantidade'      , '1');
     vr_obj_efetivar.put('parcelaPrimeiroVencimento' , '');
@@ -7255,7 +7299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         WHERE 1=1
         and   tpsituacao = 3 -- Concluído com sucesso
         AND   cdcooper = pr_cdcooper
-        AND   nrdconta = pr_nrdconta;
+        AND   nrdconta = pr_nrdconta
+        AND   nrctrcrd = pr_nrctrcrd;
       EXCEPTION    
         WHEN OTHERS THEN
           vr_dscritic := 'Nao foi possivel atualizar o limite da proposta apos envio da efetivacao de Analise de Credito: '||SQLERRM;
