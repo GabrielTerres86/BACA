@@ -2079,6 +2079,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
 
+    CURSOR cr_craplau (pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE,
+                       pr_nrseqagp  craplau.nrseqagp%TYPE) IS
+      SELECT 1
+        FROM craplau lau
+       WHERE lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta
+         AND lau.nrseqagp = pr_nrseqagp; 
+    rw_craplau cr_craplau%ROWTYPE;
+    vr_flcraplau BOOLEAN;
+    
+     
     --Tabela de Saldos
     vr_tab_saldos extr0001.typ_tab_saldos;
 
@@ -2320,28 +2332,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     --> realizar a operacao
     IF pr_idorigem = 3 THEN
       
-      IF pr_flmobile = 1 THEN
-        vr_idorigem := 10; --> MOBILE
-      ELSE
-        vr_idorigem := 3; --> InternetBank
+      vr_flcraplau := FALSE;
+      IF pr_nrseqagp > 0 THEN
+        --> Verificar se era um pagamento agendado
+        OPEN cr_craplau (pr_cdcooper  => pr_cdcooper,
+                         pr_nrdconta  => pr_nrdconta,
+                         pr_nrseqagp  => pr_nrseqagp );
+        FETCH cr_craplau INTO rw_craplau;
+        vr_flcraplau := cr_craplau%FOUND;
+        CLOSE cr_craplau;
       END IF;
+      
+      IF vr_flcraplau = FALSE THEN
+        IF pr_flmobile = 1 THEN
+          vr_idorigem := 10; --> MOBILE
+        ELSE
+          vr_idorigem := 3; --> InternetBank
+        END IF;
      
-      vr_idanalise_fraude := NULL;
-      --> Rotina para Inclusao do registro de analise de fraude
-      AFRA0001.pc_Criar_Analise_Antifraude(pr_cdcooper    => pr_cdcooper
-                                          ,pr_cdagenci    => pr_cdagenci
-                                          ,pr_nrdconta    => pr_nrdconta
-                                          ,pr_cdcanal     => vr_idorigem 
-                                          ,pr_iptransacao => pr_iptransa
-                                          ,pr_dtmvtolt    => pr_dtmvtolt
-                                          ,pr_cdproduto   => 47 --> GPS
-                                          ,pr_cdoperacao  => 5  --> GPS Eletronica
-                                          ,pr_iddispositivo => pr_iddispos 
-                                          ,pr_dstransacao => 'Pagamento de GPS'
-                                          ,pr_tptransacao => 1 --> online 2-Agendamento
-                                          ,pr_idanalise_fraude => vr_idanalise_fraude
-                                          ,pr_dscritic   => vr_dscritic);
-      vr_dscritic := NULL;
+        vr_idanalise_fraude := NULL;
+        --> Rotina para Inclusao do registro de analise de fraude
+        AFRA0001.pc_Criar_Analise_Antifraude(pr_cdcooper    => pr_cdcooper
+                                            ,pr_cdagenci    => pr_cdagenci
+                                            ,pr_nrdconta    => pr_nrdconta
+                                            ,pr_cdcanal     => vr_idorigem 
+                                            ,pr_iptransacao => pr_iptransa
+                                            ,pr_dtmvtolt    => pr_dtmvtolt
+                                            ,pr_cdproduto   => 47 --> GPS
+                                            ,pr_cdoperacao  => 5  --> GPS Eletronica
+                                            ,pr_iddispositivo => pr_iddispos 
+                                            ,pr_dstransacao => 'Pagamento de GPS'
+                                            ,pr_tptransacao => 1 --> online 2-Agendamento
+                                            ,pr_idanalise_fraude => vr_idanalise_fraude
+                                            ,pr_dscritic   => vr_dscritic);
+        vr_dscritic := NULL;
+      END IF;
     END IF;
 
 
