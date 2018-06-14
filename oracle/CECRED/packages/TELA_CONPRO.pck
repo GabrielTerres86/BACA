@@ -652,9 +652,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                              ,2,'Solicitada'
                              ,3,'Liberada'
                              ,4,'Em Uso'
-                             ,5,'Cancelada'
-                             ,6,'Em analise'
-                             ,7,'Enviado Bancoob') situacao_ayllos
+                             ,5,'Bloqueada'
+                             ,6,'Cancelada'
+                             ,8,'Em Analise'
+                             ,9,'Enviado Bancoob') situacao_ayllos
                       ,DECODE(epr.insitdec,
                               1,
                               'Sem Aprovacao',
@@ -703,7 +704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       CURSOR cr_crapope IS
         SELECT TRIM(LOWER(operador) || ' - ' || INITCAP((SUBSTR(nome, 1, INSTR(nome, ' ') - 1)))) nmoperad,
                UPPER(operador) cdoperad
-          FROM (SELECT TRIM(REPLACE(REPLACE(ope.nmoperad, 'AILOS', ' '), '-', ' ')) nome,
+          FROM (SELECT TRIM(REPLACE(REPLACE(ope.nmoperad, 'CECRED', ' '), '-', ' ')) nome,
                        UPPER(ope.cdoperad) operador
                   FROM crapope ope
                  WHERE ope.cdcooper = pr_cdcooper);
