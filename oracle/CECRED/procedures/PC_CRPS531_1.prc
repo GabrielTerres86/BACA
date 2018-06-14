@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 08/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 13/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -270,6 +270,8 @@ BEGIN
          08/06/2018 - Ajuste para enviar e-mail referente a TEC salário somente se nas devoluções
                      (Adriano - REQ0016678).
                      
+		     13/06/2018 - Ajuste para inicializar variável  de estado de crise (Adriano).
+                     
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -337,7 +339,7 @@ BEGIN
     /* Variaveis genéricos */
     vr_aux_dtintegr DATE;
     vr_aux_flestcri PLS_INTEGER;
-    vr_aux_inestcri PLS_INTEGER;
+    vr_aux_inestcri PLS_INTEGER := 0;
 
     /* Variavel para manter arquivo fisico */
     vr_aux_manter_fisico BOOLEAN;
@@ -6587,8 +6589,13 @@ END;
                                                 ,pr_dscritic => vr_dscritic
                                                 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada);
             END IF;
+            
             -- Se voltou erro nas criticas
             IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+              
+              --Deve efetuar rollback, pois ao chamar a PAGA0001 poderá ter efetuado alguma operação na qual deve ser desfeita
+			        ROLLBACK;
+
               -- Se ha critica sem descricao
               IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
