@@ -2266,7 +2266,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_status       PLS_INTEGER;          --> Status
       vr_msg_detalhe  VARCHAR2(10000);      --> Detalhe da mensagem    
       vr_dssitapr     VARCHAR2(50);
-      vr_tpproduto    number;
+      vr_tpproduto    NUMBER;
+      vr_nrctrprp     NUMBER(10);
+
+      
+      --Busca dados proposta alteração
+      CURSOR cr_limatu IS
+        SELECT nrctrcrd
+              ,nrproposta_est
+          FROM tbcrd_limite_atualiza
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND nrproposta_est = pr_nrctremp;
+      rw_limatu cr_limatu%ROWTYPE;
     
     BEGIN
      
@@ -2310,12 +2322,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      into   vr_dssitapr
      from   dual;
       
+      --Se Cartão, verifica se é proposta de alteração de limite, então pega a proposta original para gerar os acionamentos
+      IF vr_tpproduto = 4 THEN
+        OPEN cr_limatu;
+        FETCH cr_limatu INTO rw_limatu;
+        IF cr_limatu%FOUND THEN
+          CLOSE cr_limatu;
+          vr_nrctrprp := rw_limatu.nrctrcrd;
+        ELSE
+          CLOSE cr_limatu;
+          vr_nrctrprp := pr_nrctremp;
+        END IF;
+      ELSE
+        vr_nrctrprp := pr_nrctremp;
+      END IF;
+      
       -- Para cada requisicao sera criado um numero de transacao
       ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
                                      pr_cdagenci                 => 1, 
                                      pr_cdoperad                 => 'ESTEIRA',
                                      pr_cdorigem                 => 9,
-                                     pr_nrctrprp                 => pr_nrctremp,
+                                    pr_nrctrprp                 => vr_nrctrprp,
                                      pr_nrdconta                 => pr_nrdconta,
                                      pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                      pr_dsoperacao               => 'RETORNO PROPOSTA - '||vr_dssitapr,
@@ -2332,7 +2359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                    pr_ind_tipo_log => 2, 
                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
+                                                      ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || vr_nrctrprp ||': '||SQLERRM,
                                    pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                                    
         -- Montar mensagem de critica
@@ -2380,7 +2407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Montar mensagem de critica
         vr_status      := 400;
         vr_cdcritic    := 138;
-        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch AILOS esta em execucao.';
+        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch CECRED esta em execucao.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -2389,7 +2416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Atualiza os dados da proposta do servico 01
         pc_atualiza_prop_srv_emprestim(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
                                       ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
-                                      ,pr_nrctremp    => pr_nrctremp    --> Numero do contrato
+                                      ,pr_nrctremp    => vr_nrctrprp    --> Numero do contrato
 																			,pr_tpretest    => 'E'            --> Tipo do retorno
                                       ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
                                       ,pr_insitapr    => pr_insitapr    --> Situacao da proposta
@@ -2407,7 +2434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      elsif pr_tpprodut = 3 then
            pc_atualiza_prop_srv_limdesct(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
                                         ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
-                                        ,pr_nrctrlim    => pr_nrctremp
+                                        ,pr_nrctrlim    => vr_nrctrprp
                                         ,pr_tpctrlim    => vr_tpproduto
                                         ,pr_tpretest    => 'E'            --> Tipo do retorno
                                         ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
@@ -2425,7 +2452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      elsif pr_tpprodut = 4 then
            pc_atualiza_prop_srv_cartao(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
                                       ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
-                                      ,pr_nrctrcrd    => pr_nrctremp    --> Numero do contrato
+                                      ,pr_nrctrcrd    => vr_nrctrprp    --> Numero do contrato
                                       ,pr_tpretest    => 'E'            --> Tipo do retorno
                                       ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
                                       ,pr_insitapr    => pr_insitapr    --> Situacao da proposta
@@ -2454,7 +2481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                          pr_cdagenci                 => 1, 
                                          pr_cdoperad                 => 'ESTEIRA',
                                          pr_cdorigem                 => 9,
-                                         pr_nrctrprp                 => pr_nrctremp,
+                                         pr_nrctrprp                 => vr_nrctrprp,
                                          pr_nrdconta                 => pr_nrdconta,
                                          pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                          pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
@@ -2471,7 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                        pr_ind_tipo_log => 2, 
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
+                                                          ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || vr_nrctrprp ||': '||SQLERRM,
                                        pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
           END IF;
         END IF;
@@ -2491,7 +2518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                          pr_cdagenci                 => 1, 
                                          pr_cdoperad                 => 'ESTEIRA',
                                          pr_cdorigem                 => 9,
-                                         pr_nrctrprp                 => pr_nrctremp,
+                                         pr_nrctrprp                 => vr_nrctrprp,
                                          pr_nrdconta                 => pr_nrdconta,
                                          pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                          pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
@@ -2508,7 +2535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                        pr_ind_tipo_log => 2, 
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || pr_nrctremp ||': '||SQLERRM,
+                                                          ' - WEBS0001 --> Erro ao gravar acionamento para conta '||pr_nrdconta||' contrato' || vr_nrctrprp ||': '||SQLERRM,
                                        pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
           END IF;
         END IF;
@@ -2701,7 +2728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
       
            
- 			-- Função para verificar se parâmetro passado é numérico
+      -- Funçao para verificar se parâmetro passado é numérico
 			FUNCTION fn_is_number(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
 			BEGIN
 			  IF TRIM(gene0002.fn_char_para_number(pr_vlparam)) IS NULL THEN
@@ -2714,7 +2741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 					RETURN FALSE;
 			END fn_is_number;
       
-      -- Função para verificar se parâmetro passado é Data
+   -- Funçao para verificar se parâmetro passado é Data
       FUNCTION fn_is_date(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
         vr_data date;
       BEGIN
@@ -2729,7 +2756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           RETURN FALSE;
       END fn_is_date;
       
-      -- Função para trocar o litereal "null" por null
+   -- Funçao para trocar o litereal "null" por null
       FUNCTION fn_converte_null(pr_dsvaltxt IN VARCHAR2) RETURN VARCHAR2 IS
       BEGIN
         IF pr_dsvaltxt = 'null' THEN
@@ -2741,7 +2768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 											 
 		BEGIN
     
-     -- Produto 999 = Monitoração do serviço
+     -- Produto 999 = Monitoraçao do serviço
      IF pr_dsprotoc = 'PoliticaGeralMonitoramento' THEN
        
        -- Apenas gerar retorno de sucesso para a esteira
@@ -2762,8 +2789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
       -- Acionamento 
       OPEN cr_aciona;
-      FETCH cr_aciona
-       INTO rw_aciona;
+     FETCH cr_aciona INTO rw_aciona;
       CLOSE cr_aciona; 
       
 			-- Buscar a proposta de empréstimo a partir do protocolo
@@ -2772,7 +2798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                      ,rw_aciona.nrctremp);
 			FETCH cr_crawepr INTO rw_crawepr;
 			
-			-- Se não encontrou a proposta
+      -- Se nao encontrou a proposta
 			IF cr_crawepr%NOTFOUND THEN
         CLOSE cr_crawepr;
 				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
@@ -2813,7 +2839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
-        -- Sem tratamento de exceção para DEBUG                    
+        -- Sem tratamento de exceçao para DEBUG                    
         --IF TRIM(vr_dscritic) IS NOT NULL THEN
         --  RAISE vr_exc_erro;
         --END IF;
@@ -2847,7 +2873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         ELSE vr_dssitret := 'DESCONHECIDA';
       END CASE;
 		
-      -- Se o acionamento ainda não foi gravado
+      -- Se o acionamento ainda nao foi gravado
       IF vr_nrtransacao = 0 THEN 				
         -- Gravar o acionamento 
         ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
@@ -2862,7 +2888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
                                       pr_cdstatus_http            => 200,
                                       pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
-                                      pr_dsresposta_requisicao    => NULL,
+                                      pr_dsresposta_requisicao    => vr_dssitret,
                                       pr_dsprotocolo              => pr_dsprotoc,
                                       pr_idacionamento            => vr_nrtransacao,
                                       pr_dscritic                 => vr_dscritic);
@@ -2892,11 +2918,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         vr_status      := 400;
         vr_cdcritic    := 138;
         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch '
-                       || 'AILOS esta em execucao.';
+                       || 'CECRED esta em execucao.';
         RAISE vr_exc_saida;
       END IF;	
       
-      -- Somente se a proposta não foi atualizada ainda
+      -- Somente se a proposta nao foi atualizada ainda
       IF rw_crawepr.insitest <> 1 THEN
         -- Montar mensagem de critica
         vr_status      := 400;
@@ -2905,7 +2931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         RAISE vr_exc_saida;        
       END IF;		
 			
-			-- Se algum dos parâmetros abaixo não foram informados
+      -- Se algum dos parâmetros abaixo nao foram informados
 			IF nvl(pr_cdorigem, 0) = 0 OR
 				 TRIM(pr_dsprotoc) IS NULL OR
 				 TRIM(pr_dsresana) IS NULL THEN
@@ -2963,7 +2989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           RAISE vr_exc_saida;
         END IF;
         
-        -- Se risco não for um dos verificados abaixo
+        -- Se risco nao for um dos verificados abaixo
         IF NOT pr_indrisco IN('AA','A','B','C','D','E','F','G','H') THEN
           -- Montar mensagem de critica
           vr_status      := 500;
@@ -2973,7 +2999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           RAISE vr_exc_saida;
         END IF;
         
-        -- Se algum dos parâmetros abaixo não forem números
+        -- Se algum dos parâmetros abaixo nao forem números
         IF NOT fn_is_number(vr_nrnotrat) OR
            NOT fn_is_number(vr_nrinfcad) OR
            NOT fn_is_number(vr_nrliquid) OR
@@ -3060,7 +3086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
-        -- Sem tratamento de exceção para DEBUG                    
+        -- Sem tratamento de exceçao para DEBUG                    
         --IF TRIM(vr_dscritic) IS NOT NULL THEN
         --  RAISE vr_exc_erro;
         --END IF;
@@ -3069,7 +3095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Caso nao tenha havido erro na atualizado 
 			IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL AND TRIM(pr_dsprotoc) IS NOT NULL THEN 
       
-        -- Se resultado da análise não retornou erro
+        -- Se resultado da análise nao retornou erro
         IF lower(pr_dsresana) <> 'erro' THEN
           -- Acionar rotina para processamento consultas automatizadas
           SSPC0001.pc_retorna_conaut_esteira(rw_crawepr.cdcooper
@@ -3108,16 +3134,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                           pr_dsprotocolo           => pr_dsprotoc,
                                           pr_idacionamento         => vr_idaciona,
                                           pr_dscritic              => vr_dscritic);
-            -- Sem tratamento de exceção para DEBUG                    
+            -- Sem tratamento de exceçao para DEBUG                    
             --IF TRIM(vr_dscritic) IS NOT NULL THEN
             --  RAISE vr_exc_erro;
             --END IF;
           END IF;
         END IF;
         
-        -- Caso seja derivação
+        -- Caso seja derivaçao
         IF lower(pr_dsresana) = 'derivar' THEN
-          -- Acionar rotina para derivação automatica em  paralelo
+          -- Acionar rotina para derivaçao automatica em  paralelo
           vr_dsplsql := 'DECLARE'||chr(13)
                      || '  vr_dsmensag VARCHAR2(4000);'||chr(13)
                      || '  vr_cdcritic NUMBER;'||chr(13)
@@ -3139,7 +3165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                 ,pr_cdprogra  => 'ATENDA'     --> Código do programa
                                 ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
                                 ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
-                                ,pr_interva   => null         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                ,pr_interva   => null         --> Sem intervalo de execuçao da fila, ou seja, apenas 1 vez
                                 ,pr_jobname   => vr_jobname   --> Nome randomico criado
                                 ,pr_des_erro  => vr_dscritic);
           -- Testar saida com erro
@@ -3148,7 +3174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                        pr_ind_tipo_log => 2, 
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
-                                                       || ' - WEBS0001 --> Erro ao solicitor derivação '
+                                                       || ' - WEBS0001 --> Erro ao solicitor derivaçao '
                                                        || ' Automatica do Protocolo: '||pr_dsprotoc
                                                        || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
                                        pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -3195,7 +3221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           END IF;
         END IF;
         
-        -- Mudaremos a situação da analise para encerrada com erro para que possa haver o Re-envio
+        -- Mudaremos a situaçao da analise para encerrada com erro para que possa haver o Re-envio
         IF rw_crawepr.rowid IS NOT NULL THEN 
           BEGIN
             UPDATE crawepr
@@ -3256,7 +3282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           END IF;
         END IF; 
         
-        -- Mudaremos a situação da analise para encerrada com erro para que possa haver o Re-envio
+        -- Mudaremos a situaçao da analise para encerrada com erro para que possa haver o Re-envio
         IF rw_crawepr.rowid IS NOT NULL THEN 
           BEGIN
             UPDATE crawepr
@@ -4449,7 +4475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Montar mensagem de critica
       vr_status      := 400;
       vr_cdcritic    := 138;
-      vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch AILOS esta em execucao.';
+      vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch CECRED esta em execucao.';
       RAISE vr_exc_saida;
     END IF;
 
