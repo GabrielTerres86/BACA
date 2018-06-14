@@ -5,14 +5,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 12/04/2016
+      Data     : Abril/2016.                   Ultima atualizacao: 10/04/2018
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes tela de integração com sistema Easy-Way
 
-      Alteracoes:
+      Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                               (Marcelo Telles Coelho - Mouts).
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -553,6 +554,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND (avt.nrcpfcgc > 0 OR
               avt.nrdctato > 0);
     
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    --> Verificar se a pessoa é Reportável (FATCA/CRS)
+    CURSOR cr_reportavel (pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+    SELECT inreportavel
+      FROM tbreportaval_fatca_crs
+     WHERE nrcpfcgc = pr_nrcpfcgc;
+    rw_reportavel cr_reportavel%ROWTYPE;
+
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    --> Buscar endereço do reportavel
+    CURSOR cr_dados_reportavel ( pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    SELECT e.nmlogradouro
+          ,e.nrlogradouro
+          ,e.dscomplemento
+          ,e.nrcep    dscodigo_postal
+          ,e.nmbairro dsbairro
+          ,f.dscidade
+          ,f.cdestado dsuf
+          ,a.tppessoa
+          ,c.cdpais
+          ,b.nridentificacao
+          ,d.cdtipo_proprietario
+          ,d.cdtipo_declarado
+          ,c.cdpais dsnacionalidade
+      FROM tbcadast_pessoa a
+          ,tbcadast_pessoa_estrangeira b
+          ,crapnac c
+          ,tbreportaval_fatca_crs d
+          ,tbcadast_pessoa_endereco e
+          ,crapmun f
+     WHERE a.nrcpfcgc     = pr_nrcpfcgc
+       AND b.idpessoa     = a.idpessoa
+       AND c.cdnacion     = b.cdpais
+       AND d.nrcpfcgc     = a.nrcpfcgc
+       AND e.idpessoa     = a.idpessoa
+       AND e.tpendereco   = DECODE(a.tppessoa,1,10,9)
+       AND f.idcidade     = e.idcidade;
+    rw_dados_reportavel cr_dados_reportavel%ROWTYPE;
+
   -----------> VARIAVEIS <-----------        
 
     vr_exc_erro     EXCEPTION;
@@ -620,6 +660,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       vr_dslinha  VARCHAR2(3200);
       vr_dscritic VARCHAR2(2000);
     BEGIN
+      -- Projeto 414 - Marcelo Telles Coelho - Mouts
+      --> Buscar reportável FATCA/CRS
+      OPEN cr_reportavel ( pr_nrcpfcgc => pr_nrcpfcgc);
+      FETCH cr_reportavel INTO rw_reportavel;
+      IF cr_reportavel%NOTFOUND THEN
+        rw_reportavel.inreportavel := 'N';
+      END IF;
+      CLOSE cr_reportavel;
+
+      -- Projeto 414 - Marcelo Telles Coelho - Mouts
+      IF rw_reportavel.inreportavel = 'S' THEN
+        --> Buscar Endereço reportável FATCA/CRS
+        OPEN cr_dados_reportavel ( pr_nrcpfcgc => pr_nrcpfcgc);
+        FETCH cr_dados_reportavel INTO rw_dados_reportavel;
+        IF cr_dados_reportavel%NOTFOUND THEN
+          rw_reportavel.inreportavel := 'N';
+        END IF;
+        CLOSE cr_dados_reportavel;
+      END IF;
       
       --> Buscar endereço do cooperado
       OPEN cr_crapenc ( pr_cdcooper => pr_cdcooper,
@@ -654,7 +713,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                         pr_idseqttl => pr_idseqttl);
       FETCH cr_crapcem INTO rw_crapcem;
       CLOSE cr_crapcem;
-      
       --> Montar linha conforme layout easyway
       vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)                 ||     --> CPF/CNPJ Cooperado
@@ -688,6 +746,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(' ',10,' ')                              ||     --> Tipo de declarado
                     chr(13)||chr(10);                                    --> quebrar linha
          
+      -- Projeto 414 - Marcelo Telles Coelho - Mouts
+      IF rw_reportavel.inreportavel = 'S' THEN
+        vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
+                                       pr_inpessoa)                 ||     --> CPF/CNPJ Cooperado
+        rpad(fn_remove_caract_espec(nvl(pr_nmprimtl,' ')),60,' ')             ||     --> Nome do Contribuinte
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.nmlogradouro,' ')),80,' ')       ||     --> Logradouro
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.nrlogradouro,0)), 8,' ')         ||     --> Número
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dscomplemento,' ')),40,' ')      ||     --> Complemento
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dscodigo_postal,0)), 8,' ')      ||     --> CEP
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dsbairro,' ')),20,' ')           ||     --> Bairro
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dscidade,' ')),30,' ')           ||     --> Descrição Cidade
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dsuf,' ')), 2,' ')               ||     --> UF
+        rpad(fn_remove_caract_espec(nvl(rw_craptfc.nrtelefo,' ')),15,' ')              ||     --> Telefone
+        lpad(nvl(pr_dtnasctl,' '),8,' ')              ||     --> Data de Nascimento
+        rpad(nvl(pr_nrinsmun,' '),20,' ')             ||     --> Inscrição Municipal
+        lpad(nvl(pr_dtadmiss,' '),8,' ')              ||     --> Data da Inclusão no sistema de origem
+        lpad(nvl(pr_dtaltera,' '),8,' ')              ||     --> Data última alteração sistema de origem
+
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.tppessoa,0)),1,' ')            ||     --> Tipo número de identificação (1 - CPF, 2 - CNPJ)
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.cdpais,' ')),3,' ')            ||     --> Código do País
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.nridentificacao,' ')),20,' ')  ||     --> Numero de Identificação Fiscal (NIF)
+        rpad(' ', 3,' ')                              ||     --> Natureza da Relação
+        rpad(' ',40,' ')                              ||     --> Descrição do Estado (se estrangeiro)
+        rpad(fn_remove_caract_espec(nvl(rw_crapcem.dsdemail,' ')),60,' ')              ||     --> Email
+        pr_dspessoa                                   ||     --> PF/PJ(F - PF; J – PJ)
+        rpad(nvl(pr_nrinsest,' '),20,' ')             ||     --> Inscrição Estadual
+        vr_idsitcnt                                   ||     --> Status do Contribuinte
+        rpad(fn_remove_caract_espec(nvl(rw_crapenc.tp_lograd,' ')),10,' ')             ||     --> Tipo de Logradouro
+        nvl(pr_isento_inscr_estadual,' ')             ||     --> Isento de Inscrição Estadual
+        lpad(' ',19,' ')                              ||     --> GIIN (Global Intermediary Identification Number)
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.cdtipo_proprietario,' ')),10,' ')||     --> Tipo de Proprietário
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.dsnacionalidade,' ')),2,' ')     ||     --> Nacionalidade
+        rpad(fn_remove_caract_espec(nvl(rw_dados_reportavel.cdtipo_declarado,' ')),10,' ')   ||     --> Tipo de Declarado
+        chr(13)||chr(10);                                    --> quebrar linha
+      END IF;
+
       pc_escreve_clob(vr_dslinha);
       
       /* Geração de Log */
