@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 30/05/2018
+   Data    : Novembro/98                     Ultima atualizacao: 14/06/2018
 
    Dados referentes ao programa:
 
@@ -623,6 +623,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                30/05/2018 - Ajustar para contabilizar a tarifa dos convenios proprios 
                             no PA do cooperado ou se for TAA no PA do TAA 
                             (Lucas Ranghetti #TASK0011641)
+                            
+               14/06/2018 - Incluir validação de historico para a contabilização das
+                            tarifas de arrecadações (Lucas Ranghetti #INC0017254)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -8737,9 +8740,12 @@ BEGIN
       vr_agencia_prox:= rw_craprej2.cdagenci;
 
       -- Verificar se a proxima Agencia eh igual a anterior
-      IF nvl(vr_agencia_ant,0) = nvl(vr_agencia_prox,0) THEN
+      IF nvl(vr_agencia_ant,0) = nvl(vr_agencia_prox,0) and 
+         vr_cdhistor = rw_craprej2.cdhistor THEN
         continue;
       END IF;
+
+      vr_cdhistor := rw_craprej2.cdhistor;
 
       ----------------------------------------------------------------------------------------------------
       -- Verificar os registros daquele PA, ex: PA 4 tem 2 lancamentos registrados na agencia 4,
