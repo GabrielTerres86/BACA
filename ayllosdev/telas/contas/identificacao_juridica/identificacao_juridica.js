@@ -19,7 +19,7 @@
  * 010: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.      
  * 011: [13/07/2017] Diogo (P410)         	   : Incluido campo Identificador do Regime tributário 'tpregtrb'
  * 012: [12/08/2017] Lombardi                  : Criada a função dossieDigidoc.	PRJ339 CRM
- 
+ * 013: [13/04/2018] Mateus Z (Mouts)           : Alterado funcao proximaRotina para chamar FATCA/CRS (PRJ414).
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -418,7 +418,7 @@ function controlaContinuar () {
 function proximaRotina () {
 	hideMsgAguardo();
 	encerraRotina(false);
-	acessaRotina('REGISTRO','Registro','registro');		
+	acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pj');
 }
 
 function dossieDigidoc() {

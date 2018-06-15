@@ -12,6 +12,8 @@
  *
  *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ *                25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS - 
+ *                             PRJ 414 (Mateus Z - Mouts)
  */
  
 	session_start();
@@ -69,6 +71,7 @@
 	<div id="declaracao_pep">Declara&ccedil;&atilde;o PEP</div>
 	<? } ?>
 	<div id="cartao_assinatura">Cart&atilde;o Assinatura</div>
+	<div id="declaracao_fatca_crs">Declara&ccedil;&atilde;o FATCA/CRS</div>
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>

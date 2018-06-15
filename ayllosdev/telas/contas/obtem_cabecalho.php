@@ -24,6 +24,7 @@
  * 015: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico 
  * 016: [02/10/2017] Diogo (MoutS)        : Adicionado campo tpregtrb no formulário principal da contas (Projeto 410).
  * 017: [10/04/2018] Heitor (MoutS)       : Remocao da opcao Desabilitar Operacoes, essa opcao agora esta na tela ATENDA.
+ * 018: [10/04/2018] Mateus Z (Mouts)     : Nova rotina "FATCA CRS" (PRJ414).
  */
 
 	session_start();	
@@ -368,6 +369,14 @@
 					$urlRotina  = "impedimentos_desligamento";
 					break;					
 				}
+				case "FATCA CRS": {
+					// Exibir opção FATCA/CRS apenas se o primeiro titular estiver selecionado
+					if($cabecalho[4]->cdata == 1){
+						$nomeRotina = "FATCA/CRS";
+						$urlRotina  = "fatca_crs_pf";
+					}
+					break;					
+				}
 				default: {		
 					$nomeRotina = "";    
 					$urlRotina  = "";    				 
@@ -495,6 +504,14 @@
 					$urlRotina  = "impedimentos_desligamento";
 					break;					
 				}
+				case "FATCA CRS": {
+					// Exibir opção FATCA/CRS apenas se o primeiro titular estiver selecionado
+					if($cabecalho[4]->cdata == 1){
+						$nomeRotina = "FATCA/CRS"; 
+						$urlRotina  = "fatca_crs_pj";
+					}
+					break;					
+				}				
 				default: {		
 					$nomeRotina = "";    
 					$urlRotina  = "";    				 

@@ -3,11 +3,11 @@
 	/********************************************************************************************
 	 Fonte: cadnac.php                                                
 	 Autor: Adriano - CECRED                                                   
-	 Data : Junho/2017              					Última Alteração: 
+	 Data : Junho/2017              					Última Alteração: 09/04/2018
 	                                                                  
 	 Objetivo  : Mostrar tela CADNAC.                                 
 	                                                                  
-	Alterações: 
+	Alterações: 09/04/2018 - PRJ 414 - Incluido o form incluir (Mateus Z - Mouts)
 	                                                                  
 	********************************************************************************************/
 	
@@ -96,7 +96,11 @@
 																				<div id="divFiltro">
 																					<? include('form_filtro.php'); ?>																			
 																				</div>
-																				
+																				<!-- Inicio PRJ 414 -->
+																				<div id="divIncluir">
+																					<? include('form_incluir.php'); ?>																			
+																				</div>
+																				<!-- Fim PRJ 414 -->
 																				<div id="divTabela"></div>
 																				
 																			</div>

@@ -9,6 +9,9 @@
  *
  *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ *
+ *                25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS
+ *							   PRJ 414 (Mateus Z - Mouts)
  */	 
 ?>
 
@@ -37,7 +40,7 @@
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 	$nrdconta = (isset($_POST['_nrdconta'])) ? $_POST['_nrdconta'] : '';
 	$idseqttl = (isset($_POST['_idseqttl'])) ? $_POST['_idseqttl'] : '';
-			
+	$GLOBALS['nrcpfcgc'] = (isset($_POST['_nrcpfcgc'])) ? $_POST['_nrcpfcgc'] : '';			
 	
 	// Gerando uma chave do formulário
 	$impchave = $GLOBALS['tprelato'].$nrdconta.$idseqttl;
@@ -87,10 +90,14 @@
 	// Gera o relatório em PDF através do DOMPDF
 	$dompdf = new DOMPDF();	
 	
-	if ( $inpessoa == '1' ) {
-		$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pf_html.php' );
+	if($GLOBALS['tprelato'] == 'declaracao_fatca_crs'){
+		$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_html.php' );
 	} else {
-		$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pj_html.php' );
+		if ( $inpessoa == '1' ) {
+			$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pf_html.php' );
+		} else {
+			$dompdf->load_html_file( './imp_'.$GLOBALS['tprelato'].'_pj_html.php' );
+		}
 	}
 	
 	$dompdf->set_paper('a4');

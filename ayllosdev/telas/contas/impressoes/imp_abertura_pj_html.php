@@ -2,7 +2,7 @@
 /*!
  * FONTE        : imp_termo_pj_html.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 14/06/2017
+ * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 14/06/2018
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF de Termo da 
  *                rotina Impressões.
  *	
@@ -19,6 +19,8 @@
  *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					          (Adriano - P339).
+							  
+ *                14/06/2018 - Adicionado nova clausula ao contrato refente a FATCA/CRS. PRJ 414 (Mateus Z - Mouts)
  */	 
 ?>
 <?
@@ -193,8 +195,26 @@
 	
 	escreveLinha( preencheString('Declara ainda estar ciente de que:',76) );
 	pulaLinha(1);
+
+	escreveLinha( preencheString('c) Ciente da existencia de obrigacoes internacionais para  a troca automa-',76) );
+	escreveLinha( preencheString('tica  de  informacoes  tributarias (FATCA e CRS), declaro  que este <b>Coope-',83) );
+	escreveLinha( preencheString('rado  (a)  Titular</b> nao  possui obrigacoes  fiscais  no  exterior, em  qual',83) );
+	escreveLinha( preencheString('quer pais aderente a troca de informacoes, sendo que, havendo alteracao no',76) );
+	escreveLinha( preencheString('status de possuidora de conta  nao reportavel, ou alteracao  no capital de',76) );
+	escreveLinha( preencheString('qualquer  dos socios/acionistas estrangeiros, a situacao  sera informada a',76) );
+	escreveLinha( preencheString('esta  instituicao e  apresentada a  competente  documentacao o  que inclui',76) );
+	escreveLinha( preencheString('numero  de  identificacao  fiscal. Nao  obstante, fica  esta  <b>COOPERATIVA',83) );
+	escreveLinha( preencheString('AUTORIZADA</b>,  mesmo  que  sem  a  apresentacao  de  declaracao  especifica,',83) );
+	escreveLinha( preencheString('a reportar para os  paises participantes, as informacoes financeiras desta',76) );
+	escreveLinha( preencheString('conta, sempre que constatado qualquer vinculo ou obrigacao tributaria/fis-',76) );
+	escreveLinha( preencheString('cal  do  <b>Cooperado (a)  Titular</b>  ou  qualquer  de  seus  socios,  acionis-',83) );
+	escreveLinha( preencheString('tas, proprietarios ou procuradores da conta, com qualquer  dos  referidos-',76) );
+	escreveLinha( preencheString('paises  reportaveis.  Nada  mais,  este  <b>Cooperado  (a)  Titular</b>  declara',83) );
+	escreveLinha( preencheString('que prestara sempre  que  solicitada, todas as  informacoes  necessarias e',76) );
+	escreveLinha( preencheString('apresentara documentos comprobatorios, sob pena de encerramento da conta.',76) );
+	pulaLinha(1);
 		
-	escreveLinha( preencheString('c) A conta aberta, sera movimentada por um ou mais socios, ou por procura-',76) );
+	escreveLinha( preencheString('d) A conta aberta, sera movimentada por um ou mais socios, ou por procura-',76) );
 	escreveLinha( preencheString('dores  legalmente  constituidos, conforme especificado na ficha cadastral,',83) );
 	escreveLinha( preencheString('podendo  estes  disporem  do  saldo que nela existir, mediante  emissao de',76) );
 	escreveLinha( preencheString('cheques, recibos, TEDs, ordens  de  pagamentos, ou quaisquer outros  meios',76) );
@@ -202,7 +222,7 @@
 	escreveLinha( preencheString('sive, realizar seu encerramento.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('d) A <b>Cooperativa</b> possui parceria com outras instituicoes para execucao dos',83) );
+	escreveLinha( preencheString('e) A <b>Cooperativa</b> possui parceria com outras instituicoes para execucao dos',83) );
 	escreveLinha( preencheString('servicos de Centralizacao da  Compensacao de Cheques e Outros Papeis (COM-',76) );
 	escreveLinha( preencheString('PE); Manutencao do Cadastro de Emitentes de Cheques sem Fundos; Sistema de',76) );
 	escreveLinha( preencheString('Liquidacao de Pagamentos e Transferencias Interbancarias do Sistema Finan-',76) );
@@ -211,13 +231,13 @@
 	escreveLinha( preencheString('cadastrais as instituicoes parceiras.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('e) Podera  ter  acesso  aos  canais  de  autoatendimento  disponibilizados',76) );
+	escreveLinha( preencheString('f) Podera  ter  acesso  aos  canais  de  autoatendimento  disponibilizados',76) );
 	escreveLinha( preencheString('pela <b>Cooperativa</b>, ou ainda, outros que venham a ser disponibilizados, para',83) );
 	escreveLinha( preencheString('realizacao de movimentacoes, transacoes e contratacoes  financeiras em sua',76) );
 	escreveLinha( preencheString('conta corrente. Atualmente, sao disponibilizados os seguintes canais:',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('f) Conta online: canal eletronico via internet, para acesso  a informacoes',76) );
+	escreveLinha( preencheString('g) Conta online: canal eletronico via internet, para acesso  a informacoes',76) );
     escreveLinha( preencheString('sobre produtos e servicos da <b>Cooperativa</b>, podendo  realizar consultas, mo-',83) );
     escreveLinha( preencheString('vimentacoes, antecipacao de  pagamento de contratos (observadas as  regras',76) );
 	escreveLinha( preencheString('estipuladas  para  este  servico), transacoes  e  contratacoes,  inclusive',76) );
@@ -236,7 +256,7 @@
 	escreveLinha( preencheString('pessoal.',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('g) A <b>Cooperada</b> podera  cadastrar operador(es) para utilizacao da conta on-',83) );
+	escreveLinha( preencheString('h) A <b>Cooperada</b> podera  cadastrar operador(es) para utilizacao da conta on-',83) );
 	escreveLinha( preencheString('line, hipotese  em  que  necessariamente  devera(ao)  ser definida(s) a(s)',76) );
 	escreveLinha( preencheString('senha(s)  e  as permissoes de acesso para o(s) operador(es) cadastrado(s).',76) );
 	escreveLinha( preencheString('As  transacoes  financeiras  realizadas  pelo(s) operador(es) deverao  ser',76) );
@@ -245,21 +265,21 @@
 	escreveLinha( preencheString('serao canceladas e deverao ser novamente registradas e aprovadas.',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('h) Aplicativo  para  celular: canal  para  acesso a conta, mediante uso da',76) );
+	escreveLinha( preencheString('i) Aplicativo  para  celular: canal  para  acesso a conta, mediante uso da',76) );
     escreveLinha( preencheString('mesma  senha  de  utilizacao  da Conta Online, podendo realizar consultas,',76) );
 	escreveLinha( preencheString('movimentacoes, transacoes e contratacoes  relativas a produtos e servicos,',76) );
 	escreveLinha( preencheString('inclusive  de credito, diretamente em sua conta, conforme  disponibilizado',76) );
 	escreveLinha( preencheString('pela <b>Cooperativa</b>.',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('i) Terminal de autoatendimento: equipamento localizado nos Postos de Aten-',76) );
+	escreveLinha( preencheString('j) Terminal de autoatendimento: equipamento localizado nos Postos de Aten-',76) );
 	escreveLinha( preencheString('dimento  ou em  outros locais de acesso publico, devidamente identificados',76) );
 	escreveLinha( preencheString('com as credenciais  da <b>Cooperativa</b>, para realizacao de consultas, movimen-',83) );
 	escreveLinha( preencheString('tacoes, transacoes e  contratacoes relativas a produtos e servicos, inclu-',76) );
 	escreveLinha( preencheString('sive de credito, diretamente na conta corrente.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('j) Sao  disponibilizados os servicos de Tele Saldo e SAC (Servico de Aten-',76) );
+	escreveLinha( preencheString('k) Sao  disponibilizados os servicos de Tele Saldo e SAC (Servico de Aten-',76) );
 	escreveLinha( preencheString('dimento  ao  Cooperado), por  meio  de atendimento telefonico, para reali-',76) );
 	escreveLinha( preencheString('zar consultas, obter informacoes, solicitar e autorizar transacoes, inclu-',76) );
 	escreveLinha( preencheString('sive  as  relativas  a  contratacao de produtos e servicos, ofertadas  pe-',76) );
@@ -270,7 +290,7 @@
 	escreveLinha( preencheString('a realizar gravacoes das solicitacoes e instrucoes telefonicas.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('k) A <b>Cooperativa</b> podera  disponibilizar por meio dos canais de autoatendi-',83) );
+	escreveLinha( preencheString('l) A <b>Cooperativa</b> podera  disponibilizar por meio dos canais de autoatendi-',83) );
 	escreveLinha( preencheString('mento existentes, ou ainda aqueles que venham a ser criados, a  possibili-',76) );
 	escreveLinha( preencheString('dade  de  contratacao de operacoes de credito, desde que os requisitos ne-',76) );
 	escreveLinha( preencheString('cessarios  para  sua  contratacao e as regras estipuladas pela <b>Cooperativa</b>',83) );
@@ -279,13 +299,13 @@
 	escreveLinha( preencheString('lizadas em seu nome.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('l) A <b>Cooperativa</b> podera  disponibilizar  a  seu criterio pacote de tarifas',83) );
+	escreveLinha( preencheString('m) A <b>Cooperativa</b> podera  disponibilizar  a  seu criterio pacote de tarifas',83) );
 	escreveLinha( preencheString('para  movimentacao  da  conta  corrente. Ao  aderir  o  pacote  de tarifas',76) );
 	escreveLinha( preencheString('conforme opcao realizada em Termo de  Adesao proprio, a <b>Cooperada</b> autoriza',83) );
 	escreveLinha( preencheString('o  debito dos valores correspondentes ao pacote, diretamente desta conta.',76) );	
 	pulaLinha(1);	
 			 
-	escreveLinha( preencheString('m) A <b>Cooperativa</b> possui  Politica  de  Responsabilidade  Socioambiental, a',83) );
+	escreveLinha( preencheString('n) A <b>Cooperativa</b> possui  Politica  de  Responsabilidade  Socioambiental, a',83) );
 	escreveLinha( preencheString('qual a <b>Cooperada</b>  declara  conhecer, cumprindo  e  respeitando,  durante a',83) );
 	escreveLinha( preencheString('vigencia desta Proposta/Contrato de Abertura de Conta Corrente, o disposto',76) );
 	escreveLinha( preencheString('na legislacao e a regulamentacao ambiental e trabalhista, especialmente as',76) );
@@ -295,7 +315,7 @@
 	escreveLinha( preencheString('analogas a escravidao ou que cause danos ao meio ambiente.',76) );
 	pulaLinha(1);	
 	 
-	escreveLinha( preencheString('n) Independentemente  de  culpa,  a  <b>Cooperada</b> ressarcira  a  <b>Cooperativa</b>,',89) );
+	escreveLinha( preencheString('o) Independentemente  de  culpa,  a  <b>Cooperada</b> ressarcira  a  <b>Cooperativa</b>,',89) );
 	escreveLinha( preencheString('de  qualquer  quantia  que  esta  seja  compelido  a  pagar,  bem  como  a',76) );
 	escreveLinha( preencheString('indenizara  por  quaisquer  perdas e danos  referentes a danos  ambientais',76) );
 	escreveLinha( preencheString('ou  relativos  a  saude e seguranca  ocupacional que, de qualquer forma, a',76) );
@@ -303,7 +323,7 @@
 	escreveLinha( preencheString('decorrentes desta Proposta/Contrato de Abertura de Conta Corrente.',76) );
 	pulaLinha(1);	
 
-	escreveLinha( preencheString('o) As  partes  declaram que este instrumento esta vinculado as disposicoes',76) );
+	escreveLinha( preencheString('p) As  partes  declaram que este instrumento esta vinculado as disposicoes',76) );
 	escreveLinha( preencheString('legais cooperativistas, ao Estatuto Social da <b>Cooperativa</b> e demais delibe-',83) );
 	escreveLinha( preencheString('racoes assembleares desta, e do  seu  Conselho de Administracao, aos quais',76) );
 	escreveLinha( preencheString('a <b>Cooperada</b>, livre  e espontaneamente  aderiu ao  integrar o quadro social',83) );

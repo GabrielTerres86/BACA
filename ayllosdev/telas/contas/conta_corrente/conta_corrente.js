@@ -44,6 +44,8 @@
  *                07/01/2016 - Remover campo de Libera Credito Pre Aprovado (Anderson).
  *
  *			      15/07/2016 - Incluir ajustes referentes a flag de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
+ *
+ *                13/04/2018 - Alterado funcao voltarRotina para voltar para FATCA/CRS - PRJ 414(Mateus Z - Mouts)
  */
 var operacao = '';
 var nrdrowid = '';
@@ -735,7 +737,7 @@ function voltarRotina() {
     fechaRotina(divRotina);
 	
 	if (inpessoa == 1) {
-		acessaRotina('COMERCIAL', 'COMERCIAL', 'comercial_pf');
+		acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pf');
 	} else {
 		acessaRotina('REFERENCIAS', 'Referências', 'referencias');
 	}

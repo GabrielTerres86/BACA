@@ -37,7 +37,7 @@
  * 041: [06/06/2017] Jonata            (Mouts): Ajuste para inclusão da busca de dominios - P408.
  * 042: [13/08/2017] Jonata            (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
  * 043: [24/10/2017] Odirlei Busana    (AMcom): Incluido onchage na buscaCPF. PRJ339 - CRM.
- 
+ * 044: [04/05/2018] Mateus Z          (Mouts): Adicionado condicao especifica para a tela FATCA/CRS na função buscaDescricao - PRJ 414.
  */
 
 var vg_formRetorno  = '';
@@ -61,8 +61,11 @@ var mtSelecaoEndereco;
  */
 function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodigo, campoDescricao, codigoAtual, campoRetorno, filtros, nomeFormulario,executaMetodo) {
 
-	// Ação utilizada para arrumar a pesquisa utilizando o evento change
-	if ( $('#'+campoCodigo).attr('aux') == $('#'+campoCodigo, '#'+nomeFormulario).val() ) { return false; }
+	// Ignorar validação caso seja rotina de valida pais da tela FATCA/CRS
+	if ( nomeFormulario != 'frmDadosFatcaCrs') { 
+		// Ação utilizada para arrumar a pesquisa utilizando o evento change
+		if ( $('#'+campoCodigo).attr('aux') == $('#'+campoCodigo, '#'+nomeFormulario).val() ) { return false; }
+	}
 	
 	if (nomeProcedure == 'BUSCADESCDOMINIOS') {
 

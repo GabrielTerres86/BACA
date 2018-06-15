@@ -5,7 +5,7 @@
 	* DATA CRIAÇÃO : Junho/2017
 	* OBJETIVO     : Rotina para realizar a inclusão das nacionalidades
 	* --------------
-	* ALTERAÇÕES   : 
+	* ALTERAÇÕES   : 09/04/2018 - PRJ 414 - Alterado para receber e enviar os novos campos adicionados (Mateus Z - Mouts)
 	* -------------- 
 	*/		
  
@@ -24,6 +24,11 @@
 	}
 	
 	$dsnacion = isset($_POST["dsnacion"]) ? $_POST["dsnacion"] : "";
+	$cdpais   = isset($_POST["cdpais"])   ? $_POST["cdpais"]   : "";
+	$nmpais   = isset($_POST["nmpais"])   ? $_POST["nmpais"]   : "";
+	$inacordo = isset($_POST["inacordo"]) ? $_POST["inacordo"] : "";
+	$dtinicio = isset($_POST["dtinicio"]) ? $_POST["dtinicio"] : "";
+	$dtfinal  = isset($_POST["dtfinal"])  ? $_POST["dtfinal"]  : "";
 	
 	validaDados();
 	
@@ -31,6 +36,11 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <dsnacion>".$dsnacion."</dsnacion>";
+	$xml .= "   <cdpais>".$cdpais."</cdpais>";
+	$xml .= "   <nmpais>".$nmpais."</nmpais>";
+	$xml .= "   <inacordo>".$inacordo."</inacordo>";
+	$xml .= "   <dtinicio>".$dtinicio."</dtinicio>";
+	$xml .= "   <dtfinal>".$dtfinal."</dtfinal>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
@@ -59,8 +69,24 @@
 		//Decrição da nacionalidade
 		if($GLOBALS["dsnacion"] == ''){
 			
-            exibirErro('error','Descri&ccedil;atilde;o da nacionalidade inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmFiltro\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmFiltro\');',false);
+            exibirErro('error','Descri&ccedil;&atilde;o da nacionalidade inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmFiltro\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmFiltro\');',false);
        
+		}
+
+		if($GLOBALS["cdpais"] == '' && $GLOBALS["nmpais"] != ''){
+			exibirErro('error','Favor informar a c&oacute;digo do pa&iacute;s.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
+		}
+
+		if($GLOBALS["cdpais"] != '' && $GLOBALS["nmpais"] == ''){
+			exibirErro('error','Favor informar a descri&ccedil;&atilde;o do pa&iacute;s.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
+		}
+
+		if($GLOBALS["inacordo"] != '' && $GLOBALS["cdpais"] == ''){
+			exibirErro('error','Favor informar a c&oacute;digo do pa&iacute;s.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
+		}
+
+		if($GLOBALS["inacordo"] != '' && $GLOBALS["dtinicio"] == ''){
+			exibirErro('error','Favor informar a data de in&iacute;cio.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
 		}
 		
 	}

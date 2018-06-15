@@ -3,9 +3,9 @@
  * FONTE        : form_dados_conta.php
  * CRIAÇÃO      : Mateus Zimmermann (Mouts)
  * DATA CRIAÇÃO : 09/10/2017 
- * OBJETIVO     : Fomulário de dados de Identificação Física        
+ * OBJETIVO     : Fomulário de dados da conta        
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : [14/06/2018] Mateus Z (Mouts)     : Nova rotina "FATCA CRS" (PRJ414).
  * --------------
  *
  */	
@@ -210,6 +210,7 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
 		<a href="#" class="botao" id="btGrEconomico" onclick="abreTelaGrEconomico(); return false;"><? echo utf8ToHtml('Gr. Econômico') ?></a>
         <a href="#" class="botao" id="btDosie" onclick="dossieDigidoc();return false;"><? echo utf8ToHtml('Dossiê DigiDOC') ?></a>        
 		<a href="#" class="botao pessoaJuridica" id="btImunidadeTributaria" onclick="abreTelaImunidadeTributaria(); return false;"><? echo utf8ToHtml('Imunidade Tribut.') ?></a>
+		<a href="#" class="botao" id="btFatcaCrs" onclick="abreTelaFatcaCrs(); return false;">FATCA/CRS</a>
 		<div style="margin-top:5px;"></div>
 		<a href="#" class="botao" id="btClienteFinanceiro" onclick="abreTelaClienteFinanceiro(); return false;">Cliente Financeiro</a>
 		<a href="#" class="botao" id="btOrgaosProtecaoCredito" onclick="abreTelaOrgaosProtecaoCredito(); return false;"><? echo utf8ToHtml('Órgãos de Proteção ao Crédito') ?></a>

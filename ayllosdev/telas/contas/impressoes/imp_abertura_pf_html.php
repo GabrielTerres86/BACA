@@ -2,7 +2,7 @@
 /*!
  * FONTE        : imp_termo_pf_html.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 14/06/2017
+ * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 14/06/2018
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF de Termo da 
  *                rotina Impressões.
  *
@@ -18,6 +18,8 @@
  *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 					          (Adriano - P339).
+ *							  
+ *                14/06/2018 - Adicionado nova clausula ao contrato refente a FATCA/CRS. PRJ 414 (Mateus Z - Mouts)
  */	 
 ?>
 <?
@@ -108,8 +110,8 @@
 	
 	if ( getByTagName($AberPF,'nmrepleg') != '') {
 		echo '<b>';escreveLinha( preencheString('1.5.Dados do Representante Legal:</b> '.getByTagName($AberPF,'nmrepleg'),80) );	
-		escreveLinha( preencheString('                                  CPF: '.getByTagName($AberPF,'nrcpfrep'),76) );	
-		escreveLinha( preencheString('                                  RG: '.getByTagName($AberPF,'nrdocrep'),76) );
+		escreveLinha( preencheString('                      CPF: '.getByTagName($AberPF,'nrcpfrep'),76) );	
+		escreveLinha( preencheString('                      RG: '.getByTagName($AberPF,'nrdocrep'),76) );
 	}
 	pulaLinha(1);
 	
@@ -180,8 +182,24 @@
 	
 	escreveLinha( preencheString('Declara(m) ainda estar(estarem) cientes de que:',76) );
 	pulaLinha(1);
+
+	escreveLinha( preencheString('c) Ciente da existencia de  obrigacoes  internacionais  para a troca auto-',76) );
+	escreveLinha( preencheString('matica de  informacoes  tributarias (FATCA e CRS), declaro  que nao possuo',76) );
+	escreveLinha( preencheString('obrigacoes  fiscais no  exterior, em  qualquer  pais  aderente a troca  de',76) );
+	escreveLinha( preencheString('informacoes, sendo que, havendo  alteracao no  meu status  de possuidor de',76) );
+	escreveLinha( preencheString('conta nao  reportavel, informarei  a  esta  instituicao e  apresentarei  a',76) );
+	escreveLinha( preencheString('competente  documentacao o  que inclui  numero  de  identificacao  fiscal.',76) );
+	escreveLinha( preencheString('Nao  obstante,  AUTORIZO,  mesmo  que  sem a  apresentacao  de  declaracao',76) );
+	escreveLinha( preencheString('especifica, que  sejam  por esta  instituicao, reportadas  para  os paises',76) );
+	escreveLinha( preencheString('participantes, as  informacoes  financeiras desta conta, sempre  que cons-',76) );
+	escreveLinha( preencheString('tatado  qualquer  vinculo ou obrigacao  tributaria/fiscal de  qualquer dos',76) );
+	escreveLinha( preencheString('titulares, proprietario  ou procuradores da conta, com  qualquer dos refe-',76) );
+	escreveLinha( preencheString('ridos paises  reportaveis. Nada  mais, declaro  que  prestarei  sempre que',76) );
+	escreveLinha( preencheString('solicitado, todas as  informacoes  necessarias e  apresentarei  documentos',76) );
+	escreveLinha( preencheString('comprobatorios, sob pena de encerramento da minha conta.',76) );
+	pulaLinha(1);
 	
-	escreveLinha( preencheString('c) A conta aberta sera  movimentada de forma isolada  pelo(a) <b>Cooperado(a)',83) );
+	escreveLinha( preencheString('d) A conta aberta sera  movimentada de forma isolada  pelo(a) <b>Cooperado(a)',83) );
 	escreveLinha( preencheString('Titular</b>, ou, quando possuir mais de um titular, sera movimentada separada-',83) );
 	escreveLinha( preencheString('mente por cada um deles, podendo estes disporem do saldo que nela existir,',76) );
 	escreveLinha( preencheString('mediante  emissao  de  cheques, recibos, TEDs, ordens  de  pagamentos,  ou',76) );
@@ -190,7 +208,7 @@
 	escreveLinha( preencheString('pelo(a) <b>Cooperado(a) Titular</b>.',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('d) A <b>Cooperativa</b> possui parceria com outras instituicoes para execucao dos',83) );
+	escreveLinha( preencheString('e) A <b>Cooperativa</b> possui parceria com outras instituicoes para execucao dos',83) );
 	escreveLinha( preencheString('servicos  de Centralizacao da Compensacao de Cheques e Outros Papeis (COM-',76) );
 	escreveLinha( preencheString('PE); Manutencao do Cadastro de Emitentes de Cheques sem Fundos; Sistema de',76) );
 	escreveLinha( preencheString('Liquidacao  de  Pagamentos  e Transferencias Interbancarias do Sistema Fi-',76) );
@@ -199,13 +217,13 @@
 	escreveLinha( preencheString('coes cadastrais as instituicoes parceiras.',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('e) Podera(ao) ter  acesso aos  canais de autoatendimento  disponibilizados',76) );
+	escreveLinha( preencheString('f) Podera(ao) ter  acesso aos  canais de autoatendimento  disponibilizados',76) );
 	escreveLinha( preencheString('pela <b>Cooperativa</b>, ou ainda, outros que venham a ser  disponibilizados, pa-',83) );
 	escreveLinha( preencheString('ra realizacao de movimentacoes, transacoes e  contratacoes  financeiras em',76) );
 	escreveLinha( preencheString('sua conta corrente. Atualmente, sao disponibilizados os seguintes canais:',76) );
 	pulaLinha(1);
 	
-    escreveLinha( preencheString('f) Conta online: canal eletronico via internet para  acesso  a informacoes',76) );
+    escreveLinha( preencheString('g) Conta online: canal eletronico via internet para  acesso  a informacoes',76) );
     escreveLinha( preencheString('sobre produtos e servicos da <b>Cooperativa</b>, que  possibilita a realizacao de',83) );
     escreveLinha( preencheString('consultas, movimentacoes, antecipacao  de pagamento de contratos (observa-',76) );
 	escreveLinha( preencheString('das as  regras  estipuladas  para  este  servico), transacoes  e contrata-',76) );
@@ -219,7 +237,7 @@
 	escreveLinha( preencheString('praticados mediante a utilizacao de senha pessoal.',76) );
 	pulaLinha(1);
 	
-	escreveLinha( preencheString('g) Aplicativo  para  celular: canal  para  acesso a conta, mediante uso da',76) );
+	escreveLinha( preencheString('h) Aplicativo  para  celular: canal  para  acesso a conta, mediante uso da',76) );
     escreveLinha( preencheString('mesma  senha  de  utilizacao  da Conta Online, podendo realizar consultas,',76) );
 	escreveLinha( preencheString('movimentacoes, transacoes e contratacoes  relativas a produtos e servicos,',76) );
 	escreveLinha( preencheString('inclusive  de  credito, diretamente em sua conta, conforme disponibilizado',76) );
@@ -227,14 +245,14 @@
 	
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('h) Terminal de autoatendimento: equipamento localizado nos Postos de Aten-',76) );
+	escreveLinha( preencheString('i) Terminal de autoatendimento: equipamento localizado nos Postos de Aten-',76) );
 	escreveLinha( preencheString('dimento  ou em  outros locais de acesso publico, devidamente identificados',76) );
 	escreveLinha( preencheString('com as credenciais  da <b>Cooperativa</b>, para realizacao de consultas, movimen-',83) );
 	escreveLinha( preencheString('tacoes, transacoes e  contratacoes relativas a produtos e servicos, inclu-',76) );
 	escreveLinha( preencheString('sive de credito, diretamente na conta corrente.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('i) Sao disponibilizados  os servicos de Tele Saldo e SAC (Servico de Aten-',76) );
+	escreveLinha( preencheString('j) Sao disponibilizados  os servicos de Tele Saldo e SAC (Servico de Aten-',76) );
 	escreveLinha( preencheString('dimento ao  Cooperado), por  meio de atendimento telefonico, para realizar',76) );
 	escreveLinha( preencheString('consultas, obter  informacoes, solicitar e autorizar transacoes, inclusive',76) );
 	escreveLinha( preencheString('as  relativas  a  contratacao  de   produtos  e  servicos,  ofertadas  pe-',76) );
@@ -245,7 +263,7 @@
 	escreveLinha( preencheString('realizar gravacoes das solicitacoes e instrucoes telefonicas.',76) );
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('j) A <b>Cooperativa</b> podera  disponibilizar por meio dos canais de autoatendi-',83) );
+	escreveLinha( preencheString('k) A <b>Cooperativa</b> podera  disponibilizar por meio dos canais de autoatendi-',83) );
 	escreveLinha( preencheString('mento existentes, ou ainda aqueles que venham a ser criados, a  possibili-',76) );
 	escreveLinha( preencheString('dade  de  contratacao de operacoes de credito, desde que os requisitos ne-',76) );
 	escreveLinha( preencheString('cessarios  para  sua  contratacao e as regras estipuladas pela <b>Cooperativa</b>',83) );
@@ -256,20 +274,20 @@
 	escreveLinha( preencheString('gacoes contraidas.',76) );		
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('k) Diante  de  incapacidade  civil absoluta ou relativa do(a) <b>Cooperado(a)',83) );
+	escreveLinha( preencheString('l) Diante  de  incapacidade  civil absoluta ou relativa do(a) <b>Cooperado(a)',83) );
 	escreveLinha( preencheString('Titular</b>, a  movimentacao  da  conta  corrente sera  realizada por  meio de',83) );
 	escreveLinha( preencheString('representacao  ou  assistencia  dos  representante(s)  legal(is), conforme',76) );	
 	escreveLinha( preencheString('o caso.',76) );	
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('l) A <b>Cooperativa</b> podera  disponibilizar  a  seu criterio pacote de tarifas',83) );
+	escreveLinha( preencheString('m) A <b>Cooperativa</b> podera  disponibilizar  a  seu criterio pacote de tarifas',83) );
 	escreveLinha( preencheString('para a movimentacao  da  conta  corrente. Ao aderir  o  pacote  de tarifas',76) );
 	escreveLinha( preencheString('conforme opcao realizada em Termo de Adesao proprio, o(a) <b>Cooperado(a) Ti-',83) );
 	escreveLinha( preencheString('tular</b> autoriza o debito dos valores correspondentes ao pacote, diretamente',83) );	
 	escreveLinha( preencheString('desta conta.',76) );	
 	pulaLinha(1);	
 	
-	escreveLinha( preencheString('m) As  partes  declaram que este instrumento esta vinculado as disposicoes',76) );
+	escreveLinha( preencheString('n) As  partes  declaram que este instrumento esta vinculado as disposicoes',76) );
 	escreveLinha( preencheString('legais cooperativistas, ao Estatuto Social da <b>Cooperativa</b> e demais delibe-',83) );
 	escreveLinha( preencheString('racoes assembleares  desta, e do seu  Conselho de Administracao, aos quais',76) );
 	escreveLinha( preencheString('o(a) <b>Cooperado(a)</b> e os demais titulares, livres e espontaneamente aderiram',83) );
