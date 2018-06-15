@@ -927,6 +927,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       CLOSE cr_crapcco_empr;
     
     END IF; 
+    
+    IF pr_dsorgarq = 'DESCONTO DE TITULO' THEN
+      
+      OPEN cr_crapcco_empr(pr_cdcooper => pr_cdcooper
+                          ,pr_dsorgarq => pr_dsorgarq);
+                                     
+      FETCH cr_crapcco_empr INTO rw_crapcco_empr;
+      
+      IF cr_crapcco_empr%FOUND THEN
+        
+         --Fecha o cursor
+         CLOSE cr_crapcco_empr;
+         
+         --Monta mensagem de erro
+         vr_cdcritic := 0;
+         vr_dscritic := 'Ja possui um convenio de DESCONTO DE TITULO ativo cadastrado.';
+          
+         RAISE vr_exc_erro;                 
+      
+      END IF;                                
+      
+      CLOSE cr_crapcco_empr;
+    
+    END IF; 
                                                    
     pr_des_erro := 'OK';
     
