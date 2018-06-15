@@ -2030,7 +2030,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         vr_obj_generic2.put('ratingConta', 'A');
         vr_obj_generic2.put('riscoCooperado', 'A');
       END IF;
-      vr_obj_generic2.put('aquiteste',vr_des_reto);
       
 
       -- Buscar risco do grupo econômico (se existir)
