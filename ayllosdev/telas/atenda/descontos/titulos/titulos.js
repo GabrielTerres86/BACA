@@ -2560,13 +2560,25 @@ function confirmarInclusao(){
             success: function (response) {
                 var r = $.parseJSON(response);
                 nrbordero = r.nrborder;
-                showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
-                    "Confirma&ccedil;&atilde;o - Ayllos",
-                    "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
-                    "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
-                    "sim.gif",
-                    "nao.gif"
-                );                
+                flrestricao = r.flrestricao;
+                
+                //Caso tenha restricao, mostrar confirmação para analisar
+                if (flrestricao == 1){
+                    showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
+                        "Confirma&ccedil;&atilde;o - Ayllos",
+                        "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                        "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                        "sim.gif",
+                        "nao.gif"
+                    );                
+                }else{
+                    showError(
+                        "inform",
+                        r.msg,
+                        "Alerta - Ayllos",
+                        "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');"
+                    );
+                }
             }
         });
     }
@@ -3268,7 +3280,6 @@ function efetuarPagamentoTitulosVencidos(fl_avalista, arr_titulos){
             },
             success : function(response) {
                 hideMsgAguardo();
-                console.log(response);
                 if (response == 1)
                     showError('inform','T&iacute;tulos pagos com sucesso!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaBorderosTitulos();voltaDiv(3,2,4,\'DESCONTO DE TÍTULOS - BORDERÔS\');');
                 else{

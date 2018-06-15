@@ -394,8 +394,10 @@
 
     	$dados = $xmlObj->roottag->tags[0];
     	$nrborder = $dados->tags[1]->cdata;
+    	$flrestricao = $dados->tags[2]->cdata;
     	$arrInsert['msg'] = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->cdata);
     	$arrInsert['nrborder'] = $nrborder;
+    	$arrInsert['flrestricao'] = $flrestricao;
 
 		echo json_encode($arrInsert);
 			
