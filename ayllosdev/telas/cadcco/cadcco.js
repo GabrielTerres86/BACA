@@ -1633,6 +1633,7 @@ function formataInformacoes() {
                 cDsorgarq.val() == "INTERNET"               ||
                 cDsorgarq.val() == "PROTESTO"               ||
                 cDsorgarq.val() == "EMPRESTIMO"             ||
+                cDsorgarq.val() == "DESCONTO DE TITULO"     ||
                $('#cddopcao', '#frmCabCadcco').val() == "I") {
 
                 cDsorgarq.habilitaCampo();
