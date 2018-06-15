@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 08/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 13/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -248,8 +248,6 @@ BEGIN
 			   
 			   15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
 
-			   18/05/2018 - Ajuste para gerar criticas em contas encerradas (CRAPASS.CDSITDCT = 4)
-
 			   28/05/2018 - Ajustes efetuados:
 						    > Para pegar corretamente o número de controle
 							> Efetuar devolução para cooperativa coorreta
@@ -269,6 +267,8 @@ BEGIN
         
          08/06/2018 - Ajuste para enviar e-mail referente a TEC salário somente se nas devoluções
                      (Adriano - REQ0016678).
+
+		     13/06/2018 - Ajuste para inicializar variável  de estado de crise (Adriano).
                      
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -337,7 +337,7 @@ BEGIN
     /* Variaveis genéricos */
     vr_aux_dtintegr DATE;
     vr_aux_flestcri PLS_INTEGER;
-    vr_aux_inestcri PLS_INTEGER;
+    vr_aux_inestcri PLS_INTEGER := 0;
 
     /* Variavel para manter arquivo fisico */
     vr_aux_manter_fisico BOOLEAN;
@@ -597,7 +597,6 @@ BEGIN
       SELECT inpessoa
             ,nrcpfcgc
             ,dtelimin
-            ,cdsitdct
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -918,10 +917,6 @@ BEGIN
           pr_dscritic := 'Conta informada invalida.';
           RETURN;
         ELSIF rw_crapass.dtelimin IS NOT NULL THEN
-          pr_cdcritic := 1;  /* Conta encerrada */
-          RETURN;
-        ELSIF vr_aux_CodMsg IN('PAG0108R2','PAG0143R2')-- TED
-        AND rw_crapass.cdsitdct = 4  THEN
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN;
         ELSE
@@ -6587,9 +6582,14 @@ END;
                                                 ,pr_dscritic => vr_dscritic
                                                 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada);
             END IF;
+            
             -- Se voltou erro nas criticas
             IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-              -- Se ha critica sem descricao
+              
+              --Deve efetuar rollback, pois ao chamar a PAGA0001 poderá ter efetuado alguma operação na qual deve ser desfeita
+			        ROLLBACK;
+
+			        -- Se ha critica sem descricao
               IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
               END IF;

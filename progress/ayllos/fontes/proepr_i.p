@@ -6,7 +6,7 @@
    Autor   : Deborah/Edson
    Data    : Outubro/96.                     Ultima atualizacao: 23/04/2018
 
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
 
    Frequencia: Diario (on-line)
    Objetivo  : Rotina para tratamento da inclusao da PROPOSTA DE
@@ -908,6 +908,7 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
                                             INPUT ?, /* par_idcarenc */
                                             INPUT ?, /* par_dtcarenc */
 											INPUT tt-proposta-epr.idfiniof,
+                                            INPUT tt-proposta-epr.idquapro,
                                             OUTPUT TABLE tt-erro,
                                             OUTPUT TABLE tt-msg-confirma,
                                             OUTPUT TABLE tt-grupo,
