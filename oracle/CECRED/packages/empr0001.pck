@@ -2744,7 +2744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         , pr_vltotope => rw_crapepr.vlemprst
                                         , pr_dscatbem => ''
                                         , pr_cdlcremp => rw_crapepr.cdlcremp
-                                        , pr_cdfinemp => rw_crapepr.cdfinemp josi
+                                        , pr_cdfinemp => rw_crapepr.cdfinemp 
                                         , pr_dtmvtolt => pr_dtmvtolt
                                         , pr_qtdiaiof => vr_qtdiaiof
                                         , pr_vliofpri => vr_vliofpri
@@ -3192,7 +3192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         , pr_vlemprst => vr_vlbaseiof --rw_crappep.vlsdvsji
                                         , pr_dscatbem => ''
                                         , pr_cdlcremp => pr_cdlcremp
-                                        , pr_cdfinemp => rw_crapepr.cdfinemp  josi
+                                        , pr_cdfinemp => rw_crapepr.cdfinemp  
                                         , pr_dtmvtolt => pr_dtmvtolt
                                         , pr_qtdiaiof => vr_qtdiaiof
                                         , pr_vliofpri => vr_vliofpri
