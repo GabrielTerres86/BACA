@@ -5998,6 +5998,7 @@ PROCEDURE valida_senha_cooperado:
    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+   DEF  INPUT PARAM par_vlintrnt AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.   
    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -6041,7 +6042,34 @@ PROCEDURE valida_senha_cooperado:
            END.
    END.
       END. 
+      
+      MESSAGE "senha do amasonas".
+      MESSAGE par_cddsenha.
+      MESSAGE STRING(CHARACTER_LENGTH(par_cddsenha)).
+      MESSAGE ENCODE(STRING(par_cddsenha,"99999999")).
+      MESSAGE ENCODE(STRING(par_cddsenha,"999999")).
+      MESSAGE STRING(par_cddsenha,"99999999").
+      MESSAGE STRING(par_cddsenha,"999999").
+      MESSAGE "^^^^^^^^".
+    /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE AND  par_vlintrnt = "s" THEN 
+      DO:
+          FOR EACH crapsnh FIELDS (cddsenha) 
+                           WHERE  crapsnh.cdcooper = par_cdcooper
+                             AND  crapsnh.nrdconta = par_nrdconta
+                             AND  crapsnh.tpdsenha = 1 /*internet*/ 
+                             NO-LOCK:                
+              DO:        
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"99999999"))) = CAPS(crapsnh.cddsenha) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
+              END.
+             END.
               
+      END.
+    END.
+  /*Fim validaçao senha online */
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
