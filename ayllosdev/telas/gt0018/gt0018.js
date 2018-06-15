@@ -303,7 +303,7 @@ function formataCampos(){
     
     
     rCdempcon.addClass('rotulo').css({'width':'85px'});
-    cCdempcon.addClass('inteiro').css({'width':'40px'}).attr('maxlength','5');
+    cCdempcon.addClass('inteiro').css({'width':'40px'}).attr('maxlength','4');
     cNmrescon.addClass('alpha').css({'width':'200px'}).attr('maxlength','20');;
     
     rCdsegmto.addClass('rotulo-linha').css({'padding-left':'10px'});
@@ -724,10 +724,7 @@ function confirmaOpe() {
      if (cCddopcao.val() == 'A' ||
          cCddopcao.val() == 'I' ){ 
          
-        if (cCdempcon.val() == ""){
-            showError("error","Codigo da empresa deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdempcon.focus();");        
-            return false;
-        }
+        
         
         if (cCdsegmto.val() == ""){
             showError("error","Segmento deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdsegmto.focus();");        
@@ -736,10 +733,18 @@ function confirmaOpe() {
         
         // Se for Bancoob
         if (cTparrecd.val() == 2){
+            
+            if (cCdempcon.val() == ""){
+                showError("error","Codigo da empresa deve ser informada.","Alerta - Ayllos","blockBackground(); unblockBackground(); cCdempcon.focus();");        
+               return false;
+            }
+            
             if (cNrlayout.val() == ""){
                 showError("error","Layout Febraban deve ser informado.","Alerta - Ayllos","blockBackground(); unblockBackground(); cNrlayout.focus();");        
                 return false;
             }
+            
+            
         }
         
     }

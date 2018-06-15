@@ -13,7 +13,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
     Frequencia : Diario (JOB).
     Objetivo   : Importar arquivo de retorno de arrecadacao Bancoob
 
-    Alteracoes : 
+    Alteracoes : 05/06/2018 - Ajustes para mover arquivo pdf independente da sua data de geração.
+                              PRJ406 - FGTS(Odirlei - AMcom)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -43,6 +44,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
   
   vr_dsdircon     VARCHAR2(400);
   vr_nmarquiv     VARCHAR2(400);
+  vr_nmarqpdf     VARCHAR2(400);
   vr_listarq      VARCHAR2(32000);
   vr_tab_arquiv   gene0002.typ_split;
   vr_tab_linhas   gene0009.typ_tab_linhas;
@@ -53,6 +55,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
   vr_dtproces     DATE;
   vr_fltraile     BOOLEAN;
   vr_cdsitret     INTEGER;
+  
+  vr_dsarqlog_ori  VARCHAR2(400);    
+  vr_dsarqlog_dest VARCHAR2(400);
   
   -- Código do programa
   vr_cdprogra           CONSTANT crapprg.cdprogra%TYPE := 'CRPS728';
@@ -160,10 +165,42 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
     
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pc_gera_log_prccon('Erro ao copiar arquivo '||pr_nmarquiv ||': '|| vr_dscritic);
+        pc_gera_log_prccon('Erro ao mover arquivo '||pr_nmarquiv ||': '|| vr_dscritic);
         vr_dscritic := NULL;
       WHEN OTHERS THEN
-        pc_gera_log_prccon('Erro ao copiar arquivo '||pr_nmarquiv ||': '|| SQLERRM);
+        pc_gera_log_prccon('Erro ao mover arquivo '||pr_nmarquiv ||': '|| SQLERRM);
+        vr_dscritic := NULL;
+    END;
+    
+    --> Rotina para copia arquivo
+    PROCEDURE pc_copia_arq( pr_dsdirori IN VARCHAR2,
+                            pr_dsdirdes IN VARCHAR2) IS
+    
+      vr_comando  VARCHAR2(1000);
+      vr_typ_saida VARCHAR2(100);
+      
+    BEGIN
+    
+      -- Copiar arquivo para o diretorio envia
+      vr_comando := 'cp ' || pr_dsdirori || ' '||pr_dsdirdes;
+      -- Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        --
+        vr_dscritic := 'Não foi possível executar comando unix. ' || vr_comando || ' Erro: ' || vr_dscritic;        
+        RAISE vr_exc_erro;
+      END IF;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pc_gera_log_prccon('Erro ao copiar arquivo '||pr_dsdirori ||': '|| vr_dscritic);
+        vr_dscritic := NULL;
+      WHEN OTHERS THEN
+        pc_gera_log_prccon('Erro ao copiar arquivo '||pr_dsdirori ||': '|| SQLERRM);
         vr_dscritic := NULL;
     END;
     
@@ -198,6 +235,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
       BEGIN
         -->>>>> Caso alterado nome do arquivo de retorno, necessario alterar package tela_tab057 <<<<--
         vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%'||rw_crapcop_central.nmrescop||'%';
+        vr_nmarqpdf := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||'%'||rw_crapcop_central.nmrescop||'%';
         
         --> Buscar arquivos 
         gene0001.pc_lista_arquivos(pr_path     => vr_dsdircon||'/recebe', 
@@ -443,10 +481,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
             END;
           END LOOP; -- Fim Arq
           
-          pc_move_arq(pr_nmarquiv => replace(vr_nmarquiv,'%','*')||'.PDF',
-                      pr_dsdirori => vr_dsdircon||'/recebe',
-                      pr_dsdirdes => '/usr/sistemas/bancoob/convenios/recebidos');
-          
           --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
           pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
                               pr_dstiplog => 'F');
@@ -454,7 +488,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
 
         END IF;
         
+        IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdircon||'/recebe/'||replace(vr_nmarqpdf,'%','*')||'.PDF') THEN
+          pc_move_arq(pr_nmarquiv => replace(vr_nmarqpdf,'%','*')||'.PDF',
+                      pr_dsdirori => vr_dsdircon||'/recebe',
+                      pr_dsdirdes => '/usr/sistemas/bancoob/convenios/recebidos');
         
+        END IF;
       EXCEPTION
         WHEN vr_exc_erro THEN
           --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
@@ -465,6 +504,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
           
       END;
     END LOOP; --> Fim loop CRAPCOP
+           
+    vr_dsarqlog_ori  := vr_dsdircon||'/logs/prccon.log'; 
+      
+    vr_dsarqlog_dest := gene0001.fn_param_sistema( pr_nmsistem => 'CRED',
+                                                   pr_cdcooper => 3,
+                                                   pr_cdacesso => 'ROOT_SISTEMAS'); 
+    vr_dsarqlog_dest := vr_dsarqlog_dest ||'/bancoob/convenios/recebidos/prccon_connect.log';
+    
+    IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsarqlog_ori) THEN
+      pc_copia_arq(pr_dsdirori => vr_dsarqlog_ori,
+                   pr_dsdirdes => vr_dsarqlog_dest);
+          
+    END IF;
            
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------                                                     
 
