@@ -22,7 +22,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 13/06/2017
+    Data      : Julho/2014                Ultima Atualizacao: 12/04/2018
     
     Dados referentes ao programa:
 
@@ -101,9 +101,14 @@
                 
                 08/12/2017 - Projeto 410 - Ajuste na chamada à procedure pc_calcula_iof_epr, passando como parametro 
                              o numero do contrato - Jean (Mout´S)
+                
+                15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)						                  
+                             (Reinert)                                                                  
+                
+                12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
 ..............................................................................*/
 
@@ -901,6 +906,7 @@ PROCEDURE grava_dados:
                                                INPUT ?, /* par_idcarenc */
                                                INPUT ?, /* par_dtcarenc */
                                                INPUT 0,  /* par_idfiniof */
+                                               INPUT 1, /* par_idquapro */
                                                OUTPUT TABLE tt-erro,
                                                OUTPUT TABLE tt-msg-confirma,
                                                OUTPUT TABLE tt-ge-epr,
@@ -1104,6 +1110,7 @@ PROCEDURE grava_dados:
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
                                                    INPUT par_dtmvtolt,
+                                                   INPUT 0, /* idcobope */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
                                                    OUTPUT TABLE tt-erro,
@@ -1273,6 +1280,7 @@ PROCEDURE grava_dados_conta PRIVATE:
     DEF VAR aux_dscatbem AS CHAR                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_vltrfgar AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlpreclc AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofpri AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofadi AS DECI                                    NO-UNDO.
     DEF VAR aux_flgimune AS INTE                                    NO-UNDO.
@@ -1609,8 +1617,9 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT par_nrdconta
                                                 ,INPUT par_nrctremp
                                                 ,INPUT par_dtmvtolt
-                                                ,INPUT crapass.inpessoa
+                                                ,INPUT crapass.inpessoa                                                
                                                 ,INPUT par_cdlcremp
+                                                ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
                                                 ,INPUT crawepr.vlpreemp
                                                 ,INPUT par_vlemprst
@@ -1622,6 +1631,8 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT ""
                                                 ,INPUT crawepr.idfiniof
                                                 ,INPUT ""
+                                                ,INPUT "S" /* Gravar valor IOF parcelas no cadastro de Parcelas */
+                                                ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
@@ -1635,11 +1646,13 @@ PROCEDURE grava_dados_conta PRIVATE:
 
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-         ASSIGN aux_vliofpri = 0
+         ASSIGN aux_vlpreclc = 0
+                aux_vliofpri = 0
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
                 par_vltariof = 0
+                aux_vlpreclc = DECI(pc_calcula_iof_epr.pr_vlpreclc) WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?
                 par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
@@ -1650,7 +1663,7 @@ PROCEDURE grava_dados_conta PRIVATE:
            UNDO TRANS_1, LEAVE TRANS_1.
 
         /* Caso for imune, nao podemos cobrar IOF */
-        IF (par_vltariof) > 0 THEN
+        IF (par_vltariof) > 0 AND aux_flgimune = 0 THEN
            DO:
            
                DO WHILE TRUE:
@@ -1685,6 +1698,13 @@ PROCEDURE grava_dados_conta PRIVATE:
         
                END.  /*  Fim do DO WHILE TRUE  */
         
+               /* Condicao para verificar se eh Financiamento */
+               IF craplcr.dsoperac = 'FINANCIAMENTO' THEN
+                  ASSIGN aux_cdhistor = 2309.
+               ELSE
+                  ASSIGN aux_cdhistor = 2308.
+        
+        
                CREATE craplcm.
                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                       craplcm.cdagenci = craplot.cdagenci
@@ -1694,7 +1714,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                       craplcm.nrdctabb = par_nrdconta
                       craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
                       craplcm.nrdocmto = par_nrctremp
-                      craplcm.cdhistor = 322
+                      craplcm.cdhistor = aux_cdhistor
                       craplcm.nrseqdig = craplot.nrseqdig + 1
                       craplcm.cdpesqbb = 
                                  STRING(par_vlemprst,"zzz,zzz,zz9.99") + 
@@ -1849,6 +1869,7 @@ PROCEDURE calcula_iof:
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
@@ -1921,6 +1942,7 @@ PROCEDURE calcula_iof:
                                                  INPUT par_dtmvtolt,
                                                  INPUT aux_inpessoa,
                                                  INPUT par_cdlcremp,
+                                                 INPUT par_cdfinemp,                                                 
                                                  INPUT par_nrparepr,
                                                  INPUT par_vlpreemp,
                                                  INPUT par_vlemprst,
@@ -1932,6 +1954,8 @@ PROCEDURE calcula_iof:
                                                  INPUT aux_dscatbem,      /* Bens em garantia */
                                                  INPUT (IF AVAILABLE crawepr THEN crawepr.idfiniof ELSE 0),  /* Indicador de financiamento de IOF e tarifa */
                                                  INPUT "0", /* passar assim para nao gerar erro no Oracle */
+                                                 INPUT "N",
+                                                OUTPUT 0, 
                                                 OUTPUT 0,
                                                 OUTPUT 0,
                                                 OUTPUT 0,
@@ -2036,6 +2060,32 @@ PROCEDURE calcula_parcelas_emprestimo:
             RETURN "NOK".
         END.
 
+    /* Buscar dados do associado e informações do pre aprovado */
+    FOR crapass FIELDS (inpessoa)
+                WHERE crapass.cdcooper = par_cdcooper 
+                  AND crapass.nrdconta = par_nrdconta 
+                      NO-LOCK: END.
+    
+    FOR crappre FIELDS(cdfinemp) 
+                WHERE crappre.cdcooper = par_cdcooper 
+                  AND crappre.inpessoa = crapass.inpessoa
+                      NO-LOCK: END.
+
+    IF NOT AVAIL crappre THEN
+       DO:
+           ASSIGN aux_cdcritic = 0
+                  aux_dscritic = "Parametros pre-aprovado nao cadastrado".
+        
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+       END.
+
+    /* Buscar pre-aprovado da conta */
     FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
                                        crapcpa.nrdconta = par_nrdconta AND
                                        crapcpa.iddcarga = aux_idcarga
@@ -2054,6 +2104,7 @@ PROCEDURE calcula_parcelas_emprestimo:
            RETURN "NOK".
        END.
 
+    /* Buscar linha de credito */
     FOR craplcr FIELDS(cdlcremp nrinipre nrfimpre)
                 WHERE craplcr.cdcooper = par_cdcooper     AND
                       craplcr.cdlcremp = crapcpa.cdlcremp
@@ -2093,6 +2144,7 @@ PROCEDURE calcula_parcelas_emprestimo:
                                               INPUT FALSE, /* par_flgerlog */
                                               INPUT 0,     /* par_nrctremp */
                                               INPUT crapcpa.cdlcremp,
+                                              INPUT crappre.cdfinemp,
                                               INPUT par_vlemprst,
                                               INPUT aux_qtpreemp,
                                               INPUT par_dtmvtolt,
@@ -2141,7 +2193,7 @@ PROCEDURE calcula_parcelas_emprestimo:
 
     RETURN "OK".
 
-END PROCEDURE. /* END calcula_emprestimo */
+END PROCEDURE. /* END calcula_parcelas_emprestimo */
 
 PROCEDURE calcula_taxa_emprestimo:
 
@@ -2289,6 +2341,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                           INPUT "", /* dscatbem */
                                           INPUT 1, /* idfiniof */
                                           INPUT "", /* dsctrliq */
+                                          INPUT "N",
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
@@ -2305,6 +2358,7 @@ PROCEDURE calcula_taxa_emprestimo:
                      INPUT par_idorigem,
                      INPUT par_nrdconta,
                      INPUT 0, /* par_nrctremp */
+                     INPUT 0, /* cdfinemp */
                      INPUT crapcpa.cdlcremp,
                      INPUT par_vlemprst,
                      INPUT par_dtmvtolt,
