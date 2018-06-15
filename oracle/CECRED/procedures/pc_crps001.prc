@@ -495,7 +495,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          AND    craplot.nrdolote = pr_nrdolote;
        rw_craplot cr_craplot%ROWTYPE;
        
-       vr_rw_craplot   craplot%ROWTYPE;
+       vr_rw_craplot   lanc0001.cr_craplot%ROWTYPE;
        --Selecionar informacoes dos lancamentos na conta
        CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE
                          ,pr_nrdconta IN craplcm.nrdconta%TYPE
@@ -794,14 +794,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_qtdiacor  NUMBER;
        vr_dsctajud crapprm.dsvlrprm%TYPE;
 
-       vr_vlblqaco crapsda.vlblqaco%TYPE := 0;
-       vr_qtiasadp  PLS_INTEGER;  -- Quantidade de dias em ADP
-       vr_inddebit  PLS_INTEGER;      -- 1-Debita IOF / 2 - Agenda IOF / 3 - Nao Debita
+       vr_vlblqaco      crapsda.vlblqaco%TYPE := 0;
+       vr_qtiasadp      PLS_INTEGER;  -- Quantidade de dias em ADP
+       vr_inddebit      PLS_INTEGER;      -- 1-Debita IOF / 2 - Agenda IOF / 3 - Nao Debita
+       
+       -- variaveis para rotina de debito
+       vr_tab_retorno   lanc0001.typ_reg_retorno;
+       vr_incrineg      INTEGER;      -- Indicador de crítica do negócio
 
        --Procedure para limpar os dados das tabelas de memoria
        PROCEDURE pc_limpa_tabela IS
          BEGIN
-
            vr_tab_craphis.DELETE;
            vr_tab_crapass.DELETE;
            vr_tab_crapsda.DELETE;
@@ -1214,6 +1217,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      vr_inddebit := 1;
                    END IF;
                  END IF;
+                 
                  -- Criado tratamento para vr_inddebit decorrente da nova regra debito IOF
                  CASE vr_inddebit
                    WHEN 1 THEN
@@ -1466,13 +1470,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      NULL;
                    
                  END CASE;
-
                END IF; -- FIM => é PF ou PJ
-
              END IF; -- FIM  vliofmes > 0
 
-             --Se o juros do cheque especial for maior zero
-             IF rw_crapsld.vljuresp > 0 THEN
+             IF rw_crapsld.vljuresp > 0 --Se o juros do cheque especial for maior zero
+               AND NOT prej0003.fn_verifica_preju_conta(rw_crapsld.nrdconta, pr_cdcooper) THEN -- E se a conta não estiver em prejuizo
                
                -- Condicao para verificar se permite incluir as linhas parametrizadas
                IF INSTR(',' || vr_dsctajud || ',',',' || rw_crapsld.nrdconta || ',') > 0 THEN
@@ -1622,7 +1624,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                     --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
                     BEGIN
-                     LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
+                     LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => rw_craplot.cdagenci
                                                        , pr_cdbccxlt => rw_craplot.cdbccxlt
                                                        , pr_nrdolote => rw_craplot.nrdolote
                                                        , pr_cdhistor => 38
@@ -1634,11 +1636,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                        , pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0) + 1
                                                        , pr_vllanmto => rw_crapsld.vljuresp
                                                        , pr_cdcooper => pr_cdcooper
+                                                       , pr_cdcoptfn => 0
+                                                       , pr_vldoipmf => TRUNC(rw_crapsld.vljuresp * vr_txcpmfcc,2)
+                                                       , pr_tab_retorno => vr_tab_retorno
+	                                                     , pr_incrineg => vr_incrineg
                                                        , pr_cdcritic => vr_cdcritic
                                                        , pr_dscritic => vr_dscritic
-                                                       , pr_cdcoptfn => 0
-                                                       , pr_vldoipmf => TRUNC(rw_crapsld.vljuresp * vr_txcpmfcc,2));
-                      IF vr_dscritic IS NOT NULL THEN
+                                                       );
+                      IF vr_dscritic IS NOT NULL
+                        AND vr_incrineg = 0 THEN -- Erro de sistema/BD
                          RAISE vr_exc_saida;
                       END IF;
                       
@@ -1698,11 +1704,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                     END;
               
                 END; -- Final do bloco de inclusao de lcm e lote
-               
-               END IF;
-
-             END IF;
-
+               END IF; -- FIM bloco - Condicao para verificar se permite incluir as linhas parametrizadas
+             END IF; -- FIM bloco - Se o juros do cheque especial for maior zero E nao estiver em prejuizo
            END IF; -- FIM bloco ==> Se for primeiro dia util e tiver IOF a cobrar
 
            --linha 477

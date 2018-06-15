@@ -291,8 +291,8 @@ BEGIN
     vr_dsdctitg craprej.nrdctitg%TYPE;
 	  vr_gerandb NUMBER := 1; -- Gera crapndb
 
-    vr_dsctajud crapprm.dsvlrprm%TYPE;
-    podeDebitar     BOOLEAN;
+    vr_dsctajud     crapprm.dsvlrprm%TYPE;
+    vr_pmtdebit     BOOLEAN;
 
     --Chamado 709894
     vr_dsparam  varchar2(2000);
@@ -337,7 +337,7 @@ BEGIN
        ORDER BY lot.progress_recid DESC;
 
     rw_craplot cr_craplot%ROWTYPE;
-    vr_rw_craplot   craplot%ROWTYPE;
+    vr_rw_craplot   lanc0001.cr_craplot%ROWTYPE;
 
     -- BUSCA LANCAMENTOS AUTOMATICOS
     CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -637,6 +637,10 @@ BEGIN
          AND gnconve.flgativo = 1;
          
     rw_gnconve cr_gnconve%ROWTYPE;
+    
+    -- variaveis para rotina de debito
+    vr_tab_retorno   lanc0001.typ_reg_retorno;
+    vr_incrineg      INTEGER;      -- Indicador de crítica do negócio
 
     --------------- SUBROTINAS --------------------------
 
@@ -1255,10 +1259,10 @@ BEGIN
       END IF;
       
       -- valida se historico pode debitar
-      podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+      vr_pmtdebit := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
                                               pr_nrdconta => vr_nrdconta,
                                               pr_cdhistor => rw_craplau.cdhistor);
-      IF podeDebitar = false THEN
+      IF vr_pmtdebit = false THEN
         CONTINUE;
       END IF;
 
@@ -1338,9 +1342,6 @@ BEGIN
 
       -- SE NÃO ENCONTRAR
       IF cr_craplot_II%NOTFOUND THEN
-        -- FECHAR O CURSOR
-        CLOSE cr_craplot_II;
-
         -- CASO NAO ENCONTRE O LOTE, INSERE
         BEGIN
           LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtopr
@@ -1353,12 +1354,16 @@ BEGIN
                                  , pr_nrseqdig => 0
                                  , pr_rw_craplot => vr_rw_craplot
                                  , pr_cdcritic => vr_cdcritic
-                                 , pr_dscritic => vr_dscritic);
+                                 , pr_dscritic => vr_dscritic
+                                 );
 
           IF vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
           END IF;
           
+          -- FECHAR O CURSOR
+          CLOSE cr_craplot_II;
+
           -- BUSCA REGISTRO REFERENTE AO LOTE CRIADO
           OPEN cr_craplot_II(pr_cdcooper => vr_cdcooper,
                              pr_dtmvtolt => rw_crapdat.dtmvtopr,
@@ -1380,10 +1385,10 @@ BEGIN
                         ||',Nrdolote='||vr_nrdolote;
             RAISE vr_exc_saida;
         END;
-      ELSE
-        -- FECHAR O CURSOR
-        CLOSE cr_craplot_II;
       END IF;
+
+      -- FECHAR O CURSOR
+      CLOSE cr_craplot_II;
 
       -- VERIFICA SE É UMA CONTA MIGRADA
       IF vr_ctamigra = 1 THEN
@@ -1751,7 +1756,7 @@ BEGIN
       IF vr_flgentra = 1 AND vr_gerandb = 1 THEN
 
         BEGIN
-           LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot_II.cdagenci
+           LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => rw_craplot_II.cdagenci
                                              , pr_cdbccxlt => rw_craplot_II.cdbccxlt
                                              , pr_nrdolote => rw_craplot_II.nrdolote
                                              , pr_cdhistor => rw_craplau.cdhistor
@@ -1763,15 +1768,17 @@ BEGIN
                                              , pr_nrseqdig => nvl(rw_craplot_II.nrseqdig,0) + 1
                                              , pr_vllanmto => rw_craplau.vllanaut
                                              , pr_cdcooper => vr_cdcooper
-                                             , pr_cdcritic => vr_cdcritic
-                                             , pr_dscritic => vr_dscritic
                                              , pr_cdpesqbb => 'Lote ' || TO_CHAR(rw_craplau.dtmvtolt, 'dd') || '/' ||
                                                                TO_CHAR(rw_craplau.dtmvtolt, 'mm') || '-' ||
                                                                gene0002.fn_mask(vr_cdagenci, '999') || '-' ||
                                                                gene0002.fn_mask(rw_craplau.cdbccxlt, '999') || '-' ||
                                                                gene0002.fn_mask(rw_craplau.nrdolote, '999999') || '-' ||
                                                                gene0002.fn_mask(rw_craplau.nrseqdig, '99999') || '-' ||
-                                                               rw_craplau.nrdocmto 
+                                                               rw_craplau.nrdocmto
+                                             , pr_tab_retorno => vr_tab_retorno
+	                                           , pr_incrineg => vr_incrineg                                                               
+                                             , pr_cdcritic => vr_cdcritic
+                                             , pr_dscritic => vr_dscritic                                                               
                                              );
            IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
