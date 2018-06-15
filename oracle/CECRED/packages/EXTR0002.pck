@@ -795,6 +795,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                      pois haviam casos em que não estavamos entrando na rotina
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
         
+        21/05/2018 - Alterações relacionadas a SM4 - PRJ364 - Paulo Martins - Mout´s
+        
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -5530,6 +5532,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(1);
+          -- SM4 - Paulo Martins - Mout´s
+          pr_tab_lancamento_futuro(vr_index).cdhistor:= 37;
+          if rw_crapass.cdsitdct  = 7 then
+            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+          else
+            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+          end if;		  
         END IF;
         END IF;
         --Saldo
@@ -5614,6 +5623,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(2);
+          -- SM4 - Paulo Martins - Mout´s
+          pr_tab_lancamento_futuro(vr_index).cdhistor:= 38;
+          if rw_crapass.cdsitdct  = 7 then
+            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+          else
+            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+          end if;     		  
           END IF;
         END IF; --crapsld.vlsmnesp <> 0
         --Valor Bloqueado
@@ -5675,6 +5691,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
             pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
             pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
+            -- SM4 - Paulo Martins - Mout´s
+            pr_tab_lancamento_futuro(vr_index).cdhistor:= 2323;
+            if rw_crapass.cdsitdct  = 7 then
+              pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+            else
+              pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+            end if;     			
           END IF;   
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
@@ -14427,13 +14450,23 @@ END pc_consulta_ir_pj_trim;
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
               WHILE vr_index_extrato IS NOT NULL LOOP
-                  --Montar novo indice conforme break-by
+                IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NOT NULL THEN
+                --Montar novo indice conforme break-by
+                  vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
+                                  vr_tab_extrato_epr(vr_index_extrato).nranomes||
+                                  TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'YYYYMMDD hhmiss')|| 
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                ELSE
+                --Montar novo indice conforme break-by
                 vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
                                 vr_tab_extrato_epr(vr_index_extrato).nranomes||
                                 TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                END IF;
                  
                 --Copiar de uma tabela para outra
                 vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);
