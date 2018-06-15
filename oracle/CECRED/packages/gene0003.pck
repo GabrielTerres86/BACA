@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
+    Data    : Agosto/2006                     Ultima Atualizacao: 06/11/2017
 
     Dados referentes ao programa:
 
@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
+    Data    : Agosto/2006                     Ultima Atualizacao: 06/12/2017
 
     Dados referentes ao programa:
 
@@ -222,9 +222,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
                              na leitura dessas mensagens na Conta Online.
                              Heitor (Mouts) - Chamado 807108
-
-               21/05/2018 - Alteração no tamanho da variavel de controle de anexos, de VARCHAR2 500 para 4000 
-                             Belli (Envolti) - Chamado REQ0014900
 
 ..............................................................................*/
 
@@ -496,7 +493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 13/06/2018
     --
     --  Dados referentes ao programa:
     --
@@ -531,6 +528,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --                       - Pc_set_modulo, cecred.pc_internal_exception
     --                       - Tratamento erros others
     --                         Chamado 788828 - Ana Volles (Envolti)
+    --
+    --            13/06/2018 - Sincronizar o horario do email com o horario do servidor que hoje se encontra
+    --                         divergente. (Kelvin/Saqueta).
     -- .............................................................................
 
     DECLARE
@@ -577,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_dsnmrepl   crapsle.dsnmrepl%TYPE;
       vr_dsemrepl   crapsle.dsemrepl%TYPE;
       --String com os anexos para gravar no .SH
-      vr_dsanexos varchar2(4000); -- Aumento do tamanho de 500 para 4000 - Chamado REQ0014900 - 21/05/2018
+      vr_dsanexos varchar2(500);
       --Variavel para montar o comando que será salvo no .SH
       vr_dscomdSH varchar2(10000);
       --Diretorio da cooperativa para manter os anexos
@@ -678,13 +678,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- Abrir conexão de dados
         utl_smtp.open_data(vr_conexao);
         -- Enviar header
-        utl_smtp.write_data(vr_conexao, 'Date: ' || TO_CHAR(TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE,'DDMMYYYYHH24MISS')||' AMERICA/SAO_PAULO','DDMMYYYYHH24MISS TZR'),'DD-MON-YYYY HH24:MI:SS') || vr_des_quebra);
+        utl_smtp.write_data(vr_conexao, 'Date: ' || TO_CHAR(to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR'), 'DD-MON-YYYY HH24:MI:SS') || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'MIME-Version: 1.0' || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'To: ' || rw_crapsle.dsendere || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'From: ' || vr_des_nome || ' <' || vr_des_remete ||'>'|| vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Reply-To: ' || vr_dsnmrepl || ' <'||vr_dsemrepl||'>'|| vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Subject: ' || replace(UTL_ENCODE.mimeheader_encode(rw_crapsle.dsassunt),UTL_TCP.CRLF, UTL_TCP.CRLF || ' ') || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Content-Type: multipart/mixed; boundary="'||vr_des_limite||'"'|| vr_des_quebra || vr_des_quebra);
+        
         -- Envia  mensagem HTML
         utl_smtp.write_data(vr_conexao, '--' || vr_des_limite || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Content-Type: text/html; charset="iso-8859-1"' || vr_des_quebra || vr_des_quebra);

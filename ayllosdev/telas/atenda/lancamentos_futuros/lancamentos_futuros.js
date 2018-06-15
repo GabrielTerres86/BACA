@@ -17,6 +17,7 @@
             
              04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
                            (Jonata - RKAM P364).
+            maio/2018 - PRJ364 - SM4 - Adicionado  cdhistor e value (Paulo Martins - Mouts)
  ***********************************************************************/
 var glb_gen_dstabela, glb_gen_cdhistor, glb_gen_recid; 
 
@@ -283,7 +284,9 @@ function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
                         $(this).attr('cdagenci') + ',' +
                         $(this).attr('cdbccxlt') + ',' +
                         $(this).attr('nrdolote') + ',' +
-                        $(this).attr('nrseqdig');
+                        $(this).attr('nrseqdig') + ',' +
+                        $(this).attr('cdhistor') + ',' +
+                        $(this).attr('value');
             qtdebit = qtdebit + 1;
         }
         qtselec = qtselec + 1;

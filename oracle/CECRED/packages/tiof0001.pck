@@ -2269,7 +2269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_dtmvtolt => vr_dtmvtolt
                                        ,pr_inpessoa => pr_inpessoa
-                                       ,pr_flgrvvlr => (pr_idgravar = 'S')
+                                       ,pr_flgrvvlr => FALSE
                                        ,pr_cdinsenc => 0
                                        ,pr_vlinsenc => pr_valoriof
                                        ,pr_flgimune => Vr_flgimune
