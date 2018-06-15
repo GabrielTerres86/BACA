@@ -1796,6 +1796,24 @@ create or replace package body CECRED.AFRA0004 is
     vr_cdagenci:= pr_cdagenci;
     
     IF vr_cdagenci = 90 AND pr_flgagend = 0 THEN /*false*/
+    
+      -- Selecionar informacoes do associado
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      --Posicionar no primeiro registro
+      FETCH cr_crapass INTO rw_crapass_prot;
+      --Se nao encontrou
+      IF cr_crapass%NOTFOUND THEN
+        --Mensagem Erro
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Associado nao cadastrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapass;
+    
+    
       --Flag email recebe true
       vr_flgemail:= TRUE;
 
@@ -2470,12 +2488,14 @@ create or replace package body CECRED.AFRA0004 is
 
       END IF; --vr_flgemail
 
+      --Selecionar ultimo log transacao sistema
+      OPEN cr_crapass_t(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass_t INTO rw_crapass_t;
+      CLOSE cr_crapass_t;
+
       IF vr_flgemail AND (pr_vlfatura < rw_crapcop.vllmonip) THEN
-        --Selecionar ultimo log transacao sistema
-        OPEN cr_crapass_t(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta);
-        FETCH cr_crapass_t INTO rw_crapass_t;
-        CLOSE cr_crapass_t;
+        
 
         vr_qtidenti:= 0;
         vr_dtlimite:= vr_datdodia;
