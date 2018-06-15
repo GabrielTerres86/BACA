@@ -25,7 +25,8 @@
     $nrdconta = $_POST['nrdconta'];
     $nrctrcrd = $_POST['nrctrcrd'];
     $tpacao   = $_POST['tpacao'];
-
+	$esteira  = $_POST['esteira'];
+	$cdadmcrd = $_POST['cdadmcrd'];
 ?>
 
 
@@ -37,15 +38,16 @@
             $xml .= " </Dados>";
             $xml .= "</Root>";
             $admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$objectResult = simplexml_load_string( $admresult );
-		$podeEnviar = 1;
-		$alguemAssinou = false;
-		$alguemNaoAssinou = false;
-		$idastcjt = null;
-		$insitcrd = false;
-		$inupgrad = false;
-		$temJustificativa = false;
-			
+            $objectResult = simplexml_load_string( $admresult );		
+            $podeEnviar = 1;
+            $alguemAssinou = false;
+            $alguemNaoAssinou = false;
+            $idastcjt = null;
+            $insitcrd = false;
+            $inupgrad = false;
+            $temJustificativa = false;
+            $dsjustif;
+            $cdopesup;
 			
             if($tpacao == "verificaAutorizacoes"){
 
@@ -64,13 +66,38 @@
                     }else{
                         $alguemNaoAssinou = true;
                     }
+					if(isset($representante->dsjustif) && (strlen($representante->dsjustif) > 0))
+						$dsjustif = $representante->dsjustif;
+					if(isset($representante->cdopesup) && (strlen($representante->cdopesup) > 0))
+						$cdopesup = $representante->cdopesup;
+					
 					if(!$temJustificativa && (isset($representante->dsjustif) && strlen($representante->dsjustif) > 0)){
 						$temJustificativa = true;
-						echo "\n justificativaCartao ='"+$representante->dsjustif+"' ;\n";
-						echo "\n globalesteira = true; \n";
+						echo "\n justificativaCartao ='".$representante->dsjustif."' ;\n";
+						echo "\n  globalesteira = true; \n";
 					}
                 }
+				
+				if((strlen($dsjustif) > 0 ) && (!isset($cdopesup) || strlen($cdopesup) ==0 )){
+					  // Montar o xml de Requisicao
+                    $xml = "<Root>";
+                    $xml .= " <Dados>";
+                    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+                    $xml .= " </Dados>";
+                    $xml .= "</Root>";
+                    $xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+                    $xmlObj = getObjectXML($xmlResult);
 
+
+                    $json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
+
+                    $idacionamento = $json_sugestoes['protocolo'];
+                
+                    if(isset($idacionamento))
+                        echo "protocolo = '$idacionamento';";
+                    echo "autorizado = false; /* \n $xmlResult \n*/";
+					return;
+				 }
                 
 
                 if(($alguemAssinou && !$alguemNaoAssinou) || (($alguemAssinou && $idastcjt =='0') &&($insitcrd != 0)) || ($insitcrd == 5) || ($inupgrad == 1))
@@ -109,7 +136,7 @@
                     <th style="width: 110px;">CPF</th>	
                     <th style="width: 110px;">Validado</th>
                     <th style="width: 110px;">Validar</th>
-                    <th class="ordemInicial" style="width: 14px;"></th>
+                    <th class="ordemInicial" style="width: 13px;"></th>
                 </tr>		
             </thead>
         </table>
@@ -121,6 +148,8 @@
                         $counter = 0;//idastcjt
                         $idastcjt = null;
                         $alguemAssinou = false;
+						$dsjustif;
+						$cdopesup;
                         foreach($objectResult->Dados->representantes->representante as $representante){
                             if(is_null( $idastcjt)){
                                  $idastcjt = $representante->idastcjt;
@@ -133,12 +162,16 @@
                                 $podeEnviar = 0;
                             else
                                 $alguemAssinou = true;
+							if(isset($representante->dsjustif) && (strlen($representante->dsjustif) > 0))
+								$dsjustif = $representante->dsjustif;
+							if(isset($representante->cdopesup) && (strlen($representante->cdopesup) > 0))
+								$cdopesup = $representante->cdopesup;
                             $counter++;
                                 ?>
                                     <tr style="  " class="<?php echo $style; ?> ">
-                                        <td style=" width: 127px; "><?php echo  $representante->nome ; ?> </td>
-                                        <td style="  width: 128px; "><?php echo $representante->nrcpfcgf; ?> </td>
-                                        <td style=" width: 128px; "> <?php echo $representante->assinou == "N"?  utf8ToHtml("Não"):"Sim"; ?> </td>
+                                        <td style=" width: 152; "><?php echo  $representante->nome ; ?> </td>
+                                        <td style=" width: 152; "><?php echo $representante->nrcpfcgf; ?> </td>
+                                        <td style=" width: 152; "> <?php echo $representante->assinou == "N"?  utf8ToHtml("Não"):"Sim"; ?> </td>
                                         <? if( $representante->assinou == "N"){?>
                                             <td style=" "><input type="radio" name="agentPassword" id="agentPassword" value="<?php echo $representante->nrcpfcgf; ?>#<?php echo $representante->nome; ?>#<?php echo $representante->nrdctato; ?>"> </td>
                                         <? } else{?>
@@ -167,11 +200,24 @@
                 {
                     ?>
                         <a href="#" class="botao" id="" onclick="<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;"> Sair</a>
+						<? if((strlen($dsjustif) > 0 ) && (!isset($cdopesup) || strlen($cdopesup) ==0 )){
+
+							?>
+							<a href="#" class="botao" 
+							onclick="chamarCoordenador(<? echo $nrctrcrd?>, '<? echo $idacionamento; ?>','C',<?echo $cdadmcrd;?> );">
+							<?echo utf8ToHtml("Aprovação coordenador") ?>
+							</a>	
+							
+							
+							<?
+						}else{
+							?>
                         <a href="#" class="botao" id="" onclick="enviarBancoob(' <? echo utf8ToHtml($nrctrcrd) ;?> ');"> <? echo utf8ToHtml("Enviar Solicitação") ;?></a>
+						<? } ?>
                     <?
                 }else{
                     ?>
-                        <a href="#" class="botao" id="" onclick="<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;"> Sair</a>
+                        <a href="#" class="botao" id="" onclick="<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;"> Sair</a>						
                         <a href="#" class="botao" id="" onclick="validarSenha(<?php echo $nrctrcrd; ?>)" > Validar</a>
                     <?                   
                 }

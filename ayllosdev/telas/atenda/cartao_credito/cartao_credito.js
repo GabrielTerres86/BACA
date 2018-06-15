@@ -109,7 +109,7 @@ var dsadmcrdList = {
     15: "CECRED EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
-
+var faprovador;
 var callbacckReturn = undefined;
 var protocolo = 0;
 var glbadc = 'n';
@@ -1876,6 +1876,26 @@ function validarNovoCartao() {
 	  
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+	setTimeout(function(){
+		$( "#btnSenhaCoordenador" ).mouseover(function() {
+		  faprovador = $("#cdopelib").val();
+		  console.log("Setado pelo mouse out");
+		});
+		console.log("Setada a trigger");
+		$(".campo").blur(function(){
+			if( $(this).attr('id') =='cdopelib'){
+				faprovador = $(this).val();
+			}
+			
+		});
+		
+		$(".campo").change(function(){
+			if( $(this).attr('id') =='cdopelib'){
+				faprovador = $(this).val();
+			}
+		});
+		
+	},160);
 }
 
 /*!
@@ -4563,7 +4583,13 @@ function validarUpDown() {
 			
             eval(response);
 			if(!error)
-				atualizaUpgradeDowngrade();
+				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+				if(iPiloto == 1){
+					atualizaUpgradeDowngrade();
+				} else {					
+					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
+				}
+					
         }
     });
 }
@@ -5717,7 +5743,7 @@ function carregaSelecionarRepresentantes() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -5829,14 +5855,16 @@ function validarSenha(nrctrcrd) {
         log4console(' add trigger back');
         $(".btnVoltar").attr('onclick','voltarParaTelaPrincipal();');
 		//|| idastcjt !=1
-        if (inpessoa == 1 ) {
+        //if (inpessoa == 1 ) {
+		if(false){
 			log4console("indo solicitar senha");
             solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\')', nrdconta, '', 'sim.gif', 'nao.gif');
             return;
         }
         if ($("#agentPassword:checked").val() != undefined) {
             var nrContaRepresentante =  ($("#agentPassword:checked").val().split("#")[2]);
-            solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\')', nrContaRepresentante, '', 'sim.gif', 'nao.gif');
+            //solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\')', nrContaRepresentante, '', 'sim.gif', 'nao.gif');
+			solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'solicitaSenha( '+ nrctrcrd +')\')', nrContaRepresentante,true);
 
         } else {
             showError("error", "Selecione um Representante para validar a senha. ", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -5860,21 +5888,32 @@ function solicitaSenha(nrctrcrd,cdAdmCartao) {
         console.log('estamos fora da tela novo');
     }
 	//|| idastcjt !=1
-    if (inpessoa == 1 ) {
+    if (false) {
         validarSenha(nrctrcrd);
         return;
     }
     showMsgAguardo("Aguarde ...");
     atualizaContrato(nrctrcrd,protocolo,"S", function(){
-
+	var chklen =  $('input[name="dsadmcrdcc"]').length;
+	var outros = false;
+    for(j = 0; j< chklen; j++){	
+            var o = $('input[name="dsadmcrdcc"]')[j];
+            if($(o).attr("checked") == 'checked'){
+                if($(o).val() == "outro")
+                    outros = true;
+            }
+    }
+	var esteira = outros? "s":"n";
     $.ajax({
         type: "POST",
         dataType: "html",
         url: UrlSite + "telas/atenda/cartao_credito/aprovacao_representantes.php",
         data: {
             tpacao: 'montagrid',
-            nrdconta: nrdconta,
-            nrctrcrd: nrctrcrd
+            nrdconta : nrdconta,
+            nrctrcrd : nrctrcrd,
+			cdadmcrd : cdadmcrd,
+			esteira  : esteira
         },
         error: function (objAjax, responseError, objExcept) {
 
@@ -6135,8 +6174,9 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
 				dsjustif      : dsjustif,
                 cdadmcrd      : cdadmcrd,
                 inpessoa      : inpessoa,
-                idproces      :idproces,
-                flagIdprocess  : flagIdprocess? "1":"2"
+                idproces      : idproces,
+                flagIdprocess : flagIdprocess? "1":"2",
+				faprovador    : faprovador != undefined ? faprovador : ""
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
@@ -6314,7 +6354,9 @@ function alterarBancoob(autorizado,inpessoa,tipo){
 				limiteatualCC :   limiteatualCC,
                 protocolo     :   protocolo,
 				cdadmcrd      :   cdadmcrd,
-                justificativa :   $("#justificativa").val()
+                justificativa :   $("#justificativa").val(),
+				faprovador    :   (faprovador != undefined )?faprovador :""
+				
 
             },
             error: function (objAjax, responseError, objExcept) {
@@ -6452,4 +6494,10 @@ function abreProtocoloAcionamento(dsprotocolo) {
             return false;
         }
     });
+}
+
+function chamarCoordenador(nrctrcrd, idacionamento,idproces,cdAdmCartao ){
+	
+	senhaCoordenador("atualizaContrato(" + nrctrcrd + ",'" + idacionamento +"','" + idproces + "', function(){solicitaSenha("+nrctrcrd+", "+cdAdmCartao+");} )");
+	
 }

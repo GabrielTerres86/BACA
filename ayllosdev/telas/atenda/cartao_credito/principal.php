@@ -275,6 +275,10 @@ function voltarParaTelaPrincipal(){
 	flgativo = "<?php echo $flgativo; ?>";
 	nrctrhcj = "<?php echo $nrctrhcj; ?>";
 	iPiloto = "<?php echo $iPiloto; ?>";
+	// Se NAO for piloto, nao podemos alterar o limite
+	if (iPiloto == 0){		
+		$("#btnalterarLimite").hide();
+	}
 
 	// Esconde div das op��es
 	$("#divOpcoesDaOpcao1").css("display","none");

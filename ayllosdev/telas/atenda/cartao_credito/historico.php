@@ -28,7 +28,18 @@ $response = simplexml_load_string($xmlResult);
 
 $counter = count($response->Dados->inf );
 
+$arrayLiberaReeviarProposta  = array();
+array_push($arrayLiberaReeviarProposta, "retorno análise automática");
+array_push($arrayLiberaReeviarProposta, "Retorno Proposta");
+array_push($arrayLiberaReeviarProposta, "envio da solicitacao cartao bancoob");
 
+$arrayLiberaSolicitarRetorno = array();
+array_push($arrayLiberaSolicitarRetorno, "envio da solicitacao cartao bancoob");
+array_push($arrayLiberaSolicitarRetorno, "retorno solicitacao bancoob");
+
+$arrayLiberaReeviarEsteira   = array();
+array_push($arrayLiberaSolicitarRetorno, "retorno analise automatanálise de credito");
+array_push($arrayLiberaSolicitarRetorno, "reenvio da proposta para analise de credito");
 
 ?>
 <fieldset>
@@ -104,25 +115,32 @@ $counter = count($response->Dados->inf );
                                     </div>
                                 </div>
 
-                                <div id="divBotoes" style='border-top:1px solid #777'>								    
+                                <div id="divBotoes" style='border-top:1px solid #777'>			
+
+									
 									<a href="#" onclick="consultaCartao();"  class="botao" id="btVoltar">Voltar</a>
 									
+									<?if(in_array($operacao, $arrayLiberaReeviarProposta)|| true ){ ?> 
 									<a 	href="#" 
 										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
 										class="botao" 
 										id="btRenviar">Reenviar Proposta</a>
+									<?}?>
 									
+									<?if(in_array($operacao, $arrayLiberaSolicitarRetorno)|| true){ ?> 
 									<a href="#" 
 										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
 									   class="botao" 
 									   id="btRenviar">Solicitar Retorno</a>
+									<?}?>
 									
+									<?if(in_array($operacao, $arrayLiberaReeviarEsteira) || true){ ?> 
 									<a 
 										href="#" 
 										onclick="showConfirmacao('<? echo utf8ToHtml("Deseja reenviar a proposta para a esteira de crédito"); ;?>', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviaEsteira(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   										
 										class="botao" 
 										id="btRenviar">Reenvia Esteira</a>
-									
+									<?}?>
 									
 									
 									<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
