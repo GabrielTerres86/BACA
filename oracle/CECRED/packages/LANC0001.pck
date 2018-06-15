@@ -208,41 +208,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --  Data     : Abril/2018.
   --
   -- Frequencia: -----
-  -- Objetivo  : Procedimentos para lançamentos na CRAPLCM e tabelas auxiliares (CRAPLOT, ...)
+  -- Objetivo  : Procedimentos para centralização de lançamentos na CRAPLCM e aplicação das respectivas 
+	--             regras de negócio.
   --
-  -- Alterado  : 10/05/2018 - Migração do cursor "cr_craplot" e da procedure "pc_inclui_altera_lote" a partir
-  --                          da package "EMPR0001".
+  -- Alterado  : 10/05/2018 - Migração do cursor "cr_craplot" e da procedure "pc_inclui_altera_lote" 
+  --                          a partir da package "EMPR0001".
   --                          (Reginaldo - AMcom - PRJ 450)
   --
   ---------------------------------------------------------------------------------------------------------------
 
+-- Record para armazenar dados dos históricos para evitar consultas repetitivas
 TYPE typ_reg_historico IS RECORD (
      indebcre        craphis.indebcre%TYPE
-   , inestoura_conta craphis.inestoura_conta%TYPE);
+   , indebprj        craphis.indebprj%TYPE);
 
+-- Tabela com dados dos históricos já consultados na rotina
 TYPE typ_tab_historico IS TABLE OF typ_reg_historico INDEX BY VARCHAR2(8);
 
-vr_tab_historico typ_tab_historico; -- tabela para manter em memória dados dos históricos
+-- Varíavel para armazenamento da tabela de dados dos históricos
+vr_tab_historico typ_tab_historico; 
 
+-- Tabela para armazenar a informação de dias de atraso das contas para evitar consultas repetitivas
 TYPE typ_tab_atraso IS TABLE OF crapsld.qtddsdev%TYPE INDEX BY VARCHAR2(18);
 
-vr_tab_atraso typ_tab_atraso; -- tabela para manter os dias de atraso (estouro) da conta
+-- Variável para armazenamento da tabela de dias de atraso das contas
+vr_tab_atraso typ_tab_atraso;
 
+-- Record com dados do lote, obtidos a partir do cursor "LANC0001.cr_craplot"
 rw_craplot cr_craplot%ROWTYPE;
 
--- Indica se as regras de negócio do tratamento do prejuízo já estão ativas
+-- Variável que Indica se as regras de negócio do tratamento do prejuízo já estão ativas, 
+-- ou seja, se as regras de bloqueio de débitos e transferência de créditos para a conta
+-- transitória já devem ser processados para contas em prejuízo.
 vr_inatvprj BOOLEAN := NVL(GENE0001.fn_param_sistema (pr_cdcooper => 0
                                                          ,pr_nmsistem => 'CRED'
                                                          ,pr_cdacesso => 'DT_CORTE_REGCRE'), 'N') = 'S';
 
--- Obtém dados do histórico (CRAPHIS)
+-- Função que Obtém dados do histórico (CRAPHIS)
 FUNCTION fn_obtem_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
                               , pr_cdhistor craplcm.cdhistor%TYPE)
   RETURN typ_reg_historico AS vr_reg_historico typ_reg_historico;
 
   -- Recupera os do histórico
   CURSOR cr_historico IS
-  SELECT his.inestoura_conta
+  SELECT his.indebprj
        , his.indebcre
     FROM craphis his
    WHERE his.cdcooper = pr_cdcooper
@@ -261,18 +270,18 @@ BEGIN
        CLOSE cr_historico;
 
        vr_tab_historico(vr_chvhist).indebcre := rw_historico.indebcre;
-       vr_tab_historico(vr_chvhist).inestoura_conta := rw_historico.inestoura_conta;
+       vr_tab_historico(vr_chvhist).indebprj := rw_historico.indebprj;
      END IF;
 
      RETURN vr_reg_historico;
 END fn_obtem_dados_historico;
 
--- Obtém dias em atraso da conta (estouro)
+-- Função que obtém dias em atraso da conta (estouro)
 FUNCTION fn_obtem_dias_atraso(pr_cdcooper crapsld.cdcooper%TYPE
                           , pr_nrdconta crapsld.nrdconta%TYPE)
   RETURN crapsld.qtddsdev%TYPE AS vr_dias_atraso crapsld.qtddsdev%TYPE;
 
-  -- Recupera a quantidade de dias em que a conta está devedora (estourada)
+  -- Cursos que recupera a quantidade de dias em que a conta está em atraso (ADP)
   CURSOR cr_saldo IS
   SELECT sld.qtddsdev
     FROM crapsld sld
@@ -297,7 +306,8 @@ BEGIN
 	RETURN vr_dias_atraso;
 END fn_obtem_dias_atraso ;
 
--- Verifica se pode debitar um histórico em uma conta
+-- Função qye verifica se pode debitar um histórico em uma conta de acordo com as marcações feitas
+-- na tela HISTOR
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
                        , pr_nrdconta craplcm.nrdconta%TYPE
                        , pr_cdhistor craplcm.cdhistor%TYPE)
@@ -317,7 +327,7 @@ BEGIN
 		IF vr_reg_historico.indebcre = 'D' THEN	
 			-- Se a conta está em prejuízo e o histórico não permite aumentar o estouro da conta
 			IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) 
-			AND vr_reg_historico.inestoura_conta = 0 THEN
+			AND vr_reg_historico.indebprj = 0 THEN
 				vr_pode_debitar := FALSE;
 			END IF;
 		END IF;
@@ -326,7 +336,7 @@ BEGIN
   RETURN vr_pode_debitar;
 END fn_pode_debitar;
 
---> Rotina para verificar se pode realizar o debito - Versão Progress
+--> Rotina para verificar se pode realizar o debito - Versão para uso em programas Progress
 PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
                          , pr_nrdconta  IN craplcm.nrdconta%TYPE
                          , pr_cdhistor  IN craplcm.cdhistor%TYPE
@@ -359,7 +369,7 @@ BEGIN
 
 END pc_pode_debitar;
 
--- Inclui um novo lançamento na CRAPLCM
+-- Inclui um novo lançamento na CRAPLCM e aplica as devidas regras de negócio
 PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAULT NULL
                                   , pr_cdagenci IN  craplcm.cdagenci%TYPE default 0
                                   , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE default 0
@@ -398,12 +408,12 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   -------------------------------------------------
                                   -- Dados do lote (Opcional)
                                   -------------------------------------------------
-                                  , pr_inprolot  IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0
+                                  , pr_inprolot  IN  INTEGER DEFAULT 0   -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0 -- Campo para inclusão na CRAPLOT
 																	, pr_tab_retorno OUT typ_reg_retorno   -- Record com os dados retornados pela procedure
-																	, pr_incrineg  OUT INTEGER           -- Indicador de crítica de negócio
-																	, pr_cdcritic  OUT PLS_INTEGER
-                                  , pr_dscritic  OUT VARCHAR2) IS      -- Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+																	, pr_incrineg  OUT INTEGER             -- Retorna o indicador de crítica de negócio (0 - Não, 1 - Sim)
+																	, pr_cdcritic  OUT PLS_INTEGER         
+                                  , pr_dscritic  OUT VARCHAR2) IS        
 BEGIN
    /* ............................................................................
         Programa: pc_gerar_lancamento_conta
@@ -414,14 +424,15 @@ BEGIN
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
-        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM, fazendo as críticas necessárias
+        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM, 
+				            aplicando as respectivas regras de negócio.
         Observacao: -----
         Alteracoes:
     ..............................................................................*/
 
 DECLARE
     ----->>> VARIÁVEIS <<<-----
-    vr_reg_historico  typ_reg_historico;       -- Registro para armazenar os dados do histórico
+    vr_reg_historico  typ_reg_historico;       -- Registro para armazenar os dados do histórico do lançamento
     vr_nrseqdig       craplot.nrseqdig%TYPE;   -- Aramazena o valor do campo "nrseqdig" da CRAPLOT para referência na CRAPLCM
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
 		vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
@@ -449,7 +460,7 @@ BEGIN
 			END IF;
 		END IF;
 
-    -- processa lote
+    -- Se deve processar internamente o lote (CRAPLOT)
 		IF pr_inprolot = 1 THEN
 			IF vr_reg_historico.indebcre = 'C' THEN
 				vr_flgcredi := TRUE;
@@ -569,16 +580,17 @@ BEGIN
 		INTO
 		  pr_tab_retorno.rowidlct, pr_tab_retorno.progress_recid_lcm;
 
-    -- Se é um lançamento de crédito e a conta corrente está em prejuízo
-		-- (e se as regras de negócio do prejuízo já estão ativas)
+    -- Se é um lançamento de crédito e se as regras de negócio do prejuízo já estão ativas
     IF vr_reg_historico.indebcre = 'C' AND vr_inatvprj THEN
 			-- Identifica se a conta está em prejuízo
   		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
 			
-			IF vr_inprejuz THEN
+			IF vr_inprejuz THEN -- *** Acrescentar crítica do campo craphis.INTRANSF_CRED_PREJUIZO que está sendo criado ***
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
+				
+				-- Processar bloqueio BACENJUD
 
-				-- Realizar lançamento referente ao débito na CRAPLOT
+				-- Realizar lançamento referente ao débito na CRAPLOT com histórico (650009)
 				-- Realizar lançamento de débito na CRAPLCM
 
 				-- Realizar lançamento de crédito na TBCC_PREJUIZO_LANCAMENTO
@@ -586,7 +598,6 @@ BEGIN
 		END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN
-			-- Apenas retornar a variável de saida
 			pr_cdcritic := NVL(pr_cdcritic, 0);
 
 			IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
