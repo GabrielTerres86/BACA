@@ -11,6 +11,8 @@
 
              12/09/2017 - Inclusao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
+             14/06/2018 - Adicionado desconto de título como tipo de origem - Luis Fernando (GFT)
+
 ************************************************************************/
 
 var exisbole = 0;
