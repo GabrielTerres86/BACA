@@ -131,6 +131,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
 
                    04/08/2016 - #482583 Retirada do controle de restart (Carlos)
 
+                   05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
+  --                            Josiane Stiehler- AMcom
     ............................................................................ */
 
     DECLARE
@@ -315,6 +317,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
       vr_vlsdeved     NUMBER(14,2); --> Saldo devedor do emprestimo
       -- Indicador de utilizac?o da tabela de taxa de juros
       vr_inusatab BOOLEAN;
+      
+      -- P450 - Regulatório de crédito      
+      vr_incrineg     INTEGER;
+      vr_tab_retorno  lanc0001.typ_reg_retorno;
+      vr_fldebita     BOOLEAN;
 
       -- Subrotina para checar a existencia de lote cfme tipo passado
       PROCEDURE pc_cria_craplot(pr_dtmvtolt   IN craplot.dtmvtolt%TYPE
@@ -827,70 +834,67 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
             END;
             -- Descontar da quantidade de parcelas calculadas o valor da sobra / valor da parcela
             vr_qtprecal_lem := vr_qtprecal_lem - ROUND((vr_vldsobra/rw_crapepr.vlpreemp),4);
-            -- Testar se ja retornado o registro de capas de lote para o 8351
+
+
             IF rw_craplot_8351.rowid IS NULL THEN
-              -- Chamar rotina para busca-lo, e se n?o encontrar, ira crialo
-              pc_cria_craplot(pr_dtmvtolt   => rw_crapdat.dtmvtopr
-                             ,pr_nrdolote   => 8351
-                             ,pr_tplotmov   => 1
-                             ,pr_rw_craplot => rw_craplot_8351
-                             ,pr_dscritic   => vr_dscritic);
-              -- Se houve retorno de erro
-              IF vr_dscritic IS NOT NULL THEN
-                -- Sair do processo
-                RAISE vr_exc_undo;
-              END IF;
+               -- Chamar rotina para busca-lo, e se n?o encontrar, ira crialo
+               pc_cria_craplot(pr_dtmvtolt   => rw_crapdat.dtmvtopr
+                              ,pr_nrdolote   => 8351
+                              ,pr_tplotmov   => 1
+                              ,pr_rw_craplot => rw_craplot_8351
+                              ,pr_dscritic   => vr_dscritic);
+               -- Se houve retorno de erro
+               IF vr_dscritic IS NOT NULL THEN
+                 -- Sair do processo
+                 RAISE vr_exc_undo;
+               END IF;
+             END IF;
+
+             -- Efetuar lancamento na conta-corrente
+             -- P450 - Regulatório de Crédito
+             LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot_8351.dtmvtolt
+                                               ,pr_cdagenci => rw_craplot_8351.cdagenci
+                                               ,pr_cdbccxlt => rw_craplot_8351.cdbccxlt
+                                               ,pr_nrdolote => rw_craplot_8351.nrdolote 
+                                               ,pr_nrdconta => rw_crapepr.nrdconta
+                                               ,pr_nrdocmto => rw_crapepr.nrctremp
+                                               ,pr_cdhistor => 20 --> Sobras Empr.
+                                               ,pr_nrseqdig => rw_craplot_8351.nrseqdig + 1 
+                                               ,pr_vllanmto => vr_vldsobra
+                                               ,pr_nrdctabb => rw_crapepr.nrdconta
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdctitg => to_char(rw_crapepr.nrdconta,'fm00000000')
+                                               -- OUTPUT --
+                                               ,pr_tab_retorno => vr_tab_retorno
+                                               ,pr_incrineg => vr_incrineg
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic); 
+                              
+             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                   RAISE vr_exc_undo;
+                END IF;	
+             END IF; 
+             
+             -- Atualizar as informac?es no lote utilizado
+             BEGIN
+               UPDATE craplot
+                  SET vlinfocr = vlinfocr + vr_vldsobra
+                     ,vlcompcr = vlcompcr + vr_vldsobra
+                     ,qtinfoln = qtinfoln + 1
+                     ,qtcompln = qtcompln + 1
+                     ,nrseqdig = nrseqdig + 1
+                WHERE rowid = rw_craplot_8351.rowid
+                RETURNING nrseqdig INTO rw_craplot_8351.nrseqdig; -- Atualizamos a sequencia no rowtype
+             EXCEPTION
+               WHEN OTHERS THEN
+                 -- Gerar erro e fazer rollback
+                 vr_dscritic := 'Erro ao atualizar capas de lotes (craplot), lote: '||rw_craplot_8351.nrdolote||'. Detalhes: '||sqlerrm;
+                 RAISE vr_exc_undo;
+             END;
             END IF;
-            -- Efetuar lancamento na conta-corrente
-            BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,vllanmto)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8351.dtmvtolt
-                                 ,rw_craplot_8351.cdagenci
-                                 ,rw_craplot_8351.cdbccxlt
-                                 ,rw_craplot_8351.nrdolote
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrdconta
-                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_crapepr.nrctremp
-                                 ,20 --> Sobras Empr.
-                                 ,rw_craplot_8351.nrseqdig + 1
-                                 ,vr_vldsobra);
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao criar lancamento de sobras para a conta corrente (CRAPLCM) '
-                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                            || '. Detalhes: '||sqlerrm;
-                RAISE vr_exc_undo;
-            END;
-            -- Atualizar as informac?es no lote utilizado
-            BEGIN
-              UPDATE craplot
-                 SET vlinfocr = vlinfocr + vr_vldsobra
-                    ,vlcompcr = vlcompcr + vr_vldsobra
-                    ,qtinfoln = qtinfoln + 1
-                    ,qtcompln = qtcompln + 1
-                    ,nrseqdig = nrseqdig + 1
-               WHERE rowid = rw_craplot_8351.rowid
-               RETURNING nrseqdig INTO rw_craplot_8351.nrseqdig; -- Atualizamos a sequencia no rowtype
-            EXCEPTION
-              WHEN OTHERS THEN
-                -- Gerar erro e fazer rollback
-                vr_dscritic := 'Erro ao atualizar capas de lotes (craplot), lote: '||rw_craplot_8351.nrdolote||'. Detalhes: '||sqlerrm;
-                RAISE vr_exc_undo;
-            END;
-          END IF;
+           
+           
 
           -- Se houve valor de abono
           IF vr_vldabono > 0 THEN
@@ -1276,7 +1280,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
       END;
 
       -- Efetuar commit final
-      COMMIT;
+      COMMIT; 
     EXCEPTION
       WHEN vr_exc_fimprg THEN
         -- Se foi retornado apenas codigo
