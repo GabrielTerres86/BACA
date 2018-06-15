@@ -3371,7 +3371,33 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                             ,pr_nmsubdir => 'abbc');
 
       /* Remove os arquivos CCF dos dias anteriores */
-      vr_comando:= 'rm '||vr_dir_local ||'/CCF*';
+      vr_comando:= 'rm '||vr_dir_local ||'/CCF61*';
+
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_des_erro);
+     
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_comando:= 'rm '||vr_dir_local ||'/CCF62*';
+
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_des_erro);
+     
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_comando:= 'rm '||vr_dir_local ||'/CCF.ZIP';
 
       --Executar o comando no unix
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -3442,14 +3468,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         RAISE vr_exc_saida;
       END IF;
       
-      vr_comando:= 'rm '||vr_dir_local ||'/'||vr_nmarquiv||' 1> /dev/null';
-
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_des_erro);
-
       -- Gravar os comandos no banco
       COMMIT;
     EXCEPTION
