@@ -148,7 +148,7 @@ BEGIN
                                     ,pr_nrdctabb => rw_craptdb.nrdctabb    
                                     ,pr_nrcnvcob => rw_craptdb.nrcnvcob    
                                     ,pr_nrdocmto => rw_craptdb.nrdocmto    
-                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt    
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtopr    
                                     ,pr_vlmtatit => vr_vlmtatit    
                                     ,pr_vlmratit => vr_vlmratit    
                                     ,pr_vlioftit => vr_vlioftit    
