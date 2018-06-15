@@ -106,8 +106,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
      WHERE tlc.cdcooper = pr_cdcooper
        AND tlc.cdadmcrd = pr_cdadmcrd
        AND tlc.vllimcrd = pr_vllimatu
-       AND tlc.cdadmcrd < 10
-       AND tlc.cdadmcrd > 80
        AND tlc.insittab = 0;
   rw_craptlc   cr_craptlc%ROWTYPE;
   
