@@ -6109,11 +6109,13 @@ create or replace package body cecred.PAGA0002 is
     CURSOR cr_gnconve_2 (pr_cdcooper gnconve.cdcooper%TYPE,
                          pr_cdhistor gnconve.cdhiscxa%TYPE) IS
       SELECT 1
-        FROM gnconve cnv
-       WHERE cnv.cdcooper = pr_cdcooper
-         AND cnv.cdhiscxa = pr_cdhistor
-         AND cnv.flgativo = 1   
-         AND cnv.flgenvpa = 1;
+        FROM gnconve cnv,
+            gncvcop cop
+        WHERE cnv.cdconven = cop.cdconven
+		AND cop.cdcooper = pr_cdcooper
+		AND cnv.cdhiscxa = pr_cdhistor
+		AND cnv.flgativo = 1   
+		AND cnv.flgenvpa = 1;
     rw_gnconve_2 cr_gnconve_2%ROWTYPE;
 
     CURSOR cr_crapscn (pr_cdempcon IN crapscn.cdempcon%TYPE
