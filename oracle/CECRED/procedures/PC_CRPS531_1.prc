@@ -242,6 +242,8 @@ BEGIN
                14/02/2018 - Tratar mensagens CIR0020 e CIR0021, incluir o tratamento junto com a mensagem STR0003R2
                             SD 805540 - Marcelo Telles Coelho-Mouts
 
+               14/03/2018 - Tratar recebimento de TED destinada a contas administradoras de recursos (Rodrigo Heinzle - Supero)
+
 			   16/03/2018 - Ajustado tamanho de variável (Adriano).
 
 			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
@@ -428,6 +430,11 @@ BEGIN
     vr_aux_NumRemessaOr         VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
     vr_aux_AgIF                 VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
     vr_aux_FinlddCIR            VARCHAR2(100); /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+
+    vr_aux_TPCONTA_CREDITADA    VARCHAR2(2);
+    vr_aux_NMTITULAR_CREDITADA  VARCHAR2(80);
+    vr_aux_DSCONTA_CREDITADA    VARCHAR2(13);
+    VR_AUX_CDAGENCI_CREDITADA   NUMBER(5);
 
 
     vr_aux_msgderro       VARCHAR(1000);
@@ -764,6 +771,16 @@ BEGIN
     -- Rotina para validar a conta
     PROCEDURE pc_verifica_conta(pr_cdcritic OUT NUMBER
                                ,pr_dscritic OUT VARCHAR) IS
+      --
+      CURSOR cr_conta(pr_cdcooper tbfin_recursos_conta.cdcooper%TYPE
+                     ,pr_nrdconta tbfin_recursos_conta.nrdconta%TYPE
+                     ) IS
+        SELECT trc.nmtitular
+          FROM tbfin_recursos_conta trc
+         WHERE trc.cdcooper = pr_cdcooper
+           AND trc.nrdconta = pr_nrdconta;
+      rw_conta cr_conta%ROWTYPE;
+      
       -- Variaveis locais
       vr_val_cdcooper PLS_INTEGER;
       vr_val_nrdconta NUMBER;
@@ -915,10 +932,23 @@ BEGIN
         -- Se não encontrar
         IF cr_crapass%NOTFOUND THEN
           CLOSE cr_crapass;
+          OPEN cr_conta(pr_cdcooper => vr_val_cdcooper
+                       ,pr_nrdconta => vr_val_nrdconta
+                       );
+          --
+          FETCH cr_conta INTO rw_conta;
+          -- Se não encontrar
+          IF cr_conta%NOTFOUND THEN
+            CLOSE cr_conta;
           -- Cconta não encontrada
           pr_cdcritic := 2;
           pr_dscritic := 'Conta informada invalida.';
           RETURN;
+            --
+          END IF;
+          --
+          CLOSE cr_conta;
+          --
         ELSIF rw_crapass.dtelimin IS NOT NULL THEN
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN;
@@ -4694,6 +4724,11 @@ END;
       vr_aux_flgenvio  NUMBER;
       vr_aux_dsdemail  VARCHAR2(4000);
       vr_tipolog       VARCHAR2(100);
+      vr_aux_flgreccon BOOLEAN := FALSE;
+      vr_aux_flgrecsal BOOLEAN := FALSE;
+      vr_aux_sal_ant   NUMBER(25,2) := 0;
+      vr_aux_nrseqdig   NUMBER;
+      vr_idlancto      tbfin_recursos_movimento.idlancto%TYPE;
 
       --Bacenjud - SM 1
       vr_dsincons      tbgen_inconsist.dsinconsist%TYPE;
@@ -4752,6 +4787,61 @@ END;
            AND epr.nrdconta = pr_nrdconta
            AND epr.nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;
+
+      -- Buscar informações das contas administradoras de recursos
+      CURSOR cr_tbfin_rec_con(pr_cdcooper tbfin_recursos_conta.cdcooper%TYPE
+                             ,pr_nrdconta tbfin_recursos_conta.nrdconta%TYPE
+                             ,pr_cdagenci tbfin_recursos_conta.cdagenci%TYPE
+                            ) IS
+        SELECT rc.cdcooper
+              ,rc.nrdconta
+              ,rc.cdagenci
+              ,rc.flgativo
+              ,rc.tpconta
+              ,rc.nmtitular
+          FROM tbfin_recursos_conta rc
+         WHERE rc.cdcooper = pr_cdcooper
+           AND rc.nrdconta = pr_nrdconta
+           AND rc.cdagenci = pr_cdagenci
+           AND rc.flgativo = 1;
+      rw_tbfin_rec_con cr_tbfin_rec_con%ROWTYPE;
+
+      /*-- Buscar registro de saldo do dia atual das contas administradoras de recursos
+      CURSOR cr_tbfin_rec_sal(pr_cdcooper tbfin_recursos_saldo.cdcooper%TYPE
+                             ,pr_nrdconta tbfin_recursos_saldo.nrdconta%TYPE
+                             ,pr_dtmvtolt tbfin_recursos_saldo.dtmvtolt%TYPE) IS
+        SELECT rs.dtmvtolt
+              ,rs.vlsaldo_inicial
+              ,rs.vlsaldo_final
+          FROM tbfin_recursos_saldo rs
+         WHERE rs.cdcooper = pr_cdcooper
+           AND rs.nrdconta = pr_nrdconta
+           AND dtmvtolt = pr_dtmvtolt;
+      rw_tbfin_rec_sal cr_tbfin_rec_sal%ROWTYPE;
+
+
+       -- Buscar registro saldo do dia anterior das contas administradoras de recursos
+      CURSOR cr_tbfin_rec_sal_ant(pr_cdcooper tbfin_recursos_saldo.cdcooper%TYPE
+                             ,pr_nrdconta tbfin_recursos_saldo.nrdconta%TYPE
+                             ,pr_dtmvtolt tbfin_recursos_saldo.dtmvtolt%TYPE) IS
+        SELECT rs.vlsaldo_final
+          FROM tbfin_recursos_saldo rs
+         WHERE rs.cdcooper = pr_cdcooper
+           AND rs.nrdconta = pr_nrdconta
+           AND dtmvtolt = (pr_dtmvtolt - 1);
+      rw_tbfin_rec_sal_ant cr_tbfin_rec_sal_ant%ROWTYPE;*/
+
+      --
+      CURSOR cr_craphis(pr_cdcooper craphis.cdcooper%TYPE
+                       ,pr_cdhistor craphis.cdhistor%TYPE
+                       ) IS
+        SELECT craphis.indebcre
+          FROM craphis
+         WHERE craphis.cdcooper = pr_cdcooper
+           AND craphis.cdhistor = pr_cdhistor; 
+      --
+      rw_craphis cr_craphis%ROWTYPE;
+      --
 
       --Bacenjud - SM 1
       --Buscar maior sequencia inserida na tbblqj_erro_ted para comparar com o parametro de reenvios
@@ -5709,10 +5799,27 @@ END;
 
           ELSE
             -- Gerar histórico
+              /* Verifica se a TED é destinada a uma conta administradora de recursos */
+              OPEN cr_tbfin_rec_con(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                    ,pr_nrdconta => vr_aux_nrctacre
+                                    ,pr_cdagenci => rw_craplot.cdagenci);
+              FETCH cr_tbfin_rec_con
+              INTO rw_tbfin_rec_con;
+
             /* Estorno TED */
             IF vr_aux_CodMsg in('STR0010R2','PAG0111R2') THEN
               vr_aux_cdhistor := 600;
               vr_aux_cdpesqbb := vr_aux_CodDevTransf;
+              IF vr_aux_CodMsg = 'STR0010R2' THEN
+                IF cr_tbfin_rec_con%FOUND THEN
+                  vr_aux_cdhistor := 2663;
+                  vr_aux_flgreccon := TRUE; 
+                  vr_aux_TPCONTA_CREDITADA := rw_tbfin_rec_con.tpconta;
+                  vr_aux_NMTITULAR_CREDITADA := rw_tbfin_rec_con.nmtitular;
+                  vr_aux_DSCONTA_CREDITADA := rw_tbfin_rec_con.nrdconta;
+                  VR_AUX_CDAGENCI_CREDITADA := rw_tbfin_rec_con.cdagenci;
+                END IF;
+              END IF;
             /* Estorno TED Rejeitada*/
             ELSIF vr_aux_tagCABInf THEN
               vr_aux_cdhistor := 887;
@@ -5728,7 +5835,21 @@ END;
               /* Credito TED */
               vr_aux_cdhistor := 578;
               vr_aux_cdpesqbb := vr_aux_dadosdeb;
+
+              -- Se encontrar
+              IF cr_tbfin_rec_con%FOUND THEN
+                vr_aux_flgreccon := TRUE; 
+                vr_aux_cdhistor := 2622;
+                vr_aux_TPCONTA_CREDITADA := rw_tbfin_rec_con.tpconta;
+                vr_aux_NMTITULAR_CREDITADA := rw_tbfin_rec_con.nmtitular;
+                vr_aux_DSCONTA_CREDITADA := rw_tbfin_rec_con.nrdconta;
+                VR_AUX_CDAGENCI_CREDITADA := rw_tbfin_rec_con.cdagenci;
               END IF;
+              CLOSE cr_tbfin_rec_con;
+            END IF;
+
+            IF NOT vr_aux_flgreccon THEN
+
               -- Gerar lançamento em conta
               BEGIN
                 INSERT INTO craplcm
@@ -5796,6 +5917,166 @@ END;
                              ,pr_dscritic => vr_dscritic);
               IF vr_dscritic IS NOT NULL THEN
                 raise vr_exc_saida;
+            END IF;
+
+            ELSE
+                   
+              vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
+                             'nrseqdig',''||rw_crapcop_mensag.cdcooper
+                             ||';'||vr_aux_nrctacre||';'||to_char(vr_aux_dtmvtolt,'dd/mm/yyyy')||'');
+              
+              vr_idlancto := fn_sequence(pr_nmtabela => 'TBFIN_RECURSOS_MOVIMENTO'
+                                          ,pr_nmdcampo => 'IDLANCTO'
+                                        ,pr_dsdchave => 'IDLANCTO');
+                                                            
+              -- Gerar lançamento em conta
+              BEGIN
+
+                INSERT INTO tbfin_recursos_movimento
+                    (cdcooper
+                    ,nrdconta
+                    ,dtmvtolt
+                    ,nrdocmto
+                    ,nrseqdig
+                    ,cdhistor
+                    ,dsdebcre
+                    ,vllanmto
+                    ,nmif_debitada
+                    ,nrispbif
+                    ,nrcnpj_debitada
+                    ,nmtitular_debitada
+                    ,tpconta_debitada
+                    ,cdagenci_debitada
+                    ,dsconta_debitada
+                    ,hrtransa
+                    ,cdoperad
+                    ,idlancto
+                    ,inpessoa_debitada
+                    ,inpessoa_creditada
+                    ,CDAGENCI_CREDITADA
+                    ,DSCONTA_CREDITADA
+                    ,TPCONTA_CREDITADA
+                    ,NMTITULAR_CREDITADA)
+                VALUES
+                   (rw_crapcop_mensag.cdcooper
+                   ,vr_aux_nrctacre
+                   ,vr_aux_dtmvtolt
+                   ,vr_aux_nrdocmto
+                   ,vr_aux_nrseqdig
+                   ,vr_aux_cdhistor
+                   ,'C'
+                   ,vr_aux_VlrLanc
+                   ,vr_aux_BancoDeb
+                   ,vr_aux_BancoDeb
+                   ,vr_aux_CNPJ_CPFDeb
+                   ,vr_aux_NomCliDebtd
+                   ,vr_aux_TpCtDebtd
+                   ,vr_aux_AgDebtd
+                   ,vr_aux_CtDebtd
+                   ,to_char(sysdate,'sssss')
+                   ,'1'
+                   ,vr_idlancto
+                   ,DECODE(vr_aux_TpPessoaDebtd_Remet, 'F', 1, 'J', 2)
+                   ,DECODE(vr_aux_TpPessoaCred, 'F', 1, 'J', 2)
+                   ,vr_aux_CDAGENCI_CREDITADA
+                   ,vr_aux_DSCONTA_CREDITADA
+                   ,vr_aux_TPCONTA_CREDITADA
+                   ,vr_aux_NMTITULAR_CREDITADA
+                   );
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao inserir na tabela tbfin_recursos_movimento --> ' || SQLERRM;
+                 -- Sair da rotina
+                 RAISE vr_exc_saida;
+              END;
+
+              --
+              OPEN cr_craphis(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                             ,pr_cdhistor => vr_aux_cdhistor);
+              --
+              FETCH cr_craphis INTO rw_craphis;
+              --
+              IF cr_craphis%NOTFOUND THEN
+                --
+                vr_dscritic := 'Contrapartida do histórico ' || vr_aux_cdhistor || ' não encontrada!';
+                CLOSE cr_craphis;
+                RAISE vr_exc_saida;
+                --
+          END IF;
+              --
+              CLOSE cr_craphis;
+
+              -- Atualiza o saldo
+              COBR0011.pc_atualiza_saldo(pr_cdcooper => 3
+                                        ,pr_nrdconta => vr_aux_nrctacre
+                                        ,pr_dtmvtolt => vr_aux_dtmvtolt
+                                        ,pr_vllanmto => vr_aux_VlrLanc
+                                        ,pr_dsdebcre => rw_craphis.indebcre
+                                        ,pr_dscritic => vr_dscritic);
+
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_saida;
+              END IF;
+
+              /*OPEN cr_tbfin_rec_sal(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                    ,pr_nrdconta => vr_aux_nrctacre
+                                    ,pr_dtmvtolt => rw_crapdat_mensag.dtmvtolt);
+              FETCH cr_tbfin_rec_sal
+              INTO rw_tbfin_rec_sal;
+              -- Se encontrar
+              IF cr_tbfin_rec_sal%FOUND THEN
+                vr_aux_flgrecsal := TRUE;
+              END IF;
+              CLOSE cr_tbfin_rec_sal;
+
+              -- Alterar saldo
+              IF vr_aux_flgrecsal THEN
+
+                BEGIN
+                  UPDATE tbfin_recursos_saldo
+                  SET vlsaldo_final = vlsaldo_final + vr_aux_VlrLanc
+                  WHERE cdcooper = rw_crapcop_mensag.cdcooper
+                  AND nrdconta = vr_aux_nrctacre;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao editar a tabela tbfin_recursos_saldo --> ' || SQLERRM;
+                   -- Sair da rotina
+                   RAISE vr_exc_saida;
+                END;
+
+              ELSE
+
+                OPEN cr_tbfin_rec_sal_ant(pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                        ,pr_nrdconta => vr_aux_nrctacre
+                                        ,pr_dtmvtolt => rw_crapdat_mensag.dtmvtolt);
+                FETCH cr_tbfin_rec_sal_ant
+                INTO rw_tbfin_rec_sal_ant;
+                -- Se encontrar
+                IF cr_tbfin_rec_sal_ant%FOUND THEN
+                  vr_aux_sal_ant := rw_tbfin_rec_sal_ant.vlsaldo_final;
+                END IF;
+                CLOSE cr_tbfin_rec_sal_ant;
+
+                BEGIN
+                  INSERT INTO tbfin_recursos_saldo
+                     (cdcooper
+                      ,nrdconta
+                      ,dtmvtolt
+                      ,vlsaldo_inicial
+                      ,vlsaldo_final)
+                  VALUES
+                     (rw_crapcop_mensag.cdcooper
+                     ,vr_aux_nrctacre
+                     ,rw_crapdat_mensag.dtmvtolt
+                     ,vr_aux_sal_ant
+                     ,(vr_aux_sal_ant + vr_aux_VlrLanc));
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao inserir na tabela tbfin_recursos_saldo --> ' || SQLERRM;
+                   -- Sair da rotina
+                   RAISE vr_exc_saida;
+                END;
+              END IF;*/
             END IF;
           END IF;
         END IF;

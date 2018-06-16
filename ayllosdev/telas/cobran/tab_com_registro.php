@@ -52,6 +52,7 @@
 								  <input type="hidden" id="nrnosnum" name="nrnosnum" value="<? echo getByTagName($r->tags,'nrnosnum') ?>" />								  
 								  <input type="hidden" id="dsorgarq" name="dsorgarq" value="<? echo getByTagName($r->tags,'dsorgarq') ?>" />								  
 								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo getByTagName($r->tags,'nrdctabb') ?>" />								  
+								  <input type="hidden" id="insitcrt" name="insitcrt" value="<? echo getByTagName($r->tags,'insitcrt') ?>" />									  
 								  
 								  <input type="hidden" id="cdcooper" name="cdcooper" value="<? echo getByTagName($r->tags,'cdcooper') ?>" />								  
 								  <input type="hidden" id="cdsituac" name="cdsituac" value="<? echo getByTagName($r->tags,'cdsituac') ?>" />								  
@@ -216,6 +217,7 @@
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Log Boleto</a>
 		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;"><? echo utf8ToHtml('Instruções');  ?></a>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
+		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;"><? echo utf8ToHtml('Imprimir carta anuência');  ?></a>
 	<?php
 	}
 	?>
