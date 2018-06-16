@@ -5592,6 +5592,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_rec_cobranca.qtdiaprt := 0;
     END IF;
   
+    IF pr_rec_cobranca.qtdiaprt <> 0 AND
+       pr_rec_cobranca.cddespec NOT IN (01, 02) THEN /* DM e DS */
+      -- Pedido de Protesto Não Permitido para o Título
+      vr_rej_cdmotivo := '39';
+      RAISE vr_exc_reje;
+    END IF;
+  
     --Modificado para efetuar demais validação junto ao sacado
     pr_rec_cobranca.serasa := pr_rec_header.flserasa;
   
@@ -8640,6 +8647,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         pr_rec_cobranca.qtdiaprt := 15;
         
       END IF;      
+    
+      IF pr_rec_cobranca.qtdiaprt <> 0 AND
+         pr_rec_cobranca.cddespec NOT IN (01, 02) THEN /* DM e DS */
+        -- Pedido de Protesto Não Permitido para o Título
+        vr_rej_cdmotivo := '39';
+        RAISE vr_exc_reje;
+    END IF;    
     
     END IF;    
             

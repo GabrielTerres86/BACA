@@ -72,7 +72,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                               ,pr_dtinicial     IN VARCHAR2 --> Data inicial de recebimento de ted
                               ,pr_dtfinal       IN VARCHAR2 --> Data final de recebimento de ted
                               ,pr_cdestado      IN VARCHAR2 --> Estado que veio a confirmação
-                              ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                              ,pr_cartorio      IN VARCHAR2 --> Cartorio da ted
+                              ,pr_flcustas      IN INTEGER                 -- Exibir custas/taxas pagas
                               ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
                               ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
                               ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
@@ -100,6 +101,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                          	  	      ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
                                       ,pr_cdestado      IN VARCHAR2 --> Estado que veio a confirmação
                                       ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                                      ,pr_flcustas      IN INTEGER                 -- Exibir custas/taxas pagas
                                       ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
                                       ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
                                       ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
@@ -124,6 +126,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                          	  	          ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
                                           ,pr_cdestado      IN VARCHAR2 --> Estado que veio a confirmação
                                           ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                                          ,pr_flcustas      IN INTEGER                 -- tarifas e custas processadas
                                           ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
                                           ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
@@ -268,15 +271,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
          left join crapcaf caf on (caf.cdcidade = agencia.cdcidade)
          left join tbcobran_cartorio_protesto cartorio on (ted.nrcnpj_debitada = cartorio.nrcpf_cnpj 
                                                     /*and ted.nmtitular_debitada = cartorio.nmcartorio*/)
-    WHERE ted.dsdebcre = 'C'
+    WHERE ted.dsdebcre = 'C' AND TED.INDEVTED_MOTIVO = 0 
      and ((ted.dtmvtolt between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
          or (pr_dtinicial is null and pr_dtfinal is null))
      and ((ted.vllanmto >= pr_vlinicial and ted.vllanmto <= pr_vlfinal) 
          or (pr_vlinicial = 0 and pr_vlfinal = 0))
      and (ted.nrcnpj_debitada = pr_cartorio or pr_cartorio is null)
      and ((pr_flgcon = 1 and ted.dtconciliacao IS NOT NULL) or (pr_flgcon = 0 and ted.dtconciliacao IS NULL))
+     
     ORDER BY ted.dtmvtolt, ted.nrcnpj_debitada;  
     rw_tbfin_recursos_movimento cr_tbfin_recursos_movimento%ROWTYPE;
+    
     
     CURSOR cr_tbcobran_conciliacao_ieptb(pr_dtinicial    IN VARCHAR2
                                         ,pr_dtfinal       IN VARCHAR2
@@ -325,70 +330,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                    ,pr_dtinicial     IN VARCHAR2
                                    ,pr_dtfinal       IN VARCHAR2
                                    ,pr_cdestado      IN VARCHAR2
-                                   ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE) IS
-   select retorno.vlgrava_eletronica as tarifas
-         ,retorno.vlcuscar as custas_cartorarias -- custo cartorio
-         ,retorno.vlcustas_cartorio as custas_distribuidor -- custo distribuicao
-         ,retorno.vldemais_despes as demais_despesas
+                                   ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
+                                   ,pr_flcustas      IN INTEGER) IS
+     SELECT retorno.vlgrava_eletronica AS tarifas
+         ,retorno.vlcuscar AS custas_cartorarias -- custo cartorio
+         ,retorno.vlcustas_cartorio AS custas_distribuidor -- custo distribuicao
+         ,retorno.vldemais_despes AS demais_despesas
          ,(retorno.vlcuscar + retorno.vlcustas_cartorio + retorno.vldemais_despes) AS total_despesas -- total saldo
          ,retorno.dtmvtolt -- data do recebimento
          ,crapcop.nmrescop -- cooperativa
          ,cartorio.nmcartorio -- cartorio
          ,crapmun.cdestado -- estado
          ,crapcob.nrnosnum -- nosso numero
-    from tbcobran_retorno_ieptb retorno
-        ,crapcob
-        ,crapmun
-        ,tbcobran_cartorio_protesto cartorio,
-        crapcop
-    where 
-        retorno.cdcooper = crapcob.cdcooper
-    and retorno.nrdconta = crapcob.nrdconta
-    and retorno.nrcnvcob = crapcob.nrcnvcob
-    and retorno.nrdocmto = crapcob.nrdocmto
-    and retorno.cdcomarc = crapmun.cdcomarc
-    --and retorno.cdcartorio = cartorio.cdcartorio
-    and crapmun.idcidade = cartorio.idcidade
-    and retorno.cdcooper = crapcop.cdcooper
-    and retorno.flcustas_proc = 1
-    and (crapmun.cdestado = pr_cdestado or pr_cdestado is null)
-    and ((crapcob.cdcooper = pr_cdcooper) or (pr_cdcooper is null))
-    and (crapcob.nrdconta = pr_nrdconta or pr_nrdconta is null)
-    and (cartorio.nrcpf_cnpj = pr_cartorio or pr_cartorio is null)
-    and ((retorno.dtcustas_proc between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
-             or (pr_dtinicial is null and pr_dtfinal is null))
-    union all
-    select confirmacao.vlgrava_eletronica as tarifas
-          ,confirmacao.vlcuscar as custas_cartorarias
-          ,confirmacao.vlcustas_cartorio as custas_distribuidor
-          ,confirmacao.vldemais_despes as demais_despesas
+         ,NVL(tar.dtmvtolt,NVL(cus.dtmvtolt,NULL)) AS dtcustar
+         ,NVL(tar.nrdocmto,NVL(cus.nrdocmto,NULL)) AS nrdocmto
+         ,TO_CHAR(TO_DATE(NVL(tar.hrtransa,NVL(cus.hrtransa,NULL)),'SSSSS'),'HH24:MI') AS hrtransa
+    FROM tbcobran_retorno_ieptb retorno
+         INNER JOIN crapcob ON (retorno.cdcooper = crapcob.cdcooper AND retorno.nrdconta = crapcob.nrdconta AND retorno.nrcnvcob = crapcob.nrcnvcob AND retorno.nrdocmto = crapcob.nrdocmto)
+         INNER JOIN crapmun ON retorno.cdcomarc = crapmun.cdcomarc
+         INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade
+         INNER JOIN crapcop ON retorno.cdcooper = crapcop.cdcooper
+         LEFT JOIN tbfin_recursos_movimento tar ON tar.idlancto = retorno.idlancto_tarifa
+         LEFT JOIN tbfin_recursos_movimento cus ON cus.idlancto = retorno.idlancto_custas
+    WHERE (retorno.flcustas_proc = pr_flcustas OR pr_flcustas IS NULL)
+          AND (crapmun.cdestado = pr_cdestado OR pr_cdestado IS NULL)
+          AND (crapcob.cdcooper = pr_cdcooper OR pr_cdcooper = 3)
+          AND (crapcob.nrdconta = pr_nrdconta OR pr_nrdconta IS NULL)
+          AND (cartorio.nrcpf_cnpj = pr_cartorio OR pr_cartorio IS NULL)
+          AND ((retorno.dtcustas_proc BETWEEN to_date(pr_dtinicial,'DD/MM/RRRR') AND to_date(pr_dtfinal,'DD/MM/RRRR')) 
+                 OR (pr_dtinicial IS NULL AND pr_dtfinal IS NULL))
+
+    UNION ALL
+
+    SELECT confirmacao.vlgrava_eletronica AS tarifas
+          ,confirmacao.vlcuscar AS custas_cartorarias
+          ,confirmacao.vlcustas_cartorio AS custas_distribuidor
+          ,confirmacao.vldemais_despes AS demais_despesas
           ,(confirmacao.vlcuscar + confirmacao.vlcustas_cartorio + confirmacao.vldemais_despes) AS total_despesas
           ,confirmacao.dtmvtolt -- data do recebimento
           ,crapcop.nmrescop -- cooperativa
           ,cartorio.nmcartorio -- cartorio
           ,crapmun.cdestado -- estado
           ,crapcob.nrnosnum -- nosso numero
-    from tbcobran_confirmacao_ieptb confirmacao
-        ,crapcob
-        ,crapmun
-        ,tbcobran_cartorio_protesto cartorio
-        ,crapcop
-    where 
-        confirmacao.cdcooper = crapcob.cdcooper
-    and confirmacao.nrdconta = crapcob.nrdconta
-    and confirmacao.nrcnvcob = crapcob.nrcnvcob
-    and confirmacao.nrdocmto = crapcob.nrdocmto
-    and confirmacao.cdcomarc = crapmun.cdcomarc
-    --and confirmacao.cdcartorio = cartorio.cdcartorio
-    and crapmun.idcidade = cartorio.idcidade
-    and confirmacao.cdcooper = crapcop.cdcooper
-    and confirmacao.flcustas_proc = 1
-    and (crapmun.cdestado = pr_cdestado or pr_cdestado is null)
-    and ((crapcob.cdcooper = pr_cdcooper) or (pr_cdcooper is null))
-    and (crapcob.nrdconta = pr_nrdconta or pr_nrdconta is null)
-    and (cartorio.nrcpf_cnpj = pr_cartorio or pr_cartorio is null)
-    and ((confirmacao.dtcustas_proc between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
-             or (pr_dtinicial is null and pr_dtfinal is null));          
+          ,NVL(tar.dtmvtolt,NVL(cus.dtmvtolt,NULL)) AS dtcustar
+          ,NVL(tar.nrdocmto,NVL(cus.nrdocmto,NULL)) AS nrdocmto
+          ,TO_CHAR(TO_DATE(NVL(tar.hrtransa,NVL(cus.hrtransa,NULL)),'SSSSS'),'HH24:MI') AS hrtransa
+    FROM  tbcobran_confirmacao_ieptb confirmacao
+          INNER JOIN crapcob ON (confirmacao.cdcooper = crapcob.cdcooper AND confirmacao.nrdconta = crapcob.nrdconta AND confirmacao.nrcnvcob = crapcob.nrcnvcob AND confirmacao.nrdocmto = crapcob.nrdocmto)
+          INNER JOIN crapmun ON confirmacao.cdcomarc = crapmun.cdcomarc
+          INNER JOIN tbcobran_cartorio_protesto cartorio ON crapmun.idcidade = cartorio.idcidade
+          INNER JOIN crapcop ON confirmacao.cdcooper = crapcop.cdcooper
+          LEFT JOIN tbfin_recursos_movimento tar ON tar.idlancto = confirmacao.idlancto_tarifa
+          LEFT JOIN tbfin_recursos_movimento cus ON cus.idlancto = confirmacao.idlancto_custas
+    WHERE (confirmacao.flcustas_proc = pr_flcustas OR pr_flcustas IS NULL)
+          AND (crapmun.cdestado = pr_cdestado OR pr_cdestado IS NULL)
+          AND (crapcob.cdcooper = pr_cdcooper OR pr_cdcooper = 3)
+          AND (crapcob.nrdconta = pr_nrdconta OR pr_nrdconta IS NULL)
+          AND (cartorio.nrcpf_cnpj = pr_cartorio OR pr_cartorio IS NULL)
+          AND ((confirmacao.dtcustas_proc BETWEEN to_date(pr_dtinicial,'DD/MM/RRRR') AND to_date(pr_dtfinal,'DD/MM/RRRR')) 
+                 OR (pr_dtinicial IS NULL AND pr_dtfinal IS NULL));          
    rw_tbcobran_retorno_ieptb cr_tbcobran_retorno_ieptb%ROWTYPE;  
 
    CURSOR cr_tbcobran_ted(pr_idlancto IN tbfin_recursos_movimento.idlancto%TYPE) IS
@@ -830,7 +830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                               ,pr_dtinicial     IN VARCHAR2 --> Data inicial de recebimento de ted
                               ,pr_dtfinal       IN VARCHAR2 --> Data final de recebimento de ted
                               ,pr_cdestado      IN VARCHAR2 --> Estado que veio a confirmação
-                              ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                              ,pr_cartorio      IN VARCHAR2 --> Cartorio da ted
+                              ,pr_flcustas      IN INTEGER  --> Exibir taxas/custas pagas
                               ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
                               ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
                               ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
@@ -889,13 +890,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                                               ,pr_dtinicial  => pr_dtinicial
                                                               ,pr_dtfinal    => pr_dtfinal
                                                               ,pr_cdestado   => pr_cdestado
-                                                              ,pr_cartorio   => pr_cartorio) LOOP
+                                                              ,pr_cartorio   => pr_cartorio
+                                                              ,pr_flcustas   => pr_flcustas) LOOP
                                                               
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'custas_cartorarias', pr_tag_cont => rw_tbcobran_retorno_ieptb.custas_cartorarias, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'custas_distribuidor', pr_tag_cont => rw_tbcobran_retorno_ieptb.custas_distribuidor, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'total_despesas', pr_tag_cont => rw_tbcobran_retorno_ieptb.total_despesas, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtmvtolt', pr_tag_cont => rw_tbcobran_retorno_ieptb.dtmvtolt, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtmvtolt', pr_tag_cont => to_char(rw_tbcobran_retorno_ieptb.dtmvtolt, 'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nmrescop', pr_tag_cont => rw_tbcobran_retorno_ieptb.nmrescop, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nmcartorio', pr_tag_cont => rw_tbcobran_retorno_ieptb.nmcartorio, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cdestado', pr_tag_cont => rw_tbcobran_retorno_ieptb.cdestado, pr_des_erro => vr_dscritic);
@@ -1306,6 +1308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                          	  	        ,pr_dtfinal       IN VARCHAR2 --> Data final de recebimento de ted
                                       ,pr_cdestado      IN VARCHAR2 --> Estado que veio a confirmação
                                       ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                                      ,pr_flcustas      IN INTEGER
                                       ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
                                       ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
                                       ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
@@ -1349,6 +1352,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     vr_nmarquivo   VARCHAR2(1000);      --> Nome do relatorio CSV
     
   BEGIN                                                  
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_MANPRT'
+                              ,pr_action => null);
+
     -- Cria a variavel CLOB
     dbms_lob.createtemporary(vr_clob, TRUE);
     dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
@@ -1361,16 +1368,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     -- Criar cabeçalho do CSV
     GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                            ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => 'Data Recebimento;Cooperativa;Cartório;UF;Nosso Número;Vlr. Cartório;Vlr Distribuição;Total Custas'||chr(10));
+                           ,pr_texto_novo     => 'Nr Docto TED;Data Envio;Hora Envio;Data Recebimento;Cooperativa;Cartório;UF;Nosso Número;Vlr. Cartório;Vlr Distribuição;Total Custas'||chr(10));
     
     FOR rw_tbcobran_retorno_ieptb IN cr_tbcobran_retorno_ieptb(pr_cdcooper 	 => pr_cdcooper
                                                            	  ,pr_nrdconta   => pr_nrdconta
-                                                              ,pr_dtinicial  => to_date(pr_dtinicial,'dd/mm/yyyy')
-                                                              ,pr_dtfinal    => to_date(pr_dtfinal,'dd/mm/yyyy')
+                                                              ,pr_dtinicial  => pr_dtinicial
+                                                              ,pr_dtfinal    => pr_dtfinal
                                                               ,pr_cdestado   => pr_cdestado
-                                                              ,pr_cartorio   => pr_cartorio) LOOP
+                                                              ,pr_cartorio   => pr_cartorio
+                                                              ,pr_flcustas   => pr_flcustas) LOOP
                                                               
-      vr_linha_csv := vr_linha_csv || to_char(rw_tbcobran_retorno_ieptb.dtmvtolt,'DD/MM/YYYY') || ';';
+      vr_linha_csv := vr_linha_csv || to_char(rw_tbcobran_retorno_ieptb.nrdocmto, 'DD/MM/RRRR') || ';';
+      vr_linha_csv := vr_linha_csv || to_char(rw_tbcobran_retorno_ieptb.dtcustar, 'DD/MM/RRRR') || ';';
+      vr_linha_csv := vr_linha_csv || to_char(rw_tbcobran_retorno_ieptb.hrtransa, 'DD/MM/RRRR') || ';';
+      vr_linha_csv := vr_linha_csv || to_char(rw_tbcobran_retorno_ieptb.dtmvtolt, 'DD/MM/RRRR') || ';';
       vr_linha_csv := vr_linha_csv || rw_tbcobran_retorno_ieptb.nmrescop || ';';
       vr_linha_csv := vr_linha_csv || rw_tbcobran_retorno_ieptb.nmcartorio || ';';
       vr_linha_csv := vr_linha_csv || rw_tbcobran_retorno_ieptb.cdestado || ';';
@@ -1685,6 +1696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                          	  	          ,pr_dtfinal       IN VARCHAR2 -- Data final de recebimento de ted
                                           ,pr_cdestado      IN VARCHAR2 --> Estado que veio a confirmação
                                           ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE -- Cartorio da ted
+                                          ,pr_flcustas      IN INTEGER                 -- tarifas e custas processadas
                                           ,pr_xmllog        IN VARCHAR2                -- XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER            -- Código da crítica
                                           ,pr_dscritic      OUT VARCHAR2               -- Descrição da crítica
@@ -1739,6 +1751,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     end;
     
   BEGIN                                                  
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_MANPRT'
+                              ,pr_action => null);
+
     vr_des_xml := null;
     dbms_lob.createtemporary(vr_des_xml, true);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -1751,11 +1767,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                    '<cduflogr>'     ||pr_cdestado       ||'</cduflogr>'||
                    '<dscartorio>'   ||pr_cartorio       ||'</dscartorio>'||
                    '<Columns>'      ||
-		               '<column1>'      ||'Tarifas'      		  ||'</column1>'||
-		               '<column2>'      ||'Custas cartorarias'    ||'</column2>'||
-		               '<column3>'      ||'Custas distribuidor'   ||'</column3>'||
-		               '<column4>'      ||'Outras despesas'       ||'</column4>'||
-		               '<column5>'      ||'Total custas'          ||'</column5>'||
+                     '<column1>'      ||'Nr. Docto TED'      		||'</column1>'||
+                     '<column2>'      ||'Data/Hr Envio'      		||'</column2>'||
+                     '<column3>'      ||'Tarifas'      		      ||'</column3>'||
+                     '<column4>'      ||'Custas cartorarias'    ||'</column4>'||
+                     '<column5>'      ||'Custas distribuidor'   ||'</column5>'||
+                     '<column6>'      ||'Outras despesas'       ||'</column6>'||
+                     '<column7>'      ||'Total custas'          ||'</column7>'||
 	                 '</Columns>');
                    
     pc_escreve_xml('<custas>');
@@ -1765,10 +1783,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                                               ,pr_dtinicial  => pr_dtinicial
                                                               ,pr_dtfinal    => pr_dtfinal
                                                               ,pr_cdestado   => pr_cdestado
-                                                              ,pr_cartorio   => pr_cartorio) LOOP
+                                                              ,pr_cartorio   => pr_cartorio
+                                                              ,pr_flcustas   => pr_flcustas) LOOP
       pc_escreve_xml('<custa>');
-	  
-      pc_escreve_xml('<tarifas>'     			||rw_tbcobran_retorno_ieptb.tarifas                  ||'</tarifas>'||
+          pc_escreve_xml('  <idlancto>'     			    ||rw_tbcobran_retorno_ieptb.nrdocmto                 ||'</idlancto>'||
+                         '  <hrenvio>'     			      ||to_char(rw_tbcobran_retorno_ieptb.dtcustar, 'DD/MM/RRRR') || ' ' || rw_tbcobran_retorno_ieptb.hrtransa ||'</hrenvio>'||
+                         '  <tarifas>'     			      ||rw_tbcobran_retorno_ieptb.tarifas                  ||'</tarifas>'||
                      '<custas_cartorarias>'     ||TRIM(to_char(rw_tbcobran_retorno_ieptb.custas_cartorarias,'fm999g999g990D00'))       ||'</custas_cartorarias>'||
                      '<custas_distribuidor>'    ||TRIM(to_char(rw_tbcobran_retorno_ieptb.custas_distribuidor,'fm999g999g990D00'))      ||'</custas_distribuidor>'||
                      '<demais_despesas>'        ||TRIM(to_char(rw_tbcobran_retorno_ieptb.demais_despesas,'fm999g999g990D00'))          ||'</demais_despesas>'||
@@ -2091,7 +2111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   INNER JOIN tbcobran_cartorio_protesto cart ON cart.nrcpf_cnpj = ted.nrcnpj_debitada
                                             AND cart.nmcartorio = ted.nmtitular_debitada
        WHERE ted.cdhistor IN (2622)
-         AND ted.dtconciliacao IS NOT NULL -- PARA DEBUG, comentar
+         AND ted.dtconciliacao IS NULL -- PARA DEBUG, comentar
          -- AND ted.idlancto = 999998      -- PARA DEBUG, retirar comentario
          AND ted.dsdebcre = 'C'
     ORDER BY ted.dtmvtolt ASC,
@@ -2617,12 +2637,106 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     
     -- Variável para armazenar as informações em XML
     vr_des_xml       clob;
+    vr_des_xml_txt   varchar2(32767);
     vr_typsaida     VARCHAR2(100); 
     
     -- Variável para o caminho e nome do arquivo base
     vr_dsdireto   varchar2(200);
     vr_nmarquivo  varchar2(200);
     vr_dscomand   varchar2(200);
+    
+    --debug
+    vr_input_file utl_file.file_type;
+    vr_nmdirtxt   VARCHAR2(400);
+    
+    CURSOR cr_teds(pr_dtinicial     IN VARCHAR2
+                  ,pr_dtfinal       IN VARCHAR2
+                  ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE
+                  ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE
+                  ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
+                  ,pr_flgcon        IN INTEGER
+                  ,pr_idmovto       IN tbcobran_conciliacao_ieptb.idrecurso_movto%TYPE
+                  ,pr_idretorno     IN tbcobran_conciliacao_ieptb.idretorno_ieptb%TYPE) IS
+                  
+      SELECT a.nmcartorio
+             ,a.vllanmto
+             ,a.nrdconta
+             ,a.cdagenci_debitada
+             ,gene0002.fn_mask_cpf_cnpj(a.nrcpf_cnpj,2) AS nrcpf_cnpj
+             ,a.dtmvtolt
+             ,a.idrecurso_movto
+             ,a.cdbccxlt
+             ,a.idcidade
+      FROM (
+        SELECT cartorio.nmcartorio
+                  ,mov.vllanmto
+                  ,mov.nrdconta
+                  ,banco.cdbccxlt
+                  ,mov.cdagenci_debitada
+                  ,cartorio.nrcpf_cnpj
+                  ,mov.dtmvtolt
+                  ,conc.idrecurso_movto
+                  ,conc.idretorno_ieptb
+                  ,cartorio.idcidade
+            FROM tbcobran_conciliacao_ieptb conc
+                ,tbcobran_retorno_ieptb ret
+                ,tbcobran_cartorio_protesto cartorio
+                ,crapmun municipio
+                ,tbfin_recursos_movimento mov
+                ,crapcop coop
+                ,crapban banco
+            WHERE ret.idretorno = conc.idretorno_ieptb
+              AND conc.idrecurso_movto = mov.idlancto
+              AND cartorio.idcidade = municipio.idcidade
+              AND cartorio.cdcartorio = ret.cdcartorio
+              AND municipio.cdcomarc = ret.cdcomarc
+              AND mov.cdcooper = coop.cdcooper
+              AND mov.nrispbif = banco.nrispbif
+              AND banco.nrispbif (+) = mov.nrispbif
+              AND banco.cdbccxlt (+) = decode(mov.nrispbif,0,1,banco.cdbccxlt(+))
+              AND ((conc.dtconcilicao BETWEEN to_date(pr_dtinicial,'DD/MM/RRRR') AND to_date(pr_dtfinal,'DD/MM/RRRR')) 
+                 OR (pr_dtinicial IS NULL AND pr_dtfinal IS NULL))
+              AND ((ret.vltitulo >= pr_vlinicial AND ret.vltitulo <= pr_vlfinal) 
+                 OR (pr_vlinicial = 0 AND pr_vlfinal = 0))
+              AND (cartorio.nrcpf_cnpj = pr_cartorio OR pr_cartorio IS NULL)
+      ) a
+      group by a.nmcartorio
+             ,a.vllanmto
+             ,a.nrdconta
+             ,a.cdagenci_debitada
+             ,gene0002.fn_mask_cpf_cnpj(a.nrcpf_cnpj,2)
+             ,a.dtmvtolt
+             ,a.idrecurso_movto
+             ,a.cdbccxlt
+             ,a.idcidade;
+
+    rw_ted cr_teds%ROWTYPE;
+    
+    CURSOR cr_titulos(pr_idmovto      IN tbcobran_conciliacao_ieptb.idrecurso_movto%TYPE
+                     ,pr_idcidade     IN crapmun.idcidade%TYPE) IS
+      select ret.nrdconta
+            ,ret.nrcnvcob
+            ,ret.nrdocmto
+            ,ret.cdcooper
+            ,coop.nmrescop
+            ,ret.vltitulo
+      from   tbcobran_conciliacao_ieptb conc
+            ,tbcobran_retorno_ieptb ret
+            ,crapmun municipio
+            ,tbfin_recursos_movimento mov
+            ,crapban banco
+            ,crapcop coop
+      where  conc.idretorno_ieptb = ret.idretorno
+        and  conc.idrecurso_movto = mov.idlancto
+        and  municipio.cdcomarc   = ret.cdcomarc
+        and  banco.nrispbif       = mov.nrispbif
+        and  coop.cdcooper = ret.cdcooper
+        and  banco.nrispbif (+) = mov.nrispbif
+        and  banco.cdbccxlt (+) = decode(mov.nrispbif,0,1,banco.cdbccxlt(+))
+        and  conc.idrecurso_movto = pr_idmovto
+        and  municipio.idcidade = pr_idcidade;
+        
+    rw_titulo cr_titulos%ROWTYPE;
     
     -- Subrotina para escrever texto na variável CLOB do XML
     procedure pc_escreve_xml(pr_des_dados in clob) is
@@ -2631,6 +2745,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     end;
     
   BEGIN                                                  
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_MANPRT', pr_action => null);
+
     vr_des_xml := null;
     dbms_lob.createtemporary(vr_des_xml, true);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -2641,55 +2758,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
 				   '<nrdconta>'     ||pr_nrdconta	    ||'</nrdconta>'||
                    '<dtinicial>'    ||pr_dtinicial      ||'</dtinicial>'||
                    '<dtfinal>'      ||pr_dtfinal        ||'</dtfinal>'||
-				   '<vlinicial>'    ||pr_vlinicial      ||'</vlinicial>'||
-				   '<vlfinal>'      ||pr_vlfinal        ||'</vlfinal>'||
+				           '<vlinicial>'    ||to_char(pr_vlinicial, 'fm999g999g990D00')    ||'</vlinicial>'||
+				           '<vlfinal>'      ||to_char(pr_vlfinal, 'fm999g999g990D00')      ||'</vlfinal>'  ||
                    '<dscartorio>'   ||pr_cartorio       ||'</dscartorio>');
                    
     pc_escreve_xml('<conciliacoes>');
                    
-    FOR rw_tbcobran_conciliacao_ieptb IN cr_tbcobran_conciliacao_ieptb(pr_dtinicial  => pr_dtinicial
+    FOR rw_ted IN cr_teds(pr_dtinicial  => pr_dtinicial
                                                                 ,pr_dtfinal    => pr_dtfinal
                                                                 ,pr_vlinicial  => pr_vlinicial
 															                                  ,pr_vlfinal	   => pr_vlfinal
                                                                 ,pr_cartorio   => pr_cartorio
-                                                                ,pr_flgcon => 1) LOOP
+                         ,pr_flgcon     => 1
+                         ,pr_idmovto    => NULL
+                         ,pr_idretorno  => NULL) LOOP
       pc_escreve_xml('<recurso_movimento>');
 
-      pc_escreve_xml('<cdcartorio>'     ||rw_tbcobran_conciliacao_ieptb.nrcpf_cnpj         ||'</cdcartorio>'||
-                     '<banco>'     		||rw_tbcobran_conciliacao_ieptb.cdbccxlt       	 ||'</banco>'||
-                     '<agencia>'    	||rw_tbcobran_conciliacao_ieptb.cdagenci_debitada      	 ||'</custas_distribuidor>'||
-                     '<nrconta>'        ||rw_tbcobran_conciliacao_ieptb.nrdconta           ||'</nrconta>'||
-                     '<vlted>'          ||rw_tbcobran_conciliacao_ieptb.vllanmto           ||'</total_despesas>'||
-					 '<dtrecebimento>'  ||rw_tbcobran_conciliacao_ieptb.dtmvtolt           ||'</dtrecebimento>'||
+      pc_escreve_xml('<cdcartorio>'     ||rw_ted.nrcpf_cnpj                            ||'</cdcartorio>'||
+                     '<banco>'     		  ||rw_ted.cdbccxlt       	                      ||'</banco>'||
+                     '<agencia>'    	  ||rw_ted.cdagenci_debitada                     ||'</agencia>'||
+                     '<nrconta>'        ||rw_ted.nrdconta                              ||'</nrconta>'||
+                     '<vlted>'          ||to_char(rw_ted.vllanmto, 'fm999g999g990D00') ||'</vlted>'||
+					           '<dtrecebimento>'  ||to_char(rw_ted.dtmvtolt, 'DD/MM/RRRR')       ||'</dtrecebimento>'||
 					 '<Columns>'        ||
-		               '<column1>'      ||'Data rec.'      ||'</column1>'||
-		               '<column2>'      ||'Hora rec.'      ||'</column2>'||
-		               '<column3>'      ||'Remetente'      ||'</column3>'||
-		               '<column4>'      ||'Valor'          ||'</column4>'||
-		               '<column5>'      ||'Data conc.'     ||'</column5>'||
-		               '<column6>'      ||'Banco'          ||'</column6>'||
-		               '<column7>'      ||'Conta'          ||'</column7>'||
-		               '<column8>'      ||'CPF/CNPJ'       ||'</column8>'||
+                       '<column1>'      ||'Conta'          ||'</column1>'||
+                       '<column2>'      ||'Convenio'       ||'</column2>'||
+                       '<column3>'      ||'Documento'      ||'</column3>'||
+                       '<column4>'      ||'Cooperativa'    ||'</column4>'||
+                       '<column5>'      ||'Valor título'   ||'</column5>'||
 	                 '</Columns>');
 	  
-	  FOR rw_tbcobran_retorno_ieptb IN cr_tbcobran_retorno_ieptb(pr_cdcooper   => pr_cdcooper
-                                                              ,pr_nrdconta   => pr_nrdconta
-                                                              ,pr_dtinicial  => pr_dtinicial
-                                                              ,pr_dtfinal    => pr_dtfinal
-                                                              ,pr_cdestado   => NULL
-                                                              ,pr_cartorio   => pr_cartorio) LOOP
+    pc_escreve_xml('<retornos>');
+
+	  FOR rw_titulo IN cr_titulos(pr_idmovto   => rw_ted.idrecurso_movto
+                               ,pr_idcidade  => rw_ted.idcidade) LOOP
+
         pc_escreve_xml('<retorno_ieptb>');
-		/*pc_escreve_xml('<dtrecebimento>'   ||rw_tbcobran_retorno_ieptb.nrcpf_cnpj         ||'</dtrecebimento>'||
-                     '<hrrecebimento>'     ||rw_tbcobran_retorno_ieptb.c       	  ||'</hrrecebimento>'||
-                     '<cdremetente>'       ||rw_tbcobran_retorno_ieptb.cdageban      	  ||'</cdremetente>'||
-                     '<vlvalor>'           ||rw_tbcobran_retorno_ieptb.nrdconta           ||'</vlvalor>'||
-                     '<dtconciliacao>'     ||rw_tbcobran_retorno_ieptb.vllanmto           ||'</dtconciliacao>'||
-					 '<banco>'  		   ||rw_tbcobran_retorno_ieptb.dtmvtolt           ||'</banco>'||
-					 '<conta>'  		   ||rw_tbcobran_retorno_ieptb.dtmvtolt           ||'</conta>'||
-					 '<iddocumento>'       ||rw_tbcobran_retorno_ieptb.dtmvtolt                ||'</iddocumento>');*/
+		     pc_escreve_xml('<conta>'      ||rw_titulo.nrdconta      ||'</conta>'||
+                        '<convenio>'   ||rw_titulo.nrcnvcob      ||'</convenio>'||
+                        '<documento>'  ||rw_titulo.nrdocmto      ||'</documento>'||
+                        '<cooperativa>'||rw_titulo.nmrescop      ||'</cooperativa>'||
+	          				    '<valor>'      ||to_char(rw_titulo.vltitulo, 'fm999g999g990D00')      ||'</valor>');
 		pc_escreve_xml('</retorno_ieptb>');
 	  END LOOP;																
-	  pc_escreve_xml('<retornos>');
+	  
       pc_escreve_xml('</retornos>');	  
 					 
       pc_escreve_xml('</recurso_movimento>');
@@ -2716,6 +2828,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     END IF;
     vr_nmarquivo := 'crrl741_'||0 || gene0002.fn_busca_time || '.pdf';
     
+    -- DEBUG
+    -- Diretório onde deverá gerar o arquivo de remessa
+    --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
+    vr_nmdirtxt := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'              -- IN
+                                             ,pr_cdcooper => 3                   -- IN
+                                             ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
+                                             );
+    -- Abre o arquivo de dados em modo de gravação
+    gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diretório do arquivo
+                            ,pr_nmarquiv => 'arquivo.txt'   -- IN -- Nome do arquivo
+                            ,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
+                            ,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
+                            ,pr_des_erro => pr_dscritic   -- IN -- Erro
+                            );
+    --
+    IF pr_dscritic IS NOT NULL THEN
+      --
+      RAISE vr_exc_erro;
+      --
+    END IF;
+    
+    vr_des_xml_txt := dbms_lob.substr(vr_des_xml, 30000, 1); --         (or DBMS_LOB.READ(v1,1000,1,v2))
+    
+    -- Escrever o registro no arquivo
+    gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file            -- Handle do arquivo aberto
+                                  ,pr_des_text  => vr_des_xml_txt -- Texto para escrita
+                                  );
+                                  
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+    -- END DEBUG
+    
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                , pr_cdprogra  => 'MANPRT'
@@ -2727,7 +2870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                , pr_dsarqsaid => vr_dsdireto ||'/'||vr_nmarquivo
                                , pr_flg_gerar => 'S'
                                , pr_qtcoluna  => 132
-                               , pr_cdrelato  => 740
+                               , pr_cdrelato  => 741
                                , pr_sqcabrel  => 1
                                , pr_flg_impri => 'N'
                                , pr_nmformul  => ' '
@@ -2833,6 +2976,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     vr_nmarquivo   VARCHAR2(1000);      --> Nome do relatorio CSV
     
   BEGIN                                                  
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_MANPRT', pr_action => null);
+
     -- Cria a variavel CLOB
     dbms_lob.createtemporary(vr_clob, TRUE);
     dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
@@ -2844,28 +2990,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     -- Criar cabeçalho do CSV
     GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                            ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => 'Cartorio;Remetente;CPF/CNPJ;Banco;Agencia;Conta;Data Rec;Valor;Estado;Cidade;Status'||chr(10));
+                           ,pr_texto_novo     => 'Cartorio;Valor TED;Cooperativa;Convenio;Conta;Data Conc.;Vlr. Titulo;Data Pagto'||chr(10));
     
-    FOR rw_tbfin_recursos_movimento IN cr_tbfin_recursos_movimento(pr_dtinicial => pr_dtinicial
+    FOR rw_tbcobran_conciliacao_ieptb IN cr_tbcobran_conciliacao_ieptb(pr_dtinicial => pr_dtinicial
                                                                   ,pr_dtfinal   => pr_dtfinal
                                                                   ,pr_vlinicial => pr_vlinicial
                                                                   ,pr_vlfinal   => pr_vlfinal
                                                                   ,pr_cartorio  => pr_cartorio
-                                                                  ,pr_flgcon    => pr_flgcon) LOOP
+                                                                      ,pr_flgcon    => 0) LOOP
       -- Carrega os dados
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => rw_tbfin_recursos_movimento.nome_cartorio      ||';'||
-                                                   rw_tbfin_recursos_movimento.nome_remetente     ||';'||
-                                                   gene0002.fn_mask_cpf_cnpj(rw_tbfin_recursos_movimento.cnpj_cpf,1)       ||';'||
-                                                   rw_tbfin_recursos_movimento.nome_banco         ||';'||
-                                                   rw_tbfin_recursos_movimento.nome_agencia       ||';'||
-                                                   rw_tbfin_recursos_movimento.conta              ||';'||
-                                                   rw_tbfin_recursos_movimento.data_recebimento   ||';'||
-                                                   rw_tbfin_recursos_movimento.valor              ||';'||
-                                                   rw_tbfin_recursos_movimento.nome_estado        ||';'||
-                                                   rw_tbfin_recursos_movimento.nome_cidade        ||';'||
-                                                   rw_tbfin_recursos_movimento.status        ||chr(10));
+                             ,pr_texto_novo     => rw_tbcobran_conciliacao_ieptb.nmcartorio       ||';'||
+                                                   to_char(rw_tbcobran_conciliacao_ieptb.vllanmto, 'fm999g999g990D00')         ||';'||
+                                                   rw_tbcobran_conciliacao_ieptb.nmrescop         ||';'||
+                                                   rw_tbcobran_conciliacao_ieptb.nrcnvcob         ||';'||
+                                                   rw_tbcobran_conciliacao_ieptb.nrdconta         ||';'||
+                                                   to_char(rw_tbcobran_conciliacao_ieptb.dtconcilicao,'DD/MM/YYYY')     ||';'||
+                                                   to_char(rw_tbcobran_conciliacao_ieptb.vltitulo, 'fm999g999g990D00')         ||';'||
+                                                   to_char(rw_tbcobran_conciliacao_ieptb.dtmvtolt,'DD/MM/YYYY')         ||chr(10));
     END LOOP;
     -- Encerrar o Clob
     GENE0002.pc_escreve_xml(pr_xml            => vr_clob

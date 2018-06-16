@@ -27,9 +27,18 @@ create or replace package cecred.WPRT0001 is
                             ,pr_cdbandoc IN crapcob.cdbandoc%TYPE  -- Código do banco
                             ,pr_dtmvtolt IN crapcob.dtmvtolt%TYPE  -- Data do arquivo
                             ,pr_dscritic OUT VARCHAR2);
+                            
+  PROCEDURE pc_processa_retorno(pr_dsdireto IN VARCHAR2
+                               ,pr_dsarquiv IN VARCHAR2
+                               ,pr_dscritic OUT VARCHAR2);                               
+                               
+  PROCEDURE pc_abre_envelope(pr_arquivo   IN VARCHAR2
+                            ,pr_dscritic  OUT VARCHAR2);
+
+
 end WPRT0001;
-/
-create or replace package body cecred.WPRT0001 is
+
+CREATE OR REPLACE PACKAGE BODY "CECRED"."WPRT0001" is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : WPRT0001
@@ -266,6 +275,297 @@ create or replace package body cecred.WPRT0001 is
                         ,pr_nrdrowid => vr_nrdrowid);
   END pc_gera_log;
   
+  FUNCTION fn_extrai_xml(pr_dsdireto IN VARCHAR2
+                        ,pr_dsarquiv IN VARCHAR2
+                        ,pr_dscritic  OUT VARCHAR2) RETURN VARCHAR2 IS
+  
+    
+  /* ..........................................................................
+    
+    Programa : pc_copia_arquivo        
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Augusto Henrique da Conceição (SUPERO)
+    Data     : Março/2018.                   Ultima atualizacao: 25/05/2018
+    
+    Dados referentes ao programa:
+    
+    Frequencia: ---
+    Objetivo  : 
+    
+    Alteração : 
+        
+  ..........................................................................*/  
+  BEGIN
+  DECLARE
+    p   xmlparser.parser;
+    doc xmldom.DOMDocument;
+    nl xmldom.DOMNodeList;
+    len1 NUMBER;
+    len2 NUMBER;
+    n xmldom.DOMNode;
+    n2 xmldom.DOMNode;
+    nnm xmldom.DOMNamedNodeMap;
+    e xmldom.DOMElement;
+    
+    vr_exc_erro EXCEPTION;
+    vr_cdcritic VARCHAR2(50);
+    vr_dscritic VARCHAR2(500);  
+  BEGIN
+    IF pr_dsdireto IS NULL or pr_dsarquiv IS NULL THEN
+      vr_dscritic := 'Diretório ou arquivo não informados.';
+      raise vr_exc_erro;
+    END IF;
+    
+    IF NOT GENE0001.fn_exis_arquivo(pr_dsdireto || '/' || pr_dsarquiv) THEN
+      vr_dscritic := 'Não foi possível localizar o arquivo ' || pr_dsdireto || '/' || pr_dsarquiv || '.';
+      raise vr_exc_erro;  
+    END IF;
+  
+    -- new parser
+    p := xmlparser.newParser;
+
+    -- set some characteristics
+    xmlparser.setValidationMode(p, FALSE);
+    xmlparser.setBaseDir(p, pr_dsdireto);
+
+    -- parse input file
+    xmlparser.parse(p, pr_dsdireto || '/' || pr_dsarquiv);
+
+    -- get document
+    doc := xmlparser.getDocument(p);
+
+    -- Get document element attributes
+    -- get all elements
+    nl := xmldom.getElementsByTagName(doc, '*');    
+    len1 := xmldom.getLength(nl);
+    
+    -- loop through elements
+    for j in 0..len1-1 LOOP
+      --
+      n := xmldom.item(nl, j);
+      e := xmldom.makeElement(n);
+      
+      -- get all attributes of element
+      nnm := xmldom.getAttributes(n);
+      --
+      IF (xmldom.isNull(nnm) = FALSE) THEN
+        --
+        IF xmldom.getNodeName(n) = 'return' THEN
+          --
+          RETURN xmldom.getnodevalue(xmldom.getfirstchild(n));
+          --
+        END IF;
+       END IF;
+      --
+    END LOOP;
+
+    IF pr_dscritic IS NOT NULL THEN
+      raise vr_exc_erro;
+    END IF;
+    
+    RETURN NULL;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN     
+        --> Buscar critica
+        IF nvl(vr_cdcritic,0) > 0 AND 
+          TRIM(vr_dscritic) IS NULL THEN
+          -- Busca descricao        
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+        END IF;  
+        
+        pr_dscritic := vr_dscritic;
+      
+      WHEN OTHERS THEN
+        pr_dscritic := 'Não foi possivel extrair o xml: '||SQLERRM;
+    END;
+  END fn_extrai_xml;
+  
+  PROCEDURE pc_abre_envelope(pr_arquivo   IN VARCHAR2
+                            ,pr_dscritic  OUT VARCHAR2) IS
+  
+    
+  /* ..........................................................................
+    
+    Programa : pc_abre_envelope        
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Augusto Henrique da Conceição (SUPERO)
+    Data     : Março/2018.                   Ultima atualizacao: 25/05/2018
+    
+    Dados referentes ao programa:
+    
+    Frequencia: ---
+    Objetivo  : 
+    
+    Alteração : 
+        
+  ..........................................................................*/  
+  BEGIN
+  DECLARE
+
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(4000);
+    
+    vr_utlfileh UTL_FILE.file_type;
+    vr_deslinha VARCHAR2(4000);
+    vr_desarquiv VARCHAR2(4000);
+    vr_desxml VARCHAR2(4000);
+    vr_dirarquiv  VARCHAR2(50);
+    vr_nmarquiv VARCHAR2(50);
+    
+  BEGIN
+    
+    gene0001.pc_separa_arquivo_path(pr_caminho => pr_arquivo
+                           	       ,pr_direto  => vr_dirarquiv
+                                   ,pr_arquivo => vr_nmarquiv);
+
+    gene0001.pc_abre_arquivo(pr_nmdireto => vr_dirarquiv
+                            ,pr_nmarquiv => vr_nmarquiv
+                            ,pr_tipabert => 'R'
+                            ,pr_utlfileh => vr_utlfileh
+                            ,pr_des_erro => vr_dscritic);
+
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    
+    LOOP
+      BEGIN
+        gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                    ,pr_des_text => vr_deslinha);
+
+        vr_deslinha := TRIM(vr_deslinha);
+        vr_deslinha := REPLACE(REPLACE(vr_deslinha,chr(10),''),CHR(13),'');
+        vr_desarquiv := vr_desarquiv || vr_deslinha;
+        
+        EXCEPTION
+          WHEN NO_DATA_FOUND THEN                                
+              gene0001.pc_fecha_arquivo(pr_utlfileh => vr_utlfileh);
+              EXIT;
+        END;    
+    END LOOP;
+    
+    IF vr_desarquiv IS NULL THEN
+      RAISE no_data_found;      
+    END IF;
+    
+    vr_desxml := fn_extrai_xml(pr_dsdireto => vr_dirarquiv
+                              ,pr_dsarquiv => vr_nmarquiv
+                              ,pr_dscritic => vr_dscritic);
+                 
+    IF vr_desxml IS NOT NULL THEN
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_dirarquiv
+                              ,pr_nmarquiv => vr_nmarquiv
+                              ,pr_tipabert => 'W'
+                              ,pr_utlfileh => vr_utlfileh
+                              ,pr_des_erro => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      gene0001.pc_escr_texto_arquivo(pr_utlfileh => vr_utlfileh
+                                    ,pr_des_text => vr_desxml);
+                                    
+      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_utlfileh);
+    END IF;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN     
+        pr_dscritic := vr_dscritic;      
+      WHEN OTHERS THEN
+        pr_dscritic := 'Não foi possivel codificar o arquivo: '||SQLERRM;
+    END;
+  END pc_abre_envelope;
+  
+  PROCEDURE pc_copia_arquivo(pr_arquivo        IN VARCHAR2  -- Local atual
+                            ,pr_cparquivo      IN VARCHAR2  -- Local copia
+                            ,pr_typ_saida  OUT VARCHAR2
+                            ,pr_des_saida  OUT VARCHAR2) IS
+  
+    
+  /* ..........................................................................
+    
+    Programa : pc_copia_arquivo        
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Augusto Henrique da Conceição (SUPERO)
+    Data     : Março/2018.                   Ultima atualizacao: 25/05/2018
+    
+    Dados referentes ao programa:
+    
+    Frequencia: ---
+    Objetivo  : 
+    
+    Alteração : 
+        
+  ..........................................................................*/  
+  BEGIN
+  DECLARE
+    vr_typ_saida VARCHAR2(3);
+
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic NUMBER;    
+    
+  BEGIN
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'cp ' || pr_arquivo || ' ' || pr_cparquivo
+                         ,pr_flg_aguard  => 'S'
+                         ,pr_typ_saida   => pr_typ_saida
+                         ,pr_des_saida   => pr_des_saida);
+    EXCEPTION
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception;
+  END;
+
+  END pc_copia_arquivo;
+  
+  PROCEDURE pc_remove_arquivo(pr_arquivo    IN VARCHAR2
+                             ,pr_typ_saida  OUT VARCHAR2
+                             ,pr_des_saida  OUT VARCHAR2) IS
+  
+    
+  /* ..........................................................................
+    
+    Programa : pc_remove_arquivo        
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Augusto Henrique da Conceição (SUPERO)
+    Data     : Junho/2018.                   Ultima atualizacao: 07/06/2018
+    
+    Dados referentes ao programa:
+    
+    Frequencia: ---
+    Objetivo  : 
+    
+    Alteração : 
+        
+  ..........................................................................*/  
+  BEGIN
+  DECLARE
+    vr_typ_saida VARCHAR2(3);
+
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic NUMBER;    
+    
+  BEGIN
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'rm ' || pr_arquivo
+                         ,pr_flg_aguard  => 'S'
+                         ,pr_typ_saida   => pr_typ_saida
+                         ,pr_des_saida   => pr_des_saida);
+    EXCEPTION
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception;
+  END;
+
+  END pc_remove_arquivo;
+  
   PROCEDURE pc_atualiza_arquivo(pr_arquivo        IN VARCHAR2  -- Local atual
                                ,pr_nvarquivo      IN VARCHAR2  -- Novo local                
                                ,pr_dscritic       OUT VARCHAR2) IS
@@ -296,11 +596,10 @@ create or replace package body cecred.WPRT0001 is
     vr_cdcritic NUMBER;    
     
   BEGIN
-    /*GENE0001.pc_mv_arquivo(pr_dsarqori => pr_arquivo
-                          ,pr_dsarqdes => pr_nvarquivo
+    pc_copia_arquivo(pr_arquivo => pr_arquivo
+                    ,pr_cparquivo => pr_nvarquivo
                           ,pr_typ_saida => vr_typ_saida
-                          ,pr_des_saida => vr_dscritic);*/
-
+                    ,pr_des_saida => vr_dscritic);
 
     --Se ocorreu erro dar RAISE
     IF vr_typ_saida = 'ERR' THEN
@@ -317,6 +616,27 @@ create or replace package body cecred.WPRT0001 is
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+    
+    pc_remove_arquivo(pr_arquivo => pr_arquivo
+                     ,pr_typ_saida => vr_typ_saida
+                     ,pr_des_saida => vr_dscritic);
+    
+    --Se ocorreu erro dar RAISE
+    IF vr_typ_saida = 'ERR' THEN
+          
+      --Monta mensagem de critica
+      vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+                     'mv '||pr_arquivo||' '||pr_nvarquivo||' - '||vr_dscritic;
+          
+      -- retornando ao programa chamador
+      RAISE vr_exc_erro;
+          
+    END IF;
+
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
     
     EXCEPTION
       WHEN vr_exc_erro THEN     
@@ -426,6 +746,31 @@ create or replace package body cecred.WPRT0001 is
           end loop;
           pr_dscritic := pr_dscritic || vr_cdcritic || ' - ' || vr_dscritic || ' ';
           --
+       ELSIF xmldom.getNodeName(n) = 'relatorio' THEN
+          --
+          len2 := xmldom.getLength(nnm);
+          --
+          for k in 0..len2-1 LOOP
+            n2 := xmldom.item(nnm, k);
+
+            IF xmldom.getNodeName(n2) = 'codigo' THEN
+               vr_cdcritic := xmldom.getNodeValue(n2);
+        END IF;
+
+            IF xmldom.getNodeName(n2) = 'ocorrencia' THEN
+               vr_dscritic := xmldom.getNodeValue(n2);
+            END IF;
+          end loop;
+          -- Só iremos considerar como erro se o código for diferente de zero
+          IF vr_cdcritic IS NOT NULL AND TO_NUMBER(vr_cdcritic) <> 0 THEN
+             pr_dscritic := pr_dscritic || vr_cdcritic || ' - ' || vr_dscritic || ' ';
+          END IF;
+          --
+        ELSIF xmldom.getNodeName(n) = 'faultstring' THEN
+          --
+          vr_dscritic := xmldom.getNodeValue(xmldom.getfirstchild(n));
+          pr_dscritic := pr_dscritic || vr_dscritic || ' ';
+          --
         END IF;
       END IF;
       --
@@ -474,6 +819,7 @@ create or replace package body cecred.WPRT0001 is
                                 pr_ieptb_UserPass     IN VARCHAR2,
                                 pr_ieptb_resposta     IN VARCHAR2,
                                 pr_ieptb_erro         IN VARCHAR2,
+                                pr_ieptb_retorno      IN VARCHAR2,
                                 pr_arquivo            IN VARCHAR2,
                                 pr_emails_cobranca    IN VARCHAR2,
                                 pr_cdcritic           OUT crapcri.cdcritic%TYPE,
@@ -506,6 +852,7 @@ create or replace package body cecred.WPRT0001 is
     vr_nmarquiv  VARCHAR2(50);
     vr_dirarquiv  VARCHAR2(50);
     vr_nvarquivo VARCHAR2(50);
+    vr_xml       VARCHAR2(4000);
     
     vr_horaatua VARCHAR2(50);
   
@@ -524,10 +871,14 @@ create or replace package body cecred.WPRT0001 is
                                             ,pr_cdacesso => 'ROOT_CECRED_BIN') ||
                                             'SendIEPTB.pl';
                                             
-    vr_nmarqcmd := '/usr/coop/sistema/equipe/rafael/SendIEPTB.pl';                                            
+    --vr_nmarqcmd := '/usr/coop/sistema/equipe/rafael/SendIEPTB.pl';                                            
   
     --Buscar parametros 
-    vr_dscomora := gene0001.fn_param_sistema('CRED', 3, 'SCRIPT_EXEC_SHELL');   
+    vr_dscomora := gene0001.fn_param_sistema('CRED', pr_cdcooper, 'SCRIPT_EXEC_SHELL');
+    
+    vr_drsalvar := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => '/salvar');
     
     --Retorno do request
     vr_horaatua := to_char(SYSDATE, 'yymmddhh24miss');
@@ -550,13 +901,12 @@ create or replace package body cecred.WPRT0001 is
       vr_comando := vr_comando || ' --userPass=' || CHR(39) || pr_ieptb_userPass ||  CHR(39);
     END IF;
     
-    -- Caso for arquivo de retorno ou confirmação não haverá dados para enviar
-    IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' THEN
+    -- Necessario testar 'CP', pois é ambiguo com 'C'    
+    IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' OR NOT (SUBSTR(vr_nmarquiv, 0, 1) = 'R' OR SUBSTR(vr_nmarquiv, 0, 1) = 'C') THEN
       vr_comando := vr_comando || ' < ' || 
                   REPLACE(pr_arquivo, 'coopd', 'coop');
-    ELSIF NOT (SUBSTR(vr_nmarquiv, 0, 1) = 'R' or SUBSTR(vr_nmarquiv, 0, 1) = 'C') THEN
-      vr_comando := vr_comando || ' < ' || 
-                  REPLACE(pr_arquivo, 'coopd', 'coop');
+    ELSE -- Caso for arquivo de retorno ou confirmação não haverá dados para enviar
+      vr_comando := vr_comando || ' < ' || '/dev/null'; -- Hotfix para evitar loop de STDIN no perl
     END IF;
       vr_comando := vr_comando || ' > ' ||
                     REPLACE(pr_ieptb_resposta || '/' || vr_arqreceb, 'coopd', 'coop');
@@ -578,15 +928,28 @@ create or replace package body cecred.WPRT0001 is
       END IF;
     END IF;
 
-    -- Pré processa o arquivo
+    -- Pré processa o arquivo, contanto que não seja de retorno
+    IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' OR NOT (SUBSTR(vr_nmarquiv, 0, 1) = 'R' OR SUBSTR(vr_nmarquiv, 0, 1) = 'C') THEN
+      -- Caso for arquivo de cancelamento devemos abrir o envelope SOAP
+      IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' THEN
+        pc_abre_envelope(pr_arquivo => pr_ieptb_resposta || '/' || vr_arqreceb
+                        ,pr_dscritic => pr_dscritic);
+      END IF;                           
+
     pc_processa_retorno(pr_dsdireto => pr_ieptb_resposta
                        ,pr_dsarquiv => vr_arqreceb
                        ,pr_dscritic => pr_dscritic);
+    ELSE -- Caso for de retorno cria uma copia no diretorio de arquivos de retorno
+      pc_copia_arquivo(pr_arquivo => pr_ieptb_resposta || '/' || vr_arqreceb
+                      ,pr_cparquivo => pr_ieptb_retorno || '/' || vr_nmarquiv
+                      ,pr_typ_saida => vr_typ_saida
+                      ,pr_des_saida => pr_dscritic);
+    END IF;
 
     -- Caso houver algum erro no retorno, enviaremos um e-mail e moveremos o arquivo para o diretório de erros
-    IF TRIM(pr_dscritic) IS NOT NULL THEN
+    IF TRIM(pr_dscritic) IS NOT NULL OR vr_typ_saida = 'ERR' THEN
        vr_des_assunto := 'CECRED - Erro no envio ao IEPTB';
-       vr_conteudo := '<html><body>Erro ao enviar o arquivo ' || pr_ieptb_resposta || '/' || pr_arquivo || '.' ||
+       vr_conteudo := '<html><body>Erro ao enviar o arquivo ' || pr_arquivo || '.' ||
        '<br><b>Motivo(s):</b><br> ' || pr_dscritic || '</body></html>';
        --
        GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
@@ -605,7 +968,7 @@ create or replace package body cecred.WPRT0001 is
        --
        vr_nvarquivo := pr_ieptb_erro || '/' || vr_nmarquiv;
        --
-       pc_atualiza_arquivo(pr_arquivo => pr_ieptb_resposta || '/' || pr_arquivo
+       pc_atualiza_arquivo(pr_arquivo => pr_arquivo
                           ,pr_nvarquivo => vr_nvarquivo
                           ,pr_dscritic => pr_dscritic);
       -- Loga o erro
@@ -613,13 +976,15 @@ create or replace package body cecred.WPRT0001 is
       --
     ELSE
       -- Caso contrário, iremos apenas mover para o dirério /salvar
+      IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' OR NOT (SUBSTR(vr_nmarquiv, 0, 1) = 'R' OR SUBSTR(vr_nmarquiv, 0, 1) = 'C') THEN
       vr_nvarquivo := vr_drsalvar || '/' || vr_nmarquiv;
       --
-      pc_atualiza_arquivo(pr_arquivo => pr_ieptb_resposta || '/' || pr_arquivo
+        pc_atualiza_arquivo(pr_arquivo => pr_arquivo
                           ,pr_nvarquivo => vr_nvarquivo
                           ,pr_dscritic => pr_dscritic);
+      END IF;
       -- Loga o registro enviado
-			pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] Envio do arquivo ' || pr_ieptb_resposta || '/' || pr_arquivo || ' ao CRA Nacional.'); -- Texto para escrita
+			pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] Envio do arquivo ' || pr_arquivo || ' ao CRA Nacional.'); -- Texto para escrita
     END IF;
     
     EXCEPTION
@@ -734,6 +1099,7 @@ create or replace package body cecred.WPRT0001 is
                                ,pr_ieptb_UserPass => vr_ieptb_userPass
                                ,pr_ieptb_resposta => vr_ieptb_resposta
                                ,pr_ieptb_erro => vr_ieptb_erro
+                               ,pr_ieptb_retorno => vr_ieptb_retorno
                                ,pr_arquivo => vr_arquivo
                                ,pr_emails_cobranca => vr_emails_cobranca
                                ,pr_cdcritic => vr_cdcritic
@@ -759,6 +1125,7 @@ create or replace package body cecred.WPRT0001 is
                                ,pr_ieptb_UserPass => vr_ieptb_userPass
                                ,pr_ieptb_resposta => vr_ieptb_resposta
                                ,pr_ieptb_erro => vr_ieptb_erro                              
+                               ,pr_ieptb_retorno => vr_ieptb_retorno
                                ,pr_arquivo => vr_arquivo
                                ,pr_emails_cobranca => vr_emails_cobranca
                                ,pr_cdcritic => vr_cdcritic
@@ -784,6 +1151,7 @@ create or replace package body cecred.WPRT0001 is
                                ,pr_ieptb_UserPass => vr_ieptb_userPass
                                ,pr_ieptb_resposta => vr_ieptb_resposta
                                ,pr_ieptb_erro => vr_ieptb_erro                              
+                               ,pr_ieptb_retorno => vr_ieptb_retorno
                                ,pr_arquivo => vr_arquivo
                                ,pr_emails_cobranca => vr_emails_cobranca
                                ,pr_cdcritic => vr_cdcritic
@@ -878,6 +1246,7 @@ create or replace package body cecred.WPRT0001 is
                        ,pr_ieptb_resposta => vr_ieptb_resposta
                        ,pr_emails_cobranca => vr_emails_cobranca
                        ,pr_ieptb_erro => vr_ieptb_erro                      
+                       ,pr_ieptb_retorno => vr_ieptb_retorno
                        ,pr_arquivo => vr_nmarqv
                        ,pr_cdcritic => vr_nmarqv
                        ,pr_dscritic => pr_dscritic);
@@ -896,6 +1265,7 @@ create or replace package body cecred.WPRT0001 is
                        ,pr_ieptb_resposta => vr_ieptb_resposta
                        ,pr_emails_cobranca => vr_emails_cobranca
                        ,pr_ieptb_erro => vr_ieptb_erro                  
+                       ,pr_ieptb_retorno => vr_ieptb_retorno
                        ,pr_arquivo => vr_nmarqv
                        ,pr_cdcritic => vr_nmarqv
                        ,pr_dscritic => pr_dscritic);

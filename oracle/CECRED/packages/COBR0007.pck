@@ -2958,6 +2958,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END;
   END pc_inst_protestar;
 
+  -- Procedure para retornar os dias úteis para o cancelamento
+	PROCEDURE pc_calc_dias_cancel(pr_cdcooper IN  NUMBER
+		                           ,pr_dtsitcrt IN  DATE
+		                           ,pr_qtdias   IN  NUMBER
+															 ,pr_dtlmtcnl OUT DATE
+															 ,pr_dscritic OUT VARCHAR2
+		                           ) IS
+    --
+		vr_x INTEGER;
+		--
+	BEGIN
+		--
+		pr_dtlmtcnl := pr_dtsitcrt;
+		--
+		FOR vr_x IN 1..pr_qtdias LOOP 
+			pr_dtlmtcnl := pr_dtlmtcnl + 1;
+	    
+			pr_dtlmtcnl := cecred.gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
+																											 ,pr_dtmvtolt  => pr_dtlmtcnl
+																											 ,pr_tipo      => 'P'
+																											 ,pr_feriado   => TRUE
+																											 ,pr_excultdia => FALSE
+																											 );
+		END LOOP;
+		--
+	EXCEPTION
+		WHEN OTHERS THEN
+			pr_dscritic := 'Erro na pc_calc_dias_cancel: ' || SQLERRM;
+	END pc_calc_dias_cancel;
+
   -- Procedure para Cancelar o Protesto 085
   PROCEDURE pc_inst_cancel_protesto_85(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
@@ -3061,6 +3091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_cdmotivo     crapret.cdmotivo%TYPE;
     vr_cdocorre     craprem.cdocorre%TYPE;
     vr_dtmvtaux     DATE;
+		vr_dtlmtcnl     DATE;
 
   BEGIN
     --Inicializa variaveis erro
@@ -3533,8 +3564,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
               vr_dscritic := 'Erro ao buscar a qtd de dias limite de cancelamento: ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
+          -- Calcula o prazo limite para cancelamento
+					pc_calc_dias_cancel(pr_cdcooper => rw_crapcob.cdcooper -- IN
+														 ,pr_dtsitcrt => rw_crapcob.dtsitcrt -- IN
+														 ,pr_qtdias   => vr_qtdiacan         -- IN
+														 ,pr_dtlmtcnl => vr_dtlmtcnl         -- OUT
+														 ,pr_dscritic => vr_dscritic         -- OUT
+														 );
+					-- Verifica se ocorreu erro durante a execucao
+					IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+						RAISE vr_exc_erro;
+					END IF;
           --
-          IF pr_dtmvtolt > (rw_crapcob.dtsitcrt + vr_qtdiacan) THEN
+          IF pr_dtmvtolt > vr_dtlmtcnl THEN
             -- Gerar o retorno para o cooperado 
             COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                                ,pr_cdocorre => 26   -- Instrucao Rejeitada
