@@ -86,7 +86,7 @@
 																				<table width="100%" border="0" cellspacing="0" cellpadding="0">
 																					<tr>
 																						<td>
-			                                                                                <div id="divRotina">TESTE EITA DO KORAI</div>
+			                                                                                <div id="divRotina"></div>
 			                                                                                <div id="divTela">
 																								<!-- INCLUDE DA TELA DE PESQUISA -->
 																								<? require_once("../../includes/pesquisa/pesquisa.php"); ?>

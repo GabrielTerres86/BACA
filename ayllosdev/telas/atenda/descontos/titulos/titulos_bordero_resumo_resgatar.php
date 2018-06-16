@@ -104,7 +104,7 @@
 						    			<td><? echo $t->nrdocmto;?></td>
 						    			<td><? echo $t->nrinssac.' - '.$t->nmdsacad;?></td>
 						    			<td><? echo $t->dtvencto;?></td>
-						    			<td><span><? echo converteFloat($t->vltitulo);?></span><? echo formataMoeda($t->vltitulo);?></td>
+						    			<td class="tit-bord-res-vl"><span><? echo converteFloat($t->vltitulo);?></span><? echo formataMoeda($t->vltitulo);?></td>
 										<td><? echo $t->nrborder?></td>
 						    			<td><? echo $t->dtlibbdt; ?></td>
 						    		</tr>
@@ -121,6 +121,18 @@
 
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
+	<!-- Tabela de resumo dos titulos -->
+	<table class="tit-bord-resumo-valores">
+		<tr>
+			<td><label>Quantidade de T&iacute;tulos:</label></td>
+			<td class="tit-bord-res-qtd">0</td>
+			<td width="20px"></td>
+			<td><label>Valor Total:</label></td>
+			<td class="tit-bord-res-vltot">0,00</td>
+		</tr>
+	</table>
+
+	<!-- Botoes -->
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,2,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
 	<input type="button" class="botao" value="Confirmar Resgate" onClick="showConfirmacao('Confirma resgate dos t&iacute;tulos selecionados?','Confirma&ccedil;&atilde;o - Ayllos','confirmarResgate();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 </div>
@@ -131,6 +143,10 @@
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDERO - RESUMO");
 
+	//Calcular valores do resumo
+	calculaValoresResumoBordero();
+	$(".tit-bord-resumo-valores").css("margin", "5px 0 5px 0");
+	
 	formataLayout('divResumoBordero');
 
 	// Esconde mensagem de aguardo
@@ -144,5 +160,7 @@
     var ordemInicial = new Array();
     table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
 
+	//Seleciona primeira linha ao entrar na tela
+    $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
 
 </script>

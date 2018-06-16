@@ -393,9 +393,13 @@
 		}
 
     	$dados = $xmlObj->roottag->tags[0];
+    	$nrborder = $dados->tags[1]->cdata;
+    	$flrestricao = $dados->tags[2]->cdata;
+    	$arrInsert['msg'] = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->cdata);
+    	$arrInsert['nrborder'] = $nrborder;
+    	$arrInsert['flrestricao'] = $flrestricao;
 
-			
-	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+		echo json_encode($arrInsert);
 			
 	}else if ($operacao == 'REALIZAR_MANUTENCAO_LIMITE'){
 
@@ -514,9 +518,10 @@
 		}
 
     	$dados = $xmlObj->roottag->tags[0];
+    	$arrAlterar['msg'] = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->cdata);
 
-			
-	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+		echo json_encode($arrAlterar);	
+	    //echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
 			
 	}else if ($operacao =='BUSCAR_TITULOS_RESGATE'){
 
@@ -725,6 +730,63 @@
 	    //$html .= '<input type="hidden" name="qtregist" id="qtregist" value="'.$qtregist.'" />';
 
 	    echo $html;
+	}else if($operacao == 'CALCULAR_SALDO_TITULOS_VENCIDOS'){
+		$nrdconta     = $_POST['nrdconta'];
+		$nrborder    = $_POST['nrborder'];
+		$arr_nrdocmto = implode(',', $_POST['arr_nrdocmto']);
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<arrtitulo>".$arr_nrdocmto."</arrtitulo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CALCULA_POSSUI_SALDO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$dados = $root->dados;
+
+		//Pega o saldo de retorno
+		foreach($dados->find("inf") as $t){
+			$possui_saldo = $t->possui_saldo;
+		}
+		
+		//Se possuir saldo positivo o retorno é 1 senão 0
+		echo $possui_saldo;
+
+	}else if($operacao == 'PAGAR_TITULOS_VENCIDOS'){
+		$nrdconta     = $_POST['nrdconta'];
+		$nrborder     = $_POST['nrborder'];
+		$fl_avalista  = $_POST['fl_avalista'];
+		$arr_nrdocmto = implode(',', $_POST['arr_nrdocmto']);
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<flavalista>".$fl_avalista."</flavalista>";
+		$xml .= "		<arrtitulo>".$arr_nrdocmto."</arrtitulo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "PAGAR_TITULOS_VENCIDOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+
+		//OK caso retorne com sucesso
+		echo $root->dsmensag;
 	}
 
 	// Função para exibir erros na tela através de javascript

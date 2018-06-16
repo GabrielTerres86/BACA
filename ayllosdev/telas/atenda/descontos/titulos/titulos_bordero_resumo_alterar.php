@@ -136,7 +136,7 @@
 						    			<td><? echo $t->nrdocmto;?></td>
 						    			<td><? echo $t->nrinssac.' - '.$t->nmdsacad;?></td>
 						    			<td><? echo $t->dtvencto;?></td>
-						    			<td><span><? echo converteFloat($t->vltitulo);?></span><? echo formataMoeda($t->vltitulo);?></td>
+						    			<td class="tit-bord-res-vl"><span><? echo converteFloat($t->vltitulo);?></span><? echo formataMoeda($t->vltitulo);?></td>
 						    			<?
 							    			$sit = $t->dssituac;
 								    		if ($sit=="N") { ?>
@@ -175,6 +175,18 @@
 
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
+	<!-- Tabela de resumo dos titulos -->
+	<table class="tit-bord-resumo-valores">
+		<tr>
+			<td><label>Quantidade de T&iacute;tulos:</label></td>
+			<td class="tit-bord-res-qtd">0</td>
+			<td width="20px"></td>
+			<td><label>Valor Total:</label></td>
+			<td class="tit-bord-res-vltot">0,00</td>
+		</tr>
+	</table>
+
+	<!-- Botoes -->
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,3,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
 	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
 	<input type="button" class="botao" value="Ver Detalhes" onClick="mostrarDetalhesPagador();return false;"/>
@@ -189,6 +201,10 @@
 
 	formataLayout('divResumoBordero');
 
+	//Calcular valores do resumo
+	calculaValoresResumoBordero();
+	$(".tit-bord-resumo-valores").css("margin", "5px 0 5px 0");
+
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 
@@ -199,6 +215,9 @@
     var table = registros.find(">table");
     var ordemInicial = new Array();
     table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+
+	//Seleciona primeira linha ao entrar na tela
+    $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
 
     // //Atualizar a situacao da pagina anterior 
     $(".divRegistrosTitulosSelecionados .titulo-nao-analisado").each(function(){

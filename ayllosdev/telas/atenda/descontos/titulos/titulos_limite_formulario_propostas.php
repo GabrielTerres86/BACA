@@ -349,8 +349,15 @@
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
+
+			/*Motor em contingencia*/
+			if(flctgmot){
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulosPropostas()");
-		} else if (operacao == 'C') {
+			}else{
+				fncRatingSuccess = 'carregaLimitesTitulosPropostas()';
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+			}
+		}else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
 		} else {
@@ -361,7 +368,11 @@
 	});
 	
 	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
+		if(operacao == 'A' && flctgmot){
 		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+		}else{
+			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Observacao;divBotoesObs');
+		}
 		return false;
 	});
 	

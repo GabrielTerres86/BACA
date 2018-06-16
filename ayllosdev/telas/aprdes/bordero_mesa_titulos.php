@@ -5,7 +5,7 @@
 	 Data : 25/03/2018
 	                                                                  
 	 Objetivo  : Lista os títulos de um borderô passíveis de análise na mesa de checagem
-
+     - 01/06/2018 | Vitor Shimada Assanuma (GFT): Inclusão de todos os titulos do borderô, mas com o campo de decisão bloqueado quando não tem crítica CNAE
 	************************************************************************/
 	
 	session_start();
@@ -155,8 +155,9 @@
 																<tbody>
 																	<? foreach($dados->find("inf") AS $t) {?>
 																		<tr onclick="selecionaTitulo('<?= $t->cdbandoc; ?>;<?= $t->nrdctabb; ?>;<?= $t->nrcnvcob; ?>;<?= $t->nrdocmto; ?>');">
-																			<td>
+																			<td>><?php if ($t->flgenvmc->cdata == 1){ ?>
 							    												<input type='hidden' name='titulos[]' value='<?= $t->cdbandoc; ?>;<?= $t->nrdctabb; ?>;<?= $t->nrcnvcob; ?>;<?= $t->nrdocmto; ?>'/>
+							    												<?php } ?>
 																				<? echo $t->nmdsacad; ?>
 																			</td>
 																			<td><? echo $t->nrcelsac; ?></td>
@@ -175,7 +176,7 @@
 															                	<td>N&atilde;o Analisado</td>
 															                <? } ?>
 																			<td style="text-align:center;">
-																				<select name="insitmch" style="float:none;" <?=$checagem?"":" disabled "?>>
+																				<select name="insitmch" style="float:none;" <?=$checagem && $t->flgenvmc->cdata == 1?"":" disabled "?>>
 																					<option value=""></option>
 																					<option value="S" <?=$t->insitmch=='1'?'selected':''?>>Sim</option>
 																					<option value="N" <?=$t->insitmch=='2'?'selected':''?>>N&atilde;o</option>

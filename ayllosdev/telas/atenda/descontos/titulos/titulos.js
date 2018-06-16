@@ -2611,7 +2611,27 @@ function confirmarInclusao(){
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                eval(response);
+                var r = $.parseJSON(response);
+                nrbordero = r.nrborder;
+                flrestricao = r.flrestricao;
+                
+                //Caso tenha restricao, mostrar confirmação para analisar
+                if (flrestricao == 1){
+                    showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
+                        "Confirma&ccedil;&atilde;o - Ayllos",
+                        "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                        "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                        "sim.gif",
+                        "nao.gif"
+                    );                
+                }else{
+                    showError(
+                        "inform",
+                        r.msg,
+                        "Alerta - Ayllos",
+                        "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');"
+                    );
+                }
             }
         });
     }
@@ -2646,7 +2666,15 @@ function confirmarAlteracao(){
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                eval(response);
+                var r = $.parseJSON(response);
+               
+                showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
+                    "Confirma&ccedil;&atilde;o - Ayllos",
+                    "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                    "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                    "sim.gif",
+                    "nao.gif"
+                );                
             }
         });
     }
@@ -2750,6 +2778,7 @@ function visualizarTituloDeBordero() {
         data: {
             nrdconta: nrdconta,
             selecionados: selecionados,
+            nrborder: nrbordero,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -3303,7 +3332,6 @@ function efetuarPagamentoTitulosVencidos(fl_avalista, arr_titulos){
             },
             success : function(response) {
                 hideMsgAguardo();
-                
                 if (response == 1)
                     showError('inform','T&iacute;tulos pagos com sucesso!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaBorderosTitulos();voltaDiv(3,2,4,\'DESCONTO DE TÍTULOS - BORDERÔS\');');
                 else{
@@ -3327,12 +3355,12 @@ function pagarTitulosVencidos(){
     //Caso nada tenha sido selecionado mostra erro
     if (arr_nrdocmto.length <= 0){
         showError("error", "Selecione ao menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-    }else if(pgto_avalista){ 
-        //Caso seja pagamento com avalista nao precisa verificar o saldo
-        msg_confirmacao = "Confirmar Pagamento com Avalista?";
-        showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    }else {
+        if(pgto_avalista){ 
+            showMsgAguardo('Aguarde, pagamento com avalista calculando saldo em conta...');
     }else{
         showMsgAguardo('Aguarde, calculando saldo em conta...');
+        }
 
         //Invoca AJAX para verificar se possui Saldo em Conta
         $.ajax({        
@@ -3358,7 +3386,7 @@ function pagarTitulosVencidos(){
                     showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
                 }
                 else if (response == 2){
-                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento?";
+                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento com al&ccedil;a?";
                     showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
                 }else{
                     //Invoca a funcao
