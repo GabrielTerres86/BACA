@@ -728,8 +728,9 @@
 			  14/12/2017 - SM Motor de Crédito - Interrupçao de Fluxo (Marcos-Supero)
 			  
               15/12/2017 - Inserção do campo idcobope. Inclusão do vinculo com a cobertura. PRJ404 (Lombardi)
-              01/12/2017 - P410 - Alteracao Calculo IOF - incluir o Valor IOF complementar por atraso (Jean -Mout´s)
 
+              01/12/2017 - P410 - Alteracao Calculo IOF - incluir o Valor IOF complementar por atraso (Jean -Mout´s)
+  
                           21/11/2017 - Inclusão do campo flgpreap na procedure altera-valor-proposta,
                                                          Prj. 402 (Jean Michel)
 	  
@@ -766,6 +767,12 @@
               
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
+              
+			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
+
+              22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
+                           Incluida validacao das linhas de credito 100,800,900 e 6901 e do campo
+                           par_idquapro. PRJ366 (Lombardi)
 
  ..............................................................................*/
 
@@ -1761,7 +1768,7 @@ PROCEDURE obtem-extrato-emprestimo:
             RETURN "NOK".
         END.
 
-    ASSIGN aux_dshistor = "1032,1033,1034,1035,1048,1049,2566,2567".
+    ASSIGN aux_dshistor = "1032,1033,1034,1035,1048,1049,2566,2567,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476".
 
     FOR EACH craplem WHERE craplem.cdcooper  = par_cdcooper AND
                            craplem.nrdconta  = par_nrdconta AND
@@ -1803,7 +1810,6 @@ PROCEDURE obtem-extrato-emprestimo:
                                                    craplem.vlpreemp,4)
                                          ELSE
                                              0.
-
         /*Historicos que nao vao compor o saldo,
           mas vao aparecer no relatorio*/
         IF  CAN-DO("1048,1049,1050,1051,1717,1720,1708,1711,2566,2567",
@@ -2424,6 +2430,7 @@ PROCEDURE obtem-propostas-emprestimo:
                                                        ,INPUT aux_dscatbem     /* Bens em garantia */
                                                        ,INPUT crawepr.idfiniof /* Indicador de financiamento de iof e tarifa */
                                                        ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
+                                                       ,INPUT "N" /* Nao gravar valor nas parcelas */
                                                        ,OUTPUT 0 /* Valor calculado da Parcel */
                                                        ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                                        ,OUTPUT 0 /* Valor calculado do iof principal */
@@ -3014,14 +3021,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
                        tt-proposta-epr.vliofepr = 0
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof.
-                       
-					   DO i = 1 TO 10:
-						IF  crawepr.nrctrliq[i] > 0  THEN
-							tt-proposta-epr.dsctrliq = tt-proposta-epr.dsctrliq + 
-														(IF tt-proposta-epr.dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))
-														ELSE
-															", " + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
-						END. /** Fim do DO ... TO **/
+
                        
 				IF  AVAIL crapepr THEN
                   DO:
@@ -3081,11 +3081,11 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).
                         END.
                 END.
-
+                      
                      ASSIGN aux_qtdias_carencia = 0.
                      IF crawepr.idcarenc > 0 THEN
                      DO:
-
+                     
                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                        
                        /* Efetuar a chamada a rotina Oracle  */
@@ -3132,6 +3132,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                             ,INPUT aux_dscatbem         /* Bens em garantia */
                                             ,INPUT crawepr.idfiniof     /* Indicador de financiamento de IOF e tarifa */
                                             ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
+                                            ,INPUT "N" /* Nao gravar valor nas parcelas */
                                             ,OUTPUT 0 /* Valor calculado da Parcela */
                                             ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                             ,OUTPUT 0 /* Valor calculado do iof principal */
@@ -3737,6 +3738,7 @@ PROCEDURE valida-dados-gerais:
     DEF  INPUT PARAM par_idcarenc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcarenc AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idquapro AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -3890,7 +3892,9 @@ PROCEDURE valida-dados-gerais:
     
     DO WHILE TRUE:
 
-        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) THEN /* CDC */
+        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) AND
+            NOT CAN-DO("100,800,900,6901", STRING(par_cdlcremp)) AND /* CDC */
+            NOT CAN-DO("2,4", STRING(par_idquapro)) THEN
             DO:
                 aux_valida_adesao = TRUE.
                 IF par_cddopcao = "A" THEN
@@ -3904,7 +3908,9 @@ PROCEDURE valida-dados-gerais:
                         /* Verifica se valida */
                         IF  AVAIL crawepr   THEN
                             DO:
-                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) THEN
+                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) OR 
+                                    CAN-DO("100,800,900,6901", STRING(crawepr.cdlcremp)) OR /* CDC */
+                                    CAN-DO("2,4", STRING(crawepr.idquapro)) THEN
                                     aux_valida_adesao = TRUE.
                                 ELSE 
                                     aux_valida_adesao = FALSE.
@@ -3928,7 +3934,7 @@ PROCEDURE valida-dados-gerais:
                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
                         
                         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+                        
                         ASSIGN aux_cdcritic = 0
                                aux_dscritic = ""
                                aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
@@ -4422,6 +4428,7 @@ PROCEDURE valida-dados-gerais:
                                             INPUT par_flgerlog,
                                             INPUT par_nrctremp,
                                             INPUT par_cdlcremp,
+                                            INPUT par_cdfinemp,
                                             INPUT par_vlemprst,
                                             INPUT par_qtpreemp, /*par_qtparepr*/
                                             INPUT par_dtmvtolt,
@@ -4520,6 +4527,7 @@ PROCEDURE valida-dados-gerais:
                                                            ,INPUT aux_dscatbem     /* Bens em garantia */
                                                            ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
                                                            ,INPUT "" /* pr_dsctrliq */
+                                                           ,INPUT "N" /* Nao gravar valor nas parcelas */
                                                            ,OUTPUT 0 /* Valor calculado da Parcela */
                                                            ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                                            ,OUTPUT 0 /* Valor calculado do iof principal */
@@ -4765,6 +4773,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
     DEF VAR par_qtprecal          AS INTE                           NO-UNDO.
+	DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
 
     DEF BUFFER crabepr FOR crapepr.
 
@@ -4773,22 +4782,34 @@ PROCEDURE proc_qualif_operacao:
 
     ASSIGN par_dsctrliq = " " + par_dsctrliq.
 
+
+    FIND FIRST crapdat 
+         WHERE cdcooper = par_cdcooper
+       NO-LOCK NO-ERROR.
+
+    /* Se Mes do Dia diferente do Mes do dia de ontem,
+       assume dada do ultimo dia do mes anterior */
+    IF  MONTH(crapdat.dtmvtolt) <> MONTH(crapdat.dtmvtoan) THEN
+        ASSIGN aux_dtmvtoan = crapdat.dtultdma.
+    ELSE
+        ASSIGN aux_dtmvtoan = crapdat.dtmvtoan.
+
+
     DO  aux_contaliq = 1 TO NUM-ENTRIES(par_dsctrliq):
 		aux_qtd_dias_atraso = 0.
         aux_emp_a_liq = INTEGER(ENTRY(aux_contaliq,par_dsctrliq)).
 
         /* ADP                                                */
-        IF aux_emp_a_liq = par_nrdconta THEN
-            DO:
+        IF  aux_emp_a_liq = par_nrdconta THEN DO:
                 /* Ver se existe na central de risco          */
                 FIND FIRST crapris
                      WHERE crapris.cdcooper = par_cdcooper
                        AND crapris.nrdconta = par_nrdconta
-					   AND crapris.dtrefere = par_dtmvtoan
+                       AND crapris.dtrefere = aux_dtmvtoan
+                       AND crapris.inddocto = 1
                        AND crapris.cdorigem = 1
                        AND crapris.cdmodali = 101
                        AND crapris.nrctremp = aux_emp_a_liq
-                       AND crapris.inddocto = 1                       
                            NO-LOCK NO-ERROR.
                 IF  AVAIL crapris  THEN
                     DO:
@@ -4808,16 +4829,15 @@ PROCEDURE proc_qualif_operacao:
 
 				IF  AVAIL craplim THEN
 					DO:
-
 						/* LIMITE                                */
 						FIND FIRST crapris
 							 WHERE crapris.cdcooper = par_cdcooper
 							   AND crapris.nrdconta = par_nrdconta
-							   AND crapris.dtrefere = par_dtmvtoan
+                               AND crapris.dtrefere = aux_dtmvtoan
+                               AND crapris.inddocto = 1
 							   AND crapris.cdorigem = 1
 							   AND crapris.cdmodali = 201
 							   AND crapris.nrctremp = aux_emp_a_liq
-							   AND crapris.inddocto = 1							   
 								   NO-LOCK NO-ERROR.
 
 						IF AVAIL crapris THEN
@@ -4827,10 +4847,10 @@ PROCEDURE proc_qualif_operacao:
 						FIND FIRST crapris
 							 WHERE crapris.cdcooper = par_cdcooper
 							   AND crapris.nrdconta = par_nrdconta
-							   AND crapris.dtrefere = par_dtmvtoan
+                               AND crapris.dtrefere = aux_dtmvtoan
+                               AND crapris.inddocto = 1	
 							   AND crapris.cdorigem = 1
 							   AND crapris.cdmodali = 101
-							   AND crapris.inddocto = 1							   
 								   NO-LOCK NO-ERROR.
 
 						IF AVAIL crapris THEN
@@ -4846,28 +4866,27 @@ PROCEDURE proc_qualif_operacao:
                    NO-LOCK NO-ERROR.
 
         IF  AVAIL crabepr THEN DO:
-		FOR FIRST crapris FIELDS(qtdiaatr) 
-            WHERE crapris.cdcooper = par_cdcooper 
-			  AND crapris.nrdconta = par_nrdconta
-			  AND crapris.cdorigem = 3
-			  AND crapris.nrctremp = crabepr.nrctremp
-			  AND crapris.inddocto = 1
-			  AND crapris.dtrefere = par_dtmvtoan
+		    FOR FIRST crapris FIELDS(qtdiaatr) 
+                WHERE crapris.cdcooper = par_cdcooper 
+                  AND crapris.dtrefere = aux_dtmvtoan
+                  AND crapris.inddocto = 1
+		    	  AND crapris.nrdconta = par_nrdconta
+		    	  AND crapris.nrctremp = crabepr.nrctremp
+		    	  AND crapris.cdorigem = 3
               NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-        END.
-        END.
+            END.
 
-		/* Se contrato a liquidar já é um refinanciamento, força 
-		    qualificação mínima como "Renegociação" 
-		        Reginaldo (AMcom) - Mar/2018 
-		*/
-		IF crabepr.idquaprc > 1 THEN
-			ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+          /* Se contrato a liquidar já é um refinanciamento, força 
+		     qualificação mínima como "Renegociação" 
+		     Reginaldo (AMcom) - Mar/2018                     */
+          IF crabepr.idquaprc > 1 THEN
+			 ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+
+        END.
 
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
-
              END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
@@ -6785,7 +6804,7 @@ PROCEDURE grava-proposta-completa:
 
        END.
       END.
-
+    
     ASSIGN aux_contbens = 0
            aux_contabns = 0
            aux_idchsdup = FALSE.
@@ -8235,6 +8254,7 @@ PROCEDURE altera-valor-proposta:
                      INPUT par_flgerlog,
                      INPUT crawepr.nrctremp,
                      INPUT crawepr.cdlcremp,
+                     INPUT crawepr.cdfinemp,
                      INPUT crawepr.vlemprst,
                      INPUT crawepr.qtpreemp,
                      INPUT crawepr.dtlibera,
@@ -13614,6 +13634,7 @@ PROCEDURE recalcular_emprestimo:
                                                    INPUT TRUE,
                                                    INPUT crawepr.nrctremp,
                                                    INPUT crawepr.cdlcremp,
+                                                   INPUT crawepr.cdfinemp,
                                                    INPUT crawepr.vlemprst,
                                                    INPUT crawepr.qtpreemp,
                                                    INPUT crawepr.dtlibera,
