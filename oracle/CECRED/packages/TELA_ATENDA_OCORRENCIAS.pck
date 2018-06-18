@@ -430,7 +430,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     BEGIN
       pr_des_erro := 'OK';
 
-/*
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
@@ -447,7 +446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
-*/
+
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -473,7 +472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       FETCH cr_tab INTO rw_tab;
       CLOSE cr_tab;
 
-      vr_valor_arrasto := 100; --TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
+      vr_valor_arrasto := TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
 
       -- Busca dados da conta base
       OPEN cr_base(pr_cdcooper, pr_nrdconta);
