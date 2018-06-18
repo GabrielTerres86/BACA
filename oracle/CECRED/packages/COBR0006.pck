@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 02/02/2018
+    Data     : Novembro/2015.                   Ultima atualizacao: 12/06/2018
   
    Dados referentes ao programa:
   
@@ -558,6 +558,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 
                 01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto.
                 
+                             
+                12/06/2018 - Ajuste para remover caratere especiais do campo dsdinstr que é usado para gravar 
+                             na crapcob campo dsinform : Alcemir - Mout's (PRB0040060) .      
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -1369,7 +1372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).nmdavali := pr_rec_cobranca.nmdavali;
     pr_tab_crapcob(vr_index).nrinsava := pr_rec_cobranca.nrinsava;
     pr_tab_crapcob(vr_index).cdtpinav := pr_rec_cobranca.cdtpinav;
-    pr_tab_crapcob(vr_index).dsdinstr := pr_rec_cobranca.dsdinstr;
+    pr_tab_crapcob(vr_index).dsdinstr := fn_remove_chr_especial(pr_rec_cobranca.dsdinstr);
     pr_tab_crapcob(vr_index).dsusoemp := pr_rec_cobranca.dsusoemp;
     pr_tab_crapcob(vr_index).nrremass := pr_rec_cobranca.nrremass;
     pr_tab_crapcob(vr_index).flgregis := pr_rec_cobranca.flgregis;
@@ -6334,11 +6337,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
 
       /* Concatena instrucoes separadas por _   */
-      pr_rec_cobranca.dsdinstr := pr_tab_linhas('DSMENSG5').texto || '_' ||
+      pr_rec_cobranca.dsdinstr := fn_remove_chr_especial(pr_tab_linhas('DSMENSG5').texto || '_' ||
                                   pr_tab_linhas('DSMENSG6').texto || '_' ||
                                   pr_tab_linhas('DSMENSG7').texto || '_' ||
                                   pr_tab_linhas('DSMENSG8').texto || '_' ||
-                                  pr_tab_linhas('DSMENSG9').texto;
+                                                         pr_tab_linhas('DSMENSG9').texto);
     END IF;
     
     pr_des_reto := 'OK';
@@ -8184,7 +8187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	vr_limitemin  INTEGER;
     vr_limitemax  INTEGER;
     vr_rej_cdmotivo VARCHAR2(2);
-	
+    
 	vr_des_erro  VARCHAR2(255);
     
   BEGIN
@@ -8659,7 +8662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Pedido de Protesto Não Permitido para o Título
         vr_rej_cdmotivo := '39';
         RAISE vr_exc_reje;
-    END IF;    
+      END IF;      
     
     END IF;    
             
@@ -9013,7 +9016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     ELSIF trim(pr_tab_linhas('INDMENSA').texto) IS NULL  THEN
           
-      pr_rec_cobranca.dsdinstr := substr(pr_tab_linhas('OBSMENSA').texto,1,40);
+      pr_rec_cobranca.dsdinstr := fn_remove_chr_especial(substr(pr_tab_linhas('OBSMENSA').texto,1,40));
     
     END IF;
   
@@ -9059,7 +9062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_rej_cdmotivo := '38';
           RAISE vr_exc_reje;
           
-          END IF;
+        END IF;
         END IF;
         
       END IF;
@@ -14436,12 +14439,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                vr_tab_campos('IDIMPRES').numero = 3 THEN
 
               /* Concatena instrucoes separadas por _   */
-              vr_dsdinstr := vr_tab_campos('DSMENSG5').texto || '_' ||
+              vr_dsdinstr := fn_remove_chr_especial(vr_tab_campos('DSMENSG5').texto || '_' ||
                              vr_tab_campos('DSMENSG5').texto || '_' ||
                              vr_tab_campos('DSMENSG6').texto || '_' ||
                              vr_tab_campos('DSMENSG7').texto || '_' ||
                              vr_tab_campos('DSMENSG8').texto || '_' ||
-                             vr_tab_campos('DSMENSG9').texto;
+                                                    vr_tab_campos('DSMENSG9').texto);
                                           
               IF trim(vr_dsdinstr) IS NULL THEN
                 
@@ -16169,7 +16172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 				                      (Andrei - Mouts).        
                   29/05/2018 - Ajuste para mover arquivos para pasta FTP e melhoria no script.
 				               Gabriel (Mouts) - Chamado INC0015743.                   
-                                    
+
     .................................................................................*/
     
     -- Busca dados da Cooperativa
@@ -16181,7 +16184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Nome do Arquivo .ERR
     vr_nmarquivo_err VARCHAR2(4000);
-    
+
     vr_exc_erro EXCEPTION; 
     vr_nrdrowid ROWID;
     
@@ -16214,7 +16217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Monta nome do Arquivo de Erro (.ERR)
     vr_nmarquivo_err := REPLACE(UPPER(pr_nmarquiv),'.REM','.ERR');
-    
+
     -- Busca nome resumido da cooperativa
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -16234,7 +16237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Diretório da Cooperativa
     vr_dir_coop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                         ,pr_cdcooper => pr_cdcooper);
-    
+     
     -- Diretório do arquivo de Erro (.ERR)
     vr_diretorio_err := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper
@@ -16243,7 +16246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Renomeia o Arquivo .REM para .ERR
     gene0001.pc_OScommand_Shell('mv ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
                                 vr_diretorio_err || '/' || vr_nmarquivo_err); 
-           
+        
     -- Caminho script que envia/recebe via FTP os arquivos de custodia cheque
     vr_script_cust := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                ,pr_cdcooper => '0'
@@ -16287,7 +16290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
       RAISE vr_exc_erro;
     END IF;                    
-                           
+
     -- Verifica Qual a Origem
     CASE pr_idorigem 
       WHEN 1 THEN vr_dsorigem := 'AYLLOS';

@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 16/06/2018
 
    Dados referentes ao programa:
 
@@ -773,6 +773,10 @@
               22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
                            Incluida validacao das linhas de credito 100,800,900 e 6901 e do campo
                            par_idquapro. PRJ366 (Lombardi)
+
+		      16/06/2018 - Alterado para verificar o campo nrplnovo na crapbpr, caso tenha valor neste campo,
+			               deve ser pego este campo, caso contrario pegar do campo nrdplaca.
+						   (Alcemir Mout's) - (PRB0040101).
 
  ..............................................................................*/
 
@@ -3044,7 +3048,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                             ASSIGN tt-proposta-epr.vlrtotal = tt-proposta-epr.vlrtotal
                                                             - tt-proposta-epr.vliofepr
                                                             - tt-proposta-epr.vlrtarif.
-                        END.
+                  END.
                   END.
                   ELSE
                   DO:
@@ -3137,7 +3141,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        DO:
                            ASSIGN tt-proposta-epr.vlfinanc = crawepr.vlemprst
                                   tt-proposta-epr.vlrtotal = crawepr.vlemprst.
-
+                  
                        END.
 
                   END.
@@ -3327,7 +3331,10 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                    tt-bens-alienacao.dschassi = crapbpr.dschassi
                                    tt-bens-alienacao.nranobem = crapbpr.nranobem
                                    tt-bens-alienacao.nrmodbem = crapbpr.nrmodbem
-                                   tt-bens-alienacao.nrdplaca = crapbpr.nrdplaca
+                                   tt-bens-alienacao.nrdplaca =
+								       IF (crapbpr.nrplnovo <> ?) and (trim(crapbpr.nrplnovo) <> "") THEN
+								           crapbpr.nrplnovo 
+					                   ELSE crapbpr.nrdplaca 
                                    tt-bens-alienacao.nrrenava = 
                                        IF crapbpr.nrrenovo > 0 THEN
                                            crapbpr.nrrenovo
@@ -4553,7 +4560,7 @@ PROCEDURE valida-dados-gerais:
                      
                  END.
         END CASE.
-        
+
         /* Para MicroCredito */
         IF craplcr.cdusolcr = 1 THEN
         DO:
@@ -4858,12 +4865,12 @@ PROCEDURE proc_qualif_operacao:
         IF  AVAIL crabepr THEN DO:
 		    FOR FIRST crapris FIELDS(qtdiaatr) 
                 WHERE crapris.cdcooper = par_cdcooper 
-		    	  AND crapris.dtrefere = aux_dtmvtoan
-		    	  AND crapris.inddocto = 1
+                  AND crapris.dtrefere = aux_dtmvtoan
+                  AND crapris.inddocto = 1
 		    	  AND crapris.nrdconta = par_nrdconta
 		    	  AND crapris.nrctremp = crabepr.nrctremp
 		    	  AND crapris.cdorigem = 3
-		    	  NO-LOCK: 
+              NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
             END.
 

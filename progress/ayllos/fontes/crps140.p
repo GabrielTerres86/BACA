@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/95                      Ultima atualizacao: 01/09/2017
+   Data    : Novembro/95                      Ultima atualizacao: 15/05/2017
                                                                           
    Dados referentes ao programa:
 
@@ -97,6 +97,8 @@
                01/09/2017 - Inclusao de log de fim de execucao do programa 
                             (Carlos)
                
+               15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)     							
+               
 ............................................................................. */
 
 { includes/var_batch.i "NEW" }
@@ -122,7 +124,8 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps140 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
-    INPUT INT(STRING(glb_flgresta,"1/0")),
+    INPUT 0,
+    INPUT 0,	
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 

@@ -4037,6 +4037,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
                                
+                  11/06/2018 - Ajuste no insert da tabela crapsab, limitando o numero de caracteres
+                               para 40, numero maximo permitido por esta tabela.
+							   Chamado PRB0040065 - Gabriel (Mouts).
+
   ..............................................................................*/
 
 		DECLARE
@@ -4737,7 +4741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 														 GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
 														 pr_dtmvtolt,
 														 vr_nrendere,
-                             vr_complend,
+                                 trim(substr(trim(vr_complend),1,40)),
                              1);
 
 			ELSE

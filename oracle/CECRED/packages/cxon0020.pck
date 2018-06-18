@@ -2617,7 +2617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 13/08/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 13/06/2018
   
       Dados referentes ao programa:
   
@@ -2632,6 +2632,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
 
 				  13/08/2017 - Ajuste para pegar o erro corretamente (Jonata - RKAM / P364).
+
+				  13/06/2018 - Ajuste para limpar caracteres especiais (Andrey Formigari - MOUTS).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
@@ -3049,12 +3051,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_cdbanfav => pr_cddbanco --> Banco Favorecido       
                   ,pr_cdagefav => pr_cdageban --> Agencia Favorecido     
                   ,pr_nrctafav => pr_nrctatrf --> Conta Favorecido       
-                  ,pr_nmfavore => pr_nmtitula --> Nome Favorecido        
+                  ,pr_nmfavore => gene0007.fn_caract_acento(pr_nmtitula, 1) --> Nome Favorecido        
                   ,pr_nrcpffav => pr_nrcpfcgc --> CPF/CNPJ Favorecido    
                   ,pr_inpesfav => pr_inpessoa --> Tipo Pessoa Favorecido 
                   ,pr_tpctafav => pr_intipcta --> Tipo Conta Favorecido  
                   ,pr_dshistor => pr_dshistor --> Descriçao do Histórico 
-                  ,pr_dstransf => pr_dstransf --> Identificacao Transf.
+                  ,pr_dstransf => gene0007.fn_caract_acento(pr_dstransf, 1) --> Identificacao Transf.
                   ,pr_cdfinali => pr_cdfinali --> Finalidade TED                              
                   ,pr_cdispbif => pr_cdispbif --> ISPB Banco Favorecido
                   ,pr_flmobile => pr_flmobile --> Indicador se origem é do Mobile
