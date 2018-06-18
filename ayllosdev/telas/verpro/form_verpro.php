@@ -236,10 +236,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                     echo $htmlLinhas;
                                                 } ?>
 
-                                                <?php if($cdtippro == 22){?>
-                                                    <label for="qttitbor"><? echo utf8ToHtml('Qtd. de títulos:') ?></label>
-                                                    <input name="qttitbor" id="qttitbor" type="text" value="<? echo $qttitbor ?>" />
-                                                <?php }?>
+                                                
 												<? if($cdtippro == 21){?>
 												<label for="nmprepos"><? echo utf8ToHtml('Cadastrado por:') ?></label>
                                                 <input name="nmprepos" id="nmprepos" type="text" value="<? echo $nmprepos ?>" />
@@ -395,6 +392,17 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													<input name="dspacote" id="dspacote" type="text" value="<? echo trim(substr($aux_dslinha2[0], strpos($aux_dslinha2[0], "#"))) ?>" />													
 												
 												<?}?>
+                                                
+                                                <?php if($cdtippro == 22){?>
+                                                    
+                                                    <label for="nrborder"><? echo utf8ToHtml('Nr. do Borderô:') ?></label>
+                                                    <input name="nrborder" id="nrborder" type="text" value="<? echo $nrdocmto ?>" />
+                                                    
+                                                    <label for="qttitbor"><? echo utf8ToHtml('Qtd. de títulos:') ?></label>
+                                                    <input name="qttitbor" id="qttitbor" type="text" value="<? echo $qttitbor ?>" />
+                                                    
+                                                <?php }?>
+                                                
 												<? if($cdtippro != 21){?>
                                                 <label for="dtmvtolt"><? echo utf8ToHtml('Data Pagamento:') ?></label>
                                                 <input name="dtmvtolt" id="dtmvtolt" type="text" value="<? echo $dtmvtolt ?>" />
@@ -441,7 +449,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                         <?
                                                     }
                                                     ?>
-
+                                                    
                                                     <label for="vlaplica"><? echo utf8ToHtml('Valor:') ?></label>
                                                     <input name="vlaplica" id="vlaplica" type="text" value="<? echo formataMoeda($vldocmto) ?>" />
 
@@ -545,6 +553,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 												
 												<br style="clear:both" />
 												
+                                                
 												<label for="nrseqaut">Seq. Autentica&ccedil;&atilde;o:</label>
                                                 <input name="nrseqaut" id="nrseqaut" type="text" value="<? echo $nrseqaut ?>" />
 

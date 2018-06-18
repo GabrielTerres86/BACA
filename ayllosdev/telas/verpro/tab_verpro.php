@@ -58,8 +58,6 @@
   								  <input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($r->tags,'nrdocmto') ?>" />								  
   								  <input type="hidden" id="flgpagto" name="flgpagto" value="<? echo getByTagName($r->tags,'flgpagto') ?>" />	
   								  <!-- Campos de bordero -->							  			
-  								  <input type="hidden" id="dtinsbor" name="dtinsbor" value="<? echo getByTagName($r->tags,'dtinsbor') ?>" />								  			
-  								  <input type="hidden" id="hrinsbor" name="hrinsbor" value="<? echo getByTagName($r->tags,'hrinsbor') ?>" />								  			
   								  <input type="hidden" id="qttitbor" name="qttitbor" value="<? echo getByTagName($r->tags,'qttitbor') ?>" />	
   								  <input type="hidden" id="vltotbor" name="vltotbor" value="<? echo getByTagName($r->tags,'vltotbor') ?>" />								  								  								  
   								  <input type="hidden" id="dslinha1" name="dslinha1" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.1') ?>" />								  

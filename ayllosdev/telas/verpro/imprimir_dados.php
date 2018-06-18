@@ -112,6 +112,7 @@
 	$hrrecarga    = $_POST['hrrecarga'];
 	$dtdebito     = $_POST['dtdebito'];
 	$nsuopera     = $_POST['nsuopera'];
+	$qttitbor     = $_POST['qttitbor'];
 	
 	$dsiduser 	= session_id();	
 
@@ -142,7 +143,6 @@
 	
 	$campospc = 'dslinha1' . '|' . 'dslinha2' . '|' . 'dslinha3';
 	$dadosprc = $dslinha1 . ';' . $dslinha2 . ';' . $dslinha3;
-	
 	
 	// Monta o xml de requisição
 	$xml  = '';
@@ -219,6 +219,7 @@
 	$xml .= '		<hrrecarga>'.$hrrecarga.'</hrrecarga>';	
 	$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';	
 	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';	
+	$xml .= '		<qttitbor>'.$qttitbor.'</qttitbor>';	
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 	

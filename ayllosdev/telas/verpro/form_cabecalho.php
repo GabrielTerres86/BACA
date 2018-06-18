@@ -57,7 +57,7 @@
     <option value="19" <?php echo $cdtippro == '19' ? 'selected' : '' ?>>19 - Agendamento DAS</option>
     <option value="20" <?php echo $cdtippro == '20' ? 'selected' : '' ?>>20 - Recarga de celular</option>
     <option value="21" <?php echo $cdtippro == '21' ? 'selected' : '' ?>>21 - Operador</option>
-	<option value="22" <?php echo $cdtippro == '22' ? 'selected' : '' ?>>22 - Border&ocirc;</option>
+	<option value="22" <?php echo $cdtippro == '22' ? 'selected' : '' ?>>22 - <?=utf8ToHtml('Desconto de Título')?></option>
     </select>
 
     <br />
