@@ -652,9 +652,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                              ,2,'Solicitada'
                              ,3,'Liberada'
                              ,4,'Em Uso'
-                             ,5,'Cancelada'
-                             ,6,'Em analise'
-                             ,7,'Enviado Bancoob') situacao_ayllos
+                             ,5,'Bloqueada'
+                             ,6,'Cancelada'
+                             ,8,'Em Analise'
+                             ,9,'Enviado Bancoob') situacao_ayllos
                       ,DECODE(epr.insitdec,
                               1,
                               'Sem Aprovacao',
@@ -800,7 +801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         CLOSE cr_crawcrd_total;
         --  
       END IF;
-    
+      
       IF pr_tpproduto = 0 THEN
       -- Abre cursor para atribuir os registros encontrados na PL/Table
       FOR rw_crawepr IN cr_crawepr LOOP
@@ -912,7 +913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
           pr_tab_crawepr(vr_ind_crawepr).nrdconta := rw_crawcrd.nrdconta;
           pr_tab_crawepr(vr_ind_crawepr).vlemprst := rw_crawcrd.vlemprst;
           pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_crawcrd.dtmvtolt, 'DD/MM/YYYY');
-    
+          
           IF vr_tab_crapope.EXISTS(rw_crawcrd.nmoperad) THEN
             pr_tab_crawepr(vr_ind_crawepr).nmoperad := vr_tab_crapope(rw_crawcrd.nmoperad).nmoperad;
           ELSE
@@ -2000,9 +2001,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
           pr_tab_crawepr(vr_ind_crawepr).retorno := substr(vr_dsretorno,1,150);        
           pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_cratbgen.nrctrprp;
           pr_tab_crawepr(vr_ind_crawepr).dsprotocolo := rw_cratbgen.dsprotocolo;
-      
-      END LOOP;
-    
+          
+        END LOOP;
+        
       END IF;        
     
     EXCEPTION
