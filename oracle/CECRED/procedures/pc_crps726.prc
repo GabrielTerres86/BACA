@@ -8,14 +8,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Odirlei Busana - AMcom
-    Data    : Janeiro/2018                  Ultima Atualizacao : 24/01/2018
+    Data    : Janeiro/2018                  Ultima Atualizacao : 18/06/2018
 
     Dados referente ao programa:
 
     Frequencia : Mensal (JOB).
     Objetivo   : Gerar arquivos contabeis de Convenios Bancoob .
 
-    Alteracoes : 
+    Alteracoes : 18/06/2018 - Aumentado format do registro de cada PA, de 'fm00' 
+	                          para 'fm000'. (Reinert)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -230,7 +231,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
         END IF;                   
         
         --> gerar registro pa
-        vr_dsdlinha := to_char(rw_craplft.cdagenci_fatura,'fm00')   ||','||
+        vr_dsdlinha := to_char(rw_craplft.cdagenci_fatura,'fm000')   ||','||
                        to_char(rw_craplft.vltarifa,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||
                        chr(10);
         
@@ -369,7 +370,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
           
           vr_vldespes := rw_craplft.qtlanmto * rw_crapcop.vltarbcb;
           --> gerar registro pa
-          vr_dsdlinha := to_char(rw_craplft.cdagenci_fatura,'fm00')   ||','||
+          vr_dsdlinha := to_char(rw_craplft.cdagenci_fatura,'fm000')   ||','||
                          to_char(vr_vldespes,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||
                          chr(10);
           
