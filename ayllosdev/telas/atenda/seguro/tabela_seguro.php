@@ -16,6 +16,8 @@
 				  21/11/2017 - Bloquear botões quando vindo da tela de impedimentos (Jonata - RKAM P364).						   							   
 
 				  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
+
+				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -102,24 +104,20 @@
 
 	<?php if (!$executandoImpedimentos){?>
 
-		<?php if($sitaucaoDaContaCrm == '4' || 
-				 $sitaucaoDaContaCrm == '7' || 
-				 $sitaucaoDaContaCrm == '8' || 
-				 $sitaucaoDaContaCrm == '9' ){?>
+		<?php if(!($sitaucaoDaContaCrm == '4' || 
+				   $sitaucaoDaContaCrm == '7' || 
+				   $sitaucaoDaContaCrm == '8'  )){?>
 
-			<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
-			
+			<input type="image" id="btIncluir"   src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'I\');"'; } ?> />
+		
+		<?}?>
 
-		<?}else{?>
-
-		<input type="image" id="btIncluir"   src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'I\');"'; } ?> />
 		<input type="image" id="btAlterar"   src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'ALTERAR\');"'; } ?>  />
 		<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
 		<input type="image" id="btCancelar"  src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'C\');"'; } ?>   />
 		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
 		<input type="image" id="btImprimir"  src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'IMP\');"'; } ?>  />
 	
-		<?}?>
 
 	<?}else{?>
 		
