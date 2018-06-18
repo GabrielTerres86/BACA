@@ -11,7 +11,7 @@
 
               12/09/2017 - Inclusao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
   
-
+              14/06/2018 - Adicionado desconto de título como tipo de origem - Luis Fernando (GFT)
  * ********************************************************************* */
 
  session_start();
@@ -43,6 +43,7 @@
 			<option value="PROTESTO" <? echo getByTagName($inf,'dsorgarq') == 'PROTESTO' ? 'selected' : '' ?> >Protesto</option>
 			<option value="EMPRESTIMO" <? echo getByTagName($inf,'dsorgarq') == 'EMPRESTIMO' ? 'selected' : '' ?> >Empr&eacute;stimo</option>
 			<option value="ACORDO" <? echo getByTagName($inf,'dsorgarq') == 'ACORDO' ? 'selected' : '' ?> >Acordo</option>
+			<option value="DESCONTO DE TITULO" <? echo getByTagName($inf,'dsorgarq') == 'DESCONTO DE TITULO' ? 'selected' : '' ?> >Desconto de T&iacute;tulo</option>
 			
 			<?php if($cddopcao != 'I'){?>
 				<option value="MIGRACAO" <? echo getByTagName($inf,'dsorgarq') == 'MIGRACAO' ? 'selected' : '' ?>> Migra&ccedil;&atilde;o</option>

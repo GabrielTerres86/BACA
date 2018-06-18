@@ -256,6 +256,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                28/11/2016 - P341 - Automatização BACENJUD - Alterado o parametro PR_DSDEPART 
                             para PR_CDDEPART e as consultas do fonte para utilizar o código 
                             do departamento nas validações (Renato Darosci - Supero)
+                            
+               14/06/2018 - Adicionado desconto de título como tipo de origem - Luis Fernando (GFT)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Variavel temporária para LOG 
@@ -919,6 +921,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
          --Monta mensagem de erro
          vr_cdcritic := 0;
          vr_dscritic := 'Ja possui um convenio de EMPRESTIMO ativo cadastrado.';
+          
+         RAISE vr_exc_erro;                 
+      
+      END IF;                                
+      
+      CLOSE cr_crapcco_empr;
+    
+    END IF; 
+    
+    IF pr_dsorgarq = 'DESCONTO DE TITULO'THEN
+      
+      OPEN cr_crapcco_empr(pr_cdcooper => pr_cdcooper
+                          ,pr_dsorgarq => pr_dsorgarq);
+                                     
+      FETCH cr_crapcco_empr INTO rw_crapcco_empr;
+      
+      IF cr_crapcco_empr%FOUND THEN
+        
+         --Fecha o cursor
+         CLOSE cr_crapcco_empr;
+         
+         --Monta mensagem de erro
+         vr_cdcritic := 0;
+         vr_dscritic := 'Ja possui um convenio de DESCONTO DE TITULO ativo cadastrado.';
           
          RAISE vr_exc_erro;                 
       
