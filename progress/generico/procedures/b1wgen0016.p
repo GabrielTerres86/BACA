@@ -10816,7 +10816,7 @@ PROCEDURE aprova_trans_pend:
                   
                   END. /* = 14,15 */
 
-               /* ELSE IF tt-tbgen_trans_pend.tptransacao = 18 THEN /*  cheque em custodia */
+               ELSE IF tt-tbgen_trans_pend.tptransacao = 18 THEN /*  cheque em custodia */
                   DO: /*Inicio 18*/
                     /*Se ultimo aprovador e se a tela eh a de confirmacao faca*/
                     IF par_indvalid = 1 AND aux_conttran = 1 THEN
