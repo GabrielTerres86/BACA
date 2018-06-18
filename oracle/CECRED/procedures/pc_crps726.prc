@@ -370,7 +370,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps726(pr_cdcooper IN crapcop.cdcooper%TY
           
           vr_vldespes := rw_craplft.qtlanmto * rw_crapcop.vltarbcb;
           --> gerar registro pa
-          vr_dsdlinha := to_char(rw_craplft.cdagenci_fatura,'fm00')   ||','||
+          vr_dsdlinha := to_char(rw_craplft.cdagenci_fatura,'fm000')   ||','||
                          to_char(vr_vldespes,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||
                          chr(10);
           
