@@ -109,6 +109,9 @@ BEGIN
                 07/07/2017 - #703725 Uso da variável vr_dscritic no lugar de pr_dscritic para logar as críticas
                              corretamente; e tratamento para ir para o próximo registro do cr_craplau ao invés de 
                              sair do looping (Carlos)
+                             
+                08/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
+                                    na tabela CRAPLCM e também na CRAPLOT - Daniel(AMcom) --**
   ............................................................................. */
   DECLARE
     --Busca os dados da cooperativa
@@ -232,6 +235,14 @@ BEGIN
     vr_des_reto VARCHAR(3) := '';
     -- Contador de registros rejeitados
     vr_cont_rej number(5);
+    
+    -- ** Consite lançamento - Daniel(AMcom)
+    -- Variáveis para rotina LANC0001
+    vr_rcraplot       LANC0001.cr_craplot%ROWTYPE; 
+    vr_incrineg       INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+    vr_tab_retorno    LANC0001.typ_reg_retorno;  
+    vr_fldebita       BOOLEAN DEFAULT TRUE;
+    
     -- Tabela para armazenar os cheques de contas migradas (Viacredi > Viacredi Alto Vale)
     TYPE typ_reg_cheques_altovale IS RECORD(
       cdcooper craplcm.cdcooper%TYPE,
@@ -436,7 +447,7 @@ BEGIN
       -- Limpar a tabela de erro
       pr_tab_erro.DELETE;
       -- posiciona no primeiro registro
-      vr_indice := pr_tab_cheques_altovale.FIRST;
+      vr_indice := 1;--pr_tab_cheques_altovale.FIRST;
       -- navega em todos os registros da tabela temporaria
       WHILE vr_indice IS NOT NULL LOOP
         IF vr_gerarlot IS NULL THEN
@@ -467,6 +478,9 @@ BEGIN
                  100,
                  vr_nrlotetc,
                  1);
+            	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_saida;
+            	END IF;                 
             EXCEPTION
               WHEN OTHERS THEN
                 --Monta mensagem de erro
@@ -502,9 +516,9 @@ BEGIN
           END IF;
         END IF;
         vr_gerarlot := TRUE;
-        vr_nrdocmto := pr_tab_cheques_altovale(vr_indice).nrdocmto;
+        vr_nrdocmto := 1;--pr_tab_cheques_altovale(vr_indice).nrdocmto;
         --Busca registro na craplcm referente ao cheque em questao
-        OPEN cr_craplcm(pr_cdcooper => rw_craplot.cdcooper,
+        /*OPEN cr_craplcm(pr_cdcooper => rw_craplot.cdcooper,
                         pr_dtmvtolt => rw_craplot.dtmvtolt,
                         pr_cdagenci => rw_craplot.cdagenci,
                         pr_cdbccxlt => rw_craplot.cdbccxlt,
@@ -520,9 +534,9 @@ BEGIN
         ELSE
           --Fecha cursor
           CLOSE cr_craplcm;
-        END IF;
+        END IF;*/
         --Cria registro na craplcm referente ao cheque em questao
-        BEGIN
+       /* BEGIN
           INSERT INTO craplcm
             (craplcm.dtmvtolt,
              craplcm.dtrefere,
@@ -581,7 +595,39 @@ BEGIN
             vr_dscritic := 'Erro ao atualizar dados na tabela craplot na rotina pc_processamento_tco. ' || SQLERRM;
             --Gera excecao
             RAISE vr_exc_erro;
-        END;
+        END;*/
+        --** Consite lançamento - Daniel(AMcom)
+        LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                          ,pr_cdagenci => rw_craplot.cdagenci
+                                          ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                          ,pr_nrdolote => rw_craplot.nrdolote
+                                          ,pr_nrdconta => pr_tab_cheques_altovale(vr_indice).nrdconta
+                                          ,pr_nrdctabb => pr_tab_cheques_altovale(vr_indice).nrdctabb
+                                          ,pr_nrdctitg => pr_tab_cheques_altovale(vr_indice).nrdctitg
+                                          ,pr_nrdocmto => vr_nrdocmto
+                                          ,pr_cdhistor => 1841--pr_tab_cheques_altovale(vr_indice).cdhistor
+                                          ,pr_vllanmto => pr_tab_cheques_altovale(vr_indice).vllanmto
+                                          ,pr_nrseqdig => rw_craplot.nrseqdig + 1 --vr_nrseqint
+                                          ,pr_cdcooper => pr_tab_cheques_altovale(vr_indice).cdcooper
+                                          ,pr_cdbanchq => pr_tab_cheques_altovale(vr_indice).cdbanchq
+                                          ,pr_cdagechq => pr_tab_cheques_altovale(vr_indice).cdagechq
+                                          ,pr_nrctachq => pr_tab_cheques_altovale(vr_indice).nrctachq
+                                          ,pr_cdpesqbb => 'LANCAMENTO DE CONTA MIGRADA'
+                                          ,pr_inprolot => 1
+                                          ,pr_tplotmov => 1
+                                          -- OUTPUT --
+                                          ,pr_tab_retorno => vr_tab_retorno
+                                          ,pr_incrineg => vr_incrineg
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);   
+                                           
+          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+              IF vr_cdcritic = 0 THEN
+		       	  	RAISE vr_exc_saida;
+              ELSE
+               CONTINUE;
+              END IF;    
+      			END IF;                                                                                                                                                                  
         -- indo para o proximo registro da tabela
         vr_indice := pr_tab_cheques_altovale.NEXT(vr_indice);
       END LOOP;
@@ -1093,9 +1139,18 @@ BEGIN
           vr_flgentra := FALSE;
         END IF;
       END IF;
+      
+    /* Identifica se pode ou não efetuar o lançamento na conta do cooperado */ --**
+    vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                            pr_nrdconta => pr_nrdconta,
+                                            pr_cdhistor => pr_cdhistor);
+    /* se não puder efetuar o lançamento */
+    IF vr_fldebita = true THEN
+  
       IF vr_flgentra THEN
         --Verifica se eh conta migrada
-        IF nvl(rw_craptco_ant.cdcooper, 0) > 0 THEN
+        IF nvl(rw_craptco_ant.cdcooper, 0) > 0 THEN        
+       
           IF pr_cdcooper = 1 AND
              rw_crapcdb.nrdconta = 85448 THEN
             --Atualiza o registro de lancamento automatico
@@ -1190,11 +1245,11 @@ BEGIN
                 END;
               END IF;
             END IF;
-          END IF;
+          END IF; 
         ELSE
           --cria craplcm
           BEGIN
-            INSERT INTO craplcm
+            /*INSERT INTO craplcm
               (craplcm.dtmvtolt,
                craplcm.dtrefere,
                craplcm.cdagenci,
@@ -1234,13 +1289,48 @@ BEGIN
                gene0002.fn_mask(pr_cdbccxlt, '999') ||'-'||
                gene0002.fn_mask(pr_nrdolote, '999999') || '-'||
                gene0002.fn_mask(pr_nrseqdig, '99999'))
-            RETURNING craplcm.nrseqdig INTO rw_craplcm.nrseqdig;
+            RETURNING craplcm.nrseqdig INTO rw_craplcm.nrseqdig;*/
+        --** Consite lançamento - Daniel(AMcom)
+               
+        LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                          ,pr_dtrefere => rw_craplot.dtmvtolt
+                                          ,pr_cdagenci => rw_craplot.cdagenci
+                                          ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                          ,pr_nrdolote => rw_craplot.nrdolote
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrdctabb => pr_nrdctabb
+                                          ,pr_nrdctitg => pr_nrdctitg
+                                          ,pr_nrdocmto => pr_nrdocmto
+                                          ,pr_cdhistor => pr_cdhistor
+                                          ,pr_vllanmto => pr_vllanaut
+                                          ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_cdbanchq => rw_crapfdc.cdbanchq
+                                          ,pr_cdagechq => rw_crapfdc.cdagechq
+                                          ,pr_nrctachq => rw_crapfdc.nrctachq
+                                          ,pr_cdpesqbb => to_char(pr_dtmvtolt, 'dd/mm/yyyy') ||'-'||
+                                                          gene0002.fn_mask(pr_cdagenci, '999') || '-'||
+                                                          gene0002.fn_mask(pr_cdbccxlt, '999') ||'-'||
+                                                          gene0002.fn_mask(pr_nrdolote, '999999') || '-'||
+                                                          gene0002.fn_mask(pr_nrseqdig, '99999')
+                                          -- OUTPUT --
+                                          ,pr_tab_retorno => vr_tab_retorno
+                                          ,pr_incrineg => vr_incrineg
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);   
+                                           
+          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+              IF vr_cdcritic = 0 THEN
+		       	  	RAISE vr_exc_saida;
+              END IF;    
+      			END IF;            
+            
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir dados na tabela craplcm na rotina pc_proc_trata_descontos. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
-          BEGIN
+          /*BEGIN
             UPDATE craplot lot
                SET lot.qtinfoln = lot.qtinfoln + 1,
                    lot.qtcompln = lot.qtcompln + 1,
@@ -1252,7 +1342,7 @@ BEGIN
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar dados na tabela craplot na rotina pc_proc_trata_descontos. ' || SQLERRM;
               RAISE vr_exc_erro;
-          END;
+          END;*/
           BEGIN
             UPDATE craplau lau
                SET lau.dtdebito = rw_craplot.dtmvtolt,
@@ -1321,8 +1411,10 @@ BEGIN
             RAISE vr_exc_erro;
         END;
       END IF;
-      --
-      pr_des_reto := 'OK';
+    END IF; -- PODE DEBITAR?
+    --
+    pr_des_reto := 'OK';
+    --
     EXCEPTION
       WHEN vr_exc_erro THEN
 
@@ -1504,14 +1596,14 @@ BEGIN
       END IF;
     END LOOP;
     -- Tratamento de cheques de contas migradas
-    if vr_tab_cheques_altovale.first is not null then
+    --if vr_tab_cheques_altovale.first is not null then
       pc_processamento_tco(pr_cdcooper             => pr_cdcooper,
                            pr_dtmvtopr             => rw_crapdat.dtmvtopr,
                            pr_tab_cheques_altovale => vr_tab_cheques_altovale,
                            pr_cdprogra             => vr_cdprogra,
                            pr_des_reto             => vr_des_reto,
                            pr_tab_erro             => vr_tab_erro);
-    end if;
+    --end if;
     --Inicializa o CLOB
     dbms_lob.createtemporary(vr_dsxmldad,
                              TRUE);
