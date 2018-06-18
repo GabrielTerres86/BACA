@@ -69,6 +69,23 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
   -- Vetor para armazenamento
   vr_tab_craplcr typ_tab_craplcr;
   
+  PROCEDURE pc_calcula_qtd_dias_uteis(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
+                                     ,pr_flgbatch     IN BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
+                                     ,pr_dtefetiv     IN crapepr.dtmvtolt%TYPE --> Data de Efetivação da Proposta
+                                     ,pr_datainicial  IN DATE                  --> Data Inicial
+                                     ,pr_datafinal    IN DATE                  --> Data Final
+                                     ,pr_qtdiaute    OUT PLS_INTEGER           --> Quantidade de dias uteis
+                                     ,pr_cdcritic    OUT PLS_INTEGER           --> Codigo da critica
+                                     ,pr_dscritic    OUT VARCHAR2);
+                                     
+  PROCEDURE pc_calcula_dias360(pr_ehmensal   IN BOOLEAN                -- Indica se juros esta rodando na mensal
+                              ,pr_dtvencto   IN crappep.dtvencto%TYPE  --> Data de Vencimento
+                              ,pr_dtrefjur   IN DATE                   --> Data de Referencia do lancamento de juros
+                              ,pr_data_final IN DATE                   --> Data Final
+                              ,pr_qtdedias   OUT PLS_INTEGER            --> Quantidade de Dias entre duas Datas
+                              ,pr_cdcritic   OUT PLS_INTEGER           --> Codigo da critica
+                              ,pr_dscritic   OUT VARCHAR2);
+  
   PROCEDURE pc_calcula_saldo_projetado(pr_cdcooper            IN  crapepr.cdcooper%TYPE         --> Codigo da Cooperativa
                                       ,pr_flgbatch            IN  BOOLEAN DEFAULT FALSE         --> Indica se o processo noturno estah rodando
                                       ,pr_dtefetiv            IN  crapepr.dtmvtolt%TYPE         --> Data de Efetivação da Proposta
@@ -1708,7 +1725,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_vlparcela_sem_juros := NVL(pr_vlparepr,0) - NVL(vr_vllanmto,0);
       
       -- Calcula o valor da do IOF e tarifa
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 --> Somente atraso
+                                       ,pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
                                        ,pr_vlemprst => vr_vlparcela_sem_juros
@@ -1857,7 +1875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Calculo do Valor Presente Liquido
       vr_vlpresente_liquido := pr_vlsdvpar / pr_tab_price(pr_tab_price.last).fator_acumulado;
     
-      
+
       ---------------------------------------------------------------------------------------------------------
       --                          INICIO - Calcular Juros Remuneratorio/Correcao
       ---------------------------------------------------------------------------------------------------------      

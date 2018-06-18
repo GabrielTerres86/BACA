@@ -297,7 +297,8 @@ DO ON ERROR UNDO , LEAVE:
                                 
                           
                  RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
-                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapepr.cdcooper
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2 /* Somente atraso */
+                                                        ,INPUT crapepr.cdcooper
                                                         ,INPUT crapepr.nrdconta
                                                         ,INPUT crapepr.nrctremp
                                                         ,INPUT aux_vlbaseiof /* vr_vlbaseiof */

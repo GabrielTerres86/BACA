@@ -242,7 +242,11 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,qttolatr crapepr.qttolatr%TYPE
 	,dsratpro VARCHAR2(30)
     ,dsratatu VARCHAR2(30)
-	,vliofcpl crapepr.vliofcpl%TYPE);
+	  ,vliofcpl crapepr.vliofcpl%TYPE
+    ,idfiniof crapepr.idfiniof%TYPE
+    ,vliofepr crapepr.vliofepr%TYPE
+    ,vlrtarif crapepr.vltarifa%TYPE
+    ,vlrtotal crapepr.vlsdeved%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -2740,22 +2744,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 (rw_crapepr.qtpreemp - rw_crappep.nrparepr + 1) )));
                    
         
-          TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
-                                        , pr_nrdconta => pr_nrdconta
-                                        , pr_nrctremp => pr_nrctremp
-                                        , pr_vlemprst => vr_vlbaseiof -- valor principal
-                                        , pr_vltotope => rw_crapepr.vlemprst
-                                        , pr_dscatbem => ''
-                                        , pr_cdlcremp => rw_crapepr.cdlcremp
-                                        , pr_cdfinemp => rw_crapepr.cdfinemp
-                                        , pr_dtmvtolt => pr_dtmvtolt
-                                        , pr_qtdiaiof => vr_qtdiaiof
-                                        , pr_vliofpri => vr_vliofpri
-                                        , pr_vliofadi => vr_vliofpri
-                                        , pr_vliofcpl => pr_vliofcpl
-                                        , pr_vltaxa_iof_principal => vr_vltxaiof
-                                        , pr_flgimune => vr_flgimune
-                                        , pr_dscritic => vr_dscritic);
+          TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 -- Só atraso
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
+                                           ,pr_vlemprst => vr_vlbaseiof -- valor principal
+                                           ,pr_vltotope => rw_crapepr.vlemprst
+                                           ,pr_dscatbem => ''
+                                           ,pr_cdlcremp => rw_crapepr.cdlcremp
+                                           ,pr_cdfinemp => rw_crapepr.cdfinemp
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_qtdiaiof => vr_qtdiaiof
+                                           ,pr_vliofpri => vr_vliofpri
+                                           ,pr_vliofadi => vr_vliofpri
+                                           ,pr_vliofcpl => pr_vliofcpl
+                                           ,pr_vltaxa_iof_principal => vr_vltxaiof
+                                           ,pr_flgimune => vr_flgimune
+                                           ,pr_dscritic => vr_dscritic);
 
         
         -- Se o valor a pagar originalmente for diferente de zero
@@ -3167,7 +3172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          /* Projeto 410 - valor base para IOF:
              Valor da Parcela /((1+ tx mensal)^(qt parcelas - parcela atual))) */             
                                         
-          vr_vlbaseiof :=   rw_crappep.vlsdvpar / ((power(( 1 + pr_txmensal / 100 ), 
+          vr_vlbaseiof :=   rw_crappep.vlsdvsji / ((power(( 1 + pr_txmensal / 100 ), 
                                 (rw_crawepr.qtpreemp - rw_crappep.nrparepr + 1) )));
           
           -- Valor a Vencer
@@ -3189,21 +3194,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                            
           END IF;
         
-             TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
-                                        , pr_nrdconta => pr_nrdconta
-                                        , pr_nrctremp => pr_nrctremp
-                                        , pr_vlemprst => vr_vlbaseiof --rw_crappep.vlsdvsji
-                                        , pr_dscatbem => ''
-                                        , pr_cdlcremp => pr_cdlcremp
-                                        , pr_cdfinemp => rw_crapepr.cdfinemp
-                                        , pr_dtmvtolt => pr_dtmvtolt
-                                      , pr_qtdiaiof => vr_qtdiaiof
-                                        , pr_vliofpri => vr_vliofpri
-                                        , pr_vliofadi => vr_vliofpri
-                                        , pr_vliofcpl => vr_vliofcpl_tmp
-                                        , pr_vltaxa_iof_principal => vr_vltxaiof
-                                        , pr_flgimune => vr_flgimune
-                                        , pr_dscritic => vr_dscritic);
+          TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 -- Só atraso
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
+                                           ,pr_vlemprst => vr_vlbaseiof
+                                           ,pr_dscatbem => ''
+                                           ,pr_cdlcremp => pr_cdlcremp
+                                           ,pr_cdfinemp => rw_crapepr.cdfinemp
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_qtdiaiof => vr_qtdiaiof
+                                           ,pr_vliofpri => vr_vliofpri
+                                           ,pr_vliofadi => vr_vliofpri
+                                           ,pr_vliofcpl => vr_vliofcpl_tmp
+                                           ,pr_vltaxa_iof_principal => vr_vltxaiof
+                                           ,pr_flgimune => vr_flgimune
+                                           ,pr_dscritic => vr_dscritic);
                                         
               --Acumula o IOF de atraso das parcelas
                                         vr_vliofcpl := NVL(vr_vliofcpl,0) + NVL(vr_vliofcpl_tmp,0);
@@ -4911,6 +4917,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  é adicionado na tabela de memória são concatenados três caracteres
                                  (" - ") que acabam estourando o tamanho do campo.
                                  (Douglas - Chamado 819534)
+                                 
+                    07/06/2018 - P410 - Inclusao de campos do IOF (Marcos-Envolti)              
+                                 
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4963,6 +4972,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,qtimpctr
               ,qttolatr
 			  ,vliofcpl	
+              ,idfiniof
+              ,vliofepr
+              ,vltarifa
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
@@ -5730,6 +5742,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           else
           pr_tab_dados_epr(vr_indadepr).vliofcpl := NVL(vr_vliofcpl,0);
           end if;
+          -- Copiar campos do IOF
+          pr_tab_dados_epr(vr_indadepr).vlrtotal := rw_crapepr.vlemprst;
+          pr_tab_dados_epr(vr_indadepr).idfiniof := rw_crapepr.idfiniof;
+          pr_tab_dados_epr(vr_indadepr).vliofepr := nvl(rw_crapepr.vliofepr,0);
+          pr_tab_dados_epr(vr_indadepr).vlrtarif := nvl(rw_crapepr.vltarifa,0);
+          -- Caso financie IOF
+          IF rw_crapepr.idfiniof = 1 THEN
+            -- Remover do valor liquido o IOF e tarifa
+            pr_tab_dados_epr(vr_indadepr).vlrtotal := pr_tab_dados_epr(vr_indadepr).vlrtotal - nvl(rw_crapepr.vliofepr,0) - nvl(rw_crapepr.vltarifa,0);
+          END IF;
+          
           pr_tab_dados_epr(vr_indadepr).vlprvenc := vr_vlprvenc;
           pr_tab_dados_epr(vr_indadepr).vlpraven := vr_vlpraven;
           pr_tab_dados_epr(vr_indadepr).flgpreap := FALSE;
@@ -6293,6 +6316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    23/06/2017 - Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
 
+                   07/06/2018 - P410 - Inclusao dos campos do IOF (Marcos-Envolti)
+
     ............................................................................. */
 
     -------------------------- VARIAVEIS ----------------------
@@ -6573,6 +6598,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<liquidia>' || vr_tab_dados_epr(vr_index).liquidia || '</liquidia>' ||
                         '<qtimpctr>' || vr_tab_dados_epr(vr_index).qtimpctr || '</qtimpctr>' ||
                         '<portabil>' || vr_tab_dados_epr(vr_index).portabil || '</portabil>' ||
+                        '<idfiniof>' || vr_tab_dados_epr(vr_index).idfiniof || '</idfiniof>' ||
+                        '<vliofepr>' || vr_tab_dados_epr(vr_index).vliofepr || '</vliofepr>' ||
+                        '<vlrtarif>' || vr_tab_dados_epr(vr_index).vlrtarif || '</vlrtarif>' ||
+                        '<vlrtotal>' || vr_tab_dados_epr(vr_index).vlrtotal || '</vlrtotal>' ||
                         '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
                         '<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
                         '<idcarenc>' || vr_tab_dados_epr(vr_index).idcarenc || '</idcarenc>' ||

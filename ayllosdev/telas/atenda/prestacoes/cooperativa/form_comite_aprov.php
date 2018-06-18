@@ -7,6 +7,7 @@
  * ALTERACAO    : 
  *
  * 001 [08/04/2014] Alterado fluxo de botao voltar e continuar. (Jorge)
+ * 002 [07/06/2018] - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti
  */	
 ?>
 
@@ -34,6 +35,6 @@
 <div id="divBotoes">
 	<? if ($operacao == 'C_COMITE_APROV') { ?>
 		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"   onClick="controlaOperacao('C_PROT_CRED'); return false;" />
-		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('TC'); return false;" />
+		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_DEMONSTRATIVO_EMPRESTIMO'); return false;" />
 	<? } ?>
 </div>

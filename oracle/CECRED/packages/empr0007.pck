@@ -4328,7 +4328,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_qtdiaiof := pr_dtvencto - pr_dtmvtolt;
                               
       --Calcula o IOF
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                       ,pr_cdcooper => pr_cdcooper                            --> Código da cooperativa referente ao contrato de empréstimos
                                         ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
                                         ,pr_nrctremp => pr_nrctremp                            --> Número do contrato de empréstimo
                                         ,pr_vlemprst => pr_vlparepr                            --> Valor do empréstimo para efeito de cálculo
@@ -6236,7 +6237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_qtdiaiof := vr_tab_dados_epr(vr_tab_dados_epr.first).dtdpagto - pr_dtmvtolt;
                               
       --Calcula o IOF
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                       ,pr_cdcooper => pr_cdcooper                            --> Código da cooperativa referente ao contrato de empréstimos
                                         ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
                                         ,pr_nrctremp => pr_nrctremp                            --> Número do contrato de empréstimo
                                         ,pr_vlemprst => pr_vlsdeved                            --> Valor do empréstimo para efeito de cálculo

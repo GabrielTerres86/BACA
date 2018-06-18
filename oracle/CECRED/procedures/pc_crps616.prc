@@ -458,7 +458,8 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
         fetch cr_crapepr_lcr into rw_crapepr_lcr;
         close cr_crapepr_lcr;
         
-        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+        TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 --> Somente o atraso
+                                        , pr_cdcooper => pr_cdcooper
                                         , pr_nrdconta => pr_nrdconta
                                         , pr_nrctremp => pr_nrctremp
                                         , pr_vlemprst => pr_vlsdvsji

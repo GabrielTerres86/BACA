@@ -1,4 +1,4 @@
-/******************************************************************************
+/***********************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +------------------------------------------+----------------------------------------+
@@ -1304,14 +1304,30 @@ PROCEDURE grava_dados_conta PRIVATE:
 
         FIND crawepr WHERE crawepr.cdcooper = par_cdcooper AND crawepr.nrdconta = par_nrdconta AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
         IF NOT AVAIL crawepr THEN DO:
-          MESSAGE "Nao encontrado registro na crawepr".
-          UNDO TRANS_1, LEAVE TRANS_1.
+          ASSIGN aux_cdcritic = 535
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
         END.
 
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND craplcr.cdlcremp = par_cdlcremp NO-LOCK NO-ERROR.
         IF NOT AVAIL craplcr THEN DO:
-          MESSAGE "Nao encontrado registro na craplcr".
-           UNDO TRANS_1, LEAVE TRANS_1.
+          ASSIGN aux_cdcritic = 363
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
         END.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -1844,11 +1860,22 @@ PROCEDURE grava_dados_conta PRIVATE:
              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
              /* Se retornou erro */
-             ASSIGN aux_dscritic = ""
+             ASSIGN aux_cdcritic = 0
+                    aux_cdcritic = INTE(pc_insere_iof.pr_cdcritic) WHEN pc_insere_iof.pr_cdcritic <> ?
+                    aux_dscritic = ""
                     aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
               
-             IF aux_dscritic <> "" THEN
-                RETURN "NOK".
+             IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                DO:
+                
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+                  UNDO TRANS_1, RETURN "NOK".
+                END.
            
            
            END. /* END IF aux_vltxaiof > 0 THEN */

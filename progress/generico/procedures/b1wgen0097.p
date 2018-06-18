@@ -141,6 +141,7 @@ DEF VAR var_txmensal AS DECI                                        NO-UNDO.
 DEF VAR var_vliofepr AS DECI                                        NO-UNDO.
 DEF VAR var_vlrtarif AS DECI                                        NO-UNDO.
 DEF VAR var_vllibera AS DECI                                        NO-UNDO.
+DEF VAR var_vllibcet AS DECI                                        NO-UNDO.
 DEF VAR var_permnovo AS LOGI                                        NO-UNDO.
 
 
@@ -205,6 +206,57 @@ PROCEDURE busca-feriados:
 
 END PROCEDURE.
 
+PROCEDURE calcula_data_parcela_sim:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtvencto AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrparcel AS INTE                           NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-datas-parcelas.
+
+    DEF VAR aux_dtcalcul AS DATE                                    NO-UNDO.
+    DEF VAR aux_nrparcel AS INTE                                    NO-UNDO.
+    DEF VAR aux_dia      AS INTE                                    NO-UNDO.
+    DEF VAR aux_mes      AS INTE                                    NO-UNDO.
+    DEF VAR aux_ano      AS INTE                                    NO-UNDO.
+
+    ASSIGN  aux_dtcalcul = par_dtvencto
+            aux_dia      = DAY(aux_dtcalcul)
+            aux_mes      = MONTH(aux_dtcalcul)
+            aux_ano      = YEAR(aux_dtcalcul).
+
+    DO  aux_nrparcel = 1 TO par_nrparcel:
+        IF  aux_dia >= 29 THEN
+            DO: /*  Se nao existir o dia no mes, joga o vencimento para
+                    o ultimo deste mesmo mes. */
+                aux_dtcalcul = DATE(aux_mes,aux_dia,aux_ano) NO-ERROR.
+                IF  ERROR-STATUS:ERROR THEN
+                    DO:
+                      /* Calcular o ultimo dia do mês */
+                      ASSIGN aux_dtcalcul = DATE((DATE(aux_mes, 28, aux_ano) + 4) -
+                                                 DAY(DATE(aux_mes,28, aux_ano) + 4)).
+                    END.
+            END.
+        ELSE
+            DO:
+                aux_dtcalcul = DATE(aux_mes, aux_dia, aux_ano).
+            END.
+
+        CREATE tt-datas-parcelas.
+        ASSIGN tt-datas-parcelas.nrparepr = aux_nrparcel
+               tt-datas-parcelas.dtparepr = aux_dtcalcul.
+
+        IF  aux_mes = 12 THEN
+            DO:
+                aux_mes = 1.
+                aux_ano = aux_ano + 1.
+            END.
+        ELSE
+            aux_mes = aux_mes + 1.
+    END.
+
+END PROCEDURE. /* calcula data parcela */
+
 
 /***************************************************************************
  Carregar os dados de uma determinada simulacao de emprestimo
@@ -229,6 +281,9 @@ PROCEDURE busca_dados_simulacao:
     EMPTY TEMP-TABLE tt-erro.         
     EMPTY TEMP-TABLE tt-crapsim.      
     EMPTY TEMP-TABLE tt-parcelas-epr. 
+
+    
+    DEF VAR aux_nrparepr          AS INTE INITIAL 0                 NO-UNDO.
 
     IF   par_flgerlog   THEN
          ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -266,7 +321,11 @@ PROCEDURE busca_dados_simulacao:
              IF   AVAIL crapfin   THEN
                   ASSIGN tt-crapsim.dsfinemp = crapfin.dsfinemp.
 
-             ASSIGN tt-crapsim.vlrtotal = tt-crapsim.vlemprst + tt-crapsim.vliofepr + tt-crapsim.vlrtarif.
+             ASSIGN tt-crapsim.vlrtotal = tt-crapsim.vlemprst.
+             IF tt-crapsim.idfiniof = 1 THEN 
+             DO:
+                ASSIGN tt-crapsim.vlrtotal = tt-crapsim.vlrtotal + tt-crapsim.vliofepr + tt-crapsim.vlrtarif.
+             END.
              
              IF (AVAIL crapfin) AND (AVAIL craplcr) THEN
              DO:
@@ -291,40 +350,25 @@ PROCEDURE busca_dados_simulacao:
                 END.
              END.
                           
-             RUN sistema/generico/procedures/b1wgen0084.p 
-                 PERSISTENT SET hb1wgen0084.
+             /* Datas das Prestacoes */
+             RUN calcula_data_parcela_sim
+                (par_cdcooper, crapsim.dtdpagto, crapsim.qtparepr).
              
-             RUN calcula_emprestimo IN hb1wgen0084  
-                                       (INPUT  par_cdcooper,  
-                                        INPUT  par_cdagenci,  
-                                        INPUT  par_nrdcaixa,  
-                                        INPUT  par_cdoperad,  
-                                        INPUT  par_nmdatela,  
-                                        INPUT  par_idorigem,  
-                                        INPUT  par_nrdconta,  
-                                        INPUT  par_idseqttl,  
-                                        INPUT  par_flgerlog,
-                                        INPUT  0,
-                                        INPUT  craplcr.cdlcremp,  
-                                        INPUT  crapfin.cdfinemp,
-                                        INPUT  crapsim.vlemprst,  
-                                        INPUT  crapsim.qtparepr,  
-                                        INPUT  crapsim.dtmvtolt,
-                                        INPUT  crapsim.dtdpagto,
-                                        INPUT  NO,            
-                                        INPUT  crapsim.dtlibera,
-                                        INPUT  crapsim.idfiniof,
-                                        OUTPUT var_qtdiacar,  
-                                        OUTPUT var_vlajuepr,  
-                                        OUTPUT var_txdiaria,  
-                                        OUTPUT var_txmensal,  
-                                        OUTPUT TABLE tt-erro,
-                                        OUTPUT TABLE tt-parcelas-epr).
+             DO aux_nrparepr = 1 TO crapsim.qtparepr:
              
-             DELETE OBJECT hb1wgen0084.
+                FIND tt-datas-parcelas WHERE tt-datas-parcelas.nrparepr = aux_nrparepr
+                                             NO-LOCK NO-ERROR.
+                IF  AVAIL tt-datas-parcelas THEN
+                    DO:
          
-             IF   RETURN-VALUE <> "OK"   THEN 
-                  RETURN "NOK".
+                        CREATE tt-parcelas-epr.
+                        ASSIGN tt-parcelas-epr.cdcooper = par_cdcooper
+                               tt-parcelas-epr.nrdconta = par_nrdconta
+                               tt-parcelas-epr.nrparepr = aux_nrparepr
+                               tt-parcelas-epr.vlparepr = crapsim.vlparepr
+                               tt-parcelas-epr.dtparepr = tt-datas-parcelas.dtparepr.
+                    END.
+             END.                  
          
          END.
     ELSE
@@ -561,6 +605,8 @@ PROCEDURE grava_simulacao:
     DEF  VAR aux_dtlibera AS DATE                                   NO-UNDO.
     DEF  VAR aux_dtdpagto AS DATE                                   NO-UNDO.
     DEF  VAR aux_txcetano AS DECI                                   NO-UNDO.
+    DEF  VAR aux_dscatbem AS CHAR                                   NO-UNDO.
+    DEF  VAR aux_nrparepr AS INTE INITIAL 0                         NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
@@ -670,13 +716,45 @@ PROCEDURE grava_simulacao:
     
     FIND FIRST tt-parcelas-epr NO-ERROR.
   
+   
+        
+    /* Calcular a Tarifa da Operação */
+    RUN consulta_tarifa_emprst(INPUT  par_cdcooper,
+                               INPUT  par_cdlcremp,
+                               INPUT  par_vlemprst,
+                               INPUT  par_nrdconta,
+                               INPUT 0, /* Número do contrato - passa zero pois na simulacao nao tem bens */
+                               OUTPUT var_vlrtarif,
+                               OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".    
+    
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
            var_vliofepr = 0.
 
-    /* Financia IOF e Tarifa */
-    IF  craplcr.flgtaiof = TRUE THEN
+    /* Calcula IOF */ 
+    FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
+                       craplcr.cdlcremp = par_cdlcremp
+                       NO-LOCK NO-ERROR.
+
+    IF  NOT AVAIL craplcr THEN
         DO:
+            aux_cdcritic = 363.
+            RETURN "NOK".
+        END.    
+    
+    /* Criar um bem fixo para simular o cálculo do IOF de acordo com a alienação */
+    IF ( craplcr.tpctrato = 2 ) OR       /* Avaliacao de garantia de bem movel */
+       ( craplcr.tpctrato = 3 ) THEN     /* Avaliacao de garantia de bem imovel */
+        IF craplcr.tpctrato = 2 THEN   
+            aux_dscatbem = "AUTOMOVEL".
+        ELSE
+            aux_dscatbem = "CASA".
+    ELSE
+      ASSIGN aux_dscatbem = "".
+    
               /* Calcular o IOF da operação */
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         /* Efetuar a chamada a rotina Oracle */ 
@@ -698,7 +776,7 @@ PROCEDURE grava_simulacao:
                                               INPUT 1,
                                               INPUT ?, /* pr_dtcarenc */
                                               INPUT 0, /* pr_qtdias_carencia */
-                                              INPUT "",     /* Bens em garantia */
+                                          INPUT aux_dscatbem,     /* Bens em garantia */
                                               INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
                                               INPUT ?,
                                               INPUT "N", 
@@ -716,29 +794,34 @@ PROCEDURE grava_simulacao:
                                  WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
                aux_dscritic = pc_calcula_iof_epr.pr_dscritic
                                  WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+     /* Financia IOF e Tarifa */
+     IF par_idfiniof = 1 THEN
+     DO:                         
+
+        /* Atualizar valor da Parcela conforme calculo do IOF */
+        DO aux_nrparepr = 1 TO par_qtparepr:
+
+          FIND tt-parcelas-epr WHERE tt-parcelas-epr.nrparepr = aux_nrparepr
+                                       NO-LOCK NO-ERROR.
+          IF  AVAIL tt-parcelas-epr THEN
+              DO:
+                  ASSIGN tt-parcelas-epr.vlparepr = pc_calcula_iof_epr.pr_vlpreclc
+                                                  WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?.
+              END.
+        END.
 
         IF aux_dscritic <> "" THEN
-                RETURN "NOK".
-
-        /* Calcular a Tarifa da Operação */
-    RUN consulta_tarifa_emprst(INPUT  par_cdcooper,
-                               INPUT  par_cdlcremp,
-                               INPUT  par_vlemprst,
-                               INPUT  par_nrdconta,
-                                   INPUT 0, /* Número do contrato - passa zero pois na simulacao nao tem bens */
-                               OUTPUT var_vlrtarif,
-                               OUTPUT TABLE tt-erro).
-
-    IF  RETURN-VALUE = "NOK" THEN
         RETURN "NOK".
 
         /* Incrementar Tarifa e IOF */
-    ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
+        ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr
+               var_vllibcet = par_vlemprst.
 
     END.
     ELSE
     DO:
-        ASSIGN var_vllibera = par_vlemprst.
+        ASSIGN var_vllibera = par_vlemprst
+               var_vllibcet = par_vlemprst - var_vlrtarif - var_vliofepr.
     END.
     
     /* Criacao ou busca do registro de simulacao */
@@ -818,7 +901,7 @@ PROCEDURE grava_simulacao:
                                      INPUT IF AVAIL tt-parcelas-epr THEN 
                                               tt-parcelas-epr.vlparepr 
                                            ELSE 0, 
-                                     INPUT var_vllibera,
+                                     INPUT var_vllibcet,
                                      INPUT par_dtlibera, 
                                      INPUT par_dtdpagto,
                                     OUTPUT aux_txcetano,
@@ -1724,7 +1807,7 @@ PROCEDURE verifica-dia-util:
                     
     RETURN "OK".
 
-       END.    
+END.
           
 
 /*****************************************************************************
@@ -1770,58 +1853,6 @@ PROCEDURE consulta_tarifa_emprst:
             aux_cdcritic = 363.
             RETURN "NOK".
         END.
-/*
-    IF  craplcr.vltrfesp > 0 THEN
-        aux_vltrfesp = craplcr.vltrfesp.
-
-    IF  craplcr.flgtarif THEN
-        DO: 
-           FIND craptab WHERE craptab.cdcooper = par_cdcooper       AND
-                              craptab.nmsistem = "CRED"             AND
-                              craptab.tptabela = "USUARI"           AND
-                              craptab.cdempres = 11                 AND
-                              craptab.cdacesso = "TRFACTREMP"       AND
-                              craptab.tpregist = 1
-                              USE-INDEX craptab1 NO-LOCK NO-ERROR.
-      
-           IF   NOT AVAILABLE craptab   THEN
-                DO:
-                    ASSIGN aux_cdcritic = 487.                             
-                    RETURN "NOK".
-                END.
-           
-           ASSIGN tab_dstextab = craptab.dstextab      
-                  aux_chaveate = -1
-                  aux_chavetar =  0.
-                    
-           /* Obter o valor da tarifa dependendo do valor do emprestimo */
-           DO aux_contador = 1 TO 10:
-
-              ASSIGN aux_chavetar = aux_chavetar + 2 /* Chave tarifa */
-                     aux_chaveate = aux_chaveate + 2 /* Chave faixa ate */
-                     aux_valorate = 
-                          DECIMAL(ENTRY(aux_chaveate,tab_dstextab,"#"))
-                     par_vlrtarif = 
-                          DECIMAL(ENTRY(aux_chavetar,tab_dstextab,"#"))
-                             NO-ERROR.
-
-                /* Se valor da tarifa eh >= ao do emprestimo ou */
-                /* Se chegou na ultima faixa ou  */
-                /* Se nao existe a faixa */
-                IF   aux_valorate >= par_vlemprst       OR 
-                     aux_contador = 10                  OR 
-                     ERROR-STATUS:ERROR                 THEN
-                     DO:
-                         /* Se deu erro, pegar a anterior */
-                         IF   ERROR-STATUS:ERROR    THEN
-                              DO:
-                                  ASSIGN aux_chavetar = aux_chavetar - 2
-                                         par_vlrtarif = 
-                               DECIMAL(ENTRY(aux_chavetar , tab_dstextab ,"#")).
-                              END.
-                         LEAVE.
-                     END.
-           END.   */
 
            ASSIGN aux_inpessoa = 1. /* Fisica */ 
 
@@ -1832,14 +1863,7 @@ PROCEDURE consulta_tarifa_emprst:
            /* Verifica qual tarifa deve ser cobrada com base tipo pessoa */
            IF AVAIL crapass THEN
            DO:
-               ASSIGN aux_inpessoa = crapass.inpessoa. /* 
-               IF crapass.inpessoa = 1 THEN /* Fisica */
-                    ASSIGN aux_cdbattar = "FINANCIAPF".
-               ELSE
-                    ASSIGN aux_cdbattar = "FINANCIAPJ". 
-           END.
-           ELSE
-               ASSIGN aux_cdbattar = "FINANCIAPJ".      */
+        ASSIGN aux_inpessoa = crapass.inpessoa.
            END.
             
            IF NOT VALID-HANDLE(h-b1wgen0153) THEN
@@ -1905,62 +1929,7 @@ PROCEDURE consulta_tarifa_emprst:
               ASSIGN par_vlrtarif = par_vlrtarif + ROUND(DECI(pc_calcula_tarifa.pr_vltrfgar),2).
             END.
         
-      /*
-           IF  craplcr.cdusolcr = 1 THEN DO:
-
-                IF  aux_inpessoa = 1 THEN
-                    aux_cdbattar = "MICROCREPF".
-                ELSE
-                    aux_cdbattar = "MICROCREPJ".
-    
-                RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
-                                                (INPUT  par_cdcooper,
-                                                 INPUT  aux_cdbattar,       
-                                                 INPUT  par_vlemprst,
-                                                 INPUT  "", /* cdprogra */
-                                                 OUTPUT aux_cdhistor,
-                                                 OUTPUT aux_cdhisest,
-                                                 OUTPUT par_vlrtarif,
-                                                 OUTPUT aux_dtdivulg,
-                                                 OUTPUT aux_dtvigenc,
-                                                 OUTPUT aux_cdfvlcop,
-                                                 OUTPUT TABLE tt-erro).
-    
-           END.
-           ELSE DO:
-
-               RUN carrega_dados_tarifa_emprestimo IN h-b1wgen0153
-                                                  (INPUT  par_cdcooper,
-                                                   INPUT  par_cdlcremp,
-                                                   INPUT  "EM",
-                                                   INPUT  aux_inpessoa,
-                                                   INPUT  par_vlemprst,
-                                                   INPUT  "", /* cdprogra */
-                                                   OUTPUT aux_cdhistor,
-                                                   OUTPUT aux_cdhisest,
-                                                   OUTPUT par_vlrtarif,
-                                                   OUTPUT aux_dtdivulg,
-                                                   OUTPUT aux_dtvigenc,
-                                                   OUTPUT aux_cdfvlcop,
-                                                   OUTPUT TABLE tt-erro).
-
-           
-               RUN carrega_dados_tarifa_emprestimo IN h-b1wgen0153
-                                                  (INPUT  par_cdcooper,
-                                                   INPUT  par_cdlcremp,
-                                                   INPUT  "ES",
-                                                   INPUT  aux_inpessoa,
-                                                   INPUT  par_vlemprst,
-                                                   INPUT  "", /* cdprogra */
-                                                   OUTPUT aux_cdhistor,
-                                                   OUTPUT aux_cdhisest,
-                                                   OUTPUT aux_vltrfesp,
-                                                   OUTPUT aux_dtdivulg,
-                                                   OUTPUT aux_dtvigenc,
-                                                   OUTPUT aux_cdfvlcop,
-                                                   OUTPUT TABLE tt-erro).
-           END.
-
+    /* Buscar tarifas de Alienação pois a rotina acima não tem os Bens na simulação */
            IF  VALID-HANDLE(h-b1wgen0153)  THEN
                 DELETE PROCEDURE h-b1wgen0153.
             
@@ -1970,15 +1939,6 @@ PROCEDURE consulta_tarifa_emprst:
            IF ( craplcr.tpctrato = 2 ) OR       /* Avaliacao de garantia de bem movel */
               ( craplcr.tpctrato = 3 ) THEN     /* Avaliacao de garantia de bem imovel */
            DO:
-                /* Assume pessoa fisica quando nao encontrar registro na crapass. */
-                ASSIGN aux_inpessoa = 1.
-
-                FIND crapass WHERE crapass.cdcooper = par_cdcooper     AND
-                                   crapass.nrdconta = par_nrdconta
-                                   NO-LOCK NO-ERROR.
-
-                IF AVAIL crapass THEN
-                    ASSIGN aux_inpessoa = crapass.inpessoa.
 
                 IF craplcr.tpctrato = 2 THEN    
                     DO:
@@ -2021,17 +1981,9 @@ PROCEDURE consulta_tarifa_emprst:
                     RETURN "NOK".
 
            END.
-           */
            
-           
-/*      END.
-    ELSE
-    DO:
-        par_vlrtarif = 0.
-        aux_taravali = 0.        
-    END.
-*/    
-    /* par_vlrtarif = par_vlrtarif + aux_vltrfesp + aux_taravali. */
+    /* Acumular tarifa de alienação (Se aplicavel) */
+    par_vlrtarif = par_vlrtarif + aux_taravali.
 
     RETURN "OK".
 END.

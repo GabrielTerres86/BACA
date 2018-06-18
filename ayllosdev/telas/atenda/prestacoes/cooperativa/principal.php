@@ -45,6 +45,7 @@
  * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
  * 034: [13/12/2017] Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)	 
  * 035: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 036: [07/06/2018] - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti
  */
 ?>
 
@@ -286,6 +287,8 @@
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
 			
 			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
+            arrayRegistros['idfiniof'] = '<? echo getByTagName($registros,'idfiniof'); ?>';
+      
 			</script><?
 			
 		} else if (in_array($operacao,array('C_NOVA_PROP'))) {
@@ -382,7 +385,11 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
-            arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
+            arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof'); ?>';
+			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr'); ?>';
+			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif'); ?>';
+			arrayProposta['vlfinanc'] = '<? echo getByTagName($proposta,'vlfinanc'); ?>';
+            arrayProposta['vlrtotal'] = '<? echo getByTagName($proposta,'vlrtotal'); ?>';
 
             // Se for Pos-Fixado
             if (arrayProposta['tpemprst'] == 2) {
@@ -961,6 +968,8 @@
 		include ('questionario.php');
 	} else if (in_array($operacao,array('PORTAB_CRED_C'))) {
 		include('../../emprestimos/portabilidade/portabilidade.php');                
+	} else if (in_array($operacao,array('C_DEMONSTRATIVO_EMPRESTIMO'))) {
+    include('form_demonstracao_emprestimo.php');
 	}
 	
 	if ((in_array($operacao,array('C_TRANSF_PREJU','C_DESFAZ_PREJU')))) {

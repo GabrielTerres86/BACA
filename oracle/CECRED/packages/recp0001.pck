@@ -2800,7 +2800,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         CLOSE cr_crapepr;
                               
         --Calcula o IOF
-        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => rw_acordo_contrato.cdcooper             --> Código da cooperativa referente ao contrato de empréstimos
+        TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                         ,pr_cdcooper => rw_acordo_contrato.cdcooper            --> Código da cooperativa referente ao contrato de empréstimos
                                           ,pr_nrdconta => rw_acordo_contrato.nrdconta            --> Número da conta referente ao empréstimo
                                           ,pr_nrctremp => rw_acordo_contrato.nrctremp            --> Número do contrato de empréstimo
                                           ,pr_vlemprst => vr_vlparcel                            --> Valor do empréstimo para efeito de cálculo

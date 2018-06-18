@@ -945,7 +945,8 @@ PROCEDURE calcula_atraso_parcela:
                    
                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                    RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
-                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                /* Somente IOF Complementar do Atraso */
+                                                       ,INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
                                                        ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
                                                        ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
                                                        ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */

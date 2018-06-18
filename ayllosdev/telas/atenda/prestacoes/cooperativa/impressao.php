@@ -6,22 +6,32 @@
    OBJETIVO     : Mostra a tela com opções para impressão
    ALTERACOES   : 25/10/2011 - Controle de impressão do rating na central (Henrique).
  				  24/05/2013 - Incluir camada nas includes "../" (Lucas R.)
+ 				  
   				  01/09/2014 - Incluir botão do cet, Projeto CET (Lucas R./Gielow)
+ 				  
  				  12/09/2014 - Projeto Contrato de Emprestimo
 							   Retirar botao de impressao "COMPLETA"
 							   (Tiago Castro - RKAM).
+ 				  
 			      30/10/2014 - Projeto de consultas automatizadas (Jonata-RKAM)
+ 				  
                   25/11/2014 - Ocultar apenas o botao de  PROPOSTA/NOTA PROMISSORIA/CONTRATO 
                                mantendo as demais opcoes habilitadas e visiveis. (Jaison)
+ 				  
 				  09/06/2015 - Contrato nao negociavel (Gabriel-RKAM).				
 							   
 				  12/01/2016 - Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.
 							   (Carlos Rafael Tanholi - Pré-Aprovado fase II).
+				 
 				  09/06/2015  - Contrato nao negociavel (Gabriel-RKAM).			
+ 				  
                   15/03/2016 - Buscar flmail_comite para verificar se deve permitir enviar email 
                                para o comite. PRJ207 - Esteira (Odirlei-AMcom)                  
+ 				  
                   11/10/2017 - Liberacao melhoria 442 (Heitor - Mouts)							   
 							   
+          07/06/2018 - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti                  
+
  */	
 
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -61,6 +71,30 @@
 		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', true);
 	}
     
+	//Busca se deve mostrar o botão para impressão da declaração de isenção de IOF
+	$xml = '';
+	$xml .= '<Root>';
+	$xml .= '	<Dados>';
+	$xml .= '		<cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+	$xml .= '		<nrdconta>' . $_POST['nrdconta'] . '</nrdconta>';
+	$xml .= '		<nrctrato>' . $_POST['nrctremp'] . '</nrctrato>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "ATENDA", "CONS_DEC_ISENC_IOF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjDados = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
+		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+	}
+
+	$isencaoIOF = $xmlObjDados->roottag->tags[0]->cdata;
+
 ?>
 <script>
     flmail_comite = "<?php echo $xmlObjDados->roottag->tags[0]->cdata; ?>";
@@ -127,6 +161,11 @@
 											<a href="#" class="botao" onClick="verificaImpressao(11);return false;"><? echo utf8ToHtml('Política')?></a>
 											<a href="#" class="botao" onClick="verificaAntecipacao(); return false;"><? echo utf8ToHtml('Antecipação')?></a>
 											<a href="#" class="botao" onClick="<?php echo $imp_rating_proposta; ?> return false;">Rating Proposta</a>
+											<?php
+												if ($isencaoIOF == 'S') {
+														echo '<a href="#" class="botao" onClick="verificaImpressao(57);return false;">Declara&ccedil;&atilde;o Financ. Im&oacute;veis</a>';
+												}
+											?>
 											<a href="#" class="botao" id="btVoltar" onClick="fechaImpressao('fechar');">Voltar</a>
 											
 										</div>
