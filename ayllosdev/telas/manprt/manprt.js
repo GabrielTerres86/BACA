@@ -188,6 +188,7 @@ function realizaoConsultaCustas() {
     var nrdconta = $('#nrdconta', '#' + frmOpcao).val();
     var cduflogr = $('#cduflogr', '#' + frmOpcao).val();
     var dscartor = $('#dscartor', '#' + frmOpcao).val();
+    var flcustas = $('#flcustas', '#' + frmOpcao).val();
 
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
@@ -204,6 +205,7 @@ function realizaoConsultaCustas() {
             nrdconta: nrdconta,
             cduflogr: cduflogr,
             dscartor: dscartor,
+            flcustas: flcustas,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -315,6 +317,8 @@ function buscaOpcao() {
                 formataOpcaoR();
             } else if (cddopcao == 'C') {
                 formataOpcaoC();
+            } else if (cddopcao == 'E') {
+                exportarConsultaPDF();
             }
 
 			if (flgimped){
@@ -412,6 +416,7 @@ function formataOpcaoR() {
     rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
     rCduflogr = $('label[for="cduflogr"]', '#' + frmOpcao);
     rDscartor = $('label[for="dscartor"]', '#' + frmOpcao);
+    rFlcustas = $('label[for="flcustas"]', '#' + frmOpcao);
     
     rInidtpro.css({ 'width': '68px' }).addClass('rotulo');
     rFimdtpro.css({ 'width': '65px' }).addClass('rotulo-linha'); 
@@ -419,6 +424,7 @@ function formataOpcaoR() {
     rNrdconta.css({ 'width': '70px' }).addClass('rotulo-linha');
     rCduflogr.css({ 'margin-left':'43px' }).addClass('rotulo-linha');
     rDscartor.css({ 'width': '120px', 'margin-left':'50px' }).addClass('rotulo-linha');
+    rFlcustas.css({ 'width': '135px' }).addClass('rotulo-linha');
         
     cInidtpro = $('#inidtpro', '#' + frmOpcao);
     cFimdtpro = $('#fimdtpro', '#' + frmOpcao);
@@ -426,6 +432,7 @@ function formataOpcaoR() {
     cNrdconta = $('#nrdconta', '#' + frmOpcao);
     cCduflogr = $('#cduflogr', '#' + frmOpcao);
     cDscartor = $('#dscartor', '#' + frmOpcao);
+    cFlcustas = $('#flcustas', '#' + frmOpcao);
     
     cInidtpro.css({ 'width': '75px' }).addClass('data campo');
     cFimdtpro.css({ 'width': '75px' }).addClass('data campo');
@@ -433,6 +440,7 @@ function formataOpcaoR() {
     cNrdconta.addClass('conta pesquisa campo').css({'width': '80px'});
     cCduflogr.css('width', '25px').attr('maxlength', '2').addClass('campo');
     cDscartor.css({ 'width': '130px' }).addClass('campo');
+    cFlcustas.css({ 'width': '180px' }).addClass('campo');
 
     layoutPadrao();
     return false;
@@ -918,6 +926,7 @@ function formatFormOpcaoR(form){
     var nrdconta = $('#nrdconta', '#' + frmOpcao).val();
     var cduflogr = $('#cduflogr', '#' + frmOpcao).val();
     var dscartor = $('#dscartor', '#' + frmOpcao).val();
+    var flcustas = $('#flcustas', '#' + frmOpcao).val();
 
     $('#inidtpro', form).val(inidtpro);
     $('#fimdtpro', form).val(fimdtpro);
@@ -925,6 +934,7 @@ function formatFormOpcaoR(form){
     $('#nrdconta', form).val(nrdconta.replace(/[^\w\s]/gi, ''));
     $('#cduflogr', form).val(cduflogr);
     $('#dscartor', form).val(dscartor);
+    $('#flcustas', form).val(flcustas);
 }
 
 function abrirModalConciliacao() {
