@@ -233,6 +233,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                05/06/2018 - Inclusão de Descont de Titulos (Borderô de Titulos) (Andrew Albuquerque(GFT))
 
+               17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
+                 
      ............................................................................. */
 
      DECLARE
@@ -540,14 +542,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapcyb.nrdconta
                ,crapcyb.nrctremp;
 
-       --Selecionar Linhas de Credito
-       CURSOR cr_craplcr (pr_cdcooper IN crapcop.cdcooper%type
-                         ,pr_cdlcremp IN craplcr.cdlcremp%type) IS
-         SELECT craplcr.dslcremp
-               ,craplcr.tpctrato
-         FROM craplcr
-         WHERE craplcr.cdcooper = pr_cdcooper
-         AND   craplcr.cdlcremp = pr_cdlcremp;
+       --Selecionar Linhas de Credito e Linhas de de Desconto
+       CURSOR cr_craplcr (pr_cdcooper IN crapcop.cdcooper%TYPE
+                         ,pr_cdlcremp IN craplcr.cdlcremp%TYPE
+                         ,pr_cdorigem IN crapcyb.cdorigem%TYPE) IS
+         SELECT lin.dslcremp
+               ,lin.tpctrato
+           FROM (SELECT 'LDC' AS tabela
+                       ,ldc.cddlinha AS cdlcremp
+                       ,ldc.dsdlinha AS dslcremp
+                       ,ldc.tpctrato 
+                   FROM crapldc ldc
+                  WHERE ldc.cdcooper = pr_cdcooper
+                    AND ldc.cddlinha = pr_cdlcremp
+                  UNION
+                 SELECT 'LCR' AS tabela 
+                       ,lcr.cdlcremp
+                       ,lcr.dslcremp
+                       ,lcr.tpctrato
+                   FROM craplcr lcr
+                  WHERE lcr.cdcooper = pr_cdcooper
+                    AND lcr.cdlcremp = pr_cdlcremp) lin
+          WHERE lin.tabela = DECODE(pr_cdorigem,4,'LDC','LCR');
        rw_craplcr cr_craplcr%ROWTYPE;
 
        --Selecionar Titulares da Conta
@@ -2455,9 +2471,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_crapsda:= cr_crapsda%FOUND;
            CLOSE cr_crapsda;
 
-           --Selecionar Linha Credito
+           --Selecionar Linha Credito ou de Desconto (4-Desconto de Títulos)
            OPEN cr_craplcr (pr_cdcooper => pr_cdcooper
-                           ,pr_cdlcremp => pr_cdlcremp);
+                           ,pr_cdlcremp => pr_cdlcremp
+                           ,pr_cdorigem => pr_cdorigem);
            FETCH cr_craplcr INTO rw_craplcr;
            vr_craplcr:= cr_craplcr%FOUND;
            --Retornar para parametro se encontrou
