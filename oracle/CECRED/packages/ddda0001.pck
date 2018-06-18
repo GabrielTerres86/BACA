@@ -464,7 +464,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --             29/08/2017 - Retirado mensagem de logs da proc_message.log e direcionado para o log
   --                          principal da NPC. (Rafael)
   --
-
+  --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
+  --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   
