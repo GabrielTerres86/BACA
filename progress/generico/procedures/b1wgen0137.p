@@ -319,10 +319,12 @@
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
                      
                 11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).    
-				
+                     
                      
                 21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
                              na opção todos (Carlos).
+                20/04/2018 - Incluir novos documentos para batime1nto de digitalizaçao.
+                             Projeto 414 - Regulatório FATCA/CRS (Marcelo Telles Coelho - Mouts).
 
                 06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
                              chamada pelo crps620, verifica os documentos digitalizados do
@@ -789,7 +791,7 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
-                END. 
+        END.
         END.
     ELSE
     IF  par_tipopcao = 3 THEN /* MATRICULA */
@@ -1297,7 +1299,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,171,172,176,177", ENTRY(3,craptab.dstextab,";")) THEN
+       
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1376,7 +1379,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 59:
+            DO aux_contdocs = 1 TO 63:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1432,6 +1435,15 @@ PROCEDURE efetua_batimento_ged_cadastro:
                     WHEN 59 THEN
                         ASSIGN aux_conttabs = 59. /*DOCUMENTO DE EMANCIPACAO*/
                     
+                    WHEN 60 THEN
+                        ASSIGN aux_conttabs = 60. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 61 THEN
+                        ASSIGN aux_conttabs = 61. /*DOCUMENTO NIF*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 62 THEN
+                        ASSIGN aux_conttabs = 62. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 63 THEN
+                        ASSIGN aux_conttabs = 63. /*DOCUMENTO NIF - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+
                     OTHERWISE
                         NEXT.
                 END CASE.
@@ -3719,7 +3731,7 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH tt-tarif-contas-pacote FIELDS(nrdconta dtadesao cdoperador_adesao)
                              WHERE tt-tarif-contas-pacote.dtcancel  = ?            
                                AND tt-tarif-contas-pacote.dtadesao = aux_data NO-LOCK:
-        
+
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
                    crapass.cdcooper = par_cdcooper AND
@@ -3730,7 +3742,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
-        
+            
         /* Verifica se o contrato foi digitalizado */
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper  = par_cdcooper AND
@@ -3761,7 +3773,7 @@ PROCEDURE efetua_batimento_ged_termos:
             NEXT.
           END.
         ELSE DO:
-            
+
             FIND FIRST tt-documentos-termo
                  WHERE tt-documentos-termo.cdcooper = par_cdcooper
                    AND tt-documentos-termo.cdagenci = crapass.cdagenci
@@ -3786,8 +3798,8 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopeade
                        tt-documentos-termo.idseqite = aux_conttabs. /* Adesao */
             END.
+            END.
         END.
-    END.
     END.
     /* fim tipo de documento 39 */
     
@@ -3807,7 +3819,7 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH tt-tarif-contas-pacote FIELDS(cdcooper nrdconta dtcancelamento cdoperador_cancela)
                              WHERE tt-tarif-contas-pacote.dtcancel  <> ?           
                                AND tt-tarif-contas-pacote.dtcancel = aux_data NO-LOCK:
-        
+
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
                    crapass.cdcooper = par_cdcooper AND
@@ -3818,7 +3830,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
-        
+
         /* Verifica se o contrato foi digitalizado */
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper  = par_cdcooper AND
@@ -3872,8 +3884,8 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopecan
                        tt-documentos-termo.idseqite = aux_conttabs. /* Cancelamento */
             END.
+            END.
         END.
-    END.
     /* fim tipo de documento 38 */
     
     END. /* do aux_data */

@@ -6,22 +6,23 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADNAC AS
    Sigla   : CRED
 
    Autor   : Adriano - CECRED
-   Data    : Junho/2017                       Ultima atualizacao: 
+   Data    : Junho/2017                       Ultima atualizacao: 10/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela CADNAC para permitir o gerenciamento de nacionalidades
 
-   Alteracoes: 
+   Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                            (Marcelo Telles Coelho - Mouts).
 
    */  
    
   --Busca as nacionalidades cadastradas no sistema
   PROCEDURE pc_busca_nacionalidades(pr_cdnacion IN crapnac.cdnacion%TYPE -->Código da nacionalidade
                                    ,pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                   ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
-                                   ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                   ,pr_nrregist IN INTEGER               --> Quantidade de registros
+                                   ,pr_nriniseq IN INTEGER               --> Qunatidade inicial
                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -31,6 +32,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADNAC AS
                                      
   --Inclui nacionalidade requerida pelo usuario
   PROCEDURE pc_incluir_nacionalidade(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
+                                    ,pr_cdpais   IN crapnac.cdpais%TYPE   --> Código do pais no FATCA/CRS
+                                    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+                                    ,pr_nmpais   IN crapnac.nmpais%TYPE   --> Nome do país
+                                    ,pr_inacordo IN crapnac.inacordo%TYPE --> Tipo de acordo (FATCA, CRS)
+                                    ,pr_dtinicio IN VARCHAR2              --> Data de início (dd/mm/yyyy)
+                                    ,pr_dtfinal  IN VARCHAR2              --> Data final (dd/mm/yyyy)
+                                    -- Projeto 414 - Marcelo Telles Coelho - Mouts
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -50,6 +58,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADNAC AS
   --Altear nacionalidade requerida pelo usuario
   PROCEDURE pc_alterar_nacionalidade(pr_cdnacion IN crapnac.cdnacion%TYPE --> Código da nacionalidade
                                     ,pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
+                                    ,pr_cdpais   IN crapnac.cdpais%TYPE   --> Código do pais no FATCA/CRS
+                                    ,pr_nmpais   IN crapnac.nmpais%TYPE   --> Nome do país
+                                    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+                                    ,pr_inacordo IN crapnac.inacordo%TYPE --> Tipo de acordo (FATCA, CRS)
+                                    ,pr_dtinicio IN VARCHAR2              --> Data de início (dd/mm/yyyy)
+                                    ,pr_dtfinal  IN VARCHAR2              --> Data final (dd/mm/yyyy)
+                                    -- Projeto 414 - Marcelo Telles Coelho - Mouts
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -67,14 +82,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
    Sigla   : CRED
 
    Autor   : Adriano - CECRED
-   Data    : Junho/2017                       Ultima atualizacao: 
+   Data    : Junho/2017                       Ultima atualizacao: 10/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela CADNAC para permitir o gerenciamento de nacionalidades
 
-   Alteracoes: 
+   Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                            (Marcelo Telles Coelho - Mouts).
 			              
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -94,20 +110,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano - CECRED
-   Data    : Junho/2017                        Ultima atualizacao: --/--/----
+   Data    : Junho/2017                        Ultima atualizacao: 10/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado
    Objetivo  : Rotina para buscar as nacionalidades
 
-   Alteracoes: 
+   Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                            (Marcelo Telles Coelho - Mouts).
                 
     ............................................................................. */                                    
     CURSOR cr_crapnac (pr_cdnacion IN crapnac.cdnacion%TYPE
                       ,pr_dsnacion IN crapnac.dsnacion%TYPE) IS
     SELECT nac.dsnacion 
           ,nac.cdnacion
+          ,nac.cdpais
+          ,nac.nmpais
+          ,nac.inacordo                                -- Projeto 414 - Marcelo Telles Coelho - Mouts
+          ,TO_CHAR(nac.dtinicio,'dd/mm/yyyy') dtinicio -- Projeto 414 - Marcelo Telles Coelho - Mouts
+          ,TO_CHAR(nac.dtfinal,'dd/mm/yyyy') dtfinal   -- Projeto 414 - Marcelo Telles Coelho - Mouts
       FROM crapnac nac
      WHERE (pr_cdnacion = 0 
         OR nac.cdnacion = pr_cdnacion)
@@ -183,7 +205,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'crapnac',pr_posicao => 0,pr_tag_nova => 'nacionalidades',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'cdnacion', pr_tag_cont => rw_crapnac.cdnacion, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'dsnacion', pr_tag_cont => rw_crapnac.dsnacion, pr_des_erro => vr_dscritic);
-       
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'cdpais', pr_tag_cont => rw_crapnac.cdpais, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'nmpais', pr_tag_cont => rw_crapnac.nmpais, pr_des_erro => vr_dscritic);
+        -- Projeto 414 - Marcelo Telles Coelho - Mouts
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'inacordo', pr_tag_cont => rw_crapnac.inacordo, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'dtinicio', pr_tag_cont => rw_crapnac.dtinicio, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => vr_auxconta, pr_tag_nova => 'dtfinal', pr_tag_cont => rw_crapnac.dtfinal, pr_des_erro => vr_dscritic);
         -- Incrementa contador p/ posicao no XML
         vr_auxconta := nvl(vr_auxconta,0) + 1;  
               
@@ -238,6 +265,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
 
   --Inclui nacionalidade requerida pelo usuario
   PROCEDURE pc_incluir_nacionalidade(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
+                                    ,pr_cdpais   IN crapnac.cdpais%TYPE   --> Código do pais no FATCA/CRS
+                                    ,pr_nmpais   IN crapnac.nmpais%TYPE   --> Nome do país
+                                    ,pr_inacordo IN crapnac.inacordo%TYPE --> Tipo de acordo (FATCA, CRS)
+                                    ,pr_dtinicio IN VARCHAR2              --> Data de início (dd/mm/yyyy)
+                                    ,pr_dtfinal  IN VARCHAR2              --> Data final (dd/mm/yyyy)
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -249,14 +281,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano - CECRED
-   Data    : Junho/2017                       Ultima atualizacao: --/--/----
+   Data    : Junho/2017                       Ultima atualizacao: 10/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado
    Objetivo  : Rotina para incluir as nacionalidades
 
-   Alteracoes: 
+   Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                            (Marcelo Telles Coelho - Mouts).
                 
     ............................................................................. */                                    
     CURSOR cr_crapnac (pr_dsnacion IN crapnac.dsnacion%TYPE) IS
@@ -265,6 +298,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
      WHERE UPPER(nac.dsnacion) = UPPER(pr_dsnacion);    
     rw_crapnac cr_crapnac%ROWTYPE;
     
+    CURSOR cr_cdpais_uk (pr_cdpais IN crapnac.cdpais%TYPE) IS
+    SELECT nac.cdnacion
+      FROM crapnac nac
+     WHERE UPPER(nac.cdpais) = UPPER(pr_cdpais);
+    rw_cdpais_uk cr_cdpais_uk%ROWTYPE;
+
     -- Variaveis de log
     vr_cdcooper NUMBER;
     vr_cdoperad VARCHAR2(100);
@@ -280,6 +319,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
     vr_dscritic crapcri.dscritic%TYPE;         
     vr_exc_saida EXCEPTION;
   
+    --Variaveis de trabalho
+    vr_dtinicio crapnac.dtinicio%TYPE; -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    vr_dtfinal  crapnac.dtfinal%TYPE;  -- Projeto 414 - Marcelo Telles Coelho - Mouts
+
   BEGIN
     
     -- Incluir nome do módulo logado
@@ -300,6 +343,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
     -- Verifica se houve erro                      
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
+    END IF;
+
+    vr_dtinicio := TO_DATE(pr_dtinicio,'dd/mm/yyyy'); -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    vr_dtfinal  := TO_DATE(pr_dtfinal,'dd/mm/yyyy');  -- Projeto 414 - Marcelo Telles Coelho - Mouts
+
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    IF vr_dtinicio < TRUNC(SYSDATE) THEN
+      vr_dscritic := 'Data início deve ser maior ou igual ao dia de hoje!';
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    IF vr_dtfinal IS NOT NULL THEN
+      IF vr_dtfinal < vr_dtinicio THEN
+        vr_dscritic := 'Data final deve ser maios ou igual a Data inicio!';
+        RAISE vr_exc_saida;
+      END IF;
     END IF;                         
     
     OPEN cr_crapnac(pr_dsnacion);
@@ -317,13 +377,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
     
     CLOSE cr_crapnac;
     
+    -- Ver UK CDPAIS
+
+    IF pr_cdpais IS NOT NULL THEN
+      OPEN cr_cdpais_uk(pr_cdpais);
+
+      FETCH cr_cdpais_uk INTO rw_cdpais_uk;
+
+      IF cr_cdpais_uk%FOUND THEN
+
+        CLOSE cr_cdpais_uk;
+
+        vr_dscritic := 'País já cadastrado na nacionalidade '||rw_cdpais_uk.cdnacion||'.';
+        RAISE vr_exc_saida;
+
+      END IF;
+
+      CLOSE cr_cdpais_uk;
+    END IF;
+
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');    
     
     BEGIN 
       --Inclui a nacionalidade
-      INSERT INTO crapnac(dsnacion) VALUES(UPPER(pr_dsnacion));
-
+      INSERT INTO crapnac(dsnacion
+                         ,cdpais
+                         ,nmpais
+                         -- Projeto 414 - Marcelo Telles Coelho - Mouts
+                         ,inacordo
+                         ,dtinicio
+                         ,dtfinal)
+                   VALUES(UPPER(pr_dsnacion)
+                         ,UPPER(pr_cdpais)
+                         ,UPPER(pr_nmpais)
+                         -- Projeto 414 - Marcelo Telles Coelho - Mouts
+                         ,UPPER(pr_inacordo)
+                         ,vr_dtinicio
+                         ,vr_dtfinal);
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Não foi possível incluir a nacionalidade.';
@@ -511,6 +602,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
   --Altear nacionalidade requerida pelo usuario
   PROCEDURE pc_alterar_nacionalidade(pr_cdnacion IN crapnac.cdnacion%TYPE --> Código da nacionalidade
                                     ,pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
+                                    ,pr_cdpais   IN crapnac.cdpais%TYPE   --> Código do pais no FATCA/CRS
+                                    ,pr_nmpais   IN crapnac.nmpais%TYPE   --> Nome do país
+                                    ,pr_inacordo IN crapnac.inacordo%TYPE --> Tipo de acordo (FATCA, CRS)
+                                    ,pr_dtinicio IN VARCHAR2              --> Data de início (dd/mm/yyyy)
+                                    ,pr_dtfinal  IN VARCHAR2              --> Data final (dd/mm/yyyy)
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -522,14 +618,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano - CECRED
-   Data    : Junho/2017                        Ultima atualizacao: --/--/----
+   Data    : Junho/2017                        Ultima atualizacao: 10/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado
    Objetivo  : Rotina para alterar as nacionalidade
 
-   Alteracoes: 
+   Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
+                            (Marcelo Telles Coelho - Mouts).
                 
     ............................................................................. */                                    
     CURSOR cr_crapnac (pr_cdnacion IN crapnac.cdnacion%TYPE) IS
@@ -547,6 +644,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
        AND UPPER(nac.dsnacion) = UPPER(pr_dsnacion);
     rw_nacionalidade cr_nacionalidade%ROWTYPE;
     
+    CURSOR cr_cdpais_uk (pr_cdnacion IN crapnac.cdnacion%TYPE
+                        ,pr_cdpais IN crapnac.cdpais%TYPE) IS
+    SELECT nac.cdnacion
+      FROM crapnac nac
+     WHERE nac.cdnacion <> pr_cdnacion
+       AND UPPER(nac.cdpais) = UPPER(pr_cdpais);
+    rw_cdpais_uk cr_cdpais_uk%ROWTYPE;
+
     -- Variaveis de log
     vr_cdcooper NUMBER;
     vr_cdoperad VARCHAR2(100);
@@ -562,6 +667,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
     vr_dscritic crapcri.dscritic%TYPE;         
     vr_exc_saida EXCEPTION;
   
+    --Variaveis de trabalho
+    vr_dtinicio crapnac.dtinicio%TYPE; -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    vr_dtfinal  crapnac.dtfinal%TYPE;  -- Projeto 414 - Marcelo Telles Coelho - Mouts
+
   BEGIN
   
     -- Incluir nome do módulo logado
@@ -582,6 +691,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
     -- Verifica se houve erro                      
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
+    END IF;
+
+    vr_dtinicio := TO_DATE(pr_dtinicio,'dd/mm/yyyy'); -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    vr_dtfinal  := TO_DATE(pr_dtfinal,'dd/mm/yyyy');  -- Projeto 414 - Marcelo Telles Coelho - Mouts
+
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    IF vr_dtfinal IS NOT NULL THEN
+      IF vr_dtinicio IS NULL THEN
+        vr_dscritic := 'Data inicio deve ser informada!';
+        RAISE vr_exc_saida;
+      END IF;
+      IF vr_dtfinal < vr_dtinicio THEN
+        vr_dscritic := 'Data final deve ser maios ou igual a Data inicio!';
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
+
+    -- Projeto 414 - Marcelo Telles Coelho - Mouts
+    IF vr_dtinicio IS NOT NULL THEN
+      IF pr_inacordo IS NULL THEN
+        vr_dscritic := 'Pais nao faz parte de acordo, Datas nao devem ser informadas!';
+        RAISE vr_exc_saida;
+      END IF;
     END IF;                         
     
     OPEN cr_crapnac(pr_cdnacion);
@@ -615,10 +747,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADNAC AS
     
     CLOSE cr_nacionalidade;
     
+    -- Ver UK CDPAIS
+
+    IF pr_cdpais IS NOT NULL THEN
+      OPEN cr_cdpais_uk(pr_cdnacion
+                       ,pr_cdpais);
+
+      FETCH cr_cdpais_uk INTO rw_cdpais_uk;
+
+      IF cr_cdpais_uk%FOUND THEN
+
+        CLOSE cr_cdpais_uk;
+
+        vr_dscritic := 'País já cadastrado na nacionalidade '||rw_cdpais_uk.cdnacion||'.';
+        RAISE vr_exc_saida;
+
+      END IF;
+
+      CLOSE cr_cdpais_uk;
+    END IF;
+
     BEGIN 
       --Alterar a nacionalidade
       UPDATE crapnac
          SET crapnac.dsnacion = UPPER(pr_dsnacion)
+            -- Projeto 414 - Marcelo Telles Coelho - Mouts
+            ,crapnac.cdpais   = UPPER(pr_cdpais)
+            ,crapnac.nmpais   = UPPER(pr_nmpais)
+            ,crapnac.inacordo = UPPER(pr_inacordo)
+            ,crapnac.dtinicio = vr_dtinicio
+            ,crapnac.dtfinal  = vr_dtfinal
        WHERE crapnac.cdnacion = pr_cdnacion;
 
     EXCEPTION 
