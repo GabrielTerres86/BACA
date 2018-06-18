@@ -4012,7 +4012,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF pr_tpproces = 'I' THEN --Inclusão
       vr_obj_generico.put('tipoProduto','LM');
     ELSE --Alteração
-      vr_obj_generico.put('tipoProduto','MJ');
+      IF rw_crawcrd.vllimcrd = 0 THEN
+        vr_obj_generico.put('tipoProduto','LM');
+      ELSE
+        vr_obj_generico.put('tipoProduto','MJ');
+      END IF;
     END IF;
 
     --Campos usados somente em Empréstimo, irão com valor em branco.

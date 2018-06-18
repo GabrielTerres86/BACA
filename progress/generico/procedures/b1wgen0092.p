@@ -6050,7 +6050,7 @@ PROCEDURE valida_senha_cooperado:
                              AND  crapsnh.tpdsenha = 1 /*internet*/ 
                              NO-LOCK:                
               DO:        
-              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapsnh.cddsenha) THEN
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"99999999"))) = CAPS(crapsnh.cddsenha) THEN
                   DO:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
