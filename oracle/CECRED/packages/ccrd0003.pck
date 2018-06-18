@@ -10874,6 +10874,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
       vr_idxrel     INTEGER := 0;  
       
+      -- Objetos para armazenar as variáveis da notificação
+      vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+      vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+      vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE; 
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
@@ -11407,7 +11412,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
-            
+          --
+          vr_notif_origem   := 10;
+          vr_notif_motivo   := 1;
+          vr_variaveis_notif('#valordebito') := TRIM(to_char(vr_vlpagmto,'9999990.00'));
+          vr_variaveis_notif('#datadebito')  := to_char(pr_dtmvtolt,'dd/mm/yyyy');
+          vr_variaveis_notif('#tipodebito')  := vr_dstransa;
+          -- Cria uma notificação
+          noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                      ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_tbcrd_fatura.nrdconta
+                                      ,pr_variaveis => vr_variaveis_notif);
+
           --Pega os valores para atualizar no sld do dia das faturas
           vr_vlsomsld := vr_vlpagmto;
           vr_dtultsld := pr_dtmvtolt;
