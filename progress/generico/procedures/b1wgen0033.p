@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 09/04/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 16/05/2018
            
     Dados referentes ao programa:
                 
@@ -226,8 +226,7 @@
 							 (Adriano - P339).
 
 				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).
+			                 crapass, crapttl, crapjur (Adriano - P339).
 
                 27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
                              (Andrei Vieira - MOUTs)
@@ -245,6 +244,9 @@
                              código da modalidade to tipo de conta igual a "2" ou "3".
                              PRJ366 (Lombardi).
 
+				16/05/2018 - Alteração na procedure "buscar_motivo_can" para inclusão do
+				             novo motivo de cancelamento "Insuf. saldo e/ou Inadimplencia (autom.)"
+							 (Reginaldo/AMcom)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -8951,7 +8953,7 @@ PROCEDURE cancelar_seguro:
     DO:
         IF par_tpseguro  = 11 AND
             (par_cdmotcan = 0 OR
-             par_cdmotcan > 9) THEN
+             par_cdmotcan > 12) THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado.".
                 LEAVE valida.
@@ -9191,13 +9193,13 @@ PROCEDURE buscar_motivo_can:
 
     valida:
     DO:
-        IF par_cdmotcan > 11 THEN
+        IF par_cdmotcan > 12 THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado".
                 LEAVE valida.
             END.
 
-        ASSIGN par_qtregist = 9.
+        ASSIGN par_qtregist = 12.
 
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 1
@@ -9242,6 +9244,10 @@ PROCEDURE buscar_motivo_can:
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 11
                tt-mot-can.dsmotcan = "Perdido para a concorrencia".
+
+		CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 12
+               tt-mot-can.dsmotcan = "Insuf. saldo e/ou Inadimplencia (autom.)".			   
 
         IF par_cdmotcan <> 0 THEN DO:
             FOR EACH tt-mot-can WHERE

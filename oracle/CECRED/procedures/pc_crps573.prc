@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 03/04/2018
+       Data    : Agosto/2010                       Ultima atualizacao: 07/06/2018
 
        Dados referentes ao programa:
 
@@ -345,6 +345,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                    10/05/2018 - Ajuste na proc pc_garantia_cobertura_opera para nao enviar atricuto Ident 
                                 da tag Gar quando tipo for "0104" ou "0105". PRJ366 (Lombardi)
 				   
+                    07/06/2018 - P450 - Considerar contrato Limite/ADP na Qtde Contratos(qtctrliq) (Guilherme/AMcom)
+
 .............................................................................................................................*/
 
     DECLARE
@@ -455,7 +457,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                wpr.nrctrliq##7+
                wpr.nrctrliq##8+
                wpr.nrctrliq##9+
-               wpr.nrctrliq##10 qtctrliq -- Se houver qq contrato, teremos a soma + 0          
+               wpr.nrctrliq##10+
+               NVL(wpr.nrliquid,0)     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
               ,wpr.idquapro
               ,epr.idquaprc
           from crapepr epr

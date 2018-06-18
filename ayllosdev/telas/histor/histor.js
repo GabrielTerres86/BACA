@@ -13,8 +13,11 @@
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
- *
  *                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
+ *                11/06/2018 - P450 - Alterado o label "Estourar a conta corrente" para 
+ *     					       "Debita após o estouro de conta corrente (60 dias)".
+ *							   Diego Simas (AMcom)
+
  * --------------
  */
 
@@ -158,7 +161,7 @@ function formataCadastroHistorico() {
     $('#inhistor', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '2').setMask('INTEGER', 'zz', '', '');
     $('#dsexthst', '#frmHistorico').css({ 'width': '455px' }).attr('maxlength', '50');
     $('#dsextrat', '#frmHistorico').css({ 'width': '200px' }).attr('maxlength', '21');
-    $('#nmestrut', '#frmHistorico').css({ 'width': '125px' }).attr('maxlength', '15');
+    $('#nmestrut', '#frmHistorico').css({ 'width': '250px' }).attr('maxlength', '32');
 	// PJ416
     $('#indutblq', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '1'); 
 	
@@ -194,7 +197,7 @@ function formataCadastroHistorico() {
     $('label[for="ingerdeb"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
     $('label[for="nrctatrc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
     $('label[for="nrctatrd"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
-    $('label[for="inestocc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
+    $('label[for="inestocc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '520px' });
 
 	// CAMPOS - Dados Contabeis
     $('#cdhstctb', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
@@ -1568,7 +1571,6 @@ function manterRotina() {
 	
 	// PRJ 416 
     var operauto = $('#operauto', '#frmHistorico').val();	
-	
 	
 	$.ajax({		
         type: 'POST',

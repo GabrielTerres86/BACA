@@ -26,6 +26,7 @@
 <?php if ($rel_sicredi == '') { ?>
                 <option value="6"> 6 - Seguro Auto Sicredi </option>
 <?php } ?>
+				<option value="7"> 7 - Motivos de cancelamento Seguro de Vida Individual  </option>
 			</select>
 		</div>
 		</br>

@@ -12,7 +12,10 @@
     *                             Diego Simas - AMcom  
 	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 	*
-	*                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
+	*                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
+	*							  "Debita após o estouro de conta corrente (60 dias)".
+	*							  Diego Simas (AMcom) - Prj 450
+	*							  			
 	* --------------
 	*/ 
 
@@ -22,6 +25,27 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
+
+	$nmestrutLst = array(
+		'CRAPCBB',
+		'CRAPCHD',
+		'CRAPLAC',
+		'CRAPLAP',
+		'CRAPLCI',
+		'CRAPLCM',
+		'CRAPLCS',
+		'CRAPLCT',
+		'CRAPLCX',
+		'CRAPLEM',
+		'CRAPLFT',
+		'CRAPLGP',
+		'CRAPLPI',
+		'CRAPLPP',
+		'CRAPLTR',
+		'CRAPTIT',
+		'CRAPTVL',
+		'TBCC_PREJUIZO_LANCAMENTO'
+	);
 ?>
 
 <form id="frmHistorico" name="frmHistorico" class="formulario condensado">
@@ -82,7 +106,15 @@
 				<tr>
 					<td colspan="3">
 						<label for="nmestrut">Nome da Estrutura:</label>
-						<input id="nmestrut" name="nmestrut" type="text"/>
+						<select id="nmestrut" name="nmestrut">
+							<option value="">&nbsp;</option>
+						<?php
+						foreach ($nmestrutLst as $nmestrut) { 
+						?>
+							<option value="<?php echo $nmestrut;?>"><?php echo $nmestrut;?></option>
+						<?php
+						}
+						?>
 					</td>
 				</tr>
 			</table>
@@ -230,7 +262,7 @@
 				</tr>
 				<tr class='estouraConta'>
 					<td colspan="2">
-						<label for="inestocc">Estourar a conta corrente:</label>
+						<label for="inestocc">Debita ap&oacute;s o estouro de conta corrente (60 dias) :</label>
 						<select id="inestocc" name="inestocc">
 							<option value="0">0 - N&atilde;o</option>
 							<option value="1">1 - Sim</option>

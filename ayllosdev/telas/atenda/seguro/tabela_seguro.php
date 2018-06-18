@@ -18,6 +18,8 @@
 				  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
 
 				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+
+                  18/06/2018 - P450 - Inclusão do Motivo do Cancelamento/dsmotcan (Marcel/AMcom)
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -38,7 +40,7 @@
 				<tr>
 					<td>
                         <?php echo getByTagName($seguro->tags,'dsTipo'); ?>
-
+                        <input type="hidden" id="dsmotcan"   name="dsmotcan"   value="<?php echo getByTagName($seguro->tags,'dsmotcan');   ?>" />
                         <input type="hidden" id="tpseguro"   name="tpseguro"   value="<?php echo getByTagName($seguro->tags,'tpSeguro');   ?>" />
                         <input type="hidden" id="idorigem"   name="idorigem"   value="<?php echo getByTagName($seguro->tags,'idOrigem');   ?>" />
                         <input type="hidden" id="idcontrato" name="idcontrato" value="<?php echo getByTagName($seguro->tags,'idContrato'); ?>" />
