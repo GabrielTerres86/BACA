@@ -168,8 +168,11 @@
                              de emprestimos. (Reinert)
 
                 31/10/2016 - Validação dentro do busca_registro_parcela para identificar
-				             parcelas ja liquidadas (AJFink - SD545719)
+				                     parcelas ja liquidadas (AJFink - SD545719)
 
+                12/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                             [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+                            
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -178,6 +181,7 @@
 { sistema/generico/includes/b1wgen0084tt.i }
 { sistema/generico/includes/b1wgen0084att.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 
 DEF STREAM str_1.
@@ -3985,54 +3989,109 @@ PROCEDURE cria_lancamento_cc_chave:
     DEF OUTPUT PARAM par_nrseqdig AS INTE                                NO-UNDO.
 
     DEF VAR h-b1craplot          AS HANDLE                              NO-UNDO.
+    
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200        AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg        AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic        AS INT     NO-UNDO.
+    DEF VAR aux_dscritic        AS CHAR    NO-UNDO.
 
-    IF ROUND(par_vllanmto,2) > 0 THEN
-       DO:
-           /* Atualizar o lote da C/C */
-           RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
-        
-           RUN inclui-altera-lote IN h-b1craplot
-                                     (INPUT par_cdcooper,
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_cdpactra,
-                                      INPUT par_cdbccxlt,
-                                      INPUT par_nrdolote,
-                                      INPUT 1,   /* tplotmov */
-                                      INPUT par_cdoperad,
-                                      INPUT par_cdhistor,
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_vllanmto,
-                                      INPUT TRUE,
-                                      INPUT TRUE,
-                                     OUTPUT par_nrseqdig,
-                                     OUTPUT aux_cdcritic).
-        
-           DELETE PROCEDURE h-b1craplot.
-           
-           CREATE craplcm.
-           ASSIGN craplcm.dtmvtolt = par_dtmvtolt
-                  craplcm.cdagenci = par_cdpactra
-                  craplcm.cdbccxlt = par_cdbccxlt
-                  craplcm.nrdolote = par_nrdolote
-                  craplcm.nrdconta = par_nrdconta
-                  craplcm.nrdctabb = par_nrdconta
-                  craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                  craplcm.nrdocmto = par_nrseqdig
-                  craplcm.cdhistor = par_cdhistor 
-                  craplcm.nrseqdig = par_nrseqdig 
-                  craplcm.vllanmto = par_vllanmto
-                  craplcm.cdcooper = par_cdcooper
-                  craplcm.nrparepr = par_nrparepr
-                  craplcm.cdpesqbb = STRING(par_nrctremp,"zz,zzz,zz9")
-                  craplcm.nrseqava = par_nrseqava
-                  craplcm.cdoperad = par_cdoperad
-                  craplcm.hrtransa = TIME.
-           VALIDATE craplcm.
+    /* 12/06/20108 - Incluida condicao que verifica se pode realizar o debito */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+        RUN sistema/generico/procedures/b1wgen0200.p 
+        PERSISTENT SET h-b1wgen0200.
 
-       END.
+    IF  DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
+                         INPUT par_cdcooper, 
+                         INPUT par_nrdconta,
+                         INPUT par_cdhistor) THEN
+        DO:
 
-    RETURN "OK".
+            IF ROUND(par_vllanmto,2) > 0 THEN
+               DO:
+                   /* Atualizar o lote da C/C */
+                   RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
+                
+                   RUN inclui-altera-lote IN h-b1craplot
+                                             (INPUT par_cdcooper,
+                                              INPUT par_dtmvtolt,
+                                              INPUT par_cdpactra,
+                                              INPUT par_cdbccxlt,
+                                              INPUT par_nrdolote,
+                                              INPUT 1,   /* tplotmov */
+                                              INPUT par_cdoperad,
+                                              INPUT par_cdhistor,
+                                              INPUT par_dtmvtolt,
+                                              INPUT par_vllanmto,
+                                              INPUT TRUE,
+                                              INPUT TRUE,
+                                             OUTPUT par_nrseqdig,
+                                             OUTPUT aux_cdcritic).
+                
+                   DELETE PROCEDURE h-b1craplot.
 
+                   /* 12/06/2018 - BLOCO DA INSERÇAO DA CRAPLCM */
+                   RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                     (INPUT par_dtmvtolt                         /* par_dtmvtolt */
+                     ,INPUT par_cdpactra                         /* par_cdagenci */
+                     ,INPUT par_cdbccxlt                         /* par_cdbccxlt */
+                     ,INPUT par_nrdolote                         /* par_nrdolote */
+                     ,INPUT par_nrdconta                         /* par_nrdconta */
+                     ,INPUT par_nrseqdig                         /* par_nrdocmto */
+                     ,INPUT par_cdhistor                         /* par_cdhistor */
+                     ,INPUT par_nrseqdig                         /* par_nrseqdig */
+                     ,INPUT par_vllanmto                         /* par_vllanmto */
+                     ,INPUT par_nrdconta                         /* par_nrdctabb */
+                     ,INPUT STRING(par_nrctremp,"zz,zzz,zz9")    /* par_cdpesqbb */
+                     ,INPUT 0                                    /* par_vldoipmf */
+                     ,INPUT 0                                    /* par_nrautdoc */
+                     ,INPUT 0                                    /* par_nrsequni */
+                     ,INPUT 0                                    /* par_cdbanchq */
+                     ,INPUT 0                                    /* par_cdcmpchq */
+                     ,INPUT 0                                    /* par_cdagechq */
+                     ,INPUT 0                                    /* par_nrctachq */
+                     ,INPUT 0                                    /* par_nrlotchq */
+                     ,INPUT 0                                    /* par_sqlotchq */
+                     ,INPUT ""                                   /* par_dtrefere */
+                     ,INPUT TIME                                 /* par_hrtransa */
+                     ,INPUT par_cdoperad                         /* par_cdoperad */
+                     ,INPUT 0                                    /* par_dsidenti */
+                     ,INPUT par_cdcooper                         /* par_cdcooper */
+                     ,INPUT STRING(par_nrdconta,"99999999")      /* par_nrdctitg */
+                     ,INPUT ""                                   /* par_dscedent */
+                     ,INPUT 0                                    /* par_cdcoptfn */
+                     ,INPUT 0                                    /* par_cdagetfn */
+                     ,INPUT 0                                    /* par_nrterfin */
+                     ,INPUT par_nrparepr                         /* par_nrparepr */
+                     ,INPUT par_nrseqava                         /* par_nrseqava */
+                     ,INPUT 0                                    /* par_nraplica */
+                     ,INPUT 0                                    /* par_cdorigem */
+                     ,INPUT 0                                    /* par_idlautom */
+                     /* CAMPOS OPCIONAIS DO LOTE                                                                  */ 
+                     ,INPUT 0                                    /* Processa lote                                 */
+                     ,INPUT 0                                    /* Tipo de lote a movimentar                     */
+                     /* CAMPOS DE SAIDA                                                                           */                                            
+                     ,OUTPUT TABLE tt-ret-lancto                 /* Collection que contém o retorno do lançamento */
+                     ,OUTPUT aux_incrineg                        /* Indicador de crítica de negócio               */
+                     ,OUTPUT aux_cdcritic                        /* Código da crítica                             */
+                     ,OUTPUT aux_dscritic).                      /* Descriçao da crítica                          */
+
+               END.
+
+            /* 12/06/2018 - TJ - Apagar handle associado */
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200.
+               
+            RETURN "OK".
+        END.  /* fim pode debitar */
+    ELSE 
+        DO:
+            /* 12/06/2018 - Apagar handle associado (SE NAO PODE DEBITAR) */
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200.
+
+            RETURN "NOK".
+        END.
 END PROCEDURE. /* cria lancamento cc */ 
 
 

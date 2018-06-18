@@ -241,7 +241,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --
   --             05/04/2018 - Ajuste na rotina pc_pagar_emprestimo_prejuizo para correta realização de lançamento com histórico 384 
   --                          na CRAPLCM ao pagar todo o valor do prejuízo. Reginaldo (AMcom) / Daniel Zimmermann
-  -- 
+  --                
+  --             06/06/2018 - Ajuste na rotina pc_pagar_IOF_contrato_conta para usar procedure que centraliza 
+  --                          lancamentos na CRAPLOT e CRAPLCM (LANC0001.pc_gerar_lancamento_conta). 
+  --                         (PRJ450 - Teobaldo J - AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -269,6 +273,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     END IF;
     
     -- Faz o split dos parametros retornados
+    
+    
     vr_dstabprm := GENE0002.fn_quebra_string(vr_dsvlrprm, ',');
     
     -- Verifica se a quebra de registro foi realizada
@@ -556,12 +562,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   -- Frequencia: -----
   -- Objetivo  : Realizar pagamento do IOF de estouro de conta do acordo
   --
-  -- Alteração : 04/05/2018- Inclusão do debito do IOF acordo. PRJ450 (Odirlei-AMcom)
+  -- Alteração : 04/05/2018 - Inclusão do debito do IOF acordo. PRJ450 (Odirlei-AMcom)
+  --             06/06/2018 - Alterado para usar rotina que centraliza lançamentos
+  --                          (LANC0001.pc_gerar_lancamento_conta). PRJ450 (Teobaldo J.- AMcom)
   --  
   ---------------------------------------------------------------------------------------------------------------
     
     ---------------> CURSORES <-------------    
     --Selecionar informacoes dos lotes
+
     CURSOR cr_craplot ( pr_cdcooper IN craplot.cdcooper%TYPE
                        ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
                        ,pr_cdagenci IN craplot.cdagenci%TYPE
@@ -589,7 +598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     rw_craplot cr_craplot%ROWTYPE;
     
     --> Verificar se ja existe lcm
-    CURSOR cr_craplcm  ( pr_cdcooper craplcm.cdcooper%TYPE,
+    CURSOR cr_craplcm_1( pr_cdcooper craplcm.cdcooper%TYPE,
                          pr_dtmvtolt craplcm.dtmvtolt%TYPE,
                          pr_cdagenci craplcm.cdagenci%TYPE,
                          pr_cdbccxlt craplcm.cdbccxlt%TYPE,
@@ -605,7 +614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
          AND lcm.nrdolote = pr_nrdolote
          AND lcm.nrdctabb = pr_nrdctabb
          AND lcm.nrdocmto = pr_nrdocmto;
-    rw_craplcm_1 cr_craplcm%ROWTYPE; 
+    rw_craplcm_1 cr_craplcm_1%ROWTYPE; 
     
     --> buscar valores de IOF
     CURSOR cr_ioflanc IS
@@ -624,23 +633,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
          AND iof.nrseqdig_lcm IS NULL
          AND iof.nracordo = pr_nracordo
        ORDER BY iof.dtmvtolt,iof.idlancto;
+
+    --> Obter dados do lancamento efetuado
+    CURSOR cr_craplcm (pr_rowid IN ROWID) IS
+      SELECT lcm.nrdocmto,
+             lcm.dtmvtolt,       
+             lcm.cdagenci,
+             lcm.cdbccxlt,
+             lcm.nrdolote,
+             lcm.nrseqdig,
+             lcm.vllanmto,
+             lcm.vldoipmf
+        FROM craplcm lcm
+       WHERE lcm.rowid = pr_rowid;
     
-    rw_craplcm craplcm%ROWTYPE;
+    rw_craplcm cr_craplcm%ROWTYPE;
        
     -- VARIÁVEIS
     vr_vlioflan       NUMBER;
     vr_vliofpen       NUMBER := 0;
     vr_vlparcel       NUMBER := 0;
     vr_nrdocmto       NUMBER := 0;
-    vr_des_reto       VARCHAR2(10);
-    vr_tab_erro       GENE0001.typ_tab_erro;
+    -- vr_des_reto       VARCHAR2(10);
+    -- vr_tab_erro       GENE0001.typ_tab_erro;
+    vr_tab_retorno    LANC0001.typ_reg_retorno;
+    vr_incrineg       INTEGER;
     
     TYPE typ_tab_rowid_iof IS TABLE OF ROWID
          INDEX BY PLS_INTEGER;
     vr_tab_rowid_iof typ_tab_rowid_iof;
     
     -- EXCEPTION
-    vr_exc_erro       EXCEPTION;
+    vr_exc_erro     EXCEPTION;
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
     
@@ -662,7 +686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     SAVEPOINT SAVE_IOF_CONTRATO_CONTA;
     /******************************************/
     
-    --> Se possui valor d IOF a regularizar e valor de parcela
+    --> Se possui valor de IOF a regularizar e valor de parcela
     IF vr_vliofpen > 0  AND vr_vlparcel > 0 THEN
     
       vr_vlioflan := 0;   
@@ -741,76 +765,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       
       --> Verificar se ja existe lcm
       LOOP
-        OPEN cr_craplcm (pr_cdcooper => pr_cdcooper,
-                         pr_dtmvtolt => rw_craplot.dtmvtolt,
-                         pr_cdagenci => rw_craplot.cdagenci,
-                         pr_cdbccxlt => rw_craplot.cdbccxlt,
-                         pr_nrdolote => rw_craplot.nrdolote,
-                         pr_nrdctabb => pr_nrdconta,
-                         pr_nrdocmto => vr_nrdocmto);
-        FETCH cr_craplcm INTO rw_craplcm_1;
-        IF cr_craplcm%NOTFOUND THEN
-          CLOSE cr_craplcm;
+        OPEN cr_craplcm_1 (pr_cdcooper => pr_cdcooper,
+                           pr_dtmvtolt => pr_crapdat.dtmvtolt, -- rw_craplot.dtmvtolt,
+                           pr_cdagenci => 1,                   -- rw_craplot.cdagenci,
+                           pr_cdbccxlt => 100,                 -- rw_craplot.cdbccxlt,
+                           pr_nrdolote => 8450,                -- rw_craplot.nrdolote,
+                           pr_nrdctabb => pr_nrdconta,
+                           pr_nrdocmto => vr_nrdocmto);
+        FETCH cr_craplcm_1 INTO rw_craplcm_1;
+        IF cr_craplcm_1%NOTFOUND THEN
+          CLOSE cr_craplcm_1;
           --> Sair do loop, pois o numero nao é utilizado 
           EXIT;
         ELSE
           vr_nrdocmto := vr_nrdocmto + 1;
-          CLOSE cr_craplcm;
+          CLOSE cr_craplcm_1;
         END IF;
-                                     
-      END LOOP;                               
-      --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
-      BEGIN
-       INSERT INTO craplcm (cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,nrdconta
-                           ,nrdctabb
-                           ,nrdctitg
-                           ,nrdocmto
-                           ,cdhistor
-                           ,nrseqdig
-                           ,vllanmto
-                           ,cdpesqbb
-                           ,vldoipmf
-                           ,cdorigem)
-                   VALUES  (pr_cdcooper
-                           ,rw_craplot.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,pr_nrdconta
-                           ,pr_nrdconta
-                           ,to_char(pr_nrdconta,'fm00000000')
-                           ,vr_nrdocmto
-                           ,2323
-                           ,Nvl(rw_craplot.nrseqdig,0) + 1
-                           ,round(vr_vlioflan,2)
-                           ,to_char(pr_vlbasiof,'fm000g000g000d00')
-                           ,0
-                           ,11)-- ACORDO
-                 RETURNING dtmvtolt,
-                           cdagenci,
-                           cdbccxlt,
-                           nrdolote,
-                           nrseqdig,
-                           vllanmto
-                      INTO rw_craplcm.dtmvtolt,
-                           rw_craplcm.cdagenci,
-                           rw_craplcm.cdbccxlt,
-                           rw_craplcm.nrdolote, 
-                           rw_craplcm.nrseqdig,
-                           rw_craplcm.vllanmto;
+        
+      END LOOP;    
+      
+      -- Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+      -- substitui o insert na craplot e craplcm
+      LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                        ,pr_cdagenci => rw_craplot.cdagenci
+                                        ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                        ,pr_nrdolote => rw_craplot.nrdolote
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_nrdctabb => pr_nrdconta
+                                        ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')
+                                        ,pr_nrdocmto => vr_nrdocmto
+                                        ,pr_cdhistor => 2323
+                                        ,pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0) + 1                                        
+                                        ,pr_vllanmto => round(vr_vlioflan,2)
+                                        ,pr_cdpesqbb => to_char(pr_vlbasiof,'fm000g000g000d00')
+                                        ,pr_vldoipmf => 0
+                                        ,pr_cdorigem => 11                   -- ACORDO
+                                        ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                        ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                        ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                        ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                        ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                        ,pr_tab_retorno => vr_tab_retorno ); -- Registro com dados do retorno
 
-      EXCEPTION
-       WHEN OTHERS THEN
-         vr_dscritic := 'Erro ao inserir na tabela craplcm. '|| SQLERRM;
-         --Sair do programa
-         RAISE vr_exc_erro;
-      END;
-
+      -- Independente do erro deve parar o processo, pois utiliza dados da craplcm
+      IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      OPEN  cr_craplcm (pr_rowid => vr_tab_retorno.rowidlct);
+      FETCH cr_craplcm INTO rw_craplcm;
+      CLOSE cr_craplcm;
+      
       --Atualizar capa do Lote
       BEGIN
        UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + round(rw_craplcm.vllanmto,2)
@@ -825,7 +831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
          --Sair do programa
          RAISE vr_exc_erro;
       END;
-        
+       
       --> Atualizar IOFs debitados
       FOR idx IN vr_tab_rowid_iof.first..vr_tab_rowid_iof.last LOOP
       
@@ -902,8 +908,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     -- VARIÁVEIS
     vr_vllanmto       craplcm.vllanmto%TYPE;   -- Valor de Lancamento
-    vr_des_reto       VARCHAR2(10);
-    vr_tab_erro       GENE0001.typ_tab_erro;
+    -- vr_des_reto       VARCHAR2(10);
+    -- vr_tab_erro       GENE0001.typ_tab_erro;
     
     -- EXCEPTION
     vr_exc_erro       EXCEPTION;
@@ -3233,7 +3239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         CLOSE cr_crapepr;
                               
         --Calcula o IOF
-        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => rw_acordo_contrato.cdcooper             --> Código da cooperativa referente ao contrato de empréstimos
+        TIOF0001.pc_calcula_valor_iof_epr( pr_cdcooper => rw_acordo_contrato.cdcooper             --> Código da cooperativa referente ao contrato de empréstimos
                                           ,pr_nrdconta => rw_acordo_contrato.nrdconta            --> Número da conta referente ao empréstimo
                                           ,pr_nrctremp => rw_acordo_contrato.nrctremp            --> Número do contrato de empréstimo
                                           ,pr_vlemprst => vr_vlparcel                            --> Valor do empréstimo para efeito de cálculo
@@ -3247,7 +3253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal    --> Valor da Taxa do IOF Principal
                                           ,pr_flgimune => vr_flgimune                            --> Possui imunidade tributária
                                           ,pr_dscritic => vr_dscritic);                          --> Descrição da crítica
-                                                
+                                            
         IF NVL(vr_dscritic, ' ') <> ' ' THEN
 				   RAISE vr_exc_erro;
 			  END IF;

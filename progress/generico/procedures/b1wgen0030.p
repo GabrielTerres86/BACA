@@ -462,11 +462,11 @@
                             (Tiago/Rodrigo Melhoria 116).
 
                16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
-			                tarifa de resgate na data de resgate e não na data na qual
-				  		   foi criado o bordero de desconto de titulo.
-						   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
+			                      tarifa de resgate na data de resgate e não na data na qual
+				  		              foi criado o bordero de desconto de titulo.
+						                PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
 
-			   28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
+			         28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
                             de tarifa na procedure efetua_liber_anali_bordero. 
                             (Reinert)
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
@@ -480,8 +480,8 @@
 
                25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 
-			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
-					       (Adriano - SD 603451).
+			         09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
+					                  (Adriano - SD 603451).
 
                12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
@@ -499,7 +499,7 @@
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
                             de novo limite. (Chamado 768648) - (Fabricio)
 
-			   16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
+			         16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
 
                20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
                             (Diogo - MoutS)
@@ -555,6 +555,10 @@
                           - Inlusao das procedures valida_inclusao_bordero,
                             valida_alteracao_bordero e valida_exclusao_tit_bordero.
                             Projeto 366 (Lombardi).
+
+               12/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
+                            [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -572,6 +576,7 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -964,7 +969,12 @@ PROCEDURE efetua_liber_anali_bordero:
     DEF VAR h-b1wgen0138 AS HANDLE                                   NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                   NO-UNDO.
     DEF VAR h-b1wgen0159 AS HANDLE                                   NO-UNDO.
-   
+
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_podedebi AS INT     NO-UNDO.
+	
     DEF BUFFER crablot  FOR craplot.
     DEF BUFFER crabtdb  FOR craptdb.
 
@@ -2098,7 +2108,27 @@ PROCEDURE efetua_liber_anali_bordero:
          LIBERACAO:
          DO TRANSACTION ON ENDKEY UNDO LIBERACAO, RETURN "NOK"
                         ON ERROR  UNDO LIBERACAO, RETURN "NOK":
-                        
+
+            /* 12/06/2018 - TJ - Incluida condicao que verifica se pode realizar o debito */
+            IF NOT VALID-HANDLE(h-b1wgen0200) THEN
+               RUN sistema/generico/procedures/b1wgen0200.p 
+               PERSISTENT SET h-b1wgen0200.
+
+            ASSIGN aux_podedebi = 1. 
+            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
+                                    INPUT par_cdcooper, 
+                                    INPUT par_nrdconta,
+                                    INPUT 686) THEN
+               DO:
+                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
+                      QUE MENSAGEM DE CRITICA DEVE GERAR?      */
+                  ASSIGN aux_podedebi = 0.
+               END.
+               
+            /* Se nao pode debitar entao abandona o bloco transacao LIBERACAO */
+            IF aux_podedebi = 0 THEN 
+               UNDO LIBERACAO, LEAVE.
+
             /*  Liberacao do bordero .....................................*/
             DO aux_contador = 1 TO 10:
 
@@ -2345,7 +2375,7 @@ PROCEDURE efetua_liber_anali_bordero:
          
                    IF aux_cdcritic > 0   THEN
                       UNDO LIBERACAO, LEAVE.
-
+					
                    CREATE craplcm.
                    ASSIGN craplcm.dtmvtolt = crablot.dtmvtolt
                           craplcm.cdagenci = crablot.cdagenci
@@ -2462,36 +2492,61 @@ PROCEDURE efetua_liber_anali_bordero:
 
             /* Cria lancamento da conta do associado */
             /* credito de desconto de titulos */
-            CREATE craplcm.
-            ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
-                   craplcm.cdagenci = craplot.cdagenci
-                   craplcm.cdbccxlt = craplot.cdbccxlt 
-                   craplcm.nrdolote = craplot.nrdolote
-                   craplcm.nrdconta = crapbdt.nrdconta
-                   craplcm.nrdocmto = craplot.nrseqdig + 1
-                   craplcm.vllanmto = aux_vlborder
-                   craplcm.cdhistor = 686
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   craplcm.nrdctabb = crapbdt.nrdconta 
+            /* 12/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+            RUN gerar_lancamento_conta IN h-b1wgen0200 
+              (INPUT craplot.dtmvtolt       /* par_dtmvtolt */ 
+              ,INPUT craplot.cdagenci       /* par_cdagenci */ 
+              ,INPUT craplot.cdbccxlt       /* par_cdbccxlt */ 
+              ,INPUT craplot.nrdolote       /* par_nrdolote */ 
+              ,INPUT crapbdt.nrdconta       /* par_nrdconta */ 
+              ,INPUT craplot.nrseqdig + 1   /* par_nrdocmto */ 
+              ,INPUT 686                    /* par_cdhistor */ 
+              ,INPUT craplot.nrseqdig + 1   /* par_nrseqdig */ 
+              ,INPUT aux_vlborder           /* par_vllanmto */ 
+              ,INPUT crapbdt.nrdconta       /* par_nrdctabb */ 
+              ,INPUT "Desconto do bordero " + STRING(crapbdt.nrborder,"zzz,zz9") /* par_cdpesqbb */ 
+              ,INPUT 0                      /* par_nrautdoc */ 
+              ,INPUT 0                      /* par_nrsequni */ 
+              ,INPUT ""                     /* par_dtrefere */ 
+              ,INPUT ""                     /* par_cdoperad */                                
+              ,INPUT par_cdcooper           /* par_cdcooper */ 
+              ,INPUT ""                     /* par_nrdctitg */ 
+              ,INPUT 0                      /* par_cdcoptfn */ 
+              ,INPUT 0                      /* par_cdagetfn */ 
+              ,INPUT 0                      /* par_nrterfin */ 
+              ,INPUT 0                      /* par_cdorigem */ 
+              /* CAMPOS OPCIONAIS DO LOTE                                                    */
+              ,INPUT 0                      /* Processa lote                                 */
+              ,INPUT 0                      /* Tipo de lote a movimentar                     */
+              /* CAMPOS DE SAIDA                                                             */
+              ,OUTPUT TABLE tt-ret-lancto   /* Collection que contém o retorno do lançamento */
+              ,OUTPUT aux_incrineg          /* Indicador de crítica de negócio               */
+              ,OUTPUT aux_cdcritic          /* Código da crítica                             */
+              ,OUTPUT aux_dscritic).        /* Descriçao da crítica                          */
 
-                   craplcm.nrautdoc = 0
-                   craplcm.cdcooper = par_cdcooper
+            /* 12/06/2018 - TJ - Apagar handle associado */
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200.
+            
+            FIND FIRST tt-ret-lancto.
+            DISP tt-ret-lancto.
 
-                   craplcm.cdpesqbb = "Desconto do bordero " +
-                                       STRING(crapbdt.nrborder,"zzz,zz9")
-
-                   craplot.nrseqdig = craplcm.nrseqdig
-                   craplot.qtinfoln = craplot.qtinfoln + 1
-                   craplot.qtcompln = craplot.qtcompln + 1
-        
-                   craplot.vlinfocr = craplot.vlinfocr +
-                                      craplcm.vllanmto
-                   craplot.vlcompcr = craplot.vlcompcr +
-                                      craplcm.vllanmto.
-              
-            VALIDATE craplot.
-            VALIDATE craplcm.
-
+            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+               /* Tratamento erro Banco Dados */
+               UNDO LIBERACAO, LEAVE.
+            ELSE 
+               /* Se criou lancamento entao atualiza dados do Lote */
+               DO:
+                   ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                          craplot.qtinfoln = craplot.qtinfoln + 1
+                          craplot.qtcompln = craplot.qtcompln + 1
+                          craplot.vlinfocr = craplot.vlinfocr + aux_vlborder
+                          craplot.vlcompcr = craplot.vlcompcr + aux_vlborder.    
+                     
+                   VALIDATE craplot.
+                   VALIDATE craplcm.
+               END.
+            
             /* RUN buscar_valor_iof_simples_nacional(INPUT aux_vlborder,
                                                   INPUT par_cdcooper,
                                                   INPUT par_nrdconta,
@@ -2499,6 +2554,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                   INPUT TABLE tt-iof-sn,
                                                   OUTPUT aux_vltotaliofsn).
             aux_vltotiof = aux_vltotiof + aux_vltotaliofsn. */
+            
             RUN sistema/generico/procedures/b1wgen0159.p
                             PERSISTENT SET h-b1wgen0159.
 
@@ -2512,6 +2568,27 @@ PROCEDURE efetua_liber_anali_bordero:
                                                 OUTPUT aux_flgimune,
                                                 OUTPUT TABLE tt-erro).
             DELETE PROCEDURE h-b1wgen0159.
+
+
+            /* 12/06/2018 - TJ - Incluida condicao que verifica se pode realizar o debito */
+            IF NOT VALID-HANDLE(h-b1wgen0200) THEN
+               RUN sistema/generico/procedures/b1wgen0200.p 
+               PERSISTENT SET h-b1wgen0200.
+
+            ASSIGN aux_podedebi = 1. 
+            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
+                                    INPUT par_cdcooper, 
+                                    INPUT crapbdt.nrdconta,
+                                    INPUT 2330) THEN
+               DO:
+                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
+                      QUE MENSAGEM DE CRITICA DEVE GERAR?      */
+                  ASSIGN aux_podedebi = 0.
+               END.
+               
+            /* Se nao pode debitar entao abandona o bloco transacao LIBERACAO */
+            IF aux_podedebi = 0 THEN 
+               UNDO LIBERACAO, LEAVE.
 
             /*  Cobranca do IOF de desconto  */
             IF  aux_vltotiof > 0 THEN         
@@ -2556,39 +2633,62 @@ PROCEDURE efetua_liber_anali_bordero:
                                   
                    IF aux_dscritic <> ""   THEN
                       UNDO LIBERACAO, LEAVE.
-                
-                   CREATE craplcm.
-                   ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                          craplcm.cdagenci = craplot.cdagenci
-                          craplcm.cdbccxlt = craplot.cdbccxlt
-                          craplcm.nrdolote = craplot.nrdolote
-                          craplcm.nrdconta = crapbdt.nrdconta
-                          craplcm.nrdctabb = crapbdt.nrdconta
-                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
-                                                    "99999999")
-                          craplcm.nrdocmto = craplot.nrseqdig + 1
-                          /* craplcm.cdhistor = 688 */
-                          craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
 
-                          craplcm.nrseqdig = craplot.nrseqdig + 1
-                          craplcm.cdpesqbb = "Bordero " +
-                                             STRING(crapbdt.nrborder)
-                                             + " - " +
-                                             STRING(aux_vlborder,
-                                                    "999,999,999.99")
-                          /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
-                          craplcm.vllanmto = ROUND(aux_vltotiof, 2)
-                          craplcm.cdcooper = par_cdcooper
-                          craplot.vlinfodb = craplot.vlinfodb + 
-                                                     craplcm.vllanmto
-                          craplot.vlcompdb = craplot.vlcompdb + 
-                                                     craplcm.vllanmto
-                          craplot.qtinfoln = craplot.qtinfoln + 1
-                          craplot.qtcompln = craplot.qtcompln + 1
-                          craplot.nrseqdig = craplot.nrseqdig + 1.
-                     
-                   VALIDATE craplot.
-                   VALIDATE craplcm.
+                   /* 13/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                   RUN gerar_lancamento_conta IN h-b1wgen0200 
+                     (INPUT craplot.dtmvtolt                      /* par_dtmvtolt */ 
+                     ,INPUT craplot.cdagenci                      /* par_cdagenci */ 
+                     ,INPUT craplot.cdbccxlt                      /* par_cdbccxlt */ 
+                     ,INPUT craplot.nrdolote                      /* par_nrdolote */ 
+                     ,INPUT crapbdt.nrdconta                      /* par_nrdconta */ 
+                     ,INPUT craplot.nrseqdig + 1                  /* par_nrdocmto */ 
+                     ,INPUT 2320                                  /* par_cdhistor - Novo historico - projeto 410 */ 
+                     ,INPUT craplot.nrseqdig + 1                  /* par_nrseqdig */ 
+                     ,INPUT ROUND(aux_vltotiof, 2)                /* par_vllanmto */ 
+                     ,INPUT crapbdt.nrdconta                      /* par_nrdctabb */ 
+                     ,INPUT "Bordero " + STRING(crapbdt.nrborder) + 
+                            " - " + STRING(aux_vlborder,"999,999,999.99") /* par_cdpesqbb */ 
+                     ,INPUT 0                                     /* par_nrautdoc */ 
+                     ,INPUT 0                                     /* par_nrsequni */ 
+                     ,INPUT ""                                    /* par_dtrefere */ 
+                     ,INPUT 0                                     /* par_cdoperad */                                
+                     ,INPUT par_cdcooper                          /* par_cdcooper */ 
+                     ,INPUT STRING(crapbdt.nrdconta,"99999999")   /* par_nrdctitg */ 
+                     ,INPUT 0                                     /* par_cdcoptfn */ 
+                     ,INPUT 0                                     /* par_cdagetfn */ 
+                     ,INPUT 0                                     /* par_nrterfin */ 
+                     ,INPUT 0                                     /* par_cdorigem */ 
+                     /* CAMPOS OPCIONAIS DO LOTE                                                                   */
+                     ,INPUT 0                                     /* Processa lote                                 */
+                     ,INPUT 0                                     /* Tipo de lote a movimentar                     */
+                     /* CAMPOS DE SAIDA                                                                            */
+                     ,OUTPUT TABLE tt-ret-lancto                  /* Collection que contém o retorno do lançamento */
+                     ,OUTPUT aux_incrineg                         /* Indicador de crítica de negócio               */
+                     ,OUTPUT aux_cdcritic                         /* Código da crítica                             */
+                     ,OUTPUT aux_dscritic).                       /* Descriçao da crítica                          */
+                
+                   /* 13/06/2018 - TJ - Apagar handle associado */
+                   IF VALID-HANDLE(h-b1wgen0200) THEN
+                      DELETE PROCEDURE h-b1wgen0200.
+                   
+                   FIND FIRST tt-ret-lancto.
+                   DISP tt-ret-lancto.
+
+                   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                      /* Tratamento erro Banco Dados */
+                      UNDO LIBERACAO, LEAVE.
+                   ELSE 
+                      /* Se criou lancamento entao atualiza dados do Lote */
+                      DO:
+                          ASSIGN craplot.vlinfodb = craplot.vlinfodb + ROUND(aux_vltotiof, 2)
+                                 craplot.vlcompdb = craplot.vlcompdb + ROUND(aux_vltotiof, 2)
+                                 craplot.qtinfoln = craplot.qtinfoln + 1
+                                 craplot.qtcompln = craplot.qtcompln + 1
+                                 craplot.nrseqdig = craplot.nrseqdig + 1.
+                            
+                          VALIDATE craplot.
+                          VALIDATE craplcm.
+                      END.
 
                   /* Projeto 410 - Novo IOF */
                   ASSIGN aux_dscritic = "".
@@ -2611,6 +2711,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                       ,INPUT aux_flgimune           /* Flag da imunidade */   
                                                       ,OUTPUT 0                     /* Código da Crítica */
                                                       ,OUTPUT "").
+                                                      
                   /* Fechar o procedimento para buscarmos o resultado */ 
                   CLOSE STORED-PROC pc_insere_iof
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -2654,10 +2755,8 @@ PROCEDURE efetua_liber_anali_bordero:
                    IF aux_dscritic <> ""   THEN
                       UNDO LIBERACAO, LEAVE.
                 
-                   ASSIGN crapcot.vliofapl = crapcot.vliofapl +
-                                             craplcm.vllanmto
-                          crapcot.vlbsiapl = crapcot.vlbsiapl + 
-                                             aux_vlborder.
+                   ASSIGN crapcot.vliofapl = crapcot.vliofapl + ROUND(aux_vltotiof, 2)  /* 13/06/2018 - TJ ### era: craplcm.vllanmto */
+                          crapcot.vlbsiapl = crapcot.vlbsiapl + aux_vlborder.
                END.
           
             ASSIGN crapbdt.insitbdt = 3 /*  Liberado  */
@@ -14529,6 +14628,11 @@ PROCEDURE efetua_baixa_titulo:
     
     DEF VAR aux_flgdsair AS LOGICAL NO-UNDO.
     
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_podedebi AS INT     NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_dscritic = ""
@@ -14675,6 +14779,58 @@ PROCEDURE efetua_baixa_titulo:
                 ASSIGN aux_tottitul_cr = aux_tottitul_cr + 1. 
             ELSE
                 ASSIGN aux_tottitul_sr = aux_tottitul_sr + 1. 
+
+
+            /* 13/06/2018 - TJ - Incluida condicao que verifica se pode realizar o debito */
+            IF NOT VALID-HANDLE(h-b1wgen0200) THEN
+               RUN sistema/generico/procedures/b1wgen0200.p 
+               PERSISTENT SET h-b1wgen0200.
+            
+            /* Verificar qual codigo de historico irah utilizar (extraido das regras abaixo) */
+            IF par_indbaixa = 1 THEN
+               DO:
+                   /* se pagamento a menor     */
+                   IF  craptdb.vltitulo > tt-titulos.vltitulo  THEN
+                       DO: 
+                           IF tt-titulos.flgregis = FALSE THEN 
+                              ASSIGN aux_cdhistor = 590.     /* pagto a menor - sem registro */
+                           ELSE 
+                              ASSIGN aux_cdhistor = 1101.
+                       END.
+                   ELSE 
+                       /* se pagamento a maior */
+                       IF  craptdb.vltitulo < tt-titulos.vltitulo  THEN
+                           DO:
+                              IF tt-titulos.flgregis = FALSE THEN 
+                                 ASSIGN aux_cdhistor = 1100. /* pagto a maior - sem registro */
+                              ELSE 
+                                 ASSIGN aux_cdhistor = 1102.                 .
+                           END.
+                           
+                   /* se pagamento em atraso   */        
+                   IF  NOT(craptdb.dtvencto > crapdat.dtmvtoan) AND craptdb.dtvencto <  par_dtmvtolt THEN
+                       ASSIGN aux_cdhistor = 2321.
+               END.
+            ELSE
+               ASSIGN aux_cdhistor = 591.
+            
+            ASSIGN aux_podedebi = 1. 
+            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
+                                    INPUT par_cdcooper, 
+                                    INPUT crapbdt.nrdconta,
+                                    INPUT aux_cdhistor) THEN
+               DO:
+                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
+                      QUE MENSAGEM DE CRITICA DEVE GERAR?      */
+                  ASSIGN aux_podedebi = 0.
+               END.
+               
+            /* Se nao pode debitar entao abandona o bloco transacao BAIXA */
+            IF aux_podedebi = 0 THEN 
+               UNDO BAIXA, RETURN "NOK".
+               
+            /* ... fim do bloco da verificacao Pode realizar debito */
+
             /* 
                 Valor pago eh menor que o titulo (Ex: Desconto de 10%)
                 a diferenca eh cobrado o ajuste do titulo
@@ -14742,40 +14898,67 @@ PROCEDURE efetua_baixa_titulo:
                                     UNDO BAIXA, RETURN "NOK".
                                 END.                
 
-                            CREATE craplcm.
-                            ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
-                                   craplcm.cdagenci = craplot.cdagenci
-                                   craplcm.cdbccxlt = craplot.cdbccxlt 
-                                   craplcm.nrdolote = craplot.nrdolote
-                                   craplcm.nrdconta = craptdb.nrdconta
-                                   craplcm.nrdocmto = craplot.nrseqdig + 1
-                                   craplcm.vllanmto = craptdb.vltitulo -
-                                                      tt-titulos.vltitulo
-                                   craplcm.cdhistor = 
-                                     (IF tt-titulos.flgregis = FALSE THEN 
-                                         590 /* pagto a menor - sem registro */
-                                      ELSE 
-                                         1101) /* pagto a menor - c/ registro */
-                                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                                   craplcm.nrdctabb = craptdb.nrdconta 
+                            /* 13/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                            ASSIGN aux_cdhistor = (IF tt-titulos.flgregis = FALSE THEN 
+                                                      590    /* pagto a menor - sem registro */
+                                                   ELSE 
+                                                      1101). /* pagto a menor - com registro */
+                            
+                            RUN gerar_lancamento_conta IN h-b1wgen0200 
+                              (INPUT craplot.dtmvtolt                           /* par_dtmvtolt */ 
+                              ,INPUT craplot.cdagenci                           /* par_cdagenci */ 
+                              ,INPUT craplot.cdbccxlt                           /* par_cdbccxlt */ 
+                              ,INPUT craplot.nrdolote                           /* par_nrdolote */ 
+                              ,INPUT craptdb.nrdconta                           /* par_nrdconta */ 
+                              ,INPUT craplot.nrseqdig + 1                       /* par_nrdocmto */ 
+                              ,INPUT aux_cdhistor                               /* par_cdhistor */ 
+                              ,INPUT craplot.nrseqdig + 1                       /* par_nrseqdig */ 
+                              ,INPUT (craptdb.vltitulo - tt-titulos.vltitulo)   /* par_vllanmto */ 
+                              ,INPUT craptdb.nrdconta                           /* par_nrdctabb */ 
+                              ,INPUT STRING(craptdb.nrdocmto)                   /* par_cdpesqbb */ 
+                              ,INPUT 0                                          /* par_nrautdoc */ 
+                              ,INPUT 0                                          /* par_nrsequni */ 
+                              ,INPUT ""                                         /* par_dtrefere */ 
+                              ,INPUT 0                                          /* par_cdoperad */                                
+                              ,INPUT par_cdcooper                               /* par_cdcooper */ 
+                              ,INPUT ""                                         /* par_nrdctitg */ 
+                              ,INPUT 0                                          /* par_cdcoptfn */ 
+                              ,INPUT 0                                          /* par_cdagetfn */ 
+                              ,INPUT 0                                          /* par_nrterfin */ 
+                              ,INPUT 0                                          /* par_cdorigem */ 
+                              /* CAMPOS OPCIONAIS DO LOTE                                                                        */
+                              ,INPUT 0                                          /* Processa lote                                 */
+                              ,INPUT 0                                          /* Tipo de lote a movimentar                     */
+                              /* CAMPOS DE SAIDA                                                                                 */
+                              ,OUTPUT TABLE tt-ret-lancto                       /* Collection que contém o retorno do lançamento */
+                              ,OUTPUT aux_incrineg                              /* Indicador de crítica de negócio               */
+                              ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
+                              ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
+                          
+                            /* 13/06/2018 - TJ - Apagar handle associado */
+                            IF VALID-HANDLE(h-b1wgen0200) THEN
+                               DELETE PROCEDURE h-b1wgen0200.
+                            
+                            FIND FIRST tt-ret-lancto.
+                            DISP tt-ret-lancto.
 
-                                   craplcm.nrautdoc = 0
-                           
-                                   craplcm.cdcooper = par_cdcooper
-                                   craplcm.cdpesqbb = STRING(craptdb.nrdocmto)
+                            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                               /* Tratamento erro Banco Dados */
+                               UNDO BAIXA, RETURN "NOK".
+                            ELSE 
+                               /* Se criou lancamento entao atualiza dados do Lote */
+                               DO:
+                                   ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                                          craplot.qtinfoln = craplot.qtinfoln + 1
+                                          craplot.qtcompln = craplot.qtcompln + 1
+                                          craplot.vlinfocr = craplot.vlinfocr + (craptdb.vltitulo - tt-titulos.vltitulo)
+                                          craplot.vlcompcr = craplot.vlcompcr + (craptdb.vltitulo - tt-titulos.vltitulo)
+                                          aux_vllanmto     = aux_vllanmto + (craptdb.vltitulo - tt-titulos.vltitulo).
+                                     
+                                   VALIDATE craplot.
+                                   VALIDATE craplcm.
+                               END.
 
-                                   craplot.nrseqdig = craplcm.nrseqdig
-                                   craplot.qtinfoln = craplot.qtinfoln + 1
-                                   craplot.qtcompln = craplot.qtcompln + 1
-         
-                                   craplot.vlinfocr = craplot.vlinfocr +
-                                                      craplcm.vllanmto
-                                   craplot.vlcompcr = craplot.vlcompcr +
-                                                      craplcm.vllanmto
-                                   aux_vllanmto     = aux_vllanmto + 
-                                                      craplcm.vllanmto.
-                            VALIDATE craplot.
-                            VALIDATE craplcm.
                         END. /* Fim do IF */
                     ELSE
                         /* se pagamento a maior */
@@ -14837,44 +15020,71 @@ PROCEDURE efetua_baixa_titulo:
                                                        INPUT aux_cdcritic,
                                                        INPUT-OUTPUT aux_dscritic).
                                         UNDO BAIXA, RETURN "NOK".
-                                    END.                
-    
-                                CREATE craplcm.
-                                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
-                                       craplcm.cdagenci = craplot.cdagenci
-                                       craplcm.cdbccxlt = craplot.cdbccxlt 
-                                       craplcm.nrdolote = craplot.nrdolote
-                                       craplcm.nrdconta = craptdb.nrdconta
-                                       craplcm.nrdocmto = craplot.nrseqdig + 1
-                                       craplcm.vllanmto = tt-titulos.vltitulo - craptdb.vltitulo
-                                       craplcm.cdhistor = 
-                                        (IF tt-titulos.flgregis = FALSE THEN 
-                                            1100 /* pagto a maior - sem registro */
-                                         ELSE 
-                                            1102) /* pagto a maior - c/ registro */
-                                       craplcm.nrseqdig = craplot.nrseqdig + 1 
-                                       craplcm.nrdctabb = craptdb.nrdconta 
-    
-                                       craplcm.nrautdoc = 0
-                               
-                                       craplcm.cdcooper = par_cdcooper
-                                       craplcm.cdpesqbb = STRING(craptdb.nrdocmto)
-    
-                                       craplot.nrseqdig = craplcm.nrseqdig
-                                       craplot.qtinfoln = craplot.qtinfoln + 1
-                                       craplot.qtcompln = craplot.qtcompln + 1
-             
-                                       craplot.vlinfocr = craplot.vlinfocr +
-                                                          craplcm.vllanmto
-                                       craplot.vlcompcr = craplot.vlcompcr +
-                                                          craplcm.vllanmto
-                                       aux_vllanmto     = aux_vllanmto + 
-                                                          craplcm.vllanmto.
-                                VALIDATE craplot.
-                                VALIDATE craplcm.
+                                    END.  
+                                    
+                                /* 13/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                                ASSIGN aux_cdhistor = (IF tt-titulos.flgregis = FALSE THEN 
+                                                          1100   /* pagto a maior - sem registro */
+                                                       ELSE 
+                                                          1102). /* pagto a maior - com registro */
+                                
+                                RUN gerar_lancamento_conta IN h-b1wgen0200 
+                                  (INPUT craplot.dtmvtolt                           /* par_dtmvtolt */ 
+                                  ,INPUT craplot.cdagenci                           /* par_cdagenci */ 
+                                  ,INPUT craplot.cdbccxlt                           /* par_cdbccxlt */ 
+                                  ,INPUT craplot.nrdolote                           /* par_nrdolote */ 
+                                  ,INPUT craptdb.nrdconta                           /* par_nrdconta */ 
+                                  ,INPUT craplot.nrseqdig + 1                       /* par_nrdocmto */ 
+                                  ,INPUT aux_cdhistor                               /* par_cdhistor */ 
+                                  ,INPUT craplot.nrseqdig + 1                       /* par_nrseqdig */ 
+                                  ,INPUT (tt-titulos.vltitulo - craptdb.vltitulo)   /* par_vllanmto */ 
+                                  ,INPUT craptdb.nrdconta                           /* par_nrdctabb */ 
+                                  ,INPUT STRING(craptdb.nrdocmto)                   /* par_cdpesqbb */ 
+                                  ,INPUT 0                                          /* par_nrautdoc */ 
+                                  ,INPUT 0                                          /* par_nrsequni */ 
+                                  ,INPUT ""                                         /* par_dtrefere */ 
+                                  ,INPUT 0                                          /* par_cdoperad */                                
+                                  ,INPUT par_cdcooper                               /* par_cdcooper */ 
+                                  ,INPUT ""                                         /* par_nrdctitg */ 
+                                  ,INPUT 0                                          /* par_cdcoptfn */ 
+                                  ,INPUT 0                                          /* par_cdagetfn */ 
+                                  ,INPUT 0                                          /* par_nrterfin */ 
+                                  ,INPUT 0                                          /* par_cdorigem */ 
+                                  /* CAMPOS OPCIONAIS DO LOTE                                                                        */
+                                  ,INPUT 0                                          /* Processa lote                                 */
+                                  ,INPUT 0                                          /* Tipo de lote a movimentar                     */
+                                  /* CAMPOS DE SAIDA                                                                                 */
+                                  ,OUTPUT TABLE tt-ret-lancto                       /* Collection que contém o retorno do lançamento */
+                                  ,OUTPUT aux_incrineg                              /* Indicador de crítica de negócio               */
+                                  ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
+                                  ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
+                              
+                                /* 13/06/2018 - TJ - Apagar handle associado */
+                                IF VALID-HANDLE(h-b1wgen0200) THEN
+                                   DELETE PROCEDURE h-b1wgen0200.
+                                
+                                FIND FIRST tt-ret-lancto.
+                                DISP tt-ret-lancto.
 
-                                END.
-
+                                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                                   /* Tratamento erro Banco Dados */
+                                   UNDO BAIXA, RETURN "NOK".
+                                ELSE 
+                                   /* Se criou lancamento entao atualiza dados do Lote */
+                                   DO:
+                                       ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                                              craplot.qtinfoln = craplot.qtinfoln + 1
+                                              craplot.qtcompln = craplot.qtcompln + 1
+                                              craplot.vlinfocr = craplot.vlinfocr + (tt-titulos.vltitulo - craptdb.vltitulo)
+                                              craplot.vlcompcr = craplot.vlcompcr + (tt-titulos.vltitulo - craptdb.vltitulo)
+                                              aux_vllanmto     = aux_vllanmto + (tt-titulos.vltitulo - craptdb.vltitulo).
+                                         
+                                       VALIDATE craplot.
+                                       VALIDATE craplcm.
+                                   END.
+                                    
+                            END.  /* fim se pagamento a maior */
+                                    
 
                     /* Se for pago via compe (crps375), o sistema lanca com
                        dtmvtopr na conta do associado, porem o desconto eh 
@@ -15028,31 +15238,64 @@ PROCEDURE efetua_baixa_titulo:
                                                         INPUT aux_cdcritic,
                                                         INPUT-OUTPUT aux_dscritic).
                                          UNDO BAIXA, RETURN "NOK".
-                                     END.                
-                                 CREATE craplcm.
-                                 ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
-                                        craplcm.cdagenci = craplot.cdagenci
-                                        craplcm.cdbccxlt = craplot.cdbccxlt 
-                                        craplcm.nrdolote = craplot.nrdolote
-                                        craplcm.nrdconta = craptdb.nrdconta
-                                        craplcm.nrdocmto = craplot.nrseqdig + 1
-                                        craplcm.vllanmto = aux_vliofcpl
-                                        craplcm.cdhistor = 2321
-                                        craplcm.nrseqdig = craplot.nrseqdig + 1 
-                                        craplcm.nrdctabb = craptdb.nrdconta 
-                                        craplcm.nrautdoc = 0
-                                        craplcm.cdcooper = par_cdcooper
-                                        craplcm.cdpesqbb = STRING(craptdb.nrdocmto)
-                                        craplot.nrseqdig = craplcm.nrseqdig
-                                        craplot.qtinfoln = craplot.qtinfoln + 1
-                                        craplot.qtcompln = craplot.qtcompln + 1
-                                        craplot.vlinfocr = craplot.vlinfocr +
-                                                           craplcm.vllanmto
-                                        craplot.vlcompcr = craplot.vlcompcr +
-                                                           craplcm.vllanmto.                                        
-                                  VALIDATE craplot.
-                                  VALIDATE craplcm.                           
-                             END.                           
+                                     END.             
+                                     
+                                 /* 13/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                                 RUN gerar_lancamento_conta IN h-b1wgen0200 
+                                   (INPUT craplot.dtmvtolt                           /* par_dtmvtolt */ 
+                                   ,INPUT craplot.cdagenci                           /* par_cdagenci */ 
+                                   ,INPUT craplot.cdbccxlt                           /* par_cdbccxlt */ 
+                                   ,INPUT craplot.nrdolote                           /* par_nrdolote */ 
+                                   ,INPUT craptdb.nrdconta                           /* par_nrdconta */ 
+                                   ,INPUT craplot.nrseqdig + 1                       /* par_nrdocmto */ 
+                                   ,INPUT 2321                                       /* par_cdhistor */ 
+                                   ,INPUT craplot.nrseqdig + 1                       /* par_nrseqdig */ 
+                                   ,INPUT aux_vliofcpl                               /* par_vllanmto */ 
+                                   ,INPUT craptdb.nrdconta                           /* par_nrdctabb */ 
+                                   ,INPUT STRING(craptdb.nrdocmto)                   /* par_cdpesqbb */ 
+                                   ,INPUT 0                                          /* par_nrautdoc */ 
+                                   ,INPUT 0                                          /* par_nrsequni */ 
+                                   ,INPUT ""                                         /* par_dtrefere */ 
+                                   ,INPUT 0                                          /* par_cdoperad */                                
+                                   ,INPUT par_cdcooper                               /* par_cdcooper */ 
+                                   ,INPUT ""                                         /* par_nrdctitg */ 
+                                   ,INPUT 0                                          /* par_cdcoptfn */ 
+                                   ,INPUT 0                                          /* par_cdagetfn */ 
+                                   ,INPUT 0                                          /* par_nrterfin */ 
+                                   ,INPUT 0                                          /* par_cdorigem */ 
+                                   /* CAMPOS OPCIONAIS DO LOTE                                                                        */
+                                   ,INPUT 0                                          /* Processa lote                                 */
+                                   ,INPUT 0                                          /* Tipo de lote a movimentar                     */
+                                   /* CAMPOS DE SAIDA                                                                                 */
+                                   ,OUTPUT TABLE tt-ret-lancto                       /* Collection que contém o retorno do lançamento */
+                                   ,OUTPUT aux_incrineg                              /* Indicador de crítica de negócio               */
+                                   ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
+                                   ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
+                                
+                                 /* 13/06/2018 - TJ - Apagar handle associado */
+                                 IF VALID-HANDLE(h-b1wgen0200) THEN
+                                    DELETE PROCEDURE h-b1wgen0200.
+                                 
+                                 FIND FIRST tt-ret-lancto.
+                                 DISP tt-ret-lancto.
+
+                                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                                    /* Tratamento erro Banco Dados */
+                                    UNDO BAIXA, RETURN "NOK".
+                                 ELSE 
+                                    /* Se criou lancamento entao atualiza dados do Lote */
+                                    DO:
+                                        ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                                               craplot.qtinfoln = craplot.qtinfoln + 1
+                                               craplot.qtcompln = craplot.qtcompln + 1
+                                               craplot.vlinfocr = craplot.vlinfocr + aux_vliofcpl
+                                               craplot.vlcompcr = craplot.vlcompcr + aux_vliofcpl.
+                                          
+                                        VALIDATE craplot.
+                                        VALIDATE craplcm.
+                                    END.
+                              END.  /* fim valor complemento > 0 */
+
                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                            /* Efetuar a chamada a rotina Oracle */
                            RUN STORED-PROCEDURE pc_insere_iof
@@ -15158,36 +15401,63 @@ PROCEDURE efetua_baixa_titulo:
                                            INPUT-OUTPUT aux_dscritic).
                             UNDO BAIXA, RETURN "NOK".
                         END.                
+                    
+                    /* 13/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                    RUN gerar_lancamento_conta IN h-b1wgen0200 
+                      (INPUT craplot.dtmvtolt                           /* par_dtmvtolt */ 
+                      ,INPUT craplot.cdagenci                           /* par_cdagenci */ 
+                      ,INPUT craplot.cdbccxlt                           /* par_cdbccxlt */ 
+                      ,INPUT craplot.nrdolote                           /* par_nrdolote */ 
+                      ,INPUT craptdb.nrdconta                           /* par_nrdconta */ 
+                      ,INPUT craplot.nrseqdig + 1                       /* par_nrdocmto */ 
+                      ,INPUT 591                                        /* par_cdhistor */ 
+                      ,INPUT craplot.nrseqdig + 1                       /* par_nrseqdig */ 
+                      ,INPUT tt-titulos.vltitulo                        /* par_vllanmto */ 
+                      ,INPUT craptdb.nrdconta                           /* par_nrdctabb */ 
+                      ,INPUT STRING(craptdb.nrdocmto)                   /* par_cdpesqbb */ 
+                      ,INPUT 0                                          /* par_nrautdoc */ 
+                      ,INPUT 0                                          /* par_nrsequni */ 
+                      ,INPUT ""                                         /* par_dtrefere */ 
+                      ,INPUT 0                                          /* par_cdoperad */                                
+                      ,INPUT par_cdcooper                               /* par_cdcooper */ 
+                      ,INPUT ""                                         /* par_nrdctitg */ 
+                      ,INPUT 0                                          /* par_cdcoptfn */ 
+                      ,INPUT 0                                          /* par_cdagetfn */ 
+                      ,INPUT 0                                          /* par_nrterfin */ 
+                      ,INPUT 0                                          /* par_cdorigem */ 
+                      /* CAMPOS OPCIONAIS DO LOTE                                                                        */
+                      ,INPUT 0                                          /* Processa lote                                 */
+                      ,INPUT 0                                          /* Tipo de lote a movimentar                     */
+                      /* CAMPOS DE SAIDA                                                                                 */
+                      ,OUTPUT TABLE tt-ret-lancto                       /* Collection que contém o retorno do lançamento */
+                      ,OUTPUT aux_incrineg                              /* Indicador de crítica de negócio               */
+                      ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
+                      ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
+                    
+                    /* 13/06/2018 - TJ - Apagar handle associado */
+                    IF VALID-HANDLE(h-b1wgen0200) THEN
+                       DELETE PROCEDURE h-b1wgen0200.
+                    
+                    FIND FIRST tt-ret-lancto.
+                    DISP tt-ret-lancto.
 
-                    CREATE craplcm.
-                    ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
-                           craplcm.cdagenci = craplot.cdagenci
-                           craplcm.cdbccxlt = craplot.cdbccxlt 
-                           craplcm.nrdolote = craplot.nrdolote
-                           craplcm.nrdconta = craptdb.nrdconta
-                           craplcm.nrdocmto = craplot.nrseqdig + 1
-                           craplcm.vllanmto = tt-titulos.vltitulo
-                           craplcm.cdhistor = 591
+                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                       /* Tratamento erro Banco Dados */
+                       UNDO BAIXA, RETURN "NOK".
+                    ELSE 
+                       /* Se criou lancamento entao atualiza dados do Lote */
+                       DO:
+                           ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                                  craplot.qtinfoln = craplot.qtinfoln + 1
+                                  craplot.qtcompln = craplot.qtcompln + 1
+                                  craplot.vlinfocr = craplot.vlinfocr + tt-titulos.vltitulo
+                                  craplot.vlcompcr = craplot.vlcompcr + tt-titulos.vltitulo.
+                             
+                           VALIDATE craplot.
+                           VALIDATE craplcm.
+                       END.
 
-                           craplcm.nrseqdig = craplot.nrseqdig + 1 
-                           craplcm.nrdctabb = craptdb.nrdconta 
-
-                           craplcm.nrautdoc = 0
-                           
-                           craplcm.cdcooper = par_cdcooper
-                           craplcm.cdpesqbb = STRING(craptdb.nrdocmto)
-
-                           craplot.nrseqdig = craplcm.nrseqdig
-                           craplot.qtinfoln = craplot.qtinfoln + 1
-                           craplot.qtcompln = craplot.qtcompln + 1
-         
-                           craplot.vlinfocr = craplot.vlinfocr +
-                                                      craplcm.vllanmto
-                           craplot.vlcompcr = craplot.vlcompcr +
-                                                      craplcm.vllanmto.
-                    VALIDATE craplot.
-                    VALIDATE craplcm.
-
+                    
                     ASSIGN craptdb.insittit = 3. /* Baixado s/ pagto */        
 
                     FIND FIRST crapcob 
@@ -15212,10 +15482,6 @@ PROCEDURE efetua_baixa_titulo:
                 END. /* Final da baixa por vencimento */
                 
 
-                    
-
-
-            
             /**** ABATIMENTO DE JUROS ****/
             ASSIGN aux_txdiaria = ROUND((EXP(1 + (crapbdt.txmensal / 100),
                                          1 / 30) - 1),7)
@@ -15391,6 +15657,28 @@ PROCEDURE efetua_baixa_titulo:
                        crapljt.vldjuros = 0.
    
             END.  /*  Fim do FOR EACH crapljt  */
+
+
+            /* 13/06/2018 - TJ - Incluida condicao que verifica se pode realizar o debito */
+            IF NOT VALID-HANDLE(h-b1wgen0200) THEN
+               RUN sistema/generico/procedures/b1wgen0200.p 
+               PERSISTENT SET h-b1wgen0200.
+
+            ASSIGN aux_podedebi = 1. 
+            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
+                                    INPUT par_cdcooper, 
+                                    INPUT crapbdt.nrdconta,
+                                    INPUT 597) THEN
+               DO:
+                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
+                      QUE MENSAGEM DE CRITICA DEVE GERAR?       */
+                  ASSIGN aux_podedebi = 0.
+               END.
+               
+            /* Se nao pode debitar entao abandona o bloco transacao BAIXA */
+            IF aux_podedebi = 0 THEN 
+               UNDO BAIXA, RETURN "NOK".
+
             
             IF  aux_vltotjur > 0  THEN
                 DO:
@@ -15447,30 +15735,63 @@ PROCEDURE efetua_baixa_titulo:
                             UNDO BAIXA, RETURN "NOK".
                         END.
 
-                    CREATE craplcm.
-                    ASSIGN craplcm.dtmvtolt = cra2lot.dtmvtolt 
-                           craplcm.cdagenci = cra2lot.cdagenci
-                           craplcm.cdbccxlt = cra2lot.cdbccxlt 
-                           craplcm.nrdolote = cra2lot.nrdolote
-                           craplcm.nrdconta = craptdb.nrdconta
-                           craplcm.nrdocmto = cra2lot.nrseqdig + 1 
-                           craplcm.vllanmto = aux_vltotjur
-                           craplcm.cdhistor = 597
-                           craplcm.nrseqdig = cra2lot.nrseqdig + 1 
-                           craplcm.nrdctabb = craptdb.nrdconta
-                           craplcm.nrautdoc = 0
-                           craplcm.cdpesqbb = STRING(craptdb.nrdocmto)
-                           craplcm.cdcooper = par_cdcooper
+                    /* 13/06/2018 - TJ - BLOCO DA INSERÇAO DA CRAPLCM */
+                    RUN gerar_lancamento_conta IN h-b1wgen0200 
+                      (INPUT cra2lot.dtmvtolt                           /* par_dtmvtolt */ 
+                      ,INPUT cra2lot.cdagenci                           /* par_cdagenci */ 
+                      ,INPUT cra2lot.cdbccxlt                           /* par_cdbccxlt */ 
+                      ,INPUT cra2lot.nrdolote                           /* par_nrdolote */ 
+                      ,INPUT craptdb.nrdconta                           /* par_nrdconta */ 
+                      ,INPUT cra2lot.nrseqdig + 1                       /* par_nrdocmto */ 
+                      ,INPUT 597                                        /* par_cdhistor */ 
+                      ,INPUT cra2lot.nrseqdig + 1                       /* par_nrseqdig */ 
+                      ,INPUT aux_vltotjur                               /* par_vllanmto */ 
+                      ,INPUT craptdb.nrdconta                           /* par_nrdctabb */ 
+                      ,INPUT STRING(craptdb.nrdocmto)                   /* par_cdpesqbb */ 
+                      ,INPUT 0                                          /* par_nrautdoc */ 
+                      ,INPUT 0                                          /* par_nrsequni */ 
+                      ,INPUT ""                                         /* par_dtrefere */ 
+                      ,INPUT 0                                          /* par_cdoperad */                                
+                      ,INPUT par_cdcooper                               /* par_cdcooper */ 
+                      ,INPUT ""                                         /* par_nrdctitg */ 
+                      ,INPUT 0                                          /* par_cdcoptfn */ 
+                      ,INPUT 0                                          /* par_cdagetfn */ 
+                      ,INPUT 0                                          /* par_nrterfin */ 
+                      ,INPUT 0                                          /* par_cdorigem */ 
+                      /* CAMPOS OPCIONAIS DO LOTE                                                                        */
+                      ,INPUT 0                                          /* Processa lote                                 */
+                      ,INPUT 0                                          /* Tipo de lote a movimentar                     */
+                      /* CAMPOS DE SAIDA                                                                                 */
+                      ,OUTPUT TABLE tt-ret-lancto                       /* Collection que contém o retorno do lançamento */
+                      ,OUTPUT aux_incrineg                              /* Indicador de crítica de negócio               */
+                      ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
+                      ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
+                    
+                    /* 13/06/2018 - TJ - Apagar handle associado */
+                    IF VALID-HANDLE(h-b1wgen0200) THEN
+                       DELETE PROCEDURE h-b1wgen0200.
+                    
+                    FIND FIRST tt-ret-lancto.
+                    DISP tt-ret-lancto.
 
-                           cra2lot.nrseqdig = craplcm.nrseqdig
-                           cra2lot.vlinfodb = cra2lot.vlinfodb + aux_vltotjur
-                           cra2lot.vlcompdb = cra2lot.vlcompdb + aux_vltotjur
-                           cra2lot.qtinfoln = cra2lot.qtinfoln + 1
-                           cra2lot.qtcompln = cra2lot.qtcompln + 1.           
-                    VALIDATE cra2lot.
-                    VALIDATE craplcm.
-                END.
-            
+                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                       /* Tratamento erro Banco Dados */
+                       UNDO BAIXA, RETURN "NOK".
+                    ELSE 
+                       /* Se criou lancamento entao atualiza dados do Lote */
+                       DO:
+                           ASSIGN cra2lot.nrseqdig = cra2lot.nrseqdig + 1
+                                  cra2lot.vlinfodb = cra2lot.vlinfocr + aux_vltotjur
+                                  cra2lot.vlcompdb = cra2lot.vlcompcr + aux_vltotjur
+                                  cra2lot.qtinfoln = cra2lot.qtinfoln + 1
+                                  cra2lot.qtcompln = cra2lot.qtcompln + 1.
+                             
+                           VALIDATE cra2lot.
+                           VALIDATE craplcm.
+                       END.
+
+                END.  /* fim aux_vltotjur > 0 */
+                
             VALIDATE craptdb.
             
             /* Verifica se deve liquidar o bordero caso sim Liquida */
