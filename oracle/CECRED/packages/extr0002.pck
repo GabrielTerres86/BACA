@@ -794,7 +794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
                      pois haviam casos em que não estavamos entrando na rotina
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
-
+        
         21/05/2018 - Alterações relacionadas a SM4 - PRJ364 - Paulo Martins - Mout´s
         
   ---------------------------------------------------------------------------------------------------------------
@@ -3118,14 +3118,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END LOOP;  
         END IF;                             
         /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */                                   
-        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049,2566,2567) THEN
+        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049,2566,2567,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476) THEN
           --Proximo registro
           CONTINUE;
         END IF;
         /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */
         -- rmm desconsiderar pagamentos prejuizo (2390,2392,2388,2475)        
         IF rw_crapepr.tpemprst = 1 AND rw_craplem.cdhistor IN --(2390,2392,2388,2475,2391,2395) 
-          (2386,2388,2473,2389,2390,2475,2391,2387,2392,2474,2393,2394,2476,2395) THEN
+          (2386,2388,2473,2389,2390,2475,2391,2387,2392,2474,2393,2394,2476,2395,2701,2702) THEN
           CONTINUE;          
         END IF;
         --
@@ -3784,6 +3784,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              23/01/2017 - Ajustes para arrecadacao de FGTS/DAE. PRJ406 - FGTS
   --                           (Odirlei-AMcom)
+  --
+  --              20/02/2018 - Alterada validação cdtipcta IN (1,2,...) para verificacao se permite
+  --                           o produto 38 (Folhas de Cheque). PRJ366 (Lombardi).
+  -- 
+  --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
+  --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -3797,7 +3804,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.cdcooper
               ,crapass.cdagenci
               ,crapass.cdtipcta
-              ,crapass.cdsitdct
         FROM crapass crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
@@ -4091,6 +4097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craphis.dshistor
               ,craphis.indebcre
               ,craphis.cdhistor
+              ,craphis.inperdes
         FROM craphis craphis
         WHERE craphis.cdcooper = pr_cdcooper       
         AND   craphis.cdhistor = pr_cdhistor;                      
@@ -4441,6 +4448,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dscedent VARCHAR(300);
       vr_idlstdom NUMBER;
       vr_incancel INTEGER;
+      vr_possuipr VARCHAR2(1);				  
+      vr_inimpede_talionario INTEGER;
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4556,8 +4565,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;  
         --Fechar Cursor
         CLOSE cr_crapsld;
+        
+        CADA0006.pc_permite_produto_tipo(pr_cdprodut => 38
+                                        ,pr_cdtipcta => rw_crapass.cdtipcta
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_inpessoa => rw_crapass.inpessoa
+                                        ,pr_possuipr => vr_possuipr
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+        
+        IF vr_cdcritic > 0 AND vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao Saida com Sucesso
+          RAISE vr_exc_erro;
+        END IF;
+        		
+        CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_inimpede_talionario => vr_inimpede_talionario
+                                        ,pr_des_erro => vr_des_reto
+                                        ,pr_dscritic => vr_dscritic);
+        IF vr_des_reto = 'NOK' THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
         /*  Nao calcula programados para quem movimenta com talao de cheques  */
-        IF rw_crapass.cdtipcta IN (1,2,3,4,8,9,10,11,12,13,14,15) AND rw_crapass.cdsitdct = 1 THEN
+        IF vr_possuipr = 'S' AND vr_inimpede_talionario = 0 THEN
           --Sem Lancamentos futuros
           pr_tab_totais_futuros(1).vllautom:= 0;
           --Levantar Excecao Saida com Sucesso
@@ -4770,6 +4802,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Proximo Registro
           CONTINUE;
         END IF; 
+
+        IF rw_craphis.inperdes = 1 AND (pr_nmdatela LIKE 'MATRIC' OR pr_nmdatela LIKE 'CONTAS') THEN
+          CONTINUE;
+        END IF;        
         --Tipo Historico
         IF rw_craphis.inhistor IN (1,2,3,4,5) THEN 
           --Valor Lancamento Automatico
@@ -7073,6 +7109,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40
   --                           pois estava estourando (Tiago #724513)
+  --
+  --              14/05/2018 - Aumentado o tamanho das variáveis de indice para 24 posicoes
+  --                           para ordenacao dos extratos, projeto Debitador Unico (Elton-AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                
         /* Cursores Locais */
@@ -7142,8 +7182,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_dstexto    VARCHAR2(32600);
         vr_dstexto40  VARCHAR2(32600);
         --Variaveis para indices
-        vr_index_extrato     VARCHAR2(12);
-        vr_index_extrato_aux VARCHAR2(12);
+        vr_index_extrato     VARCHAR2(24);
+        vr_index_extrato_aux VARCHAR2(24);
         vr_index_cheque      PLS_INTEGER;
         vr_index_deposito    PLS_INTEGER;
         --Variaveis de Erro
@@ -13923,6 +13963,7 @@ END pc_consulta_ir_pj_trim;
         --Tabela de Memoria de Emprestimos
         vr_tab_dados_epr        empr0001.typ_tab_dados_epr; 
         vr_tab_extrato_epr      typ_tab_extrato_epr; 
+        vr_type_aux              typ_reg_extrato_epr;
         vr_tab_extrato_epr_novo typ_tab_extrato_epr_novo; 
         vr_tab_extrato_epr_aux  typ_tab_extrato_epr_aux; 
         -- Cursor genérico de calendário
@@ -14388,6 +14429,23 @@ END pc_consulta_ir_pj_trim;
                 vr_flgctepr:= FALSE;
               END IF; 
               
+              FOR V_IND_TP IN vr_tab_extrato_epr.first .. vr_tab_extrato_epr.COUNT LOOP
+                FOR V_IND_TP_AUX IN vr_tab_extrato_epr.first .. vr_tab_extrato_epr.COUNT - V_IND_TP LOOP
+                  
+                  IF (to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX + 1).dtmvtolt,'yyyymmdd')) < 
+                      to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX).dtmvtolt,'yyyymmdd')) AND 
+                      vr_tab_extrato_epr(V_IND_TP_AUX).dthrtran IS NULL) OR 
+                     (to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX + 1).dthrtran,'yyyymmddHHMISS')) < 
+                      to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX).dthrtran,'yyyymmddHHMISS')) AND
+                      vr_tab_extrato_epr(V_IND_TP_AUX).dthrtran IS NOT NULL) THEN
+                    -- ORDERNANDO O TYPE
+                    vr_type_aux := vr_tab_extrato_epr(V_IND_TP_AUX);
+                    vr_tab_extrato_epr(V_IND_TP_AUX) := vr_tab_extrato_epr(V_IND_TP_AUX + 1);
+                    vr_tab_extrato_epr(V_IND_TP_AUX + 1) := vr_type_aux;
+                  END IF;
+                  --   
+                END LOOP;  
+              END LOOP;            
               --Preparar a tabela conforme break-by
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
@@ -14464,12 +14522,13 @@ END pc_consulta_ir_pj_trim;
                   --Debito  
                   IF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'D' THEN
                     --Se Possui Saldo
-                    IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
+                    IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo AND
+                      vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (2403,2404,2407)  THEN
                       --Saldo Devedor
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2391,2401,2402,2403,2404,2405,2406,2407) THEN --<> 349 THEN
+                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2401,2402,2405,2406) THEN --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
                       --Saldo Devedor
