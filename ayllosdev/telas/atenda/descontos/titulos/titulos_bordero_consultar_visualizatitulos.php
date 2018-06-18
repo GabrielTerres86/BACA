@@ -248,7 +248,7 @@
 										}
 									?>	
 								</td>
-								<td><?php echo number_format(str_replace(",",".",$t->tags[8]->cdata),2,",",".");?></td> 
+								<td><?php echo number_format(str_replace(",",".",$t->tags[16]->cdata),2,",",".");?></td> 
 							</tr>							
 						<?php 
 							}
