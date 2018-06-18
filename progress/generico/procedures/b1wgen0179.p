@@ -870,9 +870,6 @@ PROCEDURE Grava_Dados:
     
 	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
     
-	/* PRJ 416 */
-    DEF  INPUT PARAM par_operauto AS CHAR                           NO-UNDO.
-    
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
