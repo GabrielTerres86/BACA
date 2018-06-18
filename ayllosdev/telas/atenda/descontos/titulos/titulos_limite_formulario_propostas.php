@@ -31,6 +31,8 @@
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
+	<input type="hidden" id="idcobert" value="<?php echo $dados[30]->cdata; ?>" />
+
 	<div id="divDscTit_Limite">
 	
 		<fieldset>

@@ -1241,6 +1241,7 @@ DECLARE
          ,lim.vllimite
          ,lim.cddlinha
          ,lim.insitapr
+		 ,lim.idcobope
    from   crawlim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1253,7 +1254,7 @@ DECLARE
          ,lim.nrdconta
          ,lim.nrctrlim
          ,lim.tpctrlim
-         ,lim.vllimite
+         ,lim.vllimite		 
    from   craplim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1538,10 +1539,26 @@ BEGIN
            vr_dscritic := 'Erro ao atualizar a proposta de limite de desconto de título. ' || sqlerrm;
            raise vr_exc_saida;
    end;
+
+   -- Se possui cobertura vinculada
+   IF rw_crawlim.idcobope > 0 AND vr_flcraplim = FALSE THEN
+        -- Chama bloqueio/desbloqueio da garantia
+        BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => rw_crawlim.idcobope
+                                            ,pr_inbloq_desbloq => 'B'
+                                            ,pr_cdoperador     => '1'
+                                            ,pr_vldesbloq      => 0
+                                            ,pr_flgerar_log    => 'S'
+                                            ,pr_dscritic       => vr_dscritic);
+        -- Se houve erro
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+   END IF;
+
    
    --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
    --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
-   IF  rw_crawlim.vllimite > rw_craplim.vllimite AND
+   IF  ( ((rw_crawlim.vllimite > rw_craplim.vllimite) AND vr_flcraplim = TRUE ) OR vr_flcraplim = FALSE ) AND
        NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
        este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
