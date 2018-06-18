@@ -1,5 +1,5 @@
 
-  CREATE OR REPLACE PROCEDURE "CECRED"."PC_CRPS730_RC7" (pr_dscritic OUT VARCHAR2
+  CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730 (pr_dscritic OUT VARCHAR2
                                       ) IS
 /* .............................................................................
 
@@ -117,6 +117,8 @@
 		,vr_cdfinali INTEGER                                           -- Finalidade TED
 		,vr_operador VARCHAR2(2)                                       -- Fixo 1 -- Processo automático
 		,vr_cdhistor tbfin_recursos_movimento.cdhistor%TYPE            -- Código do histórico
+		,vr_tpregist VARCHAR2(100)                                     -- Tipo registro
+		,vr_tporigem VARCHAR2(100)                                     -- Tabela de origem
 		);
 	-- Tabela de tipo TED
 	TYPE typ_tab_ted IS TABLE OF typ_reg_ted INDEX BY PLS_INTEGER;
@@ -124,6 +126,24 @@
 	vr_tab_ted typ_tab_ted;
 	-- Registro de TED
 	vr_reg_ted typ_reg_ted;
+	 
+	-- Tipo de registro lançamento
+	TYPE typ_reg_lancto IS RECORD
+    (vr_tpregist  VARCHAR2(100)                            -- Tipo registro
+		,vr_origem    VARCHAR2(100)                            -- Tabela de origem
+		,vr_cdcooper  tbcobran_confirmacao_ieptb.cdcooper%TYPE -- Cooperativa
+		,vr_dtmvtolt  tbcobran_confirmacao_ieptb.dtmvtolt%TYPE -- Data do movimento
+		,vr_cdcomarc  tbcobran_confirmacao_ieptb.cdcomarc%TYPE -- Comarca
+		,vr_nrseqrem  tbcobran_confirmacao_ieptb.nrseqrem%TYPE -- Sequencial de remessa
+		,vr_nrseqarq  tbcobran_confirmacao_ieptb.nrseqarq%TYPE -- Sequencia do arquivo
+    ,vr_idretorno tbcobran_retorno_ieptb.idretorno%TYPE    -- Lançamento retorno
+		);
+	-- Tabela de registro lançamento
+	TYPE typ_tab_lancto IS TABLE OF typ_reg_lancto INDEX BY PLS_INTEGER;
+	-- Tabela que contem os lançamentos
+	vr_tab_lancto typ_tab_lancto;
+	-- Registro do lançamento
+	vr_reg_lancto typ_reg_lancto;
 	 
   vr_exc_erro     EXCEPTION;
   
@@ -599,14 +619,22 @@
 																	 ,pr_cdcomarc      IN  tbcobran_confirmacao_ieptb.cdcomarc%TYPE
 																	 ,pr_nrseqrem      IN  tbcobran_confirmacao_ieptb.nrseqrem%TYPE
 																	 ,pr_nrseqarq      IN  tbcobran_confirmacao_ieptb.nrseqarq%TYPE
-																	 ,pr_dtcustas_proc IN  tbcobran_confirmacao_ieptb.dtcustas_proc%TYPE
+																	 ,pr_dtcustas_proc   IN  tbcobran_confirmacao_ieptb.dtcustas_proc%TYPE DEFAULT NULL
+																	 ,pr_idlancto_tarifa IN  tbcobran_confirmacao_ieptb.idlancto_tarifa%TYPE DEFAULT NULL
+																	 ,pr_idlancto_custas IN  tbcobran_confirmacao_ieptb.idlancto_custas%TYPE DEFAULT NULL
 																	 ,pr_dscritic      OUT VARCHAR2
 		                               ) IS
 	BEGIN
 		--
 		UPDATE tbcobran_confirmacao_ieptb
-		   SET tbcobran_confirmacao_ieptb.dtcustas_proc = pr_dtcustas_proc
-			    ,tbcobran_confirmacao_ieptb.flcustas_proc = 1 -- Fixo
+		   SET tbcobran_confirmacao_ieptb.dtcustas_proc   = nvl(pr_dtcustas_proc, tbcobran_confirmacao_ieptb.dtcustas_proc)
+			    ,tbcobran_confirmacao_ieptb.flcustas_proc   = decode(pr_dtcustas_proc
+					                                                    ,NULL
+																															,tbcobran_confirmacao_ieptb.flcustas_proc
+																															,1
+																															) -- Fixo
+					,tbcobran_confirmacao_ieptb.idlancto_tarifa = nvl(pr_idlancto_tarifa, tbcobran_confirmacao_ieptb.idlancto_tarifa)
+					,tbcobran_confirmacao_ieptb.idlancto_custas = nvl(pr_idlancto_custas, tbcobran_confirmacao_ieptb.idlancto_custas)
 		 WHERE tbcobran_confirmacao_ieptb.cdcooper = pr_cdcooper
 		   AND tbcobran_confirmacao_ieptb.dtmvtolt = pr_dtmvtolt
 			 AND tbcobran_confirmacao_ieptb.cdcomarc = pr_cdcomarc
@@ -625,13 +653,24 @@
 															 ,pr_nrseqrem      IN  tbcobran_retorno_ieptb.nrseqrem%TYPE
 															 ,pr_nrseqarq      IN  tbcobran_retorno_ieptb.nrseqarq%TYPE
 															 ,pr_dtcustas_proc IN  tbcobran_retorno_ieptb.dtcustas_proc%TYPE
+															 ,pr_idretorno       IN  tbcobran_retorno_ieptb.idretorno%TYPE DEFAULT NULL
+															 ,pr_idlancto_tarifa IN  tbcobran_retorno_ieptb.idlancto_tarifa%TYPE DEFAULT NULL
+															 ,pr_idlancto_custas IN  tbcobran_retorno_ieptb.idlancto_custas%TYPE DEFAULT NULL
 															 ,pr_dscritic      OUT VARCHAR2
 		                           ) IS
 	BEGIN
 		--
+		IF pr_idretorno IS NULL THEN
+			--
+			BEGIN
+				--
 		UPDATE tbcobran_retorno_ieptb
-		   SET tbcobran_retorno_ieptb.dtcustas_proc = pr_dtcustas_proc
-			    ,tbcobran_retorno_ieptb.flcustas_proc = 1 -- Fixo
+					 SET tbcobran_retorno_ieptb.dtcustas_proc = nvl(pr_dtcustas_proc, tbcobran_retorno_ieptb.dtcustas_proc)
+							,tbcobran_retorno_ieptb.flcustas_proc = decode(pr_dtcustas_proc
+							                                              ,NULL
+																														,tbcobran_retorno_ieptb.flcustas_proc
+																														,1
+																														) -- Fixo
 		 WHERE tbcobran_retorno_ieptb.cdcooper = pr_cdcooper
 		   AND tbcobran_retorno_ieptb.dtmvtolt = pr_dtmvtolt
 			 AND tbcobran_retorno_ieptb.cdcomarc = pr_cdcomarc
@@ -640,7 +679,31 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
-			pr_dscritic := 'Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
+					pr_dscritic := '1.Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
+		  END;
+			--
+		ELSE
+			--
+			BEGIN
+				--
+				UPDATE tbcobran_retorno_ieptb
+					 SET tbcobran_retorno_ieptb.dtcustas_proc   = nvl(pr_dtcustas_proc, tbcobran_retorno_ieptb.dtcustas_proc)
+							,tbcobran_retorno_ieptb.flcustas_proc   = decode(pr_dtcustas_proc
+																															,NULL
+																															,tbcobran_retorno_ieptb.flcustas_proc
+																															,1
+																															) -- Fixo
+				      ,tbcobran_retorno_ieptb.idlancto_tarifa = nvl(pr_idlancto_tarifa, tbcobran_retorno_ieptb.idlancto_tarifa)
+							,tbcobran_retorno_ieptb.idlancto_custas = nvl(pr_idlancto_custas, tbcobran_retorno_ieptb.idlancto_custas)
+				 WHERE tbcobran_retorno_ieptb.idretorno = pr_idretorno;
+				--
+			EXCEPTION
+				WHEN OTHERS THEN
+					pr_dscritic := '2.Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
+		  END;
+			--
+		END IF;
+		--
 	END pc_atualiza_retorno;
   
   -- Rotina que carrega os arquivos de retorno
@@ -738,13 +801,6 @@
     vr_nrseqarq INTEGER;
   BEGIN
     --
-    /*-- temporario RC7
-    vr_nrseqarq := fn_sequence(pr_nmtabela => 'TBCOBRAN_CONFIRMACAO_IEPTB'
-															 ,pr_nmdcampo => 'NRSEQARQ'
-															 ,pr_dsdchave => to_char(pr_cdcooper) || ';' || 
-                                               to_char(pr_dtmvtolt) || ';' ||
-                                               to_char(pr_cdcomarc) || ';' || 
-                                               to_char(pr_nrseqrem));*/
 
     INSERT INTO tbcobran_confirmacao_ieptb(cdcooper
                                           ,dtmvtolt
@@ -826,6 +882,7 @@
                                  ,pr_vltitulo            IN  tbcobran_retorno_ieptb.vltitulo%TYPE
                                  ,pr_vlsaldo_titulo      IN  tbcobran_retorno_ieptb.vlsaldo_titulo%TYPE
                                  ,pr_dsregist            IN  tbcobran_retorno_ieptb.dsregist%TYPE
+																 ,pr_idretorno           OUT NUMBER
                                  ,pr_dscritic          	 OUT VARCHAR2
                                  ) IS
     --
@@ -838,14 +895,6 @@
 															 ,pr_nmdcampo => 'IDRETORNO'
 															 ,pr_dsdchave => 'IDRETORNO'
 															 );
-                               
-    /*-- temporario RC7
-    vr_nrseqarq := fn_sequence(pr_nmtabela => 'TBCOBRAN_RETORNO_IEPTB'
-															 ,pr_nmdcampo => 'NRSEQARQ'
-															 ,pr_dsdchave => to_char(pr_cdcooper) || ';' || 
-                                               to_char(pr_dtmvtolt) || ';' ||
-                                               to_char(pr_cdcomarc) || ';' || 
-                                               to_char(pr_nrseqrem));*/
                                
 		--
     INSERT INTO tbcobran_retorno_ieptb(cdcooper
@@ -900,6 +949,8 @@
 																							,vr_idretorno
                                               );
     --
+		pr_idretorno := vr_idretorno;
+		--
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro ao inserir na tbcobran_retorno_ieptb: ' || SQLERRM;
@@ -978,6 +1029,83 @@
 			pr_dscritic := 'Erro na pc_totaliza_cooperativa: ' || SQLERRM;
 	END pc_totaliza_cooperativa;
 	
+	-- Atualiza os títulos
+	PROCEDURE pc_atualiza_titulos(pr_idretorno IN  tbcobran_retorno_ieptb.idretorno%TYPE
+		                           ,pr_tpregist  IN  VARCHAR2
+															 ,pr_origem    IN  VARCHAR2
+		                           ,pr_dscritic  OUT VARCHAR2
+		                           ) IS
+	  --
+		vr_index_lancto NUMBER := 0;
+		--
+		vr_idlancto_tarifa VARCHAR2(100) := NULL;
+		vr_idlancto_custas VARCHAR2(100) := NULL;
+		--
+	BEGIN
+		--
+		IF vr_tab_lancto.count() > 0 THEN
+			--
+			WHILE vr_index_lancto IS NOT NULL LOOP
+				--
+				IF pr_origem = vr_tab_lancto(vr_index_lancto).vr_origem THEN
+					--
+					IF pr_tpregist = vr_tab_lancto(vr_index_lancto).vr_tpregist THEN
+						--
+						IF pr_tpregist IN('vr_tot_outras_cra_tarifa', 'vr_tot_sp_cra_tarifa') THEN
+							--
+							vr_idlancto_tarifa := pr_idretorno;
+							vr_idlancto_custas := NULL;
+							--
+						ELSIF pr_tpregist IN('vr_tot_outras_cra_custas', 'vr_tot_sp_cra_custas') THEN
+							--
+							vr_idlancto_custas := pr_idretorno;
+							vr_idlancto_tarifa := NULL;
+							--
+						END IF;
+						--
+						IF pr_origem = 'CON' THEN
+							--
+							pc_atualiza_confirmacao(pr_cdcooper        => vr_tab_lancto(vr_index_lancto).vr_cdcooper -- IN
+																		 ,pr_dtmvtolt        => vr_tab_lancto(vr_index_lancto).vr_dtmvtolt -- IN
+																		 ,pr_cdcomarc        => vr_tab_lancto(vr_index_lancto).vr_cdcomarc -- IN
+																		 ,pr_nrseqrem        => vr_tab_lancto(vr_index_lancto).vr_nrseqrem -- IN
+																		 ,pr_nrseqarq        => vr_tab_lancto(vr_index_lancto).vr_nrseqarq -- IN
+																		 ,pr_dtcustas_proc   => NULL                                       -- IN
+																		 ,pr_idlancto_tarifa => vr_idlancto_tarifa                         -- IN
+																		 ,pr_idlancto_custas => vr_idlancto_custas                         -- IN
+																		 ,pr_dscritic        => pr_dscritic                                -- OUT
+																		 );
+							--
+						ELSE
+							--
+							pc_atualiza_retorno(pr_cdcooper        => vr_tab_lancto(vr_index_lancto).vr_cdcooper  -- IN
+																 ,pr_dtmvtolt        => vr_tab_lancto(vr_index_lancto).vr_dtmvtolt  -- IN
+																 ,pr_cdcomarc        => vr_tab_lancto(vr_index_lancto).vr_cdcomarc  -- IN
+																 ,pr_nrseqrem        => vr_tab_lancto(vr_index_lancto).vr_nrseqrem  -- IN
+																 ,pr_nrseqarq        => vr_tab_lancto(vr_index_lancto).vr_nrseqarq  -- IN
+																 ,pr_dtcustas_proc   => NULL                                        -- IN
+																 ,pr_idretorno       => vr_tab_lancto(vr_index_lancto).vr_idretorno -- IN
+																 ,pr_idlancto_tarifa => vr_idlancto_tarifa                          -- IN
+																 ,pr_idlancto_custas => vr_idlancto_custas                          -- IN
+																 ,pr_dscritic        => pr_dscritic                                 -- OUT
+																 );
+							--
+						END IF;
+						--
+					END IF;
+					--
+				END IF;
+				-- Próximo registro
+				vr_index_lancto := vr_tab_lancto.next(vr_index_lancto);
+				--
+			END LOOP;
+			--
+		END IF;
+		--
+		COMMIT;
+		--
+	END pc_atualiza_titulos;
+	
 	-- Processa as TED geradas em memória e realiza o envio das mesmas
 	PROCEDURE pc_envia_teds(pr_dscritic OUT VARCHAR2
 		                     ) IS
@@ -1016,6 +1144,12 @@
 																		,pr_cdcritic => vr_cdcritic
 																		,pr_dscritic => vr_dscritic
 																		);
+				-- Atualiza os títulos
+				pc_atualiza_titulos(pr_idretorno => vr_idlancto                          -- IN
+													 ,pr_tpregist  => vr_tab_ted(vr_index_ted).vr_tpregist -- IN
+													 ,pr_origem    => vr_tab_ted(vr_index_ted).vr_tporigem -- IN
+													 ,pr_dscritic  => vr_dscritic                          -- OUT
+													 );
 				-- Próximo registro
 				vr_index_ted := vr_tab_ted.next(vr_index_ted);
 				--
@@ -1196,6 +1330,8 @@
 		vr_idlancto       tbfin_recursos_movimento.idlancto%TYPE;
 		vr_nrdocmto       NUMBER;
 		--
+		vr_idretorno      NUMBER;
+		--
   BEGIN
     --
 		vr_tab_coop.delete;
@@ -1358,6 +1494,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -1491,6 +1628,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -1639,6 +1777,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -1679,6 +1818,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -1955,6 +2095,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2011,6 +2152,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2066,6 +2208,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2121,6 +2264,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2176,6 +2320,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2231,6 +2376,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2286,6 +2432,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2341,6 +2488,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2396,6 +2544,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2451,6 +2600,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2506,6 +2656,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2561,6 +2712,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2616,6 +2768,7 @@
 																	 ,pr_vltitulo            => vr_vltitulo                           -- IN
 																	 ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
 																	 ,pr_dsregist            => NULL                                  -- IN
+																	 ,pr_idretorno           => vr_idretorno                          -- OUT
 																	 ,pr_dscritic          	 => pr_dscritic                           -- OUT
 																	 );
 							--
@@ -2770,9 +2923,53 @@
 								--
 								vr_tot_sp_cra_custas := nvl(vr_tot_sp_cra_custas, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes);
 								--
+								IF vr_idtiparq = 'CON' THEN
+									--
+									vr_reg_lancto.vr_tpregist := 'vr_tot_sp_cra_custas';
+									vr_reg_lancto.vr_origem   := vr_idtiparq;
+									vr_reg_lancto.vr_cdcooper := rw_crapcob.cdcooper;
+									vr_reg_lancto.vr_dtmvtolt := rw_crapcob.dtmvtolt;
+									vr_reg_lancto.vr_cdcomarc := vr_tab_arquivo(vr_index_reg).campoh15;
+									vr_reg_lancto.vr_nrseqrem := vr_tab_arquivo(vr_index_reg).campoh08;
+									vr_reg_lancto.vr_nrseqarq := vr_tab_arquivo(vr_index_reg).campot52;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+								ELSIF vr_idtiparq = 'RET' THEN
+									--
+									vr_reg_lancto.vr_tpregist  := 'vr_tot_sp_cra_custas';
+									vr_reg_lancto.vr_origem    := vr_idtiparq;
+									vr_reg_lancto.vr_idretorno := vr_idretorno;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+								END IF;
+								--
 							ELSE
 								--
 								vr_tot_outros_cra_custas := nvl(vr_tot_outros_cra_custas, 0) + (vr_vlcuscar + vr_vlcusdis + vr_vldemdes);
+								--
+								IF vr_idtiparq = 'CON' THEN
+									--
+									vr_reg_lancto.vr_tpregist := 'vr_tot_outros_cra_custas';
+									vr_reg_lancto.vr_origem   := vr_idtiparq;
+									vr_reg_lancto.vr_cdcooper := rw_crapcob.cdcooper;
+									vr_reg_lancto.vr_dtmvtolt := rw_crapcob.dtmvtolt;
+									vr_reg_lancto.vr_cdcomarc := vr_tab_arquivo(vr_index_reg).campoh15;
+									vr_reg_lancto.vr_nrseqrem := vr_tab_arquivo(vr_index_reg).campoh08;
+									vr_reg_lancto.vr_nrseqarq := vr_tab_arquivo(vr_index_reg).campot52;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+								ELSIF vr_idtiparq = 'RET' THEN
+									--
+									vr_reg_lancto.vr_tpregist  := 'vr_tot_outros_cra_custas';
+									vr_reg_lancto.vr_origem    := vr_idtiparq;
+									vr_reg_lancto.vr_idretorno := vr_idretorno;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+							END IF;
 								--
 							END IF;
 							--
@@ -2784,9 +2981,53 @@
 								--
 								vr_tot_sp_cra_tarifa := nvl(vr_tot_sp_cra_tarifa, 0) + vr_vlgraele;
 								--
+								IF vr_idtiparq = 'CON' THEN
+									--
+									vr_reg_lancto.vr_tpregist := 'vr_tot_sp_cra_tarifa';
+									vr_reg_lancto.vr_origem   := vr_idtiparq;
+									vr_reg_lancto.vr_cdcooper := rw_crapcob.cdcooper;
+									vr_reg_lancto.vr_dtmvtolt := rw_crapcob.dtmvtolt;
+									vr_reg_lancto.vr_cdcomarc := vr_tab_arquivo(vr_index_reg).campoh15;
+									vr_reg_lancto.vr_nrseqrem := vr_tab_arquivo(vr_index_reg).campoh08;
+									vr_reg_lancto.vr_nrseqarq := vr_tab_arquivo(vr_index_reg).campot52;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+								ELSIF vr_idtiparq = 'RET' THEN
+									--
+									vr_reg_lancto.vr_tpregist  := 'vr_tot_sp_cra_tarifa';
+									vr_reg_lancto.vr_origem    := vr_idtiparq;
+									vr_reg_lancto.vr_idretorno := vr_idretorno;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+								END IF;
+								--
 							ELSE
 								--
 								vr_tot_outros_cra_tarifa := nvl(vr_tot_outros_cra_tarifa, 0) + vr_vlgraele;
+								--
+								IF vr_idtiparq = 'CON' THEN
+									--
+									vr_reg_lancto.vr_tpregist := 'vr_tot_outros_cra_tarifa';
+									vr_reg_lancto.vr_origem   := vr_idtiparq;
+									vr_reg_lancto.vr_cdcooper := rw_crapcob.cdcooper;
+									vr_reg_lancto.vr_dtmvtolt := rw_crapcob.dtmvtolt;
+									vr_reg_lancto.vr_cdcomarc := vr_tab_arquivo(vr_index_reg).campoh15;
+									vr_reg_lancto.vr_nrseqrem := vr_tab_arquivo(vr_index_reg).campoh08;
+									vr_reg_lancto.vr_nrseqarq := vr_tab_arquivo(vr_index_reg).campot52;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+								ELSIF vr_idtiparq = 'RET' THEN
+									--
+									vr_reg_lancto.vr_tpregist  := 'vr_tot_outros_cra_tarifa';
+									vr_reg_lancto.vr_origem    := vr_idtiparq;
+									vr_reg_lancto.vr_idretorno := vr_idretorno;
+									--
+									vr_tab_lancto(vr_tab_lancto.count()) := vr_reg_lancto;
+									--
+							END IF;
 								--
 							END IF;
 							--
@@ -3052,6 +3293,8 @@
 						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
 						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
 						vr_reg_ted.vr_cdhistor := 2642;                                                    -- Fixo
+						vr_reg_ted.vr_tpregist := 'vr_tot_sp_cra_custas';                                  -- Fixo
+						vr_reg_ted.vr_tporigem := vr_idtiparq;                                             
 						--
 						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
@@ -3093,6 +3336,8 @@
 						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
 						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
 						vr_reg_ted.vr_cdhistor := 2642;                                                    -- Fixo
+						vr_reg_ted.vr_tpregist := 'vr_tot_outros_cra_custas';                              -- Fixo
+						vr_reg_ted.vr_tporigem := vr_idtiparq;                                             
 						--
 						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
@@ -3134,6 +3379,8 @@
 						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
 						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
 						vr_reg_ted.vr_cdhistor := 2646;                                                    -- Fixo
+						vr_reg_ted.vr_tpregist := 'vr_tot_sp_cra_tarifa';                                  -- Fixo
+						vr_reg_ted.vr_tporigem := vr_idtiparq;                                             
 						--
 						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
@@ -3175,6 +3422,8 @@
 						vr_reg_ted.vr_cdfinali := 10;                                                      -- Finalidade TED
 						vr_reg_ted.vr_operador := 1;                                                       -- Fixo
 						vr_reg_ted.vr_cdhistor := 2646;                                                    -- Fixo
+						vr_reg_ted.vr_tpregist := 'vr_tot_outros_cra_tarifa';                              -- Fixo
+						vr_reg_ted.vr_tporigem := vr_idtiparq;                                             
 						--
 						vr_tab_ted(vr_tab_ted.count()) := vr_reg_ted;
 						--
@@ -3298,16 +3547,11 @@ begin
 	END;
 	--
   
-  -- temporario RC7
-  vr_dtmvtolt := trunc(SYSDATE);
-  vr_dtmvtolt := to_date('04/05/2018','DD/MM/RRRR');
-  
-	/*
 	wprt0001.pc_obtem_retorno(pr_cdcooper => 3
-													 ,pr_cdbandoc => 85
-													 ,pr_dtmvtolt => vr_dtmvtolt
-													 ,pr_dscritic => pr_dscritic
-													 );*/
+							 ,pr_cdbandoc => 85
+							 ,pr_dtmvtolt => vr_dtmvtolt
+							 ,pr_dscritic => pr_dscritic
+							 );
 	--
 	IF pr_dscritic IS NOT NULL THEN
     --
@@ -3356,7 +3600,7 @@ begin
   END IF;
 	
 	-- Executa a conciliação automática
-	--tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
+	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
@@ -3365,7 +3609,7 @@ begin
   END IF;
 	
 	-- Gera as movimentações
-	--cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
+	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
@@ -3394,4 +3638,5 @@ EXCEPTION
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || SQLERRM);
 		ROLLBACK;
   --
-end pc_crps730_rc7;
+end pc_crps730;
+/

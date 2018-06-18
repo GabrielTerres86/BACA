@@ -21,6 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --
   --              29/12/2016 - P340 - Ajustes para leitura do Segmento y053 e envia a CIP (Ricardo Linhares).
   --
+  --              02/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+  -- 
   --	          16/05/2018 - Ajuste para que o insert do campo cdmensag nunca seja com o valor nulo.
   --                           Chamado INC0011898 - Gabriel (Mouts).
   --
@@ -120,6 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                cddespec  crapcob.cddespec%TYPE,
                dtemscob  crapcob.dtretcob%TYPE,
                inenvcip  crapcob.inenvcip%TYPE,
+			   insrvprt  crapcob.insrvprt%TYPE,
                -- Ocorrencia --> Utilizado em diversas linhas
                cdocorre  INTEGER,
                -- Identifica se foi rejeitado
@@ -258,6 +261,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                inenvcip  crapcob.inenvcip%TYPE,
                inemiten  crapcob.inemiten%TYPE,
                flgdprot  crapcob.flgdprot%TYPE,
+			   insrvprt  crapcob.insrvprt%TYPE,
                flgaceit  crapcob.flgaceit%TYPE,
                idseqttl  crapcob.idseqttl%TYPE,
                cdoperad  crapcob.cdoperad%TYPE,
@@ -351,6 +355,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                                       ,pr_dtmvtolt IN DATE    --Data Movimento
                                       ,pr_cdoperad IN VARCHAR2 --Codigo Operador
                                       ,pr_nrremass IN INTEGER --Numero Remessa
+                                      ,pr_dtcatanu IN crapret.dtcatanu%TYPE DEFAULT null --Data de referencia a quitacao da divida.
                                       ,pr_cdcritic OUT INTEGER --Codigo Critica
                                       ,pr_dscritic OUT VARCHAR2);  --Descricao Critica
                                       
@@ -461,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 30/05/2017
+    Data     : Novembro/2015.                   Ultima atualizacao: 02/02/2018
   
    Dados referentes ao programa:
   
@@ -550,6 +555,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              
                 30/05/2017 - Implementado ajustes para nao estourar a chave da crapcob na 
                              pc_processa_titulos(Tiago/Rodrigo #663295)
+                
+                01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto.
+                
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -1181,6 +1189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.dsdinstr := NULL;
     pr_rec_cobranca.qtdiaprt := 0;
     pr_rec_cobranca.flgdprot := 0;
+	pr_rec_cobranca.insrvprt := 0;
     pr_rec_cobranca.flgaceit := NULL;
     pr_rec_cobranca.inemiexp := NULL;
     pr_rec_cobranca.cddespec := NULL;
@@ -1374,6 +1383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).vlrmulta := pr_rec_cobranca.vldmulta;
     pr_tab_crapcob(vr_index).inemiten := pr_rec_cobranca.inemiten;
     pr_tab_crapcob(vr_index).flgdprot := pr_rec_cobranca.flgdprot;
+	pr_tab_crapcob(vr_index).insrvprt := pr_rec_cobranca.insrvprt;
     pr_tab_crapcob(vr_index).flgaceit := pr_rec_cobranca.flgaceit;
     pr_tab_crapcob(vr_index).idseqttl := 1;
     pr_tab_crapcob(vr_index).cdoperad := '996';
@@ -1723,6 +1733,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_inpessoa  INTEGER;
     vr_cdinstr1  INTEGER;
     vr_cdinstr2  INTEGER;
+	vr_limitemin INTEGER;
+    vr_limitemax INTEGER;
+    
+    vr_des_erro  VARCHAR2(255);
+    vr_dscritic  VARCHAR2(255);
     
   BEGIN
     --> Inicializa variaveis
@@ -1819,6 +1834,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Protestar
     IF pr_cdocorre = 09 THEN
+	
+	  tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_cdcooper,
+										     pr_qtlimitemin_tolerancia => vr_limitemin,
+										     pr_qtlimitemax_tolerancia => vr_limitemax,
+										     pr_des_erro => vr_des_erro,
+										     pr_dscritic => vr_dscritic);
+	
+      IF (vr_des_erro <> 'OK') THEN
+        pr_cdmotivo := '38';
+        RAISE vr_exc_motivo;
+      END IF;
+    
       IF rw_crapcob.dtvencto >= TRUNC(SYSDATE) THEN
         -- Pedido de Protesto Nao Permitido para o Titulo
         pr_cdmotivo := '39';
@@ -1834,12 +1861,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         END IF;
         
         -- Valida Prazo para Protesto
+        IF pr_rec_header.cdbandoc = 085 THEN
+          -- Prazo para protesto valido de X a Y dias
+          IF pr_tab_linhas('QTDIAPRT').numero < vr_limitemin OR
+             pr_tab_linhas('QTDIAPRT').numero > vr_limitemax THEN
+            -- Prazo para Protesto Invalido
+            pr_cdmotivo := '38';
+            RAISE vr_exc_motivo;
+          END IF;
+        ELSE
         -- Prazo para protesto valido de 5 a 15 dias
         IF pr_tab_linhas('QTDIAPRT').numero < 5  OR
            pr_tab_linhas('QTDIAPRT').numero > 15 THEN
           -- Prazo para Protesto Invalido
           pr_cdmotivo := '38';
           RAISE vr_exc_motivo;
+        END IF;
         END IF;
 
       ELSE -- CNAB 400
@@ -1858,6 +1895,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         ELSE
          
           -- Valida Prazo para Protesto
+          IF pr_rec_header.cdbandoc = 085 THEN
+            -- Prazo para protesto valido de X a Y dias
+            IF pr_tab_linhas('NRDIAPRT').numero < vr_limitemin OR
+               pr_tab_linhas('NRDIAPRT').numero > vr_limitemax THEN
+              -- Prazo para Protesto Invalido
+              pr_cdmotivo := '38';
+              RAISE vr_exc_motivo;
+            END IF; 
+          ELSE
           -- Prazo para protesto valido de 5 a 15 dias
           IF pr_tab_linhas('NRDIAPRT').numero < 5  OR
              pr_tab_linhas('NRDIAPRT').numero > 15 THEN
@@ -1865,6 +1911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             pr_cdmotivo := '38';
             RAISE vr_exc_motivo;
           END IF; 
+          END IF;
         
         END IF;
                
@@ -2185,6 +2232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vlrmulta,
                 inemiten,
                 flgdprot,
+				insrvprt,
                 flgaceit,
                 idseqttl,
                 cdoperad,
@@ -2249,6 +2297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).vlrmulta,
                 pr_tab_crapcob(vr_idx_cob).inemiten,
                 pr_tab_crapcob(vr_idx_cob).flgdprot,
+				pr_tab_crapcob(vr_idx_cob).insrvprt,
                 pr_tab_crapcob(vr_idx_cob).flgaceit,
                 pr_tab_crapcob(vr_idx_cob).idseqttl,
                 pr_tab_crapcob(vr_idx_cob).cdoperad,
@@ -2467,7 +2516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 02/02/2018
 
        Dados referentes ao programa:
 
@@ -2479,6 +2528,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+                
+                   01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+                   
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2644,7 +2696,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         --   02 - Baixar
         --   10 - Sustar Protesto e Baixar
         --   11 - Sustar Protesto e Carteira
-        IF vr_instrucao.cdocorre NOT IN (02,10,11) AND
+        --   81 - Excluir Protesto com Carta de Anuência
+        IF vr_instrucao.cdocorre NOT IN (02,10,11,81) AND
            rw_crapcob.incobran = 3                 AND -- Baixado
            TRIM(rw_crapcob.cdtitprt) IS NULL       THEN
           -- Preparar Lote de Retorno Cooperado
@@ -3052,6 +3105,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_processa_erro;
             END IF;
 
+          -- 80 = Instrução automática de protesto
+          WHEN 80 THEN
+            COBR0007.pc_inst_aut_protesto(pr_cdcooper => vr_instrucao.cdcooper
+                                         ,pr_nrdconta => vr_instrucao.nrdconta
+                                         ,pr_nrcnvcob => vr_instrucao.nrcnvcob
+                                         ,pr_nrdocmto => vr_instrucao.nrdocmto
+                                         ,pr_cdocorre => vr_instrucao.cdocorre
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_qtdiaprt => vr_instrucao.qtdiaprt
+                                         ,pr_dtvencto => vr_instrucao.dtvencto
+                                         ,pr_nrremass => vr_instrucao.nrremass
+                                         ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic
+                                         );
+            -- Verificar se ocorreu erro durante a execucao da instrucao
+            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_processa_erro;
+            END IF;
+          
+          -- 81 = Excluir Protesto com Carta de Anuência Eletrônica -- REVISAR
+          WHEN 81 THEN
+            COBR0007.pc_exc_prtst_anuencia_eletr(pr_cdcooper => vr_instrucao.cdcooper
+                                                ,pr_nrdconta => vr_instrucao.nrdconta
+                                                ,pr_nrcnvcob => vr_instrucao.nrcnvcob
+                                                ,pr_nrdocmto => vr_instrucao.nrdocmto
+                                                ,pr_cdocorre => vr_instrucao.cdocorre
+                                                ,pr_dtmvtolt => pr_dtmvtolt
+                                                ,pr_cdoperad => pr_cdoperad
+                                                ,pr_nrremass => vr_instrucao.nrremass
+                                                ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic
+                                                );
+            -- Verificar se ocorreu erro durante a execucao da instrucao
+            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_processa_erro;
+            END IF;
+          
           -- 90 = Alterar tipo de emissao CEE
           WHEN 90 THEN
             COBR0007.pc_inst_alt_tipo_emissao_cee(pr_cdcooper => vr_instrucao.cdcooper
@@ -5177,7 +5270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     --> 07.3P Valida Codigo do Movimento
     pr_rec_cobranca.cdocorre := pr_tab_linhas('CDMOVRE').numero;
-    IF pr_rec_cobranca.cdocorre NOT IN (1,2,4,5,6,7,8,9,10,11,31,41,90,93,94,95,96) THEN
+    IF pr_rec_cobranca.cdocorre NOT IN (1,2,4,5,6,7,8,9,10,11,31,41,80,81,90,93,94,95,96) THEN
       vr_rej_cdmotivo := '05'; --> Codigo de Movimento Invalido
       RAISE vr_exc_reje;
     END IF;
@@ -5503,6 +5596,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
     ELSE
       pr_rec_cobranca.qtdiaprt := 0;
+    END IF;
+  
+    IF pr_rec_cobranca.qtdiaprt <> 0 AND
+       pr_rec_cobranca.cddespec NOT IN (01, 02) THEN /* DM e DS */
+      -- Pedido de Protesto Não Permitido para o Título
+      vr_rej_cdmotivo := '39';
+      RAISE vr_exc_reje;
     END IF;
   
     --Modificado para efetuar demais validação junto ao sacado
@@ -7254,6 +7354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                       ,pr_dtmvtolt IN DATE     --Data Movimento
                                       ,pr_cdoperad IN VARCHAR2 --Codigo Operador
                                       ,pr_nrremass IN INTEGER  --Numero Remessa
+                                      ,pr_dtcatanu IN crapret.dtcatanu%TYPE DEFAULT null --Data de referencia a quitacao da divida.
                                       ,pr_cdcritic OUT INTEGER --Codigo Critica
                                       ,pr_dscritic OUT VARCHAR2) IS --Descricao Critica
     /* .........................................................................
@@ -7637,7 +7738,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ,crapret.nrnosnum
           ,crapret.dsdoccop
           ,crapret.nrremass
-          ,crapret.dtvencto)
+          ,crapret.dtvencto
+          ,crapret.dtcatanu)
         VALUES
           (rw_crapcob.cdcooper
           ,rw_crapcob.nrcnvcob
@@ -7661,7 +7763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ,rw_crapcob.nrnosnum
           ,rw_crapcob.dsdoccop
           ,pr_nrremass
-          ,rw_crapcob.dtvencto);
+          ,rw_crapcob.dtvencto
+          ,pr_dtcatanu);
       EXCEPTION
         WHEN Others THEN
           vr_cdcritic:= 0;
@@ -8078,7 +8181,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dscritic   VARCHAR2(4000);
     vr_stsnrcal   BOOLEAN;
     vr_inpessoa   INTEGER;
+	vr_limitemin  INTEGER;
+    vr_limitemax  INTEGER;
     vr_rej_cdmotivo VARCHAR2(2);
+	
+	vr_des_erro  VARCHAR2(255);
     
   BEGIN
     
@@ -8547,6 +8654,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
       END IF;      
     
+      IF pr_rec_cobranca.qtdiaprt <> 0 AND
+         pr_rec_cobranca.cddespec NOT IN (01, 02) THEN /* DM e DS */
+        -- Pedido de Protesto Não Permitido para o Título
+        vr_rej_cdmotivo := '39';
+        RAISE vr_exc_reje;
+    END IF;    
+    
     END IF;    
             
     --Solicitacao de Baixa
@@ -8910,20 +9024,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Nosso sistema trabalha apenas com prazo de 5 a 15 dias. */
     IF pr_rec_cobranca.cdprotes = 1 THEN -- 01-Registro de titulos
       
+      BEGIN
+        SELECT insrvprt
+          INTO pr_rec_cobranca.insrvprt
+          FROM crapcco
+         WHERE cdcooper = pr_rec_cobranca.cdcooper
+           AND nrconven = pr_rec_cobranca.nrcnvcob;
+      EXCEPTION
+          WHEN OTHERS THEN
+            pr_rec_cobranca.insrvprt := 2;
+      END;
+      
       -- 06-Indica Protesto em dias corridos
       IF pr_rec_cobranca.instcodi  = 6 OR
          pr_rec_cobranca.instcodi2 = 6 THEN
          
         pr_rec_cobranca.qtdiaprt := pr_tab_linhas('NRDIAPRT').numero;
         
-        -- Prazo para protesto valido de 5 a 15 dias
-        IF pr_rec_cobranca.qtdiaprt < 5  OR 
-           pr_rec_cobranca.qtdiaprt > 15 THEN
+        tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_rec_cobranca.cdcooper,
+                                               pr_qtlimitemin_tolerancia => vr_limitemin,
+                                               pr_qtlimitemax_tolerancia => vr_limitemax,
+                                               pr_des_erro => vr_des_erro,
+                                               pr_dscritic => vr_dscritic);
+                                               
+        IF (vr_des_erro <> 'OK') THEN
+          vr_rej_cdmotivo := '38';
+          RAISE vr_exc_reje;
+        ELSE
+          -- Prazo para protesto valido de X a Y dias
+          IF pr_rec_cobranca.qtdiaprt < vr_limitemin  OR 
+             pr_rec_cobranca.qtdiaprt > vr_limitemax THEN
            
           -- Prazo para Protesto Invalido
           vr_rej_cdmotivo := '38';
           RAISE vr_exc_reje;
           
+          END IF;
         END IF;
         
       END IF;

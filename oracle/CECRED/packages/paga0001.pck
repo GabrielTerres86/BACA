@@ -1068,6 +1068,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                   ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE  --Numero Convenio
                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data movimento
                                   ,pr_cdoperad IN crapope.cdoperad%TYPE  --Codigo Operador
+																	,pr_idregcob IN ROWID DEFAULT '0'      --ROWID da cobranca
                                   ,pr_nrremret OUT INTEGER               --Numero Remessa Retorno
                                   ,pr_rowid_ret OUT ROWID                --ROWID Remessa Retorno
                                   ,pr_nrseqreg OUT INTEGER               --Numero Sequencial
@@ -1179,6 +1180,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                            ,pr_vldescto IN NUMBER   --Valor Desconto
                                            ,pr_vljurmul IN NUMBER   --Valor juros multa
                                            ,pr_vlrpagto IN NUMBER   --Valor pagamento
+                                           ,pr_vltarifa IN NUMBER DEFAULT 0  --Valor tarifa
+                                           ,pr_vloutcre IN NUMBER DEFAULT 0 --Valor outros creditos
+																					 ,pr_vloutdes IN NUMBER DEFAULT 0 -- Valor de outras despesas
                                            ,pr_flgdesct IN BOOLEAN  --Flag para titulo descontado
                                            ,pr_flcredit IN BOOLEAN  --Flag credito já efetuado
                                            ,pr_nrretcoo IN NUMBER   --Numero Retorno Cooperativa
@@ -1235,7 +1239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 27/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1617,6 +1621,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        
        14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)        
+
+       27/03/2018 - Ajustes referente ao PRJ352
+                                     
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -1960,6 +1967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            ,crapcob.nrdident
            ,crapcob.indpagto
            ,crapcob.rowid
+		   ,crapcob.insrvprt
     FROM crapcob
     WHERE crapcob.ROWID = pr_rowid;
   rw_crapcob cr_crapcob%ROWTYPE;
@@ -8388,7 +8396,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             IF nvl(vr_cdcritic,0) > 0 OR                                    
                TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_exc_erro;   
-                    END IF;
+                  END IF;
 
           EXCEPTION
             WHEN vr_exc_erro THEN
@@ -12058,7 +12066,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_flsgproc PLS_INTEGER;
       vr_newindex VARCHAR2(80);
       vr_index    VARCHAR2(300);
-      
+
       -- Objetos para armazenar as variáveis da notificação
       vr_variaveis_notif NOTI0001.typ_variaveis_notif;
       vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
@@ -15477,6 +15485,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                            ,pr_vldescto IN NUMBER   --Valor Desconto
                                            ,pr_vljurmul IN NUMBER   --Valor juros multa
                                            ,pr_vlrpagto IN NUMBER   --Valor pagamento
+                                           ,pr_vltarifa IN NUMBER DEFAULT 0  --Valor tarifa
+                                           ,pr_vloutcre IN NUMBER DEFAULT 0 --Valor outros creditos
+																					 ,pr_vloutdes IN NUMBER DEFAULT 0 -- Valor de outras despesas
                                            ,pr_flgdesct IN BOOLEAN  --Flag para titulo descontado
                                            ,pr_flcredit IN BOOLEAN  --Flag credito já efetuado
                                            ,pr_nrretcoo IN NUMBER   --Numero Retorno Cooperativa
@@ -15729,11 +15740,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 ,pr_vlabatim => pr_vlabatim           --Valor abatimentos
                                 ,pr_vldescto => pr_vldescto           --Valor descontos
                                 ,pr_vljurmul => pr_vljurmul           --Valor Juros
-                                ,pr_vloutcre => 0                     --Valor saida credito
-                                ,pr_vloutdes => 0                     --Valor saida debito
+                                ,pr_vloutcre => pr_vloutcre           --Valor saida credito
+                                ,pr_vloutdes => pr_vloutdes           --Valor saida debito
                                 ,pr_vlrliqui => pr_vlrpagto           --Valor liquidacao   -- Alterado de rw_crapcob.vltitulo para pr_vlrpagto (SD 183392)
                                 ,pr_vlrpagto => pr_vlrpagto           --Valor Pagamento
-                                ,pr_vltarifa => 0                     --Valor tarifa
+                                ,pr_vltarifa => pr_vltarifa           --Valor tarifa
                                 ,pr_vltitulo => rw_crapcob.vltitulo   --Valor titulo
                                 ,pr_cdoperad => pr_cdoperad           --Codigo operador
                                 ,pr_dtmvtolt => pr_dtmvtolt           --Data Movimento
@@ -15791,7 +15802,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 29/11/2017
+    --  Data     : Julho/2013.                   Ultima atualizacao: 27/03/2018
     --
     --  Dados referentes ao programa:
     --
@@ -15809,6 +15820,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --              29/11/2017 - Ajustado para carregar as informações da tarifa 
     --                           após o UPDATE da cob devido ao indpagto ser atualizado 
     --                           nesse update (Douglas - Chamado 799851)
+    --
+    --              27/03/2018 - Ajustes referente ao PRJ352
+    --
     -- .........................................................................*/
 
   BEGIN
@@ -15928,7 +15942,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
       --Historico de Pagamento
       IF pr_indpagto = 0 THEN
+        --
+        IF pr_dsmotivo = '08' THEN
+          --
+          vr_cdhistor := 2631;
+          --
+        ELSE
+          --
         vr_cdhistor:= 0;
+          --
+        END IF;
+        --
       ELSE
         vr_cdhistor:= 987;
       END IF;
@@ -16136,20 +16160,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           RAISE vr_exc_erro;
       END;
       
-      -- Deve ser feito após o  UPDATE da cob devido ao indpagto ser atualizado nesse update
-      vr_cdmotivo := 0;
-
-      IF pr_cdbanpag = 85 THEN
-         vr_cdmotivo := pr_dsmotivo;
-      END IF;
-
       /* Gerar dados para tt-lcm-consolidada */
       PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
                                           ,pr_cdocorre => pr_cdocorre --Codigo Ocorrencia
                                           ,pr_tplancto => 'T'         --Tipo Lancamento
                                           ,pr_vltarifa => 0           --Valor Tarifa
                                           ,pr_cdhistor => 0           --Codigo Historico
-                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
+                                          ,pr_cdmotivo => pr_dsmotivo --Codigo motivo
                                           ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
                                           ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                           ,pr_dscritic => vr_dscritic); --Descricao Critica
@@ -16214,6 +16231,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                                 ,pr_vldescto => pr_vldescto   --Valor Desconto
                                                 ,pr_vljurmul => pr_vlrjuros   --Valor juros multa
                                                 ,pr_vlrpagto => pr_vlrpagto   --Valor pagamento
+																								,pr_vloutcre => pr_vloutcre   --Valor outros creditos
                                                 ,pr_flgdesct => vr_flgdesct   --Flag para titulo descontado
                                                 ,pr_flcredit => vr_flcredit   --Flag Credito
                                                 ,pr_nrretcoo => pr_ret_nrremret --Numero Retorno Cooperativa
@@ -16699,6 +16717,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                   ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE  --Numero Convenio
                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data movimento
                                   ,pr_cdoperad IN crapope.cdoperad%TYPE  --Codigo Operador
+																	,pr_idregcob IN ROWID DEFAULT '0'      --ROWID da cobranca
                                   ,pr_nrremret OUT INTEGER               --Numero Remessa Retorno
                                   ,pr_rowid_ret OUT ROWID                --ROWID Remessa Retorno
                                   ,pr_nrseqreg OUT INTEGER               --Numero Sequencial
@@ -16710,12 +16729,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 05/06/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para preparar remessa para banco
+		--
+		--   Alteração : 03/05/2018 - Ajustes para atender ao PRJ352
   BEGIN
     DECLARE
       -- Selecionar controle retorno titulos bancarios
@@ -16763,12 +16784,42 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_des_erro VARCHAR2(4000);
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
+			vr_dtmvtolt DATE;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
+
+			IF pr_idregcob <> '0' THEN
+				--Selecionar registro cobranca
+				OPEN cr_crapcob (pr_rowid => pr_idregcob);
+				--Posicionar no proximo registro
+				FETCH cr_crapcob INTO rw_crapcob;
+				--Se nao encontrar
+				IF cr_crapcob%FOUND THEN
+					-- Valida se usa o serviço de protesto do IEPTB, se usar, valida o horário para gerar na data de movimento correta -- PRJ352
+					IF rw_crapcob.cdbandoc = 85 AND
+						 rw_crapcob.insrvprt = 1 THEN
+						--
+						vr_dtmvtolt := cobr0011.fn_busca_dtmvtolt(pr_cdcooper => rw_crapcob.cdcooper);
+						--
+					ELSE
+						--
+						vr_dtmvtolt := pr_dtmvtolt;
+						--
+					END IF;
+					--
+				END IF;
+				--Fechar Cursor
+				CLOSE cr_crapcob;
+				--
+			ELSE
+				--
+				vr_dtmvtolt := pr_dtmvtolt;
+				--
+			END IF;
 
       --Selecionar Dados da Cooperativa
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -16788,7 +16839,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       /*** Localiza o ultimo CRE desta data ***/
       OPEN cr_crapcre (pr_cdcooper => pr_cdcooper
                       ,pr_nrcnvcob => pr_nrcnvcob
-                      ,pr_dtmvtolt => pr_dtmvtolt
+                      ,pr_dtmvtolt => vr_dtmvtolt --pr_dtmvtolt
                       ,pr_intipmvt => 1
                       ,pr_flgproce => 0);
       --Posicionar no proximo registro
@@ -16814,7 +16865,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         CLOSE cr_crapcre2;
 
         --Montar Nome Arquivo
-        vr_nmarquiv:= 'CBR'||to_char(pr_dtmvtolt,'MMDD')||
+        vr_nmarquiv:= 'CBR'||to_char(vr_dtmvtolt/*pr_dtmvtolt*/,'MMDD')||
                       '_'||gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
                       '_'||gene0002.fn_mask(pr_nrcnvcob,'9999999')||
                       '_'||gene0002.fn_mask(pr_nrremret,'99999')||'.REM';
@@ -16834,7 +16885,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           VALUES
              (pr_cdcooper
              ,pr_nrcnvcob
-             ,pr_dtmvtolt
+             ,vr_dtmvtolt -- pr_dtmvtolt
              ,pr_nrremret
              ,1
              ,vr_nmarquiv
@@ -16906,12 +16957,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 03/05/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para criat tabela remessa para banco
+		--
+		--   Alterações: 03/05/2018 - Ajustes para atender ao PRJ352
+		--
   BEGIN
     DECLARE
       --Variaveis Locais
@@ -20543,7 +20597,11 @@ end;';
                   vr_cdhistor := 1689; -- Histórico para pagto de VR Boleto no caixa;
                ELSE
                   IF rw_cursor1.cdocorre IN (6,76) THEN
+										IF rw_cursor1.cdmotivo = '08' THEN
+										  vr_cdhistor := 2631; -- liq boleto em cartorio
+                    ELSE
                   vr_cdhistor := 987;
+										END IF;
                   ELSIF rw_cursor1.cdocorre IN (17,77) THEN
                      vr_cdhistor := 1762; -- historico novo - liq apos bx caixa online
                   ELSE
@@ -20844,7 +20902,11 @@ end;';
                 vr_cdhistor := 1689; -- Histórico para pagto de VR Boleto no caixa;
              ELSE
                 IF rw_cursor2.cdocorre IN (6,76) THEN
+									IF rw_cursor2.cdmotivo = '08' THEN
+										  vr_cdhistor := 2631; -- liq boleto em cartorio
+                    ELSE
                 vr_cdhistor := 987;
+										END IF;
                 ELSIF rw_cursor2.cdocorre IN (17,77) THEN
                    vr_cdhistor := 1762; -- historico novo - liq apos bx caixa online
                 ELSE

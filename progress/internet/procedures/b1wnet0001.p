@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 30/03/2017
+   Data    : 14/07/2006                        Ultima atualizacao: 16/06/2018
 
    Dados referentes ao programa:
 
@@ -284,6 +284,10 @@
 
                07/07/2017 - Ajuste na leitura da flprotes.
                             PRJ340 - NPC (Odirlei-AMcom)   
+
+               16/06/2018 - Ajuste na procedure grava-boleto para utilizar o convenio
+                            por parametro quando o codigo da carteira for 5-Quanta ou 
+                            6-Recuperacao de Credito. (PRJ468 - Previdencia - Rafael)   
 
 .............................................................................*/
 
@@ -1659,9 +1663,20 @@ PROCEDURE gravar-boleto:
             /* se flgregis = true - cobranca registrada */
             IF par_flgregis THEN
             DO:                                                
+                /* Se o codigo da carteira for 5 ou 6, entao o convenio sera
+                   escolhido pelo parameto par_nrcnvcob */
+                /* carteira 5 - Quanta */
+                /* carteira 6 - Recuperacao de credito */
+                IF par_cdcartei = 5 OR 
+                   par_cdcartei = 6 THEN DO:                   
+                   IF par_nrcnvcob = ? THEN
+                      ASSIGN par_nrcnvcob = 0.
+                END.
+                ELSE 
+                  ASSIGN par_nrcnvcob = 0.
+                                              
                 /* o sistema irá fazer a escolha do convenio em funcao
                    do sacado ser DDA ou nao */
-                ASSIGN par_nrcnvcob = 0.
 
                 IF par_inemiten = 1 AND tt-verifica-sacado.flgsacad = FALSE THEN
                 DO:
@@ -1682,6 +1697,7 @@ PROCEDURE gravar-boleto:
                 END.
                 ELSE
                 DO:
+                  IF par_nrcnvcob = 0 THEN DO:
                     FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper
                                        AND crapcco.cddbanco = 085
                                        AND crapcco.flginter = TRUE
@@ -1695,6 +1711,20 @@ PROCEDURE gravar-boleto:
                                        AND crapceb.insitceb = 1
                                        NO-LOCK:
                         par_nrcnvcob = crapcco.nrconven.
+                      END.                    
+                  END.
+                  ELSE DO:
+                        FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper
+                                           AND crapcco.cddbanco = 085
+                                           AND crapcco.nrconven = par_nrcnvcob
+                                           NO-LOCK
+                           ,FIRST crapceb WHERE crapceb.cdcooper = crapcco.cdcooper
+                                           AND crapceb.nrdconta = par_nrdconta  
+                                           AND crapceb.nrconven = crapcco.nrconven
+                                           AND crapceb.insitceb = 1
+                                           NO-LOCK:
+                            par_nrcnvcob = crapcco.nrconven.
+                      END.                                      
                     END.                       
 
                     /* se nao encontrou convenio 085, pode ser que o cooperado

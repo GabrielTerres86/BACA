@@ -56,6 +56,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_flserasa  IN crapceb.flserasa%TYPE --> Pode negativar no Serasa
                                 ,pr_qtdfloat  IN crapceb.qtdfloat%TYPE --> Quantidade de dias para o Float
                                 ,pr_flprotes  IN crapceb.flprotes%TYPE --> Liberacao da opcao de Protesto na Cobranca
+                                ,pr_insrvprt  IN crapceb.insrvprt%TYPE --> Serviço de Protesto
+                                ,pr_qtlimaxp  IN crapceb.qtlimaxp%TYPE --> Limite a maximo de dias para pode protestar
+                                ,pr_qtlimmip  IN crapceb.qtlimmip%TYPE --> Quantidade de dias para poder protestar
                                 ,pr_qtdecprz  IN crapceb.qtdecprz%TYPE --> Quantidade de dias para Decurso de Prazo
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
@@ -133,6 +136,28 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);           --> Erros do processo                               
                                         
+  --> Rotina para cancelar os boletos
+  PROCEDURE pc_cancela_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE --> Codigo da cooperativa
+                              ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                              ,pr_nrconven IN crapceb.nrconven%TYPE --> Convenio
+                              ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2);           --> Erros do processo   
+
+  --> Rotina para sustar os boletos
+  PROCEDURE pc_susta_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE --> Codigo da cooperativa
+                            ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                            ,pr_nrconven IN crapceb.nrconven%TYPE --> Convenio
+                            ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                            ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2);           --> Erros do processo   
+
 END TELA_ATENDA_COBRAN;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
@@ -1087,6 +1112,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_flserasa  IN crapceb.flserasa%TYPE --> Pode negativar no Serasa
                                 ,pr_qtdfloat  IN crapceb.qtdfloat%TYPE --> Quantidade de dias para o Float
                                 ,pr_flprotes  IN crapceb.flprotes%TYPE --> Liberacao da opcao de Protesto na Cobranca
+                                ,pr_insrvprt  IN crapceb.insrvprt%TYPE --> Serviço de Protesto
+                                ,pr_qtlimaxp  IN crapceb.qtlimaxp%TYPE --> Limite a maximo de dias para pode protestar
+                                ,pr_qtlimmip  IN crapceb.qtlimmip%TYPE --> Quantidade de dias para poder protestar
                                 ,pr_qtdecprz  IN crapceb.qtdecprz%TYPE --> Quantidade de dias para Decurso de Prazo
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
@@ -1217,6 +1245,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flcooexp
               ,crapceb.flceeexp
               ,crapceb.flprotes
+			  ,crapceb.insrvprt
+              ,crapceb.qtlimaxp
+              ,crapceb.qtlimmip
               ,crapceb.qtdecprz
               ,crapceb.qtdfloat
 							,crapceb.inenvcob
@@ -1564,6 +1595,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Seta como registro existente
       vr_blnewreg := FALSE;
 
+      -- Valida intervalo de protesto
+      IF pr_qtlimaxp < pr_qtlimmip THEN
+        vr_dscritic := 'Data máxima de Intervalo de Protesto não pode ser menor que data mínima.';
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Cadastro de bloquetos
       OPEN cr_crapceb(pr_cdcooper => vr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -1827,9 +1864,119 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END IF;
       CLOSE cr_DDA_Conven;
       
+        IF pr_flprotes = 1 THEN
+          -- Gera Pendencia de digitalizacao do documento
+          DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
+                                              ,pr_nrdconta => pr_nrdconta
+                                              ,pr_idseqttl => 1
+                                              ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                              ,pr_cdoperad => vr_cdoperad
+                                              ,pr_nrseqdoc => pr_nrconven
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+              
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
       
       --> senao é manutencao  
       ELSE
+	      IF (rw_crapceb.flprotes = 0 AND pr_flprotes = 1) THEN
+          
+          -- Gera Pendencia de digitalizacao do documento
+          DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
+                                              ,pr_nrdconta => pr_nrdconta
+                                              ,pr_idseqttl => 1
+                                              ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                              ,pr_cdoperad => vr_cdoperad
+                                              ,pr_nrseqdoc => pr_nrconven
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+          
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          --> Gravar o log atenda - cobram - log, registrando o cancelamento do serviço de protesto
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Ativacao do servico de protesto',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => vr_insitceb,
+                           pr_dscritic  => vr_dscritic);
+                           
+          -- Efetua os inserts para apresentacao na tela VERLOG
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => ' '
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                            ,pr_dstransa => 'Ativacao do servico de protesto'
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'ATENDA'
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);                 
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        
+	      ELSIF (rw_crapceb.flprotes = 1 AND pr_flprotes = 0) THEN
+ 
+          -- Gera Pendencia de digitalizacao do documento
+          DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
+                                              ,pr_nrdconta => pr_nrdconta
+                                              ,pr_idseqttl => 1
+                                              ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                              ,pr_tpdocmto => 57 -- Termo de Cancelamento do protesto
+                                              ,pr_cdoperad => vr_cdoperad
+                                              ,pr_nrseqdoc => pr_nrconven
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+          
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        
+          --> Gravar o log atenda - cobram - log, registrando o cancelamento do serviço de protesto
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Cancelamento do servico de protesto',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => vr_insitceb,
+                           pr_dscritic  => vr_dscritic);
+                           
+          -- Efetua os inserts para apresentacao na tela VERLOG
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => ' '
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                            ,pr_dstransa => 'Cancelamento do servico de protesto'
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'ATENDA'
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);                 
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
         --> Verificar se situacao permite continuar
         --A=Apto, I=Inapto, E=Em análise
         IF VR_INSITIF IN ('A','E') THEN
@@ -1916,6 +2063,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.cdhomolo = vr_cdoperad
               ,crapceb.qtdfloat = pr_qtdfloat
               ,crapceb.flprotes = pr_flprotes
+			  ,crapceb.insrvprt = pr_insrvprt
+              ,crapceb.qtlimaxp = pr_qtlimaxp
+              ,crapceb.qtlimmip = pr_qtlimmip
               ,crapceb.qtdecprz = pr_qtdecprz
               ,crapceb.idrecipr = pr_idrecipr
 							,crapceb.inenvcob = pr_inenvcob
@@ -2110,6 +2260,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_nmdcampo => 'Envio de Protesto'
                                  ,pr_dsdadant => CASE WHEN rw_crapceb.flprotes = 1 THEN 'ATIVO' ELSE 'INATIVO' END
                                  ,pr_dsdadatu => CASE WHEN pr_flprotes = 1 THEN 'ATIVO' ELSE 'INATIVO' END);
+      END IF;
+
+	  -- Se alterou o Serviço de Protesto
+      IF rw_crapceb.insrvprt <> pr_insrvprt THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Serviço de Protesto'
+                                 ,pr_dsdadant => rw_crapceb.insrvprt
+                                 ,pr_dsdadatu => pr_insrvprt);
+      END IF;
+      
+      -- Se a quantidade de dias para poder protestar
+      IF rw_crapceb.qtlimmip <> pr_qtlimmip THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Quantidade de dias para poder protestar'
+                                 ,pr_dsdadant => rw_crapceb.qtlimmip
+                                 ,pr_dsdadatu => pr_qtlimmip);
+      END IF;
+      
+      -- Se o limite a maximo de dias para pode protestar
+      IF rw_crapceb.qtlimaxp <> pr_qtlimaxp THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Limite a maximo de dias para pode protestar'
+                                 ,pr_dsdadant => rw_crapceb.qtlimaxp
+                                 ,pr_dsdadatu => pr_qtlimaxp);
       END IF;
 
       -- Se alterou Float a aplicar
@@ -2339,6 +2513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,prc.perdesconto_maximo perdesconto_maximo_recipro
               ,cco.flgapvco
               ,cco.flprotes
+			  ,cco.insrvprt
               ,cco.flserasa
               ,cco.qtdecini
               ,cco.qtdecate
@@ -2349,7 +2524,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
      WHERE cco.idprmrec = prc.idparame_reciproci (+) -- Outer pois nem sempre havera PRC
        AND cco.cdcooper = pr_cdcooper
        AND cco.nrconven = pr_nrconven;
+	 CURSOR cr_parprot(pr_cdcooper IN crapcco.cdcooper%TYPE) IS
+        SELECT parprot.QTLIMITEMIN_TOLERANCIA
+              ,parprot.QTLIMITEMAX_TOLERANCIA
+      FROM TBCOBRAN_PARAM_PROTESTO parprot
+     WHERE parprot.cdcooper = pr_cdcooper;
+
       rw_cco_prc cr_cco_prc%ROWTYPE;
+	  rw_cr_parprot cr_parprot%ROWTYPE;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2383,6 +2565,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       OPEN cr_cco_prc(pr_cdcooper => vr_cdcooper
                      ,pr_nrconven => pr_nrconven);
       FETCH cr_cco_prc INTO rw_cco_prc;
+      
+	  OPEN cr_parprot(pr_cdcooper => vr_cdcooper);
+      FETCH cr_parprot INTO rw_cr_parprot;
+      -- Fecha cursor
+      CLOSE cr_parprot;
       
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -2460,6 +2647,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
+                            ,pr_tag_nova => 'insrvprt'
+                            ,pr_tag_cont => rw_cco_prc.insrvprt
+                            ,pr_des_erro => vr_dscritic);
+                            
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'flgregis'
+                            ,pr_tag_cont => rw_cco_prc.flgregis
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
                             ,pr_tag_nova => 'flserasa'
                             ,pr_tag_cont => rw_cco_prc.flserasa
                             ,pr_des_erro => vr_dscritic);                      
@@ -2491,6 +2692,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flgregis'
                             ,pr_tag_cont => rw_cco_prc.flgregis
                             ,pr_des_erro => vr_dscritic);
+
+	  GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'insrvprt'
+                            ,pr_tag_cont => rw_cco_prc.insrvprt
+                            ,pr_des_erro => vr_dscritic);
+                        
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'QTLIMITEMIN_TOLERANCIA'
+                            ,pr_tag_cont => rw_cr_parprot.QTLIMITEMIN_TOLERANCIA
+                            ,pr_des_erro => vr_dscritic);
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'QTLIMITEMAX_TOLERANCIA'
+                            ,pr_tag_cont => rw_cr_parprot.QTLIMITEMAX_TOLERANCIA
+                            ,pr_des_erro => vr_dscritic);                           
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -3750,6 +3971,262 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       ROLLBACK;
 
   END pc_consulta_log_conv_web;     
+  
+  PROCEDURE pc_cancela_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE  --> Codigo da cooperativa
+                               ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                               ,pr_nrconven IN crapceb.nrconven%TYPE --> Nro Convenio
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                    
+    --> Buscar boletos
+    CURSOR cr_boletos (pr_cdcooper crapceb.cdcooper%TYPE,
+                       pr_nrdconta crapceb.nrdconta%TYPE,
+                       pr_nrconven crapceb.nrconven%TYPE) IS
+      SELECT nrdconta,
+             nrcnvcob,
+             nrdocmto,
+             insitcrt,
+             insrvprt
+        FROM crapcob
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcnvcob = pr_nrconven
+         AND dtdpagto IS NULL
+         AND dtdbaixa IS NULL
+         AND (insitcrt = 0 OR insitcrt = 1);
+    rw_boletos cr_boletos%ROWTYPE;
+      
+    -- Cria o registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    
+  BEGIN
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+                             
+    -- Abre o cursor de data
+    OPEN btch0001.cr_crapdat(pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+    
+    FOR boleto IN cr_boletos(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrconven => pr_nrconven)
+    LOOP
+      --dbms_output.put_line('Doc Nro: ' || boleto.nrdocmto);
+        COBR0010.pc_grava_instr_boleto(pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --Data Movimentacao
+                                      ,pr_cdoperad => nvl(vr_cdoperad,'1') --Codigo Operador
+                                      ,pr_cdinstru => 41                   --Codigo Instrucao
+                                      ,pr_nrdconta => pr_nrdconta          --Nro Conta
+                                      ,pr_nrcnvcob => pr_nrconven          --Nro Convenio
+                                      ,pr_nrdocmto => boleto.nrdocmto      --Nro Documento
+                                      ,pr_vlabatim => NULL                 --Valor Abatimento
+                                      ,pr_dtvencto => NULL                 --Data Vencimento
+                                      ,pr_qtdiaprt => NULL                 --Qtd dias
+                                      ,pr_cdcritic => vr_cdcritic          --Codigo Critica
+                                      ,pr_dscritic => vr_dscritic);        --Descricao Critica
+    END LOOP;
+    
+    IF cr_boletos%ISOPEN THEN
+    CLOSE cr_boletos;
+    END IF;
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_cancela_boletos;      
+  
+  PROCEDURE pc_susta_boletos(pr_cdcooper IN crapceb.cdcooper%TYPE  --> Codigo da cooperativa
+                               ,pr_nrdconta IN crapceb.nrdconta%TYPE --> Conta
+                               ,pr_nrconven IN crapceb.nrconven%TYPE --> Nro Convenio
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                    
+    --> Buscar boletos
+    CURSOR cr_boletos (pr_cdcooper crapceb.cdcooper%TYPE,
+                       pr_nrdconta crapceb.nrdconta%TYPE,
+                       pr_nrconven crapceb.nrconven%TYPE) IS
+      SELECT nrdconta,
+             nrcnvcob,
+             nrdocmto,
+             insitcrt,
+             insrvprt
+        FROM crapcob
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcnvcob = pr_nrconven
+         AND dtdpagto IS NULL
+         AND dtdbaixa IS NULL
+         AND (insitcrt = 2 OR insitcrt = 3);
+    rw_boletos cr_boletos%ROWTYPE;
+      
+    -- Cria o registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    
+  BEGIN
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+                             
+    -- Abre o cursor de data
+    OPEN btch0001.cr_crapdat(vr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+    
+    FOR boleto IN cr_boletos(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrconven => pr_nrconven)
+    LOOP
+      --dbms_output.put_line('Doc Nro: ' || boleto.nrdocmto);
+        COBR0010.pc_grava_instr_boleto(pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --Data Movimentacao
+                                      ,pr_cdoperad => nvl(vr_cdoperad,'1') --Codigo Operador
+                                      ,pr_cdinstru => 41                   --Codigo Instrucao
+                                      ,pr_nrdconta => pr_nrdconta          --Nro Conta
+                                      ,pr_nrcnvcob => pr_nrconven          --Nro Convenio
+                                      ,pr_nrdocmto => boleto.nrdocmto      --Nro Documento
+                                      ,pr_vlabatim => NULL                 --Valor Abatimento
+                                      ,pr_dtvencto => NULL                 --Data Vencimento
+                                      ,pr_qtdiaprt => NULL                 --Qtd dias
+                                      ,pr_cdcritic => vr_cdcritic          --Codigo Critica
+                                      ,pr_dscritic => vr_dscritic);        --Descricao Critica
+    END LOOP;
+    
+    IF cr_boletos%ISOPEN THEN
+    CLOSE cr_boletos;
+    END IF;
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_susta_boletos;      
 
 END TELA_ATENDA_COBRAN;
 /

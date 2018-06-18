@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010i.p                  
    Autor   : Gabriel Capoia - DB1.
-   Data    : 19/01/2012                        Ultima atualizacao: 04/02/2016
+   Data    : 19/01/2012                        Ultima atualizacao: 03/06/2018
     
    Dados referentes ao programa:
 
@@ -40,6 +40,11 @@
                           (Adriano).			   
 
 			04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel)
+
+             03/06/2018 - Ajuste no relatorio 601 para mostrar os titulos com
+                          protesto cancelados, solicitados pela tela ATENDA > Cobranca
+                          (PRJ352 - Andre/Supero)
+
 
 
 .............................................................................*/
@@ -1003,6 +1008,7 @@ PROCEDURE proc_crrl601: /* Relat 6 - Francesa */
     DEF  INPUT PARAM par_cdagencx AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inidtmvt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_fimdtmvt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_tprelato AS INTE                           NO-UNDO.
 
     DEF  INPUT PARAM TABLE FOR tt-consulta-blt.
 
@@ -1108,6 +1114,13 @@ PROCEDURE proc_crrl601: /* Relat 6 - Francesa */
     OUTPUT STREAM str_1 TO VALUE (par_nmarqimp) PAGED PAGE-SIZE 62.
   
     { sistema/generico/includes/b1cabrel234.i "11" "601" }
+
+    IF par_tprelato = 8 THEN DO:    
+       FOR EACH tt-consulta-blt  
+          WHERE tt-consulta-blt.cdocorre <> 20.
+            DELETE tt-consulta-blt.                                
+          END.
+    END. 
   
     FOR EACH tt-consulta-blt WHERE tt-consulta-blt.cdcooper = par_cdcooper AND
                                  ((tt-consulta-blt.cdagenci = par_cdagencx AND

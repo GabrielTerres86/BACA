@@ -1,5 +1,5 @@
 
-  CREATE OR REPLACE PROCEDURE "CECRED"."PC_CRPS729_RC7" (pr_dscritic OUT VARCHAR2
+  CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS729 (pr_dscritic OUT VARCHAR2
                                              ) IS
 /* .............................................................................
 
@@ -595,9 +595,6 @@
           --
           vr_dsdlinha := NULL;
           --
-          -- temporario RC7
-          rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
-          
           pc_gera_trailler_remessa(pr_cdbandoc => rw_craprem.cdbandoc -- IN
                                   ,pr_nmresbcc => rw_craprem.nmresbcc -- IN
                                   ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -629,10 +626,7 @@
         vr_qtnumarq := vr_qtnumarq + 1;
         vr_vlsomseg := 0;
         --
-      END IF;
-      
-      -- temporario RC7
-      rw_craprem.dtmvtolt := to_char(SYSDATE-6, 'DDMMYYYY');
+      END IF;     
       
       -- Se for o primeiro registro, gerar o cabeçalho
       IF vr_qtregist = 1 THEN
@@ -724,8 +718,6 @@
       --
       vr_dsdlinha := NULL;
       --
-      -- temporario RC7
-      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
 
       pc_gera_trailler_remessa(pr_cdbandoc => rw_craprem.cdbandoc -- IN
                               ,pr_nmresbcc => rw_craprem.nmresbcc -- IN
@@ -808,11 +800,8 @@
       vr_nmarqtxt := cobr0011.fn_gera_nome_arquivo_remessa(pr_cdbandoc => 85          -- IN
                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                           );
-      -- temporario RC7                                                    
-      vr_nmarqtxt := cobr0011.fn_gera_nome_arquivo_remessa(pr_cdbandoc => 85          -- IN
-                                                          ,pr_dtmvtolt => SYSDATE -- IN
-       );
-      -- temporario RC7                                                  
+
+      -- Controlar sequencial de remessa no dia, caso seja necessario enviar mais de um arquivo                                                  
       vr_aux := fn_sequence(pr_nmtabela => 'IEPTB'
                            ,pr_nmdcampo => 'NRSEQUENCIAL'
                            ,pr_dsdchave => '1;' || to_char(SYSDATE,'YYYYMMDD'));
@@ -1335,7 +1324,6 @@
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;            
     --
-    rw_crapdat.dtmvtolt := to_date('07/05/2018');
     OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);    
     --
     LOOP
@@ -1346,8 +1334,6 @@
       IF vr_qtregist = 1 THEN
         -- Inicializa o arquivo de desistências
         
-        -- temporario RC7
-        rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
 
         pc_gera_header_arq_desist(pr_cdaprese => rw_craprem.cdbandoc -- IN
                                  ,pr_nmaprese => rw_craprem.nmresbcc -- IN
@@ -1530,9 +1516,6 @@
       vr_dsdlinha := NULL;
       --
 
-      -- temporario RC7
-      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
-      
       pc_gera_trail_arq_desist(pr_cdaprese => rw_craprem.cdbandoc -- IN
                               ,pr_nmaprese => rw_craprem.nmresbcc -- IN
                               ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -1616,10 +1599,6 @@
                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                           );
                                                           
-      -- temporario RC7                                                    
-      vr_nmarqtxt := cobr0011.fn_gera_nome_arq_desistencia(pr_cdbandoc => '85'        -- IN
-                                                          ,pr_dtmvtolt => SYSDATE -- IN
-                                                          );
                                                           
       -- Diretório onde deverá gerar o arquivo de desistência
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
@@ -2176,10 +2155,7 @@
       EXIT WHEN cr_craprem%NOTFOUND;
       --
       IF vr_qtregist = 1 THEN
-        -- Inicializa o arquivo de cancelamentos
-        
-        -- temporario RC7
-        rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+        -- Inicializa o arquivo de cancelamentos       
         
         pc_gera_header_arq_cancel(pr_cdaprese => rw_craprem.cdbandoc -- IN
                                  ,pr_nmaprese => rw_craprem.nmresbcc -- IN
@@ -2352,9 +2328,6 @@
       vr_dsdlinha := NULL;
       --
 
-      -- temporario RC7
-      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
-
       pc_gera_trail_arq_cancel(pr_cdaprese => rw_craprem.cdbandoc -- IN
                               ,pr_nmaprese => rw_craprem.nmresbcc -- IN
                               ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -2436,10 +2409,6 @@
       -- Busca o nome do arquivo
       vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
                                                            ,pr_dtmvtolt => vr_dtmvtolt -- IN
-                                                           );
-      -- temporario RC7                                                     
-      vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
-                                                           ,pr_dtmvtolt => SYSDATE -- IN
                                                            );
                                                            
       -- Diretório onde deverá gerar o arquivo de cancelamento
@@ -2811,12 +2780,6 @@
 		-- Busca o nome do arquivo
 		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
 																												 ,pr_dtmvtolt => vr_dtmvtolt -- IN
-																												 );
-		
-		-- temporario RC7                                                         
-		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'    -- IN
-																												 ,pr_dtmvtolt => SYSDATE -- IN
-																												 );
     
 		-- Faz o envelopamento SOAP
 		vr_arquivo := '<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:protesto_brIntf-Iprotesto_br">'
@@ -2971,4 +2934,5 @@ EXCEPTION
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || SQLERRM);
 		ROLLBACK;
   --
-END pc_crps729_rc7;
+END pc_crps729;
+/

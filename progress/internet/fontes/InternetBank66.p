@@ -50,6 +50,9 @@
                                  
                 13/10/2016 - Inclusao opcao 95 e 96, para Enviar e cancelar
                              SMS de vencimento. PRJ319 - SMS Cobranca (Odirlei-AMcom)
+
+                04/05/2018 - Inclusao de parametro qtdiaprt referente a quantidade de dias 
+                             para protesto automatico - instrução 80. PRJ352 - Protesto (Supero)
                                  
                 01/06/2018 - Incluir parametro com o numero de celular do sacado para ser
                              processado na instruçao 95. PRJ. 285 - Nova Conta Online (Douglas)
@@ -77,6 +80,7 @@ DEF  INPUT PARAM par_cdtpinsc AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_vldescto AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_nrcelsac AS DECI                                  NO-UNDO.
+DEF  INPUT PARAM par_qtdiaprt AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -111,6 +115,7 @@ RUN STORED-PROCEDURE pc_InternetBank66
                              INPUT par_vldescto,
                              INPUT par_cdtpinsc,
                              INPUT par_nrcelsac,
+                             INPUT par_qtdiaprt,
                              OUTPUT xml_dsmsgerr,
                              OUTPUT 0,   /* pr_cdcritic */
                              OUTPUT ""). /* pr_dscritic */

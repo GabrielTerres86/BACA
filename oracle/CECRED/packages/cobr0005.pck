@@ -109,6 +109,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
           ,qtdiaprt crapcob.qtdiaprt%TYPE
           ,indiaprt crapcob.indiaprt%TYPE
           ,insitpro crapcob.insitpro%TYPE
+		  ,insrvprt crapcob.insrvprt%TYPE
           ,flgcbdda VARCHAR2(1)
           ,cdocorre INTEGER
           ,dsocorre VARCHAR2(1000)
@@ -565,6 +566,31 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
                                       ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
                                       ,pr_cdcritic OUT NUMBER                          --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
                                       ,pr_dscritic OUT VARCHAR2);                                    
+									    
+  --> Rotina responsavel por gerar o relatorio carta anuencia - Chamada ayllos Web                                    
+  PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
+                                        ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
+	                                      ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+                                        ,pr_dtcatanu    IN VARCHAR2  --> Data quitação divida 
+                                        ,pr_dtmvtolt    IN VARCHAR2  --> data do movimento                                     
+                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
+                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica
+                                        ,pr_retxml IN  OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2               --> Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2);             --> Erros do processo           
+  
+  --> Rotina responsavel por gerar o relatorio carta anuencia                         
+  PROCEDURE pc_relat_carta_anuencia (pr_cdcooper    IN craptab.cdcooper%TYPE  --> Cooperativa                                  
+                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                    ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
+	                                  ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco           
+                                    --------->> OUT <<-----------
+                                    ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
+                                    ,pr_dsxmlrel   OUT CLOB                   --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                                    ,pr_cdcritic   OUT NUMBER                 --> Codigo da critica
+                                    ,pr_dscritic   OUT VARCHAR2);             --> Retorno de critica                                 
 END cobr0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
@@ -1754,6 +1780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                ,cob.dtelimin
                ,cob.flserasa 
                ,cob.qtdianeg
+			   ,cob.insrvprt
                ,sab.nmdsacad
                ,sab.dsendsac
                ,sab.nmbaisac
@@ -2185,6 +2212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           pr_tab_cob(vr_ind_cob).tpjurmor := rw_crapcob.tpjurmor;
           pr_tab_cob(vr_ind_cob).tpdmulta := rw_crapcob.tpdmulta;
           pr_tab_cob(vr_ind_cob).flgdprot := rw_crapcob.flgdprot;
+		  pr_tab_cob(vr_ind_cob).insrvprt := rw_crapcob.insrvprt;
           pr_tab_cob(vr_ind_cob).qtdiaprt := rw_crapcob.qtdiaprt;
           pr_tab_cob(vr_ind_cob).indiaprt := rw_crapcob.indiaprt;
           pr_tab_cob(vr_ind_cob).insitpro := rw_crapcob.insitpro;
@@ -2307,8 +2335,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           END IF;
           
           IF rw_crapcob.flgdprot = 1 THEN
+             IF rw_crapcob.insrvprt = 1 THEN
+               pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR BOLETO APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS DO VENCIMENTO.';
+             ELSIF rw_crapcob.insrvprt = 2 THEN
              pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
              pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+          END IF;
           END IF;
                     
           IF rw_crapcob.flserasa = 1 AND rw_crapcob.qtdianeg > 0  THEN
@@ -9997,6 +10029,448 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_relat_resumo_envio_sms; 
+  
+  --> Rotina para disponibilizar uma carta de anuencia - Chamada ayllos Web
+  PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
+                                        ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
+                                        ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+                                        ,pr_dtcatanu    IN VARCHAR2  --> Data quitação divida
+                                        ,pr_dtmvtolt    IN VARCHAR2  --> data do movimento                                     
+                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
+                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica
+                                        ,pr_retxml IN  OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2               --> Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2) IS           --> Erros do processo
+  /* ............................................................................
+
+       Programa: pc_relat_carta_anuencia_web
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Hélinton Steffens
+       Data    : Fevereiro/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de carta anuencia - Chamada ayllos Web
+
+       Alteracoes: ----
+
+    ............................................................................ */  
+ 
+    -------------->> VARIAVEIS <<----------------
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_dsretorn VARCHAR2(1000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper   INTEGER;
+    vr_cdoperad   VARCHAR2(100);
+    vr_nmdatela   VARCHAR2(100);
+    vr_nmeacao    VARCHAR2(100);
+    vr_cdagenci   VARCHAR2(100);
+    vr_nrdcaixa   VARCHAR2(100);
+    vr_idorigem   VARCHAR2(100);
+    -- Variaveis gerais
+    vr_nmarqpdf VARCHAR2(1000);
+    vr_dsxmlrel CLOB;
+    
+    
+    cursor cr_crapcob (pr_cdcooper crapcob.cdcooper%TYPE,
+
+                     pr_nrdconta crapcob.nrdconta%TYPE,
+                     pr_cdbandoc crapcob.cdbandoc%TYPE,
+                     pr_nrdocmto crapcob.nrdocmto%TYPE) is
+      SELECT cob.rowid
+        FROM crapass pas, 
+             crapcob cob, 
+             crapsab sab,
+             crapenc enc
+        WHERE
+             cob.cdcooper = pr_cdcooper 
+       AND cob.cdbandoc = pr_cdbandoc 
+       AND cob.nrdconta = pr_nrdconta 
+       AND cob.nrdocmto = pr_nrdocmto;
+    rw_crapcob cr_crapcob%rowtype;
+
+  BEGIN
+    OPEN cr_crapcob(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_cdbandoc => pr_cdbancoc,
+                    pr_nrdocmto => pr_nrdocmto);
+    FETCH cr_crapcob INTO rw_crapcob;
+  
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    pc_relat_carta_anuencia (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa 
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrdocmto => pr_nrdocmto
+                             ,pr_cdbancoc => pr_cdbancoc
+                             --------->> OUT <<-----------
+                             ,pr_nmarqpdf => vr_nmarqpdf    --> Retorna o nome do relatorio gerado
+                             ,pr_dsxmlrel => vr_dsxmlrel    --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                             ,pr_cdcritic => vr_cdcritic    --> Retorna codigo de critica 
+                             ,pr_dscritic => vr_dscritic);  --> Retorno de critica
+    
+   COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                     ,pr_cdocorre => 98   -- Instrucao Rejeitada
+                                     ,pr_cdmotivo => 'F3' -- Motivo
+                                     ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                     ,pr_cdbcoctl => 0
+                                     ,pr_cdagectl => 0
+                                     ,pr_dtmvtolt => TO_DATE(pr_dtmvtolt,'DD/MM/YYYY')
+                                     ,pr_cdoperad => '1'
+                                     ,pr_nrremass => 0
+                                     ,pr_dtcatanu => TO_DATE(pr_dtcatanu,'YYYY-MM-DD')
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);                                                  
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                      ,pr_tag_pai  => 'Dados'
+                      ,pr_posicao  => 0
+                      ,pr_tag_nova => 'nmarqpdf'
+                      ,pr_tag_cont => vr_nmarqpdf
+                      ,pr_des_erro => vr_dscritic);
+                                                
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_relat_carta_anuencia_web: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+  END pc_relat_carta_anuencia_web; 
+  
+  --> Rotina responsavel por gerar o relatorio carta anuência
+  PROCEDURE pc_relat_carta_anuencia (pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa                                  
+                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE         --> Número da conta
+                                    ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE         --> Número do documento
+                                    ,pr_cdbancoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
+                                    --------->> OUT <<-----------
+                                    ,pr_nmarqpdf OUT VARCHAR2                      --> Retorna o nome do relatorio gerado
+                                    ,pr_dsxmlrel OUT CLOB                          --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                                    ,pr_cdcritic OUT NUMBER                        --> Retorna codigo de critica
+                                    ,pr_dscritic OUT VARCHAR2) IS                  --> Retorno de critica)
+	/* ............................................................................
+
+       Programa: pc_relat_carta_anuencia
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Hélinton Steffens
+       Data    : Fevereiro/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de carta de anuencia
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    -- Cursor para validação da cooperativa
+    cursor cr_crapcop (pr_nrdconta   crapass.nrdconta%TYPE
+                      ,pr_nrdocmto   crapcob.nrdocmto%TYPE
+                      ,pr_cdbancoc   crapcob.cdbandoc%TYPE) is
+      SELECT nmprimtl as nmcooper, 
+             sab.nmcidsac as dscidade_cooper, 
+             enc.dsendere as dsrua, 
+             enc.nrendere as vlnumero, 
+             enc.nmbairro as dsbairro, 
+             enc.nmcidade as dscidade,
+             enc.cdufende as dsuf, 
+             null as nmsocioadm, 
+             nrcpfcgc as cnpj,
+             sab.nmdsacad as nmpagador,
+             sab.cdufsaca as dsufadm, 
+             sab.nmcidsac as dscidadeadm, 
+             sab.nmbaisac as dsbairroadm, 
+             sab.dsendsac as dsruaadm,
+             sab.nrinssac as iddocumento, 
+             nrendsac as vlnumadm, 
+             cob.vldpagto as vlboleto, 
+             cob.dtvencto as dtvencimento, 
+             cob.dsdoccop as nrboleto,
+             cob.nrnosnum as nrnossonmr
+        FROM crapass pas, 
+             crapcob cob, 
+             crapsab sab,
+             crapenc enc
+        WHERE
+             cob.nrdconta = pas.nrdconta 
+         AND sab.nrdconta = pas.nrdconta 
+         AND sab.nrinssac = cob.nrinssac 
+         AND pas.nrdconta = pr_nrdconta 
+         AND cob.nrdocmto = pr_nrdocmto 
+         AND cob.cdbandoc = pr_cdbancoc;
+    rw_crapcop cr_crapcop%rowtype;
+    --
+    -- PL/Table contendo os tipos de dados
+    type typ_tipo is record (vr_dscidade_cooper      varchar2(50),
+                vr_nmcooper          varchar2(50),
+                vr_cnpj            varchar2(50),
+                vr_dsrua          varchar2(50),
+                vr_vlnumero          varchar2(50),
+                vr_dsbairro          varchar2(50),
+                vr_dscidade          varchar2(50),
+                vr_dsuf            varchar2(50),
+                vr_nmsocioadm        varchar2(50),
+                vr_nmpagador        varchar2(50),
+                vr_iddocumento        varchar2(50),
+                vr_dsruaadm          varchar2(50),
+                vr_vlnumadm          varchar2(50),
+                vr_dsbairroadm        varchar2(50),
+                vr_dscidadeadm        varchar2(50),
+                vr_dsufadm          varchar2(50),
+                vr_nrboleto          varchar2(50),
+                vr_vlboleto          varchar2(50),
+                vr_nrnossonmr        varchar2(50),
+                vr_dtvencimento        CRAPCOB.DTVENCTO%type);
+    -- Definição da tabela para armazenar os tipos de conta
+    type typ_tab_tipo is table of typ_tipo index by binary_integer;
+    -- Instância da tabela. O índice é o tipo de conta
+    vr_tab_tipo      typ_tab_tipo;
+    -- Índice para leitura da PL/Table
+    vr_ind           binary_integer;
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_exc_fimprg EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+    vr_exc_erro     EXCEPTION;
+    vr_tab_erro     GENE0001.typ_tab_erro;
+    -- Data do movimento
+    vr_dtmvtolt      crapdat.dtmvtolt%type;
+    -- Paramentros relatorio
+    vr_dscidade_cooper      varchar2(50);
+    vr_nmcooper          varchar2(50);
+    vr_cnpj            varchar2(50);
+    vr_dsrua          varchar2(50);
+    vr_vlnumero          varchar2(50);
+    vr_dsbairro          varchar2(50);
+    vr_dscidade          varchar2(50);
+    vr_dsuf            varchar2(50);
+    vr_nmsocioadm        varchar2(50);
+    vr_nmpagador        varchar2(50);
+    vr_iddocumento        varchar2(50);
+    vr_dsruaadm          varchar2(50);
+    vr_vlnumadm          varchar2(50);
+    vr_dsbairroadm        varchar2(50);
+    vr_dscidadeadm        varchar2(50);
+    vr_dsufadm          varchar2(50);
+    vr_nrboleto          varchar2(50);
+    vr_vlboleto          varchar2(50);
+    vr_nrnossonmr        varchar2(50);
+    vr_dtvencimento        CRAPCOB.DTVENCTO%type;
+    -- Variável para armazenar as informações em XML
+    vr_des_xml       clob;
+    vr_typsaida     VARCHAR2(100);
+    vr_des_reto     VARCHAR2(100); 
+    -- Variável para o caminho e nome do arquivo base
+    vr_dsdireto varchar2(200);
+    vr_dscomand   varchar2(200);
+    -- Subrotina para escrever texto na variável CLOB do XML
+    procedure pc_escreve_xml(pr_des_dados in clob) is
+    begin
+      dbms_lob.writeappend(vr_des_xml, length(pr_des_dados), pr_des_dados);
+    end;
+    --
+  begin
+    
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN cr_crapcop(pr_nrdconta, pr_nrdocmto, pr_cdbancoc);
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_crapcop;
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapcop;
+    END IF;
+
+    vr_dscidade_cooper := rw_crapcop.dscidade_cooper;
+    vr_nmcooper := rw_crapcop.nmcooper;
+    vr_cnpj := rw_crapcop.cnpj;
+    vr_dsrua := rw_crapcop.dsrua;
+    vr_vlnumero := rw_crapcop.vlnumero;
+    vr_dsbairro := rw_crapcop.dsbairro;
+    vr_dscidade := rw_crapcop.dscidade;
+    vr_dsuf := rw_crapcop.dsuf;
+    vr_nmsocioadm := rw_crapcop.nmsocioadm;
+    vr_nmpagador := rw_crapcop.nmpagador;
+    vr_iddocumento := rw_crapcop.iddocumento;
+    vr_dsruaadm := rw_crapcop.dsruaadm;
+    vr_vlnumadm := rw_crapcop.vlnumadm;
+    vr_dsbairroadm := rw_crapcop.dsbairroadm;
+    vr_dscidadeadm := rw_crapcop.dscidadeadm;
+    vr_dsufadm := rw_crapcop.dsufadm;
+    vr_nrboleto := rw_crapcop.nrboleto;
+    vr_vlboleto := rw_crapcop.vlboleto;
+    vr_nrnossonmr := rw_crapcop.nrnossonmr;
+    vr_dtvencimento := rw_crapcop.dtvencimento;
+
+    -- Inicializar o CLOB para armazenar o arquivo XML
+    vr_des_xml := null;
+    dbms_lob.createtemporary(vr_des_xml, true);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><carta_anuencia>');
+    pc_escreve_xml('<dscidade_cooper>'     ||vr_dscidade_cooper	    ||'</dscidade_cooper>'||
+                   '<nmcooper>'            ||vr_nmcooper            ||'</nmcooper>'||
+                   '<cnpj>'                ||gene0002.fn_mask_cpf_cnpj(vr_cnpj,1)  ||'</cnpj>'||
+                   '<dsrua>'               ||vr_dsrua               ||'</dsrua>'||
+                   '<vlnumero>'            ||vr_vlnumero            ||'</vlnumero>'||
+                   '<dsbairro>'            ||vr_dsbairro            ||'</dsbairro>'||
+                   '<dscidade>'            ||vr_dscidade            ||'</dscidade>'||
+                   '<dsuf>'                ||vr_dsuf                ||'</dsuf>'||
+                   '<nmsocioadm>'          ||vr_nmsocioadm          ||'</nmsocioadm>'||
+                   '<nmpagador>'           ||vr_nmpagador           ||'</nmpagador>'||
+                   '<iddocumento>'         ||gene0002.fn_mask_cpf_cnpj(vr_iddocumento,1)         ||'</iddocumento>'||
+                   '<dsruaadm>'            ||vr_dsruaadm            ||'</dsruaadm>'||
+                   '<vlnumadm>'            ||vr_vlnumadm            ||'</vlnumadm>'||
+                   '<dsbairroadm>'         ||vr_dsbairroadm         ||'</dsbairroadm>'||
+                   '<dscidadeadm>'         ||vr_dscidadeadm         ||'</dscidadeadm>'||
+                   '<dsufadm>'             ||vr_dsufadm             ||'</dsufadm>'||
+                   '<nrboleto>'            ||vr_nrboleto            ||'</nrboleto>'||
+                   '<vlboleto>'            ||gene0002.fn_valor_extenso('M', vr_vlboleto)            ||'</vlboleto>'||
+                   '<nrnossonmr>'          ||vr_nrnossonmr            ||'</nrnossonmr>'||
+                   '<vr_dtvencimento>'     ||to_char(vr_dtvencimento,'DD/MM/RRRR')         ||'</vr_dtvencimento>');
+
+    -- Fecha a tag principal para encerrar o XML
+    pc_escreve_xml('</carta_anuencia>');
+    --Buscar diretorio da cooperativa
+    vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
+                                         pr_cdcooper => pr_cdcooper,
+                                         pr_nmsubdir => '/rl');
+    --vr_dsdireto := '/microsd/cecred/faria'                                     
+      
+    vr_dscomand := 'rm '||vr_dsdireto ||'/crrl738_' ||0 ||'* 2>/dev/null';
+      
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typsaida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF; 
+      
+      
+    pr_nmarqpdf := 'crrl738_'||0 || gene0002.fn_busca_time || '.pdf';
+    
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => 'COBRAN'
+                               , pr_dtmvtolt  => vr_dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/carta_anuencia'
+                               , pr_dsjasper  => 'carta_anuencia.jasper'
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 132
+                               , pr_cdrelato  => 738
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_des_erro  => vr_dscritic);
+      
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF; 
+    
+    -- Liberando a memoria alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+
+      
+    --> AyllosWeb
+    -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+    GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                ,pr_cdagenci => NULL
+                                ,pr_nrdcaixa => NULL
+                                ,pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf
+                                ,pr_des_reto => vr_des_reto
+                                ,pr_tab_erro => vr_tab_erro);
+    -- Se retornou erro
+    IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+      IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros          
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;
+
+    -- Remover relatorio do diretorio padrao da cooperativa
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    -- Se retornou erro
+    IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+      -- Concatena o erro que veio
+      vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;
+
+	EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_relat_carta_anuencia : '||SQLERRM;  	                                   
+  END pc_relat_carta_anuencia;
   
   --> Rotina para verificar se é para apresentar popup do serviço de SMS para o cooperado
   PROCEDURE pc_verifar_oferta_sms(pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa

@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 16/05/2018
+   Data    : 12/09/2005                     Ultima atualizacao: 16/06/2018
 
    Dados referentes ao programa:
 
@@ -468,7 +468,11 @@
 
 			   16/05/2018 - Ajuste para que o Internet Banking apresente na Tela: Cobrancas Bancarias >>
 			                Manutencao, registros que possuam o campo cdmensag com o valor nulo.
-			                Chamado INC0011898 - Gabriel (Mouts).
+			                Chamado INC0011898 - Gabriel (Mouts). 
+
+               16/06/2018 - Ajuste na situacao do boleto quando Protestado "P" 
+                          - Popular dados do beneficiario na temp-table tt-consulta-blt (Carta de Anuencia)
+                          - (PRJ352 - Rafael).
 
 ........................................................................... */
 
@@ -777,8 +781,9 @@ PROCEDURE consulta-boleto-2via.
         END.
     
     /* ====  validacao do boleto ====*/
-    
-    IF crapcob.incobran = 5 THEN
+    IF crapcob.insitcrt = 3 THEN
+         ASSIGN aux_dscritic = "Boleto bloqueado, entre em contato com o beneficiário".
+    ELSE IF crapcob.incobran = 5 THEN
          ASSIGN aux_dscritic = "Boleto liquidado. Nao e possivel imprimi-lo.".
     ELSE IF crapcob.incobran = 3 AND crapcob.insitcrt = 1 THEN
          ASSIGN aux_dscritic = "Boleto enviado para protesto. " +
@@ -3836,6 +3841,7 @@ PROCEDURE grava_instrucoes:
     DEF  INPUT PARAM par_vlabatim AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dtvencto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdtpinsc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_qtdiaprt AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -3857,6 +3863,7 @@ PROCEDURE grava_instrucoes:
                                   INPUT par_nrdocmto, /* Boleto */
                                   INPUT par_vlabatim, /* Valor de Abatimento */
                                   INPUT par_dtvencto, /* Data de Vencimetno */
+                                  INPUT par_qtdiaprt, /* Quantidade de dias para protesto */
                                  OUTPUT 0,            /* Codigo da Critica */
                                  OUTPUT "").          /* Descricao da Critica */
              
@@ -4153,6 +4160,9 @@ PROCEDURE cria_tt-consulta-blt.
                     AND crabceb.nrdconta = crapcob.nrdconta
                     NO-LOCK NO-ERROR.
        
+     RUN busca_dados_beneficiario( INPUT crapcob.cdcooper,
+                                   INPUT crapcob.nrdconta).
+       
      IF AVAIL(crabceb) THEN
      DO:
 	    ASSIGN tt-consulta-blt.flprotes = INTE(crabceb.flprotes).
@@ -4334,6 +4344,7 @@ PROCEDURE cria_tt-consulta-blt.
             tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */
             tt-consulta-blt.dtbloqueio = crapcob.dtbloque
             tt-consulta-blt.vltitulo = crapcob.vltitulo
+                        tt-consulta-blt.insitcrt = crapcob.insitcrt
             tt-consulta-blt.nrinssac = crapcob.nrinssac
             tt-consulta-blt.cdtpinsc = crapcob.cdtpinsc
             tt-consulta-blt.vltarifa = crapcob.vltarifa
@@ -4497,9 +4508,16 @@ PROCEDURE cria_tt-consulta-blt.
                                 aux_dsstacom = "ABERTO"
                                 aux_dtsitcrt = ?.
                  END.
-                 WHEN 2 THEN ASSIGN aux_dsstaabr = "INS"
+
+                 WHEN 2 THEN DO: 
+                    IF crapcob.cdbandoc = 001 THEN
+                        ASSIGN aux_dsstaabr = "INS"
                                     aux_dsstacom = "C/ INST SUST"
                                     aux_dtsitcrt = crapcob.dtsitcrt.
+                    ELSE
+                        ASSIGN aux_dsstaabr = "INS"
+                               aux_dsstacom = "REM CARTORIO "
+                               aux_dtsitcrt = crapcob.dtsitcrt.                                  END.
                  WHEN 3 THEN ASSIGN aux_dsstaabr = "CAR"
                                     aux_dsstacom = "EM CARTORIO"
                                     aux_dtsitcrt = crapcob.dtsitcrt.
@@ -4551,6 +4569,16 @@ PROCEDURE cria_tt-consulta-blt.
                                        ELSE
                                           tt-consulta-blt.dssituac.
 
+         IF crapcob.incobran = 5 AND
+            crapcob.dtdpagto <> ? AND
+                NOT tt-consulta-blt.flgdprot = FALSE AND
+                crapcob.insitcrt <> 0 THEN
+         DO:
+                CASE crapcob.insitcrt:
+           WHEN 3 THEN ASSIGN tt-consulta-blt.dssituac =
+                              tt-consulta-blt.dssituac + "/EM CARTORIO".
+        END CASE.
+         END.
 
      IF crapcob.inserasa <> 0 THEN
      DO:
@@ -4885,6 +4913,9 @@ PROCEDURE cria_tt-consulta-blt_rej.
                crapass.nrdconta = crapret.nrdconta
                NO-LOCK: END.
     
+     RUN busca_dados_beneficiario( INPUT crapret.cdcooper,
+                                   INPUT crapret.nrdconta).               
+    
      ASSIGN tt-consulta-blt.nmdsacad = crapret.nrnosnum.
 
      ASSIGN tt-consulta-blt.nmdavali = ""
@@ -5077,6 +5108,9 @@ PROCEDURE cria_tt-consulta-blt_tdb.
       WHERE crapsab.cdcooper = crapcob.cdcooper AND
             crapsab.nrdconta = crapcob.nrdconta AND
             crapsab.nrinssac = crapcob.nrinssac NO-LOCK NO-ERROR.
+
+     RUN busca_dados_beneficiario( INPUT crapcob.cdcooper,
+                                   INPUT crapcob.nrdconta).            
 
      IF  AVAILABLE crapsab  THEN
          DO:
@@ -5301,7 +5335,11 @@ PROCEDURE proc_nosso_numero.
         IF  crapcob.dtsitcrt <> ? THEN
             CASE crapcob.incobran:
                 WHEN 0 THEN ASSIGN aux_cdsituac = "A".
-                WHEN 3 THEN ASSIGN aux_cdsituac = "B".
+                WHEN 3 THEN 
+                  IF crapcob.insitcrt = 5 THEN 
+                    ASSIGN aux_cdsituac = "P". /* Ajuste - PRJ352 */
+                  ELSE
+                    ASSIGN aux_cdsituac = "B".
                 WHEN 5 THEN ASSIGN aux_cdsituac = "L".
             END CASE.
 
@@ -5314,6 +5352,7 @@ PROCEDURE proc_nosso_numero.
           WHEN "E" THEN aux_dssituac = "EXCLUIDO".
           WHEN "L" THEN aux_dssituac = "LIQUIDADO".
           WHEN "R" THEN aux_dssituac = "REJEITADO".
+          WHEN "P" THEN aux_dssituac = "PROTESTADO". /* Ajuste - PRJ 352 */
      END CASE. 
 
      IF  TRIM(crapcob.dcmc7chq) <> "" THEN
@@ -5467,6 +5506,9 @@ PROCEDURE proc_nosso_numero.
         
         ASSIGN tt-consulta-blt.cdserasa = crapcob.inserasa.
 
+        RUN busca_dados_beneficiario( INPUT crapcob.cdcooper,
+                                      INPUT crapcob.nrdconta).        
+
         CASE crapcob.inserasa:
           WHEN 1 THEN 
             DO:
@@ -5514,6 +5556,7 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.nmprimtl = p-nmprimtl 
                tt-consulta-blt.nmdsacad = REPLACE(aux_na_nmdsacad,"&","%26")
                tt-consulta-blt.nrinssac = crapcob.nrinssac
+                           tt-consulta-blt.insitcrt = crapcob.insitcrt
                tt-consulta-blt.cdtpinsc = (IF crapcob.nrinssac = 0 THEN
                                               1
                                            ELSE
@@ -8088,7 +8131,7 @@ PROCEDURE gera_relatorio:
                aux_nmarqimp = aux_nmendter + ".ex"
                aux_nmarqpdf = aux_nmendter + ".pdf".
 
-        IF  CAN-DO("2,6",STRING(par_tprelato)) THEN
+        IF  CAN-DO("2,6,8",STRING(par_tprelato)) THEN
             IF  NOT CAN-FIND(crapage WHERE
                              crapage.cdcooper = par_cdcooper AND
                              crapage.cdagenci = par_cdagencx) THEN
@@ -8130,7 +8173,7 @@ PROCEDURE gera_relatorio:
                    aux_fimdtmvt = par_fimdtper
                    aux_flgregis = TRUE.
         END.
-        IF  par_tprelato = 6 THEN
+        IF  par_tprelato = 6 OR par_tprelato = 8 THEN
             ASSIGN aux_inidtmvt = par_inidtper
                    aux_fimdtmvt = par_fimdtper
                    aux_flgregis = TRUE
@@ -8236,6 +8279,7 @@ PROCEDURE gera_relatorio:
                                  INPUT par_cdagencx,
                                  INPUT aux_inidtmvt,
                                  INPUT aux_fimdtmvt,
+                                                                                 INPUT par_tprelato,
                                  INPUT TABLE tt-consulta-blt).
                                  
                 IF  par_idorigem = 3  THEN  /** Internet Bank **/
@@ -8323,6 +8367,19 @@ PROCEDURE gera_relatorio:
                               
                     END.
             END.
+                 
+                 WHEN 8 THEN DO:
+                    RUN proc_crrl601 IN h-b1wgen0010i
+                                           ( INPUT par_cdcooper,
+                                             INPUT par_dtmvtolt,
+                                             INPUT aux_nmarqimp,
+                                             INPUT par_cdagencx,
+                                             INPUT aux_inidtmvt,
+                                             INPUT aux_fimdtmvt,
+                                             INPUT par_tprelato,
+                                             INPUT TABLE tt-consulta-blt).
+                 END.
+                 
         END CASE.
 
         IF  VALID-HANDLE(h-b1wgen0010i) THEN
@@ -9752,4 +9809,50 @@ PROCEDURE controla-busca-nmdobnfc:
     END.
 
     RETURN "OK".
+END PROCEDURE.
+
+PROCEDURE busca_dados_beneficiario:
+
+    DEF INPUT PARAM par_cdcooper    LIKE    crapcop.cdcooper        NO-UNDO.
+    DEF INPUT PARAM par_nrdconta    LIKE    crapass.nrdconta        NO-UNDO.
+
+    /* buscar os dados cadastrais do cooperado beneficiario dos boletos */
+    FIND FIRST crapass 
+         WHERE crapass.cdcooper = par_cdcooper
+           AND crapass.nrdconta = par_nrdconta
+           NO-LOCK NO-ERROR.
+           
+    /* se cooperado-beneficiario for PF */
+    IF crapass.inpessoa = 1 THEN 
+       FIND FIRST crapenc
+            WHERE crapenc.cdcooper = crapass.cdcooper
+              AND crapenc.nrdconta = crapass.nrdconta
+              AND crapenc.tpendass = 10 
+              NO-LOCK NO-ERROR.
+    ELSE
+       FIND FIRST crapenc
+            WHERE crapenc.cdcooper = crapass.cdcooper
+              AND crapenc.nrdconta = crapass.nrdconta
+              AND crapenc.tpendass = 9 
+              NO-LOCK NO-ERROR.  
+              
+    IF AVAILABLE crapenc THEN
+       ASSIGN tt-consulta-blt.dsendere_bnf = crapenc.dsendere
+              tt-consulta-blt.nrendere_bnf = crapenc.nrendere
+              tt-consulta-blt.nrcepend_bnf = crapenc.nrcepend
+              tt-consulta-blt.complend_bnf = crapenc.complend
+              tt-consulta-blt.nmbairro_bnf = crapenc.nmbairro
+              tt-consulta-blt.nmcidade_bnf = crapenc.nmcidade
+              tt-consulta-blt.cdufende_bnf = crapenc.cdufende.
+    ELSE
+       ASSIGN tt-consulta-blt.dsendere_bnf = 'NAO ENCONTRADO'
+              tt-consulta-blt.nrendere_bnf = 0
+              tt-consulta-blt.nrcepend_bnf = 0
+              tt-consulta-blt.complend_bnf = ' '
+              tt-consulta-blt.nmbairro_bnf = ' '
+              tt-consulta-blt.nmcidade_bnf = ' '
+              tt-consulta-blt.cdufende_bnf = ' '.
+
+    RETURN "OK".
+
 END PROCEDURE.
