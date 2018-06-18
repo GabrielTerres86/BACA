@@ -14,6 +14,9 @@ Alteracoes: 27/03/2009 - Acerto para o uso do zoom, na chamada da tela crap002
                          format. (Chamado 174180) - (Fabricio)
  
             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).           
+            
+            12/06/2018 - Utilizaçao do caixa online mesmo com processo notirno executando
+			             (Fabio Adriano - AMcom).
 ............................................................................. */
 
 
@@ -277,7 +280,7 @@ PROCEDURE process-web-request :
 
         RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
     
-        RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+        RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                            INPUT v_pac,
                                            INPUT v_caixa).
     

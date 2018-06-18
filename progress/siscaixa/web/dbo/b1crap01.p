@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/08/2017
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -31,6 +31,9 @@
 
 			   23/08/2017 - Alterado para validar as informacoes do operador 
 							pelo AD. (PRJ339 - Reinert)
+              
+              17/04/2018 - Utilizaçao do Caixa Online mesmo com o processo 
+                           noturno executando (Fabio Adriano - AMCom).
 ............................................................................ */
 
 
@@ -413,7 +416,7 @@ PROCEDURE valida-caixa-aberto:
     /* Verifica se o caixa ja foi aberto hoje, nao pode por enquanto
        e necessario alterar o programa do boletim */
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
                             crapbcx.cdagenci = p-cod-agencia        AND
                             crapbcx.nrdcaixa = p-nro-caixa          AND
                             crapbcx.cdopecxa <> p-cod-operador      AND
@@ -435,7 +438,7 @@ PROCEDURE valida-caixa-aberto:
     
     /* Verifica se Usuario abriu caixa em outro terminal */
     FIND first crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
                              crapbcx.cdopecxa = p-cod-operador      AND
                              crapbcx.cdsitbcx = 1 
                              USE-INDEX crapbcx3 NO-LOCK NO-ERROR.

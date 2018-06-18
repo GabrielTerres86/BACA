@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 03/06/2015
+   Data    : Marco/2001                      Ultima atualizacao: 20/04/2018
 
    Dados referentes ao programa:
 
@@ -37,6 +37,9 @@
                             
                03/06/2015 - Tratamento para reload de rotina ao abrir/fechar
                             o BL. Melhoria SD 260475 (Lunelli).
+                            
+               20/04/2018 - liberaçao do caixa online mesmo com processo batch noturno executando
+                            Fabio Adriano (AMcom)
                             
 ............................................................................ */
 
@@ -925,7 +928,8 @@ PROCEDURE process-web-request :
 
               RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
               
-              RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+              /* 20/04/2018 liberaçao do caixa online mesmo com processo batch noturno executando */
+              RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                                  INPUT v_pac,
                                                  INPUT v_caixa).
     
@@ -989,8 +993,8 @@ PROCEDURE process-web-request :
                                          ASSIGN i-qtd-taloes = 0.
                             
                                          ASSIGN dt-data =
-                                             date(MONTH(crapdat.dtmvtolt),01,
-                                                  YEAR(crapdat.dtmvtolt)).
+                                             date(MONTH(crapdat.dtmvtocd),01,
+                                                  YEAR(crapdat.dtmvtocd)).
                             
                                          FOR EACH crapfdc NO-LOCK WHERE
                                              crapfdc.cdcooper = 
@@ -1147,7 +1151,8 @@ PROCEDURE process-web-request :
         
                 RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
         
-                RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+                /* 20/04/2018 liberaçao do caixa online mesmo com processo batch noturno executando */
+                RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                                    INPUT v_pac,
                                                    INPUT v_caixa).
         
@@ -1220,8 +1225,8 @@ PROCEDURE process-web-request :
                                         /*--- Qtdade Taloes retirados no mes ---*/
                                         ASSIGN i-qtd-taloes = 0.
                           
-                                        ASSIGN dt-data = date(MONTH(crapdat.dtmvtolt),01,
-                                                              YEAR(crapdat.dtmvtolt)).
+                                        ASSIGN dt-data = date(MONTH(crapdat.dtmvtocd),01,
+                                                              YEAR(crapdat.dtmvtocd)).
                             
                                         FOR EACH crapfdc NO-LOCK WHERE
                                                  crapfdc.cdcooper = crapcop.cdcooper AND

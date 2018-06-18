@@ -39,6 +39,9 @@
                           (Adriano - SD 314469).   
               
              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                         
+			 
+			 17/05/2018 - Utilização do caixa on-line mesmo com o processo batch (noturno) executando
+			              (Fabio Adriano - AMcom).
 .............................................................................-->
 
 <html>
@@ -128,7 +131,7 @@
            v_operador   = GET-VALUE("operador")
            v_pac        = GET-VALUE("User_pac")
            v_coop       = GET-VALUE("user_coop")
-           v_data       = STRING(crapdat.dtmvtolt,"99/99/9999")
+           v_data       = (STRING(crapdat.dtmvtocd,"99/99/9999")) 
            v_reativa    = GET-VALUE("preativa")
            aux_nrdlote1 = 11000 + INT(v_caixa)
            aux_nrdlote2 = 28000 + INT(v_caixa)
@@ -144,7 +147,7 @@
     FOR EACH crapchd WHERE crapchd.cdcooper = crapcop.cdcooper      AND
                            crapchd.cdagenci = INT(v_pac)            AND
                            crapchd.cdoperad = v_operador            AND
-                           crapchd.dtmvtolt = crapdat.dtmvtolt      AND
+                           crapchd.dtmvtolt = crapdat.dtmvtocd AND
                            CAN-DO(aux_cdbccxlt, STRING(crapchd.cdbccxlt))   AND
                           (crapchd.nrdolote = aux_nrdlote1          OR 
                            crapchd.nrdolote = aux_nrdlote2          OR
@@ -215,7 +218,7 @@
                             RUN sistema/generico/procedures/b1wgen0012.p PERSISTENT SET h-b1wgen0012.
                                            
                             RUN gerar_arquivos_cecred IN h-b1wgen0012 (INPUT "COMPEL",
-                                                                       INPUT crapdat.dtmvtolt,
+                                                                       INPUT crapdat.dtmvtocd,
                                                                        INPUT crapcop.cdcooper, 
                                                                        INPUT INTE(v_pac), /* Ini */
                                                                        INPUT INTE(v_pac), /* Fim */
@@ -333,7 +336,7 @@
                        
                     RUN reativar_arquivos_cecred IN h-b1wgen0012 (INPUT  "COMPEL",
                                                                   INPUT  crapcop.cdcooper,
-                                                                  INPUT  crapdat.dtmvtolt,
+                                                                  INPUT  crapdat.dtmvtocd,
                                                                   INPUT  INT(v_pac),
                                                                   INPUT  FALSE, 
                                                                   INPUT  0,             

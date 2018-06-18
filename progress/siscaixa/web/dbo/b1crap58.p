@@ -4,7 +4,7 @@
     Historicos - 92  (LANEMP)                                                 
     Autenticacao  - PG
     
-    Ultima atualizacao: 30/01/2017
+    Ultima atualizacao: 19/03/2018
     
     Alteracoes:
                 02/03/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -38,6 +38,10 @@
 
                 16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                              modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
+                             
+                19/03/2018 - inserido por causa da necessidade de bloqueio 
+                             caso o processo batch (noturno) ainda esteja em execuçao
+                             Fabio Adriano (AMcom)             
 
 ----------------------------------------------------------------------------*/
  
@@ -133,6 +137,7 @@ DEF  VAR ant_vlsdeved AS DECIMAL                               NO-UNDO.
 
 DEF  VAR par_qtdialib AS INTE INITIAL 0                        NO-UNDO.
 
+
 PROCEDURE valida-valores:
     
     DEF INPUT  PARAM p-cooper         AS CHAR.
@@ -143,6 +148,30 @@ PROCEDURE valida-valores:
     DEF INPUT  PARAM p-valor          AS DEC.     
       
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+
+    
+    /* INICIO - inserido por causa da necessidade de bloqueio 
+       caso o processo batch (noturno) ainda esteja em execuçao */
+    FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
+                             NO-LOCK NO-ERROR.
+                
+    IF  crapdat.inproces <> 1  THEN 
+      DO:
+                     
+          ASSIGN i-cod-erro  = 138
+                 c-desc-erro = " ".
+          RUN cria-erro (INPUT p-cooper,
+                         INPUT p-cod-agencia,
+                         INPUT p-nro-caixa,
+                         INPUT i-cod-erro,
+                         INPUT c-desc-erro,
+                         INPUT YES). 
+      END.  
+     
+	  
+     /* FIM - inserido por causa da necessidade de bloqueio 
+       caso o processo batch (noturno) ainda esteja em execuçao */                        
+                             
 
     ASSIGN p-nro-conta = DEC(REPLACE(STRING(p-nro-conta),".","")).
 
@@ -321,7 +350,7 @@ PROCEDURE valida-conta-contrato:
                                              INPUT  p-cod-agencia,
                                              INPUT  p-nro-caixa,
                                              0,
-                                             INPUT  crapdat.dtmvtolt,
+                                             INPUT  crapdat.dtmvtocd,
                                              INPUT  "b1crap58",
                                              INPUT  2, /*CAIXA*/
                                              OUTPUT TABLE tt-erro).
@@ -569,7 +598,7 @@ PROCEDURE atualiza-emprestimos:
           INPUT 1,  /** origem **/
           INPUT inc_nrdconta,
           INPUT 1,  /** idseqttl **/
-          INPUT crapdat.dtmvtolt,
+          INPUT crapdat.dtmvtocd,
           INPUT crapdat.dtmvtopr,
           INPUT inc_dtcalcul,
           INPUT p-nro-contrato, /** Contrato **/
@@ -674,7 +703,7 @@ PROCEDURE atualiza-emprestimos:
     END.  /*  DO WHILE */
 
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote        NO-ERROR.
@@ -683,7 +712,7 @@ PROCEDURE atualiza-emprestimos:
         DO:
             CREATE craplot.
             ASSIGN craplot.cdcooper = crapcop.cdcooper
-                   craplot.dtmvtolt = crapdat.dtmvtolt
+                   craplot.dtmvtolt = crapdat.dtmvtocd
                    craplot.cdagenci = p-cod-agencia   
                    craplot.cdbccxlt = 11              
                    craplot.nrdolote = i-nro-lote
@@ -701,7 +730,7 @@ PROCEDURE atualiza-emprestimos:
 
     /*--- Verifica se Lancamento ja Existe ---*/
     FIND craplem WHERE craplem.cdcooper = crapcop.cdcooper      AND
-                       craplem.dtmvtolt = crapdat.dtmvtolt      AND
+                       craplem.dtmvtolt = crapdat.dtmvtocd      AND
                        craplem.cdagenci = p-cod-agencia         AND
                        craplem.cdbccxlt = 11                    AND
                        craplem.nrdolote = i-nro-lote            AND
@@ -721,7 +750,7 @@ PROCEDURE atualiza-emprestimos:
         END.
 
     FIND craplem WHERE craplem.cdcooper = crapcop.cdcooper  AND
-                       craplem.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplem.dtmvtolt = crapdat.dtmvtocd  AND
                        craplem.cdagenci = p-cod-agencia     AND
                        craplem.cdbccxlt = 11                AND
                        craplem.nrdolote = i-nro-lote        AND
@@ -769,7 +798,7 @@ PROCEDURE atualiza-emprestimos:
     
     CREATE craplem.
     ASSIGN craplem.cdcooper = crapcop.cdcooper
-           craplem.dtmvtolt = crapdat.dtmvtolt
+           craplem.dtmvtolt = crapdat.dtmvtocd
            craplem.cdagenci = p-cod-agencia
            craplem.cdbccxlt  = 11
            craplem.nrdolote = i-nro-lote
@@ -783,7 +812,7 @@ PROCEDURE atualiza-emprestimos:
            craplem.txjurepr = IF crapepr.inprejuz <> 0
                               THEN 0
                               ELSE aux_txdjuros
-           craplem.dtpagemp = crapdat.dtmvtolt
+           craplem.dtpagemp = crapdat.dtmvtocd
            craplem.vlpreemp = crapepr.vlpreemp.
     VALIDATE craplem.        
 
@@ -793,7 +822,7 @@ PROCEDURE atualiza-emprestimos:
            craplot.vlcompcr  = craplot.vlcompcr + p-valor
            craplot.vlinfocr  = craplot.vlinfocr + p-valor.
 
-    ASSIGN crapepr.dtultpag = crapdat.dtmvtolt
+    ASSIGN crapepr.dtultpag = crapdat.dtmvtocd
            crapepr.txjuremp = aux_txdjuros
            crapepr.inliquid = IF (aux_vlsdeved - p-valor ) > 0
                                  THEN 0
@@ -809,7 +838,7 @@ PROCEDURE atualiza-emprestimos:
                                                   INPUT p-cod-agencia,
                                                   INPUT p-nro-caixa,
                                                   INPUT p-cod-operador,
-                                                  INPUT crapdat.dtmvtolt,
+                                                  INPUT crapdat.dtmvtocd,
                                                   INPUT crapdat.dtmvtopr,
                                                   INPUT p-nro-conta,
                                                   INPUT 90, /* Emprestimo*/ 
@@ -859,7 +888,7 @@ PROCEDURE atualiza-emprestimos:
     ASSIGN c-literal[1]  = TRIM(crapcop.nmrescop) +  " - " +
                            TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") +
+           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") +
                            " " + STRING(TIME,"HH:MM:SS") +  " PA  " + 
                            STRING(p-cod-agencia,"999") +
                            "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
@@ -879,7 +908,7 @@ PROCEDURE atualiza-emprestimos:
                            STRING(p-nro-contrato,"Z,ZZZ,ZZ9")
            c-literal[14] = " " 
            c-literal[15] = "DATA PAGAMENTO.....:     " +
-                           STRING(crapdat.dtmvtolt,"99/99/9999")
+                           STRING(crapdat.dtmvtocd,"99/99/9999")
            c-literal[16] = " " 
            c-literal[17] = "VALOR PAGO.........: " +  
                            STRING(p-valor,"ZZZ,ZZZ,ZZ9.99") 
