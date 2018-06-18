@@ -2972,10 +2972,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
          Resultado esperado "resultado": "1 - Processado com sucesso!" */
       IF TRIM(SUBSTR(vr_resultado,1,2)) = '1' AND
          pr_intipret = 'I' /* Inclusao de cartao */ THEN
-         
-        /* Atualizar o insitcrd aqui */
       
         BEGIN
+          /* Procedimento de busca da conta cartao e numero do cartao
+             ficara comentado ate que a Cabal libere o acesso ao
+             servico de consulta dados do cartao em producao   
+        
           IF NOT vr_obj_retorno.exist('numeroConta') THEN  
             vr_dscritic := 'Nao foi encontrado conta cartao no retorno do Bancoob';
             RAISE vr_exc_erro;
@@ -2985,9 +2987,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           vr_obj_lst   := json_list(vr_obj_retorno.get('componentes').to_char());
           vr_idusuario := json(vr_obj_lst.get(1).to_char()).get('idComponente').to_char();
           
-          /*======== Agora vamos buscar os dados do cartao gerado bancoob =========*/
+          --======== Agora vamos buscar os dados do cartao gerado bancoob =========
           pc_carrega_param_bancoob(pr_cdcooper      => pr_cdcooper, -- Codigo da cooperativa
-                                   pr_tipo_ws       => 5, /* Consultar Dados do Cartao */
+                                   pr_tipo_ws       => 5, -- Consultar Dados do Cartao
                                    pr_host          => vr_host,     -- Host do Bancoob
                                    pr_recurso       => vr_recurso,  -- URI do Bancoob
                                    pr_method        => vr_method,
@@ -3035,17 +3037,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           END IF;
           -- Troca os caracteres * por 0 (zero), referente a mascara do cartao.
           vr_nrcartao := trim(replace(replace(vr_obj_retorno.get('cartao').to_char(),'*','0'),'"',''));
+          */
           
           UPDATE crawcrd
              SET insitcrd = 2 /* Solicitado */
-               , nrcrcard = vr_nrcartao
-               , nrcctitg = vr_conta_cartao
+             /* , nrcrcard = vr_nrcartao
+               , nrcctitg = vr_conta_cartao */
                , dtsolici = trunc(SYSDATE)
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
              AND nrctrcrd = pr_nrctrcrd;
              
-          /* Vamos atualizar a conta cartao */
+          /* Vamos atualizar a conta cartao 
           ccrd0003.pc_insere_conta_cartao(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_nrconta_cartao => vr_conta_cartao
@@ -3053,7 +3056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                          ,pr_dscritic => vr_dscritic);
           IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-          END IF;         
+          END IF; */
             
         EXCEPTION
           WHEN OTHERS THEN
