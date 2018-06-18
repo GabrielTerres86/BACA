@@ -58,6 +58,9 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
       29/10/2015 - Alterado tamanho do campo typ_reg_remessa_dda.dsinstru 
                    SD352398(Odirlei-Amcom)            
   
+      13/06/2018 - Criado assinatura da fn_datamov para ser chamada no CRPS618.
+                   Chamado SCTASK0015832 - Gabriel (Mouts).
+
   ..............................................................................*/
 
 
@@ -73,8 +76,8 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
    ,quantidade INTEGER
   );
   
- MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2; 
- MOTIVO_NOVOS_TITULOS_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1; 
+ MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 10; 
+ MOTIVO_NOVOS_TITULOS_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 11; 
 
 
   /* Tipo de registro de Remessa DDA
@@ -239,6 +242,9 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                           , VlrBaixaOperacTit       VARCHAR2(20) PATH 'VlrBaixaOperacTit'
                           , NumCodBarrasBaixaOperac VARCHAR2(44) PATH 'NumCodBarrasBaixaOperac'
                           , TpOpBaixaOperac         VARCHAR2(1) PATH 'TpOpBaixaOperac');    
+
+  /* Buscar data de referencia da cabine JDNPC */
+  FUNCTION fn_datamov RETURN NUMBER;
 
   /* Procedure para Atualizar Situacao */
   PROCEDURE pc_requis_atualizar_situacao(pr_cdlegado IN VARCHAR2 --> Codigo Legado
@@ -461,6 +467,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
   --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
   --
+  --             12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
+
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -5210,7 +5218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       --> Enviar Email
       GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
                                 ,pr_cdprogra        => 'COBRANCA'     --> Programa conectado
-                                ,pr_des_destino     => nvl(vr_dsdemail_dst,'segurancacorporativa@cecred.coop.br')  --> Um ou mais detinatários separados por ';' ou ','
+                                ,pr_des_destino     => nvl(vr_dsdemail_dst,'segurancacorporativa@ailos.coop.br')  --> Um ou mais detinatários separados por ';' ou ','
                                 ,pr_des_assunto     => vr_dsAssunt    --> Assunto do e-mail
                                 ,pr_des_corpo       => vr_dsdcorpo    --> Corpo (conteudo) do e-mail
                                 ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
