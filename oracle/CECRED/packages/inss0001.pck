@@ -1100,7 +1100,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 03/04/2018
+   Data    : 27/08/2013                        Ultima atualizacao: 08/06/2018
 
    Dados referentes ao programa:
 
@@ -1214,6 +1214,10 @@ create or replace package body cecred.INSS0001 as
                       cooperativa terminar. (Carlos)
 
          03/04/2018 - Inserido noti0001.pc_cria_notificacao 
+         
+         08/06/2018 - Tratamento para exibir a data no inss_historico.log e tratamento
+                      para buscar o log dos registros do arquivo. 
+                      (Lucas Ranghetti #INC0016881)
                       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -11730,7 +11734,8 @@ create or replace package body cecred.INSS0001 as
         
       END IF;
       
-      vr_des_log :=   
+      vr_des_log :=   pr_dtmvtolt                           || ' | ' ||
+        'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||
         'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
         'Nome: '     || pr_nmextttl                         || ' | ' ||
         'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -11739,9 +11744,7 @@ create or replace package body cecred.INSS0001 as
                                                  
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_nmdatela || ' --> ' || 
-                                                    'ALERTA: ' || vr_des_log
+                                  ,pr_des_log      => vr_des_log
                                   ,pr_nmarqlog     => 'inss_historico.log'
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_cdprograma   => vr_nmdatela
@@ -13114,7 +13117,8 @@ create or replace package body cecred.INSS0001 as
                              
       END IF;
       
-      vr_des_log :=   
+      vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
+      'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||  
       'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
       'Nome: '     || pr_nmextttl                         || ' | ' ||
       'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -13123,9 +13127,7 @@ create or replace package body cecred.INSS0001 as
       
     btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                               ,pr_ind_tipo_log => 1
-                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_nmdatela || ' --> ' || 
-                                                    'ALERTA: ' || vr_des_log                               
+                              ,pr_des_log      => vr_des_log                               
                               ,pr_nmarqlog     => 'inss_historico.log'
                               ,pr_flfinmsg     => 'N'
                               ,pr_cdprograma   => vr_nmdatela
@@ -14078,7 +14080,8 @@ create or replace package body cecred.INSS0001 as
                           
       END IF;
       
-      vr_des_log :=   
+      vr_des_log :=   pr_dtmvtolt                           || ' | ' ||
+        'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||        
         'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
         'Nome: '     || pr_nmbenefi                         || ' | ' ||
         'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -14089,9 +14092,7 @@ create or replace package body cecred.INSS0001 as
                                                  
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_nmdatela || ' --> ' || 
-                                                    'ALERTA: ' || vr_des_log   
+                                  ,pr_des_log      => vr_des_log   
                                   ,pr_nmarqlog     => 'inss_historico.log'
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_cdprograma   => vr_nmdatela
@@ -14751,7 +14752,8 @@ create or replace package body cecred.INSS0001 as
                                                                   
         END IF;
         
-        vr_des_log :=   
+        vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
+        'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||   
         'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
         'Nome: '     || pr_nmbenefi                         || ' | ' ||
         'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -14763,9 +14765,7 @@ create or replace package body cecred.INSS0001 as
         
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nmdatela || ' --> ' || 
-                                                    'ALERTA: ' || vr_des_log   
+                                  ,pr_des_log      => vr_des_log   
                                   ,pr_nmarqlog     => 'inss_historico.log'
                                   ,pr_flfinmsg     => 'N'
                                   ,pr_cdprograma   => pr_nmdatela
@@ -15762,7 +15762,8 @@ create or replace package body cecred.INSS0001 as
                                      
       END IF;
       
-      vr_des_log :=   
+      vr_des_log :=   pr_dtmvtolt                         || ' | ' ||
+      'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||   
       'Conta: '    || gene0002.fn_mask(pr_nrdconta,'9999.999-9')  || ' | ' ||
       'Nome: '     || pr_nmbenefi                         || ' | ' ||
       'NB: '       || to_char(pr_nrrecben)                || ' | ' ||
@@ -15772,9 +15773,7 @@ create or replace package body cecred.INSS0001 as
                                                  
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_nmdatela || ' --> ' || 
-                                                    'ALERTA: ' || vr_des_log   
+                                ,pr_des_log      => vr_des_log   
                                 ,pr_nmarqlog     => 'inss_historico.log'
                                 ,pr_flfinmsg     => 'N'
                                 ,pr_cdprograma   => vr_nmdatela
@@ -17582,7 +17581,8 @@ create or replace package body cecred.INSS0001 as
       END IF;
                                          
       IF pr_cddopcao = 'C' THEN
-        vr_des_log :=   
+        vr_des_log :=   pr_dtmvtolt                           || ' | ' ||
+          'Horario: '  || to_char(SYSDATE,'HH24:MI:SS')       || ' | ' ||  
           'Conta: '    || gene0002.fn_mask(vr_nrdconta,'9999.999-9')  || ' | ' ||
           'Nome: '     || vr_nmbenefi                    || ' | ' ||
           'NB: '       || to_char(pr_nrrecben)           || ' | ' ||
@@ -17592,9 +17592,7 @@ create or replace package body cecred.INSS0001 as
                                                    
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
-                                                    ' - ' || vr_nmdatela || ' --> ' || 
-                                                    'ALERTA: ' || vr_des_log   
+                                    ,pr_des_log      => vr_des_log   
                                     ,pr_nmarqlog     => 'inss_historico.log'
                                     ,pr_flfinmsg     => 'N'
                                     ,pr_cdprograma   => vr_nmdatela
@@ -18915,6 +18913,7 @@ create or replace package body cecred.INSS0001 as
     vr_nmlog     VARCHAR2(10000) := 'resultado_comando.txt';
     vr_tab_log   typ_tab_log;
     linha        VARCHAR(10000);
+    linha2       VARCHAR(10000);
     vr_fim_log   BOOLEAN := FALSE;
     vr_posicao   INTEGER;
     vr_xml       CLOB;
@@ -19138,40 +19137,73 @@ create or replace package body cecred.INSS0001 as
             
             -- Data
             vr_dtmvtolt := substr(linha, 1, 10);
-            linha := substr(linha, INSTR(linha, 'Horario: ') + 9);
-               
-            -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247                           
+            
+            -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247
+            -- Ajustar para casos que não gravou a data no log
             IF  substr(vr_dtmvtolt, 3, 1) <> '/' THEN 
-              CONTINUE;   
+              linha2 := linha;
+              vr_dtmvtolt:= '00/00/0000';
+
+              -- Hora
+              vr_posicao := instr(linha2, ' ');
+              vr_hrmvtolt := substr(linha2, 1, vr_posicao - 1);
+              linha2 := substr(linha2, instr(linha2, ': ') + 2);
+              
+              -- Passar pra frente somente
+              linha2 := substr(linha2, instr(linha2, ': ') + 2);
+                
+              -- Conta
+              vr_posicao := instr(linha2, ' |');
+              vr_nrdconta := substr(linha2, 1, vr_posicao - 1);
+              linha2 := substr(linha2, instr(linha2, ': ') + 2);
+                
+              -- Nome
+              vr_posicao := instr(linha2, ' |');
+              vr_nmdconta := trim(substr(linha2, 1, vr_posicao - 1));
+              linha2 := substr(linha2, instr(linha2, ': ') + 2);
+                
+              -- NB
+              vr_posicao := instr(linha2, ' |');
+              vr_nrrecben := substr(linha2, 1, vr_posicao - 1);
+              linha2 := substr(linha2, instr(linha2, ': ') + 2);
+              
+              -- Operador
+              vr_posicao := instr(linha2, ' ');
+              vr_operador := trim(substr(linha2, 1, vr_posicao - 1));
+              linha2 := substr(linha2, instr(linha2, ': ') + 2);
+              
+              -- Alteracao
+              vr_historic := linha2;
+            else
+              linha := substr(linha, INSTR(linha, 'Horario: ') + 9);
+              -- Hora
+              vr_posicao := instr(linha, ' ');
+              vr_hrmvtolt := substr(linha, 1, vr_posicao - 1);
+              linha := substr(linha, instr(linha, ': ') + 2);
+                
+              -- Conta
+              vr_posicao := instr(linha, ' ');
+              vr_nrdconta := substr(linha, 1, vr_posicao - 1);
+              linha := substr(linha, instr(linha, ': ') + 2);
+                
+              -- Nome
+              vr_posicao := instr(linha, ' |');
+              vr_nmdconta := trim(substr(linha, 1, vr_posicao - 1));
+              linha := substr(linha, instr(linha, ': ') + 2);
+                
+              -- Numero do Beneficiario
+              vr_posicao := instr(linha, ' ');
+              vr_nrrecben := substr(linha, 1, vr_posicao - 1);
+              linha := substr(linha, instr(linha, ': ') + 2);
+                
+              -- Operador
+              vr_posicao := instr(linha, ' |');
+              vr_operador := trim(substr(linha, 1, vr_posicao - 1));
+              linha := substr(linha, instr(linha, ': ') + 2);
+                
+              -- Alteracao
+              vr_historic := linha;
             END IF;
-                           
-            -- Hora
-            vr_posicao := instr(linha, ' ');
-            vr_hrmvtolt := substr(linha, 1, vr_posicao - 1);
-            linha := substr(linha, instr(linha, ': ') + 2);
-              
-            -- Conta
-            vr_posicao := instr(linha, ' ');
-            vr_nrdconta := substr(linha, 1, vr_posicao - 1);
-            linha := substr(linha, instr(linha, ': ') + 2);
-              
-            -- Nome
-            vr_posicao := instr(linha, ' |');
-            vr_nmdconta := trim(substr(linha, 1, vr_posicao - 1));
-            linha := substr(linha, instr(linha, ': ') + 2);
-              
-            -- Numero do Beneficiario
-            vr_posicao := instr(linha, ' ');
-            vr_nrrecben := substr(linha, 1, vr_posicao - 1);
-            linha := substr(linha, instr(linha, ': ') + 2);
-              
-            -- Operador
-            vr_posicao := instr(linha, ' |');
-            vr_operador := trim(substr(linha, 1, vr_posicao - 1));
-            linha := substr(linha, instr(linha, ': ') + 2);
-              
-            -- Alteracao
-            vr_historic := linha;
             
             -- Cria sequncial com a data e as horas
             vr_qtregist := vr_qtregist + 1;
