@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 07/06/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 17/06/2018
 
      Dados referentes ao programa:
 
@@ -369,6 +369,7 @@ BEGIN
                  07/06/2018 - Alteracao das rotinas de gravacao do 227 e 354 para enviar dados
                               dos titulos de bordero, e para gerar as entradas nas tabelas do CYBER
                               (Andrew Albuquerque - GFT)
+                 17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
   ............................................................................. */
 
   DECLARE
@@ -538,8 +539,12 @@ BEGIN
             ,vlpagiof craptdb.vlpagiof%TYPE
             ,vlpagmta craptdb.vlpagmta%TYPE
             ,vlpagmra craptdb.vlpagmra%TYPE
-            ,nrctrdsc crapcyb.nrctremp%TYPE --
-            ,vlatraso craptdb.vltitulo%TYPE);
+            ,nrctrdsc crapcyb.nrctremp%TYPE
+            ,vlatraso craptdb.vltitulo%TYPE
+            ,vlsaldodev craptdb.vlsldtit%TYPE
+            ,cddlinha crapldc.cddlinha%TYPE
+            ,dsdlinha crapldc.dsdlinha%TYPE
+            ,txmensal crapbdt.txmensal%TYPE);
 
     -- AWAE: Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_craptdb IS
@@ -902,11 +907,23 @@ BEGIN
           ,tdb.vlpagmra
           ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) +
            (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) +
+           (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
+          ,ldc.cddlinha
+          ,ldc.dsdlinha
+          ,bdt.txmensal
       FROM craptdb tdb
      INNER JOIN crapbdt bdt
         ON tdb.cdcooper = bdt.cdcooper
        AND tdb.nrdconta = bdt.nrdconta
        AND tdb.nrborder = bdt.nrborder
+     INNER JOIN craplim lim
+        ON lim.cdcooper = bdt.cdcooper
+       AND lim.nrdconta = bdt.nrdconta
+       AND lim.nrctrlim = bdt.nrctrlim
+     INNER JOIN crapldc ldc
+        ON lim.cdcooper = ldc.cdcooper
+       AND lim.cddlinha = ldc.cddlinha
      WHERE tdb.insittit = 4
        AND tdb.cdcooper = pr_cdcooper
        AND tdb.nrdconta = pr_nrdconta
@@ -2813,6 +2830,10 @@ BEGIN
               vr_tab_craptdb(vr_indice_tdb).vlpagmta := rw_craptdb.vlpagmta;
               vr_tab_craptdb(vr_indice_tdb).nrctrdsc := vr_nrctrdsc_tdb;
               vr_tab_craptdb(vr_indice_tdb).vlatraso := rw_craptdb.vlatraso;
+              vr_tab_craptdb(vr_indice_tdb).vlsaldodev := rw_craptdb.vlsaldodev;
+              vr_tab_craptdb(vr_indice_tdb).cddlinha := rw_craptdb.cddlinha;
+              vr_tab_craptdb(vr_indice_tdb).dsdlinha := rw_craptdb.dsdlinha;
+              vr_tab_craptdb(vr_indice_tdb).txmensal := rw_craptdb.txmensal;
             END LOOP;
           END IF; -- FIM DOS TITULOS DE BORDERÔ
 
@@ -3147,7 +3168,11 @@ BEGIN
                       vr_tab_craptdb(vr_indice_dados_tdb).vlpagiof || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).vlpagmta || ds_character_separador ||
                       vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc || ds_character_separador ||
-                      vr_tab_craptdb(vr_indice_dados_tdb).vlatraso || ds_character_separador;
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlatraso || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cddlinha || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dsdlinha || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).txmensal || ds_character_separador;
 
         pc_popular_tbgen_batch_rel_wrk(pr_cdcooper     => pr_cdcooper,
                                        pr_nmtabmemoria => 'VR_TAB_CRAPTDB',
@@ -3209,6 +3234,10 @@ BEGIN
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 37) + 1, instr(tab.dsxml, '#', 1, 38) - instr(tab.dsxml, '#', 1, 37) - 1) vlpagmra,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 38) + 1, instr(tab.dsxml, '#', 1, 39) - instr(tab.dsxml, '#', 1, 38) - 1) nrctrdsc,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 39) + 1, instr(tab.dsxml, '#', 1, 40) - instr(tab.dsxml, '#', 1, 39) - 1) vlatraso,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 40) + 1, instr(tab.dsxml, '#', 1, 41) - instr(tab.dsxml, '#', 1, 40) - 1) vlsaldodev,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 41) + 1, instr(tab.dsxml, '#', 1, 42) - instr(tab.dsxml, '#', 1, 41) - 1) cddlinha,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 42) + 1, instr(tab.dsxml, '#', 1, 43) - instr(tab.dsxml, '#', 1, 42) - 1) dsdlinha,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 43) + 1, instr(tab.dsxml, '#', 1, 44) - instr(tab.dsxml, '#', 1, 43) - 1) txmensal,
                tab.dschave vr_indice
           from (select wrk.dscritic dsxml,
                        wrk.dschave
@@ -3262,6 +3291,10 @@ BEGIN
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmta := r_dados_tdb.vlpagmta;
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmra := r_dados_tdb.nrctrdsc;
           vr_tab_craptdb(r_dados_tdb.vr_indice).vlatraso := r_dados_tdb.vlatraso;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlsaldodev := r_dados_tdb.vlsaldodev;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cddlinha := r_dados_tdb.cddlinha;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dsdlinha := r_dados_tdb.dsdlinha;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).txmensal := r_dados_tdb.txmensal;
         END LOOP;
 
       EXCEPTION
@@ -4531,7 +4564,7 @@ BEGIN
                                  ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
                                  ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
                                  ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'zzzzzzz9'))||'</nrctremp>'
-                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit,'fm999g999g990d00')||'</vldivida>'
+                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,'fm999g999g990d00')||'</vldivida>'
                                  ||' <vljura60>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,'fm999g999g990d00')||'</vljura60>'
                                  ||' <vlpreemp>'||to_char(nvl(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,0),'fm999g990d00')||'</vlpreemp>'
                                  ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
@@ -4639,7 +4672,7 @@ BEGIN
                                  ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
                                  ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
                                  ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'zzzzzzz9'))||'</nrctremp>'
-                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit,'fm999g999g990d00')||'</vldivida>'
+                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,'fm999g999g990d00')||'</vldivida>'
                                  ||' <vljura60>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,'fm999g999g990d00')||'</vljura60>'
                                  ||' <vlpreemp>'||to_char(nvl(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,0),'fm999g990d00')||'</vlpreemp>'
                                  ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
@@ -4859,15 +4892,15 @@ BEGIN
                                                          ,pr_nrctremp => vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc  -- Numero do contrato
                                                          ,pr_cdorigem => 4                                             -- Origem cyber
                                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
-                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit  -- Saldo devedor
+                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev-- Saldo devedor
                                                          ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit  -- Valor a regularizar
                                                          ,pr_qtprepag => 0                                             -- Prestacoes Pagas
-                                                         ,pr_txmensal => vr_txmensal                                   -- Taxa mensal
+                                                         ,pr_txmensal => vr_tab_craptdb(vr_indice_dados_tdb).txmensal  -- Taxa mensal
                                                          ,pr_txdiaria => 0                                             -- Taxa diaria
                                                          ,pr_vlprepag => 0                                             -- Vlr. Prest. Pagas
                                                          ,pr_qtmesdec => 0                                             -- Qtd. meses decorridos
                                                          ,pr_dtdpagto => vr_tab_craptdb(vr_indice_dados_tdb).dtdpagto  -- Data de pagamento
-                                                         ,pr_cdlcremp => 0                                             -- Codigo da linha de credito
+                                                         ,pr_cdlcremp => vr_tab_craptdb(vr_indice_dados_tdb).cddlinha  -- Codigo da linha de credito
                                                          ,pr_cdfinemp => 0                                             -- Codigo da finalidade.
                                                          ,pr_dtefetiv => vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt  -- Data da efetivacao do emprestimo.
                                                          ,pr_vlemprst => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Valor emprestado.
@@ -4945,7 +4978,7 @@ BEGIN
                                                          ||vr_dsorigem||vr_dssepcol_354
                                                          ||LPAD(to_char(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'fm99999999'),8,' ')||vr_dssepcol_354
                                                          ||RPAD(vr_cdlcremp_354,8,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit,8,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,8,' ')||vr_dssepcol_354
                                                          ||RPAD(NVL(to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60),' '),8,' ')||vr_dssepcol_354
                                                          ||RPAD(NVL(to_char(vr_tab_craptdb(vr_indice_dados_tdb).vltitulo),' '),8,' ')||vr_dssepcol_354
                                                          ||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'999990d00')||vr_dssepcol_354
