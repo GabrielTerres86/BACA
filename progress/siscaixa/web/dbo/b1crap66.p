@@ -51,9 +51,6 @@
 
                16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
-             
-              23/05/2018  - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom)
-             
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -359,7 +356,7 @@ PROCEDURE valida-conta:
                                               INPUT  p-cod-agencia,
                                               INPUT  p-nro-caixa,
                                               0,
-                                              INPUT  crapdat.dtmvtocd,  /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                                              INPUT  crapdat.dtmvtolt,
                                               INPUT  "b1crap51",
                                               INPUT  2, /*CAIXA*/
                                               OUTPUT TABLE tt-erro).
@@ -1064,7 +1061,7 @@ PROCEDURE valida-deposito-com-captura:
                                              INPUT  p-cod-agencia,
                                              INPUT  p-nro-caixa,
                                              0,
-                                             INPUT  crapdat.dtmvtocd, /*23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                                             INPUT  crapdat.dtmvtolt,
                                              INPUT  "b1crap51",
                                              INPUT  2, /*CAIXA*/
                                              OUTPUT TABLE tt-erro).
@@ -1164,7 +1161,7 @@ PROCEDURE valida-deposito-com-captura:
          ASSIGN  aux_tpdmovto = 1.
 
     IF  CAN-FIND(crapchd WHERE crapchd.cdcooper = crapcop.cdcooper     AND
-                               crapchd.dtmvtolt = crapdat.dtmvtocd     AND  /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                               crapchd.dtmvtolt = crapdat.dtmvtolt     AND
                                crapchd.cdcmpchq = p-cdcmpchq           AND
                                crapchd.cdbanchq = p-cdbanchq           AND
                                crapchd.cdagechq = p-cdagechq           AND
@@ -1263,7 +1260,7 @@ PROCEDURE valida-deposito-com-captura:
 
      FOR EACH w-compel NO-LOCK :   /* Verifica Lancamento Existente */
          FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper   AND
-                                  crapchd.dtmvtolt = crapdat.dtmvtocd   AND /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                                  crapchd.dtmvtolt = crapdat.dtmvtolt   AND
                                   crapchd.cdcmpchq = w-compel.cdcmpchq  AND
                                   crapchd.cdbanchq = w-compel.cdbanchq  AND
                                   crapchd.cdagechq = w-compel.cdagechq  AND
@@ -1557,7 +1554,7 @@ PROCEDURE atualiza-deposito-com-captura:
            dt-maior-praca  = ?
            dt-menor-fpraca = ?
            dt-maior-fpraca = ?
-           dt-menor-fpraca = crapdat.dtmvtocd  /* 23/05/2018 - Alterdo para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+           dt-menor-fpraca = crapdat.dtmvtolt
            aux_nrdconta = p-nro-conta.
     /*--- Verifica se Houve Transferencia de Conta --*/
     ASSIGN aux_nrtrfcta = 0.
@@ -1637,7 +1634,7 @@ PROCEDURE atualiza-deposito-com-captura:
     ASSIGN c-docto-salvo = STRING(time).
 
     FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                             craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                             craplot.dtmvtolt = crapdat.dtmvtolt  AND
                              craplot.cdagenci = p-cod-agencia     AND
                              craplot.cdbccxlt = 11                AND /* Fixo */
                              craplot.nrdolote = i-nro-lote 
@@ -1647,7 +1644,7 @@ PROCEDURE atualiza-deposito-com-captura:
          DO: 
              CREATE craplot.
              ASSIGN craplot.cdcooper = crapcop.cdcooper
-                    craplot.dtmvtolt = crapdat.dtmvtocd   /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                    craplot.dtmvtolt = crapdat.dtmvtolt
                     craplot.cdagenci = p-cod-agencia
                     craplot.cdbccxlt = 11
                     craplot.nrdolote = i-nro-lote
@@ -1716,7 +1713,7 @@ PROCEDURE atualiza-deposito-com-captura:
                              OUTPUT glb_stsnrcal).
 
         FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper    AND
-                                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                                 crapchd.dtmvtolt = crapdat.dtmvtolt    AND
                                  crapchd.cdcmpchq = crapmdw.cdcmpchq    AND
                                  crapchd.cdbanchq = crapmdw.cdbanchq    AND
                                  crapchd.cdagechq = crapmdw.cdagechq    AND
@@ -1748,7 +1745,7 @@ PROCEDURE atualiza-deposito-com-captura:
                crapchd.cdoperad = p-cod-operador
                crapchd.cdsitatu = 1
                crapchd.dsdocmc7 = crapmdw.dsdocmc7
-               crapchd.dtmvtolt = crapdat.dtmvtocd  /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+               crapchd.dtmvtolt = crapdat.dtmvtolt
                crapchd.inchqcop = IF crapmdw.nrctaaux > 0 THEN 1 ELSE 0
                crapchd.insitchq = 0
                crapchd.cdtipchq = crapmdw.cdtipchq
@@ -1785,7 +1782,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                                    INPUT p-cod-agencia,
                                                    INPUT p-nro-caixa,
                                                    INPUT p-cod-operador,
-                                                   INPUT crapdat.dtmvtocd,  /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                                                   INPUT crapdat.dtmvtolt,
                                                    INPUT 1). /*Inclusao*/ 
         DELETE PROCEDURE h_b1crap00.
 
@@ -1805,7 +1802,7 @@ PROCEDURE atualiza-deposito-com-captura:
           END.
 
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtocd  AND /* 3/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+                            crapbcx.dtmvtolt = crapdat.dtmvtolt  AND
                             crapbcx.cdagenci = p-cod-agencia     AND
                             crapbcx.nrdcaixa = p-nro-caixa       AND
                             crapbcx.cdopecxa = p-cod-operador    AND
@@ -1827,7 +1824,7 @@ PROCEDURE atualiza-deposito-com-captura:
          END.
 
     CREATE craplcx.
-    ASSIGN craplcx.dtmvtolt = crapdat.dtmvtocd /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+    ASSIGN craplcx.dtmvtolt = crapdat.dtmvtolt
            craplcx.cdagenci = p-cod-agencia
            craplcx.nrdcaixa = p-nro-caixa
            craplcx.cdopecxa = p-cod-operador
@@ -1852,7 +1849,7 @@ PROCEDURE atualiza-deposito-com-captura:
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                            TRIM(crapcop.nmextcop)
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " +            /* 23/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PA  " +
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +
@@ -1975,7 +1972,7 @@ PROCEDURE gera-tabela-resumo-cheques:
             dt-maior-praca  = ?
             dt-menor-fpraca = ?
             dt-maior-fpraca = ?
-            dt-menor-fpraca = crapdat.dtmvtocd.         /* 23/05/2018 - Alterdo para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
+            dt-menor-fpraca = crapdat.dtmvtolt.
             
      DO   aux_contador = 1 TO 4:
           ASSIGN dt-menor-fpraca = dt-menor-fpraca + 1.

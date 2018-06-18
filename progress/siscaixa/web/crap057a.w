@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 25/05/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 30/10/2006.
 
    Dados referentes ao programa:
 
@@ -20,9 +20,6 @@
 
                30/10/2006 - Controle para exclusao das instancias das BO's
                             (Evandro).
-
-               25/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
-                            norturno rodando (Douglas Pagel - AMcom)
 
 ............................................................................ */
 
@@ -573,7 +570,7 @@ PROCEDURE process-web-request :
         RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
         RUN dbo/b1crap57.p PERSISTENT SET h-b1crap57.
 
-        RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
+        RUN valida-transacao IN h-b1crap00(INPUT v_coop,
                                            INPUT v_pac,
                                            INPUT v_caixa).
 

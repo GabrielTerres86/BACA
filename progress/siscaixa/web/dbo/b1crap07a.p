@@ -5,9 +5,6 @@
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
 
-                02/05/2018 - Utilizaçao do caixa on-line mesmo se o processo 
-                             batch (noturno) estiver executando (Fabio Adriano - AMcom)
-
 ----------------------------------------------------------------------------- */
 {dbo/bo-erro1.i}
 
@@ -31,7 +28,7 @@ PROCEDURE saldo-inicial-boletim:
                              NO-LOCK NO-ERROR.
 
     FIND first crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
                              crapbcx.cdopecxa = p-cod-operador      AND
                              crapbcx.cdsitbcx = 1 
                              USE-INDEX crapbcx3 NO-LOCK NO-ERROR.
@@ -42,7 +39,7 @@ PROCEDURE saldo-inicial-boletim:
         END.
     ELSE 
         DO:
-            ASSIGN i-cod-erro  = 701  /* Boletim de caixa nao encontrado */
+            ASSIGN i-cod-erro  = 701
                    c-desc-erro = " ".           
             RUN cria-erro (INPUT p-cod-agencia,
                            INPUT p-nro-caixa,

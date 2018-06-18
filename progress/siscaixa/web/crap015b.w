@@ -13,9 +13,6 @@ Alteracoes: 29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Od
 
             06/10/2017 - Ajuste no bloco de transacao da rotina de estorno NPC (Rafael)
 
-            22/05/2018 - Utilizaçao do Caixa Online mesmo com o processo batch (noturno)
-                         em execuçao (Fabio Adriano - AMcom)
-
 ..............................................................................*/
 { sistema/generico/includes/var_oracle.i }
 
@@ -498,7 +495,7 @@ PROCEDURE process-web-request :
    *******************************************************************/
   ASSIGN glb_cdcooper = crapcop.cdcooper
          glb_nmrescop = crapcop.nmrescop
-         glb_dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
+         glb_dtmvtolt = crapdat.dtmvtolt
          glb_dtmvtopr = crapdat.dtmvtopr
          glb_dtmvtoan = crapdat.dtmvtoan
          glb_cdagenci = INTE(get-value("user_pac"))

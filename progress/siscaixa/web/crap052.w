@@ -10,9 +10,6 @@ Alteracoes: 17/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
                          Dataserver Oracle 
                          Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
 
-            25/05/2018 - Utilizaçao do Caixa Online mesmo com o processo 
-                         batch (noturno) executando (Fabio Adriano - AMcom)
-
 ............................................................................. */
 
 
@@ -558,8 +555,8 @@ PROCEDURE process-web-request :
      ASSIGN OK = "".
 
      /*  Monta a Data de Liberacao  para Depositos da Praca e Fora da Praca */
-     ASSIGN dt-menor-praca  = crapdat.dtmvtocd + 1
-            dt-maior-praca  = crapdat.dtmvtocd + 1.
+     ASSIGN dt-menor-praca  = crapdat.dtmvtolt + 1
+            dt-maior-praca  = crapdat.dtmvtolt + 1.
 
      /* Verificar se 'Data menor' eh Sabado,Domingo ou Feriado */
      DO WHILE TRUE:
@@ -633,7 +630,7 @@ PROCEDURE process-web-request :
        
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
-     RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
+     RUN valida-transacao IN h-b1crap00(INPUT v_coop,
                                         INPUT int(v_pac),
                                         INPUT int(v_caixa)).
 
@@ -872,8 +869,8 @@ PROCEDURE process-web-request :
     ASSIGN vh_foco = "7".
 
     /* Monta a Data de Liberacao para Depositos da Praca e Fora da Praca */
-    ASSIGN dt-menor-praca  = crapdat.dtmvtocd + 1
-           dt-maior-praca  = crapdat.dtmvtocd + 1.
+    ASSIGN dt-menor-praca  = crapdat.dtmvtolt + 1
+           dt-maior-praca  = crapdat.dtmvtolt + 1.
 
     /* Verificar se 'Data menor' eh Sabado,Domingo ou Feriado */
     DO WHILE TRUE:

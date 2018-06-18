@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 25/05/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 13/12/2013.
 
    Dados referentes ao programa:
 
@@ -27,10 +27,6 @@
                13/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)  
-                            
-               25/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
-                            norturno rodando (Douglas Pagel - AMcom)
-
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -510,7 +506,7 @@ PROCEDURE process-web-request :
          dt-maior-praca  = ?
          dt-menor-fpraca = ?
          dt-maior-fpraca = ?
-         dt-menor-fpraca = crapdat.dtmvtocd.
+         dt-menor-fpraca = crapdat.dtmvtolt.
 
   DO  aux_contador = 1 TO 4:
       ASSIGN dt-menor-fpraca = dt-menor-fpraca + 1.

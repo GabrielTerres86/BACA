@@ -10,7 +10,7 @@
    Frequencia:  Diario (on-line)
    Objetivo  :  Transferencia e deposito entre cooperativas.
 
-   Alteracoes: 25/05/2018 - Alteraçao para a procedire valida-transacao2 - Everton Deserto(AMCom).
+   Alteracoes:   
                           
 -----------------------------------------------------------------------------*/
 
@@ -671,7 +671,7 @@ PROCEDURE process-web-request :
         ELSE DO:
                 
             RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-            RUN valida-transacao2 IN h-b1crap00(INPUT v_coop, /* 25/05/2018 - Alterado para a procedure valida-transacao2 - Everton Deserto(AMCom)*/
+            RUN valida-transacao IN h-b1crap00(INPUT v_coop,
                                                INPUT v_pac,
                                                INPUT v_caixa).
             DELETE PROCEDURE h-b1crap00.

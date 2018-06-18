@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 21/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 06/02/2018
 
    Dados referentes ao programa:
 
@@ -100,9 +100,6 @@
 
                16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
-                            
-         21/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
-                      norturno rodando (Douglas Pagel - AMcom)
 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -889,8 +886,8 @@ PROCEDURE valida-outros:
                   END.
              ELSE 
                   DO:
-                      IF   p-liberacao <= crapdat.dtmvtocd      OR
-                           p-liberacao > crapdat.dtmvtocd + 30  OR
+                      IF   p-liberacao <= crapdat.dtmvtolt      OR
+                           p-liberacao > crapdat.dtmvtolt + 30  OR
                           (CAN-DO("1,7",STRING(weekday(p-liberacao))))   THEN
                            DO:
                                ASSIGN i-cod-erro  = 13  
@@ -930,7 +927,7 @@ PROCEDURE valida-outros:
          DO:
              FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper     AND
                                 craplcm.nrdconta = p-conta-atualiza     AND
-                                craplcm.dtmvtolt = crapdat.dtmvtocd     AND
+                                craplcm.dtmvtolt = crapdat.dtmvtolt     AND
                                 craplcm.cdhistor = 26                   AND
                                 craplcm.nrdocmto = p-nro-docto 
                                 USE-INDEX craplcm2 NO-LOCK NO-ERROR.
@@ -985,7 +982,7 @@ PROCEDURE valida-outros:
         
              FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper    AND
                                     craplcm.nrdconta  = crapsld.nrdconta    AND
-                                    craplcm.dtmvtolt  = crapdat.dtmvtocd    AND
+                                    craplcm.dtmvtolt  = crapdat.dtmvtolt    AND
                                     craplcm.cdhistor <> 289 USE-INDEX craplcm2
                                     NO-LOCK:
                                     
@@ -1034,10 +1031,9 @@ PROCEDURE valida-outros:
              FIND FIRST crapdpb WHERE crapdpb.cdcooper = crapcop.cdcooper   AND 
                                       crapdpb.nrdconta = aux_nrdconta       AND
                                       crapdpb.nrdocmto = p-nro-docto        AND
-                                      crapdpb.dtliblan > crapdat.dtmvtocd   AND
+                                      crapdpb.dtliblan > crapdat.dtmvtolt   AND
                                       crapdpb.inlibera  = 1  
                                       USE-INDEX crapdpb2 NO-LOCK NO-ERROR.
-         
              IF   NOT AVAIL crapdpb   THEN 
                   DO: 
                       ASSIGN i-cod-erro  = 82
@@ -1097,7 +1093,7 @@ PROCEDURE valida-outros:
 
              FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper    AND
                                     craplcm.nrdconta  = crapsld.nrdconta    AND
-                                    craplcm.dtmvtolt  = crapdat.dtmvtocd    AND
+                                    craplcm.dtmvtolt  = crapdat.dtmvtolt    AND
                                     craplcm.cdhistor <> 289
                                     USE-INDEX craplcm2 NO-LOCK:
 
@@ -1188,12 +1184,12 @@ PROCEDURE valida-outros:
    
     IF   p-nro-docto > 0 THEN 
          DO:
-             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper     AND
-                                craplcm.dtmvtolt = crapdat.dtmvtocd     AND
-                                craplcm.cdagenci = p-cod-agencia        AND
-                                craplcm.cdbccxlt = 11                   AND /*Fixo*/
-                                craplcm.nrdolote = i-nro-lote           AND
-                                craplcm.nrdctabb = aux_nrdconta         AND
+             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
+                                craplcm.dtmvtolt = crapdat.dtmvtolt AND
+                                craplcm.cdagenci = p-cod-agencia    AND
+                                craplcm.cdbccxlt = 11               AND /*Fixo*/
+                                craplcm.nrdolote = i-nro-lote       AND
+                                craplcm.nrdctabb = aux_nrdconta     AND
                                 craplcm.nrdocmto = p-nro-docto      
                                 USE-INDEX craplcm1 NO-ERROR.
                                 
@@ -1247,15 +1243,15 @@ PROCEDURE valida-outros:
     IF   craphis.inavisar = 1   THEN  
          DO:
              IF   CAN-FIND(crapavs WHERE 
-                           crapavs.cdcooper = crapcop.cdcooper    AND
-                           crapavs.dtmvtolt = crapdat.dtmvtocd    AND
-                           crapavs.cdempres = 0                   AND
-                           crapavs.cdagenci = crapass.cdagenci    AND
-                           crapavs.cdsecext = crapass.cdsecext    AND
-                           crapavs.nrdconta = crapass.nrdconta    AND
-                           crapavs.dtdebito = crapdat.dtmvtocd    AND
-                           crapavs.cdhistor = craphis.cdhistor    AND
-                           crapavs.nrdocmto = p-nro-docto)        THEN  
+                           crapavs.cdcooper = crapcop.cdcooper  AND
+                           crapavs.dtmvtolt = crapdat.dtmvtolt  AND
+                           crapavs.cdempres = 0                 AND
+                           crapavs.cdagenci = crapass.cdagenci  AND
+                           crapavs.cdsecext = crapass.cdsecext  AND
+                           crapavs.nrdconta = crapass.nrdconta  AND
+                           crapavs.dtdebito = crapdat.dtmvtolt  AND
+                           crapavs.cdhistor = craphis.cdhistor  AND
+                           crapavs.nrdocmto = p-nro-docto)      THEN  
                   DO:
                       ASSIGN i-cod-erro  = 22
                              c-desc-erro = " ".           
@@ -1298,7 +1294,6 @@ PROCEDURE atualiza-outros:
     DEFINE  VARIABLE i                  AS INTE NO-UNDO.
  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
-     
      
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -1382,7 +1377,7 @@ PROCEDURE atualiza-outros:
         END.
  
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
+                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
@@ -1392,7 +1387,7 @@ PROCEDURE atualiza-outros:
          DO:
              CREATE craplot.
              ASSIGN craplot.cdcooper = crapcop.cdcooper
-                    craplot.dtmvtolt = crapdat.dtmvtocd
+                    craplot.dtmvtolt = crapdat.dtmvtolt
                     craplot.cdagenci = p-cod-agencia   
                     craplot.cdbccxlt = 11              
                     craplot.nrdolote = i-nro-lote
@@ -1454,9 +1449,9 @@ PROCEDURE atualiza-outros:
                   LEAVE.
              END. /* DO WHILE*/
 
-             IF  (MONTH(crapatr.dtultdeb) <> MONTH(crapdat.dtmvtocd)    OR
-                 (YEAR(crapatr.dtultdeb) <> YEAR(crapdat.dtmvtocd)))   THEN
-                     ASSIGN crapatr.dtultdeb = crapdat.dtmvtocd.
+             IF  (MONTH(crapatr.dtultdeb) <> MONTH(crapdat.dtmvtolt)    OR
+                  (YEAR(crapatr.dtultdeb) <> YEAR(crapdat.dtmvtolt)))   THEN
+                  ASSIGN crapatr.dtultdeb = crapdat.dtmvtolt.
 
              RELEASE crapatr.
 
@@ -1470,9 +1465,9 @@ PROCEDURE atualiza-outros:
                     crapavs.cdempres = 0
                     crapavs.cdhistor = craphis.cdhistor
                     crapavs.cdsecext = crapass.cdsecext
-                    crapavs.dtdebito = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
-                    crapavs.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
-                    crapavs.dtrefere = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
+                    crapavs.dtdebito = crapdat.dtmvtolt
+                    crapavs.dtmvtolt = crapdat.dtmvtolt
+                    crapavs.dtrefere = crapdat.dtmvtolt
                     crapavs.insitavs = 0
                     crapavs.nrdconta = crapass.nrdconta
                     crapavs.nrdocmto = p-nro-docto
@@ -1499,7 +1494,7 @@ PROCEDURE atualiza-outros:
           
            CREATE craplcm.
            ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                  craplcm.dtmvtolt = IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd
+                  craplcm.dtmvtolt = crapdat.dtmvtolt
                   craplcm.cdagenci = p-cod-agencia
                   craplcm.cdbccxlt  = 11
                   craplcm.nrdolote = i-nro-lote
@@ -1562,7 +1557,7 @@ PROCEDURE atualiza-outros:
                              crapdpb.dtliblan = p-dtliblan
                              crapdpb.cdhistor = p-cdhistor
                              crapdpb.nrdocmto = p-nro-docto
-                             crapdpb.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
+                             crapdpb.dtmvtolt = crapdat.dtmvtolt
                              crapdpb.cdagenci = p-cod-agencia
                              crapdpb.cdbccxlt = 11     /* Fixo */
                              crapdpb.nrdolote = i-nro-lote
@@ -1581,7 +1576,7 @@ PROCEDURE atualiza-outros:
           
            CREATE craplcs.
            ASSIGN craplcs.cdcooper = crapcop.cdcooper
-                  craplcs.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
+                  craplcs.dtmvtolt = crapdat.dtmvtolt
                   craplcs.nrdolote = i-nro-lote
                   craplcs.nrdconta = aux_nrdconta
                   craplcs.nrdocmto = p-nro-docto
@@ -1701,7 +1696,7 @@ PROCEDURE atualiza-outros:
              ASSIGN c-literal-compr[01] = TRIM(crapcop.nmrescop) +  " - " +
                                           TRIM(crapcop.nmextcop) 
                     c-literal-compr[02] = " "
-                    c-literal-compr[03] = STRING((IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd),"99/99/99")
+                    c-literal-compr[03] = STRING(crapdat.dtmvtolt,"99/99/99")
                                           + " " + STRING(TIME,"HH:MM:SS") +
                                           " PA  " + 
                                           STRING(p-cod-agencia,"999") +

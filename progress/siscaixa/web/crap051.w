@@ -2,7 +2,7 @@
 
    Programa: siscaixa/web/crap051.w
    Sistema : Caixa On-line
-   Sigla   : CRED                            Ultima atualizacao: 09/05/2018.
+   Sigla   : CRED                            Ultima atualizacao: 16/04/2013.
 
    Dados referentes ao programa:
 
@@ -20,9 +20,6 @@
                             
                16/04/2013 - Adicionado verificacao de sangria de caixa no
                             REQUEST-METHOD = GET. (Fabricio)
-                            
-               09/05/2018 - possibilidade de utilizaçao do Caixa On-lie mesmo com o
-                            processo batch (noturno) executando (Fabio Adriano - AMcom)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI adm2
@@ -503,9 +500,8 @@ PROCEDURE process-web-request :
     
     {include/assignfields.i}
 
-     /*possibilidade de utilizaçao do Caixa On-lie mesmo com o processo batch (noturno) executando*/
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-     RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
+     RUN valida-transacao IN h-b1crap00(INPUT v_coop,
                                         INPUT v_pac,
                                         INPUT v_caixa).
      DELETE PROCEDURE h-b1crap00.

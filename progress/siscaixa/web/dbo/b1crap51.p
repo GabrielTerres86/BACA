@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 01/06/2017
 
    Dados referentes ao programa:
 
@@ -175,9 +175,6 @@
                       
                16/03/2018 - Substituida verificacao "cdtipcta entre 8 e 11" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
-                            
-               17/05/2018 - Utilizaçao do caixa on-line mesmo com o processo batch (noturno) executando
-                            (Fabio Adriano - AMcom)
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -416,7 +413,6 @@ PROCEDURE valida-conta:
                                       INPUT p-cod-agencia,
                                       INPUT p-nro-caixa,
                                       INPUT-OUTPUT i_conta).
-                                      
     DELETE PROCEDURE h_b2crap00.
     IF   RETURN-VALUE = "NOK"   THEN
          RETURN "NOK".
@@ -502,7 +498,7 @@ PROCEDURE valida-conta:
                                               INPUT  p-cod-agencia,
                                               INPUT  p-nro-caixa,
                                               0,
-                                              INPUT  crapdat.dtmvtocd,
+                                              INPUT  crapdat.dtmvtolt,
                                               INPUT  "b1crap51",
                                               INPUT  2, /*CAIXA*/
                                               OUTPUT TABLE tt-erro).
@@ -1274,7 +1270,7 @@ PROCEDURE valida-deposito-com-captura:
                                              INPUT  p-cod-agencia,
                                              INPUT  p-nro-caixa,
                                              0,
-                                             INPUT  crapdat.dtmvtocd,
+                                             INPUT  crapdat.dtmvtolt,
                                              INPUT  "b1crap51",
                                              INPUT  2, /*CAIXA*/
                                              OUTPUT TABLE tt-erro).
@@ -1417,8 +1413,8 @@ PROCEDURE valida-deposito-com-captura:
          ASSIGN  aux_tpdmovto = 1.
 
 
-    IF   CAN-FIND (crapchd WHERE crapchd.cdcooper = crapcop.cdcooper     AND
-                                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
+    IF   CAN-FIND(crapchd WHERE crapchd.cdcooper = crapcop.cdcooper     AND
+                                crapchd.dtmvtolt = crapdat.dtmvtolt     AND
                                 crapchd.cdcmpchq = p-cdcmpchq           AND
                                 crapchd.cdbanchq = p-cdbanchq           AND
                                 crapchd.cdagechq = p-cdagechq           AND
@@ -1523,14 +1519,14 @@ PROCEDURE valida-deposito-com-captura:
                ASSIGN w-compel.nrdocmto = aux_nrdocchq.*/
 
     FOR EACH w-compel NO-LOCK :   /* Verifica Lancamento Existente */
-        FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper    AND
-                                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
-                                 crapchd.cdcmpchq = w-compel.cdcmpchq   AND
-                                 crapchd.cdbanchq = w-compel.cdbanchq   AND
-                                 crapchd.cdagechq = w-compel.cdagechq   AND
+        FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper   AND
+                                 crapchd.dtmvtolt = crapdat.dtmvtolt   AND
+                                 crapchd.cdcmpchq = w-compel.cdcmpchq  AND
+                                 crapchd.cdbanchq = w-compel.cdbanchq  AND
+                                 crapchd.cdagechq = w-compel.cdagechq  AND
                                  crapchd.nrctachq = (IF aux_nrctcomp > 0 
                                                         THEN p-nrctabdb
-                                                    ELSE de-nrctachq)   AND
+                                                    ELSE de-nrctachq)  AND
                                  crapchd.nrcheque = w-compel.nrcheque 
                                  NO-LOCK NO-ERROR.
                                   
@@ -1757,7 +1753,7 @@ PROCEDURE valida-deposito-com-captura:
               
               RUN calcula_bloqueio_cheque IN h-b1wgen0044
                                           (INPUT crapcop.cdcooper,
-                                          INPUT crapdat.dtmvtocd,
+                                           INPUT crapdat.dtmvtolt,
                                            INPUT p-cod-agencia,
                                            INPUT p-cdbanchq,
                                            INPUT p-cdagechq,
@@ -2183,7 +2179,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                                              INPUT  p-cod-agencia,
                                              INPUT  p-nro-caixa,
                                              0,
-                                             INPUT  crapdat.dtmvtocd,
+                                             INPUT  crapdat.dtmvtolt,
                                              INPUT  "b1crap51",
                                              INPUT  2, /*CAIXA*/
                                              OUTPUT TABLE tt-erro).
@@ -2323,7 +2319,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
          ASSIGN  aux_tpdmovto = 1.
 
     IF   CAN-FIND(crapchd WHERE crapchd.cdcooper = crapcop.cdcooper     AND
-                                crapchd.dtmvtolt = crapdat.dtmvtocd     AND
+                                crapchd.dtmvtolt = crapdat.dtmvtolt     AND
                                 crapchd.cdcmpchq = p-cdcmpchq           AND
                                 crapchd.cdbanchq = p-cdbanchq           AND
                                 crapchd.cdagechq = p-cdagechq           AND
@@ -2424,14 +2420,14 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                ASSIGN w-compel.nrdocmto = aux_nrdocchq.*/
 
      FOR EACH w-compel NO-LOCK :   /* Verifica Lancamento Existente */
-         FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper    AND
-                                  crapchd.dtmvtolt = crapdat.dtmvtocd    AND
-                                  crapchd.cdcmpchq = w-compel.cdcmpchq   AND
-                                  crapchd.cdbanchq = w-compel.cdbanchq   AND
-                                  crapchd.cdagechq = w-compel.cdagechq   AND
+         FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper   AND
+                                  crapchd.dtmvtolt = crapdat.dtmvtolt   AND
+                                  crapchd.cdcmpchq = w-compel.cdcmpchq  AND
+                                  crapchd.cdbanchq = w-compel.cdbanchq  AND
+                                  crapchd.cdagechq = w-compel.cdagechq  AND
                                   crapchd.nrctachq = (IF aux_nrctcomp > 0 
                                                          THEN p-nrctabdb
-                                                     ELSE de-nrctachq)   AND
+                                                     ELSE de-nrctachq)  AND
                                   crapchd.nrcheque = w-compel.nrcheque 
                                   NO-LOCK NO-ERROR.
                                   
@@ -2636,7 +2632,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                     
               RUN calcula_bloqueio_cheque IN h-b1wgen0044
                                           (INPUT crapcop.cdcooper,
-                                           INPUT crapdat.dtmvtocd,
+                                           INPUT crapdat.dtmvtolt,
                                            INPUT p-cod-agencia,
                                            INPUT p-cdbanchq,
                                            INPUT p-cdagechq,
@@ -2787,23 +2783,21 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                                    INT(SUBSTRING(craptab.dstextab,7,4)))
                tab_dtfimpmf = DATE(INT(SUBSTRING(craptab.dstextab,15,2)),
                                    INT(SUBSTRING(craptab.dstextab,12,2)),
-                                   INT(SUBSTRING(craptab.dstextab,18,4))).
-                                   
-        ASSIGN tab_txcpmfcc = IF  crapdat.dtmvtocd >= tab_dtinipmf  AND
-                                  crapdat.dtmvtocd <= tab_dtfimpmf  THEN
+                                   INT(SUBSTRING(craptab.dstextab,18,4)))
+               tab_txcpmfcc = IF  crapdat.dtmvtolt >= tab_dtinipmf  AND
+                                  crapdat.dtmvtolt <= tab_dtfimpmf  THEN
                                   DECIMAL(SUBSTR(craptab.dstextab,23,13))
                               ELSE
                                   0
-               tab_txrdcpmf = IF  crapdat.dtmvtocd >= tab_dtinipmf  AND
-                                  crapdat.dtmvtocd <= tab_dtfimpmf  THEN
+               tab_txrdcpmf = IF  crapdat.dtmvtolt >= tab_dtinipmf  AND
+                                  crapdat.dtmvtolt <= tab_dtfimpmf  THEN
                                   DECIMAL(SUBSTR(craptab.dstextab,38,13))
                               ELSE 
                                   1.
 
-
         FOR EACH craplcm WHERE craplcm.cdcooper  = crapsld.cdcooper     AND
                                craplcm.nrdconta  = crapsld.nrdconta     AND
-                               craplcm.dtmvtolt  = crapdat.dtmvtocd     AND
+                               craplcm.dtmvtolt  = crapdat.dtmvtolt     AND
                                craplcm.cdhistor <> 289                  
                                USE-INDEX craplcm2 NO-LOCK:
 
@@ -3231,7 +3225,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
                                              INPUT  p-cod-agencia,
                                              INPUT  p-nro-caixa,
                                              0,
-                                             INPUT  crapdat.dtmvtocd,
+                                             INPUT  crapdat.dtmvtolt,
                                              INPUT  "b1crap51",
                                              INPUT  2, /*CAIXA*/
                                              OUTPUT TABLE tt-erro).
@@ -3372,7 +3366,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
          ASSIGN  aux_tpdmovto = 1.
     
     IF   CAN-FIND(crapchd WHERE crapchd.cdcooper = crabcop.cdcooper     AND
-                                crapchd.dtmvtolt = crapdat.dtmvtocd     AND
+                                crapchd.dtmvtolt = crapdat.dtmvtolt     AND
                                 crapchd.cdcmpchq = p-cdcmpchq           AND
                                 crapchd.cdbanchq = p-cdbanchq           AND
                                 crapchd.cdagechq = p-cdagechq           AND
@@ -3470,14 +3464,14 @@ PROCEDURE valida-deposito-com-captura-migrado:
                ASSIGN w-compel.nrdocmto = aux_nrdocchq.*/
 
      FOR EACH w-compel NO-LOCK :   /* Verifica Lancamento Existente */
-         FIND FIRST crapchd WHERE crapchd.cdcooper = crabcop.cdcooper    AND
-                                  crapchd.dtmvtolt = crapdat.dtmvtocd    AND
-                                  crapchd.cdcmpchq = w-compel.cdcmpchq   AND
-                                  crapchd.cdbanchq = w-compel.cdbanchq   AND
-                                  crapchd.cdagechq = w-compel.cdagechq   AND
+         FIND FIRST crapchd WHERE crapchd.cdcooper = crabcop.cdcooper   AND
+                                  crapchd.dtmvtolt = crapdat.dtmvtolt   AND
+                                  crapchd.cdcmpchq = w-compel.cdcmpchq  AND
+                                  crapchd.cdbanchq = w-compel.cdbanchq  AND
+                                  crapchd.cdagechq = w-compel.cdagechq  AND
                                   crapchd.nrctachq = (IF aux_nrctcomp > 0 
                                                          THEN p-nrctabdb
-                                                     ELSE de-nrctachq)   AND
+                                                     ELSE de-nrctachq)  AND
                                   crapchd.nrcheque = w-compel.nrcheque 
                                   NO-LOCK NO-ERROR.
                                   
@@ -3622,7 +3616,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
                     
               RUN calcula_bloqueio_cheque IN h-b1wgen0044
                                           (INPUT crapcop.cdcooper,
-                                           INPUT crapdat.dtmvtocd,
+                                           INPUT crapdat.dtmvtolt,
                                            INPUT p-cod-agencia,
                                            INPUT p-cdbanchq,
                                            INPUT p-cdagechq,
@@ -3957,7 +3951,7 @@ PROCEDURE atualiza-deposito-com-captura:
            dt-maior-praca  = ?
            dt-menor-fpraca = ?
            dt-maior-fpraca = ?
-           dt-menor-fpraca = crapdat.dtmvtocd.
+           dt-menor-fpraca = crapdat.dtmvtolt.
            
     ASSIGN aux_nrdconta = p-nro-conta.
     /*--- Verifica se Houve Transferencia de Conta --*/
@@ -4056,7 +4050,7 @@ PROCEDURE atualiza-deposito-com-captura:
     DO aux_contalot = 1 TO 5:
     
         FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                                 craplot.dtmvtolt = crapdat.dtmvtocd  AND
+                                 craplot.dtmvtolt = crapdat.dtmvtolt  AND
                                  craplot.cdagenci = p-cod-agencia     AND
                                  craplot.cdbccxlt = 11                AND /* Fixo */
                                  craplot.nrdolote = i-nro-lote 
@@ -4075,7 +4069,7 @@ PROCEDURE atualiza-deposito-com-captura:
                DO:
                    CREATE craplot.
                    ASSIGN craplot.cdcooper = crapcop.cdcooper
-                          craplot.dtmvtolt = crapdat.dtmvtocd
+                          craplot.dtmvtolt = crapdat.dtmvtolt
                           craplot.cdagenci = p-cod-agencia
                           craplot.cdbccxlt = 11
                           craplot.nrdolote = i-nro-lote
@@ -4214,7 +4208,7 @@ PROCEDURE atualiza-deposito-com-captura:
                       /*--- Verifica se Lancamento ja Existe ---*/
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -4236,7 +4230,7 @@ PROCEDURE atualiza-deposito-com-captura:
 
                       FIND FIRST craplcm WHERE 
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -4260,7 +4254,7 @@ PROCEDURE atualiza-deposito-com-captura:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtocd
+                             craplcm.dtmvtolt = crapdat.dtmvtolt
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -4296,7 +4290,7 @@ PROCEDURE atualiza-deposito-com-captura:
                       /*--- Verifica se Lancamento ja Existe ---*/
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -4318,7 +4312,7 @@ PROCEDURE atualiza-deposito-com-captura:
 
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -4342,7 +4336,7 @@ PROCEDURE atualiza-deposito-com-captura:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtocd
+                             craplcm.dtmvtolt = crapdat.dtmvtolt
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -4390,7 +4384,7 @@ PROCEDURE atualiza-deposito-com-captura:
         /*--- Verifica se Lancamento ja Existe ---*/
         FIND FIRST craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                    craplcm.cdagenci = p-cod-agencia       AND
                    craplcm.cdbccxlt = 11                  AND
                    craplcm.nrdolote = i-nro-lote          AND
@@ -4412,7 +4406,7 @@ PROCEDURE atualiza-deposito-com-captura:
 
         FIND FIRST craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                    craplcm.cdagenci = p-cod-agencia       AND
                    craplcm.cdbccxlt = 11                  AND
                    craplcm.nrdolote = i-nro-lote          AND
@@ -4436,7 +4430,7 @@ PROCEDURE atualiza-deposito-com-captura:
         /*----------------------------------------------------*/        
         CREATE craplcm.
         ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtocd
+               craplcm.dtmvtolt = crapdat.dtmvtolt
                craplcm.cdagenci = p-cod-agencia
                craplcm.cdbccxlt = 11
                craplcm.nrdolote = i-nro-lote
@@ -4444,7 +4438,7 @@ PROCEDURE atualiza-deposito-com-captura:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 2433
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -4459,15 +4453,15 @@ PROCEDURE atualiza-deposito-com-captura:
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
                craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr + tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr + tt-cheques.vlcompel.
+              craplot.vlcompcr  = craplot.vlcompcr + tt-cheques.vlcompel
+              craplot.vlinfocr  = craplot.vlinfocr + tt-cheques.vlcompel.
         CREATE crapdpb.
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 2433
+              crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtocd
+               crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
                crapdpb.cdbccxlt = 11
                crapdpb.nrdolote = i-nro-lote
@@ -4487,7 +4481,7 @@ PROCEDURE atualiza-deposito-com-captura:
                              OUTPUT glb_stsnrcal).
 
         FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper    AND
-                                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
+                                 crapchd.dtmvtolt = crapdat.dtmvtolt    AND
                                  crapchd.cdcmpchq = crapmdw.cdcmpchq    AND
                                  crapchd.cdbanchq = crapmdw.cdbanchq    AND
                                  crapchd.cdagechq = crapmdw.cdagechq    AND
@@ -4530,7 +4524,7 @@ PROCEDURE atualiza-deposito-com-captura:
                crapchd.cdoperad = p-cod-operador
                crapchd.cdsitatu = 1
                crapchd.dsdocmc7 = crapmdw.dsdocmc7
-               crapchd.dtmvtolt = crapdat.dtmvtocd
+               crapchd.dtmvtolt = crapdat.dtmvtolt
                crapchd.inchqcop = IF crapmdw.nrctaaux > 0 THEN 1 ELSE 0
                crapchd.insitchq = 0
                crapchd.cdtipchq = crapmdw.cdtipchq
@@ -4566,7 +4560,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                                            INPUT p-cod-agencia,
                                                            INPUT p-nro-caixa,
                                                            INPUT p-cod-operador,
-                                                           INPUT crapdat.dtmvtocd,
+                                                           INPUT crapdat.dtmvtolt,
                                                            INPUT 1). /*Inclusao*/ 
                 DELETE PROCEDURE h_b1crap00.
             END.
@@ -4587,7 +4581,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                INPUT p-nro-caixa,             
                                INPUT p-cod-operador,
                                INPUT ROWID(crapmdw),
-                               INPUT crapdat.dtmvtocd,
+                               INPUT crapdat.dtmvtolt,
                                INPUT 0).             
 
         /* volta infos da ultima autenticacao 700 */
@@ -4608,7 +4602,7 @@ PROCEDURE atualiza-deposito-com-captura:
         /* Pagamento Cheque */
         
         ASSIGN crablcm.cdcooper = crapcop.cdcooper
-               crablcm.dtmvtolt = crapdat.dtmvtocd
+               crablcm.dtmvtolt = crapdat.dtmvtolt
                crablcm.cdagenci = p-cod-agencia
                crablcm.cdbccxlt = 11 /* Fixo */
                crablcm.nrdolote = i-nro-lote
@@ -4651,7 +4645,7 @@ PROCEDURE atualiza-deposito-com-captura:
              END.
 
         ASSIGN crabfdc.incheque = crabfdc.incheque + 5
-               crabfdc.dtliqchq = crapdat.dtmvtocd
+               crabfdc.dtliqchq = crapdat.dtmvtolt
                crabfdc.cdoperad = p-cod-operador
                crabfdc.vlcheque = crapmdw.vlcompel
                
@@ -4736,7 +4730,7 @@ PROCEDURE atualiza-deposito-com-captura:
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                            TRIM(crapcop.nmextcop)
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
+           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PAC " +
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +
@@ -5030,7 +5024,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
            dt-maior-praca  = ?
            dt-menor-fpraca = ?
            dt-maior-fpraca = ?
-           dt-menor-fpraca = crapdat.dtmvtocd.
+           dt-menor-fpraca = crapdat.dtmvtolt.
            
     ASSIGN aux_nrdconta = p-nro-conta.
     /*--- Verifica se Houve Transferencia de Conta --*/
@@ -5215,7 +5209,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
     DO aux_contalot = 1 TO 5:
     
         FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                                 craplot.dtmvtolt = crapdat.dtmvtocd  AND
+                                 craplot.dtmvtolt = crapdat.dtmvtolt  AND
                                  craplot.cdagenci = p-cod-agencia     AND
                                  craplot.cdbccxlt = 11                AND /* Fixo */
                                  craplot.nrdolote = i-nro-lote 
@@ -5234,7 +5228,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
             DO:
                 CREATE craplot.
                 ASSIGN craplot.cdcooper = crapcop.cdcooper
-                       craplot.dtmvtolt = crapdat.dtmvtocd
+                       craplot.dtmvtolt = crapdat.dtmvtolt
                        craplot.cdagenci = p-cod-agencia
                        craplot.cdbccxlt = 11
                        craplot.nrdolote = i-nro-lote
@@ -5281,7 +5275,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                       /*--- Verifica se Lancamento ja Existe ---*/
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -5303,7 +5297,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
 
                       FIND FIRST craplcm WHERE 
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -5327,7 +5321,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtocd
+                             craplcm.dtmvtolt = crapdat.dtmvtolt
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -5364,7 +5358,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                       /*--- Verifica se Lancamento ja Existe ---*/
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -5386,7 +5380,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
 
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -5410,7 +5404,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtocd
+                             craplcm.dtmvtolt = crapdat.dtmvtolt
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -5458,7 +5452,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         /*--- Verifica se Lancamento ja Existe ---*/
         FIND FIRST craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                    craplcm.cdagenci = p-cod-agencia       AND
                    craplcm.cdbccxlt = 11                  AND
                    craplcm.nrdolote = i-nro-lote          AND
@@ -5480,7 +5474,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
 
         FIND FIRST craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                    craplcm.cdagenci = p-cod-agencia       AND
                    craplcm.cdbccxlt = 11                  AND
                    craplcm.nrdolote = i-nro-lote          AND
@@ -5505,7 +5499,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         /*----------------------------------------------------*/        
         CREATE craplcm.
         ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtocd
+               craplcm.dtmvtolt = crapdat.dtmvtolt
                craplcm.cdagenci = p-cod-agencia
                craplcm.cdbccxlt = 11
                craplcm.nrdolote = i-nro-lote
@@ -5513,7 +5507,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 2433
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -5535,9 +5529,9 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 2433
+              crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtocd
+               crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
                crapdpb.cdbccxlt = 11
                crapdpb.nrdolote = i-nro-lote
@@ -5559,7 +5553,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
 
         /* Validar o chd na cooperativa geradora do cheque */
         FIND FIRST crapchd WHERE crapchd.cdcooper = crapmdw.cdcooper    AND
-                                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
+                                 crapchd.dtmvtolt = crapdat.dtmvtolt    AND
                                  crapchd.cdcmpchq = crapmdw.cdcmpchq    AND
                                  crapchd.cdbanchq = crapmdw.cdbanchq    AND
                                  crapchd.cdagechq = crapmdw.cdagechq    AND
@@ -5602,7 +5596,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                crapchd.cdoperad = p-cod-operador
                crapchd.cdsitatu = 1
                crapchd.dsdocmc7 = crapmdw.dsdocmc7
-               crapchd.dtmvtolt = crapdat.dtmvtocd
+               crapchd.dtmvtolt = crapdat.dtmvtolt
                crapchd.inchqcop = IF crapmdw.nrctaaux > 0 THEN 1 ELSE 0
                crapchd.insitchq = 0
                crapchd.cdtipchq = crapmdw.cdtipchq
@@ -5638,7 +5632,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                                            INPUT p-cod-agencia,
                                                            INPUT p-nro-caixa,
                                                            INPUT p-cod-operador,
-                                                           INPUT crapdat.dtmvtocd,
+                                                           INPUT crapdat.dtmvtolt,
                                                            INPUT 1). /*Inclusao*/ 
                 DELETE PROCEDURE h_b1crap00.
             END.
@@ -5658,7 +5652,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                INPUT p-nro-caixa,             
                                INPUT p-cod-operador,
                                INPUT ROWID(crapmdw),
-                               INPUT crapdat.dtmvtocd,
+                               INPUT crapdat.dtmvtolt,
                                INPUT 0).             
 
         /* volta infos da ultima autenticacao 700 */
@@ -5691,7 +5685,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
              /* Pagamento Cheque */
              
              ASSIGN crablcm.cdcooper = crapcop.cdcooper
-                    crablcm.dtmvtolt = crapdat.dtmvtocd
+                    crablcm.dtmvtolt = crapdat.dtmvtolt
                     crablcm.cdagenci = p-cod-agencia
                     crablcm.cdbccxlt = 11 /* Fixo */
                     crablcm.nrdolote = i-nro-lote
@@ -5715,7 +5709,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
              
              
              ASSIGN crabfdc.incheque = crabfdc.incheque + 5
-                    crabfdc.dtliqchq = crapdat.dtmvtocd
+                    crabfdc.dtliqchq = crapdat.dtmvtolt
                     crabfdc.cdoperad = "1" /* SUPER-USUARIO para migracao */
                     crabfdc.vlcheque = crapmdw.vlcompel
              
@@ -5815,7 +5809,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                      /* Pagamento Cheque */                 
 
                      ASSIGN crablcm.cdcooper = crapcop.cdcooper
-                            crablcm.dtmvtolt = crapdat.dtmvtocd
+                            crablcm.dtmvtolt = crapdat.dtmvtolt
                             crablcm.cdagenci = craplot.cdagenci
                             crablcm.cdbccxlt = craplot.cdbccxlt
                             crablcm.nrdolote = craplot.nrdolote
@@ -5839,7 +5833,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                  
                  
                      ASSIGN crabfdc.incheque = crabfdc.incheque + 5
-                            crabfdc.dtliqchq = crapdat.dtmvtocd
+                            crabfdc.dtliqchq = crapdat.dtmvtolt
                             crabfdc.cdoperad = "1" /* SUPER-USUARIO para migracao */
                             crabfdc.vlcheque = crapmdw.vlcompel
                  
@@ -5924,7 +5918,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                            TRIM(crapcop.nmextcop)
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
+           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PAC " +
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +
@@ -6014,6 +6008,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
         END.
+
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)
@@ -6219,7 +6214,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
            dt-maior-praca  = ?
            dt-menor-fpraca = ?
            dt-maior-fpraca = ?
-           dt-menor-fpraca = crapdat.dtmvtocd.
+           dt-menor-fpraca = crapdat.dtmvtolt.
            
     ASSIGN aux_nrdconta = p-nro-conta.
     /*--- Verifica se Houve Transferencia de Conta --*/
@@ -6319,7 +6314,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
     DO aux_contalot = 1 TO 5:
     
         FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                                 craplot.dtmvtolt = crapdat.dtmvtocd  AND
+                                 craplot.dtmvtolt = crapdat.dtmvtolt  AND
                                  craplot.cdagenci = p-cod-agencia     AND
                                  craplot.cdbccxlt = 11                AND /* Fixo */
                                  craplot.nrdolote = i-nro-lote 
@@ -6338,7 +6333,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
             DO:
                 CREATE craplot.
                 ASSIGN craplot.cdcooper = crapcop.cdcooper
-                       craplot.dtmvtolt = crapdat.dtmvtocd
+                       craplot.dtmvtolt = crapdat.dtmvtolt
                        craplot.cdagenci = p-cod-agencia
                        craplot.cdbccxlt = 11
                        craplot.nrdolote = i-nro-lote
@@ -6470,7 +6465,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                       /*--- Verifica se Lancamento ja Existe ---*/
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -6492,7 +6487,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
 
                       FIND FIRST craplcm WHERE 
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -6516,7 +6511,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtocd
+                             craplcm.dtmvtolt = crapdat.dtmvtolt
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -6552,7 +6547,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                       /*--- Verifica se Lancamento ja Existe ---*/
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -6574,7 +6569,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
 
                       FIND FIRST craplcm WHERE
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -6598,7 +6593,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtocd
+                             craplcm.dtmvtolt = crapdat.dtmvtolt
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -6645,7 +6640,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         /*--- Verifica se Lancamento ja Existe ---*/
         FIND FIRST craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                    craplcm.cdagenci = p-cod-agencia       AND
                    craplcm.cdbccxlt = 11                  AND
                    craplcm.nrdolote = i-nro-lote          AND
@@ -6667,7 +6662,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
 
         FIND FIRST craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtocd    AND
+                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
                    craplcm.cdagenci = p-cod-agencia       AND
                    craplcm.cdbccxlt = 11                  AND
                    craplcm.nrdolote = i-nro-lote          AND
@@ -6691,7 +6686,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         /*----------------------------------------------------*/        
         CREATE craplcm.
         ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtocd
+               craplcm.dtmvtolt = crapdat.dtmvtolt
                craplcm.cdagenci = p-cod-agencia
                craplcm.cdbccxlt = 11
                craplcm.nrdolote = i-nro-lote
@@ -6721,9 +6716,9 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 2433
+              crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtocd
+               crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
                crapdpb.cdbccxlt = 11
                crapdpb.nrdolote = i-nro-lote
@@ -6743,7 +6738,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                              OUTPUT glb_stsnrcal).
 
         FIND FIRST crapchd WHERE crapchd.cdcooper = crapcop.cdcooper    AND
-                                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
+                                 crapchd.dtmvtolt = crapdat.dtmvtolt    AND
                                  crapchd.cdcmpchq = crapmdw.cdcmpchq    AND
                                  crapchd.cdbanchq = crapmdw.cdbanchq    AND
                                  crapchd.cdagechq = crapmdw.cdagechq    AND
@@ -6786,7 +6781,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                crapchd.cdoperad = p-cod-operador
                crapchd.cdsitatu = 1
                crapchd.dsdocmc7 = crapmdw.dsdocmc7
-               crapchd.dtmvtolt = crapdat.dtmvtocd
+               crapchd.dtmvtolt = crapdat.dtmvtolt
                crapchd.inchqcop = IF crapmdw.nrctaaux > 0 THEN 1 ELSE 0
                crapchd.insitchq = 0
                crapchd.cdtipchq = crapmdw.cdtipchq
@@ -6822,7 +6817,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                                                             INPUT p-cod-agencia,
                                                             INPUT p-nro-caixa,
                                                             INPUT p-cod-operador,
-                                                            INPUT crapdat.dtmvtocd,
+                                                            INPUT crapdat.dtmvtolt,
                                                             INPUT 1). /*Inclusao*/ 
                  DELETE PROCEDURE h_b1crap00.
             END.
@@ -6843,7 +6838,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                                INPUT p-nro-caixa,             
                                INPUT p-cod-operador,
                                INPUT ROWID(crapmdw),
-                               INPUT crapdat.dtmvtocd,
+                               INPUT crapdat.dtmvtolt,
                                INPUT 0).             
 
         /* volta infos da ultima autenticacao 700 */
@@ -6879,7 +6874,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
             IF  AVAIL craptco  THEN
             DO:
                 FIND FIRST cra2lot WHERE cra2lot.cdcooper = crabcop.cdcooper AND
-                                         cra2lot.dtmvtolt = crapdat.dtmvtocd AND
+                                         cra2lot.dtmvtolt = crapdat.dtmvtolt AND
                                          cra2lot.cdagenci = craptco.cdagenci AND
                                          cra2lot.cdbccxlt = 100              AND
                                          cra2lot.nrdolote = 205000 + craptco.cdagenci
@@ -6889,7 +6884,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                      DO: 
                          CREATE cra2lot.
                          ASSIGN cra2lot.cdcooper = crabcop.cdcooper
-                                cra2lot.dtmvtolt = crapdat.dtmvtocd
+                                cra2lot.dtmvtolt = crapdat.dtmvtolt
                                 cra2lot.cdagenci = craptco.cdagenci
                                 cra2lot.cdbccxlt = 100
                                 cra2lot.nrdolote = 205000 + craptco.cdagenci
@@ -6902,7 +6897,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
 
                 /* Validar para criar o lancamento ao fim da procedure */
                 FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
-                                        crapbcx.dtmvtolt = crapdat.dtmvtocd  AND
+                                        crapbcx.dtmvtolt = crapdat.dtmvtolt  AND
                                         crapbcx.cdagenci = p-cod-agencia     AND
                                         crapbcx.nrdcaixa = p-nro-caixa       AND
                                         crapbcx.cdopecxa = p-cod-operador    AND
@@ -6925,7 +6920,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
 
                 /* Utilizado como base bcaixal.i */
                 CREATE craplcx.
-                ASSIGN craplcx.dtmvtolt = crapdat.dtmvtocd
+                ASSIGN craplcx.dtmvtolt = crapdat.dtmvtolt
                        craplcx.cdagenci = p-cod-agencia
                        craplcx.nrdcaixa = p-nro-caixa
                        craplcx.cdopecxa = p-cod-operador
@@ -6946,7 +6941,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                 /* Pagamento Cheque */
                 
                 ASSIGN cra2lcm.cdcooper = cra2lot.cdcooper
-                       cra2lcm.dtmvtolt = crapdat.dtmvtocd
+                       cra2lcm.dtmvtolt = crapdat.dtmvtolt
                        cra2lcm.cdagenci = cra2lot.cdagenci
                        cra2lcm.cdbccxlt = cra2lot.cdbccxlt
                        cra2lcm.nrdolote = cra2lot.nrdolote
@@ -6969,7 +6964,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                        cra2lot.vlinfodb = cra2lot.vlinfodb + crapmdw.vlcompel.
                 
                 ASSIGN cra2fdc.incheque = cra2fdc.incheque + 5
-                       cra2fdc.dtliqchq = crapdat.dtmvtocd
+                       cra2fdc.dtliqchq = crapdat.dtmvtolt
                        cra2fdc.cdoperad = p-cod-operador
                        cra2fdc.vlcheque = crapmdw.vlcompel
                        
@@ -7018,7 +7013,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                 /* Pagamento Cheque */                          
                 
                 ASSIGN crablcm.cdcooper = crapcop.cdcooper
-                       crablcm.dtmvtolt = crapdat.dtmvtocd
+                       crablcm.dtmvtolt = crapdat.dtmvtolt
                        crablcm.cdagenci = p-cod-agencia
                        crablcm.cdbccxlt = 11 /* Fixo */
                        crablcm.nrdolote = i-nro-lote
@@ -7062,7 +7057,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                      END.
         
                 ASSIGN crabfdc.incheque = crabfdc.incheque + 5
-                       crabfdc.dtliqchq = crapdat.dtmvtocd
+                       crabfdc.dtliqchq = crapdat.dtmvtolt
                        crabfdc.cdoperad = p-cod-operador
                        crabfdc.vlcheque = crapmdw.vlcompel
                        
@@ -7149,7 +7144,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                            TRIM(crapcop.nmextcop)
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
+           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PAC " +
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +
@@ -7376,7 +7371,7 @@ PROCEDURE gera-tabela-resumo-cheques:
             dt-maior-praca  = ?
             dt-menor-fpraca = ?
             dt-maior-fpraca = ?
-            dt-menor-fpraca = crapdat.dtmvtocd.
+            dt-menor-fpraca = crapdat.dtmvtolt.
             
      DO   aux_contador = 1 TO 4:
           ASSIGN dt-menor-fpraca = dt-menor-fpraca + 1.
@@ -7874,7 +7869,7 @@ PROCEDURE critica-contra-ordem:
               IF  (crapfdc.cdbantic <> 0
               OR   crapfdc.cdagetic <> 0
               OR   crapfdc.nrctatic <> 0) 
-             AND  (crapfdc.dtlibtic >= crapdat.dtmvtocd
+             AND  (crapfdc.dtlibtic >= crapdat.dtmvtolt
               OR   crapfdc.dtlibtic  = ?) THEN
                   DO:
                       ASSIGN i-cod-erro  = 950 

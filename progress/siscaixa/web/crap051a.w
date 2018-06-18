@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 09/05/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 08/01/2016.
 
    Dados referentes ao programa:
 
@@ -45,9 +45,6 @@
                            (Guilherme/SUPERO)
 
 			  08/01/2016 - Inserida Mensagem de teste (Lucas Lunelli SD 335441)
-
-              09/05/2018 - Disponibilidade de utilizaçao do caixa on-line mesmo com o
-                           processo batch (noturno) executando (Fabio Adriano - AMcom).
 
 ............................................................................ */
 
@@ -626,9 +623,8 @@ PROCEDURE process-web-request :
                 v_dtenvelo   = GET-VALUE("v_pdtenvelo").
 
          
-         /*isponibilidade de utilizaçao do caixa on-line mesmo com o processo batch (noturno) executando*/
          RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-         RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
+         RUN valida-transacao IN h-b1crap00(INPUT v_coop,
                                             INPUT v_pac,
                                             INPUT v_caixa).
          DELETE PROCEDURE h-b1crap00.

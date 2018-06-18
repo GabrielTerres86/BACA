@@ -3,7 +3,7 @@
 Programa: siscaixa/web/crap014b.w
 Sistema : Caixa On-line                                       
 Sigla   : CRED    
-                                             Ultima atualizacao: 18/05/2018
+                                             Ultima atualizacao: 20/10/2017
    
 Dados referentes ao programa:
 
@@ -76,9 +76,6 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                          Antonio R. Jr (mouts)
             
             16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
-                         
-            18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo
-                          norturno rodando (Douglas Pagel - AMcom)
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -1195,7 +1192,7 @@ PROCEDURE process-web-request :
                                 ,INPUT ""                 /* pr_idtitdda */ 
                                 ,INPUT aux_cdsittit      /* pr_cdsittit */ 
                                 ,INPUT 0                 /* pr_flgerlog */ 
-                                ,INPUT (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)  /* pr_dtmvtolt */  
+                                ,INPUT crapdat.dtmvtolt  /* pr_dtmvtolt */  
                                 ,INPUT c_codbarras       /* pr_dscodbar */ 
                                 ,INPUT v_cdctrlcs        /* pr_cdctrlcs */ 
                                ,OUTPUT 0                 /* pr_cdcritic */ 
@@ -1255,7 +1252,7 @@ PROCEDURE process-web-request :
                                  END.
 
                                  RUN liquidacao-intrabancaria-dda IN h-b1wgen0088(INPUT crapcop.cdcooper,
-                                                                                  INPUT (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd),
+                                                                                  INPUT crapdat.dtmvtolt,
                                                                                   INPUT aux_recidcob,   
                                                                                   OUTPUT ret_dsinserr).
                 

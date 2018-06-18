@@ -7,9 +7,6 @@ Alteracoes: 15/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
             26/06/2009 - Validar se o caixa existe conforme b1crap07 (Evandro).
             
             25/01/2018 - Removido campos de Supervisor e Senha. (PRJ339 - Reinert)
-            
-            08/05/2018 - possibilita acesso ao caixa on-line mesmo com o processo batch (noturno) executando 
-                         (Fabio Adriano - AMcom)
 ............................................................................. */
 
 
@@ -393,9 +390,7 @@ PROCEDURE process-web-request :
                                       INPUT YES).
                    END.
                    ELSE DO:
-                   
-             /* possibilita acesso ao caixa on-line mesmo com o processo batch (noturno) executando */      
-					   RUN valida-transacao2 IN h-b1crap00(INPUT crapcop.nmrescop,
+					   RUN valida-transacao IN h-b1crap00(INPUT crapcop.nmrescop,
 														  INPUT get-value("v_agencia"),
 														  INPUT get-value("v_caixa")).
 
