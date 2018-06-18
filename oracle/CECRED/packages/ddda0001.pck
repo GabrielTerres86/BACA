@@ -76,8 +76,8 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
    ,quantidade INTEGER
   );
   
- MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 10; 
- MOTIVO_NOVOS_TITULOS_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 11; 
+ MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2; 
+ MOTIVO_NOVOS_TITULOS_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1; 
 
 
   /* Tipo de registro de Remessa DDA
@@ -464,10 +464,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --             29/08/2017 - Retirado mensagem de logs da proc_message.log e direcionado para o log
   --                          principal da NPC. (Rafael)
   --
-  --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
-  --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
-  --
-  --             12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
 
   ---------------------------------------------------------------------------------------------------------------
   
