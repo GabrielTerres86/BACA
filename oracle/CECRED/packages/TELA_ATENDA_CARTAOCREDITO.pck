@@ -1219,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
    
       IF rw_crawcrd.insitdec IN (2,3,4,5,6) THEN
         vr_dssitest := 'Analise Finalizada';
-      ELSIF rw_crawcrd.insitdec = 1 AND rw_crawcrd.insitcrd = 8 THEN
+      ELSIF rw_crawcrd.insitdec = 1 AND rw_crawcrd.insitcrd IN (1,8) THEN
         vr_dssitest := 'Enviada Analise Manual';
       ELSIF rw_crawcrd.insitdec = 7 THEN
         vr_dssitest := 'Expirada';
@@ -2438,7 +2438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       ELSE
         --Se não estiver ativo, ok, liberado para todo mundo
         vr_retorno := 1;
-      END IF;
+      END IF;      
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml

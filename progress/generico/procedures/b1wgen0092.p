@@ -168,7 +168,7 @@
                            
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
-                           
+
               28/03/2017 - Ajustado para utilizar nome resumo se houver. (Ricardo Linhares - 547566)
                            
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
@@ -228,7 +228,7 @@
                            
               03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
                            permite a contrataçao do produto. PRJ366 (Lombardi).
-                           
+
               21/05/2018 - Alterada consulta da craplau na procedure bloqueia_lancamento para pegar apenas pendentes
                            pois acontecia as vezes de trazer mais de um registro (Tiago).
                            
@@ -1161,7 +1161,7 @@ PROCEDURE valida-dados:
                                par_nmdcampo = "cdrefere".
                         LEAVE Valida.
                     END.
-                              
+                
                 IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
                     aux_cdprodut = 10. /* Débito Automático */
                 ELSE
@@ -2075,8 +2075,8 @@ PROCEDURE grava-dados:
                         /* Bancoob nao permite deb.aut. */                                            
                         ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
                         UNDO Grava, LEAVE Grava.
-
-                    END.
+                    
+                    END.    
                     
                 /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
                 IF  par_idorigem = 3 /* IBANK */    OR 
@@ -2413,7 +2413,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                             
+                        
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2580,9 +2580,9 @@ PROCEDURE busca_convenios_codbarras:
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
-
+            
          IF aux_nmresumi <> "" THEN
-          ASSIGN aux_nmempcon = aux_nmresumi.    
+          ASSIGN aux_nmempcon = aux_nmresumi.
 
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
@@ -4135,7 +4135,7 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-                                      
+
         IF  NOT AVAIL gnconve  AND
             NOT AVAIL crapscn  THEN
             NEXT.
@@ -4202,7 +4202,7 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
-                          
+        
                 IF  NOT AVAIL gnconve  AND
                     NOT AVAIL crapscn  THEN
                     NEXT.
@@ -5998,6 +5998,7 @@ PROCEDURE valida_senha_cooperado:
    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+   DEF  INPUT PARAM par_vlintrnt AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.   
    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -6039,10 +6040,10 @@ PROCEDURE valida_senha_cooperado:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
            END.
-       END.
+   END.
       END. 
-   /* Amasonas - Supero - Validaçao senha Online*/   
-    IF  aux_flgsevld = FALSE THEN 
+    /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE AND  par_vlintrnt = "s" THEN 
       DO:
           FOR EACH crapsnh FIELDS (cddsenha) 
                            WHERE  crapsnh.cdcooper = par_cdcooper
@@ -6050,13 +6051,13 @@ PROCEDURE valida_senha_cooperado:
                              AND  crapsnh.tpdsenha = 1 /*internet*/ 
                              NO-LOCK:                
               DO:        
-              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapsnh.cddsenha) THEN
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"99999999"))) = CAPS(crapsnh.cddsenha) THEN
                   DO:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
-   END.
-      END. 
-
+              END.
+             END.
+              
       END.
     END.
   /*Fim validaçao senha online */
@@ -6628,19 +6629,19 @@ PROCEDURE busca_convenio_nome:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-   
+
     DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
-   
+        
     FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                              crapcon.cdempcon = par_cdempcon AND
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
-   
+             
     IF AVAILABLE crapcon THEN    
       DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
       END.
-   
+
     RELEASE crapcon.
   
   RETURN "OK".
-END PROCEDURE.
+END PROCEDURE.    

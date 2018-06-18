@@ -57,6 +57,7 @@ DEF VAR aux_nmfatret AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdempcon AS INTE                                           NO-UNDO.
 DEF VAR aux_cdsegmto AS CHAR                                           NO-UNDO.
+DEF VAR aux_vlintrnt AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdempres AS CHAR                                           NO-UNDO.
 DEF VAR aux_rthistor AS CHAR                                           NO-UNDO.
 DEF VAR aux_codbarra AS CHAR                                           NO-UNDO.
@@ -133,7 +134,8 @@ PROCEDURE valores_entrada:
             WHEN "fatura04" THEN aux_fatura04 = tt-param.valorCampo.
             WHEN "flgsicre" THEN aux_flgsicre = tt-param.valorCampo.
             WHEN "flgmanua" THEN aux_flgmanua = tt-param.valorCampo.
-            WHEN "nomcampo" THEN aux_nomcampo = tt-param.valorCampo.                        
+            WHEN "nomcampo" THEN aux_nomcampo = tt-param.valorCampo.
+            WHEN "vlintrnt" THEN aux_vlintrnt = tt-param.valorCampo.
 
         END CASE.
 
@@ -662,6 +664,7 @@ PROCEDURE valida_senha_cooperado:
                                        INPUT aux_nrdcaixa,
                                        INPUT aux_cdoperad,
                                        INPUT aux_nmdatela,
+                                       INPUT aux_vlintrnt,
                                        INPUT aux_idorigem,
                                        INPUT aux_nrdconta,                                       
                                        INPUT TRUE, /* LOG */

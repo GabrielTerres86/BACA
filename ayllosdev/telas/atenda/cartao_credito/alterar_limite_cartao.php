@@ -274,6 +274,7 @@ $vlsugmot = number_format(0,2,",",".");
 	 
 	}else{
 		echo "<!-- Cartao NUlo -->";
+		echo "<script>vlLimiteMaximo = 0 ; </script>";
 	}
   }
 ?>
@@ -581,7 +582,7 @@ $vlsugmot = number_format(0,2,",",".");
 					if($("#justificativa").val().length == 0)
 						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					else
-						alterarBancoob(false,inpessoa,tipo );
+						senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
 				}else{
 					//alterarBancoob(false,inpessoa,tipo );
 					alterarBancoob(true,inpessoa,tipo );
@@ -600,4 +601,5 @@ $vlsugmot = number_format(0,2,",",".");
 			
 		}
 	verificaValor();
+	faprovador = undefined;
 </script>

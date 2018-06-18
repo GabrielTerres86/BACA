@@ -29,6 +29,7 @@
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : "";
 	$cddsenha = (isset($_POST["cddsenha"])) ? $_POST["cddsenha"] : "";
 	$retorno  = (isset($_POST["retorno"])) ? $_POST["retorno"] : "";
+	$validainternet = (isset($_POST['validainternet'])) ? $_POST['validainternet'] : '';
 	
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml  = '';
@@ -43,6 +44,7 @@
 	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
+	$xml .= '		<vlintrnt>'.$validainternet.'</vlintrnt>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<flgerlog>yes</flgerlog>';
@@ -51,7 +53,7 @@
 	
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
-	
+	echo "/* $xml */";
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
 	

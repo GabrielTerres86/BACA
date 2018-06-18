@@ -84,20 +84,24 @@
 			<table>
 				<thead>
 					<tr>
-						<th>Data da Altera&ccedil;&atilde;o</th>
-						<th>Tipo</th>
-						<th>Valor Anterior</th>
-						<th>Valor Atualizado</th>
+						<th class="hdata">Data da Altera&ccedil;&atilde;o</th>
+						<th class='hproposta'>Proposta</th>
+						<th class='hsituacao'>Situa&ccedil;&atilde;o</th>
+						<th class='htipo'>Tipo</th>
+						<th class='hvlant'>Valor Anterior</th>
+						<th class='hvlatu'>Valor Atualizado</th>
 					</tr>			
 				</thead>
 				<tbody>
 					<?  for ($i = 0; $i < count($historico); $i++) { 					
 					?>
 						<tr id="<?php echo $i; ?>" >
-							<td><?php echo getByTagName($historico[$i]->tags,"DTALTERA"); ?></td>
-							<td><?php echo getByTagName($historico[$i]->tags,"DSTIPALT"); ?></td>
-							<td><?php echo getByTagName($historico[$i]->tags,"VLLIMOLD"); ?></td>
-							<td><?php echo getByTagName($historico[$i]->tags,"VLLIMNEW"); ?></td>
+							<td class='data'><?php echo getByTagName($historico[$i]->tags,"DTALTERA"); ?></td>
+							<td class='proposta'><?php echo getByTagName($historico[$i]->tags,"NRPROPOSTA_EST"); ?></td>
+							<td class='situacao'><?php echo getByTagName($historico[$i]->tags,"SITUACAO"); ?></td>
+							<td class='tipo'><?php echo getByTagName($historico[$i]->tags,"DSTIPALT"); ?></td>
+							<td class='vlant'><?php echo getByTagName($historico[$i]->tags,"VLLIMOLD"); ?></td>
+							<td class='vlatu'><?php echo getByTagName($historico[$i]->tags,"VLLIMNEW"); ?></td>
 							
 						</tr>				
 					<? } ?>			
@@ -116,6 +120,17 @@
 	$('#divOpcoesDaOpcao2').css('display','block');
 	
 	controlaLayout('divConteudoHistorico');
+	
+	formatColumn("data",80);
+	formatColumn("proposta",80);
+	formatColumn("situacao",80);
+	formatColumn("tipo",75);
+	formatColumn("vlant",115);
+	
+	function formatColumn(cssclass, size){
+		$('.h'+cssclass).css('width',size+'px');
+		$('.'+cssclass).css('width',size+'px');
+	}
 	
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);

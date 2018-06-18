@@ -32,6 +32,7 @@
 	// Guardo os parâmetos do POST em variáveis	
 	$nmdatela = (isset($_POST['nmdatela'])) ? $_POST['nmdatela'] : '';
 	$nmrotina = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : '';
+	$validainternet = (isset($_POST['validainternet'])) ? $_POST['validainternet'] : '';
   
     $session = session_id();	    
     
@@ -80,6 +81,7 @@
 												<input name="cddsenha" id="cddsenha" type="password" maxlength="6" value=""/>
 												<input id="retorno"  type="hidden" name="retorno"  value="<?echo $retorno?>"></input>	
 												<input id="nrdconta" type="hidden" name="nrdconta" value="<?echo $nrdconta?>"></input>	
+												<input id="validainternet" type="hidden" name="validainternet" value="<?echo $validainternet?>"></input>	
 												</br>
 												</br>
 											</div>
