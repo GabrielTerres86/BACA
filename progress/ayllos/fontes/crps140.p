@@ -97,7 +97,7 @@
                01/09/2017 - Inclusao de log de fim de execucao do programa 
                             (Carlos)
 							
-               15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)    							
+               15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)     							
                
 ............................................................................. */
 
