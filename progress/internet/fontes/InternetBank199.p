@@ -57,7 +57,10 @@ DEF INPUT  PARAM  par_idagenda  AS INTEGER                                NO-UND
 DEF INPUT  PARAM  par_vlapagar  AS DECIMAL                                NO-UNDO.
 DEF INPUT  PARAM  par_versaldo  AS INTEGER                                NO-UNDO.
 DEF INPUT  PARAM  par_tpleitor  AS INTEGER                                NO-UNDO.
-DEF INPUT  PARAM  par_nrrefere  AS CHAR                                   NO-UNDO.
+DEF INPUT  PARAM  par_nrrefere  AS DECI                                   NO-UNDO.
+DEF INPUT  PARAM par_iptransa   AS CHAR                                   NO-UNDO.
+DEF INPUT  PARAM par_iddispos   AS CHAR                                   NO-UNDO.
+
 
 DEF OUTPUT PARAM  xml_dsmsgerr  AS CHAR                                   NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -122,6 +125,8 @@ RUN STORED-PROCEDURE pc_processa_tributos
                                        ,INPUT par_vlapagar               /* pr_vlapagar */
                                        ,INPUT par_versaldo               /* pr_versaldo */
                                        ,INPUT par_tpleitor               /* pr_tpleitor */
+                                       ,INPUT par_iptransa               /* --> IP da transacao  IBank/mobile */
+                                       ,INPUT par_iddispos               /* --> ID Dispositivo mobile         */                         
                                        ,OUTPUT ""                        /* pr_retxml   */
                                        ,OUTPUT ""                        /* pr_dscritic */
                                        ).

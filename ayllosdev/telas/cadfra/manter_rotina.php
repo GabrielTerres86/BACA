@@ -29,6 +29,9 @@
     $dsemail_retorno   = (isset($_POST['dsemail_retorno']))   ? $_POST['dsemail_retorno']   : '';
     $dsassunto_retorno = (isset($_POST['dsassunto_retorno'])) ? $_POST['dsassunto_retorno'] : '';
     $dscorpo_retorno   = (isset($_POST['dscorpo_retorno']))   ? $_POST['dscorpo_retorno']   : '';
+    $flgativo          = (isset($_POST['flgativo']))          ? $_POST['flgativo']   : 0;
+    $tpretencao        = (isset($_POST['tpretencao']))        ? $_POST['tpretencao']   : 1;
+    
 
     $strhoraminutos    = (isset($_POST['strhoraminutos']))    ? $_POST['strhoraminutos']    : '';
 
@@ -53,6 +56,8 @@
     $xml .= "   <dsemail_retorno>".utf8_decode($dsemail_retorno)."</dsemail_retorno>";
     $xml .= "   <dsassunto_retorno>".utf8_decode($dsassunto_retorno)."</dsassunto_retorno>";
     $xml .= "   <dscorpo_retorno><![CDATA[".utf8_decode($dscorpo_retorno)."]]></dscorpo_retorno>";
+    $xml .= "   <flgativo>".$flgativo."</flgativo>";
+    $xml .= "   <tpretencao>".$tpretencao."</tpretencao>";    
     $xml .= " </Dados>";
     $xml .= "</Root>";
 

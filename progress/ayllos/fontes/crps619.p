@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Adriano     
-   Data    : Marco/2012.                        Ultima atualizacao: 25/10/2017
+   Data    : Marco/2012.                        Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -50,6 +50,11 @@
                             
                25/10/2017 - Enviar o cdagectl no arquivo ao invés de mandar a cooperativa 
                             mais o PA (Lucas Ranghetti #767689)
+                            
+               17/04/2018 - Incluido Tratamento para nao enviar pagamento ainda nao 
+                            aprovados por antifraude.
+                            PRJ381 - AntiFraude(Odirlei-AMcom)
+                            
 ............................................................................. */
                                       
 { includes/var_batch.i "NEW" } 
@@ -90,6 +95,8 @@ DEF VAR aux_nmdespar AS CHAR                                         NO-UNDO.
 
 DEF VAR aux_tpfatura  AS CHAR      FORMAT "x(1)"                     NO-UNDO.
 DEF VAR aux_nrautdoc  AS CHAR      FORMAT "x(14)"                    NO-UNDO.
+DEF VAR aux_cdparece  AS INT                                         NO-UNDO.
+DEF VAR aux_dscritic  AS CHAR                                        NO-UNDO.
 
 DEF BUFFER b-gnconve FOR gnconve.
 DEF BUFFER b-crapcop FOR crapcop.
@@ -287,6 +294,41 @@ PROCEDURE efetua_geracao_arquivos.
                          EXCLUSIVE-LOCK BY craplft.cdagenci
                                          BY craplft.cdbccxlt
                                           BY craplft.nrdolote:
+  
+      IF craplft.idanafrd > 0 THEN
+      DO:
+          ASSIGN aux_cdparece = 0.
+          
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+           
+          /* Efetuar a chamada a rotina Oracle  */
+          RUN STORED-PROCEDURE pc_ret_sit_analise_fraude
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT craplft.idanafrd,
+                                                    OUTPUT 0,   /* pr_cdparece */
+                                                    OUTPUT ""). /* pr_dscritic */
+           
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_ret_sit_analise_fraude
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+          ASSIGN aux_dscritic = ""
+                 aux_dscritic = pc_ret_sit_analise_fraude.pr_dscritic 
+                                WHEN pc_ret_sit_analise_fraude.pr_dscritic <> ?.           
+      
+      
+          ASSIGN aux_cdparece = 0
+                 aux_cdparece = pc_ret_sit_analise_fraude.pr_cdparece 
+                                WHEN pc_ret_sit_analise_fraude.pr_cdparece <> ?.
+          
+          /* Se ainda nao foi aprovado */
+          IF aux_cdparece <> 1 THEN                      
+          DO:
+            NEXT.          
+          END.
+      END.
+  
   
       IF  craplft.cdagenci = 90 THEN     /** Internet **/
           ASSIGN aux_tpfatura = "3"      

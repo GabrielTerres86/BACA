@@ -23,7 +23,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2007.                       Ultima atualizacao: 12/07/2017
+   Data    : Abril/2007.                       Ultima atualizacao: 12/04/2018
    
    Dados referentes ao programa:
    
@@ -94,6 +94,10 @@
 			                PRJ118 (Odirlei-AMcom)
                                          
                12/06/2017 - Tratamento para Novo Catalgo do SPB (Lucas Ranghetti #668207)
+               
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                              de analise de fraude. 
+                              PRJ381 - AntiFraude (Odirlei-AMcom)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -157,6 +161,7 @@ DEF  INPUT PARAM par_gravafav AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_dshistor AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_iptransa AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_iddispos AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -203,6 +208,7 @@ ASSIGN aux_dstransa = (IF par_flgexecu     THEN "" ELSE "Valida ")           +
         ,INPUT  par_dshistor           /* --> codifo do historico           */
         ,INPUT  INT(par_flmobile)      /* --> Indicativo de operacao mobile */
         ,INPUT  par_iptransa           /* --> IP da transacao  IBank/mobile */
+        ,INPUT  par_iddispos           /* --> ID Dispositivo mobile         */
         ,OUTPUT ""                     /* --> Retorno XML de critica        */
         ,OUTPUT ""                     /* --> Retorno XML da operaçao 26    */
         ,OUTPUT "" ).                  /* --> Retorno de critica (OK ou NOK)*/

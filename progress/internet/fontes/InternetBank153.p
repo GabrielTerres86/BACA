@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Renato Darosci
-   Data    : Setembro/2015                      Ultima atualizacao: 09/10/2017
+   Data    : Setembro/2015                      Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -30,6 +30,14 @@
                09/10/2017 - Habilitar condicoes especificas do app mobile para
                             projeto 285 (David).
                
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                            de analise de fraude. 
+                            PRJ381 - AntiFraude (Odirlei-AMcom)
+
+			   18/04/2018 - Alterar mensagem de retorno e condicional das rotinas
+			                pc_gps_pagamento e pc_gps_agmto_novo.
+							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -64,6 +72,9 @@ DEF INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF INPUT PARAM par_dshistor AS CHAR                                  NO-UNDO.
 DEF INPUT PARAM par_indtpaga AS INTE                                  NO-UNDO.
 DEF INPUT PARAM par_vlrlote  AS DECI                                  NO-UNDO.
+DEF INPUT PARAM par_iptransa AS CHAR                                  NO-UNDO.
+DEF INPUT PARAM par_iddispos AS CHAR                                  NO-UNDO.
+
 
 DEF OUTPUT PARAM par_dsmsgerr AS CHAR                                 NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -242,6 +253,8 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
                          INPUT par_nrcpfope,
                          INPUT INT(par_flmobile),
                          INPUT par_dshistor,
+                         INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
+                         INPUT par_iddispos,    /* --> ID Dispositivo mobile         */
                          OUTPUT "", /*pr_dsprotoc*/
                          OUTPUT "",
                          OUTPUT 0,
@@ -332,6 +345,8 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
                          INPUT par_nrcpfope,
                          INPUT INT(par_flmobile),
                          INPUT par_dshistor,
+                         INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
+                         INPUT par_iddispos,    /* --> ID Dispositivo mobile         */
                          OUTPUT "", /* DSPROTOC */
                          OUTPUT "",
                          OUTPUT 0,
@@ -401,6 +416,8 @@ ELSE IF  par_tpoperac = 6 THEN DO:
                           INPUT par_nrcpfope,       /* pr_nrcpfope */
                           INPUT INT(par_flmobile),  /* pr_flmobile */
                           INPUT "",   /* pr_dshistor */
+                          INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
+                          INPUT par_iddispos,    /* --> ID Dispositivo mobile         */                         
                           OUTPUT "",  /* pr_dslitera */
                           OUTPUT 0,   /* pr_sequenci */
                           OUTPUT 0,   /* pr_nrseqaut */
