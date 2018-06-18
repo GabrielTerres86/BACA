@@ -11415,7 +11415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           --
           vr_notif_origem   := 10;
           vr_notif_motivo   := 1;
-          vr_variaveis_notif('#valordebito') := vr_vlpagmto;
+          vr_variaveis_notif('#valordebito') := to_char(vr_vlpagmto,'9999990.00');
           vr_variaveis_notif('#datadebito')  := to_char(pr_dtmvtolt,'dd/mm/yyyy');
           vr_variaveis_notif('#tipodebito')  := vr_dstransa;
           -- Cria uma notificação
