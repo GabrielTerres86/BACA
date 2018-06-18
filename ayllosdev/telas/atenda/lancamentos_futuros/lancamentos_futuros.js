@@ -17,6 +17,7 @@
             
              04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
                            (Jonata - RKAM P364).
+            maio/2018 - PRJ364 - SM4 - Adicionado  cdhistor e value (Paulo Martins - Mouts)
  ***********************************************************************/
 
 var glb_gen_dstabela, glb_gen_cdhistor, glb_gen_recid; 
@@ -77,8 +78,8 @@ function controlaFoco(opcao) {
         $(this).bind('keydown', function (e) {
             if (e.keyCode == 13) {
                 $(this).click();
-            }
-        });
+		}				
+	}); 		
     });
 
     $(".LastInputModal").focus(function () {
@@ -87,7 +88,7 @@ function controlaFoco(opcao) {
         $(this).bind('keyup', function (e) {
             if (e.keyCode == 16) {
                 pressedShift = false;//Quando tecla shift for solta passa valor false 
-            }
+}
         })
 
         $(this).bind('keydown', function (e) {
@@ -167,15 +168,15 @@ function controlaLayout() {
 		
     habilitaBotao('btExcluir', 'D'); // Desabilitar
     habilitaBotao('btDebitar', 'D'); // Desabilitar
-
+	
     $('label[for="vltotal"]').addClass('rotulo txtNormalBold');
     $('#vltotal').addClass('campo').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo();
 		}
 		
 function confirmaExclusaoLanctoFut(){
 	showConfirmacao('Confirma a exclus&atilde;o do lan&ccedil;amento?','Confirma&ccedil;&atilde;o - Ayllos','excluirLanctoFut();','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
-}
-
+		}
+		
 function excluirLanctoFut(){
 
 	var qtexclu = 0;
@@ -241,7 +242,7 @@ function verificaCheckbox() {
         habilitaBotao('btExcluir', 'H'); // Habilitar
     } else {
         habilitaBotao('btExcluir', 'D'); // Desabilitar
-    }
+}
 
     // Somente habilita se foi selecionado apenas registros de debito
     if (qtexclu == 0 && qtdebit > 0) {
@@ -249,10 +250,10 @@ function verificaCheckbox() {
     } else {
         habilitaBotao('btDebitar', 'D'); // Desabilitar
 }
-
-    $('#vltotal').val(vltotal == 0 ? '' : number_format(vltotal,2,',','.'));
-}
 	
+    $('#vltotal').val(vltotal == 0 ? '' : number_format(vltotal,2,',','.'));
+	}		
+
 function habilitaBotao(botao, opcao) {
     if (opcao == 'D') {
         // Desabilitar
@@ -284,7 +285,9 @@ function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
                         $(this).attr('cdagenci') + ',' +
                         $(this).attr('cdbccxlt') + ',' +
                         $(this).attr('nrdolote') + ',' +
-                        $(this).attr('nrseqdig');
+                        $(this).attr('nrseqdig') + ',' +
+                        $(this).attr('cdhistor') + ',' +
+                        $(this).attr('value');
             qtdebit = qtdebit + 1;
         }
         qtselec = qtselec + 1;

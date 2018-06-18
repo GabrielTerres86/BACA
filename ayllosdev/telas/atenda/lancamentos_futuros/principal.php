@@ -16,6 +16,7 @@
 
 			   04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
                            (Jonata - RKAM P364).
+              Maio/2018 - PRJ364 - SM4 - Permitido edição para situação 7 ( Paulo Martins - Mouts )
 
 	  ************************************************************************/
 	
@@ -175,7 +176,7 @@
 	<?php
 	   //Projeto CRM: Para a situações de conta abaixo, a tela deve ser apresentada apenas para consulta.
 		if(!($sitaucaoDaContaCrm == '4' || 
-			 $sitaucaoDaContaCrm == '7' || 
+			// $sitaucaoDaContaCrm == '7' ||  SM4
 			 $sitaucaoDaContaCrm == '8' || 
 			 $sitaucaoDaContaCrm == '9')){ 
 	?>			
@@ -184,7 +185,7 @@
         // Verifica se o usuario tem opcao de exclusao de lancamentos
         if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"E",false)) == "") {
             ?>
-	<a href="#" class="botao" id="btExcluir">Excluir</a>
+            <a href="#" class="botao" id="btExcluir">Excluir</a>
             <?php
         }
     ?>
