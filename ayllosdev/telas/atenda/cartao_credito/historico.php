@@ -7,7 +7,7 @@ require_once('../../../class/xmlfile.php');
 isPostMethod();
 $nrdconta = $_POST["nrdconta"];
 $nrctrcrd = $_POST["nrctrcrd"];
-
+$sitcrd = strtolower($_POST['dssituac']);
 
 
 $lista = array();
@@ -40,6 +40,30 @@ array_push($arrayLiberaSolicitarRetorno, "retorno solicitacao bancoob");
 $arrayLiberaReeviarEsteira   = array();
 array_push($arrayLiberaSolicitarRetorno, "retorno analise automatanálise de credito");
 array_push($arrayLiberaSolicitarRetorno, "reenvio da proposta para analise de credito");
+
+
+$motorResp = getDecisao($nrdconta, $nrctrcrd,$glbvars);
+$sitest = strtolower($motorResp[1]);
+$sitdec = strtolower($motorResp[0]);
+
+function getDecisao($nrdconta, $nrctrcrd, $glbvars){
+		$adxml .= "<Root>";
+		$adxml .= " <Dados>";
+		$adxml .= "   <nrdconta>$nrdconta</nrdconta>";
+		$adxml .= "   <nrctrcrd>$nrctrcrd</nrctrcrd>";
+		$adxml .= " </Dados>";
+		$adxml .= "</Root>";
+
+		
+		$result = mensageria($adxml, "ATENDA_CRD", "BUSCAR_SITUACAO_DECISAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		
+		$admxmlObj = simplexml_load_string($result);
+		$returnVal = array($admxmlObj->Dados->cartoes->sitdec,$admxmlObj->Dados->cartoes->sitest);
+		return $returnVal;
+	
+
+
+}
 
 ?>
 <fieldset>
@@ -81,6 +105,7 @@ array_push($arrayLiberaSolicitarRetorno, "reenvio da proposta para analise de cr
 												<?php
 													$key = 0;
 													if($counter > 0){
+													$operacao;
 													foreach($response->Dados->inf as  $tem){
 														if ($key % 2 == 0) {
 															$class =  "even corImpar";
@@ -90,6 +115,8 @@ array_push($arrayLiberaSolicitarRetorno, "reenvio da proposta para analise de cr
 														$key++;
 														echo "<!-- \n  "; print_r($tem); echo" \n -->";
 														$dsprotocolo = $tem->dsprotocolo;
+														if(!isset($operacao))
+															$operacao = $tem->operacao;
 														
 													?>
 													
@@ -120,21 +147,41 @@ array_push($arrayLiberaSolicitarRetorno, "reenvio da proposta para analise de cr
 									
 									<a href="#" onclick="consultaCartao();"  class="botao" id="btVoltar">Voltar</a>
 									
-									<?if(in_array($operacao, $arrayLiberaReeviarProposta)|| true ){ ?> 
+									<?if(($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ){ ?> 
 									<a 	href="#" 
 										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
 										class="botao" 
 										id="btRenviar">Reenviar Proposta</a>
 									<?}?>
 									
-									<?if(in_array($operacao, $arrayLiberaSolicitarRetorno)|| true){ ?> 
+									<?if(($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
+										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ){ ?> 
 									<a href="#" 
 										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
 									   class="botao" 
 									   id="btRenviar">Solicitar Retorno</a>
-									<?}?>
+									<?}
+
+									?>
 									
-									<?if(in_array($operacao, $arrayLiberaReeviarEsteira) || true){ ?> 
+									<?if((($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Enviada Analise Manual") && $sitdec==strtolower("Sem Aprovacao") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Enviada Analise Manual") && $sitdec==strtolower("Sem Aprovacao") ) ||
+										 ($sitcrd==strtolower("Em Estudo") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Refazer") ) ||
+										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Sem Aprovacao") && $sitdec==strtolower("Enviada Analise Manual") ) ){ ?> 
 									<a 
 										href="#" 
 										onclick="showConfirmacao('<? echo utf8ToHtml("Deseja reenviar a proposta para a esteira de crédito"); ;?>', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviaEsteira(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   										
@@ -149,7 +196,7 @@ array_push($arrayLiberaSolicitarRetorno, "reenvio da proposta para analise de cr
 										idorigem="<?php echo $glbvars['idorigem']; ?>" 
 										cdoperad="<?php echo $glbvars['cdoperad']; ?>"
 										dsdircop="<?php echo $glbvars['dsdircop']; ?>"
-										   href="#" class="botao imprimeTermoBTN" id="emiteTermoBTN" onclick="imprimirTermoDeAdesao(this,true);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
+										href="#" class="botao imprimeTermoBTN" id="emiteTermoBTN" onclick="imprimirTermoDeAdesao(this,true);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
 										 
                                 </div>
                             </div>

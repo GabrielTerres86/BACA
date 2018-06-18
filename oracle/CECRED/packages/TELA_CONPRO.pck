@@ -71,6 +71,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                     ,pr_insitapr IN NUMBER --> 
                                     ,pr_nriniseq IN NUMBER DEFAULT 1
                                     ,pr_nrregist IN NUMBER DEFAULT 100
+                                    ,pr_tpproduto IN number DEFAULT 0
                                     ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -90,6 +91,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                 ,pr_cdoperad    IN crapope.cdoperad%TYPE --> Cód. Operador
                                 ,pr_nrregist    IN NUMBER DEFAULT 1
                                 ,pr_nriniseq    IN NUMBER DEFAULT 9999
+                                ,pr_tpproduto IN number DEFAULT 0
                                 ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
                                 ,pr_dscritic    OUT crapcri.dscritic%TYPE --> Descrição da crítica
                                 ,pr_tab_crawepr OUT typ_tab_crawepr
@@ -181,6 +183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                     ,pr_insitapr IN NUMBER --> 
                                     ,pr_nriniseq IN NUMBER DEFAULT 1
                                     ,pr_nrregist IN NUMBER DEFAULT 100
+                                    ,pr_tpproduto IN number DEFAULT 0
                                     ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -270,6 +273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                        pr_cdoperad    => vr_cdoperad,
                                        pr_nrregist    => pr_nrregist,
                                        pr_nriniseq    => pr_nriniseq,
+                                       pr_tpproduto   => pr_tpproduto,
                                        pr_cdcritic    => vr_cdcritic,
                                        pr_dscritic    => vr_dscritic,
                                        pr_tab_crawepr => vr_tab_crawepr,
@@ -495,6 +499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                 ,pr_cdoperad    IN crapope.cdoperad%TYPE --> Cód. Operador
                                 ,pr_nrregist    IN NUMBER --> 
                                 ,pr_nriniseq    IN NUMBER --> 
+                                ,pr_tpproduto   IN number DEFAULT 0
                                 ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
                                 ,pr_dscritic    OUT crapcri.dscritic%TYPE --> Descrição da crítica
                                 ,pr_tab_crawepr OUT typ_tab_crawepr
@@ -518,6 +523,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       Alteracoes: 15/12/2017 - P337 - SM - Tratar campos de envio Motor e Esteira 
                                separadamente (Marcos-Supero)
+                  02/04/2018 - P345 - Inclusão do Parâmetro Tipo de Produto para considerar
+                               cartões de crédito
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -630,6 +637,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
          WHERE rnum >= pr_nriniseq;
       rw_crawepr cr_crawepr%ROWTYPE;
     
+      CURSOR cr_crawcrd IS
+        SELECT *
+          FROM (SELECT rownum       rnum
+                      ,epr.cdcooper cdcooper
+                      ,epr.cdagenci cdagenci
+                      ,epr.nrctrcrd nrctremp
+                      ,epr.nrdconta nrdconta
+                      ,epr.vllimcrd vlemprst
+                      ,epr.dtmvtolt
+                      ,DECODE(epr.insitcrd
+                             ,0,'Estudo'
+                             ,1,'Aprovada'
+                             ,2,'Solicitada'
+                             ,3,'Liberada'
+                             ,4,'Em Uso'
+                             ,5,'Bloqueada'
+                             ,6,'Cancelada'
+                             ,8,'Em Analise'
+                             ,9,'Enviado Bancoob') situacao_ayllos
+                      ,DECODE(epr.insitdec,
+                              1,
+                              'Sem Aprovacao',
+                              2,
+                              'Aprovada Auto',
+                              3,
+                              'Aprovada Manual',
+                              4,
+                              'Erro',
+                              5,
+                              'Rejeitada',
+                              6,
+                              'Refazer',
+                              7,
+                              'Expirada') parecer_esteira
+                      ,UPPER(epr.cdoperad) nmoperad -- Operador Inclusão
+                      ,epr.cdorigem nmorigem
+                      ,DECODE((SELECT 1
+                                 FROM crapcrd
+                                WHERE crapcrd.cdcooper = epr.cdcooper
+                                  AND crapcrd.nrdconta = epr.nrdconta
+                                  AND crapcrd.nrctrcrd = epr.nrctrcrd),
+                               1,
+                               'Sim',
+                               'Nao') efetivada
+                      ,age.nmresage                
+                  FROM crawcrd epr,
+                       crapass ass,
+                       crapage age
+                 WHERE 1=1 
+                 AND  epr.cdcooper = pr_cdcooper --> Cód. cooperativa
+                 AND  epr.cdoperad = nvl(pr_cdoperad,epr.cdoperad)
+                 AND (pr_cdagenci = 0 OR epr.cdagenci = pr_cdagenci) --> PA
+                 AND (NVL(pr_nrdconta, 0) = 0 OR epr.nrdconta = pr_nrdconta) --> Nr. da Conta
+                 AND (NVL(pr_nrctremp, 0) = 0 OR epr.nrctrcrd = pr_nrctremp) --> Nr. Proposta
+                 AND epr.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal
+                 AND ass.cdcooper = epr.cdcooper
+                 AND ass.nrdconta = epr.nrdconta                  
+                 AND age.cdcooper(+) = epr.cdcooper
+                 AND age.cdagenci(+) = epr.cdagenci
+                 AND rownum <= (pr_nriniseq + pr_nrregist)
+               ORDER BY epr.cdagenci)
+         WHERE rnum >= pr_nriniseq;
+      rw_crawcrd    cr_crawcrd%ROWTYPE;   
+    
       CURSOR cr_crapope IS
         SELECT TRIM(LOWER(operador) || ' - ' || INITCAP((SUBSTR(nome, 1, INSTR(nome, ' ') - 1)))) nmoperad,
                UPPER(operador) cdoperad
@@ -649,6 +720,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
            AND (NVL(pr_insitapr, 9) = 9 OR epr.insitapr = pr_insitapr) -- Parecer Esteiral
            AND epr.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal;
       rw_crawepr_total cr_crawepr_total%ROWTYPE;
+      
+      CURSOR cr_crawcrd_total IS
+        SELECT COUNT(*) TOTAL           
+                  FROM CRAWCRD epr
+                   WHERE  epr.cdcooper = pr_cdcooper --> Cód. cooperativa
+                   AND  epr.cdoperad = nvl(pr_cdoperad,epr.cdoperad)
+                   AND (pr_cdagenci = 0 OR epr.cdagenci = pr_cdagenci) --> PA
+                   AND (NVL(pr_nrdconta, 0) = 0 OR epr.nrdconta = pr_nrdconta) --> Nr. da Conta
+                   AND (NVL(pr_nrctremp, 0) = 0 OR epr.nrctrcrd = pr_nrctremp) --> Nr. Proposta
+                   AND epr.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal;
+      rw_crawcrd_total   cr_crawcrd_total%ROWTYPE;          
     BEGIN
     
       ---------------------------------- VALIDACOES INICIAIS --------------------------
@@ -690,6 +772,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
       END LOOP;
     
+      IF pr_tpproduto = 0 THEN
+        --
       OPEN cr_crawepr_total;
       FETCH cr_crawepr_total
         INTO rw_crawepr_total;
@@ -701,7 +785,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       END IF;
     
       CLOSE cr_crawepr_total;
+        --
+      ELSE
+        --
+        OPEN cr_crawcrd_total;
+        FETCH cr_crawcrd_total
+          INTO rw_crawcrd_total;
     
+        IF cr_crawcrd_total%FOUND THEN
+          pr_totalreg := rw_crawcrd_total.total;
+        ELSE
+          pr_totalreg := 0;
+        END IF;
+      
+        CLOSE cr_crawcrd_total;
+        --  
+      END IF;
+      
+      IF pr_tpproduto = 0 THEN
       -- Abre cursor para atribuir os registros encontrados na PL/Table
       FOR rw_crawepr IN cr_crawepr LOOP
       
@@ -787,6 +888,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         pr_tab_crawepr(vr_ind_crawepr).nmresage := rw_crawepr.nmresage;
       
       END LOOP;
+      ELSE
+        FOR rw_crawcrd IN cr_crawcrd LOOP
+          
+          -- Verifica Efetivação
+          IF pr_insitefe <> 9 THEN
+          
+            IF pr_insitefe = 1 AND
+               rw_crawepr.efetivada <> 'Sim' THEN
+              CONTINUE;
+            ELSE
+              IF pr_insitefe = 0 AND
+                 rw_crawepr.efetivada <> 'Nao' THEN
+                CONTINUE;
+              END IF;
+            END IF;
+          
+          END IF;
+          --
+          vr_ind_crawepr := vr_ind_crawepr + 1;
+        
+          pr_tab_crawepr(vr_ind_crawepr).cdagenci := rw_crawcrd.cdagenci;
+          pr_tab_crawepr(vr_ind_crawepr).nrctremp := rw_crawcrd.nrctremp;
+          pr_tab_crawepr(vr_ind_crawepr).nrdconta := rw_crawcrd.nrdconta;
+          pr_tab_crawepr(vr_ind_crawepr).vlemprst := rw_crawcrd.vlemprst;
+          pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_crawcrd.dtmvtolt, 'DD/MM/YYYY');
+          
+          IF vr_tab_crapope.EXISTS(rw_crawcrd.nmoperad) THEN
+            pr_tab_crawepr(vr_ind_crawepr).nmoperad := vr_tab_crapope(rw_crawcrd.nmoperad).nmoperad;
+          ELSE
+            pr_tab_crawepr(vr_ind_crawepr).nmoperad := ' ';
+          END IF;
+          
+          pr_tab_crawepr(vr_ind_crawepr).situacao_ayllos := rw_crawcrd.situacao_ayllos;
+          pr_tab_crawepr(vr_ind_crawepr).parecer_esteira := rw_crawcrd.parecer_esteira;
+          
+          IF vr_tab_crapope.EXISTS(rw_crawcrd.nmorigem) THEN
+            pr_tab_crawepr(vr_ind_crawepr).nmorigem := vr_tab_crapope(rw_crawcrd.nmorigem).nmoperad;
+          ELSE
+            pr_tab_crawepr(vr_ind_crawepr).nmorigem := ' ';
+          END IF;
+        
+          pr_tab_crawepr(vr_ind_crawepr).efetivada := rw_crawcrd.efetivada;
+          pr_tab_crawepr(vr_ind_crawepr).nmresage := rw_crawcrd.nmresage;
+          --
+      END LOOP;
+      END IF;
     
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -920,6 +1067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                        pr_cdoperad    => vr_cdoperad,
                                        pr_nrregist    => pr_nrregist,
                                        pr_nriniseq    => pr_nriniseq,
+                                       pr_tpproduto   => 0, --Empréstimo pr_tpproduto,
                                        pr_cdcritic    => vr_cdcritic,
                                        pr_dscritic    => vr_dscritic,
                                        pr_tab_crawepr => vr_tab_crawepr,
@@ -1381,7 +1529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       TELA_CONPRO.pc_consulta_acionamento(pr_cdcooper    => vr_cdcooper,
                                           pr_nrctremp    => pr_nrctremp,
-                                          pr_tpproduto   => pr_tpproduto,
+                                          pr_tpproduto   => nvl(pr_tpproduto,0),
                                           pr_nrdconta    => pr_nrdconta,
                                           pr_dtinicio    => vr_dtinicio,
                                           pr_dtafinal    => vr_dtafinal,
@@ -1569,6 +1717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       Observacao: -----
     
       Alteracoes: 12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
+                  12/04/2017 - Inclusão de consulta para o Tipo de Produto 4 - Cartão de Crédito
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -1628,6 +1777,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
       
+     CURSOR cr_cratbgen IS
+        SELECT A.Idacionamento Acionamento,
+               A.CDCOOPER cdcooper,
+               A.NRDCONTA nrdconta,
+               A.Nrctrprp nrctrprp,
+               INITCAP(TO_CHAR(A.CDAGENCI_ACIONAMENTO) || ' - ' || P.NMRESAGE) nmagenci,
+               upper(a.cdoperad) cdoperad,
+               INITCAP(TO_CHAR(A.CDOPERAD) || ' - ' ||
+                       INITCAP((SUBSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '), '-', ' ')),
+                                       1,
+                                       INSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '),
+                                                          '-',
+                                                          ' ')),
+                                             ' ') - 1)))) nmoperad,
+               INITCAP(A.DSOPERACAO) operacao,
+               A.DHACIONAMENTO dtmvtolt,
+               a.dsuriservico,               
+               a.dsresposta_requisicao,
+               a.cdstatus_http,
+               a.tpacionamento,
+               decode(a.tpacionamento,2,a.dsprotocolo,NULL) dsprotocolo
+          FROM tbgen_webservice_aciona a
+        
+          LEFT JOIN crapope o
+            ON o.cdcooper = a.cdcooper
+           AND upper(o.cdoperad) = upper(a.cdoperad)
+        
+          LEFT JOIN crapass b
+            ON b.cdcooper = a.cdcooper
+           AND b.nrdconta = a.nrdconta
+        
+          LEFT JOIN crapage P
+            ON a.cdcooper = p.cdcooper
+           AND a.cdagenci_acionamento = p.cdagenci
+        
+         WHERE a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta
+           AND ( a.nrctrprp = pr_nrctremp OR pr_nrctremp = 0)
+           AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
+           AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
+           AND a.tpacionamento IN(1,2)
+           AND a.tpproduto = pr_tpproduto
+     ORDER BY a.DHACIONAMENTO DESC;
+      rw_cratbgen cr_cratbgen%ROWTYPE;
+      
      -- Descritivo Retorno
      vr_dsretorno VARCHAR2(1000); 
       
@@ -1660,6 +1854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         RAISE vr_exc_saida;
       END IF;
     
+      IF pr_tpproduto <> 4 THEN -- Empréstimo / Limite / etc
       -- Abre cursor para atribuir os registros encontrados na PL/Table
       FOR rw_crawepr IN cr_cratbepr LOOP
       
@@ -1731,8 +1926,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_crawepr.nrctrprp;
         pr_tab_crawepr(vr_ind_crawepr).dsprotocolo := rw_crawepr.dsprotocolo;
         
-      
       END LOOP;
+        
+      ELSIF pr_tpproduto = 4 THEN --Cartão de Crédito
+        -- Abre cursor para atribuir os registros encontrados na PL/Table
+        FOR rw_cratbgen IN cr_cratbgen LOOP
+        
+          -- Incrementa contador para utilizar como indice da PL/Table
+          vr_ind_crawepr := vr_ind_crawepr + 1;
+      
+          -- pr_tab_cde(vr_ind_cde).cdcooper := rw_crapcob.cdcooper;
+          pr_tab_crawepr(vr_ind_crawepr).acionamento := rw_cratbgen.acionamento;
+          pr_tab_crawepr(vr_ind_crawepr).nmagenci := substr(rw_cratbgen.nmagenci,1,100);
+          pr_tab_crawepr(vr_ind_crawepr).cdoperad := rw_cratbgen.nmoperad;
+          pr_tab_crawepr(vr_ind_crawepr).operacao := substr(rw_cratbgen.operacao,1,100);
+          pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_cratbgen.dtmvtolt,
+                                                             'DD/MM/YYYY hh24:mi:ss');
+        
+          vr_dscritic := NULL;
+          IF UPPER(rw_cratbgen.operacao) LIKE '%BANCOOB%' AND 
+            rw_cratbgen.CDSTATUS_HTTP = 400 THEN
+            vr_dscritic := substr(rw_cratbgen.DSRESPOSTA_REQUISICAO,1,150);  
+          ELSIF rw_cratbgen.CDSTATUS_HTTP = 400 THEN
+            vr_dscritic := substr(ESTE0001.fn_retorna_critica(rw_cratbgen.DSRESPOSTA_REQUISICAO),1,150);
+          END IF;
+          -- Se encontramos critica
+          IF vr_dscritic IS NOT NULL THEN
+            -- Retornaremos a mesma
+            vr_dsretorno := vr_dscritic;
+          ELSE
+            -- Erros HTTP
+            IF rw_cratbgen.cdstatus_http = 401 THEN
+              vr_dsretorno := 'Credencias de acesso ao WebService Ibratan invalidas.';
+            ELSIF rw_cratbgen.cdstatus_http = 403 THEN
+              vr_dsretorno := 'Sem permissao de acesso ao Webservice Ibratan.';
+            ELSIF rw_cratbgen.cdstatus_http = 404 THEN
+              vr_dsretorno := 'Recurso nao encontrado no WebService Ibratan nao existe.';
+            ELSIF rw_cratbgen.cdstatus_http = 412 THEN
+              vr_dsretorno := 'Parametros do WebService Ibratan invalidos.';
+            ELSIF rw_cratbgen.cdstatus_http = 429 THEN
+              vr_dsretorno := 'Muitas requisicoes de retorno da Analise Automatica da esteira.';
+            ELSIF rw_cratbgen.cdstatus_http BETWEEN 400 AND 499 THEN
+              vr_dsretorno := 'Valor do(s) parametro(s) WebService invalidos.';
+            ELSIF rw_cratbgen.cdstatus_http BETWEEN 501 AND 599 THEN
+              vr_dsretorno := 'Falha na comunicacao com servico Ibratan.';
+            ELSE 
+              -- Tratar envios e retornos 
+              IF rw_cratbgen.cdstatus_http = 200 THEN 
+                IF INSTR(rw_cratbgen.dsuriservico, 'cancelar') > 0 THEN   
+                  vr_dsretorno := 'Cancelamento da proposta enviado com sucesso para esteira.';
+                ELSIF INSTR(rw_cratbgen.dsuriservico, 'efetivar') > 0 THEN   
+                  vr_dsretorno := 'Proposta efetivada foi enviada para esteira com sucesso.';
+                ELSIF INSTR(rw_cratbgen.dsuriservico, 'numeroProposta') > 0 THEN   
+                  vr_dsretorno := 'Numero da proposta foi enviado para esteira com sucesso.';
+                END IF;
+              END IF;
+              
+              IF UPPER(rw_cratbgen.operacao) = 'REENVIO DA PROPOSTA PARA ANALISE DE CREDITO' THEN
+                vr_dsretorno := 'Proposta reenviada para Analise de credito com sucesso.';
+              ELSIF UPPER(rw_cratbgen.operacao) = 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO' THEN
+                vr_dsretorno := 'Proposta enviada para analise manual da esteira com sucesso.';
+              ELSIF UPPER(rw_cratbgen.operacao) = 'SOLICITA SUGESTAO MOTOR' THEN
+                vr_dsretorno := 'Solicitacao de sugestao do Motor enviada com sucesso.';
+              ELSIF UPPER(rw_cratbgen.operacao) LIKE 'RETORNO ANALISE AUTOMATICA%' THEN
+                vr_dsretorno := 'Retorno da analise automatica recebido com sucesso.';
+              ELSIF UPPER(rw_cratbgen.operacao) LIKE 'RETORNO PROPOSTA%' THEN
+                vr_dsretorno := 'Retorno da analise manual recebido com sucesso.';
+              ELSE
+                vr_dsretorno := rw_cratbgen.dsresposta_requisicao;
+              END IF;  
+            END IF;  
+          END IF;
+          
+          pr_tab_crawepr(vr_ind_crawepr).retorno := substr(vr_dsretorno,1,150);        
+          pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_cratbgen.nrctrprp;
+          pr_tab_crawepr(vr_ind_crawepr).dsprotocolo := rw_cratbgen.dsprotocolo;
+          
+      END LOOP;
+    
+      END IF;        
     
     EXCEPTION
       WHEN vr_exc_saida THEN
