@@ -963,7 +963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   END;
   
   --> Rotina para retornar total de prestações que o avalista tem
-  --> e também retornar a quantidade de contrato em que é avalista
+  --> e também retornar a quantidade de contratos ativo do avalista
   --> Diego Simas (AMcom)
   PROCEDURE pc_resumo_aval(pr_cdcooper    IN crapepr.cdcooper%TYPE --> Código da cooperativa
                           ,pr_nrdconta    IN crapepr.nrdconta%TYPE --> Numero da conta do emprestimo
@@ -992,18 +992,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Selecionar informações do avalista
       -- Cursor para pegar quantidade de contratos e o valor total
-      -- das prestações em que o cooperado é avalista    
+      -- das prestações do avalista
       CURSOR cr_crapavl (pr_cdcooper crapass.cdcooper%TYPE,
                          pr_nrdconta crapass.nrdconta%TYPE)IS
       SELECT SUM(emp.vlpreemp) total_prestacoes, 
-             COUNT(DISTINCT ava.nrctravd) qtd_contratos
-        FROM crapavl ava, 
-             crapepr emp
-       WHERE ava.cdcooper = pr_cdcooper
-         AND ava.nrdconta = pr_nrdconta
-         AND emp.cdcooper = ava.cdcooper
-         AND emp.nrdconta = ava.nrctaavd
-         AND emp.nrctremp = ava.nrctravd
+       COUNT(DISTINCT emp.nrctremp) qtd_contratos
+        FROM crapepr emp
+       WHERE emp.cdcooper = pr_cdcooper
+         AND emp.nrdconta = pr_nrdconta
          AND emp.inliquid = 0;
       rw_crapavl cr_crapavl%ROWTYPE;
 
@@ -1600,6 +1596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
     
       -- Cursor para pegar os contratos em que o cooperado é avalista
+      -- Objeto Contas Avalizada do Proponente
       -- Diego Simas (AMcom)
       CURSOR cr_crapavl_contas (pr_cdcooper crapass.cdcooper%TYPE,
                                 pr_nrdconta crapass.nrdconta%TYPE)IS
@@ -3282,33 +3279,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                          ,este0001.fn_decimal_ibra(vr_ava_vlsdeved));
 												 
       -- INÍCIO AVAIS CRUZADOS                   
-      -- Buscar a quantidade de contratos e o valor total
-      -- das prestações, de contratos ativos, em que o cooperado é avalista
+      -- Buscar as contas avalizadas do proponente
       -- Diego Simas (AMcom)
-      pc_resumo_aval(pr_cdcooper => pr_cdcooper   --Cooperativa
-                    ,pr_nrdconta => pr_nrdconta   --Conta
-                    ,pr_vltprava => vr_vltprava   --Valor total das prestações do aval
-                    ,pr_qtconava => vr_qtconava   --Quantidade de contratos do aval
-                    ,pr_cdcritic => vr_cdcritic   --Código da crítica
-                    ,pr_dscritic => vr_dscritic   --Descrição da crítica
-                    ,pr_nmdcampo => vr_nmdcampo   --Nome do campo de retorno
-                    ,pr_des_erro => vr_des_erro); --Retorno OK;NOK
-                                      
-      IF vr_des_erro <> 'OK'      OR
-         nvl(vr_cdcritic,0) <> 0  OR
-           vr_dscritic IS NOT NULL  THEN
-           RAISE vr_exc_erro;
-      END IF;
-      
-      -- Cria informação totalPrestacoesAvalista
-      vr_obj_generic2.put('totalPrestacoesAvalista'
-                         ,este0001.fn_decimal_ibra(vr_vltprava));
-      -- Cria informação qtdContratosAvalista
-      vr_obj_generic2.put('qtdContratosAvalista'
-                         ,vr_qtconava);
-
-      -- Montar objeto para Aval Cruzado
-      -- Criar objeto para contas e contratos avalizados
       vr_lst_generic3 := json_list();
       
       -- Efetuar laço para trazer todos os registros
@@ -3672,6 +3644,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Adicionar o array OpCred no objeto informações adicionais
       vr_obj_generic2.put('opCred', vr_lst_generic3);
 						
+      -- INÍCIO AVAIS CRUZADOS
+      -- Buscar a quantidade de contratos e o valor total
+      -- das prestações de contratos ativos do avalista
+      -- Diego Simas (AMcom)
+      pc_resumo_aval(pr_cdcooper => pr_cdcooper   --Cooperativa
+                    ,pr_nrdconta => pr_nrdconta   --Conta
+                    ,pr_vltprava => vr_vltprava   --Valor total das prestações do aval
+                    ,pr_qtconava => vr_qtconava   --Quantidade de contratos do aval
+                    ,pr_cdcritic => vr_cdcritic   --Código da crítica
+                    ,pr_dscritic => vr_dscritic   --Descrição da crítica
+                    ,pr_nmdcampo => vr_nmdcampo   --Nome do campo de retorno
+                    ,pr_des_erro => vr_des_erro); --Retorno OK;NOK
+
+      IF vr_des_erro <> 'OK'      OR
+         nvl(vr_cdcritic,0) <> 0  OR
+           vr_dscritic IS NOT NULL  THEN
+           RAISE vr_exc_erro;
+      END IF;
+
+      -- Cria informação totalPrestacoesAvalista
+      vr_obj_generic2.put('totalPrestacoesAvalista'
+                         ,este0001.fn_decimal_ibra(vr_vltprava));
+      -- Cria informação qtdContratosAvalista
+      vr_obj_generic2.put('qtdContratosAvalista'
+                         ,vr_qtconava);
+      
+      -- Diego Simas (AMcom)
+      -- FIM AVAIS CRUZADOS
+
       -- Somente para Pessoa Fisica
       IF rw_crapass.inpessoa <> 1 THEN
 			
@@ -6560,7 +6561,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na montagem dos dados para análise automática da proposta: '||sqlerrm;
   END pc_gera_json_limite;
-    
   
 END ESTE0002;
 /
