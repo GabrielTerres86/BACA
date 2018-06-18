@@ -85,6 +85,7 @@ BEGIN
       WHERE 1=1
       AND   insitcrd = 0
       AND   cdcooper = rcooper.cdcooper
+	  AND   cdadmcrd BETWEEN 10 AND 80 -- Bancoob
       AND   dtpropos < TRUNC(SYSDATE)-vr_dias_expiracap_prop;
     EXCEPTION
       WHEN OTHERS THEN
