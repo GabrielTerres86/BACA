@@ -40,25 +40,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps733 IS
    
   -- Solicitação de limite de credito
   CURSOR cur_alt_limite_crd IS
-    select tbla.cdcooper
+    SELECT tbla.cdcooper
       ,tbla.nrdconta
+          ,tbla.nrproposta_est
       ,crcrd.nrctrcrd
       ,crcrd.cdagenci
       ,crcrd.cdoperad
       ,crcrd.cdorigem
       ,crcrd.dtmvtolt
       ,crcrd.cdadmcrd
-  from tbcrd_limite_atualiza tbla
+      FROM tbcrd_limite_atualiza tbla
       ,crawcrd crcrd
- where 1=1
+     WHERE 1=1
    AND tbla.cdcooper   = crcrd.cdcooper
    AND tbla.nrdconta   = crcrd.nrdconta
    AND tbla.insitdec   = 3 -- Aprovado manual
-   and tbla.tpsituacao = 3
+       AND tbla.tpsituacao = 3
    AND crcrd.insitcrd  = 4
    AND crcrd.flgprcrd  = 1
    AND crcrd.nrcctitg  = tbla.nrconta_cartao
    AND crcrd.cdadmcrd  = tbla.cdadmcrd
+       AND crcrd.nrctrcrd  = tbla.nrctrcrd --Novo
    AND NOT EXISTS (SELECT 1
                    FROM   tbgen_webservice_aciona tbwa
                    WHERE tbwa.dsoperacao LIKE 'ENVIO%PROPOSTA%ESTEIRA%CREDITO'
@@ -69,7 +71,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps733 IS
    AND tbla.dtalteracao = (SELECT MAX(tbla1.dtalteracao)
                            FROM   tbcrd_limite_atualiza tbla1
                            WHERE  tbla1.cdcooper = tbla.cdcooper
-                           AND    tbla1.nrdconta = tbla.nrdconta);
+                               AND    tbla1.nrdconta = tbla.nrdconta
+                               AND    tbla1.nrctrcrd = tbla.nrctrcrd --Novo
+                               AND    tbla1.nrproposta_est = tbla.nrproposta_est); --Novo
+
   --
   -- Subrotinas
   -- Controla Controla log
