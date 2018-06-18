@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 12/03/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 18/06/2018
 
     Dados referente ao programa:
 
@@ -115,14 +115,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                  23/02/2018 - Ajustar crrl636 para contabilizar a receita liquida da mesma forma 
                               que o 634 e 635 (Lucas Ranghetti #846567)
 
-				 12/03/2018 - Ajustar Relatorio de Despesas para contabilizar a receita liquida da
-				              mesma forma que o 634 e 635 (Everton Mouts #857158)
+				         12/03/2018 - Ajustar Relatorio de Despesas para contabilizar a receita liquida da
+				                      mesma forma que o 634 e 635 (Everton Mouts #857158)
 
                  07/05/2018 - Ajustar ordenação de query ao buscar a empresa de arrecadação (cursor cr_crapscn).
                               Aplicado o mesmo padrão de ordenação já aplicado no programa caixa online (cxon0014).
                               Desta forma irá retornar a mesma empresa que foi fixada no BI (638), não gerando mais
                               diferença no relatório contábil mensal (crrl635).
                               (Wagner/Sustentação #TASK0012676)
+                 
+                 18/06/2018 - Adicionado valor da fatura no index pois  haviam convenios que estavam se repetindo 
+                              fazendo com que se perdesse valores. Isso por que os relatórios 635 e 636 estavam 
+                              com valores totais diferentes e deveriam ser iguais. (SCTASK0014061 - Kelvin).           
 
   ..............................................................................*/
 
@@ -154,7 +158,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   -- Mesmo tipo acima, porém precisamos dos registros ordenados por quantiodade de faturas desc 
   TYPE tt_tab_rel63X_qtdade IS
     TABLE OF tt_rel63X
-      INDEX BY VARCHAR2(87); -- Id(Debaut ou não - 1) + Quantidade Faturas Empresa (18) + Nome EMpresa(35) + Quantidade Faturas do Canal (18) + Canal(15)
+      INDEX BY VARCHAR2(100); -- Id(Debaut ou não - 1) + Quantidade Faturas Empresa (18) + Nome EMpresa(35) + Quantidade Faturas do Canal (18) + Canal(15)
   -- Tipo para armazenar os totais por empresa
   TYPE tt_tot_empresa IS
     TABLE OF NUMBER
@@ -165,7 +169,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tab_rel636        tt_tab_rel63X;
   vr_tab_rel636_qtdade tt_tab_rel63X_qtdade;
   vr_ind_rel63X varchar(50);
-  vr_ind_rel636_qtdade varchar(87);
+  vr_ind_rel636_qtdade varchar(100);
   vr_tab_tot_empresa   tt_tot_empresa; 
   
   -- Vetor para armazenar valores por agencia para o arquivo contabil 
@@ -1831,7 +1835,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                  || to_char(vr_tab_tot_empresa(vr_tab_rel636(vr_ind_rel63X).cdempres)*100,'fm000000000000000000')
                                  || RPAD(vr_tab_rel636(vr_ind_rel63X).nmconven,35,' ')
                                  || to_char(vr_tab_rel636(vr_ind_rel63X).qtfatura*100,'fm000000000000000000')
-                                 || RPAD(vr_tab_rel636(vr_ind_rel63X).dsmeiarr,15,' ');
+                                 || RPAD(vr_tab_rel636(vr_ind_rel63X).dsmeiarr,15,' ') || to_char(vr_tab_rel636(vr_ind_rel63X).vltotfat,'fm0000000000000');
             -- Enfim, criar o registro na tabela nova com base no registro antigo 
             vr_tab_rel636_qtdade(vr_ind_rel636_qtdade) := vr_tab_rel636(vr_ind_rel63X);
             -- Buscar o proximo registro
