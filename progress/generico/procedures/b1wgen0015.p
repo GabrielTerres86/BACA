@@ -9780,7 +9780,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
           EMPTY TEMP-TABLE tt-erro.
 
           /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
-               RUN gera_erro (INPUT par_cdcooper,
+             RUN gera_erro (INPUT par_cdcooper,
                             INPUT par_cdagenci,
                             INPUT par_nrdcaixa,
                             INPUT 1,            /** Sequencia **/
@@ -9801,7 +9801,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                              
           RETURN "NOK".
         END.
-        
+      
       
     RETURN "OK".
     
