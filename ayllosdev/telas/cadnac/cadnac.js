@@ -1,11 +1,12 @@
 /*****************************************************************************************
  Fonte: cadnac.js                                                   
  Autor: Adriano - CECRED                                                   
- Data : Junho/2017             					   Última Alteração:         
+ Data : Junho/2017             					   Última Alteração: 09/04/2018         
                                                                   
  Objetivo  : Biblioteca de funções da tela CADNAC
                                                                   
- Alterações:  
+ Alterações:  09/04/2018 - PRJ 414 - Alterado formatação da tabela de nacionalidades,
+ 					       incluido form incluir e sua formatação (Mateus Z - Mouts)
 						  
 ******************************************************************************************/
 
@@ -20,8 +21,10 @@ function estadoInicial() {
 	
 	formataCabecalho();
 	$('#frmFiltro').css('display','none');
+	$('#frmIncluir').css('display','none');
 	$('#divTabela').html('');
 	$('#divBotoesFiltro').css('display','none');
+	$('#divBotoesIncluir').css('display','none');
 	$('#cddopcao','#frmCabCadnac').habilitaCampo().focus().val('C');
 	
 	layoutPadrao();
@@ -63,7 +66,11 @@ function formataCabecalho(){
 		$('#cddopcao','#frmCabCadnac').desabilitaCampo();		
 		$(this).unbind('click');
 		
-		formataFiltro();
+		if($('#cddopcao','#frmCabCadnac').val() == 'I'){
+			formataIncluir();
+		} else {
+			formataFiltro();
+		}
 								
 	});
 	
@@ -114,6 +121,8 @@ function formataFiltro(){
 		
 	});
 	
+	$('#frmIncluir').css('display','none');
+	$('#divBotoesIncluir').css('display','none');
 	$('#frmFiltro').css('display','block');
 	$('#divBotoesFiltro').css('display','block');
 	
@@ -202,13 +211,33 @@ function formataDetalhes(){
 	
 	//Label do frmDetalhes
 	var rDsnacion = $('label[for="dsnacion"]','#frmDetalhes');
+	var rCdpais   = $('label[for="cdpais"]','#frmDetalhes');
+	var rNmpais   = $('label[for="nmpais"]','#frmDetalhes');
+	var rInacordo = $('label[for="inacordo"]','#frmDetalhes');
+	var rDtinicio = $('label[for="dtinicio"]','#frmDetalhes');
+	var rDtfinal    = $('label[for="dtfinal"]','#frmDetalhes');	
 	
 	rDsnacion.addClass("rotulo").css('width','100px');
+	rCdpais.addClass("rotulo").css('width','100px');
+	rNmpais.addClass("rotulo-linha").css('width','100px');
+	rInacordo.addClass("rotulo").css('width','100px');
+	rDtinicio.addClass("rotulo-linha").css('width','93px');
+	rDtfinal.addClass("rotulo-linha").css('width','70px');
   
 	//Campos do frmDetalhes
-	var cDsnacion = $('#dsnacion','#frmDetalhes');
+	var cDsnacion = $('#dsnacion','#frmDetalhes');	
+	var cCdpais = $('#cdpais','#frmDetalhes');
+	var cNmpais = $('#nmpais','#frmDetalhes');
+	var cInacordo = $('#inacordo','#frmDetalhes');
+	var cDtinicio = $('#dtinicio','#frmDetalhes');
+	var cDtfinal = $('#dtfinal','#frmDetalhes');
   
-    cDsnacion.css({'width':'400px'}).addClass('alphanum').attr('maxlength','25').habilitaCampo();
+    cDsnacion.css({'width':'570px'}).addClass('alphanum').attr('maxlength','25').habilitaCampo();
+    cCdpais.css({'width':'33px'}).addClass('alphanum').habilitaCampo();
+    cNmpais.css({'width':'534px', 'text-transform': 'uppercase'}).habilitaCampo();
+    cInacordo.css({'width':'75px'}).habilitaCampo();
+    cDtinicio.css({'width':'75px'}).addClass('data').habilitaCampo();
+    cDtfinal.css({'width':'75px'}).addClass('data').habilitaCampo();
 		
 	// Percorrendo todos os links
     $('input, select', '#frmDetalhes').each(function () {
@@ -231,14 +260,25 @@ function formataDetalhes(){
 		});
 		
 	});
+
+	// Evento change no campo cNrdconta
+	cInacordo.unbind("change").bind("change",function() {
+		
+		if ($(this).val() == "") {
+			cDtinicio.val('');
+			cDtfinal.val('');
+			return true;
+		}			
+		
+		return true;
+		
+	});
 	
 	$('#divBotoesFiltro').css('display','none');
 	$('#frmDetalhes').css('display','block');
 	$('#divBotoesDetalhes').css('display','block');
 	$('input','#frmFiltro').desabilitaCampo();
 	layoutPadrao();
-	
-	formataTabelaNacionalidade();	
 	
 	$('#dsnacion','#frmDetalhes').focus();
 	
@@ -295,7 +335,12 @@ function buscarNacionalidades(nriniseq,nrregist){
 function incluirNacionalidade(){
 	
 	var cddopcao = $('#cddopcao','#frmCabCadnac').val();
-	var dsnacion = $('#dsnacion','#frmFiltro').val();
+	var dsnacion = $('#dsnacion','#frmIncluir').val();
+	var cdpais 	 = $('#cdpais','#frmIncluir').val();
+	var nmpais   = $('#nmpais','#frmIncluir').val();
+	var inacordo = $('#inacordo','#frmIncluir').val();
+	var dtinicio = $('#dtinicio','#frmIncluir').val();
+	var dtfinal  = $('#dtfinal','#frmIncluir').val();
 	
 	showMsgAguardo( "Aguarde, incluindo nacionalidade..." );
 	
@@ -306,6 +351,11 @@ function incluirNacionalidade(){
         data: {
 			cddopcao: cddopcao,
 			dsnacion: dsnacion,
+			cdpais  : cdpais,  
+			nmpais  : nmpais,  
+			inacordo: inacordo,
+			dtinicio: dtinicio,
+			dtfinal : dtfinal,
             redirect: "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
@@ -365,6 +415,11 @@ function alterarNacionalidade(){
 	var cddopcao = $('#cddopcao','#frmCabCadnac').val();
 	var cdnacion = $('#cdnacion','#frmDetalhes').val();
 	var dsnacion = $('#dsnacion','#frmDetalhes').val();
+	var cdpais 	 = $('#cdpais','#frmDetalhes').val();
+	var nmpais   = $('#nmpais','#frmDetalhes').val();
+	var inacordo = $('#inacordo','#frmDetalhes').val();
+	var dtinicio = $('#dtinicio','#frmDetalhes').val();
+	var dtfinal  = $('#dtfinal','#frmDetalhes').val();
 	
 	showMsgAguardo( "Aguarde, alterando nacionalidade..." );
 	
@@ -376,12 +431,18 @@ function alterarNacionalidade(){
 			cddopcao: cddopcao,
 			cdnacion: cdnacion,
 			dsnacion: dsnacion,
+			cdpais  : cdpais,  
+			nmpais  : nmpais,  
+			inacordo: inacordo,
+			dtinicio: dtinicio,
+			dtfinal : dtfinal, 
             redirect: "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
             showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","$('#dsnacion','#frmFiltro').focus();");
         },
         success: function(response) {
+        	hideMsgAguardo();
 			try {
 				eval(response);				
 			} 
@@ -409,12 +470,21 @@ function formataTabelaNacionalidade(){
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-    arrayLargura[0] = '60px';
-	
+    arrayLargura[0] = '50px';
+    arrayLargura[1] = '170px';
+    arrayLargura[2] = '25px';
+    arrayLargura[3] = '150px';
+    arrayLargura[4] = '50px';
+    arrayLargura[5] = '70px';	
 	
     var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
 	arrayAlinha[1] = 'left';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'left';
+	arrayAlinha[4] = 'left';
+	arrayAlinha[5] = 'left';
+	arrayAlinha[6] = 'left';
 	
 	var metodoTabela = '';
 	
@@ -447,8 +517,15 @@ function formataTabelaNacionalidade(){
 
 function selecionaNacionalidade(tr){
 
+	var acordoSelecionado = $('#inacordo', tr ).val().toLowerCase();
+
 	$('#dsnacion','#frmDetalhes').val($('#dsnacion', tr ).val());
 	$('#cdnacion','#frmDetalhes').val($('#cdnacion', tr ).val());
+	$('#cdpais','#frmDetalhes').val($('#cdpais', tr ).val());
+	$('#nmpais','#frmDetalhes').val($('#nmpais', tr ).val());
+	$('#inacordo option[value="' + acordoSelecionado + '"]', '#frmDetalhes').prop('selected', true);
+	$('#dtinicio','#frmDetalhes').val($('#dtinicio', tr ).val());
+	$('#dtfinal','#frmDetalhes').val($('#dtfinal', tr ).val());
 	return false;
 	
 }
@@ -480,7 +557,7 @@ function controlaOperacao(){
 		
 		case 'I':
 		
-			showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','incluirNacionalidade();','$(\'#dsnacion\',\'#frmFiltro\').focus();','sim.gif','nao.gif');
+			showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','incluirNacionalidade();','$(\'#dsnacion\',\'#frmDetalhes\').focus();','sim.gif','nao.gif');
 		
 		break;
 		
@@ -516,3 +593,71 @@ function controlaVoltar(op){
 	
 }
 
+function formataIncluir(){
+
+	highlightObjFocus( $('#frmIncluir') );
+	$('#fsetIncluir').css({'border-bottom':'1px solid #777'});	
+	
+	$('input, select','#frmIncluir').val('');
+	
+	//Label do frmIncluir
+	var rDsnacion = $('label[for="dsnacion"]','#frmIncluir');
+	var rCdpais   = $('label[for="cdpais"]','#frmIncluir');
+	var rNmpais   = $('label[for="nmpais"]','#frmIncluir');
+	var rInacordo = $('label[for="inacordo"]','#frmIncluir');
+	var rDtinicio = $('label[for="dtinicio"]','#frmIncluir');
+	var rDtfinal    = $('label[for="dtfinal"]','#frmIncluir');	
+	
+	rDsnacion.addClass("rotulo").css('width','100px');
+	rCdpais.addClass("rotulo").css('width','100px');
+	rNmpais.addClass("rotulo-linha").css('width','100px');
+	rInacordo.addClass("rotulo").css('width','100px');
+	rDtinicio.addClass("rotulo-linha").css('width','93px');
+	rDtfinal.addClass("rotulo-linha").css('width','70px');
+  
+	//Campos do frmIncluir
+	var cDsnacion = $('#dsnacion','#frmIncluir');	
+	var cCdpais = $('#cdpais','#frmIncluir');
+	var cNmpais = $('#nmpais','#frmIncluir');
+	var cInacordo = $('#inacordo','#frmIncluir');
+	var cDtinicio = $('#dtinicio','#frmIncluir');
+	var cDtfinal = $('#dtfinal','#frmIncluir');
+  
+    cDsnacion.css({'width':'570px'}).addClass('alphanum').attr('maxlength','25').habilitaCampo();
+    cCdpais.css({'width':'33px'}).addClass('alphanum').habilitaCampo();
+    cNmpais.css({'width':'534px', 'text-transform': 'uppercase'}).habilitaCampo();
+    cInacordo.css({'width':'75px'}).habilitaCampo();
+    cDtinicio.css({'width':'75px'}).addClass('data').habilitaCampo();
+    cDtfinal.css({'width':'75px'}).addClass('data').habilitaCampo();
+		
+	// Percorrendo todos os links
+    $('input, select', '#frmIncluir').each(function () {
+		
+		//Define ação para o campo
+		$(this).unbind('keypress').bind('keypress', function (e) {
+
+			$('input,select').removeClass('campoErro');
+			
+			if (divError.css('display') == 'block') { return false; }
+
+			// Se é a tecla ENTER, TAB
+			if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
+				
+				$(this).nextAll('.campo:first').focus();
+
+				return false;
+			}
+			
+		});
+		
+	});
+	
+	$('#frmIncluir').css('display','block');
+	$('#divBotoesIncluir').css('display','block');
+	layoutPadrao();
+	
+	$('#dsnacion','#frmIncluir').focus();
+	
+	return false;
+	
+}

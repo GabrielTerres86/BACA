@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções na rotina REGISTRO da tela de CONTAS
  * --------------
  * ALTERAÇÕES   : 03/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ * 				  13/04/2018 - Alterado funcao voltarRotina para chamar a FATCA/CRS - PRJ 414 (Mateus - Mouts).
  * --------------
  */ 
 
@@ -300,7 +301,7 @@ function controlaContinuar () {
 
 function voltarRotina() {
 	fechaRotina(divRotina);
-	acessaRotina('IDENTIFICACAO','Identificação','identificacao_juridica'); 
+	acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pj'); 
 }
 
 function proximaRotina() {

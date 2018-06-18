@@ -12,7 +12,8 @@
  * 01/08/2013 - Jean Michel  (CECRED) : Ajuste p/ impressão de cartões de assinatura de proc/tit.
  * 02/09/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)
  * 19/10/2015 - Ajuste no layout na div DivConteudoOpcao que estava quebrando. SD 310056 (Kelvin)
- * 03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)				
+ * 03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)	
+ * 25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS - PRJ 414 (Mateus Z - Mouts) 
  * --------------
  */
 
@@ -127,6 +128,8 @@ function controlaImpressao(idImpressao, inpessoa) {
     } else if (idImpressao == 'declaracao_pj_cooperativa'){
         showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracaoPJCooperativa(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
+	} else if (idImpressao == 'declaracao_fatca_crs') {
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');	
     } else if (idImpressao != '') {
         showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     }
@@ -259,6 +262,8 @@ function controlaLayout(inpessoa) {
 }
 
 function imprime(idImpressao, flgpreen, inpessoa) {
+	
+	var nrCPF = normalizaNumero(cpfprocu);
 
     $('#tprelato', '#frmCabContas').remove();
     $('#flgpreen', '#frmCabContas').remove();
@@ -267,6 +272,7 @@ function imprime(idImpressao, flgpreen, inpessoa) {
     $('#_idseqttl', '#frmCabContas').remove();
     $('#sidlogin', '#frmCabContas').remove();
 	$('#tpregtrb', '#frmCabContas').remove();
+	$('#_nrcpfcgc', '#frmCabContas').remove();
 
     // Insiro input do tipo hidden do formulário para enviá-los posteriormente
     $('#frmCabContas').append('<input type="hidden" id="tprelato" name="tprelato" />');
@@ -276,6 +282,7 @@ function imprime(idImpressao, flgpreen, inpessoa) {
     $('#frmCabContas').append('<input type="hidden" id="_idseqttl" name="_idseqttl" />');
     $('#frmCabContas').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
 	$('#frmCabContas').append('<input type="hidden" id="tpregtrb" name="tpregtrb" />');
+	$('#frmCabContas').append('<input type="hidden" id="_nrcpfcgc" name="_nrcpfcgc" />');
 
     // Agora insiro os devidos valores nos inputs criados
     $('#tprelato', '#frmCabContas').val(idImpressao);
@@ -285,6 +292,7 @@ function imprime(idImpressao, flgpreen, inpessoa) {
     $('#_idseqttl', '#frmCabContas').val(idseqttl);
 	$('#tpregtrb', '#frmCabContas').val(tpregtrb);
     $('#sidlogin', '#frmCabContas').val($('#sidlogin', '#frmMenu').val());
+	$('#_nrcpfcgc', '#frmCabContas').val(nrCPF);
 
     var action = UrlSite + 'telas/contas/impressoes/imp_impressoes.php';
     var callafter = "bloqueiaFundo(divRotina);";
