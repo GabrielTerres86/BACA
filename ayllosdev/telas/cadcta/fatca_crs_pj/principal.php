@@ -25,6 +25,7 @@
 	$nrcpfcgc = $_POST["nrcpfcgc"] == "" ? 0 : $_POST["nrcpfcgc"];
 
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
+	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '@';
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';	
 
 	// Carrega permissões do operador
@@ -34,13 +35,14 @@
 
 	$qtOpcoesTela = count($opcoesTela);
 
-	// Carregas as opções da Rotina de Bens
+	// Carregas as opções da Rotina de Fatca/CRS
 	$flgAlterar  = (in_array("A", $glbvars["opcoesTela"]));
 	
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "    <nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+	$xml .= "    <cddopcao>".$cddopcao."</cddopcao>";
 	$xml .= "    <nriniseq>1</nriniseq>";
 	$xml .= "    <nrregist>9999</nrregist>";
 	$xml .= " </Dados>";
@@ -51,7 +53,7 @@
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina(divRotina)',false);
 	}
 	
 	$dados = $xmlObj->roottag->tags[0]->tags[0]->tags;
@@ -60,6 +62,7 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "    <nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+	$xml .= "    <cddopcao>".$cddopcao."</cddopcao>";
 	$xml .= "    <nriniseq>1</nriniseq>";
 	$xml .= "    <nrregist>9999</nrregist>";
 	$xml .= " </Dados>";
@@ -70,7 +73,7 @@
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina(divRotina)',false);
 	}
 
 	$socios = $xmlObj->roottag->tags[0]->tags;

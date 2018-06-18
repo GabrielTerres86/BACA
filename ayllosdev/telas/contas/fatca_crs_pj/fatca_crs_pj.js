@@ -13,6 +13,7 @@ var nomeForm = "frmDadosFatcaCrs";
 var flgContinuar = false;
 var nrcpfcgc = normalizaNumero(cpfprocu);
 var nrcpfcgcSocio;
+var modoAlteracao;
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) {
@@ -43,6 +44,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		data: {
 			nrcpfcgc: nrcpfcgc,
 			flgcadas: flgcadas,
+			modoAlteracao: modoAlteracao,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -130,6 +132,7 @@ function controlaOperacao(operacao) {
 			nrcpfcgc: nrCPF,
 			flgcadas: flgcadas,
 			operacao: operacao,
+			modoAlteracao: modoAlteracao,
 			redirect: "html_ajax"
 		},  
 		error: function(objAjax,responseError,objExcept) {
@@ -215,10 +218,6 @@ function manterRotina(operacao) {
 			try {
 				
 				eval(response);
-				
-				if  (operacao == 'VA' && (flgcadas == 'M' || flgContinuar)) {
-					proximaRotina();
-				}
 				
 			} catch(error) {
 				hideMsgAguardo();
