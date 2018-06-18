@@ -226,7 +226,7 @@
 								
 								<td><?php 
 									//Caso o titulo não esteja pago ou baixado e a diferença da data de movimento com o de pagamento for negativo, então está vencido
-									if (($t->tags[12]->cdata <> 2 && $t->tags[12]->cdata <> 3) && (diffData($t->tags[3]->cdata,$glbvars["dtmvtolt"]) < 0)){
+									if ($t->tags[15]->cdata == 1){
 										echo "Vencido";
 									}else{
 										switch ($t->tags[12]->cdata){
