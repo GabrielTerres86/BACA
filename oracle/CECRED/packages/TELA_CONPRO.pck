@@ -47,8 +47,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
     operacao    VARCHAR2(100),
     -- dtmvtolt'); ?></td>
     retorno VARCHAR2(150),
-    nrctrprp NUMBER
-    
+    nrctrprp NUMBER,
+    dsprotocolo VARCHAR2(1000)
     );
 
   TYPE typ_reg_crapope IS RECORD(
@@ -112,7 +112,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                      ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE pc_tela_busca_contratos_pp(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
+  PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -122,6 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Nr. Contrato   
+                                       ,pr_tpproduto IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                        ,pr_dtinicio IN VARCHAR2 -->
                                        ,pr_dtafinal IN VARCHAR2 -->
                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -133,6 +134,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa
                                    ,pr_nrctremp    IN crawepr.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
+                                   ,pr_tpproduto   IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE DEFAULT 0 --> Nr. da Conta
                                    ,pr_dtinicio    IN DATE DEFAULT NULL
                                    ,pr_dtafinal    IN DATE DEFAULT NULL
@@ -140,6 +142,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                    ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE --> Descrição da crítica
                                    ,pr_tab_crawepr OUT typ_tab_crawepr);
+
+  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbgen_webservice_aciona.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
+                               ,pr_xmllog      IN VARCHAR2                           -- XML com informacoes de LOG
+                               ,pr_cdcritic   OUT PLS_INTEGER                        -- Codigo da critica
+                               ,pr_dscritic   OUT VARCHAR2                           -- Descricao da critica
+                               ,pr_retxml  IN OUT NOCOPY XMLType                     -- Arquivo de retorno do XML
+                               ,pr_nmdcampo   OUT VARCHAR2                           -- Nome do campo com erro
+                               ,pr_des_erro   OUT VARCHAR2);                         -- Erros do processo
 
 END TELA_CONPRO;
 /
@@ -157,7 +167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela CONPRO
   --
-  -- Alteracoes:
+  -- Alteracoes: 18/04/2017 - Alterações referentes ao projeto 337 - Motor de Crédito. (Reinert)
   --
   ---------------------------------------------------------------------------
 
@@ -496,7 +506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Daniel Zimmermann
-      Data    : Março/16.                    Ultima atualizacao: --/--/----
+      Data    : Março/16.                    Ultima atualizacao: 15/12/2017
     
       Dados referentes ao programa:
     
@@ -506,7 +516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       Observacao: -----
     
-      Alteracoes:
+      Alteracoes: 15/12/2017 - P337 - SM - Tratar campos de envio Motor e Esteira 
+                               separadamente (Marcos-Supero)
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -514,6 +525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
     
+      vr_dtenvest DATE;
       vr_hrenvest VARCHAR2(10);
     
       -- Tratamento de erros
@@ -540,34 +552,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                       ,
                        DECODE(pac.instatus, 1, 'Baixo@Risco', 2, 'Medio@Risco', 3, 'Alto@Risco') parecer_ayllos,
                        epr.dtenvest,
-                       epr.hrenvest
+                       epr.hrenvest,
+                       epr.dtenvmot,
+                       epr.hrenvmot,
+                       
                        -- Situação Ayllos
-                      ,
-                       DECODE(epr.insitest,
-                              0,
-                              'Nao enviada',
-                              1,
-                              'Enviada @ para Analise',
-                              2,
-                              'Reenviado@para Analise',
-                              3,
-                              'Analise@Finalizada',
-                              4,
-                              'Expirado',
-                              '') situacao_ayllos
+                       DECODE(epr.insitest,0,'Nao enviada'
+														 ,1,'Env. p/@Analise@Autom.'
+														 ,2,'Env. p/@Analise@Manual'
+														 ,3,'Analise@Finalizada'
+														 ,4,'Expirado','') situacao_ayllos
                        -- Parecer esteira
                       ,
                        DECODE(epr.insitapr,
                               0,
                               'Nao@Analisado',
                               1,
-                              'Aprovado',
+                              'Aprov'||decode(epr.cdopeapr,'MOTOR','.@Aut.','ESTEIRA','.@Man.','ada'),
                               2,
-                              'Nao@Aprovado',
+                              'Rejeit'||decode(epr.cdopeapr,'MOTOR','.@Aut.','ESTEIRA','.@Man.','ada'),
                               3,
                               'Com@Restricao',
                               4,
-                              'Refazer') parecer_esteira
+                              'Refazer',
+                              5,
+                              'Derivar',
+                              6,
+                              'Erro') parecer_esteira
                        
                        --  ,epr.cdopeste cdopeste
                       ,
@@ -671,8 +682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
         vr_tab_crapope(UPPER(rw_crapope.cdoperad)).cdoperad := rw_crapope.cdoperad;
         
-        IF UPPER(rw_crapope.nmoperad) LIKE '%ESTEIRA%' THEN
-          vr_tab_crapope(UPPER(rw_crapope.cdoperad)).nmoperad := 'Esteira';
+        IF UPPER(rw_crapope.nmoperad) IN('MOTOR','ESTEIRA') THEN
+          vr_tab_crapope(UPPER(rw_crapope.cdoperad)).nmoperad := INITCAP(rw_crapope.nmoperad);
         ELSE
           vr_tab_crapope(UPPER(rw_crapope.cdoperad)).nmoperad := rw_crapope.nmoperad;
         END IF;  
@@ -723,13 +734,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_crawepr.dtmvtolt, 'DD/MM/YYYY');
         pr_tab_crawepr(vr_ind_crawepr).hrmvtolt := gene0002.fn_calc_hora(rw_crawepr.hrinclus);
       
+        -- Enviar data e hora do ultimo envio (Motor ou Esteira)
+        IF to_date(to_char(rw_crawepr.dtenvest,'ddmmrrrr')||to_char(rw_crawepr.hrenvest,'fm00000'),'ddmmrrrrsssss')
+         > to_date(to_char(rw_crawepr.dtenvmot,'ddmmrrrr')||to_char(rw_crawepr.hrenvmot,'fm00000'),'ddmmrrrrsssss') THEN 
+          -- Envio Esteira foi o ultimo 
+          vr_dtenvest := rw_crawepr.dtenvest;
         IF rw_crawepr.hrenvest > 0 THEN
           vr_hrenvest := gene0002.fn_calc_hora(rw_crawepr.hrenvest);
         ELSE
           vr_hrenvest := ' ';
         END IF;
       
-        pr_tab_crawepr(vr_ind_crawepr).dtenvest := LPAD(to_char(rw_crawepr.dtenvest, 'DD/MM/YYYY'),
+        ELSE
+          -- Envio Motor foi o ultimo 
+          vr_dtenvest := rw_crawepr.dtenvmot;
+          IF rw_crawepr.hrenvmot > 0 THEN
+            vr_hrenvest := gene0002.fn_calc_hora(rw_crawepr.hrenvmot);
+          ELSE
+            vr_hrenvest := ' ';
+          END IF;
+        END IF;
+        pr_tab_crawepr(vr_ind_crawepr).dtenvest := LPAD(to_char(vr_dtenvest, 'DD/MM/YYYY'),
                                                         10,
                                                         ' ');
         pr_tab_crawepr(vr_ind_crawepr).hrenvest := LPAD(vr_hrenvest, 8, ' ');
@@ -1116,7 +1141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     END;
   END pc_impressao_proposta_web;
 
-  PROCEDURE pc_tela_busca_contratos_pp(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
+  PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1126,26 +1151,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
   BEGIN
     /* .............................................................................
     
-    Programa: pc_tela_busca_contratos_pp
+    Programa: pc_tela_busca_contratos
     Sistema : Rotinas referentes ao limite de credito
     Sigla   : LIMI
     Autor   : James Prust Junior
-    Data    : Setembro/15.                    Ultima atualizacao:
+    Data    : Setembro/15.                    Ultima atualizacao: 30/01/2017
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     
-    Objetivo  : Buscar todos os contratos PP
+    Objetivo  : Buscar todos os contratos.
     
     Observacao: -----
-    Alteracoes:
+    Alteracoes: 30/01/2017 - Alterado para listar todos os tipos de contrato. (Jaison/James - PRJ298)
     ..............................................................................*/
   
     DECLARE
       CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
-                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
-                       ,pr_tpemprst IN crapepr.tpemprst%TYPE) IS
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE) IS
         SELECT nrctremp,
                dtmvtolt,
                vlemprst,
@@ -1155,8 +1179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                cdfinemp
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
-           AND crawepr.nrdconta = pr_nrdconta
-           AND crawepr.tpemprst = pr_tpemprst;
+           AND crawepr.nrdconta = pr_nrdconta;
     
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1192,8 +1215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       -- Busca todos os emprestimos de acordo com o numero da conta
       FOR rw_crapepr IN cr_crapepr(pr_cdcooper => vr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_tpemprst => 1) LOOP
+                                   pr_nrdconta => pr_nrdconta) LOOP
       
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Dados',
@@ -1266,7 +1288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       WHEN OTHERS THEN
       
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em EMPR0008.pc_tela_busca_contratos_pp: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em TELA_CONPRO.pc_tela_busca_contratos: ' || SQLERRM;
       
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -1275,10 +1297,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
     END;
   
-  END pc_tela_busca_contratos_pp;
+  END pc_tela_busca_contratos;
 
   PROCEDURE pc_consulta_acionamento_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Nr. Contrato   
+                                       ,pr_tpproduto IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                        ,pr_dtinicio IN VARCHAR2 -->
                                        ,pr_dtafinal IN VARCHAR2 -->
                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -1293,7 +1316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Daniel Zimmermann
-        Data    : Março/16.                    Ultima atualizacao: --/--/----
+        Data    : Março/16.                    Ultima atualizacao: 12/06/2017
     
         Dados referentes ao programa:
     
@@ -1303,7 +1326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -1358,6 +1381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       TELA_CONPRO.pc_consulta_acionamento(pr_cdcooper    => vr_cdcooper,
                                           pr_nrctremp    => pr_nrctremp,
+                                          pr_tpproduto   => pr_tpproduto,
                                           pr_nrdconta    => pr_nrdconta,
                                           pr_dtinicio    => vr_dtinicio,
                                           pr_dtafinal    => vr_dtafinal,
@@ -1455,6 +1479,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                    pr_tag_nova => 'nmagenci',
                                    pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).nmagenci,
                                    pr_des_erro => vr_dscritic);
+																	 
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'dsprotocolo',
+                                   pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).dsprotocolo,
+                                   pr_des_erro => vr_dscritic);																	 																	 
+																	 
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
             EXIT WHEN(vr_ind_crawepr = vr_tab_crawepr.LAST);
           
@@ -1474,7 +1506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       ELSE
         -- Atribui crítica
         vr_cdcritic := 0;
-        vr_dscritic := 'Dados nao encontrados!';
+        vr_dscritic := 'Nenhum regitro de acionamento encontrado.';
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
@@ -1511,6 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa
                                    ,pr_nrctremp    IN crawepr.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
+                                   ,pr_tpproduto   IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0 --> Tipo de produto   
                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE DEFAULT 0 --> Nr. da Conta
                                    ,pr_dtinicio    IN DATE DEFAULT NULL
                                    ,pr_dtafinal    IN DATE DEFAULT NULL
@@ -1525,7 +1558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Daniel Zimmermann
-      Data    : Março/16.                    Ultima atualizacao: --/--/----
+      Data    : Março/16.                    Ultima atualizacao: 12/06/2017
     
       Dados referentes ao programa:
     
@@ -1535,7 +1568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       Observacao: -----
     
-      Alteracoes:
+      Alteracoes: 12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -1555,46 +1588,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                A.NRDCONTA nrdconta,
                A.Nrctrprp nrctrprp,
                INITCAP(TO_CHAR(A.CDAGENCI_ACIONAMENTO) || ' - ' || P.NMRESAGE) nmagenci,
+               upper(a.cdoperad) cdoperad,
                INITCAP(TO_CHAR(A.CDOPERAD) || ' - ' ||
                        INITCAP((SUBSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '), '-', ' ')),
                                        1,
                                        INSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '),
                                                           '-',
                                                           ' ')),
-                                             ' ') - 1)))) cdoperad,
+                                             ' ') - 1)))) nmoperad,
                INITCAP(A.DSOPERACAO) operacao,
                A.DHACIONAMENTO dtmvtolt,
-               A.DSRESPOSTA_REQUISICAO,
-               A.CDSTATUS_HTTP,
-               
-               nvl(ESTE0001.fn_retorna_critica(a.DSRESPOSTA_REQUISICAO),
-              CASE
-                 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'cancelar') > 0) THEN   
-                  'Cancelamento da proposta enviado com sucesso para esteira.' 
-                 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'efetivar') > 0) THEN   
-                  'Proposta efetivada foi enviada para esteira com sucesso.' 
-                 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'numeroProposta') > 0) THEN   
-                  'Numero da proposta foi enviado para esteira com sucesso.'
-                 WHEN (A.CDSTATUS_HTTP = 200) THEN
-                  'Proposta reenviada para esteira com sucesso.'
-                 WHEN (A.CDSTATUS_HTTP = 201) THEN
-                  'Proposta enviada para esteira com sucesso.'
-                 WHEN (A.CDSTATUS_HTTP = 401) THEN
-                  'Credencias de acesso ao WebService Ibratan invalidas.'
-                 WHEN (A.CDSTATUS_HTTP = 403) THEN
-                  'Sem permissao de acesso ao Webservice Ibratan.'
-                 WHEN (A.CDSTATUS_HTTP = 404) THEN
-                  'Recurso nao encontrado no WebService Ibratan nao existe.'
-                 WHEN (A.CDSTATUS_HTTP = 412) THEN
-                  'Parametros do WebService Ibratan invalidos.'
-                 WHEN (A.CDSTATUS_HTTP BETWEEN 400 AND 499) THEN
-                  'Valor do(s) parametro(s) WebService invalidos.'
-                 WHEN (A.CDSTATUS_HTTP BETWEEN 500 AND 599) THEN
-                  'Falha na comunicacao com servico Ibratan.'
-               END) retorno
-
+               a.dsuriservico,               
+               a.dsresposta_requisicao,
+							 a.cdstatus_http,
+               a.tpacionamento,
+               decode(a.tpacionamento,2,a.dsprotocolo,NULL) dsprotocolo
         
-          FROM tbepr_acionamento a
+          FROM tbgen_webservice_aciona a
         
           LEFT JOIN crapope o
             ON o.cdcooper = a.cdcooper
@@ -1611,11 +1621,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
          WHERE a.cdcooper = pr_cdcooper
            AND a.nrdconta = pr_nrdconta
            AND ( a.nrctrprp = pr_nrctremp OR pr_nrctremp = 0)
-           AND a.dtmvtolt >= pr_dtinicio
-           AND a.dtmvtolt <= pr_dtafinal
-		 ORDER BY a.idacionamento;
+           AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
+           AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
+           AND a.tpacionamento IN(1,2)
+           AND a.tpproduto = nvl(pr_tpproduto, 0/*0 = emprestimo*/)
+		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
-    
+      
+     -- Descritivo Retorno
+     vr_dsretorno VARCHAR2(1000); 
+      
     BEGIN
     
       ---------------------------------- VALIDACOES INICIAIS --------------------------
@@ -1651,23 +1666,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         -- Incrementa contador para utilizar como indice da PL/Table
         vr_ind_crawepr := vr_ind_crawepr + 1;
       
-        --    pr_tab_cde(vr_ind_cde).cdcooper := rw_crapcob.cdcooper;
+        -- pr_tab_cde(vr_ind_cde).cdcooper := rw_crapcob.cdcooper;
         pr_tab_crawepr(vr_ind_crawepr).acionamento := rw_crawepr.acionamento;
         pr_tab_crawepr(vr_ind_crawepr).nmagenci := substr(rw_crawepr.nmagenci,1,100);
-        pr_tab_crawepr(vr_ind_crawepr).cdoperad := rw_crawepr.cdoperad;
+        pr_tab_crawepr(vr_ind_crawepr).cdoperad := rw_crawepr.nmoperad;
         pr_tab_crawepr(vr_ind_crawepr).operacao := substr(rw_crawepr.operacao,1,100);
         pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_crawepr.dtmvtolt,
                                                            'DD/MM/YYYY hh24:mi:ss');
       
+        vr_dscritic := NULL;
         IF rw_crawepr.CDSTATUS_HTTP = 400 THEN
           vr_dscritic := substr(ESTE0001.fn_retorna_critica(rw_crawepr.DSRESPOSTA_REQUISICAO),1,150);
-          pr_tab_crawepr(vr_ind_crawepr).retorno := nvl(vr_dscritic, rw_crawepr.retorno);
-          vr_dscritic := NULL;
+        END IF;
+        -- Se encontramos critica
+        IF vr_dscritic IS NOT NULL THEN
+          -- Retornaremos a mesma
+          vr_dsretorno := vr_dscritic;
         ELSE
-          pr_tab_crawepr(vr_ind_crawepr).retorno := substr(rw_crawepr.retorno,1,150);
+          -- Erros HTTP
+          IF rw_crawepr.CDSTATUS_HTTP = 401 THEN
+            vr_dsretorno := 'Credencias de acesso ao WebService Ibratan invalidas.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 403 THEN
+            vr_dsretorno := 'Sem permissao de acesso ao Webservice Ibratan.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 404 THEN
+            vr_dsretorno := 'Recurso nao encontrado no WebService Ibratan nao existe.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 412 THEN
+            vr_dsretorno := 'Parametros do WebService Ibratan invalidos.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 429 THEN
+            vr_dsretorno := 'Muitas requisicoes de retorno da Analise Automatica da esteira.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP BETWEEN 400 AND 499 THEN
+            vr_dsretorno := 'Valor do(s) parametro(s) WebService invalidos.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP BETWEEN 500 AND 599 THEN
+            vr_dsretorno := 'Falha na comunicacao com servico Ibratan.';
+          ELSE 
+            -- Tratar envios e retornos 
+            IF rw_crawepr.CDSTATUS_HTTP = 200 THEN 
+              IF INSTR(rw_crawepr.dsuriservico, 'cancelar') > 0 THEN   
+                vr_dsretorno := 'Cancelamento da proposta enviado com sucesso para esteira.';
+              ELSIF INSTR(rw_crawepr.dsuriservico, 'efetivar') > 0 THEN   
+                vr_dsretorno := 'Proposta efetivada foi enviada para esteira com sucesso.';
+              ELSIF INSTR(rw_crawepr.dsuriservico, 'numeroProposta') > 0 THEN   
+                vr_dsretorno := 'Numero da proposta foi enviado para esteira com sucesso.';
+              ELSIF rw_crawepr.cdoperad = 'MOTOR' THEN
+                vr_dsretorno := 'Retorno da analise automatica da esteira recebido com sucesso.';
+              ELSIF rw_crawepr.tpacionamento = 1 THEN
+                vr_dsretorno := 'Proposta reenviada para esteira com sucesso.';  
+              END IF;  
+            ELSIF rw_crawepr.CDSTATUS_HTTP = 201 THEN
+              vr_dsretorno := 'Proposta enviada para analise manual da esteira com sucesso.';
+            ELSIF rw_crawepr.CDSTATUS_HTTP = 202 THEN
+              -- Se foi no envio
+              IF rw_crawepr.tpacionamento = 1 THEN  
+                vr_dsretorno := 'Proposta enviada para analise automatica da esteira com sucesso.';
+              ELSE
+                vr_dsretorno := 'Retorno da analise automatica da esteira recebido com sucesso.';
+              END IF;  
+            ELSIF rw_crawepr.CDSTATUS_HTTP = 204 THEN
+              vr_dsretorno := 'Proposta em processo de analise automatica da esteira.';
+            END IF;
+          END IF;	
         END IF;
         
+        pr_tab_crawepr(vr_ind_crawepr).retorno := substr(vr_dsretorno,1,150);        
         pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_crawepr.nrctrprp;
+        pr_tab_crawepr(vr_ind_crawepr).dsprotocolo := rw_crawepr.dsprotocolo;
         
       
       END LOOP;
@@ -1692,6 +1754,155 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
     END;
   END pc_consulta_acionamento;
+
+  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbgen_webservice_aciona.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
+                               ,pr_xmllog      IN VARCHAR2                           -- XML com informacoes de LOG
+                               ,pr_cdcritic   OUT PLS_INTEGER                        -- Codigo da critica
+                               ,pr_dscritic   OUT VARCHAR2                           -- Descricao da critica
+                               ,pr_retxml  IN OUT NOCOPY XMLType                     -- Arquivo de retorno do XML
+                               ,pr_nmdcampo   OUT VARCHAR2                           -- Nome do campo com erro
+                               ,pr_des_erro   OUT VARCHAR2) IS                       -- Erros do processo
+  /* .............................................................................
+  
+    Programa: pc_gera_arq_detalhe
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Junho/2017                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para gerar o arquivo de detalhes da proposta.
+
+    Alteracoes: 
+  ..............................................................................*/
+
+    -- Variaveis Locais
+    vr_cdcooper       INTEGER;
+    vr_nmdatela       VARCHAR2(100);
+    vr_nmeacao        VARCHAR2(100);
+    vr_cdagenci       VARCHAR2(100);
+    vr_nrdcaixa       VARCHAR2(100);
+    vr_idorigem       VARCHAR2(100);
+    vr_cdoperad       VARCHAR2(100);
+    vr_dsdirarq       VARCHAR2(1000);
+    vr_nmarquiv       VARCHAR2(1000);
+    vr_dscomando      VARCHAR2(1000);
+       
+    -- Variaveis de Erro
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3);
+    vr_tab_erro GENE0001.typ_tab_erro;
+    
+    -- Variaveis de Excecao
+    vr_exc_saida EXCEPTION;
+         
+    BEGIN
+      -- Inicializar Variavel
+      vr_cdcritic := 0;
+      vr_dscritic := NULL;
+      vr_nmarquiv := pr_dsprotocolo || '.pdf';
+
+      -- Extrair dados do XML de requisicao
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Diretorio para salvar
+      vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
+                                           ,pr_cdcooper => 3
+                                           ,pr_nmsubdir => '/log/webservices'); 
+
+      -- Comando para download
+      vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
+
+      -- Substituir o caminho do arquivo a ser baixado
+      vr_dscomando := replace(vr_dscomando
+                             ,'[local-name]'
+                             ,vr_dsdirarq || '/' || vr_nmarquiv);
+
+      -- Substiruir a URL para Download
+      vr_dscomando := REPLACE(vr_dscomando
+                             ,'[remote-name]'
+                             ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                             ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                             || '_result/' || pr_dsprotocolo || '/pdf');
+
+      -- Executar comando para Download
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomando);
+
+      -- Se NAO encontrou o arquivo
+      IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+        vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Enviar arquivo para Web
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
+                                  ,pr_cdagenci => vr_cdagenci
+                                  ,pr_nrdcaixa => vr_nrdcaixa
+                                  ,pr_nmarqpdf => vr_dsdirarq || '/' || vr_nmarquiv
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se ocorreu erro
+      IF vr_des_reto = 'NOK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_dscritic := 'Erro ao enviar arquivo para web.';  
+        END IF;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Comando para remover arquivo
+      vr_dscomando := 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv || ' 2>/dev/null';
+
+      -- Remover Arquivo
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomando
+                           ,pr_typ_saida   => vr_des_reto
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se ocorreu erro
+      IF vr_des_reto = 'ERR' THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmarqpdf', pr_tag_cont => vr_nmarquiv, pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela TELA_CONPRO: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_gera_arq_detalhe;
 
 END TELA_CONPRO;
 /
