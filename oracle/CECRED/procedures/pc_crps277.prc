@@ -360,32 +360,7 @@ BEGIN
         BEGIN
           --Inserir a capa do lote retornando informacoes para uso posterior
 
-          lanc0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper,
-                                   pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                                   pr_cdagenci => 1,
-                                   pr_cdbccxlt => 100,
-                                   pr_nrdolote => 8459,
-                                   pr_tplotmov => 1,
-                                   pr_nrseqdig => 0,
-                                   pr_cdoperad => 1,
-                                   pr_rw_craplot => vr_rw_craplot,
-                                   pr_cdcritic   => pr_cdcritic,
-                                   pr_dscritic   => pr_dscritic
-                                   );
-          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
-             RAISE vr_exc_saida;
-          end if;
 
-          rw_craplot.cdcooper := vr_rw_craplot.cdcooper;
-          rw_craplot.dtmvtolt := vr_rw_craplot.dtmvtolt;
-          rw_craplot.cdagenci := vr_rw_craplot.cdagenci;
-          rw_craplot.cdbccxlt := vr_rw_craplot.cdbccxlt;
-          rw_craplot.nrdolote := vr_rw_craplot.nrdolote;
-          rw_craplot.tplotmov := vr_rw_craplot.tplotmov;
-          rw_craplot.nrseqdig := vr_rw_craplot.nrseqdig;
-          rw_craplot.rowid    := vr_rw_craplot.rowid;
-
-/*
           INSERT INTO craplot(cdcooper
                              ,dtmvtolt
                              ,cdagenci
@@ -418,7 +393,6 @@ BEGIN
                           ,rw_craplot.tplotmov
                           ,rw_craplot.nrseqdig
                           ,rw_craplot.rowid;
-*/
 
         EXCEPTION
           WHEN OTHERS THEN

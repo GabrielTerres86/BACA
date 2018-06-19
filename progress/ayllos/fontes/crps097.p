@@ -95,16 +95,16 @@
                             tari0001.pc_cria_lan_auto_tarifa, projeto de 
                             Tarifas-218(Jean Michel) 
 
-	           16/08/2016 - Ajuste para alterar o campo indevarq para 2 também
-							quando forem cheques VLB, pois o crps264 precisa
-							identificar estes cheques para envia-los a ABBC
-							no primeiro horário da manhã
-							(Adriano - SD 501761).
+                   16/08/2016 - Ajuste para alterar o campo indevarq para 2 também
+                                                        quando forem cheques VLB, pois o crps264 precisa
+                                                        identificar estes cheques para envia-los a ABBC
+                                                        no primeiro horário da manhã
+                                                        (Adriano - SD 501761).
 
-			         18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
-			                      caso o aviso de debito ja existir, evitando acionamento
+                                 18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
+                                              caso o aviso de debito ja existir, evitando acionamento
                             desnecessario visto que essa critica nao abortado a
-                            execucao do processo. (Daniel)	
+                            execucao do processo. (Daniel)        
                             
                23/11/2016 - Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
                             lancamento atraves deste programa (Lucas Ranghetti/Elton - Melhoria 69) 
@@ -123,11 +123,17 @@
                             crapass (Lucas Ranghetti #680458)
                             
                08/08/2017 - Tratar historicos 573 ou 78 (Lucas Ranghetti #715027)
+               
+               29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
+
 ............................................................................. */
 
 { includes/var_batch.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
 
+DEF VAR h-b1wgen0200 AS HANDLE                                       NO-UNDO.
 DEF        VAR res_nrctachq AS INTE                                  NO-UNDO.
 DEF        VAR res_nrdocmto AS INT                                   NO-UNDO.
 DEF        VAR res_cdhistor AS INT                                   NO-UNDO.
@@ -160,6 +166,12 @@ DEF        VAR aux_cdhisbac AS INTE                                  NO-UNDO.
 DEF        VAR aux_cdtarbac AS CHAR                                  NO-UNDO.
 DEF        VAR aux_vltarbac AS DECIMAL FORMAT "zz9.99"               NO-UNDO.
 DEF        VAR aux_cdfvlbac AS INTE                                  NO-UNDO.
+
+DEF        VAR aux_incrineg AS INT                                   NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                   NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
+
+DEF        VAR vr_cdpesqbb  AS CHAR                                  NO-UNDO.
 
 DEF BUFFER crabass5 FOR crapass.
 /*******************************************/
@@ -447,6 +459,89 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
 
              END.  /*  Fim do DO WHILE TRUE  */
 
+             /* renato PJ450*/
+
+             IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p 
+                     PERSISTENT SET h-b1wgen0200.
+
+/* inicio chamada rotina nova de gravaçao do lançamento*/
+
+             IF crapdev.cdalinea <> 0
+                THEN vr_cdpesqbb = STRING(crapdev.cdalinea).
+             ELSE vr_cdpesqbb = "21".
+                          
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                         (INPUT craplot.dtmvtolt                      /*par_dtmvtolt*/
+                         ,INPUT craplot.cdagenci                      /*par_cdagenci*/
+                         ,INPUT craplot.cdbccxlt                      /*par_cdbccxlt*/
+                         ,INPUT craplot.nrdolote                      /*par_nrdolote*/
+                         ,INPUT crapdev.nrdconta                      /*par_nrdconta*/
+                         ,INPUT crapdev.nrcheque                      /*par_nrdocmto*/
+                         ,INPUT crapdev.cdhistor                      /*par_cdhistor*/
+                         ,INPUT craplot.nrseqdig + 1                  /*par_nrseqdig*/
+                         ,INPUT crapdev.vllanmto                      /*par_vllanmto*/
+                         ,INPUT crapdev.nrdctabb                      /*par_nrdctabb*/
+                         ,INPUT vr_cdpesqbb                           /*par_cdpesqbb*/
+                         ,INPUT 0                                     /*par_vldoipmf*/
+                         ,INPUT 0                                     /*par_nrautdoc*/
+                         ,INPUT 0                                     /*par_nrsequni*/
+                         ,INPUT crapdev.cdbanchq                      /*par_cdbanchq*/
+                         ,INPUT 0                                     /*par_cdcmpchq*/
+                         ,INPUT crapdev.cdagechq                      /*par_cdagechq*/
+                         ,INPUT crapdev.nrctachq                      /*par_nrctachq*/
+                         ,INPUT 0                                     /*par_nrlotchq*/
+                         ,INPUT 0                                     /*par_sqlotchq*/
+                         ,INPUT craplot.dtmvtolt                      /*par_dtrefere*/
+                         ,INPUT TIME                                  /*par_hrtransa*/
+                         ,INPUT ""                                    /*par_cdoperad*/
+                         ,INPUT ""                                    /*par_dsidenti*/
+                         ,INPUT glb_cdcooper                          /*par_cdcooper*/
+                         ,INPUT crapdev.nrdctitg                      /*par_nrdctitg*/
+                         ,INPUT ""                                    /*par_dscedent*/
+                         ,INPUT 0                                     /*par_cdcoptfn*/
+                         ,INPUT 0                                     /*par_cdagetfn*/
+                         ,INPUT 0                                     /*par_nrterfin*/
+                         ,INPUT 0                                     /*par_nrparepr*/
+                         ,INPUT 0                                     /*par_nrseqava*/
+                         ,INPUT 0                                     /*par_nraplica*/
+                         ,INPUT 0                                     /*par_cdorigem*/
+                         ,INPUT 0                                     /*par_idlautom*/
+                         ,INPUT 0                                     /*par_inprolot */
+                         ,INPUT 0                                     /*par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+/*  ver com a Josi como tratar a crítica */               
+             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:   
+               IF aux_incrineg = 1 THEN
+                 DO:
+                   /* Tratativas de negocio */  
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                 END.
+               ELSE
+                 DO:
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   RETURN "NOK".
+                 END.
+               
+             END.
+               
+             FIND FIRST tt-ret-lancto.
+             DISP tt-ret-lancto.
+             DELETE PROCEDURE h-b1wgen0200.       
+
+/* final chamada rotina*/
+             assign
+             craplot.vlinfocr = craplot.vlinfocr + crapdev.vllanmto
+             craplot.vlcompcr = craplot.vlcompcr + crapdev.vllanmto
+             craplot.qtinfoln = craplot.qtinfoln + 1
+             craplot.qtcompln = craplot.qtcompln + 1
+             craplot.nrseqdig = craplot.nrseqdig + 1.
+
+/*
              CREATE craplcm.
              ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                     craplcm.cdagenci = craplot.cdagenci
@@ -462,7 +557,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                     craplcm.cdpesqbb = IF crapdev.cdalinea <> 0
                                           THEN STRING(crapdev.cdalinea)
                                           ELSE "21"
-                    craplcm.cdcooper = glb_cdcooper                      
+                    craplcm.cdcooper = glb_cdcooper
                     craplcm.cdbanchq = crapdev.cdbanchq
                     craplcm.cdagechq = crapdev.cdagechq
                     craplcm.nrctachq = crapdev.nrctachq
@@ -473,7 +568,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                     craplot.qtcompln = craplot.qtcompln + 1
                     craplot.nrseqdig = craplot.nrseqdig + 1.
              VALIDATE craplcm.
-
+*/
              IF   AVAILABLE crapfdc   THEN
                   ASSIGN crapfdc.incheque = crapfdc.incheque - 5
                          crapfdc.dtliqchq = ?
@@ -505,11 +600,18 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                                             gncpchq.cdalinea = 21.
                                     END.
                            END.
-                                
-                      ASSIGN crapdev.indevarq = 2 
-						     craplcm.dsidenti = STRING(crapdev.indevarq,"9").
-                  
-                  END.         
+
+                      ASSIGN crapdev.indevarq = 2.
+
+                      FIND FIRST craplcm 
+                           WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
+                           NO-ERROR.
+                      IF AVAILABLE craplcm THEN
+                         ASSIGN craplcm.dsidenti = STRING(crapdev.indevarq,"9").
+                      ELSE
+                         /* tratamento de erro padrao do programa sendo alterado*/
+                         NEXT.
+               END.         
          END.
     ELSE
     IF  crapdev.cdhistor = 46 AND (aux_vltarifa > 0 OR aux_vltarbac > 0)  THEN

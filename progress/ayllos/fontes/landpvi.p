@@ -483,7 +483,7 @@
                22/09/2016 - Incluido tratamento para verificacao de contrato de 
                             acordo, Prj. 302 (Jean Michel).
                             
-                                 21/10/2016 - Incluir o historico 384        na listagem dos historicos para verificacao do 
+			         21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
 			                      saldo disponivel (Renato Darosci - SD542195).
 
                31/10/2016 - Bloquear os historicos 354 e 451 para a cooperativa Transulcred. (James)
@@ -502,10 +502,10 @@
               11/07/2017 - Ajustes historico 354
                            (Demetrius Wolff MOUTS - Prj 364)
 
+                            
                10/08/2017 - Somente vamos exibir a critica 728 para casos em que o Tipo do 
                             cartao do titular nao for de um operador isso na leitura da crapcrm 
                             (Lucas Ranghetti #726238)
-
 			  19/11/2017 - Ajustes para retirar o uso do historico 354
                            (Jonata RKAM - P364)
 
@@ -518,11 +518,8 @@
                            a fim de pegar os valore de alteraçao do dia.
                            ( Lindon GFT )
 
-              08/03/2018 - Substituidas verificacoes pelo campo "cdtipcta" fixos pelo código da modalidade e 
-                           flag de conta integraçao. PRJ366 (Lombardi).
-
-              17/05/2018 - Alteraçao gravaçao de lançamentos para chamada da rotina pc_gerar_lancamento_conta.
-                           (Renato Cordeiro - AMcom)
+               29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -538,6 +535,9 @@
 { includes/var_landpv.i }
 { includes/var_cmedep.i "NEW" }
 
+{ sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
+
+DEF VAR h-b1wgen0200 AS HANDLE                                  NO-UNDO.
 
 DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -564,6 +564,7 @@ DEF VAR aux_devchqtic        AS LOG                             NO-UNDO.
 DEF VAR aux_nrdrowid         AS ROWID                           NO-UNDO.
 DEF VAR aux_qtregist         AS INT                             NO-UNDO.
 
+DEF VAR aux_incrineg         AS INT                             NO-UNDO.
 DEF VAR aux_cdcritic         AS INTE                            NO-UNDO.
 DEF VAR aux_dscritic         AS CHAR                            NO-UNDO.
 
@@ -575,17 +576,13 @@ DEF VAR par_numipusr         AS CHAR                            NO-UNDO.
 DEF VAR aux_vlblqjud         AS DEC                             NO-UNDO.
 DEF VAR aux_vlresblq         AS DEC                             NO-UNDO.
 DEF VAR aux_flgativo         AS DEC                             NO-UNDO.
-DEF VAR aux_cdmodali         AS INT                             NO-UNDO.
-DEF VAR aux_idctaitg         AS INT                             NO-UNDO.
-DEF VAR aux_des_erro         AS CHAR                            NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
-        
+
 DEF VAR vr_cdpesqbb AS CHAR  NO-UNDO.
 DEF VAR vr_nrctachq AS INT   NO-UNDO.
-
-DEF VAR vr_nrseqdig AS INT   NO-UNDO.
+DEF VAR vr_nrdctabb AS INT   NO-UNDO.
         
 DEF BUFFER crabcop FOR crapcop.
 DEF BUFFER craxlcm FOR craplcm.
@@ -792,7 +789,7 @@ PROCEDURE p_atualiza_avs:
                                       IF crapavs.vllanmto <= crapavs.vldebito
                                          THEN 1
                                          ELSE 0
-                       craplcm.cdpesqbb = craplcm.cdpesqbb  +  
+                       craplcm.cdpesqbb = craplcm.cdpesqbb +  
                                           STRING(pro_cdpesqbb, "zzzzzzzz9.99").
                                       
                 RETURN "OK".
@@ -1866,40 +1863,10 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
       IF   craphis.indebcre = "C"   AND    glb_cdcritic = 0   THEN
            DO:
-               
-               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-               RUN STORED-PROCEDURE pc_busca_modalidade_tipo
-               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                                    INPUT crapass.cdtipcta, /* Tipo de conta */
-                                                   OUTPUT 0,                /* Modalidade */
-                                                   OUTPUT "",               /* Flag Erro */
-                                                   OUTPUT "").              /* Descrição da crítica */
-
-               CLOSE STORED-PROC pc_busca_modalidade_tipo
-                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-               ASSIGN aux_cdmodali = 0
-                      aux_des_erro = ""
-                      aux_dscritic = ""
-                      aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
-                                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
-                      aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
-                                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
-                      aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
-                                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
-
-               IF aux_des_erro = "NOK"  THEN
-                   DO:
-                      BELL.
-                      ASSIGN glb_dscritic = aux_dscritic.
-                      MESSAGE glb_dscritic.
-                      LEAVE.
-                   END.
-               
-               IF   aux_cdmodali = 3 THEN
+               IF   crapass.cdtipcta = 6   OR
+                    crapass.cdtipcta = 7   OR
+                    crapass.cdtipcta = 17  OR
+                    crapass.cdtipcta = 18  THEN
                     DO:
                         BELL.
 
@@ -4064,58 +4031,153 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                     END.     
                ELSE 
                     aux_nrdctabb = tel_nrdctabb.
-/*
 
-               ASSIGN aux_cdcritic = 0
-               aux_dscritic = ""
-               aux_cdcritic = pc_efetiva_pag_atraso_tr.pr_cdcritic
-                  WHEN pc_efetiva_pag_atraso_tr.pr_cdcritic <> ?
-               aux_dscritic = pc_efetiva_pag_atraso_tr.pr_dscritic
-                  WHEN pc_efetiva_pag_atraso_tr.pr_dscritic <> ?.
+/*INICIO renato PJ450*/
 
-                           IF   aux_cdcritic <> 0   OR aux_dscritic <> ""  THEN
-                  DO:
-                    ASSIGN glb_dscritic = aux_dscritic.
-                    NEXT-PROMPT tel_cdhistor 
-                    WITH FRAME f_landpv.
-                    UNDO, NEXT INICIO.
-                  END.
-*/
+             IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p 
+                     PERSISTENT SET h-b1wgen0200.
+
+/* inicio chamada rotina nova de gravaçao do lançamento*/
+
+             IF (tel_cdhistor = 24  OR 
+                   tel_cdhistor = 27  OR
+                   tel_cdhistor = 47  OR
+                   tel_cdhistor = 78  OR
+                   tel_cdhistor = 156 OR 
+                   tel_cdhistor = 191 OR 
+                   tel_cdhistor = 399) OR
+                   (tel_cdhistor = 351  AND tel_cdalinea > 0) THEN vr_cdpesqbb = STRING(tel_cdalinea,"99").
+             ELSE IF  tel_cdhistor = 275 OR
+                        tel_cdhistor = 317 OR
+                        tel_cdhistor = 3501 OR
+                        tel_cdhistor = 394 OR
+                        tel_cdhistor = 428 OR
+                        tel_cdhistor = 506 THEN vr_cdpesqbb = STRING(his_nrctremp,"99,999,999").
+             ELSE IF  tel_cdhistor = 104 OR
+                        tel_cdhistor = 302 OR 
+                        tel_cdhistor = 1806 THEN vr_cdpesqbb = STRING(tel_nrctatrf).
+             ELSE vr_cdpesqbb = "".
+
+             IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                  vr_nrctachq = craptco.nrctaant.
+             ELSE vr_nrctachq = tel_nrdctabb.
+             IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                  vr_nrdctabb = craptco.nrdconta.
+             ELSE vr_nrdctabb = aux_nrdctabb.
+                          
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                         (INPUT tel_dtmvtolt                 /*par_dtmvtolt*/
+                         ,INPUT tel_cdagenci                 /*par_cdagenci*/
+                         ,INPUT tel_cdbccxlt                 /*par_cdbccxlt*/
+                         ,INPUT tel_nrdolote                 /*par_nrdolote*/
+                         ,INPUT aux_nrdconta                 /*par_nrdconta*/
+                         ,INPUT tel_nrdocmto                 /*par_nrdocmto*/
+                         ,INPUT tel_cdhistor                 /*par_cdhistor*/
+                         ,INPUT tel_nrseqdig                 /*par_nrseqdig*/
+                         ,INPUT tel_vllanmto                 /*par_vllanmto*/
+                         ,INPUT vr_nrdctabb                  /*par_nrdctabb*/
+                         ,INPUT vr_cdpesqbb                  /*par_cdpesqbb*/
+                         ,INPUT 0                            /*par_vldoipmf*/
+                         ,INPUT tel_nrautdoc                 /*par_nrautdoc*/
+                         ,INPUT 0                            /*par_nrsequni*/
+                         ,INPUT tel_cdbaninf                 /*par_cdbanchq*/
+                         ,INPUT 0                            /*par_cdcmpchq*/
+                         ,INPUT tel_cdageinf                 /*par_cdagechq*/
+                         ,INPUT vr_nrctachq                  /*par_nrctachq*/
+                         ,INPUT 0                            /*par_nrlotchq*/
+                         ,INPUT 0                            /*par_sqlotchq*/
+                         ,INPUT tel_dtmvtolt                 /*par_dtrefere*/
+                         ,INPUT TIME                         /*par_hrtransa*/
+                         ,INPUT glb_cdoperad                 /*par_cdoperad*/
+                         ,INPUT ""                           /*par_dsidenti*/
+                         ,INPUT glb_cdcooper                 /*par_cdcooper*/
+                         ,INPUT crapass.nrdctitg             /*par_nrdctitg*/
+                         ,INPUT ""                           /*par_dscedent*/
+                         ,INPUT 0                            /*par_cdcoptfn*/
+                         ,INPUT 0                            /*par_cdagetfn*/
+                         ,INPUT 0                            /*par_nrterfin*/
+                         ,INPUT 0                            /*par_nrparepr*/
+                         ,INPUT 0                            /*par_nrseqava*/
+                         ,INPUT 0                            /*par_nraplica*/
+                         ,INPUT 0                            /*par_cdorigem*/
+                         ,INPUT 0                            /*par_idlautom*/
+                         ,INPUT 0                            /*par_inprolot */
+                         ,INPUT 0                            /*par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+/*  ver com a Josi como tratar a crítica */               
+             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:   
+               IF aux_incrineg = 1 THEN
+                 DO:
+                   /* Tratativas de negocio */  
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   PAUSE(3) NO-MESSAGE.
+                   UNDO , NEXT INICIO.
+                 END.
+               ELSE
+                 DO:
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   PAUSE(3) NO-MESSAGE.
+                   UNDO , NEXT INICIO.
+                 END.
+             END.
+
+             ASSIGN /* RENATO PJ450*/
+                craplot.nrseqdig = tel_nrseqdig
+                craplot.qtcompln = craplot.qtcompln + 1.
+
+             FIND FIRST tt-ret-lancto.
+             DISP tt-ret-lancto.
+             
+             FIND FIRST craplcm 
+                WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
+                      NO-ERROR.
+             IF NOT AVAILABLE craplcm THEN
+                DO:
+                   MESSAGE "Erro ao ler CRAPLCM=" tt-ret-lancto.recid_lcm.
+                   PAUSE(3) NO-MESSAGE.
+                   UNDO , NEXT INICIO.
+                END.
+
+             DELETE PROCEDURE h-b1wgen0200.       
+
+/*FIM renato PJ450*/
 /*
-                                        
                CREATE craplcm.
                ASSIGN craplcm.cdcooper = glb_cdcooper
                       craplcm.cdoperad = glb_cdoperad
-                      craplcm.dtmvtolt = tel_dtmvtolt 
+                      craplcm.dtmvtolt = tel_dtmvtolt
                       craplcm.dtrefere = glb_dtmvtolt
                       craplcm.cdagenci = tel_cdagenci
-                      craplcm.cdbccxlt = tel_cdbccxlt 
+                      craplcm.cdbccxlt = tel_cdbccxlt
                       craplcm.nrdolote = tel_nrdolote
                       craplcm.nrdconta = aux_nrdconta
-*/
+
                       /* Quando for cheque de conta incorporada, a variavel
                          aux_nrdctabb permanecera com a nova conta, por isso eh
                          necessario este tratamento */
-/*
-                      craplcm.nrdctabb = IF   AVAIL craptco AND 
+                      craplcm.nrdctabb = IF   AVAIL craptco AND
                                               tel_cdbaninf = 85  THEN
                                               craptco.nrdconta
                                          ELSE aux_nrdctabb
 
                       craplcm.nrdctitg = crapass.nrdctitg
                       craplcm.nrdocmto = tel_nrdocmto
-                      craplcm.vllanmto = tel_vllanmto 
+                      craplcm.vllanmto = tel_vllanmto
                       craplcm.cdhistor = tel_cdhistor
                       craplcm.nrseqdig = tel_nrseqdig
                       craplcm.nrautdoc = tel_nrautdoc
                       craplcm.cdbanchq = tel_cdbaninf
                       craplcm.cdagechq = tel_cdageinf
-*/
+
                       /* Quando for cheque de conta incorporada, a variavel
                          tel_nrdctabb permanecera com a nova conta, por isso eh
                          necessario este tratamento */
-/*
-                      craplcm.nrctachq = IF   AVAIL craptco AND 
+                      craplcm.nrctachq = IF   AVAIL craptco AND
                                               tel_cdbaninf = 85  THEN
                                               craptco.nrctaant
                                          ELSE tel_nrdctabb
@@ -4142,112 +4204,12 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                   tel_cdhistor = 1806 THEN
                                                   STRING(tel_nrctatrf)
                                                ELSE ""
-*/
-                      craplot.nrseqdig = tel_nrseqdig.
+
+                      craplot.nrseqdig = tel_nrseqdig
                       craplot.qtcompln = craplot.qtcompln + 1.
-                      
-               IF (tel_cdhistor = 24  OR 
-                   tel_cdhistor = 27  OR
-                   tel_cdhistor = 47  OR
-                   tel_cdhistor = 78  OR
-                   tel_cdhistor = 156 OR 
-                   tel_cdhistor = 191 OR 
-                   tel_cdhistor = 399) OR
-                   (tel_cdhistor = 351  AND tel_cdalinea > 0) THEN vr_cdpesqbb = STRING(tel_cdalinea,"99").
-               ELSE IF  tel_cdhistor = 275 OR
-                        tel_cdhistor = 317 OR
-                        tel_cdhistor = 3501 OR
-                        tel_cdhistor = 394 OR
-                        tel_cdhistor = 428 OR
-                        tel_cdhistor = 506 THEN vr_cdpesqbb = STRING(his_nrctremp,"99,999,999").
-               ELSE IF  tel_cdhistor = 104 OR
-                        tel_cdhistor = 302 OR 
-                        tel_cdhistor = 1806 THEN vr_cdpesqbb = STRING(tel_nrctatrf).
-               ELSE vr_cdpesqbb = "".
 
-               IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
-                    vr_nrctachq = craptco.nrctaant.
-               ELSE vr_nrctachq = tel_nrdctabb.
-
-               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-               /* Efetuar a chamada a rotina Oracle */ 
-               RUN STORED-PROCEDURE pc_gerar_lancamento_conta
-                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT tel_dtmvtolt,          /* pr_dtmvtolt */
-                                                       INPUT tel_cdagenci,          /* pr_cdagenci */
-                                                       INPUT tel_cdbccxlt,          /* pr_cdbccxlt */
-                                                       INPUT tel_nrdolote,          /* pr_nrdolote */
-                                                       INPUT aux_nrdconta,          /* pr_nrdconta */
-                                                       INPUT tel_nrdocmto,          /* pr_nrdocmto */
-                                                       INPUT 0,                     /* Historico da Multa pr_cdhistor*/
-                                                       INPUT tel_nrseqdig,          /* pr_nrseqdig */
-                                                       INPUT tel_vllanmto,          /* pr_vllanmto */
-                                                       INPUT tel_nrdctabb,          /* Conta do associado pr_nrdctabb*/
-                                                       INPUT vr_cdpesqbb,               /* pr_cdpesqbb */
-                                                       INPUT 0,                     /* pr_vldoipmf */
-                                                       INPUT tel_nrautdoc,          /* pr_nrautdoc */
-                                                       INPUT 0,                     /* pr_nrsequni */
-                                                       INPUT tel_cdbaninf,          /* pr_cdbanchq */
-                                                       INPUT 0,                     /* pr_cdcmpchq */
-                                                       INPUT tel_cdageinf,          /* pr_cdagechq */
-                                                       INPUT vr_nrctachq,      /* pr_nrctachq */
-                                                       INPUT 0,                      /* pr_nrlotchq */
-                                                       INPUT 0,                      /* pr_sqlotchq */
-                                                       INPUT glb_dtmvtolt,           /* pr_dtrefere */
-                                                       INPUT 0,                      /* pr_hrtransa */
-                                                       INPUT glb_cdoperad,           /* pr_cdoperad */
-                                                       INPUT "",                      /* pr_dsidenti */
-                                                       INPUT glb_cdcooper,           /* pr_cdcooper */
-                                                       INPUT crapass.nrdctitg,       /* pr_nrdctitg */
-                                                       INPUT "",                      /* pr_dscedent */
-                                                       INPUT 0,                      /* pr_cdcoptfn */
-                                                       INPUT 0,                      /* pr_cdagetfn */
-                                                       INPUT 0,                      /* pr_nrterfin */
-                                                       INPUT 0,                      /* pr_nrparepr */
-                                                       INPUT 0,                      /* pr_nrseqava */
-                                                       INPUT 0,                      /* pr_nraplica */
-                                                       INPUT 0,                      /* pr_cdorigem */
-                                                       INPUT 0,                      /* pr_idlautom */
-                                                       INPUT 0,                      /* pr_proclote */
-                                                       INPUT 0,                      /* pr_tplotmov */
-                                                       OUTPUT 0,
-                                                       OUTPUT "").
-                                                               
-               /* Fechar o procedimento para buscarmos o resultado */ 
-               CLOSE STORED-PROC pc_gerar_lancamento_conta
-               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-               ASSIGN aux_dscritic = ""
-                      aux_cdcritic = 0
-                      aux_dscritic = pc_gerar_lancamento_conta.pr_dscritic
-                                WHEN pc_gerar_lancamento_conta.pr_dscritic <> ?
-                     aux_cdcritic = pc_gerar_lancamento_conta.pr_cdcritic
-                                WHEN pc_gerar_lancamento_conta.pr_cdcritic <> ?.
-                           
-               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-               IF aux_cdcritic <> 0 THEN
-                  DO:
-                     glb_cdcritic = aux_cdcritic.
-                     RUN fontes/critic.p.
-                  END.
-               ELSE IF aux_dscritic <> "" THEN
-                  glb_dscritic = aux_dscritic.
-                  
-               IF glb_cdcritic <> 0 OR glb_dscritic <> "" THEN
-                  DO:
-                     BELL.
-                     MESSAGE glb_dscritic.
-                     glb_cdcritic = 0.
-                     glb_dscritic = "".
-                     PAUSE(3) NO-MESSAGE. 
-                     NEXT-PROMPT tel_vllanmto WITH FRAME f_landpv.
-                     UNDO, NEXT INICIO.
-                  END.
-
-
-/*               VALIDATE craplcm.*/
-
+               VALIDATE craplcm.
+*/
                IF   aux_indebcre = "D"   THEN
                     craplot.vlcompdb = craplot.vlcompdb + tel_vllanmto.
                ELSE
@@ -4499,103 +4461,118 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO, NEXT INICIO.
                              END.
 
-                        vr_nrseqdig = crablot.nrseqdig + 1. /* pr_nrseqdig */
+            /*INICIO renato PJ450*/
 
-                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                           
-                        /* Efetuar a chamada a rotina Oracle */ 
-                        RUN STORED-PROCEDURE pc_gerar_lancamento_conta
-                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT tel_dtmvtolt,          /* pr_dtmvtolt */
-                                                       INPUT 1,                     /* pr_cdagenci */
-                                                       INPUT 100,          /* pr_cdbccxlt */
-                                                       INPUT his_nrdolote,          /* pr_nrdolote */
-                                                       INPUT tel_nrctatrf,          /* pr_nrdconta */
-                                                       INPUT tel_nrdocmto,          /* pr_nrdocmto */
-                                                       INPUT his_cdhistor,                     /* Historico da Multa pr_cdhistor*/
-                                                       INPUT vr_nrseqdig,          /* pr_nrseqdig */
-                                                       INPUT tel_vllanmto,          /* pr_vllanmto */
-                                                       INPUT tel_nrctatrf,          /* Conta do associado pr_nrdctabb*/
-                                                       INPUT STRING(tel_nrdctabb),   /* pr_cdpesqbb */
-                                                       INPUT 0,                     /* pr_vldoipmf */
-                                                       INPUT 0,          /* pr_nrautdoc */
-                                                       INPUT 0,                     /* pr_nrsequni */
-                                                       INPUT 0,          /* pr_cdbanchq */
-                                                       INPUT 0,                     /* pr_cdcmpchq */
-                                                       INPUT 0,          /* pr_cdagechq */
-                                                       INPUT 0,      /* pr_nrctachq */
-                                                       INPUT 0,                      /* pr_nrlotchq */
-                                                       INPUT 0,/* pr_sqlotchq */
-                                                       INPUT tel_dtmvtolt,           /* pr_dtrefere */
-                                                       INPUT 0,   /* pr_hrtransa */
-                                                       INPUT glb_cdoperad,   /* pr_cdoperad */
-                                                       INPUT "",                      /* pr_dsidenti */
-                                                       INPUT glb_cdcooper,           /* pr_cdcooper */
-                                                       INPUT STRING(tel_nrctatrf,"99999999"),       /* pr_nrdctitg */
-                                                       INPUT "",       /* pr_dscedent */
-                                                       INPUT 0,                      /* pr_cdcoptfn */
-                                                       INPUT 0,                      /* pr_cdagetfn */
-                                                       INPUT 0,                      /* pr_nrterfin */
-                                                       INPUT 0,                      /* pr_nrparepr */
-                                                       INPUT 0,                      /* pr_nrseqava */
-                                                       INPUT 0,                      /* pr_nraplica */
-                                                       INPUT 0,                      /* pr_cdorigem */
-                                                       INPUT 0,                      /* pr_idlautom */
-                                                       INPUT 0,                      /* pr_proclote */
-                                                       INPUT 0,                      /* pr_tplotmov */
-                                                       OUTPUT 0,
-                                                       OUTPUT "").
-                                                               
-                        /* Fechar o procedimento para buscarmos o resultado */ 
-                        CLOSE STORED-PROC pc_gerar_lancamento_conta
-                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                             RUN sistema/generico/procedures/b1wgen0200.p 
+                                 PERSISTENT SET h-b1wgen0200.
 
-                        ASSIGN aux_dscritic = ""
-                               aux_cdcritic = 0
-                           aux_dscritic = pc_gerar_lancamento_conta.pr_dscritic
-                                WHEN pc_gerar_lancamento_conta.pr_dscritic <> ?
-                           aux_cdcritic = pc_gerar_lancamento_conta.pr_cdcritic
-                                WHEN pc_gerar_lancamento_conta.pr_cdcritic <> ?.
-                           
-                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            /* inicio chamada rotina nova de gravaçao do lançamento*/
 
-                        IF aux_cdcritic <> 0 THEN
-                           DO:
-                              glb_cdcritic = aux_cdcritic.
-                              RUN fontes/critic.p.
-                           END.
-                        ELSE IF aux_dscritic <> "" THEN
-                           glb_dscritic = aux_dscritic.
+                         vr_cdpesqbb = STRING(tel_nrdctabb).
 
-                        IF glb_cdcritic <> 0 OR glb_dscritic <> "" THEN
-                           DO:
-                              BELL.
-                              MESSAGE glb_dscritic.
-                              glb_cdcritic = 0.
-                              glb_dscritic = "".
-                              PAUSE(3) NO-MESSAGE. 
-                              NEXT-PROMPT tel_vllanmto WITH FRAME f_landpv.
-                              UNDO, NEXT INICIO.
-                           END.
+                         IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                              vr_nrctachq = craptco.nrctaant.
+                         ELSE vr_nrctachq = tel_nrdctabb.
+                         IF   AVAIL craptco AND tel_cdbaninf = 85  THEN
+                              vr_nrdctabb = craptco.nrdconta.
+                         ELSE vr_nrdctabb = aux_nrdctabb.
+                                      
+                         RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                                     (INPUT tel_dtmvtolt           /*par_dtmvtolt*/
+                                     ,INPUT 1                      /*par_cdagenci*/
+                                     ,INPUT 100                    /*par_cdbccxlt*/
+                                     ,INPUT his_nrdolote           /*par_nrdolote*/
+                                     ,INPUT tel_nrctatrf           /*par_nrdconta*/
+                                     ,INPUT tel_nrdocmto           /*par_nrdocmto*/
+                                     ,INPUT his_cdhistor           /*par_cdhistor*/
+                                     ,INPUT crablot.nrseqdig + 1   /*par_nrseqdig*/
+                                     ,INPUT tel_vllanmto           /*par_vllanmto*/
+                                     ,INPUT tel_nrctatrf           /*par_nrdctabb*/
+                                     ,INPUT vr_cdpesqbb            /*par_cdpesqbb*/
+                                     ,INPUT 0                      /*par_vldoipmf*/
+                                     ,INPUT 0                      /*par_nrautdoc*/
+                                     ,INPUT 0                      /*par_nrsequni*/
+                                     ,INPUT 0                      /*par_cdbanchq*/
+                                     ,INPUT 0                      /*par_cdcmpchq*/
+                                     ,INPUT 0                      /*par_cdagechq*/
+                                     ,INPUT 0                      /*par_nrctachq*/
+                                     ,INPUT 0                      /*par_nrlotchq*/
+                                     ,INPUT 0                      /*par_sqlotchq*/
+                                     ,INPUT tel_dtmvtolt           /*par_dtrefere*/
+                                     ,INPUT TIME                   /*par_hrtransa*/
+                                     ,INPUT glb_cdoperad          /*par_cdoperad*/
+                                     ,INPUT ""                    /*par_dsidenti*/
+                                     ,INPUT glb_cdcooper          /*par_cdcooper*/
+                 ,INPUT STRING(tel_nrctatrf,"99999999")           /*par_nrdctitg*/
+                                     ,INPUT ""                           /*par_dscedent*/
+                                     ,INPUT 0                            /*par_cdcoptfn*/
+                                     ,INPUT 0                            /*par_cdagetfn*/
+                                     ,INPUT 0                            /*par_nrterfin*/
+                                     ,INPUT 0                            /*par_nrparepr*/
+                                     ,INPUT 0                            /*par_nrseqava*/
+                                     ,INPUT 0                            /*par_nraplica*/
+                                     ,INPUT 0                            /*par_cdorigem*/
+                                     ,INPUT 0                            /*par_idlautom*/
+                                     ,INPUT 0                            /*par_inprolot */
+                                     ,INPUT 0                            /*par_tplotmov */
+                                     ,OUTPUT TABLE tt-ret-lancto
+                                     ,OUTPUT aux_incrineg
+                                     ,OUTPUT aux_cdcritic
+                                     ,OUTPUT aux_dscritic).
+            /*  ver com a Josi como tratar a crítica */               
+                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO:   
+                           IF aux_incrineg = 1 THEN
+                             DO:
+                               /* Tratativas de negocio */  
+                               MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                               PAUSE(3) NO-MESSAGE.
+                               UNDO , NEXT INICIO.
+                             END.
+                           ELSE
+                             DO:
+                               MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                               PAUSE(3) NO-MESSAGE.
+                               UNDO , NEXT INICIO.
+                             END.
+                         END.
 
-/*                                                         
-//                        CREATE craplcm.
-//                        ASSIGN craplcm.cdcooper = glb_cdcooper
-//                               craplcm.cdoperad = glb_cdoperad
-//                               craplcm.dtmvtolt = tel_dtmvtolt
-//                               craplcm.cdagenci = 1
-//                               craplcm.cdbccxlt = 100
-//                               craplcm.nrdolote = his_nrdolote
-//                               craplcm.nrdconta = tel_nrctatrf
-//                               craplcm.nrdctabb = tel_nrctatrf
-//                               craplcm.nrdctitg = STRING(tel_nrctatrf,
-//                                                             "99999999")
-//                               craplcm.nrdocmto = tel_nrdocmto
-//                               craplcm.cdhistor = his_cdhistor
-//                               craplcm.nrseqdig = crablot.nrseqdig + 1
-//                               craplcm.vllanmto = tel_vllanmto
-//                               craplcm.cdpesqbb = STRING(tel_nrdctabb).
-//                        VALIDATE craplcm.
-*/
+                         FIND FIRST tt-ret-lancto.
+                         DISP tt-ret-lancto.
+                         
+                         FIND FIRST craplcm 
+                            WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
+                                  NO-ERROR.
+                         IF NOT AVAILABLE craplcm THEN
+                            DO:
+                               MESSAGE "Erro ao ler CRAPLCM=" tt-ret-lancto.recid_lcm.
+                               PAUSE(3) NO-MESSAGE.
+                               UNDO , NEXT INICIO.
+                            END.
+
+                         DELETE PROCEDURE h-b1wgen0200.       
+
+/*FIM renato PJ450*/
+/*
+                        CREATE craplcm.
+                        ASSIGN craplcm.cdcooper = glb_cdcooper
+                               craplcm.cdoperad = glb_cdoperad
+                               craplcm.dtmvtolt = tel_dtmvtolt
+                               craplcm.cdagenci = 1
+                               craplcm.cdbccxlt = 100
+                               craplcm.nrdolote = his_nrdolote
+                               craplcm.nrdconta = tel_nrctatrf
+                               craplcm.nrdctabb = tel_nrctatrf
+                               craplcm.nrdctitg = STRING(tel_nrctatrf,
+                                                             "99999999")
+                               craplcm.nrdocmto = tel_nrdocmto
+                               craplcm.cdhistor = his_cdhistor
+                               craplcm.nrseqdig = crablot.nrseqdig + 1
+                               craplcm.vllanmto = tel_vllanmto
+                               craplcm.cdpesqbb = STRING(tel_nrdctabb).
+                        VALIDATE craplcm.*/
+
                     END.
                ELSE   
                IF   tel_cdhistor = 451   OR
@@ -4962,8 +4939,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                   INPUT glb_inproces, /** Indic.Process.**/
                                   INPUT FALSE,        /** Gera log erro **/
                                   INPUT TRUE,         /** Flag Condic.C.**/
-                                  INPUT 0,                               /** nriniseq      **/
-                                  INPUT 0,                         /** nrregist      **/
+                                  INPUT 0, 			      /** nriniseq      **/
+                                  INPUT 0, 		        /** nrregist      **/
                                  OUTPUT aux_qtregist,
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados-epr ).
@@ -5240,6 +5217,13 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
             
                             DELETE PROCEDURE h-b1wgen0171.
                         END.
+                             
+
+
+
+
+
+
                     END.
                       
                ASSIGN crablot.nrseqdig = crablot.nrseqdig + 1
@@ -5441,42 +5425,17 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                               crabass5.nrdconta = tel_nrdctabb
                               NO-LOCK NO-ERROR.
           
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-          RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass5.inpessoa, /* Tipo de pessoa */
-                                               INPUT crabass5.cdtipcta, /* Tipo de conta */
-                                              OUTPUT 0,                /* Modalidade */
-                                              OUTPUT "",               /* Flag Erro */
-                                              OUTPUT "").              /* Descrição da crítica */
-
-          CLOSE STORED-PROC pc_busca_tipo_conta_itg
-                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-          ASSIGN aux_idctaitg = 0
-                 aux_des_erro = ""
-                 aux_dscritic = ""
-                 aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
-                                WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
-                 aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
-                                WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
-                 aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
-                                WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
-
-          IF aux_des_erro = "NOK"  THEN
+          IF   crabass5.cdtipcta >= 8    AND
+               crabass5.cdtipcta <= 11   THEN
                DO:
-                 BELL.
-                 ASSIGN glb_dscritic = aux_dscritic.
-                 MESSAGE glb_dscritic.
-                 LEAVE.
-              END.
-          
-          IF aux_idctaitg = 0 THEN
-               DO:
+                        /* IF CECRED */
+                   IF  crabass5.cdbcochq = crapcop.cdbcoctl  THEN
                        ASSIGN crabfdc.cdbandep = crapcop.cdbcoctl
                               crabfdc.cdagedep = crapcop.cdagectl.
+                   ELSE /* BANCOOB */
+                       ASSIGN crabfdc.cdbandep = 756
+                              crabfdc.cdagedep = crapcop.cdagebcb.
+
                END.
           ELSE
                /* BANCO DO BRASIL - SEM DIGITO */

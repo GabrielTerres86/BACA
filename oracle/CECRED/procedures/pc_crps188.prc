@@ -54,8 +54,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps188(pr_cdcooper IN crapcop.cdcooper%TY
                             pois a tabela tem a data em formato DD/MM/AAAA e o programa
                             estava lendo como MM/DD/AAAA.  (Renato - Supero)
 
-              23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
-              Renato Cordeiro (AMcom)         
+               29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -359,32 +359,6 @@ BEGIN
       
         BEGIN
           --Inserir a capa do lote retornando informacoes para uso posterior
-
-          lanc0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper,
-                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                   pr_cdagenci => 1,
-                                   pr_cdbccxlt => 100,
-                                   pr_nrdolote => 8452,
-                                   pr_tplotmov => 1,
-                                   pr_nrseqdig => 0,
-                                   pr_rw_craplot => vr_rw_craplot,
-                                   pr_cdcritic   => pr_cdcritic,
-                                   pr_dscritic   => pr_dscritic
-                                   );
-          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
-             RAISE vr_exc_saida;
-          end if;
-
-          rw_craplot.cdcooper  := vr_rw_craplot.cdcooper;
-          rw_craplot.dtmvtolt  := vr_rw_craplot.dtmvtolt;
-          rw_craplot.cdagenci  := vr_rw_craplot.cdagenci;
-          rw_craplot.cdbccxlt  := vr_rw_craplot.cdbccxlt;
-          rw_craplot.nrdolote  := vr_rw_craplot.nrdolote;
-          rw_craplot.tplotmov  := vr_rw_craplot.tplotmov;
-          rw_craplot.nrseqdig  := vr_rw_craplot.nrseqdig;
-          rw_craplot.rowid     := vr_rw_craplot.rowid;
-
-/*
           INSERT INTO craplot(cdcooper
                              ,dtmvtolt
                              ,cdagenci
@@ -415,7 +389,6 @@ BEGIN
                           ,rw_craplot.tplotmov
                           ,rw_craplot.nrseqdig
                           ,rw_craplot.rowid;
-*/
         EXCEPTION
           WHEN OTHERS THEN
            vr_dscritic := 'Erro ao inserir na tabela craplot. '|| SQLERRM;
@@ -427,7 +400,7 @@ BEGIN
         -- Apenas Fechar Cursor
         CLOSE cr_craplot; 
       END IF; 
-      
+
       IF rw_crawcrd.cdadmcrd = 1 THEN
         vr_cdhistor := 174; -- 174 - Anuidade Credicard
       ELSE  

@@ -1289,26 +1289,6 @@ BEGIN
         FETCH cr_craplot INTO rw_craplot;
         IF cr_craplot%NOTFOUND THEN -- Se nao existir insere a capa de lote
           BEGIN
-          lanc0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                   pr_dtmvtopg => rw_crapdat.dtmvtopr,
-                                   pr_cdagenci => 1,
-                                   pr_cdbccxlt => 100,
-                                   pr_cdoperad => 1,
-                                   pr_nrdolote => 4650,
-                                   pr_tplotmov => 1,
-                                   pr_tpdmoeda => 1,
-                                   pr_cdcooper => pr_cdcooper,
-                                   pr_rw_craplot => vr_rw_craplot,
-                                   pr_cdcritic   => pr_cdcritic,
-                                   pr_dscritic   => pr_dscritic
-                                   );
-          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
-             RAISE vr_exc_saida;
-          end if;
-
-          vr_rowid_craplot := vr_rw_craplot.ROWID;
-
-/*
             INSERT INTO craplot
               (dtmvtolt,
                dtmvtopg,
@@ -1330,7 +1310,6 @@ BEGIN
                1,
                pr_cdcooper)
              RETURNING ROWID INTO vr_rowid_craplot;
-*/
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir CRAPLOT: ' ||SQLERRM;

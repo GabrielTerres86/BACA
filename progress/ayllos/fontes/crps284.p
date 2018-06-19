@@ -24,10 +24,16 @@
                16/02/2006 - Unificacao dos Bancos - SQLWorks - Fernando.  
                
                20/01/2014 - Incluir VALIDATE craplcm, craplot (Lucas R.)
+               
+               29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
+
 ............................................................................. */
  
 { includes/var_batch.i  } 
+{ sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
 
+DEF VAR h-b1wgen0200 AS HANDLE                                       NO-UNDO./*renato PJ450*/
 DEF BUFFER crablcm FOR craplcm.
 
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
@@ -132,6 +138,72 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
 
              END.  /*  Fim do DO WHILE TRUE  */
 
+             /* renato PJ450*/
+
+             /* Identificar orgao expedidor */
+             IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p 
+                     PERSISTENT SET h-b1wgen0200.
+
+             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                         (INPUT craplot.dtmvtolt                      /*par_dtmvtolt*/
+                         ,INPUT craplot.cdagenci                      /*par_cdagenci*/
+                         ,INPUT craplot.cdbccxlt                      /*par_cdbccxlt*/
+                         ,INPUT craplot.nrdolote                      /*par_nrdolote*/
+                         ,INPUT crablcm.nrdconta                      /*par_nrdconta*/
+                         ,INPUT craplot.nrseqdig + 1                  /*par_nrdocmto*/
+                         ,INPUT 352                                   /*par_cdhistor*/
+                         ,INPUT craplot.nrseqdig + 1                  /*par_nrseqdig*/
+                         ,INPUT aux_vllanmto                          /*par_vllanmto*/
+                         ,INPUT crablcm.nrdconta                      /*par_nrdctabb*/
+                         ,INPUT ""                                    /*par_cdpesqbb*/
+                         ,INPUT 0                                     /*par_vldoipmf*/
+                         ,INPUT 0                                     /*par_nrautdoc*/
+                         ,INPUT 0                                     /*par_nrsequni*/
+                         ,INPUT 0                                     /*par_cdbanchq*/
+                         ,INPUT 0                                     /*par_cdcmpchq*/
+                         ,INPUT 0                                     /*par_cdagechq*/
+                         ,INPUT 0                                     /*par_nrctachq*/
+                         ,INPUT 0                                     /*par_nrlotchq*/
+                         ,INPUT 0                                     /*par_sqlotchq*/
+                         ,INPUT craplot.dtmvtolt                      /*par_dtrefere*/
+                         ,INPUT TIME                                  /*par_hrtransa*/
+                         ,INPUT ""                                    /*par_cdoperad*/
+                         ,INPUT ""                                    /*par_dsidenti*/
+                         ,INPUT glb_cdcooper                          /*par_cdcooper*/
+                         ,INPUT STRING(crablcm.nrdconta,"99999999")   /*par_nrdctitg*/
+                         ,INPUT ""                                    /*par_dscedent*/
+                         ,INPUT 0                                     /*par_cdcoptfn*/
+                         ,INPUT 0                                     /*par_cdagetfn*/
+                         ,INPUT 0                                     /*par_nrterfin*/
+                         ,INPUT 0                                     /*par_nrparepr*/
+                         ,INPUT 0                                     /*par_nrseqava*/
+                         ,INPUT 0                                     /*par_nraplica*/
+                         ,INPUT 0                                     /*par_cdorigem*/
+                         ,INPUT 0                                     /*par_idlautom*/
+                         ,INPUT 0                                     /*par_inprolot */
+                         ,INPUT 0                                     /*par_tplotmov */
+                         ,OUTPUT TABLE tt-ret-lancto
+                         ,OUTPUT aux_incrineg
+                         ,OUTPUT aux_cdcritic
+                         ,OUTPUT aux_dscritic).
+/*  ver com a Josi como tratar a crítica */               
+             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:   
+               IF aux_incrineg = 1 THEN
+                 DO:
+                   /* Tratativas de negocio */  
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                 END.
+               ELSE
+                 DO:
+                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   RETURN "NOK".
+                 END.
+               
+             END.
+
+/*
              CREATE craplcm.
              ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                     craplcm.cdagenci = craplot.cdagenci
@@ -145,16 +217,16 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                     craplcm.nrseqdig = craplot.nrseqdig + 1
                     craplcm.vllanmto = aux_vllanmto
                     craplcm.cdcooper = glb_cdcooper
- 
+ */
                     craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
                     craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
                     craplot.qtinfoln = craplot.qtinfoln + 1
                     craplot.qtcompln = craplot.qtcompln + 1
                     craplot.nrseqdig = craplot.nrseqdig + 1
-
+*/
                     aux_vllanmto = 0.
             
-             VALIDATE craplcm.
+/*             VALIDATE craplcm.*/
              VALIDATE craplot.
         
             /* Cria registro de restart  */

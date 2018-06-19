@@ -142,6 +142,13 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                      ,pr_cdmodali   IN NUMBER     DEFAULT 0
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);
   
+  vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+  vr_tab_retorno lanc0001.typ_reg_retorno;
+  vr_cdhistor      craplcm.cdhistor%type;
+  vr_incrineg  INTEGER;
+  vr_cdcritic    number(10);
+  pr_cdcritic    varchar2(2000);
+
 END BLQJ0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
@@ -171,6 +178,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              Rafael (Mouts) - Chamado 662865
 
 				30/11/2017 - M460 bancenJud - Demetrius\Thiago Rodrigues
+
+               29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                            PRJ450 - Renato Cordeiro (AMcom)         
 
   .............................................................................*/
   
@@ -1280,7 +1290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_dtblqfim      crapblj.dtblqfim%TYPE;
     vr_vlresblq      crapblj.vlresblq%TYPE;
     vr_nrdocmto      craplcm.nrdocmto%TYPE;
-    
+
     -- EXCEPTIONS
     vr_exp_erro       EXCEPTION;
     
@@ -1427,7 +1437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,1
                                  ,0) 
                         RETURNING ROWID INTO rw_craplot.dsdrowid;
-                         
+
                -- Atualizar o registro do lote        
                rw_craplot.cdcooper := pr_cdcooper;
                rw_craplot.dtmvtolt := BTCH0001.rw_crapdat.dtmvtolt;
@@ -1475,6 +1485,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           
           -- Inserir registro na CRAPLCM 
           BEGIN
+            
+            if rw_crapass.inpessoa = 1 then
+               vr_cdhistor := 1402;
+            else
+               vr_cdhistor := 1403;
+            end if;
+
+            lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                   ,pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_crapass.nrdconta
+                   ,pr_nrdctabb => rw_crapass.nrdconta
+                   ,pr_nrdctitg => rw_crapass.nrdctitg
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => vr_cdhistor
+                   ,pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_cdpesqbb => 'BLOQJUD'
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic
+                   );
+
+            if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+               RAISE vr_exp_erro;
+            end if;
+/*
             INSERT INTO craplcm(cdcooper
                                ,dtmvtolt
                                ,dtrefere
@@ -1503,6 +1545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,TO_NUMBER(vr_tbbloque(vr_indice)) -- vllanmto
                                ,rw_craplot.nrseqdig + 1           -- nrseqdig
                                ,'BLOQJUD');                       -- cdpesqbb
+*/
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
@@ -1654,7 +1697,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,1
                                  ,0) 
                         RETURNING ROWID INTO rw_craplot.dsdrowid;
-                         
                -- Atualizar o registro do lote        
                rw_craplot.cdcooper := pr_cdcooper;
                rw_craplot.dtmvtolt := BTCH0001.rw_crapdat.dtmvtolt;
@@ -2126,7 +2168,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,1
                                ,0) 
                        RETURNING ROWID INTO rw_craplot.dsdrowid;
-                         
             -- Atualizar o registro do lote        
             rw_craplot.cdcooper := pr_cdcooper;
             rw_craplot.dtmvtolt := pr_dtmvtolt;
@@ -2186,6 +2227,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 --            IF sql%rowcount = 0  THEN
            IF NOT vr_inserlcm THEN
               vr_inserlcm := TRUE;
+
+          if rw_crapblj.inpessoa = 1 then
+             vr_cdhistor := 1402;
+          else
+             vr_cdhistor := 1403;
+          end if;
+
+          lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => pr_dtmvtolt
+                   ,pr_dtrefere => pr_dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_crapblj.nrdconta
+                   ,pr_nrdctabb => rw_crapblj.nrdconta
+                   ,pr_nrdctitg => rw_crapblj.nrdctitg
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => vr_cdhistor
+                   ,pr_vllanmto => pr_vldesblo
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_cdpesqbb => 'BLOQJUD'
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic
+                   );
+
+          if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+             RAISE vr_exp_erro;
+          end if;
+/*
           INSERT INTO craplcm(cdcooper
                              ,dtmvtolt
                              ,dtrefere
@@ -2214,6 +2287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,pr_vldesblo  --ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
                              ,rw_craplot.nrseqdig + 1           -- nrseqdig
                              ,'BLOQJUD');                       -- cdpesqbb
+*/
 --            END IF;
             END IF;
         EXCEPTION

@@ -294,38 +294,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
         CLOSE cr_craplot;                    
         -- Tentaremos criar o registro do lote
         BEGIN
-          
-          lanc0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper,
-                                   pr_dtmvtolt => pr_dtmvtopr,
-                                   pr_cdagenci => vr_cdagenci,
-                                   pr_cdbccxlt => vr_cdbccxlt,
-                                   pr_nrdolote => pr_nrdolote,
-                                   pr_tplotmov => 1,
-                                   pr_rw_craplot => vr_rw_craplot,
-                                   pr_cdcritic   => pr_cdcritic,
-                                   pr_dscritic   => pr_dscritic
-                                   );
-          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
-             RAISE vr_exc_saida;
-          end if;
-
-          pr_rw_craplot.nrrowid  := vr_rw_craplot.rowid;
-          pr_rw_craplot.dtmvtolt := vr_rw_craplot.dtmvtolt;
-          pr_rw_craplot.cdagenci := vr_rw_craplot.cdagenci;
-          pr_rw_craplot.cdbccxlt := vr_rw_craplot.cdbccxlt;
---          pr_rw_craplot.cdbccxpg := vr_rw_craplot.cdbccxpg;
-          pr_rw_craplot.nrdolote := vr_rw_craplot.nrdolote;
-          pr_rw_craplot.tplotmov := vr_rw_craplot.tplotmov;
-          pr_rw_craplot.qtinfoln := vr_rw_craplot.qtinfoln;
-          pr_rw_craplot.qtcompln := vr_rw_craplot.qtcompln;
-          pr_rw_craplot.vlinfodb := vr_rw_craplot.vlinfodb; 
-          pr_rw_craplot.vlcompdb := vr_rw_craplot.vlcompdb;
-          pr_rw_craplot.nrseqdig := vr_rw_craplot.nrseqdig;
-          pr_rw_craplot.vlcompcr := vr_rw_craplot.vlcompcr;
-          pr_rw_craplot.vlinfocr := vr_rw_craplot.vlinfocr;
---          pr_rw_craplot.dtmvtopg := vr_rw_craplot.dtmvtopg;
-
-/*
           INSERT INTO craplot (cdcooper
                               ,dtmvtolt
                               ,cdagenci
@@ -368,7 +336,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                               ,pr_rw_craplot.vlcompcr
                               ,pr_rw_craplot.vlinfocr
                               ,pr_rw_craplot.dtmvtopg;
-*/
         EXCEPTION
           WHEN dup_val_on_index THEN
             -- Lote já existe, critica 59
