@@ -43,7 +43,9 @@
                             tari0001.pc_cria_lan_auto_tarifa, projeto de 
                             Tarifas-218(Jean Michel)       
                             
-                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta 
+                             corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+                             
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cddevolu AS INT        /* Sempre 4 */             NO-UNDO.
@@ -453,10 +455,16 @@ PROCEDURE gera_lancamento:
                 ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
                 
                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                DO:  
-                  MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                  RETURN "NOK".
-                END.   
+                   DO:  
+                     MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
+                     RETURN "NOK".
+                   END.   
+                ELSE 
+                   DO:
+                     /* 19/06/2018- TJ - Posicionando no registro da craplcm criado acima */
+                     FIND FIRST tt-ret-lancto.
+                     FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                   END.                
                 
                 IF  VALID-HANDLE(h-b1wgen0200) THEN
                   DELETE PROCEDURE h-b1wgen0200.
