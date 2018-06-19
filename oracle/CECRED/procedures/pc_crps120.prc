@@ -1573,6 +1573,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
             END IF;
 
             BEGIN
+              vr_nrseqdig:= rw_craplot.nrseqdig + 1;
+               
             -- Inserir lancamento
               LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot.dtmvtolt -- dtmvtolt
                                                 ,pr_cdagenci =>rw_craplot.cdagenci -- cdagenci
@@ -1584,8 +1586,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                                                 ,pr_nrdocmto => rw_craplot.nrseqdig + 1 -- nrdocmto                                              
                                                 ,pr_cdhistor => vr_idx                  -- cdhistor                                                
                                                 ,pr_vllanmto => pr_tab_vldebcta(vr_idx) -- vllanmto                                                
-                                                ,pr_nrseqdig =>rw_craplot.nrseqdig + 1 -- nrseqdig
-                                                ,pr_cdcooper =>pr_cdcooper
+                                                ,pr_nrseqdig => vr_nrseqdig -- nrseqdig
+                                                ,pr_cdcooper => pr_cdcooper
 
                                                 -- OUTPUT --
                                                 ,pr_tab_retorno => vr_tab_retorno
@@ -1594,7 +1596,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                                                 ,pr_dscritic => vr_dscritic);
                                                 
                                                 
-              vr_nrseqdig:= rw_craplot.nrseqdig + 1;
                     
               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                  RAISE vr_exc_saida;
@@ -3541,6 +3542,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
               IF vr_vllanmto > 0 THEN
                  /*  Credito do liquido de pagamento  */
                 BEGIN
+               
+                vr_nrseqdig:=  rw_craplot.nrseqdig + 1;
+                 
+                   -- Inserir lancamento
+                 LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>rw_craplot.dtmvtolt -- dtmvtolt
+                                                   ,pr_cdagenci =>rw_craplot.cdagenci -- cdagenci
+                                                   ,pr_cdbccxlt =>rw_craplot.cdbccxlt -- cdbccxlt
+                                                   ,pr_nrdolote =>rw_craplot.nrdolote -- nrdolote
+                                                   ,pr_nrdconta =>vr_nrdconta        -- nrdconta                                                                                                
+                                                   ,pr_nrdctabb =>vr_nrdconta        -- nrdctabb   
+                                                   ,pr_nrdctitg =>gene0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
+                                                   ,pr_nrdocmto => vr_nrdocmto -- nrdocmto                                              
+                                                   ,pr_cdhistor => vr_cdhistor                  -- cdhistor                                                
+                                                   ,pr_vllanmto => vr_vllanmto -- vllanmto                                                
+                                                   ,pr_nrseqdig =>vr_nrseqdig-- nrseqdig
+                                                   ,pr_cdcooper =>pr_cdcooper
+
+                                                   -- OUTPUT --
+                                                  ,pr_tab_retorno => vr_tab_retorno
+                                                  ,pr_incrineg => vr_incrineg
+                                                  ,pr_cdcritic => vr_cdcritic
+                                                  ,pr_dscritic => vr_dscritic);
+                                                
+                                                
+
+                    
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_saida;
+              END IF;
+                  
+                  
+                
+             /*   
                   INSERT INTO craplcm
                               (   dtmvtolt
                                  ,cdagenci
@@ -3566,7 +3600,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                                  ,vr_vllanmto         -- vllanmto
                                  ,rw_craplot.nrseqdig + 1 -- nrseqdig
                                  ,pr_cdcooper)        -- cdcooper
-                        returning nrseqdig into vr_nrseqdig;
+                        returning nrseqdig into vr_nrseqdig;*/
 
                   folh0001.pc_inserir_lanaut(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => vr_nrdconta
