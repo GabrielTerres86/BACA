@@ -749,8 +749,8 @@ PROCEDURE pc-efetua-gps-pagamento:
                          INPUT 0,
 						 INPUT 0, /* Mobile */
 						 INPUT "", /* pr_dshistor */
-                         INPUT ""  /* pr_iptransa */
-                         INPUT ""  /* pr_iddispos */
+                         INPUT "", /* pr_iptransa */
+                         INPUT "", /* pr_iddispos */
 						 OUTPUT "", /* protocolo */
                          
                          OUTPUT "",
