@@ -1,4 +1,4 @@
-
+Ôªø
 /******************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
@@ -66,8 +66,8 @@
                              novo processo de busca tarifa na craptar usando 
                              fixo cdmotivo = "00" (Daniel).     
 
-                13/08/2013 - Nova forma de chamar as agÍncias, alterado para
-                             "Posto de Atendimento" (PA). (AndrÈ Santos - SUPERO) 
+                13/08/2013 - Nova forma de chamar as agƒôncias, alterado para
+                             "Posto de Atendimento" (PA). (Andr√© Santos - SUPERO) 
                              
                 14/11/2013 - Fixado valor do campo crapfco.flgvigen para FALSE na
                              inclusao e alteracao de registro (Daniel).
@@ -75,8 +75,8 @@
                 02/12/2013 - Fixado utilixacao filtro crapfvl quando utilizar
                              chave cdtarifa (Daniel).           
                              
-                05/02/2014 - Tratamento para n„o dar erro de tarifa caso a
-                             coop. n„o estiver ativa (crapcop.flgativo) (Lucas).
+                05/02/2014 - Tratamento para nƒÉo dar erro de tarifa caso a
+                             coop. nƒÉo estiver ativa (crapcop.flgativo) (Lucas).
                 
                 12/02/2014 - Retirado condicao "craplcr.flgstlcr = TRUE" dos FINDs 
                              da craplcr (Tiago)
@@ -87,14 +87,14 @@
                              Retirar tratamento de sequencia da craplat.
                              (Gabriel).      
                 
-                05/05/2014 - RemoÁ„o de erro inserido no log e inclus„o de 
+                05/05/2014 - Remo√ßƒÉo de erro inserido no log e inclusƒÉo de 
                              funcionamento de envio de email com o erro, 
                              "solicitar_envio_email". (Jaison - SF: 142671)
                              
-                16/05/2014 - Inclus„o de verificacao de nmdatela para procedure
-                             lista-cooperativas. (Jean Michel - Projeto Cartıes)
+                16/05/2014 - InclusƒÉo de verificacao de nmdatela para procedure
+                             lista-cooperativas. (Jean Michel - Projeto Cart≈ëes)
                              
-                21/01/2015 - Convers„o da fn_sequence para procedure para n„o
+                21/01/2015 - ConversƒÉo da fn_sequence para procedure para nƒÉo
                              gerar cursores abertos no Oracle. (Dionathan)
                              
                 25/03/2015 - Inserido condicao para quando buscar coops
@@ -129,7 +129,7 @@
                15/02/2016 - Chamada da pc_carrega_dados_tarifa_cobr do Oracle
                             na carrega_dados_tarifa_cobranca. (Jaison/Marcos)
 
-               16/02/2016 - MigraÁao das rotinas da CADCAT para Oracle. (Dionathan)
+               16/02/2016 - Migra√ßao das rotinas da CADCAT para Oracle. (Dionathan)
 
                 01/03/2016 - Incluido log de monitoramento de lote em uso para TED.
                              Odirlei-AMcom
@@ -137,13 +137,13 @@
 				08/03/2016 - Inclusao da procedure consulta-pacotes-tarifas,
                              Prj. 218 - Pacotes de Tarifas (Jean Michel).
 				
-				14/04/2016 - Alterada procedure buscar-cadtar para buscar tambÈm
+				14/04/2016 - Alterada procedure buscar-cadtar para buscar tamb√©m
 							 o campo flutlpct. Prj. 218 - Pacotes de Tarifas (Lombardi).
 							        
                 17/04/2017 - Alterar for each com last-off por find last na busca-novo-cdfvlcop
                             (Lucas Ranghetti #633002)
 
-				11/07/2017 - Melhoria 150 - TarifaÁ„o de operaÁıes de crÈdito por percentual
+				11/07/2017 - Melhoria 150 - Tarifa√ßƒÉo de opera√ß≈ëes de cr√©dito por percentual
 
                 07/11/2017 - Adicionados campos para comportar o cadastro de 
                              tarifas por porcentual na ALTTAR.
@@ -152,10 +152,8 @@
                 21/11/2017 - Setado ordenacao na tabela crapcop na procedure carrega-atribuicao-detalhamento
                              pois estava pegando um indice diferente alterando o resultado em tela
                             (Tiago #782313) 
-                            
-                19/03/2018 - Procedure lista-tipo-conta deletada pois nao sera mais usada. 
-                             Alteracao para buscar descricao do tipo de conta do Oracle.
-                             PRJ366 (Lombardi).
+                
+                08/06/2018  PRJ450 - Centraliza√ßao do lan√ßamento em conta corrente Rangel Decker  AMcom.
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -165,6 +163,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1cabrelvar.i }
 { sistema/generico/includes/var_oracle.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
@@ -179,8 +178,6 @@ DEF VAR aux_dslogpar AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen0060 AS HANDLE                                         NO-UNDO.
 
-DEF VAR aux_dstipcta AS CHAR                                           NO-UNDO.
-DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
 
 DEF STREAM str_1.
 
@@ -4039,32 +4036,15 @@ PROCEDURE busca-associado-lantar:
             END.
     END.
 
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-    RUN STORED-PROCEDURE pc_descricao_tipo_conta
-      aux_handproc = PROC-HANDLE NO-ERROR
-                              (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                               INPUT crapass.cdtipcta, /* Tipo de conta */
-                              OUTPUT "",               /* DescriÁao do Tipo de conta */
-                              OUTPUT "",               /* Flag Erro */
-                              OUTPUT "").              /* DescriÁao da crÌtica */
+    FIND craptip WHERE craptip.cdcooper = par_cdcooper AND
+                       craptip.cdtipcta = crapass.cdtipcta
+                       NO-LOCK NO-ERROR.
 
-    CLOSE STORED-PROC pc_descricao_tipo_conta
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-    ASSIGN aux_dstipcta = ""
-           aux_des_erro = ""
-           aux_dscritic = ""
-           aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                           WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                           WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                           WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-    
-    IF aux_des_erro = "NOK"  THEN
+    IF  NOT AVAIL(craptip) THEN
         DO:
+            ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Tipo de Conta inexistente!".
+
             RUN gera_erro (INPUT par_cdcooper,        
                            INPUT par_cdagenci,
                            INPUT 1, /* nrdcaixa  */
@@ -4094,8 +4074,8 @@ PROCEDURE busca-associado-lantar:
 
     ASSIGN par_cdagenci = crapass.cdagenci
            par_nrmatric = crapass.nrmatric
-           par_cdtipcta = crapass.cdtipcta
-           par_dstipcta = aux_dstipcta
+           par_cdtipcta = craptip.cdtipcta
+           par_dstipcta = craptip.dstipcta
            par_nmprimtl = crapass.nmprimtl
            par_inpessoa = crapass.inpessoa
            par_nmresage = crapage.nmresage.
@@ -4573,32 +4553,15 @@ PROCEDURE busca-associado-reltar:
             RETURN "NOK".
         END.
 
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-    RUN STORED-PROCEDURE pc_descricao_tipo_conta
-      aux_handproc = PROC-HANDLE NO-ERROR
-                              (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                               INPUT crapass.cdtipcta, /* Tipo de conta */
-                              OUTPUT "",               /* DescriÁao do Tipo de conta */
-                              OUTPUT "",               /* Flag Erro */
-                              OUTPUT "").              /* DescriÁao da crÌtica */
+    FIND craptip WHERE craptip.cdcooper = aux_cdcooper AND
+                       craptip.cdtipcta = crapass.cdtipcta
+                       NO-LOCK NO-ERROR.
 
-    CLOSE STORED-PROC pc_descricao_tipo_conta
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-    
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-    ASSIGN aux_dstipcta = ""
-           aux_des_erro = ""
-           aux_dscritic = ""
-           aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                           WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                           WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                           WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-    
-    IF aux_des_erro = "NOK"  THEN
+    IF  NOT AVAIL(craptip) THEN
         DO:
+            ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Tipo de conta inexistente!".
+
             RUN gera_erro (INPUT par_cdcooper,        
                            INPUT par_cdagenci,
                            INPUT 1, /* nrdcaixa  */
@@ -4627,8 +4590,8 @@ PROCEDURE busca-associado-reltar:
 
     ASSIGN par_cdagenci = crapass.cdagenci
            par_nrmatric = crapass.nrmatric
-           par_cdtipcta = crapass.cdtipcta
-           par_dstipcta = aux_dstipcta
+           par_cdtipcta = craptip.cdtipcta
+           par_dstipcta = craptip.dstipcta
            par_nmprimtl = crapass.nmprimtl
            par_inpessoa = crapass.inpessoa
            par_nmresage = crapage.nmresage.
@@ -7479,40 +7442,9 @@ PROCEDURE carrega-tabassociado:
                     NEXT.
             END.  
     
-            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-            RUN STORED-PROCEDURE pc_descricao_tipo_conta
-              aux_handproc = PROC-HANDLE NO-ERROR
-                                      (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                       INPUT crapass.cdtipcta, /* Tipo de conta */
-                                      OUTPUT "",               /* DescriÁao do Tipo de conta */
-                                      OUTPUT "",               /* Flag Erro */
-                                      OUTPUT "").              /* DescriÁao da crÌtica */
-            
-            CLOSE STORED-PROC pc_descricao_tipo_conta
-                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-            
-            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-            
-            ASSIGN aux_dstipcta = ""
-                   aux_des_erro = ""
-                   aux_dscritic = ""
-                   aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                                   WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-                   aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                                   WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-                   aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                                   WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-            
-            IF aux_des_erro = "NOK"  THEN
-                DO:
-                    RUN gera_erro (INPUT par_cdcooper,        
-                                   INPUT par_cdagenci,
-                                   INPUT 1, /* nrdcaixa  */
-                                   INPUT 1, /* sequencia */
-                                   INPUT aux_cdcritic,        
-                                   INPUT-OUTPUT aux_dscritic).
-                    RETURN "NOK".
-                END.
+            FIND craptip WHERE craptip.cdcooper = crapass.cdcooper AND 
+                               craptip.cdtipcta = crapass.cdtipcta
+                               NO-LOCK NO-ERROR.
     
             ASSIGN par_qtregist = par_qtregist + 1.
     
@@ -7528,8 +7460,8 @@ PROCEDURE carrega-tabassociado:
                        tt-associados.nmprimtl = crapass.nmprimtl
                        tt-associados.cdagenci = crapass.cdagenci
                        tt-associados.inpessoa = crapass.inpessoa
-                       tt-associados.cdtipcta = crapass.cdtipcta
-                       tt-associados.dstipcta = aux_dstipcta
+                       tt-associados.cdtipcta = craptip.cdtipcta
+                       tt-associados.dstipcta = craptip.dstipcta
                        tt-associados.nrmatric = crapass.nrmatric.
 
             END.
@@ -7576,40 +7508,9 @@ PROCEDURE carrega-tabassociado:
                             NEXT.
                     END.  
             
-                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                    RUN STORED-PROCEDURE pc_descricao_tipo_conta
-                      aux_handproc = PROC-HANDLE NO-ERROR
-                                              (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                               INPUT crapass.cdtipcta, /* Tipo de conta */
-                                              OUTPUT "",               /* DescriÁao do Tipo de conta */
-                                              OUTPUT "",               /* Flag Erro */
-                                              OUTPUT "").              /* DescriÁao da crÌtica */
-                    
-                    CLOSE STORED-PROC pc_descricao_tipo_conta
-                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                    
-                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                    
-                    ASSIGN aux_dstipcta = ""
-                           aux_des_erro = ""
-                           aux_dscritic = ""
-                           aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                                           WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-                           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                                           WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-                           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                                           WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-                    
-                    IF aux_des_erro = "NOK"  THEN
-                        DO:
-                            RUN gera_erro (INPUT par_cdcooper,        
-                                           INPUT par_cdagenci,
-                                           INPUT 1, /* nrdcaixa  */
-                                           INPUT 1, /* sequencia */
-                                           INPUT aux_cdcritic,        
-                                           INPUT-OUTPUT aux_dscritic).
-                            RETURN "NOK".
-                        END.
+                    FIND craptip WHERE craptip.cdcooper = crapass.cdcooper AND 
+                                       craptip.cdtipcta = crapass.cdtipcta
+                                       NO-LOCK NO-ERROR.
             
                    ASSIGN par_qtregist = par_qtregist + 1.
             
@@ -7625,8 +7526,8 @@ PROCEDURE carrega-tabassociado:
                                tt-associados.nmprimtl = crapass.nmprimtl
                                tt-associados.cdagenci = crapass.cdagenci
                                tt-associados.inpessoa = crapass.inpessoa
-                               tt-associados.cdtipcta = crapass.cdtipcta
-                               tt-associados.dstipcta = aux_dstipcta
+                               tt-associados.cdtipcta = craptip.cdtipcta
+                               tt-associados.dstipcta = craptip.dstipcta
                                tt-associados.nrmatric = crapass.nrmatric
                                tt-associados.qtdchcus = 0.
 
@@ -7691,31 +7592,11 @@ PROCEDURE lista-associado:
         IF  AVAIL(crapass) THEN
             DO:
 
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                RUN STORED-PROCEDURE pc_descricao_tipo_conta
-                  aux_handproc = PROC-HANDLE NO-ERROR
-                                          (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                           INPUT crapass.cdtipcta, /* Tipo de conta */
-                                          OUTPUT "",               /* DescriÁao do Tipo de conta */
-                                          OUTPUT "",               /* Flag Erro */
-                                          OUTPUT "").              /* DescriÁao da crÌtica */
-                
-                CLOSE STORED-PROC pc_descricao_tipo_conta
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                FIND craptip WHERE craptip.cdcooper = crapass.cdcooper AND 
+                                   craptip.cdtipcta = crapass.cdtipcta
+                                   NO-LOCK NO-ERROR.
 
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                
-                ASSIGN aux_dstipcta = ""
-                       aux_des_erro = ""
-                       aux_dscritic = ""
-                       aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                                       WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-                       aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                                       WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-                       aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                                       WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-                
-                IF aux_des_erro = "OK"  THEN
+                IF  AVAIL(craptip) THEN
                     DO:
                         CREATE tt-associados.
                         ASSIGN tt-associados.nrdconta = crapass.nrdconta
@@ -7724,8 +7605,8 @@ PROCEDURE lista-associado:
                                tt-associados.nmprimtl = crapass.nmprimtl
                                tt-associados.cdagenci = crapass.cdagenci
                                tt-associados.inpessoa = crapass.inpessoa
-                               tt-associados.cdtipcta = crapass.cdtipcta
-                               tt-associados.dstipcta = aux_dstipcta
+                               tt-associados.cdtipcta = craptip.cdtipcta
+                               tt-associados.dstipcta = craptip.dstipcta
                                tt-associados.nrmatric = crapass.nrmatric
                                tt-associados.qtdchcus = 0.
                     END.
@@ -7736,6 +7617,49 @@ PROCEDURE lista-associado:
 
     RETURN "OK".
 END PROCEDURE.
+
+/******************************************************************************
+ Listagem de Tipo de Conta
+******************************************************************************/
+PROCEDURE lista-tipo-conta:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE                    NO-UNDO.
+
+    DEF OUTPUT PARAM par_qtregist AS INTE                   NO-UNDO.     
+    DEF OUTPUT PARAM TABLE FOR tt-tpconta.
+
+    DEF VAR aux_nrregist AS INT.
+
+    DO ON ERROR UNDO, LEAVE:
+    
+        EMPTY TEMP-TABLE tt-tpconta.
+    
+        FOR EACH craptip NO-LOCK WHERE craptip.cdcooper = par_cdcooper 
+                                    BY craptip.cdtipcta:
+
+            ASSIGN par_qtregist = par_qtregist + 1.
+
+            CREATE tt-tpconta.
+            ASSIGN tt-tpconta.cdtipcta = craptip.cdtipcta
+                   tt-tpconta.dstipcta = craptip.dstipcta
+                   aux_nrregist = aux_nrregist + 1.
+
+            ASSIGN aux_nrregist = aux_nrregist - 1.
+        END.
+
+    END.
+
+    RETURN "OK".
+
+END PROCEDURE.
+
 
 /*****************************************************************************
 Lancamento manul de tarifas
@@ -7986,32 +7910,16 @@ PROCEDURE busca-associado:
             RETURN "NOK".
         END.
 
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-    RUN STORED-PROCEDURE pc_descricao_tipo_conta
-      aux_handproc = PROC-HANDLE NO-ERROR
-                              (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                               INPUT crapass.cdtipcta, /* Tipo de conta */
-                              OUTPUT "",               /* DescriÁao do Tipo de conta */
-                              OUTPUT "",               /* Flag Erro */
-                              OUTPUT "").              /* DescriÁao da crÌtica */
-    
-    CLOSE STORED-PROC pc_descricao_tipo_conta
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-    ASSIGN aux_dstipcta = ""
-           aux_des_erro = ""
-           aux_dscritic = ""
-           aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                           WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-           aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                           WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-           aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                           WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+    FIND craptip WHERE craptip.cdcooper = par_cdcooper AND
+                       craptip.cdtipcta = crapass.cdtipcta
+                       NO-LOCK NO-ERROR.
 
-    IF aux_des_erro = "NOK"  THEN
+    IF  NOT AVAIL(craptip) THEN
         DO:
+            ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Tipo de conta inexistente!".
+
             RUN gera_erro (INPUT par_cdcooper,        
                            INPUT par_cdagenci,
                            INPUT 1, /* nrdcaixa  */
@@ -8040,8 +7948,8 @@ PROCEDURE busca-associado:
 
     ASSIGN par_cdagenci = crapass.cdagenci
            par_nrmatric = crapass.nrmatric
-           par_cdtipcta = crapass.cdtipcta
-           par_dstipcta = aux_dstipcta
+           par_cdtipcta = craptip.cdtipcta
+           par_dstipcta = craptip.dstipcta
            par_nmprimtl = crapass.nmprimtl
            par_inpessoa = crapass.inpessoa
            par_nmresage = crapage.nmresage.
@@ -8176,7 +8084,7 @@ PROCEDURE estorno-baixa-tarifa:
                                                                           INPUT craplat.vltarifa,       /* vltarifa */
                                                                           INPUT craplat.nrdocmto,       /* nrdocmto */
                                                                           INPUT crapass.cdagenci,       /* cdageass */
-																		  INPUT 0,                      /* cdcoptfn */
+																	                                     	  INPUT 0,                      /* cdcoptfn */
                                                                           INPUT 0,                      /* cdagetfn */
                                                                           INPUT 0,                      /* nrterfin */
                                                                           INPUT 0,                      /* nrsequni */
@@ -8214,7 +8122,7 @@ PROCEDURE estorno-baixa-tarifa:
             /* Se encontrar critica */
             IF aux_dscritic <> "" THEN
                 DO:
-                    /* apagar as alteraÁoes*/
+                    /* apagar as altera√ßoes*/
                     UNDO lat, LEAVE. /* Sair do loop */
                 END.
             ELSE
@@ -8679,12 +8587,12 @@ PROCEDURE carrega_dados_tarifa_emprestimo:
         DO:
 		  ASSIGN par_vltarifa = par_vllanmto * (crapfco.vlpertar / 100).
  
-          /*VERIFICA LIMITE MÕNIMO*/
+          /*VERIFICA LIMITE M√çNIMO*/
           IF par_vltarifa < crapfco.vlmintar THEN
             DO:
 			  ASSIGN par_vltarifa = crapfco.vlmintar.
 			END.
-          /*VERIFICA LIMITE M¡XIMO*/
+          /*VERIFICA LIMITE M√ÅXIMO*/
           IF par_vltarifa > crapfco.vlmaxtar THEN
             DO:
 			  ASSIGN par_vltarifa = crapfco.vlmaxtar.
@@ -8901,12 +8809,12 @@ PROCEDURE carrega_dados_tarifa_vigente:
         DO:
 		  ASSIGN par_vltarifa = par_vllanmto * (crapfco.vlpertar / 100).
  
-          /*VERIFICA LIMITE MÕNIMO*/
+          /*VERIFICA LIMITE M√çNIMO*/
           IF par_vltarifa < crapfco.vlmintar THEN
             DO:
 			  ASSIGN par_vltarifa = crapfco.vlmintar.
 			END.
-          /*VERIFICA LIMITE M¡XIMO*/
+          /*VERIFICA LIMITE M√ÅXIMO*/
           IF par_vltarifa > crapfco.vlmaxtar THEN
             DO:
 			  ASSIGN par_vltarifa = crapfco.vlmaxtar.
@@ -9015,7 +8923,7 @@ PROCEDURE gera_log_lote_uso:
                           WHEN pc_param_sistema.pr_dsvlrprm <> ?.
   end.
   
-  /* Verificar se È para gerar log(variavel in-out para nao precisar carregar a toda hora)*/
+  /* Verificar se √© para gerar log(variavel in-out para nao precisar carregar a toda hora)*/
   IF par_flgerlog = 'S' THEN
   DO:
   
@@ -9112,6 +9020,11 @@ PROCEDURE lan_tarifa_conta_corrente:
     DEF VAR aux_flgtrans AS LOGI INIT FALSE                            NO-UNDO.
 	  DEF VAR aux_flgerlog AS CHAR                                       NO-UNDO.  
 	  DEF VAR aux_des_log  AS CHAR                                       NO-UNDO.  
+    
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -9162,7 +9075,7 @@ PROCEDURE lan_tarifa_conta_corrente:
                                 DO:
                                     ASSIGN aux_contador = aux_contador + 1.
         
-                                    ASSIGN aux_des_log  = "Lote j· Alocado -> " +
+                                    ASSIGN aux_des_log  = "Lote j√° Alocado -> " +
 														  "cdcooper: " +  string(par_cdcooper) + " " +
 														  "dtmvtolt: " +  string(par_dtmvtolt,"99/99/9999") + " " +
 														  "cdagenci: " +  string(par_cdagenci) + " " +
@@ -9265,7 +9178,72 @@ PROCEDURE lan_tarifa_conta_corrente:
              
             IF  NOT AVAIL craplcm THEN
                 DO:
-                    CREATE craplcm.
+                
+                RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                      ( INPUT craplot.dtmvtolt  /* par_dtmvtolt */
+                       ,INPUT par_cdagenci      /* par_cdagenci */
+                       ,INPUT par_cdbccxlt      /* par_cdbccxlt */
+                       ,INPUT par_nrdolote      /* par_nrdolote */
+                       ,INPUT par_nrdconta      /* par_nrdconta */
+                       ,INPUT IF par_nrdocmto > 0 THEN
+                                 INT(aux_nraplica)
+                             ELSE
+                               craplot.nrseqdig  /* par_nrdocmto */
+                       ,INPUT par_cdhistor      /* par_cdhistor */
+                       ,INPUT craplot.nrseqdig  /* par_nrseqdig */
+                       ,INPUT par_vltarifa      /* par_vllanmto */
+                       ,INPUT par_nrdctabb      /* par_nrdctabb */
+                       ,INPUT par_cdpesqbb      /* par_cdpesqbb */
+                       ,INPUT 0                 /* par_vldoipmf */
+                       ,INPUT par_nrautdoc      /* par_nrautdoc */
+                       ,INPUT IF par_nrsequni = 0 THEN 
+                                craplot.nrseqdig
+                              ELSE
+                                par_nrsequni    /* par_nrsequni */
+                       ,INPUT par_cdbanchq      /* par_cdbanchq */
+                       ,INPUT 0                 /* par_cdcmpchq */
+                       ,INPUT par_cdagechq      /* par_cdagechq */
+                       ,INPUT par_nrctachq      /* par_nrctachq */
+                       ,INPUT 0                 /* par_nrlotchq */
+                       ,INPUT 0                 /* par_sqlotchq */
+                       ,INPUT craplot.dtmvtolt  /* par_dtrefere */
+                       ,INPUT TIME              /* par_hrtransa */
+                       ,INPUT par_cdoperad      /* par_cdoperad */                               
+                       ,INPUT par_dsidenti     /* par_dsidenti */
+                       ,INPUT par_cdcooper      /* par_cdcooper */
+                       ,INPUT par_nrdctitg     /* par_nrdctitg */
+                       ,INPUT ""               /* par_dscedent */
+                       ,INPUT par_cdcoptfn     /* par_cdcoptfn */
+                       ,INPUT par_cdagetfn     /* par_cdagetfn */
+                       ,INPUT par_nrterfin     /* par_nrterfin */
+                       ,INPUT 0                /* par_nrparepr */
+                       ,INPUT 0                /* par_nrseqava */
+                       ,INPUT 0                /* par_nraplica */
+                       ,INPUT 0                /*par_cdorigem*/
+                       ,INPUT 0                /* par_idlautom */
+                       ,INPUT 0                /*par_inprolot*/ 
+                       ,INPUT 0                /*par_tplotmov */
+                       ,OUTPUT TABLE tt-ret-lancto
+                       ,OUTPUT aux_incrineg
+                       ,OUTPUT aux_cdcritic
+                       ,OUTPUT aux_dscritic).
+
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO:  
+                          IF aux_incrineg = 1 THEN
+                             DO:
+                              /* Tratativas de negocio */ 
+                               NEXT.   
+                             END.
+                            ELSE
+                             DO:
+                              RETURN "NOK".
+                             END. 
+                        END.  
+                
+                      
+                    
+                   /* CREATE craplcm.
                     ASSIGN craplcm.cdcooper = par_cdcooper
                            craplcm.dtmvtolt = craplot.dtmvtolt
                            craplcm.cdagenci = par_cdagenci
@@ -9298,7 +9276,7 @@ PROCEDURE lan_tarifa_conta_corrente:
                            craplcm.nrterfin = par_nrterfin
                            craplcm.nrautdoc = par_nrautdoc
                            craplcm.dsidenti = par_dsidenti.		
-                    VALIDATE craplcm.
+                    VALIDATE craplcm.*/
                 END.
             ELSE
                 DO:
@@ -14255,14 +14233,14 @@ PROCEDURE consulta-pacotes-tarifas:
    /* Efetuar a chamada a rotina Oracle  */
    RUN STORED-PROCEDURE pc_consulta_pct_tar_car
        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cddopcao /* Opcao Selecionado em Tela */
-                                           ,INPUT par_cdpacote /* CÛdigo do Pacote de Tarifas */
+                                           ,INPUT par_cdpacote /* C√≥digo do Pacote de Tarifas */
                                            ,INPUT par_dspacote /* Descricao do Pacote de Tarifas */
                                            ,INPUT par_nrregist /* Numero de Registros Exibidos */
                                            ,INPUT par_nriniseq /* Registro Inicial */
                                            ,OUTPUT 0           /* Quantidade de Registros */
                                            ,OUTPUT ?           /* XML com dos Pacotes de tarifas */
-                                           ,OUTPUT 0           /* CÛdigo da crÌtica */
-                                           ,OUTPUT "").        /* DescriÁ„o da crÌtica */
+                                           ,OUTPUT 0           /* C√≥digo da cr√≠tica */
+                                           ,OUTPUT "").        /* Descri√ßƒÉo da cr√≠tica */
 
    /* Fechar o procedimento para buscarmos o resultado */ 
    CLOSE STORED-PROC pc_consulta_pct_tar_car
@@ -14270,7 +14248,7 @@ PROCEDURE consulta-pacotes-tarifas:
 
    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
    
-   /* Busca possÌveis erros */ 
+   /* Busca poss√≠veis erros */ 
    ASSIGN aux_cdcritic = 0
           aux_dscritic = ""
           
@@ -14400,14 +14378,14 @@ PROCEDURE consulta_pacote_manpac:
    RUN STORED-PROCEDURE pc_pesquisa_manpac_car
        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cddopcao /* Opcao Selecionado em Tela */
 										   ,INPUT par_cdcooper /* Codigo da Cooperativa */
-                                           ,INPUT par_cdpacote /* CÛdigo do Pacote de Tarifas */
+                                           ,INPUT par_cdpacote /* C√≥digo do Pacote de Tarifas */
                                            ,INPUT par_dspacote /* Descricao do Pacote de Tarifas */
                                            ,INPUT par_nrregist /* Numero de Registros Exibidos */
                                            ,INPUT par_nriniseq /* Registro Inicial */
                                            ,OUTPUT 0           /* Quantidade de Registros */
                                            ,OUTPUT ?           /* XML com dos Pacotes de tarifas */
-                                           ,OUTPUT 0           /* CÛdigo da crÌtica */
-                                           ,OUTPUT "").        /* DescriÁ„o da crÌtica */
+                                           ,OUTPUT 0           /* C√≥digo da cr√≠tica */
+                                           ,OUTPUT "").        /* Descri√ßƒÉo da cr√≠tica */
 
    /* Fechar o procedimento para buscarmos o resultado */ 
    CLOSE STORED-PROC pc_pesquisa_manpac_car
@@ -14415,7 +14393,7 @@ PROCEDURE consulta_pacote_manpac:
 
    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
    
-   /* Busca possÌveis erros */ 
+   /* Busca poss√≠veis erros */ 
    ASSIGN aux_cdcritic = 0
           aux_dscritic = ""
           
