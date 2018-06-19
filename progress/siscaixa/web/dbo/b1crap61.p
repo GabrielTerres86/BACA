@@ -1,4 +1,4 @@
-
+ï»¿
 /* ...........................................................................
 
    Programa: siscaixa/web/dbo/b1crap61.p
@@ -36,7 +36,7 @@
                17/11/2014 - Efetuar RETURN "NOK" quando a procedure 
                            'realiza-deposito' retornar <> "OK" (Diego).
                            
-               03/12/2014 - Validaçãod e LOCKED na crapmdw e verificação de
+               03/12/2014 - ValidaÃ§Äƒod e LOCKED na crapmdw e verificaÃ§Äƒo de
                             sequencial zerado
                             (Lucas Lunelli SD. 227937)     
                             
@@ -46,19 +46,23 @@
                               c-desc-erro para NO-UNDO
                            (Adriano SD - 237890).   
                            
-               18/02/2015 - Alteração para retornar de uma vez todos os envelopes de DINHEIRO a
+               18/02/2015 - AlteraÃ§Äƒo para retornar de uma vez todos os envelopes de DINHEIRO a
                             serem processados naquela data para aquele TAA (Lunelli - SD 229246).
                             
-               13/10/2015 - Corrigida conversão de tipos na procedure 'deposita_envelope_dinheiro'
-                            durante a criação da CRAPLCM (Lucas Lunelli)
+               13/10/2015 - Corrigida conversÄƒo de tipos na procedure 'deposita_envelope_dinheiro'
+                            durante a criaÃ§Äƒo da CRAPLCM (Lucas Lunelli)
 
 			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+              
+              
+       12/06/2018 - PRJ450 - CentralizaÃ§ao do lanÃ§amento em conta corrente - Rangel Decker AMcom       
 
 ............................................................................ */
 
 {dbo/bo-erro1.i}
+{sistema/generico/includes/b1wgen0200tt.i }
 
 DEF VAR i-cod-erro    AS INTEGER                                NO-UNDO.
 DEF VAR c-desc-erro   AS CHAR                                   NO-UNDO.
@@ -702,6 +706,17 @@ PROCEDURE deposita_envelope_dinheiro:
     DEF VAR in99                    AS INTE                   NO-UNDO.
     DEF VAR aux_returnvl            AS CHAR INIT "NOK"        NO-UNDO.
     
+    DEF VAR h-b1wgen0200 AS HANDLE                                        NO-UNDO.
+    DEF VAR aux_incrineg AS INT NO-UNDO.
+    DEF VAR aux_cdcritic AS INT NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR NO-UNDO.
+    
+    
+    /* Identificar orgao expedidor */
+    IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+    RUN sistema/generico/procedures/b1wgen0200.p
+        PERSISTENT SET h-b1wgen0200.
+    
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
                       INPUT p-nro-caixa).
@@ -860,7 +875,7 @@ PROCEDURE deposita_envelope_dinheiro:
                       END.
                    ELSE
                       ASSIGN i-cod-erro  = 0
-                             c-desc-erro = "Nao foi possível realizar o " + 
+                             c-desc-erro = "Nao foi possÃ­vel realizar o " + 
                                            "deposito.".
                     
                    UNDO DepDinheiro, LEAVE DepDinheiro.
@@ -955,7 +970,7 @@ PROCEDURE deposita_envelope_dinheiro:
                       END.
                    ELSE
                       ASSIGN i-cod-erro  = 0
-                             c-desc-erro = "Nao foi possível gerar a " + 
+                             c-desc-erro = "Nao foi possÃ­vel gerar a " + 
                                            "autenticacao.".
                     
                    UNDO DepDinheiro, LEAVE DepDinheiro.
@@ -1012,8 +1027,8 @@ PROCEDURE deposita_envelope_dinheiro:
                          UNDO DepDinheiro, LEAVE DepDinheiro.
        
                       END.
-                
-                   CREATE craplcm.
+                   
+                   /*CREATE craplcm.
        
                    ASSIGN craplcm.cdcooper = crapcop.cdcooper
                           craplcm.dtmvtolt = crapdat.dtmvtolt
@@ -1031,8 +1046,67 @@ PROCEDURE deposita_envelope_dinheiro:
                           craplcm.cdpesqbb = "CRAP51"
                           craplcm.nrdctitg = glb_dsdctitg.
        
-                   VALIDATE craplcm.
+                   VALIDATE craplcm.*/
                 
+                    RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                                      ( INPUT crapdat.dtmvtolt        /* par_dtmvtolt */
+                                       ,INPUT p-cod-agencia           /* par_cdagenci */
+                                       ,INPUT 11                      /* par_cdbccxlt */
+                                       ,INPUT i-nro-lote              /* par_nrdolote */
+                                       ,INPUT aux_nrdconta            /* par_nrdconta */
+                                       ,INPUT DECI(c-docto)           /* par_nrdocmto */
+                                       ,INPUT 1                       /* par_cdhistor */
+                                       ,INPUT craplot.nrseqdig + 1    /* par_nrseqdig */
+                                       ,INPUT p-vlcomput              /* par_vllanmto */
+                                       ,INPUT p-nro-conta             /* par_nrdctabb */
+                                       ,INPUT "CRAP51"                /* par_cdpesqbb */
+                                       ,INPUT 0                       /* par_vldoipmf */
+                                       ,INPUT p-ult-sequencia         /* par_nrautdoc */
+                                       ,INPUT 0                       /* par_nrsequni */
+                                       ,INPUT 0                       /* par_cdbanchq */
+                                       ,INPUT 0                       /* par_cdcmpchq */
+                                       ,INPUT 0                       /* par_cdagechq */
+                                       ,INPUT 0                       /* par_nrctachq */
+                                       ,INPUT 0                       /* par_nrlotchq */
+                                       ,INPUT 0                       /* par_sqlotchq */
+                                       ,INPUT ""                    /* par_dtrefere */
+                                       ,INPUT ""                    /* par_hrtransa */
+                                       ,INPUT 0                       /* par_cdoperad */                               
+                                       ,INPUT p-identifica            /* par_dsidenti */
+                                       ,INPUT crapcop.cdcooper        /* par_cdcooper */
+                                       ,INPUT glb_dsdctitg            /* par_nrdctitg */
+                                       ,INPUT ""                      /* par_dscedent */
+                                       ,INPUT 0                       /* par_cdcoptfn */
+                                       ,INPUT 0                       /* par_cdagetfn */
+                                       ,INPUT 0                       /* par_nrterfin */
+                                       ,INPUT 0                       /* par_nrparepr */
+                                       ,INPUT 0                       /* par_nrseqava */
+                                       ,INPUT 0                       /* par_nraplica */
+                                       ,INPUT 0                       /*par_cdorigem*/
+                                       ,INPUT 0                       /* par_idlautom */
+                                       ,INPUT 0                       /*par_inprolot*/ 
+                                       ,INPUT 0                      /*par_tplotmov */
+                                       ,OUTPUT TABLE tt-ret-lancto
+                                       ,OUTPUT aux_incrineg
+                                       ,OUTPUT aux_cdcritic
+                                       ,OUTPUT aux_dscritic).
+
+                   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                    DO:  
+                      IF aux_incrineg = 1 THEN
+                       DO:
+                          /* Tratativas de negocio */ 
+                        NEXT.
+                       END.
+                     ELSE
+                     DO:
+                       RETURN "NOK".
+                     END. 
+                   END.  
+                   
+                   DELETE PROCEDURE h-b1wgen0200.      
+                     
+                   
                    ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                           craplot.qtcompln  = craplot.qtcompln + 1
                           craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -1042,7 +1116,7 @@ PROCEDURE deposita_envelope_dinheiro:
                                               p-vlcomput
                           crapenl.cdsitenv = 1 /* Liberado */
                           crapenl.nrautdoc = p-ult-sequencia
-                          crapenl.vldincmp = craplcm.vllanmto.
+                          crapenl.vldincmp = p-vlcomput. /*craplcm.vllanmto.*/
 
                    VALIDATE craplot.
        
@@ -1336,7 +1410,7 @@ PROCEDURE confere_envelope:
             RETURN "NOK".
         END.
 
-    /* Atualiza os valores porem a finalizacao da situação para "1"
+    /* Atualiza os valores porem a finalizacao da situaÃ§Äƒo para "1"
        eh feita na rotina 51 apos o deposito dos valores */
     ASSIGN crapenl.vldincmp = par_vldincmp
            crapenl.vlchqcmp = par_vlchqcmp.
@@ -1421,8 +1495,8 @@ PROCEDURE verifica_dia_util:
 
     IF  AVAILABLE crapcop  THEN
         DO:
-            /* valida se a data é dia útil, caso contrario, retorna
-               o proximo dia útil */
+            /* valida se a data Ã© dia Ãºtil, caso contrario, retorna
+               o proximo dia Ãºtil */
             DO  WHILE TRUE:
 
                 IF  CAN-DO("1,7",STRING(WEEKDAY(aux_dtmvtolt))) OR
