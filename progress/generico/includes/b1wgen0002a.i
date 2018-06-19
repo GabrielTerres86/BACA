@@ -24,7 +24,7 @@
 
    Programa: b1wgen0002a.i                  
    Autor   : Tiago.
-   Data    : 06/03/2012                        Ultima atualizacao: 29/06/2015
+   Data    : 06/03/2012                        Ultima atualizacao: 19/06/2018
     
    Dados referentes ao programa:
 
@@ -58,7 +58,10 @@
                             
                29/06/2015 - Projeto 215 - DV 3 (Daniel) 
                
-               09/10/2015 - Incluir históricos de Estorno PP (Oscar).
+               09/10/2015 - Incluir históricos de Estorno PP (Oscar).		
+               
+               19/06/2018 - Retirados valores de iof acrescentados no campo 
+                            aux_vlsdeved. INC0016637 (Lombardi)
                
 ..............................................................................*/
 DEF VAR aux_flgtrans AS LOGI                                        NO-UNDO.
@@ -427,14 +430,15 @@ DO ON ERROR UNDO , LEAVE:
           ASSIGN aux_vlsdeved = crapepr.vlemprst
                  aux_vlprepag = 0 
                  aux_vlpreapg = 0.
-				 
+          /*
 		  /* Projeto 410 - Se financia IOF, incrementar IOF + Tarifa ao saldo devedor */		 
 	      IF crawepr.idfiniof = 1 THEN
 		     ASSIGN aux_vlsdeved = crapepr.vlemprst + crapepr.vliofepr + crapepr.vltarifa.
+          */
       END.
    ELSE
       DO:
-          ASSIGN aux_vlsdeved = aux_vlsderel + aux_vliofcpl.
+          ASSIGN aux_vlsdeved = aux_vlsderel. /* + aux_vliofcpl.*/
       END.
 
    ASSIGN aux_flgtrans = TRUE.
