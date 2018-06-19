@@ -1652,6 +1652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_vltxaiof     tbgen_iof_taxa.vltaxa_iof%TYPE;
       vr_flgimune     PLS_INTEGER;
       vr_vlparcela_sem_juros NUMBER(25,2);
+      vr_vlbaseiof    NUMBER(25,2);
       
       -- Variaveis tratamento de erros
       vr_cdcritic     crapcri.cdcritic%TYPE;
@@ -1724,12 +1725,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Valor da Parcela sem o Juros
       vr_vlparcela_sem_juros := NVL(pr_vlparepr,0) - NVL(vr_vllanmto,0);
       
+      -- BAse do IOF Complementar é o menor valor entre o Saldo Devedor ou O Principal
+      vr_vlbaseiof := LEAST(vr_vlparcela_sem_juros,pr_vlsdvpar);
+      
       -- Calcula o valor da do IOF e tarifa
       TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 --> Somente atraso
                                        ,pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
-                                       ,pr_vlemprst => vr_vlparcela_sem_juros
+                                       ,pr_vlemprst => vr_vlbaseiof
                                        ,pr_vltotope => pr_vlemprst
                                        ,pr_dscatbem => ''
                                        ,pr_cdfinemp => rw_crawepr.cdfinemp

@@ -718,23 +718,8 @@ PROCEDURE grava_simulacao:
   
    
         
-    /* Calcular a Tarifa da Operação */
-    RUN consulta_tarifa_emprst(INPUT  par_cdcooper,
-                               INPUT  par_cdlcremp,
-                               INPUT  par_vlemprst,
-                               INPUT  par_nrdconta,
-                               INPUT 0, /* Número do contrato - passa zero pois na simulacao nao tem bens */
-                               OUTPUT var_vlrtarif,
-                               OUTPUT TABLE tt-erro).
-
-    IF  RETURN-VALUE = "NOK" THEN
-        RETURN "NOK".    
     
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = ""
-           var_vliofepr = 0.
-
-    /* Calcula IOF */ 
+    /* Busca dados da Linha */ 
     FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
                        craplcr.cdlcremp = par_cdlcremp
                        NO-LOCK NO-ERROR.
@@ -755,6 +740,24 @@ PROCEDURE grava_simulacao:
     ELSE
       ASSIGN aux_dscatbem = "".
     
+    /* Calcular a Tarifa da Operação */
+    RUN consulta_tarifa_emprst(INPUT  par_cdcooper,
+                               INPUT  par_cdlcremp,
+                               INPUT  par_vlemprst,
+                               INPUT  par_nrdconta,
+                               INPUT  0, /* Número do contrato - passa zero pois na simulacao nao tem bens */
+                               INPUT  aux_dscatbem,
+                               OUTPUT var_vlrtarif,
+                               OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK" THEN
+        RETURN "NOK".    
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           var_vliofepr = 0.      
+          
+        
               /* Calcular o IOF da operação */
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         /* Efetuar a chamada a rotina Oracle */ 
@@ -794,6 +797,7 @@ PROCEDURE grava_simulacao:
                                  WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
                aux_dscritic = pc_calcula_iof_epr.pr_dscritic
                                  WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+    
      /* Financia IOF e Tarifa */
      IF par_idfiniof = 1 THEN
      DO:                         
@@ -1820,6 +1824,8 @@ PROCEDURE consulta_tarifa_emprst:
     DEF INPUT        PARAM par_vlemprst AS DEC                      NO-UNDO.
     DEF INPUT        PARAM par_nrdconta AS INT                      NO-UNDO.    
     DEF INPUT        PARAM par_nrctremp AS INT                      NO-UNDO.
+    DEF INPUT        PARAM par_dscatbem AS CHAR                     NO-UNDO.
+    
     DEF OUTPUT       PARAM par_vlrtarif AS DEC                      NO-UNDO.
 
     DEF OUTPUT       PARAM TABLE FOR tt-erro.
@@ -1869,13 +1875,20 @@ PROCEDURE consulta_tarifa_emprst:
            IF NOT VALID-HANDLE(h-b1wgen0153) THEN
                RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
 
-        
+           /* Caso enviado Numero Contrato, buscamos os bens, senão usamos a lista passada */
+           IF par_nrctremp > 0 THEN 
+           DO:
            ASSIGN aux_dscatbem = "".
            FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper  AND
                                   crapbpr.nrdconta = par_nrdconta  AND
                                   crapbpr.nrctrpro = par_nrctremp  AND 
                                   crapbpr.tpctrpro = 90 NO-LOCK:
                ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+           END.
+           END.
+           ELSE
+           DO:
+               ASSIGN aux_dscatbem = par_dscatbem.
            END.
           
           /* Buscar a tarifa */
@@ -1929,6 +1942,10 @@ PROCEDURE consulta_tarifa_emprst:
               ASSIGN par_vlrtarif = par_vlrtarif + ROUND(DECI(pc_calcula_tarifa.pr_vltrfgar),2).
             END.
         
+          /* Faremos o cálculo abaixo somente se não recebemos bens nem contrato */
+          IF par_nrctremp > 0 AND par_dscatbem = "" THEN
+          DO:
+          
     /* Buscar tarifas de Alienação pois a rotina acima não tem os Bens na simulação */
            IF  VALID-HANDLE(h-b1wgen0153)  THEN
                 DELETE PROCEDURE h-b1wgen0153.
@@ -1984,6 +2001,9 @@ PROCEDURE consulta_tarifa_emprst:
            
     /* Acumular tarifa de alienação (Se aplicavel) */
     par_vlrtarif = par_vlrtarif + aux_taravali.
+
+          END.
+           
 
     RETURN "OK".
 END.

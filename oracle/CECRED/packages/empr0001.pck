@@ -2740,9 +2740,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           /* Projeto 410 - valor base para IOF:
              Valor da Parcela /((1+ tx mensal)^(qt parcelas - parcela atual))) */             
         --Sempre calcular IOF complementar - ajustado com James                                
-          vr_vlbaseiof :=   rw_crappep.vlsdvsji / ((power(( 1 + rw_crapepr.txmensal / 100 ), 
+          vr_vlbaseiof :=   rw_crappep.vlparepr / ((power(( 1 + rw_crapepr.txmensal / 100 ), 
                                 (rw_crapepr.qtpreemp - rw_crappep.nrparepr + 1) )));
                    
+          -- BAse do IOF Complementar é o menor valor entre o Saldo Devedor ou O Principal
+          vr_vlbaseiof := LEAST(vr_vlbaseiof,rw_crappep.vlsdvsji );
         
           TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 -- Só atraso
                                            ,pr_cdcooper => pr_cdcooper
@@ -3172,9 +3174,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          /* Projeto 410 - valor base para IOF:
              Valor da Parcela /((1+ tx mensal)^(qt parcelas - parcela atual))) */             
                                         
-          vr_vlbaseiof :=   rw_crappep.vlsdvsji / ((power(( 1 + pr_txmensal / 100 ), 
+          vr_vlbaseiof :=   rw_crappep.vlparepr / ((power(( 1 + pr_txmensal / 100 ), 
                                 (rw_crawepr.qtpreemp - rw_crappep.nrparepr + 1) )));
           
+
+          -- BAse do IOF Complementar é o menor valor entre o Saldo Devedor ou O Principal
+          vr_vlbaseiof := LEAST(vr_vlbaseiof,rw_crappep.vlsdvsji );
+        
+
           -- Valor a Vencer
           vr_vlprvenc := vr_vlprvenc + vr_vlatupar;
           /* Verifica se esta na tolerancia dos juros de mora, aux_qtdianor é quantidade de dias que passaram

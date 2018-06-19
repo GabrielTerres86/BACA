@@ -940,8 +940,15 @@ PROCEDURE calcula_atraso_parcela:
                     /* Projeto 410 - Novo IOF */
 
                    /* calcula valor base do IOF de acordo com valor principal (parcela - juros) */
-                   ASSIGN aux_vlbasiof = crabpep.vlsdvsji / (EXP((1 + crabepr.txmensal / 100 ), 
+                   ASSIGN aux_vlbasiof = crabpep.vlparepr / (EXP((1 + crabepr.txmensal / 100 ), 
                                                                     ( crabepr.qtpreemp -  crabpep.nrparepr + 1))).                   
+                   
+
+                   /* BAse do IOF Complementar é o menor valor entre o Principal ou o Saldo Devedor */           
+                   IF aux_vlbasiof > crabpep.vlsdvsji THEN
+                   DO:
+                       ASSIGN aux_vlbasiof = crabpep.vlsdvsji.
+                   END.  
                    
                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                    RUN STORED-PROCEDURE pc_calcula_valor_iof_epr

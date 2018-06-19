@@ -2341,21 +2341,7 @@ PROCEDURE obtem-propostas-emprestimo:
 
                IF crawepr.idfiniof > 0 THEN
                   DO:
-                    RUN sistema/generico/procedures/b1wgen0097.p 
-                           
-                    PERSISTENT SET h-b1wgen0097.               
-                    RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  crawepr.cdcooper,
-                                                                INPUT  crawepr.cdlcremp,
-                                                                INPUT  crawepr.vlemprst,
-                                                                INPUT  crawepr.nrdconta,
-                                                                INPUT  crawepr.nrctremp,
-                                                                OUTPUT aux_vlrtarif,
-                                                                OUTPUT TABLE tt-erro).                                
-                    DELETE PROCEDURE h-b1wgen0097.
-                           
-                    IF RETURN-VALUE = "NOK" THEN
-                      RETURN "NOK".
-                                 
+                    
                     /* Busca os bens em garantia */
                     ASSIGN aux_dscatbem = "".
                     FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
@@ -2364,6 +2350,24 @@ PROCEDURE obtem-propostas-emprestimo:
                                            crapbpr.tpctrpro = 90 NO-LOCK:
                         ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
                     END.
+                    
+                    RUN sistema/generico/procedures/b1wgen0097.p 
+                           
+                    PERSISTENT SET h-b1wgen0097.               
+                    RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  crawepr.cdcooper,
+                                                                INPUT  crawepr.cdlcremp,
+                                                                INPUT  crawepr.vlemprst,
+                                                                INPUT  crawepr.nrdconta,
+                                                                INPUT  crawepr.nrctremp,
+                                                                INPUT  aux_dscatbem,
+                                                                OUTPUT aux_vlrtarif,
+                                                                OUTPUT TABLE tt-erro).                                
+                    DELETE PROCEDURE h-b1wgen0097.
+                           
+                    IF RETURN-VALUE = "NOK" THEN
+                      RETURN "NOK".
+                                 
+                    
                     
                                  
                     IF  AVAIL crapepr THEN
@@ -2990,6 +2994,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                INPUT  crawepr.vlemprst,
                                INPUT  crawepr.nrdconta,
                                INPUT  crawepr.nrctremp,
+                               INPUT  "",
                                OUTPUT aux_vlrtarif,
                                OUTPUT TABLE tt-erro).
 				
@@ -4515,7 +4520,7 @@ PROCEDURE valida-dados-gerais:
                                                            ,INPUT aux_qtdias_carencia /* dias de carencia */
                                                            ,INPUT aux_dscatbem     /* Bens em garantia */
                                                            ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
-                                                        ,INPUT pr_dsctrliq /* pr_dsctrliq */
+                                                        ,INPUT par_dsctrliq /* pr_dsctrliq */
                                                            ,INPUT "N" /* Nao gravar valor nas parcelas */
                                                            ,OUTPUT 0 /* Valor calculado da Parcela */
                                                            ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
@@ -4547,6 +4552,7 @@ PROCEDURE valida-dados-gerais:
                                                                     INPUT  par_vlemprst,
                                                                     INPUT  par_nrdconta,
                                                                     INPUT  par_nrctremp,
+                                                                    INPUT  aux_dscatbem,
                                                                     OUTPUT aux_vlrtarif,
                                                                     OUTPUT TABLE tt-erro).                                
                         DELETE PROCEDURE h-b1wgen0097.
@@ -6694,6 +6700,12 @@ PROCEDURE grava-proposta-completa:
 
     DEF VAR          aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 
+    DEF  VAR         aux_vlemprst        AS DECI                    NO-UNDO.   
+    DEF  VAR         aux_qtdias_carencia AS INTE                    NO-UNDO.
+    DEF  VAR         aux_vlrdoiof        AS DECIMAL                 NO-UNDO.           
+    DEF  VAR         h-b1wgen0097        AS HANDLE                  NO-UNDO.
+    DEF  VAR         aux_dscatbem        AS CHAR                    NO-UNDO.
+
     DEF  BUFFER      crabavt FOR  crapavt.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -6811,7 +6823,9 @@ PROCEDURE grava-proposta-completa:
         
         ASSIGN reg_dsdregis = ENTRY(aux_contador,par_dsdalien,"|")
                aux_contbens = aux_contbens + 1
-               aux_idchsdup = FALSE.
+               aux_idchsdup = FALSE
+               aux_dscatbem = aux_dscatbem + "|" + CAPS(ENTRY(1,reg_dsdregis,";")).
+               
         IF CAN-DO("MOTO,AUTOMOVEL,CAMINHAO",TRIM(CAPS(ENTRY(1,reg_dsdregis,";")))) THEN
             DO:
                 DO aux_contabns = 1 TO NUM-ENTRIES(par_dsdalien,"|"): 
@@ -6988,10 +7002,171 @@ PROCEDURE grava-proposta-completa:
             RETURN "NOK".
         END.
     
+    FIND craplcr WHERE craplcr.cdcooper = par_cdcooper   AND
+                       craplcr.cdlcremp = par_cdlcremp
+                       NO-LOCK NO-ERROR.
+
+    IF   NOT AVAIL craplcr   THEN
+         DO:
+             aux_cdcritic = 363.
+             RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1, /*sequencia*/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+             RETURN "NOK".
+         END.          
+         
+    /* Guardar valor do emprestimo */
+    ASSIGN aux_vlemprst = par_vlemprst.
+
+    /* Caso financie IOF */
+    IF par_idfiniof > 0 THEN 
+    DO:
+        
+        /* Somente para Pós */
+        IF par_tpemprst = 2 THEN
+        DO:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Efetuar a chamada a rotina Oracle  */
+          RUN STORED-PROCEDURE pc_busca_qtd_dias_carencia
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_idcarenc,
+                                                  OUTPUT 0,   /* pr_qtddias */
+                                                  OUTPUT 0,   /* pr_cdcritic */
+                                                  OUTPUT ""). /* pr_dscritic */  
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_busca_qtd_dias_carencia
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = ""
+                 aux_cdcritic = INT(pc_busca_qtd_dias_carencia.pr_cdcritic) 
+                                WHEN pc_busca_qtd_dias_carencia.pr_cdcritic <> ?
+                 aux_dscritic = pc_busca_qtd_dias_carencia.pr_dscritic
+                                WHEN pc_busca_qtd_dias_carencia.pr_dscritic <> ?
+                 aux_qtdias_carencia = INT(pc_busca_qtd_dias_carencia.pr_qtddias) 
+                                       WHEN pc_busca_qtd_dias_carencia.pr_qtddias <> ?.
+        END.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+        DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1, /*sequencia*/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+        END.        
+                     
+        /* Se financiar IOF, calcula esses valores e soma ao total emprestado, para enviar ao cálculo da parcela*/                             
+        ASSIGN aux_vlrtarif = 0
+               aux_vlrdoiof = 0.           
+            
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_calcula_iof_epr
+        aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper
+                                           ,INPUT par_nrdconta
+                                           ,INPUT par_nrctremp
+                                           ,INPUT par_dtmvtolt
+                                           ,INPUT crapass.inpessoa                                                           
+                                           ,INPUT par_cdlcremp
+                                           ,INPUT par_cdfinemp
+                                           ,INPUT par_qtpreemp
+                                           ,INPUT par_vlpreemp
+                                           ,INPUT par_vlemprst
+                                           ,INPUT par_dtdpagto
+                                           ,INPUT par_dtmvtolt
+                                           ,INPUT par_tpemprst
+                                           ,INPUT par_dtcarenc /* Data carencia */
+                                           ,INPUT aux_qtdias_carencia /* dias de carencia */
+                                           ,INPUT aux_dscatbem     /* Bens em garantia */
+                                           ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
+                                           ,INPUT par_dsctrliq /* pr_dsctrliq */
+                                           ,INPUT "N" /* Nao gravar valor nas parcelas */
+                                           ,OUTPUT 0 /* Valor calculado da Parcela */
+                                           ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
+                                           ,OUTPUT 0 /* Valor calculado do iof principal */
+                                           ,OUTPUT 0 /* Valor calculado do iof adicional */
+                                           ,OUTPUT 0 /* Imunidade tributária */
+                                           ,OUTPUT "").
+
+        CLOSE STORED-PROC pc_calcula_iof_epr 
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Retornar valor da prestação */
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_calcula_iof_epr.pr_dscritic
+                              WHEN pc_calcula_iof_epr.pr_dscritic <> ?
+               aux_vlrdoiof = pc_calcula_iof_epr.pr_valoriof
+                              WHEN pc_calcula_iof_epr.pr_valoriof <> ?.
+        
+        IF aux_dscritic <> "" THEN
+        DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1, /*sequencia*/
+                         INPUT 0,
+                         INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+        END.                              
+
+        /* Se financia IOF + Tarifa */
+        IF par_idfiniof > 0 THEN DO:
+
+             IF NOT VALID-HANDLE(h-b1wgen0097) THEN
+                RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.               
+             RUN consulta_tarifa_emprst IN h-b1wgen0097 (INPUT  par_cdcooper,
+                                                         INPUT  par_cdlcremp,
+                                                         INPUT  par_vlemprst,
+                                                         INPUT  par_nrdconta,
+                                                         INPUT  par_nrctremp,
+                                                         INPUT  aux_dscatbem,
+                                                         OUTPUT aux_vlrtarif,
+                                                         OUTPUT TABLE tt-erro).                                
+             DELETE PROCEDURE h-b1wgen0097.
+             
+             IF RETURN-VALUE = "NOK" THEN
+                RETURN "NOK".
+                
+             ASSIGN aux_vlemprst = aux_vlemprst + aux_vlrtarif + aux_vlrdoiof.
+             
+        END.
+
+    END.
+
+    /* Para MicroCredito */
+    IF craplcr.cdusolcr = 1 THEN
+    DO:
+          /* Para PF */
+          IF (crapass.inpessoa = 1 AND craplcr.vlmaxass < aux_vlemprst)
+          OR (crapass.inpessoa = 2 AND craplcr.vlmaxasj < aux_vlemprst) THEN
+          DO:
+               ASSIGN aux_dscritic = 
+                            "Valor da proposta excede o valor maximo por Cooperado para Microcredito.".
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1, /*sequencia*/
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+               RETURN "NOK".
+          END.
+    END.     
+         
     ASSIGN par_qtpromis = INTEGER(craptab.dstextab).
 
     IF  par_qtpromis = 0 THEN
         ASSIGN par_flgimpnp = FALSE.
+        
         
     Grava: DO TRANSACTION ON ERROR  UNDO Grava, LEAVE Grava
                           ON ENDKEY UNDO Grava, LEAVE Grava:
@@ -7106,16 +7281,6 @@ PROCEDURE grava-proposta-completa:
         ASSIGN par_recidepr = INTE(RECID(crawepr))
                nov_nrctremp = par_nrctremp.
 
-        FIND craplcr WHERE craplcr.cdcooper = par_cdcooper   AND
-                           craplcr.cdlcremp = par_cdlcremp
-                           NO-LOCK NO-ERROR.
-
-        IF   NOT AVAIL craplcr   THEN
-             DO:
-                 aux_cdcritic = 363.
-                 UNDO, LEAVE Grava.
-             END.
-        
         IF par_tpemprst = 0 THEN
             ASSIGN crawepr.txdiaria = craplcr.txdiaria.
 
