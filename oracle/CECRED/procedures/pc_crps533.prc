@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 08/05/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 18/05/2018
 
    Dados referentes ao programa:
 
@@ -316,10 +316,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                            
                08/05/2018 - Efetuado manutenção para não enviar o relatório crrl564 a intranet. Ele não é mais usado
                             pela área de negócio (Jonata - MOUTS SCTASK0012408)                           
-
+                           
+			   18/05/2018 - Se conta está encerrada, gera devolução (crítica 64)              
+                           
                28/05/2018 - ROLLBACK --> Chamado #861675.
                            Tivemos que voltar versão devido a não estar enviando os cheques para BBC
                            nestes casos, de devolução automática. (Wagner/Sustentação).
+
+			   19/06/2018 - Removida a alteração realizada em 18/05/2018, pois foi realizado a solicitação para retirada 
+							do requisito do projeto. (Renato Darosci - Supero)
                            
 ............................................................................. */
 
@@ -883,7 +888,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_erro;
              END;
            END IF; --vr_contareg = 1
-
+           
            -- iniciar variavel
            vr_flgeneri := FALSE;
            
@@ -1421,7 +1426,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ,nvl(pr_cdoperad,' ')      --cdoperad
                                      ,nvl(pr_cdhistor,0)        --cdhistor
                                      ,'TCO'                     --cdpesqui
-                                     ,0                         --insitdev -- deverá entrar como devolvido, após a correção para enviar para BBC
+                                     ,0                         --insitdev 
                                      ,nvl(rw_crapcop.cdbcoctl,0)--cdbanchq
                                      ,nvl(pr_cdagechq,0)        --cdagechq
                                      ,nvl(pr_nrctachq,0)        --nrctachq
@@ -2893,7 +2898,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         --Ir para a proxima linha do arquivo
                         RAISE vr_exc_pula;
                       END IF; --cr_crapass%NOTFOUND
-
+            
                       --Verificar se a situacao da conta (somente para não integradas)
                       IF vr_nrdconta_incorp IS NULL THEN
                         IF vr_tab_crapass(vr_nrdconta).cdsitdtl IN (2,4,5,6,7,8) THEN
@@ -3765,7 +3770,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                 ,pr_cdprogra => pr_cdprogra
                                                                 ,pr_nrdrecid => 0
                                                                 ,pr_vlchqvlb => pr_vlchqvlb
-                                                                ,pr_insitdev => 0 --> deverá entrar como devolvido após a correção de envio para BBC.
+                                                                ,pr_insitdev => 0 
                                                                 ,pr_cdcritic => vr_cdcritic
                                                                 ,pr_des_erro => vr_des_erro);
 
@@ -5835,7 +5840,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        /* A partir de 16/04/2018 nao havera mais Cheque VLB - Projeto Compe Sessao Unica */  
        --Buscar informormacoes da craptab para valores vlb
        vr_dstextab_vlb:= '';
-         vr_vlchqvlb:= 0;
+	   vr_vlchqvlb:= 0;
 
        ----- Gravar informações vindas do cadastro da cooperativa ----
        -- Inicializar contador de arquivos processados
