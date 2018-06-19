@@ -121,6 +121,11 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                              para as cooperativas singulares executarem em paralelo quando carga normal.
                              (INC0013085 - AJFink)
 
+                13/06/2018 - Ajuste para verificar se data de movimento da CIP é igual data referencia
+                             (sysdate). Caso elas sejam diferentes, os titulos ficam na fila ate que a 
+                             informacao de abertura chegue ao sistema.
+                             Chamado SCTASK0015832 - Gabriel (Mouts).
+
   ******************************************************************************/
 
   --types
@@ -480,30 +485,6 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
                              ,pr_qtlottit in number
                              ,pr_tab_sab in out nocopy t_tab_sab) is
     --
-    function fn_datamov return date is
-      --
-      cursor c_datamov is
-        SELECT "DataMov" datamov
-          FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
-         WHERE "ISPBCliente" = 5463212
-           AND "DataMov" IS NOT NULL
-        ORDER BY "DataMov" DESC;
-      --
-      w_datamov number(8);
-      --
-    begin
-      --
-      open c_datamov;
-      fetch c_datamov into w_datamov;
-      close c_datamov;
-      --
-      return (to_date(w_datamov,'yyyymmdd'));
-      --
-    exception
-      when others then
-        raise_application_error(-20001,'ddda0001.fn_datamov',true);
-    end fn_datamov;
-    --
     procedure pc_verifica_carga_inicial(pr_cdcooper_in in crapcop.cdcooper%type
                                        ,pr_idexecut out number
                                        ,pr_dtcrgrol out date
@@ -538,7 +519,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
         --se a data parametrizada é maior que sysdate então deve indicar "já processado"
         --ou se data de movimento da CIP é diferente de sysdate
         --para evitar processamento da carga antes da data parametrizada
-        if vr_dtcrgrol > trunc(sysdate) or fn_datamov <> trunc(sysdate) then
+        if vr_dtcrgrol > trunc(sysdate) then
           --
           vr_idexecut := 1;
           --
@@ -1013,7 +994,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
       loop
         --
         vr_tpdenvio := 0;
-        if nvl(pr_nrdconta_in,0) = 0 then
+        if nvl(pr_nrdconta_in,0) <> 0 then
           vr_tpdenvio := 1;
         END IF;
         --
@@ -1252,11 +1233,14 @@ begin
     vr_qtlottit number(10);
     vr_jobname  varchar2(100);
     vr_dsplsql  varchar2(10000);
+    vr_currenttimestamp timestamp;
     --exceptions
     vr_exc_saida exception;
     --
   begin
     --
+    if to_date(ddda0001.fn_datamov,'yyyymmdd') = trunc(sysdate) then
+      --
     --busca a data de processo da cooperativa
     OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -1279,6 +1263,9 @@ begin
     ---------------------------------------
     if nvl(pr_cdcooper,0) = 3 and nvl(pr_nrdconta,0) = 0 then
       --
+        --iniciliza horario de execução dos jobs para iniciarem todos em paralelo
+        vr_currenttimestamp := to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp)+(4/86400),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR');
+        --
       for r_cop in (
                     select cop.cdcooper
                     from crapcop cop
@@ -1303,7 +1290,7 @@ end;';
         gene0001.pc_submit_job(pr_cdcooper => r_cop.cdcooper
                               ,pr_cdprogra => ct_cdprogra
                               ,pr_dsplsql  => vr_dsplsql
-                              ,pr_dthrexe  => NULL
+                                ,pr_dthrexe  => vr_currenttimestamp
                               ,pr_interva  => NULL
                               ,pr_jobname  => vr_jobname
                               ,pr_des_erro => vr_dscritic );
@@ -1358,6 +1345,8 @@ end;';
       --
     end if;
     --
+    end if;
+    --
   exception
     when vr_exc_saida then
       begin
@@ -1408,6 +1397,14 @@ end;';
                                  ,pr_dsmensag => 'Ocorreu falhar ao enviar movimento da cobranca bancaria para a Cabine JD.'
                                                ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog||'). (PC_CRPS618)'
                                  ,pr_idprglog => vr_idprglog);
+    --
+  end if;
+  --
+  --commit somente se não é integração on-line
+  if nvl(pr_nrdconta,0) = 0 then
+    --commit final quando data de movimento da CIP é diferente de trunc(sysdate)
+    commit;
+    npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'pc_crps618_08');
     --
   end if;
   --
