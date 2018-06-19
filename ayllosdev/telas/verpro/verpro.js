@@ -390,6 +390,10 @@ function selecionaTabela(tr) {
     dslinha1 = $('#dslinha1', tr).val();
     dslinha2 = $('#dslinha2', tr).val();
     dslinha3 = $('#dslinha3', tr).val();
+    dtinsbor = $('#dtinsbor', tr).val();
+    hrinsbor = $('#hrinsbor', tr).val();
+    qttitbor = $('#qttitbor', tr).val();
+    vltotbor = $('#vltotbor', tr).val();
 
     return false;
 }
@@ -432,6 +436,10 @@ function mostraProtocolo() {
             lndigita: lndigita,
             nrseqaut: nrseqaut,
             nrdocmto: nrdocmto,
+            dtinsbor: dtinsbor,
+            hrinsbor: hrinsbor,
+            qttitbor: qttitbor,
+            vltotbor: vltotbor,
             dslinha1: dslinha1,
             dslinha2: dslinha2,
             dslinha3: dslinha3,
@@ -527,7 +535,13 @@ function formataVerpro() {
     rVldoirrf = $('label[for="vldoirrf"]', '#' + frmDados);
     rVlaliqir = $('label[for="vlaliqir"]', '#' + frmDados);
     rVlliquid = $('label[for="vlliquid"]', '#' + frmDados);
-
+    
+    
+    
+    rNrborder = $('label[for="nrborder"]', '#' + frmDados);
+    rQttitbor = $('label[for="qttitbor"]', '#' + frmDados);
+    
+    
 
     rNmprepos.addClass('rotulo').css({'width': '115px'});
     rNmoperad.addClass('rotulo').css({'width': '115px'});
@@ -598,7 +612,13 @@ function formataVerpro() {
     rVldoirrf.addClass('rotulo').css({'width': '130px'});
     rVlaliqir.addClass('rotulo').css({'width': '130px'});
     rVlliquid.addClass('rotulo').css({'width': '130px'});
-
+    
+    
+    
+    rNrborder.addClass('rotulo').css({'width': '115px'});
+    rQttitbor.addClass('rotulo').css({'width': '115px'});
+    
+    
     // campos
     cNmprepos = $('#nmprepos', '#' + frmDados);
     cNmoperad = $('#nmoperad', '#' + frmDados);
@@ -670,6 +690,13 @@ function formataVerpro() {
     cVlaliqir = $('#vlaliqir', '#' + frmDados);
     cVlliquid = $('#vlliquid', '#' + frmDados);
 
+    //Campos do bordero
+    
+    
+    cNrborder = $('#nrborder', '#' + frmDados);
+    cQttitbor = $('#qttitbor', '#' + frmDados);
+    
+
     cNmprepos.css({'width': '440px'});
     cNmoperad.css({'width': '440px'});
     cNrdocmtx.css({'width': '200px'});
@@ -737,7 +764,13 @@ function formataVerpro() {
     cVldoirrf.css({'width': '400px'});
     cVlaliqir.css({'width': '400px'});
     cVlliquid.css({'width': '400px'});
-
+    
+    
+    
+    cNrborder.css({'width': '440px'});
+    cQttitbor.css({'width': '440px'});
+    
+    
     // label protocolo pacote de tarifas
     rDspacote = $('label[for="dspacote"]', '#' + frmDados);
     rDtdiadeb = $('label[for="dtdiadeb"]', '#' + frmDados);
@@ -1306,7 +1339,41 @@ function formataVerpro() {
        
 		rDsprotoc.css({'display': 'block'});
 		cDsprotoc.css({'display': 'block'});
-	// Recarga de celular			
+	// Desconto de títulos
+    } else if (cdtippro == '22'){
+        // Esconder Labels
+        rNmprepos.css({'display': 'none'});
+        rDsdbanco.css({'display': 'none'});
+        rDscedent.css({'display': 'none'});
+        rDtmvtolt.css({'display': 'none'});
+        rDtdebito.css({'display': 'none'});
+        rVlrecarga.css({'display': 'none'});
+        rNmoperadora.css({'display': 'none'});
+        rNrtelefo.css({'display': 'none'});
+        rNrdocmto.css({'display': 'none'});
+        rDtrecarga.css({'display': 'none'});
+        rHrrecarga.css({'display': 'none'});
+        
+        // Esconder Campos
+        cNmprepos.css({'display': 'none'});
+        cDsdbanco.css({'display': 'none'});
+        cDscedent.css({'display': 'none'});
+        cDtmvtolt.css({'display': 'none'});
+        cVlrecarga.css({'display': 'none'});
+        cNmoperadora.css({'display': 'none'});
+        cNrtelefo.css({'display': 'none'});
+        cNrdocmto.css({'display': 'none'});
+        cDtrecarga.css({'display': 'none'});
+        cHrrecarga.css({'display': 'none'});
+        cDtdebito.css({'display': 'none'});
+        
+        rDsprotoc.css({'display': 'block'});
+        rNrseqaut.css({'display': 'block'});
+
+        cDsprotoc.css({'display': 'block'});
+        cNrseqaut.css({'display': 'block'});
+        
+    // Recarga de celular			
     } else if (cdtippro == '20'){
 		// Esconder Labels
 		rDsdbanco.css({'display': 'none'});
