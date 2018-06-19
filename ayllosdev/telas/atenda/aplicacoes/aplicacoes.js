@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 18/12/2017
+ Data : Setembro/2009                Última Alteração: 10/05/2018
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -90,13 +90,13 @@
 			 29/11/2017 - Validacao sobre valor bloqueado. M460 - BancenJud (Thiago Rodrigues)
 
              01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
-			 
+
              18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
-
+			 
 			 04/04/2018 - Ajuste para chamar as rotinas de validacao do valor de adesao do produto e 
-						  senha do coordenador. PRJ366 (Lombardi).	  
-
-			 14/05/2018 - Ajustes na function validaValorProdutoResgate. PRJ366 (Lombardi).	
+						  senha do coordenador. PRJ366 (Lombardi).
+			 
+			 10/05/2018 - SM404 - Permitir o resgate de aplicações bloqueadas
 
 ***************************************************************************/
 
@@ -507,6 +507,37 @@ function acessaOpcaoCadastroResgate() {
             nraplica: nraplica,
             tpaplica: glbTpaplica,
             flcadrgt: "yes",
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+}
+
+//Função para validar o bloqueio da aplicação
+function validaBloqueioAplicacao(tporigem){
+	// Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, validando bloqueio aplica&ccedil;&atilde;o ...");
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/aplicacoes/valida_bloqueio_apli.php",
+        data: {
+            nrdconta: nrdconta,
+            nraplica: nraplica,
+			tporigem: tporigem,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2619,9 +2650,9 @@ function validaDiferenca(formaResgate, flmensag, nrdconta, dtresgat, flgctain) {
     }
 
     if (parseFloat($("#tdDifer").html().replace(",", ".")) == 0) {
-        cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flgctain);
+		cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flgctain);
     } else {
-        showConfirmacao(msg, "Confirma&ccedil;&atilde;o - Ayllos", 'cadastrarVariosResgates(\'' + formaResgate + '\', \'' + flmensag + '\', \'' + nrdconta + '\', \'' + dtresgat + '\', \'' + flgctain + '\')', 'voltarDivPrincipal()', "sim.gif", "nao.gif");
+		showConfirmacao(msg, "Confirma&ccedil;&atilde;o - Ayllos", 'cadastrarVariosResgates(\'' + formaResgate + '\', \'' + flmensag + '\', \'' + nrdconta + '\', \'' + dtresgat + '\', \'' + flgctain + '\')', 'voltarDivPrincipal()', "sim.gif", "nao.gif");
     }
 }
 
@@ -2630,13 +2661,13 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, " + (flmensag == "yes" ? "validando" : "cadastrando") + " resgates ...");
-
+	
     var camposPc = '';
     var dadosPrc = '';
     var cdopera2 = $("#cdopera2", "#frmResgateVarias").val();
-    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");;
-
-    if (formaResgate == "automatica") {
+    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");
+	
+	if (formaResgate == "automatica") {
         camposPc = retornaCampos(lstDadosResgate, '|');
         dadosPrc = retornaValores(lstDadosResgate, ';', '|', camposPc);
     } else {
@@ -3300,37 +3331,8 @@ function ativaCampo() {
 }
 
 function validaValorProdutoResgate (executa, campo, form) {
-	var vlresgat = 0;
-	var tpresgat = $("#tpresgat", "#frmResgate").val();
-	
-	if (form == 'frmResgate' && tpresgat == "T") {
-		$.ajax({
-			type: "POST",
-			dataType: "html",
-			url: UrlSite + "telas/atenda/aplicacoes/busca_saldo_resgate_aplicacao.php",
-			data: {
-				nrdconta: nrdconta,
-				nraplica: nraplica,
-				redirect: "script_ajax"
-			},
-			error: function (objAjax, responseError, objExcept) {
-				hideMsgAguardo();
-				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-			},
-			success: function (response) {
-				try {
-					eval(response);
-					validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
-				} catch (error) {
-					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-				}
-			}
-		});
-	} else {
-		vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
-		validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
-	}
+	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
+	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
 }
 
 function senhaCoordenador(executaDepois) {

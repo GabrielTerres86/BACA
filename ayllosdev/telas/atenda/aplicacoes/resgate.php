@@ -21,9 +21,11 @@
 
 				 03/12/2014 - Incluido verificacao de novos produtos de captacao
 				              (Jean Michel).
-				 
+							  
 				 17/04/2018 - Incluida verificacao de adesao do produto pelo tipo de conta. PRJ366 (Lombardi)
-				 
+				
+				 09/05/2018 - Permitir o resgate de aplicações bloqueadas (SM404)
+							  
 	************************************************************************/
 	
 	session_start();
@@ -56,7 +58,7 @@
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
-	}	
+	}
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -180,7 +182,7 @@
 		strHTML += '</form>';		
 		strHTML += '<div id="divBotoes" style="margin-top:5px; margin-bottom :10px; text-align: center;">';
 		strHTML += '	<a href="#" class="botao" id="btCancelar" onClick="voltarDivResgate();return false;" >Cancelar</a>';
-		strHTML += '	<a href="#" class="botao" id="btConcluir" onClick="validaValorProdutoResgate(\'cadastrarResgate(\\\'yes\\\');\',\'vlresgat\',\'frmResgate\');return false;" >Concluir</a>';
+		strHTML += '	<a href="#" class="botao" id="btConcluir" onClick="validaValorProdutoResgate(\'validaBloqueioAplicacao(1);\',\'vlresgat\',\'frmResgate\');return false;">Concluir</a>';
 		strHTML += '</div>';
 		
 		$("#divOpcoes").html(strHTML);

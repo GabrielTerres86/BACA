@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: resgate_cadastrar.php                                     ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Outubro/2009                 Última Alteração: 01/12/2010 ***//
+	//*** Data : Outubro/2009                 Última Alteração: 10/05/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Validar e cadastrar resgate para aplicação           ***//	
 	//***                                                                  ***//	 
@@ -18,6 +18,9 @@
 	//***																   ***//	
     /*         		  17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) */
+    //***																   ***//
+	//***			  10/05/2018 - Permitir resgate de aplicações          ***//
+	//***						   bloqueadas (SM404)				   	   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -56,6 +59,7 @@
 	$cddsenha = (isset($_POST['cddsenha'])) ? $_POST['cddsenha'] : '';
 	$flgsenha = ($cdopera2 != '') ? '1' : '0';
 	
+	$cdopelib = (isset($_SESSION['cdopelib'])) ? $_SESSION['cdopelib'] : '';
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -122,7 +126,9 @@
 		$xmlResgate .= "		<cdopera2>".$cdopera2."</cdopera2>";
 		$xmlResgate .= "		<cddsenha>".$cddsenha."</cddsenha>";
 		$xmlResgate .= "	</Dados>";
-		$xmlResgate .= "</Root>";	
+		$xmlResgate .= "</Root>";
+		
+		//var_dump($xmlResgate);
 		
 		// Executa script para envio do XML
 		$xmlResult = getDataXML($xmlResgate);
@@ -132,8 +138,47 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
+			//var_dump($xmlResgate);
 			exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
-		} 
+		// Senão, gera log com os dados da autorização e exclui o bloqueio no caso de resgate total (SM404)
+		}else{
+			if(isset($_SESSION['cdopelib'])) {
+				$vlresgat = str_replace(',','.',str_replace('.','',$vlresgat));
+				// Montar o xml de Requisicao
+				$xml .= "<Root>";
+				$xml .= " <Dados>";
+				$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>"; // Código da cooperativa
+				$xml .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>"; // Código do operador
+				$xml .= "   <cdopelib>".$_SESSION['cdopelib']."</cdopelib>"; // Código do coordenador
+				$xml .= "   <nrdconta>".$nrdconta."</nrdconta>"; // Número da Conta
+				$xml .= "   <nraplica>".$nraplica."</nraplica>"; // Número da Aplicação
+				$xml .= "   <vlresgat>".$vlresgat."</vlresgat>"; // Valor do resgate
+				$xml .= "   <tpresgat>".$tpresgat."</tpresgat>"; // Tipo do resgate
+				$xml .= "	<idseqttl>1</idseqttl>";
+				$xml .= " </Dados>";
+				$xml .= "</Root>";
+				
+				$xmlResult = mensageria($xml, "APLI0002", "PROC_POS_RESGATE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+				$xmlObj = getObjectXML($xmlResult);
+								
+				//-----------------------------------------------------------------------------------------------
+				// Controle de Erros
+				//-----------------------------------------------------------------------------------------------
+				
+				if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+					$msgErro = $xmlObj->roottag->tags[0]->cdata;
+					
+					if($msgErro == null || $msgErro == ''){
+						$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+					}
+					
+					exibeErro($msgErro,$frm);			
+					exit();
+				}else{
+					$_SESSION['cdopelib'] = null;
+				}
+			}
+		}
 			
 		// Esconde mensagem de aguardo
 		echo 'hideMsgAguardo();';	
