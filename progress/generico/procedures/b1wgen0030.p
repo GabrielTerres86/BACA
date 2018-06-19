@@ -2524,19 +2524,15 @@ PROCEDURE efetua_liber_anali_bordero:
               ,OUTPUT aux_cdcritic          /* Código da crítica                             */
               ,OUTPUT aux_dscritic).        /* Descriçao da crítica                          */
 
-            /* 12/06/2018 - TJ - Apagar handle associado */
-            IF VALID-HANDLE(h-b1wgen0200) THEN
-               DELETE PROCEDURE h-b1wgen0200.
-            
-            FIND FIRST tt-ret-lancto.
-            DISP tt-ret-lancto.
-
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                /* Tratamento erro Banco Dados */
                UNDO LIBERACAO, LEAVE.
             ELSE 
                /* Se criou lancamento entao atualiza dados do Lote */
                DO:
+                   FIND FIRST tt-ret-lancto.
+                   FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+
                    ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                           craplot.qtinfoln = craplot.qtinfoln + 1
                           craplot.qtcompln = craplot.qtcompln + 1
@@ -2546,6 +2542,11 @@ PROCEDURE efetua_liber_anali_bordero:
                    VALIDATE craplot.
                    VALIDATE craplcm.
                END.
+
+            /* Apagar handle associado */
+            IF VALID-HANDLE(h-b1wgen0200) THEN
+               DELETE PROCEDURE h-b1wgen0200.
+            
             
             /* RUN buscar_valor_iof_simples_nacional(INPUT aux_vlborder,
                                                   INPUT par_cdcooper,
@@ -2667,19 +2668,15 @@ PROCEDURE efetua_liber_anali_bordero:
                      ,OUTPUT aux_cdcritic                         /* Código da crítica                             */
                      ,OUTPUT aux_dscritic).                       /* Descriçao da crítica                          */
                 
-                   /* 13/06/2018 - TJ - Apagar handle associado */
-                   IF VALID-HANDLE(h-b1wgen0200) THEN
-                      DELETE PROCEDURE h-b1wgen0200.
-                   
-                   FIND FIRST tt-ret-lancto.
-                   DISP tt-ret-lancto.
-
                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                       /* Tratamento erro Banco Dados */
                       UNDO LIBERACAO, LEAVE.
                    ELSE 
                       /* Se criou lancamento entao atualiza dados do Lote */
                       DO:
+                          FIND FIRST tt-ret-lancto.
+                          FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+
                           ASSIGN craplot.vlinfodb = craplot.vlinfodb + ROUND(aux_vltotiof, 2)
                                  craplot.vlcompdb = craplot.vlcompdb + ROUND(aux_vltotiof, 2)
                                  craplot.qtinfoln = craplot.qtinfoln + 1
@@ -2689,6 +2686,11 @@ PROCEDURE efetua_liber_anali_bordero:
                           VALIDATE craplot.
                           VALIDATE craplcm.
                       END.
+
+                   /* Apagar handle associado */
+                   IF VALID-HANDLE(h-b1wgen0200) THEN
+                      DELETE PROCEDURE h-b1wgen0200.
+                   
 
                   /* Projeto 410 - Novo IOF */
                   ASSIGN aux_dscritic = "".
@@ -14935,19 +14937,15 @@ PROCEDURE efetua_baixa_titulo:
                               ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
                               ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
                           
-                            /* 13/06/2018 - TJ - Apagar handle associado */
-                            IF VALID-HANDLE(h-b1wgen0200) THEN
-                               DELETE PROCEDURE h-b1wgen0200.
-                            
-                            FIND FIRST tt-ret-lancto.
-                            DISP tt-ret-lancto.
-
                             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                /* Tratamento erro Banco Dados */
                                UNDO BAIXA, RETURN "NOK".
                             ELSE 
                                /* Se criou lancamento entao atualiza dados do Lote */
                                DO:
+                                   FIND FIRST tt-ret-lancto.
+                                   FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+
                                    ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                                           craplot.qtinfoln = craplot.qtinfoln + 1
                                           craplot.qtcompln = craplot.qtcompln + 1
@@ -14959,7 +14957,11 @@ PROCEDURE efetua_baixa_titulo:
                                    VALIDATE craplcm.
                                END.
 
-                        END. /* Fim do IF */
+                            /* Apagar handle associado */
+                            IF VALID-HANDLE(h-b1wgen0200) THEN
+                               DELETE PROCEDURE h-b1wgen0200.
+
+                        END. /* Fim do pagamento a menor */
                     ELSE
                         /* se pagamento a maior */
                         IF  craptdb.vltitulo < tt-titulos.vltitulo  THEN
@@ -15059,19 +15061,15 @@ PROCEDURE efetua_baixa_titulo:
                                   ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
                                   ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
                               
-                                /* 13/06/2018 - TJ - Apagar handle associado */
-                                IF VALID-HANDLE(h-b1wgen0200) THEN
-                                   DELETE PROCEDURE h-b1wgen0200.
-                                
-                                FIND FIRST tt-ret-lancto.
-                                DISP tt-ret-lancto.
-
                                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                    /* Tratamento erro Banco Dados */
                                    UNDO BAIXA, RETURN "NOK".
                                 ELSE 
                                    /* Se criou lancamento entao atualiza dados do Lote */
                                    DO:
+                                       FIND FIRST tt-ret-lancto.
+                                       FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                                       
                                        ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                                               craplot.qtinfoln = craplot.qtinfoln + 1
                                               craplot.qtcompln = craplot.qtcompln + 1
@@ -15082,7 +15080,11 @@ PROCEDURE efetua_baixa_titulo:
                                        VALIDATE craplot.
                                        VALIDATE craplcm.
                                    END.
-                                    
+
+                                /* Apagar handle associado */
+                                IF VALID-HANDLE(h-b1wgen0200) THEN
+                                   DELETE PROCEDURE h-b1wgen0200.
+                                
                             END.  /* fim se pagamento a maior */
                                     
 
@@ -15272,19 +15274,15 @@ PROCEDURE efetua_baixa_titulo:
                                    ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
                                    ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
                                 
-                                 /* 13/06/2018 - TJ - Apagar handle associado */
-                                 IF VALID-HANDLE(h-b1wgen0200) THEN
-                                    DELETE PROCEDURE h-b1wgen0200.
-                                 
-                                 FIND FIRST tt-ret-lancto.
-                                 DISP tt-ret-lancto.
-
                                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                     /* Tratamento erro Banco Dados */
                                     UNDO BAIXA, RETURN "NOK".
                                  ELSE 
                                     /* Se criou lancamento entao atualiza dados do Lote */
                                     DO:
+                                        FIND FIRST tt-ret-lancto.
+                                        FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                                        
                                         ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                                                craplot.qtinfoln = craplot.qtinfoln + 1
                                                craplot.qtcompln = craplot.qtcompln + 1
@@ -15294,6 +15292,11 @@ PROCEDURE efetua_baixa_titulo:
                                         VALIDATE craplot.
                                         VALIDATE craplcm.
                                     END.
+
+                                 /* Apagar handle associado */
+                                 IF VALID-HANDLE(h-b1wgen0200) THEN
+                                    DELETE PROCEDURE h-b1wgen0200.
+                                 
                               END.  /* fim valor complemento > 0 */
 
                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -15434,19 +15437,15 @@ PROCEDURE efetua_baixa_titulo:
                       ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
                       ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
                     
-                    /* 13/06/2018 - TJ - Apagar handle associado */
-                    IF VALID-HANDLE(h-b1wgen0200) THEN
-                       DELETE PROCEDURE h-b1wgen0200.
-                    
-                    FIND FIRST tt-ret-lancto.
-                    DISP tt-ret-lancto.
-
                     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                        /* Tratamento erro Banco Dados */
                        UNDO BAIXA, RETURN "NOK".
                     ELSE 
                        /* Se criou lancamento entao atualiza dados do Lote */
                        DO:
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                           
                            ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                                   craplot.qtinfoln = craplot.qtinfoln + 1
                                   craplot.qtcompln = craplot.qtcompln + 1
@@ -15457,6 +15456,9 @@ PROCEDURE efetua_baixa_titulo:
                            VALIDATE craplcm.
                        END.
 
+                    /* Apagar handle associado */
+                    IF VALID-HANDLE(h-b1wgen0200) THEN
+                       DELETE PROCEDURE h-b1wgen0200.
                     
                     ASSIGN craptdb.insittit = 3. /* Baixado s/ pagto */        
 
@@ -15767,19 +15769,15 @@ PROCEDURE efetua_baixa_titulo:
                       ,OUTPUT aux_cdcritic                              /* Código da crítica                             */
                       ,OUTPUT aux_dscritic).                            /* Descriçao da crítica                          */
                     
-                    /* 13/06/2018 - TJ - Apagar handle associado */
-                    IF VALID-HANDLE(h-b1wgen0200) THEN
-                       DELETE PROCEDURE h-b1wgen0200.
-                    
-                    FIND FIRST tt-ret-lancto.
-                    DISP tt-ret-lancto.
-
                     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                        /* Tratamento erro Banco Dados */
                        UNDO BAIXA, RETURN "NOK".
                     ELSE 
                        /* Se criou lancamento entao atualiza dados do Lote */
                        DO:
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                           
                            ASSIGN cra2lot.nrseqdig = cra2lot.nrseqdig + 1
                                   cra2lot.vlinfodb = cra2lot.vlinfocr + aux_vltotjur
                                   cra2lot.vlcompdb = cra2lot.vlcompcr + aux_vltotjur
@@ -15790,6 +15788,10 @@ PROCEDURE efetua_baixa_titulo:
                            VALIDATE craplcm.
                        END.
 
+                    /* Apagar handle associado */
+                    IF VALID-HANDLE(h-b1wgen0200) THEN
+                       DELETE PROCEDURE h-b1wgen0200.
+                       
                 END.  /* fim aux_vltotjur > 0 */
                 
             VALIDATE craptdb.

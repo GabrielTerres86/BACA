@@ -4076,6 +4076,17 @@ PROCEDURE cria_lancamento_cc_chave:
                      ,OUTPUT aux_cdcritic                        /* Código da crítica                             */
                      ,OUTPUT aux_dscritic).                      /* Descriçao da crítica                          */
 
+                   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                      DO:  
+                        /* Tratamento erro banco de dados 
+                           MESSAGE  aux_cdcritic  aux_dscritic VIEW-AS ALERT-BOX. */   
+                        RETURN "NOK".
+                      END.   
+                   ELSE 
+                      DO:
+                        FIND FIRST tt-ret-lancto.
+                        FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                      END.
                END.
 
             /* 12/06/2018 - TJ - Apagar handle associado */
