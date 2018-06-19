@@ -12210,8 +12210,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            vr_notif_origem   := 10;
            vr_notif_motivo   := 1;
            
-		   vr_variaveis_notif('#valordebito') := TRIM(to_char(vr_tab_agendto(vr_index_agendto).vllanaut,'9999990.00'));
-           vr_variaveis_notif('#datadebito')  := to_char(pr_dtmvtopg,'dd/mm/yyyy');
+		   vr_variaveis_notif('#valordebito') := TRIM(TO_CHAR(vr_tab_agendto(vr_index_agendto).vllanaut,'fm999G999G999G999D00'));
+           vr_variaveis_notif('#datadebito')  := TO_CHAR(pr_dtmvtopg,'dd/mm/yyyy');
            vr_variaveis_notif('#tipodebito')  := vr_tab_agendto(vr_index_agendto).dstiptra||'-'||vr_tab_agendto(vr_index_agendto).dstransa;
            -- Cria uma notificação
            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem

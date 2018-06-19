@@ -914,8 +914,8 @@ create or replace package body cecred.SICR0001 is
             --everton
             vr_notif_origem   := 10;
             vr_notif_motivo   := 1;
-            vr_variaveis_notif('#valordebito') := TRIM(to_char(pr_tab_agendamentos(vr_ind).vllanaut,'9999990.00'));
-            vr_variaveis_notif('#datadebito')  := to_char(pr_dtmvtopg,'dd/mm/yyyy');
+            vr_variaveis_notif('#valordebito') := TRIM(TO_CHAR(pr_tab_agendamentos(vr_ind).vllanaut,'fm999G999G999G999D00'));
+            vr_variaveis_notif('#datadebito')  := TO_CHAR(pr_dtmvtopg,'dd/mm/yyyy');
             vr_variaveis_notif('#tipodebito')  := pr_tab_agendamentos(vr_ind).dstiptra||'-'||pr_tab_agendamentos(vr_ind).dstransa;
             -- Cria uma notificação
             noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
