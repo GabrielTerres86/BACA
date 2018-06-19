@@ -225,7 +225,7 @@ END fn_verifica_preju_conta;
         
         
         UPDATE crapass ass
-           SET ass.cdsitdct = 3,
+           SET ass.cdsitdct = 2, -- 2-Em Prejuizo
                ass.inprejuz = 1
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = rw_crapris.nrdconta;
