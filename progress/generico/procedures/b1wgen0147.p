@@ -3,7 +3,7 @@
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
    Data    : 02/05/2013                         Ultima atualizacao: 19/02/2018
-
+  
    Dados referentes ao programa:
 
    Objetivo  : BO DE PROCEDURES REF. OPERACOES COM O BNDES
@@ -24,24 +24,26 @@
                15/08/2017 - Incluir dividor por 100 ao buscar o percentual de 
                             garantia aux_vlpergar 116,5 (Lucas Ranghetti #734912)
                             
-			   12/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							 (Adriano - P339).		            
+                           12/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+                                         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+                                                         (Adriano - P339).                            
 
                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                             PRJ339 - CRM (Odirlei-AMcom)          
-							
-			   01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
+                                                        
+                           01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
 
-			   28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-							CH, RE, PP E CT. (PRJ339 - Reinert)
+                           28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+                                                        CH, RE, PP E CT. (PRJ339 - Reinert)
 
-			   30/10/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 778394)
+                           30/10/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 778394)
 
-			   19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
-
+                           19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
+         
+         07/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
 .............................................................................*/
 
+{ sistema/generico/includes/b1wgen0200tt.i }
 { sistema/generico/includes/b1wgen0147tt.i }
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/gera_erro.i }
@@ -443,7 +445,7 @@ PROCEDURE cria_dados_totvs:
                
        END. /*fim do juridica*/
 
-	 UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/ 2>/dev/null').
+         UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/ 2>/dev/null').
 
      UNIX SILENT VALUE ("rm " + aux_nmarquiv + " 2> /dev/null" ).
       
@@ -1641,6 +1643,12 @@ PROCEDURE cria-lancamento:
     DEF INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF INPUT PARAM par_vllanmto AS DECI NO-UNDO.
+    
+    
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -1681,6 +1689,13 @@ PROCEDURE cria-lancamento:
                craplot.qtcompln = craplot.qtcompln + 1
                craplot.nrseqdig = craplot.nrseqdig + 1.
 
+
+         /* Identificar orgao expedidor */
+         IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+            RUN sistema/generico/procedures/b1wgen0200.p
+            PERSISTENT SET h-b1wgen0200.
+       
+
         /* Responsavel por criar lancamento em conta corrente */
         FIND FIRST craplcm WHERE craplcm.cdcooper = par_cdcooper AND
                                  craplcm.nrdconta = par_nrdconta AND
@@ -1698,7 +1713,63 @@ PROCEDURE cria-lancamento:
                     END.
                 ELSE
                     DO:
-                        CREATE craplcm.
+                     RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                      ( INPUT craplot.dtmvtolt  /* par_dtmvtolt */
+                       ,INPUT par_cdagenci      /* par_cdagenci */
+                       ,INPUT par_cdbccxlt      /* par_cdbccxlt */
+                       ,INPUT par_nrdolote      /* par_nrdolote */
+                       ,INPUT par_nrdconta      /* par_nrdconta */
+                       ,INPUT craplot.nrseqdig  /* par_nrdocmto */
+                       ,INPUT par_cdhistor      /* par_cdhistor */
+                       ,INPUT craplot.nrseqdig  /* par_nrseqdig */
+                       ,INPUT par_vllanmto      /* par_vllanmto */
+                       ,INPUT par_nrdconta      /* par_nrdctabb */
+                       ,INPUT ""                /* par_cdpesqbb */
+                       ,INPUT 0                 /* par_vldoipmf */
+                       ,INPUT 0                 /* par_nrautdoc */
+                       ,INPUT craplot.nrseqdig  /* par_nrsequni */
+                       ,INPUT 0                 /* par_cdbanchq */
+                       ,INPUT 0                 /* par_cdcmpchq */
+                       ,INPUT 0                 /* par_cdagechq */
+                       ,INPUT 0                 /* par_nrctachq */
+                       ,INPUT 0                 /* par_nrlotchq */
+                       ,INPUT 0                 /* par_sqlotchq */
+                       ,INPUT craplot.dtmvtolt  /* par_dtrefere */
+                       ,INPUT TIME              /* par_hrtransa */
+                       ,INPUT par_cdoperad      /* par_cdoperad */                               
+                       ,INPUT ""                /* par_dsidenti */
+                       ,INPUT par_cdcooper      /* par_cdcooper */
+                       ,INPUT 0                 /* par_nrdctitg */
+                       ,INPUT ""               /* par_dscedent */
+                       ,INPUT 0                /* par_cdcoptfn */
+                       ,INPUT 0                /* par_cdagetfn */
+                       ,INPUT 0                /* par_nrterfin */
+                       ,INPUT 0                /* par_nrparepr */
+                       ,INPUT 0                /* par_nrseqava */
+                       ,INPUT 0                /* par_nraplica */
+                       ,INPUT 0                /*par_cdorigem*/
+                       ,INPUT 0                /* par_idlautom */
+                       ,INPUT 0                /*par_inprolot*/ 
+                       ,INPUT 0                /*par_tplotmov */
+                       ,OUTPUT TABLE tt-ret-lancto
+                       ,OUTPUT aux_incrineg
+                       ,OUTPUT aux_cdcritic
+                       ,OUTPUT aux_dscritic).
+
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO:  
+                          IF aux_incrineg = 1 THEN
+                             DO:
+                              /* Tratativas de negocio */ 
+                               NEXT.   
+                             END.
+                            ELSE
+                             DO:
+                              RETURN "NOK".
+                             END. 
+                          END.  
+                       
+                      /*  CREATE craplcm.
                         ASSIGN craplcm.cdcooper = par_cdcooper
                                craplcm.dtmvtolt = craplot.dtmvtolt
                                craplcm.cdagenci = par_cdagenci
@@ -1714,10 +1785,12 @@ PROCEDURE cria-lancamento:
                                craplcm.nrdocmto = craplot.nrseqdig
                                craplcm.cdhistor = par_cdhistor
                                craplcm.vllanmto = par_vllanmto.
-                        VALIDATE craplcm.
-
-                    END.
-            END.
+                        VALIDATE craplcm.*/
+                        
+                        
+                        
+              END.    
+           END.
         ELSE
             DO:
                 ASSIGN aux_cdcritic = 92.
@@ -1735,6 +1808,9 @@ PROCEDURE cria-lancamento:
         LEAVE.
 
     END. /* fim do while true */
+    
+   
+    DELETE PROCEDURE h-b1wgen0200. 
 
     RETURN "OK".
 
