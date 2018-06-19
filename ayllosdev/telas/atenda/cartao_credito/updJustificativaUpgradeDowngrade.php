@@ -44,7 +44,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	   $ds_justif == "Atualizacao da Renda." ){
 		   $message= "Solicitação de categoria enviada para esteira de crédito.";
 	}else{
-		$message= "Alteração de categoria enviada para esteira com sucesso.";
+		$message= "Alteração de categoria efetuada com sucesso.";
 	}
 	echo 'showError("inform"," '.utf8ToHtml( $message).' ","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 }
