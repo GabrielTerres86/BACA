@@ -982,11 +982,14 @@ PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TY
   vr_desassun VARCHAR2(1000);
   vr_descorpo VARCHAR2(1000);
   vr_nrborder NUMBER;
-
+  vr_nrautdoc craplcm.nrautdoc%type;
+  vr_dsprotoc crappro.dsprotoc%TYPE;
+          
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
-
+  vr_des_erro VARCHAR2(1000);
+      
   -- Tratamento de erros
   vr_exc_saida EXCEPTION;
   
@@ -1001,6 +1004,10 @@ PROCEDURE pc_criar_bordero_dscto_tit(pr_cdcooper          IN crapcop.cdcooper%TY
   AND    age.cdagenci       = ass.cdagenci
   AND    TRIM(age.dsmailbd) IS NOT NULL;
   rw_crapage cr_crapage%ROWTYPE;
+  
+  vr_nrdrecid  ROWID;
+  vr_historico INTEGER;
+  vr_literal   VARCHAR2(1000);
       
 BEGIN
   pc_busca_crapdat(pr_cdcooper => pr_cdcooper
@@ -1008,14 +1015,20 @@ BEGIN
   IF  vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida; 
   END IF;
-  
+
   tela_atenda_dscto_tit.pc_insere_bordero(pr_cdcooper          => pr_cdcooper
                                          ,pr_nrdconta          => pr_nrdconta
                                          ,pr_tpctrlim          => 3
                                          ,pr_insitlim          => 2 -- Igual valor passado pela tela atenda
                                          ,pr_dtmvtolt          => rw_crapdat.dtmvtolt
                                          ,pr_cdoperad          => 996
-                                         ,pr_cdagenci          => 0
+                                         ,pr_cdagenci          => 90
+                                         ,pr_nrdcaixa          => 900
+                                         ,pr_nmdatela          => 'INTERNETBANK'
+                                         ,pr_idorigem          => 3
+                                         ,pr_idseqttl          => pr_idseqttl
+                                         ,pr_dtmvtopr          => rw_crapdat.dtmvtopr
+                                         ,pr_inproces          => rw_crapdat.inproces
                                          ,pr_tab_dados_titulos => pr_tab_dados_titulos
                                          ,pr_tab_borderos      => vr_tab_borderos
                                          ,pr_dsmensag          => pr_dsmensag
@@ -1027,7 +1040,7 @@ BEGIN
   END IF;
 
   vr_nrborder := vr_tab_borderos(1).nrborder;
-  
+  vr_historico := 0;
   --  se todos os titulos selecionados para o borderô estiverem pré-aprovados, então aprovar automaticamente e liberar o borderô
   IF  pr_inpreapr = 1 THEN
       pc_libera_bordero_dscto_tit(pr_cdcooper => pr_cdcooper
@@ -1039,6 +1052,7 @@ BEGIN
       IF  TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_saida; 
       END IF;
+      vr_historico := 2665;
   END IF;
   
   vr_qttitulo := 0;
@@ -1047,7 +1061,73 @@ BEGIN
       vr_qttitulo := vr_qttitulo + 1;
       vr_vltitulo := vr_vltitulo + pr_tab_dados_titulos(idx).vltitulo;
   END LOOP;
-      
+  
+   /* Grava uma autenticacao para a transferencia */
+  CXON0000.pc_grava_autenticacao (pr_cooper       => pr_cdcooper   --Codigo Cooperativa
+                                 ,pr_cod_agencia  => 90              --Codigo Agencia
+                                 ,pr_nro_caixa    => 900            --Numero do caixa
+                                 ,pr_cod_operador => 996            --Codigo Operador
+                                 ,pr_valor        => vr_vltitulo    --Valor da transacao
+                                 ,pr_docto        => vr_nrborder    --Numero documento
+                                 ,pr_operacao     => TRUE           --Indicador Operacao Debito
+                                 ,pr_status       => '1'            --Status da Operacao - Online
+                                 ,pr_estorno      => FALSE          --Indicador Estorno
+                                 ,pr_histor       => vr_historico   --Historico
+                                 ,pr_data_off     => NULL           --Data Transacao
+                                 ,pr_sequen_off   => 0              --Sequencia
+                                 ,pr_hora_off     => 0              --Hora transacao
+                                 ,pr_seq_aut_off  => 0              --Sequencia automatica
+                                 ,pr_literal      => vr_literal     --Descricao literal
+                                 ,pr_sequencia    => vr_nrautdoc    --Sequencia
+                                 ,pr_registro     => vr_nrdrecid    --ROWID do registro
+                                 ,pr_cdcritic     => vr_cdcritic    --Código do erro
+                                 ,pr_dscritic     => vr_dscritic);  --Descricao do erro
+                                 
+  IF nvl(vr_cdcritic,0) <> 0 OR trim(vr_dscritic) IS NOT NULL THEN
+    vr_cdcritic:= 0;
+    vr_dscritic:= 'Erro na autenticacao da transferencia.';
+    --Levantar Excecao
+    RAISE vr_exc_saida;
+  END IF;
+  
+  -- Insere o protocolo de geração do borderô
+  GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper                         --> Código da cooperativa
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt                 --> Data movimento
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) --> Hora da transação
+                            ,pr_nrdconta => pr_nrdconta                         --> Número da conta
+                            ,pr_nrdocmto => vr_nrborder                         --> Número do documento
+                            ,pr_nrseqaut => NVL(vr_nrautdoc,0)                  --> Número da sequencia
+                            ,pr_vllanmto => vr_vltitulo                         --> Valor lançamento
+                            ,pr_nrdcaixa => 900                                 --> Número do caixa
+                            ,pr_gravapro => TRUE                                --> Controle de gravação
+                            ,pr_cdtippro => 22                                  --> Código de operação
+                            ,pr_dsinfor1 => 'Desconto de Titulo'                --> Descrição 1
+                            ,pr_dsinfor2 => vr_qttitulo                         --> Descrição 2
+                            ,pr_dsinfor3 => NULL                                --> Descrição 3
+                            ,pr_dscedent => NULL                                --> Descritivo
+                            ,pr_flgagend => FALSE                               --> Controle de agenda
+                            ,pr_nrcpfope => 0                                   --> Número de operação
+                            ,pr_nrcpfpre => 0                                   --> Número pré operação
+                            ,pr_nmprepos => NULL                                --> Nome
+                            ,pr_dsprotoc => vr_dsprotoc                         --> Descrição do protocolo
+                            ,pr_dscritic => vr_dscritic                         --> Descrição crítica
+                            ,pr_des_erro => vr_des_erro);                       --> Descrição dos erros de processo
+  
+  IF  TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+  END IF;
+  /*
+  -- Insere o protocolo de geração do borderô
+  GENE0006.pc_gera_protocolo(pr_cdcooper => pr_cdcooper
+                            ,pr_dsinfor1 => 'Desconto de Titulo'
+                            ,pr_cdtippro => 22 -- Desconto de Titulo
+                            ,pr_nrdocmto => vr_nrborder
+                            ,pr_dsinfor2 => vr_qttitulo -- Quantidade de títulos
+                            ,pr_vllanmto => vr_vltitulo -- Valor total do borderô
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                            ,pr_hrtransa => 
+                            ,
+  */    
   -- Gerar log
   gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                       ,pr_cdoperad => 996
