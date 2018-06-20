@@ -88,7 +88,7 @@
 							<?php foreach($dados->biro->find("craprpf") AS $t) {?>
 								<tr>
 									<td><? echo $t->dsnegati;  ?></td>
-									<?php if($t->qtnegati>0) { ?>
+									<?php if($t->findFirst("qtnegati")!= '' && $t->findFirst("qtnegati")>0) { ?>
 										<td><? echo (formataMoeda($t->vlnegati)); ?></td>
 										<td><? echo $t->qtnegati; ?></td>
 										<td><? echo $t->dtultneg; ?></td>
@@ -153,16 +153,7 @@
 						<?php foreach($dados->criticas->find("critica") AS $c) {?>
 							<tr>
 								<td><? echo $c->dsc;?></td>
-								<td>
-									<?php 
-									 	$varint = $c->int->cdata;
-									 	if($varint > 0){
-									 		echo $varint;
-									 	} else {
-									 		echo formataMoeda($c->per).'%';
-									 	}
-									?>
-								</td>
+								<td><? echo $c->vlr;?></td>
 							</tr>
 						<?} // Fim do foreach ?>	
 					</tbody>
