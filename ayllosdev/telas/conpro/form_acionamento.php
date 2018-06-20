@@ -14,7 +14,7 @@
     <div id="divFiltrosAciona">
         <fieldset>
 
-            <legend><?php echo utf8ToHtml('Filtros 2') ?></legend>
+            <legend><?php echo utf8ToHtml('Filtros') ?></legend>
 
             <label class="tpproduto" for="tpproduto">
              <?php echo utf8ToHtml('Tipo produto:') ?>
