@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 13/06/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 20/06/2018
            
     Dados referentes ao programa:
                 
@@ -246,9 +246,9 @@
                              código da modalidade to tipo de conta igual a "2" ou "3".
                              PRJ366 (Lombardi).
                              
-                13/06/2018 - Alterar a impressao da proposta f_vida_cecred_AP para 
-                             os planos 11,15,21,31,41,51 e 61 mudando para cobertura d
-                             e conjuge  a indenizacao sera de 50% de Morte (M) 
+                20/06/2018 - Alterar a impressao da proposta f_vida_cecred_3 para 
+                             os planos 14,18,24,34,44,54,64 mudando para cobertura do 
+                             conjuge a indenizacao sera de 50% de Morte (M)
                              (Lucas Ranghetti #TASK0016716)
 
 ..............................................................................*/
@@ -1548,9 +1548,9 @@ FORM SKIP(1)
      SKIP
      "   SANIDADE MENTAL DO SEGURADO."
      SKIP(1)
-     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 50% (CINQUENTA  POR  CENTO) DO CAPITAL"
+     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 100% (CEM POR CENTO) DO CAPITAL MAXIMO"
      SKIP
-     "   MAXIMO DO SEGURADO PRINCIPAL NA GARANTIA DE MORTE ACIDENTAL."     
+     "   DO SEGURADO PRINCIPAL NA GARANTIA DE MORTE ACIDENTAL."     
      SKIP(1)
      "6. O REEMBOLSO SERA FEITO PARA AS DESPESAS COM ALTERACAO DE CASA E/OU MODIFICACAO DE"
      SKIP
@@ -1585,9 +1585,9 @@ FORM SKIP(1)
      SKIP
      "   SANIDADE MENTAL DO SEGURADO."
      SKIP(1)
-     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 100% (CEM POR CENTO) DO CAPITAL MAXIMO" 
+     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 50% (CINQUENTA POR CENTO) DO CAPITAL" 
      SKIP
-     "   DO SEGURADO PRINCIPAL INDEPENDENTEMENTE DA SANIDADE MENTAL DO SEGURADO."
+     "   MAXIMO DO SEGURADO PRINCIPAL INDEPENDENTEMENTE DA SANIDADE MENTAL DO SEGURADO."
      SKIP(1)
      "6. OS FILHOS MENORES E/OU ENTEADOS CONSIDERADOS DEPENDENTES DO SEGURADO PRINCIPAL, "
      SKIP
