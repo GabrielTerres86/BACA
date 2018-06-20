@@ -35,9 +35,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                   nrdocmto craptdb.nrdocmto%TYPE,
                   dtvencto craptdb.dtvencto%TYPE,
                   dtlibbdt craptdb.dtlibbdt%TYPE,
+                  dtdpagto craptdb.dtdpagto%TYPE,
                   nossonum VARCHAR2(50),
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
+                  vlsldtit craptdb.vlsldtit%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
                   flgregis crapcob.flgregis%TYPE,
                   insittit craptdb.insittit%TYPE,
@@ -230,7 +232,8 @@ TYPE typ_reg_borderos IS RECORD(
      aux_vltottit   craptdb.vltitulo%TYPE,
      aux_qtsitapr   INTEGER,
      aux_vlsitapr   craptdb.vltitulo%TYPE,
-     dsinsitapr     VARCHAR2(50)
+     dsinsitapr     VARCHAR2(50),
+     flrestricao    INTEGER
 
 );
 TYPE typ_tab_borderos IS TABLE OF typ_reg_borderos INDEX BY BINARY_INTEGER;
@@ -3788,11 +3791,36 @@ END pc_obtem_proposta_aciona_web;
 
 
     /*Cursor para verificar se boleto já nao esta em outro bordero*/
-    CURSOR cr_craptdb (pr_nrdocmto IN craptdb.nrdocmto%TYPE, pr_nrdctabb IN craptdb.nrdctabb%TYPE, pr_nrcnvcob IN craptdb.nrcnvcob%TYPE) IS
+    CURSOR cr_craptdb (pr_nrdocmto IN craptdb.nrdocmto%TYPE, pr_nrdctabb IN craptdb.nrdctabb%TYPE, pr_nrcnvcob IN craptdb.nrcnvcob%TYPE, pr_nrborder IN craptdb.nrborder%TYPE) IS
      SELECT
         craptdb.nrdocmto,
         craptdb.nrborder,
-        craptdb.insitapr
+        craptdb.insitapr,
+        CASE WHEN (SELECT nrdocmto FROM craptdb INNER JOIN crapbdt ON craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
+          WHERE craptdb.nrdconta = pr_nrdconta
+            AND craptdb.cdcooper = pr_cdcooper
+            AND craptdb.nrdocmto = pr_nrdocmto
+             AND craptdb.nrdctabb = pr_nrdctabb
+             AND craptdb.nrcnvcob = pr_nrcnvcob
+            AND craptdb.nrborder <> pr_nrborder
+            AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
+            AND craptdb.insitapr = 0) IS NOT NULL THEN 1 ELSE 0 END AS fl_aberto, --Somente titulos aprovados
+        CASE WHEN (SELECT nrdocmto FROM craptdb INNER JOIN crapbdt ON craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
+          WHERE craptdb.nrdconta = pr_nrdconta
+            AND craptdb.cdcooper = pr_cdcooper
+            AND craptdb.nrdocmto = pr_nrdocmto
+            AND craptdb.nrdctabb = pr_nrdctabb
+            AND craptdb.nrcnvcob = pr_nrcnvcob
+            AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
+            AND craptdb.insitapr = 1) IS NOT NULL THEN 1 ELSE 0 END AS fl_aprovado, --Somente titulos aprovados
+         CASE WHEN (SELECT nrborder FROM craptdb 
+           WHERE craptdb.nrdconta = pr_nrdconta
+             AND craptdb.cdcooper = pr_cdcooper
+             AND craptdb.nrdocmto = pr_nrdocmto
+             AND craptdb.nrdctabb = pr_nrdctabb
+             AND craptdb.nrcnvcob = pr_nrcnvcob
+             AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
+             AND craptdb.nrborder = pr_nrborder) IS NOT NULL THEN 1 ELSE 0 END AS fl_bordero --Somente titulos aprovados
      FROM
         craptdb
         INNER JOIN crapbdt ON  craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
@@ -3803,7 +3831,7 @@ END pc_obtem_proposta_aciona_web;
         AND craptdb.nrdctabb = pr_nrdctabb
         AND craptdb.nrcnvcob = pr_nrcnvcob
         AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
-  --      AND craptdb.insitapr = 1 --Somente titulos aprovados
+        -- Retirar os titulos que ja foram aprovados em algum bordero
    ;rw_craptdb cr_craptdb%ROWTYPE;
    BEGIN
      -- Incluir nome do modulo logado
@@ -3867,10 +3895,10 @@ END pc_obtem_proposta_aciona_web;
            END IF;
         END IF;
         /*verifica se já nao está em outro bordero*/
-       open cr_craptdb (pr_nrdocmto=>rw_crapcob.nrdocmto, pr_nrdctabb => rw_crapcob.nrdctabb, pr_nrcnvcob => rw_crapcob.nrcnvcob);
+       open cr_craptdb (pr_nrdocmto=>rw_crapcob.nrdocmto, pr_nrdctabb => rw_crapcob.nrdctabb, pr_nrcnvcob => rw_crapcob.nrcnvcob, pr_nrborder => pr_nrborder);
          fetch cr_craptdb into rw_craptdb;
          if  (cr_craptdb%notfound
-               OR (cr_craptdb%found AND rw_craptdb.nrborder IS NOT NULL AND (rw_craptdb.nrborder=pr_nrborder OR rw_craptdb.insitapr=2) ) )then
+               OR (cr_craptdb%found AND rw_craptdb.nrborder IS NOT NULL AND (rw_craptdb.fl_bordero = 1 OR rw_craptdb.fl_aprovado = 0) AND rw_craptdb.fl_aberto = 0 ) )then
             pr_qtregist := pr_qtregist+1;
             vr_idtabtitulo := pr_tab_dados_titulos.count + 1;
             pr_tab_dados_titulos(vr_idtabtitulo).progress_recid := rw_crapcob.progress_recid;
@@ -4809,7 +4837,7 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
     Objetivo  : Procedure para realizar a inclusão do borderô
 
     Alteração : 18/05/2018 - Criação, separado da procedure pc_insere_bordero_web (Paulo Penteado (GFT))
-
+                15/06/2018 - Retorno se o bordero teve criticas ou nao ao inserir. [Vitor Shimada Assanuma (GFT)]
   ---------------------------------------------------------------------------------------------------------------------*/
    -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -4935,6 +4963,7 @@ BEGIN
         vr_dscritic := 'Contrato não encontrado.';
         raise vr_exc_erro;
       END IF;
+      CLOSE cr_craplim;
       vr_cddlinha := rw_craplim.cddlinha;
 
       OPEN cr_crapldc;
@@ -4943,6 +4972,7 @@ BEGIN
          vr_dscritic := 'Linha de crédito não encontrada.';
          raise vr_exc_erro;
       END IF;
+      CLOSE cr_crapldc;
 
      IF (rw_craplim.dtfimvig <pr_dtmvtolt) THEN
          vr_dscritic := 'A vigência do contrato deve ser maior que a data de movimentação do sistema.';
@@ -4955,6 +4985,7 @@ BEGIN
         vr_dscritic := 'Cooperado não cadastrado';
         raise vr_exc_erro;
      END IF;
+     CLOSE cr_crapass;
 
       --carregando os dados de prazo limite da TAB052
      dsct0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
@@ -5216,9 +5247,13 @@ BEGIN
                                       ,pr_cdcritic => vr_cdcritic          --> Código da crítica
                                       ,pr_dscritic => vr_dscritic             --> Descriçao da crítica
                                       );      
+                                      
        IF  vr_cdcritic > 0  OR TRIM(vr_dscritic) IS NOT NULL THEN
          RAISE vr_exc_erro;
        END IF;
+       
+       -- Retorno se teve restrição
+       pr_tab_borderos(1).flrestricao := vr_indrestr;
        
        IF (vr_indrestr = 0) THEN
           pr_dsmensag := 'Borderô n ' || vr_nrborder || ' criado com sucesso. Borderô sem críticas, aprovado automaticamente!';
@@ -5227,7 +5262,7 @@ BEGIN
        END IF;
 
 EXCEPTION
-  WHEN vr_exc_erro then
+  WHEN vr_exc_erro THEN
        IF  nvl(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NULL THEN
            pr_cdcritic := vr_cdcritic;
            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -5236,7 +5271,7 @@ EXCEPTION
            pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
        END IF;
 
-  WHEN OTHERS then
+  WHEN OTHERS THEN
        pr_cdcritic := vr_cdcritic;
        pr_dscritic := 'Erro geral na rotina pc_insere_bordero: '||SQLERRM;
 END pc_insere_bordero;
@@ -5266,6 +5301,7 @@ END pc_insere_bordero;
 
     Alteração : ??/03/2018 - Criação (Luis Fernando (GFT))
                 18/05/2018 - Transformado a procedure em _web (Paulo Penteado (GFT)) 
+                15/06/2018 - Retorno se o bordero teve criticas ou nao e o numero ao inserir. [Vitor Shimada Assanuma (GFT)]
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_dados_titulos typ_tab_dados_titulos;
@@ -5327,6 +5363,7 @@ END pc_insere_bordero;
     END IF;
     CLOSE btch0001.cr_crapdat;
                             
+                            
     pc_insere_bordero(pr_cdcooper          => vr_cdcooper
                      ,pr_nrdconta          => pr_nrdconta
                      ,pr_tpctrlim          => pr_tpctrlim
@@ -5365,7 +5402,13 @@ END pc_insere_bordero;
                         ,pr_nrdrowid => vr_nrdrowid);
                           
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                   '<Root><Dados><inf>' || vr_dsmensag || '</inf></Dados></Root>');
+                                   '<Root>'||
+                                      '<Dados>' ||
+                                        '<inf>'         || vr_dsmensag                    || '</inf>'         ||
+                                        '<nrborder>'    || vr_tab_borderos(1).nrborder    || '</nrborder>'    ||
+                                        '<flrestricao>' || vr_tab_borderos(1).flrestricao || '</flrestricao>' ||
+                                      '</Dados>'||
+                                   '</Root>');
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -5653,6 +5696,9 @@ END pc_insere_bordero;
         
       -- Caso o bordero esteja liberado ou liquidado, deve carregar as criticas da CRAPABT
       IF rw_crapbdt.insitbdt IN (3,4)  THEN
+        pr_tab_dados_detalhe(0).concpaga := 0;
+        pr_tab_dados_detalhe(0).liqpagcd := 100.00;
+        pr_tab_dados_detalhe(0).liqgeral := 100.00;
         vr_idtabcritica := 0;
         OPEN cr_crapabt(vr_tab_chaves(4), -- Conta
                            vr_tab_chaves(3), -- Convenio
@@ -6050,6 +6096,7 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
    vr_dscritic varchar2(1000);        --> Desc. Erro
 
    vr_index        INTEGER;
+   vr_dtmvtolt    DATE;
    vr_nrinssac    number;
    vr_situacao char(1);
    vr_ibratan char(1);
@@ -6122,7 +6169,8 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
               /*Verifica se o valor líquido do título é 0, se for calcula*/
               IF (vr_tab_tit_bordero(vr_index).vlliquid=0) THEN
                 IF  rw_crapdat.dtmvtolt > vr_tab_tit_bordero(vr_index).dtvencto THEN
-                    vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero(vr_index).dtvencto,rw_crapdat.dtmvtolt);
+                    vr_qtd_dias := rw_crapdat.dtmvtolt - vr_tab_tit_bordero(vr_index).dtvencto;
+                    --vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero(vr_index).dtvencto,rw_crapdat.dtmvtolt);
                 ELSE
                     vr_qtd_dias := vr_tab_tit_bordero(vr_index).dtvencto -  rw_crapdat.dtmvtolt;
                 END IF;
@@ -6167,9 +6215,11 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
              pr_tab_tit_bordero(vr_index).nrdocmto := vr_tab_tit_bordero(vr_index).nrdocmto;
              pr_tab_tit_bordero(vr_index).dtvencto := vr_tab_tit_bordero(vr_index).dtvencto;
              pr_tab_tit_bordero(vr_index).dtlibbdt := vr_tab_tit_bordero(vr_index).dtlibbdt;
+             pr_tab_tit_bordero(vr_index).dtdpagto := vr_tab_tit_bordero(vr_index).dtdpagto;
              pr_tab_tit_bordero(vr_index).nossonum := vr_tab_tit_bordero(vr_index).nossonum;
              pr_tab_tit_bordero(vr_index).vltitulo := vr_tab_tit_bordero(vr_index).vltitulo;
              pr_tab_tit_bordero(vr_index).vlliquid := vr_tab_tit_bordero(vr_index).vlliquid;
+             pr_tab_tit_bordero(vr_index).vlsldtit := vr_tab_tit_bordero(vr_index).vlsldtit;
              pr_tab_tit_bordero(vr_index).nmsacado := vr_tab_tit_bordero(vr_index).nmsacado;
              pr_tab_tit_bordero(vr_index).insittit := vr_tab_tit_bordero(vr_index).insittit;
              pr_tab_tit_bordero(vr_index).insitapr := vr_tab_tit_bordero(vr_index).insitapr;
@@ -6187,8 +6237,7 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
 
 END pc_buscar_tit_bordero;
 
-PROCEDURE pc_buscar_tit_bordero_web (
-                                  pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                   ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
                                   ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                   --------> OUT <--------
@@ -6222,7 +6271,12 @@ PROCEDURE pc_buscar_tit_bordero_web (
      vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
      vr_dscritic varchar2(1000);        --> Desc. Erro
 
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%rowtype;
+    
+    vr_tit_vencido INTEGER;
     BEGIN
+      
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -6248,6 +6302,11 @@ PROCEDURE pc_buscar_tit_bordero_web (
                            ,vr_dscritic --> Descrição da crítica
                            );
 
+      --    Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
@@ -6261,7 +6320,15 @@ PROCEDURE pc_buscar_tit_bordero_web (
       -- ler os registros de titulos e incluir no xml
       vr_index := vr_tab_tit_bordero.first;
 
-      while vr_index is not null loop
+      while vr_index is not null LOOP
+            vr_tit_vencido := 0;
+            
+            --Verifica se o titulo está vencido
+            IF (vr_tab_tit_bordero(vr_index).insittit NOT IN (2,3))
+             AND (gene0005.fn_valida_dia_util(vr_cdcooper, vr_tab_tit_bordero(vr_index).dtvencto) < rw_crapdat.dtmvtolt) THEN
+              vr_tit_vencido := 1;
+            END IF;
+            
             pc_escreve_xml('<inf>'||
                               '<cdbandoc>' || vr_tab_tit_bordero(vr_index).cdbandoc || '</cdbandoc>' || --FIELD cdbandoc LIKE craptdb.cdbandoc
                               '<nrdconta>' || vr_tab_tit_bordero(vr_index).nrdconta || '</nrdconta>' || --FIELD nrdconta LIKE craptdb.nrdconta
@@ -6278,6 +6345,8 @@ PROCEDURE pc_buscar_tit_bordero_web (
                               '<insittit>' || vr_tab_tit_bordero(vr_index).insittit || '</insittit>' || --FIELD insittit LIKE craptdb.insittit
                               '<flgregis>' || vr_tab_tit_bordero(vr_index).flgregis || '</flgregis>' || --FIELD flgregis AS LOG  FORMAT "REGISTRADA/SEM REGISTRO"
                               '<insitapr>' || vr_tab_tit_bordero(vr_index).insitapr || '</insitapr>' || --FIELD insitapr LIKE craptdb.insitapr
+                              '<tvencido>' || vr_tit_vencido                        || '</tvencido>' || -- Verifica a partir do calendario de feriados se esta vencido ou nao
+                              '<vlsldtit>' || vr_tab_tit_bordero(vr_index).vlsldtit || '</vlsldtit>' || --Saldo devedor do título
                            '</inf>'
                           );
           /* buscar proximo */
@@ -7218,7 +7287,8 @@ PROCEDURE pc_buscar_tit_bordero_web (
               crapbdt.insitbdt = 1, --Em Estudo
               crapbdt.insitapr = 0,
               crapbdt.dtenvmch = NULL,
-              crapbdt.nrseqtdb = vr_idtabtitulo
+              crapbdt.nrseqtdb = vr_idtabtitulo,
+              crapbdt.dtanabor = NULL -- Limpa a data de analise, pois necessita nova analise
            WHERE
               crapbdt.nrborder = pr_nrborder
               AND crapbdt.cdcooper = vr_cdcooper
