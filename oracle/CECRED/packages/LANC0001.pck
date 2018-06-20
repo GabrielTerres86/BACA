@@ -729,8 +729,6 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 	
-	COMMIT;
-
   -- Criar documento XML
   dbms_lob.createtemporary(pr_dsretorn_xml, TRUE);
   dbms_lob.open(pr_dsretorn_xml, dbms_lob.lob_readwrite);
