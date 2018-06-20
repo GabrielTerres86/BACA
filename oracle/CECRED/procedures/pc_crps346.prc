@@ -195,6 +195,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
 
               21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                            (Ana - Envolti - Chamado 746134)
+
+              29/05/2018  - Lançamento de Credito e Debito utilizando LANC0001 - Rangel Decker AMcom                           
    ............................................................................. */
 
   -- Constantes do programa
@@ -337,6 +339,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
                                  ,vlblq999 NUMBER); 
   TYPE typ_tab_crawdpb IS TABLE OF typ_reg_crawdpb INDEX BY PLS_INTEGER;
   vr_tab_crawdpb typ_tab_crawdpb;
+  
+  
+  vr_rcraplot       LANC0001.cr_craplot%ROWTYPE; 
+  vr_incrineg       INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
+  
+  vr_fldebita       BOOLEAN DEFAULT TRUE;
   
   -- Tipo para armazenar valores do lote
   TYPE typ_reg_craplot IS RECORD(nrrowid  rowid
@@ -1133,8 +1142,22 @@ BEGIN
         IF vr_flgclote THEN
           -- Tentaremos criar o registro do lote
           BEGIN
-            INSERT INTO craplot (cdcooper
-                                ,dtmvtolt
+            
+             LANC0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                      ,pr_cdagenci => vr_cdagenci
+                                      ,pr_cdbccxlt => vr_cdbccxlt
+                                      ,pr_nrdolote => vr_nrdolote
+                                      ,pr_tplotmov => 1
+                                      ,pr_rw_craplot => vr_rcraplot
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic);
+            	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_saida;
+            	END IF;                          
+             
+          /*  INSERT INTO craplot (cdcooper
+                                ,dtmvtolt  
                                 ,cdagenci
                                 ,cdbccxlt
                                 ,nrdolote
@@ -1169,7 +1192,7 @@ BEGIN
                                 ,rw_craplot.vlcompdb 
                                 ,rw_craplot.vlinfocr
                                 ,rw_craplot.vlcompcr;
-          EXCEPTION
+*/          EXCEPTION
             WHEN dup_val_on_index THEN
               -- Lote já existe, critica 59
               vr_cdcritic := 59;
@@ -1473,8 +1496,47 @@ BEGIN
             ELSE   
               vr_cdhistor := 50;
             END IF;
+            
+            /* identifica se pode debitar na conta do cooperado */
+            vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                    pr_nrdconta => vr_nrdconta,
+                                                    pr_cdhistor => vr_cdhistor);
+
+           IF vr_fldebita = TRUE  THEN
             -- Criando lançamento 
-            INSERT INTO craplcm (dtmvtolt
+            LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt  => rw_craplot.dtmvtolt
+                                               ,pr_dtrefere => vr_dtleiarq 
+                                               ,pr_cdagenci => rw_craplot.cdagenci
+                                               ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                               ,pr_nrdolote => rw_craplot.nrdolote
+                                               ,pr_nrdconta => vr_nrdconta
+                                               ,pr_nrdctabb => vr_nrdctabb
+                                               ,pr_nrdctitg => vr_dsdctitg -- nrdctitg
+                                               ,pr_nrdocmto => vr_nrdocmto
+                                               ,pr_cdhistor => vr_cdhistor
+                                               ,pr_vllanmto => vr_vllanmto
+                                               ,pr_nrseqdig => vr_nrseqint
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdpesqbb => vr_cdpesqbb
+                                               ,pr_cdbanchq => rw_crapfdc.cdbanchq
+                                               ,pr_cdagechq => rw_crapfdc.cdagechq
+                                               ,pr_nrctachq => rw_crapfdc.nrctachq
+                                               -- OUTPUT --
+                                               ,pr_tab_retorno => vr_tab_retorno
+                                               ,pr_incrineg => vr_incrineg
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic);   
+                                           
+          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+             IF vr_incrineg = 0 THEN 
+		       		RAISE vr_exc_saida;
+             ELSE
+              CONTINUE;
+             END IF;  
+      			END IF;    
+            
+                
+          /*  INSERT INTO craplcm (dtmvtolt
                                 ,dtrefere
                                 ,cdagenci
                                 ,cdbccxlt
@@ -1508,11 +1570,16 @@ BEGIN
                                ,rw_crapfdc.cdbanchq
                                ,rw_crapfdc.cdagechq
                                ,rw_crapfdc.nrctachq);
-          EXCEPTION 
+*/ 
+                                                                                               
+          END IF;  
+           EXCEPTION 
             WHEN OTHERS THEN 
               vr_dscritic := ' na inserção do lançamento em CC --> '||sqlerrm;
               RAISE vr_exc_saida;
-          END;
+         END;
+          
+         IF vr_fldebita = TRUE  THEN
           -- Atualizar folha de cheque 
           BEGIN 
             UPDATE crapfdc 
@@ -1526,6 +1593,7 @@ BEGIN
               vr_dscritic := ' ao atualizar Folha de Cheque --> '||sqlerrm;
               RAISE vr_exc_saida; 
           END;
+        
           -- Se for devolucao de cheque verifica o indicador de
           -- historico da contra-ordem. Se for 2, alimenta aux_cdalinea
           -- com 28 para nao gerar taxa de devolucao
@@ -1677,15 +1745,47 @@ BEGIN
                 RAISE vr_exc_saida;
             END;
           END IF;
+            
           -- Atualizar LOTE 
           rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
           rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
           rw_craplot.vlinfocr := rw_craplot.vlinfocr + nvl(vr_vllanmto,0);
           rw_craplot.vlcompcr := rw_craplot.vlcompcr + nvl(vr_vllanmto,0);
           rw_craplot.nrseqdig := vr_nrseqint;
+          
+          
           -- Criar lançamento na CC do Cooperado 
           BEGIN
-            INSERT INTO craplcm (dtmvtolt
+             
+               LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt  => rw_craplot.dtmvtolt
+                                                  ,pr_cdagenci => rw_craplot.cdagenci
+                                                  ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                                  ,pr_nrdolote => rw_craplot.nrdolote
+                                                  ,pr_nrdconta => vr_nrdconta
+                                                  ,pr_nrdctabb => vr_nrdctabb
+                                                  ,pr_nrdctitg => vr_dsdctitg -- nrdctitg
+                                                  ,pr_nrdocmto => vr_nrdocmto
+                                                  ,pr_cdhistor => vr_cdhistor
+                                                  ,pr_vllanmto => vr_vllanmto
+                                                  ,pr_nrseqdig => vr_nrseqint
+                                                  ,pr_cdcooper => pr_cdcooper
+                                                  ,pr_cdpesqbb => vr_cdpesqbb
+                                                     -- OUTPUT --
+                                                  ,pr_tab_retorno => vr_tab_retorno
+                                                  ,pr_incrineg => vr_incrineg
+                                                  ,pr_cdcritic => vr_cdcritic
+                                                  ,pr_dscritic => vr_dscritic);   
+                                           
+          	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+              IF vr_cdcritic = 0 THEN
+		       	  	RAISE vr_exc_saida;
+              ELSE
+               CONTINUE;
+              END IF;    
+      			END IF;                                                                                       
+
+            
+          /*  INSERT INTO craplcm (dtmvtolt
                                 ,cdagenci
                                 ,cdbccxlt
                                 ,nrdolote
@@ -1711,7 +1811,7 @@ BEGIN
                                ,vr_vllanmto
                                ,vr_nrseqint
                                ,vr_cdpesqbb);
-          EXCEPTION 
+*/          EXCEPTION 
             WHEN OTHERS THEN 
               vr_dscritic := ' na inserção do lançamento em CC --> '||sqlerrm;
               RAISE vr_exc_saida;
@@ -1748,6 +1848,7 @@ BEGIN
           -- Atualizar variavel de entrada
           vr_flgentra := true;
         END IF;
+      END IF;   
       END LOOP;
     EXCEPTION
       WHEN vr_exc_saida THEN
