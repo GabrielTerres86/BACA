@@ -6,7 +6,10 @@
  * OBJETIVO     : Formulário de exibição da tela TAB089
  * ALTERAÇÕES   : 
  *                 30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
- *                 PRJ 450 - Diego Simas (AMcom)
+ *                 				PRJ 450 - Diego Simas (AMcom)
+ *					
+ *				   20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+ *							    PRJ 450 - Diego Simas (AMcom)	
  *                  
  */
 ?>
@@ -55,10 +58,6 @@
 		<input type="text" id="vltolemp" name="vltolemp" class="moeda" value="<?php echo $vltolemp == 0 ? '' : $vltolemp ?>" style="text-align:right;"/>
 		<br style="clear:both" />
 
-		<label for="pctaxpre" class='labelPri'>Taxa de juros remunerat&oacute;rio de preju&iacute;zo:</label>
-		<input type="text" id="pctaxpre" name="pctaxpre" class="moeda" value="<?php echo $pctaxpre == 0 ? '' : $pctaxpre ?>" maxlength="6" style="text-align:right;width:50px;"/>	
-		<label>&nbsp;%</label>
-		
     </fieldset>
 	
 	<fieldset>
@@ -106,5 +105,20 @@
 		<input type="text" id="qtdibsem" name="qtdibsem" value="<?php echo $qtdibsem == 0 ? '' : $qtdibsem ?>" maxlength="3" style="text-align:right;"/>	
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
-	</fieldset>    
+	</fieldset>   
+
+	<fieldset>
+		<legend>Preju&iacute;zo</legend>
+		
+		<label for="pctaxpre" class='labelPri'>Taxa de juros remunerat&oacute;rio de preju&iacute;zo:</label>
+		<input type="text" id="pctaxpre" name="pctaxpre" class="moeda" value="<?php echo $pctaxpre == 0 ? '' : $pctaxpre ?>" maxlength="6" style="text-align:right;width:50px;"/>	
+		<label>&nbsp;%</label>
+		<br style="clear:both" />
+		
+		<label for="qtdictcc" class='labelPri'>Prazo p/ transfer&ecirc;ncia de valor da conta transit&oacute;ria para a CC:</label>
+		<input type="text" id="qtdictcc" name="qtdictcc" value="<?php echo $qtdictcc == 0 ? '' : $qtdictcc ?>" maxlength="3" style="text-align:right;"/>	
+		<label>&nbsp;dia(s)</label>
+		<br style="clear:both" />
+
+	</fieldset>
 </form>

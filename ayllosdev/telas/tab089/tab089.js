@@ -6,7 +6,10 @@
  * ---------------
  * ALTERAÇÕES   
  *                30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
- *                PRJ 450 - Diego Simas (AMcom)
+ *                             PRJ 450 - Diego Simas (AMcom)
+ * 
+ *                20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC *
+ *                             PRJ 450 - Diego Simas (AMcom)
  *
  * ---------------
  */
@@ -122,6 +125,7 @@ function formataCampos() {
     cQtdibaut = $('#qtdibaut', '#frmTab089'); 
     cQtdibapl = $('#qtdibapl', '#frmTab089'); 
     cQtdibsem = $('#qtdibsem', '#frmTab089'); 
+    cQtdictcc = $('#qtdictcc', '#frmTab089');
     cVlempres = $('#vlempres', '#frmTab089'); 
     cVlmaxest = $('#vlmaxest', '#frmTab089'); 
     cVltolemp = $('#vltolemp', '#frmTab089'); 
@@ -139,9 +143,9 @@ function formataCampos() {
     cQtdpasem.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdibaut.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdibapl.css('width', '40px').setMask('INTEGER','zzz','','');
-    cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');    
+    cQtdictcc.css('width', '40px').setMask('INTEGER','zzz','','');
     //Máscara para porcentagem
-    cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
     cPcaltpar.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
     cPctaxpre.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
     //Máscara para moedas (Valor Monetário)
@@ -222,20 +226,10 @@ function controlaFoco() {
 
     $('#vltolemp', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctaxpre', '#frmTab089').focus();
-            return false;
-        }
-    });
-
-    $('#pctaxpre', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtdpaimo', '#frmTab089').focus();
             return false;
         }
     });
-
-
-
 
     $('#qtdpaimo', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -286,6 +280,21 @@ function controlaFoco() {
             return false;
         }
     });
+
+    $('#qtdibsem', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#pctaxpre', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#pctaxpre', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdictcc', '#frmTab089').focus();
+            return false;
+        }
+    });
+
 }
 
 function controlaOperacao() {
@@ -324,6 +333,7 @@ function manterRotina(cddopcao) {
     var cQtdibaut = normalizaNumero($('#qtdibaut', '#frmTab089').val());
     var cQtdibapl = normalizaNumero($('#qtdibapl', '#frmTab089').val());
     var cQtdibsem = normalizaNumero($('#qtdibsem', '#frmTab089').val());
+    var cQtdictcc = normalizaNumero($('#qtdictcc', '#frmTab089').val());
     var cVlempres = normalizaNumero($('#vlempres', '#frmTab089').val());
     var cVlmaxest = normalizaNumero($('#vlmaxest', '#frmTab089').val());
     var cVltolemp = normalizaNumero($('#vltolemp', '#frmTab089').val());
@@ -332,7 +342,7 @@ function manterRotina(cddopcao) {
 
     var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
     showMsgAguardo(mensagem);
-
+    
     $.ajax({
         type: 'POST',
         async: true,
@@ -351,6 +361,7 @@ function manterRotina(cddopcao) {
             qtdibaut : cQtdibaut,
             qtdibapl : cQtdibapl,
             qtdibsem : cQtdibsem,
+            qtdictcc : cQtdictcc,
             vlempres : cVlempres,
             vlmaxest : cVlmaxest,
             vltolemp : cVltolemp,
