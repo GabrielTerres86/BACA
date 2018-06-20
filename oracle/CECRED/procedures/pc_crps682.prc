@@ -92,6 +92,9 @@ BEGIN
                  30/04/2018 - Alterados codigos de situacao "ass.cdsitdct". PRJ366 (Lombardi).
                               
                  23/05/2018 - Adicionado campo "dtvigencia" no where. PRJ366 (Lombardi). 
+
+				 15/06/2018 - Ao buscar os dados do cooperado de todas as agencias pelo cpf/cnpj,
+				              não deve considerar as contas que estão na situação 4. (Renato - Supero)
                               
   ............................................................................ */
 
@@ -604,7 +607,7 @@ BEGIN
             ,ass.dtmvtolt
         from crapass ass
        where ass.nrcpfcgc = pr_nrcpfcgc
-         and ass.cdsitdct in (1,2,3,4,5,9);
+         and ass.cdsitdct in (1,2,3,5,9);
 
     -- Verifica se pre aprovado esta liberado
     CURSOR cr_param_conta (pr_cdcooper crapneg.cdcooper%TYPE

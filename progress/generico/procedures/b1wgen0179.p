@@ -865,10 +865,10 @@ PROCEDURE Grava_Dados:
     /*364 - SM 5*/
     DEF  INPUT PARAM par_inperdes AS INTE                           NO-UNDO.
     
-	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
-    
-	/* PRJ 416 */
+	  /* PRJ 416 */
     DEF  INPUT PARAM par_operauto AS CHAR                           NO-UNDO.
+    
+	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -1396,7 +1396,7 @@ PROCEDURE Grava_Dados:
                                          INPUT par_vltarcsh).
 					
 					/* Inicio PRJ 416 - Se o campo operauto (operador que autorizou fia vform senha) nao seja vazio, irá salvar log informando que foi o mesmo que autorizou a açao */                     
-                    IF par_operauto <> "" THEN
+                    IF par_indutblq = "N" AND par_operauto <> "" THEN
                       DO:
                       
                         FIND crapope WHERE crapope.cdcooper = par_cdcooper   AND

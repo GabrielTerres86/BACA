@@ -8914,7 +8914,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                             AND ccs.nrdconta = efp.nrdconta)) nmprimtl
                ,efp.dsdcargo
                ,efp.dtadmiss
-               ,efp.dstelefo
+               ,NVL(TRIM(REGEXP_REPLACE(efp.dstelefo,'[^0-9]')),' ') dstelefo
                ,efp.dsdemail
                ,efp.nrregger
                ,efp.nrodopis

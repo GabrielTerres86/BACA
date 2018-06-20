@@ -56,8 +56,6 @@ function estadoInicial() {
     $('#tlcooper', '#frmCab').val('0');
 	$('label[for="tlcooper"]', '#' + frmCab).hide();
 	$('#tlcooper', '#' + frmCab).hide();
-    /*$('label[for="tpproduto"]', '#' + frmCab).hide();
-	$('#tpproduto', '#' + frmCab).hide();*/
 }
 
 function controlaLayout() {
@@ -90,7 +88,7 @@ function formataCabecalho() {
     // Cabeçalho
     rCddopcao = $('label[for="cddopcao"]', '#' + frmCab);
     rTlcooper = $('label[for="tlcooper"]', '#' + frmCab);
-    rTpproduto = $('label[for="tpproduto"]', '#' + frmCab);    
+    rTpproduto = $('label[for="tpprodut"]', '#' + frmCab);    
 
 	rCddopcao.css('width', '50px');
 	rTlcooper.css('width', '80px');
@@ -101,7 +99,7 @@ function formataCabecalho() {
 	
     btnCab = $('#btOK', '#' + frmCab);
 
-    cCddopcao.css({'width': '300px'});
+    cCddopcao.css({'width': '230px'});
 	cTlcooper.css({'width': '80px'});
 
     cTodosCabecalho.habilitaCampo();
@@ -362,7 +360,7 @@ function controlaFoco() {
 }
 
 function controlaOperacao() {
-    tpproduto = $("#tpproduto").val();  
+    tpproduto = $("#tpprodut").val();  
 	if ( $('#cddopcao', '#frmCab').val() == 'C' ) {
 		LiberaCampos();
 	} else {			
@@ -386,7 +384,7 @@ function LiberaCampos() {
     cTodosCabecalho = $('input[type="text"],select', '#frmCab');
     cTodosCabecalho.desabilitaCampo();
 
-    if(tpproduto == '0'){
+    if(tpproduto != '4'){
 	$('#frmParest').css({'display': 'block'});
     }else if(tpproduto == '4'){
         $('#frmParest04').css({'display': 'block'});
@@ -398,7 +396,7 @@ function LiberaCampos() {
 	    if ($('#tlcooper', '#' + frmCab).val() == 0) { // Todas
 			// Mostra Divs
 	        $('#divBotoes').css({ 'display': 'block' });
-            if(tpproduto == '0')
+            if(tpproduto != '4')
 	        $('#divAlteracao').css({ 'display': 'block' });
             else if(tpproduto == '4'){
                 $('#divAlteracao04').css({ 'display': 'block' });
@@ -444,7 +442,7 @@ function manterRotina(cdopcao) {
 	var tpprodut = normalizaNumero($('#tpprodut', '#' + frmCab).val());
 	
    
-    if(tpproduto == '0'){
+    if(tpproduto != '4'){
     var contigen = normalizaNumero($('#contigen', '#' + frmParest).val());
     var incomite = normalizaNumero($('#incomite', '#' + frmParest).val());
     var anlautom = normalizaNumero($('#anlautom', '#' + frmParest).val());

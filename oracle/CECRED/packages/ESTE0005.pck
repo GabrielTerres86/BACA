@@ -2030,7 +2030,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         vr_obj_generic2.put('ratingConta', 'A');
         vr_obj_generic2.put('riscoCooperado', 'A');
       END IF;
-      vr_obj_generic2.put('aquiteste',vr_des_reto);
       
 
       -- Buscar risco do grupo econômico (se existir)
@@ -4013,7 +4012,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF pr_tpproces = 'I' THEN --Inclusão
       vr_obj_generico.put('tipoProduto','LM');
     ELSE --Alteração
-      vr_obj_generico.put('tipoProduto','MJ');
+      IF rw_crawcrd.vllimcrd = 0 THEN
+        vr_obj_generico.put('tipoProduto','LM');
+      ELSE
+        vr_obj_generico.put('tipoProduto','MJ');
+      END IF;
     END IF;
 
     --Campos usados somente em Empréstimo, irão com valor em branco.
@@ -4487,7 +4490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       FOR rw_crapavt IN cr_crapavt( pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrctrcrd => 0
-                                   ,pr_tpctrato => 4
+                                   ,pr_tpctrato => 6
                                    ,pr_dsproftl => 'SOCIO') LOOP
 
         -- Setar flag para indicar que há sócio
@@ -4671,7 +4674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     FOR rw_crapavt IN cr_crapavt(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_nrctrcrd => 0
-                                ,pr_tpctrato => 4
+                                ,pr_tpctrato => 6
                                 ,pr_dsproftl => 'PROCURADOR') LOOP
       -- Setar flag para indicar que há sócio
       vr_flprocura := true;
@@ -5870,6 +5873,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_tpprodut := 'MJ';
       vr_dsjustif := rw_limatu.dsjustificativa;
       vr_dsprotoc := rw_limatu.dsprotocolo;
+      IF vr_dsprotoc = '0' THEN
+        vr_dsprotoc := null;
+      END IF;
     ELSE
       vr_vllimite := rw_crawcrd.vllimcrd;
       vr_tpprodut := 'LM';

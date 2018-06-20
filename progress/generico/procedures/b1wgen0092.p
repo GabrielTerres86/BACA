@@ -1153,7 +1153,7 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:   
+            DO:                                 
                               
                 IF  par_cdrefere = 0 THEN              
                     DO:
@@ -1548,7 +1548,7 @@ PROCEDURE valida-dados:
                             par_cdhistor = 554   OR   /* AGUAS JOINVILLE */
                             par_cdhistor = 961   OR   /* FOZ DO BRASIL */
                             par_cdhistor = 962   OR   /* AGUAS DE MASSARANDUBA */ 
-                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */
+                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */                           
                             DO:        
                                 IF  par_cdrefere > 99999999 THEN /* 8 Dig.*/
                                     DO:
@@ -2413,7 +2413,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                             
+                        
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2551,7 +2551,7 @@ PROCEDURE busca_convenios_codbarras:
         
         /* Cecred */
         ELSE IF  crapcon.tparrecd = 3 THEN
-            DO:                
+            DO:      
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2572,7 +2572,7 @@ PROCEDURE busca_convenios_codbarras:
                            crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
                            
-
+                                         
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
@@ -2637,7 +2637,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
                           (par_cddopcao <> "S"))                        NO-LOCK:
                             
         ASSIGN aux_nmempcon = ""
-               aux_inaltera = FALSE               
+               aux_inaltera = FALSE
                aux_cdempcon = 0
                aux_cdsegmto = 0.
         
@@ -2677,8 +2677,8 @@ PROCEDURE busca_autorizacoes_cadastradas:
                 ELSE 
                     ASSIGN aux_cdempcon = crapcon.cdempcon
                            aux_cdsegmto = crapcon.cdsegmto.                                                    
-            END.            
-            
+            END.   
+
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
                    aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
@@ -3517,10 +3517,10 @@ PROCEDURE cadastra_suspensao_autorizacao:
                                 INPUT TRUE, /* Ultimo dia do ano */
                                 INPUT "A",
                                 OUTPUT aux_dtmvtolt). 
-                    
+                                
             /* Entrar somente se for o ultimo dia util do ano */
             IF  par_dtinisus = aux_dtmvtolt THEN
-                DO:                                    
+                DO:                
                     RUN valida_dia_util(INPUT par_cdcooper,
                                         INPUT par_dtinisus,
                                         INPUT TRUE, /* primeiro dia util do ano*/
@@ -3535,7 +3535,7 @@ PROCEDURE cadastra_suspensao_autorizacao:
                                 INPUT TRUE, /* Ultimo dia do ano */
                                 INPUT "A",
                                 OUTPUT aux_dtmvtolt). 
-            
+                                
             /* Entrar somente se for o ultimo dia util do ano */                    
             IF  par_dtfimsus = aux_dtmvtolt THEN
                 DO:                
@@ -3888,7 +3888,7 @@ PROCEDURE exclui_suspensao_autorizacao:
                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         ELSE
            /* Se nao veio, vamos continuar a testar a busca atraves do cdempcon e cdsegmto (Antigo IB) */
-        FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
+           FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
                            crapatr.cdsegmto = par_cdsegmto AND
                            crapatr.cdempcon = par_cdempcon AND
@@ -4119,7 +4119,7 @@ PROCEDURE busca_lancamentos:
                             crapatr.nrdconta = craplau.nrdconta AND
                             crapatr.cdhistor = craplau.cdhistor AND
                             crapatr.cdrefere = craplau.nrdocmto NO-LOCK:
-                     
+                            
         ASSIGN aux_dsprotoc = "".
         
         IF  crapatr.cdhistor <> 1019 THEN
@@ -4135,7 +4135,7 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-                                      
+
         IF  NOT AVAIL gnconve  AND
             NOT AVAIL crapscn  THEN
             NEXT.
@@ -4158,7 +4158,7 @@ PROCEDURE busca_lancamentos:
                         
                 END.
             END.
-            
+
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
                tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
@@ -4186,7 +4186,7 @@ PROCEDURE busca_lancamentos:
                                     crapatr.nrdconta = craplcm.nrdconta AND
                                     crapatr.cdhistor = craplcm.cdhistor AND
                                     crapatr.cdrefere = craplcm.nrdocmto NO-LOCK:
-                              
+                                    
                 ASSIGN aux_dsprotoc = "".
                 
                 IF  crapatr.cdhistor <> 1019 THEN
@@ -4202,7 +4202,7 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
-                          
+        
                 IF  NOT AVAIL gnconve  AND
                     NOT AVAIL crapscn  THEN
                     NEXT.
@@ -4214,7 +4214,7 @@ PROCEDURE busca_lancamentos:
                                         crappro.dtmvtolt = craplcm.dtmvtolt AND
                                         crappro.nrdocmto = craplcm.nrdocmto AND
                                         crappro.nrseqaut = craplcm.nrautdoc NO-LOCK. END.
-                                        
+        
                 IF  AVAIL crappro  THEN
                     ASSIGN aux_dsprotoc = crappro.dsprotoc.
         
@@ -6041,7 +6041,25 @@ PROCEDURE valida_senha_cooperado:
            END.
    END.
       END. 
+   /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE THEN 
+      DO:
+          FOR EACH crapsnh FIELDS (cddsenha) 
+                           WHERE  crapsnh.cdcooper = par_cdcooper
+                             AND  crapsnh.nrdconta = par_nrdconta
+                             AND  crapsnh.tpdsenha = 1 /*internet*/ 
+                             NO-LOCK:                
+              DO:        
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"99999999"))) = CAPS(crapsnh.cddsenha) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
+   END.
+      END. 
 
+      END.
+    END.
+  /*Fim validaçao senha online */
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
@@ -6610,19 +6628,19 @@ PROCEDURE busca_convenio_nome:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-   
+
     DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
-   
+        
     FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                              crapcon.cdempcon = par_cdempcon AND
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
-   
+             
     IF AVAILABLE crapcon THEN    
       DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
       END.
-   
+
     RELEASE crapcon.
   
   RETURN "OK".
-END PROCEDURE.
+END PROCEDURE.    

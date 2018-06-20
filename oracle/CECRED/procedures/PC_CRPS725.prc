@@ -97,11 +97,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
             , cdadmcrd DESC;
   rw_crawcrd   cr_crawcrd%ROWTYPE;
   
-  -- Cursor para verificar se o limite para atualização está habilitado para o tipo do cartão. 
+  -- Cursor para verificar se o limite para atualização está habilitado para o tipo do cartão. (OUTROS)
   CURSOR cr_craptlc(pr_cdcooper   craptlc.cdcooper%TYPE 
                    ,pr_cdadmcrd   craptlc.cdadmcrd%TYPE 
                    ,pr_vllimatu   craptlc.vllimcrd%TYPE ) IS
-    SELECT 1 
+    SELECT 1 AS existe
       FROM craptlc tlc
      WHERE tlc.cdcooper = pr_cdcooper
        AND tlc.cdadmcrd = pr_cdadmcrd
@@ -109,23 +109,34 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
        AND tlc.insittab = 0;
   rw_craptlc   cr_craptlc%ROWTYPE;
   
+   -- Cursor para verificar se o limite para atualização está habilitado para o tipo do cartão. (CECRED)
+  CURSOR cr_craptlc_cecred( pr_cdcooper   craptlc.cdcooper%TYPE
+                           ,pr_cdadmcrd   craptlc.cdadmcrd%TYPE
+                           ,pr_vllimatu   craptlc.vllimcrd%TYPE ) IS
+    SELECT 1 AS existe
+      FROM tbcrd_config_categoria tbcc
+     WHERE tbcc.cdcooper = pr_cdcooper
+       AND tbcc.cdadmcrd = pr_cdadmcrd
+       AND pr_vllimatu BETWEEN tbcc.vllimite_minimo AND tbcc.vllimite_maximo;
+  rw_craptlc_cecred   cr_craptlc_cecred%ROWTYPE;
+
   -- Buscar algum outro processo de majoração em andamento para o cartão
   CURSOR cr_maj_penden(pr_cdcooper  NUMBER
                       ,pr_nrdconta  NUMBER
                       ,pr_nrctacrd  NUMBER) IS
     SELECT 1
-		  FROM INTEGRADADOS.sasf_majoracaocartao@SASP maj
-		 WHERE maj.cdcooper      = pr_cdcooper
+      FROM INTEGRADADOS.sasf_majoracaocartao@SASP maj
+     WHERE maj.cdcooper      = pr_cdcooper
        AND maj.nrdconta      = pr_nrdconta
-		   AND maj.nrcontacartao = pr_nrctacrd
-		   AND maj.cdmajorado    = 4 -- Pendente 
+       AND maj.nrcontacartao = pr_nrctacrd
+       AND maj.cdmajorado    = 4 -- Pendente 
      UNION
     SELECT 1
-		  from tbcrd_limite_atualiza atu
-		 where atu.cdcooper       = pr_cdcooper
-		   and atu.nrdconta       = pr_nrdconta
-		   and atu.nrconta_cartao = pr_nrctacrd
-		   and atu.tpsituacao     IN (1,2); -- Pendente ou Enviado ao Bancoob 
+      from tbcrd_limite_atualiza atu
+     where atu.cdcooper       = pr_cdcooper
+       and atu.nrdconta       = pr_nrdconta
+       and atu.nrconta_cartao = pr_nrctacrd
+       and atu.tpsituacao     IN (1,2); -- Pendente ou Enviado ao Bancoob 
   rw_maj_penden  cr_maj_penden%ROWTYPE;
   
   -------------------------- ROTINAS INTERNAS ------------------------------
@@ -184,9 +195,9 @@ BEGIN
   ------------- */
   BEGIN
     UPDATE tbcrd_limite_atualiza atu
-	     SET tpsituacao = 5    -- Expirado 
-	   WHERE atu.dtalteracao < TRUNC(SYSDATE - 15)
-	     AND atu.tpsituacao IN (1,2); -- Pendente ou Enviado ao Bancoob
+       SET tpsituacao = 5    -- Expirado 
+     WHERE atu.dtalteracao < TRUNC(SYSDATE - 15)
+       AND atu.tpsituacao IN (1,2); -- Pendente ou Enviado ao Bancoob
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro alterar registro expirados na TBCRD_LIMITE_ATUALIZA: '||SQLERRM;
@@ -194,12 +205,12 @@ BEGIN
   END;
   
   BEGIN
-	  UPDATE INTEGRADADOS.sasf_majoracaocartao@SASP maj
-	     SET maj.cdmajorado        = 3   -- Erro
+    UPDATE INTEGRADADOS.sasf_majoracaocartao@SASP maj
+       SET maj.cdmajorado        = 3   -- Erro
          , maj.dtmajoracaocartao = SYSTIMESTAMP
-	       , maj.dsexclusao        = 'Registro expirado'
-	   WHERE maj.dtbase            < TRUNC(SYSDATE - 15)
-	     AND maj.cdmajorado        = 4; -- Pendente
+         , maj.dsexclusao        = 'Registro expirado'
+     WHERE maj.dtbase            < TRUNC(SYSDATE - 15)
+       AND maj.cdmajorado        = 4; -- Pendente
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro alterar registro expirados na majoração: '||SQLERRM;
@@ -326,12 +337,29 @@ BEGIN
           -- Fechar o cursor 
           CLOSE cr_craptlc;
           
+        END IF;
+
+        -- Fechar o cursor
+        CLOSE cr_craptlc;
+        
+        OPEN  cr_craptlc_cecred(rw_majoracao.cdcooper    -- pr_cdcooper
+                              ,rw_crawcrd.cdadmcrd      -- pr_cdadmcrd
+                              ,rw_majoracao.vllimite);  -- pr_vllimatu
+        FETCH cr_craptlc_cecred INTO rw_craptlc_cecred;
+        -- Verificar se existe registro
+        IF cr_craptlc_cecred%NOTFOUND THEN
+          -- Fechar o cursor
+          CLOSE cr_craptlc_cecred;
+
+        END IF;
+
+        -- Fechar o cursor
+        CLOSE cr_craptlc_cecred;
+        
+        IF rw_craptlc.existe IS NULL AND rw_craptlc_cecred.existe IS NULL THEN
           vr_dscritic := 'Valor do limite solicitado não existe para o tipo de cartão '||rw_crawcrd.cdadmcrd||' na tela LIMCRD!';
           RAISE vr_expmajoracao;
         END IF;
-   
-        -- Fechar o cursor 
-        CLOSE cr_craptlc;
         
         ------------------------------------------------
         
@@ -372,7 +400,7 @@ BEGIN
         CLOSE cr_maj_penden;
         
         ------------------------------------------------
-		    
+        
       EXCEPTION
         WHEN vr_expmajoracao THEN
           -- Se ocorrer erro na majoração deve atualizar o registro

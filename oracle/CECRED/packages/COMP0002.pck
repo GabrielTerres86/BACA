@@ -1386,6 +1386,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_dsdlinha  VARCHAR2(30000); 
       vr_cdorigem  INTEGER; --> Código de origem
 			vr_tparrecd  crapcon.tparrecd%TYPE;
+			
+      --> Buscar código da agência da cooperativa cadastrada no bancoob
+      CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+				SELECT crapcop.cdagebcb
+					FROM crapcop
+				 WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;            
       
     BEGIN
     
@@ -1523,6 +1530,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																 				        
         -- Caso for um convenio Bancoob
         IF vr_tparrecd = 2 THEN
+					
+					-- Buscar dados da cooperativa			
+					OPEN cr_crapcop(pr_cdcooper);
+					FETCH cr_crapcop INTO rw_crapcop;
+
+					IF cr_crapcop%NOTFOUND THEN
+						CLOSE cr_crapcop;
+						        
+						vr_dscritic := 'Cooperativa nao encontrada.';
+						vr_des_erro := 'Erro em pc_detalhe_compr_pagamento:' || vr_dscritic;
+							
+						RAISE vr_exc_erro;
+					ELSE
+						CLOSE cr_crapcop;
+					END IF;			
 				
           vr_dsdlinha := NULL;      
           vr_dsdlinha := '<infbancoob>'||
@@ -1546,6 +1568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                            '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
                            '<nrtelouv>'|| vr_protocolo(vr_ind).nrtelouv ||'</nrtelouv>'||
                            '<cdbarras>'|| vr_cdbarras ||'</cdbarras>'||		
+											     '<cdagebcb>'|| rw_crapcop.cdagebcb || '</cdagebcb>' ||													 
                          '</infbancoob> ';
           
           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -4737,7 +4760,13 @@ END pc_comprovantes_recebidos;
       vr_idx VARCHAR2(40);
       vr_split_reg   gene0002.typ_split;
       vr_split_campo gene0002.typ_split;
-            
+
+      --> Buscar código da agência da cooperativa cadastrada no bancoob
+      CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+				SELECT crapcop.cdagebcb
+					FROM crapcop
+				 WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;            
     
   BEGIN
     
@@ -4758,6 +4787,21 @@ END pc_comprovantes_recebidos;
     ELSE
       CLOSE cr_crapass;
     END IF;
+		
+		-- Buscar dados da cooperativa			
+		OPEN cr_crapcop(pr_cdcooper);
+		FETCH cr_crapcop INTO rw_crapcop;
+
+    IF cr_crapcop%NOTFOUND THEN
+      CLOSE cr_crapcop;
+			        
+      vr_dscritic := 'Cooperativa nao encontrada.';
+      vr_des_erro := 'Erro em pc_detalhe_compr_pag_fgts:' || vr_dscritic;
+				
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;		
 			
     gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
@@ -4965,6 +5009,7 @@ END pc_comprovantes_recebidos;
       vr_dsdlinha := vr_dsdlinha ||     
                        '<nrtelsac>'|| vr_protocolo(vr_ind).nrtelsac ||'</nrtelsac>'||
                        '<nrtelouv>'|| vr_protocolo(vr_ind).nrtelouv ||'</nrtelouv>	'||
+											 '<cdagebcb>'|| rw_crapcop.cdagebcb || '</cdagebcb>' ||											 
                      '</infbancoob> ';
       
       gene0002.pc_escreve_xml(pr_xml            => vr_retxml
@@ -5044,7 +5089,7 @@ END pc_comprovantes_recebidos;
       vr_split_reg   gene0002.typ_split;
       vr_split_campo gene0002.typ_split;
             
-      --> Buscar dados do conbenio
+      --> Buscar código da agência da cooperativa cadastrada no bancoob
       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
 				SELECT crapcop.cdagebcb
 					FROM crapcop

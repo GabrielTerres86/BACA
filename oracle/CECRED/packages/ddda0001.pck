@@ -58,6 +58,9 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
       29/10/2015 - Alterado tamanho do campo typ_reg_remessa_dda.dsinstru 
                    SD352398(Odirlei-Amcom)            
   
+      13/06/2018 - Criado assinatura da fn_datamov para ser chamada no CRPS618.
+                   Chamado SCTASK0015832 - Gabriel (Mouts).
+
   ..............................................................................*/
 
 
@@ -239,6 +242,9 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                           , VlrBaixaOperacTit       VARCHAR2(20) PATH 'VlrBaixaOperacTit'
                           , NumCodBarrasBaixaOperac VARCHAR2(44) PATH 'NumCodBarrasBaixaOperac'
                           , TpOpBaixaOperac         VARCHAR2(1) PATH 'TpOpBaixaOperac');    
+
+  /* Buscar data de referencia da cabine JDNPC */
+  FUNCTION fn_datamov RETURN NUMBER;
 
   /* Procedure para Atualizar Situacao */
   PROCEDURE pc_requis_atualizar_situacao(pr_cdlegado IN VARCHAR2 --> Codigo Legado
