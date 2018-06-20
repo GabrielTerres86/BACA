@@ -87,8 +87,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
           ,e.nmpais                      nmpais_reportavel
           ,c.nmlogradouro||', '||c.nrlogradouro||DECODE(NVL(c.dscomplemento,' '),' ',NULL,' - '||c.dscomplemento) dsendereco
           ,CASE
-           WHEN (NVL(b.inobrigacao_exterior,'N') = 'S' OR NVL(b.insocio_obrigacao,'N') = 'S')
-            AND e.inacordo IS NOT NULL
+           WHEN NVL(b.inobrigacao_exterior,'N') = 'S'
+           THEN
+             CASE
+             WHEN e.inacordo IS NOT NULL
+             THEN
+               'S'
+             ELSE
+               'N'
+             END
+           WHEN (NVL(b.inobrigacao_exterior,'N') = 'N' AND NVL(b.insocio_obrigacao,'N') = 'S')
             THEN
               'S'
             ELSE
@@ -203,7 +211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'dsestado'         , pr_tag_cont => rw_declaracao.dsestado         , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'dscodigo_postal'  , pr_tag_cont => rw_declaracao.dscodigo_postal  , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'nmpais_reportavel', pr_tag_cont => rw_declaracao.nmpais_reportavel, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'inreportavel'     , pr_tag_cont => 'S'                            , pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'inreportavel'     , pr_tag_cont => rw_declaracao.inreportavel     , pr_des_erro => vr_dscritic);
       -- Incrementa contador p/ posicao no XML
       vr_auxconta := nvl(vr_auxconta,0) + 1;
 
