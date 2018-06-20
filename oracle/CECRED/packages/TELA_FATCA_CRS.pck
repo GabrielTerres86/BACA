@@ -1105,7 +1105,12 @@ w_passo := 51;
           END;
           --
 w_passo := 52;
-          IF vr_inacordo <> 'S' THEN
+          -- Ficou definido pela Suelen que se:
+          -- A Empresa não tem obrigação fiscal no exterior (inobrigacao_exterior = N), mas
+          -- que tenha algum sócio que tenha obrigação discal no exterior e mais de 10% (insocio_obrigacao = S)
+          -- deve ser gerada a pendencia no DIGIDOC para a Declaração da Empresa.
+          --
+          -- IF vr_inacordo <> 'S' THEN
             pc_buscar_tpdocmto_digidoc(pr_insocio   => pr_insocio
                                       ,pr_intem_nif => pr_nridentificacao
                                       ,pr_tpdocmto1 => vr_tpdocmto1
@@ -1122,15 +1127,25 @@ w_passo := 52;
             END IF;
             --
             IF vr_tpdocmto1 IS NOT NULL THEN
-              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
-                                      ,pr_nrdconta  => pr_nrdconta
-                                      ,pr_idseqttl  => 1
-                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
-                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
-                                      ,pr_tpdocmto  => vr_tpdocmto1
-                                      ,pr_cdoperad  => vr_cdoperad
-                                      ,pr_cdcritic  => vr_cdcritic
-                                      ,pr_dscritic  => vr_dscritic);
+              DIGI0001.pc_gera_pend_digitalizacao(PR_CDCOOPER => vr_cdcooper
+                                                 ,PR_NRDCONTA => pr_nrdconta
+                                                 ,PR_IDSEQTTL => 1
+                                                 ,PR_NRCPFCGC => rw_crapass.nrcpfcgc
+                                                 ,PR_DTMVTOLT => TRUNC(SYSDATE)
+                                                 ,PR_LSTPDOCT => vr_tpdocmto1||';'
+                                                 ,PR_CDOPERAD => vr_cdoperad
+                                                 ,PR_NRSEQDOC => NULL
+                                                 ,PR_CDCRITIC => vr_cdcritic
+                                                 ,PR_DSCRITIC => vr_dscritic);
+--              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
+--                                      ,pr_nrdconta  => pr_nrdconta
+--                                      ,pr_idseqttl  => 1
+--                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
+--                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
+--                                      ,pr_tpdocmto  => vr_tpdocmto1
+--                                      ,pr_cdoperad  => vr_cdoperad
+--                                      ,pr_cdcritic  => vr_cdcritic
+--                                      ,pr_dscritic  => vr_dscritic);
               IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_saida;
               END IF;
@@ -1139,20 +1154,30 @@ w_passo := 52;
 w_passo := 53;
             --
             IF vr_tpdocmto2 IS NOT NULL THEN
-              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
-                                      ,pr_nrdconta  => pr_nrdconta
-                                      ,pr_idseqttl  => 1
-                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
-                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
-                                      ,pr_tpdocmto  => vr_tpdocmto2
-                                      ,pr_cdoperad  => vr_cdoperad
-                                      ,pr_cdcritic  => vr_cdcritic
-                                      ,pr_dscritic  => vr_dscritic);
+              DIGI0001.pc_gera_pend_digitalizacao(PR_CDCOOPER => vr_cdcooper
+                                                 ,PR_NRDCONTA => pr_nrdconta
+                                                 ,PR_IDSEQTTL => 1
+                                                 ,PR_NRCPFCGC => rw_crapass.nrcpfcgc
+                                                 ,PR_DTMVTOLT => TRUNC(SYSDATE)
+                                                 ,PR_LSTPDOCT => vr_tpdocmto2||';'
+                                                 ,PR_CDOPERAD => vr_cdoperad
+                                                 ,PR_NRSEQDOC => NULL
+                                                 ,PR_CDCRITIC => vr_cdcritic
+                                                 ,PR_DSCRITIC => vr_dscritic);
+--              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
+--                                      ,pr_nrdconta  => pr_nrdconta
+--                                      ,pr_idseqttl  => 1
+--                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
+--                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
+--                                      ,pr_tpdocmto  => vr_tpdocmto2
+--                                      ,pr_cdoperad  => vr_cdoperad
+--                                      ,pr_cdcritic  => vr_cdcritic
+--                                      ,pr_dscritic  => vr_dscritic);
               IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_saida;
               END IF;
             END IF;
-          END IF;
+          -- END IF;
         END IF;
       END IF;
       --

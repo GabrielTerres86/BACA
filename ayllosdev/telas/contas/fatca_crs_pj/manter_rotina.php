@@ -77,7 +77,8 @@
 			}								
 			exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
 		}
-						
+		
+		echo 'modoAlteracao = \'N\';';						
 		echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
 
 	}

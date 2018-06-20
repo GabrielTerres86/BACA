@@ -94,6 +94,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
             ELSE
               'N'
             END inreportavel
+          ,a.tppessoa
+          ,NVL(b.inobrigacao_exterior,'N') inobrigacao_exterior
       FROM tbcadast_pessoa a
           ,tbcadast_pessoa_estrangeira b
           ,tbcadast_pessoa_endereco c
@@ -105,6 +107,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
        AND c.tpendereco   = DECODE(a.tppessoa,1,10,9)
        AND d.idcidade     = c.idcidade
        AND e.cdnacion     = b.cdpais;
+
+    CURSOR cr_pais_socio(pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    SELECT e.nmpais nmpais_socio
+      FROM crapavt a
+          ,crapass b
+          ,tbcadast_pessoa c
+          ,tbcadast_pessoa_estrangeira d
+          ,crapnac e
+     WHERE b.nrcpfcgc  = 76330927000151 -- pr_nrcpfcgc
+       AND b.cdsitdct <> 4
+       AND b.dtdemiss is null
+       AND a.cdcooper  = b.CDCOOPER
+       AND a.nrdconta  = b.NRDCONTA
+       AND a.tpctrato  = 6
+       AND a.dsproftl <> 'PROCURADOR'
+       AND a.persocio >= 10
+       AND c.nrcpfcgc  = a.nrcpfcgc
+       AND d.idpessoa  = c.idpessoa
+       AND d.inobrigacao_exterior = 'S'
+       AND e.cdnacion  = d.cdpais;
+    rw_pais_socio cr_pais_socio%rowtype;
 
     -- Variaveis de log
     vr_cdcooper NUMBER;
@@ -160,6 +183,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
     FOR rw_declaracao IN cr_declaracao(pr_nrcpfcgc => pr_nrcpfcgc) LOOP
       vr_inexiste_declaracao := 1;
 
+      -- Caso a pessoa não tem obrigação no exterior e for uma PJ
+      -- Deverá ser pego o país de algum sócio para ser apresentado na Declaração
+      IF  rw_declaracao.inobrigacao_exterior = 'N'
+      AND rw_declaracao.tppessoa             = 2
+      THEN
+        OPEN cr_pais_socio (pr_nrcpfcgc => pr_nrcpfcgc);
+        FETCH cr_pais_socio INTO rw_pais_socio;
+        IF cr_pais_socio%FOUND THEN
+          rw_declaracao.nmpais_reportavel := rw_pais_socio.nmpais_socio;
+        END IF;
+        CLOSE cr_pais_socio;
+      END IF;
+      --
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'rel_declaracao',pr_posicao => 0          , pr_tag_nova => 'declaracao'       , pr_tag_cont => NULL                           , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'dsendereco'       , pr_tag_cont => rw_declaracao.dsendereco       , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'declaracao'    ,pr_posicao => vr_auxconta, pr_tag_nova => 'nmpessoa'         , pr_tag_cont => rw_declaracao.nmpessoa         , pr_des_erro => vr_dscritic);
