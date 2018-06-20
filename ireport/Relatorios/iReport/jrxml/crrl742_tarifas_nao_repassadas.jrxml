@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl742_tarifas_nao_repassadas" language="groovy" pageWidth="759" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="460" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="1.0881456789507433"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="tedsnaoconciliadas.xml"/>
+	<queryString language="xPath">
+		<![CDATA[/composicao/tarifasnaorepassadas/tarifa]]>
+	</queryString>
+	<field name="data" class="java.lang.String">
+		<fieldDescription><![CDATA[data]]></fieldDescription>
+	</field>
+	<field name="historico" class="java.lang.String">
+		<fieldDescription><![CDATA[historico]]></fieldDescription>
+	</field>
+	<field name="vllancamento" class="java.lang.Double">
+		<fieldDescription><![CDATA[vllancamento]]></fieldDescription>
+	</field>
+	<variable name="total" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vllancamento}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="20">
+			<rectangle>
+				<reportElement x="0" y="0" width="760" height="20" backcolor="#BDBBBB" uuid="d425d3a7-ce09-4be9-94cf-5cf8c737fc70">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.0" lineColor="#FFFFFF"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="10" y="0" width="353" height="17" uuid="a6016d10-f697-499e-b4dc-b8e72f178229"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tarifas cobradas e não repassadas para o IEPTB]]></text>
+			</staticText>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="21">
+			<staticText>
+				<reportElement x="582" y="5" width="177" height="13" uuid="c9b87ab7-92e5-447a-b042-5ec96e321a71">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Valor Lançamento]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="128" y="5" width="454" height="13" uuid="eb71aaa6-21df-455e-9b1e-e1ce3a552779">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[histórico]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="5" width="126" height="13" uuid="7e715d98-71a3-4546-b66b-50808f00ed42">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Data
+]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="19" width="760" height="1" uuid="6c5900e3-c167-4afa-8142-b769055aa2e8"/>
+			</line>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="19" splitType="Stretch">
+			<textField>
+				<reportElement x="3" y="0" width="126" height="15" isPrintWhenDetailOverflows="true" uuid="504caca8-3936-4f45-b074-f9d87b7021d8">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{data}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="129" y="0" width="207" height="15" isPrintWhenDetailOverflows="true" uuid="30e04b68-70ce-4e05-9d6f-0d02f8abd84d">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{historico}]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00">
+				<reportElement x="582" y="0" width="166" height="15" isPrintWhenDetailOverflows="true" uuid="1d105a6b-867a-4592-900d-d34a3434756e">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vllancamento}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="26">
+			<textField pattern="¤ #,##0.00">
+				<reportElement x="582" y="2" width="166" height="20" isPrintWhenDetailOverflows="true" uuid="c6969bed-9873-4e53-a1e6-eb017cd4b8bb">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{total}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="128" y="2" width="100" height="20" uuid="b8172bb4-ae1d-4eac-8fe3-f63739da3dfb"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+		</band>
+	</columnFooter>
+</jasperReport>
