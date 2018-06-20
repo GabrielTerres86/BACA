@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-06-20T11:20:09 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl742" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="762" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50" whenResourceMissingType="Empty" uuid="6386a198-a31e-4f65-936d-2bc9fe5ac907">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter1"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="161"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Sans_Normal" isDefault="true" fontName="SansSerif" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Sans_Bold" fontName="SansSerif" fontSize="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Sans_Italic" fontName="SansSerif" fontSize="12" isBold="false" isItalic="true" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<queryString language="xPath">
+		<![CDATA[/composicao]]>
+	</queryString>
+	<field name="saldototal" class="java.lang.Double">
+		<fieldDescription><![CDATA[saldototal]]></fieldDescription>
+	</field>
+	<variable name="saldo_total" class="java.lang.Double"/>
+	<title>
+		<band>
+			<line>
+				<reportElement x="0" y="-2" width="758" height="1" uuid="9c2633d9-9bfe-433b-8f5f-533a8280c386"/>
+			</line>
+			<textField>
+				<reportElement x="2" y="-25" width="758" height="22" uuid="1d6b150c-de8f-40ad-8011-0db635963ad2"/>
+				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MMM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="34">
+			<staticText>
+				<reportElement style="Sans_Normal" x="4" y="0" width="758" height="30" uuid="69cf7a16-df9e-4a92-8dee-005fa6f01193"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="22"/>
+				</textElement>
+				<text><![CDATA[Composição]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="21">
+			<subreport>
+				<reportElement x="0" y="0" width="755" height="21" uuid="ea8b1dc8-a578-46b4-ac6f-0f8431cfdcb9"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//composicao/tedsnaoconciliadas/ted")]]></dataSourceExpression>
+				<returnValue subreportVariable="total" toVariable="saldo_total" calculation="Sum"/>
+				<subreportExpression><![CDATA["crrl742_tedsnaoconciliadas.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="21">
+			<subreport>
+				<reportElement x="0" y="0" width="755" height="21" uuid="cfe668c9-9d05-4cb3-93bb-e07f6b81f4aa"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//composicao/custasnaorepassadas/custa")]]></dataSourceExpression>
+				<returnValue subreportVariable="total" toVariable="saldo_total" calculation="Sum"/>
+				<subreportExpression><![CDATA["crrl742_custas_nao_repassadas.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="24">
+			<subreport>
+				<reportElement x="0" y="0" width="755" height="21" uuid="284813c4-5108-4501-bb40-d321e6c3b8b5"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//composicao/tarifasnaorepassadas/tarifa")]]></dataSourceExpression>
+				<returnValue subreportVariable="total" toVariable="saldo_total" calculation="Sum"/>
+				<subreportExpression><![CDATA["crrl742_tarifas_nao_repassadas.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="40">
+			<line>
+				<reportElement x="0" y="-4" width="759" height="1" uuid="33a41154-ab20-4fbc-8f20-b47eb00b7c12"/>
+			</line>
+			<textField>
+				<reportElement x="576" y="21" width="169" height="15" uuid="e6339776-ad98-448c-9ede-58a76a109cc0"/>
+				<textElement textAlignment="Right">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Página " + String.valueOf($V{PAGE_NUMBER}) + " de"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="745" y="21" width="15" height="15" uuid="c03e12cf-4440-4b0c-9b04-b28a6b5c95b4">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="0" y="0" width="762" height="21" backcolor="#BDBBBB" uuid="05210405-00aa-4ffb-9f88-90f9e2452e9e">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.0" lineColor="#FFFFFF"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement style="Sans_Normal" x="4" y="1" width="549" height="20" uuid="a8c6bd45-01d2-4ada-b4a0-30107819e326"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="11" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Saldo total mantida na conta de administração de recursos]]></text>
+			</staticText>
+			<textField pattern="¤ #,##0.00">
+				<reportElement x="582" y="1" width="167" height="20" uuid="f5531791-2de9-4c68-af93-dbe04e51b84a"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA[$V{saldo_total}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>
