@@ -1296,7 +1296,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        -- DCTOs 172, 173, 174 e 174 - Projeto 414 - Marcelo Telles Coelho - Mouts
+        /* DCTOs 172, 173, 174 e 174 - Projeto 414 - Marcelo Telles Coelho - Mouts */
         IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
