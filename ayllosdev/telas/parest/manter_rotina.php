@@ -1,6 +1,6 @@
 <?php
 
-/* !
+/* ! 
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Daniel Zimmermann
  * DATA CRIAÇÃO : 24/03/2016 
@@ -116,7 +116,6 @@ if ( $cdopcao == 'C') {
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
 	$xml .= "   <flgativo>1</flgativo>";
-	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
     $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
@@ -126,6 +125,7 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
 	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
+	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

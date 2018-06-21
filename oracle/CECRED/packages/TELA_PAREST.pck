@@ -597,34 +597,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
     
       -- Abre cursor para atribuir os registros encontrados na PL/Table
       IF pr_tpprodut = 0 THEN -- Se o tipo de produto for empréstimos ou financioamentos
-		FOR rw_crapcop IN cr_crapcop LOOP
-        
-		IF rw_crapcop.comite IS NULL THEN
-			continue;
-		END IF;
-      
-		-- Incrementa contador para utilizar como indice da PL/Table
-		vr_ind_crapcop := vr_ind_crapcop + 1;
-      
-		pr_tab_crapcop(vr_ind_crapcop).cdcooper := rw_crapcop.cdcooper;
-		pr_tab_crapcop(vr_ind_crapcop).nmrescop := rw_crapcop.nmrescop;
-		pr_tab_crapcop(vr_ind_crapcop).incomite := rw_crapcop.comite;
-		pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
-		pr_tab_crapcop(vr_ind_crapcop).anlautom := rw_crapcop.analise_autom;
-		pr_tab_crapcop(vr_ind_crapcop).nmregmpf := rw_crapcop.nmregmpf;
-		pr_tab_crapcop(vr_ind_crapcop).nmregmpj := rw_crapcop.nmregmpj;
-		pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
-		pr_tab_crapcop(vr_ind_crapcop).qtmeschq := rw_crapcop.qtmeschq;								
-		pr_tab_crapcop(vr_ind_crapcop).qtmesest := rw_crapcop.qtmesest;								
-		pr_tab_crapcop(vr_ind_crapcop).qtmesemp := rw_crapcop.qtmesemp;																				
-      
-		END LOOP;
+        FOR rw_crapcop IN cr_crapcop LOOP
+            
+        IF rw_crapcop.comite IS NULL THEN
+          continue;
+        END IF;
+          
+        -- Incrementa contador para utilizar como indice da PL/Table
+        vr_ind_crapcop := vr_ind_crapcop + 1;
+          
+        pr_tab_crapcop(vr_ind_crapcop).cdcooper := rw_crapcop.cdcooper;
+        pr_tab_crapcop(vr_ind_crapcop).nmrescop := rw_crapcop.nmrescop;
+        pr_tab_crapcop(vr_ind_crapcop).incomite := rw_crapcop.comite;
+        pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
+        pr_tab_crapcop(vr_ind_crapcop).anlautom := rw_crapcop.analise_autom;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmpf := rw_crapcop.nmregmpf;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmpj := rw_crapcop.nmregmpj;
+        pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmeschq := rw_crapcop.qtmeschq;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmesest := rw_crapcop.qtmesest;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmesemp := rw_crapcop.qtmesemp;																				
+          
+        END LOOP;
       ELSIF pr_tpprodut = 1 THEN -- Desconto de Títulos
         FOR rw_crapcop_desc IN cr_crapcop_desc LOOP
           
           IF rw_crapcop_desc.comite IS NULL THEN
             continue;
-            END IF;
+          END IF;
         
           -- Incrementa contador para utilizar como indice da PL/Table
           vr_ind_crapcop_desc := vr_ind_crapcop_desc + 1;
@@ -695,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 															 ,pr_qtmeschq IN NUMBER
                                ,pr_qtmesest IN NUMBER
                                ,pr_qtmesemp IN NUMBER
-							   ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
+							   ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos / 4 - Cartão de Crédito)  
                                ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -794,22 +794,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         vr_possui_reg := TRUE;
       
         IF pr_tpprodut IN (0,1) THEN
-			BEGIN
-			  UPDATE crapprm prm
-				 SET prm.dsvlrprm = pr_incomite
-			   WHERE prm.nmsistem = 'CRED'
-				 AND prm.cdcooper = rw_crapcop.cdcooper
-				   AND prm.cdacesso = vr_cd_incomite;
-			EXCEPTION
-			  WHEN OTHERS THEN
-				vr_dscritic := 'Erro ao atualizar tabela crapprm (1). ' || SQLERRM;
-				--Sair do programa
-				RAISE vr_exc_saida;
-			END;
-      
+          BEGIN
+            UPDATE crapprm prm
+             SET prm.dsvlrprm = pr_incomite
+             WHERE prm.nmsistem = 'CRED'
+             AND prm.cdcooper = rw_crapcop.cdcooper
+               AND prm.cdacesso = vr_cd_incomite;
+          EXCEPTION
+            WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crapprm (1). ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_saida;
+          END;
+
         END IF;
 
-		BEGIN
+		    BEGIN
           UPDATE crapprm prm
              SET prm.dsvlrprm = pr_contigen
            WHERE prm.nmsistem = 'CRED'
@@ -822,7 +822,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
             RAISE vr_exc_saida;
         END;
         
-	    IF NVL(pr_tlcooper, 0) <> 0 THEN
+        IF (NVL(pr_tlcooper, 0) = 0) AND  --No caso de cartões, para todas as cooperativas
+           (pr_tpprodut = 4)         THEN --existira esse campo em interface.
+          BEGIN
+			UPDATE crapprm prm
+              SET prm.dsvlrprm = pr_anlautom
+            WHERE prm.nmsistem = 'CRED'
+              AND prm.cdcooper = rw_crapcop.cdcooper
+              AND prm.cdacesso = vr_cd_anlautom;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela crapprm (3). ' || SQLERRM;
+              --Sair do programa
+              RAISE vr_exc_saida;
+          END;
+        END IF;
+        
+	      IF NVL(pr_tlcooper, 0) <> 0 THEN
 					BEGIN
 						UPDATE crapprm prm
              SET prm.dsvlrprm = pr_anlautom

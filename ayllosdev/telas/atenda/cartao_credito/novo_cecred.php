@@ -401,7 +401,9 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
                 });
 
                 function changeRadio( param ){
-
+					
+		    $(".optradio").removeAttr("checked");
+		    $(param).attr("checked",true);
                     if(param.value == "outro"){
 
                         $("#justificativa").removeAttr("disabled");
@@ -411,6 +413,9 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 
                     }else{
                         var paramArray = param.value.split(";");
+						
+		    	$("#justificativa").removeAttr("value");                       
+                        $("#valorLimite").removeAttr("value");
 
                         $("#justificativa").attr("disabled",true);
                         $("#listType").attr("disabled",true);

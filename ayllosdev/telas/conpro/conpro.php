@@ -54,15 +54,16 @@ setVarSession("opcoesTela", $opcoesTela);
                         '4':'<?php echo utf8ToHtml("Expirado"); ?>'
                     };
                     situacoes[4] = {  
-                        '9':'Todos',
+                        '99':'Todos',
                         '0':'Estudo',
                         '1':'Aprovada',
                         '2':'Solicitada',
                         '3':'Liberada',
                         '4':'Em uso',
-                        '5':'Cancelada',
-                        '6':'<?php echo utf8ToHtml("Em análise"); ?>',
-                        '7':'Enviado Bancoob'                        
+                        '5':'Bloqueada',
+						'6':'Cancelada',
+                        '8':'<?php echo utf8ToHtml("Em análise"); ?>',
+                        '9':'Enviado Bancoob'                        
                     };
                     var parecer=[];
                     parecer[0] = {

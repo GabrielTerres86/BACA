@@ -19,9 +19,9 @@ if($tpproduto != 4)
     $tabela .= "<thead>";
     $tabela .= "<tr>";
     $tabela .= "<th>Coop.</th>";
-$tabela .= "<th>Conting.</th>";
-$tabela .= "<th>" . utf8ToHtml('Comitê') . "</th>";
-$tabela .= "<th>" . utf8ToHtml('Análise Aut.') . "</th>";
+    $tabela .= "<th>Conting.</th>";
+    $tabela .= "<th>" . utf8ToHtml('Comitê') . "</th>";
+    $tabela .= "<th>" . utf8ToHtml('Análise Aut.') . "</th>";
     $tabela .= "<th>Regra PF</th>";
     $tabela .= "<th>Regra PJ</th>";
     $tabela .= "</tr>";
@@ -35,7 +35,6 @@ $tabela .= "<th>" . utf8ToHtml('Análise Aut.') . "</th>";
 		echo "console.log('1--> ".getByTagName($r->tags, 'nmregmpj')."');";
 
         $tabela .= "<tr>";
-
         $tabela .= "<td>" . getByTagName($r->tags, 'nmrescop') . "</td>";
         $tabela .= "<td>" . getByTagName($r->tags, 'contigen') . "</td>";
         $tabela .= "<td>" . getByTagName($r->tags, 'incomite') . "</td>";
