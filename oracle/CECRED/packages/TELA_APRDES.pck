@@ -46,36 +46,6 @@ create or replace package cecred.TELA_APRDES is
 
   TYPE typ_tab_dados_titulos IS TABLE OF typ_rec_dados_titulos INDEX BY BINARY_INTEGER;
   
-  /*Tabela de retorno dos dados obtidos para o biro*/
-  TYPE typ_reg_dados_biro IS RECORD(
-        dsnegati        VARCHAR2(225),
-        qtnegati        integer,
-        vlnegati        number,
-        dtultneg        date
-      );
-    
-  TYPE typ_tab_dados_biro IS TABLE OF typ_reg_dados_biro INDEX BY BINARY_INTEGER;
-      
-  /*Tabela de retorno dos dados obtidos para os detalhes*/
-  TYPE typ_reg_dados_detalhe IS RECORD(
-       concpaga        number,
-       liqpagcd        number,
-       liqgeral        number
-  );
-  TYPE typ_tab_dados_detalhe IS TABLE OF typ_reg_dados_detalhe INDEX BY BINARY_INTEGER;
-    
-    
-  /*Tabela de retorno dos dados obtidos para as criticas*/
-  TYPE typ_reg_dados_critica IS RECORD(
-       dsc                   VARCHAR2(225),
-       varint               NUMBER(5), -- numero
-       varper               NUMBER(5,2) --percentual
-  );
-
-  TYPE typ_tab_dados_critica IS TABLE OF typ_reg_dados_critica INDEX BY BINARY_INTEGER; 
-  
-  
-  
   /*Tabela de retorno dos dados obtidos para as criticas*/
   TYPE typ_reg_dados_parecer IS RECORD(
        nmoperad             crapope.nmoperad%TYPE,
@@ -504,7 +474,7 @@ create or replace package body cecred.TELA_APRDES is
           tdb.cdcooper = pr_cdcooper
           AND tdb.nrdconta = pr_nrdconta
           AND tdb.nrborder = pr_nrborder
-          AND tdb.flgenvmc = 1 -- Apenas os enviados para mesa de checagem
+          --AND tdb.flgenvmc = 1 -- Apenas os enviados para mesa de checagem
      ;
      rw_craptdb cr_craptdb%ROWTYPE;
      
@@ -1206,23 +1176,23 @@ create or replace package body cecred.TELA_APRDES is
      
      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
                     '<root><dados>');
-     -- ler os registros de titulos e inclui
+      -- ler os registros de titulos e inclui
      IF (vr_insitbdt=2) THEN
-         vr_msgfinal := 'Borderô n ' || pr_nrborder ||' analisado e aprovado com sucesso';
+         vr_msgfinal := ' analisado e aprovado com sucesso';
      ELSE 
        IF (vr_insitbdt=1 ) THEN
          IF (vr_em_contingencia_ibratan) THEN
-           vr_msgfinal := 'Borderô n ' || pr_nrborder ||' analisado. Esteria de crédito em contingência';
+           vr_msgfinal := ' analisado. Esteria de crédito em contingência';
          ELSE
-           vr_msgfinal := 'Borderô n ' || pr_nrborder ||' não Aprovado.';
+           vr_msgfinal := ' não Aprovado.';
          END IF;
        ELSE 
          IF (vr_insitbdt=6) THEN
-           vr_msgfinal := 'Borderô n ' || pr_nrborder ||' analisado com sucesso. Processou seguiu para esteria de crédito';
+           vr_msgfinal := ' analisado com sucesso. Processou seguiu para esteria de crédito';
          END IF;
        END IF;
      END IF;
-     pc_escreve_xml (vr_msgfinal);
+     pc_escreve_xml ('Bordero'||vr_msgfinal);
      pc_escreve_xml ('</dados></root>',true);
      pr_retxml := xmltype.createxml(vr_des_xml);
      
@@ -1231,7 +1201,7 @@ create or replace package body cecred.TELA_APRDES is
                         ,pr_cdoperad => vr_cdoperad
                         ,pr_dscritic => vr_dscritic
                         ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
-                        ,pr_dstransa => vr_msgfinal
+                        ,pr_dstransa => 'Bordero n ' || pr_nrborder || vr_msgfinal
                         ,pr_dttransa => TRUNC(SYSDATE)
                         ,pr_flgtrans => 1
                         ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
@@ -1402,9 +1372,9 @@ create or replace package body cecred.TELA_APRDES is
                                          ,pr_chave              in VARCHAR2                --> Chave do titulo
                                          ,pr_nrinssac           out crapsab.nrinssac%TYPE   --> Inscrição do sacado
                                          ,pr_nmdsacad           out crapsab.nmdsacad%TYPE   --> Nome do Sacado
-                                         ,pr_tab_dados_biro     out  typ_tab_dados_biro    --> Tabela de retorno biro
-                                         ,pr_tab_dados_detalhe  out  typ_tab_dados_detalhe --> Tabela de retorno detalhe
-                                         ,pr_tab_dados_critica  out  typ_tab_dados_critica --> Tabela de retorno critica
+                                         ,pr_tab_dados_biro     out  tela_atenda_dscto_tit.typ_tab_dados_biro    --> Tabela de retorno biro
+                                         ,pr_tab_dados_detalhe  out  tela_atenda_dscto_tit.typ_tab_dados_detalhe --> Tabela de retorno detalhe
+                                         ,pr_tab_dados_critica  out  tela_atenda_dscto_tit.typ_tab_dados_critica --> Tabela de retorno critica
                                          ,pr_tab_dados_parecer  out  typ_tab_dados_parecer --> Tabela de retorno parecer
                                          ,pr_cdcritic           out pls_integer            --> Codigo da critica
                                          ,pr_dscritic           out varchar2               --> Descricao da critica
@@ -1431,31 +1401,6 @@ create or replace package body cecred.TELA_APRDES is
    vr_nrinssac            crapcob.nrinssac%TYPE;
    vr_nrconbir            craprpf.nrconbir%TYPE;
    vr_nrseqdet            craprpf.nrseqdet%TYPE;
-   vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
-   vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
-   
-    -- Titulos (Boletos de Cobrança)
-    CURSOR cr_crapcob (pr_nrdocmto IN crapcob.nrdocmto%TYPE,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE, pr_nrdctabb IN crapcob.nrdctabb%TYPE, pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS 
-    SELECT cob.cdcooper, 
-           cob.nrdconta,
-           cob.nrinssac,
-           cob.nrnosnum,
-           cob.cdtpinsc, -- Tipo Pesso do Pagador (0-Nenhum/1-CPF/2-CNPJ)
-           sab.nmdsacad,
-           cob.nrdocmto,
-           cob.nrcnvcob,
-           cob.nrdctabb,
-           cob.cdbandoc
-    FROM   crapcob cob
-           INNER JOIN crapsab sab ON sab.nrinssac=cob.nrinssac AND sab.cdtpinsc=cob.cdtpinsc
-    WHERE  cob.cdcooper = pr_cdcooper -- Cooperativa
-          AND cob.nrdconta = pr_nrdconta
-          AND cob.cdbandoc = pr_cdbandoc
-          AND cob.nrdctabb = pr_nrdctabb
-          AND cob.nrcnvcob = pr_nrcnvcob
-          AND cob.nrdocmto = pr_nrdocmto
-    AND    cob.incobran=0;
-    rw_crapcob cr_crapcob%rowtype; 
    
    CURSOR cr_tbdsct_parecer_titulo (pr_nrdocmto IN crapcob.nrdocmto%TYPE,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE, pr_nrdctabb IN crapcob.nrdctabb%TYPE, pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS
      SELECT
@@ -1476,111 +1421,7 @@ create or replace package body cecred.TELA_APRDES is
      ORDER BY tbdsct_parecer_titulo.dtparecer DESC
           ;
     rw_tbdsct_parecer_titulo cr_tbdsct_parecer_titulo%ROWTYPE;
-   
-   
-    --  Críticas Pagador (Job - Análise Diária)
-    cursor cr_analise_pagador is 
-      select *
-      from   tbdsct_analise_pagador
-      where  cdcooper = pr_cdcooper 
-      and    nrdconta = pr_nrdconta 
-    AND  nrinssac = vr_nrinssac;
-    rw_analise_pagador cr_analise_pagador%rowtype;
-
-    CURSOR cr_crapcbd IS
-      SELECT crapcbd.nrconbir,
-             crapcbd.nrseqdet
-        FROM crapcbd
-       WHERE crapcbd.cdcooper = pr_cdcooper
-         AND crapcbd.nrdconta = pr_nrdconta 
-         AND crapcbd.nrcpfcgc = vr_nrinssac
-         AND crapcbd.inreterr = 0  -- Nao houve erros
-       ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
-     rw_crapcbd  cr_crapcbd%rowtype; 
-    
-    -- Cursor sobre as pendencias financeiras existentes
-    CURSOR cr_craprpf(pr_nrconbir craprpf.nrconbir%TYPE,
-                      pr_nrseqdet craprpf.nrseqdet%TYPE) IS
-      SELECT innegati,
-             dsnegati,
-             decode(qtnegati,0,NULL,qtnegati) qtnegati,
-             decode(qtnegati,0,NULL,vlnegati) vlnegati,
-             dtultneg
-        FROM (SELECT 1 innegati,
-                     'REFIN' dsnegati,
-                     MAX(craprpf.qtnegati) qtnegati,
-                     MAX(craprpf.vlnegati) vlnegati,
-                     MAX(craprpf.dtultneg) dtultneg
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 1
-              UNION ALL
-              SELECT 2,
-                     'PEFIN' dsnegati,
-                     MAX(craprpf.qtnegati),
-                     MAX(craprpf.vlnegati),
-                     MAX(craprpf.dtultneg)
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 2
-              UNION ALL
-              SELECT 3,
-                     'Protesto' dsnegati,
-                     MAX(craprpf.qtnegati),
-                     MAX(craprpf.vlnegati),
-                     MAX(craprpf.dtultneg)
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 3
-              UNION ALL
-              SELECT 4,
-                     'Ação Judicial' dsnegati,
-                     MAX(craprpf.qtnegati),
-                     MAX(craprpf.vlnegati),
-                     MAX(craprpf.dtultneg)
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 4
-              UNION ALL
-              SELECT 5,
-                     'Participação falência' dsnegati,
-                     MAX(craprpf.qtnegati),
-                     MAX(craprpf.vlnegati),
-                     MAX(craprpf.dtultneg)
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 5
-              UNION ALL
-              SELECT 6,
-                     'Cheque sem fundo' dsnegati,
-                     MAX(craprpf.qtnegati),
-                     MAX(craprpf.vlnegati),
-                     MAX(craprpf.dtultneg)
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 6
-              UNION ALL
-              SELECT 7,
-                     'Cheque Sust./Extrav.' dsnegati,
-                     MAX(craprpf.qtnegati),
-                     MAX(craprpf.vlnegati),
-                     MAX(craprpf.dtultneg)
-                FROM craprpf
-               WHERE craprpf.nrconbir = pr_nrconbir
-                 AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 7);
-                     
-     rw_craprpf cr_craprpf%rowtype; 
-     
-   -- Cursor genérico de calendário
-   rw_crapdat btch0001.cr_crapdat%rowtype;
-   
+        
    vr_tab_chaves  gene0002.typ_split;
    vr_index     PLS_INTEGER;
    
@@ -1589,40 +1430,21 @@ create or replace package body cecred.TELA_APRDES is
    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
     
    BEGIN
-      --    Leitura do calendário da cooperativa
-      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat into rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
-      
+     TELA_ATENDA_DSCTO_TIT.pc_detalhes_tit_bordero(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_nrborder => pr_nrborder
+                               ,pr_chave    => pr_chave
+                               ,pr_nrinssac => pr_nrinssac
+                               ,pr_nmdsacad => pr_nmdsacad
+                               ,pr_tab_dados_biro => pr_tab_dados_biro
+                               ,pr_tab_dados_detalhe => pr_tab_dados_detalhe
+                               ,pr_tab_dados_critica => pr_tab_dados_critica
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               );
       vr_tab_chaves := gene0002.fn_quebra_string(pr_string  => pr_chave,
                                              pr_delimit => ';');
-      OPEN cr_crapcob(vr_tab_chaves(4), -- Conta
-                       vr_tab_chaves(3), -- Convenio
-                       vr_tab_chaves(2), -- Conta base do banco
-                       vr_tab_chaves(1)  -- Codigo do banco
-                       );
-      FETCH cr_crapcob INTO rw_crapcob;
-
-      vr_nrinssac := rw_crapcob.nrinssac;
-      vr_cdtpinsc := rw_crapcob.cdtpinsc;
-      pr_nrinssac := rw_crapcob.nrinssac;
-      pr_nmdsacad := rw_crapcob.nmdsacad;
-      
-      -- Busca dos valores para calcular a liquidez a partir dos valores da TAB052
-      DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
-                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
-                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
-                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
-                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
-                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
-                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                   ,pr_inpessoa          => vr_cdtpinsc
-                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
-                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
-                                   ,pr_cdcritic          => vr_cdcritic
-                                   ,pr_dscritic          => vr_dscritic);
-
-      
+                                             
       --> Lista de pareceres
       OPEN cr_tbdsct_parecer_titulo (vr_tab_chaves(4), -- Conta
                        vr_tab_chaves(3), -- Convenio
@@ -1639,127 +1461,6 @@ create or replace package body cecred.TELA_APRDES is
            vr_index:=vr_index+1;
       END LOOP;
       CLOSE cr_tbdsct_parecer_titulo;
-      
-      --> DETALHES (BORDERO)
-      open cr_crapcbd;
-      fetch cr_crapcbd into rw_crapcbd;
-      IF (cr_crapcbd%FOUND) THEN
-        vr_idtabtitulo:=0;
-        open cr_craprpf (pr_nrconbir=>rw_crapcbd.nrconbir,pr_nrseqdet=>rw_crapcbd.nrseqdet);
-        LOOP
-            fetch cr_craprpf into rw_craprpf;
-               EXIT WHEN cr_craprpf%NOTFOUND;
-               pr_tab_dados_biro(vr_idtabtitulo).dsnegati := rw_craprpf.dsnegati;
-               pr_tab_dados_biro(vr_idtabtitulo).qtnegati := rw_craprpf.qtnegati;
-               pr_tab_dados_biro(vr_idtabtitulo).vlnegati := rw_craprpf.vlnegati;
-               pr_tab_dados_biro(vr_idtabtitulo).dtultneg := rw_craprpf.dtultneg;
-               vr_idtabtitulo := vr_idtabtitulo + 1;
-        END LOOP;      
-      END IF; 
-      
-      --> Preenche liquidez e concentração
-      pr_tab_dados_detalhe(0).liqpagcd := DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper
-                                                                              ,pr_nrdconta
-                                                                              ,vr_nrinssac
-                                                                              ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
-                                                                              ,rw_crapdat.dtmvtolt
-                                                                              ,vr_tab_dados_dsctit(1).cardbtit_c);
-      pr_tab_dados_detalhe(0).concpaga := DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper
-                                                                                 ,pr_nrdconta
-                                                                                 ,vr_nrinssac
-                                                                                 ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
-                                                                                 ,rw_crapdat.dtmvtolt
-                                                                                 ,vr_tab_dados_dsctit(1).cardbtit_c);
-      pr_tab_dados_detalhe(0).liqgeral := DSCT0003.fn_calcula_liquidez_geral(pr_nrdconta 
-                                                                                 ,pr_cdcooper             
-                                                                                 ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
-                                                                                 ,rw_crapdat.dtmvtolt
-                                                                                 ,vr_tab_dados_dsctit(1).cardbtit_c);
-                                                                                       
-      --> CRÍTICAS DO PAGADOR (JOB - ANÁLISE PAGADOR)
-      vr_idtabcritica := 0;
-      OPEN  cr_analise_pagador;
-      FETCH cr_analise_pagador INTO rw_analise_pagador;
-      CLOSE cr_analise_pagador;                   
-      
-      IF rw_analise_pagador.inpossui_criticas > 0 THEN
-
-        -- qtremessa_cartorio -> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
-        IF rw_analise_pagador.qtremessa_cartorio > 0 THEN
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd Remessa em Cartório acima do permitido'; 
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qtremessa_cartorio;
-           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        END IF;
-              
-        -- qttit_protestados -> Crítica: Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt).
-        if rw_analise_pagador.qttit_protestados > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Protestados acima do permitido'; 
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qttit_protestados; 
-           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        end if;
-              
-        -- qttit_naopagos -> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
-        if rw_analise_pagador.qttit_naopagos > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido';
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qttit_naopagos; 
-           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        end if;
-              
-        -- pemin_liquidez_qt -> Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp).
-        if rw_analise_pagador.pemin_liquidez_qt > 0.0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos)';
-           pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.pemin_liquidez_qt; 
-           pr_tab_dados_critica(vr_idtabcritica).varint := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        end if;
-              
-        -- pemin_liquidez_vl -> Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp).
-        if rw_analise_pagador.pemin_liquidez_vl > 0.0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos)';
-           pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.pemin_liquidez_vl; 
-           pr_tab_dados_critica(vr_idtabcritica).varint := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        end if;
-             
-        -- peconcentr_maxtit -> Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
-        if rw_analise_pagador.peconcentr_maxtit > 0.0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Concentração Máxima Permitida de Títulos excedida';
-           pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.peconcentr_maxtit; 
-           pr_tab_dados_critica(vr_idtabcritica).varint := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        end if;
-              
-        -- inemitente_conjsoc -> Crítica: Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar).
-        if rw_analise_pagador.inemitente_conjsoc > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Emitente é Cônjuge/Sócio do Pagador.';
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.inemitente_conjsoc;
-           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        end if;
-              
-        -- inpossui_titdesc -> Crítica: Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp).
-        if rw_analise_pagador.inpossui_titdesc > 0 then
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Cooperado possui Títulos Descontados na Conta deste Pagador.';
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.inpossui_titdesc; 
-           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-        END IF;
-      END IF;
-      -- invalormax_cnae -> Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
-      IF DSCT0003.fn_calcula_cnae(rw_crapcob.cdcooper 
-                                   ,rw_crapcob.nrdconta
-                                   ,rw_crapcob.nrdocmto
-                                   ,rw_crapcob.nrcnvcob
-                                   ,rw_crapcob.nrdctabb
-                                   ,rw_crapcob.cdbandoc) THEN
-           pr_tab_dados_critica(vr_idtabcritica).dsc := 'Valor Máximo Permitido por CNAE excedido.';
-           pr_tab_dados_critica(vr_idtabcritica).varint := 1; 
-           pr_tab_dados_critica(vr_idtabcritica).varper := 0;
-           vr_idtabcritica := vr_idtabcritica + 1;
-      END IF;
 
  END pc_detalhes_titulo;
  
@@ -1776,9 +1477,9 @@ create or replace package body cecred.TELA_APRDES is
                                          ) IS
  
     -- variaveis de retorno       
-    vr_tab_dados_biro         typ_tab_dados_biro;
-    vr_tab_dados_detalhe      typ_tab_dados_detalhe;
-    vr_tab_dados_critica      typ_tab_dados_critica;
+    vr_tab_dados_biro         tela_atenda_dscto_tit.typ_tab_dados_biro;
+    vr_tab_dados_detalhe      tela_atenda_dscto_tit.typ_tab_dados_detalhe;
+    vr_tab_dados_critica      tela_atenda_dscto_tit.typ_tab_dados_critica;
     vr_tab_dados_parecer      typ_tab_dados_parecer;
     vr_nrinssac          crapsab.nrinssac%TYPE;
     vr_nmdsacad          crapsab.nmdsacad%TYPE;
@@ -1906,10 +1607,7 @@ create or replace package body cecred.TELA_APRDES is
             
             pc_escreve_xml('<critica>'|| 
                              '<dsc>' || vr_tab_dados_critica(vr_index_critica).dsc || '</dsc>' ||
-                             '<int>' || vr_tab_dados_critica(vr_index_critica).varint || '</int>' ||
-                             '<per>' || to_char(
-                                     vr_tab_dados_critica(vr_index_critica).varper,
-                                      'FM999G999G999G990D00')|| '</per>' ||
+                             '<vlr>' || vr_tab_dados_critica(vr_index_critica).vlr || '</vlr>' ||
                              '</critica>');
             /* buscar proximo */
             vr_index_critica := vr_tab_dados_critica.next(vr_index_critica);
