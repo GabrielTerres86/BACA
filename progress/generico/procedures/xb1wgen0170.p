@@ -172,6 +172,9 @@ PROCEDURE valida-cadcyb:
                 RUN piXmlAtributo (INPUT "nmassess", INPUT tt-crapcyc.nmassess).
                 RUN piXmlAtributo (INPUT "cdmotcin", INPUT STRING(tt-crapcyc.cdmotcin) ).
                 RUN piXmlAtributo (INPUT "dsmotcin", INPUT tt-crapcyc.dsmotcin) .
+                RUN piXmlAtributo (INPUT "nrborder", INPUT tt-crapcyc.nrborder) .
+                RUN piXmlAtributo (INPUT "nrtitulo", INPUT tt-crapcyc.nrtitulo) .
+                RUN piXmlAtributo (INPUT "nrctremp", INPUT tt-crapcyc.nrctremp) .
                 RUN piXmlSave.           
             END.
         END.                   
@@ -274,6 +277,8 @@ PROCEDURE excluir-dados-crapcyc:
                                       INPUT aux_nmdatela,
                                       INPUT aux_idorigem,
                                       INPUT aux_nrdconta,
+                                      INPUT aux_nrborder,
+                                      INPUT aux_nrtitulo,
                                       INPUT aux_nrctremp,
                                       INPUT aux_cdorigem,
                                      OUTPUT TABLE tt-erro).

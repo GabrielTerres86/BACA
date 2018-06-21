@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para alterar as informações da tela CADCYB
  * --------------
  * ALTERAÇÕES   : 01/09/2015 - Adicionado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12)
+ *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * -------------- 
  */
  
@@ -46,6 +47,8 @@
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
     $xml .= "       <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "       <nrctremp>".$nrctremp."</nrctremp>";
+	$xml .= "       <lsborder>".$lsborder."</lsborder>";
+	$xml .= "       <lstitulo>".$lstitulo."</lstitulo>";
 	$xml .= "       <cdorigem>".$cdorigem."</cdorigem>";
 	$xml .= "       <flgjudic>".$flgjudic."</flgjudic>";
 	$xml .= "       <flextjud>".$flextjud."</flextjud>";

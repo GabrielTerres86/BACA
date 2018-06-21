@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 01/10/2013 - Alterado para setar focus no cCdorigem (Lucas R.)
  *                12/09/2014 - Ajuste na verificação de permissão por tipo de operação (Jaison)
  *                31/08/2015 - Ajustado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12)
+ *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * -------------- 
  */
 
@@ -99,6 +100,9 @@
 			$nmassess = $xmlObjetoContrato->roottag->tags[0]->attributes["NMASSESS"];
 			$cdmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["CDMOTCIN"];
 			$dsmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["DSMOTCIN"];
+			$nrborder = $xmlObjetoContrato->roottag->tags[0]->attributes["NRBORDER"];
+			$nrtitulo = $xmlObjetoContrato->roottag->tags[0]->attributes["NRTITULO"];
+			$nrctremp = $xmlObjetoContrato->roottag->tags[0]->attributes["NRCTREMP"];
 			
 			if ($judicial == "SIM") {
 				echo "$('#flgjudic','#frmCab').prop('checked',true);";			
@@ -126,6 +130,9 @@
 			if($cdmotcin != "0") {
 				echo "$('#cdmotivocin','#frmCab').val('".$cdmotcin."');";
 				echo "$('#dsmotivocin','#frmCab').val('".$dsmotcin."');";
+			}
+			if($cdorigem == 4){
+				echo "$('#nrctremp','#frmCab').val('".$nrctremp."');";
 			}
 
 			if ($operacao == "E") {

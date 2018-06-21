@@ -11,6 +11,7 @@
  *				               (Kelvin - SD 233714)
  *
  *                31/08/2015 - Adicionado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12) 
+ *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * --------------
  */
 ?>
@@ -91,6 +92,9 @@
 	
 	<div id="divOpcoes2" style="display:none">
 		<label for="nmdarqui">Arquivo:</label>
+		<!-- <input type="text" id="nmdarqui" name="nmdarqui" value=' -->
+		<? /*echo "/micros/".$glbvars["dsdircop"]."/cadcyb/".$glbvars["dsdircop"].".csv" */?>' 
+		<!-- /> -->
 		<input type="text" id="nmdarqui" name="nmdarqui" value='<? echo "/micros/".$glbvars["dsdircop"]."/cadcyb/".$glbvars["dsdircop"].".csv" ?>' />
 		
 		<br style="clear:both" />		
@@ -100,8 +104,8 @@
 		<div id="exemplo" style="height:120px">
 		<label style="text-align:left">
 			&nbsp;&nbsp;Formato do arquivo CSV exemplo:</br>
-			&nbsp;&nbsp;Nº Coop;Cooperativa;Origem;Nº Conta;Nº Contrato;Judicial;Extra Judicial;CIN;Data Assessoria Cobrança;Nº Assessoria;Nº Motivo CIN</br>
-			&nbsp;&nbsp;<? echo $glbvars["cdcooper"] ?>;<? echo $glbvars["dsdircop"] ?>;3;952168;158582;N;S;S;31/03/2015;7;3
+			&nbsp;&nbsp;Nº Coop;Cooperativa;Origem;Nº Conta;Nº Contrato;Judicial;Extra Judicial;CIN;Data Assessoria Cobrança;Nº Assessoria;Nº Motivo CIN;Nº Bordero;Nº Titulo</br>
+			&nbsp;&nbsp;<? echo $glbvars["cdcooper"] ?>;<? echo $glbvars["dsdircop"] ?>;3;952168;158582;N;S;S;31/03/2015;7;3;2084;1
 		</label>
 		</div>
 		</fieldset>

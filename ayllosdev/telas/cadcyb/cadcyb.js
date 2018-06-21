@@ -15,6 +15,7 @@
                                os campos flgjudic e flextjud não podem er nulos (Jean/Mout´S).
  *                15/02/2017 - Alteracao para habilitar btnOk quando chamado funcao estadoInicial. (Jaison/James)
  *				  04/06/2018 - Projeto 403 - Inclusão de tratativas para a inclusão de títulos vencidos na Cyber (Lucas - GFT)	
+ *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * -----------------------------------------------------------------------
  */
 
@@ -469,6 +470,8 @@ function excluirCrapcyc(flgmsger) {
 	var nrctremp;
 	var nrdconta = normalizaNumero( $("#nrdconta","#frmCab").val() );
 	var cdorigem = $("#cdorigem","#frmCab").val();
+	var nrborder = $("#nrborder","#frmCab").val();
+	var nrtitulo = $("#nrtitulo","#frmCab").val();
 
 	if (cdorigem == "1") {
 		nrctremp = nrdconta;
@@ -486,6 +489,8 @@ function excluirCrapcyc(flgmsger) {
 				nrdconta: nrdconta,
 				nrctremp: nrctremp,
 				cdorigem: cdorigem,
+				nrborder: nrborder,
+				nrtitulo: nrtitulo,
 				redirect: 'script_ajax' 
 				},
 		error   : function(objAjax,responseError,objExcept) {
@@ -534,15 +539,15 @@ function btnContinuar() {
 	var nrborder = $("#nrborder","#frmCab").val();
 	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	
-	/*
+	
 	if (cdorigem == "1") {
 		nrctremp = nrdconta;
 	}else if (cdorigem == "4") {
-		nrctremp = $("#nrborder","#frmCab").val() + " - " + $("#nrborder","#frmCab").val();
+		nrctremp = $("#nrborder","#frmCab").val();
 	}else{
 		nrctremp = $("#nrctremp","#frmCab").val();
 	}	
-	*/
+	
 
 	// Verifica se o número da conta é vazio
 	if ( nrdconta == '' ) { 
@@ -1245,14 +1250,15 @@ function mostrarPesquisaMotivoCin(){
 // Função para abrir a pesquisa de borderos, usando número do título
 function mostrarPesquisaBorderoPorTitulo(){
 	var normNrconta = normalizaNumero($('#frmCab #nrdconta').val()) > 0 ? normalizaNumero($('#frmCab #nrdconta').val()) : '';
+	var nrBorder    = normalizaNumero($('#frmCab #nrborder').val()) > 0 ? $('#frmCab #nrborder').val() : '';
 	if( $('#nrtitulo','#frmCab').prop("disabled") ) {
 		return false;
 	}
 	//Definição dos filtros
 	// |;nrborder;;N;;N;nrborder|;nrtitulo;;N;;N;nrtitulo
-	var filtros	= "Numero do Bordero;nrborder;;N;;N;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Numero Doc;nrdocmto;;N;;N;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto|Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta";
+	var filtros	= "Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrborder;;S;"+nrBorder+";S;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Numero Doc;nrdocmto;;N;;N;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto";
 	//Campos que serão exibidos na tela
-	var colunas = 'Bordero;nrborder;20%;center|Titulo;nrtitulo;20%;center|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center|Numero da Conta;nrdconta;0%;center;;N';			
+	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Titulo;nrtitulo;20%;center|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center';			
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_TITULOS_BORDERO", "Titulos e Bordero","100",filtros,colunas);
 }
