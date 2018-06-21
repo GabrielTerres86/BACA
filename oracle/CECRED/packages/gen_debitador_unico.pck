@@ -34,12 +34,11 @@ CREATE OR REPLACE PACKAGE cecred.gen_debitador_unico AS
                                          ,pr_cdacesso IN crapprm.cdacesso%TYPE
                                          ,pr_dsvlrprm IN crapprm.dsvlrprm%TYPE);
                                          
-  /* Verifica se a já executou a integração ABBC */  
+  /* Verifica se executou a integração ABBC do dia anterior */
   PROCEDURE pc_valida_integracao_abbc(pr_cdcooper                 IN tbgen_prglog.cdcooper%TYPE
                                      ,pr_tpexecucao               IN tbgen_prglog.tpexecucao%TYPE
                                      ,pr_cdprograma               IN tbgen_prglog.cdprograma%TYPE
-                                     ,pr_dhinicio                 IN tbgen_prglog.dhinicio%TYPE
-                                     ,pr_dhfim                    IN tbgen_prglog.dhfim%TYPE
+                                     ,pr_dtprglog                 IN DATE
                                      ,pr_flgsucesso               IN tbgen_prglog.flgsucesso%TYPE
                                      ,pr_inexecutou_integra_abbc OUT VARCHAR2                                  
                                      ,pr_dscritic                OUT crapcri.dscritic%TYPE);                                         
@@ -201,16 +200,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
   END pc_atualiz_erro_prg_debitador; 
   
   
-  /* Verifica se a já executou a integração ABBC */  
+  /* Verifica se executou a integração ABBC do dia anterior */  
   PROCEDURE pc_valida_integracao_abbc(pr_cdcooper                 IN tbgen_prglog.cdcooper%TYPE
                                      ,pr_tpexecucao               IN tbgen_prglog.tpexecucao%TYPE
                                      ,pr_cdprograma               IN tbgen_prglog.cdprograma%TYPE
-                                     ,pr_dhinicio                 IN tbgen_prglog.dhinicio%TYPE
-                                     ,pr_dhfim                    IN tbgen_prglog.dhfim%TYPE
+                                     ,pr_dtprglog                 IN DATE
                                      ,pr_flgsucesso               IN tbgen_prglog.flgsucesso%TYPE
                                      ,pr_inexecutou_integra_abbc OUT VARCHAR2                                  
-                                     ,pr_dscritic                OUT crapcri.dscritic%TYPE) IS 
-  BEGIN 
+                                     ,pr_dscritic                OUT crapcri.dscritic%TYPE) IS                                                                                                                                        
+  BEGIN    
     BEGIN 
       SELECT 'S'
       INTO   pr_inexecutou_integra_abbc 
@@ -218,8 +216,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
       WHERE  cdcooper   = pr_cdcooper
       AND    tpexecucao = pr_tpexecucao                               
       AND    cdprograma = pr_cdprograma
-      AND    dhinicio  >= pr_dhinicio  
-      AND    dhfim     <  pr_dhfim + 1
+      AND    dhinicio  >= pr_dtprglog  
+      AND    dhfim     <  pr_dtprglog + 1
       AND    flgsucesso = pr_flgsucesso
       AND    ROWNUM     = 1;
     EXCEPTION
@@ -236,7 +234,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
   PROCEDURE pc_valida_hora_processo(pr_dhprocessamento IN tbgen_debitador_horario.dhprocessamento%TYPE
                                    ,pr_cdprocesso      IN tbgen_debitador_horario_proc.cdprocesso%TYPE                           
                                    ,pr_ds_erro        OUT crapcri.dscritic%TYPE) IS
-    vr_erro                     EXCEPTION;                                   
+    vr_erro                 EXCEPTION;                                   
     vr_ds_erro              crapcri.dscritic%TYPE;                                 
     vr_dhprocessamento_max  tbgen_debitador_horario.dhprocessamento%TYPE;                               
   BEGIN
@@ -409,13 +407,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
       RAISE vr_erro; 
     END IF;   
   
-    -- Verifica se a já executou a integração ABBC   
-    pc_valida_integracao_abbc(pr_cdcooper                => pr_cdcooper         --Coopertativa
-                             ,pr_tpexecucao              => 1                   --Batch 
-                             ,pr_cdprograma              => 'CRPS538'           --Processo ABBC
-                             ,pr_dhinicio                => rw_crapdat.dtmvtoan --Data Inicial
-                             ,pr_dhfim                   => rw_crapdat.dtmvtoan --Data Final
-                             ,pr_flgsucesso              => 1                   --Indicador de sucesso da execução
+    -- Verifica se executou a integração ABBC do dia anterior 
+    pc_valida_integracao_abbc(pr_cdcooper                => pr_cdcooper           --Coopertativa
+                             ,pr_tpexecucao              => 1                     --Batch 
+                             ,pr_cdprograma              => 'CRPS538'             --Processo ABBC
+                             ,pr_dtprglog                => rw_crapdat.dtmvtoan+1 --Data Anterior da Cooperativa + 1 (O log do integração é gerado na madrugada do dia seguinte da data atual da cooperativa. Ex: Integração referente ao dia 19/06/2018, no log da integração a data do log será de 20/06/2018)
+                             ,pr_flgsucesso              => 1                     --Indicador de sucesso da execução
                              ,pr_inexecutou_integra_abbc => vr_inexecutou_integra_abbc                              
                              ,pr_dscritic                => vr_ds_erro); 
     -- Tratamento Erro
@@ -1207,13 +1204,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                           ,pr_idtiplog => 'O');                           
       
-      -- Verifica se a já executou a integração ABBC   
-      pc_valida_integracao_abbc(pr_cdcooper                => pr_cdcooper         --Coopertativa
-                               ,pr_tpexecucao              => 1                   --Batch 
-                               ,pr_cdprograma              => 'CRPS538'           --Processo ABBC
-                               ,pr_dhinicio                => rw_crapdat.dtmvtoan --Data Inicial
-                               ,pr_dhfim                   => rw_crapdat.dtmvtoan --Data Final
-                               ,pr_flgsucesso              => 1                   --Indicador de sucesso da execução
+      -- Verifica se executou a integração ABBC do dia anterior   
+      pc_valida_integracao_abbc(pr_cdcooper                => pr_cdcooper           --Coopertativa
+                               ,pr_tpexecucao              => 1                     --Batch 
+                               ,pr_cdprograma              => 'CRPS538'             --Processo ABBC
+                               ,pr_dtprglog                => rw_crapdat.dtmvtoan+1 --Data Anterior da Cooperativa + 1 (O log do integração é gerado na madrugada do dia seguinte da data atual da cooperativa. Ex: Integração referente ao dia 19/06/2018, no log da integração a data do log será de 20/06/2018)
+                               ,pr_flgsucesso              => 1                     --Indicador de sucesso da execução
                                ,pr_inexecutou_integra_abbc => vr_inexecutou_integra_abbc                              
                                ,pr_dscritic                => vr_dscritic); 
       -- Tratamento Erro
@@ -1221,11 +1217,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
         RAISE vr_exc_email;              
       END IF;         
       
+      --19/06/2018
+      --Alteração: Solicitado por Rodrigo Siewerdt/Cecred para não abortar o debitador e sim reprogramar o JOB caso a integração ABBC (CRPS538) ainda não foi processada
       -- Se a Integração ABBC ainda não foi processada
-      IF Nvl(vr_inexecutou_integra_abbc,'N') = 'N' THEN 
-        vr_dscritic := 'Debitador Abortado. CRPS538 - Integração ABBC ainda não foi processada em '||To_Char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||'. (Cooperativa: '||pr_cdcooper||').';
-        RAISE vr_exc_email;
-      END IF;                                   
+      --IF Nvl(vr_inexecutou_integra_abbc,'N') = 'N' THEN 
+        --vr_dscritic := 'Debitador Abortado. CRPS538 - Integração ABBC ainda não foi processada em '||To_Char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||'. (Cooperativa: '||pr_cdcooper||').';
+        --RAISE vr_exc_email;
+      --END IF;                                   
       
       -- Log de ocorrência
       pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
@@ -1235,8 +1233,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                           ,pr_idtiplog => 'O'); 
                 
-      -- Se a Cooperativa ainda estiver executando o Processo Batch (Noturna)
-      IF rw_crapdat.inproces > 1 THEN    
+      -- Se a Cooperativa ainda estiver executando o Processo Batch (Noturna) ou a integração ABBC (CRPS538) ainda não foi processada 
+      IF rw_crapdat.inproces > 1 OR Nvl(vr_inexecutou_integra_abbc,'N') = 'N' THEN   
         
         -- Log de ocorrência
         pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
@@ -1271,7 +1269,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                              
         -- Log de ocorrência
         pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
-                            ,pr_indexecu => 'Reagendando JOB '||vr_nm_job||', pois ainda esta executando o Processo Batch (Noturno)...'
+                            ,pr_indexecu => 'Reagendando JOB '||vr_nm_job||', pois ainda esta executando o Processo Batch (Noturno) ou a Integração ABBC ainda não foi processada...'
                             ,pr_cdcooper => pr_cdcooper
                             ,pr_tpexecuc => NULL
                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
