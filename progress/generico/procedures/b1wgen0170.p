@@ -1498,7 +1498,7 @@ PROCEDURE importa-dados-crapcyc:
                                  " Data Assessoria Cobranca: " + STRING(aux_dtenvcbr, "99/99/9999") + 
                                  " Assessoria: " + STRING(aux_cdassess, "zzzz9")        +
                                  " Motivo Cin: " + STRING(aux_cdmotcin, "zz9").
-            message aux_registro.
+            
            IF aux_cdcooper <> par_cdcooper THEN DO:
                 PUT STREAM str_2 UNFORMATTED "Registro nao pertence a cooperativa processada. - " +
                                               aux_registro SKIP.
@@ -1590,7 +1590,8 @@ PROCEDURE importa-dados-crapcyc:
                         FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = aux_cdcooper AND
                                                              tbdsct_titulo_cyber.nrdconta = aux_nrdconta AND
                                                              tbdsct_titulo_cyber.nrtitulo = aux_nrtitulo AND
-                                                             tbdsct_titulo_cyber.nrborder = aux_nrborder
+                                                             tbdsct_titulo_cyber.nrborder = aux_nrborder AND
+                                                             tbdsct_titulo_cyber.nrctrdsc = aux_nrctremp
                                                         NO-LOCK NO-ERROR.
                         /* Caso não exista, insere um novo e atribui o valor de contrato */                                                        
                         IF NOT AVAIL(tbdsct_titulo_cyber) THEN
@@ -1618,16 +1619,9 @@ PROCEDURE importa-dados-crapcyc:
                                         ASSIGN aux_flgerro = TRUE.
                                         NEXT.
                                     END.
+                                /* Substitui o numero do contrato de emprestimo com o sequencial especifico do desconto de titulos */
+                                ASSIGN aux_nrctremp = INT(pc_inserir_titulo_cyber.pr_nrctrdsc).
                             END.
-                        ELSE
-                            DO:
-                               PUT STREAM str_2 UNFORMATTED "Titulo existente na tabela da Cyber. - " +
-                                                                                    aux_registro SKIP.
-                               ASSIGN aux_flgerro = TRUE.
-                               NEXT.
-                            END.
-                        /* Substitui o numero do contrato de emprestimo com o sequencial especifico do desconto de titulos */
-                        ASSIGN aux_nrctremp = INT(pc_inserir_titulo_cyber.pr_nrctrdsc).
                     END.
            FOR FIRST crapcyc FIELD(flgjudic flgehvip flextjud 
                                    dtenvcbr cdassess cdmotcin)
