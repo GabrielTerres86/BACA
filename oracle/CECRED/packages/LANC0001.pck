@@ -326,7 +326,7 @@ BEGIN
 		-- Confere se o histórico em questão é de Débito
 		IF vr_reg_historico.indebcre = 'D' THEN	
 			-- Se a conta está em prejuízo e o histórico não permite aumentar o estouro da conta
-			IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) 
+			IF FALSE /*PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) */
 			AND vr_reg_historico.indebprj = 0 THEN
 				vr_pode_debitar := FALSE;
 			END IF;
@@ -583,7 +583,7 @@ BEGIN
     -- Se é um lançamento de crédito e se as regras de negócio do prejuízo já estão ativas
     IF vr_reg_historico.indebcre = 'C' AND vr_inatvprj THEN
 			-- Identifica se a conta está em prejuízo
-  		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
+  		vr_inprejuz := FALSE; /*PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);*/
 			
 			IF vr_inprejuz THEN -- *** Acrescentar crítica do campo craphis.INTRANSF_CRED_PREJUIZO que está sendo criado ***
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
