@@ -37,7 +37,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
     qtmaxbol crapprm.dsvlrprm%TYPE,
     blqrsgcc crapprm.dsvlrprm%TYPE);
 
-  tab_import tbepr_boleto_import%ROWTYPE;
+  tab_import tbrecup_boleto_import%ROWTYPE;
 
   PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
                            ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
@@ -82,7 +82,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
                          ,pr_des_erro OUT VARCHAR2);
 
 	PROCEDURE pc_buscar_boletos_contratos_w (pr_cdagenci IN crapass.cdagenci%TYPE DEFAULT 0         --> PA
-																					,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE DEFAULT 0  --> Nr. do Contrato
+																					,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE DEFAULT 0  --> Nr. do Contrato
 																					,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0         --> Nr. da Conta
 																					,pr_dtbaixai IN VARCHAR2                                --> Data de baixa inicial
 																					,pr_dtbaixaf IN VARCHAR2                                --> Data de baixa final
@@ -284,6 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   --                          nas procedures pc_verifica_gerar_boleto, Prj. 302 (Jean Michel).
   --
   --             14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
+  --             02/06/2018 - Adicionado tipo de produto na tabela de ligação contrato/boleto (Luis Fernando - GFT)
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
@@ -327,10 +328,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
            AND nrdconta = pr_nrdconta
         UNION
         SELECT DISTINCT dsemail, ' ', nmcontato
-          FROM tbepr_cobranca
+          FROM tbrecup_cobranca
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND dsemail IS NOT NULL;
+           AND dsemail IS NOT NULL
+           AND tpproduto = 0;
 
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -513,10 +515,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 --           AND cdopetfn > 0
         UNION
         SELECT DISTINCT nrddd_sms, nrtel_sms, 0 ramal, 0, nmcontato, 0
-          FROM tbepr_cobranca
+          FROM tbrecup_cobranca
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND nrtel_sms > 0;
+           AND nrtel_sms > 0
+           AND tpproduto = 0;
 
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -738,10 +741,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
            AND cdopetfn > 0
         UNION
         SELECT DISTINCT nrddd_sms, nrtel_sms, 0 ramal, 0, nmcontato, 0
-          FROM tbepr_cobranca
+          FROM tbrecup_cobranca
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
-           AND nrtel_sms > 0;
+           AND nrtel_sms > 0
+           AND tpproduto = 0;
 
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1108,7 +1112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   END pc_buscar_log;
 
 	PROCEDURE pc_buscar_boletos_contratos_w (pr_cdagenci IN crapass.cdagenci%TYPE DEFAULT 0         --> PA
-																					,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE DEFAULT 0  --> Nr. do Contrato
+																					,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE DEFAULT 0  --> Nr. do Contrato
 																					,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0         --> Nr. da Conta
 																					,pr_dtbaixai IN VARCHAR2                                --> Data de baixa inicial
 																					,pr_dtbaixaf IN VARCHAR2                                --> Data de baixa final
@@ -1341,6 +1345,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Observacao: -----
 
       Alteracoes: 01/03/2017 - Inclusao de indicador se possui avalista e coluna de Saldo Prejuizo. (P210.2 - Jaison/Daniel)
+
+                  09/08/2017 - Nao permitir geracao para produto Pos-Fixado. (Jaison/James - PRJ298)
       Alteracoes: 14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
     ..............................................................................*/
 			DECLARE
@@ -1396,7 +1402,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
         SELECT epr.inprejuz,
                epr.tpemprst,
-               epr.vlsdprej
+               epr.vlsdprej,
+               epr.txmensal,
+               epr.qtpreemp
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
@@ -1558,17 +1566,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 						LOOP
               
+              -- Se for Pos-Fixado, vai para proximo
+              IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 2 THEN
+                -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
+                EXIT WHEN (vr_ind_cde = vr_tab_dados_epr.LAST OR vr_ind_cde = (pr_nriniseq + pr_nrregist) - 1);
+                vr_ind_cde := vr_tab_dados_epr.NEXT(vr_ind_cde);
+                CONTINUE;
+              END IF;
+
               vr_dstipcob := '';
               vr_vlsdeved := 0;
-              vr_vlsdeved := (vr_tab_dados_epr(vr_ind_cde).vlsdeved + 
-                              vr_tab_dados_epr(vr_ind_cde).vlmtapar +
-                              vr_tab_dados_epr(vr_ind_cde).vlmrapar);   
+
               
               OPEN cr_epr (pr_cdcooper => vr_cdcooper
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp);
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrctremp => vr_tab_dados_epr(vr_ind_cde).nrctremp);
               FETCH cr_epr INTO rw_epr;
               CLOSE cr_epr;
+                        
+                           
+              vr_vlsdeved := (NVL(vr_tab_dados_epr(vr_ind_cde).vlsdeved,0) + 
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vlmtapar,0) +
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vlmrapar,0) + 
+                              NVL(vr_tab_dados_epr(vr_ind_cde).vliofcpl,0));
+                            
               
               -- verificar se o contrato eh prejuizo      
               IF nvl(rw_epr.inprejuz,0) = 1 THEN
@@ -1625,7 +1646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               IF vr_tab_dados_epr(vr_ind_cde).tpemprst = 0 THEN
                 vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vltotpag;
               ELSE
-                vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vlprvenc + vr_tab_dados_epr(vr_ind_cde).vlmtapar + vr_tab_dados_epr(vr_ind_cde).vlmrapar;                
+                vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vlprvenc + vr_tab_dados_epr(vr_ind_cde).vlmtapar + vr_tab_dados_epr(vr_ind_cde).vlmrapar + vr_tab_dados_epr(vr_ind_cde).vliofcpl;
               END IF;
 
               IF vr_tab_dados_epr(vr_ind_cde).dsdavali <> ' ' THEN
@@ -1653,6 +1674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inprejuz', pr_tag_cont => nvl(vr_tab_dados_epr(vr_ind_cde).inprejuz,0), pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vlsdprej', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).vlsdprej, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'inliquid', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).inliquid, pr_des_erro => vr_dscritic);              
+              gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'vliofcpl', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).vliofcpl, pr_des_erro => vr_dscritic);
 
               --IF ( vr_tab_dados_epr(vr_ind_cde).vltotpag > 0 ) THEN
                  vr_auxconta := vr_auxconta + 1;
@@ -2070,7 +2092,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 			-- Tratamento de erros
 			vr_exc_saida EXCEPTION;
-			vr_tab_erro  gene0001.typ_tab_erro;
 
 			 -- Variaveis de log
 			vr_cdcooper INTEGER;
@@ -2796,29 +2817,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       vr_auxarqui INTEGER := 0;
 
 		  -- Busca os arquivos
-      CURSOR cr_arquivos(pr_dtarqini IN tbepr_boleto_arq.dtarquivo%TYPE
-                        ,pr_dtarqfim IN tbepr_boleto_arq.dtarquivo%TYPE
-                        ,pr_nmarquiv IN tbepr_boleto_arq.nmarq_import%TYPE) IS
+      CURSOR cr_arquivos(pr_dtarqini IN tbrecup_boleto_arq.dtarquivo%TYPE
+                        ,pr_dtarqfim IN tbrecup_boleto_arq.dtarquivo%TYPE
+                        ,pr_nmarquiv IN tbrecup_boleto_arq.nmarq_import%TYPE) IS
         SELECT arq.idarquivo,
                arq.dtarquivo,
                arq.nmarq_import,
                DECODE(arq.insitarq, 0, 'Pendente', 'Processado') situacaoarq,
                (SELECT COUNT(imp.idarquivo)
-                  FROM tbepr_boleto_import imp
+                  FROM tbrecup_boleto_import imp
                  WHERE imp.idarquivo = arq.idarquivo) qtd_boleto,
                DECODE(arq.insitarq, 0, 
                      (SELECT COUNT(DISTINCT cri.idboleto)
-                        FROM tbepr_boleto_critic cri
+                        FROM tbrecup_boleto_critic cri
                        WHERE cri.idarquivo = arq.idarquivo),
                      (SELECT COUNT(DISTINCT imp.idboleto)
-                        FROM tbepr_boleto_import imp
+                        FROM tbrecup_boleto_import imp
                        WHERE imp.idarquivo = arq.idarquivo
                          AND TRIM(imp.dserrger) IS NOT NULL)) qtd_critica
-          FROM tbepr_boleto_arq arq
+          FROM tbrecup_boleto_arq arq
          WHERE (TRIM(pr_nmarquiv) IS NULL
             OR  UPPER(arq.nmarq_import) LIKE '%'||UPPER(pr_nmarquiv)||'%')
            AND ((TRIM(pr_dtarqini) IS NULL AND TRIM(pr_dtarqfim) IS NULL)
             OR  TRUNC(arq.dtarquivo) BETWEEN pr_dtarqini AND pr_dtarqfim)
+           AND tpproduto = 0
           ORDER BY arq.idarquivo DESC;
 
 			BEGIN
@@ -3009,26 +3031,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     vr_vet_dado GENE0002.typ_split;
     vr_tab_aval DSCT0002.typ_tab_dados_avais;
 
-    vr_lin_cdcooper tbepr_boleto_import.cdcooper%TYPE;
-    vr_lin_nrdconta tbepr_boleto_import.nrdconta%TYPE;
-    vr_lin_nrctremp tbepr_boleto_import.nrctremp%TYPE;
-    vr_lin_nrcpfava tbepr_boleto_import.nrcpfaval%TYPE;
-    vr_lin_tipenvio tbepr_boleto_import.tpenvio%TYPE;
-    vr_lin_per_acre tbepr_boleto_import.peracrescimo%TYPE;
-    vr_lin_per_desc tbepr_boleto_import.perdesconto%TYPE;
-    vr_lin_dtvencto tbepr_boleto_import.dtvencto%TYPE;
-    vr_lin_dsdnrddd tbepr_boleto_import.nrddd_envio%TYPE;
-    vr_lin_telefone tbepr_boleto_import.nrfone_envio%TYPE;
-    vr_lin_dsdemail tbepr_boleto_import.dsemail_envio%TYPE;
-    vr_lin_endereco tbepr_boleto_import.dsendereco_envio%TYPE;
+    vr_lin_cdcooper tbrecup_boleto_import.cdcooper%TYPE;
+    vr_lin_nrdconta tbrecup_boleto_import.nrdconta%TYPE;
+    vr_lin_nrctremp tbrecup_boleto_import.nrctremp%TYPE;
+    vr_lin_nrcpfava tbrecup_boleto_import.nrcpfaval%TYPE;
+    vr_lin_tipenvio tbrecup_boleto_import.tpenvio%TYPE;
+    vr_lin_per_acre tbrecup_boleto_import.peracrescimo%TYPE;
+    vr_lin_per_desc tbrecup_boleto_import.perdesconto%TYPE;
+    vr_lin_dtvencto tbrecup_boleto_import.dtvencto%TYPE;
+    vr_lin_dsdnrddd tbrecup_boleto_import.nrddd_envio%TYPE;
+    vr_lin_telefone tbrecup_boleto_import.nrfone_envio%TYPE;
+    vr_lin_dsdemail tbrecup_boleto_import.dsemail_envio%TYPE;
+    vr_lin_endereco tbrecup_boleto_import.dsendereco_envio%TYPE;
 
     -------------------------------- CURSORES --------------------------------------
 
 		-- Cursor para consultar arquivo
-		CURSOR cr_arquivo(pr_nmarquiv IN tbepr_boleto_arq.nmarq_import%TYPE) IS
+		CURSOR cr_arquivo(pr_nmarquiv IN tbrecup_boleto_arq.nmarq_import%TYPE) IS
       SELECT arq.idarquivo,
              arq.insitarq
-        FROM tbepr_boleto_arq arq
+        FROM tbrecup_boleto_arq arq
        WHERE UPPER(arq.nmarq_import) = UPPER(pr_nmarquiv);
 		rw_arquivo cr_arquivo%ROWTYPE;
 
@@ -3066,14 +3088,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     ----------------------------- SUBROTINAS INTERNAS -------------------------------
 
     -- Inclusao da critica
-    PROCEDURE pc_inclui_critica(pr_idarquivo IN tbepr_boleto_critic.idarquivo%TYPE,
-                                pr_idboleto  IN tbepr_boleto_critic.idboleto%TYPE,
-                                pr_idmotivo  IN tbepr_boleto_critic.idmotivo%TYPE,
-                                pr_vlrcampo  IN tbepr_boleto_critic.vlcampo%TYPE) IS
+    PROCEDURE pc_inclui_critica(pr_idarquivo IN tbrecup_boleto_critic.idarquivo%TYPE,
+                                pr_idboleto  IN tbrecup_boleto_critic.idboleto%TYPE,
+                                pr_idmotivo  IN tbrecup_boleto_critic.idmotivo%TYPE,
+                                pr_vlrcampo  IN tbrecup_boleto_critic.vlcampo%TYPE) IS
     BEGIN
 
     	BEGIN
-        INSERT INTO tbepr_boleto_critic (idarquivo,idboleto,idmotivo,vlcampo)
+        INSERT INTO tbrecup_boleto_critic (idarquivo,idboleto,idmotivo,vlcampo)
              VALUES (pr_idarquivo,pr_idboleto,pr_idmotivo,pr_vlrcampo);
       EXCEPTION
         WHEN OTHERS THEN
@@ -3169,7 +3191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
         BEGIN
 
-          UPDATE tbepr_boleto_arq
+          UPDATE tbrecup_boleto_arq
              SET dtarquivo = SYSDATE
                 ,cdoperad  = vr_cdoperad
            WHERE idarquivo = rw_arquivo.idarquivo;
@@ -3185,9 +3207,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
         BEGIN
 
-          INSERT INTO tbepr_boleto_arq (idarquivo,dtarquivo,cdoperad,nmarq_import,insitarq)
-               VALUES ((SELECT (NVL(MAX(idarquivo), 0) + 1) FROM tbepr_boleto_arq),
-                        SYSDATE,vr_cdoperad,vr_nmarquiv,0) -- 0 = Pendente
+          INSERT INTO tbrecup_boleto_arq (idarquivo,dtarquivo,cdoperad,nmarq_import,insitarq,tpproduto)
+               VALUES ((SELECT (NVL(MAX(idarquivo), 0) + 1) FROM tbrecup_boleto_arq),
+                        SYSDATE,vr_cdoperad,vr_nmarquiv,0,0) -- 0 = Pendente e 0= Contrato de empréstimo
             RETURNING idarquivo INTO rw_arquivo.idarquivo;
 
         EXCEPTION
@@ -3201,11 +3223,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       BEGIN
 
         DELETE 
-          FROM tbepr_boleto_import
+          FROM tbrecup_boleto_import
          WHERE idarquivo = rw_arquivo.idarquivo;
 
         DELETE 
-          FROM tbepr_boleto_critic
+          FROM tbrecup_boleto_critic
          WHERE idarquivo = rw_arquivo.idarquivo;
 
       EXCEPTION
@@ -3531,7 +3553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
           BEGIN
 
-            INSERT INTO tbepr_boleto_import
+            INSERT INTO tbrecup_boleto_import
               (idarquivo,idboleto,cdcooper,nrdconta,nrctremp,nrcpfaval,tpenvio,peracrescimo,
                perdesconto,dtvencto,nrddd_envio,nrfone_envio,dsemail_envio,dsendereco_envio)
             VALUES
@@ -3650,7 +3672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     -------------------------------- CURSORES --------------------------------------
 
 		-- Cursor para consultar arquivo
-		CURSOR cr_arquivo(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE
+		CURSOR cr_arquivo(pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE
                      ,pr_cdcooper IN crapcop.cdcooper%TYPE) IS
       SELECT arq.idarquivo
             ,ope.nmoperad
@@ -3660,7 +3682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,arq.nmarq_gerado
             ,arq.insitarq idsituacao
             ,DECODE(arq.insitarq, 0, 'Pendente', 'Processado') dssituacao
-        FROM tbepr_boleto_arq arq
+            ,0 AS tpproduto
+        FROM tbrecup_boleto_arq arq
             ,crapope ope
        WHERE arq.idarquivo = pr_idarquiv
          AND ope.cdcooper = pr_cdcooper
@@ -3668,7 +3691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 		rw_arquivo cr_arquivo%ROWTYPE;
 
     -- Busca linhas de importação do boleto
-		CURSOR cr_linha(pr_idarquiv IN tbepr_boleto_import.idarquivo%TYPE
+		CURSOR cr_linha(pr_idarquiv IN tbrecup_boleto_import.idarquivo%TYPE
                    ,pr_flgcriti IN INTEGER) IS
       SELECT imp.idarquivo
             ,imp.idboleto
@@ -3684,44 +3707,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                    ,1,imp.dsemail_envio
                    ,2,('('||imp.nrddd_envio||') '||gene0002.fn_mask(imp.nrfone_envio,'99999-9999'))
                    ,3,imp.dsendereco_envio) destino
-        FROM tbepr_boleto_import imp
+        FROM tbrecup_boleto_import imp
             ,crapcop cop
        WHERE imp.idarquivo = pr_idarquiv
          AND (pr_flgcriti = 0
          OR  EXISTS(SELECT 1
-                      FROM tbepr_boleto_critic cri
+                      FROM tbrecup_boleto_critic cri
                      WHERE cri.idarquivo = imp.idarquivo
                        AND cri.idboleto  = imp.idboleto))
          AND cop.cdcooper = imp.cdcooper;
     
     -- Busca qtd de linhas de importação do boleto
-		CURSOR cr_linha_reg(pr_idarquiv IN tbepr_boleto_import.idarquivo%TYPE
+		CURSOR cr_linha_reg(pr_idarquiv IN tbrecup_boleto_import.idarquivo%TYPE
                        ,pr_flgcriti IN INTEGER) IS
       SELECT COUNT(1) qtregistros
-        FROM tbepr_boleto_import imp
+        FROM tbrecup_boleto_import imp
             ,crapcop cop
        WHERE imp.idarquivo = pr_idarquiv
          AND (pr_flgcriti = 0
          OR  EXISTS(SELECT 1
-                      FROM tbepr_boleto_critic cri
+                      FROM tbrecup_boleto_critic cri
                      WHERE cri.idarquivo = imp.idarquivo
                        AND cri.idboleto  = imp.idboleto))
          AND cop.cdcooper = imp.cdcooper;
     rw_linha_reg cr_linha_reg%ROWTYPE;
     
     -- Busca as criticas do boleto
-		CURSOR cr_critica(pr_idarquiv IN tbepr_boleto_critic.idarquivo%TYPE
-                     ,pr_idboleto IN tbepr_boleto_critic.idboleto%TYPE) IS
+		CURSOR cr_critica(pr_idarquiv IN tbrecup_boleto_critic.idarquivo%TYPE
+                     ,pr_idboleto IN tbrecup_boleto_critic.idboleto%TYPE) IS
       SELECT mot.dsmotivo
             ,cri.vlcampo
-        FROM tbepr_boleto_critic cri
+        FROM tbrecup_boleto_critic cri
             ,tbgen_motivo mot
        WHERE cri.idarquivo = pr_idarquiv
          AND cri.idboleto = pr_idboleto
          AND mot.idmotivo = cri.idmotivo;
     
     --Busca boletos
-    CURSOR cr_boleto(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+    CURSOR cr_boleto(pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE) IS
       SELECT cop.nmrescop
             ,gene0002.fn_mask_conta(epr.nrdconta) nrdconta
             ,gene0002.fn_mask_contrato(epr.nrctremp) nrctremp
@@ -3733,8 +3756,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,imp.dserrger
             ,imp.nrcpfaval
             ,ass.nrcpfcgc
-        FROM tbepr_boleto_import imp
-            ,tbepr_cobranca epr
+        FROM tbrecup_boleto_import imp
+            ,tbrecup_cobranca epr
             ,crapcob cob
             ,crapcop cop
             ,crapass ass
@@ -3743,7 +3766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
-
+         AND epr.tpproduto = 0
 		 -- Leitura CCO
          AND cco.cdcooper = epr.cdcooper
          AND cco.nrconven = epr.nrcnvcob
@@ -3764,10 +3787,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
          AND sab.nrinssac = DECODE(imp.nrcpfaval, 0,ass.nrcpfcgc,imp.nrcpfaval);
     
     --Busca boletos
-    CURSOR cr_boleto_reg(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+    CURSOR cr_boleto_reg(pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE) IS
       SELECT count(1) qtregistros
-        FROM tbepr_boleto_import imp
-            ,tbepr_cobranca epr
+        FROM tbrecup_boleto_import imp
+            ,tbrecup_cobranca epr
             ,crapcob cob
             ,crapcop cop
             ,crapass ass
@@ -3776,6 +3799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
+         AND epr.tpproduto = 0
 
 		 -- Leitura CCO
          AND cco.cdcooper = epr.cdcooper
@@ -3798,7 +3822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     rw_boleto_reg cr_boleto_reg%ROWTYPE;
     
     --Busca criticas
-    CURSOR cr_boleto_critica(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+    CURSOR cr_boleto_critica(pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE) IS
       SELECT cop.nmrescop
             ,gene0002.fn_mask_conta(imp.nrdconta) nrdconta
             ,gene0002.fn_mask_contrato(imp.nrctremp) nrctremp
@@ -3806,16 +3830,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,DECODE(imp.tpenvio,1,'E-mail',2,'SMS',3,'Carta') tpenvio
             ,to_char(imp.dtvencto,'DD/MM/RRRR') dtvencto
             ,imp.dserrger
-        FROM tbepr_boleto_import imp
+        FROM tbrecup_boleto_import imp
             ,crapcop cop
        WHERE imp.idarquivo = pr_idarquiv
          AND cop.cdcooper = imp.cdcooper
          AND TRIM(imp.dserrger) IS NOT NULL;
     
     --Busca criticas
-    CURSOR cr_boleto_critica_reg(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+    CURSOR cr_boleto_critica_reg(pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE) IS
       SELECT COUNT(1) qtregistros
-        FROM tbepr_boleto_import imp
+        FROM tbrecup_boleto_import imp
             ,crapcop cop
        WHERE imp.idarquivo = pr_idarquiv
          AND cop.cdcooper = imp.cdcooper
@@ -3896,6 +3920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                                '<nmarq_import>' || rw_arquivo.nmarq_import || '</nmarq_import>' ||
                                '<nmarq_gerado>' || rw_arquivo.nmarq_gerado || '</nmarq_gerado>' ||
                                '<dssituacao>'   || rw_arquivo.dssituacao   || '</dssituacao>'  ||
+                               '<tpproduto>'    || rw_arquivo.tpproduto    || '</tpproduto>'  ||
                            '</cabecalho>');
       
       -- Pendente
@@ -4213,20 +4238,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
         INDEX BY PLS_INTEGER;
     
     TYPE typ_reg_import IS
-     RECORD(idarquivo        tbepr_boleto_import.idarquivo%TYPE
-           ,idboleto         tbepr_boleto_import.idboleto%TYPE
-           ,cdcooper         tbepr_boleto_import.cdcooper%TYPE
-           ,nrdconta         tbepr_boleto_import.nrdconta%TYPE
-           ,nrctremp         tbepr_boleto_import.nrctremp%TYPE
-           ,nrcpfaval        tbepr_boleto_import.nrcpfaval%TYPE
-           ,tpenvio          tbepr_boleto_import.tpenvio%TYPE
-           ,peracrescimo     tbepr_boleto_import.peracrescimo%TYPE
-           ,perdesconto      tbepr_boleto_import.perdesconto%TYPE
-           ,dtvencto         tbepr_boleto_import.dtvencto%TYPE
-           ,nrddd_envio      tbepr_boleto_import.nrddd_envio%TYPE
-           ,nrfone_envio     tbepr_boleto_import.nrfone_envio%TYPE
-           ,dsemail_envio    tbepr_boleto_import.dsemail_envio%TYPE
-           ,dsendereco_envio tbepr_boleto_import.dsendereco_envio%TYPE
+     RECORD(idarquivo        tbrecup_boleto_import.idarquivo%TYPE
+           ,idboleto         tbrecup_boleto_import.idboleto%TYPE
+           ,cdcooper         tbrecup_boleto_import.cdcooper%TYPE
+           ,nrdconta         tbrecup_boleto_import.nrdconta%TYPE
+           ,nrctremp         tbrecup_boleto_import.nrctremp%TYPE
+           ,nrcpfaval        tbrecup_boleto_import.nrcpfaval%TYPE
+           ,tpenvio          tbrecup_boleto_import.tpenvio%TYPE
+           ,peracrescimo     tbrecup_boleto_import.peracrescimo%TYPE
+           ,perdesconto      tbrecup_boleto_import.perdesconto%TYPE
+           ,dtvencto         tbrecup_boleto_import.dtvencto%TYPE
+           ,nrddd_envio      tbrecup_boleto_import.nrddd_envio%TYPE
+           ,nrfone_envio     tbrecup_boleto_import.nrfone_envio%TYPE
+           ,dsemail_envio    tbrecup_boleto_import.dsemail_envio%TYPE
+           ,dsendereco_envio tbrecup_boleto_import.dsendereco_envio%TYPE
            ,row_id           ROWID);
     TYPE typ_tab_import IS
       TABLE OF typ_reg_import
@@ -4243,20 +4268,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     -------------------------------- CURSORES --------------------------------------
 
 		-- Cursor para consultar arquivo
-		CURSOR cr_arquivo(pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE) IS
+		CURSOR cr_arquivo(pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE) IS
       SELECT arq.idarquivo
             ,to_char(arq.dtarquivo, 'DD/MM/RRRR') dtarquivo
             ,to_char(arq.dtarquivo, 'HH:MI:SS') hrarquivo
             ,arq.nmarq_import
             ,arq.nmarq_gerado
             ,arq.insitarq
-        FROM tbepr_boleto_arq arq
+        FROM tbrecup_boleto_arq arq
        WHERE arq.idarquivo = pr_idarquiv;
        
 		rw_arquivo cr_arquivo%ROWTYPE;
 
     -- Busca linhas de importação do boleto
-		CURSOR cr_linha(pr_idarquiv IN tbepr_boleto_import.idarquivo%TYPE) IS
+		CURSOR cr_linha(pr_idarquiv IN tbrecup_boleto_import.idarquivo%TYPE) IS
       SELECT imp.idarquivo
             ,imp.idboleto
             ,imp.cdcooper
@@ -4272,12 +4297,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,imp.dsemail_envio
             ,imp.dsendereco_envio
             ,imp.rowid
-        FROM tbepr_boleto_import imp
+        FROM tbrecup_boleto_import imp
        WHERE imp.idarquivo = pr_idarquiv;
        
-    CURSOR cr_criticas(pr_idarquiv IN tbepr_boleto_critic.idarquivo%TYPE) IS   
+    CURSOR cr_criticas(pr_idarquiv IN tbrecup_boleto_critic.idarquivo%TYPE) IS   
        SELECT COUNT(*) qtdcriticas
-         FROM tbepr_boleto_critic cri
+         FROM tbrecup_boleto_critic cri
         WHERE cri.idarquivo = pr_idarquiv;
     rw_criticas cr_criticas%ROWTYPE;
         
@@ -4404,7 +4429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       -- Efetua limpeza das criticas de geração anterior.
       BEGIN
             
-        UPDATE tbepr_boleto_import imp
+        UPDATE tbrecup_boleto_import imp
            SET imp.dserrger  = ' '
          WHERE imp.idarquivo = pr_idarquiv;
         COMMIT;
@@ -4588,7 +4613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             vr_flcritic := TRUE;
             
             BEGIN
-              UPDATE tbepr_boleto_import imp
+              UPDATE tbrecup_boleto_import imp
                  SET imp.dserrger = vr_dscritic
                WHERE imp.rowid = vr_tab_import(vr_index).row_id;
                vr_dscritic := '';
@@ -4605,7 +4630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       
       -- Atualizar a situação da remessa para "Processada"
       BEGIN
-        UPDATE tbepr_boleto_arq arq
+        UPDATE tbrecup_boleto_arq arq
            SET arq.insitarq = 1
          WHERE arq.idarquivo = pr_idarquiv;
       EXCEPTION
@@ -4937,11 +4962,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       -- Condicao para verificar se encontrou contrato de emprestimo
       IF vr_tab_dados_epr.COUNT > 0 THEN
         -- Saldo Devedor
-        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0) + nvl(vr_tab_dados_epr(1).vliofcpl,0);
         -- Saldo Prejuizo
         pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
         -- Valor em Atraso
         pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
+        
       END IF;
         
     END IF;
@@ -5141,7 +5167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     -------------------------------- CURSORES --------------------------------------
 
 		-- Cursor para consultar arquivo
-		CURSOR cr_crapcob(pr_idarquiv IN tbepr_cobranca.idarquivo%TYPE) IS       
+		CURSOR cr_crapcob(pr_idarquiv IN tbrecup_cobranca.idarquivo%TYPE) IS       
       SELECT epr.cdcooper
             ,epr.nrdconta
             ,epr.nrdconta_cob
@@ -5157,21 +5183,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
             ,imp.nrfone_envio
             ,imp.dsemail_envio
             ,imp.dsendereco_envio
-        FROM tbepr_boleto_import imp
-            ,tbepr_cobranca epr
+        FROM tbrecup_boleto_import imp
+            ,tbrecup_cobranca epr
             ,crapcob cob
        WHERE imp.idarquivo = pr_idarquiv
          AND epr.idarquivo = imp.idarquivo
          AND epr.idboleto  = imp.idboleto
+         AND epr.tpproduto = 0
          AND cob.cdcooper = epr.cdcooper
          AND cob.nrdconta = epr.nrdconta_cob
          AND cob.nrcnvcob = epr.nrcnvcob
          AND cob.nrdocmto = epr.nrboleto;
     
-    CURSOR cr_arquivo(pr_idarquiv IN tbepr_cobranca.idarquivo%TYPE) IS       
+    CURSOR cr_arquivo(pr_idarquiv IN tbrecup_cobranca.idarquivo%TYPE) IS       
        SELECT arq.dsarq_gerado
              ,arq.nmarq_gerado
-        FROM tbepr_boleto_arq arq
+        FROM tbrecup_boleto_arq arq
        WHERE arq.idarquivo = pr_idarquiv;
     rw_arquivo cr_arquivo%ROWTYPE;
     
@@ -5269,7 +5296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
        
         -- Salva arquivo na tabela da remessa
         BEGIN
-          UPDATE tbepr_boleto_arq arq
+          UPDATE tbrecup_boleto_arq arq
              SET arq.nmarq_gerado = vr_dsnmarq
                 ,arq.dsarq_gerado = vr_arquivo
            WHERE arq.idarquivo = pr_idarquiv;

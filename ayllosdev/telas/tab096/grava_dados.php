@@ -24,7 +24,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 	
-		
+	$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : 0;
 	$nrconven = (isset($_POST['nrconven'])) ? $_POST['nrconven'] : ''  ;	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : ''  ;	
 	$prazomax = (isset($_POST['prazomax'])) ? $_POST['prazomax'] : ''  ;	
@@ -65,10 +65,11 @@
 	$xmlCarregaDados .= "   <blqemiss>".$blqemiss."</blqemiss>";	
 	$xmlCarregaDados .= "   <qtdmaxbl>".$qtdmaxbl."</qtdmaxbl>";	
 	$xmlCarregaDados .= "   <flgblqvl>".$flgblqvl."</flgblqvl>";	
+	$xmlCarregaDados .= "   <tpproduto>".$tpproduto."</tpproduto>";	
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
 		
-	$xmlResult = mensageria($xmlCarregaDados, "EMPR0007", "GRAVA_COBEMP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xmlCarregaDados, "TELA_TAB096", "TAB096_GRAVAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);					
 	
 	echo 'hideMsgAguardo();';
