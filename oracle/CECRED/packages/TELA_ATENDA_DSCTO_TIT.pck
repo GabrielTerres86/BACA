@@ -730,6 +730,7 @@ PROCEDURE pc_contingencia_ibratan_web(pr_xmllog   IN VARCHAR2              --> X
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2             --> Erros do processo
                                  );
+                                 
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
