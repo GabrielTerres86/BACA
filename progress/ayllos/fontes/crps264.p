@@ -98,7 +98,7 @@
                         
                 18/06/2012 - Alteracao na leitura da craptco (David Kruger).
                 
-                15/08/2012 - Alterado posiçőes do cdtipchq de 52,2 para 148,3 
+                15/08/2012 - Alterado posições do cdtipchq de 52,2 para 148,3 
                             (Lucas R.).
                             
                 27/08/2012 - Removido parametro p-flghrexe e adicionado os
@@ -123,10 +123,10 @@
                 21/03/2013 - Ajustes referentes ao Projeto tarifas - fase 2
                              Grupo de cheque (Lucas R.)
                              
-                10/06/2013 - Alteraçăo funçăo enviar_email_completo para
-                            nova versăo (Jean Michel).
+                10/06/2013 - Alteraçao funçao enviar_email_completo para
+                            nova versao (Jean Michel).
                             
-                09/09/2013 - Nova forma de chamar as agęncias, de PAC agora 
+                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).            
                            
                11/10/2013 - Incluido parametro cdprogra nas procedures da 
@@ -154,7 +154,7 @@
                19/12/2014 - Efetuado acerto na procedure 'gera_arquivo_cecred'
                             na abertura/fechamento do arquivo (Diego).
                             
-               19/01/2015 - Adiçăo dos parâmetros "arq" e "coop" na chamada do
+               19/01/2015 - Adição dos parâmetros "arq" e "coop" na chamada do
                             fonte mqcecred_envia.pl. (Dionathan)
                             
                11/03/2015 - Incluido tratamento para as contas migradas.(James)
@@ -208,7 +208,7 @@
                            (Lucas Ranghetti #600012)
                            
 	            30/03/2017 - Gerar lançamentos de cheques descontados ou custodiados de 
-			                     operaçőes entre cooperados no arquivo AAMMDD_CRITICAS.txt
+			                     operações entre cooperados no arquivo AAMMDD_CRITICAS.txt
 						               P307 - (Jonatas - Supero)
                            
               04/04/2017 - Incluir validacao para contas migradas na procedure gera_lancamento 
@@ -219,12 +219,12 @@
 
               08/05/2017 - Incluso tratativa crapcst.nrborder = 0 nas duas leituras
 			               FOR LAST crapcst (Daniel - Projeto 300) 
-
+                           
               13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
                            Fraudes/Impedimentos e remoçao do processo de devoluçao VLB.
                            PRJ367 - Compe Sessao Unica (Lombardi)
               
-              13/07/2017 - Alterar a situaçăo do insitchq das tabelas crapcdb e crapcst
+              13/07/2017 - Alterar a situação do insitchq das tabelas crapcdb e crapcst
                            para 3 depois que criar o craplcm (Lucas Ranghetti #659855)
 
               01/09/2017 - SD737676 - Alteracao de comentario fazendo mencao a arquivo 
@@ -234,11 +234,20 @@
 						   no relatorio de cheques 085
 						   (Adriano - SD 744959).
 
+              06/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. PRJ366 (Lombardi)
+
 			  10/03/2018 - Removida procedure envia_arquivo_xml - Compe Sessao Unica (Diego).
-        
-        10/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
+
+              11/05/2018 - Ajuste para processar cheques com alinea 35, os mesmos nao estavam
+                           sendo processados e nao apareciam no Relatorio 219.
+                           chamado SCTASK0012893 - Gabriel (Mouts).	  
+
+              10/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente 
+                           Rangel Decker  AMcom.
 
 ..............................................................................*/
+
+{ sistema/generico/includes/var_oracle.i }
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
 DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
@@ -340,6 +349,10 @@ DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
 
 DEF        VAR aux_flcraptco AS LOGICAL                              NO-UNDO.
+
+DEF        VAR aux_dstipcta AS CHAR                                  NO-UNDO.
+DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF BUFFER crabcop FOR crapcop.
 DEF BUFFER crabtco FOR craptco.
@@ -506,7 +519,7 @@ ELSE
                                 DO:
                                     RUN gera_arquivo_cecred.
                                 END.
-
+                       
                            /* Gerar log com o fim da execuçăo */ 
                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                              glb_cdprogra + "' --> '" +
@@ -521,22 +534,19 @@ ELSE
 
 PROCEDURE gera_lancamento:
 
-    DEF VAR aux_verifloc AS INTEGER NO-UNDO. 
-    
-    DEF VAR aux_nrdctitg  LIKE craplcm.nrdctitg NO-UNDO.
-    DEF VAR aux_dsidenti  LIKE craplcm.dsidenti NO-UNDO.
-    
+    DEF VAR aux_verifloc AS INTEGER NO-UNDO.    
+
     DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
     DEF VAR aux_incrineg AS INT     NO-UNDO.
     DEF VAR aux_cdcritic AS INT     NO-UNDO.
     DEF VAR aux_dscritic AS CHAR    NO-UNDO.   
+    DEF VAR aux_dsidenti LIKE craplcm.dsidenti NO-UNDO. 
     
-    
-    /* Identificar orgao expedidor */
     IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
-      RUN sistema/generico/procedures/b1wgen0200.p
+        RUN sistema/generico/procedures/b1wgen0200.p
         PERSISTENT SET h-b1wgen0200.
 
+    /* Identificar orgao expedidor */
     IF  NOT VALID-HANDLE(h-b1wgen0153) THEN
         RUN sistema/generico/procedures/b1wgen0153.p 
             PERSISTENT SET h-b1wgen0153.
@@ -976,6 +986,76 @@ PROCEDURE gera_lancamento:
                           UNDO, RETURN "NOK".
                       END.
                                              
+                 /* 20/06/2018 - TJ - definir variavel conforme regra abaixo criacao craplcm */
+                 ASSIGN aux_dsidenti = "2".
+                 IF p-cddevolu = 6 THEN
+                    aux_dsidenti = "1".
+                                             
+                 /* VIACON - cria lancamento na coop atual */
+                 RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                                      ( INPUT craplot.dtmvtolt        /* par_dtmvtolt */
+                                       ,INPUT craplot.cdagenci        /* par_cdagenci */
+                                       ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
+                                       ,INPUT craplot.nrdolote        /* par_nrdolote */
+                                       ,INPUT aux_nrdconta            /* par_nrdconta */
+                                       ,INPUT crapdev.nrcheque        /* par_nrdocmto */
+                                       ,INPUT crapdev.cdhistor        /* par_cdhistor */
+                                       ,INPUT craplot.nrseqdig + 1    /* par_nrseqdig */
+                                       ,INPUT crapdev.vllanmto        /* par_vllanmto */
+                                       ,INPUT aux_nrctalcm            /* par_nrdctabb */
+                                       ,INPUT (IF crapdev.cdalinea <> 0 THEN
+                                                  STRING(crapdev.cdalinea)
+                                               ELSE "21")             /* par_cdpesqbb */
+                                       ,INPUT 0                       /* par_vldoipmf */
+                                       ,INPUT 0                       /* par_nrautdoc */
+                                       ,INPUT 0                       /* par_nrsequni */
+                                       ,INPUT crapdev.cdbanchq        /* par_cdbanchq */
+                                       ,INPUT 0                       /* par_cdcmpchq */
+                                       ,INPUT crapdev.cdagechq        /* par_cdagechq */
+                                       ,INPUT crapdev.nrctachq        /* par_nrctachq */
+                                       ,INPUT 0                       /* par_nrlotchq */
+                                       ,INPUT 0                       /* par_sqlotchq */
+                                       ,INPUT ""                      /* par_dtrefere */
+                                       ,INPUT ""                      /* par_hrtransa */
+                                       ,INPUT crapdev.cdoperad        /* par_cdoperad */                               
+                                       ,INPUT aux_dsidenti            /* par_dsidenti */
+                                       ,INPUT aux_cdcooper            /* par_cdcooper */
+                                       ,INPUT aux_nrdctitg            /* par_nrdctitg */
+                                       ,INPUT ""                      /* par_dscedent */
+                                       ,INPUT 0                       /* par_cdcoptfn */
+                                       ,INPUT 0                       /* par_cdagetfn */
+                                       ,INPUT 0                       /* par_nrterfin */
+                                       ,INPUT 0                       /* par_nrparepr */
+                                       ,INPUT 0                       /* par_nrseqava */
+                                       ,INPUT 0                       /* par_nraplica */
+                                       ,INPUT 0                       /* par_cdorigem */
+                                       ,INPUT 0                       /* par_idlautom */
+                                       ,INPUT 0                       /* par_inprolot */ 
+                                       ,INPUT 0                       /* par_tplotmov */
+                                       ,OUTPUT TABLE tt-ret-lancto
+                                       ,OUTPUT aux_incrineg
+                                       ,OUTPUT aux_cdcritic
+                                       ,OUTPUT aux_dscritic).
+
+                     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                        DO:  
+                          IF aux_incrineg = 1 THEN
+                           DO:
+                            /* Tratativas de negocio */ 
+                            NEXT.
+                           END.
+                          ELSE
+                           DO:
+                             RETURN "NOK".
+                           END. 
+                        END. 
+                     ELSE
+                        DO:
+                          /* 20/06/2018- TJ - Posicionando no registro da craplcm criado acima */
+                          FIND FIRST tt-ret-lancto.
+                          FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                        END.
+
                 
                  /*CREATE craplcm.
                  ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -997,7 +1077,7 @@ PROCEDURE gera_lancamento:
                         craplcm.cdagechq = crapdev.cdagechq
                         craplcm.nrctachq = crapdev.nrctachq*/
                         
-                        ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+                 ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                         craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                         craplot.qtinfoln = craplot.qtinfoln + 1
                         craplot.qtcompln = craplot.qtcompln + 1
@@ -1019,17 +1099,14 @@ PROCEDURE gera_lancamento:
 
                  IF   p-cddevolu = 2  OR   /* Conta Base */
                       p-cddevolu = 3  THEN /* Conta Integracao */
-                      /*craplcm.nrdctitg = crapdev.nrdctitg.*/
-                      ASSIGN aux_nrdctitg  = crapdev.nrdctitg. 
+                      craplcm.nrdctitg = crapdev.nrdctitg.
                  ELSE     
-                      /*craplcm.nrdctitg = "".*/
-                      ASSIGN aux_nrdctitg  = "". 
+                      craplcm.nrdctitg = "".
 
 
                  IF   p-cddevolu = 5 OR p-cddevolu = 6 THEN
                       DO:
                           ASSIGN craplcm.nrdctitg = "".
-                          ASSIGN aux_nrdctitg  = "". 
                           
                           /* Atribui Valor para Alinea na GNCPCHQ */
                           FIND LAST gncpchq WHERE 
@@ -1064,12 +1141,10 @@ PROCEDURE gera_lancamento:
                                   indicador = 1, para saber quem ja foi env. */
                                crapdev.indevarq = 1.  /* Envia */
                                
-                          /*craplcm.dsidenti = STRING(crapdev.indevarq,"9").*/
-                          ASSIGN aux_dsidenti  =STRING(crapdev.indevarq,"9").
+                          craplcm.dsidenti = STRING(crapdev.indevarq,"9").
                       END.
                  ELSE
-                      /*craplcm.dsidenti = "2".*/
-                      ASSIGN aux_dsidenti  = "2".
+                      craplcm.dsidenti = "2".
 
                /* VALIDATE craplcm.*/
                 
@@ -1125,7 +1200,7 @@ PROCEDURE gera_lancamento:
                          DO:
                           /* Tratativas de negocio */ 
                           NEXT.
-                         END.
+             END.
                         ELSE
                          DO:
                            RETURN "NOK".
@@ -1242,7 +1317,7 @@ PROCEDURE gera_lancamento:
                 IF  crapdev.cdhistor = 47 AND 
                    (p-cddevolu = 5 OR p-cddevolu = 6) THEN
                     DO:                     
-                      
+                       
                       /* Verificar se pode realizar o debito debitar  */
                     IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
                                          INPUT aux_cdcooper, 
@@ -1267,7 +1342,7 @@ PROCEDURE gera_lancamento:
                        END.                        
                        
                        IF  AVAILABLE crapcdb THEN          
-                           DO:   
+                           DO:                               
                             IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
                                                  INPUT aux_cdcooper, 
                                                  INPUT crapcdb.nrdconta,
@@ -1355,6 +1430,70 @@ PROCEDURE gera_lancamento:
 
                                         UNDO, RETURN "NOK".
                                END.
+ 
+                               RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                                      ( INPUT craplot.dtmvtolt          /* par_dtmvtolt */
+                                       ,INPUT craplot.cdagenci          /* par_cdagenci */
+                                       ,INPUT craplot.cdbccxlt          /* par_cdbccxlt */
+                                       ,INPUT craplot.nrdolote          /* par_nrdolote */
+                                       ,INPUT crapcdb.nrdconta          /* par_nrdconta */
+                                       ,INPUT crapcdb.nrcheque          /* par_nrdocmto */
+                                       ,INPUT 399                       /* par_cdhistor */
+                                       ,INPUT craplot.nrseqdig + 1      /* par_nrseqdig */
+                                       ,INPUT crapdev.vllanmto          /* par_vllanmto */
+                                       ,INPUT aux_nrctalcm              /* par_nrdctabb */
+                                       ,INPUT (IF   crapdev.cdalinea <> 0 THEN
+                                                    STRING(crapdev.cdalinea)
+                                               ELSE "21")               /* par_cdpesqbb */
+                                       ,INPUT 0                         /* par_vldoipmf */
+                                       ,INPUT 0                         /* par_nrautdoc */
+                                       ,INPUT 0                         /* par_nrsequni */
+                                       ,INPUT crapcdb.cdbanchq          /* par_cdbanchq */
+                                       ,INPUT 0                         /* par_cdcmpchq */
+                                       ,INPUT crapcdb.cdagechq          /* par_cdagechq */
+                                       ,INPUT crapcdb.nrctachq          /* par_nrctachq */
+                                       ,INPUT 0                         /* par_nrlotchq */
+                                       ,INPUT 0                         /* par_sqlotchq */
+                                       ,INPUT ""                        /* par_dtrefere */
+                                       ,INPUT TIME                      /* par_hrtransa */
+                                       ,INPUT crapdev.cdoperad          /* par_cdoperad */                               
+                                       ,INPUT 0                         /* par_dsidenti */
+                                       ,INPUT crapcdb.cdcooper          /* par_cdcooper */
+                                       ,INPUT 0                         /* par_nrdctitg */
+                                       ,INPUT ""                        /* par_dscedent */
+                                       ,INPUT 0                         /* par_cdcoptfn */
+                                       ,INPUT 0                         /* par_cdagetfn */
+                                       ,INPUT 0                         /* par_nrterfin */
+                                       ,INPUT 0                         /* par_nrparepr */
+                                       ,INPUT 0                         /* par_nrseqava */
+                                       ,INPUT 0                         /* par_nraplica */
+                                       ,INPUT 0                         /* par_cdorigem */
+                                       ,INPUT 0                         /* par_idlautom */
+                                       ,INPUT 0                         /* par_inprolot */ 
+                                       ,INPUT 0                         /* par_tplotmov */
+                                       ,OUTPUT TABLE tt-ret-lancto
+                                       ,OUTPUT aux_incrineg
+                                       ,OUTPUT aux_cdcritic
+                                       ,OUTPUT aux_dscritic).
+
+                                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                                    DO:  
+                                      IF aux_incrineg = 1 THEN
+                                       DO:
+                                        /* Tratativas de negocio */ 
+                                        NEXT.
+                                       END.
+                                      ELSE
+                                       DO:
+                                        RETURN "NOK".
+                                       END. 
+                                    END.
+                                 ELSE
+                                    DO:
+                                      /* 20/06/2018- TJ - Posicionando no registro da craplcm criado acima */
+                                      FIND FIRST tt-ret-lancto.
+                                      FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                                    END.
                                
                               /* CREATE craplcm.
                                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -1377,7 +1516,7 @@ PROCEDURE gera_lancamento:
                                       craplcm.nrctachq = crapcdb.nrctachq
                                       craplcm.hrtransa = TIME*/
                                       
-                                   ASSIGN   craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+                               ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                                       craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                                       craplot.qtinfoln = craplot.qtinfoln + 1
                                       craplot.qtcompln = craplot.qtcompln + 1
@@ -1459,8 +1598,8 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
-                                                  AND crapcst.dtdevolu = ?
-                                                  AND crapcst.nrborder = 0
+												  AND crapcst.dtdevolu = ?
+												  AND crapcst.nrborder = 0
                                                   EXCLUSIVE-LOCK:
                               END.
                         
@@ -1576,68 +1715,75 @@ PROCEDURE gera_lancamento:
                                              craplcm.nrctachq = crapcst.nrctachq
                                              craplcm.hrtransa = TIME*/
                                              
-                                           RUN gerar_lancamento_conta_comple IN h-b1wgen0200 (INPUT craplot.dtmvtolt    /* par_dtmvtolt */
-                                                                                         ,INPUT craplot.cdagenci        /* par_cdagenci */
-                                                                                         ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
-                                                                                         ,INPUT craplot.nrdolote        /* par_nrdolote */
-                                                                                         ,INPUT crapcst.nrdconta        /* par_nrdconta */
-                                                                                         ,INPUT crapcst.nrcheque        /* par_nrdocmto */
-                                                                                         ,INPUT 351                     /* par_cdhistor */
-                                                                                         ,INPUT craplot.nrseqdig + 1   /* par_nrseqdig */
-                                                                                         ,INPUT crapdev.vllanmto       /* par_vllanmto */
-                                                                                         ,INPUT aux_nrctalcm           /* par_nrdctabb */
-                                                                                         ,INPUT IF   crapdev.cdalinea <> 0 THEN
-                                                                                                    STRING(crapdev.cdalinea)
-                                                                                                ELSE "21"          /* par_cdpesqbb */
-                                                                                         ,INPUT 0                  /* par_vldoipmf */
-                                                                                         ,INPUT 0                  /* par_nrautdoc */
-                                                                                         ,INPUT 0                  /* par_nrsequni */
-                                                                                         ,INPUT crapcst.cdbanchq   /* par_cdbanchq */
-                                                                                         ,INPUT 0                  /* par_cdcmpchq */
-                                                                                         ,INPUT crapcst.cdagechq   /* par_cdagechq */
-                                                                                         ,INPUT crapcst.nrctachq   /* par_nrctachq */
-                                                                                         ,INPUT 0                  /* par_nrlotchq */
-                                                                                         ,INPUT 0                  /* par_sqlotchq */
-                                                                                         ,INPUT ""                 /* par_dtrefere */
-                                                                                         ,INPUT TIME               /* par_hrtransa */
-                                                                                         ,INPUT crapdev.cdoperad   /* par_cdoperad */                               
-                                                                                         ,INPUT 0                  /* par_dsidenti */
-                                                                                         ,INPUT crapcst.cdcooper   /* par_cdcooper */
-                                                                                         ,INPUT 0                  /* par_nrdctitg */
-                                                                                         ,INPUT ""                 /* par_dscedent */
-                                                                                         ,INPUT 0                  /* par_cdcoptfn */
-                                                                                         ,INPUT 0                  /* par_cdagetfn */
-                                                                                         ,INPUT 0                  /* par_nrterfin */
-                                                                                         ,INPUT 0                  /* par_nrparepr */
-                                                                                         ,INPUT 0                  /* par_nrseqava */
-                                                                                         ,INPUT 0                  /* par_nraplica */
-                                                                                         ,INPUT 0                  /*par_cdorigem*/
-                                                                                         ,INPUT 0                  /* par_idlautom */
-                                                                                         ,INPUT 0                  /*par_inprolot*/ 
-                                                                                         ,INPUT 0                  /*par_tplotmov */
-                                                                                         ,OUTPUT TABLE tt-ret-lancto
-                                                                                         ,OUTPUT aux_incrineg
-                                                                                         ,OUTPUT aux_cdcritic
-                                                                                         ,OUTPUT aux_dscritic).
+                                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 (INPUT craplot.dtmvtolt    /* par_dtmvtolt */
+                                                                                    ,INPUT craplot.cdagenci        /* par_cdagenci */
+                                                                                    ,INPUT craplot.cdbccxlt        /* par_cdbccxlt */
+                                                                                    ,INPUT craplot.nrdolote        /* par_nrdolote */
+                                                                                    ,INPUT crapcst.nrdconta        /* par_nrdconta */
+                                                                                    ,INPUT crapcst.nrcheque        /* par_nrdocmto */
+                                                                                    ,INPUT 351                     /* par_cdhistor */
+                                                                                    ,INPUT craplot.nrseqdig + 1    /* par_nrseqdig */
+                                                                                    ,INPUT crapdev.vllanmto        /* par_vllanmto */
+                                                                                    ,INPUT aux_nrctalcm            /* par_nrdctabb */
+                                                                                    ,INPUT (IF crapdev.cdalinea <> 0 THEN
+                                                                                               STRING(crapdev.cdalinea)
+                                                                                            ELSE "21")             /* par_cdpesqbb */
+                                                                                    ,INPUT 0                       /* par_vldoipmf */
+                                                                                    ,INPUT 0                       /* par_nrautdoc */
+                                                                                    ,INPUT 0                       /* par_nrsequni */
+                                                                                    ,INPUT crapcst.cdbanchq        /* par_cdbanchq */
+                                                                                    ,INPUT 0                       /* par_cdcmpchq */
+                                                                                    ,INPUT crapcst.cdagechq        /* par_cdagechq */
+                                                                                    ,INPUT crapcst.nrctachq        /* par_nrctachq */
+                                                                                    ,INPUT 0                       /* par_nrlotchq */
+                                                                                    ,INPUT 0                       /* par_sqlotchq */
+                                                                                    ,INPUT ""                      /* par_dtrefere */
+                                                                                    ,INPUT TIME                    /* par_hrtransa */
+                                                                                    ,INPUT crapdev.cdoperad        /* par_cdoperad */                               
+                                                                                    ,INPUT 0                       /* par_dsidenti */
+                                                                                    ,INPUT crapcst.cdcooper        /* par_cdcooper */
+                                                                                    ,INPUT 0                       /* par_nrdctitg */
+                                                                                    ,INPUT ""                      /* par_dscedent */
+                                                                                    ,INPUT 0                       /* par_cdcoptfn */
+                                                                                    ,INPUT 0                       /* par_cdagetfn */
+                                                                                    ,INPUT 0                       /* par_nrterfin */
+                                                                                    ,INPUT 0                       /* par_nrparepr */
+                                                                                    ,INPUT 0                       /* par_nrseqava */
+                                                                                    ,INPUT 0                       /* par_nraplica */
+                                                                                    ,INPUT 0                       /* par_cdorigem */
+                                                                                    ,INPUT 0                       /* par_idlautom */
+                                                                                    ,INPUT 0                       /* par_inprolot */ 
+                                                                                    ,INPUT 0                       /* par_tplotmov */
+                                                                                    ,OUTPUT TABLE tt-ret-lancto
+                                                                                    ,OUTPUT aux_incrineg
+                                                                                    ,OUTPUT aux_cdcritic
+                                                                                    ,OUTPUT aux_dscritic).
 
-                                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                                        DO:  
-                                          IF aux_incrineg = 1 THEN
-                                           DO:
-                                            /* Tratativas de negocio */ 
-                                            NEXT.
-                                           END.
-                                          ELSE
-                                           DO:
-                                            RETURN "NOK".
-                                           END. 
+                                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                                         DO:  
+                                           IF aux_incrineg = 1 THEN
+                                            DO:
+                                             /* Tratativas de negocio */ 
+                                             NEXT.
+                                            END.
+                                           ELSE
+                                            DO:
+                                             RETURN "NOK".
+                                            END. 
+                                         END.
+                                      ELSE 
+                                        DO:
+                                          /* 20/06/2018- TJ - Posicionando no registro da craplcm criado acima */
+                                          FIND FIRST tt-ret-lancto.
+                                          FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
                                         END.
+                                       
                                              
                                        ASSIGN  craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-                                               craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
-                                               craplot.qtinfoln = craplot.qtinfoln + 1
-                                               craplot.qtcompln = craplot.qtcompln + 1
-                                               craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
+                                             craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
+                                             craplot.qtinfoln = craplot.qtinfoln + 1
+                                             craplot.qtcompln = craplot.qtcompln + 1
+                                             craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
                                     
                                       VALIDATE craplot.
                                       /*VALIDATE craplcm.*/
@@ -1662,7 +1808,9 @@ PROCEDURE gera_lancamento:
                         IF  crapdev.cdbanchq <> crapcop.cdbcoctl THEN
                             NEXT.    
                     END.
-                ELSE
+              /*ELSE Estava impedindo que cheques com alinea 35 
+				     tivessem seus campos atualizados para serem 
+					 processados e constarem no Relatorio 219 */ 
                   /* Verificar se alinea do cheque devolvido é 35 */
                   IF  crapdev.cdalinea = 35 THEN
                       ASSIGN crapdev.insitdev = 1
@@ -1670,8 +1818,8 @@ PROCEDURE gera_lancamento:
             END.
     END.  /*  Fim do FOR EACH e da transacao  */
     
-    
-    DELETE PROCEDURE h-b1wgen0200. 
+    IF VALID-HANDLE(h-b1wgen0200) THEN
+       DELETE PROCEDURE h-b1wgen0200.
     
     IF  VALID-HANDLE(h-b1wgen0153) THEN
         DELETE OBJECT h-b1wgen0153.
@@ -1752,7 +1900,7 @@ PROCEDURE gera_impressao:
 
     FORM crapass.nrdconta LABEL "Conta/dv"
          crapass.nmprimtl LABEL "Titular"       FORMAT "x(40)" 
-         craptip.dstipcta LABEL "Tipo de conta" 
+         aux_dstipcta     LABEL "Tipo de conta" 
          crapdev.nrctachq LABEL "Conta Cheque"  FORMAT "zzzz,zz9,9"
          crapdev.nrcheque LABEL "Cheque"        FORMAT "zzz,zz9,9"
          crapdev.vllanmto LABEL "Valor"         FORMAT "zzzz,zz9.99"
@@ -2051,12 +2199,44 @@ PROCEDURE gera_impressao:
                           (p-cddevolu = 3                         AND
                            crapass.nrdctitg = crapdev.nrdctitg))  NO-LOCK,
         EACH crapope WHERE crapope.cdcooper = p-cdcooper          AND
-                           crapope.cdoperad = crapdev.cdoperad    NO-LOCK,
-        EACH craptip WHERE craptip.cdcooper = p-cdcooper          AND
-                           craptip.cdtipcta = crapass.cdtipcta    NO-LOCK
+                           crapope.cdoperad = crapdev.cdoperad    NO-LOCK
                            BREAK BY crapdev.cdbccxlt
                                  BY crapdev.nrdctabb
                                  BY crapdev.nrcheque:
+
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+ 
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+ 
+        IF aux_des_erro = "NOK"  THEN
+           DO:
+               glb_dscritic = aux_dscritic.
+               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                                 glb_cdprogra + "' --> '" + glb_dscritic +
+                                 " CRED-GENERI-00-VALORESVLB-001 " +
+                                 " >> log/proc_message.log").
+               RETURN.
+           END.
 
         IF   LINE-COUNTER(str_1) > 80 THEN
              DO:
@@ -2069,7 +2249,7 @@ PROCEDURE gera_impressao:
                     rel_vlchqdev = 0.
 
         DISPLAY STREAM str_1 crapass.nrdconta  crapass.nmprimtl
-                             craptip.dstipcta  crapdev.nrctachq
+                             aux_dstipcta      crapdev.nrctachq
                              crapdev.nrcheque  crapdev.vllanmto
                              crapdev.cdalinea  crapass.cdagenci
                              crapope.nmoperad  WITH FRAME f_todos.
@@ -2887,14 +3067,35 @@ PROCEDURE gera_arquivo_cecred:
        
                 IF  AVAILABLE crapass  THEN
                      DO:
-                         FIND craptip WHERE craptip.cdcooper = p-cdcooper   AND
-                                            craptip.cdtipcta = crapass.cdtipcta
-                                            NO-LOCK NO-ERROR.
+                         
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+                          aux_handproc = PROC-HANDLE NO-ERROR
+                                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                  OUTPUT "",               /* Descrição do Tipo de conta */
+                                                  OUTPUT "",               /* Flag Erro */
+                                                  OUTPUT "").              /* Descrição da crítica */
+                        
+                        CLOSE STORED-PROC pc_descricao_tipo_conta
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                 
+                        ASSIGN aux_dstipcta = ""
+                               aux_des_erro = ""
+                               aux_dscritic = ""
+                               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
                           
-                        IF  AVAILABLE craptip THEN
-                              aux_dstipcta = craptip.dstipcta.
-                         ELSE
+                        IF aux_des_erro = "NOK"  THEN
                               aux_dstipcta = "NAO ENCONTRADO".
+                           
+                        
                      END.
                 ELSE
                     aux_dstipcta = "NAO ENCONTRADO".
@@ -3208,7 +3409,7 @@ PROCEDURE gera_arquivo_cecred:
                 ELSE
                      aux_cdcmpchq = INT(SUBSTR(gncpchq.dsidenti,79,3)).
                 
-
+                
                 aux_linhadet = SUBSTR(gncpchq.dsidenti,1,53) +
                                STRING(crapdev.cdalinea,"99") +
                                SUBSTR(gncpchq.dsidenti,56,23) +
@@ -3219,7 +3420,7 @@ PROCEDURE gera_arquivo_cecred:
                 PUT STREAM str_2 aux_linhadet FORMAT "x(160)".
 
                 PUT STREAM str_2 SKIP.
-
+        
                 ASSIGN aux_nrsequen = aux_nrsequen + 1
                        aux_vldtotal = aux_vldtotal + crapdev.vllanmto.
                 
