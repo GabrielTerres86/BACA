@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Junho/2008.                       Ultima atualizacao: 19/09/2017.
+   Data    : Junho/2008.                       Ultima atualizacao: 11/06/2018.
 
    Dados referentes ao programa:
 
@@ -36,10 +36,13 @@
                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
                19/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+			   
+               11/06/2018 - Alteraçao  Tratamento de Históricos de Credito/Debito - Fabiano B. Dias AMcom			   
 
 ............................................................................ */
 
 { includes/var_batch.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF STREAM str_1.   
 DEF STREAM str_2.
@@ -89,6 +92,11 @@ DEF        VAR aux_lshsttrf AS CHAR                                  NO-UNDO.
 DEF        VAR aux_dtrefere AS CHAR                                  NO-UNDO.
 DEF        VAR aux_vllandeb AS CHAR                                  NO-UNDO.
 DEF        VAR aux_vllancre AS CHAR                                  NO-UNDO.
+
+DEF        VAR h-b1wgen0200 AS HANDLE                                NO-UNDO.
+DEF        VAR aux_incrineg AS INT                                   NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                   NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF BUFFER crabcop FOR crapcop. 
 
@@ -565,7 +573,83 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
       
 
       /* Grava as informacoes */
-      
+
+      /* Verificar se pode realizar o debito debitar  */
+      IF DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
+                          INPUT 1, 
+                          INPUT 3019373,
+                          INPUT 100)                        THEN 
+         DO:
+
+            /* Identificar orgao expedidor */
+            IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+               RUN sistema/generico/procedures/b1wgen0200.p
+               PERSISTENT SET h-b1wgen0200.
+
+            RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+               (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+               ,INPUT craplot.cdagenci               /* par_cdagenci */
+               ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+               ,INPUT craplot.nrdolote               /* par_nrdolote */
+               ,INPUT aux_nrdconta                   /* par_nrdconta */
+               ,INPUT aux_nrdocmto                   /* par_nrdocmto */
+               ,INPUT IF   aux_indebcre = "D" THEN
+                           446
+                      ELSE 440                       /* par_cdhistor */
+               ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+               ,INPUT aux_vllanmto                   /* par_vllanmto */
+               ,INPUT aux_nrdctabb                   /* par_nrdctabb */
+               ,INPUT ""                             /* par_cdpesqbb */
+               ,INPUT 0                              /* par_vldoipmf */
+               ,INPUT 0                              /* par_nrautdoc */
+               ,INPUT 0                              /* par_nrsequni */
+               ,INPUT 0                              /* par_cdbanchq */
+               ,INPUT 0                              /* par_cdcmpchq */
+               ,INPUT 0                              /* par_cdagechq */
+               ,INPUT 0                              /* par_nrctachq */
+               ,INPUT 0                              /* par_nrlotchq */
+               ,INPUT 0                              /* par_sqlotchq */
+               ,INPUT craplot.dtmvtolt               /* par_dtrefere */
+               ,INPUT ""                             /* par_hrtransa */
+               ,INPUT 0                              /* par_cdoperad */
+               ,INPUT 0                              /* par_dsidenti */
+               ,INPUT glb_cdcooper                   /* par_cdcooper */
+               ,INPUT ""                             /* par_nrdctitg */
+               ,INPUT ""                             /* par_dscedent */
+               ,INPUT 0                              /* par_cdcoptfn */
+               ,INPUT 0                              /* par_cdagetfn */
+               ,INPUT 0                              /* par_nrterfin */
+               ,INPUT 0                              /* par_nrparepr */
+               ,INPUT 0                              /* par_nrseqava */
+               ,INPUT 0                              /* par_nraplica */
+               ,INPUT 0                              /* par_cdorigem */
+               ,INPUT 0                              /* par_idlautom */
+               /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+               ,INPUT 0                              /* Processa lote                                 */
+               ,INPUT 0                              /* Tipo de lote a movimentar                     */
+               /* CAMPOS DE SAÍDA                                                                     */                                            
+               ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+               ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+               ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+               ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+  
+            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+              IF aux_incrineg = 1 THEN DO:
+                  /* Tratativas de negocio */ 
+                  NEXT.   
+                END.
+              ELSE   
+                DO:
+                  RETURN "NOK".
+                END.
+            END.
+  
+            IF  VALID-HANDLE(h-b1wgen0200) THEN
+              DELETE PROCEDURE h-b1wgen0200.
+		   
+
+					
+/*     
       CREATE craplcm.
       ASSIGN craplcm.cdcooper = glb_cdcooper 
              craplcm.nrdconta = aux_nrdconta
@@ -582,24 +666,28 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
              craplcm.vllanmto = aux_vllanmto
              craplcm.nrseqdig = craplot.nrseqdig + 1.
       VALIDATE craplcm.
+*/
+            ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
+                   craplot.qtcompln = craplot.qtcompln + 1
+                   craplot.nrseqdig = craplcm.nrseqdig.
 
-      ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
-             craplot.qtcompln = craplot.qtcompln + 1
-             craplot.nrseqdig = craplcm.nrseqdig.
 
+            IF   aux_indebcre = "D" THEN
+               ASSIGN craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
+                      craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
+            ELSE 
+               ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
+                      craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.
 
-             IF   aux_indebcre = "D" THEN
-                  ASSIGN craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                         craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
-             ELSE 
-                  ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-                         craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.
+            RUN cria_integrado.
 
-      RUN cria_integrado.
-      
+         END.
+		 
+      ELSE
+        MESSAGE "Nao Pode." VIEW-AS ALERT-BOX.      
+
    END. /* DO WHILE TRUE */
-  
-
+ 
 END. /* DO TRANSACTION */
 
         
