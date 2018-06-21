@@ -2274,15 +2274,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 	CURSOR cr_lanipetb2(pr_cdcooper craplcm.cdcooper%TYPE
 	                   ,pr_dtmvtolt craplcm.dtmvtolt%TYPE
 	                  ) IS
-		SELECT SUM(craplcm.vllanmto) vllanmto
-			FROM craplcm
-					,crapcop
-		 WHERE craplcm.nrdconta = crapcop.nrctactl
-			 AND craplcm.cdcooper = 3
-			 AND craplcm.cdhistor = 2643
-			 AND craplcm.vllanmto > 0
-			 AND craplcm.dtmvtolt = pr_dtmvtolt
-			 AND crapcop.cdcooper = pr_cdcooper;
+		SELECT cdagenci
+					,sum(vltarifa_ieptb) vltarifa_ieptb
+					,sum(sum(vltarifa_ieptb)) OVER () vltarifa_ieptb_total
+		 FROM( SELECT ass.cdagenci
+								 ,SUM(con.vlgrava_eletronica) vltarifa_ieptb
+						 FROM tbcobran_confirmacao_ieptb con
+								 ,crapass ass
+						WHERE con.cdcooper        = pr_cdcooper
+							AND con.dtmvtolt        = pr_dtmvtolt
+							AND con.idlancto_tarifa > 0
+							AND ass.cdcooper        = con.cdcooper
+							AND ass.nrdconta        = con.nrdconta
+						GROUP BY ass.cdagenci
+						UNION
+					 SELECT ass.cdagenci
+								 ,SUM(rti.vlgrava_eletronica)
+						 FROM tbcobran_retorno_ieptb rti
+								 ,crapass ass
+						WHERE rti.cdcooper        = pr_cdcooper
+							AND rti.dtmvtolt        = pr_dtmvtolt
+							AND rti.idlancto_tarifa > 0
+							AND ass.cdcooper        = rti.cdcooper
+							AND ass.nrdconta        = rti.nrdconta
+				 GROUP BY ass.cdagenci)
+		GROUP BY cdagenci
+		ORDER BY 1;
 	--
 	rw_lanipetb2 cr_lanipetb2%ROWTYPE;
                           
@@ -2665,6 +2682,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_contador               NUMBER := 0;
   --
   vr_vltardes               NUMBER := 0;
+	
+	vr_isFirst                BOOLEAN;
   
   function fn_calcula_data (pr_cdcooper in craptab.cdcooper%type,
                             pr_dtmvtoan in date) return date is
@@ -13519,6 +13538,8 @@ BEGIN
 		--
 		CLOSE cr_finieptb;
 		--
+	ELSE -- pr_cdcooper <> 3 (todas as cooperativas diferente da central)
+		--
 		OPEN cr_lanipetb(pr_cdcooper
 	                  ,vr_dtmvtolt
 	                  );
@@ -13574,29 +13595,49 @@ BEGIN
 		--
 		CLOSE cr_lanipetb;
 		--
-	ELSE -- pr_cdcooper <> 3 (todas as cooperativas diferente da central)
-		--
 		OPEN cr_lanipetb2(pr_cdcooper
 	                   ,vr_dtmvtolt
 	                  );
+		--
+		vr_isFirst := TRUE;
 		--
 		LOOP
 			--
 			FETCH cr_lanipetb2 INTO rw_lanipetb2;
 			EXIT WHEN cr_lanipetb2%NOTFOUND;
 			--
-			vr_cdestrut := 50;
-			vr_linhadet := trim(vr_cdestrut) ||
-			               trim(vr_dtmvtolt_yymmdd) || ',' ||
-			               trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
-			               '8125,' ||
-			               '1455,' ||
-			               TRIM(to_char(nvl(rw_lanipetb2.vllanmto, 0), 'fm99999999999990.00')) || ',' ||
-			               '5210,' ||
-			               '"(crps249) REPASSE DE TARIFA IEPTB - PROTESTO TITULO"';
+			IF vr_isFirst THEN
+				--
+				vr_cdestrut := 50;
+				vr_linhadet := trim(vr_cdestrut) ||
+											 trim(vr_dtmvtolt_yymmdd) || ',' ||
+											 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+											 '8125,' ||
+											 '1455,' ||
+											 TRIM(to_char(nvl(rw_lanipetb2.vltarifa_ieptb_total, 0), 'fm99999999999990.00')) || ',' ||
+											 '5210,' ||
+											 '"(crps249) REPASSE DE TARIFA IEPTB - PROTESTO TITULO"';
+				gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+				--
+				vr_isFirst := FALSE;
+				--
+			END IF;
+			--
+			vr_linhadet := lpad(rw_lanipetb2.cdagenci, 3, '0' ) || ',' ||
+			               TRIM(to_char(nvl(rw_lanipetb2.vltarifa_ieptb, 0), 'fm99999999999990.00'));
+      --
 			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 			--
 		END LOOP;
+		--
+		IF rw_lanipetb2.vltarifa_ieptb_total IS NOT NULL THEN
+			--
+			vr_linhadet := '999,' ||
+			               TRIM(to_char(nvl(rw_lanipetb2.vltarifa_ieptb_total, 0), 'fm99999999999990.00'));
+      --
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+			--
+		END IF;
 		--
 		CLOSE cr_lanipetb2;
 		--  

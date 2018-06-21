@@ -3575,7 +3575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 						RAISE vr_exc_erro;
 					END IF;
-          --
+					--
           IF pr_dtmvtolt > vr_dtlmtcnl THEN
             -- Gerar o retorno para o cooperado 
             COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid

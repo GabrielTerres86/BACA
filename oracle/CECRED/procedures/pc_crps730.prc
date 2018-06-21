@@ -1065,12 +1065,12 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					--
 					IF pr_tpregist = vr_tab_lancto(vr_index_lancto).vr_tpregist THEN
 						--
-						IF pr_tpregist IN('vr_tot_outras_cra_tarifa', 'vr_tot_sp_cra_tarifa') THEN
+						IF pr_tpregist IN('vr_tot_outros_cra_tarifa', 'vr_tot_sp_cra_tarifa') THEN
 							--
 							vr_idlancto_tarifa := pr_idretorno;
 							vr_idlancto_custas := NULL;
 							--
-						ELSIF pr_tpregist IN('vr_tot_outras_cra_custas', 'vr_tot_sp_cra_custas') THEN
+						ELSIF pr_tpregist IN('vr_tot_outros_cra_custas', 'vr_tot_sp_cra_custas') THEN
 							--
 							vr_idlancto_custas := pr_idretorno;
 							vr_idlancto_tarifa := NULL;
