@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+   Data    : Maio/2017                      Ultima atualizacao: 11/06/2018
 
    Dados referentes ao programa:
 
@@ -205,6 +205,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                transferência para prejuízo
 
    Alteracoes:
+
+   11/06/2018 - INC0014258 Na rotina pc_controla_exe_job, não registrar as validações
+                de execução do job como erro. Estas mensagens de validação serão 
+                enviadas para o log de Finalização da execução do job (Carlos)
 
 ..............................................................................*/
 
@@ -4222,7 +4226,6 @@ PROCEDURE pc_estorno_trf_prejuizo_TR(pr_cdcooper in number
                (Rafael - Mout's)
 
 ..............................................................................*/          
-
       
   -- verifica pagamentos
   CURSOR cr_craplem(pr_dtmvtolt in date) is
@@ -6731,7 +6734,6 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
     -- Variaveis
   
     vr_cdcooper crapcop.cdcooper%TYPE;
-    vr_dthoje   DATE := TRUNC(SYSDATE);
     vr_infimsol INTEGER;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000); 
@@ -6845,10 +6847,10 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
            RAISE vr_exc_erro; 
         END IF;
         
-      ELSE
-        -- Não retornar o erro - Chamado 831545 - 16/01/2018
-        IF vr_dserro NOT LIKE '%Processo noturno nao finalizado para cooperativa%' THEN
-          vr_cdcritic := 0;
+      ELSE        
+        IF vr_dscritic IS NOT NULL THEN
+          vr_dscritic := vr_dscritic || ' - ' || vr_dserro;
+        ELSE
           vr_dscritic := vr_dserro;
           RAISE vr_exc_erro;  
         END IF;
