@@ -2779,7 +2779,8 @@
 		END;
 		-- Busca o nome do arquivo
 		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
-																												 ,pr_dtmvtolt => vr_dtmvtolt -- IN
+			 											     ,pr_dtmvtolt => vr_dtmvtolt -- IN
+															  );
     
 		-- Faz o envelopamento SOAP
 		vr_arquivo := '<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:protesto_brIntf-Iprotesto_br">'
