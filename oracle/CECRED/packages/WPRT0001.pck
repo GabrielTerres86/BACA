@@ -37,7 +37,7 @@ create or replace package cecred.WPRT0001 is
 
 
 end WPRT0001;
-
+/
 CREATE OR REPLACE PACKAGE BODY "CECRED"."WPRT0001" is
   /* ---------------------------------------------------------------------------------------------------------------
 
