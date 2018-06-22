@@ -57,7 +57,7 @@ DEF INPUT  PARAM  par_idagenda  AS INTEGER                                NO-UND
 DEF INPUT  PARAM  par_vlapagar  AS DECIMAL                                NO-UNDO.
 DEF INPUT  PARAM  par_versaldo  AS INTEGER                                NO-UNDO.
 DEF INPUT  PARAM  par_tpleitor  AS INTEGER                                NO-UNDO.
-DEF INPUT  PARAM  par_nrrefere  AS DECI                                   NO-UNDO.
+DEF INPUT  PARAM  par_nrrefere  AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM par_iptransa   AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM par_iddispos   AS CHAR                                   NO-UNDO.
 

@@ -93,7 +93,7 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           391,
                                           382,
                                           384,                                          
-                                          354,  /* credito cotas */] 
-										  2280  /* EST.ARRECAD   */ NO-UNDO.
+                                          354,  /* credito cotas */ 
+										  2280  /* EST.ARRECAD   */] NO-UNDO.
                         
                                             
