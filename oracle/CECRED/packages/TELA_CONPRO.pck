@@ -691,6 +691,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                  AND (pr_cdagenci = 0 OR epr.cdagenci = pr_cdagenci) --> PA
                  AND (NVL(pr_nrdconta, 0) = 0 OR epr.nrdconta = pr_nrdconta) --> Nr. da Conta
                  AND (NVL(pr_nrctremp, 0) = 0 OR epr.nrctrcrd = pr_nrctremp) --> Nr. Proposta
+				 AND (pr_insitest = 99 OR epr.insitcrd = pr_insitest)
+                 AND (pr_insitapr = 99 OR epr.insitdec = pr_insitapr)
                  AND epr.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal
                  AND ass.cdcooper = epr.cdcooper
                  AND ass.nrdconta = epr.nrdconta                  
@@ -729,6 +731,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                    AND (pr_cdagenci = 0 OR epr.cdagenci = pr_cdagenci) --> PA
                    AND (NVL(pr_nrdconta, 0) = 0 OR epr.nrdconta = pr_nrdconta) --> Nr. da Conta
                    AND (NVL(pr_nrctremp, 0) = 0 OR epr.nrctrcrd = pr_nrctremp) --> Nr. Proposta
+				   AND (pr_insitest = 99 OR epr.insitcrd = pr_insitest)
+				   AND (pr_insitapr = 99 OR epr.insitdec = pr_insitapr)
                    AND epr.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal;
       rw_crawcrd_total   cr_crawcrd_total%ROWTYPE;          
     BEGIN
@@ -1957,19 +1961,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
           ELSE
             -- Erros HTTP
             IF rw_cratbgen.cdstatus_http = 401 THEN
-              vr_dsretorno := 'Credencias de acesso ao WebService Ibratan invalidas.';
+              vr_dsretorno := 'Credencias de acesso ao WebService invalidas.';
             ELSIF rw_cratbgen.cdstatus_http = 403 THEN
-              vr_dsretorno := 'Sem permissao de acesso ao Webservice Ibratan.';
+              vr_dsretorno := 'Sem permissao de acesso ao Webservice.';
             ELSIF rw_cratbgen.cdstatus_http = 404 THEN
-              vr_dsretorno := 'Recurso nao encontrado no WebService Ibratan nao existe.';
+              vr_dsretorno := 'Recurso nao encontrado no WebService nao existe.';
             ELSIF rw_cratbgen.cdstatus_http = 412 THEN
-              vr_dsretorno := 'Parametros do WebService Ibratan invalidos.';
+              vr_dsretorno := 'Parametros do WebService invalidos.';
             ELSIF rw_cratbgen.cdstatus_http = 429 THEN
               vr_dsretorno := 'Muitas requisicoes de retorno da Analise Automatica da esteira.';
             ELSIF rw_cratbgen.cdstatus_http BETWEEN 400 AND 499 THEN
               vr_dsretorno := 'Valor do(s) parametro(s) WebService invalidos.';
             ELSIF rw_cratbgen.cdstatus_http BETWEEN 501 AND 599 THEN
-              vr_dsretorno := 'Falha na comunicacao com servico Ibratan.';
+              vr_dsretorno := 'Falha na comunicacao com o servico.';
             ELSE 
               -- Tratar envios e retornos 
               IF rw_cratbgen.cdstatus_http = 200 THEN 
