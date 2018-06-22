@@ -204,6 +204,11 @@ IF  par_idrelato = 1 OR
                         RETURN "NOK".
                     END.
             END.
+        ELSE
+            DO:
+                ASSIGN xml_dsmsgerr = "<dsmsgerr>Nenhum boleto encontrado para o período informado.</dsmsgerr>".                                             
+                RETURN "NOK".
+            END.
         
         IF par_idrelato = 1 OR par_idrelato = 3 OR par_idrelato = 4 THEN
         DO:
@@ -269,7 +274,7 @@ IF  par_idrelato = 1 OR
                                             "</cdagepag><cdsituac>" +
                                             tt-consulta-blt.cdsituac +
                                             "</cdsituac><dssituac>" + 
-                                            SUBSTR(tt-consulta-blt.dssituac,1,10) +
+                                            SUBSTR(tt-consulta-blt.dssituac,1,10) + tt-consulta-blt.flgdesco +
                                             "</dssituac><flgdesco>" +
                                             tt-consulta-blt.flgdesco +
                                             "</flgdesco><dtelimin>" +
