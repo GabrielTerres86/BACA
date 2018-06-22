@@ -1163,6 +1163,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 				17/04/2018 - Validação se o vr_insitceb é diferente de 2, tratamento para permitir inativação
                              da cobrança caso o cooperado esteja classificado na categoria de risco de fraude.
                              (Chamado 853600 - GSaquetta)
+                
+                22/06/2018 - Ajuste pra inverter os codigos de pendencias 25 e 32. PRJ352 (Lombardi)
 
     ..............................................................................*/
     DECLARE
@@ -1871,7 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                               ,pr_idseqttl => 1
                                               ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 32 ELSE 25 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
                                               ,pr_cdoperad => vr_cdoperad
                                               ,pr_nrseqdoc => pr_nrconven
                                               ,pr_cdcritic => vr_cdcritic
@@ -1892,7 +1894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                               ,pr_idseqttl => 1
                                               ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 32 ELSE 25 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
                                               ,pr_cdoperad => vr_cdoperad
                                               ,pr_nrseqdoc => pr_nrconven
                                               ,pr_cdcritic => vr_cdcritic
