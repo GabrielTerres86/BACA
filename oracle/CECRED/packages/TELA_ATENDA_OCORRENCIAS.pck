@@ -518,19 +518,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                 ELSE
                    vr_tiporegistro := rw_tabrisco_central.tipo_registro;
                 END IF;
-
-/*                IF rw_tabrisco_central.ris_cdmodali IN (4, 3) THEN
-                   vr_tiporegistro := 'RF1';
-                ELSIF rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL THEN
-                  vr_tiporegistro := 'RF2';
-                ELSIF (rw_tabrisco_central.lcr_flgrefin = 1 AND rw_tabrisco_central.lcr_flgstlcr = 1) THEN
-                  vr_tiporegistro := 'RF3';
-                ELSIF rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
-                  vr_tiporegistro := 'RF4';
-                ELSE
-                   vr_tiporegistro := rw_tabrisco_central.tipo_registro;
-                END IF; */
-                                
                 -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
@@ -565,7 +552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                               , rw_contas_grupo_economico.nrdconta
                                  , rw_dat.dtmvtoan) LOOP
 
- 	                -- trata tipo de registro Refinanciamento (REF)
+                   -- trata tipo de registro Refinanciamento (REF)
                 IF rw_tabrisco_central.ris_cdmodali IN (4, 3) 
                   OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
                   OR (rw_tabrisco_central.lcr_flgrefin = 1 
@@ -859,6 +846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     vr_inprejuz VARCHAR2(1);
     vr_qttotatr NUMBER(10);
     vr_saldodev NUMBER(25,2);
+    vr_iof      NUMBER(25,2);
 
     --Variaveis de Indice
     vr_index PLS_INTEGER;
@@ -957,10 +945,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         OPEN cr_crapsld(pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => pr_nrdconta); 
         FETCH cr_crapsld INTO rw_crapsld;
+        
+        vr_iof := 0;
+        
         IF cr_crapsld%FOUND THEN 
           CLOSE cr_crapsld;
+          vr_iof := rw_crapsld.vliofmes;
           vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes));          
-        ELSE
+        ELSE          
           CLOSE cr_crapsld;     
           vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej));        
         END IF;
@@ -978,6 +970,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                pr_tag_nova => 'vltrapre', -- Valor Transferido para Prejuízo
                                pr_tag_cont => rw_prejuizo.vldivida_original,
                                pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vlsdprej', -- Saldo Atual
+                               pr_tag_cont => rw_prejuizo.vlsdprej,
+                               pr_des_erro => vr_dscritic);                                                       
           
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
@@ -1003,6 +1002,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'vljuprej', -- Juros Remuneratório
+                               pr_tag_cont => rw_prejuizo.vljuprej,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
+                               pr_tag_nova => 'valoriof', -- IOF
+                               pr_tag_cont => vr_iof,
+                               pr_des_erro => vr_dscritic);                                                               
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlpagpre', -- Valor pago prejuízo
                                pr_tag_cont => rw_prejuizo.vlpgprej,
                                pr_des_erro => vr_dscritic);                    
@@ -1012,13 +1025,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlabopre', -- Valor abono prejuízo
                                pr_tag_cont => rw_prejuizo.vlrabono,
-                               pr_des_erro => vr_dscritic);        
-        
+                               pr_des_erro => vr_dscritic);  
+                               
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlslddev', -- Saldo Devedor
-                               pr_tag_cont => vr_saldodev,
+                               pr_tag_cont => abs(least(vr_saldodev,0)),
                                pr_des_erro => vr_dscritic);  
          
       ELSE
