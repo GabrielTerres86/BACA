@@ -1106,7 +1106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                e.cdcooper,
                e.nrdconta,
                e.nrconven,
-               f.cdagenci
+               f.cdagenci,
+               f.nrcpfcgc nrcpfcgc_sem_mask
           FROM crapenc i,
                crapdat h,
                crapage g,
@@ -1274,6 +1275,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
         ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
           vr_cdtipdoc := 115; -- PJ
         END IF;
+      END IF;
+      
+      -- Gera Pendencia de digitalizacao do documento
+      DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_idseqttl => 1
+                                          ,pr_nrcpfcgc => rw_crapceb.nrcpfcgc_sem_mask
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_tpdocmto => CASE WHEN vr_cdtipdoc = 106 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                          ,pr_cdoperad => vr_cdoperad
+                                          ,pr_nrseqdoc => pr_nrconven
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+              
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
       END IF;
 
       vr_qrcode := rw_crapceb.cdcooper || '_' || 

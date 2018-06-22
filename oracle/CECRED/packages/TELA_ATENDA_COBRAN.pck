@@ -1164,8 +1164,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                              da cobrança caso o cooperado esteja classificado na categoria de risco de fraude.
                              (Chamado 853600 - GSaquetta)
                 
-                22/06/2018 - Ajuste pra inverter os codigos de pendencias 25 e 32. PRJ352 (Lombardi)
-
     ..............................................................................*/
     DECLARE
 
@@ -1866,43 +1864,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END IF;
       CLOSE cr_DDA_Conven;
       
-        IF pr_flprotes = 1 THEN
-          -- Gera Pendencia de digitalizacao do documento
-          DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
-                                              ,pr_nrdconta => pr_nrdconta
-                                              ,pr_idseqttl => 1
-                                              ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
-                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 32 ELSE 25 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
-                                              ,pr_cdoperad => vr_cdoperad
-                                              ,pr_nrseqdoc => pr_nrconven
-                                              ,pr_cdcritic => vr_cdcritic
-                                              ,pr_dscritic => vr_dscritic);
-              
-          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_saida;
-          END IF;
-        END IF;
-      
       --> senao é manutencao  
       ELSE
 	      IF (rw_crapceb.flprotes = 0 AND pr_flprotes = 1) THEN
-          
-          -- Gera Pendencia de digitalizacao do documento
-          DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
-                                              ,pr_nrdconta => pr_nrdconta
-                                              ,pr_idseqttl => 1
-                                              ,pr_nrcpfcgc => rw_crapass.nrcpfcgc
-                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                              ,pr_tpdocmto => CASE WHEN rw_crapass.inpessoa = 1 THEN 32 ELSE 25 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
-                                              ,pr_cdoperad => vr_cdoperad
-                                              ,pr_nrseqdoc => pr_nrconven
-                                              ,pr_cdcritic => vr_cdcritic
-                                              ,pr_dscritic => vr_dscritic);
-          
-          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_saida;
-          END IF;
           
           --> Gravar o log atenda - cobram - log, registrando o cancelamento do serviço de protesto
           COBR0008.pc_gera_log_ceb 
