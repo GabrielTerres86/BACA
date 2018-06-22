@@ -42,7 +42,7 @@ END APLI0007;
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
   
   -- Constantes
-  vr_nomdojob CONSTANT VARCHAR2(30) := 'JBAPL_CUSTOD_B3';     -- Nome do JOB
+  vr_nomdojob CONSTANT VARCHAR2(30) := 'JBCAPT_CUSTOD_B3';     -- Nome do JOB
   vr_nmsimplf CONSTANT VARCHAR2(20) := RPAD('CECRED',20,' '); -- Nome Simplificado do Participante
   vr_dsdirarq CONSTANT VARCHAR2(30) := gene0001.fn_diretorio('C',1,'arq'); -- Diretório temporário para arquivos
   vr_qtdexjob CONSTANT NUMBER(5)    := 500; -- Quantidade de arquivos enviados / recebidos por execução                  
