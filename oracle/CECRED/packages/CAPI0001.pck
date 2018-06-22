@@ -427,6 +427,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                 ,pr_flgnegat IN INTEGER -- flag que indica se permite negativar
                                 ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
                                 ,pr_dscritic OUT VARCHAR2) IS -- Descrição da crítica
+                                
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
+  vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+                                
 
     CURSOR cr_crapass(pr_cdcooper      IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta      IN crapass.nrdconta%TYPE) IS
@@ -639,9 +643,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                             ,pr_qtinfoln => vr_qtinfoln
                             ,pr_qtcompln => vr_qtcompln
                             ,pr_nrseqdig => vr_nrseqdig);
+                            
+    -- cria lançamento de depositos a vista - craplcm                        
+    -- Inserir registro de crédito:
+    LANC0001.pc_gerar_lancamento_conta(pr_cdagenci =>vc_cdagenci             -- cdagenci
+                                      ,pr_cdbccxlt =>vc_cdbccxlt             -- cdbccxlt
+                                      ,pr_cdhistor =>vr_craplcm_cdhist       -- cdhistor
+                                      ,pr_dtmvtolt =>pr_dtmvtolt             -- dtmvtolt
+                                      ,pr_cdpesqbb =>vr_cdpesqbb             -- cdpesqbb                                                                                                
+                                      ,pr_nrdconta =>pr_nrdconta             -- nrdconta   
+                                      ,pr_nrdctabb =>pr_nrdconta             -- nrdctabb
+                                      ,pr_nrdctitg =>LPAD(pr_nrdconta, 9, 0) -- nrdctitg                                              
+                                      ,pr_nrdocmto =>vr_nrseqdig             -- nrdocmto                                                
+                                      ,pr_nrdolote =>vc_lote_deposito_vista  -- nrdolote                                                
+                                      ,pr_nrseqdig =>vr_nrseqdig             -- nrseqdig
+                                      ,pr_vllanmto =>pr_vlintegr             -- vllanmto 
+                                      ,pr_cdcooper =>pr_cdcooper             -- cdcooper     
 
-    -- cria lançamento de depositos a vista - craplcm
+                                      -- OUTPUT --
+                                      ,pr_tab_retorno => vr_tab_retorno
+                                      ,pr_incrineg => vr_incrineg
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
 
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;    
+    vr_nrdrowid := vr_tab_retorno.rowidlct;
+
+    /*-- cria lançamento de depositos a vista - craplcm
     INSERT INTO craplcm
       (cdagenci
       ,cdbccxlt
@@ -670,7 +700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       ,vr_nrseqdig
       ,pr_vlintegr
       ,pr_cdcooper)
-      RETURNING ROWID INTO vr_nrdrowid;
+      RETURNING ROWID INTO vr_nrdrowid;*/
 
    -- atualiza as cotas de capital
    UPDATE crapcot
