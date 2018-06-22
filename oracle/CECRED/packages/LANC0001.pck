@@ -242,7 +242,7 @@ rw_craplot cr_craplot%ROWTYPE;
 -- transitória já devem ser processados para contas em prejuízo.
 vr_inatvprj BOOLEAN := NVL(GENE0001.fn_param_sistema (pr_cdcooper => 0
                                                          ,pr_nmsistem => 'CRED'
-                                                         ,pr_cdacesso => 'DT_CORTE_REGCRE'), 'N') = 'S';
+                                                         ,pr_cdacesso => 'IN_ATIVA_REGRAS_PREJU'), 'N') = 'S';
 
 -- Função que Obtém dados do histórico (CRAPHIS)
 FUNCTION fn_obtem_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
