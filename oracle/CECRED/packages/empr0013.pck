@@ -1127,9 +1127,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0013 AS
                                rw_crawepr.cdfinemp, rw_crawepr.cdlcremp, --4
                                rw_crawepr.dtmvtolt, rw_crawepr.nrctaav1, --5
                                rw_crawepr.nrctaav2, rw_crawepr.qtpreemp, --6
-                               null, rw_crawepr.txdiaria, --7
-                               null, null, --8
-                               null, rw_crawepr.vlpreemp, --9
+                               0, rw_crawepr.txdiaria, --7
+                               0, 0, --8
+                               0, rw_crawepr.vlpreemp, --9
                                  
                                case when (rw_crawepr.cdlcremp = 100)
                                     then 0
@@ -1145,31 +1145,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0013 AS
                                  
                                case when (rw_crawepr.cdlcremp = 100)
                                     then 1
-                                    else null
+                                    else 0
                                end,-- inliquid, --11
 
                                rw_crapass.nrcadast, 0, --12
                                0, null, --13
                                0, pr_dtdpagto, --14
-                               null, vr_vltotiof, --15
+                               0, vr_vltotiof, --15
 
                                case when (rw_crawepr.cdlcremp = 100)
                                     then rw_crapepr.vlsdeved
-                                    else null
+                                    else 0
                                end,--vlprejuz, --16
 
                                case when (rw_crawepr.cdlcremp = 100)
                                     then rw_crapepr.vlsdeved
-                                    else null
+                                    else 0
                                end,--vlsdprej, --16
                                  
                                case when (rw_crawepr.cdlcremp = 100)
                                     then 1
-                                    else null
+                                    else 0
                                end,--inprejuz, --17
 
-                               null, --17
-                               null, --18
+                               0, --17
+                               0, --18
                                  
                                case when (rw_crawepr.cdlcremp = 100)
                                     then pr_dtmvtolt
@@ -1178,22 +1178,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0013 AS
                                  
                                rw_crawepr.tpdescto, pr_cdcooper, --19
                                rw_crawepr.tpemprst, rw_crawepr.txmensal, --20
-                               null, null, --21
-                               null, null, --22
-                               null, null, --23
-                               null, null, --24
-                               null, null, --25
-                               null, null, --26
-                               null, null, --27
-                               null, null, --28
-                               null, null, --29
+                               0,0, --21
+                               0,0, --22
+                               null,0, --23
+                               0,0, --24
+                               0,0, --25
+                               0,0, --26
+                               0,0, --27
+                               0,0, --28
+                               0,0, --29
                                rw_crawepr.qttolatr, pr_idorigem, --30
                                vr_vltarifa, decode(rw_crawepr.tpemprst,2,vr_vltariof,vr_vltotiof), --31
-                               vr_vltaxiof, null, --32
-                               null, null, --33
-                               null, null, --34
-                               null, 0, --35
-                               null, null, --36
+                               vr_vltaxiof, 0, --32
+                               0,0, --33
+                               0,0, --34
+                               0,0, --35
+                               null,null, --36
                                null, vr_idcarga, --37
                                pr_cdoperad, pr_cdagenci, --38
                                sysdate, pr_cdoperad, --39*2* sysdate ou trunc(sysdate)???
