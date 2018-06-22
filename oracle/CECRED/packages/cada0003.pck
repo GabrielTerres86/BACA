@@ -819,6 +819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
   --                          (Lucas Ranghetti INC0012381)
   ---------------------------------------------------------------------------------------------------------------
+  
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
+  vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
                              ,pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -9809,7 +9812,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Objetivo  : Rotina para efetuar o saque parcial de cotas
      Observacao: -----
 
-     Alteracoes:                 
+     Alteracoes:     
+     
+     20/06/2018 - Tratamento de Históricos de Credito/Debito   
+                              José Carvalho  AMcom 
+     
+                 
     ..............................................................................*/ 
                
     CURSOR cr_crapass_ori(pr_cdcooper IN crapass.cdcooper%TYPE
@@ -10014,8 +10022,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                          ,vr_nrdocmto
                          ,vr_nrseqdig_lot
                          ,pr_vldsaque);
+                         
+      -- Tratamento de Históricos de Credito/Debito                    
+      -- Inserir registro de crédito:
+      LANC0001.pc_gerar_lancamento_conta(pr_cdcooper =>vr_cdcooper              -- cdcooper
+                                        ,pr_dtmvtolt =>rw_crapdat.dtmvtolt      -- dtmvtolt
+                                        ,pr_dtrefere =>rw_crapdat.dtmvtolt      -- dtrefere
+                                        ,pr_cdagenci =>rw_crapass_ori.cdagenci  -- cdagenci
+                                        ,pr_cdbccxlt =>100                      -- cdbccxlt                                                                                                
+                                        ,pr_nrdolote =>vr_nrdolote              -- nrdolote   
+                                        ,pr_nrdconta=>rw_crapass_dst.nrdconta   -- nrdconta
+                                        ,pr_nrdctabb => rw_crapass_dst.nrdconta -- nrdctabb                                              
+                                        ,pr_nrdctitg => TO_CHAR(gene0002.fn_mask(rw_crapass_dst.nrdconta,'99999999')) -- nrdctitg                                                
+                                        ,pr_nrdocmto => vr_nrdocmto             -- nrdocmto                                                
+                                        ,pr_cdhistor =>2418 -- CR. COTAS/CAP    -- cdhistor
+                                        ,pr_vllanmto =>pr_vldsaque              -- vllanmto 
+                                        ,pr_nrseqdig =>vr_nrseqdig_lot          -- nrseqdig     
+
+                                        -- OUTPUT --
+                                        ,pr_tab_retorno => vr_tab_retorno
+                                        ,pr_incrineg => vr_incrineg
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;                                                                        
        
-      --Inserir registro de crédito:
+      /*--Inserir registro de crédito:
       INSERT INTO craplcm(cdcooper
                          ,dtmvtolt
                          ,dtrefere
@@ -10041,7 +10075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                          ,vr_nrdocmto
                          ,2418 -- CR. COTAS/CAP
                          ,pr_vldsaque
-                         ,vr_nrseqdig_lot);  
+                         ,vr_nrseqdig_lot);  */
       
       --Atualiza o valor de cotas do associado origem                        
       UPDATE crapcot
@@ -10471,6 +10505,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          
 				 07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).               
                   
+         20/06/2018 - Tratamento de Históricos de Credito/Debito   
+                              José Carvalho   AMcom          
     ..............................................................................*/ 
   
     --Cursor para encontrar dados do cooperado                                     
@@ -10873,8 +10909,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             END;  
             
             BEGIN
+              -- Tratamento de Históricos de Credito/Debito 
+              -- Inserir registro de crédito:
+              LANC0001.pc_gerar_lancamento_conta(pr_cdcooper =>pr_cdcooper              -- cdcooper
+                                                ,pr_dtmvtolt =>rw_crapdat.dtmvtolt      -- dtmvtolt
+                                                ,pr_dtrefere =>rw_crapdat.dtmvtolt      -- dtrefere
+                                                ,pr_cdagenci =>rw_crapass.cdagenci      -- cdagenci
+                                                ,pr_cdbccxlt =>100                      -- cdbccxlt                                                                                                
+                                                ,pr_nrdolote =>vr_nrdolote              -- nrdolote   
+                                                ,pr_nrdconta =>pr_nrdconta              -- nrdconta
+                                                ,pr_nrdctabb =>pr_nrdconta              -- nrdctabb                                              
+                                                ,pr_nrdctitg =>TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999')) -- nrdctitg                                                
+                                                ,pr_nrdocmto =>vr_nrdocmto              -- nrdocmto                                                
+                                                ,pr_cdhistor =>2137 --Credita conta     -- cdhistor
+                                                ,pr_vllanmto =>pr_vldcotas              -- vllanmto 
+                                                ,pr_nrseqdig =>vr_nrseqdig              -- nrseqdig   
+                                                ,pr_hrtransa =>TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+
+                                                -- OUTPUT --
+                                                ,pr_tab_retorno => vr_tab_retorno
+                                                ,pr_incrineg => vr_incrineg
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+
+              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 RAISE vr_exc_saida;
+              END IF;               
                    
-              --Inserir registro de crédito:
+/*              --Inserir registro de crédito:
               INSERT INTO craplcm(cdcooper
                                  ,dtmvtolt
                                  ,dtrefere
@@ -10903,7 +10965,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                  ,pr_vldcotas
                                  ,vr_nrseqdig
                                  ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
-                                         
+*/                                         
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
@@ -11056,9 +11118,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         END; 
             
         BEGIN
+            -- Tratamento de Históricos de Credito/Debito
+            -- Inserir registro de crédito:
+            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper =>pr_cdcooper              -- cdcooper
+                                              ,pr_dtmvtolt =>rw_crapdat.dtmvtolt      -- dtmvtolt
+                                              ,pr_dtrefere =>rw_crapdat.dtmvtolt      -- dtrefere
+                                              ,pr_cdagenci =>rw_crapass.cdagenci      -- cdagenci
+                                              ,pr_cdbccxlt =>100                      -- cdbccxlt                                                                                                
+                                              ,pr_nrdolote =>vr_nrdolote              -- nrdolote   
+                                              ,pr_nrdconta=>pr_nrdconta               -- nrdconta
+                                              ,pr_nrdctabb =>pr_nrdconta              -- nrdctabb                                              
+                                              ,pr_nrdctitg => TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999')) -- nrdctitg                                                
+                                              ,pr_nrdocmto => vr_nrdocmto             -- nrdocmto                                                
+                                              ,pr_cdhistor =>2137 -- CR. COTAS/CAP    -- cdhistor
+                                              ,pr_vllanmto =>pr_vldcotas              -- vllanmto 
+                                              ,pr_nrseqdig =>vr_nrseqdig              -- nrseqdig     
+                                              ,pr_hrtransa =>TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+
+                                              -- OUTPUT --
+                                              ,pr_tab_retorno => vr_tab_retorno
+                                              ,pr_incrineg => vr_incrineg
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic);
+
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+               RAISE vr_exc_saida;
+            END IF;                         
              
           --Inserir registro de crédito:
-          INSERT INTO craplcm(cdcooper
+/*          INSERT INTO craplcm(cdcooper
                              ,dtmvtolt
                              ,dtrefere
                              ,cdagenci
@@ -11085,7 +11173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,2137 -- CR. COTAS/CAP
                              ,pr_vldcotas
                              ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
+                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));*/
                                      
         EXCEPTION
           WHEN OTHERS THEN
