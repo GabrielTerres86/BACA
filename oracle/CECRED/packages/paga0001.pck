@@ -285,6 +285,8 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
 	--
   --        10/05/2017 - Fixar na pc_valores_a_creditar os códigos de histórico 2277 e 2278, para os prejuizos 
   --                     Projeto 210_2 (Lombardi).
+
+  --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -14730,24 +14732,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       rw_crapcco cr_crapcco%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
 
       -- Buscar o número da conta do cooperado no qual foi feito o acordo
-      CURSOR cr_acordo_parcela(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                      	      ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                              ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                              ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE)  IS
+      CURSOR cr_acordo_parcela(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                      	      ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                              ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                              ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE)  IS
         SELECT aco.nrdconta
           FROM tbrecup_acordo_parcela acp
              , tbrecup_acordo         aco
@@ -15472,7 +15475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 29/10/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 10/06/2018
     --
     --  Dados referentes ao programa:
     --
@@ -15486,6 +15489,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --              29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
     --
     --              29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)
+    --
+    --              10/06/2018 - Ajustado para alimentar a lista de titulos a serem baixados. Quando se tratar da nova versão da 
+    --                           funcionalidade do borderô, não precisa verificar as regras de data de vencimento ser em feriado 
+    --                           ou fds (Paulo Penteado (GFT) 
     -- .........................................................................*/
 
   BEGIN
@@ -15514,8 +15521,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               ,craptdb.vlliquid
               ,craptdb.nrinssac
               ,craptdb.rowid
-        FROM craptdb
-        WHERE craptdb.cdcooper = pr_cdcooper
+              ,crapbdt.flverbor
+        FROM crapbdt
+            ,craptdb
+        WHERE crapbdt.cdcooper = craptdb.cdcooper
+        AND   crapbdt.nrborder = craptdb.nrborder
+        AND   craptdb.cdcooper = pr_cdcooper
         AND   craptdb.cdbandoc = pr_cdbandoc
         AND   craptdb.nrdctabb = pr_nrdctabb
         AND   craptdb.nrcnvcob = pr_nrcnvcob
@@ -15526,17 +15537,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       rw_craptdb cr_craptdb%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
 
       --Variaveis Locais
@@ -15715,35 +15727,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       IF cr_craptdb%FOUND THEN
         --Fechar Cursor
         CLOSE cr_craptdb;
-        --Verificar se eh feriado
-        vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
-                                                  ,pr_dtmvtolt => rw_craptdb.dtvencto
-                                                  ,pr_tipo     => 'P');
-        --Determinar feriado ou fim de semana
-        vr_feriafds:= vr_dtferiado <> rw_craptdb.dtvencto;
-        /* POSTERGACAO DA DATA */
-        IF rw_craptdb.dtvencto < pr_dtmvtolt AND NOT vr_feriafds THEN
-          --Nao Descontado
-          vr_flgdesct:= FALSE;
-        ELSE
-          --Descontado
-          vr_flgdesct:= TRUE;
-        END IF;
-        --Nao Descontado
-        IF vr_flgdesct THEN
-          /* 1o Dia util apos o vencto */
-          vr_dtprvenc:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
-                                                   ,pr_dtmvtolt => rw_craptdb.dtvencto + 1
-                                                   ,pr_tipo     => 'P');
-          /*
-          Fazer a baixa de desconto de titulo somente se for no 1o. dia util apos o vencimento
-          caso contrario da NEXT.
-          */
-          IF vr_feriafds AND    /* venceu em feriado/fds */
-             rw_craptdb.dtvencto <= pr_dtmvtolt AND pr_dtmvtolt <> vr_dtprvenc  THEN
+        
+        -- Verificar se o título foi incluso na versão antiga da funcionalidade do borderô. Se sim, verifica as
+        -- regras de data do vencimento sendo feriado ou fds. Se foi incluso na nova versão, então não precisa
+        -- passar pelas regras de data.
+        IF rw_craptdb.flverbor = 0 THEN
+          --Verificar se eh feriado
+          vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
+                                                    ,pr_dtmvtolt => rw_craptdb.dtvencto
+                                                    ,pr_tipo     => 'P');
+          --Determinar feriado ou fim de semana
+          vr_feriafds:= vr_dtferiado <> rw_craptdb.dtvencto;
+          /* POSTERGACAO DA DATA */
+          IF rw_craptdb.dtvencto < pr_dtmvtolt AND NOT vr_feriafds THEN
             --Nao Descontado
             vr_flgdesct:= FALSE;
+          ELSE
+            --Descontado
+            vr_flgdesct:= TRUE;
           END IF;
+          --Nao Descontado
+          IF vr_flgdesct THEN
+            /* 1o Dia util apos o vencto */
+            vr_dtprvenc:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
+                                                     ,pr_dtmvtolt => rw_craptdb.dtvencto + 1
+                                                     ,pr_tipo     => 'P');
+            /*
+            Fazer a baixa de desconto de titulo somente se for no 1o. dia util apos o vencimento
+            caso contrario da NEXT.
+            */
+            IF vr_feriafds AND    /* venceu em feriado/fds */
+               rw_craptdb.dtvencto <= pr_dtmvtolt AND pr_dtmvtolt <> vr_dtprvenc  THEN
+              --Nao Descontado
+              vr_flgdesct:= FALSE;
+            END IF;
+          END IF;
+        ELSE
+          vr_flgdesct := TRUE;
         END IF;
         --Se tiver descontado
         IF vr_flgdesct THEN
@@ -16708,17 +16728,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   BEGIN
     DECLARE
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
 
       --Variaveis Locais
@@ -19753,17 +19774,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       rw_cursor2 cr_cursor2%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
 
       vr_cdcritic INTEGER;

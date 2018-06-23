@@ -104,7 +104,7 @@ BEGIN
                                              ,pr_nrborder => rw_craptdb.nrborder
                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                              ,pr_cdorigem => 7 -- batch
-                                             ,pr_cdhistor => DSCT0003.vr_cdhistordsct_pgtojurosopc
+                                             ,pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra
                                              ,pr_vllanmto => (rw_craptdb.vlmratit - rw_craptdb.vlpagmra)
                                              ,pr_cdbandoc => rw_craptdb.cdbandoc
                                              ,pr_nrdctabb => rw_craptdb.nrdctabb
