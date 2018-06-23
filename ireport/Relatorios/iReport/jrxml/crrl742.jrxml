@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-06-20T11:20:09 -->
+<!-- 2018-06-23T16:05:03 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl742" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="762" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50" whenResourceMissingType="Empty" uuid="6386a198-a31e-4f65-936d-2bc9fe5ac907">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter1"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -36,31 +36,49 @@
 	<field name="saldototal" class="java.lang.Double">
 		<fieldDescription><![CDATA[saldototal]]></fieldDescription>
 	</field>
+	<field name="dataini" class="java.lang.String">
+		<fieldDescription><![CDATA[dataini]]></fieldDescription>
+	</field>
+	<field name="datafim" class="java.lang.String">
+		<fieldDescription><![CDATA[datafim]]></fieldDescription>
+	</field>
 	<variable name="saldo_total" class="java.lang.Double"/>
 	<title>
-		<band>
+		<band height="27">
 			<line>
 				<reportElement x="0" y="-2" width="758" height="1" uuid="9c2633d9-9bfe-433b-8f5f-533a8280c386"/>
 			</line>
 			<textField>
-				<reportElement x="2" y="-25" width="758" height="22" uuid="1d6b150c-de8f-40ad-8011-0db635963ad2"/>
+				<reportElement x="560" y="-25" width="200" height="22" uuid="1d6b150c-de8f-40ad-8011-0db635963ad2"/>
+				<textElement textAlignment="Right"/>
 				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MMM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
 			</textField>
-		</band>
-	</title>
-	<pageHeader>
-		<band height="34">
 			<staticText>
-				<reportElement style="Sans_Normal" x="4" y="0" width="758" height="30" uuid="69cf7a16-df9e-4a92-8dee-005fa6f01193"/>
+				<reportElement style="Sans_Normal" x="2" y="-3" width="758" height="30" uuid="69cf7a16-df9e-4a92-8dee-005fa6f01193"/>
 				<textElement textAlignment="Center">
 					<font fontName="SansSerif" size="22"/>
 				</textElement>
 				<text><![CDATA[Composição]]></text>
 			</staticText>
 		</band>
+	</title>
+	<pageHeader>
+		<band height="55">
+			<staticText>
+				<reportElement x="4" y="33" width="56" height="17" uuid="5e7e18e4-a178-4501-9e66-980f366378b8"/>
+				<text><![CDATA[Período:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="60" y="33" width="300" height="17" uuid="697814ae-529e-4125-afeb-cd6482585482"/>
+				<textFieldExpression><![CDATA[ ($F{dataini}==null?"Todos":$F{dataini} + " à " + $F{datafim})]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="53" width="759" height="1" uuid="c298a597-22d9-4273-8e20-fec3c0ef1ce6"/>
+			</line>
+		</band>
 	</pageHeader>
 	<detail>
-		<band height="21">
+		<band height="32">
 			<subreport>
 				<reportElement x="0" y="0" width="755" height="21" uuid="ea8b1dc8-a578-46b4-ac6f-0f8431cfdcb9"/>
 				<subreportParameter name="PR_SQSOLICI"/>
