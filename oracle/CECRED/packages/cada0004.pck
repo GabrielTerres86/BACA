@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 23/05/2018
   
    Dados referentes ao programa:
   
@@ -39,6 +39,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 
                  12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+
+                 23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -4622,26 +4624,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND crapalt.nrdconta = pr_nrdconta;
          
     --> Buscar cobrancas em aberto ou pago
-    CURSOR cr_tbepr_cobranca IS     
-      SELECT tbepr_cobranca.cdcooper
-            ,tbepr_cobranca.nrdconta_cob
-            ,tbepr_cobranca.nrcnvcob
-            ,tbepr_cobranca.nrboleto
-            ,tbepr_cobranca.nrctremp
+    CURSOR cr_tbrecup_cobranca IS     
+      SELECT tbrecup_cobranca.cdcooper
+            ,tbrecup_cobranca.nrdconta_cob
+            ,tbrecup_cobranca.nrcnvcob
+            ,tbrecup_cobranca.nrboleto
+            ,tbrecup_cobranca.nrctremp
             ,crapcob.dtvencto
             ,crapcob.vltitulo
             ,crapcob.incobran
             ,crapcob.nrdconta
             ,crapcob.nrdocmto
             ,crapcob.dtdpagto
-        FROM tbepr_cobranca
+        FROM tbrecup_cobranca
             ,crapcob
-       WHERE tbepr_cobranca.cdcooper = pr_cdcooper
-         AND tbepr_cobranca.nrdconta = pr_nrdconta
-         AND crapcob.cdcooper = tbepr_cobranca.cdcooper
-         AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-         AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-         AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+       WHERE tbrecup_cobranca.tpproduto = 0
+         AND tbrecup_cobranca.cdcooper = pr_cdcooper
+         AND tbrecup_cobranca.nrdconta = pr_nrdconta
+         AND crapcob.cdcooper = tbrecup_cobranca.cdcooper
+         AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+         AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+         AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
          AND crapcob.incobran IN(0,5);
          
     -- Verificar se ret ainda nao foi processado     
@@ -5707,32 +5710,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     CLOSE cr_crapcyc;
     
     --> buscar boletos de contratos em aberto
-    FOR rw_tbepr_cobranca IN cr_tbepr_cobranca LOOP
+    FOR rw_tbrecup_cobranca IN cr_tbrecup_cobranca LOOP
       -- Em aberto
-      IF rw_tbepr_cobranca.incobran = 0 THEN
-        vr_dsmensag := 'Boleto do contrato '|| rw_tbepr_cobranca.nrctremp|| ' em aberto.'||
-                       ' Vencto '|| to_char(rw_tbepr_cobranca.dtvencto,'DD/MM/RRRR')||
-                       ' R$ '|| to_char(rw_tbepr_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+      IF rw_tbrecup_cobranca.incobran = 0 THEN
+        vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
+                       ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                       ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
       
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
       -- Pago
-      ELSIF rw_tbepr_cobranca.incobran = 5 THEN
+      ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
         -- Verificar se ret ainda nao foi processado     
-        OPEN cr_crapret (pr_cdcooper => rw_tbepr_cobranca.cdcooper,
-                         pr_nrdconta => rw_tbepr_cobranca.nrdconta,
-                         pr_nrcnvcob => rw_tbepr_cobranca.nrcnvcob,
-                         pr_nrdocmto => rw_tbepr_cobranca.nrdocmto,
-                         pr_dtdpagto => rw_tbepr_cobranca.dtdpagto); 
+        OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
+                         pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
+                         pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
+                         pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
+                         pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto); 
         FETCH cr_crapret INTO rw_crapret; 
                
         -- Se encontrar apresentar critica
         IF cr_crapret%FOUND THEN
-          vr_dsmensag := 'Boleto do contrato '|| rw_tbepr_cobranca.nrctremp|| 
+          vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| 
                          ' esta pago pendente de processamento.'||
-                         ' Vencto '|| to_char(rw_tbepr_cobranca.dtvencto,'DD/MM/RRRR')||
-                         ' R$ '|| to_char(rw_tbepr_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+                         ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                         ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
         
           --> Incluir na temptable
           pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,

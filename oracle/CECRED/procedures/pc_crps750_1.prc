@@ -34,6 +34,8 @@ BEGIN
               07/11/2017 - Ajuste realizado para gravacao do arquivo referente ao relatorio 135 por agencia.
                            Everton (Mouts) - Chamado 773664
 
+              23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+
     ............................................................................. */
 
   DECLARE
@@ -116,10 +118,11 @@ BEGIN
               AND cob.incobran = 0
               AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                   (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                     FROM tbepr_cobranca cde
+                     FROM tbrecup_cobranca cde
                     WHERE cde.cdcooper = pr_cdcooper
                       AND cde.nrdconta = pr_nrdconta
-                      AND cde.nrctremp = pr_nrctremp);
+                      AND cde.nrctremp = pr_nrctremp
+                      AND cde.tpproduto = 0);
       rw_cde cr_cde%ROWTYPE;
 
       -- Cursor para verificar se existe algum boleto pago pendente de processamento
@@ -134,10 +137,11 @@ BEGIN
              AND cob.dtdpagto = pr_dtmvtolt
              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                  (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                    FROM tbepr_cobranca cde
+                    FROM tbrecup_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
                      AND cde.nrdconta = pr_nrdconta
-                     AND cde.nrctremp = pr_nrctremp)
+                     AND cde.nrctremp = pr_nrctremp
+                     AND cde.tpproduto = 0)
              AND ret.cdcooper = cob.cdcooper
              AND ret.nrdconta = cob.nrdconta
              AND ret.nrcnvcob = cob.nrcnvcob

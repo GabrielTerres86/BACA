@@ -387,6 +387,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
                             processo caso não encontre arquivos de retorno (Carlos)
+               
+               18/06/2018 - Adicionado o procedimento dsct0003.pc_processa_liquidacao_cobtit para efetuar baixa de titulos gerados
+                            pela COBTIT (Paulo Penteado (GFT))
 
    .............................................................................*/
 
@@ -651,6 +654,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                ,crapcob.vldpagto
                ,crapcob.inserasa
                ,crapcob.dtvctori
+               ,crapcob.nrdctabb
+               ,crapcob.nrctasac
          FROM crapcob
          WHERE crapcob.cdcooper = pr_cdcooper
          AND   crapcob.cdbandoc = pr_cdbandoc
@@ -852,6 +857,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             AND cco.cdcooper = cde.cdcooper
             AND cco.nrconven = cde.nrcnvcob
             AND cob.nrctremp > 0
+            AND cde.tpproduto = 0
             AND cde.cdcooper = cob.cdcooper
             AND cde.nrdconta_cob = cob.nrdconta
             AND cde.nrcnvcob = cob.nrcnvcob
@@ -4223,6 +4229,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    ELSE
                      vr_aux_cdocorre := 6;
                    END IF;
+                    /*Se for uma cobrança da COBTIT, efetuar a baixa no processo de baixa da COBTIT*/
+                    IF dsct0003.fn_cobranca_cobtit(pr_cdcooper => pr_cdcooper
+                                                  ,pr_nrcnvcob => rw_crapcob.nrcnvcob ) THEN
+                      dsct0003.pc_processa_liquidacao_cobtit (pr_cdcooper => pr_cdcooper
+                                                             ,pr_nrdconta => rw_crapcob.nrdconta
+                                                             ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                                                             ,pr_nrctasac => rw_crapcob.nrctasac
+                                                             ,pr_nrdocmto => rw_crapcob.nrdocmto
+                                                             ,pr_vlpagmto => rw_crapcob.vltitulo
+                                                             ,pr_indpagto => rw_crapcob.indpagto
+                                                             ,pr_cdoperad => 0
+                                                             ,pr_cdagenci => 0
+                                                             ,pr_nrdcaixa => 0
+                                                             ,pr_idorigem => 1
+                                                             ,pr_cdcritic => vr_cdcritic
+                                                             ,pr_dscritic => vr_dscritic);
+                    END IF;
                  
                    --Processar liquidacao
                    PAGA0001.pc_processa_liquidacao (pr_idtabcob     => rw_crapcob.rowid       --Rowid da Cobranca
@@ -4244,7 +4267,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                    ,pr_dsmotivo     => vr_dsmotivo            --Descricao Motivo
                                                    ,pr_dtmvtolt     => vr_dtmvtaux            --Data movimento
                                                    ,pr_cdoperad     => '1'                    --Codigo Operador
-                                                   ,pr_indpagto     => rw_crapcob.indpagto    --Indicador pagamento /* 0-COMPE 1-Caixa On-Line 3-Internet 4-TAA */
+                                                   ,pr_indpagto     => rw_crapcob.indpagto    --Indicador pagamento -- 0-COMPE 1-Caixa On-Line 3-Internet 4-TAA 
                                                    ,pr_ret_nrremret => vr_nrretcoo            --Numero remetente
                                                    ,pr_nmtelant     => pr_nmtelant            --Verificar COMPEFORA                                                   
                                                    ,pr_cdcritic     => vr_cdcritic            --Codigo Critica
@@ -4279,7 +4302,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                       ,pr_dsmotivo     => vr_dsmotivo            --Descricao Motivo
                                                       ,pr_dtmvtolt     => vr_dtmvtaux            --Data movimento
                                                       ,pr_cdoperad     => '1'                    --Codigo Operador
-                                                      ,pr_indpagto     => rw_crapcob.indpagto    --Indicador pagamento /* 0-COMPE 1-Caixa On-Line 3-Internet 4-TAA */
+                                                      ,pr_indpagto     => rw_crapcob.indpagto    --Indicador pagamento -- 0-COMPE 1-Caixa On-Line 3-Internet 4-TAA 
                                                       ,pr_ret_nrremret => vr_nrretcoo            --Numero remetente
                                                       ,pr_cdcritic     => vr_cdcritic            --Codigo Critica
                                                       ,pr_dscritic     => vr_dscritic            --Descricao Critica

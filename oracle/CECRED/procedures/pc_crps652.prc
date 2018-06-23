@@ -762,8 +762,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                ,epr.nrcpfava
                ,epr.tpparcela
            FROM tbrecup_cobranca epr
-          WHERE epr.cdcooper = pr_cdcooper
-            AND EXISTS (SELECT 1
+          WHERE epr.tpproduto = 0
+            AND epr.cdcooper = pr_cdcooper
+            AND EXISTS (SELECT 1 
                           FROM crapcob cob
                          WHERE cob.cdcooper = epr.cdcooper
                           AND cob.nrdconta = epr.nrdconta_cob

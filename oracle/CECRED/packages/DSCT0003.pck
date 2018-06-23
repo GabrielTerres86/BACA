@@ -24,9 +24,30 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   ---------------------------------------------------------------------------------------------------------------
 
   -- Constantes
-  vr_cdhistor_credito_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2664; --CREDITO DESCONTO DE TITULO
-  vr_cdhistor_liberac_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2665; --LIBERACAO DO CREDITO DESCONTO DE TITULO
-  vr_cdhistor_rendapr_dscto_tit CONSTANT craphis.cdhistor%TYPE := 2666; --RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
+  vr_cdhistordsct_iofspriadic    CONSTANT craphis.cdhistor%TYPE := 2320; --IOF S/ DESCONTO DE TITULOS (PRINCIPAL E ADICIONAL)
+  vr_cdhistordsct_iofscomplem    CONSTANT craphis.cdhistor%TYPE := 2321; --IOF S/ DESCONTO DE TITULOS (COMPLEMENTAR)
+  vr_cdhistordsct_credito        CONSTANT craphis.cdhistor%TYPE := 2664; --CREDITO DESCONTO DE TITULO
+  vr_cdhistordsct_liberacred     CONSTANT craphis.cdhistor%TYPE := 2665; --LIBERACAO DO CREDITO DESCONTO DE TITULO
+  vr_cdhistordsct_rendaapropr    CONSTANT craphis.cdhistor%TYPE := 2666; --RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
+  vr_cdhistordsct_apropjurrem    CONSTANT craphis.cdhistor%TYPE := 2667; --APROPR. JUROS REMUNERATORIOS DESCONTO DE TITULO
+  vr_cdhistordsct_apropjurmra    CONSTANT craphis.cdhistor%TYPE := 2668; --APROPR. JUROS DE MORA DESCONTO DE TITULO
+  vr_cdhistordsct_apropjurmta    CONSTANT craphis.cdhistor%TYPE := 2669; --APROPR. MULTA DESCONTO DE TITULO
+  vr_cdhistordsct_pgtocc         CONSTANT craphis.cdhistor%TYPE := 2670; --PAGTO DESCONTO DE TITULO (conta cooperado)
+  vr_cdhistordsct_pgtoopc        CONSTANT craphis.cdhistor%TYPE := 2671; --PAGTO DESCONTO DE TITULO (operacao credito)
+  vr_cdhistordsct_pgtocompe      CONSTANT craphis.cdhistor%TYPE := 2672; --PAGTO DESCONTO TITULO VIA COMPE
+  vr_cdhistordsct_pgtocooper     CONSTANT craphis.cdhistor%TYPE := 2673; --PAGTO DESCONTO DE TITULO VIA COOPERATIVA (Caixa/IB/TAA)
+  vr_cdhistordsct_pgtoavalcc     CONSTANT craphis.cdhistor%TYPE := 2674; --PAGTO DESCONTO DE TITULO AVAL	(conta cooperado)
+  vr_cdhistordsct_pgtoavalopc    CONSTANT craphis.cdhistor%TYPE := 2675; --PAGTO DESCONTO DE TITULO AVAL	(operacao credito)
+  vr_cdhistordsct_rendapgtoant   CONSTANT craphis.cdhistor%TYPE := 2680; --RENDA SOBRE PGTO ANTECIPADO DESCONTO DE TITULO (conta cooperado)
+  vr_cdhistordsct_pgtomultacc    CONSTANT craphis.cdhistor%TYPE := 2681; --PAGTO DE MULTA SOBRE DESCONTO DE TITULO (conta cooperado)
+  vr_cdhistordsct_pgtomultaopc   CONSTANT craphis.cdhistor%TYPE := 2682; --PAGTO DE MULTA SOBRE DESCONTO DE TITULO (operacao credito)
+  vr_cdhistordsct_pgtomultaavcc  CONSTANT craphis.cdhistor%TYPE := 2683; --PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL (conta cooperado)
+  vr_cdhistordsct_pgtomultaavopc CONSTANT craphis.cdhistor%TYPE := 2684; --PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
+  vr_cdhistordsct_pgtojuroscc    CONSTANT craphis.cdhistor%TYPE := 2685; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO (conta cooperado)
+  vr_cdhistordsct_pgtojurosopc   CONSTANT craphis.cdhistor%TYPE := 2686; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO (operacao credito)
+  vr_cdhistordsct_pgtojurosavcc  CONSTANT craphis.cdhistor%TYPE := 2687; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (conta cooperado)
+  vr_cdhistordsct_pgtojurosavopc CONSTANT craphis.cdhistor%TYPE := 2688; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
+
   
   --Tipo de Desconto de Títulos
   TYPE typ_desconto_titulos IS RECORD --(b1wgen0030.p/tt-desconto_titulos)
@@ -91,7 +112,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                   vlmulta  NUMBER(25,2),
                   vlmora   NUMBER(25,2),
                   vliof    NUMBER(25,2),
-                  vlpagar  NUMBER(25,2)
+                  vlpagar  NUMBER(25,2),
+                  nrnumlin NUMBER,
+                  qttotlin NUMBER
                   );
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
@@ -139,6 +162,10 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                        ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                                        ,pr_qtcarpag     IN NUMBER
                                         ) RETURN NUMBER;
+
+  FUNCTION fn_cobranca_cobtit(pr_cdcooper IN crapbdt.cdcooper%TYPE --> Código da Cooperativa
+                             ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
+                             ) RETURN BOOLEAN;
 
   PROCEDURE pc_liberar_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
@@ -402,7 +429,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                 ,pr_nrcnvcob    IN craptdb.nrcnvcob%TYPE      --Numero do convenio de cobranca
                                 ,pr_nrdocmto    IN craptdb.nrdocmto%TYPE      --Numero do documento
                                 ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE      --Data Movimento
-                                ,pr_qtdiaatr    IN INTEGER DEFAULT 1          --Quantidade de dias em atraso
                                 ,pr_vlmtatit    OUT NUMBER                    --Valor da multa por atraso
                                 ,pr_vlmratit    OUT NUMBER                    --Valor dos juros de mora
                                 ,pr_vlioftit    OUT NUMBER                    --Valor do IOF complementar por atraso
@@ -410,36 +436,62 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                 ,pr_dscritic    OUT VARCHAR2);                --Descricao Critica
 
  PROCEDURE pc_pagar_titulo( pr_cdcooper    IN crapcop.cdcooper%TYPE           --Codigo Cooperativa
-                           ,pr_cdagenci    IN INTEGER                         --Codigo Agencia
-                           ,pr_nrdcaixa    IN INTEGER                         --Numero Caixa
-                           ,pr_idorigem    IN INTEGER                         --Origem sistema
-                           ,pr_cdoperad    IN VARCHAR2                        --Codigo operador
-                           ,pr_nrdconta    IN craptdb.nrdconta%TYPE           --Número da conta do cooperado
-                           ,pr_nrborder    IN craptdb.nrborder%TYPE           --Número do borderô
-                           ,pr_cdbandoc    IN craptdb.cdbandoc%TYPE           --Codigo do banco impresso no boleto
-                           ,pr_nrdctabb    IN craptdb.nrdctabb%TYPE           --Numero da conta base do titulo
-                           ,pr_nrcnvcob    IN craptdb.nrcnvcob%TYPE           --Numero do convenio de cobranca
-                           ,pr_nrdocmto    IN craptdb.nrdocmto%TYPE           --Numero do documento
-                           ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --Data Movimento
-                           ,pr_inproces    IN crapdat.inproces%TYPE DEFAULT 1 --Indicador do processo
-                           ,pr_cdorigpg    IN NUMBER DEFAULT 0                --Código da origem do pagamento (0 - Conta-Corrente / 1 - Compe / 2 - Caixa / 3 - IB / 4 - TAA)
-                           ,pr_vlpagmto    IN OUT NUMBER                      --Valor do pagamento
-                           ,pr_cdcritic    OUT INTEGER                        --Codigo Critica
-                           ,pr_dscritic    OUT VARCHAR2                       --Descricao Critica
-                           ); 
+                            ,pr_cdagenci    IN INTEGER                         --Codigo Agencia
+                            ,pr_nrdcaixa    IN INTEGER                         --Numero Caixa
+                            ,pr_idorigem    IN INTEGER                         --Origem sistema
+                            ,pr_cdoperad    IN VARCHAR2                        --Codigo operador
+                            ,pr_nrdconta    IN craptdb.nrdconta%TYPE           --Número da conta do cooperado
+                            ,pr_nrborder    IN craptdb.nrborder%TYPE           --Número do borderô
+                            ,pr_cdbandoc    IN craptdb.cdbandoc%TYPE           --Codigo do banco impresso no boleto
+                            ,pr_nrdctabb    IN craptdb.nrdctabb%TYPE           --Numero da conta base do titulo
+                            ,pr_nrcnvcob    IN craptdb.nrcnvcob%TYPE           --Numero do convenio de cobranca
+                            ,pr_nrdocmto    IN craptdb.nrdocmto%TYPE           --Numero do documento
+                            ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --Data Movimento
+                            ,pr_inproces    IN crapdat.inproces%TYPE DEFAULT 1 --Indicador do processo
+                            ,pr_cdorigpg    IN NUMBER                DEFAULT 0 --Código da origem do processo de pagamento
+                            ,pr_indpagto    IN crapcob.indpagto%TYPE DEFAULT 0 --Indica de onde vem o pagamento
+                            ,pr_flpgtava    IN NUMBER                DEFAULT 0 --Pagamento efetuado pelo avalista 0-Não 1-Sim
+                            ,pr_vlpagmto    IN OUT NUMBER                      --Valor do pagamento
+                            ,pr_cdcritic    OUT INTEGER                        --Codigo Critica
+                            ,pr_dscritic    OUT VARCHAR2) ;                   --Descricao Critica
                            
- PROCEDURE pc_efetua_lanc_cc (pr_dtmvtolt IN craplcm.dtmvtolt%TYPE -- Origem: do lote de liberação (craplot)
-                             ,pr_cdagenci IN craplcm.cdagenci%TYPE -- Origem: do lote de liberação (craplot)
-                             ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE -- Origem: do lote de liberação (craplot)
-                             ,pr_nrdconta IN craplcm.nrdconta%TYPE -- Origem: nrdconta do Bordero
-                             ,pr_vllanmto IN craplcm.vllanmto%TYPE -- Origem: do cálculo :aux_vlborder + craptdb.vlliquid da linha 1870.
-                             ,pr_cdhistor IN craphis.cdhistor%TYPE
-                             ,pr_cdcooper IN craplcm.cdcooper%TYPE
-                             ,pr_cdoperad IN crapbdt.cdoperad%TYPE --> Operador
-                             ,pr_nrborder IN crapbdt.nrborder%TYPE -- Origem: Bordero
-                             ,pr_cdpactra IN crapope.cdpactra%TYPE
-                             ,pr_dscritic    OUT VARCHAR2          --> Descricao Critica
-                             );                                                             
+  PROCEDURE pc_efetua_lanc_cc (pr_dtmvtolt  IN craplcm.dtmvtolt%TYPE -- Origem: do lote de liberação (craplot)
+                              ,pr_cdagenci  IN craplcm.cdagenci%TYPE -- Origem: do lote de liberação (craplot)
+                              ,pr_cdbccxlt  IN craplcm.cdbccxlt%TYPE -- Origem: do lote de liberação (craplot)
+                              ,pr_nrdconta  IN craplcm.nrdconta%TYPE -- Origem: nrdconta do Bordero
+                              ,pr_vllanmto  IN craplcm.vllanmto%TYPE -- Origem: do cálculo :aux_vlborder + craptdb.vlliquid da linha 1870.
+                              ,pr_cdhistor  IN craphis.cdhistor%TYPE
+                              ,pr_cdcooper  IN craplcm.cdcooper%TYPE
+                              ,pr_cdoperad  IN crapbdt.cdoperad%TYPE --> Operador
+                              ,pr_nrborder  IN crapbdt.nrborder%TYPE -- Origem: Bordero
+                              ,pr_cdpactra  IN crapope.cdpactra%TYPE
+                              ,pr_nrdocmto  IN craptdb.nrdocmto%TYPE
+                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> codigo critica
+                              ,pr_dscritic OUT VARCHAR2              --> Descricao Critica
+                              );                        
+   PROCEDURE pc_grava_restricoes_liberacao (pr_cdcooper IN crapbdt.cdcooper%TYPE --> Cooperativa
+                                           ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                           ,pr_nrborder IN crapbdt.nrborder%TYPE --> numero do bordero
+                                           ,pr_cdoperad IN crapcob.cdoperad%TYPE --> Operador que solicitou a consulta
+                                            --------> OUT <--------
+                                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                           );                                     
+
+  PROCEDURE pc_processa_liquidacao_cobtit(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                         ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE
+                                         ,pr_nrctasac  IN crapcob.nrctasac%TYPE
+                                         ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE
+                                         ,pr_vlpagmto  IN NUMBER                --> Valor do pagamento
+                                         ,pr_indpagto  IN crapcob.indpagto%TYPE --> Indicador pagamento
+                                         ,pr_cdoperad  IN crapope.cdoperad%type --> Código do Operador
+                                         ,pr_cdagenci  IN crapass.cdagenci%type --> Codigo da agencia
+                                         ,pr_nrdcaixa  IN craperr.nrdcaixa%type --> Numero Caixa
+                                         ,pr_idorigem  IN integer               --> Identificador Origem Chamada
+                                         ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                         ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                         );
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -473,7 +525,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                14/05/2018 - Criacao da procedure para trazer os titulos vencidos                              - Vitor Shimada Assanuma (GFT)
                16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
   ---------------------------------------------------------------------------------------------------------------*/
-
+  -- Cursor genérico de calendário
+  rw_crapdat btch0001.cr_crapdat%rowtype;
+  
   -- Variáveis para armazenar as informações em XML
   vr_des_xml         clob;
   vr_texto_completo  varchar2(32600);
@@ -752,10 +806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                   AND ass.nrdconta = pr_nrdconta
      ;rw_crapass cr_crapass%rowtype;
 
-     -- Cursor genérico de calendário
-     rw_crapdat btch0001.cr_crapdat%rowtype;
-          
-      --Tab052
+     --Tab052
      pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
      pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
        
@@ -877,7 +928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
    
    BEGIN       
      pc_calcula_liquidez(pr_cdcooper            
-                     ,NULL     
+                     ,pr_nrdconta     
                      ,pr_nrinssac     
                      ,pr_dtmvtolt_de  
                      ,pr_dtmvtolt_ate 
@@ -940,6 +991,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                     );
      RETURN pr_pc_cedpag;
    END fn_liquidez_pagador_cedente;
+
+  FUNCTION fn_cobranca_cobtit(pr_cdcooper IN crapbdt.cdcooper%TYPE --> Código da Cooperativa
+                             ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
+                             ) RETURN BOOLEAN IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : fn_cobranca_cobtit
+      Sistema  : Ayllos
+      Sigla    : DSTC
+      Autor    : Paulo Penteado (GFT)
+      Data     : Junho/2018
+  
+      Objetivo  : Retornar se a cobrança foi realizada pela COBTIT. Para isso compara se o número do convênio do 
+                  título é igual ao número do convenio registrado no parâmetro.
+  
+      Alteração : 10/06/2018 - Criação (Paulo Penteado (GFT))
+  
+    ----------------------------------------------------------------------------------------------------------*/
+    vr_nrcnvcob crapcob.nrcnvcob%TYPE;
+  BEGIN
+    vr_nrcnvcob := gene0001.fn_param_sistema(pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsistem => 'CRED'
+                                            ,pr_cdacesso => 'COBEMP_NRCONVEN');
+    RETURN (pr_nrcnvcob = vr_nrcnvcob);
+  END fn_cobranca_cobtit;
   
   -- Rotina para escrever texto na variável CLOB do XML
   PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
@@ -966,6 +1041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                     ,pr_cdoperej IN crapbdt.cdoperej%TYPE DEFAULT NULL -- cdoperad que efetuou a rejeição
                                     ,pr_dtrejeit IN crapbdt.dtrejeit%TYPE DEFAULT NULL -- data de rejeição
                                     ,pr_hrrejeit IN crapbdt.hrrejeit%TYPE DEFAULT NULL -- hora de rejeião
+                                    ,pr_dtanabor IN crapbdt.dtanabor%TYPE DEFAULT NULL -- data de analise
                                     ,pr_dscritic OUT PLS_INTEGER          --> Descricao Critica
                                     ) IS
   BEGIN
@@ -980,6 +1056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
             ,crapbdt.cdoperej = nvl(pr_cdoperej,crapbdt.cdoperej)
             ,crapbdt.dtrejeit = nvl(pr_dtrejeit,crapbdt.dtrejeit)
             ,crapbdt.hrrejeit = nvl(pr_hrrejeit,crapbdt.hrrejeit)
+            ,crapbdt.dtanabor = nvl(pr_dtanabor,crapbdt.dtanabor)
        WHERE crapbdt.cdcooper = pr_cdcooper
          AND crapbdt.nrborder = pr_nrborder
          AND crapbdt.nrdconta = pr_nrdconta;
@@ -1203,6 +1280,7 @@ END pc_inserir_lancamento_bordero;
          ,crapbdt.insitbdt
          ,crapbdt.insitapr
          ,crapbdt.dtenvmch
+         ,crapbdt.dtanabor
    FROM   crapbdt
    WHERE  crapbdt.cdcooper = pr_cdcooper
    AND    crapbdt.nrborder = pr_nrborder;
@@ -1224,17 +1302,24 @@ END pc_inserir_lancamento_bordero;
      
            IF    pr_cddeacao = 'LIBERAR'  THEN
                  IF  rw_crapbdt.insitbdt <> 2 OR (rw_crapbdt.insitapr NOT IN (3,4)) THEN
-                     --  verifica se a esteira está em contingencia
-                     IF  fn_contigencia_esteira(pr_cdcooper) THEN
-                         IF  rw_crapbdt.insitbdt <> 1 OR rw_crapbdt.insitapr <> 0 THEN
-                             vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação EM ESTUDO e decisão AGUARDANDO ANÁLISE.';
-                             CLOSE cr_crapbdt;
-                             RAISE vr_exc_erro;
-                         END IF;
+                     -- Caso nao tenha sido feito a analise 
+                     IF rw_crapbdt.dtanabor IS NULL THEN
+                         vr_dscritic := 'Liberação não permitida. O Borderô deve ser analisado antes de liberar.';
+                         CLOSE cr_crapbdt;
+                         RAISE vr_exc_erro;
                      ELSE
-                       vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação ANALISADO e decisão APROVADO AUTOMATICAMENTO OU APROVADO.';
-                       CLOSE cr_crapbdt;
-                       RAISE vr_exc_erro;
+                       --  verifica se a esteira está em contingencia
+                       IF  fn_contigencia_esteira(pr_cdcooper) THEN
+                           IF  rw_crapbdt.insitbdt <> 1 OR rw_crapbdt.insitapr <> 0 THEN
+                               vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação EM ESTUDO e decisão AGUARDANDO ANÁLISE.';
+                               CLOSE cr_crapbdt;
+                               RAISE vr_exc_erro;
+                           END IF;
+                       ELSE
+                         vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação ANALISADO e decisão APROVADO AUTOMATICAMENTO OU APROVADO.';
+                         CLOSE cr_crapbdt;
+                         RAISE vr_exc_erro;
+                       END IF;
                      END IF;
                  END IF;
                  
@@ -1246,12 +1331,19 @@ END pc_inserir_lancamento_bordero;
                  END IF;
 
            ELSIF pr_cddeacao = 'REJEITAR' THEN
-                 IF  (rw_crapbdt.insitapr <> 5) THEN
-                     vr_dscritic := 'Rejeição não permitida. O Borderô deve estar com a decisão NÃO APROVADO.';
-                     CLOSE cr_crapbdt;
-                     RAISE vr_exc_erro;
-                 END IF;
-
+             IF (fn_contigencia_esteira(pr_cdcooper)) THEN
+               IF (rw_crapbdt.insitbdt <> 1) THEN
+                   vr_dscritic := 'Rejeição não permitida. O Borderô deve estar com a situação EM ESTUDO.';
+                   CLOSE cr_crapbdt;
+                   RAISE vr_exc_erro;
+               END IF;
+             ELSE
+               IF  (rw_crapbdt.insitapr <> 5) THEN
+                   vr_dscritic := 'Rejeição não permitida. O Borderô deve estar com a decisão NÃO APROVADO.';
+                   CLOSE cr_crapbdt;
+                   RAISE vr_exc_erro;
+               END IF;
+             END IF;
            ELSE
                  vr_dscritic := 'Opção inválida informada para o parâmetro pr_cddeacao da dsct0003.pc_valida_bordero';
                  CLOSE cr_crapbdt;
@@ -1318,7 +1410,7 @@ END pc_inserir_lancamento_bordero;
           ,crapljt.nrdocmto
           ,crapljt.vldjuros
     FROM   crapljt
-    WHERE  crapljt.dtrefere = pr_dtrefere
+    WHERE  crapljt.dtrefere = vr_dtrefere
     AND    crapljt.nrdocmto = pr_nrdocmto
     AND    crapljt.cdbandoc = pr_cdbandoc
     AND    crapljt.nrdctabb = pr_nrdctabb
@@ -1357,24 +1449,24 @@ END pc_inserir_lancamento_bordero;
           --    Caso contrário, insere novo registro
           ELSE
                 INSERT INTO crapljt
-                       (cdcooper
-                       ,nrdconta
-                       ,nrborder
-                       ,dtrefere
-                       ,cdbandoc
-                       ,nrdctabb
-                       ,nrcnvcob
-                       ,nrdocmto
-                       ,vldjuros)
-                VALUES (pr_cdcooper
-                       ,pr_nrdconta
-                       ,pr_nrborder
-                       ,vr_dtrefere
-                       ,pr_cdbandoc
-                       ,pr_nrdctabb
-                       ,pr_nrcnvcob
-                       ,pr_nrdocmto
-                       ,vr_vldjuros );
+                       (/*01*/ cdcooper
+                       ,/*02*/ nrdconta
+                       ,/*03*/ nrborder
+                       ,/*04*/ dtrefere
+                       ,/*05*/ cdbandoc
+                       ,/*06*/ nrdctabb
+                       ,/*07*/ nrcnvcob
+                       ,/*08*/ nrdocmto
+                       ,/*09*/ vldjuros)
+                VALUES (/*01*/ pr_cdcooper
+                       ,/*02*/ pr_nrdconta
+                       ,/*03*/ pr_nrborder
+                       ,/*04*/ vr_dtrefere
+                       ,/*05*/ pr_cdbandoc
+                       ,/*06*/ pr_nrdctabb
+                       ,/*07*/ pr_nrcnvcob
+                       ,/*08*/ pr_nrdocmto
+                       ,/*09*/ vr_vldjuros );
           END   IF;
           CLOSE cr_crapljt;
         EXCEPTION
@@ -1421,9 +1513,7 @@ END pc_inserir_lancamento_bordero;
                  06/06/2018 - Liberacao parcial do bordero, liberando apenas aqueles aprovados ou quando em 
                               contingencia, aprovados e nao analisados.
    ----------------------------------------------------------------------------------------------------------*/
-                                     
-  BEGIN
-    DECLARE
+
     -- Variáveis Locais
     vr_vldjuros  number;
     vr_vltotliq number;
@@ -1521,8 +1611,8 @@ END pc_inserir_lancamento_bordero;
                         ,pr_contingencia => vr_contingencia) 
         LOOP                
         pc_calcula_juros_simples_tit(pr_cdcooper => pr_cdcooper
-                                    ,pr_nrdconta => pr_nrborder
-                                    ,pr_nrborder => pr_nrdconta
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrborder => pr_nrborder
                                     ,pr_cdbandoc => rw_base_calculo.cdbandoc
                                     ,pr_nrdctabb => rw_base_calculo.nrdctabb
                                     ,pr_nrcnvcob => rw_base_calculo.nrcnvcob
@@ -1579,7 +1669,15 @@ END pc_inserir_lancamento_bordero;
       pr_vltotbrt := vr_vltotbrt;
       pr_vltotjur := vr_vltotjur;
       
-    END;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         pr_cdcritic := 0;
+         pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+         pr_cdcritic := 0;
+         pr_dscritic := 'Erro geral na rotina dsct0003.pc_calcula_valores_bordero: '||SQLERRM;
+
   END pc_calcula_valores_bordero;
   
     
@@ -1722,6 +1820,7 @@ END pc_inserir_lancamento_bordero;
     
     EXCEPTION
       WHEN vr_exc_erro THEN
+        pr_cdcritic := 0;
         pr_dscritic := vr_dscritic;
     
   END pc_calcula_iof_bordero;
@@ -1982,7 +2081,7 @@ END pc_inserir_lancamento_bordero;
                     ,pr_nrdconta
                     ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
                     ,rw_craplot.nrseqdig
-                    ,2320
+                    ,vr_cdhistordsct_iofspriadic
                     ,vr_vltotiof
                     ,'Bordero ' || pr_nrborder || ' - ' || TO_CHAR(gene0002.fn_mask(pr_vltotliq,'999.999.999999')))
           RETURNING craplcm.ROWID
@@ -2042,6 +2141,10 @@ END pc_inserir_lancamento_bordero;
     
     EXCEPTION
       WHEN vr_exc_erro THEN
+       IF  vr_cdcritic <> 0 THEN
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       END IF;
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
     
   END pc_lanca_iof_bordero;
@@ -2271,9 +2374,6 @@ END pc_inserir_lancamento_bordero;
            ;
       rw_crapldc cr_crapldc%ROWTYPE;
 
-      -- Cursor genérico de calendário
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
     BEGIN
       --Iniciando Variavel
       vr_des_reto := 'OK';
@@ -2491,7 +2591,8 @@ END pc_inserir_lancamento_bordero;
       CURSOR cr_verifica_bordero (pr_cdcooper IN craptdb.cdcooper%TYPE,
                                   pr_nrborder IN craptdb.nrborder%TYPE) IS
         SELECT tdbold.nrborder as nrborder_dup,
-               tdbold.nrdocmto as nrdocmto_dup
+               tdbold.nrdocmto as nrdocmto_dup,
+               tdbold.insitapr AS insitapr_dup
           FROM cecred.craptdb tdban -- titulos de bordero que estão no bordero que se quer analisar
          INNER JOIN cecred.craptdb tdbold -- titulos deste bordero que estão em um bordero diferente.
             ON tdbold.cdcooper =  tdban.cdcooper
@@ -2512,7 +2613,12 @@ END pc_inserir_lancamento_bordero;
 
       rw_verifica_bordero cr_verifica_bordero%ROWTYPE;
 
-
+      -- Selecionar os titulos do bordero ativo
+      CURSOR cr_craptdb IS
+        SELECT nrdocmto FROM craptdb WHERE nrborder = pr_nrborder AND cdcooper = pr_cdcooper
+      ;rw_craptdb cr_craptdb%ROWTYPE;
+    
+      fl_nobordero INTEGER;
     BEGIN
       -- Iniciando Variáveis.
       vr_contador := 0;
@@ -2527,18 +2633,33 @@ END pc_inserir_lancamento_bordero;
         FOR rw_verifica_bordero IN
             cr_verifica_bordero (pr_cdcooper => pr_cdcooper,
                                  pr_nrborder => pr_nrborder) LOOP
-          vr_contador := vr_contador + 1;
-          vr_dscritic := 'Título ' || rw_verifica_bordero.nrdocmto_dup || ' já incluso no Borderô ' || rw_verifica_bordero.nrborder_dup;
-          vr_flgtrans := FALSE;
+          IF rw_verifica_bordero.insitapr_dup <> 2 THEN
+           OPEN cr_craptdb();
+              LOOP
+                FETCH cr_craptdb INTO rw_craptdb;
+                EXIT WHEN cr_craptdb%NOTFOUND;
+                fl_nobordero := 0;
+                IF (rw_craptdb.nrdocmto = rw_verifica_bordero.nrdocmto_dup) THEN
+                  fl_nobordero := 1;
+                  EXIT;
+                END IF;
+              END LOOP;
+            CLOSE cr_craptdb;
+            IF fl_nobordero = 0 THEN
+              vr_contador := vr_contador + 1;
+              vr_dscritic := 'Título ' || rw_verifica_bordero.nrdocmto_dup || ' já incluso no Borderô ' || rw_verifica_bordero.nrborder_dup;
+              vr_flgtrans := FALSE;
 
-          --Gerar Erro
-          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => vr_contador
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => pr_tab_erro);
+              --Gerar Erro
+              GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_nrsequen => vr_contador
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic
+                                   ,pr_tab_erro => pr_tab_erro);
+            END IF;
+          END IF;
         END LOOP;
       END IF;
 
@@ -2701,8 +2822,7 @@ END pc_inserir_lancamento_bordero;
 
       -- Soma Quantidade de Títulos Não pagos por Pagador Neste Borderô
       CURSOR cr_naopagos_pagador (pr_cdcooper IN craptdb.cdcooper%TYPE
-                                 ,pr_nrdconta IN craptdb.nrdconta%TYPE
-                                 ,pr_nrmespsq IN PLS_INTEGER) IS
+                                 ,pr_nrdconta IN craptdb.nrdconta%TYPE) IS
         SELECT count(tdb.nrdocmto) as qtde_titulos
               ,SUM(DECODE(cob.flgregis,1,1,0)) as qtnaopag_cr -- COM REGISTRO
               ,SUM(DECODE(cob.flgregis,0,1,0)) as qtnaopag_sr -- SEM REGISTR
@@ -2738,6 +2858,8 @@ END pc_inserir_lancamento_bordero;
               ,tdb.dtvencto
               ,cob.incobran
               ,cob.flgregis
+              ,cob.flgdprot
+              ,cob.flserasa
           FROM cecred.craptdb tdb
           LEFT JOIN cecred.crapcob cob
             ON cob.cdcooper = tdb.cdcooper
@@ -2795,6 +2917,12 @@ END pc_inserir_lancamento_bordero;
       vr_tab_dados_dsctit typ_tab_desconto_titulos;
       pr_pc_conc NUMBER(25,2);
     BEGIN
+      --Selecionar dados da data
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+      
       -- Se foi solicitado LOG
       IF pr_flgerlog THEN
 
@@ -2881,6 +3009,7 @@ END pc_inserir_lancamento_bordero;
 
       IF vr_des_reto = 'NOK' THEN
          pr_des_reto := 'NOK';
+         RAISE vr_exc_erro;
       END IF;
 
       -- recuperando O valor Total dos Títulos do Bordero, com COB. REGISTRADA e/ou S/ REGISTRO
@@ -3163,7 +3292,37 @@ END pc_inserir_lancamento_bordero;
               END IF;
             END IF;
          END IF; --Fim das Validações Esclusivas para Títulos com Cobrança Registrada
-
+         
+         /*Verifica se o título  possui instrução de protesto e/ou negativação*/
+         IF (rw_craptdb_cob.flgdprot =0 OR rw_craptdb_cob.flserasa =0) THEN
+            vr_dsrestri := 'Tit. não possui instr. de protesto e/ou negativação.';
+            vr_nrseqdig := 92;
+            pr_indrestr := 1;
+            pr_flsnhcoo := TRUE;
+            -- Se existem restrições, grava na tabela de Críticas/Restrições do Borderô
+            IF vr_dsrestri IS NOT NULL AND vr_nrseqdig > 0 then
+              pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_dsrestri => vr_dsrestri
+                                         ,pr_nrseqdig => vr_nrseqdig
+                                         ,pr_cdcooper => pr_cdcooper
+                                         ,pr_cdbandoc => rw_craptdb_cob.cdbandoc
+                                         ,pr_nrdctabb => rw_craptdb_cob.nrdctabb
+                                         ,pr_nrcnvcob => rw_craptdb_cob.nrcnvcob
+                                         ,pr_nrdocmto => rw_craptdb_cob.nrdocmto
+                                         ,pr_flaprcoo => 1
+                                         ,pr_dsdetres => ' '
+                                         ,pr_dscritic => vr_dscritic);
+              vr_flgtrans := FALSE;
+              vr_nrseqdig := 0;
+              vr_dsrestri := '';
+              IF  TRIM(vr_dscritic) IS NOT NULL THEN
+                RAISE vr_exc_erro;
+              END IF;
+            END IF;
+         END IF;
+         
          /* Gera Erro e Grava Log */
          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
            --Gerar Erro
@@ -3216,7 +3375,6 @@ END pc_inserir_lancamento_bordero;
       vr_qtnaopag_sr := 0;
       FOR rw_naopagos_pagador IN cr_naopagos_pagador (pr_cdcooper => pr_cdcooper
                                                      ,pr_nrdconta => pr_nrdconta
-                                                     ,pr_nrmespsq => vr_tab_dados_dsctit_sr(1).nrmespsq
                                                       ) LOOP
         vr_qtnaopag_cr := rw_naopagos_pagador.qtnaopag_cr;
         vr_qtnaopag_sr := rw_naopagos_pagador.qtnaopag_sr;
@@ -3727,8 +3885,6 @@ END pc_inserir_lancamento_bordero;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
       
-      vr_datacorte crapprm.dsvlrprm%TYPE;
-      
       vr_em_contingencia_ibratan boolean;
       
       
@@ -3854,38 +4010,12 @@ END pc_inserir_lancamento_bordero;
       --Limpar tabelas
       pr_tab_erro.DELETE;
       
-      vr_datacorte := '';
-            
-      -- Verifica Se existe algum título no borderô com data de corte abaixo da data de inicio do processo novo.
-      vr_dscritic := '';
-      OPEN cr_crapprm (pr_cdcooper => pr_cdcooper);
-      FETCH cr_crapprm INTO rw_crapprm;
-      -- Se existir o Parametro, faz a validação.
-      IF cr_crapprm%FOUND THEN
-        vr_datacorte := rw_crapprm.dsvlrprm;
-        OPEN cr_datacorte (pr_cdcooper => pr_cdcooper
-                          ,pr_nrborder => pr_nrborder
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_datacorte => vr_datacorte);
-        FETCH cr_datacorte INTO rw_datacorte;
-        IF cr_datacorte%FOUND THEN
-          vr_dscritic := 'Operação não permitida - borderô incluído no processo antigo.';
-          CLOSE cr_datacorte;
-          RAISE vr_exc_erro;
-        ELSE
-          CLOSE cr_datacorte;
-        END IF;        
-        CLOSE cr_crapprm;
-      ELSE
-        CLOSE cr_crapprm;
-      END IF;
-      
       -- Verificações Impeditivas Para Títulos
       FOR rw_craptdbcob IN cr_craptdbcob (pr_cdcooper => pr_cdcooper,
                                           pr_nrdconta => pr_nrdconta,
                                           pr_nrborder => pr_nrborder) LOOP
         IF rw_craptdbcob.dtvencto <= pr_dtmvtolt THEN
-          vr_dscritic := 'Há titulos com data de liberacao igual ou inferior a data do movimento.';
+          vr_dscritic := 'Há titulos com data de vencimento igual ou inferior a data do movimento.';
           RAISE vr_exc_erro;
         END IF;
 
@@ -4059,6 +4189,7 @@ END pc_inserir_lancamento_bordero;
                                   ,pr_status   => 2 -- estou considerando 2 como aprovado automaticamente (aprovação de análise).
                                   ,pr_dscritic => vr_dscritic
                                   ,pr_insitapr => 3
+                                  ,pr_dtanabor => pr_dtmvtolt
                                   );
           IF vr_dscritic IS NOT NULL THEN
             pr_tab_retorno_analise.DELETE;
@@ -4112,7 +4243,8 @@ END pc_inserir_lancamento_bordero;
                                     ,pr_nrdconta => pr_nrdconta -- Número da conta do cooperado
                                     ,pr_status   => 1 -- 1-Em Estudo
                                     ,pr_insitapr => 1 -- 1-Aguardando Checagem
-                                    ,pr_dtenvmch => pr_dtmvtolt
+                                    ,pr_dtanabor => pr_dtmvtolt -- Data da analise
+                                    ,pr_dtenvmch => pr_dtmvtolt -- Data de envio para mesa de checage
                                     ,pr_dscritic => vr_dscritic); -- Descricao Critica
             IF vr_dscritic IS NOT NULL THEN
               pr_tab_retorno_analise.DELETE;
@@ -4179,6 +4311,18 @@ END pc_inserir_lancamento_bordero;
                 pr_tab_retorno_analise(0).dssitres := 'Borderô Enviado para Esteira IBRATAN.';
               end if;
             END IF;
+            
+            -- Insere data de análise
+            pc_altera_status_bordero(pr_cdcooper => pr_cdcooper -- Código da Cooperativa
+                                    ,pr_nrborder => pr_nrborder -- Número do Borderô
+                                    ,pr_nrdconta => pr_nrdconta -- Número da conta do cooperado
+                                    ,pr_dtanabor => pr_dtmvtolt -- Data da analise
+                                    ,pr_dscritic => vr_dscritic); -- Descricao Critica
+            IF vr_dscritic IS NOT NULL THEN
+              pr_tab_retorno_analise.DELETE;
+              CLOSE cr_crapabt_qtde;
+              RAISE vr_exc_erro;
+            END IF;
             -- Verifica se tem críticas para o borderô. Se tiver  ele não atualiza nenhum título
             OPEN cr_check_crapabt;
             FETCH cr_check_crapabt INTO rw_check_crapabt;
@@ -4202,6 +4346,15 @@ END pc_inserir_lancamento_bordero;
               CLOSE cr_check_craptdb;
             END IF;
           END IF;
+        END IF;
+      ELSE
+        pr_indrestr := vr_indrestr;
+        -- Verifica se tem críticas para o borderô. Se tiver  ele não atualiza nenhum título
+        OPEN cr_check_crapabt;
+        FETCH cr_check_crapabt INTO rw_check_crapabt;
+        CLOSE cr_check_crapabt;
+        IF (rw_check_crapabt.fl_critica_abt > 0) THEN
+          pr_indrestr := 1;
         END IF;
       END IF; -- FIM DA GERAÇÃO DE RESTRIÇÕES
 
@@ -4283,10 +4436,7 @@ END pc_inserir_lancamento_bordero;
 
     vr_indrestr PLS_INTEGER;
     vr_ind_inpeditivo PLS_INTEGER;
-    
-    -- rowid tabela de log
-    vr_nrdrowid ROWID;
-    
+
     -- variaveis de entrada vindas no xml
     vr_cdcooper integer;
     vr_cdoperad varchar2(100);
@@ -4306,10 +4456,12 @@ END pc_inserir_lancamento_bordero;
     vr_dtmvtopr crapdat.dtmvtolt%TYPE;
     vr_dtmvtolt crapdat.dtmvtolt%TYPE;
 
-    -- Cursor genérico de calendário
-    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      -- rowid tabela de log
+      vr_nrdrowid ROWID;
 
     BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -4792,7 +4944,7 @@ END pc_inserir_lancamento_bordero;
                       ,vr_nrdolote
                       ,1
                       ,pr_cdoperad
-                      ,vr_cdhistor_credito_dscto_tit)
+                      ,vr_cdhistordsct_credito)
             RETURNING dtmvtolt
                       ,cdagenci
                       ,cdbccxlt
@@ -4849,7 +5001,7 @@ END pc_inserir_lancamento_bordero;
                ,/*05*/ pr_nrdconta
                ,/*06*/ rw_craplot.nrseqdig +1
                ,/*07*/ pr_vllanmto --  do cálculo :aux_vlborder + craptdb.vlliquid da linha 1870.
-               ,/*08*/ vr_cdhistor_credito_dscto_tit
+               ,/*08*/ vr_cdhistordsct_credito
                ,/*09*/ rw_craplot.nrseqdig +1
                ,/*10*/ pr_nrdconta
                ,/*11*/ 0
@@ -5063,7 +5215,7 @@ END pc_inserir_lancamento_bordero;
                                  ,pr_nrborder => pr_nrborder
                                  ,pr_dtmvtolt => pr_dtmvtolt
                                  ,pr_cdorigem => 5
-                                 ,pr_cdhistor => vr_cdhistor_liberac_dscto_tit
+                                 ,pr_cdhistor => vr_cdhistordsct_liberacred
                                  ,pr_vllanmto => vr_vltotbrt
                                  ,pr_dscritic => vr_dscritic );
     
@@ -5077,7 +5229,7 @@ END pc_inserir_lancamento_bordero;
                                  ,pr_nrborder => pr_nrborder
                                  ,pr_dtmvtolt => pr_dtmvtolt
                                  ,pr_cdorigem => 5
-                                 ,pr_cdhistor => vr_cdhistor_rendapr_dscto_tit
+                                 ,pr_cdhistor => vr_cdhistordsct_rendaapropr
                                  ,pr_vllanmto => vr_vltotjur
                                  ,pr_dscritic => vr_dscritic );
     
@@ -5178,10 +5330,7 @@ END pc_inserir_lancamento_bordero;
     vr_exc_restricao_analise exception;
 
     vr_tab_erro         gene0001.typ_tab_erro;
-    
-    -- rowid tabela de log
-    vr_nrdrowid ROWID;
-    
+
     vr_indrestr PLS_INTEGER;
     vr_ind_inpeditivo PLS_INTEGER;
     vr_vltotliq NUMBER;
@@ -5206,8 +5355,8 @@ END pc_inserir_lancamento_bordero;
     vr_dtmvtopr crapdat.dtmvtolt%TYPE;
     vr_dtmvtolt crapdat.dtmvtolt%TYPE;
 
-    -- Cursor genérico de calendário
-    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      -- rowid tabela de log
+      vr_nrdrowid ROWID;
 
 --    vr_em_contingencia_ibratan boolean;
     vr_possuicnae  INTEGER;
@@ -5216,6 +5365,8 @@ END pc_inserir_lancamento_bordero;
     vr_des_reto VARCHAR2(3) DEFAULT 'OK';
     
     BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
       vr_possuicnae  := 0;
       vr_enviadomesa := 0;
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
@@ -5280,35 +5431,12 @@ END pc_inserir_lancamento_bordero;
                                 
       IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
          raise vr_exc_erro;
-      END IF;      
-                          
+      END IF;                 
       -- Se o borderô possui restrições e o operador está tentando liberar pela primeira vez, retorna a mensagem abaixo
       IF vr_indrestr = 1 AND pr_confirma = 0 THEN
         vr_msgretorno := 'Há restrições no borderô. Deseja realizar a liberação mesmo assim?';
       ELSE    
         
-        -- Caso o operador tenha decidido liberar o borderô (com ou sem restrições) chama a rotina principal de liberação do borderô                        
-        pc_liberar_bordero  (pr_cdcooper => vr_cdcooper
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_idseqttl => 1
-                            ,pr_nrborder => pr_nrborder
-                            ,pr_dtmvtolt => vr_dtmvtolt
-                            ,pr_vltotliq => vr_vltotliq
-                            ,pr_flgerlog => FALSE
-                            ,pr_tab_erro => vr_tab_erro
-                            ,pr_cdcritic => vr_cdcritic
-                            ,pr_dscritic => vr_dscritic
-                            );
-                            
-        IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
-           raise vr_exc_erro;
-        END IF;   
-         
         -- Gera as Restrições do Borderô (CRAPABT)
         pc_restricoes_tit_bordero( pr_cdcooper => vr_cdcooper
                             ,pr_cdagenci =>  vr_cdagenci
@@ -5339,7 +5467,37 @@ END pc_inserir_lancamento_bordero;
           vr_dscritic := 'Borderô com críticas, aguarde retorno de análise da sede.';
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Caso o operador tenha decidido liberar o borderô (com ou sem restrições) chama a rotina principal de liberação do borderô                        
+        pc_liberar_bordero  (pr_cdcooper => vr_cdcooper
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_idseqttl => 1
+                            ,pr_nrborder => pr_nrborder
+                            ,pr_dtmvtolt => vr_dtmvtolt
+                            ,pr_vltotliq => vr_vltotliq
+                            ,pr_flgerlog => FALSE
+                            ,pr_tab_erro => vr_tab_erro
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic
+                            );
+                            
+        IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
+           raise vr_exc_erro;
+        END IF;   
+         
       
+        -- Salva a ultima imagem das % de liquidez do bordero na CRAPABT
+        pc_grava_restricoes_liberacao(vr_cdcooper, pr_nrdconta, pr_nrborder, vr_cdoperad, vr_cdcritic, vr_dscritic);
+                    
+        IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
+           raise vr_exc_erro;
+        END IF;  
+        
         -- Ajusta a mensagem de confirmação conforme a existência de restrições no borderô
         IF vr_indrestr = 1 THEN
            vr_msgretorno := 'Borderô liberado COM restrições! Valor líquido de R$' || TRIM(to_char(vr_vltotliq, 'FM999G999G999G990D00'));
@@ -5359,14 +5517,7 @@ END pc_inserir_lancamento_bordero;
           crapbdt.nrborder = pr_nrborder
           AND crapbdt.nrdconta = pr_nrdconta
           AND crapbdt.cdcooper = vr_cdcooper ;  
-        /*
-        -- Verificar se a esteira e/ou motor estão em contigencia e armazenar na variavel
-        vr_em_contingencia_ibratan := tela_atenda_dscto_tit.fn_em_contingencia_ibratan(pr_cdcooper => vr_cdcooper);
-        
-        IF  vr_em_contingencia_ibratan THEN -- Em Contingência
-          vr_msgcontingencia := 'Análise em contingência, consulta aos birôs não realizada. ' || CHR(13);
-        END IF;
-      */  
+          
         gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                     ,pr_cdoperad => vr_cdoperad
                     ,pr_dscritic => vr_dscritic
@@ -5381,8 +5532,6 @@ END pc_inserir_lancamento_bordero;
                     ,pr_nrdrowid => vr_nrdrowid);
       END IF;
       
-     
-                    
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
@@ -5429,6 +5578,429 @@ END pc_inserir_lancamento_bordero;
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
    END pc_liberar_bordero_web;
    
+   PROCEDURE pc_grava_restricoes_liberacao (pr_cdcooper IN crapbdt.cdcooper%TYPE --> Cooperativa
+                                           ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                           ,pr_nrborder IN crapbdt.nrborder%TYPE --> numero do bordero
+                                           ,pr_cdoperad IN crapcob.cdoperad%TYPE --> Operador que solicitou a consulta
+                                            --------> OUT <--------
+                                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                           ) IS
+       /*---------------------------------------------------------------------------------------------------------------------
+         Programa : pc_grava_restricoes_liberacao
+         Sistema  : 
+         Sigla    : CRED
+         Autor    : Vitor Shimada Assanuma (GFT)
+         Data     : 09/06/2018
+         Frequencia: Sempre que for chamado
+         Objetivo  : Salvar a ultima imagem das restrições ao liberar um borderô
+       ---------------------------------------------------------------------------------------------------------------------*/
+        -- tratamento de erro
+        vr_exc_erro exception;
+        
+        -- Variáveis de críticas
+        vr_cdcritic crapcri.cdcritic%TYPE;
+        vr_dscritic VARCHAR2(10000);
+    
+       -- Cursor genérico de calendário
+       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+       
+       -- Titulos (Boletos de Cobrança)
+       cursor cr_crapcob (pr_nrdocmto IN crapcob.nrdocmto%TYPE
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
+                         ,pr_nrdctabb IN crapcob.nrdctabb%TYPE
+                         ,pr_cdbandoc IN crapcob.cdbandoc%TYPE) is
+         select cob.cdcooper,
+                cob.nrdconta,
+                cob.nrinssac,
+                cob.nrnosnum,
+                cob.cdtpinsc, -- Tipo Pesso do Pagador (0-Nenhum/1-CPF/2-CNPJ)
+                cob.nrdocmto,
+                cob.nrcnvcob,
+                cob.nrdctabb,
+                cob.cdbandoc
+         from   crapcob cob
+         where  cob.cdcooper = pr_cdcooper -- Cooperativa
+         and    cob.nrdconta = pr_nrdconta -- Conta
+         AND    cob.nrdocmto = pr_nrdocmto
+         AND    cob.nrcnvcob = pr_nrcnvcob
+         AND    cob.nrdctabb = pr_nrdctabb
+         AND    cob.cdbandoc = pr_cdbandoc
+         and    cob.incobran=0
+       ;rw_crapcob cr_crapcob%rowtype;
+       
+       -- Pega todos os titulos daquele bordero independente de status
+       CURSOR cr_craptdb IS
+         SELECT * FROM craptdb t
+         WHERE t.nrdconta = pr_nrdconta
+           AND t.nrborder = pr_nrborder
+           AND t.cdcooper = pr_cdcooper
+       ;rw_craptdb cr_craptdb%ROWTYPE;
+       
+       -- Verifica Conta (Cadastro de associados)
+       cursor cr_crapass is
+         select inpessoa
+         from   crapass
+         where  crapass.cdcooper = pr_cdcooper
+         and    crapass.nrdconta = pr_nrdconta;
+       rw_crapass cr_crapass%rowtype;
+
+       -- Analise do Pagador
+       CURSOR cr_analise_pagador (pr_nrinssac IN crapcob.nrinssac%TYPE) is
+         SELECT *
+         FROM   tbdsct_analise_pagador
+         WHERE  cdcooper = pr_cdcooper
+         AND    nrdconta = pr_nrdconta
+         AND    nrinssac = pr_nrinssac
+       ;rw_analise_pagador cr_analise_pagador%rowtype;
+    
+       -- Retorno da #TAB052
+       vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
+       vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
+       
+       -- Retorno do calculo de liquidez
+       vr_liqpagcd   NUMBER;
+       vr_qtd_cedpag NUMBER;
+       vr_concpaga   NUMBER;
+       vr_qtd_conc   NUMBER;
+       vr_liqgeral   NUMBER;
+       vr_qtd_geral  NUMBER;
+       
+       -- Retorno do CNAE
+       vr_possuicnae BOOLEAN;
+       
+       vr_possuicriticacnae INTEGER;
+       
+       BEGIN
+       -- Leitura do calendário da cooperativa
+       OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+       FETCH btch0001.cr_crapdat into rw_crapdat;
+       CLOSE btch0001.cr_crapdat;
+       
+       -- Busca tipo de pessoa
+       OPEN cr_crapass;
+       FETCH cr_crapass INTO rw_crapass;
+       CLOSE cr_crapass;
+            
+       -- Busca os dados da #TAB052
+       DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                          ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                          ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                          ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                          ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                          ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                          ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                          ,pr_inpessoa          => rw_crapass.inpessoa
+                                          ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                          ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                          ,pr_cdcritic          => vr_cdcritic
+                                          ,pr_dscritic          => vr_dscritic);
+        
+       -- Itera todos os titulos daquele bordero
+       OPEN cr_craptdb;
+       LOOP
+         FETCH cr_craptdb INTO rw_craptdb;
+         EXIT WHEN cr_craptdb%NOTFOUND;
+         
+         -- Busca na COB o Inssac do pagador daquele titulo
+         OPEN cr_crapcob (rw_craptdb.nrdocmto,   -- Conta
+                          rw_craptdb.nrcnvcob,   -- Convenio
+                          rw_craptdb.nrdctabb,   -- Conta base do banco
+                          rw_craptdb.cdbandoc);  -- Codigo do banco            
+         FETCH cr_crapcob INTO rw_crapcob;
+         CLOSE cr_crapcob;
+         
+         -- Busca as criticas do Pagador
+         OPEN cr_analise_pagador(rw_crapcob.nrinssac);
+         FETCH cr_analise_pagador INTO rw_analise_pagador;
+         CLOSE cr_analise_pagador;
+         
+         if rw_analise_pagador.inpossui_criticas > 0 THEN
+          -- qtremessa_cartorio -> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
+          if rw_analise_pagador.qtremessa_cartorio > 0 THEN
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Qtd Remessa em Cartório acima do permitido'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.qtremessa_cartorio))
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+                             
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- qttit_protestados -> Crítica: Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt).
+          if rw_analise_pagador.qttit_protestados > 0 THEN
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Qtd de Títulos Protestados acima do permitido'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.qttit_protestados))
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- qttit_naopagos -> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
+          if rw_analise_pagador.qttit_naopagos > 0 THEN
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.qttit_naopagos))
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- pemin_liquidez_qt -> Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp).
+          if rw_analise_pagador.pemin_liquidez_qt > 0.0 then
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos)'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.pemin_liquidez_qt)||'%')
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- pemin_liquidez_vl -> Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp).
+          if rw_analise_pagador.pemin_liquidez_vl > 0.0 then
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos)'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.pemin_liquidez_vl)||'%')
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- peconcentr_maxtit -> Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
+          if rw_analise_pagador.peconcentr_maxtit > 0.0 then
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Perc. Concentração Máxima Permitida de Títulos excedida'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.peconcentr_maxtit)||'%')
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- inemitente_conjsoc -> Crítica: Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar).
+          if rw_analise_pagador.inemitente_conjsoc > 0 then
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Emitente é Cônjuge/Sócio do Pagador'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.inemitente_conjsoc))
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+
+          -- inpossui_titdesc -> Crítica: Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp).
+          if rw_analise_pagador.inpossui_titdesc > 0 then
+             -- Salva as informações da CRAPABT 
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Cooperado possui Títulos Descontados na Conta deste Pagador'
+                             ,pr_nrseqdig => NULL
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => (to_char(rw_analise_pagador.inpossui_titdesc))
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          end if;
+        end if;
+        
+         -- Faz o calculo de liquidez para poder inserir na CRAPABT
+         pc_calcula_liquidez(pr_cdcooper            
+                     ,pr_nrdconta     
+                     ,rw_crapcob.nrinssac 
+                     ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30  
+                     ,rw_crapdat.dtmvtolt 
+                     ,vr_tab_dados_dsctit(1).cardbtit_c
+                     -- OUT --     
+                     ,pr_pc_cedpag    => vr_liqpagcd
+                     ,pr_qtd_cedpag   => vr_qtd_cedpag
+                     ,pr_pc_conc      => vr_concpaga
+                     ,pr_qtd_conc     => vr_qtd_conc
+                     ,pr_pc_geral     => vr_liqgeral
+                     ,pr_qtd_geral    => vr_qtd_geral);
+         
+         -- Calcula o CNAE
+         vr_possuicnae := fn_calcula_cnae(pr_cdcooper   => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                          ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                          ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                          ,pr_cdbandoc => rw_craptdb.cdbandoc);
+         IF vr_possuicnae THEN
+           --Verifica se possui CNAE cadastrada
+           SELECT COUNT(1) INTO vr_possuicriticacnae FROM crapabt WHERE cdcooper = pr_cdcooper AND nrdconta = pr_nrdconta AND nrborder = pr_nrborder AND nrseqdig = 59;
+           IF vr_possuicriticacnae = 0 THEN
+             -- Salva as informações da CRAPABT => CNAE
+             pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                             ,pr_cdoperad => pr_cdoperad
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dsrestri => 'Valor Máximo Permitido por CNAE excedido' 
+                             ,pr_nrseqdig => 59
+                             ,pr_cdcooper => pr_cdcooper
+                             ,pr_flaprcoo => 1
+                             ,pr_dsdetres => 1 -- Possui CNAE
+                             ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                             ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                             ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                             ,pr_cdbandoc => rw_craptdb.cdbandoc
+                             ,pr_dscritic => vr_dscritic);
+              IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro;
+              END IF;
+           END IF;
+         END IF;
+                         
+         -- Salva as informações da CRAPABT => CONCENTRACAO
+         pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_dsrestri => 'Concentracao' 
+                         ,pr_nrseqdig => 900
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_flaprcoo => 1
+                         ,pr_dsdetres => (TRIM(to_char(vr_concpaga, 'FM999G999G999G990D00'))) -- Concentracao
+                         ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                         ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                         ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+                         
+         -- Salva as informações da CRAPABT => CEDENTE PAGADOR                     
+         pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_dsrestri => 'Liquidez Cedente Pagador' 
+                         ,pr_nrseqdig => 901
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_flaprcoo => 1
+                         ,pr_dsdetres => (TRIM(to_char(vr_liqpagcd, 'FM999G999G999G990D00'))) -- Porcentagem da Cedente Pagador
+                         ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                         ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                         ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+                         
+         -- Salva as informações da CRAPABT => LIQUIDEZ GERAL                     
+         pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_dsrestri => 'Liquidez Geral' 
+                         ,pr_nrseqdig => 902
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_flaprcoo => 1
+                         ,pr_dsdetres => (TRIM(to_char(vr_liqgeral, 'FM999G999G999G990D00'))) -- Porcentagem da Liquidez Geral
+                         ,pr_nrdocmto => rw_craptdb.nrdocmto   -- Conta
+                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob   -- Convenio
+                         ,pr_nrdctabb => rw_craptdb.nrdctabb   -- Conta base do banco
+                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                         ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+      END LOOP;                
+      
+      EXCEPTION
+      when vr_exc_erro THEN
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null THEN
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+
+      when others then
+           /* montar descriçao de erro não tratado */
+           pr_dscritic := 'erro não tratado na DSCT0003.pr_grava_restricoes_liberacao ' ||sqlerrm;
+   END pc_grava_restricoes_liberacao;
+   
    PROCEDURE pc_buscar_associado_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Número do CPF/CNPJ
                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -5468,6 +6040,8 @@ END pc_inserir_lancamento_bordero;
      vr_nrcpfcgc crapass.nrcpfcgc%TYPE;
      
      BEGIN
+       pr_nmdcampo := NULL;
+       pr_des_erro := 'OK';
        IF (pr_nrdconta IS NULL) THEN
           vr_nrdconta :=0;
        ELSE
@@ -5608,10 +6182,9 @@ END pc_inserir_lancamento_bordero;
 
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
-      -- Cursor genérico de calendário
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
   BEGIN		
+    pr_nmdcampo := NULL;
+    pr_des_erro := 'OK';
     -- Incluir nome do modulo logado
     GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
                               ,pr_action => NULL);	
@@ -5755,6 +6328,8 @@ END pc_inserir_lancamento_bordero;
     --Variaveis da procedure
     vr_flgverbor INTEGER;
     BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
       -- Extrair dados do xml de entrada
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -5844,15 +6419,16 @@ END pc_inserir_lancamento_bordero;
               ,(vliofcpl - vlpagiof) AS vliof
               ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) AS  vlpagar
               ,tdb.*
-       FROM  craptdb tdb
-       WHERE    tdb.dtresgat IS NULL      -- Nao resgatado
-         AND    tdb.dtlibbdt IS NOT NULL
-         AND    tdb.dtdpagto IS NULL      -- Nao pago
-         AND    gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto) < pr_dtmvtolt
-         AND    tdb.nrborder = pr_nrborder
-         AND    tdb.nrdconta = pr_nrdconta
-         AND    tdb.cdcooper = pr_cdcooper
-       ;
+         FROM craptdb tdb, crapbdt bdt
+        WHERE tdb.cdcooper = bdt.cdcooper
+          AND tdb.nrdconta = bdt.nrdconta
+          AND tdb.nrborder = bdt.nrborder
+          AND gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto) < pr_dtmvtolt
+          AND tdb.nrborder = pr_nrborder
+          AND tdb.nrdconta = pr_nrdconta
+          AND tdb.cdcooper = pr_cdcooper
+          AND tdb.insittit = 4  -- liberado
+          AND bdt.flverbor = 1; -- bordero liberado na nova versão;
      rw_craptdb cr_craptdb%rowtype;
      
      BEGIN
@@ -5888,6 +6464,11 @@ END pc_inserir_lancamento_bordero;
          pr_tab_tit_bordero(pr_qtregist).vlpagar  := rw_craptdb.vlpagar;  -- Soma do saldo com as multas 
        END LOOP;
        CLOSE cr_craptdb;
+
+ EXCEPTION
+  WHEN OTHERS THEN
+       pr_cdcritic := 0;
+       pr_dscritic := 'Erro geral na rotina dsct0003.pc_busca_titulos_vencidos: '||SQLERRM;
  END pc_busca_titulos_vencidos;
  
  
@@ -5913,9 +6494,9 @@ END pc_inserir_lancamento_bordero;
      -- Variável de críticas
      vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
      vr_dscritic varchar2(1000);        --> Desc. Erro
-     
-     -- Cursor genérico de calendário
-     rw_crapdat btch0001.cr_crapdat%rowtype;
+
+     -- Tratamento de erros
+     vr_exc_erro EXCEPTION;
      
      -- variaveis de retorno
      vr_tab_tit_bordero typ_tab_tit_bordero;
@@ -5932,6 +6513,8 @@ END pc_inserir_lancamento_bordero;
      vr_idorigem VARCHAR2(100);
    
      BEGIN 
+       pr_nmdcampo := NULL;
+       pr_des_erro := 'OK';
        -- Leitura dos dados
        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -5959,6 +6542,9 @@ END pc_inserir_lancamento_bordero;
                                 ,vr_cdcritic        --> Código da crítica
                                 ,vr_dscritic        --> Descrição da crítica
                               );
+       IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NOT NULL THEN
+         RAISE vr_exc_erro;
+       END IF;
        -- Inicializar o clob
        vr_des_xml := null;
        dbms_lob.createtemporary(vr_des_xml, true);
@@ -5993,7 +6579,17 @@ END pc_inserir_lancamento_bordero;
         
        /* liberando a memória alocada pro clob */
        dbms_lob.close(vr_des_xml);
-       dbms_lob.freetemporary(vr_des_xml);         
+       dbms_lob.freetemporary(vr_des_xml); 
+EXCEPTION
+  WHEN vr_exc_erro THEN
+       IF  vr_cdcritic <> 0 THEN
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       END IF;
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+       pr_dscritic := 'Erro geral na rotina dsct0003.pc_inserir_lancamento_bordero: '||SQLERRM;        
  END pc_busca_titulos_vencidos_web;
  
  PROCEDURE pc_calcula_possui_saldo (pr_nrdconta     IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -6018,9 +6614,10 @@ END pc_inserir_lancamento_bordero;
     ---------------------------------------------------------------------------------------------------------------------*/
     -- Variável de críticas
     vr_dscritic varchar2(1000);        --> Desc. Erro
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
                   
-     -- Cursor genérico de calendário
-     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
          
     -- Variaveis de entrada vindas no XML
     vr_cdcooper INTEGER;
@@ -6057,6 +6654,8 @@ END pc_inserir_lancamento_bordero;
     ;rw_crapope cr_crapope%rowtype;
     
     BEGIN   
+       pr_nmdcampo := NULL;
+       pr_des_erro := 'OK';
        -- Variavel de verificacao se possui saldo suficiente para os titulos 
        vr_possui_saldo := 0;       
           
@@ -6070,6 +6669,9 @@ END pc_inserir_lancamento_bordero;
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
                               
       -- Leitura do calendário da cooperativa
       OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
@@ -6115,8 +6717,8 @@ END pc_inserir_lancamento_bordero;
        END IF;
        
        
-       -- Caso o saldo seja maior que o custo da soma dos titulos
-       IF vr_total <= pr_tab_sald(0).vlsddisp THEN
+       -- Caso o saldo + limite seja maior que o custo da soma dos titulos
+       IF vr_total <= ( pr_tab_sald(0).vlsddisp + pr_vllimcre ) THEN
           vr_possui_saldo := 1; -- Possui Saldo
             vr_mensagem_ret := 'Utilizando Saldo do Cooperado.';
        ELSE -- Caso nao tenha saldo, verifica a alcada do operador
@@ -6151,7 +6753,15 @@ END pc_inserir_lancamento_bordero;
         
        /* liberando a memória alocada pro clob */
        dbms_lob.close(vr_des_xml);
-       dbms_lob.freetemporary(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml); 
+EXCEPTION
+  WHEN vr_exc_erro THEN
+       pr_cdcritic := 0;
+       pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+       pr_cdcritic := 0;
+       pr_dscritic := 'Erro geral na rotina dsct0003.pc_calcula_possui_saldo: '||SQLERRM;
  END pc_calcula_possui_saldo;
 
  PROCEDURE pc_pagar_titulos_vencidos (pr_nrdconta         IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -6177,17 +6787,14 @@ END pc_inserir_lancamento_bordero;
 
        Alteração : 19/05/2018 - Criação (Vitor Shimada (GFT))
 
-                   04/06/2018 - Adicionado atualização do campo craptdb.dtdebito (Paulo Penteado (GFT)) 
+                   20/06/2018 - Substituido o processo de pagamento pela chamada da procedure pc_pagar_titulo (Paulo Penteado (GFT) 
        
      ---------------------------------------------------------------------------------------------------------------------*/
-     -- Variável de críticas
-     vr_dscritic varchar2(1000);        --> Desc. Erro
-          
-     -- Cursor genérico de calendário
-     rw_crapdat btch0001.cr_crapdat%rowtype;
+     vr_vlpagmto craptdb.vltitulo%TYPE;
      
-     -- Erro da Liquidação do Borderô
-     pr_tab_erro GENE0001.typ_tab_erro;
+     -- Variável de críticas
+     vr_cdcritic crapcri.cdcritic%TYPE;
+     vr_dscritic crapcri.dscritic%TYPE;
      
      -- Variaveis de entrada vindas no XML
      vr_cdcooper INTEGER;
@@ -6197,399 +6804,110 @@ END pc_inserir_lancamento_bordero;
      vr_nrdcaixa VARCHAR2(100);
      vr_idorigem VARCHAR2(100);
      vr_cdoperad VARCHAR2(100);
-     
-     
-     vr_nrdolote craplot.nrdolote%TYPE;      
+
      vr_exc_erro EXCEPTION;
-     vr_rowid    ROWID;
      vr_sql      VARCHAR2(32767);
-     vr_vlhistorico NUMBER(25,2);
-     
-     -- CURSORES
-     CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
-                     ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
-                     ,pr_cdagenci IN craplot.cdagenci%TYPE
-                     ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
-                     ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
-     SELECT lot.qtcompln
-           ,lot.vlcompcr
-           ,lot.qtinfoln
-           ,lot.vlinfocr
-           ,lot.vlcompdb
-           ,lot.vlinfodb
-           ,lot.dtmvtolt
-           ,lot.cdagenci
-           ,lot.cdbccxlt
-           ,lot.nrdolote
-           ,lot.nrseqdig
-           ,lot.tplotmov
-           ,lot.cdoperad
-           ,lot.cdhistor
-           ,lot.ROWID
-           ,count(1) over() retorno
-         FROM craplot lot
-         WHERE lot.cdcooper = pr_cdcooper
-           AND lot.dtmvtolt = pr_dtmvtolt
-           AND lot.cdagenci = pr_cdagenci
-           AND lot.cdbccxlt = pr_cdbccxlt
-           AND lot.nrdolote = pr_nrdolote
-        FOR UPDATE;
-     rw_craplot cr_craplot%ROWTYPE;
-     
+
+     type tpy_ref_tdb is ref cursor;
+     cr_tab_tdb       tpy_ref_tdb;
+
      -- Cursor dos titulos para ser preenchido pelo comando SQL dentro do programa
      CURSOR cr_craptdb IS
             SELECT (vlmtatit - vlpagmta) AS vlmulta
                    ,(vlmratit - vlpagmra) AS vlmora
                    ,(vliofcpl - vlpagiof) AS vliof
                    ,craptdb.* 
-            FROM craptdb
-     ;rw_craptdb cr_craptdb%ROWTYPE;
-     
-     -- Historicos
-     arr_hist               dbms_sql.varchar2_table;
-     arr_hist_lanc_bordero  dbms_sql.varchar2_table;
-     
-     -- Registros para armazenar dados do lancamento gerado
-     rw_craplcm craplcm%ROWTYPE;    
-     
-     -- Variavel do array dos titulos
-     vr_index     INTEGER;
-     vr_index2    INTEGER;
-     
-     type tpy_ref_tdb is ref cursor;
-     cr_tab_tdb       tpy_ref_tdb;
-     
-     BEGIN
-        -- Caso seja pagamento com avalista muda as insercoes
-        IF pr_flavalista = 'false' THEN
-          -- Historico dos cooperados SEM avalista
-          arr_hist(0) := 2681; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO
-          arr_hist(1) := 2685; -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO
-          arr_hist(2) := 2670; -- PAGTO DESCONTO DE TITULO
-          arr_hist(3) := 2321; -- Valor do IOF complementar atraso       
-          
-          -- Historico dos Descontos SEM avalista
-          arr_hist_lanc_bordero(0) := 2682; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO
-          arr_hist_lanc_bordero(1) := 2686; -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO
-          arr_hist_lanc_bordero(2) := 2671; -- PAGTO DESCONTO DE TITULO
-        ELSE  
-          -- Historico dos cooperados COM avalista
-          arr_hist(0) := 2683; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL
-          arr_hist(1) := 2687; -- AGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL
-          arr_hist(2) := 2674; -- PAGTO DESCONTO DE TITULO AVAL
-          arr_hist(3) := 2321; -- Valor do IOF complementar atraso
-            
-          -- Historico dos Descontos COM avalista
-          arr_hist_lanc_bordero(0) := 2684; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL
-          arr_hist_lanc_bordero(1) := 2688; -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL
-          arr_hist_lanc_bordero(2) := 2675; -- PAGTO DESCONTO DE TITULO AVAL
-        END IF;
+            FROM craptdb;
+     rw_craptdb cr_craptdb%ROWTYPE;     
+  BEGIN
+    pr_nmdcampo := NULL;
+    -- Leitura dos dados
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
 
-        -- Leitura dos dados
-        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                ,pr_cdcooper => vr_cdcooper
-                                ,pr_nmdatela => vr_nmdatela
-                                ,pr_nmeacao  => vr_nmeacao
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_nrdcaixa => vr_nrdcaixa
-                                ,pr_idorigem => vr_idorigem
-                                ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
-                                      
-        -- Busca a data do sistema
-        OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
-        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-        CLOSE BTCH0001.cr_crapdat;
-         
-              
-              
-             
-        -- Busca os titulos selecionados
-        vr_sql := 'SELECT   (vlmtatit - vlpagmta) AS vlmulta' ||
-                          ',(vlmratit - vlpagmra) AS vlmora'  ||
-                          ',(vliofcpl - vlpagiof) AS vliof'   ||
-                          ',craptdb.* '||
-                     ' FROM craptdb '  ||
-                     ' WHERE '||
-                       ' craptdb.nrborder = :nrborder ' || 
-                       ' AND craptdb.nrdconta =  :nrdconta ' ||
-                       ' AND craptdb.cdcooper = :cdcooper ' ||
-                       ' AND craptdb.nrtitulo IN ('||pr_arrtitulo||')';
-        OPEN  cr_tab_tdb 
-        FOR   vr_sql 
-        USING pr_nrborder, pr_nrdconta, vr_cdcooper;
-        LOOP
+    -- Busca a data do sistema
+    OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+
+    -- Busca os titulos selecionados
+    vr_sql := 'SELECT   (vlmtatit - vlpagmta) AS vlmulta' ||
+                      ',(vlmratit - vlpagmra) AS vlmora'  ||
+                      ',(vliofcpl - vlpagiof) AS vliof'   ||
+                      ',craptdb.* '||
+                 ' FROM craptdb '  ||
+                 ' WHERE '||
+                   ' craptdb.nrborder = :nrborder ' || 
+                   ' AND craptdb.nrdconta =  :nrdconta ' ||
+                   ' AND craptdb.cdcooper = :cdcooper ' ||
+                   ' AND craptdb.nrtitulo IN ('||pr_arrtitulo||')';
+    OPEN  cr_tab_tdb 
+    FOR   vr_sql 
+    USING pr_nrborder, pr_nrdconta, vr_cdcooper;
+    LOOP
           FETCH cr_tab_tdb INTO rw_craptdb;
-          EXIT WHEN cr_tab_tdb%NOTFOUND;
-              -- Contador    
-              vr_index := 0;
-                            
-              -- Inicia o lancamento dos historicos
-              FOR vr_index IN 0..arr_hist_lanc_bordero.count-1 LOOP
-                  IF arr_hist_lanc_bordero(vr_index) >= 2681 AND arr_hist_lanc_bordero(vr_index) <= 2684 THEN -- MULTA
-                    vr_vlhistorico := rw_craptdb.vlmulta;
-                  ELSIF arr_hist_lanc_bordero(vr_index) >= 2685 AND arr_hist_lanc_bordero(vr_index) <= 2688 THEN -- MORA
-                    vr_vlhistorico := rw_craptdb.vlmora;
-                  ELSIF arr_hist_lanc_bordero(vr_index) = 2321 THEN -- IOF
-                    vr_vlhistorico := rw_craptdb.vliof;
-                  ELSE -- DESCONTO
-                    vr_vlhistorico := rw_craptdb.vlsldtit;
-                  END IF;
-                  
-                  -- Somente faz o lancamento caso o valor de multa/mora/iof for maior que zero
-                  IF vr_vlhistorico > 0 THEN
-                    pc_inserir_lancamento_bordero(pr_cdcooper => vr_cdcooper
-                                                 ,pr_nrdconta => pr_nrdconta
-                                                 ,pr_nrborder => pr_nrborder
-                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                 ,pr_cdorigem => 5
-                                                 ,pr_cdhistor => arr_hist_lanc_bordero(vr_index)
-                                                 ,pr_vllanmto => vr_vlhistorico
-                                                 ,pr_cdbandoc => rw_craptdb.cdbandoc
-                                                 ,pr_nrdctabb => rw_craptdb.nrdctabb
-                                                 ,pr_nrcnvcob => rw_craptdb.nrcnvcob
-                                                 ,pr_nrdocmto => rw_craptdb.nrdocmto
-                                                 ,pr_nrtitulo => rw_craptdb.nrtitulo
-                                                 ,pr_dscritic => vr_dscritic );
-                  END IF;                        
-                          
-                  IF  TRIM(vr_dscritic) IS NOT NULL THEN
-                      RAISE vr_exc_erro;
-                  END IF;
-                END LOOP;     
-                
-                -- Loop por todos os historicos que irao ser inseridos n craplcm
-                vr_index2 := 0;          
-                FOR vr_index2 IN 0..arr_hist.count-1 LOOP   
-                  IF arr_hist(vr_index2) >= 2681 AND arr_hist(vr_index2) <= 2684 THEN -- MULTA
-                    vr_vlhistorico := rw_craptdb.vlmulta;
-                  ELSIF arr_hist(vr_index2) >= 2685 AND arr_hist(vr_index2) <= 2688 THEN -- MORA
-                    vr_vlhistorico := rw_craptdb.vlmora;
-                  ELSIF arr_hist(vr_index2) = 2321 THEN -- IOF
-                    vr_vlhistorico := rw_craptdb.vliof;
-                  ELSE -- DESCONTO
-                    vr_vlhistorico := rw_craptdb.vlsldtit;
-                  END IF;
-                  
-                  -- Somente faz o lancamento caso o valor de multa/mora/iof for maior que zero
-                  IF vr_vlhistorico > 0 THEN
-                    -- Cria o numero do lote
-                    vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
-                                              ,pr_nmdcampo => 'NRDOLOTE'
-                                              ,pr_dsdchave => TO_CHAR(vr_cdcooper)|| ';' 
-                                               || rw_crapdat.dtmvtolt || ';'
-                                               || TO_CHAR(vr_cdagenci)|| ';'
-                                               || '100');
-                                                   
-                    
-                    --Buscar o lote
-                    OPEN cr_craplot(pr_cdcooper => vr_cdcooper
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                   ,pr_cdagenci => 1
-                                   ,pr_cdbccxlt => 100 -- Ver o numero
-                                   ,pr_nrdolote => vr_nrdolote);
+          EXIT  WHEN cr_tab_tdb%NOTFOUND;
+          
+          vr_vlpagmto := rw_craptdb.vlsldtit; 
+          
+          pc_pagar_titulo(pr_cdcooper => vr_cdcooper
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_nrdcaixa => vr_nrdcaixa
+                         ,pr_idorigem => vr_idorigem
+                         ,pr_cdoperad => vr_cdoperad
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrborder => pr_nrborder
+                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                         ,pr_nrdctabb => rw_craptdb.nrdctabb
+                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                         ,pr_nrdocmto => rw_craptdb.nrdocmto
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                         ,pr_inproces => rw_crapdat.inproces
+                         ,pr_cdorigpg => 3 --Tela PAGAR
+                         ,pr_indpagto => NULL -- não se aplica para origem de pagamento 3
+                         ,pr_flpgtava => CASE WHEN pr_flavalista = 'false' THEN 0 ELSE 1 END
+                         ,pr_vlpagmto => vr_vlpagmto
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
 
-                    FETCH cr_craplot INTO rw_craplot;
+          -- Condicao para verificar se houve critica                             
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+    END LOOP;
+    CLOSE cr_tab_tdb;  
 
-                    -- Gerar erro caso não encontre
-                    IF cr_craplot%NOTFOUND THEN
-                         -- Fechar cursor pois teremos raise
-                         CLOSE cr_craplot;
-                           BEGIN
-                             INSERT INTO craplot
-                                        (cdcooper
-                                        ,dtmvtolt
-                                        ,cdagenci
-                                        ,cdbccxlt
-                                        ,nrdolote
-                                        ,tplotmov
-                                        ,cdoperad
-                                        ,cdhistor)
-                                 VALUES(vr_cdcooper
-                                        ,rw_crapdat.dtmvtolt
-                                        ,1
-                                        ,100
-                                        ,vr_nrdolote
-                                        ,1
-                                        ,vr_cdoperad
-                                        ,arr_hist(vr_index2)) -- Numero do historico
-                              RETURNING dtmvtolt
-                                        ,cdagenci
-                                        ,cdbccxlt
-                                        ,nrdolote
-                                        ,vlinfocr
-                                        ,vlcompcr
-                                        ,qtinfoln
-                                        ,qtcompln
-                                        ,nrseqdig
-                                        ,ROWID
-                                   INTO rw_craplot.dtmvtolt
-                                        ,rw_craplot.cdagenci
-                                        ,rw_craplot.cdbccxlt
-                                        ,rw_craplot.nrdolote
-                                        ,rw_craplot.vlinfocr
-                                        ,rw_craplot.vlcompcr
-                                        ,rw_craplot.qtinfoln
-                                        ,rw_craplot.qtcompln
-                                        ,rw_craplot.nrseqdig
-                                        ,rw_craplot.rowid;
-                           EXCEPTION
-                             WHEN OTHERS THEN
-                               -- Monta critica
-                               vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
-                               -- Gera exceção
-                               RAISE vr_exc_erro;
-                           END;
-                      ELSE
-                         -- Apenas fechar o cursor
-                         CLOSE cr_craplot;
-                      END IF;  
-                      
-                     -- Gero o Insert na tabela de Lancamentos em depositos a vista
-                     BEGIN
-                        INSERT INTO craplcm
-                               (dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdocmto
-                               ,vllanmto
-                               ,cdhistor
-                               ,nrseqdig
-                               ,nrdctabb
-                               ,nrautdoc 
-                               ,cdcooper
-                               ,cdpesqbb) 
-                        VALUES (rw_craplot.dtmvtolt
-                               ,rw_craplot.cdagenci
-                               ,rw_craplot.cdbccxlt
-                               ,rw_craplot.nrdolote
-                               ,pr_nrdconta
-                               ,rw_craplot.nrseqdig + 1
-                               ,vr_vlhistorico
-                               ,arr_hist(vr_index2)
-                               ,rw_craplot.nrseqdig + 1
-                               ,pr_nrdconta
-                               ,0
-                               ,vr_cdcooper
-                               ,'Pagamento de titulos em atraso bordero/titulo: ' || pr_nrborder || '/' || rw_craptdb.nrtitulo)
-                              RETURNING craplcm.ROWID
-                                       ,craplcm.cdhistor
-                                       ,craplcm.cdcooper
-                                       ,craplcm.dtmvtolt
-                                       ,craplcm.hrtransa
-                                       ,craplcm.nrdconta
-                                       ,craplcm.nrdocmto
-                                       ,craplcm.vllanmto
-                                       ,craplcm.nrseqdig
-                                  INTO  vr_rowid 
-                                       ,rw_craplcm.cdhistor
-                                       ,rw_craplcm.cdcooper
-                                       ,rw_craplcm.dtmvtolt
-                                       ,rw_craplcm.hrtransa
-                                       ,rw_craplcm.nrdconta
-                                       ,rw_craplcm.nrdocmto
-                                       ,rw_craplcm.vllanmto
-                                       ,rw_craplcm.nrseqdig;
-                      EXCEPTION
-                        WHEN OTHERS THEN
-                          -- Monta critica
-                          vr_dscritic := 'Erro ao inserir na tabela craplcm: ' || SQLERRM;
-                          -- Gera exceção
-                          RAISE vr_exc_erro;
-                      END;
+    -- Commita toda a transacao     
+    COMMIT;
 
-                      -- Upda te da craplot
-                      BEGIN
-                        UPDATE craplot
-                           SET craplot.nrseqdig = rw_craplcm.nrseqdig
-                              ,craplot.qtinfoln = craplot.qtinfoln + 1
-                              ,craplot.qtcompln = craplot.qtcompln + 1
-                              ,craplot.vlinfocr = craplot.vlinfocr + rw_craplcm.vllanmto
-                              ,craplot.vlcompcr = craplot.vlcompcr + rw_craplcm.vllanmto
-                         WHERE craplot.rowid = rw_craplot.rowid
-                         RETURNING dtmvtolt
-                                   ,cdagenci
-                                   ,cdbccxlt
-                                   ,nrdolote
-                                   ,vlinfocr
-                                   ,vlcompcr
-                                   ,qtinfoln
-                                   ,qtcompln
-                                   ,nrseqdig
-                                   ,ROWID
-                              INTO rw_craplot.dtmvtolt
-                                  ,rw_craplot.cdagenci
-                                  ,rw_craplot.cdbccxlt
-                                  ,rw_craplot.nrdolote
-                                  ,rw_craplot.vlinfocr
-                                  ,rw_craplot.vlcompcr
-                                  ,rw_craplot.qtinfoln
-                                  ,rw_craplot.qtcompln
-                                  ,rw_craplot.nrseqdig
-                                  ,rw_craplot.rowid;
-                      EXCEPTION
-                        WHEN OTHERS THEN
-                          -- Monta critica
-                          vr_dscritic := 'Erro ao atualizar o Lote!';
-
-                          -- Gera exceção
-                          RAISE vr_exc_erro;
-                      END;
-                   END IF;
-                END LOOP;
-                
-                -- Atualiza a situaco do titulo
-                BEGIN
-                   UPDATE craptdb
-                   SET
-                      INSITTIT  = 3                     -- Baixado s/ pagamento
-                      ,dtdpagto = rw_crapdat.dtmvtolt   -- Data de movimentacao 
-                      ,dtdebito = rw_crapdat.dtmvtolt
-                   WHERE
-                      nrborder     = pr_nrborder
-                      AND nrdconta = pr_nrdconta
-                      AND nrtitulo = rw_craptdb.nrtitulo;
-                EXCEPTION
-                   WHEN OTHERS THEN
-                     -- Monta Critica
-                     vr_dscritic := 'Erro ao atualizar o titulo! ' || rw_craptdb.nrtitulo;
-                     
-                     -- Gera exceção
-                     RAISE vr_exc_erro;
-                 END;
-        END LOOP;
-        CLOSE cr_tab_tdb;     
-      
-        -- Efetua a Liquidez do Bordero
-        DSCT0001.pc_efetua_liquidacao_bordero (pr_cdcooper => vr_cdcooper --Codigo Cooperativa
-                                       ,pr_cdagenci => vr_cdagenci --Codigo Agencia
-                                       ,pr_nrdcaixa => vr_nrdcaixa --Numero do Caixa
-                                       ,pr_cdoperad => vr_cdoperad --Codigo Operador
-                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt     --Data Movimento
-                                       ,pr_idorigem => vr_idorigem  --Identificador Origem
-                                       ,pr_nrdconta => pr_nrdconta  --Numero da Conta
-                                       ,pr_nrborder => pr_nrborder  --Numero do Bordero
-                                       ,pr_tab_erro => pr_tab_erro --Tabela de erros
-                                       ,pr_des_erro => pr_des_erro --identificador de erro
-                                       ,pr_cdcritic => pr_cdcritic --Codigo do erro
-                                       ,pr_dscritic => pr_dscritic); --Descricao do erro 
-        
-        -- Commita toda a transacao     
-        COMMIT;
-        -- Caso dê tudo certo, retorna o xml com OK
-        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                  '<Root><dsmensag>'||1||'</dsmensag></Root>');
-                                  
-        -- Excecoes                                  
-        EXCEPTION 
-          WHEN vr_exc_erro THEN
-              -- Carregar XML padrao para variavel de retorno
-              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                             '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
-      
-                 
+    -- Caso dê tudo certo, retorna o xml com OK
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><dsmensag>1</dsmensag></Root>');
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
+    WHEN OTHERS THEN
+         pr_des_erro := 'NOK';
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := 'Erro geral na rotina dsct0003.pc_pagar_titulos_vencidos: '||SQLERRM;
+         pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> '||
+                                          '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
+         ROLLBACK;
  END pc_pagar_titulos_vencidos;
 
  PROCEDURE pc_calcula_liquidez(pr_cdcooper     IN craptdb.cdcooper%TYPE
@@ -6617,11 +6935,11 @@ END pc_inserir_lancamento_bordero;
     -- CALCULO DA CONCENTRACAO DO PAGADOR
     CURSOR cr_concentracao IS
       SELECT 
-        (SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_conc,
-        (SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_conc
+        NVL((SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN 1 ELSE 0 END)/COUNT(1))*100, 0) AS qtd_conc,
+        NVL((SUM(CASE WHEN (tdb.nrinssac=pr_nrinssac) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100, 0) AS pc_conc
        FROM   craptdb tdb -- Titulos do Bordero
        WHERE 
-       (tdb.dtvencto + pr_qtcarpag) BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+       (tdb.insittit = 4 OR (tdb.insittit=0 AND tdb.insitapr<>2))
        AND    tdb.cdcooper = pr_cdcooper
        AND    tdb.nrdconta = pr_nrdconta
        --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
@@ -6639,10 +6957,10 @@ END pc_inserir_lancamento_bordero;
     -- CALCULO DA LIQUIDEZ CEDENTE PAGADOR
     CURSOR cr_liquidez_pagador IS
       SELECT 
-        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
-        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
+        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL AND (tdb.dtdpagto<=(tdb.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
+        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL AND (tdb.dtdpagto<=(tdb.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
        FROM   craptdb tdb -- Titulos do Bordero
-       WHERE (tdb.dtvencto + pr_qtcarpag) BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+       WHERE tdb.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
        AND    tdb.dtresgat IS NULL 
        AND    tdb.dtlibbdt IS NOT NULL                   -- Somente os titulos que realmente foram descontados
        AND    tdb.cdcooper = pr_cdcooper
@@ -6663,10 +6981,10 @@ END pc_inserir_lancamento_bordero;
     -- CALCULO  DA LIQUIDEZ GERAL
     CURSOR cr_liquidez_geral IS
       SELECT 
-        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
-        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
+        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL AND (tdb.dtdpagto<=(tdb.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
+        (SUM(CASE WHEN (tdb.dtdpagto IS NOT NULL AND (tdb.dtdpagto<=(tdb.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
        FROM   craptdb tdb -- Titulos do Bordero
-       WHERE (tdb.dtvencto + pr_qtcarpag) BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+       WHERE tdb.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
        AND    tdb.dtresgat IS NULL 
        AND    tdb.dtlibbdt IS NOT NULL                   -- Somente os titulos que realmente foram descontados
        AND    tdb.cdcooper = pr_cdcooper
@@ -6697,13 +7015,13 @@ END pc_inserir_lancamento_bordero;
     CLOSE cr_liquidez_pagador;
     
     pr_pc_cedpag  := CASE WHEN nvl(rw_liquidez_pagador.pc_cedpag,0) = 0 THEN 100 ELSE rw_liquidez_pagador.pc_cedpag END;
-    pr_qtd_cedpag := rw_liquidez_pagador.qtd_cedpag;
+    pr_qtd_cedpag := CASE WHEN nvl(rw_liquidez_pagador.qtd_cedpag,0) = 0 THEN 100 ELSE rw_liquidez_pagador.qtd_cedpag END;
 
     pr_pc_conc    := rw_concentracao.pc_conc;
     pr_qtd_conc   := rw_concentracao.qtd_conc;
 
     pr_pc_geral   := CASE WHEN nvl(rw_liquidez_geral.pc_geral,0) = 0 THEN 100 ELSE rw_liquidez_geral.pc_geral END;
-    pr_qtd_geral  := rw_liquidez_geral.qtd_geral;
+    pr_qtd_geral  := CASE WHEN nvl(rw_liquidez_geral.qtd_geral,0) = 0 THEN 100 ELSE rw_liquidez_geral.qtd_geral END;
  END pc_calcula_liquidez;
   
   PROCEDURE pc_calcula_atraso_tit(pr_cdcooper    IN crapcop.cdcooper%TYPE      --Codigo Cooperativa
@@ -6714,11 +7032,9 @@ END pc_inserir_lancamento_bordero;
                                  ,pr_nrcnvcob    IN craptdb.nrcnvcob%TYPE      --Numero do convenio de cobranca
                                  ,pr_nrdocmto    IN craptdb.nrdocmto%TYPE      --Numero do documento
                                  ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE      --Data Movimento
-                                 ,pr_qtdiaatr    IN INTEGER DEFAULT 1          --Quantidade de dias em atraso
                                  ,pr_vlmtatit    OUT NUMBER                    --Valor da multa por atraso
                                  ,pr_vlmratit    OUT NUMBER                    --Valor dos juros de mora
                                  ,pr_vlioftit    OUT NUMBER                    --Valor do IOF complementar por atraso
-                                 --,pr_vlsldtit    OUT NUMBER                    --Valor do saldo devedor do titulo
                                  ,pr_cdcritic    OUT INTEGER                   --Codigo Critica
                                  ,pr_dscritic    OUT VARCHAR2) IS              --Descricao Critica
                                  
@@ -6760,7 +7076,10 @@ END pc_inserir_lancamento_bordero;
                      ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
                      ,pr_nrdocmto IN craptdb.nrdocmto%TYPE) IS
       SELECT craptdb.dtvencto,
+             craptdb.dtlibbdt,
+             craptdb.nrtitulo,
              craptdb.vltitulo,
+             craptdb.vlliquid,
              craptdb.vlsldtit,
              craptdb.vliofcpl,
              craptdb.vlmtatit,
@@ -6799,12 +7118,29 @@ END pc_inserir_lancamento_bordero;
         AND crapjur.nrdconta = pr_nrdconta;
     rw_crapjur cr_crapjur%ROWTYPE;
     
+    CURSOR cr_tbdsct_lancamento_bordero(pr_cdcooper tbdsct_lancamento_bordero.cdcooper%type
+                                       ,pr_nrdconta tbdsct_lancamento_bordero.nrdconta%type
+                                       ,pr_nrborder tbdsct_lancamento_bordero.nrborder%type
+                                       ,pr_nrtitulo tbdsct_lancamento_bordero.nrtitulo%type) IS
+      SELECT dtmvtolt
+        FROM tbdsct_lancamento_bordero
+       WHERE tbdsct_lancamento_bordero.cdcooper = pr_cdcooper
+         AND tbdsct_lancamento_bordero.nrdconta = pr_nrdconta
+         AND tbdsct_lancamento_bordero.nrborder = pr_nrborder
+         AND tbdsct_lancamento_bordero.nrtitulo = pr_nrtitulo
+         AND tbdsct_lancamento_bordero.cdhistor IN (2686,2688);
+    rw_tbdsct_lancamento_bordero cr_tbdsct_lancamento_bordero%ROWTYPE;
+    
+    -- cursor genérico de calendário
+    rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
+    
     /* variáveis locais */
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
     
-    vr_qtdiaatr NUMBER; -- quantidade de dias em atraso
     vr_txdiaria NUMBER; -- Taxa diária de juros de mora
+    
+    vr_dtmvtolt DATE;
     
     vr_vliofpri NUMBER;
     vr_vliofadi NUMBER;
@@ -6812,15 +7148,24 @@ END pc_inserir_lancamento_bordero;
     
     vr_vltxiofatra NUMBER;
     vr_vlsldtit NUMBER;
-    
-    vr_count_dias NUMBER;
-    
+
     vr_flgimune PLS_INTEGER;
     
     /* exceções */
     vr_exc_erro  EXCEPTION;
 
   BEGIN
+    
+    -- Leitura do calendario
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      vr_cdcritic := 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE BTCH0001.cr_crapdat;
   
     -- Valida existência do borderô do respectivo título
     OPEN cr_crapbdt (pr_cdcooper => pr_cdcooper
@@ -6880,16 +7225,31 @@ END pc_inserir_lancamento_bordero;
     END IF;
           
     -- Calculo da taxa de mora diaria
-    vr_txdiaria := ROUND((100 * (POWER((rw_crapbdt.vltxmora / 100) + 1,(1 / 30)) - 1)),10) / 100;
+    vr_txdiaria :=  (POWER((rw_crapbdt.vltxmora / 100) + 1,(1 / 30)) - 1);
     
-    pr_vlmratit := rw_craptdb.vlmratit;
     vr_vlsldtit := rw_craptdb.vlsldtit;
+    pr_vlmratit := rw_craptdb.vlmratit;
     
-    FOR vr_count_dias IN 0..pr_qtdiaatr LOOP
-      pr_vlmratit := pr_vlmratit + (ROUND(((vr_vlsldtit + pr_vlmratit) * vr_txdiaria),2));
-      vr_vlsldtit := vr_vlsldtit + pr_vlmratit;
-    END LOOP;
+    -- Se já houve pagamento de juros, pega a data do último pagamento de juros como base e acumula os juros do saldo devedor atual
+    -- com o valor já calculado até então
+    vr_dtmvtolt := rw_craptdb.dtvencto;
     
+    IF rw_craptdb.vlpagmra > 0 THEN
+      FOR rw_tbdsct_lancamento_bordero IN cr_tbdsct_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                                      ,pr_nrdconta => pr_nrdconta
+                                                                      ,pr_nrborder => pr_nrborder
+                                                                      ,pr_nrtitulo => rw_craptdb.nrtitulo) LOOP
+
+        IF rw_tbdsct_lancamento_bordero.dtmvtolt > vr_dtmvtolt THEN
+          vr_dtmvtolt := rw_tbdsct_lancamento_bordero.dtmvtolt;
+        END IF;
+      END LOOP;
+      
+      pr_vlmratit := NVL(rw_craptdb.vlpagmra + ROUND(vr_vlsldtit * vr_txdiaria * (pr_dtmvtolt - vr_dtmvtolt),2),0);
+    ELSE
+      pr_vlmratit := NVL(ROUND(vr_vlsldtit * vr_txdiaria * (pr_dtmvtolt - rw_craptdb.dtvencto),2),0);
+    END IF;
+
     -- Cálculo do IOF
     TIOF0001.pc_calcula_valor_iof_prg (pr_tpproduto            => 2 -- Desconto de títulos
                                       ,pr_tpoperacao           => 2 -- Pagamento em atraso
@@ -6898,9 +7258,9 @@ END pc_inserir_lancamento_bordero;
                                       ,pr_inpessoa             => rw_crapass.inpessoa
                                       ,pr_natjurid             => rw_crapjur.natjurid
                                       ,pr_tpregtrb             => rw_crapjur.tpregtrb
-                                      ,pr_dtmvtolt             => pr_dtmvtolt
-                                      ,pr_qtdiaiof             => pr_qtdiaatr
-                                      ,pr_vloperacao           => vr_vlsldtit
+                                      ,pr_dtmvtolt             => rw_crapdat.dtmvtolt
+                                      ,pr_qtdiaiof             => (pr_dtmvtolt - rw_craptdb.dtlibbdt)
+                                      ,pr_vloperacao           => rw_craptdb.vlliquid
                                       ,pr_vltotalope           => vr_vltotal_liquido
                                       ,pr_vltaxa_iof_atraso    => NVL(rw_crapbdt.vltaxiof,0)
                                       ,pr_vliofpri             => vr_vliofpri
@@ -6915,10 +7275,11 @@ END pc_inserir_lancamento_bordero;
       RAISE vr_exc_erro;
     END IF;
     
-    pr_vlioftit := ROUND(rw_craptdb.vliofcpl + vr_vliofcpl,2);
+    pr_vlioftit := NVL(ROUND(vr_vliofcpl, 2),0);
     
   EXCEPTION
     WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
   END pc_calcula_atraso_tit;
@@ -6936,26 +7297,39 @@ END pc_inserir_lancamento_bordero;
                             ,pr_nrdocmto    IN craptdb.nrdocmto%TYPE           --Numero do documento
                             ,pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE           --Data Movimento
                             ,pr_inproces    IN crapdat.inproces%TYPE DEFAULT 1 --Indicador do processo
-                            ,pr_cdorigpg    IN NUMBER DEFAULT 0                --Código da origem do pagamento (0 - Conta-Corrente / 1 - Compe / 2 - Caixa / 3 - IB / 4 - TAA)
+                            ,pr_cdorigpg    IN NUMBER                DEFAULT 0 --Código da origem do processo de pagamento
+                            ,pr_indpagto    IN crapcob.indpagto%TYPE DEFAULT 0 --Indica de onde vem o pagamento
+                            ,pr_flpgtava    IN NUMBER                DEFAULT 0 --Pagamento efetuado pelo avalista 0-Não 1-Sim
                             ,pr_vlpagmto    IN OUT NUMBER                      --Valor do pagamento
                             ,pr_cdcritic    OUT INTEGER                        --Codigo Critica
                             ,pr_dscritic    OUT VARCHAR2) IS                   --Descricao Critica
                                    
   /* ................................................................................
-
-     Programa: pc_pagar_titulo_cc       Antiga: 
+     Programa: pc_pagar_titulo_cc
      Sistema : Crédito
      Sigla   : CRED
 
      Autor   : Lucas Lazari (GFT)
-     Data    : 24/05/18                        Ultima atualizacao: --/--/----
+     Data    : 24/05/18
 
-     Dados referentes ao programa: Realiza o pagamento de um título através da conta corrente
-
+     Dados referentes ao programa: 
      Frequencia: Sempre que for chamado
-     Objetivo  :  
+     Objetivo  :  Realiza o pagamento de um título através da conta corrente
 
-     Alteracoes: 
+               pr_cdorigpg: Código da origem do processo de pagamento
+                            0 - Conta-Corrente (Raspada, ...)
+                            1 - Pagamento (Baixa de cobrança de títulos, ...)
+                            2 - Pagamento COBTIT
+                            3 - Tela PAGAR
+                            
+               pr_indpagto: Indica de onde vem o pagamento
+                            0 - COMPE
+                            1 - Caixa On-Line 
+                            2 - ?????
+                            3 - Internet
+                            4 - TAA
+
+     Alteracoes:
   ..................................................................................*/ 
     
     /* CURSORES */
@@ -6991,6 +7365,7 @@ END pc_inserir_lancamento_bordero;
                      ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
                      ,pr_nrdocmto IN craptdb.nrdocmto%TYPE) IS
       SELECT ROWID,
+             craptdb.nrdocmto,
              craptdb.dtvencto,
              craptdb.dtlibbdt,
              craptdb.nrtitulo,
@@ -7053,8 +7428,6 @@ END pc_inserir_lancamento_bordero;
     vr_tab_erro GENE0001.typ_tab_erro; --Tabela de erros
     vr_des_erro VARCHAR2(10);                                     
     
-    vr_qtdiaatr NUMBER; -- Quantidade de dias em atraso
-    
     vr_vlsldtit NUMBER; -- Saldo devedor atual do título
     vr_vlpagmto NUMBER; -- Valor disponível para pagamento do título
     
@@ -7070,16 +7443,17 @@ END pc_inserir_lancamento_bordero;
     vr_vlpagmra NUMBER; -- Valor pago dos juros de mora
     vr_vlpagtit NUMBER; -- Valor pago do título
     
+    vr_vlencarg NUMBER;
+    
     vr_insittit craptdb.insittit%TYPE;
     vr_dtdebito craptdb.dtdebito%TYPE;
+    vr_dtdpagto craptdb.dtdpagto%TYPE;
     
-    vr_cdhistor_pagtit INTEGER; -- Histórico de lançamento do titulo
+    vr_cdhistor_opc INTEGER; -- Histórico de lançamento do titulo
     
     vr_vltxiofatra NUMBER;
     
     vr_dados_tarifa typ_dados_tarifa;
-    
-    vr_nrseqdig NUMBER;
     
     vr_flgimune PLS_INTEGER;
     
@@ -7092,8 +7466,6 @@ END pc_inserir_lancamento_bordero;
     vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
       
     /* EXCEÇÕES */
-    
-    vr_exc_saida EXCEPTION;  
     vr_exc_erro  EXCEPTION;
     
     /* FUNÇÕES */
@@ -7205,7 +7577,7 @@ END pc_inserir_lancamento_bordero;
       vr_cdcritic := 1166; --Bordero nao encontrado. Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       CLOSE cr_crapbdt;
-    RAISE vr_exc_saida;
+    RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapbdt;
     
@@ -7216,17 +7588,12 @@ END pc_inserir_lancamento_bordero;
     -- Inicializa as regras de prioridade da raspada
     vr_flraspar := TRUE;
     
-    vr_vlpagiof := rw_craptdb.vlpagiof; 
-    vr_vlpagmta := rw_craptdb.vlpagmta; 
-    vr_vlpagmra := rw_craptdb.vlpagmra; 
+    vr_vlpagiof := 0; 
+    vr_vlpagmta := 0; 
+    vr_vlpagmra := 0; 
     vr_vlsldtit := rw_craptdb.vlsldtit;
     vr_vlpagtit := 0;
-    
-    vr_qtdiaatr := pr_dtmvtolt - rw_craptdb.dtvencto;
-    
-    IF vr_qtdiaatr < 0 THEN
-      vr_qtdiaatr := 0;
-    END IF;
+    vr_vlencarg := 0;
     
     -- 1) IOF
     
@@ -7246,7 +7613,7 @@ END pc_inserir_lancamento_bordero;
                                       ,pr_tpregtrb             => rw_crapjur.tpregtrb
                                       ,pr_dtmvtolt             => pr_dtmvtolt
                                       ,pr_qtdiaiof             => 0
-                                      ,pr_vloperacao           => vr_vlsldtit 
+                                      ,pr_vloperacao           => (rw_craptdb.vlsldtit + rw_craptdb.vlmratit_restante) 
                                       ,pr_vltotalope           => vr_vltotal_liquido
                                       ,pr_vltaxa_iof_atraso    => NVL(rw_crapbdt.vltaxiof,0)
                                       ,pr_vliofpri             => vr_vliofpri
@@ -7261,110 +7628,37 @@ END pc_inserir_lancamento_bordero;
       RAISE vr_exc_erro;
     END IF;
       
-    vr_vliofcpl := ROUND(rw_craptdb.vliofcpl - rw_craptdb.vlpagiof,2);
-      
-    IF vr_vliofcpl > 0 AND vr_flraspar AND vr_flgimune <= 0 THEN
+    IF rw_craptdb.vliofcpl_restante > 0 AND vr_flraspar AND vr_flgimune <= 0 THEN
         
-      IF vr_vliofcpl > vr_vlpagmto THEN
-        vr_vlpagiof := rw_craptdb.vlpagiof + vr_vlpagmto;
+      IF rw_craptdb.vliofcpl_restante > vr_vlpagmto THEN
+        vr_vlpagiof := vr_vlpagmto;
         vr_flraspar := FALSE;    
       ELSE
-        vr_vlpagiof := vr_vliofcpl;
+        vr_vlpagiof := rw_craptdb.vliofcpl_restante;
       END IF;
         
-      vr_vlpagmto := vr_vlpagmto - vr_vliofcpl;
-        
-      -- Projeto Ligeirinho -  paralelismo
-      -- busca a sequencia para as execuções de paralelismo
-      IF paga0001.fn_exec_paralelo THEN
-        vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-      ELSE                                         
-        vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt) + 1;
-      END IF; 
+      vr_vlencarg := vr_vlencarg + vr_vlpagiof;
         
       -- Realiza o débito do IOF complementar na conta corrente do cooperado     
-      BEGIN
-        
-        DSCT0003.pc_efetua_lanc_cc ( pr_dtmvtolt => pr_dtmvtolt
-                                    ,pr_cdagenci => 1
-                                    ,pr_cdbccxlt => 100
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_vllanmto => vr_vlpagiof
-                                    ,pr_cdhistor => 2321
-                                    ,pr_cdcooper => pr_cdcooper
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_nrborder => pr_nrborder
-                                    ,pr_cdpactra => 0
-                                    ,pr_dscritic => vr_dscritic);
-          
-        -- Condicao para verificar se houve critica                             
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-        /* 
-        INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdocmto
-            ,craplcm.vllanmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.nrdctabb
-            ,craplcm.nrautdoc
-            ,craplcm.cdcooper
-            ,craplcm.cdpesqbb)
-        VALUES
-            (pr_dtmvtolt
-            ,1
-            ,100
-            ,10301
-            ,pr_nrdconta
-            ,NVL(vr_nrseqdig,0) 
-            ,vr_vlpagiof
-            ,2321
-            ,NVL(vr_nrseqdig,0)
-            ,pr_nrdconta
-            ,0
-            ,pr_cdcooper
-            ,pr_nrdocmto)
-        RETURNING craplcm.dtmvtolt
-                 ,craplcm.cdagenci
-                 ,craplcm.cdbccxlt
-                 ,craplcm.nrdolote
-                 ,craplcm.nrseqdig
-             INTO vr_dtmvtolt_lcm
-                 ,vr_cdagenci_lcm
-                 ,vr_cdbccxlt_lcm
-                 ,vr_nrdolote_lcm
-                 ,vr_nrseqdig_lcm; */
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
-          -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-          vr_cdcritic := 1034;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'craplcm(2):' ||
-                           '  dtmvtolt:'   || pr_dtmvtolt  ||
-                           ', cdagenci:'  || '1'      || 
-                           ', cdbccxlt:'  || '100'    || 
-                           ', nrdolote:'  || '10301'  ||
-                           ', nrdconta:'  || pr_nrdconta  ||
-                           ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
-                           ', vllanmto:'  || vr_vlpagiof  ||
-                           ', cdhistor:'  || '2321'       ||
-                           ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
-                           ', nrdctabb:'  || pr_nrdconta  ||
-                           ', nrautdoc:'  || '0'          ||
-                           ', cdcooper:'  || pr_cdcooper  ||
-                           ', cdpesqbb:'  || pr_nrdocmto  || 
-                           '. ' ||sqlerrm; 
-          RAISE vr_exc_erro;
-      END;
-      
+      pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 100
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_vllanmto => vr_vlpagiof
+                       ,pr_cdhistor => vr_cdhistordsct_iofscomplem
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_cdoperad => pr_cdoperad
+                       ,pr_nrborder => pr_nrborder
+                       ,pr_cdpactra => 0
+                       ,pr_nrdocmto => rw_craptdb.nrdocmto
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
       TIOF0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
                             ,pr_nrdconta     => pr_nrdconta
                             ,pr_dtmvtolt     => pr_dtmvtolt                              
@@ -7390,104 +7684,37 @@ END pc_inserir_lancamento_bordero;
     IF rw_craptdb.vlmtatit_restante > 0 AND vr_flraspar THEN
       
       IF rw_craptdb.vlmtatit_restante > vr_vlpagmto THEN
-        vr_vlpagmta := rw_craptdb.vlpagmta + vr_vlpagmto;
+        vr_vlpagmta := vr_vlpagmto;
         vr_flraspar := FALSE;    
       ELSE
         vr_vlpagmta := rw_craptdb.vlmtatit_restante;
       END IF;
       
-      vr_vlpagmto := vr_vlpagmto - vr_vlpagmta; 
-      
-      -- Projeto Ligeirinho -  paralelismo
-      -- busca a sequencia para as execuções de paralelismo
-      IF paga0001.fn_exec_paralelo THEN
-        vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-      ELSE                                         
-        vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt) + 1;
-      END IF;
+      vr_vlencarg := vr_vlencarg + vr_vlpagmta; 
       
       -- Realiza o débito da multa na conta corrente do cooperado 
-      BEGIN
-        
-        DSCT0003.pc_efetua_lanc_cc ( pr_dtmvtolt => pr_dtmvtolt
-                                    ,pr_cdagenci => 1
-                                    ,pr_cdbccxlt => 100
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_vllanmto => vr_vlpagmta
-                                    ,pr_cdhistor => 2681
-                                    ,pr_cdcooper => pr_cdcooper
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_nrborder => pr_nrborder
-                                    ,pr_cdpactra => 0
-                                    ,pr_dscritic => vr_dscritic);
-          
-        -- Condicao para verificar se houve critica                             
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-        /*
-        INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdocmto
-            ,craplcm.vllanmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.nrdctabb
-            ,craplcm.nrautdoc
-            ,craplcm.cdcooper
-            ,craplcm.cdpesqbb)
-        VALUES
-            (pr_dtmvtolt
-            ,1
-            ,100
-            ,10301
-            ,pr_nrdconta
-            ,NVL(vr_nrseqdig,0) 
-            ,vr_vlpagmta
-            ,2681
-            ,NVL(vr_nrseqdig,0)
-            ,pr_nrdconta
-            ,0
-            ,pr_cdcooper
-            ,pr_nrdocmto)
-        RETURNING craplcm.dtmvtolt
-                 ,craplcm.cdagenci
-                 ,craplcm.cdbccxlt
-                 ,craplcm.nrdolote
-                 ,craplcm.nrseqdig
-             INTO vr_dtmvtolt_lcm
-                 ,vr_cdagenci_lcm
-                 ,vr_cdbccxlt_lcm
-                 ,vr_nrdolote_lcm
-                 ,vr_nrseqdig_lcm;*/
-      EXCEPTION
-        WHEN OTHERS THEN
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
-          vr_cdcritic := 1034;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'craplcm(2):' ||
-                           '  dtmvtolt:'   || pr_dtmvtolt  ||
-                           ', cdagenci:'  || '1'      || 
-                           ', cdbccxlt:'  || '100'    || 
-                           ', nrdolote:'  || '10301'  ||
-                           ', nrdconta:'  || pr_nrdconta  ||
-                           ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
-                           ', vllanmto:'  || vr_vlpagmta  ||
-                           ', cdhistor:'  || '2681'       ||
-                           ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
-                           ', nrdctabb:'  || pr_nrdconta  ||
-                           ', nrautdoc:'  || '0'          ||
-                           ', cdcooper:'  || pr_cdcooper  ||
-                           ', cdpesqbb:'  || pr_nrdocmto  || 
-                           '. ' ||sqlerrm; 
-          RAISE vr_exc_erro;
-      END;
+      pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 100
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_vllanmto => vr_vlpagmta
+                       ,pr_cdhistor => CASE WHEN nvl(pr_flpgtava,0) = 0 THEN 
+                                                 vr_cdhistordsct_pgtomultacc 
+                                            ELSE vr_cdhistordsct_pgtomultaavcc END
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_cdoperad => pr_cdoperad
+                       ,pr_nrborder => pr_nrborder
+                       ,pr_cdpactra => 0
+                       ,pr_nrdocmto => rw_craptdb.nrdocmto
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
       
-      -- Lançar valor da multa nos lançamentos do borderô
+      -- Lançar valor de pagamento da multa nos lançamentos do borderô
       pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrborder => pr_nrborder
@@ -7498,9 +7725,36 @@ END pc_inserir_lancamento_bordero;
                                    ,pr_nrdocmto => pr_nrdocmto
                                    ,pr_nrtitulo => rw_craptdb.nrtitulo
                                    ,pr_cdorigem => 5
-                                   ,pr_cdhistor => 2682
+                                   ,pr_cdhistor => CASE WHEN nvl(pr_flpgtava,0) = 0 THEN 
+                                                             vr_cdhistordsct_pgtomultaopc 
+                                                        ELSE vr_cdhistordsct_pgtomultaavopc END
                                    ,pr_vllanmto => vr_vlpagmta
                                    ,pr_dscritic => vr_dscritic );
+
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Lançar valor de apropriação da multa nos lançamentos do borderô
+      pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrborder => pr_nrborder
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_cdbandoc => pr_cdbandoc
+                                   ,pr_nrdctabb => pr_nrdctabb
+                                   ,pr_nrcnvcob => pr_nrcnvcob
+                                   ,pr_nrdocmto => pr_nrdocmto
+                                   ,pr_nrtitulo => rw_craptdb.nrtitulo
+                                   ,pr_cdorigem => 5
+                                   ,pr_cdhistor => vr_cdhistordsct_apropjurmta
+                                   ,pr_vllanmto => vr_vlpagmta
+                                   ,pr_dscritic => vr_dscritic );
+
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
       
     END IF;
     
@@ -7508,106 +7762,36 @@ END pc_inserir_lancamento_bordero;
     IF rw_craptdb.vlmratit_restante > 0 AND vr_flraspar THEN
       
       IF rw_craptdb.vlmratit_restante > vr_vlpagmto THEN
-        vr_vlpagmra := rw_craptdb.vlpagmra + vr_vlpagmto;
+        vr_vlpagmra := vr_vlpagmto;
         vr_flraspar := FALSE;    
       ELSE
         vr_vlpagmra := rw_craptdb.vlmratit_restante;
       END IF;
       
-      vr_vlpagmto := vr_vlpagmto - vr_vlpagmra; 
-      
-      -- Projeto Ligeirinho -  paralelismo
-      -- busca a sequencia para as execuções de paralelismo
-      IF paga0001.fn_exec_paralelo THEN
-        vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-      ELSE                                         
-        vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt) + 1;
-      END IF;
+      vr_vlencarg := vr_vlencarg + vr_vlpagmra; 
       
       -- Lança o valor dos juros de mora na conta do cooperado
-      BEGIN
-        
-        DSCT0003.pc_efetua_lanc_cc ( pr_dtmvtolt => pr_dtmvtolt
-                                    ,pr_cdagenci => 1
-                                    ,pr_cdbccxlt => 100
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_vllanmto => vr_vlpagmra
-                                    ,pr_cdhistor => 2685
-                                    ,pr_cdcooper => pr_cdcooper
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_nrborder => pr_nrborder
-                                    ,pr_cdpactra => 0
-                                    ,pr_dscritic => vr_dscritic);
-        
-        -- Condicao para verificar se houve critica                             
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;                                                              
-        
-        /*
-        INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdocmto
-            ,craplcm.vllanmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.nrdctabb
-            ,craplcm.nrautdoc
-            ,craplcm.cdcooper
-            ,craplcm.cdpesqbb)
-        VALUES
-            (pr_dtmvtolt
-            ,1
-            ,100
-            ,10301
-            ,pr_nrdconta
-            ,NVL(vr_nrseqdig,0) 
-            ,vr_vlpagmra
-            ,2685
-            ,NVL(vr_nrseqdig,0)
-            ,pr_nrdconta
-            ,0
-            ,pr_cdcooper
-            ,pr_nrdocmto)
-        RETURNING craplcm.dtmvtolt
-                 ,craplcm.cdagenci
-                 ,craplcm.cdbccxlt
-                 ,craplcm.nrdolote
-                 ,craplcm.nrseqdig
-             INTO vr_dtmvtolt_lcm
-                 ,vr_cdagenci_lcm
-                 ,vr_cdbccxlt_lcm
-                 ,vr_nrdolote_lcm
-                 ,vr_nrseqdig_lcm;
-        */
-      EXCEPTION
-        WHEN OTHERS THEN
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
-          vr_cdcritic := 1034;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'craplcm(2):' ||
-                           '  dtmvtolt:'   || pr_dtmvtolt  ||
-                           ', cdagenci:'  || '1'      || 
-                           ', cdbccxlt:'  || '100'    || 
-                           ', nrdolote:'  || '10301'  ||
-                           ', nrdconta:'  || pr_nrdconta  ||
-                           ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
-                           ', vllanmto:'  || vr_vlpagmra  ||
-                           ', cdhistor:'  || '2685'       ||
-                           ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
-                           ', nrdctabb:'  || pr_nrdconta  ||
-                           ', nrautdoc:'  || '0'          ||
-                           ', cdcooper:'  || pr_cdcooper  ||
-                           ', cdpesqbb:'  || pr_nrdocmto  || 
-                           '. ' ||sqlerrm; 
-          RAISE vr_exc_erro;
-      END;
+      pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 100
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_vllanmto => vr_vlpagmra
+                       ,pr_cdhistor => CASE WHEN nvl(pr_flpgtava,0) = 0 THEN 
+                                                 vr_cdhistordsct_pgtojuroscc
+                                            ELSE vr_cdhistordsct_pgtojurosavcc END
+                       ,pr_cdcooper => pr_cdcooper
+                       ,pr_cdoperad => pr_cdoperad
+                       ,pr_nrborder => pr_nrborder
+                       ,pr_cdpactra => 0
+                       ,pr_nrdocmto => rw_craptdb.nrdocmto
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
       
-      -- Lançar valor dos juros nos lançamentos do borderô
+      -- Lançar valor de pagamento dos juros nos lançamentos do borderô
       pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrborder => pr_nrborder
@@ -7618,14 +7802,84 @@ END pc_inserir_lancamento_bordero;
                                    ,pr_nrdocmto => pr_nrdocmto
                                    ,pr_nrtitulo => rw_craptdb.nrtitulo
                                    ,pr_cdorigem => 5
-                                   ,pr_cdhistor => 2686
+                                   ,pr_cdhistor => CASE WHEN nvl(pr_flpgtava,0) = 0 THEN 
+                                                             vr_cdhistordsct_pgtojurosopc
+                                                        ELSE vr_cdhistordsct_pgtojurosavopc END
                                    ,pr_vllanmto => vr_vlpagmra
                                    ,pr_dscritic => vr_dscritic );
+
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Lançar valor de apropriação dos juros nos lançamentos do borderô
+      pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrborder => pr_nrborder
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_cdbandoc => pr_cdbandoc
+                                   ,pr_nrdctabb => pr_nrdctabb
+                                   ,pr_nrcnvcob => pr_nrcnvcob
+                                   ,pr_nrdocmto => pr_nrdocmto
+                                   ,pr_nrtitulo => rw_craptdb.nrtitulo
+                                   ,pr_cdorigem => 5
+                                   ,pr_cdhistor => vr_cdhistordsct_apropjurmra
+                                   ,pr_vllanmto => vr_vlpagmra
+                                   ,pr_dscritic => vr_dscritic );
+
+      -- Condicao para verificar se houve critica                             
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
       
     END IF;
     
     -- 4) Valor do título
     IF rw_craptdb.vlsldtit > 0 AND vr_flraspar THEN
+      -- Tratamentos conforme a origem do pagamento
+      -- 0 - Conta-Corrente (Raspada, ...)
+      IF pr_cdorigpg = 0 THEN
+        vr_cdhistor_opc := vr_cdhistordsct_pgtoopc; -- conta corrente
+        vr_dtdebito     := pr_dtmvtolt;
+        vr_vlpagmto     := vr_vlpagmto - vr_vlencarg;
+
+      -- 1 - Pagamento (Baixa de cobrança de títulos, ...)
+      -- 2 - COBTIT
+      ELSIF pr_cdorigpg IN (1,2) THEN 
+        -- Pagamento efetuado pelo avalista
+        IF pr_flpgtava = 1 THEN
+          vr_cdhistor_opc := vr_cdhistordsct_pgtoavalopc;
+        ELSE
+          IF pr_indpagto = 0 THEN
+            vr_cdhistor_opc := vr_cdhistordsct_pgtocompe; -- Compe
+          ELSE
+            vr_cdhistor_opc := vr_cdhistordsct_pgtocooper; -- Caixa/IB/TAA
+          END IF;  
+        END IF;
+        
+        IF pr_cdorigpg = 2 THEN
+          vr_vlpagmto := vr_vlpagmto - vr_vlencarg;
+        END IF;
+        
+        vr_dtdpagto := pr_dtmvtolt;
+        
+      -- 3 - Tela PAGAR
+      ELSIF pr_cdorigpg = 3 THEN
+        IF pr_flpgtava = 1 THEN
+          vr_cdhistor_opc := vr_cdhistordsct_pgtoavalopc;
+        ELSE
+          vr_cdhistor_opc := vr_cdhistordsct_pgtoopc;
+        END IF;
+        
+        vr_dtdebito := pr_dtmvtolt;
+
+      -- origem de pagamento inválida
+      ELSE
+        vr_cdcritic := 0;
+        vr_dscritic := 'Conteúdo inválido informado para o parâmentro dsct0003.pc_pagar_titulo.pr_cdorigpg';
+        RAISE vr_exc_erro;
+      END IF;
       
       IF rw_craptdb.vlsldtit > vr_vlpagmto THEN
         vr_vlpagtit := vr_vlpagmto;
@@ -7637,105 +7891,74 @@ END pc_inserir_lancamento_bordero;
       END IF;
       
       vr_vlpagmto := vr_vlpagmto - vr_vlpagtit;
-        
-      -- Projeto Ligeirinho -  paralelismo
-      -- busca a sequencia para as execuções de paralelismo
-      IF paga0001.fn_exec_paralelo THEN
-        vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-      ELSE                                         
-        vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt) + 1;
-      END IF;
       
-      -- Debita o valor do título se o pagamento vier da conta corrente
-      IF pr_cdorigpg = 0 THEN
-        BEGIN
-          
-          DSCT0003.pc_efetua_lanc_cc ( pr_dtmvtolt => pr_dtmvtolt
-                                      ,pr_cdagenci => 1
-                                      ,pr_cdbccxlt => 100
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_vllanmto => vr_vlpagtit
-                                      ,pr_cdhistor => 2670
-                                      ,pr_cdcooper => pr_cdcooper
-                                      ,pr_cdoperad => pr_cdoperad
-                                      ,pr_nrborder => pr_nrborder
-                                      ,pr_cdpactra => 0
-                                      ,pr_dscritic => vr_dscritic);
-          
-          -- Condicao para verificar se houve critica                             
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF; 
-          
-          /*
-          INSERT INTO craplcm
-              (craplcm.dtmvtolt
-              ,craplcm.cdagenci
-              ,craplcm.cdbccxlt
-              ,craplcm.nrdolote
-              ,craplcm.nrdconta
-              ,craplcm.nrdocmto
-              ,craplcm.vllanmto
-              ,craplcm.cdhistor
-              ,craplcm.nrseqdig
-              ,craplcm.nrdctabb
-              ,craplcm.nrautdoc
-              ,craplcm.cdcooper
-              ,craplcm.cdpesqbb)
-          VALUES
-              (pr_dtmvtolt
-              ,1
-              ,100
-              ,10301
-              ,pr_nrdconta
-              ,NVL(vr_nrseqdig,0) 
-              ,vr_vlpagtit
-              ,2670
-              ,NVL(vr_nrseqdig,0)
-              ,pr_nrdconta
-              ,0
-              ,pr_cdcooper
-              ,pr_nrdocmto)
-          RETURNING craplcm.dtmvtolt
-                   ,craplcm.cdagenci
-                   ,craplcm.cdbccxlt
-                   ,craplcm.nrdolote
-                   ,craplcm.nrseqdig
-               INTO vr_dtmvtolt_lcm
-                   ,vr_cdagenci_lcm
-                   ,vr_cdbccxlt_lcm
-                   ,vr_nrdolote_lcm
-                   ,vr_nrseqdig_lcm; */
-        EXCEPTION
-          WHEN OTHERS THEN
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
-            vr_cdcritic := 1034;
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                             'craplcm(2):' ||
-                             '  dtmvtolt:'   || pr_dtmvtolt  ||
-                             ', cdagenci:'  || '1'      || 
-                             ', cdbccxlt:'  || '100'    || 
-                             ', nrdolote:'  || '10301'  ||
-                             ', nrdconta:'  || pr_nrdconta  ||
-                             ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
-                             ', vllanmto:'  || vr_vlpagtit  ||
-                             ', cdhistor:'  || '2670'       ||
-                             ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
-                             ', nrdctabb:'  || pr_nrdconta  ||
-                             ', nrautdoc:'  || '0'          ||
-                             ', cdcooper:'  || pr_cdcooper  ||
-                             ', cdpesqbb:'  || pr_nrdocmto  || 
-                             '. ' ||sqlerrm; 
-            RAISE vr_exc_erro;
-        END; 
+      -- 0 Conta-Corrente ou 3 - Tela PAGAR
+      IF pr_cdorigpg IN (0,3) THEN
+        -- Debita o valor do título se o pagamento vier da conta corrente
+        pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
+                         ,pr_cdagenci => 1
+                         ,pr_cdbccxlt => 100
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_vllanmto => vr_vlpagtit
+                         ,pr_cdhistor => CASE WHEN nvl(pr_flpgtava,0) = 0 THEN 
+                                                   vr_cdhistordsct_pgtocc
+                                              ELSE vr_cdhistordsct_pgtoavalcc END
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_nrborder => pr_nrborder
+                         ,pr_cdpactra => 0
+                         ,pr_nrdocmto => rw_craptdb.nrdocmto
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+        -- Condicao para verificar se houve critica                             
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
       END IF;
-      
-      -- Atribui o histórico de pagamento conforme a origem
-      SELECT DECODE(pr_cdorigpg,
-                    0, 2671,     -- conta corrente
-                    1, 2672,     -- Compe
-                    2673         -- Caixa/IB/TAA
-                    ) INTO vr_cdhistor_pagtit FROM dual;       
+
+      -- Se o valor pago do boleto for maior que o saldo restante, lança o saldo restante como crédito na conta corrente do cooperado
+      IF vr_vlpagmto > 0 THEN
+        pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
+                         ,pr_cdagenci => 1
+                         ,pr_cdbccxlt => 100
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_vllanmto => (pr_vlpagmto - rw_craptdb.vlsldtit)
+                         ,pr_cdhistor => vr_cdhistordsct_credito
+                         ,pr_cdcooper => pr_cdcooper
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_nrborder => pr_nrborder
+                         ,pr_cdpactra => 0
+                         ,pr_nrdocmto => rw_craptdb.nrdocmto
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+        -- Condicao para verificar se houve critica                             
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+
+      -- Se a data de vencimento for maior que a data de pagamento, significa um pagamento adiantado, então 
+      -- realizar o lançamento de estorno na conta do cooperador dos juros cobrados até o vencimento
+      IF rw_craptdb.dtvencto >= pr_dtmvtolt THEN
+        dsct0001.pc_abatimento_juros_titulo(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrborder => pr_nrborder
+                                           ,pr_cdbandoc => pr_cdbandoc
+                                           ,pr_nrdctabb => pr_nrdctabb
+                                           ,pr_nrcnvcob => pr_nrcnvcob
+                                           ,pr_nrdocmto => pr_nrdocmto
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_cdagenci => pr_cdagenci
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_cdorigpg => 1 -- operacao de credito
+                                           ,pr_dtdpagto => pr_dtmvtolt
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic );
+        -- Condicao para verificar se houve critica                             
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
                                    
       -- Lançar valor do título nos lançamentos do borderô
       pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
@@ -7748,7 +7971,7 @@ END pc_inserir_lancamento_bordero;
                                    ,pr_nrdocmto => pr_nrdocmto
                                    ,pr_nrtitulo => rw_craptdb.nrtitulo
                                    ,pr_cdorigem => 5
-                                   ,pr_cdhistor => vr_cdhistor_pagtit
+                                   ,pr_cdhistor => vr_cdhistor_opc
                                    ,pr_vllanmto => vr_vlpagtit
                                    ,pr_dscritic => vr_dscritic );
       
@@ -7758,28 +7981,33 @@ END pc_inserir_lancamento_bordero;
     
     -- chama a rotina de baixa do titulo
     IF vr_flbaixar THEN
-      vr_insittit := 3;
-      vr_dtdebito := pr_dtmvtolt;
+      IF rw_craptdb.dtvencto >= pr_dtmvtolt THEN
+        vr_insittit := 2;
+      ELSE
+        vr_insittit := 3;
+      END IF;
     ELSE
       vr_insittit := 4;
       vr_dtdebito := null;
+      vr_dtdpagto := null;
     END IF;
     
     BEGIN
       -- Atualiza as informações do título
       UPDATE craptdb
          SET craptdb.insittit = vr_insittit,
-             craptdb.vlpagiof = vr_vlpagiof,
-             craptdb.vlpagmta = vr_vlpagmta,
-             craptdb.vlpagmra = vr_vlpagmra,
+             craptdb.vlpagiof = craptdb.vlpagiof + vr_vlpagiof,
+             craptdb.vlpagmta = craptdb.vlpagmta + vr_vlpagmta,
+             craptdb.vlpagmra = craptdb.vlpagmra + vr_vlpagmra,
              craptdb.vlsldtit = vr_vlsldtit,
-             craptdb.dtdebito = vr_dtdebito
+             craptdb.dtdebito = nvl(vr_dtdebito,craptdb.dtdebito),
+             craptdb.dtdpagto = nvl(vr_dtdpagto,craptdb.dtdpagto)
        WHERE craptdb.rowid    = rw_craptdb.rowid;
     EXCEPTION
-      when others then
+      WHEN OTHERS THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Erro ao atualizar craptdb: '||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
-        raise vr_exc_saida;
+        RAISE vr_exc_erro;
     END; 
     
     -- se o título foi baixado
@@ -7817,7 +8045,7 @@ END pc_inserir_lancamento_bordero;
 
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         vr_dscritic := vr_dscritic||' pr_nrdconta:' || pr_nrdconta || ' ,pr_nrborder:' || pr_nrborder||','; 
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
       
       IF vr_dados_tarifa.vlrtarif > 0 THEN --Lancamento Tarifa Cobranca Reg PF
@@ -7850,7 +8078,7 @@ END pc_inserir_lancamento_bordero;
          --Se ocorreu erro
          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
            vr_dscritic := vr_dscritic||' pr_nrdconta:' || pr_nrdconta || ' ,pr_nrborder:' || pr_nrborder||','; 
-           RAISE vr_exc_saida;
+           RAISE vr_exc_erro;
          END IF;
          
        END IF;
@@ -7882,7 +8110,7 @@ END pc_inserir_lancamento_bordero;
       --Se ocorreu erro
       IF vr_des_erro = 'NOK' THEN
         vr_dscritic := vr_dscritic||' pr_nrdconta:' || pr_nrdconta || ' ,pr_nrborder:' || pr_nrborder||','; 
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
     
     END IF;
@@ -7890,7 +8118,7 @@ END pc_inserir_lancamento_bordero;
     COMMIT;
         
     EXCEPTION
-      WHEN vr_exc_saida THEN
+      WHEN vr_exc_erro THEN
       vr_cdcritic := NVL(vr_cdcritic, 0);
       IF vr_cdcritic > 0 THEN
         vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
@@ -7909,244 +8137,425 @@ END pc_inserir_lancamento_bordero;
     --END;  
   END pc_pagar_titulo;
   
-  PROCEDURE pc_efetua_lanc_cc (pr_dtmvtolt IN craplcm.dtmvtolt%TYPE -- Origem: do lote de liberação (craplot)
-                              ,pr_cdagenci IN craplcm.cdagenci%TYPE -- Origem: do lote de liberação (craplot)
-                              ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE -- Origem: do lote de liberação (craplot)
-                              ,pr_nrdconta IN craplcm.nrdconta%TYPE -- Origem: nrdconta do Bordero
-                              ,pr_vllanmto IN craplcm.vllanmto%TYPE -- Origem: do cálculo :aux_vlborder + craptdb.vlliquid da linha 1870.
-                              ,pr_cdhistor IN craphis.cdhistor%TYPE
-                              ,pr_cdcooper IN craplcm.cdcooper%TYPE
-                              ,pr_cdoperad IN crapbdt.cdoperad%TYPE --> Operador
-                              ,pr_nrborder IN crapbdt.nrborder%TYPE -- Origem: Bordero
-                              ,pr_cdpactra IN crapope.cdpactra%TYPE
-                              ,pr_dscritic    OUT VARCHAR2          --> Descricao Critica
+  PROCEDURE pc_efetua_lanc_cc (pr_dtmvtolt  IN craplcm.dtmvtolt%TYPE -- Origem: do lote de liberação (craplot)
+                              ,pr_cdagenci  IN craplcm.cdagenci%TYPE -- Origem: do lote de liberação (craplot)
+                              ,pr_cdbccxlt  IN craplcm.cdbccxlt%TYPE -- Origem: do lote de liberação (craplot)
+                              ,pr_nrdconta  IN craplcm.nrdconta%TYPE -- Origem: nrdconta do Bordero
+                              ,pr_vllanmto  IN craplcm.vllanmto%TYPE -- Origem: do cálculo :aux_vlborder + craptdb.vlliquid da linha 1870.
+                              ,pr_cdhistor  IN craphis.cdhistor%TYPE
+                              ,pr_cdcooper  IN craplcm.cdcooper%TYPE
+                              ,pr_cdoperad  IN crapbdt.cdoperad%TYPE --> Operador
+                              ,pr_nrborder  IN crapbdt.nrborder%TYPE -- Origem: Bordero
+                              ,pr_cdpactra  IN crapope.cdpactra%TYPE
+                              ,pr_nrdocmto  IN craptdb.nrdocmto%TYPE
+                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> codigo critica
+                              ,pr_dscritic OUT VARCHAR2              --> Descricao Critica
                               ) IS
-  BEGIN
+    /*-------------------------------------------------------------------------------------------------------
+      Programa : pc_lanca_tarifa_bordero        Antigo: b1wgen0030.p/efetua_liber_anali_bordero (Trecho de Liberação)
+      Sistema  : Procedure para lançar crédito de desconto de Título
+      Sigla    : CRED
+      Autor    : Andrew Albuquerque (GFT) 
+      Data     : Abril/2018
+     
+      Objetivo  : Procedure para laçamento de crédito de desconto de Título.
 
-   /*-------------------------------------------------------------------------------------------------------
-     Programa : pc_lanca_tarifa_bordero        Antigo: b1wgen0030.p/efetua_liber_anali_bordero (Trecho de Liberação)
-     Sistema  : Procedure para lançar crédito de desconto de Título
-     Sigla    : CRED
-     Autor    : Andrew Albuquerque (GFT) 
-     Data     : Abril/2018
-   
-     Objetivo  : Procedure para laçamento de crédito de desconto de Título.
-
-     Alteracoes: 16/04/2018 - Criação (Andrew Albuquerque (GFT))
-   ----------------------------------------------------------------------------------------------------------*/
-    DECLARE
-        
+      Alteracoes: 16/04/2018 - Criação (Andrew Albuquerque (GFT))
+    ----------------------------------------------------------------------------------------------------------*/
     vr_nrdolote craplot.nrdolote%TYPE;
-      
-    -- Variável de críticas
-    vr_dscritic VARCHAR2(10000);
-      
-    vr_exc_erro exception;
-    
     vr_rowid    ROWID;
+
+    -- Registros para armazenar dados do lancamento gerado
+    rw_craplcm craplcm%ROWTYPE;    
+        
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+        
+    vr_exc_erro exception;
+      
     -- CURSORES
     CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
                      ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
                      ,pr_cdagenci IN craplot.cdagenci%TYPE
                      ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
                      ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
-      SELECT lot.qtcompln
-            ,lot.vlcompcr
-            ,lot.qtinfoln
-            ,lot.vlinfocr
-            ,lot.vlcompdb
-            ,lot.vlinfodb
-            ,lot.dtmvtolt
-            ,lot.cdagenci
-            ,lot.cdbccxlt
-            ,lot.nrdolote
-            ,lot.nrseqdig
-            ,lot.tplotmov
-            ,lot.cdoperad
-            ,lot.cdhistor
-            ,lot.ROWID
-            ,count(1) over() retorno
-        FROM craplot lot
-       WHERE lot.cdcooper = pr_cdcooper
-         AND lot.dtmvtolt = pr_dtmvtolt
-         AND lot.cdagenci = pr_cdagenci
-         AND lot.cdbccxlt = pr_cdbccxlt
-         AND lot.nrdolote = pr_nrdolote
-      FOR UPDATE;
+    SELECT lot.qtcompln
+          ,lot.vlcompcr
+          ,lot.qtinfoln
+          ,lot.vlinfocr
+          ,lot.vlcompdb
+          ,lot.vlinfodb
+          ,lot.dtmvtolt
+          ,lot.cdagenci
+          ,lot.cdbccxlt
+          ,lot.nrdolote
+          ,lot.nrseqdig
+          ,lot.tplotmov
+          ,lot.cdoperad
+          ,lot.cdhistor
+          ,lot.ROWID
+          ,count(1) over() retorno
+      FROM craplot lot
+     WHERE lot.cdcooper = pr_cdcooper
+       AND lot.dtmvtolt = pr_dtmvtolt
+       AND lot.cdagenci = pr_cdagenci
+       AND lot.cdbccxlt = pr_cdbccxlt
+       AND lot.nrdolote = pr_nrdolote
+    FOR UPDATE;
     rw_craplot cr_craplot%ROWTYPE;
-    
-    -- Registros para armazenar dados do lancamento gerado
-    rw_craplcm craplcm%ROWTYPE;    
-    
-    BEGIN
-      
-      --vr_nrdolote := 17000 + pr_cdpactra;
-      vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
-                                ,pr_nmdcampo => 'NRDOLOTE'
-                                ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
-                                             || pr_dtmvtolt || ';'
-                                             || TO_CHAR(pr_cdagenci)|| ';'
-                                             || '100');
-      --Buscar o lote
-      OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                     ,pr_dtmvtolt => pr_dtmvtolt
-                     ,pr_cdagenci => 1
-                     ,pr_cdbccxlt => 100
-                     ,pr_nrdolote => vr_nrdolote);
+  BEGIN
+    --vr_nrdolote := 17000 + pr_cdpactra;
+    vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
+                              ,pr_nmdcampo => 'NRDOLOTE'
+                              ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
+                                              || pr_dtmvtolt || ';'
+                                              || TO_CHAR(pr_cdagenci)|| ';'
+                                              || '100');
 
-      FETCH cr_craplot INTO rw_craplot;
-
-      -- Gerar erro caso não encontre
-      IF cr_craplot%NOTFOUND THEN
-         -- Fechar cursor pois teremos raise
-         CLOSE cr_craplot;
-
-         BEGIN
-           INSERT INTO craplot
-                      (cdcooper
-                      ,dtmvtolt
-                      ,cdagenci
-                      ,cdbccxlt
-                      ,nrdolote
-                      ,tplotmov
-                      ,cdoperad
-                      ,cdhistor)
-               VALUES(pr_cdcooper
-                      ,pr_dtmvtolt
-                      ,1
-                      ,100
-                      ,vr_nrdolote
-                      ,1
-                      ,pr_cdoperad
-                      ,vr_cdhistor_credito_dscto_tit)
-            RETURNING dtmvtolt
-                      ,cdagenci
-                      ,cdbccxlt
-                      ,nrdolote
-                      ,vlinfocr
-                      ,vlcompcr
-                      ,qtinfoln
-                      ,qtcompln
-                      ,nrseqdig
-                      ,ROWID
-                 INTO rw_craplot.dtmvtolt
-                      ,rw_craplot.cdagenci
-                      ,rw_craplot.cdbccxlt
-                      ,rw_craplot.nrdolote
-                      ,rw_craplot.vlinfocr
-                      ,rw_craplot.vlcompcr
-                      ,rw_craplot.qtinfoln
-                      ,rw_craplot.qtcompln
-                      ,rw_craplot.nrseqdig
-                      ,rw_craplot.rowid;
-         EXCEPTION
-           WHEN OTHERS THEN
-             -- Monta critica
-             vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
-             -- Gera exceção
-             RAISE vr_exc_erro;
-
-         END;
-      ELSE
-         -- Apenas fechar o cursor
-         CLOSE cr_craplot;
-      END IF;
+    /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+    PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+    se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+    da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+    a agencia do cooperado*/ 
+    IF  NOT paga0001.fn_exec_paralelo THEN
+        OPEN  cr_craplot(pr_cdcooper => pr_cdcooper
+                        ,pr_dtmvtolt => pr_dtmvtolt
+                        ,pr_cdagenci => 1
+                        ,pr_cdbccxlt => 100
+                        ,pr_nrdolote => vr_nrdolote);
+        FETCH cr_craplot INTO rw_craplot;
+        IF    cr_craplot%NOTFOUND THEN
+              CLOSE cr_craplot;
+              BEGIN
+                INSERT INTO craplot
+                       (/*01*/ cdcooper
+                       ,/*02*/ dtmvtolt
+                       ,/*03*/ cdagenci
+                       ,/*04*/ cdbccxlt
+                       ,/*05*/ nrdolote
+                       ,/*06*/ tplotmov
+                       ,/*07*/ cdoperad
+                       ,/*08*/ cdhistor)
+                VALUES (/*01*/ pr_cdcooper
+                       ,/*02*/ pr_dtmvtolt
+                       ,/*03*/ 1
+                       ,/*04*/ 100
+                       ,/*05*/ vr_nrdolote
+                       ,/*06*/ 1
+                       ,/*07*/ pr_cdoperad
+                       ,/*08*/ pr_cdhistor)
+                RETURNING /*01*/ dtmvtolt
+                         ,/*02*/ cdagenci
+                         ,/*03*/ cdbccxlt
+                         ,/*04*/ nrdolote
+                         ,/*05*/ vlinfocr
+                         ,/*06*/ vlcompcr
+                         ,/*07*/ qtinfoln
+                         ,/*08*/ qtcompln
+                         ,/*09*/ nrseqdig
+                         ,/*10*/ ROWID
+                INTO      /*01*/ rw_craplot.dtmvtolt
+                         ,/*02*/ rw_craplot.cdagenci
+                         ,/*03*/ rw_craplot.cdbccxlt
+                         ,/*04*/ rw_craplot.nrdolote
+                         ,/*05*/ rw_craplot.vlinfocr
+                         ,/*06*/ rw_craplot.vlcompcr
+                         ,/*07*/ rw_craplot.qtinfoln
+                         ,/*08*/ rw_craplot.qtcompln
+                         ,/*09*/ rw_craplot.nrseqdig
+                         ,/*10*/ rw_craplot.rowid;
+              EXCEPTION
+                WHEN OTHERS THEN
+                     CLOSE cr_craplot;
+                     vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
+                     RAISE vr_exc_erro;
+              END;
+        ELSE
+          CLOSE cr_craplot;  
+        END   IF;
+        
+	      rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1; -- projeto ligeirinho
+    ELSE
+        paga0001.pc_insere_lote_wrk(pr_cdcooper => pr_cdcooper
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_cdagenci => 1
+                                   ,pr_cdbccxlt => 100
+                                   ,pr_nrdolote => vr_nrdolote
+                                   ,pr_cdoperad => pr_cdoperad
+                                   ,pr_nrdcaixa => NULL
+                                   ,pr_tplotmov => 1
+                                   ,pr_cdhistor => vr_cdhistordsct_credito
+                                   ,pr_cdbccxpg => NULL
+                                   ,pr_nmrotina => 'DSCT0003.PC_EFETUA_LANC_CC');
+        				
+        rw_craplot.dtmvtolt := pr_dtmvtolt;                  
+        rw_craplot.cdagenci := 1;                   
+        rw_craplot.cdbccxlt := 100;                  
+        rw_craplot.nrdolote := vr_nrdolote;                   
+        rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm;
+    END IF;
            
-      BEGIN
-        -- Gero o Insert na tabela de Lancamentos em depositos a vista
-        INSERT INTO craplcm
-               (/*01*/ dtmvtolt
-               ,/*02*/ cdagenci
-               ,/*03*/ cdbccxlt
-               ,/*04*/ nrdolote
-               ,/*05*/ nrdconta
-               ,/*06*/ nrdocmto
-               ,/*07*/ vllanmto
-               ,/*08*/ cdhistor
-               ,/*09*/ nrseqdig
-               ,/*10*/ nrdctabb
-               ,/*11*/ nrautdoc 
-               ,/*12*/ cdcooper
-               ,/*13*/ cdpesqbb)
-        VALUES (/*01*/ rw_craplot.dtmvtolt
-               ,/*02*/ rw_craplot.cdagenci
-               ,/*03*/ rw_craplot.cdbccxlt
-               ,/*04*/ rw_craplot.nrdolote
-               ,/*05*/ pr_nrdconta
-               ,/*06*/ rw_craplot.nrseqdig +1
-               ,/*07*/ pr_vllanmto 
-               ,/*08*/ pr_cdhistor
-               ,/*09*/ rw_craplot.nrseqdig +1
-               ,/*10*/ pr_nrdconta
-               ,/*11*/ 0
-               ,/*12*/ pr_cdcooper
-               ,/*13*/ 'Desconto do Borderô ' || pr_nrborder)
-              RETURNING craplcm.ROWID
-                       ,craplcm.cdhistor
-                       ,craplcm.cdcooper
-                       ,craplcm.dtmvtolt
-                       ,craplcm.hrtransa
-                       ,craplcm.nrdconta
-                       ,craplcm.nrdocmto
-                       ,craplcm.vllanmto
-                  INTO  vr_rowid
-                       ,rw_craplcm.cdhistor
-                       ,rw_craplcm.cdcooper
-                       ,rw_craplcm.dtmvtolt
-                       ,rw_craplcm.hrtransa
-                       ,rw_craplcm.nrdconta
-                       ,rw_craplcm.nrdocmto
-                       ,rw_craplcm.vllanmto;
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Monta critica
-          vr_dscritic := 'Erro ao inserir na tabela craplcm: ' || SQLERRM;
-          -- Gera exceção
-          RAISE vr_exc_erro;
-      END;
-
-      BEGIN
-        UPDATE craplot
-           SET craplot.nrseqdig = rw_craplcm.nrseqdig
-              ,craplot.qtinfoln = craplot.qtinfoln + 1
-              ,craplot.qtcompln = craplot.qtcompln + 1
-              ,craplot.vlinfocr = craplot.vlinfocr + rw_craplcm.vllanmto
-              ,craplot.vlcompcr = craplot.vlcompcr + rw_craplcm.vllanmto
-         WHERE craplot.rowid = rw_craplot.rowid
-         RETURNING dtmvtolt
-                   ,cdagenci
-                   ,cdbccxlt
-                   ,nrdolote
-                   ,vlinfocr
-                   ,vlcompcr
-                   ,qtinfoln
-                   ,qtcompln
-                   ,nrseqdig
-                   ,ROWID
-              INTO rw_craplot.dtmvtolt
-                  ,rw_craplot.cdagenci
-                  ,rw_craplot.cdbccxlt
-                  ,rw_craplot.nrdolote
-                  ,rw_craplot.vlinfocr
-                  ,rw_craplot.vlcompcr
-                  ,rw_craplot.qtinfoln
-                  ,rw_craplot.qtcompln
-                  ,rw_craplot.nrseqdig
-                  ,rw_craplot.rowid;
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Monta critica
-          vr_dscritic := 'Erro ao atualizar o Lote!';
-
-          -- Gera exceção
-          RAISE vr_exc_erro;
-      END;
-    
+    BEGIN
+      -- Gero o Insert na tabela de Lancamentos em depositos a vista
+      INSERT INTO craplcm
+             (/*01*/ dtmvtolt
+             ,/*02*/ cdagenci
+             ,/*03*/ cdbccxlt
+             ,/*04*/ nrdolote
+             ,/*05*/ nrdconta
+             ,/*06*/ nrdocmto
+             ,/*07*/ vllanmto
+             ,/*08*/ cdhistor
+             ,/*09*/ nrseqdig
+             ,/*10*/ nrdctabb
+             ,/*11*/ nrautdoc 
+             ,/*12*/ cdcooper
+             ,/*13*/ cdpesqbb)
+      VALUES (/*01*/ rw_craplot.dtmvtolt
+             ,/*02*/ rw_craplot.cdagenci
+             ,/*03*/ rw_craplot.cdbccxlt
+             ,/*04*/ rw_craplot.nrdolote
+             ,/*05*/ pr_nrdconta
+             ,/*06*/ pr_nrdocmto
+             ,/*07*/ pr_vllanmto 
+             ,/*08*/ pr_cdhistor
+             ,/*09*/ rw_craplot.nrseqdig
+             ,/*10*/ pr_nrdconta
+             ,/*11*/ 0
+             ,/*12*/ pr_cdcooper
+             ,/*13*/ 'Desconto de Título do Borderô ' || pr_nrborder)
+      RETURNING /*01*/ craplcm.ROWID
+               ,/*02*/ craplcm.cdhistor
+               ,/*03*/ craplcm.cdcooper
+               ,/*04*/ craplcm.dtmvtolt
+               ,/*05*/ craplcm.hrtransa
+               ,/*06*/ craplcm.nrdconta
+               ,/*07*/ craplcm.nrdocmto
+               ,/*08*/ craplcm.vllanmto
+      INTO      /*01*/ vr_rowid
+               ,/*02*/ rw_craplcm.cdhistor
+               ,/*03*/ rw_craplcm.cdcooper
+               ,/*04*/ rw_craplcm.dtmvtolt
+               ,/*05*/ rw_craplcm.hrtransa
+               ,/*06*/ rw_craplcm.nrdconta
+               ,/*07*/ rw_craplcm.nrdocmto
+               ,/*08*/ rw_craplcm.vllanmto;
     EXCEPTION
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '||' '||vr_dscritic||' '||sqlerrm;
+           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+           vr_cdcritic := 1034;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           'craplcm:' ||
+                           '  dtmvtolt:'   || pr_dtmvtolt  ||
+                           ', cdagenci:'  || '1'      || 
+                           ', cdbccxlt:'  || '100'    || 
+                           ', nrdolote:'  || rw_craplot.nrdolote ||
+                           ', nrdconta:'  || pr_nrdconta  ||
+                           ', nrdocmto:'  || rw_craplcm.nrdocmto   || 
+                           ', vllanmto:'  || rw_craplcm.vllanmto  ||
+                           ', cdhistor:'  || vr_cdhistordsct_pgtomultacc ||
+                           ', nrseqdig:'  || rw_craplot.nrseqdig   ||
+                           ', nrdctabb:'  || pr_nrdconta  ||
+                           ', nrautdoc:'  || '0'          ||
+                           ', cdcooper:'  || pr_cdcooper  ||
+                           ', cdpesqbb:'  || rw_craplcm.nrdocmto  || 
+                           '. ' ||sqlerrm; 
+           RAISE vr_exc_erro;
     END;
+
+    /*[PROJETO LIGEIRINHO]*/
+    IF  NOT paga0001.fn_exec_paralelo THEN
+        BEGIN
+          UPDATE craplot
+          SET    craplot.nrseqdig = rw_craplcm.nrseqdig
+                ,craplot.qtinfoln = craplot.qtinfoln + 1
+                ,craplot.qtcompln = craplot.qtcompln + 1
+                ,craplot.vlinfocr = craplot.vlinfocr + rw_craplcm.vllanmto
+                ,craplot.vlcompcr = craplot.vlcompcr + rw_craplcm.vllanmto
+          WHERE  craplot.rowid = rw_craplot.rowid
+          RETURNING /*01*/ dtmvtolt
+                   ,/*02*/ cdagenci
+                   ,/*03*/ cdbccxlt
+                   ,/*04*/ nrdolote
+                   ,/*05*/ vlinfocr
+                   ,/*06*/ vlcompcr
+                   ,/*07*/ qtinfoln
+                   ,/*08*/ qtcompln
+                   ,/*09*/ nrseqdig
+                   ,/*10*/ ROWID
+          INTO      /*01*/ rw_craplot.dtmvtolt
+                   ,/*02*/ rw_craplot.cdagenci
+                   ,/*03*/ rw_craplot.cdbccxlt
+                   ,/*04*/ rw_craplot.nrdolote
+                   ,/*05*/ rw_craplot.vlinfocr
+                   ,/*06*/ rw_craplot.vlcompcr
+                   ,/*07*/ rw_craplot.qtinfoln
+                   ,/*08*/ rw_craplot.qtcompln
+                   ,/*09*/ rw_craplot.nrseqdig
+                   ,/*10*/ rw_craplot.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao atualizar o Lote!';
+               RAISE vr_exc_erro;
+        END;
+    END IF;
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '||SQLERRM;
   END pc_efetua_lanc_cc;
+  
+  PROCEDURE pc_processa_liquidacao_cobtit(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                         ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE
+                                         ,pr_nrctasac  IN crapcob.nrctasac%TYPE
+                                         ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE
+                                         ,pr_vlpagmto  IN NUMBER                --> Valor do pagamento
+                                         ,pr_indpagto  IN crapcob.indpagto%TYPE --> Indicador pagamento
+                                         ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Código do Operador
+                                         ,pr_cdagenci  IN crapass.cdagenci%TYPE --> Codigo da agencia
+                                         ,pr_nrdcaixa  IN craperr.nrdcaixa%TYPE --> Numero Caixa
+                                         ,pr_idorigem  IN INTEGER               --> Identificador Origem Chamada
+                                         ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                         ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                         ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_processa_liquidacao_cobtit
+      Sistema  : Ayllos
+      Sigla    : DSTC
+      Autor    : Paulo Penteado (GFT)
+      Data     : Junho/2018
+  
+      Objetivo  : Efetuar a liquidação de titulos gerados pela cobrança COBTIT
+  
+      Alteração : 10/06/2018 - Criação (Paulo Penteado (GFT))
+  
+    ----------------------------------------------------------------------------------------------------------*/
+    TYPE tpy_ref_tdb IS REF CURSOR;
+    cr_craptdb       tpy_ref_tdb;
+    vr_sql           VARCHAR2(32767);
+    
+    vr_tab_tit_bordero typ_tab_tit_bordero;
+    vr_vlpagmto        NUMBER(25,2);
+    vr_vlpagmto_rest   NUMBER(25,2);
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+  
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    CURSOR cr_cde IS
+    SELECT cde.nrctremp
+          ,cde.nrdconta
+          ,cde.dsparcelas
+          ,cde.nrcpfava
+    FROM   tbrecup_cobranca cde
+    WHERE  cde.tpproduto    = 3
+    AND    cde.nrdconta     = pr_nrctasac
+    AND    cde.nrboleto     = pr_nrdocmto
+    AND    cde.nrcnvcob     = pr_nrcnvcob
+    AND    cde.nrdconta_cob = pr_nrdconta
+    AND    cde.cdcooper     = pr_cdcooper;
+    rw_cde cr_cde%ROWTYPE;
+     
+  BEGIN
+    --    Verifica se a data esta cadastrada
+    OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat into rw_crapdat;
+    IF    btch0001.cr_crapdat%NOTFOUND THEN
+          CLOSE btch0001.cr_crapdat;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+          RAISE vr_exc_erro;
+    END   IF;
+    CLOSE btch0001.cr_crapdat;
+
+    OPEN  cr_cde;
+    FETCH cr_cde INTO rw_cde;
+    IF    cr_cde%FOUND THEN
+          CLOSE cr_cde;
+          
+          vr_vlpagmto      := pr_vlpagmto;
+          vr_vlpagmto_rest := vr_vlpagmto;
+
+          vr_sql := 'SELECT tmp.* '|| 
+                          ', rownum nrnumlin, count(1) over() qttotlin '||
+                    'FROM ( '||
+                    'SELECT tdb.cdbandoc, tdb.nrdctabb, tdb.nrcnvcob, tdb.nrdocmto, tdb.nrtitulo '||
+                          ',tdb.vlsldtit + (tdb.vliofcpl - tdb.vlpagiof) + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) vltitulo_total '||
+                    'FROM   craptdb tdb '||
+                    'WHERE  tdb.nrborder = :nrborder '||
+                    'AND    tdb.nrdconta = :nrdconta '||
+                    'AND    tdb.cdcooper = :cdcooper '||
+                    'AND    tdb.nrtitulo in ('||rw_cde.dsparcelas||') '||
+                    'ORDER  BY tdb.dtvencto ASC, tdb.vlsldtit DESC '||
+                    ') tmp';
+          
+          OPEN  cr_craptdb
+          FOR   vr_sql
+          USING rw_cde.nrctremp, rw_cde.nrdconta, pr_cdcooper;
+          LOOP
+            FETCH cr_craptdb INTO vr_tab_tit_bordero(1).cdbandoc
+                                 ,vr_tab_tit_bordero(1).nrdctabb
+                                 ,vr_tab_tit_bordero(1).nrcnvcob
+                                 ,vr_tab_tit_bordero(1).nrdocmto
+                                 ,vr_tab_tit_bordero(1).nrtitulo
+                                 ,vr_tab_tit_bordero(1).vltitulo
+                                 ,vr_tab_tit_bordero(1).nrnumlin
+                                 ,vr_tab_tit_bordero(1).qttotlin;
+            EXIT  WHEN cr_craptdb%NOTFOUND;
+            
+            -- verificar se é o último titulo da lista da COBTIT
+            IF vr_tab_tit_bordero(1).nrnumlin = vr_tab_tit_bordero(1).qttotlin THEN
+              vr_vlpagmto := vr_vlpagmto_rest;
+            ELSE
+              vr_vlpagmto_rest := vr_vlpagmto_rest - vr_tab_tit_bordero(1).vltitulo;
+              vr_vlpagmto      := vr_tab_tit_bordero(1).vltitulo;
+            END IF;
+            
+            pc_pagar_titulo(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_idorigem => pr_idorigem
+                           ,pr_cdoperad => pr_cdoperad
+                           ,pr_nrdconta => rw_cde.nrdconta
+                           ,pr_nrborder => rw_cde.nrctremp
+                           ,pr_cdbandoc => vr_tab_tit_bordero(1).cdbandoc
+                           ,pr_nrdctabb => vr_tab_tit_bordero(1).nrdctabb
+                           ,pr_nrcnvcob => vr_tab_tit_bordero(1).nrcnvcob
+                           ,pr_nrdocmto => vr_tab_tit_bordero(1).nrdocmto
+                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                           ,pr_inproces => rw_crapdat.inproces
+                           ,pr_cdorigpg => 2 -- COBTIT
+                           ,pr_indpagto => pr_indpagto
+                           ,pr_flpgtava => CASE WHEN rw_cde.nrcpfava IS NULL THEN 0 ELSE 1 END
+                           ,pr_vlpagmto => vr_vlpagmto
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+
+            IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+          END   LOOP;
+          CLOSE cr_craptdb;
+    END   IF;
+  EXCEPTION
+    WHEN vr_exc_erro then
+         IF  vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+  
+    WHEN OTHERS THEN
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := 'Erro geral na rotina DSCT0003.pc_processa_liquidacao_cobtit: '||SQLERRM;
+  END pc_processa_liquidacao_cobtit;
   
 END DSCT0003;
 /
