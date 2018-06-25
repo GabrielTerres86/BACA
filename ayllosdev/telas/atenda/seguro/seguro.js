@@ -123,6 +123,7 @@ var dtnascsgC   = '';
 var dtnascsg    = '';
 var cdsexotl    = null;
 var vlseguro    = 0;
+var dsMotcan	  = '';
 /*variaveis refentes ao seguro tela cadastro*/
 var vlplaseg    = null;
 var vlmorada    = null;
@@ -163,6 +164,7 @@ function resetaVars(){
 	 nmbenefi    = new Array();
 	 dsgraupr    = new Array();
 	 txpartic    = new Array();
+	 dsMotcan		 = '';
 	 
 	 // Variáveis referentes ao endereco
 	 dsendere    = null;
@@ -212,6 +214,7 @@ function controlaOperacao(operacao) {
                 idorigem   = $('#idorigem', $(this) ).val();
                 nmsispar   = $('#nmsispar', $(this)).val();
                 idcontrato = $('#idcontrato', $(this)).val();
+								dsMotcan   = $('#dsmotcan', $(this) ).val();
 				
 				// for para pegar os valores dos parentes caso seja vida
 				if(tpseguro == 3){
@@ -235,7 +238,7 @@ function controlaOperacao(operacao) {
 					return false;
 				}
 				mensagem = 'carregando etapa do cancelamento de seguro...';
-				if(dsStatus=='Cancelado'){
+				if(dsStatus.indexOf('Cancelado') >= 0){
 					mostraTelaDesfazerCancelamento();
 				}
 				else{
@@ -1741,7 +1744,7 @@ function carregaPropriedadesFormPrestVida(){
 
 	 $('#pesquisa').css('width','160px');
 	 $('label[for="dssitseg"]').css('margin-left','7px');
-	 $('#dssitseg').css({'width':'160px','margin-left':'20px'});
+	 $('#dssitseg').css({'width':'350px','margin-left':'20px'});
 	 
 	 // Máscaras moeda e inteiro
 		 $('#tpplaseg,#seguradora,#qtpreseg,#ddvencto').addClass('inteiro campo').css('width','40px');
@@ -2218,7 +2221,7 @@ function consultarSeg(){
 			$('#divConteudoOpcao,#tableJanela').css({'height':'340px'});
             
 			$('#nmdsegur').val(nmresseg);
-			$('#dssitseg').val(dsStatus);
+			$('#dssitseg').val(dsStatus + (dsMotcan.length > 0 ? ' - '+dsMotcan : ''));
 			
 			if(tpplaseg.length == 2){
 				tpplaseg = '0'+tpplaseg;
