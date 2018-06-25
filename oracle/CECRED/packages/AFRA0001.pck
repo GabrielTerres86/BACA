@@ -2219,7 +2219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_trib.put('CDT_Acct_Number'     , '0');
     vr_trib.put('CDT_Hldr_Type'       , '0');
     vr_trib.put('CDT_Hldr_Document'   , '0');
-    vr_trib.put('CDT_Hldr_Name'       , '0');
+    vr_trib.put('CDT_Hldr_Name'       , rw_craplft.dscedent);
     vr_trib.put('Trxn_Purpose'        , '0');
     
     --> Carregar no objeto json os dados da conta
@@ -2595,7 +2595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_trib.put('CDT_Acct_Number'     , '0');
     vr_trib.put('CDT_Hldr_Type'       , '0');
     vr_trib.put('CDT_Hldr_Document'   , '0');
-    vr_trib.put('CDT_Hldr_Name'       , '0');
+    vr_trib.put('CDT_Hldr_Name'       , rw_craplau.dscedent);
     vr_trib.put('Trxn_Purpose'        , '0');
 
  
@@ -3213,7 +3213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_gps.put('CDT_Acct_Type'       , '0');
     vr_gps.put('CDT_Acct_Number'     , '0');  
     vr_gps.put('CDT_Hldr_Type'       , '0');
-    vr_gps.put('CDT_Hldr_Name'       , '0');
+    vr_gps.put('CDT_Hldr_Name'       , rw_craplau.dscedent);
     vr_gps.put('CDT_Hldr_Document'   , '0');
     vr_gps.put('Trxn_Purpose'        , '0');
               
@@ -3489,7 +3489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_convenio.put('CDT_Acct_Number'  , '0');
     vr_convenio.put('CDT_Hldr_Type'    , '0');
     vr_convenio.put('CDT_Hldr_Document', '0');
-    vr_convenio.put('CDT_Hldr_Name'    , '0');
+    vr_convenio.put('CDT_Hldr_Name'    , rw_craplft.dscedent);
     vr_convenio.put('Trxn_Purpose'     , '0');
     
    
@@ -3791,7 +3791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_convenio.put('CDT_Acct_Number'  , '0');
     vr_convenio.put('CDT_Hldr_Type'    , '0');
     vr_convenio.put('CDT_Hldr_Document', '0');
-    vr_convenio.put('CDT_Hldr_Name'    , '0');
+    vr_convenio.put('CDT_Hldr_Name'    , rw_craplau.dscedent);
     vr_convenio.put('Trxn_Purpose'     , '0');
     
     ----> TRANSACTION
