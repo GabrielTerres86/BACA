@@ -3313,9 +3313,9 @@ PROCEDURE Grava_Dados:
                       /* 9 - DOCUMENTO DE IDENTIFICAÇAO - PROC
                          6 - CARTAO DE ASSINATURA
                          7 - FICHA CADASTRAL 
-						16 - DOCUMENTO DE IDENTIDADE - PJ
+						11 - DOCUMENTO DE IDENTIDADE - PJ
 					  */
-                      INPUT "9;6;7;16", 
+                      INPUT "9;6;7;11", 
                       INPUT par_cdoperad,
                      OUTPUT aux_cdcritic,
                      OUTPUT aux_dscritic).
@@ -3546,8 +3546,8 @@ PROCEDURE Grava_Dados:
 										INPUT par_idseqttl,
 										INPUT aux_nrcpfcgc,
 										INPUT par_dtmvtolt,
-										/* 16 - DOCUMENTO DE IDENTIDADE - PJ */
-										INPUT "16", 
+										/* 11 - DOCUMENTO DE IDENTIDADE - PJ */
+										INPUT "11", 
 										INPUT par_cdoperad,
 										OUTPUT aux_cdcritic,
 										OUTPUT aux_dscritic).
