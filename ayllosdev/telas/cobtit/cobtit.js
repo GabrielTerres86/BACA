@@ -172,11 +172,18 @@ function divBotoes(act) {
     return false;
 }
 
-function pesquisaAssociados() {
+function pesquisaAssociados(tipo) {
+    var form;
+    
+    if (tipo == 'M'){
+        form = 'frmManutencao';
+    }else if (tipo == 'B'){
+        form = 'frmBorderos';
+    }
     if ($('#nrdconta', '#frmBorderos').hasClass('campoTelaSemBorda')) {
         return false;
     }
-    mostraPesquisaAssociado('nrdconta', frmCab);
+    mostraPesquisaAssociado('nrdconta', form);
 }
 
 

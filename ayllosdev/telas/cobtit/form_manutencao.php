@@ -23,7 +23,7 @@ isPostMethod();
     
     <label for="nrdconta">Conta/DV:</label>
     <input type="text" id="nrdconta" name="nrdconta" class="conta navigation"/>	
-    <a href="#" onclick="pesquisaAssociados(); return false;" >
+    <a href="#" onclick="pesquisaAssociados('M'); return false;" >
         <img style="margin-top:2px;" src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif" />
     </a>
     <input type="text" name="nmprimtl" id="nmprimtl" readonlyclass="navigation" />
