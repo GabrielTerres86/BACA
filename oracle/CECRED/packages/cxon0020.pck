@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 12/12/2016
+   Data    : Outubro/2011                      Ultima atualizacao: 25/06/2018
 
    Dados referentes ao programa:
 
@@ -124,6 +124,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                             BacenJud (Andrino - Mouts). Projeto 341-Bacenjud
 							
                15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
+			   
+			   25/06/2018 - Adicionado CPF/CNPJ e nome do favorecido no e-mail enviado em casos de fraude.
+							(SCTASK0015124 - Kelvin).
 							
 ..............................................................................*/
   --  antigo tt-protocolo-ted 
@@ -978,10 +981,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END LOOP;
 
       -- monta o corpo do email
-      vr_des_corpo := '<b>Atencao! Houve tentativa de TED fraudulento.<br>'||
-                      'IP: ' || vr_nrdipatu || '<br>' ||
-                      'Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta)||'<br>'||
-                      '<b>CPF/CNPJ destino: </b>'|| vr_cpfcnpj;
+      vr_des_corpo := '<b>Atencao! Houve tentativa de TED fraudulento</b>.<br>' ||
+                      '<b>IP:</b> ' || vr_nrdipatu || '<br>' ||
+                      '<b>Cooperativa: </b>' || rw_crapcop.cdcooper || ' - ' || rw_crapcop.nmrescop || '<br>' ||
+                      '<b>Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta) || '<br>' ||
+                      '<b>CPF/CNPJ destino: </b>' || vr_cpfcnpj || '<br>' ||
+                      '<b>Nome Favorecido: </b>' || pr_nmfavore;
+                      
+                      
       -- Envio de e-mail informando que houve a tentativa
       gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
                                  pr_cdprogra => 'CXON0020',
