@@ -930,10 +930,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
       IF pr_tpoperacao = 1 THEN
 
         -- Se NAO foi informado nada
-        IF pr_tpretencao = 1 AND TRIM(pr_strhoraminutos) IS NULL THEN
-          vr_dscritic := 'Informe um intervalo.###qtdminutos_retencao###0';
-          RAISE vr_exc_saida;
-        ELSIF pr_tpretencao = 2 AND TRIM(pr_hrretencao) IS NULL THEN
+        IF pr_tpretencao = 2 AND TRIM(pr_hrretencao) IS NULL THEN
           vr_dscritic := 'Informe o horário.###hrretencao###0';
           RAISE vr_exc_saida;
         ELSIF pr_tpretencao = 3 AND nvl(pr_hrretencao,0) = 0 THEN
@@ -1077,21 +1074,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
       IF pr_tpoperacao = 1 AND 
          -- e tipo de retencao por intervalo 
          pr_tpretencao = 1 THEN
-
-        -- Chama a validacao e gravacao dos intervalos
-        pc_grava_intervalo(pr_cdcooper       => vr_cdcooper
-                          ,pr_cddopcao       => vr_cddopcao
-                          ,pr_cdoperad       => vr_cdoperad
-                          ,pr_cdoperacao     => pr_cdoperacao
+        IF pr_strhoraminutos IS NOT NULL THEN
+          -- Chama a validacao e gravacao dos intervalos
+          pc_grava_intervalo(pr_cdcooper       => vr_cdcooper
+                            ,pr_cddopcao       => vr_cddopcao
+                            ,pr_cdoperad       => vr_cdoperad
+                            ,pr_cdoperacao     => pr_cdoperacao
                         	,pr_tpoperacao     => pr_tpoperacao
-                          ,pr_strhoraminutos => pr_strhoraminutos
-                          ,pr_cdcritic       => vr_cdcritic
-                          ,pr_dscritic       => vr_dscritic);
-        -- Se retornou erro
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_saida;
+                            ,pr_strhoraminutos => pr_strhoraminutos
+                            ,pr_cdcritic       => vr_cdcritic
+                            ,pr_dscritic       => vr_dscritic);
+          -- Se retornou erro
+          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
         END IF;
-
       -- Se for do tipo Agendada
       ELSIF pr_tpoperacao = 2 OR 
             -- ou retencao igual a fixo
