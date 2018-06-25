@@ -1027,6 +1027,10 @@ create or replace package body cecred.PAGA0002 is
                                
                   10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
                                um agendamento de Transferencia (Lucas Ranghetti #676219)
+                               
+                  18/06/2018 - Validar que a agencia do banco creditada contenha apenas 4 digitos.
+                               (Wagner da Silva #INC0016785 #TASK0024613)
+                               
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
 
@@ -1496,6 +1500,19 @@ create or replace package body cecred.PAGA0002 is
     vr_cdcritic := 0;
     vr_dscritic := NULL;
     vr_dtmvtopg := pr_dtmvtopg;
+    
+    -- Validar que a agencia do banco creditada contenha apenas 4 digitos,
+    -- evitando erro no processamento da mensagem pela cabine.
+    -- Obs.: Tanto o ambiente mobile quanto o IB já validam isso, porém,
+    -- via mobile, quando utilizado a função colar ("paste"), com mais caracteres
+    -- acaba passando e gerando REJEICAO na cabine.
+    -- Início da validação.
+    IF length(pr_cdageban) > 4 THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Agencia deve ser informada sem o digito verificador (Limite de 4 digitos).';
+	  RAISE vr_exc_erro;
+    END IF;          
+    -- Fim da validação.
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
