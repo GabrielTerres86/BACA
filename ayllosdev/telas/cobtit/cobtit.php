@@ -95,12 +95,17 @@ include('../../includes/carrega_permissoes.php');
                                                                                 <? require_once("../../includes/pesquisa/pesquisa.php"); ?>
 
                                                                                 <div id="divRotina"></div>
-                                                                                
+                                                                                <form name="frmImprimir" id="frmImprimir" action="<?php echo $UrlSite; ?>telas/cobtit/imprimir_relatorio.php" method="post">
+                                                                                    <input type="hidden" name="idarquivo" id="idarquivo" value="">
+                                                                                    <input type="hidden" name="flgcriti" id="flgcriti" value="">
+                                                                                    <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+                                                                                </form>                     
                                                                                 <div id="divTela">
                                                                                     <!-- INCLUDE DO CABEÇALHO -->
                                                                                     <?php include('form_cabecalho.php'); ?>
                                                                                     <?php include('form_borderos.php'); ?>
                                                                                     <?php include('form_manutencao.php'); ?>
+                                                                                    <?php include('form_arquivos.php'); ?>
                                                                                     <div id="divBotoes" style="margin-bottom: 15px; text-align:center; margin-top: 15px;display:none"></div>
                                                                                     <div id="divManutencao"></div>
                                                                                     <div id="divUsoGenerico"></div>

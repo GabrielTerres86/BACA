@@ -19,7 +19,7 @@ isPostMethod();
     <label for="nrdconta">Conta/DV:</label>
     <input type="text" id="nrdconta" name="nrdconta" class="conta" />	
     <input type="hidden" id="cdagenci" name="cdagenci" />	
-    <a href="#" onclick="pesquisaAssociados(); return false;" ><img style="margin-top:2px;" src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
+    <a href="#" onclick="pesquisaAssociados('B'); return false;" ><img style="margin-top:2px;" src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
     <input type="text" name="nmprimtl" id="nmprimtl" readonly />
     <br style="clear:both" />
 

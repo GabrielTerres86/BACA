@@ -313,5 +313,39 @@ switch ($operacao){
             echo 'showError("inform","Operacao Efetuada com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divRotina\'));;");';
         }
     break;
+    case "IMPORTAR_ARQUIVO":
+        $nmarquiv = (isset($_POST['nmarquiv'])) ? $_POST['nmarquiv'] : '';
+        $flgreimp = (isset($_POST['flgreimp'])) ? $_POST['flgreimp'] : 0;
+
+        // Montar o xml de Requisicao
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nmarquiv>" . $nmarquiv . "</nmarquiv>";
+        $xml .= "   <flgreimp>" . $flgreimp . "</flgreimp>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "COBTIT", "COBTIT_IMP_ARQUIVO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        // Tratamento de erro
+        if (strtoupper($xmlObject->roottag->tags [0]->name == 'ERRO')) {
+            $msgErro = $xmlObject->roottag->tags[0]->cdata;
+            if ($msgErro == null || $msgErro == '') {
+                $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            }
+            exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', 'fechaRotina($(\'#divRotina\'));', false);
+        } else {
+            $flgreimp = (int) $xmlObject->roottag->tags[0]->cdata;
+            if ($flgreimp) { // Solicitar confirmacao
+                echo "$('#flgreimp', '#frmNomArquivo').val(1);";
+                echo 'confirmaImportacao();';
+            } else {
+                echo "$('#flgreimp', '#frmNomArquivo').val(0);";
+                echo 'showError("inform","Operacao Efetuada com Sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaArquivos(1, 15);fechaRotina($(\'#divRotina\'));");';
+            }
+        }
+
+    break;
 }
 ?>
