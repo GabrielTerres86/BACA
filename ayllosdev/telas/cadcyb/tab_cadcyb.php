@@ -23,6 +23,8 @@
 				<th>Origem</th>
 				<th>Conta</th>
 				<th>Contrato</th>
+				<th>Borderô</th>
+				<th>Título</th>
 				<th>Judicial</th>
 				<th>Extra Judicial</th>
 				<th>CIN</th>

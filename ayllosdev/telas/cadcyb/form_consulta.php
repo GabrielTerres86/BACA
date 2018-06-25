@@ -47,6 +47,8 @@
 					$flextjud = getByTagName($r->tags,"flextjud");
 					$flgehvip = getByTagName($r->tags,"flgehvip");
 					$dtenvcbr = getByTagName($r->tags,"dtenvcbr");
+					$nrborder = getByTagName($r->tags,"nrborder");
+					$nrtitulo = getByTagName($r->tags,"nrtitulo");
 					$dtinclus = getByTagName($r->tags,"dtinclus");
 					$cdopeinc = getByTagName($r->tags,"cdopeinc");
 					$dtaltera = getByTagName($r->tags,"dtaltera");
@@ -54,7 +56,7 @@
 					$assessor = getByTagName($r->tags,"nmassess");
 					$motivocin = getByTagName($r->tags,"dsmotcin");
 				?>
-				<tr onClick="mostraDetalhes('<? echo $dsorigem; ?>', '<? echo $nrdconta; ?>', '<? echo $nrctremp; ?>', '<? echo $flgjudic; ?>', '<? echo $flextjud; ?>', '<? echo $flgehvip; ?>', '<? echo $dtenvcbr; ?>', '<? echo $dtinclus; ?>', '<? echo $cdopeinc; ?>', '<? echo $dtaltera; ?>', '<? echo $cdoperad; ?>', '<? echo $assessor; ?>', '<? echo $motivocin; ?>' );" >
+				<tr onClick="mostraDetalhes('<? echo $dsorigem; ?>', '<? echo $nrdconta; ?>', '<? echo $nrctremp; ?>', '<? echo $flgjudic; ?>', '<? echo $flextjud; ?>', '<? echo $flgehvip; ?>', '<? echo $dtenvcbr; ?>', '<? echo $dtinclus; ?>', '<? echo $cdopeinc; ?>', '<? echo $dtaltera; ?>', '<? echo $cdoperad; ?>', '<? echo $assessor; ?>', '<? echo $motivocin; ?>', '<? echo $nrborder; ?>', '<? echo $nrtitulo; ?>'  );" >
 					<td>
 						<span><?php echo $dsorigem;?></span>
 						<?php echo $dsorigem;?>						

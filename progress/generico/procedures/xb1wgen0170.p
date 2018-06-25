@@ -12,6 +12,8 @@
    
                01/09/2015 - Adicionado os campos de assessoria e motivo CIN
                             (Douglas - Melhoria 12)
+                            
+               04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT)  
    
 .............................................................................*/
 
@@ -38,6 +40,8 @@ DEF VAR aux_qtregist AS INTE                                           NO-UNDO.
 
 DEF VAR aux_lsdconta AS CHAR                                           NO-UNDO.
 DEF VAR aux_lscontra AS CHAR                                           NO-UNDO.
+DEF VAR aux_lsborder AS CHAR                                           NO-UNDO.
+DEF VAR aux_lstitulo AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsjudici AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsextjud AS CHAR                                           NO-UNDO.
@@ -52,6 +56,10 @@ DEF VAR aux_dsdircop AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtenvcbr AS DATE                                           NO-UNDO. 
 DEF VAR aux_cdassess AS INTE                                           NO-UNDO. 
 DEF VAR aux_cdmotcin AS INTE                                           NO-UNDO. 
+DEF VAR aux_nrborder AS INTE                                           NO-UNDO. 
+DEF VAR aux_nrtitulo AS INTE                                           NO-UNDO. 
+
+
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -78,6 +86,8 @@ FOR EACH tt-param:
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
             WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).
             WHEN "nrctremp" THEN aux_nrctremp = INTE(tt-param.valorCampo).
+            WHEN "nrborder" THEN aux_nrborder = INTE(tt-param.valorCampo).
+            WHEN "nrtitulo" THEN aux_nrtitulo = INTE(tt-param.valorCampo).
             WHEN "cdorigem" THEN aux_cdorigem = INTE(tt-param.valorCampo).
             WHEN "flgjudic" THEN aux_flgjudic = LOGICAL(tt-param.valorCampo).
             WHEN "flextjud" THEN aux_flextjud = LOGICAL(tt-param.valorCampo).
@@ -91,6 +101,8 @@ FOR EACH tt-param:
 
             WHEN "lsdconta" THEN aux_lsdconta = tt-param.valorCampo.
             WHEN "lscontra" THEN aux_lscontra = tt-param.valorCampo.
+            WHEN "lsborder" THEN aux_lsborder = tt-param.valorCampo.
+            WHEN "lstitulo" THEN aux_lstitulo = tt-param.valorCampo.
             WHEN "lsorigem" THEN aux_lsorigem = tt-param.valorCampo.
             WHEN "lsjudici" THEN aux_lsjudici = tt-param.valorCampo.
             WHEN "lsextjud" THEN aux_lsextjud = tt-param.valorCampo.
@@ -126,6 +138,8 @@ PROCEDURE valida-cadcyb:
                              INPUT aux_nrctremp,
                              INPUT aux_cdorigem,
                              INPUT aux_cddopcao,
+                             INPUT aux_nrborder,
+                             INPUT aux_nrtitulo,
                             OUTPUT aux_flgmsger,
                             OUTPUT TABLE tt-crapcyc,
                             OUTPUT TABLE tt-erro).
@@ -158,6 +172,9 @@ PROCEDURE valida-cadcyb:
                 RUN piXmlAtributo (INPUT "nmassess", INPUT tt-crapcyc.nmassess).
                 RUN piXmlAtributo (INPUT "cdmotcin", INPUT STRING(tt-crapcyc.cdmotcin) ).
                 RUN piXmlAtributo (INPUT "dsmotcin", INPUT tt-crapcyc.dsmotcin) .
+                RUN piXmlAtributo (INPUT "nrborder", INPUT tt-crapcyc.nrborder) .
+                RUN piXmlAtributo (INPUT "nrtitulo", INPUT tt-crapcyc.nrtitulo) .
+                RUN piXmlAtributo (INPUT "nrctremp", INPUT tt-crapcyc.nrctremp) .
                 RUN piXmlSave.           
             END.
         END.                   
@@ -177,6 +194,8 @@ PROCEDURE grava-dados-crapcyc:
                                     INPUT aux_idseqttl,
                                     INPUT aux_lsdconta,
                                     INPUT aux_lscontra,
+                                    INPUT aux_lsborder,
+                                    INPUT aux_lstitulo,
                                     INPUT aux_lsorigem,
                                     INPUT aux_lsjudici,
                                     INPUT aux_lsextjud,
@@ -258,6 +277,8 @@ PROCEDURE excluir-dados-crapcyc:
                                       INPUT aux_nmdatela,
                                       INPUT aux_idorigem,
                                       INPUT aux_nrdconta,
+                                      INPUT aux_nrborder,
+                                      INPUT aux_nrtitulo,
                                       INPUT aux_nrctremp,
                                       INPUT aux_cdorigem,
                                      OUTPUT TABLE tt-erro).
@@ -296,6 +317,8 @@ PROCEDURE consulta-dados-crapcyc:
                                        INPUT aux_nriniseq,
                                        INPUT aux_cdassess,
                                        INPUT aux_cdmotcin,
+                                       INPUT aux_nrborder,
+                                       INPUT aux_nrtitulo,
                                       OUTPUT aux_qtregist,
                                       OUTPUT TABLE tt-crapcyc,
                                       OUTPUT TABLE tt-erro).
