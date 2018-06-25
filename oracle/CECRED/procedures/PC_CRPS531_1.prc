@@ -5812,7 +5812,7 @@ END;
               vr_aux_cdpesqbb := vr_aux_CodDevTransf;
               IF vr_aux_CodMsg = 'STR0010R2' THEN
                 IF cr_tbfin_rec_con%FOUND THEN
-                  vr_aux_cdhistor := 2663;
+                  vr_aux_cdhistor := 2734;
                   vr_aux_flgreccon := TRUE; 
                   vr_aux_TPCONTA_CREDITADA := rw_tbfin_rec_con.tpconta;
                   vr_aux_NMTITULAR_CREDITADA := rw_tbfin_rec_con.nmtitular;
