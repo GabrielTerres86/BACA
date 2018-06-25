@@ -137,10 +137,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                             corretamente
                             (Adriano - SD 825150).
 				
-			   23/01/2018 - A Incorporação Transulcred, feita em 02/12/2016 por Guilherme - SUPERO 
-							foi sobrescrita. O código foi recuperado nesta versão para que as DOCs 
-							incorporadas da Transulcred voltem a ser executadas. 
-							(Gabriel - Mouts - Chamado 765829)                              
+               23/01/2018 - A Incorporação Transulcred, feita em 02/12/2016 por Guilherme - SUPERO 
+                    foi sobrescrita. O código foi recuperado nesta versão para que as DOCs 
+                    incorporadas da Transulcred voltem a ser executadas. 
+                    (Gabriel - Mouts - Chamado 765829)                              
+
+               25/06/2018 - Substituição pc_gera_log_batch por pc_log_programa
+                            (Ana - Envolti - REQ0013970)
   ............................................................................ */
 
 
@@ -354,22 +357,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     -- Frequencia: Rotina executada em qualquer frequencia.
     -- Objetivo  : Controla gravação de log em tabelas.
     --
-    -- Alteracoes:  
+    -- Alteracoes: 25/06/2018 - Substituição pc_gera_log_batch por pc_log_programa
+    --                          (Ana - Envolti - REQ0013970)
     --             
     ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;      
   BEGIN     
     --> Controlar geração de log de execução dos jobs
-    --Como executa na cadeira, utiliza pc_gera_log_batch
-    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                      
-                              ,pr_ind_tipo_log  => pr_ind_tipo_log
-                              ,pr_nmarqlog      => 'proc_batch.log'                 
-                              ,pr_dstiplog      => NVL(pr_dstiplog,'E')             
-                              ,pr_cdprograma    => vr_cdprogra                      
-                              ,pr_tpexecucao    => 1 -- batch                       
-                              ,pr_cdcriticidade => pr_cdcriticidade                      
-                              ,pr_cdmensagem    => pr_cdmensagem                      
-                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                  || vr_cdprogra || ' --> '|| pr_dscritic);
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => 1, --Batch --
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem, 
+                           pr_dsmensagem    => pr_dscritic, 
+                           pr_idprglog      => vr_idprglog, 
+                           pr_nmarqlog      => NULL);
   EXCEPTION  
     WHEN OTHERS THEN  
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
@@ -554,9 +558,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 2,
+                      pr_cdcriticidade => 1,
                       pr_cdmensagem    => vr_cdcritic,
-                      pr_ind_tipo_log  => 3);
+                      pr_ind_tipo_log  => 1);
 
           --Inclusão na tabela de erros Oracle - Chamado 789851
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -676,9 +680,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                     pr_dstiplog      => 'E',
                     pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
+                    pr_cdcriticidade => 1,
                     pr_cdmensagem    => vr_cdcritic,
-                    pr_ind_tipo_log  => 3);
+                    pr_ind_tipo_log  => 1);
 
         --Inclusão na tabela de erros Oracle - Chamado 789851
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -792,9 +796,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                   pr_dstiplog      => 'E',
                   pr_dscritic      => vr_dscritic,
-                  pr_cdcriticidade => 2,
+                  pr_cdcriticidade => 1,
                   pr_cdmensagem    => vr_cdcritic,
-                  pr_ind_tipo_log  => 3);
+                  pr_ind_tipo_log  => 1);
 
       --Inclusão na tabela de erros Oracle - Chamado 789851
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -898,9 +902,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                   pr_dstiplog      => 'E',
                   pr_dscritic      => vr_dscritic,
-                  pr_cdcriticidade => 2,
+                  pr_cdcriticidade => 1,
                   pr_cdmensagem    => vr_cdcritic,
-                  pr_ind_tipo_log  => 3);
+                  pr_ind_tipo_log  => 1);
 
       --Inclusão na tabela de erros Oracle - Chamado 789851
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -991,9 +995,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 2,
+                      pr_cdcriticidade => 1,
                       pr_cdmensagem    => vr_cdcritic,
-                      pr_ind_tipo_log  => 3);
+                      pr_ind_tipo_log  => 1);
 
           --Inclusão na tabela de erros Oracle - Chamado 789851
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -1022,7 +1026,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
 
           -- Fecha o cursor e pula para o próximo registro
           CLOSE cr_craplot;
@@ -1129,9 +1134,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 2,
+                      pr_cdcriticidade => 1,
                       pr_cdmensagem    => vr_cdcritic,
-                      pr_ind_tipo_log  => 3);
+                      pr_ind_tipo_log  => 1);
 
           --Inclusão na tabela de erros Oracle - Chamado 789851
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -1160,9 +1165,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 2,
+                      pr_cdcriticidade => 1,
                       pr_cdmensagem    => vr_cdcritic,
-                      pr_ind_tipo_log  => 3);
+                      pr_ind_tipo_log  => 1);
 
           --Inclusão na tabela de erros Oracle - Chamado 789851
           CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -1340,7 +1345,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
         END IF;
@@ -1378,8 +1384,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdcriticidade => 0,
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 4);
 
           -- Reinicializar a variável de crítica
           vr_cdcritic := NULL;
@@ -1400,7 +1407,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                     pr_dscritic      => vr_dscritic,
                     pr_cdcriticidade => 0,
                     pr_cdmensagem    => vr_cdcritic,
-                    pr_ind_tipo_log  => 1);
+                    pr_ind_tipo_log  => 4);
 
         -- Reinicializar a variável de crítica
         vr_cdcritic := NULL;
@@ -1547,7 +1554,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
 	      ELSE
           -- Gravação a cada arquivo processado
           COMMIT;
@@ -1673,8 +1681,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                 pr_dstiplog      => 'E',
                 pr_dscritic      => vr_dscritic,
-                pr_cdcriticidade => 1,
-                pr_cdmensagem    => vr_cdcritic);
+                pr_cdcriticidade => 0,
+                pr_cdmensagem    => vr_cdcritic,
+                pr_ind_tipo_log  => 3);
 
     -- Reinicializar a variável de crítica
     vr_cdcritic := NULL;
@@ -1836,7 +1845,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
         ELSE
@@ -1884,7 +1894,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
           -- Reinicializar a variável de crítica
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
@@ -1903,7 +1914,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 0,
                       pr_cdmensagem    => vr_cdcritic,
-                      pr_ind_tipo_log  => 1);
+                      pr_ind_tipo_log  => 4);
 
         -- Reinicializar a variável de crítica e de controle de primeiro registro
         vr_cdcritic := NULL;
@@ -2019,9 +2030,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                   pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                               pr_dstiplog      => 'E',
                               pr_dscritic      => vr_dscritic,
-                              pr_cdcriticidade => 2,
+                              pr_cdcriticidade => 1,
                               pr_cdmensagem    => vr_cdcritic,
-                              pr_ind_tipo_log  => 3);
+                              pr_ind_tipo_log  => 1);
 
                   --Inclusão na tabela de erros Oracle - Chamado 789851
                   CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2042,7 +2053,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                               pr_dstiplog      => 'E',
                               pr_dscritic      => vr_dscritic,
                               pr_cdcriticidade => 1,
-                              pr_cdmensagem    => vr_cdcritic);
+                              pr_cdmensagem    => vr_cdcritic,
+                              pr_ind_tipo_log  => 1);
                   -- Fecha o cursor antes de finalizar
                   CLOSE cr_craptab;
 
@@ -2067,9 +2079,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                     pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                                 pr_dstiplog      => 'E',
                                 pr_dscritic      => vr_dscritic,
-                                pr_cdcriticidade => 2,
+                                pr_cdcriticidade => 1,
                                 pr_cdmensagem    => vr_cdcritic,
-                                pr_ind_tipo_log  => 3);
+                                pr_ind_tipo_log  => 1);
 
                     --Inclusão na tabela de erros Oracle - Chamado 789851
                     CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2132,9 +2144,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                 pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                             pr_dstiplog      => 'E',
                             pr_dscritic      => vr_dscritic,
-                            pr_cdcriticidade => 2,
+                            pr_cdcriticidade => 1,
                             pr_cdmensagem    => vr_cdcritic,
-                            pr_ind_tipo_log  => 3); --erro gerado em others
+                            pr_ind_tipo_log  => 1); --erro gerado em others
 
                 --Inclusão na tabela de erros Oracle - Chamado 789851
                 CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2246,9 +2258,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                         pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                                     pr_dstiplog      => 'E',
                                     pr_dscritic      => vr_dscritic,
-                                    pr_cdcriticidade => 2,
+                                    pr_cdcriticidade => 1,
                                     pr_cdmensagem    => vr_cdcritic,
-                                    pr_ind_tipo_log  => 3);
+                                    pr_ind_tipo_log  => 1);
 
                         --Inclusão na tabela de erros Oracle - Chamado 789851
                         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2306,9 +2318,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                   pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                               pr_dstiplog      => 'E',
                               pr_dscritic      => vr_dscritic,
-                              pr_cdcriticidade => 2,
+                              pr_cdcriticidade => 1,
                               pr_cdmensagem    => vr_cdcritic,
-                              pr_ind_tipo_log  => 3);
+                              pr_ind_tipo_log  => 1);
 
                 --Inclusão na tabela de erros Oracle - Chamado 789851
                 CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2507,9 +2519,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                   pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                               pr_dstiplog      => 'E',
                               pr_dscritic      => vr_dscritic,
-                              pr_cdcriticidade => 2,
+                              pr_cdcriticidade => 1,
                               pr_cdmensagem    => vr_cdcritic,
-                              pr_ind_tipo_log  => 3);
+                              pr_ind_tipo_log  => 1);
 
                 --Inclusão na tabela de erros Oracle - Chamado 789851
                 CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2614,7 +2626,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                           pr_dstiplog      => 'E',
                           pr_dscritic      => vr_dscritic,
                           pr_cdcriticidade => 1,
-                          pr_cdmensagem    => vr_cdcritic);
+                          pr_cdmensagem    => vr_cdcritic,
+                          pr_ind_tipo_log  => 1);
 
               -- Fecha o cursor antes de abortar o procedimento
               CLOSE cr_craptab;
@@ -2694,9 +2707,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                 pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                             pr_dstiplog      => 'E',
                             pr_dscritic      => vr_dscritic,
-                            pr_cdcriticidade => 2,
+                            pr_cdcriticidade => 1,
                             pr_cdmensagem    => vr_cdcritic,
-                            pr_ind_tipo_log  => 3);
+                            pr_ind_tipo_log  => 1);
 
               --Inclusão na tabela de erros Oracle - Chamado 789851
               CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2728,7 +2741,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                           pr_dstiplog      => 'E',
                           pr_dscritic      => vr_dscritic,
                           pr_cdcriticidade => 1,
-                          pr_cdmensagem    => vr_cdcritic);
+                          pr_cdmensagem    => vr_cdcritic,
+                          pr_ind_tipo_log  => 1);
 
               -- Fecha o cursor antes de abortar o procedimento
               CLOSE cr_craplot;
@@ -2833,9 +2847,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                         pr_dstiplog      => 'E',
                         pr_dscritic      => vr_dscritic,
-                        pr_cdcriticidade => 2,
+                        pr_cdcriticidade => 1,
                         pr_cdmensagem    => vr_cdcritic,
-                        pr_ind_tipo_log  => 3);
+                        pr_ind_tipo_log  => 1);
 
             --Inclusão na tabela de erros Oracle - Chamado 789851
             CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2865,9 +2879,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                           pr_dstiplog      => 'E',
                           pr_dscritic      => vr_dscritic,
-                          pr_cdcriticidade => 2,
+                          pr_cdcriticidade => 1,
                           pr_cdmensagem    => vr_cdcritic,
-                          pr_ind_tipo_log  => 3);
+                          pr_ind_tipo_log  => 1);
 
             --Inclusão na tabela de erros Oracle - Chamado 789851
             CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2952,9 +2966,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                 pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                             pr_dstiplog      => 'E',
                             pr_dscritic      => vr_dscritic,
-                            pr_cdcriticidade => 2,
+                            pr_cdcriticidade => 1,
                             pr_cdmensagem    => vr_cdcritic,
-                            pr_ind_tipo_log  => 3);
+                            pr_ind_tipo_log  => 1);
 
               --Inclusão na tabela de erros Oracle - Chamado 789851
               CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -2987,7 +3001,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                       pr_dstiplog      => 'E',
                       pr_dscritic      => vr_dscritic,
                       pr_cdcriticidade => 1,
-                      pr_cdmensagem    => vr_cdcritic);
+                      pr_cdmensagem    => vr_cdcritic,
+                      pr_ind_tipo_log  => 1);
         ELSE
           -- Efetuar gravação a cada arquivo processo movido a salvar
           COMMIT;     
@@ -3235,8 +3250,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                 pr_dstiplog      => 'E',
                 pr_dscritic      => vr_dscritic,
-                pr_cdcriticidade => 1,
-                pr_cdmensagem    => vr_cdcritic);
+                pr_cdcriticidade => 0,
+                pr_cdmensagem    => vr_cdcritic,
+                pr_ind_tipo_log  => 3);
     -- Limpa as criticas
     vr_cdcritic := 0;
 
@@ -3323,7 +3339,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                   pr_dstiplog      => 'E',
                   pr_dscritic      => vr_dscritic,
                   pr_cdcriticidade => 1,
-                  pr_cdmensagem    => vr_cdcritic);
+                  pr_cdmensagem    => vr_cdcritic,
+                  pr_ind_tipo_log  => 1);
     END IF;
 
     /***** RELATÓRIO DE REJEITADOS TCO 999 *****/
@@ -3525,9 +3542,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                     pr_dstiplog      => 'E',
                     pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
+                    pr_cdcriticidade => 1,
                     pr_cdmensagem    => vr_cdcritic,
-                    pr_ind_tipo_log  => 3);
+                    pr_ind_tipo_log  => 1);
 
       --Inclusão na tabela de erros Oracle - Chamado 789851
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
@@ -3788,7 +3805,8 @@ EXCEPTION
                   pr_dstiplog      => 'E',
                   pr_dscritic      => vr_dscritic,
                   pr_cdcriticidade => 1,
-                  pr_cdmensagem    => vr_cdcritic);
+                  pr_cdmensagem    => vr_cdcritic,
+                  pr_ind_tipo_log  => 1);
     END IF;
 
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
@@ -3815,7 +3833,8 @@ EXCEPTION
                 pr_dstiplog      => 'E',
                 pr_dscritic      => pr_dscritic,
                 pr_cdcriticidade => 1,
-                pr_cdmensagem    => pr_cdcritic);
+                pr_cdmensagem    => pr_cdcritic,
+                pr_ind_tipo_log  => 1);
 
     -- Efetuar rollback
     ROLLBACK;
@@ -3831,7 +3850,7 @@ EXCEPTION
                 pr_dscritic      => pr_dscritic,
                 pr_cdcriticidade => 2,
                 pr_cdmensagem    => pr_cdcritic,
-                pr_ind_tipo_log  => 3);
+                pr_ind_tipo_log  => 2);
 
     --Inclusão na tabela de erros Oracle - Chamado 789851
     CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
