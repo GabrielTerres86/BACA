@@ -152,9 +152,12 @@
 							<span><?php echo str_replace(",",".",$prejuizos[$i]->tags[3]->cdata) ?></span>
 							<?php echo number_format(str_replace(",",".",$prejuizos[$i]->tags[3]->cdata),2,",","."); ?>
 						</td>						
+						<td><span>----</span>----</td><!-- Saldo Atual -->
 						<td><span>----</span>----</td><!-- Dias em Atraso -->
 						<td><span>----</span>----</td><!-- Dias em Prejuízo -->
 						<td><span>----</span>----</td><!-- Dias Total em Atraso -->
+						<td><span>----</span>----</td><!-- Juros Remuneratório -->
+						<td><span>----</span>----</td><!-- IOF -->
 						<td><span>----</span>----</td><!-- Valor Pago Prejuízo  -->
 						<td><span>----</span>----</td><!-- Valor Abono Prejuízo  -->
 						<td><!-- Saldo Devedor  -->
