@@ -1457,6 +1457,12 @@ PROCEDURE Grava_Dados:
                       
                    IF par_idseqttl > 1 THEN   
                    DO:
+                   
+                       FIND FIRST crapass
+                            WHERE crapass.cdcooper = par_cdcooper
+                              AND crapass.nrdconta = par_nrdconta
+                              NO-LOCK NO-ERROR.
+                   
                        IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                            RUN sistema/generico/procedures/b1wgen0137.p 
                            PERSISTENT SET h-b1wgen0137.
@@ -1464,8 +1470,8 @@ PROCEDURE Grava_Dados:
                        RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                   ( INPUT par_cdcooper,
                                     INPUT par_nrdconta, 
-                                    INPUT par_idseqttl,
-                                    INPUT par_nrcpfcgc,
+                                    INPUT 1,
+                                    INPUT crapass.nrcpfcgc WHEN AVAIL crapass,
                                     INPUT par_dtmvtolt, 
                                     /*
                                         58 - Termo de Alteraçao de Titularidade
