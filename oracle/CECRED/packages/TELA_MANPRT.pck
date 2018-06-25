@@ -530,7 +530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 mov.dtmvtolt between to_date(pr_dtinimvt,'DD/MM/YYYY') AND to_date(pr_dtfimmvt,'DD/MM/YYYY') OR
                (pr_dtinimvt is null OR pr_dtfimmvt is null)
              )
-              and (mov.cdhistor  = 2663  
+              and (mov.cdhistor  in(2663,2734)
               or (mov.cdhistor  = 2622 and mov.dtconciliacao is null ))
               and his.cdhistor = mov.cdhistor
               and his.cdcooper = mov.cdcooper

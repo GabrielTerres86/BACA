@@ -2304,7 +2304,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
 		 WHERE his.cdcooper = fin.cdcooper
 			 AND his.cdhistor = fin.cdhistor
 			 AND fin.vllanmto > 0
-			 AND fin.cdhistor IN(2622, 2642, 2646, 2663)
+			 AND fin.cdhistor IN(2622, 2642, 2646, 2663,2734)
 			 AND fin.cdcooper = pr_cdcooper
 			 AND fin.dtmvtolt = pr_dtmvtolt;
   --                        
@@ -13770,6 +13770,20 @@ BEGIN
 												 '"(crps249) DEVOLUCAO LIQUIDACAO BOLETO EM CART. TED REM. STR"';
 					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 					--
+				WHEN rw_finieptb.cdhistor = 2734 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (?)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (?)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) DEVOLUCAO RECEBIDAS. TED REM. STR"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+          
 				WHEN rw_finieptb.cdhistor = 2642 THEN
 					--
 					vr_cdestrut := 50;
