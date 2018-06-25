@@ -9,6 +9,7 @@
 //Labels/Campos do cabeçalho
 var cCddopcao,rCddopcao,cTodosCabecalho,cTodosFrmBorderos,btnCab;
 
+var glbIdarquivo,glbInsitarq;
 // Definição de algumas variáveis globais
 var cddopcao = 'C';
 var nrborder = '';
@@ -29,6 +30,7 @@ $(document).ready(function() {
     highlightObjFocus($('#' + frmCab));
     highlightObjFocus($('#frmManutencao'));
     highlightObjFocus($('#frmBorderos'));
+    highlightObjFocus($('#frmArquivos'));
 
     $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
     $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
@@ -94,6 +96,10 @@ function estadoInicial() {
     $('#divBotoesfrmBorderos').css({'display': 'none'});
     $('#divTabfrmBorderos').html('');
 
+    $('#frmArquivos').css({'display': 'none'});
+    $('#divBotoesfrmArquivos').css({'display': 'none'});
+    $('#divTabfrmArquivos').html('');
+
     // Limpa conteudo da divBotoes
     $('#divBotoes', '#divTela').html('');
     $('#divBotoes').css({'display': 'none'});
@@ -102,13 +108,13 @@ function estadoInicial() {
     formataCabecalho();
     formataFrmManutencao();
     formataFrmBorderos();
-    // formataFrmArquivos();
+    formataFrmArquivos();
 
     // Limpa informações dos Formularios
     cTodosCabecalho.limpaFormulario();
     cTodosFrmManutencao.limpaFormulario();
     cTodosFrmBorderos.limpaFormulario();
-    // cTodosFrmArquivos.limpaFormulario();
+    cTodosFrmArquivos.limpaFormulario();
 
     cCddopcao.val(cddopcao);
 
@@ -151,16 +157,25 @@ function controlaOpcao() {
 	        $('#'+nomeForm).css({'display': 'block'});
 	        cCdagenci.focus();
             act = "continuarM()";
+            divBotoes(act);
+            $('#divBotoes').css({'display': 'block'});
     	break;
     	case 'C':
     		nomeForm = 'frmBorderos';
 	        $('#'+nomeForm).css({'display': 'block'});
 	        $('#nrdconta', '#'+nomeForm).focus();
             act = "continuarC()";
+            divBotoes(act);
+            $('#divBotoes').css({'display': 'block'});
     	break;
+        case 'Y':
+            nomeForm = 'frmArquivos';
+            $('#'+nomeForm).css({'display': 'block'});
+            $('#dtarqini', '#frmArquivos').val($('#dtarqini', '#frmArquivos').attr('dtini')).focus();
+            $('#dtarqfim', '#frmArquivos').val($('#dtarqfim', '#frmArquivos').attr('dtfim'));
+            continuarY();
+        break;
     }
-    divBotoes(act);
-    $('#divBotoes').css({'display': 'block'});
     return false;
 }
 
@@ -274,6 +289,32 @@ function formataFrmBorderos() {
     return false;
 }
 
+function formataFrmArquivos() {
+    // cabecalho
+    rDtarqini = $('label[for="dtarqini"]', '#frmArquivos');
+    rDtarqfim = $('label[for="dtarqfim"]', '#frmArquivos');
+    rNmarquiv = $('label[for="nmarquiv"]', '#frmArquivos');
+
+    cDtarqini = $('#dtarqini', '#frmArquivos');
+    cDtarqfim = $('#dtarqfim', '#frmArquivos');
+    cNmarquiv = $('#nmarquiv', '#frmArquivos');
+
+    cTodosFrmArquivos = $('input[type="text"],select', '#frmArquivos');
+
+    rDtarqini.css({'width': '105'});
+    rDtarqfim.css({'width': '28px'});
+    rNmarquiv.css({'width': '200px'});
+
+    cDtarqini.css({'width': '75px'}).setMask('DATE', '', '', '');
+    cDtarqfim.css({'width': '75px'}).setMask('DATE', '', '', '');
+    cNmarquiv.addClass('alphanum').css({'width': '264px'});
+
+    cTodosFrmArquivos.habilitaCampo();
+
+    layoutPadrao();
+    return false;
+}
+
 function controlaFoco() {
     // frmCab
     $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function(e) {
@@ -307,6 +348,13 @@ function controlaFoco() {
     $('#dtpagtof', '#frmManutencao').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             continuarM();
+        }
+    });
+
+    // frmArquivos
+    $('#nmarquiv', '#frmArquivos').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            carregaArquivos(1,15);
         }
     });
     return false;
@@ -372,6 +420,10 @@ function continuarM(){
     }
     return false;
 
+}
+
+function continuarY(){
+    // carregaArquivos(1,15);
 }
 
 function formataBorderosManutencao() {
@@ -1720,7 +1772,6 @@ function carregarImpressoBoleto() {
 }
 
 
-
 function controlafrmEnviarSMS() {
     $("#frmEnviarSMS .navigation").bind("keypress",(function(e) {
         nextField(e,this);
@@ -1839,4 +1890,369 @@ function formataFormConsultaLog() {
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
     return false;
+}
+
+
+function carregaArquivos(nriniseq, nrregist) {
+    var dtarqini = $('#dtarqini', '#frmArquivos').val();
+    var dtarqfim = $('#dtarqfim', '#frmArquivos').val();
+    var nmarquiv = $('#nmarquiv', '#frmArquivos').val();
+    if (dtarqini == '') {
+        showError("error", "Informe a Data Inicial.", "Alerta - Ayllos", "$('#dtarqini', '#frmArquivos').focus()", false);
+        return false;
+    }
+    if (dtarqfim == '') {
+        showError("error", "Informe a Data Final.", "Alerta - Ayllos", "$('#dtarqfim', '#frmArquivos').focus()", false);
+        return false;
+    }
+    if (nmarquiv.length < 6 && nmarquiv != '') {
+        showError("error", "Nome do Arquivo Deve ter no Minimo Seis Caracteres.", "Alerta - Ayllos", "$('#nmarquiv', '#frmArquivos').focus()", false);
+        return false;
+    }
+
+    // Se diferenca for maior que 6 meses
+    if (retornaDateDiff('M',dtarqini,dtarqfim) > 6) {
+        showError("error", "O intervalo de datas ultrapassou o limite m&aacute;ximo permitido de 6 meses.", "Alerta - Ayllos", "$('#dtarqfim', '#frmArquivos').focus()", false);
+        return false;
+    }
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando consulta ...");
+
+    // Carrega dados parametro através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/carrega_arquivos.php',
+        data:
+                {
+                    cddopcao: cCddopcao.val(),
+                    dtarqini: dtarqini,
+                    dtarqfim: dtarqfim,
+                    nmarquiv: nmarquiv,
+                    nriniseq: nriniseq,
+                    nrregist: nrregist,
+                    redirect: 'script_ajax'
+                },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divTabfrmArquivos').html(response);
+                    $('#divTabfrmArquivos').css({'display': 'block'});
+                    $('#divBotoesfrmArquivos').css({'display': 'block'});
+                    $('#frmArquivos').css({'display': 'block'});
+                    $('#dtarqini', '#frmArquivos').focus();
+
+                    formataArquivos();
+                    $('#divPesquisaRodape', '#divTabfrmArquivos').formataRodapePesquisa();
+
+                    hideMsgAguardo();
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            } else {
+                try {
+                    eval(response);
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        }
+    });
+}
+
+function formataArquivos() {
+    $('#divRotina').css('width', '640px');
+    var divRegistro = $('div.divRegistros', '#divTabfrmArquivos');
+    var tabela = $('table', divRegistro);
+    divRegistro.css({'height': '220px', 'width': '100%'});
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '100px';
+    arrayLargura[1] = '80px';
+    arrayLargura[2] = '300px';
+    arrayLargura[3] = '100px';
+    arrayLargura[4] = '100px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
+    arrayAlinha[2] = 'left';
+    arrayAlinha[3] = 'center';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'center';
+
+    var metodoTabela = '';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+    // seleciona o registro que é clicado
+    $('table > tbody > tr', divRegistro).click(function() {
+        glbIdarquivo = $(this).find('#idarquivo').val();
+        glbInsitarq  = $(this).find('#situacaoarq').val();
+    });
+
+    $('table > tbody > tr:eq(0)', divRegistro).click();
+
+    return false;
+}
+
+function formataImprimirRelatorio() {
+    // Ajusta tamanho do form
+    $('#divRotina').css({'width' : '260px', 'height' : '200px'});
+    exibeRotina($('#divRotina'));
+    bloqueiaFundo($('#divRotina'));
+    $('#divRotina').setCenterPosition();
+    highlightObjFocus($('#frmNomArquivo'));
+    layoutPadrao();
+    return false;
+}
+
+//Botao Imprimir
+function btnImprimir() {
+    if (glbIdarquivo == 0) {
+      showError('error', 'Nenhuma Remessa Selecionada.', 'Alerta - Ayllos', "unblockBackground()");
+      return false;
+    }
+    if (glbInsitarq.toUpperCase() == 'PENDENTE') {
+      showMsgAguardo('Aguarde, carregando rotina para impressao...');
+      // Executa script através de ajax
+      $.ajax({
+          type: 'POST',
+          dataType: 'html',
+          url: UrlSite + 'telas/cobtit/form_relatorio.php',
+          data: {
+              redirect: 'html_ajax'
+          },
+          error: function(objAjax, responseError, objExcept) {
+              hideMsgAguardo();
+              showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+          },
+          success: function(response) {
+              $('#divRotina').html(response);
+              formataImprimirRelatorio();
+          }
+      });
+
+      hideMsgAguardo();
+    } else {
+      imprimir_relatorio(0);
+    }
+    return false;
+}
+
+// Função para gerar impressão em PDF
+function imprimir_relatorio(flgcriti) {
+    $("#idarquivo","#frmImprimir").val(glbIdarquivo);
+    $("#flgcriti","#frmImprimir").val(flgcriti);
+    var action = $("#frmImprimir").attr("action");
+    var callafter = "";
+    carregaImpressaoAyllos("frmImprimir",action,callafter);
+  return false;
+}
+
+function abreImportacao() {
+    showMsgAguardo('Aguarde, carregando rotina para importacao...');
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/enviar_arquivo.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+        },
+        success: function(response) {
+            $('#divRotina').html(response);
+            montarFormImportacao();
+        }
+    });
+
+    return false;
+}
+
+function montarFormImportacao() {
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/tab_importar_arquivo.php',
+        data: {
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+        },
+        success: function(response) {
+
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+                    $('#divConteudoOpcao').html(response);
+                    exibeRotina($('#divRotina'));
+                    formataFormArquivo();
+                    hideMsgAguardo();
+                    bloqueiaFundo($('#divRotina'));
+                    $('#divRotina').setCenterPosition();
+                    highlightObjFocus($('#frmNomArquivo'));
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            } else {
+                try {
+                    eval(response);
+                    controlaFoco();
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        }
+    });
+    return false;
+}
+
+function formataFormArquivo() {
+    // Ajusta tamanho do form
+    $('#divRotina').css('width', '400px');
+
+    var cNmarquiv = $('#nmarquiv', '#frmNomArquivo');
+    cNmarquiv.addClass('alphanum campo').attr('maxlength', '100').css({'width':'350px'});
+
+    layoutPadrao();
+    hideMsgAguardo();
+
+    cNmarquiv.focus();
+    return false;
+}
+
+function confirmaImportacao() {
+    var flgreimp = $('#flgreimp', '#frmNomArquivo').val();
+    var nmarquiv = $('#nmarquiv', '#frmNomArquivo').val().replace(/[^a-z0-9._]/gi, '');
+    
+    if (nmarquiv.length < 18) {
+        showError('error', 'Formato do Nome do Arquivo Invalido!', 'Alerta - Ayllos', "$('#nmarquiv', '#frmNomArquivo').focus(); bloqueiaFundo($('#divRotina'))");
+        return false;
+    } else {
+        showConfirmacao('Confirma a ' + (flgreimp == 1 ? 're' : '') + 'importa&ccedil;&atilde;o do arquivo: ' + nmarquiv + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'importarArquivo();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+    }
+}
+
+function importarArquivo() {
+    showMsgAguardo('Aguarde, carregando importacao de arquivo...');
+    var nmarquiv = $('#nmarquiv', '#frmNomArquivo').val().replace(/[^a-z0-9._]/gi, '');
+    var flgreimp = $('#flgreimp', '#frmNomArquivo').val();
+
+    // Executa script através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/cobtit/manter_rotina.php',
+        data: {
+            nmarquiv: nmarquiv,
+            flgreimp: flgreimp,
+            operacao: 'IMPORTAR_ARQUIVO',
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+    return false;
+}
+
+
+function confirmaGerarArquivoParceiro() {
+  if (glbIdarquivo == 0) {
+    showError('error', 'Nenhuma Remessa Selecionada.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  if (glbInsitarq.toUpperCase() != 'PROCESSADO') {
+    showError('error', 'N&atilde;o permitido Gera&ccedil;&atilde;o de Arquivo para Remessa Pendente.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  showConfirmacao('Deseja efetuar nova gera&ccedil;&atilde;o do arquivo BPC_CECRED_' + lpad(glbIdarquivo, 6) + '.csv para empresa parceira?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gera_arquivo_parceiro();',
+                  'showError("inform", "Opera&ccedil;&atilde;o Cancelada.", "Alerta - Ayllos", "unblockBackground()");', 'sim.gif', 'nao.gif');
+  return false;
+}
+
+function gera_arquivo_parceiro() {
+  showMsgAguardo('Aguarde, carregando rotina para gera&ccedil;&atilde;o de arquivo...');
+ // Executa script através de ajax
+  $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/cobtit/gerar_arquivo_parceiro.php',
+      data: {
+          idarquivo: glbIdarquivo,
+          redirect: 'html_ajax'
+      },
+      error: function(objAjax, responseError, objExcept) {
+          hideMsgAguardo();
+          showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+      },
+      success: function(response) {
+          hideMsgAguardo();
+          eval(response);
+      }
+  });
+  return false;
+}
+
+function confirmaGerarBoleto() {
+  if (glbIdarquivo == 0) {
+    showError('error', 'Nenhuma Remessa Selecionada.', 'Alerta - Ayllos', "unblockBackground()");
+    return false;
+  }
+  if (glbInsitarq.toUpperCase() == 'PROCESSADO') {
+    showError('error', 'N&atilde;o permitido Gera&ccedil;&atilde;o de Boletos para Remessa j&aacute; Processada.', 'Alerta - Ayllos', "");
+    return false;
+  }
+  showConfirmacao('Deseja gerar boletos?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gera_boletos();', '', 'sim.gif', 'nao.gif');
+  return false;
+}
+
+function gera_boletos() {
+  showMsgAguardo('Aguarde, carregando rotina para gera&ccedil;&atilde;o de boletos...');
+  // Executa script através de ajax
+  $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/cobtit/gerar_boletos.php',
+      data: {
+          idarquivo: glbIdarquivo,
+          redirect: 'html_ajax'
+      },
+      error: function(objAjax, responseError, objExcept) {
+          hideMsgAguardo();
+          showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+      },
+      success: function(response) {
+          hideMsgAguardo();
+          eval(response);
+      }
+  });
+  return false;
 }

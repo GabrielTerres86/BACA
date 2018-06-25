@@ -18,12 +18,17 @@ isPostMethod();
     
     <label for="cddopcao">Op&ccedil;&atilde;o:</label>
     <select id="cddopcao" name="cddopcao">
-        <option value="C"> C - Criar Cobran&ccedil;a</option> 
-        <option value="M"> M - Manuten&ccedil;&atilde;o da Cobran&ccedil;a</option>
+		<? if($glbvars["cdcooper"]==3){/*Aqui deve acontecer apenas se for cooperativa 3*/?>
+			<option value="Y">Y - Boletagem Massiva</option> 
+		<? } 
+		else{ ?>
+	        <option value="C"> C - Criar Cobran&ccedil;a</option> 
+	        <option value="M"> M - Manuten&ccedil;&atilde;o da Cobran&ccedil;a</option>
+        <? } ?>
     </select>
 
     <a href="#" class="botao" id="btnOK" onClick="controlaOpcao();return false;" style="text-align: right;">OK</a>
 
-    <br style="clear:both" />	
+    <br style="clear:both" />
 
 </form>
