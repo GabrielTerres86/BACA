@@ -27,6 +27,11 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                     ,pr_dscritic OUT VARCHAR2
                                     ,pr_tab_erro OUT gene0001.typ_tab_erro);
 
+  -- atualiza juros remuneratorios de uma determinada conta em cooperativa
+  PROCEDURE pc_atualiza_juros_remunera( pr_cdcooper IN NUMBER           --> Cooperativa
+                                        ,pr_nrdconta IN NUMBER          --> Conta
+                                        ,pr_dscritic OUT VARCHAR2);   --> Critica
+
 end PREJ0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
@@ -390,5 +395,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
   END pc_transfere_prejuizo_cc;
 --
 
+ -- atualiza juros remuneratorios de uma determinada conta em cooperativa
+  PROCEDURE pc_atualiza_juros_remunera( pr_cdcooper IN NUMBER           --> Cooperativa
+                                        ,pr_nrdconta IN NUMBER          --> Conta
+                                        ,pr_dscritic OUT VARCHAR2) IS   --> Critica
+    -- cursores
+    CURSOR cr_tbcc_prejuizo (pr_cdcooper   NUMBER
+                            ,pr_nrdconta   NUMBER) IS
+
+    SELECT * FROM tbcc_prejuizo 
+            WHERE cdcooper = pr_cdcooper
+              AND nrdconta = pr_nrdconta
+              AND dtliquidacao IS NULL;
+
+    rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;
+                   
+    -- variaveis
+    vr_pctaxpre             NUMBER  :=0;
+    vr_vljuprat             tbcc_prejuizo.vljuprej%TYPE; -- valor do juros prejuizo atualizado
+    
+    -- Variaveis de Erro
+    vr_cdcritic             crapcri.cdcritic%TYPE;
+    vr_dscritic             VARCHAR2(4000);
+    vr_exc_erro             EXCEPTION;
+    
+    vr_dstextab             craptab.dstextab%TYPE;
+                                      
+   BEGIN
+   
+     -- procura um registro de prejuizo não liquidado
+     OPEN cr_tbcc_prejuizo(pr_cdcooper, pr_nrdconta);
+     FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
+     
+     -- se tivermos um registro ainda no liquidado...
+     IF cr_tbcc_prejuizo%FOUND THEN
+        -- captura valor de juros remuneratório da cooperativa
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'USUARI'
+                                                 ,pr_cdempres => 11
+                                                 ,pr_cdacesso => 'PAREMPREST'
+                                                 ,pr_tpregist => 01);
+
+        IF TRIM(vr_dstextab) IS NULL THEN
+          vr_cdcritic := 55;
+          RAISE vr_exc_erro;
+        ELSE
+          vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,105,6)),0);
+          
+          -- calcula valor atualizado do juros
+          vr_vljuprat := ((rw_tbcc_prejuizo.vlsdprej / 100) * vr_pctaxpre);
+
+          -- grava valor do juros atualizado em tbcc_prejuizo
+          BEGIN
+            UPDATE tbcc_prejuizo SET vljuprej = vr_vljuprat
+                               WHERE cdcooper = pr_cdcooper
+                                 AND nrdconta = pr_nrdconta;
+          EXCEPTION
+             WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao atualizar registro de prejuizo. '||
+                              SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+
+     END IF;
+     
+     CLOSE cr_tbcc_prejuizo;
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+       -- Variavel de erro recebe erro ocorrido
+       IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+         -- Buscar a descrição
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+       END IF;
+       pr_dscritic := vr_dscritic;
+     WHEN OTHERS THEN
+       ROLLBACK;
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na risc0003.pc_dias_atraso_liquidados --> ' || SQLERRM;
+
+  END pc_atualiza_juros_remunera;
 END PREJ0003;
 /
