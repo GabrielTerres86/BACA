@@ -619,6 +619,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       
     END IF; -- vr_intitcop = 1
     
+    IF pr_dsbenefic IS NOT NULL THEN
+      -- Truncar nome do beneficiário para ficar com mesma regra do front IB
+      pr_dsbenefic := SUBSTR(pr_dsbenefic,1,15);
+    END IF;
+    
     -- Retornar o ok, informando sucesso na execução 
     pr_des_erro := 'OK';
     
