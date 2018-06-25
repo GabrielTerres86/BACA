@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/04/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 12/03/2018
 
     Dados referente ao programa:
 
@@ -108,6 +108,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               P307 - (Jonatas - Supero)
 
                  05/04/2017 - Inclusão do código da Cooperativa no arquivo Contab (Jonata-Mouts)
+                 
+                 13/10/2017 - Ajustes no crrl634 e crrl635 para apresentarmos os valores corretos
+                              das tarifas (Lucas Ranghetti #743401)
+                              
+                 23/02/2018 - Ajustar crrl636 para contabilizar a receita liquida da mesma forma 
+                              que o 634 e 635 (Lucas Ranghetti #846567)
+
+				 12/03/2018 - Ajustar Relatorio de Despesas para contabilizar a receita liquida da
+				              mesma forma que o 634 e 635 (Everton Mouts #857158)
+
+                 07/05/2018 - Ajustar ordenação de query ao buscar a empresa de arrecadação (cursor cr_crapscn).
+                              Aplicado o mesmo padrão de ordenação já aplicado no programa caixa online (cxon0014).
+                              Desta forma irá retornar a mesma empresa que foi fixada no BI (638), não gerando mais
+                              diferença no relatório contábil mensal (crrl635).
+                              (Wagner/Sustentação #TASK0012676)
+
+				 12/06/2018 - Ajuste no index dos relatórios (Andrey Formigari - Mouts) #PRB0040084.
+
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -134,7 +152,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   -- Definicao do tipo de tabela que armazena registros do tipo acima detalhado
   TYPE tt_tab_rel63X IS
     TABLE OF tt_rel63X
-      INDEX BY VARCHAR2(50); -- Nome EMpresa(35) + Canal(15)
+      INDEX BY VARCHAR2(55); -- Nome EMpresa(35) + Canal(15)
   -- Mesmo tipo acima, porém precisamos dos registros ordenados por quantiodade de faturas desc 
   TYPE tt_tab_rel63X_qtdade IS
     TABLE OF tt_rel63X
@@ -148,7 +166,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tab_rel635        tt_tab_rel63X;
   vr_tab_rel636        tt_tab_rel63X;
   vr_tab_rel636_qtdade tt_tab_rel63X_qtdade;
-  vr_ind_rel63X varchar(50);
+  vr_ind_rel63X varchar(55);
   vr_ind_rel636_qtdade varchar(87);
   vr_tab_tot_empresa   tt_tot_empresa; 
   
@@ -364,7 +382,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
        AND cdsegmto = pr_cdsegmto
        AND dtencemp is null
        AND dsoparre <> 'E' -- DEBAUT
-     ORDER BY DECODE(cdempcon,pr_cdempcon,1,2); -- Trazer primeiro os registros com cdempcon igual e depoois cdempco2
+     ORDER BY crapscn.progress_recid ASC; 
   rw_crapscn cr_crapscn%rowtype;
 
   -- Busca de tributo
@@ -487,7 +505,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     vr_aux_cdagenci NUMBER;
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
-    vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
+    vr_ind_rel63X := RPAD(pr_nmconven, 35, ' ') || RPAD(pr_dsmeiarr, 15, ' ') || RPAD(pr_cdempres, 5, ' ');
+    
     -- 634 emite somente o dial atual 
     IF rw_crapdat.dtmvtolt = pr_dtmvtolt THEN 
       -- Se já existe registro
@@ -511,12 +530,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         vr_tab_rel634(vr_ind_rel63X).dsmeiarr := substr(pr_dsmeiarr,1,8);
       END IF;
       -- Tarifa Sicredi 
-      IF vr_tab_rel634(vr_ind_rel63X).vlrecliq < 0 THEN  
-        vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar;
-      ELSE 
         vr_tab_rel634(vr_ind_rel63X).vltrfsic := vr_tab_rel634(vr_ind_rel63X).vltottar - vr_tab_rel634(vr_ind_rel63X).vlrecliq;
       END IF; 
-    END IF;
     -- 635 e 636 emite todos os dias do mês e somente é alimentada no processo mensal 
     IF TRUNC(rw_crapdat.dtmvtolt,'mm') <> TRUNC(rw_crapdat.dtmvtopr,'mm') THEN 
       -- 635 só é alimentada quando a execução não for na Central
@@ -548,11 +563,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := 0;
         END IF;
         -- Tarifa Sicredi 
-        IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN  
-          vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar;
-        ELSE 
           vr_tab_rel635(vr_ind_rel63X).vltrfsic := vr_tab_rel635(vr_ind_rel63X).vltottar - vr_tab_rel635(vr_ind_rel63X).vlrecliq;
-        END IF;      
         
         -- Tratamento PF / PJ 
         IF pr_inpessoa = 0 THEN 
@@ -580,32 +591,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PF         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpf := vr_tab_rel635(vr_ind_rel63X).vlrliqpf + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-          
-          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN  
-            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf;
-          ELSE 
             vr_tab_rel635(vr_ind_rel63X).vltrfsic_pf := vr_tab_rel635(vr_ind_rel63X).vlrtrfpf - vr_tab_rel635(vr_ind_rel63X).vlrliqpf;
-          END IF;  
-                   
           
           --Acumular valor tarifa sicredi por pessoa fisica
-          IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
-          
-            IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
-            ELSE 
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
-            END IF;
-            
-          ELSE
-            
-            IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
-            ELSE 
-              vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
-            END IF;
-
-          END IF;          
+          IF NOT vr_tab_vltrfsic_pf.exists(vr_aux_cdagenci) THEN
+            vr_tab_vltrfsic_pf(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
+          ELSE 
+            vr_tab_vltrfsic_pf(vr_aux_cdagenci) := vr_tab_vltrfsic_pf(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
+          END IF;
           
           -- Tratar informações para o arquivo contabil quando não for GPS 
           IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
@@ -621,31 +614,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           -- Gravar nos campos de PJ         
           vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj + (pr_vltrfuni * pr_qtfatura);
           vr_tab_rel635(vr_ind_rel63X).vlrliqpj := vr_tab_rel635(vr_ind_rel63X).vlrliqpj + (pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa);
-
-          IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN  
-            vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj;
-          ELSE 
             vr_tab_rel635(vr_ind_rel63X).vltrfsic_pj := vr_tab_rel635(vr_ind_rel63X).vlrtrfpj - vr_tab_rel635(vr_ind_rel63X).vlrliqpj;
-          END IF; 
           
-          --Acumular valor tarifa sicredi por pessoa fisica
-          IF ((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)) < 0 THEN
-          
-            IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := pr_vltrfuni * pr_qtfatura;
-            ELSE 
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + (pr_vltrfuni * pr_qtfatura);
-            END IF;
-            
-          ELSE
-            
-            IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
-            ELSE 
-              vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
-            END IF;
-
-          END IF; 
+          --Acumular valor tarifa sicredi por pessoa juridica
+          IF NOT vr_tab_vltrfsic_pj.exists(vr_aux_cdagenci) THEN
+            vr_tab_vltrfsic_pj(vr_aux_cdagenci) := (pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa)));
+          ELSE 
+            vr_tab_vltrfsic_pj(vr_aux_cdagenci) := vr_tab_vltrfsic_pj(vr_aux_cdagenci) + ((pr_vltrfuni * pr_qtfatura) - (((pr_vltrfuni * pr_qtfatura) - (pr_qtfatura * pr_vltarifa))));
+          END IF;
           
           -- Tratar informações para o arquivo contabil quando não for GPS 
           IF SUBSTR(pr_nmconven,1,3) <> 'GPS' THEN           
@@ -732,7 +708,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-
+    
     -- Validações iniciais do programa
     BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                              ,pr_flgbatch => 1
@@ -1157,14 +1133,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
         IF vr_tab_rel634(vr_ind_rel63X).vltotfat < 0 THEN
           vr_tab_rel634(vr_ind_rel63X).vltotfat := 0;
         END IF;
-        IF vr_tab_rel634(vr_ind_rel63X).vlrecliq < 0 THEN
-          vr_tab_rel634(vr_ind_rel63X).vlrecliq := 0;
-        END IF;
         IF vr_tab_rel634(vr_ind_rel63X).vltottar < 0 THEN
           vr_tab_rel634(vr_ind_rel63X).vltottar := 0;
-        END IF;
-        IF vr_tab_rel634(vr_ind_rel63X).vltrfsic < 0 THEN
-          vr_tab_rel634(vr_ind_rel63X).vltrfsic := 0;
         END IF;
 
         -- TOTAIS INTERNET
@@ -1385,26 +1355,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             IF vr_tab_rel635(vr_ind_rel63X).vltotfat < 0 THEN
               vr_tab_rel635(vr_ind_rel63X).vltotfat := 0;
             END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrecliq < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrecliq := 0;
-            END IF;
             IF vr_tab_rel635(vr_ind_rel63X).vltottar < 0 THEN
               vr_tab_rel635(vr_ind_rel63X).vltottar := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrtrfpf < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrtrfpf := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrliqpf < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrliqpf := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrtrfpj < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrtrfpj := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vlrliqpj < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vlrliqpj := 0;
-            END IF;
-            IF vr_tab_rel635(vr_ind_rel63X).vltrfsic < 0 THEN
-              vr_tab_rel635(vr_ind_rel63X).vltrfsic := 0;
             END IF;
 
             -- TOTAIS INTERNET
@@ -1939,9 +1891,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
             -- Corrigir valores negativos
             IF vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltotfat < 0 THEN
               vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltotfat := 0;
-            END IF;
-            IF vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vlrecliq < 0 THEN
-              vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vlrecliq := 0;
             END IF;
             IF vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltottar < 0 THEN
               vr_tab_rel636_qtdade(vr_ind_rel636_qtdade).vltottar := 0;
