@@ -5845,8 +5845,9 @@ END;
                 vr_aux_DSCONTA_CREDITADA := rw_tbfin_rec_con.nrdconta;
                 VR_AUX_CDAGENCI_CREDITADA := rw_tbfin_rec_con.cdagenci;
               END IF;
-              CLOSE cr_tbfin_rec_con;
             END IF;
+
+            CLOSE cr_tbfin_rec_con;
 
             IF NOT vr_aux_flgreccon THEN
 

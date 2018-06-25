@@ -225,6 +225,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                                           ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
                                           ,pr_des_erro      OUT VARCHAR2);
 
+   PROCEDURE pc_exp_extrado_consolidado_pdf(pr_cdcooper     IN craptab.cdcooper%TYPE   --> Cooperativa
+                                          ,pr_dtinimvt      IN VARCHAR2                --> Data inicial
+                                          ,pr_dtfimmvt      IN VARCHAR2                --> Data final
+                                          ,pr_xmllog        IN VARCHAR2                --> XML com informações de LOG
+                                          ,pr_cdcritic      OUT PLS_INTEGER            --> Código da crítica
+                                          ,pr_dscritic      OUT VARCHAR2               --> Descrição da crítica
+                                          ,pr_retxml        IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo      OUT VARCHAR2               --> Nome do Campo
+                                          ,pr_des_erro      OUT VARCHAR2);
+
 END TELA_MANPRT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
@@ -441,6 +451,98 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
           FROM TBCOBRAN_RETORNO_IEPTB
     WHERE idretorno = pr_idretorno;
     rw_tbcobran_retorno cr_tbcobran_retorno%ROWTYPE;
+    
+    --Extrato das custas
+    CURSOR cr_extrato_custas(pr_dtinimvt IN VARCHAR2
+                            ,pr_dtfimmvt IN VARCHAR2) IS
+      select
+         mov.dtmvtolt data
+        ,mov.cdhistor || ' - ' || his.dshistor historico
+        ,case his.indebcre
+              when 'C' then sum(nvl(mov.vllanmto,0))
+              else - sum(nvl(mov.vllanmto,0))
+        END vllancamento 
+      from 
+        tbfin_recursos_movimento mov
+       ,craphis                  his
+      where (
+                mov.dtmvtolt between to_date(pr_dtinimvt,'DD/MM/YYYY') AND to_date(pr_dtfimmvt,'DD/MM/YYYY') OR
+               (pr_dtinimvt is null OR pr_dtfimmvt is null)
+            )
+      and mov.cdhistor in ('2636', '2642')
+      and mov.cdhistor = his.cdhistor
+      and his.cdcooper = mov.cdcooper      
+      group by 
+         mov.dtmvtolt
+        ,mov.cdhistor
+        ,his.dshistor
+        ,his.indebcre
+      order by 
+        mov.dtmvtolt desc;
+    rw_extrato_custas cr_extrato_custas%ROWTYPE;
+    
+    --Extrato das tarifas
+    CURSOR cr_extrato_tarifas(pr_dtinimvt IN VARCHAR2
+                             ,pr_dtfimmvt IN VARCHAR2) IS
+
+      select
+         mov.dtmvtolt data
+        ,mov.cdhistor || ' - ' || his.dshistor historico
+        ,case his.indebcre
+              when 'C' then sum(nvl(mov.vllanmto,0))
+              else - sum(nvl(mov.vllanmto,0))
+        END vllancamento 
+      from 
+        tbfin_recursos_movimento mov
+       ,craphis                  his
+      where (
+                mov.dtmvtolt between to_date(pr_dtinimvt,'DD/MM/YYYY') AND to_date(pr_dtfimmvt,'DD/MM/YYYY') OR
+               (pr_dtinimvt is null OR pr_dtfimmvt is null)
+            )
+      and mov.cdhistor in ('2644', '2646')
+      and mov.cdhistor = his.cdhistor
+      and his.cdcooper = mov.cdcooper
+      group by 
+         mov.dtmvtolt
+        ,mov.cdhistor
+        ,his.dshistor
+         ,his.indebcre
+      order by 
+        mov.dtmvtolt desc;
+        
+    rw_extrato_tarifas cr_extrato_tarifas%ROWTYPE;
+    
+    --Extrato das tarifas
+    CURSOR cr_extrato_teds_naoconc_devolv(pr_dtinimvt IN VARCHAR2
+                                         ,pr_dtfimmvt IN VARCHAR2) IS
+
+          select  
+             mov.dtmvtolt data
+            ,mov.cdhistor || ' - ' || his.dshistor  historico
+             ,case his.indebcre
+              when 'C' then sum(nvl(mov.vllanmto,0))
+              else - sum(nvl(mov.vllanmto,0))
+        END vllancamento 
+      from 
+              tbfin_recursos_movimento  mov
+             ,craphis                   his
+      where  (
+                mov.dtmvtolt between to_date(pr_dtinimvt,'DD/MM/YYYY') AND to_date(pr_dtfimmvt,'DD/MM/YYYY') OR
+               (pr_dtinimvt is null OR pr_dtfimmvt is null)
+             )
+              and (mov.cdhistor  = 2663  
+              or (mov.cdhistor  = 2622 and mov.dtconciliacao is null ))
+              and his.cdhistor = mov.cdhistor
+              and his.cdcooper = mov.cdcooper
+      group by 
+               mov.dtmvtolt
+              ,mov.cdhistor
+              ,his.dshistor 
+              ,his.indebcre
+      order by 
+              mov.dtmvtolt desc;
+    rw_extrato_teds_naoconc_devolv cr_extrato_teds_naoconc_devolv%ROWTYPE;
+    
     
    PROCEDURE pc_gera_log(pr_cdcooper      IN crapcop.cdcooper%TYPE,
                          pr_dscritic      IN VARCHAR2,
@@ -3422,6 +3524,200 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                ,1);
     
   END pc_estornar_ted;
+
+  PROCEDURE pc_exp_extrado_consolidado_pdf(pr_cdcooper      IN craptab.cdcooper%TYPE   --> Cooperativa
+                                          ,pr_dtinimvt      IN VARCHAR2                --> Data inicial
+                                          ,pr_dtfimmvt      IN VARCHAR2                --> Data final
+                                          ,pr_xmllog        IN VARCHAR2                --> XML com informações de LOG
+                                          ,pr_cdcritic      OUT PLS_INTEGER            --> Código da crítica
+                                          ,pr_dscritic      OUT VARCHAR2               --> Descrição da crítica
+                                          ,pr_retxml        IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                          ,pr_nmdcampo      OUT VARCHAR2               --> Nome do Campo
+                                          ,pr_des_erro      OUT VARCHAR2) IS
+	/* ............................................................................
+
+       Programa: pc_exporta_extrado_consolidado_pdf
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Fabio Stein
+       Data    : Jun/2018                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de movimento consilidados para a contabilidade - Chamada ayllos Web
+
+       Alteracoes: ----
+
+    ............................................................................ */  
+ 
+    -------------->> VARIAVEIS <<----------------
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_des_reto VARCHAR2(10);
+    vr_typ_saida      VARCHAR2(3);
+    
+    -- Tratamento de erros
+    vr_exc_erro      EXCEPTION;
+    vr_exc_saida     EXCEPTION;
+    vr_tab_erro GENE0001.typ_tab_erro;
+    
+    -- Data do movimento
+    vr_dtmvtolt      crapdat.dtmvtolt%type;
+    
+    -- Variável para armazenar as informações em XML
+    vr_des_xml       clob;
+    vr_typsaida     VARCHAR2(100); 
+    
+    -- Variável para o caminho e nome do arquivo base
+    vr_dsdireto   varchar2(200);
+    vr_nmarquivo  varchar2(200);
+    vr_dscomand   varchar2(200);
+    
+    -- Subrotina para escrever texto na variável CLOB do XML
+    procedure pc_escreve_xml(pr_des_dados in clob) is
+    begin
+      dbms_lob.writeappend(vr_des_xml, length(pr_des_dados), pr_des_dados);
+    end;
+    
+  BEGIN                                                  
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_MANPRT'
+                              ,pr_action => null);
+    vr_des_xml := null;
+    dbms_lob.createtemporary(vr_des_xml, true);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>');
+    pc_escreve_xml('<composicao>');
+
+    IF (pr_dtinimvt IS NOT NULL) THEN
+       pc_escreve_xml('<dataini>' ||  pr_dtinimvt || '</dataini>');
+       pc_escreve_xml('<datafim>' ||  pr_dtfimmvt || '</datafim>');
+    END IF;
+        
+    pc_escreve_xml('<tedsnaoconciliadas>');
+    FOR rw_extrato_teds_naoconc_devolv IN cr_extrato_teds_naoconc_devolv(pr_dtinimvt => pr_dtinimvt
+                                                                        ,pr_dtfimmvt => pr_dtfimmvt) LOOP
+      pc_escreve_xml('<ted>');
+      pc_escreve_xml('<data>'     ||to_char(rw_extrato_teds_naoconc_devolv.data,'DD/MM/YYYY') ||'</data>');
+      pc_escreve_xml('<historico>'     ||rw_extrato_teds_naoconc_devolv.historico ||'</historico>');
+      pc_escreve_xml('<vllancamento>'     ||rw_extrato_teds_naoconc_devolv.vllancamento ||'</vllancamento>');
+      pc_escreve_xml('</ted>');
+    END LOOP;
+    pc_escreve_xml('</tedsnaoconciliadas>'); 
+
+    pc_escreve_xml('<custasnaorepassadas>');
+    FOR rw_extrato_custas IN cr_extrato_custas(pr_dtinimvt => pr_dtinimvt
+                                              ,pr_dtfimmvt => pr_dtfimmvt) LOOP
+      pc_escreve_xml('<custa>');
+      pc_escreve_xml('<data>'     ||to_char(rw_extrato_custas.data,'DD/MM/YYYY') ||'</data>');
+      pc_escreve_xml('<historico>'     ||rw_extrato_custas.historico ||'</historico>');
+      pc_escreve_xml('<vllancamento>'     ||rw_extrato_custas.vllancamento ||'</vllancamento>');
+      pc_escreve_xml('</custa>');
+    END LOOP;
+    pc_escreve_xml('</custasnaorepassadas>'); 
+
+    pc_escreve_xml('<tarifasnaorepassadas>');
+    FOR rw_extrato_tarifas IN cr_extrato_tarifas(pr_dtinimvt => pr_dtinimvt
+                                                ,pr_dtfimmvt => pr_dtfimmvt) LOOP
+      pc_escreve_xml('<tarifa>');
+      pc_escreve_xml('<data>'     ||to_char(rw_extrato_tarifas.data,'DD/MM/YYYY') ||'</data>');
+      pc_escreve_xml('<historico>'     ||rw_extrato_tarifas.historico ||'</historico>');
+      pc_escreve_xml('<vllancamento>'     ||rw_extrato_tarifas.vllancamento ||'</vllancamento>');
+      pc_escreve_xml('</tarifa>');
+    END LOOP;
+    pc_escreve_xml('</tarifasnaorepassadas>'); 
+
+
+    -- Fecha a tag principal para encerrar o XML
+
+    pc_escreve_xml('</composicao>');
+    
+    --Buscar diretorio da cooperativa
+    vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
+                                         pr_cdcooper => 3,
+                                         pr_nmsubdir => '/rl');
+    vr_dscomand := 'rm '||vr_dsdireto ||'/crrl742_' ||0 ||'* 2>/dev/null';
+      
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typsaida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF;
+    vr_nmarquivo := 'crrl742_'||0 || gene0002.fn_busca_time || '.pdf';
+    
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => 'MANPRT'
+                               , pr_dtmvtolt  => vr_dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/composicao'
+                               , pr_dsjasper  => 'crrl742.jasper'
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/'||vr_nmarquivo
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 132
+                               , pr_cdrelato  => 742
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_des_erro  => vr_dscritic);
+      
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF; 
+    
+    -- Liberando a memoria alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+ 
+    --> AyllosWeb
+    -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+    GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                ,pr_cdagenci => NULL
+                                ,pr_nrdcaixa => NULL
+                                ,pr_nmarqpdf => vr_dsdireto ||'/'||vr_nmarquivo
+                                ,pr_des_reto => vr_des_reto
+                                ,pr_tab_erro => vr_tab_erro);
+    -- Se retornou erro
+    IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+      IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros          
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;
+    
+     -- Criar XML de retorno para uso na Web
+     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' || vr_nmarquivo|| '</nmarqpdf>');
+
+    -- Remover relatorio do diretorio padrao da cooperativa
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||vr_nmarquivo
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    -- Se retornou erro
+    IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+      -- Concatena o erro que veio
+      vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;                                      
+                                        
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_exporta_extrado_consolidado_pdf : '||SQLERRM;  	                                                                                     
+  END pc_exp_extrado_consolidado_pdf;
 
 END TELA_MANPRT;
 /
