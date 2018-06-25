@@ -342,6 +342,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,ass.inpessoa
               ,ass.cdagenci
               ,ass.nrmatric
+			  ,ass.inprejuz
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
@@ -5413,6 +5414,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 ELSE
                   vr_risco_aux := 9;
               END CASE;
+
+              --**
+              -- Verifica se a conta está em prejuízo, cria registro de conta em Prejuízo - Daniel(AMcom)
+              IF rw_crapass.inprejuz = 1 THEN
+                vr_risco_aux := 10;
+              END IF;
+              --
 
               vr_diasvenc := vr_qtdiaatr * -1;
               -- Buscar o código do vencimento a lançar
