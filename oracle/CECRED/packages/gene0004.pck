@@ -1783,70 +1783,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                    ,pr_des_erro => vr_des_erro);
 
       -- Verifica se ocorreram erros
-      IF vr_des_erro <> 'OK' OR vr_dscritic IS NOT NULL THEN            
+      IF vr_des_erro <> 'OK' OR vr_dscritic IS NOT NULL THEN
+        
         -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
-        gene0004.pc_log(pr_dscritic => vr_dscritic||
-                                       vr_nmrotpro 
-                       ,pr_cdcritic => vr_cdcritic                     
-                       ,pr_cdcooper => vr_cdcooper
-                       );
-        -- Gera XML com mensagem de erro
-        IF NVL(vr_cdcritic, 0) = 0 THEN
-          -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+        IF vr_des_erro <> 'OK'  THEN    
+          gene0004.pc_log(pr_dscritic => vr_dscritic
+                         ,pr_cdcritic => vr_cdcritic
+                         );
+        END IF;
+        
+        -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+        IF vr_cdcritic = 9999 THEN
           vr_cdcritic:= 1224;
           vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          pc_gera_xml_erro(pr_xml      => vr_erro_xml
-                          ,pr_cdcooper => vr_cdcooper
-                          ,pr_nmdcampo => vr_nmdcampo
-                          ,pr_cdcritic => vr_cdcritic
-                          ,pr_dscritic => vr_dscritic
-                          ,pr_dscriret => vr_dscriret);
-          vr_cdcritic:= 0;
+        END IF;
+        
+        pc_gera_xml_erro(pr_xml      => vr_erro_xml
+                        ,pr_cdcooper => vr_cdcooper
+                        ,pr_nmdcampo => vr_nmdcampo
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dscriret => vr_dscriret);
 
-          -- Gravar mensagem de erro
-          pc_atualiza_trans(pr_xml      => vr_erro_xml
-                           ,pr_seq      => vr_seq
-                           ,pr_des_erro => vr_dscritic);
+        -- Gravar mensagem de erro
+        pc_atualiza_trans(pr_xml      => vr_erro_xml
+                         ,pr_seq      => vr_seq
+                         ,pr_des_erro => vr_dscritic);
 
-          -- Verifica se ocorreram erros ao gravar XML de resposta
-          IF vr_dscritic IS NOT NULL THEN                                                              
-            vr_cdcritic := 1197;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) ||
-                           ' vr_dscritic:' || vr_dscritic;
-            RAISE vr_exc_erro;
-          END IF;
-          IF vr_dscriret = 'OK' THEN
-            -- Propagar XML de erro
-            pr_xml_res := vr_erro_xml.getClobVal();
-          END IF;
-        ELSE      
-          -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-          vr_cdcritic:= 1224;
-          vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          pc_gera_xml_erro(pr_xml      => vr_erro_xml
-                          ,pr_cdcooper => vr_cdcooper
-                          ,pr_nmdcampo => vr_nmdcampo
-                          ,pr_cdcritic => vr_cdcritic
-                          ,pr_dscritic => vr_dscritic
-                          ,pr_dscriret => vr_dscriret);
-          vr_cdcritic:= 0;
-
-          -- Gravar mensagem de erro
-          pc_atualiza_trans(pr_xml      => vr_erro_xml
-                           ,pr_seq      => vr_seq
-                           ,pr_des_erro => vr_dscritic);
-
-          -- Verifica se ocorreram erros ao gravar XML de resposta
-          IF vr_dscritic IS NOT NULL THEN                                                            
-            vr_cdcritic := 1197;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) ||
-                           ' vr_dscritic:' || vr_dscritic;
-            RAISE vr_exc_erro;
-          END IF;
-          IF vr_dscriret = 'OK' THEN
-            -- Propagar XML de erro
-            pr_xml_res := vr_erro_xml.getClobVal();
-          END IF;
+        -- Verifica se ocorreram erros ao gravar XML de resposta
+        IF vr_dscritic IS NOT NULL THEN                                                              
+          vr_cdcritic := 1197;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) ||
+                         ' vr_dscritic:' || vr_dscritic;
+          RAISE vr_exc_erro;
+        END IF;
+        IF vr_dscriret = 'OK' THEN
+          -- Propagar XML de erro
+          pr_xml_res := vr_erro_xml.getClobVal();
         END IF;
 
       ELSE
