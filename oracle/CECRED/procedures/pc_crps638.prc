@@ -124,6 +124,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               diferença no relatório contábil mensal (crrl635).
                               (Wagner/Sustentação #TASK0012676)
 
+				 12/06/2018 - Ajuste no index dos relatórios (Andrey Formigari - Mouts) #PRB0040084.
+
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -150,7 +152,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   -- Definicao do tipo de tabela que armazena registros do tipo acima detalhado
   TYPE tt_tab_rel63X IS
     TABLE OF tt_rel63X
-      INDEX BY VARCHAR2(50); -- Nome EMpresa(35) + Canal(15)
+      INDEX BY VARCHAR2(55); -- Nome EMpresa(35) + Canal(15)
   -- Mesmo tipo acima, porém precisamos dos registros ordenados por quantiodade de faturas desc 
   TYPE tt_tab_rel63X_qtdade IS
     TABLE OF tt_rel63X
@@ -164,7 +166,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tab_rel635        tt_tab_rel63X;
   vr_tab_rel636        tt_tab_rel63X;
   vr_tab_rel636_qtdade tt_tab_rel63X_qtdade;
-  vr_ind_rel63X varchar(50);
+  vr_ind_rel63X varchar(55);
   vr_ind_rel636_qtdade varchar(87);
   vr_tab_tot_empresa   tt_tot_empresa; 
   
@@ -503,7 +505,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     vr_aux_cdagenci NUMBER;
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
-    vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
+    vr_ind_rel63X := RPAD(pr_nmconven, 35, ' ') || RPAD(pr_dsmeiarr, 15, ' ') || RPAD(pr_cdempres, 5, ' ');
     
     -- 634 emite somente o dial atual 
     IF rw_crapdat.dtmvtolt = pr_dtmvtolt THEN 
