@@ -340,7 +340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -- atualizar parametros de analise em memoria a cada 10min (600 segundos)
     IF nvl(vr_time_param,0) = 0 OR 
-       (vr_time - Nvl(vr_time_param,0)) > (600 * 100) THEN
+       (vr_time - Nvl(vr_time_param,0)) > (60 * 100) THEN
         pc_ler_parametros_fraude(1);
         vr_time_param := vr_time;
     END IF;
@@ -3197,7 +3197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_gps.put('BillPayment_Sequence_ID'   , rw_craplau.dslindig); 
     vr_gps.put('BillPayment_Reference_Date', vr_dtapurac); 
     vr_gps.put('BillPayment_Authentication', to_char(rw_craplau.nrautdoc));    
-    vr_gps.put('BillPayment_Consorcy_ID'   , nvl(rw_craplau.cdempcon_2,'270-5'));
+    vr_gps.put('BillPayment_Consorcy_ID'   , '270-5');
     vr_gps.put('BillPayment_Consorcy_Desc' , nvl(rw_craplau.nmextcon,'GPS'));   
     vr_gps.put('Token_ID'            , rw_fraude.dstoken);  
     vr_gps.put('Tracking_IP'         , rw_fraude.iptransacao);  
