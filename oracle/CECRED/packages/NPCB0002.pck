@@ -121,6 +121,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                   03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
                                periodo de convivencia será tratado por faixa de valores
                                (Douglas - Chamado 823963)
+                               
+                  12/04/2018 - Ajustado o cursor cr_crapage na function pc_consultar_titulo_cip,
+                               inclusa clausula que validar se o municipio pertence ao mesmo 
+                               estado do municipio é o mesmo da praça financeira.
+                               (INC0012121 - GSaquetta)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -133,30 +138,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema : Cobranca - Cooperativa de Credito
       Sigla   : CRED
       Autor   : AJFink SD#791193
-      Data    : Novembro/2017.                     Ultima atualizacao: --/--/----
+      Data    : Novembro/2017.                     Ultima atualizacao: 08/12/2017
       Objetivo: Libera a sessao aberta no SQLSERVER. Implementada devido ao comando
                 select da funcao fn_datamov manter a sessao presa apos o fim
                 do processamento. Deve ser incluída após um commit/rollback.
-                Chamada na cobr0006, npcb0002 e pc_crps618.
 
-      Alteracoes: 
+      Alteracoes: 08/12/2017 - Inclusão do dblink JDNPCBISQL. Tratamento de exceção
+                               individualizado. Rotina deve ser chamada nos programas
+                               que são utilizados com Progress devido ao WebSpeed manter
+                               a sessão aberta e presa no SqlServer (SD#791193 - Ajfink)
 
     ******************************************************************************/
     --
+    dblink_not_open exception;
+    pragma exception_init(dblink_not_open,-2081);
+    --
   begin
     --
+    begin
+      --
     execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
     --
   exception
+      when dblink_not_open then
+        null;
     when others then
       begin
-        npcb0001.pc_gera_log_npc( pr_cdcooper => 3,
-                                  pr_nmrotina => 'npcb0002.plssn('||pr_cdprogra_org||')',
-                                  pr_dsdolog  => sqlerrm);
+          npcb0001.pc_gera_log_npc(pr_cdcooper => 3
+                                  ,pr_nmrotina => 'npcb0002.plssn JDNPCSQL('||pr_cdprogra_org||')'
+                                  ,pr_dsdolog  => sqlerrm);
+        exception
+          when others then
+            null;
+        end; 
+    end;
+    --
+    begin
+      --
+      execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCBISQL';
+      --
+    exception
+      when dblink_not_open then
+        null;
+      when others then
+        begin
+          npcb0001.pc_gera_log_npc(pr_cdcooper => 3
+                                  ,pr_nmrotina => 'npcb0002.plssn JDNPCBISQL('||pr_cdprogra_org||')'
+                                  ,pr_dsdolog  => sqlerrm);
       exception
         when others then
           null;
       end; 
+    end;
+    --
   end pc_libera_sessao_sqlserver_npc;
 
   --> Rotina para consultar os titulos CIP
@@ -669,8 +703,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       SELECT a.cdcidade
         FROM crapcaf a
            , crapmun m
-           , crapage t 
+           , crapage t
        WHERE TRIM(a.nmcidade) = TRIM(m.dscidade)
+         AND a.cdufresd = m.cdestado
          AND m.idcidade = t.idcidade
          AND t.cdagenci = pr_cdagenci 
          AND t.cdcooper = pr_cdcooper;
@@ -1148,7 +1183,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para enviar titulo para CIP de forma online
-      Alteração : 
+      Alteração : 18/05/2018 - Devido a um problema com a transação na b1wnet0001.p
+                               e InternetBank4.p foi ajustado para o job iniciar 10 segundos
+                               após a inclusão do título. Para garantir que a transação tenha
+                               encerrado e o título esteja visível em outra sessão. (INC0013085-AJFink)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1188,7 +1226,7 @@ end;';
     gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper, 
                            pr_cdprogra => 'NPCB0002', 
                            pr_dsplsql  => vr_dsplsql, 
-                           pr_dthrexe  => NULL, 
+                           pr_dthrexe  => to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp)+(10/86400),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR'),
                            pr_interva  => NULL, 
                            pr_jobname  => vr_jobname, 
                            pr_des_erro => vr_dscritic );
@@ -1436,7 +1474,7 @@ end;';
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Setembro/2017.                   Ultima atualizacao: 03/01/2018
+      Data     : Setembro/2017.                   Ultima atualizacao: 12/01/2018
     
       Dados referentes ao programa:
     
@@ -1446,12 +1484,13 @@ end;';
                                periodo de convivencia será tratado por faixa de valores
                                (Douglas - Chamado 823963)
         
+                  12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
+                               utilizando ROUND na comparação (Douglas - Chamado 817561)
     ..........................................................................*/
   
     vr_flconviv  INTEGER;
     vr_idrollout INTEGER;
   BEGIN
-  
     vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => pr_dtmvtolt
                                                     ,pr_vltitulo => pr_vltitulo);
       
@@ -1465,7 +1504,7 @@ end;';
     
       IF pr_flgregis = 0 THEN
         --> se estiver no rollout e valor informado for menor que valor do titulo
-        IF vr_idrollout = 1 AND pr_vlinform < pr_vltitulo THEN
+        IF vr_idrollout = 1 AND ROUND(pr_vlinform, 2) < ROUND(pr_vltitulo, 2) THEN
           RETURN 0; -- Nao permitir        
         ELSE
           -- se nao estiver no rollout ou valor nao for menor
@@ -1475,7 +1514,7 @@ end;';
       ELSE
         IF pr_flgpgdiv = 0 THEN
            -- Se o valor informado for menor que valor do titulo
-           IF pr_vlinform < pr_vltitulo THEN
+           IF ROUND(pr_vlinform, 2) < ROUND(pr_vltitulo, 2) THEN
              RETURN 0; -- Nao permitir     
            ELSE
              -- se nao estiver no rollout ou valor nao for menor
