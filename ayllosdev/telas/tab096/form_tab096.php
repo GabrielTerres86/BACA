@@ -13,11 +13,11 @@
 
 <form id="frmTab096" name="frmTab096" class="formulario" style="display:none; border-bottom: 1px solid #777777; ">		
 
-	<label for="nrconven"><? echo utf8ToHtml('Conv&ecirc;nio de Cobran&ccedil;a para Empr&eacute;stimo:') ?></label>					
+	<label for="nrconven"><? echo utf8ToHtml('Conv&ecirc;nio de Cobran&ccedil;a:') ?></label>
 	<select id="nrconven" name="nrconven"></select>	
 	<br style="clear:both" />	
 
-	<label for="nrdconta"><? echo utf8ToHtml('Conta/DV Benefici&aacute;ria de Empr&eacute;stimo:') ?></label>
+	<label for="nrdconta"><? echo utf8ToHtml('Conta/DV Benefici&aacute;ria:') ?></label>
 	<input name="nrdconta" id="nrdconta" type="text" />	
 	<br style="clear:both" />	
 
