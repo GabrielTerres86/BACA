@@ -1471,7 +1471,7 @@ PROCEDURE Grava_Dados:
                                   ( INPUT par_cdcooper,
                                     INPUT par_nrdconta, 
                                     INPUT 1,
-                                    INPUT crapass.nrcpfcgc WHEN AVAIL crapass,
+                                    INPUT crapass.nrcpfcgc,
                                     INPUT par_dtmvtolt, 
                                     /*
                                         58 - Termo de Alteraçao de Titularidade
