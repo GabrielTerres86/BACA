@@ -300,7 +300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
     -- Buscar todos os lançamentos
     CURSOR cr_limite IS
-      SELECT to_char(atu.dtretorno,'DD/MM/YYYY')  dtretorno
+      SELECT to_char(atu.dtalteracao,'DD/MM/YYYY')  dtretorno
            , DECODE(atu.cdcanal, 14, 'AUTOMATICA'   /* SAS */
                                    , 'MANUAL' )   dstipatu
            , atu.vllimite_anterior
@@ -321,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND atu.tpsituacao     = 3 /* Concluido com sucesso */
          and atu.nrproposta_est IS NULL
       UNION      
-      SELECT to_char(atu.dtretorno,'DD/MM/YYYY')  dtretorno
+      SELECT to_char(atu.dtalteracao,'DD/MM/YYYY')  dtretorno
            , DECODE(atu.cdcanal, 14, 'AUTOMATICA'   /* SAS */
                                    , 'MANUAL' )   dstipatu
            , atu.vllimite_anterior
