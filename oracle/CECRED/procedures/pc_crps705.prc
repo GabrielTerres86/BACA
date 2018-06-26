@@ -162,7 +162,9 @@ BEGIN
      pc_limpa_tabela;
 
      /* Valido somente para InternetBank, por isto pac 90 */
-     PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
+     
+    /*  comentado lucas ranghetti
+    PAGA0001.pc_atualiza_trans_nao_efetiv (pr_cdcooper => pr_cdcooper   --Código da Cooperativa
                                            ,pr_nrdconta => 0             --Numero da Conta
                                            ,pr_cdagenci => 90            --Código da Agencia
                                            ,pr_dtmvtolt => vr_dtmvtopg   --Data Proximo Pagamento
@@ -174,7 +176,7 @@ BEGIN
        --Levantar Excecao
        RAISE vr_exc_saida;
      END IF;
-
+*/
      --Essa informacao é necessária para a rotina pc_calc_poupanca
      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                              ,pr_nmsistem => 'CRED'

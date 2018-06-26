@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
        Frequencia: Diario.
        Objetivo  : Solicitacao 005. Efetuar debito de agendamentos de
                    convenios SICREDI feitos na Internet. 
-
+                   
                                ************ ATENCAO *************
                    CASO NECESSARIO RODAR PROGRAMA MANUALMENTE VERIFICAR A NECESSIDADE DE AJUSTAR O
                    PARAMETRO(CRAPPRM) CTRL_DEBSIC_EXEC QUE CONTROLA A EXECUÇÃO DO PROGRAMA.
@@ -154,7 +154,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
       COMMIT;
       
       -- Procedure para atualizar o registro de transação para não efetivado
-      PAGA0001.pc_atualiza_trans_nao_efetiv ( pr_cdcooper => pr_cdcooper  --Código da Cooperativa
+      /* comentado Lucas ranghetti
+        PAGA0001.pc_atualiza_trans_nao_efetiv ( pr_cdcooper => pr_cdcooper  --Código da Cooperativa
                                              ,pr_nrdconta => 0           --Numero da Conta
                                              ,pr_cdagenci => 90          --Código da Agencia
                                              ,pr_dtmvtolt => vr_dtmvtopg --Data Proximo Pagamento
@@ -166,7 +167,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps642 (pr_cdcooper IN crapcop.cdcooper%T
         --Envio do log de erro
         RAISE vr_exc_saida;
       END IF;
-
+*/
 
       -- Carrega o numero de dias para baixa dos valores
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
