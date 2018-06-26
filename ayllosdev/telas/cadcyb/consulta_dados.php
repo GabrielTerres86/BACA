@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Agosto/2013
  * OBJETIVO     : Rotina para alterar as informações da tela CADCYB
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 04/06/2018 - Projeto 403 - Inclusão de tratativas para a inclusão de títulos vencidos na Cyber (Lucas - GFT) 
  * -------------- 
  */
  
@@ -24,7 +24,6 @@
 	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 0 ; 
 	$cdassess = (isset($_POST["cdassess"])) ? $_POST["cdassess"] : 0 ; 
 	$cdmotcin = (isset($_POST["cdmotcin"])) ? $_POST["cdmotcin"] : 0 ; 
-
 	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0 ; 
 	$nrtitulo = (isset($_POST["nrtitulo"])) ? $_POST["nrtitulo"] : 0 ; 
 	

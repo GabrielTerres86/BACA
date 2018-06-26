@@ -976,9 +976,12 @@ function buscaConsulta(nriniseq, nrregist)  {
 
 	var nrdconta = normalizaNumero( $("#nrdconta","#frmCab").val() );
 	var nrctremp = $("#nrctremp","#frmCab").val();
+	var nrborder = $("#nrborder","#frmCab").val();
+	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	var cdorigem = $("#cdorigem","#frmCab").val();
 	var cdassess = $("#cdassessoria","#frmCab").val();
 	var cdmotcin = $("#cdmotivocin","#frmCab").val();
+	
 	
 	/*
 	if (cdorigem == "1") {
@@ -999,6 +1002,8 @@ function buscaConsulta(nriniseq, nrregist)  {
 		data: { 
 				nrdconta: nrdconta,
 				nrctremp: nrctremp,
+				nrborder: nrborder,
+				nrtitulo: nrtitulo,
 				cdorigem: cdorigem,
 				nriniseq: nriniseq,
 				nrregist: nrregist,
