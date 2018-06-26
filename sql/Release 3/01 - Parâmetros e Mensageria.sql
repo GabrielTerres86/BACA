@@ -245,5 +245,33 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_BUSCAR_LOG', 'TELA_COBTIT', 'pc_buscar_log_web', 'pr_nrdconta,pr_nrdocmto,pr_nrcnvcob,pr_nriniseq,pr_nrregist', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
 
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_ARQUIVOS', 'TELA_COBTIT', 'pc_busca_arquivos_web', 'pr_dtarqini,pr_dtarqfim,pr_nmarquiv,pr_nriniseq,pr_nrregist', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_RELATORIO', 'TELA_COBTIT', 'pc_gera_relatorio_web', 'pr_idarquiv,pr_flgcriti', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_IMP_ARQUIVO', 'TELA_COBTIT', 'pc_importar_arquivo', 'pr_nmarquiv,pr_flgreimp', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_GERA_ARQPAR', 'TELA_COBTIT', 'pc_gera_arquivo_parc_web', 'pr_idarquiv', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+   
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_GERA_BOLETO', 'TELA_COBTIT', 'pc_gera_boletagem', 'pr_idarquiv', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCA_PRAZO_VCTO_MAX_COBTIT', 'TELA_COBTIT', 'pc_busca_prazo_vcto_max', 'pr_nrdconta,pr_nrborder', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+
+-- TAB096
+INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)
+     VALUES (SEQRDR_NRSEQRDR.NEXTVAL, 'TELA_TAB096', SYSDATE);
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'TAB096_GRAVAR', 'TELA_TAB096', 'pc_gravar_web', 'pr_cdcooper,pr_nrconven,pr_nrdconta,pr_prazomax,pr_prazobxa,pr_vlrminpp,pr_vlrmintr,pr_dslinha1,pr_dslinha2,pr_dslinha3,pr_dslinha4,pr_dstxtsms,pr_dstxtema,pr_blqemiss,pr_qtdmaxbl,pr_flgblqvl,pr_descprej,pr_tpproduto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_TAB096'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'TAB096_BUSCAR', 'TELA_TAB096', 'pc_buscar_web', 'pr_cdcooper,pr_tpproduto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_TAB096'));
+
 commit;
 end;

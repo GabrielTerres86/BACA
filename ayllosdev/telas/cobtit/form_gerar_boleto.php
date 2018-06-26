@@ -20,27 +20,24 @@ $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 $nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : 0;
 
 // Montar o xml de Requisicao
-/*
+
 $xml  = "<Root>";
 $xml .= " <Dados>";
-$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-$xml .= "   <nrborder>".$nrborder."</nrborder>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResultado = mensageria($xml, "TELA_COBTIT", "BUSCA_PRAZO_VCTO_MAX", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-$xmlObj = getClassXML($xmlResult);
+$xmlResultado = mensageria($xml, "COBTIT", "BUSCA_PRAZO_VCTO_MAX_COBTIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getClassXML($xmlResultado);
 $root = $xmlObj->roottag;
 // Se ocorrer um erro, mostra crítica
 if ($root->erro){
     exibeErro(htmlentities($root->erro->registro->dscritic));
     exit;
 }
-$maxDate = $xmlObj->roottag->cdata;
+$przmax = $root->dados->przmaximo;
 
-*/
 $maxDate = DateTime::createFromFormat("d/m/Y",$glbvars["dtmvtolt"]);
-$maxDate = $maxDate->add(new DateInterval('P3M'));
+$maxDate = $maxDate->add(new DateInterval('P'.$przmax.'D'));
 $maxDate = $maxDate->format("d/m/Y");
 
 

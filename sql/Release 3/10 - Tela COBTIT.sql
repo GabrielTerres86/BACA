@@ -51,7 +51,7 @@ INSERT INTO craptel
            '', 
            2 
       FROM crapcop          
-     WHERE cdcooper IN (7,14); 
+     WHERE cdcooper IN (select cdcooper from crapcop where flgativo=1); 
 
 -- Permissões de consulta para os usuários pré-definidos pela CECRED                       
 INSERT INTO crapace
@@ -73,7 +73,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (7,14)
+     WHERE cop.cdcooper IN (select cdcooper from crapcop where flgativo=1)
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -129,8 +129,9 @@ INSERT INTO crapprg
            1,
            cdcooper
       FROM crapcop          
-     WHERE cdcooper IN (7,14);
+     WHERE cdcooper IN (select cdcooper from crapcop where flgativo=1);
 
+UPDATE crapprg c SET cdrelato##1=(SELECT cdrelato##1 FROM crapprg WHERE cdprogra = 'COBEMP' AND cdcooper = 3) WHERE cdprogra='COBTIT' AND cdcooper = 3;
 
 commit;
 end;
