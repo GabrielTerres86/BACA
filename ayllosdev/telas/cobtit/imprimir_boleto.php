@@ -39,7 +39,7 @@ $xml .= "   <nrcnvcob>" . $nrcnvcob . "</nrcnvcob>";
 $xml .= "   <nrdocmto>" . $nrdocmto . "</nrdocmto>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
-echo $xml;
+
 // craprdr / crapaca 
 $xmlResult = mensageria($xml, "COBTIT", "IMPRIMIR_BOLETO_PDF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObjeto = getObjectXML($xmlResult);

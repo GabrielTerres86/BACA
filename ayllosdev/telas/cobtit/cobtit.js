@@ -639,7 +639,6 @@ function buscaBorderos(ini,qnt,callback) {
             	var r = $.parseJSON(response);
             	if(r.status=='erro'){
             		showError("error",r.mensagem,'Alerta - Ayllos','cNrdconta.focus();');
-	            	cNrdconta.focus();
             	}
             	else{
             		callback(r.html);
@@ -1023,6 +1022,7 @@ function confirmaGeracaoBoleto(){
 /*Carrega para o ultimo titulo gerado*/
 function carregaManutencao(){
     fechaRotina(divRotina);
+    chamaRotinaManutencao();
 }
 
 

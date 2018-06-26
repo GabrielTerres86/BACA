@@ -33,21 +33,21 @@ $vlpagar = 0;
                     $vlpagar += $t->vlpagar->cdata;
                     ?>
                     <tr class="linTitulo" style="text-align:center;">
-                        <td id="tr_<?=$t->nrtitulo?>">
+                        <td id="tr_<?=$t->nrtitulo?>" style="border-right:1px dotted #999;">
                             <input class="pagarTitulo" type="checkbox" value="<?=$t->nrtitulo?>" onchange="changeCheckbox(this)" name="nrtitulo_selecionado"/>
                             <input type="hidden" name="vlpagartotal" value="<?=formataMoeda($t->vlpagar)?>"/>
                             <input type="hidden" name="nrtitulo[]" value="<?=$t->nrtitulo?>"/>
                         </td>
-                        <td><?=$t->nrdocmto?></td>
-                        <td><?=$t->dtvencto?></td>
-                        <td><?=formataMoeda($t->vltitulo)?></td>
-                        <td><?=formataMoeda($t->vlpago)?></td>
-                        <td><?=formataMoeda($t->vlmulta)?></td>
-                        <td><?=formataMoeda($t->vlmora)?></td>
-                        <td><?=formataMoeda($t->vliof)?></td>
-                        <td><?=formataMoeda($t->vlsldtit)?></td>
-                        <td><?=formataMoeda($t->vlpagar)?></td>
-                        <td><input type="text" style="width:100px" class="vlpagar monetario campoTelaSemBorda" value="<?=formataMoeda(0)?>" id="vlpagar_<?=$t->nrtitulo?>" name="vlpagar[<?=$t->nrtitulo?>]" readonly/></td>
+                        <td style="border-right:1px dotted #999;"><?=$t->nrdocmto?></td>
+                        <td style="border-right:1px dotted #999;"><?=$t->dtvencto?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vltitulo)?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlpago)?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlmulta)?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlmora)?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vliof)?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlsldtit)?></td>
+                        <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlpagar)?></td>
+                        <td style="border-right:1px dotted #999;"><input type="text" style="width:100px" class="vlpagar monetario campoTelaSemBorda" value="<?=formataMoeda(0)?>" id="vlpagar_<?=$t->nrtitulo?>" name="vlpagar[<?=$t->nrtitulo?>]" readonly/></td>
                     </tr>
                 <?php } ?>
             </tbody>
