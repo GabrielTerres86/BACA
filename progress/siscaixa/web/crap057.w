@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 16/04/2013.
+   Data    : Marco/2001                      Ultima atualizacao: 06/06/2018.
 
    Dados referentes ao programa:
 
@@ -27,6 +27,9 @@
                             
                16/04/2013 - Adicionado verificacao de sangria de caixa no
                          REQUEST-METHOD = GET. (Fabricio)
+                         
+               06/06/2018 - Melhorias relacionadas aos locks de tabela 
+                            crapmdw, crapmrw (Tiago INC0015047)          
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -51,6 +54,10 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valor1 AS CHARACTER FORMAT "X(256)":U .
 
+
+DEFINE VARIABLE aux_contador  AS  INTEGER   NO-UNDO.
+
+{dbo/bo-erro1.i}
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -93,11 +100,16 @@ DEFINE VARIABLE h-b1crap57 AS HANDLE     NO-UNDO.
 DEFINE VARIABLE h-b1crap52  AS HANDLE     NO-UNDO.
 
 DEF VAR p-cod-erro         AS INTE       NO-UNDO.
+DEF VAR c-desc-erro        AS CHAR       NO-UNDO.
 DEF VAR p-poupanca         AS LOG NO-UNDO.
 DEF VAR p-conta-atualiza   AS INTE NO-UNDO.
 DEF VAR c-nome             AS CHAR.
 DEF VAR c-poup             AS CHAR.
 DEFINE VARIABLE l_achou_crapmdw AS LOGICAL    NO-UNDO.
+
+DEF BUFFER crabmrw FOR crapmrw.
+DEF BUFFER crabmdw FOR crapmdw.
+
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -470,6 +482,9 @@ PROCEDURE process-web-request :
     {include/assignfields.i}
 
 
+    IF   VALID-HANDLE(h-b1crap57)   THEN
+         DELETE PROCEDURE h-b1crap57.
+
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
     RUN dbo/b1crap57.p PERSISTENT SET h-b1crap57.
 
@@ -498,18 +513,120 @@ PROCEDURE process-web-request :
                     v_valor    = ""
                     v_valor1   = ""
                     vh_foco    = "7".
-             FOR EACH crapmdw EXCLUSIVE-LOCK
-                 WHERE crapmdw.cdcooper   = crapcop.cdcooper  
-                   AND crapmdw.cdagenci   = INT(v_pac)
-                   AND crapmdw.nrdcaixa   = INT(v_caixa):
+                
+             RUN elimina-erro (INPUT crapcop.nmrescop,
+                               INPUT INT(v_pac),
+                               INPUT INT(v_caixa)).
+                
+             FOR EACH crabmdw NO-LOCK
+                 WHERE crabmdw.cdcooper   = crapcop.cdcooper  
+                   AND crabmdw.cdagenci   = INT(v_pac)
+                   AND crabmdw.nrdcaixa   = INT(v_caixa):
+                 
+              DO aux_contador = 1 TO 10:
+                  
+                 c-desc-erro = "".
+                 
+                 FIND crapmdw WHERE crapmdw.cdcooper = crabmdw.cdcooper
+                                AND crapmdw.cdagenci = crabmdw.cdagenci
+                                AND crapmdw.nrdcaixa = crabmdw.nrdcaixa
+                                AND crapmdw.nrctabdb = crabmdw.nrctabdb
+                                AND crapmdw.nrcheque = crabmdw.nrcheque
+                                EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                  
+                 IF  NOT AVAILABLE crapmdw  THEN
+                     DO:
+                         IF  LOCKED crapmdw  THEN
+                             DO:
+                                 c-desc-erro = "Resumo do cheque ja esta sendo alterado. " +
+                                               "Tente novamente.".
+                                 PAUSE 1 NO-MESSAGE.
+                                 NEXT.
+                             END.
+                         ELSE
+                             DO:
+                                 c-desc-erro = "Resumo de cheque nao encontrado. " +
+                                               "Tente novamente.".                             
+                             END.
+                     END.
+                 ELSE 
                  DELETE crapmdw.
+                     
+                 LEAVE.
+                 
+              END. /*FIM DO*/   
+                 
+             END. /*FIM FOREACH*/
+
+             IF c-desc-erro <> "" THEN
+                DO:
+                  
+                  RUN cria-erro (INPUT crapcop.nmrescop,
+                                 INPUT INT(v_pac),
+                                 INPUT INT(v_caixa),
+                                 INPUT 0, /*cod-erro*/
+                                 INPUT c-desc-erro,
+                                 INPUT YES).
+                
+                  {include/i-erro.i}
              END.
-             FOR EACH crapmrw EXCLUSIVE-LOCK
-                 WHERE crapmrw.cdcooper   = crapcop.cdcooper
-                   AND crapmrw.cdagenci   = INT(v_pac)
-                   AND crapmrw.nrdcaixa   = INT(v_caixa):
+
+             RUN elimina-erro (INPUT crapcop.nmrescop,
+                               INPUT INT(v_pac),
+                               INPUT INT(v_caixa)).
+             
+             FOR EACH crabmrw NO-LOCK
+                 WHERE crabmrw.cdcooper   = crapcop.cdcooper
+                   AND crabmrw.cdagenci   = INT(v_pac)
+                   AND crabmrw.nrdcaixa   = INT(v_caixa):
+                  
+              DO aux_contador = 1 TO 10:
+                  
+                 c-desc-erro = "".
+                 
+                FIND crapmrw WHERE crapmrw.cdcooper = crabmrw.cdcooper
+                               AND crapmrw.cdagenci = crabmrw.cdagenci                                
+                               AND crapmrw.nrdcaixa = crabmrw.nrdcaixa
+                               AND crapmrw.nrdconta = crabmrw.nrdconta
+                               EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                  
+                IF  NOT AVAILABLE crapmrw  THEN
+                    DO:
+                        IF  LOCKED crapmrw  THEN
+                            DO:
+                                c-desc-erro = "Resumo do cheque ja esta sendo alterado. " +
+                                              "Tente novamente.".
+                                PAUSE 1 NO-MESSAGE.
+                                NEXT.
+                            END.
+                         ELSE
+                             DO:
+                                 c-desc-erro = "Resumo de cheque nao encontrado. " +
+                                               "Tente novamente.".                             
+                             END.                            
+                    END.
+                ELSE  
                  DELETE crapmrw.
+                    
+                LEAVE.
+                 
+              END. /*FIM DO*/   
+                 
+             END. /*FIM FOREACH*/            
+
+             IF c-desc-erro <> "" THEN
+                DO:
+                  
+                  RUN cria-erro (INPUT crapcop.nmrescop,
+                                 INPUT INT(v_pac),
+                                 INPUT INT(v_caixa),
+                                 INPUT 0, /*cod-erro*/
+                                 INPUT c-desc-erro,
+                                 INPUT YES).
+                
+                  {include/i-erro.i}
              END.
+                    
           END.
           ELSE DO:
              RUN valida-conta IN h-b1crap57(INPUT v_coop,         
