@@ -53,7 +53,6 @@
 	
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
-	echo "/* $xml */";
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
 	
