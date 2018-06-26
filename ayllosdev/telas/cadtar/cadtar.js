@@ -25,9 +25,7 @@
  *                09/02/2018 - Ajuste feito para que a tela seja aberta no navegador IE. (SD 840276 - Kelvin)
  *
  *				  01/03/2018 - Ajuste na insercao do detalhamento da tarifa. (SD 848069 - Kelvin)
- *           
- *                25/06/2018 - Ajuste na function carregaAtribuicaoDetalhamento, a mesma não estava funcionando corretamente.
-                               (Alcemir - Mout's) - INC0017668.
+ *
  * -------------- 
  */
 
@@ -676,11 +674,14 @@ function carregaDetalhamento(){
 	return false;		
 }
 
-function carregaAtribuicaoDetalhamento(nriniseq, nrregist) {
+function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq, flgCarregando){
 	
-    var cdfaixav = $('#cdfaixav', '#frmDetalhaTarifa').val();
-	showMsgAguardo("Aguarde, carregando...");
+	nriniseq = 1;
+	flgCarregando = false;
 	
+	if(flgCarregando == true){
+		showMsgAguardo("Aguarde, carregando...");
+	}
 
 	var flgtodos = $('#flgtodos','#divBotoesDetalhaTarifa').val();
 	
@@ -703,8 +704,7 @@ function carregaAtribuicaoDetalhamento(nriniseq, nrregist) {
 					flgtodos	: flgtodos,
 					cddopcao	: cddopcao,
 					cdtipcat	: cdtipcat, /* Daniel */		
-					nriniseq    : nriniseq,
-					nrregist    : nrregist,
+					nriniseq	: nriniseq,	
 					redirect	: 'script_ajax' 
 				},
 		error   : function(objAjax,responseError,objExcept) {
@@ -2041,10 +2041,10 @@ function formataTabDetalhamento() {
 		
 		if( $(this).prop("checked") == true ){
 			$(this).val("TRUE");	
-			carregaAtribuicaoDetalhamento();
+			carregaAtribuicaoDetalhamento( $('#cdfaixav','#frmDetalhaTarifa').val() );
 		}else{
 			$(this).val("FALSE");	
-			carregaAtribuicaoDetalhamento();
+			carregaAtribuicaoDetalhamento( $('#cdfaixav','#frmDetalhaTarifa').val() );
 		}		
 			
 	});
@@ -3138,7 +3138,8 @@ function liberaDetalhamento() {
 	$("#btSalvar","#divBotoesfrmDetalhaTarifa").show();
 	$("#btContinuar","#divBotoesfrmDetalhaTarifa").hide();
 	
-	carregaAtribuicaoDetalhamento();
+	var aux_cdfaixav = $('#cdfaixav','#frmDetalhaTarifa').val();
+	carregaAtribuicaoDetalhamento(aux_cdfaixav);	
 	
 }
 
@@ -3593,7 +3594,8 @@ function estadoInicialAtribDet() {
 	fechaRotina($('#divUsoGenerico'));
 	exibeRotina($('#divRotina'));
 	
-	carregaAtribuicaoDetalhamento();
+	var aux_cdfaixav = $('#cdfaixav','#frmDetalhaTarifa').val();
+	carregaAtribuicaoDetalhamento(aux_cdfaixav);
 	
 	return false;
 
@@ -3601,7 +3603,8 @@ function estadoInicialAtribDet() {
 
 function recargaFco() {
 
-    carregaAtribuicaoDetalhamento();
+	var aux_cdfaixav = $('#cdfaixav','#frmDetalhaTarifa').val();
+	carregaAtribuicaoDetalhamento(aux_cdfaixav);
 
 	return false;
 
