@@ -300,7 +300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
     -- Buscar todos os lançamentos
     CURSOR cr_limite IS
-      SELECT to_char(atu.dtretorno,'DD/MM/YYYY')  dtretorno
+      SELECT to_char(atu.dtalteracao,'DD/MM/YYYY')  dtretorno
            , DECODE(atu.cdcanal, 14, 'AUTOMATICA'   /* SAS */
                                    , 'MANUAL' )   dstipatu
            , atu.vllimite_anterior
@@ -321,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND atu.tpsituacao     = 3 /* Concluido com sucesso */
          and atu.nrproposta_est IS NULL
       UNION      
-      SELECT to_char(atu.dtretorno,'DD/MM/YYYY')  dtretorno
+      SELECT to_char(atu.dtalteracao,'DD/MM/YYYY')  dtretorno
            , DECODE(atu.cdcanal, 14, 'AUTOMATICA'   /* SAS */
                                    , 'MANUAL' )   dstipatu
            , atu.vllimite_anterior
@@ -1827,7 +1827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_insircrd crawcrd.insitcrd%TYPE;
     vr_dsorigem VARCHAR2(1000);
     vr_nrdrowid ROWID;
-                                    
+    
     -- Variaveis retornadas da gene0004.pc_extrai_dados
     vr_cdcooper INTEGER;
     vr_cdoperad VARCHAR2(100);
@@ -3014,7 +3014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
           vr_dscritic := 'Erro ao atualizar operador do supervisor de aprovação.';
           RAISE vr_exc_erro;
       END;
-    
+
     ELSIF pr_tpsituac = 3 THEN
       vr_dtretorno := SYSDATE;
       vr_vllimite_ant := rw_limatu.vllimite_anterior;
