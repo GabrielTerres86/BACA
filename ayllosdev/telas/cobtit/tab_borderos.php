@@ -69,10 +69,10 @@
                 <?php
                 if (isset($nriniseq)) {
                     ?> Exibindo <?php echo $nriniseq; ?> at&eacute; <?php
-                    if (($nriniseq + $nrregist) > $qtregist) {
+                    if (($nriniseq + $qtregist) > $qtregist) {
                         echo $qtregist;
                     } else {
-                        echo ($nriniseq + $nrregist - 1);
+                        echo ($nriniseq + $qtregist - 1);
                     }
                     ?> de <?php echo $qtregist; ?><?php
                 }
@@ -81,7 +81,7 @@
             <td>
                 <?php
                 // Se a paginacao nao esta na ultima pagina, exibe botao proximo
-                if ($qtregist > ($nriniseq + $nrregist - 1)) {
+                if ($qtregist > ($nriniseq + $qtregist - 1)) {
                     ?> <a class='paginacaoProximo'>Pr&oacute;ximo >>></a> <?php
                 } else {
                     ?> &nbsp; <?php
@@ -94,10 +94,10 @@
 
 <script type="text/javascript">
     $('a.paginacaoAnterior').unbind('click').bind('click', function() {
-        buscaBorderos(<?php echo "'" . ($nriniseq - $nrregist) . "','" . $nrregist . "'"; ?>);
+        buscaBorderos(<?php echo "'" . ($nriniseq - $qtregist) . "','" . $qtregist . "'"; ?>);
     });
 
     $('a.paginacaoProximo').unbind('click').bind('click', function() {
-        buscaBorderos(<?php echo "'" . ($nriniseq + $nrregist) . "','" . $nrregist . "'"; ?>);
+        buscaBorderos(<?php echo "'" . ($nriniseq + $qtregist) . "','" . $qtregist . "'"; ?>);
     });
 </script>

@@ -985,6 +985,7 @@ function confirmaGeracaoBoleto(){
         nrcpfava: nrcpfava
     }
     if(nrtitulo.length>0){
+        showMsgAguardo('Aguarde, gerando t&iacute;tulo...');
         var data = $.param(data)+"&"+vlpagar.serialize();
         $.ajax({
             type: 'POST',
@@ -1641,7 +1642,7 @@ function montarFormJustificativa() {
                 try {
                     $('#divConteudoOpcao').html(response);
                     exibeRotina($('#divRotina'));
-                    formataEnvioEmail();
+                    formataFormJustificativa();
                     hideMsgAguardo();
                     bloqueiaFundo($('#divRotina'));
                     $('#divRotina').centralizaRotinaH();
@@ -1719,7 +1720,7 @@ function baixarBoleto() {
                     showError("error",r.mensagem,'Alerta - Ayllos','bloqueiaFundo(divRotina);carregaManutencao();fechaRotina($(\'#divRotina\'));');
                 }
                 else{
-                    showError("inform",r.mensagem,'Alerta - Ayllos',"bloqueiaFundo(divRotina);carregaManutencao();fechaRotina($(\'#divRotina\'));");
+                    showError("inform",r.mensagem,'Alerta - Ayllos',"bloqueiaFundo(divRotina);continuarM();fechaRotina($(\'#divRotina\'));");
                 }
                 return false;
             } catch (error) {
