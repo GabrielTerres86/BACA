@@ -342,7 +342,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,ass.inpessoa
               ,ass.cdagenci
               ,ass.nrmatric
-			  ,ass.inprejuz
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
@@ -2310,7 +2309,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Buscar nível de risco do Empréstimo
         vr_dsnivris := null;
         -- Copiá-lo a variavel
-        vr_dsnivris := pr_rw_crapepr.dsnivori;
+        IF  pr_rw_crapepr.dsnivori <> pr_rw_crapepr.dsnivris
+        AND pr_rw_crapepr.dsnivris = 'A' THEN
+          vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
+        ELSE
+          vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
+        END IF;
+
         -- Buscar o seu valor conforme o char de risco encontrado
         IF vr_tab_risco.exists(vr_dsnivris) THEN
           IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
@@ -3041,7 +3046,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         -- Testar se existe algo na tabela de cadastro complementar
         -- Copiá-lo a variavel
-        vr_dsnivris := pr_rw_crapepr.dsnivori; --  vt_tab_nivepr(LPAD(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0'));
+        IF  pr_rw_crapepr.dsnivori <> pr_rw_crapepr.dsnivris
+        AND pr_rw_crapepr.dsnivris = 'A' THEN
+          vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
+        ELSE
+          vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
+        END IF;
 
         -- Verifica se o risco da proposta é pior que o risco acelerado - Daniel(AMcom)
         IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
@@ -3697,7 +3707,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_nivel_atraso := vr_aux_nivel;
 
         vr_dsnivris := NULL;
-        vr_dsnivris := pr_rw_crapepr.dsnivori; --  vt_tab_nivepr(LPAD(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0'));
+        IF  pr_rw_crapepr.dsnivori <> pr_rw_crapepr.dsnivris
+        AND pr_rw_crapepr.dsnivris = 'A' THEN
+          vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
+        ELSE
+          vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
+        END IF;
 
         -- Verifica se o risco da proposta é pior que o risco acelerado - Daniel(AMcom)
         IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
@@ -5414,13 +5429,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 ELSE
                   vr_risco_aux := 9;
               END CASE;
-
-              --**
-              -- Verifica se a conta está em prejuízo, cria registro de conta em Prejuízo - Daniel(AMcom)
-              IF rw_crapass.inprejuz = 1 THEN
-                vr_risco_aux := 10;
-              END IF;
-              --
 
               vr_diasvenc := vr_qtdiaatr * -1;
               -- Buscar o código do vencimento a lançar
