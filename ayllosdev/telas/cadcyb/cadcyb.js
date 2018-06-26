@@ -152,7 +152,12 @@ function formataCabecalho() {
 		validaOpcaoOrigem();
 		return false;
 	});
-	
+
+	$('#nrborder','#frmCab').unbind('blur').bind('blur', function() {
+		$('#nrtitulo','#frmCab').habilitaCampo().focus();
+		return false;
+	});
+
 	$('#nrdconta','#frmCab').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13) {
 			var cddopcao = $("#cddopcao","#frmCab").val();
@@ -167,7 +172,10 @@ function formataCabecalho() {
 						$('#flgjudic','#frmCab').habilitaCheckbox().focus();
 					}
 				}
-			} else {
+			}else if (cdorigem == '4'){
+				$('#nrctremp','#frmCab').desabilitaCampo();			
+				$('#nrborder','#frmCab').habilitaCampo().focus();			
+			}else {
 				$('#nrctremp','#frmCab').habilitaCampo().focus();			
 			}
 			
@@ -626,9 +634,20 @@ function btnContinuar() {
 						hideMsgAguardo();
 						eval(response);
 						formataTabela();
-						if (operacao == 'I') {
-							limparCamposCabecalho();
-						} else if (operacao == 'A') {
+						if (operacao == 'I'){
+							if (cdorigem == '4'){
+								$("#thnrctremp").css({'display':'none'});
+
+								$("#tbCadcyb #nrctremp").css({'display':'none'});
+							}else{
+								$("#thnrborder").css({'display':'none'});
+								$("#thnrtitulo").css({'display':'none'});
+
+								$("#tbCadcyb #nrborder").css({'display':'none'});
+								$("#tbCadcyb #nrtitulo").css({'display':'none'});
+							}
+						}
+						else if (operacao == 'A') {
 							// Tratar os botões para alteração
 							$('#btVoltar' ,'#divBotoes').show();
 							$('#btSalvar' ,'#divBotoes').hide();
@@ -1037,12 +1056,13 @@ function formataTabelaConsulta() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '135px';
-	arrayLargura[1] = '62px';
-	arrayLargura[2] = '70px';
-	arrayLargura[3] = '61px';
+	//arrayLargura[0] = '135px';
+	arrayLargura[1] = '80px';
+	arrayLargura[2] = '80px';
+	arrayLargura[3] = '80px';
 	arrayLargura[4] = '91px';
 	arrayLargura[5] = '54px';
+	arrayLargura[6] = '54px';
 
 	// AXAO
 	if(mostraColunasDscto == 4){
@@ -1052,8 +1072,8 @@ function formataTabelaConsulta() {
 
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
-	arrayAlinha[1] = 'right';
-	arrayAlinha[2] = 'right';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'center';

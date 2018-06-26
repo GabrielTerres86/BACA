@@ -23,9 +23,9 @@
 			<tr>
 				<th>Origem</th>
 				<th>Conta</th>
-				<th>Contrato</th>
-				<th>Borderô</th>
-				<th>Título</th>
+				<th id="thnrctremp">Contrato</th>
+				<th id="thnrborder">Borderô</th>
+				<th id="thnrtitulo">Título</th>
 				<th>Judicial</th>
 				<th>Extra Judicial</th>
 				<th>CIN</th>
