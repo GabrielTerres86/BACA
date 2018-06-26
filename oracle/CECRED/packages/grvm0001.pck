@@ -2748,6 +2748,100 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
    
   END pc_busca_valida_contrato;  
 
+  -- Prj. 402
+  PROCEDURE pc_consulta_situacao_cdc(pr_cdcooper IN crapcop.cdcooper%TYPE      -- Código da Cooperativa
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE      -- Número da conta
+                                    ,pr_nrctrpro IN crawepr.nrctremp%TYPE      -- Número do contrato 
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Código da crítica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descrição da crítica
+                                      
+                            
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_consulta_situacao_cdc                            
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jean Michel
+    Data     : 15/12/2017                          Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Busca contratos
+    
+    --   Alteracoes: 
+    --               
+    -------------------------------------------------------------------------------------------------------------*/                               
+    
+    --Cursor para encotrato o contrato de empréstimo 
+    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctremp IN crapepr.nrctremp%TYPE)IS
+    SELECT cop.flintcdc
+          ,cdc.inintegra_cont
+          ,fin.tpfinali
+          ,epr.cdoperad
+      FROM crapcop cop
+          ,crawepr epr
+          ,tbepr_cdc_parametro cdc
+          ,crapfin fin
+     WHERE epr.cdcooper = pr_cdcooper
+       AND epr.nrdconta = pr_nrdconta
+       AND epr.nrctremp = pr_nrctremp
+       AND epr.cdcooper = cop.cdcooper
+       AND cop.cdcooper = cdc.cdcooper
+       AND cdc.cdcooper = fin.cdcooper
+       AND fin.cdfinemp = epr.cdfinemp;
+
+    rw_crawepr cr_crawepr%ROWTYPE;                      
+                     
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION; 
+  
+    
+  BEGIN
+    
+      OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctrpro);
+                     
+      FETCH cr_crawepr INTO rw_crawepr;
+              
+      IF cr_crawepr%FOUND THEN
+        CLOSE cr_crawepr; 
+
+        IF rw_crawepr.tpfinali = 3 AND rw_crawepr.flintcdc = 1 AND rw_crawepr.inintegra_cont = 0 AND rw_crawepr.cdoperad = 'AUTOCDC' THEN
+          vr_dscritic := 'Ação não permitida, cooperativa possui integração CDC habilitada! Esta ação deve ser realizada junto ao Autorizador CDC.';
+          RAISE vr_exc_erro;
+        END IF;
+
+      ELSE
+        CLOSE cr_crawepr;
+        vr_dscritic := 'Registro de contrato não encontrado.';
+        RAISE vr_exc_erro;
+      END IF;
+
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+
+      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic); -- Buscar a descrição
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN   
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_consulta_situacao_cdc: '|| SQLERRM;
+    
+  END pc_consulta_situacao_cdc;
+  -- Prj. 402
+
   PROCEDURE pc_gravames_consultar_bens(pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
                                       ,pr_cddopcao IN VARCHAR2              --Opção
                                       ,pr_nrctrpro IN crawepr.nrctremp%TYPE --Número do contrato 
@@ -2956,6 +3050,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
     END IF;    
        
+    /**/
+    pc_consulta_situacao_cdc(pr_cdcooper => vr_cdcooper  -- Código da Cooperativa
+                            ,pr_nrdconta => pr_nrdconta  -- Número da conta
+                            ,pr_nrctrpro => pr_nrctrpro  -- Número do contrato 
+                            ,pr_cdcritic => vr_cdcritic  -- Código da crítica
+                            ,pr_dscritic => vr_dscritic); -- Descrição do Erro
+
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    /**/
+
     pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
                                    ,pr_nrdconta => pr_nrdconta  -- Numero da conta do associado
                                    ,pr_nrctrpro => pr_nrctrpro  -- Numero do contrato
@@ -6024,7 +6130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                      'Cta:' || to_char(rw_crapgrv_sem_retorno.nrdconta) || 
                                                      'Tip:' || to_char(rw_crapgrv_sem_retorno.tpctrpro) || 
                                                      'Ctr:' || to_char(rw_crapgrv_sem_retorno.nrctrpro) || 
-                                                     'Chassi:' || to_char(rw_crapgrv_sem_retorno.dschassi)||'][BPR_1]');  
+                                                     'Chassi:' || to_char(rw_crapgrv_sem_retorno.dschassi)||'][BPR_1]'); 
+        rw_crapbpr := null;                                              
       END IF;                  
       
       --Fechar o cursor
@@ -6095,7 +6202,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                       'Cta:' || to_char(rw_crapgrv_sucesso.nrdconta) || 
                                                       'Tip:' || to_char(rw_crapgrv_sucesso.tpctrpro) || 
                                                       'Ctr:' || to_char(rw_crapgrv_sucesso.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapgrv_sucesso.dschassi)||'][BPR_2]');  
+                                                      'Chassi:' || to_char(rw_crapgrv_sucesso.dschassi)||'][BPR_2]'); 
+        rw_crapbpr := null;                                                                                                     
           
       END IF;                   
       
@@ -6172,6 +6280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                       'Tip:' || to_char(rw_crapgrv_erro.tpctrpro) || 
                                                       'Ctr:' || to_char(rw_crapgrv_erro.nrctrpro) || 
                                                       'Chassi:' || to_char(rw_crapgrv_erro.dschassi)||'][BPR_3]');          
+        rw_crapbpr := null;                                                                                                    
       END IF;                  
       
       --Fechar o cursor
@@ -7613,7 +7722,6 @@ begin
       open cr_crawepr(pr_cdcooper,pr_nrdconta,pr_nrctrpro) ;
       fetch cr_crawepr into rw_crawepr;
       if cr_crawepr%NOTFOUND then
-        CLOSE cr_crawepr;
         -- Montar mensagem de crítica
         pr_cdcritic := 356;
         pr_dscritic := null;
@@ -7623,11 +7731,8 @@ begin
            rw_crawepr.cdcooper = 7             and rw_crawepr.dtmvtolt < to_date('06102014','ddmmyyyy') or
            (rw_crawepr.cdcooper not in (1,4,7) and rw_crawepr.dtmvtolt < to_date('26022015','ddmmyyyy')) then
            raise vr_exc_fimprg; -- Sai do programa
-      elsif (rw_crawepr.flgokgrv = 0) then
-        pr_cdcritic := 0;
-        pr_dscritic := 'Opcao Registro de Gravames, na tela ATENDA nao efetuada! Verifique.';
-        RAISE vr_exc_saida;
       end if;
+      CLOSE cr_crawepr;
 
       pc_valida_alienacao_fiduciaria(pr_cdcooper => pr_cdcooper,
                                      pr_nrdconta => pr_nrdconta,
@@ -7639,8 +7744,18 @@ begin
              vem da "EFETIVAR" (LANCTRI e BO00084), nesses casos nao pode
              impedir de seguir para demais contratos. **/
       if vr_des_reto <> 'OK' then
-         vr_des_reto := 'OK';
+         pr_dscritic := null;
+         raise vr_exc_fimprg;
       end if;
+
+      open cr_crawepr(pr_cdcooper,pr_nrdconta,pr_nrctrpro) ;
+      fetch cr_crawepr into rw_crawepr;
+      if (rw_crawepr.flgokgrv = 0) then
+        pr_cdcritic := 0;
+        pr_dscritic := 'Opcao Registro de Gravames, na tela ATENDA nao efetuada! Verifique.';
+        RAISE vr_exc_saida;
+      end if;
+      close cr_crawepr;
 
       pr_cdcritic := null;
       pr_dscritic := null;
