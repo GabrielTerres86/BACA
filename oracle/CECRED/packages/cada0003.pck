@@ -10578,6 +10578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     vr_vlrsaldo crapcot.vldcotas%TYPE;
     vr_dsmotdem VARCHAR2(100);
     vr_flgctitg crapass.flgctitg%TYPE;
+    vr_cdhistor pls_integer;
       
     --Tabelas de memoria
     vr_tab_erro gene0001.typ_tab_erro;    
@@ -11315,7 +11316,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                                         vr_nrdolote);   
                                                           
         BEGIN    
-          INSERT INTO craplcm(cdcooper
+          
+          -- Tratamento de Históricos de Credito/Debito
+          -- Inserir registro de crédito:
+
+          if rw_crapass.inpessoa = 1 then 
+            vr_cdhistor := 2061;
+          else 
+            vr_cdhistor := 2062;
+          end if;
+          
+          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper =>pr_cdcooper              -- cdcooper
+                                            ,pr_dtmvtolt =>rw_crapdat.dtmvtolt      -- dtmvtolt
+                                            ,pr_dtrefere =>rw_crapdat.dtmvtolt      -- dtrefere
+                                            ,pr_cdagenci =>rw_crapass.cdagenci      -- cdagenci
+                                            ,pr_cdbccxlt =>100                      -- cdbccxlt                                                                                                
+                                            ,pr_nrdolote =>vr_nrdolote              -- nrdolote   
+                                            ,pr_nrdconta=>pr_nrdconta               -- nrdconta
+                                            ,pr_nrdctabb =>pr_nrdconta              -- nrdctabb                                              
+                                            ,pr_nrdctitg => TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999')) -- nrdctitg                                                
+                                            ,pr_nrdocmto => vr_nrdocmto             -- nrdocmto                                                
+                                            ,pr_cdhistor => vr_cdhistor             -- cdhistor
+                                            ,pr_vllanmto =>NVL(TO_CHAR(vr_vlrsaldo),'0') -- vllanmto 
+                                            ,pr_nrseqdig =>vr_nrseqdig              -- nrseqdig     
+                                            ,pr_hrtransa =>TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+
+                                            -- OUTPUT --
+                                            ,pr_tab_retorno => vr_tab_retorno
+                                            ,pr_incrineg => vr_incrineg
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_saida;
+          END IF;        
+/*          INSERT INTO craplcm(cdcooper
                              ,dtmvtolt
                              ,dtrefere
                              ,cdagenci
@@ -11342,7 +11377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,decode(rw_crapass.inpessoa,1,2061,2062)
                              ,NVL(TO_CHAR(vr_vlrsaldo),'0')
                              ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));  
+                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));  */
                              
         EXCEPTION
           WHEN OTHERS THEN
