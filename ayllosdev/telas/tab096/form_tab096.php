@@ -30,14 +30,16 @@
 	<input name="prazobxa" id="prazobxa" type="text" style="margin-right: 5px" />							
 	<label><? echo utf8ToHtml(' dias') ?></label>
 	<br style="clear:both" />
-
-	<label for="vlrminpp"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - PP:') ?></label>
+	
+	<label for="vlrminpp"><? echo $tpproduto == 3 ? utf8ToHtml('Valor m&iacute;nimo do boleto:') : utf8ToHtml('Valor m&iacute;nimo do boleto - PP:') ?></label>
 	<input name="vlrminpp" id="vlrminpp" type="text" />		
 	<br style="clear:both" />	
 
-	<label for="vlrmintr"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - TR:') ?></label>
-	<input name="vlrmintr" id="vlrmintr" type="text" />				
-	<br style="clear:both" />	
+	<?php if ($tpproduto == 0 ) {?>
+		<label for="vlrmintr"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - TR:') ?></label>
+		<input name="vlrmintr" id="vlrmintr" type="text" />				
+		<br style="clear:both" />	
+	<?php } ?>
 
 	<label for="descprej"><? echo utf8ToHtml('Desconto M&aacute;ximo Contrato Preju&iacute;zo:') ?></label>
 	<input name="descprej" id="descprej" type="text" style="margin-right: 5px"/>				
