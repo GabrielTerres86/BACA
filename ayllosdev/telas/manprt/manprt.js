@@ -317,6 +317,8 @@ function buscaOpcao() {
                 formataOpcaoR();
             } else if (cddopcao == 'C') {
                 formataOpcaoC();
+            } else if (cddopcao == 'E') {
+				formataOpcaoE();
             }
 
 			if (flgimped){
@@ -485,6 +487,28 @@ function formataOpcaoC() {
     cNrdconta.addClass('conta pesquisa campo').css({'width': '80px'});
     cCduflogr.css('width', '25px').attr('maxlength', '2').addClass('campo');
     cDscartor.css({ 'width': '130px' }).addClass('campo');
+
+    layoutPadrao();
+    return false;
+}
+
+function formataOpcaoE() {
+
+    highlightObjFocus($('#frmOpcao'));
+
+    $('#divFiltro').css({ 'border': '1px solid #777', 'padding': '10px', 'min-height': '50px' });
+
+    rInidtpro = $('label[for="dtinimvt"]', '#' + frmOpcao);
+    rFimdtpro = $('label[for="dtfimmvt"]', '#' + frmOpcao);
+    
+    rInidtpro.css({ 'width': '85px' }).addClass('rotulo');
+    rFimdtpro.css({ 'width': '85px' }).addClass('rotulo-linha');
+        
+    cInidtpro = $('#dtinimvt', '#' + frmOpcao);
+    cFimdtpro = $('#dtfimmvt', '#' + frmOpcao);
+    
+    cInidtpro.css({ 'width': '75px' }).addClass('data campo');
+    cFimdtpro.css({ 'width': '75px' }).addClass('data campo');
 
     layoutPadrao();
     return false;
@@ -911,7 +935,20 @@ function exportarConsultaCSV(){
 function exportarConsultaPDF(){
      if (cddopcao == 'R'){
         formatFormOpcaoR('#frmExportarPDF');
-    }
+    } else if (cddopcao == 'E') {
+		var sDtinimvt = $('#dtinimvt', '#' + frmOpcao).val();
+		var sDtfimmvt = $('#dtfimmvt', '#' + frmOpcao).val();
+		
+		var dtinimvt = new Date(sDtinimvt.split('/').reverse().join('/'));
+		var dtfimmvt = new Date(sDtfimmvt.split('/').reverse().join('/'));
+		
+		if(dtfimmvt < dtinimvt){
+			showError('error', 'Data inicial maior do que data final!', 'Alerta - Ayllos', '$(\'#dtinimvt\',\'#frmOpcao\').focus();');
+			return false;
+		}
+		formatFormOpcaoE('#frmExportarPDF');
+	}
+	
 
     var action = $('#frmExportarPDF').attr('action');
 	carregaImpressaoAyllos("frmExportarPDF", action);
@@ -933,6 +970,14 @@ function formatFormOpcaoR(form){
     $('#cduflogr', form).val(cduflogr);
     $('#dscartor', form).val(dscartor);
     $('#flcustas', form).val(flcustas);
+}
+
+function formatFormOpcaoE(form){
+    var dtinimvt = $('#dtinimvt', '#' + frmOpcao).val();
+    var dtfimmvt = $('#dtfimmvt', '#' + frmOpcao).val();
+
+    $('#dtinimvt', form).val(dtinimvt);
+    $('#dtfimmvt', form).val(dtfimmvt);
 }
 
 function abrirModalConciliacao() {
