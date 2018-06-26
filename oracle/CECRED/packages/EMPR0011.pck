@@ -1697,6 +1697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_dtjurmora := pr_dtultpag;
       END IF;
       
+      -- Quantidade de dias em atraso para Mora e IOF
       vr_qtdiamor := pr_dtcalcul - vr_dtjurmora;
       -- Se a quantidade de dias está dentro da tolerancia de juros de mora
       IF vr_qtdiamor <= pr_qttolatr THEN
@@ -3597,7 +3598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;    
         -- Acumular emprestimo + TArifa
         vr_vlemprst := round(pr_vlemprst + nvl(vr_vltarifaN,0),2);
-        vr_vlemprst := ROUND(vr_vlemprst / ((vr_vlemprst - nvl(vr_retorno02,0) - nvl(vr_retorno03,0)) / vr_vlemprst),2);
+        vr_vlemprst := ROUND(vr_vlemprst / ((vr_vlemprst - nvl(vr_retorno02,0) - nvl(vr_retorno03,0)) / vr_vlemprst),2)+0.01;
       ELSE
         -- Valor do empréstimo normal
         vr_vlemprst := pr_vlemprst;

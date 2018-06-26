@@ -2275,6 +2275,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     -- Descontar IOFs anteriores tambem para o IOF do primeiro calculo (Usado no Pós)
     vr_vliofpri := greatest(vr_vliofpri-vr_vliofpri_ant,0);
     vr_vliofadi := greatest(vr_vliofadi-vr_vliofadi_ant,0);
+    
+    -- Somente para Pós, e na execução sem gravação de IOF
+    IF pr_tpemprst = 2 AND pr_idgravar NOT IN('C','S') THEN
+      -- Retornaremos o IOF Principal e Adicional do primeiro cálculo
+      pr_vliofpri := vr_vliofpri;
+      pr_vliofadi := vr_vliofadi;
+    END IF;
+    
     -- Checar imunidade tributária
     IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta

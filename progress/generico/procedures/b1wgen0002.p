@@ -7867,7 +7867,9 @@ PROCEDURE grava-proposta-completa:
 
              ASSIGN reg_dsdregis = ENTRY(aux_contador,par_dsdalien,"|").
 			 
-			 if ENTRY(16,reg_dsdregis,";") <> "0" AND
+             IF (NUM-ENTRIES(reg_dsdregis, ";") >= 16) THEN
+                DO:
+                 IF ENTRY(16,reg_dsdregis,";") <> "0" AND
 				ENTRY(16,reg_dsdregis,";") <> "" THEN
 				DO:
 			      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -7876,6 +7878,7 @@ PROCEDURE grava-proposta-completa:
                                            INPUT "Aprovado Coordenador: " + ENTRY(16,reg_dsdregis,";")).
 		        END.
 	       END.	
+        END.                   
         END.                   
     
     RETURN "OK".

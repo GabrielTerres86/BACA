@@ -1943,7 +1943,7 @@ PROCEDURE consulta_tarifa_emprst:
             END.
         
           /* Faremos o cálculo abaixo somente se não recebemos bens nem contrato */
-          IF par_nrctremp > 0 AND par_dscatbem = "" THEN
+          IF par_nrctremp = 0 AND par_dscatbem = "" THEN
           DO:
           
     /* Buscar tarifas de Alienação pois a rotina acima não tem os Bens na simulação */
