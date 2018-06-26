@@ -32,6 +32,9 @@
 			  
 			   14/06/2018 - Tratamento com Substring para retornar 14 digitos (PRB0040099)
 			                (Felipe Fronza-Mouts)
+         
+		       26/06/2018 - Ajuste para verificar se o tamanho da conta é = 20, ai então fazer o SUBSTRING.
+			                Alcemir - Mouts.
 							
 
  .............................................................................*/
@@ -219,8 +222,10 @@ FOR EACH tt-bkp-logspb-detalhe NO-LOCK BY tt-bkp-logspb-detalhe.dttransa:
                                     "</cdbandst><cdagedst>" + 
                                     TRIM(STRING(tt-bkp-logspb-detalhe.cdagedst)) +
                                     "</cdagedst><nrctadst>" + 
-									TRIM(STRING(SUBSTRING(tt-bkp-logspb-detalhe.nrctadst,7,14), 
-									            "xxxxxxx.xxx.xxx-x")) +
+									(IF LENGTH(TRIM(tt-bkp-logspb-detalhe.nrctadst)) = 20 THEN
+                                        STRING(SUBSTRING(TRIM(tt-bkp-logspb-detalhe.nrctadst),7,14),"xxxxxxx.xxx.xxx-x")
+                                     ELSE
+                                        STRING(TRIM(tt-bkp-logspb-detalhe.nrctadst),"xxxxxxx.xxx.xxx-x")) +
                                     "</nrctadst><dsnomdst>" + 
                                     TRIM(REPLACE(tt-bkp-logspb-detalhe.dsnomdst, "&", "")) +
                                     "</dsnomdst><dscpfdst>" + 
@@ -229,9 +234,11 @@ FOR EACH tt-bkp-logspb-detalhe NO-LOCK BY tt-bkp-logspb-detalhe.dttransa:
                                     TRIM(STRING(tt-bkp-logspb-detalhe.cdbanrem)) +
                                     "</cdbanrem><cdagerem>" + 
                                     TRIM(STRING(tt-bkp-logspb-detalhe.cdagerem)) +
-                                    "</cdagerem><nrctarem>" + 
-									TRIM(STRING(SUBSTRING(tt-bkp-logspb-detalhe.nrctarem,7,14),   
-									            "xxxxxxx.xxx.xxx-x")) +
+                                    "</cdagerem><nrctarem>" +									 
+									(IF LENGTH(TRIM(tt-bkp-logspb-detalhe.nrctarem)) = 20 THEN
+									    STRING(SUBSTRING(TRIM(tt-bkp-logspb-detalhe.nrctarem),7,14),"xxxxxxx.xxx.xxx-x")
+                                     ELSE
+                                         STRING(TRIM(tt-bkp-logspb-detalhe.nrctarem),"xxxxxxx.xxx.xxx-x")) +
                                     "</nrctarem><dsnomrem>" + 
                                     TRIM(REPLACE(tt-bkp-logspb-detalhe.dsnomrem, "&", "")) +
                                     "</dsnomrem><dscpfrem>" + 
