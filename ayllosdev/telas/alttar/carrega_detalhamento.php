@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 03/09/2015
  * OBJETIVO     : Rotina para buscar dados da tela ALTTAR
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 30/10/2017 - Adicionado os campos vlpertar, vlmaxtar, vlmintar 
+ *							   e tpcobtar na tela. PRJ M150 (Mateus Z - Mouts)
+ *
  * -------------- 
  */
 ?> 
@@ -90,6 +92,12 @@
 	echo '					<th>Valor Final</th>';
 	echo '					<th>Tarifa atual</th>';
 	echo '					<th>Nova tarifa</th>';
+	echo '					<th>% Atual</th>';
+	echo '					<th>Min. Atual</th>';
+	echo '					<th>Max. Atual</th>';
+	echo '					<th>% Novo</th>';
+	echo '					<th>Min. Novo</th>';
+	echo '					<th>Max. Novo</th>';
 	echo '				</tr>';
 	echo '			</thead>';
 	echo '			<tbody>';
@@ -103,14 +111,20 @@
 		echo    "<td height='27'><span>".$index."</span>".getByTagName($r->tags,'cdtarifa')." ".getByTagName($r->tags,'dstarifa')."</td>";
 		echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vlinifvl'))."' class='campo formatFieldOff' /></td>";
 		echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vlfinfvl'))."' class='campo formatFieldOff' /></td>";
-		echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vltarifa'))."' class='campo formatFieldOff' /></td>";
+		echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vltarifa'))."' class='campo formatFieldOff tarifa' /></td>";
 		echo    "<td>";
-        echo        "<input type='text' id='vltarnew_".$i."' value='' class='campo formatFieldOn' />";
+        echo        "<input type='text' id='vltarnew_".$i."' value='' class='campo formatFieldOn tarifa' onchange='limparCamposNovaTarifa(".$i.")' />";
         echo        "<input type='hidden' id='cdfaixav_".$i."' value='".getByTagName($r->tags,'cdfaixav')."' />";
         echo        "<input type='hidden' id='cdlcremp_".$i."' value='".getByTagName($r->tags,'cdlcremp')."' />";
         echo        "<input type='hidden' id='nrconven_".$i."' value='".getByTagName($r->tags,'nrconven')."' />";
         echo        "<input type='hidden' id='cdocorre_".$i."' value='".getByTagName($r->tags,'cdocorre')."' />";
         echo    "</td>";
+        echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vlpertar'))."' class='campo formatFieldOff' /></td>";
+        echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vlmintar'))."' class='campo formatFieldOff' /></td>";
+        echo    "<td><input type='text' value='".formataMoeda(getByTagName($r->tags,'vlmaxtar'))."' class='campo formatFieldOff' /></td>";
+        echo    "<td><input type='text' id='vlpercno_".$i."' class='campo formatFieldOn' onchange='limparCampoTarifaAtual(".$i.")' /></td>";
+        echo    "<td><input type='text' id='vlminnov_".$i."' class='campo formatFieldOn' onchange='limparCampoTarifaAtual(".$i.")' /></td>";
+        echo    "<td><input type='text' id='vlmaxnov_".$i."' class='campo formatFieldOn' onchange='limparCampoTarifaAtual(".$i.")' /></td>";
 		echo "</tr>";
 	}
 

@@ -7,6 +7,9 @@
  * ALTERAÇÕES   : 26/11/2015 - Ajustado para buscar os convenios de folha
  *                             de pagamento. (Andre Santos - SUPERO)
  *
+ *				  30/10/2017 - Adicionado os campos vlpertar, vlmaxtar, vlmintar 
+ *							   e tpcobtar na tela. PRJ M150 (Mateus Z - Mouts)
+ *
  * -------------- 
  */
 
@@ -1034,8 +1037,9 @@ function formataDetalhamento() {
     cDtdivulg.desabilitaCampo();
 	cDtvigenc.desabilitaCampo();
     
-    $('.formatFieldOn').css({'width': '95px', 'text-align': 'right'}).setMask('DECIMAL', 'zzz.zzz.zzz.zz9,99', '.', '');
-    $('.formatFieldOff').css({'width': '95px', 'text-align': 'right'}).desabilitaCampo();
+    $('.formatFieldOn').css({'width': '80px', 'text-align': 'right'}).setMask('DECIMAL', 'zzz.zzz.zzz.zz9,99', '.', '');
+    $('.formatFieldOff').css({'width': '80px', 'text-align': 'right'}).desabilitaCampo();
+    $('.tarifa').css({'width': '50px'});
 			
 	divRegistro.css({'height':'200px','width':'100%'});
 	
@@ -1043,11 +1047,17 @@ function formataDetalhamento() {
 	ordemInicial = [[0,0]];	
 	
 	var arrayLargura = new Array();
-	arrayLargura[0] = '240px';
-	arrayLargura[1] = '100px';
-	arrayLargura[2] = '100px';
-	arrayLargura[3] = '100px';
-	arrayLargura[4] = '100px';
+	arrayLargura[0] = '11%';
+	arrayLargura[1] = '9.4%';
+	arrayLargura[2] = '9.4%';
+	arrayLargura[3] = '6.3%';
+	arrayLargura[4] = '6.3%';
+	arrayLargura[5] = '9.4%';
+	arrayLargura[6] = '9.4%';
+	arrayLargura[7] = '9.4%';
+	arrayLargura[8] = '9.4%';
+	arrayLargura[9] = '9.4%';
+	arrayLargura[10] = '9%';
 
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'left';
@@ -1055,17 +1065,23 @@ function formataDetalhamento() {
 	arrayAlinha[2] = 'center';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'center';
+	arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'center';
+	arrayAlinha[8] = 'center';
+	arrayAlinha[9] = 'center';
+	arrayAlinha[10] = 'center';
 	
 	var metodoTabela = '';
 			
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, metodoTabela );
 
-    var tabelaTitulo = $( 'table.tituloRegistros',divRegistro.parent() );
-    $('th:eq(0)', tabelaTitulo ).css('width', '223px');
-    $('th:eq(1)', tabelaTitulo ).css('width', '102px');
-    $('th:eq(2)', tabelaTitulo ).css('width', '102px');
-    $('th:eq(3)', tabelaTitulo ).css('width', '102px');
-    $('th:eq(4)', tabelaTitulo ).css('width', '102px');
+    // var tabelaTitulo = $( 'table.tituloRegistros',divRegistro.parent() );
+    // $('th:eq(0)', tabelaTitulo ).css('width', '223px');
+    // $('th:eq(1)', tabelaTitulo ).css('width', '102px');
+    // $('th:eq(2)', tabelaTitulo ).css('width', '102px');
+    // $('th:eq(3)', tabelaTitulo ).css('width', '102px');
+    // $('th:eq(4)', tabelaTitulo ).css('width', '102px');
 
 	return false;
 }
@@ -1089,16 +1105,42 @@ function realizaOperacao(cddopfco) {
     var lstocorr = '';
     var lstlcrem = '';
     var blntemvl = false;
+    var vlpertar = '';
+    var vlmintar = '';
+    var vlmaxtar = '';
+    var tpcobtar = '';
+    var vlpercno = 0;
+    var vlminnov = 0;
+    var vlmaxnov = 0;
     
     for (var i = 1; i <= qtd_regs; i++) {
         vltarnew = $('#vltarnew_' + i,'#frmAtribuicaoDetalhamento').val().replace('.', '').replace(',', '.');
+        vlpercno = $('#vlpercno_' + i,'#frmAtribuicaoDetalhamento').val().replace('.', '').replace(',', '.');
+        vlminnov = $('#vlminnov_' + i,'#frmAtribuicaoDetalhamento').val().replace('.', '').replace(',', '.');
+        vlmaxnov = $('#vlmaxnov_' + i,'#frmAtribuicaoDetalhamento').val().replace('.', '').replace(',', '.');
+        if (vltarnew > 0 || vlpercno > 0 || vlminnov > 0 || vlmaxnov > 0) {
+
+        	if(vlmintar > vlmaxtar){
+        		hideMsgAguardo();
+        		showError("error","O valor do campo Min. Novo deve ser menor que o Max. Novo","Alerta - Ayllos","unblockBackground(parseInt($('#divRotina').css('z-index')))");
+        		return false;
+        	}
+
         if (vltarnew > 0) {
+        		tpcobtar = tpcobtar + (tpcobtar == '' ? '' : ';') + 1;
+        	}else if(vlpercno > 0 || vlminnov > 0 || vlmaxnov > 0){
+        		tpcobtar = tpcobtar + (tpcobtar == '' ? '' : ';') + 2;
+        	}
+
             blntemvl = true;
             lstvltar = lstvltar + (lstvltar == '' ? '' : ';') + vltarnew;
             lstfaixa = lstfaixa + (lstfaixa == '' ? '' : ';') + $('#cdfaixav_' + i,'#frmAtribuicaoDetalhamento').val();
             lstlcrem = lstlcrem + (lstlcrem == '' ? '' : ';') + $('#cdlcremp_' + i,'#frmAtribuicaoDetalhamento').val();
             lstconve = lstconve + (lstconve == '' ? '' : ';') + $('#nrconven_' + i,'#frmAtribuicaoDetalhamento').val();
             lstocorr = lstocorr + (lstocorr == '' ? '' : ';') + $('#cdocorre_' + i,'#frmAtribuicaoDetalhamento').val();
+        	vlpertar = vlpertar + (vlpertar == '' ? '' : ';') + vlpercno;
+            vlmintar = vlmintar + (vlmintar == '' ? '' : ';') + vlminnov;
+            vlmaxtar = vlmaxtar + (vlmaxtar == '' ? '' : ';') + vlmaxnov;
         }
     }
     
@@ -1118,6 +1160,10 @@ function realizaOperacao(cddopfco) {
                 lstconve: lstconve,
                 lstocorr: lstocorr,
 				cdinctar: cdinctar,
+				vlpertar: vlpertar,
+				vlmintar: vlmintar,
+				vlmaxtar: vlmaxtar,
+				tpcobtar: tpcobtar,
                 redirect: "script_ajax"
             }, 
             error: function(objAjax,responseError,objExcept) {
@@ -1163,4 +1209,17 @@ function verifica_campos(cddgrupo, dsdgrupo, cdsubgru, dssubgru){
 	$("#cdcatego","#frmCab").focus();
 
 	return false;
+}
+
+function limparCampoTarifaAtual(id){
+
+	$('#vltarnew_'+id,'#frmAtribuicaoDetalhamento').val(0).blur();
+	
+}
+
+function limparCamposNovaTarifa(id){
+
+	$('#vlpercno_'+id,'#frmAtribuicaoDetalhamento').val(0).blur();
+	$('#vlminnov_'+id,'#frmAtribuicaoDetalhamento').val(0).blur();
+	$('#vlmaxnov_'+id,'#frmAtribuicaoDetalhamento').val(0).blur();
 }
