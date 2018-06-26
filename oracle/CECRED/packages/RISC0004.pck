@@ -114,6 +114,14 @@ PROCEDURE pc_busca_grupo_economico(pr_cdcooper     IN NUMBER
 																 , vr_numero_grupo OUT NUMBER
 																 , vr_risco_grupo  OUT VARCHAR2);
 
+
+  -- Buscar o maior dias atraso dos contratos que estão sendo liquidados
+  PROCEDURE pc_dias_atraso_liquidados(pr_cdcooper IN NUMBER           --> Cooperativa
+                                      ,pr_nrdconta IN NUMBER          --> Conta
+                                      ,pr_nrctremp IN NUMBER          --> Contrato
+                                      ,pr_qtdatref OUT NUMBER       --> Qtde dias atraso refinanciamento
+                                      ,pr_dscritic OUT VARCHAR2);
+
 END RISC0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
@@ -643,5 +651,66 @@ BEGIN
 	vr_risco_grupo  := rw_grupo.dsdrisgp;
 END pc_busca_grupo_economico;
 
+
+ -- Buscar o maior dias atraso dos contratos que estão sendo liquidados
+  PROCEDURE pc_dias_atraso_liquidados(pr_cdcooper IN NUMBER           --> Cooperativa
+                                      ,pr_nrdconta IN NUMBER          --> Conta
+                                      ,pr_nrctremp IN NUMBER          --> Contrato (proposta)
+                                      ,pr_qtdatref OUT NUMBER         --> Qtde dias atraso refinanciamento
+                                      ,pr_dscritic OUT VARCHAR2) IS   --> Critica
+    -- cursores
+    CURSOR cr_qtdatref (pr_cdcooper   NUMBER
+                       ,pr_nrdconta   NUMBER
+                       ,pr_nrctremp   NUMBER) IS
+      select nvl(max(qtdiaatr), 0) as qtdatref from
+            (select ctrs.*, ris.dtrefere, ris.qtdiaatr
+            from (
+                   SELECT data, ctrliq, nrctremp, nrdconta, cdcooper FROM crawepr
+                   UNPIVOT (ctrliq FOR data IN (nrctrliq##1, nrctrliq##2, nrctrliq##3, nrctrliq##4, nrctrliq##5, nrctrliq##6, nrctrliq##7, nrctrliq##8, nrctrliq##9, nrctrliq##10, nrliquid))
+                     where cdcooper = pr_cdcooper and ctrliq > 0 and nrdconta = pr_nrdconta and nrctremp = pr_nrctremp
+              ) ctrs
+              left join crapris ris 
+                     on ris.cdcooper = ctrs.cdcooper 
+                    and ris.nrdconta = ctrs.nrdconta
+                    and ris.nrctremp = ctrs.ctrliq
+                    and ris.dtrefere IN (SELECT NVL((CASE WHEN TO_CHAR(trunc(dat.dtmvtolt), 'mm') = TO_CHAR(trunc(dat.dtmvtoan), 'mm')
+                                          THEN dat.dtmvtoan
+                                          ELSE dat.dtultdma END), '01/01/1980')
+                                  FROM crapdat dat
+                                 WHERE dat.cdcooper = pr_cdcooper));
+                           
+    rw_qtdatref cr_qtdatref%ROWTYPE;
+    
+    -- variaveis
+    -- Variaveis de Erro
+    vr_cdcritic             crapcri.cdcritic%TYPE;
+    vr_dscritic             VARCHAR2(4000);
+    vr_exc_erro             EXCEPTION;                                      
+                                      
+   BEGIN
+   
+     OPEN cr_qtdatref(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+     FETCH cr_qtdatref INTO rw_qtdatref;
+
+     pr_qtdatref := rw_qtdatref.qtdatref;
+
+     CLOSE cr_qtdatref;
+     
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+       -- Variavel de erro recebe erro ocorrido
+       IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+         -- Buscar a descrição
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+       END IF;
+       pr_dscritic := vr_dscritic;
+     WHEN OTHERS THEN
+       ROLLBACK;
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na risc0003.pc_dias_atraso_liquidados --> ' || SQLERRM;
+
+  END pc_dias_atraso_liquidados;
+  
 END RISC0004;
 /
