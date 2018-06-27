@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 21/05/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 11/06/2018
     
    Dados referentes ao programa:
    
@@ -231,6 +231,11 @@
                            
               21/05/2018 - Alterada consulta da craplau na procedure bloqueia_lancamento para pegar apenas pendentes
                            pois acontecia as vezes de trazer mais de um registro (Tiago).
+                           
+              11/06/2018 - Removido convenios Bancoob da listagem de convenios 
+                           aceitos para debito automatico da PROCEDURE 
+                           busca_convenios_codbarras. (Reinert)
+                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2520,7 +2525,8 @@ PROCEDURE busca_convenios_codbarras:
     
     FOR EACH crapcon WHERE crapcon.cdcooper =  par_cdcooper         AND
                            crapcon.cdempcon >= par_cdempcon         AND
-                           crapcon.cdsegmto >= par_cdsegmto         NO-LOCK:
+                           crapcon.cdsegmto >= par_cdsegmto         AND 
+                           crapcon.tparrecd <> 2                    NO-LOCK: /* Nao apresentar convenios bancoob */
                            
         ASSIGN aux_nmempcon = ""
                aux_nmresumi = "".
@@ -2574,14 +2580,6 @@ PROCEDURE busca_convenios_codbarras:
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
-         /* Bancoob */
-        ELSE IF crapcon.tparrecd = 2 THEN
-            DO:                
-                /* No caso do bancoob deve utilizar dados da crapcon,
-                   pois na tabela nao existe esses dados */
-                ASSIGN aux_nmresumi = ""
-                       aux_nmempcon = "".                
-            END.   
 
          IF aux_nmresumi <> "" THEN
           ASSIGN aux_nmempcon = aux_nmresumi.    
@@ -6000,6 +5998,7 @@ PROCEDURE valida_senha_cooperado:
    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+   DEF  INPUT PARAM par_vlintrnt AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.   
    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -6043,7 +6042,25 @@ PROCEDURE valida_senha_cooperado:
            END.
    END.
       END. 
+    /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE AND  par_vlintrnt = "s" THEN 
+      DO:
+          FOR EACH crapsnh FIELDS (cddsenha) 
+                           WHERE  crapsnh.cdcooper = par_cdcooper
+                             AND  crapsnh.nrdconta = par_nrdconta
+                             AND  crapsnh.tpdsenha = 1 /*internet*/ 
+                             NO-LOCK:                
+              DO:        
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"99999999"))) = CAPS(crapsnh.cddsenha) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
+              END.
+             END.
 
+      END.
+    END.
+  /*Fim validaçao senha online */
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
