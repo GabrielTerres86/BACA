@@ -27,8 +27,14 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                     ,pr_dscritic OUT VARCHAR2
                                     ,pr_tab_erro OUT gene0001.typ_tab_erro);
 
+  -- calcula juros remuneratorios de uma determinada conta em cooperativa
+  FUNCTION fn_calcula_juros_preju_cc( pr_cdcooper IN NUMBER           --> Cooperativa
+                                        ,pr_nrdconta IN NUMBER          --> Conta
+                                        ,pr_dscritic OUT VARCHAR2)
+  RETURN NUMBER;   --> Critica
+
   -- atualiza juros remuneratorios de uma determinada conta em cooperativa
-  PROCEDURE pc_atualiza_juros_remunera( pr_cdcooper IN NUMBER           --> Cooperativa
+  PROCEDURE pc_atualiza_juros_preju_cc( pr_cdcooper IN NUMBER           --> Cooperativa
                                         ,pr_nrdconta IN NUMBER          --> Conta
                                         ,pr_dscritic OUT VARCHAR2);   --> Critica
 
@@ -396,9 +402,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 --
 
  -- atualiza juros remuneratorios de uma determinada conta em cooperativa
-  PROCEDURE pc_atualiza_juros_remunera( pr_cdcooper IN NUMBER           --> Cooperativa
-                                        ,pr_nrdconta IN NUMBER          --> Conta
-                                        ,pr_dscritic OUT VARCHAR2) IS   --> Critica
+  FUNCTION fn_calcula_juros_preju_cc( pr_cdcooper IN NUMBER           --> Cooperativa
+                                      ,pr_nrdconta IN NUMBER          --> Conta
+                                      ,pr_dscritic OUT VARCHAR2)    --> Critica
+  RETURN NUMBER AS vr_vljuprat NUMBER;
+
     -- cursores
     CURSOR cr_tbcc_prejuizo (pr_cdcooper   NUMBER
                             ,pr_nrdconta   NUMBER) IS
@@ -409,10 +417,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
               AND dtliquidacao IS NULL;
 
     rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;
-                   
+
     -- variaveis
     vr_pctaxpre             NUMBER  :=0;
-    vr_vljuprat             tbcc_prejuizo.vljuprej%TYPE; -- valor do juros prejuizo atualizado
     
     -- Variaveis de Erro
     vr_cdcritic             crapcri.cdcritic%TYPE;
@@ -420,9 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     vr_exc_erro             EXCEPTION;
     
     vr_dstextab             craptab.dstextab%TYPE;
-                                      
    BEGIN
-   
      -- procura um registro de prejuizo não liquidado
      OPEN cr_tbcc_prejuizo(pr_cdcooper, pr_nrdconta);
      FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
@@ -438,30 +443,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                                  ,pr_tpregist => 01);
 
         IF TRIM(vr_dstextab) IS NULL THEN
+          CLOSE cr_tbcc_prejuizo;
           vr_cdcritic := 55;
           RAISE vr_exc_erro;
         ELSE
           vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,105,6)),0);
-          
-          -- calcula valor atualizado do juros
-          vr_vljuprat := ((rw_tbcc_prejuizo.vlsdprej / 100) * vr_pctaxpre);
-
-          -- grava valor do juros atualizado em tbcc_prejuizo
-          BEGIN
-            UPDATE tbcc_prejuizo SET vljuprej = vr_vljuprat
-                               WHERE cdcooper = pr_cdcooper
-                                 AND nrdconta = pr_nrdconta;
-          EXCEPTION
-             WHEN OTHERS THEN
-               vr_dscritic := 'Erro ao atualizar registro de prejuizo. '||
-                              SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
-              RAISE vr_exc_erro;
-          END;
         END IF;
 
+       vr_vljuprat := (((rw_tbcc_prejuizo.vlsdprej + rw_tbcc_prejuizo.vljuprej) / 100) * vr_pctaxpre);
+     ELSE 
+       vr_vljuprat := -1; -- nenhum registro de prejuizo encontrado
      END IF;
      
      CLOSE cr_tbcc_prejuizo;
+     
+     RETURN vr_vljuprat;
    EXCEPTION
      WHEN vr_exc_erro THEN
        ROLLBACK;
@@ -474,8 +470,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      WHEN OTHERS THEN
        ROLLBACK;
        -- Descricao do erro
-       pr_dscritic := 'Erro nao tratado na risc0003.pc_dias_atraso_liquidados --> ' || SQLERRM;
+       pr_dscritic := 'Erro nao tratado na PREJ0003.fn_calcula_juros_preju_cc --> ' || SQLERRM;
 
-  END pc_atualiza_juros_remunera;
+  END fn_calcula_juros_preju_cc;
+  
+ -- atualiza juros remuneratorios de uma determinada conta em cooperativa
+  PROCEDURE pc_atualiza_juros_preju_cc( pr_cdcooper IN NUMBER           --> Cooperativa
+                                        ,pr_nrdconta IN NUMBER          --> Conta
+                                        ,pr_dscritic OUT VARCHAR2) IS   --> Critica
+    -- cursores
+                   
+    -- variaveis
+    vr_vljuprat             NUMBER := 0; -- valor do juros prejuizo atualizado
+    
+    -- Variaveis de Erro
+    vr_cdcritic             crapcri.cdcritic%TYPE;
+    vr_dscritic             VARCHAR2(4000);
+    vr_exc_erro             EXCEPTION;
+    
+  BEGIN
+    BEGIN
+      vr_vljuprat := PREJ0003.fn_calcula_juros_preju_cc(pr_cdcooper
+                                                      , pr_nrdconta
+                                                      , pr_dscritic);
+                                                            
+      UPDATE tbcc_prejuizo SET vljuprej = vr_vljuprat
+                         WHERE cdcooper = pr_cdcooper
+                           AND nrdconta = pr_nrdconta
+                           AND dtliquidacao IS NULL;
+    EXCEPTION
+       WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao atualizar registro de prejuizo. '||
+                        SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+        RAISE vr_exc_erro;
+    END;
+  EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+       -- Variavel de erro recebe erro ocorrido
+       IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+         -- Buscar a descrição
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+       END IF;
+       pr_dscritic := vr_dscritic;
+     WHEN OTHERS THEN
+       ROLLBACK;
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na PREJ0003.pc_atualiza_juros_remunera --> ' || SQLERRM;
+
+  END pc_atualiza_juros_preju_cc;
 END PREJ0003;
 /

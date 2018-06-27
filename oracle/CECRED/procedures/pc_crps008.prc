@@ -364,6 +364,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
               , crapass.vllimcre     ass_vllimcre
               , crapass.tpextcta     ass_tpextcta
               , crapass.inpessoa     ass_inpessoa
+              , crapass.inprejuz     ass_inprejuz
                -- CAMPOS DE INFORMAÇÃO DO SALDO DIÁRIO DOS ASSOCIADOS
               , sda_oan.vlsddisp     vlsldoan
               , sda_olt.vlsddisp     vlsldolt 
@@ -1033,6 +1034,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            --Se não encontrou o associado
            IF rw_crapsld.ass_nrdconta IS NULL THEN
              --Montar mensagem de erro com base na critica
+             
              vr_cdcritic:= 251;
              --Sair do programa
              RAISE vr_exc_saida;
@@ -1134,7 +1136,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                 END IF;
 
                 --Valor juros cheque especial recebe valor juros * txmensal /100 * -1
-                rw_crapsld.vljuresp:= (rw_crapsld.vlsmnesp * (vr_tab_craplrt(rw_craplim.cddlinha) / 100)) * -1;
+                IF (rw_crapsld.ass_inprejuz = 0) THEN
+                  rw_crapsld.vljuresp := (rw_crapsld.vlsmnesp * (vr_tab_craplrt(rw_craplim.cddlinha) / 100)) * -1;
+                ELSE
+                  rw_crapsld.vljuresp := 0;
+                END IF;
              END IF;
 
            END IF;
@@ -1142,13 +1148,21 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
            --Se valor negativo no mes menor zero
            IF rw_crapsld.vlsmnmes < 0 THEN
              --valor juros do saldo devedor recebe valor negativo no mes * taxa juros negativo * -1.
-             rw_crapsld.vljurmes:= (rw_crapsld.vlsmnmes * vr_txjurneg) * -1;
+             IF (rw_crapsld.ass_inprejuz = 0) THEN
+                rw_crapsld.vljurmes:= (rw_crapsld.vlsmnmes * vr_txjurneg) * -1;
+             ELSE
+                rw_crapsld.vljurmes:= 0;
+             END IF;
            END IF;
 
            --Se valor media saque s/ bloqueado menor zero
            IF rw_crapsld.vlsmnblq < 0   THEN
              --Valor juro saque recebe valor media saque s/ bloqueado * taxa juros saque * -1.
-             rw_crapsld.vljursaq:= (rw_crapsld.vlsmnblq * vr_txjursaq) * -1;
+             IF (rw_crapsld.ass_inprejuz = 0) THEN
+               rw_crapsld.vljursaq:= (rw_crapsld.vlsmnblq * vr_txjursaq) * -1;
+             ELSE
+               rw_crapsld.vljursaq:= 0;
+             END IF;
            END IF;
 
            --Valor saldo anterior recebe valor saldo disponivel + valor saldo cheque salario
