@@ -139,6 +139,8 @@
 
 			   07/02/2018 - Retirada com controle de lock da tabela CRAPLOT. Carlos Rafael Tanholi (SD 845899).
 
+                18/05/2018 - Validar bloqueio de poupança programada (SM404);
+
 ..............................................................................*/
 
 
@@ -2224,6 +2226,7 @@ PROCEDURE efetuar-resgate:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_idautblq AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.    
     
@@ -2307,6 +2310,22 @@ PROCEDURE efetuar-resgate:
         IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
             UNDO TRANS_POUP, LEAVE TRANS_POUP.
 
+        /** Verifica se aplicacao esta disponivel para saque **/
+        FIND FIRST craptab WHERE 
+                   craptab.cdcooper = par_cdcooper             AND
+                   craptab.nmsistem = "CRED"                   AND
+                   craptab.tptabela = "BLQRGT"                 AND
+                   craptab.cdempres = 00                       AND
+                   craptab.cdacesso = STRING(par_nrdconta,
+                                             "9999999999")     AND
+                   INTE(SUBSTR(craptab.dstextab,1,7)) = par_nrctrrpp
+                   NO-LOCK NO-ERROR.
+     
+        IF  AVAILABLE craptab AND par_idorigem = 5 AND par_nmdatela = "ATENDA" THEN
+            ASSIGN aux_idautblq = 0.
+        ELSE
+            ASSIGN aux_idautblq = 1.
+        
         CREATE craplrg.
         ASSIGN craplrg.cdcooper = par_cdcooper
                craplrg.cdagenci = 99
@@ -2327,7 +2346,8 @@ PROCEDURE efetuar-resgate:
                craplrg.vllanmto = par_vlresgat
                craplrg.cdoperad = par_cdoperad
                craplrg.hrtransa = TIME
-               craplrg.flgcreci = par_flgctain.
+               craplrg.flgcreci = par_flgctain
+               craplrg.idautblq = aux_idautblq.
         
         VALIDATE craplrg.
 

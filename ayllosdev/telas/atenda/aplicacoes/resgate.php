@@ -24,6 +24,8 @@
 							  
 				 17/04/2018 - Incluida verificacao de adesao do produto pelo tipo de conta. PRJ366 (Lombardi)
 				 
+				 09/05/2018 - Permitir o resgate de aplicações bloqueadas (SM404)
+							  
 	************************************************************************/
 	
 	session_start();
@@ -180,7 +182,7 @@
 		strHTML += '</form>';		
 		strHTML += '<div id="divBotoes" style="margin-top:5px; margin-bottom :10px; text-align: center;">';
 		strHTML += '	<a href="#" class="botao" id="btCancelar" onClick="voltarDivResgate();return false;" >Cancelar</a>';
-		strHTML += '	<a href="#" class="botao" id="btConcluir" onClick="validaValorProdutoResgate(\'cadastrarResgate(\\\'yes\\\');\',\'vlresgat\',\'frmResgate\');return false;" >Concluir</a>';
+		strHTML += '	<a href="#" class="botao" id="btConcluir" onClick="validaValorProdutoResgate(\'validaBloqueioAplicacao(1);\',\'vlresgat\',\'frmResgate\');return false;">Concluir</a>';
 		strHTML += '</div>';
 		
 		$("#divOpcoes").html(strHTML);

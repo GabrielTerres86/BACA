@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 18/12/2017
+ Data : Setembro/2009                Última Alteração: 10/05/2018
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -97,6 +97,8 @@
 						  senha do coordenador. PRJ366 (Lombardi).
 
 			 14/05/2018 - Ajustes na function validaValorProdutoResgate. PRJ366 (Lombardi).	
+
+             10/05/2018 - SM404 - Permitir o resgate de aplicações bloqueadas
 
 ***************************************************************************/
 
@@ -507,6 +509,37 @@ function acessaOpcaoCadastroResgate() {
             nraplica: nraplica,
             tpaplica: glbTpaplica,
             flcadrgt: "yes",
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+}
+
+//Função para validar o bloqueio da aplicação
+function validaBloqueioAplicacao(tporigem){
+	// Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, validando bloqueio aplica&ccedil;&atilde;o ...");
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/aplicacoes/valida_bloqueio_apli.php",
+        data: {
+            nrdconta: nrdconta,
+            nraplica: nraplica,
+			tporigem: tporigem,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2634,7 +2667,7 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
     var camposPc = '';
     var dadosPrc = '';
     var cdopera2 = $("#cdopera2", "#frmResgateVarias").val();
-    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");;
+    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");
 
     if (formaResgate == "automatica") {
         camposPc = retornaCampos(lstDadosResgate, '|');
@@ -3300,37 +3333,8 @@ function ativaCampo() {
 }
 
 function validaValorProdutoResgate (executa, campo, form) {
-	var vlresgat = 0;
-	var tpresgat = $("#tpresgat", "#frmResgate").val();
-	
-	if (form == 'frmResgate' && tpresgat == "T") {
-		$.ajax({
-			type: "POST",
-			dataType: "html",
-			url: UrlSite + "telas/atenda/aplicacoes/busca_saldo_resgate_aplicacao.php",
-			data: {
-				nrdconta: nrdconta,
-				nraplica: nraplica,
-				redirect: "script_ajax"
-			},
-			error: function (objAjax, responseError, objExcept) {
-				hideMsgAguardo();
-				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-			},
-			success: function (response) {
-				try {
-					eval(response);
+	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
 					validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
-				} catch (error) {
-					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-				}
-			}
-		});
-	} else {
-		vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
-	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
-}
 }
 
 function senhaCoordenador(executaDepois) {

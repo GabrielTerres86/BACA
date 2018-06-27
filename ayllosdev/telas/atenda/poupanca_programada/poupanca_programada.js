@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: poupanca_programada.js                                     ***//
 //*** Autor: David                                                      ***//
-//*** Data : Março/2010                   Ultima Alteracao: 01/12/2017  ***//
+//*** Data : Março/2010                   Ultima Alteracao: 17/05/2018  ***//
 //***                                                                   ***//
 //*** Objetivo  : Biblioteca de funções da rotina Poupança Programada   ***//
 //***             da tela ATENDA                                        ***//
@@ -36,6 +36,9 @@
 //***                                                                   ***//
 //***             04/04/2018 - Ajuste para chamar a rotina de senha     ***//
 //***                          do coordenador. PRJ366 (Lombardi)        ***//
+//***                                                                   ***//
+//***            17/05/2018 - Validar bloqueio de poupança programada   ***//
+//***                         (SM404).                                  ***//
 //***                                                                   ***//
 //*************************************************************************//
 
@@ -392,6 +395,36 @@ function voltarDivResgate() {
 	nrdocmto = 0;
 }
 
+//Função para validar o bloqueio da aplicação
+function validaBloqueioAplicacao(){
+	// Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, validando bloqueio aplica&ccedil;&atilde;o ...");
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/poupanca_programada/valida_bloqueio_poup.php",
+        data: {
+            nrdconta: nrdconta,
+			nrctrrpp: nrctrrpp,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+}
+
 function acessaOpcaoResgate() {
 	// Se não tiver nenhuma poupança selecionada
 	if (nrctrrpp == 0 || cdtiparq == 1) {
@@ -476,7 +509,8 @@ function acessaOpcaoEfetuarResgate() {
 	
 	strHTML += '<div id="divBotoes">';
 	strHTML += '	<input type="image" src="' + UrlImagens + 'botoes/cancelar.gif" onClick="voltarDivResgate();return false;" />';
-	strHTML += '	<input type="image" src="' + UrlImagens + 'botoes/concluir.gif" onClick="validarResgate();return false;" />';
+	//strHTML += '	<input type="image" src="' + UrlImagens + 'botoes/concluir.gif" onClick="validarResgate();return false;" />';
+	strHTML += '	<input type="image" src="' + UrlImagens + 'botoes/concluir.gif" onClick="validaBloqueioAplicacao();return false;" />';
 	strHTML += '</div>';
 	
 	$("#divOpcoes").html(strHTML);

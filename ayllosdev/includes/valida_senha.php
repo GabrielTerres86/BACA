@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: valida_senha.php                                          ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Outubro/2008                 Última Alteração: 22/10/2010 ***//
+	//*** Data : Outubro/2008               Última Alteração: 10/05/2018   ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Validar senha de Operador/Coordenador/Gerente para   ***//
 	//***             liberação da operação                                ***//
@@ -13,6 +13,9 @@
 	//***                                                                  ***//
 	//***             22/10/2010 - Incluir novo parametro para a funcao    ***//
 	//***                          getDataXML (David).                     ***//
+	//***                                                                  ***//
+	//***             10/05/2018 - Salvar o usuário que autorizou a    	   ***//
+	//***                          liberação na sessão (SM404).            ***//
 	//************************************************************************//
 	
 	session_start();
@@ -70,6 +73,8 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjSenha->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjSenha->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}else{
+		$_SESSION['cdopelib'] = $cdopelib;
 	} 	
 	
 	// Esconde mensagem de aguardo

@@ -12308,6 +12308,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                       
                          01/06/2016 - Ajustado a leitura da craptab para utilizar a rotina
                                       da TABE0001 (Douglas - Chamado 454248)
+
+                         15/05/2018 - Retirar o bloqueio para aplicações antigas (SM404).
                                       
                          06/06/2018 - P411 - Incluir a CUSAPL na lista de programas para extrado
                                       completo + usar pr_dtinicio e pr_dtfim ao inves do calendario 
@@ -12432,6 +12434,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
          AND craplot.nrdolote = pr_nrdolote;
     rw_craplot cr_craplot%ROWTYPE;
 
+		-- Cursor para se a aplicação está disponivel para saque
+		CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+										 ,pr_nmsistem IN craptab.nmsistem%TYPE
+										 ,pr_tptabela IN craptab.tptabela%TYPE
+										 ,pr_cdempres IN craptab.cdempres%TYPE
+										 ,pr_cdacesso IN craptab.cdacesso%TYPE
+										 ,pr_dstextab IN craptab.dstextab%TYPE) IS
+			SELECT tab.dstextab
+				FROM craptab tab
+			 WHERE tab.cdcooper = pr_cdcooper
+				 AND UPPER(tab.nmsistem) = UPPER(pr_nmsistem)
+				 AND UPPER(tab.tptabela) = UPPER(pr_tptabela)
+				 AND tab.cdempres        = pr_cdempres
+				 AND UPPER(tab.cdacesso) = UPPER(pr_cdacesso)
+				 AND SUBSTR(tab.dstextab,1,7) = pr_dstextab;
+			--rw_craptab cr_craptab%ROWTYPE;  
+
 
     -- Definicao do tipo para a tabela de datas
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -12469,7 +12488,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_dtmvtopr DATE;
     vr_dtmvtocd DATE;
     vr_dstextab craptab.dstextab%TYPE;
-
+	--
+	vr_idbloqueia BOOLEAN;
+	--
   BEGIN
     -- Inicializa as variaveis
     vr_dscritic := NULL;
@@ -12768,7 +12789,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Vefificar se a situacao da aplicacao esta bloqueada
       -- Indice composto por "Numero da conta com 12" + "Numero da aplicacao com 8"
       IF vr_tab_craptab.exists(LPAD(pr_nrdconta,12,'0') || LPAD(rw_craprda.nraplica, 8,'0')) THEN
+				-- SM404
+				vr_idbloqueia := TRUE;
+				--
+				IF pr_nrorigem = 5 AND
+					upper(pr_cdprogra) = 'RESGATE' THEN -- Ayllos Web
+					-- Verifica se a aplicacao esta Bloqueada
+					OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+												 ,pr_nmsistem => 'CRED'
+												 ,pr_tptabela => 'BLQRGT'
+												 ,pr_cdempres => 0
+												 ,pr_cdacesso => gene0002.fn_mask(to_char(pr_nrdconta),'9999999999')
+												 ,pr_dstextab => gene0002.fn_mask(to_char(rw_craprda.nraplica), '9999999')
+												 );
+				  --
+					FETCH cr_craptab INTO vr_dstextab;
+					--
+					IF cr_craptab%FOUND THEN
+						--
+						vr_idbloqueia := FALSE;
+						--
+					END IF;
+					--
+					CLOSE cr_craptab;
+					--
+				END IF;
+				--
+				IF vr_idbloqueia THEN
+					--
         vr_indebcre := 'B';  -- Bloqueada
+					--
+				END IF;
+				--
       ELSE
         IF rw_craprda.tpaplica = 3 THEN -- RDCA30
           IF rw_craprda.inaniver = 1 OR -- Completou 1 mes
