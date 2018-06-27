@@ -5021,7 +5021,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ass.nrdconta = pcr.nrdconta AND
              ass.dtdemiss IS NULL        AND
              age.cdcooper = ass.cdcooper AND
-             age.cdagenci = ass.cdagenci
+             age.cdagenci = ass.cdagenci AND
+			 pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
              -- Numero da conta utilizado para nao gerar linha de solicitacao de cartao adiciona quando eh 
              -- UPGRADE/DOWNGRADE, DEVE ficar como primeiro campo no ORDER BY (Douglas - Chamado 441407)             
              ORDER BY pcr.nrdconta   

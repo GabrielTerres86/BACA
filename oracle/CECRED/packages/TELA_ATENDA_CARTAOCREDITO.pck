@@ -2232,27 +2232,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     END IF;
     CLOSE cr_crawcrd_up;    
     
-    -- Atualizar
-    BEGIN
-      UPDATE CRAWCRD t
-      SET    t.dsjustif = pr_ds_justif
-            ,t.dtmvtolt = SYSDATE
-      WHERE  t.rowid = rw_crawcrd_up.rowid;
-                                    
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_just_updown_cartao: ' || SQLERRM;
-        RAISE vr_exc_saida;
-    END;
-    
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-
     IF rw_crawcrd.flgprcrd = 1 AND rw_crawcrd.cdadmcrd < pr_cdadmnov THEN
       
-      este0005.pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
+      -- Atualizar
+      BEGIN
+        UPDATE CRAWCRD t
+        SET    t.dsjustif = pr_ds_justif
+              ,t.dtmvtolt = SYSDATE
+              ,t.insitdec = 1
+        WHERE  t.rowid = rw_crawcrd_up.rowid;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_just_updown_cartao: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+	  
+	  este0005.pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
                                       ,pr_cdagenci => vr_cdagenci
                                       ,pr_cdoperad => vr_cdoperad
                                       ,pr_cdorigem => vr_idorigem
@@ -2262,6 +2263,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
                                           
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+	ELSE
+      -- Atualizar
+      BEGIN
+        UPDATE CRAWCRD t
+        SET    t.dsjustif = pr_ds_justif
+              ,t.dtmvtolt = SYSDATE
+              ,t.insitdec = 2
+        WHERE  t.rowid = rw_crawcrd_up.rowid;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_just_updown_cartao: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
