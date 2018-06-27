@@ -543,8 +543,10 @@ BEGIN
             ,vlatraso craptdb.vltitulo%TYPE
             ,vlsaldodev craptdb.vlsldtit%TYPE
             ,cddlinha crapldc.cddlinha%TYPE
+            ,qtdiaatr INTEGER
             ,dsdlinha crapldc.dsdlinha%TYPE
-            ,txmensal crapbdt.txmensal%TYPE);
+            ,txmensal crapbdt.txmensal%TYPE
+            ,txdiaria crapbdt.txmensal%TYPE);
 
     -- AWAE: Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_craptdb IS
@@ -905,13 +907,13 @@ BEGIN
           ,tdb.vlpagiof
           ,tdb.vlpagmta
           ,tdb.vlpagmra
-          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) +
-           (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
-          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) +
-           (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
+          ,NVL(pr_dtrefere - tdb.dtvencto,0) as qtdiaatr
           ,ldc.cddlinha
           ,ldc.dsdlinha
           ,bdt.txmensal
+          ,ldc.txdiaria
       FROM craptdb tdb
      INNER JOIN crapbdt bdt
         ON tdb.cdcooper = bdt.cdcooper
@@ -921,17 +923,19 @@ BEGIN
         ON lim.cdcooper = bdt.cdcooper
        AND lim.nrdconta = bdt.nrdconta
        AND lim.nrctrlim = bdt.nrctrlim
+       AND lim.tpctrlim = 3 -- desconto de títulos
      INNER JOIN crapldc ldc
         ON lim.cdcooper = ldc.cdcooper
        AND lim.cddlinha = ldc.cddlinha
-     WHERE tdb.insittit = 4
-       AND tdb.cdcooper = pr_cdcooper
+     WHERE tdb.cdcooper = pr_cdcooper
        AND tdb.nrdconta = pr_nrdconta
        AND tdb.nrborder = pr_nrctremp -- nrctrem da crapris
        AND tdb.dtlibbdt = pr_dtinictr -- ris.dtinictr
        AND tdb.insittit = 4
+       AND ldc.tpdescto = 3 -- desconto de título
        AND tdb.dtdpagto IS NULL
-       AND tdb.dtvencto < pr_dtrefere;
+       AND tdb.dtvencto < pr_dtrefere
+       AND bdt.flverbor = 1; -- considerar somente os títulos vencidos de borderôs novos
     rw_craptdb cr_craptdb%ROWTYPE;
 
     -- Buscar detalhes do saldo da conta
@@ -2794,6 +2798,7 @@ BEGIN
                                LPAD(rw_craptdb.nrtitulo, 10, '0');
               vr_tab_craptdb(vr_indice_tdb).nrdconta := rw_craptdb.nrdconta;
               vr_tab_craptdb(vr_indice_tdb).dtvencto := rw_craptdb.dtvencto;
+              vr_tab_craptdb(vr_indice_tdb).qtdiaatr := NVL(pr_dtrefere - rw_craptdb.dtvencto,0);
               vr_tab_craptdb(vr_indice_tdb).nrseqdig := rw_craptdb.nrseqdig;
               vr_tab_craptdb(vr_indice_tdb).cdoperad := rw_craptdb.cdoperad;
               vr_tab_craptdb(vr_indice_tdb).nrdocmto := rw_craptdb.nrdocmto;
@@ -2834,6 +2839,7 @@ BEGIN
               vr_tab_craptdb(vr_indice_tdb).cddlinha := rw_craptdb.cddlinha;
               vr_tab_craptdb(vr_indice_tdb).dsdlinha := rw_craptdb.dsdlinha;
               vr_tab_craptdb(vr_indice_tdb).txmensal := rw_craptdb.txmensal;
+              vr_tab_craptdb(vr_indice_tdb).txdiaria := rw_craptdb.txdiaria;
             END LOOP;
           END IF; -- FIM DOS TITULOS DE BORDERÔ
 
@@ -4578,7 +4584,7 @@ BEGIN
                                  ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
                                  ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
                                  ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
-                                 || '<cdlcremp/>';
+                                 ||' <cdlcremp/>';
 
                 -- Não enviar nivel em caso de ser AA
                 IF vr_dsnivris <> 'AA' THEN
@@ -4587,16 +4593,17 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
-          -- Fechar tag atraso enviando pro XML
-            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
-                                  ,pr_texto_completo => vr_txtauxi_227
-                                      ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+                vr_des_xml_gene := vr_des_xml_gene || ' </atraso>';
 
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
 
+          -- Fechar tag atraso enviando pro XML
+            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
+                                  ,pr_texto_completo => vr_txtauxi_227
+                                  ,pr_texto_novo     => vr_des_xml_gene);
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4695,15 +4702,17 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
-                -- Finalmente enviar para o XML
-                  gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
-                                         ,pr_texto_completo => vr_txtauxi_354
-                                         ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
+                vr_des_xml_gene := vr_des_xml_gene || ' </divida>';
                 
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
+
+          -- Finalmente enviar para o XML
+            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
+                                   ,pr_texto_completo => vr_txtauxi_354
+                                   ,pr_texto_novo     => vr_des_xml_gene);
 
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
@@ -4892,11 +4901,11 @@ BEGIN
                                                          ,pr_nrctremp => vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc  -- Numero do contrato
                                                          ,pr_cdorigem => 4                                             -- Origem cyber
                                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
-                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev-- Saldo devedor
-                                                         ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit  -- Valor a regularizar
+                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Saldo devedor
+                                                         ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlatraso  -- Valor a regularizar
                                                          ,pr_qtprepag => 0                                             -- Prestacoes Pagas
                                                          ,pr_txmensal => vr_tab_craptdb(vr_indice_dados_tdb).txmensal  -- Taxa mensal
-                                                         ,pr_txdiaria => 0                                             -- Taxa diaria
+                                                         ,pr_txdiaria => vr_tab_craptdb(vr_indice_dados_tdb).txdiaria  -- Taxa diaria
                                                          ,pr_vlprepag => 0                                             -- Vlr. Prest. Pagas
                                                          ,pr_qtmesdec => 0                                             -- Qtd. meses decorridos
                                                          ,pr_dtdpagto => vr_tab_craptdb(vr_indice_dados_tdb).dtdpagto  -- Data de pagamento
@@ -4915,7 +4924,7 @@ BEGIN
                                                          ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
                                                          ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
                                                          ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
-                                                         ,pr_qtdiaatr => vr_tab_crapris(vr_des_chave_crapris).qtdiaatr -- Dias de atraso
+                                                         ,pr_qtdiaatr => vr_tab_craptdb(vr_indice_dados_tdb).qtdiaatr  -- Dias de atraso
                                                          ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
                                                          ,pr_flgpreju => 0                                             -- Esta em prejuizo.
                                                          ,pr_flgconsg => 0                                             --Indicador de valor consignado.
