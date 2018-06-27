@@ -95,6 +95,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                  18/04/2018 - Tratamento se existe valor bloqueado como garantia de operação com poupança programa
                               PRJ404 - Garantia(Oscar-AMcom)              
                               
+								 18/05/2018 - Validar bloqueio de poupança programada (SM404)            
+                              
   ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -132,6 +134,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             ,craplrg.flgcreci
             ,craplrg.dtmvtolt
             ,craplrg.rowid
+		    ,craplrg.idautblq
         FROM craplrg
        WHERE craplrg.cdcooper  = pr_cdcooper
          AND craplrg.nrdconta  = decode(pr_nrdconta, 0, craplrg.nrdconta, pr_nrdconta)
@@ -192,8 +195,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
            craprej.dtdaviso,
            craprej.vldaviso,
            craprej.vlsdapli, 
-           craprej.vllanmto,
-           craprej.cdpesqbb
+           craprej.vllanmto
       FROM craprej
      WHERE craprej.cdcooper = pr_cdcooper
        AND craprej.dtmvtolt = pr_dtmvtopr
@@ -728,70 +730,71 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           /* Vencida e Bloqueada faz o resgate */
           IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr  THEN
             vr_cdcritic := 828;
-          ELSIF pr_nrdconta = 0 THEN -- Somente validar abaixo se for do processo noturno   
+          ELSIF pr_nrdconta = 0 AND rw_craplrg.idautblq = 1 THEN -- Somente validar abaixo se for do processo noturno   
             /* caso contrario critica, esta bloqueada e nao venceu */
             vr_cdcritic := 640;
           END IF;
         END IF;   
         CLOSE cr_craptab;
       END IF;
-
+      
+       /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828  THEN
-        IF vr_saldorpp > 0   THEN
-          vr_vlirabap := 0;
-                                    
-          IF rw_craprpp.vlabcpmf <> 0 THEN
-            /* Procedure para verificar imunidade tributaria e inserir valor de insenção */
-            IMUT0001.pc_verifica_imunidade_trib(  pr_cdcooper  => rw_craplrg.cdcooper  --> Codigo Cooperativa
-                                                 ,pr_nrdconta  => rw_craplrg.nrdconta  --> Numero da Conta
-                                                 ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data movimento
-                                                 ,pr_flgrvvlr  => FALSE        --> Identificador se deve gravar valor
-                                                 ,pr_cdinsenc  => 5            --> Codigo da insenção
-                                                 ,pr_vlinsenc  => 0            --> Valor insento
-                                                 ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
-                                                 ,pr_dsreturn  => vr_des_reto  --> Descricao Critica
-                                                 ,pr_tab_erro  => vr_tab_erro);--> Tabela erros
+          IF vr_saldorpp > 0   THEN
+            vr_vlirabap := 0;
+                                      
+            IF rw_craprpp.vlabcpmf <> 0 THEN
+              /* Procedure para verificar imunidade tributaria e inserir valor de insenção */
+              IMUT0001.pc_verifica_imunidade_trib(  pr_cdcooper  => rw_craplrg.cdcooper  --> Codigo Cooperativa
+                                                   ,pr_nrdconta  => rw_craplrg.nrdconta  --> Numero da Conta
+                                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data movimento
+                                                   ,pr_flgrvvlr  => FALSE        --> Identificador se deve gravar valor
+                                                   ,pr_cdinsenc  => 5            --> Codigo da insenção
+                                                   ,pr_vlinsenc  => 0            --> Valor insento
+                                                   ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
+                                                   ,pr_dsreturn  => vr_des_reto  --> Descricao Critica
+                                                   ,pr_tab_erro  => vr_tab_erro);--> Tabela erros
 
-            /*O tratamento de retorno abaixo foi comentado pois, no progress, o mesmo não
-              é implementado.
-            -- Caso retornou com erro, levantar exceção
-            IF pr_des_reto = 'NOK' THEN
-              RAISE vr_exc_erro;
-            END IF; */
-            
-            -- se nao for imune, calcular valor
-            IF NOT vr_flgimune THEN
-              vr_vlirabap := TRUNC((rw_craprpp.vlabcpmf * vr_percenir / 100),2);
-            END IF;                                     
-          END IF; -- FIM IF rw_craprpp.vlabcpmf <> 0   
-          CASE rw_craplrg.tpresgat
-            WHEN  1  THEN  /*  Parcial  */
-              IF rw_craplrg.vllanmto > (vr_saldorpp - vr_vlirabap) THEN
+              /*O tratamento de retorno abaixo foi comentado pois, no progress, o mesmo não
+                é implementado.
+              -- Caso retornou com erro, levantar exceção
+              IF pr_des_reto = 'NOK' THEN
+                RAISE vr_exc_erro;
+              END IF; */
+              
+              -- se nao for imune, calcular valor
+              IF NOT vr_flgimune THEN
+                vr_vlirabap := TRUNC((rw_craprpp.vlabcpmf * vr_percenir / 100),2);
+              END IF;                                     
+            END IF; -- FIM IF rw_craprpp.vlabcpmf <> 0   
+            CASE rw_craplrg.tpresgat
+              WHEN  1  THEN  /*  Parcial  */
+                IF rw_craplrg.vllanmto > (vr_saldorpp - vr_vlirabap) THEN
+                  vr_vlresgat := vr_saldorpp - vr_vlirabap;
+                  vr_cdcritic := 429; -- 429 - Resgate menor que o solicitado.
+                ELSE
+                  vr_vlresgat := rw_craplrg.vllanmto;
+                END IF;
+              WHEN  2  THEN  /*  Total  */
                 vr_vlresgat := vr_saldorpp - vr_vlirabap;
-                vr_cdcritic := 429; -- 429 - Resgate menor que o solicitado.
-              ELSE
-                vr_vlresgat := rw_craplrg.vllanmto;
-              END IF;
-            WHEN  2  THEN  /*  Total  */
-              vr_vlresgat := vr_saldorpp - vr_vlirabap;
-            WHEN  3  THEN  /*  Antecipado  */
-              IF rw_craplrg.vllanmto = 0 THEN
-                vr_vlresgat := vr_saldorpp - vr_vlirabap;
-              ELSIF rw_craplrg.vllanmto > (vr_saldorpp - vr_vlirabap) THEN
-                vr_vlresgat := vr_saldorpp - vr_vlirabap;
-                vr_cdcritic := 429; -- 429 - Resgate menor que o solicitado.
-              ELSE
-                vr_vlresgat := rw_craplrg.vllanmto;
-              END IF;
-          END CASE;
+              WHEN  3  THEN  /*  Antecipado  */
+                IF rw_craplrg.vllanmto = 0 THEN
+                  vr_vlresgat := vr_saldorpp - vr_vlirabap;
+                ELSIF rw_craplrg.vllanmto > (vr_saldorpp - vr_vlirabap) THEN
+                  vr_vlresgat := vr_saldorpp - vr_vlirabap;
+                  vr_cdcritic := 429; -- 429 - Resgate menor que o solicitado.
+                ELSE
+                  vr_vlresgat := rw_craplrg.vllanmto;
+                END IF;
+            END CASE;
         ELSE
           vr_cdcritic := 494; --> 494 - Poupanca programada sem saldo.
         END IF;
       END IF;
-
-      IF nvl(vr_cdcritic,0) NOT IN(484,640,494)  THEN
+      
+      -- Se não há critica ainda 
+      IF nvl(vr_cdcritic,0) NOT IN(484,828,640,494)  THEN
         -- Validar resgate
-        
         Apli0002.pc_ver_val_bloqueio_poup(pr_cdcooper => pr_cdcooper,
                                           pr_cdagenci => 1,
                                           pr_nrdcaixa => 1,
@@ -811,21 +814,129 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                           pr_dscritic => vr_dscritic);
         
         -- Verifica se houve retorno de erros
-        IF NVL(vr_dscritic, 'OK') <> 'OK'  THEN
-          -- Enviaremos a critica 999 ao relatório para gravar dscritic no cdpesqbb da craprej
-           vr_cdcritic := 999; 
-        END IF; 
-      END IF;
+        IF (NVL(vr_dscritic, 'OK') <> 'OK') OR (NVL(vr_cdcritic,0) > 0)  THEN
+          IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr  THEN
+             vr_cdcritic := 828;
+             vr_dscritic := '';
+          ELSE
+             /* caso contrario critica, esta bloqueada e nao venceu */
+             vr_cdcritic := 640;
+             vr_dscritic := '';
+          END IF;
+        END IF;
 
-      
-      /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
+      END IF;
+	  /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  (nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828 OR vr_cdcritic = 429) THEN
-              
-          IF rw_craplrg.flgcreci = 0 /* false */ THEN /*Resgate Conta Corrente*/
+      
+            IF rw_craplrg.flgcreci = 0 /* false */ THEN /*Resgate Conta Corrente*/
+              -- Buscar dados do lote
+              OPEN cr_craplot (pr_cdcooper => pr_cdcooper,
+                               pr_dtmvtopr => rw_crapdat.dtmvtopr,
+                               pr_nrdolote => 8473);
+              FETCH cr_craplot INTO rw_craplot;
+              IF cr_craplot%NOTFOUND THEN
+                BEGIN
+                  INSERT INTO craplot 
+                             ( craplot.dtmvtolt
+                              ,craplot.cdagenci
+                              ,craplot.cdbccxlt
+                              ,craplot.nrdolote
+                              ,craplot.tplotmov
+                              ,craplot.cdcooper)
+                      VALUES ( rw_crapdat.dtmvtopr -- craplot.dtmvtolt
+                              ,1                   -- craplot.cdagenci 
+                              ,100                 -- craplot.cdbccxlt
+                              ,8473                -- craplot.nrdolote
+                              ,1                   -- craplot.tplotmov
+                              ,pr_cdcooper)        -- craplot.cdcooper
+                     RETURNING craplot.ROWID ,
+                               craplot.dtmvtolt,
+                               craplot.cdagenci,
+                               craplot.cdbccxlt,
+                               craplot.nrdolote
+                          INTO rw_craplot.ROWID,
+                               rw_craplot.dtmvtolt,
+                               rw_craplot.cdagenci,
+                               rw_craplot.cdbccxlt,
+                               rw_craplot.nrdolote;
+                      
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Não foi possivel inserir craplot(8473): '||SQLERRM;
+                    RAISE vr_exc_saida;
+                END;
+              END IF;
+              -- fechar cursor;
+              CLOSE cr_craplot;
+                  
+              -- atualizar informações do lote
+              BEGIN
+                UPDATE craplot
+                   SET craplot.qtinfoln = craplot.qtinfoln + 1,
+                       craplot.qtcompln = craplot.qtcompln + 1,
+                       craplot.vlinfocr = craplot.vlinfocr + vr_vlresgat,
+                       craplot.vlcompcr = craplot.vlcompcr + vr_vlresgat,
+                       craplot.nrseqdig = craplot.nrseqdig + 1
+                 WHERE craplot.rowid = rw_craplot.rowid
+                RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Não foi possivel atualizar craplot(8473): '||SQLERRM;
+                  RAISE vr_exc_saida;  
+              END;
+                  
+              -- inserir lançamento
+              BEGIN
+                INSERT INTO craplcm
+                            (craplcm.dtmvtolt
+                            ,craplcm.cdagenci
+                            ,craplcm.cdbccxlt
+                            ,craplcm.nrdolote
+                            ,craplcm.nrdconta
+                            ,craplcm.nrdctabb
+                            ,craplcm.nrdctitg                 
+                            ,craplcm.nrdocmto
+                            ,craplcm.cdhistor
+                            ,craplcm.vllanmto
+                            ,craplcm.nrseqdig
+                            ,craplcm.cdcooper)
+                     VALUES( rw_craplot.dtmvtolt -- craplcm.dtmvtolt
+                            ,rw_craplot.cdagenci -- craplcm.cdagenci
+                            ,rw_craplot.cdbccxlt -- craplcm.cdbccxlt
+                            ,rw_craplot.nrdolote -- craplcm.nrdolote
+                            ,rw_craprpp.nrdconta -- craplcm.nrdconta
+                            ,rw_craprpp.nrdconta -- craplcm.nrdctabb
+                            ,gene0002.fn_mask(rw_craprpp.nrdconta,'99999999') -- craplcm.nrdctitg
+                            ,rw_craplot.nrseqdig -- craplcm.nrdocmto
+                            ,(CASE rw_craprpp.flgctain 
+                               WHEN 1 /* true */ THEN 501 -- TRANSF. RESGATE POUP.PROGRAMADA DA C/I PARA C/C
+                               ELSE 159 -- CR.POUP.PROGR
+                              END)          -- craplcm.cdhistor
+                            ,vr_vlresgat         -- craplcm.vllanmto
+                            ,rw_craplot.nrseqdig -- craplcm.nrseqdig
+                            ,pr_cdcooper);       -- craplcm.cdcooper
+          
+                  
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Não foi possivel atualizar craplcm (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
+                  RAISE vr_exc_saida;  
+              END;    
+            END IF; --> Fim IF rw_craplrg.flgcreci = 0 /* false */ /*Resgate Conta Corrente*/
+                
+            /* Gerar  lançamento na conta investimento*/
+            pc_gera_lancamentos_craplci(pr_cdcooper => pr_cdcooper,
+                                        pr_flgctain => rw_craprpp.flgctain,
+                                        pr_flgcreci => rw_craplrg.flgcreci,
+                                        pr_nrdconta => rw_craprpp.nrdconta,
+                                        pr_vlresgat => vr_vlresgat);
+                                              
+            --> Gera lancamento do resgate <--
             -- Buscar dados do lote
             OPEN cr_craplot (pr_cdcooper => pr_cdcooper,
                              pr_dtmvtopr => rw_crapdat.dtmvtopr,
-                             pr_nrdolote => 8473);
+                             pr_nrdolote => 8383);
             FETCH cr_craplot INTO rw_craplot;
             IF cr_craplot%NOTFOUND THEN
               BEGIN
@@ -839,8 +950,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                     VALUES ( rw_crapdat.dtmvtopr -- craplot.dtmvtolt
                             ,1                   -- craplot.cdagenci 
                             ,100                 -- craplot.cdbccxlt
-                            ,8473                -- craplot.nrdolote
-                            ,1                   -- craplot.tplotmov
+                            ,8383                -- craplot.nrdolote
+                            ,14                  -- craplot.tplotmov
                             ,pr_cdcooper)        -- craplot.cdcooper
                    RETURNING craplot.ROWID ,
                              craplot.dtmvtolt,
@@ -852,23 +963,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                              rw_craplot.cdagenci,
                              rw_craplot.cdbccxlt,
                              rw_craplot.nrdolote;
-                    
+                      
               EXCEPTION
                 WHEN OTHERS THEN
-                  vr_dscritic := 'Não foi possivel inserir craplot(8473): '||SQLERRM;
+                  vr_dscritic := 'Não foi possivel inserir craplot(8383): '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
             END IF;
             -- fechar cursor;
             CLOSE cr_craplot;
-                
+                  
             -- atualizar informações do lote
             BEGIN
               UPDATE craplot
                  SET craplot.qtinfoln = craplot.qtinfoln + 1,
                      craplot.qtcompln = craplot.qtcompln + 1,
-                     craplot.vlinfocr = craplot.vlinfocr + vr_vlresgat,
-                     craplot.vlcompcr = craplot.vlcompcr + vr_vlresgat,
+                     craplot.vlinfodb = craplot.vlinfodb + vr_vlresgat,
+                     craplot.vlcompdb = craplot.vlcompdb + vr_vlresgat,
                      craplot.nrseqdig = craplot.nrseqdig + 1
                WHERE craplot.rowid = rw_craplot.rowid
               RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
@@ -877,165 +988,77 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_dscritic := 'Não foi possivel atualizar craplot(8473): '||SQLERRM;
                 RAISE vr_exc_saida;  
             END;
-                
+                  
             -- inserir lançamento
             BEGIN
-              INSERT INTO craplcm
-                          (craplcm.dtmvtolt
-                          ,craplcm.cdagenci
-                          ,craplcm.cdbccxlt
-                          ,craplcm.nrdolote
-                          ,craplcm.nrdconta
-                          ,craplcm.nrdctabb
-                          ,craplcm.nrdctitg                 
-                          ,craplcm.nrdocmto
-                          ,craplcm.cdhistor
-                          ,craplcm.vllanmto
-                          ,craplcm.nrseqdig
-                          ,craplcm.cdcooper)
-                   VALUES( rw_craplot.dtmvtolt -- craplcm.dtmvtolt
-                          ,rw_craplot.cdagenci -- craplcm.cdagenci
-                          ,rw_craplot.cdbccxlt -- craplcm.cdbccxlt
-                          ,rw_craplot.nrdolote -- craplcm.nrdolote
-                          ,rw_craprpp.nrdconta -- craplcm.nrdconta
-                          ,rw_craprpp.nrdconta -- craplcm.nrdctabb
-                          ,gene0002.fn_mask(rw_craprpp.nrdconta,'99999999') -- craplcm.nrdctitg
-                          ,rw_craplot.nrseqdig -- craplcm.nrdocmto
+              INSERT INTO craplpp
+                          (craplpp.dtmvtolt
+                          ,craplpp.cdagenci
+                          ,craplpp.cdbccxlt
+                          ,craplpp.nrdolote
+                          ,craplpp.nrdconta
+                          ,craplpp.nrctrrpp
+                          ,craplpp.nrdocmto
+                          ,craplpp.txaplmes
+                          ,craplpp.txaplica
+                          ,craplpp.cdhistor
+                          ,craplpp.nrseqdig
+                          ,craplpp.dtrefere
+                          ,craplpp.vllanmto
+                          ,craplpp.cdcooper)
+                   VALUES( rw_craplot.dtmvtolt           -- craplpp.dtmvtolt
+                          ,rw_craplot.cdagenci           -- craplpp.cdagenci
+                          ,rw_craplot.cdbccxlt           -- craplpp.cdbccxlt
+                          ,rw_craplot.nrdolote           -- craplpp.nrdolote
+                          ,rw_craprpp.nrdconta           -- craplpp.nrdconta
+                          ,rw_craprpp.nrctrrpp           -- craplpp.nrctrrpp
+                          ,rw_craplot.nrseqdig           -- craplpp.nrdocmto
+                          ,vr_rpp_txaplmes               -- craplpp.txaplmes
+                          ,vr_rpp_txaplica               -- craplpp.txaplica
                           ,(CASE rw_craprpp.flgctain 
-                             WHEN 1 /* true */ THEN 501 -- TRANSF. RESGATE POUP.PROGRAMADA DA C/I PARA C/C
-                             ELSE 159 -- CR.POUP.PROGR
-                            END)          -- craplcm.cdhistor
-                          ,vr_vlresgat         -- craplcm.vllanmto
-                          ,rw_craplot.nrseqdig -- craplcm.nrseqdig
-                          ,pr_cdcooper);       -- craplcm.cdcooper
-        
-                
+                              WHEN 1 /*YES*/  THEN 
+                                  496   /* RESGATE POUP. p/ C.I */ 
+                              ELSE 158  /* RESGATE POUP. */       -- craplpp.cdhistor
+                            END) 
+                          ,rw_craplot.nrseqdig           -- craplpp.nrseqdig
+                          ,rw_craprpp.dtfimper           -- craplpp.dtrefere
+                          ,vr_vlresgat                   -- craplpp.vllanmto
+                          ,pr_cdcooper );                -- craplpp.cdcooper 
+                  
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Não foi possivel atualizar craplcm (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
+                vr_dscritic := 'Não foi possivel atualizar craplpp (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
                 RAISE vr_exc_saida;  
-            END;    
-          END IF; --> Fim IF rw_craplrg.flgcreci = 0 /* false */ /*Resgate Conta Corrente*/
-              
-          /* Gerar  lançamento na conta investimento*/
-          pc_gera_lancamentos_craplci(pr_cdcooper => pr_cdcooper,
-                                      pr_flgctain => rw_craprpp.flgctain,
-                                      pr_flgcreci => rw_craplrg.flgcreci,
-                                      pr_nrdconta => rw_craprpp.nrdconta,
-                                      pr_vlresgat => vr_vlresgat);
-                                            
-          --> Gera lancamento do resgate <--
-          -- Buscar dados do lote
-          OPEN cr_craplot (pr_cdcooper => pr_cdcooper,
-                           pr_dtmvtopr => rw_crapdat.dtmvtopr,
-                           pr_nrdolote => 8383);
-          FETCH cr_craplot INTO rw_craplot;
-          IF cr_craplot%NOTFOUND THEN
+            END;  
+                
+            /* Atualizar valor resgatado */
             BEGIN
-              INSERT INTO craplot 
-                         ( craplot.dtmvtolt
-                          ,craplot.cdagenci
-                          ,craplot.cdbccxlt
-                          ,craplot.nrdolote
-                          ,craplot.tplotmov
-                          ,craplot.cdcooper)
-                  VALUES ( rw_crapdat.dtmvtopr -- craplot.dtmvtolt
-                          ,1                   -- craplot.cdagenci 
-                          ,100                 -- craplot.cdbccxlt
-                          ,8383                -- craplot.nrdolote
-                          ,14                  -- craplot.tplotmov
-                          ,pr_cdcooper)        -- craplot.cdcooper
-                 RETURNING craplot.ROWID ,
-                           craplot.dtmvtolt,
-                           craplot.cdagenci,
-                           craplot.cdbccxlt,
-                           craplot.nrdolote
-                      INTO rw_craplot.ROWID,
-                           rw_craplot.dtmvtolt,
-                           rw_craplot.cdagenci,
-                           rw_craplot.cdbccxlt,
-                           rw_craplot.nrdolote;
-                    
+              UPDATE craprpp
+                 SET craprpp.vlrgtacu = craprpp.vlrgtacu + vr_vlresgat
+               WHERE craprpp.rowid = rw_craprpp.rowid;
+               
+              /* resgate por vencimento */
+              IF vr_fcraprpp   THEN
+                IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr AND 
+                   rw_craplrg.tpresgat = 2                    THEN
+                
+                  /* Atualizar saldo e situação, se for poupança vencida*/
+                    UPDATE craprpp
+                       SET craprpp.vlsdrdpp = 0,
+                           craprpp.cdsitrpp = 5 -- 5-vencido.
+                     WHERE craprpp.rowid = rw_craprpp.rowid;
+                  
+                END IF;
+              END IF;
+               
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Não foi possivel inserir craplot(8383): '||SQLERRM;
-                RAISE vr_exc_saida;
+                vr_dscritic := 'Não foi possivel atualizar craprpp (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
+                RAISE vr_exc_saida; 
             END;
-          END IF;
-          -- fechar cursor;
-          CLOSE cr_craplot;
                 
-          -- atualizar informações do lote
-          BEGIN
-            UPDATE craplot
-               SET craplot.qtinfoln = craplot.qtinfoln + 1,
-                   craplot.qtcompln = craplot.qtcompln + 1,
-                   craplot.vlinfodb = craplot.vlinfodb + vr_vlresgat,
-                   craplot.vlcompdb = craplot.vlcompdb + vr_vlresgat,
-                   craplot.nrseqdig = craplot.nrseqdig + 1
-             WHERE craplot.rowid = rw_craplot.rowid
-            RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Não foi possivel atualizar craplot(8473): '||SQLERRM;
-              RAISE vr_exc_saida;  
-          END;
-                
-          -- inserir lançamento
-          BEGIN
-            INSERT INTO craplpp
-                        (craplpp.dtmvtolt
-                        ,craplpp.cdagenci
-                        ,craplpp.cdbccxlt
-                        ,craplpp.nrdolote
-                        ,craplpp.nrdconta
-                        ,craplpp.nrctrrpp
-                        ,craplpp.nrdocmto
-                        ,craplpp.txaplmes
-                        ,craplpp.txaplica
-                        ,craplpp.cdhistor
-                        ,craplpp.nrseqdig
-                        ,craplpp.dtrefere
-                        ,craplpp.vllanmto
-                        ,craplpp.cdcooper)
-                 VALUES( rw_craplot.dtmvtolt           -- craplpp.dtmvtolt
-                        ,rw_craplot.cdagenci           -- craplpp.cdagenci
-                        ,rw_craplot.cdbccxlt           -- craplpp.cdbccxlt
-                        ,rw_craplot.nrdolote           -- craplpp.nrdolote
-                        ,rw_craprpp.nrdconta           -- craplpp.nrdconta
-                        ,rw_craprpp.nrctrrpp           -- craplpp.nrctrrpp
-                        ,rw_craplot.nrseqdig           -- craplpp.nrdocmto
-                        ,vr_rpp_txaplmes               -- craplpp.txaplmes
-                        ,vr_rpp_txaplica               -- craplpp.txaplica
-                        ,(CASE rw_craprpp.flgctain 
-                            WHEN 1 /*YES*/  THEN 
-                                496   /* RESGATE POUP. p/ C.I */ 
-                            ELSE 158  /* RESGATE POUP. */       -- craplpp.cdhistor
-                          END) 
-                        ,rw_craplot.nrseqdig           -- craplpp.nrseqdig
-                        ,rw_craprpp.dtfimper           -- craplpp.dtrefere
-                        ,vr_vlresgat                   -- craplpp.vllanmto
-                        ,pr_cdcooper );                -- craplpp.cdcooper 
-                
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Não foi possivel atualizar craplpp (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
-              RAISE vr_exc_saida;  
-          END;  
-              
-          /* Atualizar valor resgatado */
-          BEGIN
-            UPDATE craprpp
-               SET craprpp.vlrgtacu = craprpp.vlrgtacu + vr_vlresgat
-             WHERE craprpp.rowid = rw_craprpp.rowid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Não foi possivel atualizar craprpp (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
-              RAISE vr_exc_saida; 
-          END;
-              
-          vr_regexist := TRUE;
-          
+            vr_regexist := TRUE;
+            
       END IF;
       
       IF nvl(vr_cdcritic,0) = 0 THEN
@@ -1062,8 +1085,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       ,craprej.vllanmto
                       ,craprej.cdcritic
                       ,craprej.tpintegr
-                      ,craprej.cdcooper
-                      ,craprej.cdpesqbb)
+                      ,craprej.cdcooper)
                VALUES (rw_crapdat.dtmvtopr  -- craprej.dtmvtolt 
                       ,156                  -- craprej.cdagenci 
                       ,156                  -- craprej.cdbccxlt 
@@ -1076,11 +1098,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       ,vr_vlresgat          -- craprej.vllanmto 
                       ,nvl(vr_cdcritic,0)   -- craprej.cdcritic 
                       ,156                  -- craprej.tpintegr 
-                      ,pr_cdcooper
-                      ,NVL(vr_dscritic, '')); 
+                      ,pr_cdcooper); 
                       
           vr_cdcritic := 0;
-          vr_dscritic := '';            
           
         EXCEPTION
           WHEN OTHERS THEN
@@ -1099,27 +1119,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           vr_dscritic := 'Não foi possivel atualizar craplrg (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
           RAISE vr_exc_saida; 
       END; 
-      
-      /* resgate por vencimento */
-      IF vr_fcraprpp   THEN
-        IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr AND 
-           rw_craplrg.tpresgat = 2                    THEN
-        
-          /* Atualizar saldo e situação, se for poupança vencida*/
-          BEGIN
-            UPDATE craprpp
-               SET craprpp.vlsdrdpp = 0,
-                   craprpp.cdsitrpp = 5 -- 5-vencido.
-             WHERE craprpp.rowid = rw_craprpp.rowid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Não foi possivel atualizar craprpp (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
-              RAISE vr_exc_saida; 
-          END;
-          
-        END IF;
-      END IF;
-
                      
     END LOOP;  -- Fim Loop craplrg  -- --  Leitura dos resgates programados                   
     
@@ -1173,13 +1172,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         
         -- buscar descrição da critica
         IF nvl(vr_cdcritic,0) <> rw_craprej.cdcritic THEN
-          
-          vr_cdcritic := rw_craprej.cdcritic;
-          IF vr_cdcritic = 999 THEN
-             vr_dscritic := rw_craprej.cdpesqbb;
-          ELSE
-             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          END IF;
+           vr_cdcritic := rw_craprej.cdcritic;
+           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
         
         pc_escreve_xml('<rejeitados>
