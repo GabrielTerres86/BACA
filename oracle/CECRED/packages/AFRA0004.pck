@@ -1795,6 +1795,11 @@ create or replace package body CECRED.AFRA0004 is
     pr_dscritic:= NULL;
     vr_cdagenci:= pr_cdagenci;
     
+    --> Busca dados da cooperativa
+    OPEN  cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    CLOSE cr_crapcop;
+    
     IF vr_cdagenci = 90 AND pr_flgagend = 0 THEN /*false*/
     
       -- Selecionar informacoes do associado

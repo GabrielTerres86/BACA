@@ -56,7 +56,7 @@
                     <div id="divAba0" class="clsAbas">
                         <br clear="all" />
                         <input type="hidden" id="flgativo_ori" name="flgativo_ori">
-                        <label for="flgativo">Envio analise:</label>
+                        <label for="flgativo">Envio análise:</label>
                         <select id="flgativo" name="flgativo">
                             <option value="0">Inativo</option>
                             <option value="1">Ativo</option>

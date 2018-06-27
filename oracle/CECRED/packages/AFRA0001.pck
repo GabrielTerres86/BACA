@@ -3346,10 +3346,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              con.tparrecd,
              lft.vllanmto,
              lft.nrautdoc,
-             pro.dscedent
+             nvl(TRIM(lcm.dscedent), pro.dscedent) dscedent
         FROM crappro pro,
              crapcon con,
-             craplft lft      
+             craplft lft,
+             craplcm lcm      
        WHERE pro.nrseqaut = lft.nrautdoc
          AND pro.dtmvtolt = lft.dtmvtolt
          AND pro.cdcooper = lft.cdcooper
@@ -3357,6 +3358,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND lft.cdcooper = con.cdcooper(+)
          AND lft.cdempcon = con.cdempcon(+)
          AND lft.cdsegmto = con.cdsegmto(+)
+         AND pro.cdcooper = lcm.cdcooper
+         AND pro.dtmvtolt = lcm.dtmvtolt
+         AND pro.nrdconta = lcm.nrdconta
+         AND pro.nrdocmto = lcm.nrdocmto         
+         AND pro.vldocmto = lcm.vllanmto
          AND lft.idanafrd = pr_idanalis
          AND lft.cdcooper = pr_cdcooper
          AND lft.nrdconta = pr_nrdconta;                
@@ -6310,7 +6316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       --> Verificar se deve notificar area de segurança
       IF rw_fraude.flgemail_retorno = 1 THEN
         pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
-                                pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
+                                pr_tpalerta   => 1, --> Tipo de alerta 1 - Entrega, 2 - Retorno falha
                                 pr_dscritic   => vr_dscritic); 
       END IF;
       
@@ -8314,6 +8320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         RAISE vr_exc_erro; 
       END IF;
     END IF;
+  
+  
   
     
   
