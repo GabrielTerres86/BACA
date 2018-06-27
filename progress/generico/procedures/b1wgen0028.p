@@ -23977,7 +23977,7 @@ PROCEDURE altera_administradora:
                               /**/
                       RUN STORED-PROCEDURE pc_busca_credito_config_categ
                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-                                                               INPUT par_codaadmi,
+                                                               INPUT par_codnadmi,
                                                                OUTPUT 0,
                                                                OUTPUT 0,
                                                                OUTPUT "",
