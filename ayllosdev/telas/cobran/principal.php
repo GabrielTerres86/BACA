@@ -25,6 +25,7 @@
 	$operacao 			= (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$cddopcao 			= (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ;
 	$nrdconta			= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
+	$nrcnvcob			= (isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : 0  ;
 	$nrdcontx			= (isset($_POST['nrdcontx'])) ? $_POST['nrdcontx'] : 0  ;
 	$ininrdoc			= (isset($_POST['ininrdoc'])) ? $_POST['ininrdoc'] : 0  ;
 	$fimnrdoc			= (isset($_POST['fimnrdoc'])) ? $_POST['fimnrdoc'] : 0  ;
