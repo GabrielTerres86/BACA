@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 18/12/2014.
+   Data    : Marco/2001                      Ultima atualizacao: 25/06/2018.
 
    Dados referentes ao programa:
 
@@ -46,6 +46,8 @@
                             quando era informado CMC7 manualmente, o sistema nao estava 
                             validando o saldo, deixando a conta negativa.
                             (Tiago Castro - RKAM)
+                            
+              25/06/2018 - inc0016988 Inclusao de no-lock em consulta com shared (Carlos)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -1128,7 +1130,8 @@ PROCEDURE process-web-request :
                         FOR EACH crapmdw
                             WHERE crapmdw.cdcooper = crapcop.cdcooper
                               AND crapmdw.cdagenci = INT(v_pac)
-                              AND crapmdw.nrdcaixa = INT(v_caixa):
+                              AND crapmdw.nrdcaixa = INT(v_caixa)
+                              NO-LOCK:
                             ASSIGN de-saldo-cheque = de-saldo-cheque +
                                    crapmdw.vlcompel.
                         END.
