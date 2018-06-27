@@ -3804,6 +3804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.cdcooper
               ,crapass.cdagenci
               ,crapass.cdtipcta
+              ,crapass.cdsitdct
         FROM crapass crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
