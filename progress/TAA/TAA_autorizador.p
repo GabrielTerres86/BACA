@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 29/11/2017
+      Data: Janeiro/2010                        Ultima alteracao: 18/06/2018
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -314,6 +314,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             21/05/2018 - Inclusao de parametros devido a analise de fraude.
                          PRJ381 - Antifraude(Odirlei-AMcom)
+                         
+            18/06/2018 - Retornar o complemento na consulta de extrato
+                         (Douglas - Prj 467)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -2572,7 +2575,7 @@ END PROCEDURE.
 
 
 PROCEDURE obtem_extrato_conta:
-
+    DEF VAR aux_dsextrat AS CHAR NO-UNDO.
     /* EXTRATOS */
     RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT SET h-b1wgen0001.
 
@@ -2668,6 +2671,11 @@ PROCEDURE obtem_extrato_conta:
              BY tt-extrato_conta.dtmvtolt
                BY tt-extrato_conta.nrsequen:
 
+        IF LENGTH(TRIM(tt-extrato_conta.dscomple)) > 0 THEN
+            ASSIGN aux_dsextrat = tt-extrato_conta.dsextrat + " - " + tt-extrato_conta.dscomple.
+        ELSE
+            ASSIGN aux_dsextrat = tt-extrato_conta.dsextrat.
+        
         /* ---------- */
         xDoc:CREATE-NODE(xField,"DDMVTOLT","ELEMENT").
         xRoot:APPEND-CHILD(xField).
@@ -2690,7 +2698,7 @@ PROCEDURE obtem_extrato_conta:
         xRoot:APPEND-CHILD(xField).
         
         xDoc:CREATE-NODE(xText,"","TEXT").
-        xText:NODE-VALUE = tt-extrato_conta.dsextrat.
+        xText:NODE-VALUE = aux_dsextrat.                                
         xField:APPEND-CHILD(xText).
 
         /* ---------- */

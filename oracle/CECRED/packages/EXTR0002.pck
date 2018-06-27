@@ -7439,10 +7439,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 vr_vldiario:= NULL;
               END IF;
               -- valida se o dscomple não esta vazio, caso não, concatena dscomple com dsextrat
-              IF (vr_tab_extrato_conta(vr_index_extrato).dscomple IS NOT NULL) OR 
-                  (TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple) <> '') THEN 
-                 vr_dsextrat := SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21) || ' - ' ||
-                                SUBSTR(TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple),1,6);
+              IF TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple) IS NOT NULL THEN 
+                 vr_dsextrat := SUBSTR(TRIM(vr_tab_extrato_conta(vr_index_extrato).dsextrat) || ' - ' ||
+                                       TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple),1,21);
               ELSE 
                  vr_dsextrat := SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21);                                                                       
               END IF;    

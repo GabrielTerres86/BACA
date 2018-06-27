@@ -154,7 +154,7 @@ DEF TEMP-TABLE tt-extrato_conta NO-UNDO
     FIELD dsprotoc LIKE crappro.dsprotoc
     FIELD flgdetal AS INTE
     FIELD idlstdom AS INTE
-	FIELD dscomple AS CHAR FORMAT "x(50)"		
+	FIELD dscomple AS CHAR FORMAT "x(100)"		
     INDEX tt-extrato_conta1 AS PRIMARY dtmvtolt nrsequen.
 
 DEF TEMP-TABLE tt-dep-identificado NO-UNDO

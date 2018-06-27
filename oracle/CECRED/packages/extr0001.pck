@@ -2889,7 +2889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Marcos (Supero)
-        Data    : Dez/2012                         Ultima atualizacao: 30/05/2018
+        Data    : Dez/2012                         Ultima atualizacao: 11/06/2018
 
         Dados referetes ao programa:
         Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -2926,6 +2926,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 					          13/04/2018 - Ajustado para filtrar os protocolos pela dtmvtolt. (Linhares).
                     
                     30/05/2018 - validar estabelecimento, e incluir na pl_table (Alcemir Mout's Prj 467).
+                    
+                    11/06/2018 - Ajustar o SQL que busca apenas o ESTABELECIMENTO sem a cidade (Douglas - Prj 467)
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3088,7 +3090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        SELECT lcm.dtmvtolt AS dtmvtolt_lcm, 
         lcm.dtrefere AS dtrefere_lcm, 
         to_char(lcm.nrdocmto),       
-        dcb.dsdtrans ESTABELECIMENTO, 
+        TRIM(SUBSTR(dcb.dsdtrans,1,23)) ESTABELECIMENTO, 
         dcb.*
        FROM craplcm lcm, crapdcb dcb
        WHERE dcb.cdcooper = lcm.cdcooper -- Cooperativa
@@ -7054,7 +7056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Douglas Quisinski
-    Data     : Novembro/2015                        Ultima atualizacao:  30/05/2018    
+    Data     : Novembro/2015                        Ultima atualizacao:  11/06/2018
   
     Dados referentes ao programa:
    
@@ -7063,6 +7065,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
   
     Alterações : 
                 30/05/2018 - adicionado ao xml de retorno o campo dscomple (Alcemir Mout's - Prj 467). 
+
+                11/06/2018 - Remover a concatenação com o ' - ', que deve ser feito pelo front
+                            (Douglas - Prj 467)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
     --Variaveis de Criticas
@@ -7221,14 +7227,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         --Percorrer todos os beneficiarios
         WHILE vr_index IS NOT NULL LOOP
           
-          -- caso venha algum complmento concatenar "- " com o mesmo.
-          IF (vr_tab_extrato_conta(vr_index).dscomple IS NOT NULL) OR
-             (TRIM(vr_tab_extrato_conta(vr_index).dscomple) <> '') THEN 
-             vr_dscomple := '- '|| vr_tab_extrato_conta(vr_index).dscomple;   
-          ELSE
-             vr_dscomple := ' '; 
-          END IF;
-          
           vr_string:= '<extrato>'||
                         '<nrdconta>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).nrdconta),' ')|| '</nrdconta>'|| 
                         '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dtmvtolt,'DD/MM/YYYY'),' ')|| '</dtmvtolt>'|| 
@@ -7261,7 +7259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                         '<dsprotoc>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dsprotoc),' ')|| '</dsprotoc>'|| 
                         '<flgdetal>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).flgdetal),'0')|| '</flgdetal>'||  
                         '<idlstdom>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).idlstdom),'0')|| '</idlstdom>'|| 
-                        '<dscomple>'||NVL(TO_CHAR(vr_dscomple),'0')|| '</dscomple>'||  
+                        '<dscomple>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dscomple),' ')|| '</dscomple>'||  
                       '</extrato>';
 
           -- Escrever no XML

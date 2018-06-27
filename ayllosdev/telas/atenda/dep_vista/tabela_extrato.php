@@ -13,6 +13,7 @@
  * 005: [05/08/2016] Carlos R. - Corrigi a variavel de controle de ordenação do extrato.
  * 006: [08/08/2016] Carlos R. - Correcao na forma de ordenação das colunas que nao obedeciam a ordenacao manual.
  * 007: [30/05/2018] Concatenar dscomple (tags[31]) com historico (Alcemir Mout's - Prj. 467).
+ * 008: [11/06/2018] Ajuste para concatenar dscomple (tags[31]) com historico, o traço deve ficar no front (Douglas - Prj. 467).
  */	
 ?>
 <div class="divRegistros">	
@@ -39,8 +40,14 @@
 
 			<?php for ($i = 1; $i < $qtExtrato; $i++) {   
 			
-			  $dshistor = $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata."  ".$extrato[$i]->tags[21]->cdata." ".$extrato[$i]->tags[31]->cdata; 
-				$dtliblan = $extrato[$i]->tags[7]->cdata;
+				if (strlen(trim($extrato[$i]->tags[31]->cdata)) > 0 ) {
+                    // Exibe o complemento
+                    $dshistor = $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[21]->cdata." - ".$extrato[$i]->tags[31]->cdata; 
+				} else {
+                    // Exibe apenas o extrato
+                    $dshistor = $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[21]->cdata; 
+				}
+                $dtliblan = $extrato[$i]->tags[7]->cdata;
 				$mtdClick = "selecionaExtrato('".$dshistor."', '".$dtliblan."')";
 				?>
 
@@ -51,7 +58,16 @@
 						<?php echo $extrato[$i]->tags[1]->cdata; ?>
 					</td>
 						
-					<td><?php echo $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[7]->cdata." ".$extrato[$i]->tags[31]->cdata; ?></td>                    					
+					<td><?php 
+						// verificar se existe complemento para ser adicionado ao extrato
+						if (strlen(trim($extrato[$i]->tags[31]->cdata)) > 0 ) {
+							// Exibe o complemento
+							echo $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[7]->cdata." - ".$extrato[$i]->tags[31]->cdata; 
+						} else {
+							// Exibe apenas o extrato
+							echo $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[7]->cdata; 
+						}
+					?></td>                    					
 					
           <td><?php echo $extrato[$i]->tags[5]->cdata; ?></td>
 					
