@@ -30,13 +30,6 @@
 //***                          quando conta demitida                    ***//
 //***                         (Jonata - RKAM P364).                     ***//
 //***                                                                   ***//
-//***             21/02/2018 - Correção do login enviado para a tela    ***//
-//***                          poupanca_resgate_valida.php              ***//
-//***                          (Antonio R Jr)-Chamado 852162            ***//
-//***                                                                   ***//
-//***             04/04/2018 - Ajuste para chamar a rotina de senha     ***//
-//***                          do coordenador. PRJ366 (Lombardi)        ***//
-//***                                                                   ***//
 //*************************************************************************//
 
 var nrctrrpp    = 0;        // Variável para armazenar número da poupança selecionada
@@ -77,29 +70,8 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},
 		success: function(response) {
 			$("#divConteudoOpcao").html(response);
-            controlaFoco();
 		}				
 	}); 		
-}
-
-//Função para controle de navegação
-function controlaFoco() {
-    $('#divConteudoOpcao').each(function () {
-        $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
-        $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
-        $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
-    });
-
-    //Se estiver com foco na classe FluxoNavega
-    $(".FluxoNavega").focus(function () {
-        $(this).bind('keydown', function (e) {
-            if (e.keyCode == 13) {
-                $(this).click();
-            }
-        });
-    });
-
-    $(".FirstInputModal").focus();
 }
 
 // Função para seleção da poupança programada
@@ -517,7 +489,7 @@ function validarResgate() {
 	var flgctain = $("#flgctain","#frmResgate").val();	
 	var cdopera2 = $("#cdopera2","#frmResgate").val();	
 	var cddsenha = $("#cddsenha","#frmResgate").val();	
-    var fvisivel = $("#dvautoriza").is(':visible') ? 1 : 0;	
+	
 	
 	if (tpresgat == "P") {
 		// Valida valor do resgate
@@ -548,7 +520,6 @@ function validarResgate() {
 			flgctain: flgctain,
 			cdopera2: cdopera2,
 			cddsenha: cddsenha,
-			fvisivel: fvisivel,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -1247,8 +1218,4 @@ function controlaLayout( nomeForm ){
 	}
 
 	return false;
-}
-
-function senhaCoordenador(executaDepois) {
-	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }
