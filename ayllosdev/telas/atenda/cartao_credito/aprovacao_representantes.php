@@ -38,16 +38,17 @@
             $xml .= " </Dados>";
             $xml .= "</Root>";
             $admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			//echo " /* \n $admresult \n */ ";
             $objectResult = simplexml_load_string( $admresult );		
             $podeEnviar = 1;
             $alguemAssinou = false;
             $alguemNaoAssinou = false;
             $idastcjt = null;
             $insitcrd = false;
-            $inupgrad = false;
-            $temJustificativa = false;
-            $dsjustif;
-            $cdopesup;
+			$inupgrad = false;
+			$temJustificativa = false;
+			$dsjustif;
+			$cdopesup;
 			
             if($tpacao == "verificaAutorizacoes"){
 
@@ -77,8 +78,9 @@
 						echo "\n  globalesteira = true; \n";
 					}
                 }
+				  echo "autorizado = false; ";
 				
-				if((strlen($dsjustif) > 0 ) && (!isset($cdopesup) || strlen($cdopesup) ==0 )){
+				/*if((strlen($dsjustif) > 0 ) && (!isset($cdopesup) || strlen($cdopesup) ==0 )){
 					  // Montar o xml de Requisicao
                     $xml = "<Root>";
                     $xml .= " <Dados>";
@@ -95,32 +97,14 @@
                 
                     if(isset($idacionamento))
                         echo "protocolo = '$idacionamento';";
-                    echo "autorizado = false; /* \n $xmlResult \n*/";
+                  
 					return;
-				 }
+				 }*/
                 
 
-                if(($alguemAssinou && !$alguemNaoAssinou) || (($alguemAssinou && $idastcjt =='0') &&($insitcrd != 0)) || ($insitcrd == 5) || ($inupgrad == 1))
-                    echo "autorizado = true;";
-                else if(($alguemAssinou && $idastcjt =='1') || ($alguemNaoAssinou && !$alguemAssinou)){
-                    // Montar o xml de Requisicao
-                    $xml = "<Root>";
-                    $xml .= " <Dados>";
-                    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-                    $xml .= " </Dados>";
-                    $xml .= "</Root>";
-                    $xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-                    $xmlObj = getObjectXML($xmlResult);
-
-
-                    $json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
-
-                    $idacionamento = $json_sugestoes['protocolo'];
                 
-                    if(isset($idacionamento))
-                        echo "protocolo = '$idacionamento';";
-                    echo "autorizado = false; /* \n $xmlResult \n*/";
-                }
+               
+                
                 return;
             }
         ?>

@@ -368,13 +368,14 @@
 <script type="text/javascript">
 	$("#divOpcoesDaOpcao1").css("display","block");
 	$("#divConteudoCartoes").css("display","none");
-	if($("#dssituac").val() == "Em uso" || $("#dssituac").val() == "Aprov."){
+	if($("#dssituac").val() == "Em estudo" || $("#dssituac").val() =="Estudo" ){
+		
+		verificaAutorizacoes();
+		
+	}else{
 		$(".imprimeTermoBTN").show();
 		hideMsgAguardo();
-		bloqueiaFundo(divRotina);
-	}else{
-		verificaAutorizacoes();
-				
+		bloqueiaFundo(divRotina);				
 	}
 	controlaLayout('frmDadosCartao');
 
