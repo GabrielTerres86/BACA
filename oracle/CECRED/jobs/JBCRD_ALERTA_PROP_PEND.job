@@ -1,0 +1,42 @@
+/*
+
+    PROJETO 345 - Cartão fase III
+	Responsavel por enviar e-mail de alerta para os PAs, referente as propostas de solicitacao de cartao
+	que estao pendentes de assinatura e que vão expirar em 3 dias (parametrizado).
+
+*/
+BEGIN
+
+  EXECUTE IMMEDIATE 'ALTER SESSION SET 
+                    nls_calendar = ''GREGORIAN''
+                    nls_comp = ''BINARY''
+                    nls_date_format = ''DD-MON-RR''
+                    nls_date_language = ''AMERICAN''
+                    nls_iso_currency = ''AMERICA''
+                    nls_language = ''AMERICAN''
+                    nls_length_semantics = ''BYTE''
+                    nls_nchar_conv_excp = ''FALSE''
+                    nls_numeric_characters = ''.,''
+                    nls_sort = ''BINARY''
+                    nls_territory = ''AMERICA''
+                    nls_time_format = ''HH.MI.SSXFF AM''
+                    nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+                    nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+                    nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+
+  -- Create do job do mesmo
+  sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCRD_ALERTA_PROP_PEND'
+                               ,job_type        => 'PLSQL_BLOCK'
+                               ,job_action      => 'BEGIN CECRED.pc_crps731; END;'
+                               ,start_date      => TO_TIMESTAMP_TZ(to_char(SYSDATE + 1,'DD/MM/RRRR')||' 21:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR')                               
+                               ,repeat_interval => 'Freq=Daily;ByDay=MON, TUE, WED, THU, FRI;ByHour=21;ByMinute=0;BySecond=0'
+                               ,end_date        => to_date(NULL)
+                               ,job_class       => 'DEFAULT_JOB_CLASS'
+                               ,enabled         => TRUE
+                               ,auto_drop       => TRUE
+                               ,comments        => 'Rodar programa pc_crps731 - Responsavel por enviar email de alerta para o PA '||
+                                                   'informando as propostas de solicitacao de cartao pendente de aprovacao, prestes a expirar.');
+
+  COMMIT;
+END;
+/

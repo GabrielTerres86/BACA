@@ -2,7 +2,7 @@
 
     Programa: b1wgen0063.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 14/03/2018
+    Data    : Marco/2010                   Ultima atualizacao: 12/04/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSOES
 
@@ -61,6 +61,9 @@
 
                 14/03/2018 - Comentada verificaçao para exibir a mensagem "Tipo de 
                              conta nao necessita de termo.". PRJ366 (Lombardi).
+							 
+				12/04/2018 - Incluido opcao de impressao de Declaracao FATCA/CRS
+                             PRJ 414 (Mateus Z - Mouts)			 
 
 .......................................................................................*/
 
@@ -1591,7 +1594,7 @@ PROCEDURE Busca_TpRelatorio:
                LEAVE Valida.
             END.
 
-        DO aux_contador = 1 TO 7:
+        DO aux_contador = 1 TO 8:
             CREATE tt-tprelato.
 
             CASE aux_contador:
@@ -1632,6 +1635,9 @@ PROCEDURE Busca_TpRelatorio:
                     ASSIGN tt-tprelato.nmrelato = "DECLARACAO PEP"
                     tt-tprelato.flgbloqu = NO.
                 END.
+				/* PRJ 414 */
+                WHEN 8 THEN
+                    ASSIGN tt-tprelato.nmrelato = "DECLARACAO FATCA CRS".
 
             END CASE.
         END.

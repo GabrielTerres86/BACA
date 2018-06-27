@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0002 AS
                              ,pr_nmdtest2 IN VARCHAR2 --> Nome da testemunha 2
                              ,pr_cpftest2 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 2
                              ,pr_nrconven IN crapceb.nrconven%TYPE --> Numero do convenio
-                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento
+                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento, 3-Termo de Cancelamento Protesto
                              ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                              ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -1049,7 +1049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                              ,pr_nmdtest2 IN VARCHAR2 --> Nome da testemunha 2
                              ,pr_cpftest2 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 2
                              ,pr_nrconven IN crapceb.nrconven%TYPE --> Numero do convenio
-                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento
+                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento, 3-Termo de Cancelamento Protesto
                              ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                              ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                              ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -1101,7 +1101,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                 to_char(h.dtmvtolt,'month','nls_date_language=portuguese') ||'de '||
                 to_char(h.dtmvtolt,'yyyy')||'.' dsdata,
 								d.flrecipr,
-								e.idrecipr
+							 e.idrecipr,
+               DECODE(NVL(d.insrvprt,0), 0, 'Nenhum', 1, 'IEPTB', 2, 'BB') insrvprt,
+               e.cdcooper,
+               e.nrdconta,
+               e.nrconven,
+               f.cdagenci,
+               f.nrcpfcgc nrcpfcgc_sem_mask
           FROM crapenc i,
                crapdat h,
                crapage g,
@@ -1180,7 +1186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       vr_dsjasper    VARCHAR2(100);   --> nome do jasper a ser usado
       vr_nmarqim     VARCHAR2(50);    --> nome do arquivo PDF
 			vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
-      
+      vr_qrcode      VARCHAR2(32767); --> QR Code enviado para o XML
+      vr_cdtipdoc    VARCHAR2(32767); --> Tipo do documento a ser usado no QR Code
     
   BEGIN
       -- Extrai os dados vindos do XML
@@ -1253,7 +1260,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
           vr_xml_recipro := vr_xml_recipro ||'</reciprocidade>'||chr(10);
         END IF;
 			END IF;
+      
+      -- Definir o TIPO DE DOCUMENTO de acordo com o layout.
+      -- OBS.: Verificar os códigos de cancelamento. Por enquanto está igual adesão.
+      IF (NVL(pr_tpimpres, 1) = 1) THEN  -- Se for Adesao
+        IF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 11) THEN
+          vr_cdtipdoc := 106; -- PF
+        ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
+          vr_cdtipdoc := 115; -- PJ
+        END IF;
+      ELSE -- Cancelamento
+        IF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 11) THEN
+          vr_cdtipdoc := 106; -- PF
+        ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
+          vr_cdtipdoc := 115; -- PJ
+        END IF;
+      END IF;
+      
+      -- Gera Pendencia de digitalizacao do documento
+      DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_idseqttl => 1
+                                          ,pr_nrcpfcgc => rw_crapceb.nrcpfcgc_sem_mask
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_tpdocmto => CASE WHEN vr_cdtipdoc = 106 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                          ,pr_cdoperad => vr_cdoperad
+                                          ,pr_nrseqdoc => pr_nrconven
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+              
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
 
+      vr_qrcode := rw_crapceb.cdcooper || '_' || 
+                   rw_crapceb.cdagenci || '_' ||
+                   TRIM(gene0002.fn_mask_conta(rw_crapceb.nrdconta)) || '_' || 
+                   0 || '_' ||
+                   rw_crapceb.nrconven || '_' || 
+                   0 || '_' || 
+                   vr_cdtipdoc; -- 
+             
       -- Escreve os dados principais
       gene0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
@@ -1261,6 +1308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                                                      '<nmcooper>'||rw_crapceb.nmcooper||'</nmcooper>'||chr(10)||
                                                      '<cnpjcoop>'||rw_crapceb.cnpjcoop||'</cnpjcoop>'||chr(10)||
                                                    '</cooperativa>'||chr(10)||
+                                                   '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||chr(10)||
                                                    '<cooperado>'||chr(10)||
                                                      '<nmprimtl>'||rw_crapceb.nmprimtl||'</nmprimtl>'||chr(10)||
                                                      '<nrcpfcgc>'||rw_crapceb.nrcpfcgc||'</nrcpfcgc>'||chr(10)||
@@ -1274,6 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
                                                      '<qtdfloat>'||rw_crapceb.qtdfloat||'</qtdfloat>'||chr(10)||
                                                      '<flserasa>'||rw_crapceb.flserasa||'</flserasa>'||chr(10)||
                                                      '<flprotes>'||rw_crapceb.flprotes||'</flprotes>'||chr(10)||
+                                                     '<insrvprt>'||rw_crapceb.insrvprt||'</insrvprt>'||chr(10)||
                                                      '<dsdecurs>'||rw_crapceb.dsdecurs||'</dsdecurs>'||chr(10)||
                                                      '<nmextcop>'||rw_crapceb.nmextcop||'</nmextcop>'||chr(10)||
                                                      '<dsdata>'||rw_crapceb.dsdata||'</dsdata>'||chr(10)||
@@ -1326,8 +1375,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       IF pr_tpimpres = 1 THEN  -- Se for Adesao
         vr_dsjasper := 'termo_adesao_cob_reg.jasper';
         vr_nmarqim  := '/TermoAbertura_'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
-      ELSE -- Se for cancelamento
+      ELSIF pr_tpimpres = 2 THEN -- Se for cancelamento
         vr_dsjasper := 'termo_cancel_cob_reg.jasper';
+        vr_nmarqim  := '/TermoCancelamento'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
+      ELSE -- Se for cancelamento do protesto
+        vr_dsjasper := 'termo_cancel_protesto.jasper';
         vr_nmarqim  := '/TermoCancelamento'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
       END IF;
       
@@ -1381,6 +1433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END;
+
 
 END SSPC0002;
 /

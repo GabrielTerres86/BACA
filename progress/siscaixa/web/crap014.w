@@ -18,7 +18,10 @@
            pois dentro desta procedure e feito find dentro da tabela crapcop
            buscando por nmrescop =/ . 
 
+
+
 */
+
 /*..............................................................................
 
 Programa: siscaixa/web/crap014.w
@@ -126,6 +129,10 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                         PRJ406-FGTS (Odirlei-AMcom)    
                         
            16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                        
+           18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                        norturno rodando (Douglas Pagel - AMcom).
+
 
 ..............................................................................*/
 
@@ -246,6 +253,7 @@ DEFINE VARIABLE h-b1wgen9999 AS HANDLE      NO-UNDO.
 DEFINE VARIABLE glb_cdcooper LIKE crapcop.cdcooper              NO-UNDO.
 DEFINE VARIABLE glb_nmrescop LIKE crapcop.nmrescop              NO-UNDO.
 DEFINE VARIABLE glb_dtmvtolt LIKE crapdat.dtmvtolt              NO-UNDO.
+DEFINE VARIABLE glb_dtmvtocd LIKE crapdat.dtmvtocd              NO-UNDO.
 DEFINE VARIABLE glb_dtmvtopr LIKE crapdat.dtmvtopr              NO-UNDO.
 DEFINE VARIABLE glb_dtmvtoan LIKE crapdat.dtmvtoan              NO-UNDO.
 DEFINE VARIABLE glb_cdagenci LIKE crapass.cdagenci              NO-UNDO.
@@ -601,7 +609,7 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("v_flblqval":U,"ab_unmap.v_flblqval":U,ab_unmap.v_flblqval:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
-    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).    
   RUN htmAssociate
     ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
@@ -692,7 +700,7 @@ PROCEDURE process-web-request:
   DEF VAR hdnVerifEstorno          AS CHAR                           NO-UNDO.
   DEF VAR hdnValorAcima            AS CHAR                           NO-UNDO.
   DEF VAR aux_cdcritic             AS INTE                           NO-UNDO.
-  
+
   RUN outputHeader.
 
   /*******************************************************************
@@ -711,6 +719,7 @@ PROCEDURE process-web-request:
   ASSIGN glb_cdcooper = crapcop.cdcooper
          glb_nmrescop = crapcop.nmrescop
          glb_dtmvtolt = crapdat.dtmvtolt
+         glb_dtmvtocd = crapdat.dtmvtocd
          glb_dtmvtopr = crapdat.dtmvtopr
          glb_dtmvtoan = crapdat.dtmvtoan
          glb_cdagenci = INTE(get-value("user_pac"))
@@ -744,7 +753,7 @@ PROCEDURE process-web-request:
      {include/assignfields.i}
  
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-     RUN valida-transacao IN h-b1crap00(INPUT glb_nmrescop,  /*nome resumido coop*/
+     RUN valida-transacao2 IN h-b1crap00(INPUT glb_nmrescop,  /*nome resumido coop*/
                                         INPUT glb_cdagenci,  /*PA*/
                                         INPUT glb_cdbccxlt). /*Caixa*/
      DELETE PROCEDURE h-b1crap00.
@@ -796,7 +805,7 @@ PROCEDURE process-web-request:
                          ASSIGN v_conta = TRIM(STRING(tt-crapcbl.nrdconta, "zzzz,zzz,9"))
                                 v_nome  = TRIM(tt-crapcbl.dsdonome).
                      END.
-
+                     
                  ASSIGN aux_des_erro = "OK".
 
                  /*se o cod barras estiver preenchido verifica o campo 
@@ -804,7 +813,7 @@ PROCEDURE process-web-request:
                    ou o campo nao estiver preenchido*/
                  IF get-value("v_codbarras") <> "" AND 
                     v_tipdocto <> "2" THEN
-                    DO:
+                    DO:       
                         /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
                         IF  INT(v_tpproces) = 1 THEN
                         DO:
@@ -953,7 +962,7 @@ PROCEDURE process-web-request:
                                                    INPUT glb_cdoperad,    /*Operador*/
                                                    INPUT glb_cdagenci,    /*PA*/
                                                    INPUT glb_cdbccxlt,    /*Caixa*/
-                                                   INPUT glb_dtmvtolt,    /*Data Movimento*/
+                                                   INPUT glb_dtmvtocd,    /*Data Movimento*/
                                                    INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
                                                    INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
                                                    INPUT v_conta,                   /*Numero da conta*/
@@ -993,7 +1002,7 @@ PROCEDURE process-web-request:
                                                 INPUT glb_cdoperad,
                                                 INPUT glb_cdagenci,
                                                 INPUT glb_cdbccxlt,
-                                                INPUT glb_dtmvtolt,
+                                                INPUT glb_dtmvtocd,
                                                 INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
                                                 INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
                                                 INPUT v_conta,                   /*Numero da conta*/
@@ -1209,7 +1218,7 @@ PROCEDURE processa-titulo:
     DEFINE VARIABLE de_tit3          AS DECIMAL                        NO-UNDO. 
     DEFINE VARIABLE de_tit4          AS DECIMAL                        NO-UNDO. 
     DEFINE VARIABLE de_tit5          AS DECIMAL                        NO-UNDO. 
-	
+
 	DEF VAR aux_vllimite_especie     AS DECIMAL                  NO-UNDO.
 
     FIND FIRST ab_unmap.
@@ -1366,7 +1375,7 @@ PROCEDURE processa-titulo:
            ASSIGN par_setafoco = "10".
            RETURN "NOK".
         END. 
-    
+     
 	
 	 IF par_tppagmto = 1 THEN
 	   DO:
@@ -1622,7 +1631,7 @@ PROCEDURE processa-fatura:
 	 		   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
 		 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-		
+
 		 ASSIGN aux_cdcritic = 0
 		 	    aux_dscritic = ""
 			    aux_vllimite_especie = 0
@@ -1883,9 +1892,9 @@ PROCEDURE processa-fatura:
                                         par_funcaojs = par_funcaojs + '";'.
             END.
         
+        END.        
    END.
-   END.
-
+   
    RETURN "OK".
 
 END PROCEDURE.

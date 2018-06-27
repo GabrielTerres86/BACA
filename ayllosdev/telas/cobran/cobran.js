@@ -27,6 +27,7 @@
  * 14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
  * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
  * 21/12/2017 - Adicionar validação para que sejam informados os campos de data inicial e final na opção "R" da tela (Douglas - Chamado 807531)
+ * 30/05/2018 - Alterações referente ao PRJ352
  */
 
 //Formulários e Tabela
@@ -55,7 +56,7 @@ var registro;
 var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgsacad, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
 	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg,
-    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot;
+    dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot, insitcrt;
 
 $(document).ready(function () {
     estadoInicial();
@@ -213,6 +214,7 @@ function manterRotina(operacao) {
     var vlabatim = $('#vlabatim', '#frmCampo').val();
     var dtvencto = $('#dtvencto', '#frmCampo').val();
     var vldescto = $('#vldescto', '#frmCampo').val();
+	var qtdiaprt = $('#qtdiaprt', '#frmCampo').val();
 
     var nmarqint = '';
 
@@ -299,6 +301,7 @@ function manterRotina(operacao) {
             vrsarqvs: vrsarqvs,
             arquivos: arquivos,
             vldescto: vldescto,
+			qtdiaprt: qtdiaprt,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -364,7 +367,7 @@ function formataCabecalho() {
         if (divError.css('display') == 'block') { return false; }
         if (cCddopcao.hasClass('campoTelaSemBorda')) { return false; }
 
-        trocaBotao('Avançar');
+        trocaBotao('Avan&ccedil;ar');
 
         //
         cddopcao = cCddopcao.val();
@@ -1213,6 +1216,18 @@ function selecionaTabela(tr) {
         flserasa = $('#flserasa', tr).val();
         qtdianeg = $('#qtdianeg', tr).val();
         flgdprot = $('#flgdprot', tr).val();
+        insitcrt = $('#insitcrt', tr).val();
+    }
+
+    $('[onclick^=geraCartaAnuencia]').length &&
+        $('[onclick^=geraCartaAnuencia]').attr('id', 'btn_carta_anuencia');
+
+    if (insitcrt == 5 && cdbandoc == 85) {
+        $('#carta_anuencia', '#frmReport').habilitaCampo();
+        $('#btn_carta_anuencia').removeClass('botaoDesativado').attr('onclick', 'geraCartaAnuencia(); return false;')
+    } else {
+        $('#carta_anuencia', '#frmReport').desabilitaCampo();
+        $('#btn_carta_anuencia').removeClass('botaoDesativado').addClass('botaoDesativado').attr('onclick', 'return false;');
     }
 
     dsavisms = $('#dsavisms', tr).val();
@@ -1223,10 +1238,88 @@ function selecionaTabela(tr) {
     return false;
 }
 
+function geraCartaAnuencia(){
+    var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();";
+    var aux_mensagem = "Deseja efetuar impress&atilde;o da carta de anuencia?"; // Mensagem de confirmacao de impressao;
+    showConfirmacao(aux_mensagem,
+					'Confirma&ccedil;&atilde;o - Ayllos',
+					'dataPagamentoDivida();',
+					callafter,
+					'sim.gif',
+					'nao.gif');
+
+}
+
+function dataPagamentoDivida() {
+	var nmrotina = "imprimirCartaAnuencia";
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/cobran/form_carta_anuencia.php',
+		data: {
+			nmrotina: nmrotina,
+			redirect: 'ajax_html'
+		},
+        error: function (objAjax, responseError, objExcept) {
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+        success: function (response) {
+            $('#divRotina').html(response);
+            exibeRotina($('#divRotina'));
+            formataConsulta();
+            formataLog();
+		}
+	});
+}
+
+function imprimirCartaAnuencia(){
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+	var dtcatanu = $('#dtcatanu', '#frmDataPag').val();
+	var nmrepres = [];
+	var msgErro = '';
+	
+	if (!dtcatanu) {
+		msgErro = 'Data quita&ccedil;&atilde;o da d&iacute;vida deve ser preenchido';
+	}
+
+	$('[name="nomrepres[]"]:visible', '#frmDataPag').each(function(i){
+		var el = $(this),
+			nome = el.val(),
+			rg  = el.next().next(),
+			cpf  = rg.next().next();
+			
+		if (nome && cpf.val() && rg.val()) {
+			nmrepres[i] = nome + ' com RG: ' + rg.val() + ' e CPF: ' + cpf.val();
+		}else {
+			msgErro = 'Nome dos representantes, RG e CPF s&atilde;o obrigat&oacute;rios';
+		}
+	});
+	
+	if (msgErro) {
+		showError('error', msgErro, 'Alerta - Ayllos', '');
+        return false;
+	}
+	
+
+    $('input,select', '#frmReport').habilitaCampo();
+    $('#cdcooper', '#frmReport').val(cdcooper);
+    $('#nrdconta', '#frmReport').val(nrdconta);
+    $('#nrdocmto', '#frmReport').val(nrdocmto);
+    $('#cdbandoc', '#frmReport').val(cdbandoc);
+    $('#dtcatanu', '#frmReport').val(dtcatanu);
+    $('#nmrepres', '#frmReport').val(nmrepres.join(', '));
+
+    var action = $('#frmReport').attr('action');
+    var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();fechaRotina($(\'#divRotina\'));";
+
+	carregaImpressaoAyllos("frmReport", action, callafter);
+}
+
 // opcao C - consulta
 function buscaConsulta(operacao) {
 
-    if (operacao == 'instrucoes' && (cdsituac == 'B' || cdsituac == 'L')) {
+    if (operacao == 'instrucoes' && cdsituac == 'L') {
         showError('error', 'Opcao nao disponivel para situacao ' + dssituac, 'Alerta - Ayllos', "");
         return false;
     }
@@ -1252,6 +1345,9 @@ function buscaConsulta(operacao) {
             qtdiaprt: qtdiaprt,
 			cdtpinsc: cdtpinsc,
 			nrinssac: nrinssac,
+            insitcrt: insitcrt,
+			dtvencto: dtvencto,
+            cdufsaca: cdufsaca,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1498,6 +1594,10 @@ function formataInstrucoes(operacao) {
     cCdinstru = $('#cdinstru', '#frmConsulta');
     cCdinstru.css({ 'width': '548px' });
 
+    if (cdsituac == 'B') {
+        cCdinstru.find('option:not([value=81])').prop('disabled', true);
+    }
+
     // Outros	
     btnOK2 = $('#btnOk2', '#frmConsulta');
     cCdinstru.habilitaCampo();
@@ -1522,6 +1622,8 @@ function formataInstrucoes(operacao) {
 function buscaCampo() {
 
     var cdinstru = $('#cdinstru', '#frmConsulta').val();
+	var nrdconta = $('#nrdconta', 'tr.corSelecao').val();
+	var nrcnvcob = $('#nrcnvcob', 'tr.corSelecao').val();
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
@@ -1531,6 +1633,8 @@ function buscaCampo() {
         url: UrlSite + 'telas/cobran/form_campo.php',
         data: {
             cdinstru: cdinstru,
+			nrdconta: nrdconta,
+			nrcnvcob: nrcnvcob,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1994,7 +2098,7 @@ function formataOpcaoR() {
             if (cTprelato.val() == '1' || cTprelato.val() == '3') {
                 btnContinuar();
                 return false;
-            } else if (cTprelato.val() == '2' || cTprelato.val() == '4' || cTprelato.val() == '6') {
+            } else if (cTprelato.val() == '2' || cTprelato.val() == '4' || cTprelato.val() == '6' || cTprelato.val() == 8) {
                 cNrdconta.focus();
                 return false;
             } else if (cTprelato.val() == '5') {
@@ -2038,7 +2142,7 @@ function formataOpcaoR() {
         // Se é a tecla TAB, 
         if (e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') {
 
-            if (tprelato == 6 && normalizaNumero(cNrdconta.val()) == 0) {
+            if ((tprelato == 6 || tprelato == 8) && normalizaNumero(cNrdconta.val()) == 0) {
                 cNrdconta.desabilitaCampo();
                 cCdagenci.habilitaCampo().focus();
             // para tipo 7, permitir informar conta 0    
@@ -2070,16 +2174,17 @@ function tipoOptionR() {
         var option = '';
 
         if (flgregis == 'yes') {
-            option = option + '<option value="5">5- Relatorio Beneficiario</option>';
-            option = option + '<option value="6">6- Relatorio Movimento de Cobranca Registrada</option>';
-            option = option + '<option value="7">7- Relatório analítico de envio de SMS</option>';
+            option = option + '<option value="5">5- Relat&oacute;rio Benefici&aacute;rio</option>';
+            option = option + '<option value="6">6- Relat&oacute;rio Movimento de Cobran&ccedil;a Registrada</option>';
+            option = option + '<option value="7">7- Relat&oacute;rio anal&iacute;tico de envio de SMS</option>';
+            option = option + '<option value="8">8- Relat&oacute;rio de t&iacute;tulos cancelados</option>';
             
 
         } else if (flgregis == 'no') {
-            option = option + '<option value="1">1- Gestao da carteira de cobranca sem registro - Por PA</option>';
-            option = option + '<option value="2">2- Gestao da carteira de cobranca sem registro - Por Cooperado</option>';
-            option = option + '<option value="3">3- Gestao da carteira de cobranca sem registro - Por Convenio</option>';
-            option = option + '<option value="4">4- Relatorio Movimento de liquidacoes - Francesa(S/ Registro)</option>';
+            option = option + '<option value="1">1- Gest&atilde;o da carteira de cobran&ccedil;a sem registro - Por PA</option>';
+            option = option + '<option value="2">2- Gest&atilde;o da carteira de cobran&ccedil;a sem registro - Por Cooperado</option>';
+            option = option + '<option value="3">3- Gest&atilde;o da carteira de cobran&ccedil;a sem registro - Por Convenio</option>';
+            option = option + '<option value="4">4- Relat&oacute;rio Movimento de liquida&ccedil;&otilde;es - Francesa(S/ Registro)</option>';
 
         }
 
@@ -2131,7 +2236,7 @@ function controlaLayoutR() {
 			btnContinuar();
 		}
 		
-    } else if (tprelato == '6') {
+    } else if (tprelato == '6' || tprelato == '8') {
         cNrdconta.habilitaCampo();
         //cCdagenci.habilitaCampo();	
      
@@ -2335,7 +2440,7 @@ function validaCampo(campo, valor) {
 
     // conta
     if (campo == 'nrdconta' && !validaNroConta(valor)) {
-        showError('error', 'Dígito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
+        showError('error', 'D&iacute;gito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
         return false;
     } else if (campo == 'nmprimtl' && valor == '') {
         showError('error', 'O campo deve ser preenchido.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
@@ -2377,7 +2482,7 @@ function btnVoltar() {
     if (cddopcao === 'C' && $('#frmTabela').length) {
         $('#' + frmTabela).remove();
         $('#divPesquisaRodape', '#divTela').remove();
-        trocaBotao('Avançar');
+        trocaBotao('Avan&ccedil;ar');
 
 		for(var x = 1; x < 8; x++) {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();

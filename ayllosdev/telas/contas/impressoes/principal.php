@@ -13,6 +13,7 @@
  *                01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * 				        03/10/2017 - Projeto 410 - RF 52 / 62 - Tela impressão declaração optante simples nacional (Diogo - Mouts)
+ * 				  12/04/2018 - Inclusão da opção de Declaração FATCA/CRS - PRJ 414 (Mateus Z - Mouts).
  */
  
 	session_start();
@@ -33,7 +34,7 @@
 	$idseqttl = $_POST["idseqttl"] == "" ?  0  : $_POST["idseqttl"];
 	$inpessoa = $_POST["inpessoa"] == "" ?  0  : $_POST["inpessoa"];
 	$tpregtrb = $_POST["tpregtrb"] == "" ?  0  : $_POST["tpregtrb"];
-
+	
 	// Verifica se o número da conta e o titular são inteiros válidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
@@ -98,6 +99,7 @@
     <? if ($pessoaJuridicaCooperativa == 'S') { ?>
         <div id="declaracao_pj_cooperativa">Declara&ccedil;&atilde;o de pessoa jur&iacute;dica cooperativa</div>
     <? } ?>
+	<div id="declaracao_fatca_crs">Declara&ccedil;&atilde;o FATCA/CRS</div>
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>
 	<input type="hidden" id="inpessoa" name="inpessoa" value="<?echo $inpessoa;?>" />
 </div>

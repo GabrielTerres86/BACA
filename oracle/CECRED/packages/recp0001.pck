@@ -877,38 +877,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
 	  IF vr_vlapagar > 0 THEN
     
-        -- ROTINA PARA EFETUAR O LANÇAMENTO
-        EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
-                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
-                                       ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
-                                       ,pr_cdbccxlt => 100               -- Codigo Caixa
-                                       ,pr_cdoperad => pr_cdoperad       -- Operador
-                                       ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
-                                       ,pr_tplotmov => 5                 -- Tipo movimento
-                                       ,pr_nrdolote => 650002            -- Numero Lote
-                                       ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
-                                       ,pr_cdhistor => 391               -- Codigo Historico
-                                       ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
-                                       ,pr_vllanmto => vr_vlapagar       -- Valor Lancamento
-                                       ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
-                                       ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
-                                       ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
-                                       ,pr_nrsequni => 0                 -- Numero Sequencia
-                                       ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
-                                       ,pr_flgincre => TRUE              -- Indicador Credito
-                                       ,pr_flgcredi => TRUE              -- Credito
-                                       ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
-                                       ,pr_cdorigem => 1                 -- Origem do Lançamento
-                                       ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
-                                       ,pr_dscritic => vr_dscritic);     -- Descricao Erro
+      -- ROTINA PARA EFETUAR O LANÇAMENTO
+      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
+                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
+                                     ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
+                                     ,pr_cdbccxlt => 100               -- Codigo Caixa
+                                     ,pr_cdoperad => pr_cdoperad       -- Operador
+                                     ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
+                                     ,pr_tplotmov => 5                 -- Tipo movimento
+                                     ,pr_nrdolote => 650002            -- Numero Lote
+                                     ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
+                                     ,pr_cdhistor => 391               -- Codigo Historico
+                                     ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
+                                     ,pr_vllanmto => vr_vlapagar       -- Valor Lancamento
+                                     ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
+                                     ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
+                                     ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
+                                     ,pr_nrsequni => 0                 -- Numero Sequencia
+                                     ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
+                                     ,pr_flgincre => TRUE              -- Indicador Credito
+                                     ,pr_flgcredi => TRUE              -- Credito
+                                     ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
+                                     ,pr_cdorigem => 1                 -- Origem do Lançamento
+                                     ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
+                                     ,pr_dscritic => vr_dscritic);     -- Descricao Erro
        
-        -- Se ocorreu erro
-        IF vr_dscritic IS NOT NULL THEN
-          pr_cdcritic := vr_cdcritic;
-          pr_dscritic := vr_dscritic;
-          RAISE vr_exc_erro;
-        END IF;
-
+      -- Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
+    
       END IF;
 
       -- Acumula o valor de pagamento realizado
@@ -1005,10 +1005,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
             ELSE
               pr_cdcritic := 0;
               pr_dscritic := 'Erro ao criar o lancamento de IOF na conta corrente.';
-            END IF;
+    END IF;    
             RAISE vr_exc_erro;
           END IF;  
-          
+    
           -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
           tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
                                , pr_nrdconta     => pr_nrdconta
@@ -2800,7 +2800,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         CLOSE cr_crapepr;
                               
         --Calcula o IOF
-        TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => rw_acordo_contrato.cdcooper             --> Código da cooperativa referente ao contrato de empréstimos
+        TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                         ,pr_cdcooper => rw_acordo_contrato.cdcooper            --> Código da cooperativa referente ao contrato de empréstimos
                                           ,pr_nrdconta => rw_acordo_contrato.nrdconta            --> Número da conta referente ao empréstimo
                                           ,pr_nrctremp => rw_acordo_contrato.nrctremp            --> Número do contrato de empréstimo
                                           ,pr_vlemprst => vr_vlparcel                            --> Valor do empréstimo para efeito de cálculo
@@ -2955,7 +2956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na PC_PAGAR_CONTRATO_ACORDO: '||SQLERRM; 
   END pc_pagar_contrato_acordo;
-
+   
  -- Gera histórico de alteração CRAPCYC
  PROCEDURE pc_gerar_historico_cdmotcin(pr_cdcooper  IN tbrecup_acordo.cdcooper%TYPE         
                                       ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 

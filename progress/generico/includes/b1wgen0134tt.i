@@ -20,6 +20,9 @@
                 
 			   19/11/2017 - Incusao do historico 354 (Jonata - RKAM P364).
                 
+               06/04/2018 - Inclusao do historico 2280. PRJ381 - AntiFraude
+                            (Odirlei-AMcom)
+                
 ............................................................................*/
 DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           1033,	/* Contrato Fina */
@@ -90,6 +93,7 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           391,
                                           382,
                                           384,                                          
-                                          354  /* credito cotas */] NO-UNDO.
+                                          354,  /* credito cotas */ 
+										  2280  /* EST.ARRECAD   */] NO-UNDO.
                         
                                             

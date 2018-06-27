@@ -114,6 +114,8 @@
 
 				 01/12/2017 - Permitir acesso a produtos para contas demitidas (Joanta - RKAM P364).
 
+				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
+
  * ********************************************************************************** */
 
 	session_start();	
@@ -188,6 +190,7 @@ $xmlGetDadosAtenda .= "		<dtfimper>" . date("d/m/Y") . "</dtfimper>";
 $xmlGetDadosAtenda .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
 $xmlGetDadosAtenda .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
 $xmlGetDadosAtenda .= "		<inproces>" . $glbvars["inproces"] . "</inproces>";
+
 if ($flgerlog) {
         $xmlGetDadosAtenda .= "		<flgerlog>S</flgerlog>";
 } else {
@@ -678,7 +681,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                 break;
             }
 			case "DESABILITAR OPERACOES": {
-			
 				$nomeRotina = "Desabilitar Operacoes";
                 $urlRotina = "liberar_bloquear";
                 $strValue = "";	
@@ -690,6 +692,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                 $urlRotina = "valores_a_devolver";
                 $strValue = ( isset($valores[21]->cdata) ) ? number_format(str_replace(",", ".", $valores[21]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
+				break;
+			}
+			case "SITUACAO_PREVIDENCIA": {
+				$nomeRotina = "Previd&ecirc;ncia"; 
+				$urlRotina = "";
+				$strValue = ( isset($valores[22]->cdata) ) ? ($valores[22]->cdata == "1" OR $valores[22]->cdata == "2")  ? "SIM" : "NAO" : "NAO"; 
+				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
 			default: {
@@ -740,7 +749,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 		
 		$contRotina++;
 	}	
-	
 
 	// Flag para acesso a rotinas
 	echo 'flgAcessoRotina = true;';

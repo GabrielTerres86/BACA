@@ -94,11 +94,11 @@
 			$vllimmax = $_POST['vllimmax'];
 			$tipo     = $_POST['tipo'];
 			$cdadmcrd = $_POST['cdadmcrd'];
-			$justificativa = $_POST['justificativa'];
-			$protocolo  = $_POST['protocolo'];
-			$vlLimiteMaximo = $_POST['vlLimiteMaximo'];
-			$limiteatualCC = $_POST['limiteatualCC'];
-			
+			$justificativa   = $_POST['justificativa'];
+			$protocolo       = $_POST['protocolo'];
+			$vlLimiteMaximo  = $_POST['vlLimiteMaximo'];
+			$limiteatualCC   = $_POST['limiteatualCC'];
+			$faprovador      = $_POST['faprovador'];
 			if($titular == 'n'){
 				$idseqttl = 0;
 			}else
@@ -134,6 +134,8 @@
 			$logXML .= "   <flgtplim>".$tipo."</flgtplim>";
 			$logXML .= "   <tpsituac>6</tpsituac  >";
 			$logXML .= "   <insitdec>".$insitdec."</insitdec  >";
+			if(isset($faprovador) && (strlen($faprovador) > 0))
+				$logXML .= "   <cdopesup>".$faprovador."</cdopesup  >";
 			$logXML .= " </Dados>";
 			$logXML .= "</Root>";
 			$logResult = mensageria($logXML, "ATENDA_CRD", "ALTERAR_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");

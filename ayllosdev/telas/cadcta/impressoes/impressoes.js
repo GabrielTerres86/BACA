@@ -12,7 +12,7 @@
  * 01/08/2013 - Jean Michel  (CECRED) : Ajuste p/ impressão de cartões de assinatura de proc/tit.
  * 02/09/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)
  * 19/10/2015 - Ajuste no layout na div DivConteudoOpcao que estava quebrando. SD 310056 (Kelvin)
-				
+ * 25/04/2018 - Adicionado nova opcao de impresssao Declaracao de FATCA/CRS - PRJ 414 (Mateus Z - Mouts)				
  * --------------
  */
 
@@ -120,6 +120,8 @@ function controlaImpressao(idImpressao, inpessoa) {
     } else if (idImpressao == 'declaracao_pep') {
         showConfirmacao('Deseja visualizar a impress&atilde;o da declara&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracao();', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
+	} else if (idImpressao == 'declaracao_fatca_crs') {
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     } else if (idImpressao != '') {
         showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     }
@@ -186,9 +188,9 @@ function controlaLayout(inpessoa) {
     } else {
 
         if (inpessoa == 1) {
-            $("#divConteudoOpcao").css("width", "487px");
+            $("#divConteudoOpcao").css("width", "670px");
         } else {
-            $("#divConteudoOpcao").css("width", "295px");
+            $("#divConteudoOpcao").css("width", "455px");
         }
 
         $('div', '#divImpressoes').css({
@@ -247,33 +249,39 @@ function controlaLayout(inpessoa) {
 
 function imprime(idImpressao, flgpreen, inpessoa) {
 
-    $('#tprelato', '#frmCabContas').remove();
-    $('#flgpreen', '#frmCabContas').remove();
-    $('#inpessoa', '#frmCabContas').remove();
-    $('#_nrdconta', '#frmCabContas').remove();
-    $('#_idseqttl', '#frmCabContas').remove();
-    $('#sidlogin', '#frmCabContas').remove();
+    var nrCPF = normalizaNumero(cpfprocu);
+
+    $('#tprelato', '#frmCabCadcta').remove();
+    $('#flgpreen', '#frmCabCadcta').remove();
+    $('#inpessoa', '#frmCabCadcta').remove();
+    $('#_nrdconta', '#frmCabCadcta').remove();
+    $('#_idseqttl', '#frmCabCadcta').remove();
+    $('#sidlogin', '#frmCabCadcta').remove();
+    $('#_nrcpfcgc', '#frmCabCadcta').remove();
 
     // Insiro input do tipo hidden do formulário para enviá-los posteriormente
-    $('#frmCabContas').append('<input type="hidden" id="tprelato" name="tprelato" />');
-    $('#frmCabContas').append('<input type="hidden" id="flgpreen" name="flgpreen" />');
-    $('#frmCabContas').append('<input type="hidden" id="inpessoa" name="inpessoa" />');
-    $('#frmCabContas').append('<input type="hidden" id="_nrdconta" name="_nrdconta" />');
-    $('#frmCabContas').append('<input type="hidden" id="_idseqttl" name="_idseqttl" />');
-    $('#frmCabContas').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="tprelato" name="tprelato" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="flgpreen" name="flgpreen" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="inpessoa" name="inpessoa" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="_nrdconta" name="_nrdconta" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="_idseqttl" name="_idseqttl" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+    $('#frmCabCadcta').append('<input type="hidden" id="_nrcpfcgc" name="_nrcpfcgc" />');
 
     // Agora insiro os devidos valores nos inputs criados
-    $('#tprelato', '#frmCabContas').val(idImpressao);
-    $('#flgpreen', '#frmCabContas').val(flgpreen);
-    $('#inpessoa', '#frmCabContas').val(inpessoa);
-    $('#_nrdconta', '#frmCabContas').val(normalizaNumero(nrdconta));
-    $('#_idseqttl', '#frmCabContas').val(idseqttl);
-    $('#sidlogin', '#frmCabContas').val($('#sidlogin', '#frmMenu').val());
+    $('#tprelato', '#frmCabCadcta').val(idImpressao);
+    $('#flgpreen', '#frmCabCadcta').val(flgpreen);
+    $('#inpessoa', '#frmCabCadcta').val(inpessoa);
+    $('#_nrdconta', '#frmCabCadcta').val(normalizaNumero(nrdconta));
+    $('#_idseqttl', '#frmCabCadcta').val(idseqttl);
+    $('#sidlogin', '#frmCabCadcta').val($('#sidlogin', '#frmMenu').val());
+    $('#tprelato', '#frmCabCadcta').val(idImpressao);
+    $('#_nrcpfcgc', '#frmCabCadcta').val(nrCPF);
 
     var action = UrlSite + 'telas/cadcta/impressoes/imp_impressoes.php';
     var callafter = "bloqueiaFundo(divRotina);";
 
-    carregaImpressaoAyllos("frmCabContas", action, callafter);
+    carregaImpressaoAyllos("frmCabCadcta", action, callafter);
 
 }
 

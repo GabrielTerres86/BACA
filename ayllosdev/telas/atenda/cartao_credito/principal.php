@@ -101,7 +101,7 @@
 
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetCCredito);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjCCredito = getObjectXML($xmlResult);
 	
@@ -114,7 +114,7 @@
 	$flgativo = $inpessoa == "1" ? "yes" : $xmlObjCCredito->roottag->tags[0]->attributes["FLGATIVO"];
 	$nrctrhcj = $inpessoa == "1" ? "0" : $xmlObjCCredito->roottag->tags[0]->attributes["NRCTRHCJ"];
 	$flgliber = $xmlObjCCredito->roottag->tags[0]->attributes["FLGLIBER"];
-	
+
 	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
 	   Procedimento temporario ate que todas as cooperativas utilizem */
 	$adxml = "<Root>";
@@ -205,9 +205,9 @@ function voltarParaTelaPrincipal(){
 					</tr>			
 				</thead>
 				<tbody>
-					<?  for ($i = 0; $i < count($ccredito); $i++) { 					
+					<?  for ($i = 0; $i < count($ccredito); $i++) {
                             $motorResp = getDecisao($nrdconta, getByTagName($ccredito[$i]->tags,'NRCTRCRD'),$glbvars);
-					
+							
 							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."','".$motorResp[0]."');";							
 					?>
 						<?;?>
@@ -237,7 +237,13 @@ function voltarParaTelaPrincipal(){
 		<div id="divBotoes">
 			
 			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
-			<input type="image" id="btnalterarLimite" src="<?php echo $UrlImagens; ?>botoes/alterar_limite.jpg"  onClick="alteraCartao(this,'<? echo $_POST["nrdconta"]; ?>')" disabled>
+			<?if(in_array("I",$glbvars["opcoesTela"])){?>
+				<input type="image" id="btnalterarLimite" style='cursor:pointer' src="<?php echo $UrlImagens; ?>botoes/alterar_limite.jpg"  onClick="alteraCartao(this,'<? echo $_POST["nrdconta"]; ?>')" disabled>
+			<?}else{
+				?>
+				<input type="image" id="btnalterarLimite" style='cursor:default' src="<?php echo $UrlImagens; ?>botoes/alterar_limite.jpg"  onClick="return false;" disabled>
+				<?
+			}?>
 			<?php if(!($sitaucaoDaContaCrm == '4' || 
 				       $sitaucaoDaContaCrm == '7' || 
 				       $sitaucaoDaContaCrm == '8'  )){?>
@@ -274,6 +280,10 @@ function voltarParaTelaPrincipal(){
 	flgativo = "<?php echo $flgativo; ?>";
 	nrctrhcj = "<?php echo $nrctrhcj; ?>";
 	iPiloto = "<?php echo $iPiloto; ?>";
+	// Se NAO for piloto, nao podemos alterar o limite
+	if (iPiloto == 0){		
+		$("#btnalterarLimite").hide();
+	}
 
 	// Esconde div das opções
 	$("#divOpcoesDaOpcao1").css("display","none");

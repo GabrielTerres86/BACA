@@ -8,6 +8,7 @@
  * ALTERAÇÃO: 
  *************
  * 001: [24/05/2013] Lucas R.		  (CECRED): Incluir camada nas includes "../".
+ * 002: [08/06/2018] Marcos M.   (Envolti): Incluir contrato - P410
  */
 ?>
  
@@ -21,6 +22,7 @@
 	
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
+    $nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 	$recidepr = (isset($_POST['recidepr'])) ? $_POST['recidepr'] : '';
 	$tplcremp = (isset($_POST['tplcremp'])) ? $_POST['tplcremp'] : '';

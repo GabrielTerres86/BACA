@@ -130,17 +130,6 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0007" is
                                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
   
-  PROCEDURE pc_alterar_cartao_bancoob_tst(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo cooperativa
-                                     ,pr_cdagenci IN crapage.cdagenci%TYPE --> Código da agência
-                                     ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do operador
-                                     ,pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr da conta
-                                     ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr da conta
-                                     ,pr_idorigem IN VARCHAR2              --> Origem
-                                     ,pr_vllimite IN crawcrd.vllimdlr%TYPE --> Novo valor do limite
-                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Sequência Titular
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ,pr_des_erro OUT VARCHAR2);
   
   PROCEDURE pc_alterar_cartao_bancoob_wb(pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr da conta
                                         ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr do contrato
@@ -3189,7 +3178,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     CLOSE cr_tbgen_webservice_aciona;
     vr_dsprotoc := rw_tbgen_webservice_aciona.dsprotocolo;
 
-    IF rw_tbgen_webservice_aciona.dsoperacao like '%SOLICITACAO CARTAO%' THEN
+    IF (rw_tbgen_webservice_aciona.dsoperacao LIKE '%SOLICITACAO CARTAO%') OR
+       (rw_tbgen_webservice_aciona.dsoperacao LIKE '%SOLICITACAO BANCOOB%') THEN
       vr_intipret := 'I';
     ELSE
       vr_intipret := 'A';
@@ -3407,6 +3397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3493,6 +3484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -3694,6 +3686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3761,6 +3754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -3802,6 +3796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3827,6 +3822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
+                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3834,560 +3830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       ROLLBACK;
   END pc_alterar_cartao_bancoob;
   
-  PROCEDURE pc_alterar_cartao_bancoob_tst(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo cooperativa
-                                     ,pr_cdagenci IN crapage.cdagenci%TYPE --> Código da agência
-                                     ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do operador
-                                     ,pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr da conta
-                                     ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Nr da conta
-                                     ,pr_idorigem IN VARCHAR2              --> Origem
-                                     ,pr_vllimite IN crawcrd.vllimdlr%TYPE --> Novo valor do limite
-                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Sequência Titular
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
-    
-    -- Tratamento de exceções
-    vr_exc_erro     EXCEPTION;
-    vr_cdcritic     PLS_INTEGER;
-    vr_dscritic     VARCHAR2(4000);
-    vr_des_mensagem VARCHAR2(4000);
-    
-        -- Objeto json
-    vr_obj_conteudo     json := json();
-    vr_obj_lst          json_list := json_list();
-    vr_obj_adicional    json := json();
-    vr_obj_titular      json := json();
-    vr_obj_titular_clob CLOB;
-	vr_obj_conteudo_clob CLOB;
-    
-    --Variáveis Gerais
-    vr_dsprotoc VARCHAR2(4000);
-    vr_hrenvban NUMBER;
-    vr_qtsegund NUMBER;
-    vr_flganlok BOOLEAN := FALSE;
-    vr_idusuari VARCHAR2(4000);
-    vr_idadicio VARCHAR2(4000);
-    vr_nrcartao VARCHAR2(4000);
-    vr_flgcrd   BOOLEAN := FALSE;
-    vr_sucesso  VARCHAR2(4000);
-    vr_flgtplim VARCHAR2(1);
-    
-    --Busca conta cartão
-    CURSOR cr_crawcrd is
-      SELECT wrd.nrcctitg
-            ,crd.nrcrcard
-			,wrd.vllimcrd
-            ,wrd.cdoperad
-        FROM crapcrd crd
-            ,crawcrd wrd
-       WHERE wrd.cdcooper = pr_cdcooper
-         AND wrd.nrdconta = pr_nrdconta
-         AND wrd.nrctrcrd = pr_nrctrcrd
-         AND wrd.cdcooper = crd.cdcooper
-         AND wrd.nrdconta = crd.nrdconta
-         AND wrd.nrctrcrd = crd.nrctrcrd;
-    rw_crawcrd cr_crawcrd%ROWTYPE;
-    
-    -- Busca acionamentos de retorno de solicitacao de cartão do Bancoob
-    CURSOR cr_retbancoob(pr_cdcooper    tbgen_webservice_aciona.cdcooper%TYPE
-                        ,pr_dsprotocolo tbgen_webservice_aciona.dsprotocolo%TYPE) IS
-      SELECT idacionamento
-            ,dsconteudo_requisicao
-			,dsresposta_requisicao
-        FROM tbgen_webservice_aciona
-       WHERE cdcooper = pr_cdcooper
-         AND cdoperad = 'BANCOOB'
-         AND nrdconta = pr_nrdconta
-         AND tpacionamento = 2 --> Apenas Retorno
-         AND cdorigem  = 5     --> Bancoob
-         AND tpproduto = 4     --> Apenas Cartão de Crédito
-         AND nrctrprp  = pr_nrctrcrd
-         AND dsprotocolo = pr_dsprotocolo;
-         /* AND TO_CHAR(dsresposta_requisicao) = '1 - Processado com sucesso!'; */
-    rw_retbancoob cr_retbancoob%ROWTYPE;
-    
-  BEGIN
-    
-    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-    FETCH btch0001.cr_crapdat INTO rw_crapdat;
-    IF btch0001.cr_crapdat%NOTFOUND THEN
-      -- Fechar o cursor pois efetuaremos raise
-      CLOSE btch0001.cr_crapdat;
-      -- Montar mensagem de critica
-      vr_cdcritic := 1;
-      RAISE vr_exc_erro;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE btch0001.cr_crapdat;
-    END IF;
-    
-    OPEN cr_crawcrd;
-    FETCH cr_crawcrd INTO rw_crawcrd;
-    CLOSE cr_crawcrd;
-    
-    --Se for titular
-    IF pr_idseqttl = 1 THEN
-    
-      vr_flgtplim := 'G';
-    
-      -- Montar os atributos
-      vr_obj_titular := json();
-        
-      vr_obj_titular.put('appOrigem' ,5 /* CECRED */);
-      vr_obj_titular.put('conta'     ,rw_crawcrd.nrcctitg);
-      vr_obj_titular.put('novoLimite',pr_vllimite);
-      vr_obj_titular.put('usuario'   ,'CECRED');
-      
-       -- Criar o CLOB para converter JSON para CLOB
-      dbms_lob.createtemporary(vr_obj_titular_clob, TRUE, dbms_lob.CALL);
-      dbms_lob.open(vr_obj_titular_clob, dbms_lob.lob_readwrite);
-      json.to_clob(vr_obj_titular,vr_obj_titular_clob);
 
-      -- Chama o webservice do Bancoob
-      pc_enviar_bancoob(pr_cdcooper     => pr_cdcooper,          --> Codigo da cooperativa
-                        pr_cdagenci     => pr_cdagenci,          --> Codigo da agencia
-                        pr_cdoperad     => pr_cdoperad,          --> codigo do operador
-                        pr_cdorigem     => pr_idorigem,          --> Origem da operacao
-                        pr_nrdconta     => pr_nrdconta,          --> Numero da conta do cooperado
-                        pr_nrctrcrd     => pr_nrctrcrd,          --> Numero da proposta de cartão
-                        pr_dtmvtolt     => rw_crapdat.dtmvtolt,  --> Data do movimento
-                        --pr_comprecu     => 'COMPL_URI_ALTLT_BANCOOB',--> Complemento do recuros da URI
-                        pr_comprecu     => NULL,                 --> Complemento do recuros da URI
-                        pr_dsmetodo     => 'POST',               --> Descricao do metodo
-                        pr_conteudo     => vr_obj_titular_clob,  --> Conteudo no Json para comunicacao
-                        pr_dsoperacao   => 'ENVIO ALTERACAO LIMITE TITULAR BANCOOB',  --> Operacao realizada
-                        pr_tipo_ws      => 2,                    --> WS - Alteracao Limite Titular
-                        pr_dsprotocolo  => vr_dsprotoc,          --> Protocolo retornado na requisição
-                        pr_dscritic     => vr_dscritic,
-                        pr_des_mensagem => vr_des_mensagem);
-
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Liberando a memória alocada pro CLOB
-      dbms_lob.close(vr_obj_titular_clob);
-      dbms_lob.freetemporary(vr_obj_titular_clob);
-      
-      --Atualiza Histórico do Limite de Crédito
-      tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
-                                                    ,pr_cdoperad => pr_cdoperad
-                                                    ,pr_nrdconta => pr_nrdconta
-                                                    ,pr_nrctrcrd => pr_nrctrcrd
-                                                    ,pr_vllimite => pr_vllimite
-                                                    ,pr_dsprotoc => vr_dsprotoc
-                                                    ,pr_dsjustif => NULL
-                                                    ,pr_flgtplim => vr_flgtplim
-                                                    ,pr_idorigem => 15--Bancoob
-                                                    ,pr_tpsituac => 2 --> Enviado ao Bancoob
-                                                    ,pr_insitdec => NULL
-                                                    ,pr_nmdatela => NULL
-                                                    ,pr_cdcritic => vr_cdcritic
-                                                    ,pr_dscritic => vr_dscritic
-                                                    ,pr_des_erro => vr_des_mensagem
-                                                    );
-      
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      vr_hrenvban := to_char(SYSDATE,'sssss');
-      
-      -- Buscar a quantidade de segundos de espera pelo retorno do Bancoob
-      vr_qtsegund := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'TIMEOUT_CONEXAO_BANCOOB'),30);
-      
-      -- Efetuar laço para esperarmos (N) segundos ou o termino da analise recebido via POST
-      WHILE NOT vr_flganlok AND TO_NUMBER(TO_CHAR(SYSDATE,'sssss')) - vr_hrenvban < vr_qtsegund LOOP
-
-        -- Aguardar 0.5 segundo para evitar sobrecarga de processador
-        sys.dbms_lock.sleep(0.5);
-
-        --Verifica se já gravou o protocolo
-        OPEN cr_retbancoob(pr_cdcooper    => pr_cdcooper
-                          ,pr_dsprotocolo => vr_dsprotoc);
-        FETCH cr_retbancoob INTO rw_retbancoob;
-
-        IF cr_retbancoob%FOUND THEN
-          CLOSE cr_retbancoob;
-          
-          IF UPPER(TO_CHAR(rw_retbancoob.dsresposta_requisicao)) LIKE '%SUCESSO%' THEN
-             vr_flganlok := TRUE;
-          ELSE
-            vr_dscritic := TO_CHAR(rw_retbancoob.dsresposta_requisicao);
-            RAISE vr_exc_erro;
-          END IF;
-        ELSE
-          CLOSE cr_retbancoob;
-                    
-          --Solicita retorno do Bancoob
-          pc_solicita_retorno_bancoob(pr_cdcooper     => pr_cdcooper
-                                     ,pr_cdagenci     => pr_cdagenci
-                                     ,pr_nrdconta     => pr_nrdconta
-                                     ,pr_nrctrcrd     => pr_nrctrcrd
-                                     ,pr_dsprotoc     => vr_dsprotoc
-                                     ,pr_intipret     => 'A'
-                                     ,pr_cdcritic     => vr_cdcritic
-                                     ,pr_dscritic     => vr_dscritic
-                                     ,pr_des_mensagem => vr_des_mensagem);
-          -- verificar se retornou critica
-          IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;
-      END LOOP;
-	  
-	  IF NOT vr_flganlok THEN
-        vr_dscritic := 'O tempo de envio do ao Bancoob excedeu. Favor tentar novamente.';
-        RAISE vr_exc_erro;
-      END IF;
-
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      ELSE
-        pc_altera_limite_proposta(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_nrctrcrd => pr_nrctrcrd
-                                 ,pr_vllimite => pr_vllimite
-                                 ,pr_nrcctitg => rw_crawcrd.nrcctitg
-                                 ,pr_idseqttl => pr_idseqttl
-                                 ,pr_dscritic => vr_dscritic);
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      
-        --Atualiza Histórico do Limite de Crédito
-        tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
-                                                      ,pr_cdoperad => pr_cdoperad
-                                                      ,pr_nrdconta => pr_nrdconta
-                                                      ,pr_nrctrcrd => pr_nrctrcrd
-                                                      ,pr_vllimite => pr_vllimite
-                                                      ,pr_dsprotoc => vr_dsprotoc
-                                                      ,pr_dsjustif => NULL
-                                                      ,pr_flgtplim => vr_flgtplim
-                                                      ,pr_idorigem => 15--Bancoob
-                                                      ,pr_tpsituac => 3 --> Concluído com Sucesso
-                                                      ,pr_insitdec => NULL
-                                                      ,pr_nmdatela => NULL
-                                                      ,pr_cdcritic => vr_cdcritic
-                                                      ,pr_dscritic => vr_dscritic
-                                                      ,pr_des_erro => vr_des_mensagem
-                                                      );
-        
-        IF TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-
-        vr_des_mensagem := 'Alteração realizada com sucesso.';
-      END IF;
-    ELSE
-      
-      vr_flgtplim := 'A';
-      
-      --Monta consulta Dados Portador
-      --Monta Json Conteúdo
-      vr_obj_conteudo := json();
-      
-      vr_obj_conteudo.put('appOrigem'   ,5);
-      vr_obj_conteudo.put('numeroCuenta',rw_crawcrd.nrcctitg);
-      vr_obj_conteudo.put('componente'  ,'01');
-
-	  -- Criar o CLOB para converter JSON para CLOB
-      dbms_lob.createtemporary(vr_obj_conteudo_clob, TRUE, dbms_lob.CALL);
-      dbms_lob.open(vr_obj_conteudo_clob, dbms_lob.lob_readwrite);
-      json.to_clob(vr_obj_conteudo,vr_obj_conteudo_clob);
-
-      --Consulta Dados Portador
-      pc_enviar_bancoob(pr_cdcooper     => pr_cdcooper,  --> Codigo da cooperativa
-                        pr_cdagenci     => pr_cdagenci,  --> Codigo da agencia
-                        pr_cdoperad     => pr_cdoperad,  --> codigo do operador
-                        pr_cdorigem     => pr_idorigem,  --> Origem da operacao
-                        pr_nrdconta     => pr_nrdconta,  --> Numero da conta do cooperado
-                        pr_nrctrcrd     => pr_nrctrcrd,  --> Numero da proposta de cartão
-                        pr_dtmvtolt     => rw_crapdat.dtmvtolt,           --> Data do movimento
-                        --pr_comprecu     => 'COMPL_URI_CONSDP_BANCOOB',     --> Complemento do recuros da URI
-                        pr_comprecu     => NULL,                 --> Complemento do recuros da URI
-                        pr_dsmetodo     => 'GET',                --> Descricao do metodo
-                        pr_conteudo     => vr_obj_conteudo_clob,         --> Conteudo no Json para comunicacao
-                        pr_dsoperacao   => 'CONSULTA DADOS PORTADOR BANCOOB', --> Operacao realizada
-                        pr_tipo_ws      => 4,                             --> WS - Consultar dados do portador
-                        pr_dsprotocolo  => vr_dsprotoc,                   --> Protocolo retornado na requisição
-                        pr_dscritic     => vr_dscritic,
-                        pr_des_mensagem => vr_des_mensagem);
-						
-      -- Liberando a memória alocada pro CLOB
-      dbms_lob.close(vr_obj_conteudo_clob);
-      dbms_lob.freetemporary(vr_obj_conteudo_clob);
-
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Código Retorno
-      IF vr_obj_conteudo.exist('codRetorno') THEN
-        pr_des_erro := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('codRetorno').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-        
-      -- Mensagem Retorno
-      IF vr_obj_conteudo.exist('mensagemRetorno') THEN
-        pr_des_erro := pr_des_erro ||' - '|| gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('mensagemRetorno').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-      
-      -- ID Usuário
-      IF vr_obj_conteudo.exist('idUsuario') THEN
-        vr_idusuari := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('idUsuario').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-      
-      --Monta consulta Adicionais
-      --Monta Json Conteúdo
-      vr_obj_conteudo := json();
-     
-      vr_obj_conteudo.put('appOrigem',pr_idorigem);
-      vr_obj_conteudo.put('idUsuario',vr_idusuari);
-      vr_obj_conteudo.put('tipoConta','1');
-
-      -- Criar o CLOB para converter JSON para CLOB
-      dbms_lob.createtemporary(vr_obj_conteudo_clob, TRUE, dbms_lob.CALL);
-      dbms_lob.open(vr_obj_conteudo_clob, dbms_lob.lob_readwrite);
-      json.to_clob(vr_obj_conteudo,vr_obj_conteudo_clob);
-
-      --Consulta Adicionais
-      pc_enviar_bancoob_alt(pr_cdcooper     => pr_cdcooper,  --> Codigo da cooperativa
-                        pr_cdagenci     => pr_cdagenci,  --> Codigo da agencia
-                        pr_cdoperad     => pr_cdoperad,  --> codigo do operador
-                        pr_cdorigem     => pr_idorigem,  --> Origem da operacao
-                        pr_nrdconta     => pr_nrdconta,  --> Numero da conta do cooperado
-                        pr_nrctrcrd     => pr_nrctrcrd,  --> Numero da proposta de cartão
-                        pr_dtmvtolt     => rw_crapdat.dtmvtolt,           --> Data do movimento
-                        pr_comprecu     => 'COMPL_URI_CONSAD_BANCOOB',     --> Complemento do recuros da URI
-                        pr_dsmetodo     => 'GET',        --> Descricao do metodo
-                        pr_conteudo     => vr_obj_conteudo_clob,         --> Conteudo no Json para comunicacao
-                        pr_dsoperacao   => 'CONSULTA ADICIONAIS BANCOOB', --> Operacao realizada
-                        pr_dsprotocolo  => vr_dsprotoc,                   --> Protocolo retornado na requisição
-                        pr_obj_conteudo => vr_obj_conteudo,
-                        pr_dscritic     => vr_dscritic,
-                        pr_des_mensagem => vr_des_mensagem);
-	  
-	  -- Liberando a memória alocada pro CLOB
-      dbms_lob.close(vr_obj_conteudo_clob);
-      dbms_lob.freetemporary(vr_obj_conteudo_clob);
-	  
-
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Código Retorno
-      IF vr_obj_conteudo.exist('codRetorno') THEN
-        pr_des_erro := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('codRetorno').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-        
-      -- Mensagem Retorno
-      IF vr_obj_conteudo.exist('mensagemRetorno') THEN
-        pr_des_erro := pr_des_erro ||' - '|| gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('mensagemRetorno').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-      
-      -- Lista Adicionais
-      IF vr_obj_conteudo.exist('listAdicionais') THEN
-        vr_obj_lst := json_list(vr_obj_conteudo.get('listAdicionais').to_char());
-        
-        -- Para cada adicional
-        FOR vr_idx IN 1..vr_obj_lst.count() LOOP
-          BEGIN
-            vr_obj_adicional := json(vr_obj_lst.get(vr_idx));
-                  
-            -- Se encontrar o atributo id
-            IF vr_obj_adicional.exist('id') THEN
-              vr_idadicio := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_adicional.get('id').to_char(),'"'),'"'),'\u','\')));
-            END IF;
-            
-            -- Se encontrar o atributo nroMascarado
-            IF vr_obj_adicional.exist('nroMascarado') THEN
-              vr_nrcartao := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_adicional.get('nroMascarado').to_char(),'"'),'"'),'\u','\')));
-            END IF;
-            
-            IF substr(vr_nrcartao,1,instr(vr_nrcartao,'*')-1)||'%'||substr(vr_nrcartao,instr(vr_nrcartao,'*',-1)+1) =
-               substr(rw_crawcrd.nrcrcard,1,instr(vr_nrcartao,'*')-1)||'%'||substr(rw_crawcrd.nrcrcard,instr(vr_nrcartao,'*',-1)+1) THEN
-              vr_flgcrd := TRUE;
-            END IF;
-                  
-          EXCEPTION
-            WHEN OTHERS THEN
-              NULL; -- Ignorar essa linha
-          END;
-        END LOOP;
-      END IF;
-      
-      --Monta consulta Adicionais
-      --Monta Json Conteúdo
-      vr_obj_conteudo := json();
-     
-      vr_obj_conteudo.put('idAdicional',vr_idadicio);
-      vr_obj_conteudo.put('novoLimite' ,pr_vllimite);
-      vr_obj_conteudo.put('idUsuario'  ,vr_idusuari);
-      vr_obj_conteudo.put('appOrigem'  ,pr_idorigem);
-      vr_obj_conteudo.put('tipoConta'  ,'1');
-
-      -- Criar o CLOB para converter JSON para CLOB
-      dbms_lob.createtemporary(vr_obj_conteudo_clob, TRUE, dbms_lob.CALL);
-      dbms_lob.open(vr_obj_conteudo_clob, dbms_lob.lob_readwrite);
-      json.to_clob(vr_obj_conteudo,vr_obj_conteudo_clob);
-
-      --Consulta Adicionais
-      pc_enviar_bancoob_alt(pr_cdcooper     => pr_cdcooper,  --> Codigo da cooperativa
-                        pr_cdagenci     => pr_cdagenci,  --> Codigo da agencia
-                        pr_cdoperad     => pr_cdoperad,  --> codigo do operador
-                        pr_cdorigem     => pr_idorigem,  --> Origem da operacao
-                        pr_nrdconta     => pr_nrdconta,  --> Numero da conta do cooperado
-                        pr_nrctrcrd     => pr_nrctrcrd,  --> Numero da proposta de cartão
-                        pr_dtmvtolt     => rw_crapdat.dtmvtolt,           --> Data do movimento
-                        pr_comprecu     => 'COMPL_URI_ALTLA_BANCOOB',     --> Complemento do recuros da URI
-                        pr_dsmetodo     => 'GET',        --> Descricao do metodo
-                        pr_conteudo     => vr_obj_conteudo_clob,         --> Conteudo no Json para comunicacao
-                        pr_dsoperacao   => 'SOLICITA ALTERACAO LIMITE BANCOOB', --> Operacao realizada
-                        pr_dsprotocolo  => vr_dsprotoc,                   --> Protocolo retornado na requisição
-                        pr_obj_conteudo => vr_obj_conteudo,
-                        pr_dscritic     => vr_dscritic,
-                        pr_des_mensagem => vr_des_mensagem);
-						
-      -- Liberando a memória alocada pro CLOB
-      dbms_lob.close(vr_obj_conteudo_clob);
-      dbms_lob.freetemporary(vr_obj_conteudo_clob);
-
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      --Atualiza Histórico do Limite de Crédito
-      tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
-                                                    ,pr_cdoperad => pr_cdoperad
-                                                    ,pr_nrdconta => pr_nrdconta
-                                                    ,pr_nrctrcrd => pr_nrctrcrd
-                                                    ,pr_vllimite => pr_vllimite
-                                                    ,pr_dsprotoc => vr_dsprotoc
-                                                    ,pr_dsjustif => NULL
-                                                    ,pr_flgtplim => vr_flgtplim
-                                                    ,pr_idorigem => 15--Bancoob
-                                                    ,pr_tpsituac => 2 --> Enviado ao Bancoob
-                                                    ,pr_insitdec => NULL
-                                                    ,pr_nmdatela => NULL
-                                                    ,pr_cdcritic => vr_cdcritic
-                                                    ,pr_dscritic => vr_dscritic
-                                                    ,pr_des_erro => vr_des_mensagem
-                                                    );
-      
-	  IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Código Retorno
-      IF vr_obj_conteudo.exist('codRetorno') THEN
-        pr_des_erro := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('codRetorno').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-        
-      -- Mensagem Retorno
-      IF vr_obj_conteudo.exist('mensagemRetorno') THEN
-        pr_des_erro := pr_des_erro ||' - '|| gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('mensagemRetorno').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-      
-      IF vr_obj_conteudo.exist('sucesso') THEN
-        vr_sucesso := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('sucesso').to_char(),'"'),'"'),'\u','\')));
-      END IF;
-      
-      IF upper(vr_sucesso) = 'TRUE' THEN
-        pc_altera_limite_proposta(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
-                                 ,pr_nrctrcrd => pr_nrctrcrd
-                                 ,pr_vllimite => pr_vllimite
-                                 ,pr_nrcctitg => rw_crawcrd.nrcctitg
-								                 ,pr_idseqttl => pr_idseqttl
-                                 ,pr_dscritic => vr_dscritic);
-        pr_des_erro := 'Alteração realizada com sucesso.';
-		
-		    --Atualiza Histórico do Limite de Crédito
-        tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
-                                                      ,pr_cdoperad => pr_cdoperad
-                                                      ,pr_nrdconta => pr_nrdconta
-                                                      ,pr_nrctrcrd => pr_nrctrcrd
-                                                      ,pr_vllimite => pr_vllimite
-                                                      ,pr_dsprotoc => vr_dsprotoc
-                                                      ,pr_dsjustif => NULL
-                                                      ,pr_flgtplim => vr_flgtplim
-                                                      ,pr_idorigem => 15--Bancoob
-                                                      ,pr_tpsituac => 3 --> Concluído com Sucesso
-                                                      ,pr_insitdec => NULL
-                                                      ,pr_nmdatela => NULL
-                                                      ,pr_cdcritic => vr_cdcritic
-                                                      ,pr_dscritic => vr_dscritic
-                                                      ,pr_des_erro => vr_des_mensagem
-                                                      );
-
-        IF TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-      ELSE
-        vr_dscritic := pr_des_erro;
-        RAISE vr_exc_erro;
-      END IF;
-    END IF;
-
-    COMMIT;    
-    
-  EXCEPTION
-    WHEN vr_exc_erro THEN
-      --> Buscar critica
-      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
-        -- Busca descricao
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
-
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      pr_des_erro := NVL(vr_des_mensagem,'NOK');
-	  
-	  --Atualiza Histórico do Limite de Crédito
-      tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
-                                                    ,pr_cdoperad => pr_cdoperad
-                                                    ,pr_nrdconta => pr_nrdconta
-                                                    ,pr_nrctrcrd => pr_nrctrcrd
-                                                    ,pr_vllimite => pr_vllimite
-                                                    ,pr_dsprotoc => vr_dsprotoc
-                                                    ,pr_dsjustif => NULL
-                                                    ,pr_flgtplim => vr_flgtplim
-                                                    ,pr_idorigem => 15--Bancoob
-                                                    ,pr_tpsituac => 4 --> Crítica
-                                                    ,pr_insitdec => NULL
-                                                    ,pr_nmdatela => NULL
-                                                    ,pr_cdcritic => vr_cdcritic
-                                                    ,pr_dscritic => vr_dscritic
-                                                    ,pr_des_erro => vr_des_mensagem
-                                                    );
-      
-      ROLLBACK;
-
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel realizar a solicitação de alteração do cartão no Bancoob: '||SQLERRM;
-      pr_des_erro := NVL(vr_des_mensagem,'NOK');
-
-      --Atualiza Histórico do Limite de Crédito
-      tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
-                                                    ,pr_cdoperad => pr_cdoperad
-                                                    ,pr_nrdconta => pr_nrdconta
-                                                    ,pr_nrctrcrd => pr_nrctrcrd
-                                                    ,pr_vllimite => pr_vllimite
-                                                    ,pr_dsprotoc => vr_dsprotoc
-                                                    ,pr_dsjustif => NULL
-                                                    ,pr_flgtplim => vr_flgtplim
-                                                    ,pr_idorigem => 15--Bancoob
-                                                    ,pr_tpsituac => 4 --> Crítica
-                                                    ,pr_insitdec => NULL
-                                                    ,pr_nmdatela => NULL
-                                                    ,pr_cdcritic => vr_cdcritic
-                                                    ,pr_dscritic => vr_dscritic
-                                                    ,pr_des_erro => vr_des_mensagem
-                                                    );
-      ROLLBACK;
-  END pc_alterar_cartao_bancoob_tst;
   
   --Chamada solicitação cartão Bancoob via Web
   PROCEDURE pc_alterar_cartao_bancoob_wb(pr_nrdconta IN crawcrd.nrdconta%TYPE --> Nr da conta

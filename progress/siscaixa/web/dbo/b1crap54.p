@@ -56,8 +56,8 @@
                             
 			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-                            
+							(Adriano - P339). 
+              
 			   23/08/2017 - Alterado para validar as informacoes do operador 
 							pelo AD. (PRJ339 - Reinert)
 
@@ -701,6 +701,7 @@ PROCEDURE atualiza-cheque-avulso:
     DEF VAR aux_idtipcar AS INTE NO-UNDO.
     DEF VAR aux_nrcartao AS DECI NO-UNDO.
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
+	DEF VAR aux_dscampos AS CHAR NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
 
@@ -1169,9 +1170,34 @@ PROCEDURE atualiza-cheque-avulso:
                       INPUT p-nro-caixa,
                       INPUT aux_cdcritic,
                       INPUT aux_dscritic,
-                        INPUT YES).
+                      INPUT YES).
         RETURN "NOK".
       END.
+
+       /* inicio NOTIF*/
+       
+        aux_dscampos = "#valorsaque=" + STRING(p-valor,"zzz,zz9.99") + ";#datasaque=" + STRING(crapdat.dtmvtolt,"99/99/9999"). 
+        
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_cria_notif_prgs
+        aux_handproc = PROC-HANDLE NO-ERROR 
+            ( INPUT 9                 /* pr_cdorigem_mensagem  */
+             ,INPUT 1                 /* pr_cdmotivo_mensagem  */
+             ,INPUT TODAY             /* pr_dhenvio  */
+             ,INPUT crapcop.cdcooper  /* pr_cdcooper */
+             ,INPUT p-nro-conta       /* pr_nrdconta  */
+             ,INPUT 0                 /* pr_idseqttl  */
+             ,INPUT aux_dscampos ).   /* pr_variaveis  */
+                                    
+        /* Fechar o procedimento para buscarmos o resultado */ 
+         CLOSE STORED-PROC pc_cria_notif_prgs
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                           
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* fim NOTIF */
 
     RETURN "OK".
 END PROCEDURE.
@@ -1259,15 +1285,15 @@ PROCEDURE valida-permissao-provisao:
           DO:
             ASSIGN i-cod-erro = 67
                    c-desc-erro = "".
-
+                   
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
                            INPUT p-nro-caixa,
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
                            INPUT YES).
-         RETURN "NOK".            
-      END.     
+            RETURN "NOK".
+          END.
 
         /* PRJ339 - REINERT (INICIO) */         
             /* Validacao de senha do usuario no AD somente no ambiente de producao */
@@ -1339,7 +1365,7 @@ PROCEDURE valida-permissao-provisao:
                                     " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                                     "/log/provisao_especie.log").
       END.
-    RETURN "OK".
+      RETURN "OK".         
 END PROCEDURE.
 
 /* b1crap54.p */

@@ -246,14 +246,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         Sistema : Ayllos
         Sigla   : CECRED
         Autor   : Daniel/AMcom & Reginaldo/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao: 29/03/2018
+        Data    : Janeiro/2018                 Ultima atualizacao: 15/06/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
         Objetivo  : Rotina para consultar dados de risco a partir de uma conta base
         Observacao: -----
         Alteracoes:  Ajuste para ler dados da nova tabela de "dados brutos" (tbrisco_central_ocr)
-				             Março/2018 - Reginaldo (AMcom)
+				             Março/2018 - Reginaldo (AMcom)	
+
+                     15/06/2018 - P450 - Melhora de Performance (Reginaldo/AMcom)
+
       ..............................................................................*/
 
       ----------->>> VARIAVEIS <<<--------
@@ -282,64 +285,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
       ---------->> CURSORES <<--------
 
+			-- Dados da conta base
+			CURSOR cr_base(pr_cdcooper INTEGER
+					 , pr_nrdconta INTEGER) IS
+			SELECT cb.cdcooper
+					 , cb.nrdconta
+					 , cb.inpessoa
+					 , cb.nrcpfcgc
+					 , cb.inrisctl
+					 , cb.dtrisctl
+					 , DECODE(cb.inpessoa, 1,
+										 to_char(cb.nrcpfcgc, '00000000000'),
+										 substr(to_char(cb.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+				FROM crapass cb
+			 WHERE cb.cdcooper = pr_cdcooper
+				 AND cb.nrdconta = pr_nrdconta;
+			rw_cbase cr_base%ROWTYPE;
+
       -- Contas de mesmo titular da conta base
-      CURSOR cr_contas_do_titular(rw_cbase IN crapass%ROWTYPE) IS
+      CURSOR cr_contas_do_titular(rw_cbase IN cr_base%ROWTYPE) IS
+			 WITH contas AS (
+					SELECT ass.cdcooper
+							 , ass.nrdconta
+							 , ass.inpessoa
+							 , to_char(ass.nrcpfcgc,
+																		DECODE(ass.inpessoa, 1, '00000000000','00000000000000')) nrcpfcgc
+							 , DECODE(ass.inpessoa, 1,
+										 to_char(ass.nrcpfcgc, '00000000000'),
+										 substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+							 , ass.dsnivris
+						FROM crapass ass
+					 WHERE cdcooper = rw_cbase.cdcooper
+						 AND inpessoa = rw_cbase.inpessoa
+				)
       SELECT c.cdcooper
            , c.nrdconta
-           , gene0002.fn_mask(c.nrcpfcgc, 
-				                    DECODE(c.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
+									 , c.nrcpfcgc
            , c.inpessoa
            , c.dsnivris
-					 , CASE WHEN c.nrdconta = rw_cbase.nrdconta THEN 0 ELSE 1 END ordem
-        FROM crapass c
-       WHERE c.cdcooper = rw_cbase.cdcooper
-         AND DECODE(rw_cbase.inpessoa, 1,
-             gene0002.fn_mask(c.nrcpfcgc, '99999999999'),
-             substr(gene0002.fn_mask(c.nrcpfcgc, '99999999999999'), 1, 8)) =
-             DECODE(rw_cbase.inpessoa, 1,
-             gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-             substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
+									 , DECODE(c.nrdconta, rw_cbase.nrdconta, 0, 1) ordem
+				FROM contas c
+				WHERE c.nrcpfcgc_compara = rw_cbase.nrcpfcgc_compara
 			 ORDER BY ordem;
       rw_contas_do_titular cr_contas_do_titular%ROWTYPE;
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
-    CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
-    SELECT DISTINCT cgr.cdcooper
-         , cgr.nrdconta
-         , gene0002.fn_mask(cgr.nrcpfcgc, 
-				                    DECODE(cgr.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
-         , cgr.inpessoa
-         , cgr.dsnivris
-         , grp.nrdgrupo
-         , grp.dsdrisgp
-      FROM crapass cgr
-         , crapgrp grp
-     WHERE grp.nrdgrupo IN (
+    CURSOR cr_contas_grupo_economico(rw_cbase IN cr_base%ROWTYPE) IS
+		WITH grupos AS (
+				SELECT gr.cdcooper
+						 , gr.nrdconta
+						 , gr.nrctasoc
+						 , gr.inpessoa
+						 , (SELECT to_char(nrcpfcgc,
+																	DECODE(inpessoa, 1, '00000000000','00000000000000')) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc
+						 , DECODE(gr.inpessoa, 1,
+													 to_char(gr.nrcpfcgc, '00000000000'),
+													 substr(to_char(gr.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+						 , gr.nrdgrupo
+						 , gr.dsdrisgp
+						 , (SELECT DECODE(inpessoa, 1,
+													 to_char(nrcpfcgc, '00000000000'),
+													 substr(to_char(nrcpfcgc, '00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc_nrdconta
+						 , (SELECT DECODE(inpessoa, 1,
+													 to_char(nrcpfcgc, '00000000000'),
+													 substr(to_char(nrcpfcgc, '00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrctasoc) nrcpfcgc_nrctasoc
+					FROM crapgrp gr
+				 WHERE gr.cdcooper = rw_cbase.cdcooper
+					 AND gr.nrdgrupo IN (
                SELECT aux.nrdgrupo
                  FROM crapgrp aux
                 WHERE aux.cdcooper = rw_cbase.cdcooper
                   AND DECODE(aux.inpessoa, 1,
-                         gene0002.fn_mask(aux.nrcpfcgc, '99999999999'),
-                         substr(gene0002.fn_mask(aux.nrcpfcgc, '99999999999999'), 1, 8)) =
-                      DECODE(rw_cbase.inpessoa, 1,
-                         gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                         substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-           )
-       AND grp.cdcooper =  rw_cbase.cdcooper
-       AND DECODE(grp.inpessoa, 1,
-                  gene0002.fn_mask(grp.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(grp.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND DECODE(cgr.inpessoa, 1,
-                  gene0002.fn_mask(cgr.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(cgr.nrcpfcgc, '99999999999999'), 1, 8)) <>
-           DECODE(rw_cbase.inpessoa, 1,
-                  gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999'),
-                  substr(gene0002.fn_mask(rw_cbase.nrcpfcgc, '99999999999999'), 1, 8))
-       AND cgr.cdcooper =  grp.cdcooper
-       AND (cgr.nrdconta =  grp.nrdconta OR cgr.nrdconta = grp.nrctasoc);
+															 to_char(aux.nrcpfcgc, '00000000000'),
+															 substr(to_char(aux.nrcpfcgc, '00000000000000'), 1, 8)) =
+															 rw_cbase.nrcpfcgc_compara
+					)
+			)
+			SELECT DISTINCT grp.nrdconta
+					 , grp.nrcpfcgc
+					 , (SELECT dsnivris FROM crapass WHERE cdcooper = grp.cdcooper AND nrdconta = grp.nrdconta) dsnivris
+					 , grp.nrdgrupo
+					 , grp.dsdrisgp
+				FROM grupos grp
+			 WHERE grp.nrcpfcgc_nrdconta <> rw_cbase.nrcpfcgc_compara
+				 AND grp.nrcpfcgc_nrctasoc <> rw_cbase.nrcpfcgc_compara 
+				 ;
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 
 		-- Dados dos riscos
@@ -399,15 +429,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        AND t.cdacesso = 'RISCOBACEN'
        AND t.tpregist = 000;
     rw_tab cr_tab%ROWTYPE;
-
-    -- Dados da conta base
-    CURSOR cr_base(pr_cdcooper INTEGER
-		     , pr_nrdconta INTEGER) IS
-    SELECT cb.*
-      FROM crapass cb
-     WHERE cb.cdcooper = pr_cdcooper
-       AND cb.nrdconta = pr_nrdconta;
-    rw_cbase cr_base%ROWTYPE;
 
     BEGIN
       pr_des_erro := 'OK';

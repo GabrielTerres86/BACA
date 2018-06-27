@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 12/12/2016
+   Data    : Outubro/2011                      Ultima atualizacao: 25/06/2018
 
    Dados referentes ao programa:
 
@@ -124,6 +124,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                             BacenJud (Andrino - Mouts). Projeto 341-Bacenjud
 							
                15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
+			   
+			   25/06/2018 - Adicionado CPF/CNPJ e nome do favorecido no e-mail enviado em casos de fraude.
+							(SCTASK0015124 - Kelvin).
 							
 ..............................................................................*/
   --  antigo tt-protocolo-ted 
@@ -213,6 +216,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
+                          ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -246,6 +250,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
+                          ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
@@ -279,6 +284,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_idagenda IN INTEGER  --> Tipo de agendamento                          
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
+                          ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED        
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
@@ -978,10 +984,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END LOOP;
 
       -- monta o corpo do email
-      vr_des_corpo := '<b>Atencao! Houve tentativa de TED fraudulento.<br>'||
-                      'IP: ' || vr_nrdipatu || '<br>' ||
-                      'Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta)||'<br>'||
-                      '<b>CPF/CNPJ destino: </b>'|| vr_cpfcnpj;
+      vr_des_corpo := '<b>Atencao! Houve tentativa de TED fraudulento</b>.<br>' ||
+                      '<b>IP:</b> ' || vr_nrdipatu || '<br>' ||
+                      '<b>Cooperativa: </b>' || rw_crapcop.cdcooper || ' - ' || rw_crapcop.nmrescop || '<br>' ||
+                      '<b>Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta) || '<br>' ||
+                      '<b>CPF/CNPJ destino: </b>' || vr_cpfcnpj || '<br>' ||
+                      '<b>Nome Favorecido: </b>' || pr_nmfavore;
+                      
+                      
       -- Envio de e-mail informando que houve a tentativa
       gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
                                  pr_cdprogra => 'CXON0020',
@@ -1297,6 +1307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_idagenda IN INTEGER  --> Tipo de agendamento                          
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile                         
+                          ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED        
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
@@ -1871,6 +1882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 										                      ,pr_cdoperacao  => 12 --> TED Eletronica 
                                           ,pr_dstransacao => pr_dstransa
                                           ,pr_tptransacao => 1 --> Online
+                                          ,pr_iddispositivo => pr_iddispos
                                           ,pr_idanalise_fraude => vr_idanalise_fraude
                                           ,pr_dscritic   => vr_dscritic);
       vr_dscritic := NULL;
@@ -2599,6 +2611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
+                          ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -2611,7 +2624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 13/08/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 13/06/2018
   
       Dados referentes ao programa:
   
@@ -2626,6 +2639,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
 
 				  13/08/2017 - Ajuste para pegar o erro corretamente (Jonata - RKAM / P364).
+
+				  13/06/2018 - Ajuste para limpar caracteres especiais (Andrey Formigari - MOUTS).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
@@ -3043,18 +3058,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_cdbanfav => pr_cddbanco --> Banco Favorecido       
                   ,pr_cdagefav => pr_cdageban --> Agencia Favorecido     
                   ,pr_nrctafav => pr_nrctatrf --> Conta Favorecido       
-                  ,pr_nmfavore => pr_nmtitula --> Nome Favorecido        
+                  ,pr_nmfavore => gene0007.fn_caract_acento(pr_nmtitula, 1) --> Nome Favorecido        
                   ,pr_nrcpffav => pr_nrcpfcgc --> CPF/CNPJ Favorecido    
                   ,pr_inpesfav => pr_inpessoa --> Tipo Pessoa Favorecido 
                   ,pr_tpctafav => pr_intipcta --> Tipo Conta Favorecido  
                   ,pr_dshistor => pr_dshistor --> Descriçao do Histórico 
-                  ,pr_dstransf => pr_dstransf --> Identificacao Transf.
+                  ,pr_dstransf => gene0007.fn_caract_acento(pr_dstransf, 1) --> Identificacao Transf.
                   ,pr_cdfinali => pr_cdfinali --> Finalidade TED                              
                   ,pr_cdispbif => pr_cdispbif --> ISPB Banco Favorecido
                   ,pr_flmobile => pr_flmobile --> Indicador se origem é do Mobile
                   ,pr_idagenda => pr_idagenda --> Tipo de agendamento                          
                   ,pr_iptransa => pr_iptransa --> IP da transacao no IBank/mobile
                   ,pr_dstransa => pr_dstransa --> Descrição da transacao no IBank/mobile                                            
+                  ,pr_iddispos => pr_iddispos --> ID Dispositivo mobile
                   -- saida
                   ,pr_nrdocmto => vr_nrdocmto --> Documento TED        
                   ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL      
@@ -3399,6 +3415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
+                          ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
@@ -3458,6 +3475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 pr_idagenda => pr_idagenda, 
                 pr_iptransa => pr_iptransa,
                 pr_dstransa => pr_dstransa,
+                pr_iddispos => pr_iddispos,
                 pr_dsprotoc => pr_dsprotoc, 
                 pr_tab_protocolo_ted => vr_tab_protocolo_ted, 
                 pr_cdcritic => pr_cdcritic, 

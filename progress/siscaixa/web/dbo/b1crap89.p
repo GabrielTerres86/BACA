@@ -3,7 +3,7 @@
 Programa: siscaixa/web/dbo/b1crap89.p
 Autor   : Andre Santos - SUPERO
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 20/06/2016
+Sigla   : CRED                               Ultima atualizacao: 19/06/2018
 
 Dados referentes ao programa:
 
@@ -12,6 +12,12 @@ Objetivo  : Validacoes de Arrecadacoes GPS SICREDI - Faturas.
 Alteracoes: 20/06/2016 - Incluida validacao da conta para verificar se esta
                          possui INTERNET ativa, caso contrario, nao segue
 						 (Guilherme/SUPERO)
+
+            12/09/2017 - Ajustes melhoria 397 - Rafael (Mouts)
+
+			19/06/2018 - Incluido parametros adicionados a rotina oracle.
+			             PRJ381 - Antifraude(Odirlei-AMcom)
+
 ..............................................................................*/
 
 {dbo/bo-erro1.i}
@@ -689,6 +695,8 @@ PROCEDURE pc-efetua-agendamento-gps:
                          INPUT 0,
                          INPUT 0,
                          INPUT "",
+						 INPUT "", /*pr_iptransa*/
+                         INPUT "", /*pr_iddispos*/
                          OUTPUT "",
                          OUTPUT "",
                          OUTPUT 0,

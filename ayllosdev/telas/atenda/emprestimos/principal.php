@@ -948,20 +948,6 @@
 		$valoriof = str_replace('.', ',', str_replace(',', '', $valoriof)); //Valor para exibir
 		$vltarifa = str_replace('.', ',', str_replace(',', '', $vltarifa)); //Valor para exibir
 		$vlpreemp = str_replace('.', ',', str_replace(',', '', $vlpreemp)); //Valor para exibir
-		
-		
-		//Aqui verifica se tem bens que são do tipo CASA ou APARTAMENTO. Se tiver, zera o valor de IOF.
-		//Já é feito na procedure do Oracle, mas busca da crapbpr, e na inclusão do contrato de empréstimo
-		//não existe registro nesta tabela ainda, apenas no array do javascript
-		if ($inpessoa == 1){
-			$tmp = explode('|', $dscatbem.'|');
-			foreach ($tmp as $bem) {
-				if ($bem == 'CASA' || $bem == 'APARTAMENTO'){
-					$valoriof = 0;
-					break;
-				}
-			}
-		}
 
 		$vlrtotal = str_replace(',', '.', str_replace('.', '', $vlempres));
 		if ($idfiniof > 0){				

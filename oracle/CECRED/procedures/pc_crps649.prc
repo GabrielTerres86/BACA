@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Carlos Henrique
-   Data    : Julho/2013                        Ultima atualizacao: 28/09/2016
+   Data    : Julho/2013                        Ultima atualizacao: 18/06/2018
 
    Dados referentes ao programa:
 
@@ -45,6 +45,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
                28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
                
+               18/06/2018 - Alterar geração do arquivo _conven da contabilidade para ser 
+                            diario (Lucas Ranghetti #TASK0011641)
 .............................................................................*/
   -- Variaveis de uso no programa
   vr_cdprogra        crapprg.cdprogra%TYPE := 'CRPS649';  -- Codigo do presente programa
@@ -301,16 +303,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
   
   -- Verifica a agencia e caso seja 90 ou 91 substitui pela agencia do cooperado
   FUNCTION fn_agencia(pr_cdagenci   IN crapass.cdagenci%TYPE
-                     ,pr_cdageass   IN crapass.cdagenci%TYPE) RETURN crapass.cdagenci%TYPE IS
+                     ,pr_cdageass   IN crapass.cdagenci%TYPE
+                     ,pr_inpessoa   IN crapass.inpessoa%TYPE) RETURN crapass.cdagenci%TYPE IS
                       
   BEGIN
     
-    -- Se agencia é 90 ou 91
-    IF pr_cdagenci IN (90,91) THEN
+    -- Se for inpessoa 3, não é cooperado, então retorna agencia de arrecadacao
+    if pr_inpessoa in( 0,3) then
+      return pr_cdagenci;
+    else -- se inpessoa 1 ou 2 retorna agencia do cooperado
       RETURN pr_cdageass;
-    ELSE 
-      RETURN pr_cdagenci;
-    END IF;
+    end if;
   
   END fn_agencia;
   
@@ -477,22 +480,6 @@ BEGIN
             vr_inpessoa := 3; -- Será considerado como NÃO ASSOCIADO
           END IF;
           
-          -- Se o indice por tipo de pessoa não existe
-          IF NOT vr_tab_tarifas.EXISTS(vr_inpessoa) THEN
-            -- Cria a posição para gravar os valores da pessoa e tarifa
-            vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass)) := 0;
-            -- Criar o totalizador para o tipo pessoa
-            vr_tab_totagen(vr_inpessoa) := 0;
-          ELSIF NOT vr_tab_tarifas(vr_inpessoa).EXISTS(fn_agencia(rw_craplft.cdagenci,vr_cdageass)) THEN -- SE o indice da agencia não existe
-            -- Cria a posição para gravar os valores da tarifa
-            vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass)) := 0;
-          END if;
-
-          -- Acumula o valor da TARIFA para a agencia
-          vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass)) := vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass)) + vr_vltarifa;
-          -- Acumula o total das tarifas por tipo de pessoa
-          vr_tab_totagen(vr_inpessoa) := vr_tab_totagen(vr_inpessoa) + vr_vltarifa;
-          
           -- Criar o convenio independente do tipo de pessoa
           IF NOT vr_tab_conv_fis_660.exists(vr_dsdchave_660) THEN
             FOR vr_indice IN 1..4 LOOP
@@ -556,7 +543,6 @@ BEGIN
             vr_tab_conv_nao_660(vr_dsdchave_660).qtlancam := nvl(vr_tab_conv_nao_660(vr_dsdchave_660).qtlancam,0) + 1; 
             
           END IF;
-          
           
           -- Se tiver processando a informação do dia
           IF rw_craplft.dtmvtolt = rw_crapdat.dtmvtolt THEN
@@ -658,22 +644,6 @@ BEGIN
                                                             vr_vltarifa;
           vr_tab_convenio_659(vr_dsdchave_660).qtlancam := nvl(vr_tab_convenio_659(vr_dsdchave_660).qtlancam,0) + 1;
           
-          -- Se o indice por tipo de pessoa não existe
-          IF NOT vr_tab_tarifas.EXISTS(vr_inpessoa) THEN
-            -- Cria a posição para gravar os valores da pessoa e tarifa
-            vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass)) := 0;
-            -- Criar o totalizador para o tipo pessoa
-            vr_tab_totagen(vr_inpessoa) := 0;
-          ELSIF NOT vr_tab_tarifas(vr_inpessoa).EXISTS(fn_agencia(rw_craplcm.cdagenci,vr_cdageass)) THEN -- SE o indice da agencia não existe
-            -- Cria a posição para gravar os valores da tarifa
-            vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass)) := 0;
-          END if;
-
-          -- Acumula o valor da TARIFA
-          vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass)) := vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass)) + vr_vltarifa;
-          -- Acumula o total das tarifas por tipo de pessoa
-          vr_tab_totagen(vr_inpessoa) := vr_tab_totagen(vr_inpessoa) + vr_vltarifa;
-          
           -- Criar o convenio independente do tipo de pessoa
           IF NOT vr_tab_conv_fis_660.exists(vr_dsdchave_660) THEN
             FOR vr_indice IN 1..4 LOOP
@@ -762,9 +732,100 @@ BEGIN
         vr_dtmvtolt := vr_dtmvtolt + 1;      
       END LOOP;
       
-    END LOOP;
+      -- Leitura dos lancamentos de fatura Diario
+      FOR rw_craplft IN cr_craplft (pr_cdcooper => vr_cdcooper
+                                   ,pr_cdhistor => rw_gnconve.cdhiscxa
+                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+                                   
+        -- Obter o valor da tarifa     
+        IF rw_craplft.cdagenci = 90  THEN     -- Internet 
+          vr_vltarifa := rw_gnconve.vltrfnet;   
+        ELSIF rw_craplft.cdagenci = 91  THEN  -- TAA
+          vr_vltarifa := rw_gnconve.vltrftaa;
+        ELSE                                   -- Caixa
+          vr_vltarifa := rw_gnconve.vltrfcxa;   
+        END IF;   
+                    
+        -- Se o número da conta for zero, não busca não associados
+        IF NVL(rw_craplft.nrdconta,0) > 0 THEN
+          -- Buscar a informação da pessoa 
+          OPEN  cr_crapass(vr_cdcooper, rw_craplft.nrdconta);
+          FETCH cr_crapass INTO vr_inpessoa, vr_cdageass;
+          -- Se o associado não for encontrado
+          IF cr_crapass%NOTFOUND THEN
+            vr_inpessoa := 3; -- Não Associado
+          ELSIF vr_inpessoa = 3 THEN
+            vr_inpessoa := 2; -- Cooperativas devem ser tratadas como pessoa juridica
+          END IF;
+          -- Fecha o cursor 
+          CLOSE cr_crapass;
+        ELSE
+          vr_inpessoa := 3; -- Será considerado como NÃO ASSOCIADO
+        END IF;
+            
+        -- Se o indice por tipo de pessoa não existe
+        IF NOT vr_tab_tarifas.EXISTS(vr_inpessoa) THEN
+          -- Cria a posição para gravar os valores da pessoa e tarifa
+          vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass,vr_inpessoa)) := 0;
+          -- Criar o totalizador para o tipo pessoa
+          vr_tab_totagen(vr_inpessoa) := 0;
+        ELSIF NOT vr_tab_tarifas(vr_inpessoa).EXISTS(fn_agencia(rw_craplft.cdagenci,vr_cdageass,vr_inpessoa)) THEN -- SE o indice da agencia não existe
+          -- Cria a posição para gravar os valores da tarifa
+          vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass,vr_inpessoa)) := 0;
+        END if;
+
+        -- Acumula o valor da TARIFA para a agencia
+        vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass,vr_inpessoa)) := vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplft.cdagenci,vr_cdageass,vr_inpessoa)) + vr_vltarifa;
+        -- Acumula o total das tarifas por tipo de pessoa
+        vr_tab_totagen(vr_inpessoa) := vr_tab_totagen(vr_inpessoa) + vr_vltarifa;
+        
+      END LOOP; -- Fim craplft diaria (Contabilidade)
+      
+      -- Leitura dos lancamentos em conta corrente Diario 
+      FOR rw_craplcm IN cr_craplcm (pr_cdcooper => vr_cdcooper
+                                   ,pr_cdhistor => rw_gnconve.cdhisdeb
+                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+        -- Se o número da conta for zero, não busca não associados
+        IF NVL(rw_craplcm.nrdconta,0) > 0 THEN
+          -- Buscar a informação da pessoa 
+          OPEN  cr_crapass(vr_cdcooper, rw_craplcm.nrdconta);
+          FETCH cr_crapass INTO vr_inpessoa, vr_cdageass;
+          -- Se o associado não for encontrado
+          IF cr_crapass%NOTFOUND THEN
+            vr_inpessoa := 0; -- Não Associado
+          ELSIF vr_inpessoa = 3 THEN
+            vr_inpessoa := 2; -- Cooperativas devem ser tratadas como pessoa juridica
+          END IF;
+          -- Fecha o cursor 
+          CLOSE cr_crapass;
+        ELSE
+          vr_inpessoa := 3; -- Será considerado como NÃO ASSOCIADO
+        END IF;
+        
+        -- Valor da tarifa do debito 
+        vr_vltarifa := rw_gnconve.vltrfdeb;
+        
+        -- Se o indice por tipo de pessoa não existe
+        IF NOT vr_tab_tarifas.EXISTS(vr_inpessoa) THEN
+          -- Cria a posição para gravar os valores da pessoa e tarifa
+          vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass,vr_inpessoa)) := 0;
+          -- Criar o totalizador para o tipo pessoa
+          vr_tab_totagen(vr_inpessoa) := 0;
+        ELSIF NOT vr_tab_tarifas(vr_inpessoa).EXISTS(fn_agencia(rw_craplcm.cdagenci,vr_cdageass,vr_inpessoa)) THEN -- SE o indice da agencia não existe
+          -- Cria a posição para gravar os valores da tarifa
+          vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass,vr_inpessoa)) := 0;
+        END if;
+
+        -- Acumula o valor da TARIFA
+        vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass,vr_inpessoa)) := vr_tab_tarifas(vr_inpessoa)(fn_agencia(rw_craplcm.cdagenci,vr_cdageass,vr_inpessoa)) + vr_vltarifa;
+        -- Acumula o total das tarifas por tipo de pessoa
+        vr_tab_totagen(vr_inpessoa) := vr_tab_totagen(vr_inpessoa) + vr_vltarifa;
+                
+      END LOOP; -- Fim craplcm diaria (Contabilidade)
+      
+    END LOOP; -- Fim cooperativa
   
-  END LOOP;
+  END LOOP; -- Fim convenio
   
   -- Imprimir os relatórios CRRL658 e CRRL659 apenas quando CECRED
   IF pr_cdcooper = 3 THEN
@@ -1507,8 +1568,8 @@ BEGIN
     END IF; 
   END IF; -- Gerar apenas se CECRED ou virada de mês
   
-  -- Gerar o arquivo para contabilidade quando for virada de mês e não for cooperativa 3 - CECRED
-  IF trunc(rw_crapdat.dtmvtopr,'MM') <> trunc(rw_crapdat.dtmvtolt,'MM') AND pr_cdcooper <> 3 AND vr_tab_tarifas.COUNT() > 0 THEN 
+  -- Gerar o arquivo para contabilidade quando não for cooperativa 3 - CECRED (DIARIO)
+  IF pr_cdcooper <> 3 AND vr_tab_tarifas.COUNT() > 0 THEN 
  
     -- Inicializar o CLOB (XML) para o arquivo com informação das tarifas
     dbms_lob.createtemporary(vr_dsxmldad_arq, TRUE);

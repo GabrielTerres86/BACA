@@ -67,6 +67,7 @@ var dsdregis = "";  // Variavel para armazenar os valores dos titulares
 var nrconven = 0;   // Variavel para guardar o convenio no inclui-altera.php
 var mensagem = "Deseja efetuar impress&atilde;o do termo de ades&atilde;o ?"; // Mensagem de confirmacao de impressao
 var callafterCobranca = '';
+var gFlginclu = false;
 
 // Numero do convenio que deve ser impresso
 var nrconven_imprimir = 0; 
@@ -170,7 +171,7 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
+function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -195,6 +196,8 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     $("#flsercco", "#divConteudoOpcao").val(flsercco);
     $("#qtdfloat", "#divConteudoOpcao").val(qtdfloat);
     $("#flprotes", "#divConteudoOpcao").val(flprotes);
+    $("#qtlimaxp", "#divConteudoOpcao").val(qtlimaxp);
+    $("#qtlimmip", "#divConteudoOpcao").val(qtlimmip);
     $("#qtdecprz", "#divConteudoOpcao").val(qtdecprz);
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
 	$("#inenvcob", "#divConteudoOpcao").val(inenvcob);
@@ -261,6 +264,8 @@ function realizaExclusao(inapurac) {
 // Exibe a opcao de Consulta ou Habilitacao
 function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 
+	gFlginclu = flginclu == 'true';
+
     var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
     var inarqcbr = $("#inarqcbr", "#divConteudoOpcao").val();
@@ -278,6 +283,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var flserasa = $("#flserasa", "#divConteudoOpcao").val();
     var qtdfloat = $("#qtdfloat", "#divConteudoOpcao").val();
     var flprotes = $("#flprotes", "#divConteudoOpcao").val();
+    var qtlimmip = $("#qtlimmip", "#divConteudoOpcao").val();
+    var qtlimaxp = $("#qtlimaxp", "#divConteudoOpcao").val();
     var qtdecprz = $("#qtdecprz", "#divConteudoOpcao").val();
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 	var inenvcob = $("#inenvcob", "#divConteudoOpcao").val();
@@ -329,6 +336,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 		flgcruni = "SIM";
 		flgcebhm = "NAO";
         flprotes = "NAO";
+        qtlimmip = "";
+        qtlimaxp = "";
         qtdfloat = "";
         qtdecprz = "";
         idrecipr = 0;
@@ -375,6 +384,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 			flsercco: flsercco, /* Indica se Convenio Possui Serasa*/
             qtdfloat: qtdfloat,
             flprotes: flprotes,
+            qtlimaxp: qtlimaxp,
+            qtlimmip: qtlimmip,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
 			inenvcob: inenvcob,
@@ -536,7 +547,104 @@ function confirmaHabilitacao(cddopcao) {
 	// Se o convenio esta ativo, imprimir termo de adesão, caso contrario o termo de cancelamento
 	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
 
-    showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+    //showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+	showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaInativacaoProtesto("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+}
+
+function confirmaCancelamentoBoletos(cddopcao) {
+    confirmaCancelamentoSustacao = false;
+    showConfirmacao(
+        'Deseja cancelar a instru&ccedil;&atilde;o autom&aacute;tica de protesto<br>dos boletos ativos e ainda n&atilde;o vencidos ou dentro da toler&acirc;ncia?',
+        'Confirma&ccedil;&atilde;o - Ayllos',
+        'cancelaSustaBoletos(0, "' + cddopcao + '")',
+        'confirmaSustacaoBoletos("' + cddopcao + '")',
+        'sim.gif', 'nao.gif'
+    );
+}
+
+function confirmaSustacaoBoletos(cddopcao) {
+    var flgregis = $("#flgregis", "#divOpcaoConsulta").val();
+    showConfirmacao(
+        'Deseja cancelar/sustar o protesto dos boletos?<br>O Cooperado deve ser conscientizado que a susta&ccedil;&atilde;o ocorrer&aacute; mediante aprova&ccedil;&atilde;o do cart&oacute;rio.',
+        'Confirma&ccedil;&atilde;o - Ayllos',
+        'cancelaSustaBoletos(1, "' + cddopcao + '")',
+        'confirmaImpressaoCancelamento("' + flgregis + '", "confirmaHabilitacaoSerasa(\'' + cddopcao + '\')");',
+        'sim.gif', 'nao.gif'
+    );
+}
+
+function cancelaSustaBoletos(fltipo, cddopcao) { // 0 = cancela | 1 = susta
+
+    confirmaCancelamentoSustacao = true;
+
+    var nrconven = normalizaNumero($("#nrconven", "#divOpcaoConsulta").val());
+
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        dataType: 'html',
+        url: UrlSite + "telas/atenda/cobranca/cancela_susta_boletos.php",
+        data: {
+            cddopcao: cddopcao,
+            cdcooper: cdcooper,
+            nrdconta: nrdconta,
+            nrconven: nrconven,
+            fltipo: fltipo,
+            flgregis: $("#flgregis", "#divOpcaoConsulta").val(),
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o." + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+}
+
+function confirmaInativacaoProtesto(cddopcao) {
+    var blnchecked = $("#flprotes", "#divOpcaoConsulta").prop("checked");
+    var flprotes_old = $("#flprotes", "#divConteudoOpcao").val();
+    flprotes_old = flprotes_old == '' || gFlginclu ? "NAO" : flprotes_old;
+    var flprotes_new = blnchecked ? "SIM" : "NAO";
+
+    // Se foi habilitado/desabilitado o indicador
+    if (flprotes_old != flprotes_new && flprotes_old == "SIM" && flprotes_new == "NAO") {
+
+        // Seta como checkbox alterado, utilizado no realiza_habilitacao.php
+        $("#flproalt", "#divConteudoOpcao").val(1);
+
+        confirmaCancelamentoBoletos(cddopcao);
+
+    } else {
+        confirmaHabilitacaoSerasa(cddopcao);
+    }
+}
+
+// imprimir
+function imprimeRelatorio() {
+
+    if (confirmaCancelamentoSustacao) {
+        var nmprimtl = $('#nmprimtl', '#frmCabAtenda').val(),
+            cdagenci = $('#cdagenci', '#frmCabAtenda').val(),
+            action = UrlSite + 'telas/atenda/cobranca/imprimir_relatorio.php';
+
+        $("#nrdconta", "#frmRelatorio").val(nrdconta);
+        $("#nmprimtl", "#frmRelatorio").val(nmprimtl);
+        $("#cdagenci", "#frmRelatorio").val(cdagenci);
+
+        //carregaImpressaoAyllos("frmRelatorio",action,"bloqueiaFundo(divRotina);");
+        carregaImpressaoAyllos("frmRelatorio", action, "");
+    }
 }
 
 // Confirmar a habilitacao do Serasa
@@ -663,10 +771,15 @@ function realizaHabilitacao() {
     var flgregis = $("#flgregis", "#divOpcaoConsulta").val();
     var flserasa = $("#flserasa", "#divOpcaoConsulta").val();
     var flseralt = $("#flseralt", "#divConteudoOpcao").val();
+    var flprotes = $("#flprotes", "#divOpcaoConsulta").val();
+    var flproalt = $("#flproalt", "#divConteudoOpcao").val();
     var flposbol = $("#flposbol", "#divConteudoOpcao").val();
     var cddbanco = $("#cddbanco", "#divOpcaoConsulta").val();
     var qtdfloat = $("#qtdfloat", "#divOpcaoConsulta").val();
     var qtdecprz = $("#qtdecprz", "#divOpcaoConsulta").val();
+    var qtlimmip = $("#qtlimmip", "#divOpcaoConsulta").val();
+    var insrvprt = $("#insrvprt", "#divOpcaoConsulta").val();
+    var qtlimaxp = $("#qtlimaxp", "#divOpcaoConsulta").val();
     var idrecipr = $("#idrecipr", "#divOpcaoConsulta").val();
 	var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
     var idreciprold = $("#idreciprold", "#divOpcaoConsulta").val();
@@ -674,6 +787,9 @@ function realizaHabilitacao() {
     nrconven = normalizaNumero(nrconven);
     qtdfloat = normalizaNumero(qtdfloat);
     qtdecprz = normalizaNumero(qtdecprz);
+    insrvprt = normalizaNumero(insrvprt);
+    qtlimmip = normalizaNumero(qtlimmip);
+    qtlimaxp = normalizaNumero(qtlimaxp);
 
     if ($("#flgregon", "#divOpcaoConsulta").prop("checked") == true) {
 		var flgregon = 1;
@@ -743,6 +859,10 @@ function realizaHabilitacao() {
 			cddopcao: cddopcao,
             qtdfloat: qtdfloat,
             flprotes: flprotes,
+            flproalt: flproalt,
+            insrvprt: insrvprt,
+            qtlimaxp: qtlimaxp,
+            qtlimmip: qtlimmip,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
 			inenvcob: inenvcob,
@@ -764,6 +884,17 @@ function realizaHabilitacao() {
 			}
 		}
 	});
+}
+
+function onChangeProtesto() {
+	if($('#flprotes', '#divOpcaoSerasaProtesto').prop("checked")){
+	    $('#qtlimmip', '#divOpcaoSerasaProtesto').habilitaCampo();
+	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').habilitaCampo();
+		        
+	} else {
+	    $('#qtlimmip', '#divOpcaoSerasaProtesto').desabilitaCampo();
+	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').desabilitaCampo();
+	}	
 }
 
 // Perguntar se quer fazer a impressao do termo
@@ -888,6 +1019,10 @@ function validaCpf(nmrotina) {
 	});
 }
 
+function imprimirTermoCancelamentoProtesto(cddopcao, flgregis, dsdtitul, tpimpres) {
+    confirmaHabilitacaoSerasa(cddopcao);
+}
+
 
 // Função para carregar impressao de termo de adesão em PDF
 function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
@@ -970,6 +1105,7 @@ function controlaLayout(nomeForm) {
         var Lflgcebhm = $('label[for="flgcebhm"]', '#' + nomeForm);
         var Lqtdfloat = $('label[for="qtdfloat"]', '#' + nomeForm);
         var Lflprotes = $('label[for="flprotes"]', '#' + nomeForm);
+        var Lqtlimmip = $('label[for="qtlimmip"]', '#' + nomeForm);
         var Lqtdecprz = $('label[for="qtdecprz"]', '#' + nomeForm);
 		var Linenvcob = $('label[for="inenvcob"]', '#' + nomeForm);
 
@@ -984,6 +1120,8 @@ function controlaLayout(nomeForm) {
         var Ccddopcao = $('#cddopcao', '#' + nomeForm);
         var Cqtdfloat = $('#qtdfloat', '#' + nomeForm);
         var Cqtdecprz = $('#qtdecprz', '#' + nomeForm);
+        var Cqtlimmip = $('#qtlimmip', '#' + nomeForm);
+        var Cqtlimaxp = $('#qtlimaxp', '#' + nomeForm);
         var Cperdesconto = $('.clsPerDesconto', '#' + nomeForm);
 		var Cinenvcob = $('#inenvcob', '#' + nomeForm);
 
@@ -1002,6 +1140,7 @@ function controlaLayout(nomeForm) {
         Lflgcebhm.addClass('rotulo').css('width', '210px');
         Lqtdfloat.addClass('rotulo').css('width', '210px');
         Lflprotes.addClass('rotulo').css('width', '210px');
+        Lqtlimmip.addClass('rotulo').css('width', '210px');
         Lqtdecprz.addClass('rotulo').css('width', '210px');
         Linenvcob.addClass('rotulo').css('width', '210px');
 
@@ -1014,6 +1153,8 @@ function controlaLayout(nomeForm) {
         Cflgcebhm.css({ 'width': '50px' });
         Cqtdfloat.css({ 'width': '70px' });
         Cqtdecprz.css({ 'width': '50px' }).attr('maxlength', '5').setMask("INTEGER", "zzzzz", ".", "");
+        Cqtlimmip.css({ 'width': '30px' }).attr('maxlength', '3').setMask("INTEGER", "zzz", ".", "");
+        Cqtlimaxp.css({ 'width': '30px' }).attr('maxlength', '3').setMask("INTEGER", "zzz", ".", "");
         Cperdesconto.css({ 'width': '50px' }).setMask('DECIMAL','zz9,99','.','');
 		Cinenvcob.css({ 'width': '155px' });
 		if (Cinsitceb.val() == 1) {
@@ -1220,25 +1361,37 @@ function buscaDescricaoConvenio(campoCodigo,valorCodigo) {
 
 
 // Perguntar se quer fazer a impressao do termo
-function confirmaImpressaoCancelamento(flgregis) {
+function confirmaImpressaoCancelamento(flgregis, callafterFnc) {
 
-    var callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+    imprimeRelatorio();
+
+    var callafterCobranca, nmrotina;
+
+    if (!callafterFnc) {
+        callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
 
     callafterCobranca += (executandoProdutos) ? 'encerraRotina();' : 'realizaExclusao(1);';
+
+    // parametros são recebidos quando é relacionado ao protesto
+    } else {
+        callafterCobranca = callafterFnc;
+
+        nmrotina = "imprimirTermoCancelamentoProtesto";
+    }
 
     aux_mensagem = "Deseja efetuar impress&atilde;o do termo de cancelamento ?"; // Mensagem de confirmacao de impressao;
 
     showConfirmacao(aux_mensagem,
 					'Confirma&ccedil;&atilde;o - Ayllos',
-					'testemunhasCancelamento("' + flgregis + '");blockBackground(parseInt($("#divRotina").css("z-index")));',
+					'testemunhasCancelamento("' + flgregis + '", "' + nmrotina + '");blockBackground(parseInt($("#divRotina").css("z-index")));',
 					callafterCobranca,
 					'sim.gif',
 					'nao.gif');
 }
 
-function testemunhasCancelamento(flgregis) {
+function testemunhasCancelamento(flgregis, pNmrotina) {
 
-    var nmrotina = "imprimirTermoCancelamento";
+    var nmrotina = pNmrotina ? pNmrotina : "imprimirTermoCancelamento";
 
     // Carrega conteúdo da opção através do Ajax
     $.ajax({
@@ -1258,6 +1411,9 @@ function testemunhasCancelamento(flgregis) {
 			// Numero do convenio e o termo de cancelamento
 			nrconven_imprimir = normalizaNumero($("#nrconven", "#divConteudoOpcao").val());
 			tpdtermo_imprimir = 2;// Imprimir termo de cancelamento
+            if (pNmrotina != "imprimirTermoCancelamento") {
+                tpdtermo_imprimir = 3;// Imprimir termo de cancelamento de protesto
+            }
 			
             $("#divOpcaoIncluiAltera").css({ 'display': 'none' });
             $("#divOpcaoConsulta").css({ 'display': 'none' });
@@ -1274,11 +1430,19 @@ function acessaAba(id,cddopcao) {
 
     var flcooexp = ($("#flcooexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
     var flceeexp = ($("#flceeexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
+	var qtlimmip_val = $("#qtlimmip", "#frmConsulta").val();
+    var qtlimaxp_val = $("#qtlimaxp", "#frmConsulta").val();
 
     // Se NAO foi selecionado nem Cooperado e nem Cooperativa expede
-    if (id == 1 && flcooexp == 0 && flceeexp == 0) {
+    if (id == 1) {
+        if (flcooexp == 0 && flceeexp == 0) {
         showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
         return false;
+        }
+        if (parseInt(qtlimaxp_val) < parseInt(qtlimmip_val)) {
+            showError("error", "Data maxima de Intervalo de Protesto nao pode ser menor que data minima.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
+            return false;
+        }
     }
 
     // Esconde as abas

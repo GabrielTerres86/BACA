@@ -236,7 +236,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 01/04/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 19/06/2018
 
    Dados referentes ao programa:
   
@@ -270,6 +270,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                      
               01/04/2018 - Ajuste para utilizar cursor com union, para validar se já existe
                             crapdev criada (Jonata - MOUTS SD 859822).                           
+                     
+              19/06/2018 - Ajuste para alimentar corretamente a agencia na solicitação do pedido
+                          (Adriano - INC0017466).                         
                      
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -3508,15 +3511,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --  Sistema  : Rotinas para cadastros Web
     --  Sigla    : CHEQUE
     --  Autor    : Lombardi
-    --  Data     : Maio/2018.                   Ultima atualizacao: --/--/----
+    --  Data     : Maio/2018.                   Ultima atualizacao: 19/06/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para solicita talonario.
     --
-    --   Alteracoes: 
-    --
+    --   Alteracoes: 19/06/2018 - Ajuste para alimentar corretamente a agencia na solicitação do pedido
+    --                            (Adriano - INC0017466).
     -- .............................................................................
     -- Cursores 
         
@@ -3524,6 +3527,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     CURSOR cr_crapass(pr_cdcooper IN crapreq.cdcooper%TYPE
                      ,pr_nrdconta IN crapreq.nrdconta%TYPE) IS
       SELECT ass.cdtipcta
+            ,ass.cdagenci
         FROM crapass ass   
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -3634,7 +3638,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     -- Verifica se existe uma solicitação pendente
     OPEN cr_crapreq(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
-                   ,pr_cdagenci => vr_cdagenci
+                   ,pr_cdagenci => rw_crapass.cdagenci
                    ,pr_cdtipcta => rw_crapass.cdtipcta);
     FETCH cr_crapreq INTO rw_crapreq;
     vr_foundreg := cr_crapreq%FOUND;
@@ -3646,7 +3650,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     
     -- Verifica se existe capa do lote da requisição
     OPEN cr_craptrq(pr_cdcooper => vr_cdcooper
-                   ,pr_cdagelot => vr_cdagenci);
+                   ,pr_cdagelot => rw_crapass.cdagenci);
     FETCH cr_craptrq INTO rw_craptrq;
     vr_foundreg := cr_craptrq%FOUND;
     CLOSE cr_craptrq;
@@ -3666,7 +3670,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             ,cdcooper)
                      VALUES (10000
                             ,1
-                            ,vr_cdagenci
+                            ,rw_crapass.cdagenci
                             ,vr_cdcooper)
                    RETURNING nrseqdig 
                             ,qtinforq
@@ -3704,8 +3708,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                    VALUES (vr_cdcooper
                           ,pr_nrdconta
                           ,pr_nrdconta
-                          ,vr_cdagenci
-                          ,vr_cdagenci
+                          ,rw_crapass.cdagenci
+                          ,rw_crapass.cdagenci
                           ,10000
                           ,rw_crapass.cdtipcta
                           ,rw_crapdat.dtmvtolt
@@ -3730,7 +3734,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
             ,trq.qtinfotl = vr_qtinfotl + 1
             ,trq.qtcomptl = vr_qtcomptl + 1
        WHERE trq.cdcooper = vr_cdcooper
-         AND trq.cdagelot = vr_cdagenci
+         AND trq.cdagelot = rw_crapass.cdagenci
          AND trq.tprequis = 1          
          AND trq.nrdolote = 10000;
     EXCEPTION 

@@ -18,6 +18,8 @@
 				  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
 
 				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+
+                  18/06/2018 - P450 - Inclusão do Motivo do Cancelamento/dsmotcan (Marcel/AMcom)
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -38,7 +40,7 @@
 				<tr>
 					<td>
                         <?php echo getByTagName($seguro->tags,'dsTipo'); ?>
-
+                        <input type="hidden" id="dsmotcan"   name="dsmotcan"   value="<?php echo getByTagName($seguro->tags,'dsmotcan');   ?>" />
                         <input type="hidden" id="tpseguro"   name="tpseguro"   value="<?php echo getByTagName($seguro->tags,'tpSeguro');   ?>" />
                         <input type="hidden" id="idorigem"   name="idorigem"   value="<?php echo getByTagName($seguro->tags,'idOrigem');   ?>" />
                         <input type="hidden" id="idcontrato" name="idcontrato" value="<?php echo getByTagName($seguro->tags,'idContrato'); ?>" />
@@ -75,13 +77,13 @@
                         <input type="hidden" id="dsgraupr_3" name="dsgraupr_3" value="<?php echo getByTagName($seguro->tags,'dsgraupr_3'); ?>" />
                         <input type="hidden" id="dsgraupr_4" name="dsgraupr_4" value="<?php echo getByTagName($seguro->tags,'dsgraupr_4'); ?>" />
                         <input type="hidden" id="dsgraupr_5" name="dsgraupr_5" value="<?php echo getByTagName($seguro->tags,'dsgraupr_5'); ?>" />
-						
+
                         <?php $txpartic1 = getByTagName($seguro->tags,'txpartic_1'); ?>
                         <?php $txpartic2 = getByTagName($seguro->tags,'txpartic_2'); ?>
                         <?php $txpartic3 = getByTagName($seguro->tags,'txpartic_3'); ?>
                         <?php $txpartic4 = getByTagName($seguro->tags,'txpartic_4'); ?>
                         <?php $txpartic5 = getByTagName($seguro->tags,'txpartic_5'); ?>
-						
+
 						<input type="hidden" id="txpartic_1" name="txpartic_1" value="<?php echo $txpartic1; ?>" />						
 						<input type="hidden" id="txpartic_2" name="txpartic_2" value="<?php echo $txpartic2; ?>" />
 						<input type="hidden" id="txpartic_3" name="txpartic_3" value="<?php echo $txpartic3; ?>" />

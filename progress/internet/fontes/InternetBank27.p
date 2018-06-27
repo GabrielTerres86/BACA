@@ -5,7 +5,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 30/05/2016
+   Data    : Junho/2007.                       Ultima atualizacao: 12/04/2018
    
    Dados referentes ao programa:
    
@@ -76,6 +76,10 @@
                             (Odirlei-AMcom)             
                             
                30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+               
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                              de analise de fraude. 
+                              PRJ381 - AntiFraude (Odirlei-AMcom)
 ..............................................................................*/
 
  
@@ -143,6 +147,8 @@ DEF INPUT  PARAM par_versaldo AS INTE                                  NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF INPUT  PARAM par_tpcptdoc AS INTE                                  NO-UNDO. 
 DEF INPUT  PARAM par_cdctrlcs AS CHAR                                  NO-UNDO. 
+DEF  INPUT PARAM par_iptransa AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_iddispos AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_msgofatr AS CHAR                                  NO-UNDO.
@@ -223,7 +229,9 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
       ,INPUT par_versaldo    /* Indicador de ver saldo         */
       ,INPUT INTE(par_flmobile) /* Indicador que origem é Mobile */
       ,INPUT par_tpcptdoc    /* Indicador de tipo de captura */
-      ,INPUT (par_cdctrlcs)    /* --> Numero de controle da consulta no NPC */
+      ,INPUT (par_cdctrlcs)  /* --> Numero de controle da consulta no NPC */
+      ,INPUT par_iptransa    /* --> IP da transacao  IBank/mobile */
+      ,INPUT par_iddispos    /* --> ID Dispositivo mobile         */
       ,OUTPUT ""             /* pr_xml_dsmsgerr */
       ,OUTPUT ""             /* pr_xml_msgofatr */
       ,OUTPUT ""             /* pr_xml_cdempcon */ 

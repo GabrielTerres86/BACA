@@ -3,7 +3,7 @@
 Programa: siscaixa/web/crap015b.w
 Sistema : Caixa On-line                                       
 Sigla   : CRED    
-                                             Ultima atualizacao: 06/10/2017
+                                             Ultima atualizacao: 22/05/2018
    
 Dados referentes ao programa:
 
@@ -495,7 +495,7 @@ PROCEDURE process-web-request :
    *******************************************************************/
   ASSIGN glb_cdcooper = crapcop.cdcooper
          glb_nmrescop = crapcop.nmrescop
-         glb_dtmvtolt = crapdat.dtmvtolt
+         glb_dtmvtolt = crapdat.dtmvtocd
          glb_dtmvtopr = crapdat.dtmvtopr
          glb_dtmvtoan = crapdat.dtmvtoan
          glb_cdagenci = INTE(get-value("user_pac"))

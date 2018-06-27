@@ -1,6 +1,6 @@
 <?php
 
-/* !
+/* ! 
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Daniel Zimmermann
  * DATA CRIAÇÃO : 24/03/2016 
@@ -116,7 +116,6 @@ if ( $cdopcao == 'C') {
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
 	$xml .= "   <flgativo>1</flgativo>";
-	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
     $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
@@ -126,6 +125,7 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
 	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
+	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -152,53 +152,53 @@ if ( $cddopcao == 'C') {
 } else {
 	if ( $cddopcao == 'X') {
 		if($tpproduto !=  4){
-		foreach ($registros as $r) {
-			
-			if ( getByTagName($r->tags, 'contigen') == 'SIM' ) {
-				echo '$("#contigen", "#divAlteracao").val("1");';
-			} else {
-				echo '$("#contigen", "#divAlteracao").val("0");';
-				echo '$("#incomite", "#divAlteracao").desabilitaCampo();';
-				echo '$("#incomite", "#divAlteracao").val("0");';
-			}
-			
-			if ( getByTagName($r->tags, 'incomite') == 'SIM' ) {
-				echo '$("#incomite", "#divAlteracao").val("1");';
-			} else {
-				echo '$("#incomite", "#divAlteracao").val("0");';
-			}
-      
-			if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
-				echo '$("#anlautom", "#divAlteracao").val("1");';
-			} else {
-				echo '$("#anlautom", "#divAlteracao").val("0");';
-				echo '$("#nmregmpf", "#divAlteracao").desabilitaCampo();';
-				echo '$("#nmregmpj", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtsstime", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtmeschq", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtmesest", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtmesemp", "#divAlteracao").desabilitaCampo();';
-				echo '$("#nmregmpf", "#divAlteracao").val("");';
-				echo '$("#nmregmpj", "#divAlteracao").val("");';
-				echo '$("#qtsstime", "#divAlteracao").val("0");';
-				echo '$("#qtmeschq", "#divAlteracao").val("0");';
-				echo '$("#qtmesest", "#divAlteracao").val("0");';
-				echo '$("#qtmesemp", "#divAlteracao").val("0");';
-			}
+			foreach ($registros as $r) {
+				
+				if ( getByTagName($r->tags, 'contigen') == 'SIM' ) {
+					echo '$("#contigen", "#divAlteracao").val("1");';
+				} else {
+					echo '$("#contigen", "#divAlteracao").val("0");';
+					echo '$("#incomite", "#divAlteracao").desabilitaCampo();';
+					echo '$("#incomite", "#divAlteracao").val("0");';
+				}
+				
+				if ( getByTagName($r->tags, 'incomite') == 'SIM' ) {
+					echo '$("#incomite", "#divAlteracao").val("1");';
+				} else {
+					echo '$("#incomite", "#divAlteracao").val("0");';
+				}
+		
+				if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
+					echo '$("#anlautom", "#divAlteracao").val("1");';
+				} else {
+					echo '$("#anlautom", "#divAlteracao").val("0");';
+					echo '$("#nmregmpf", "#divAlteracao").desabilitaCampo();';
+					echo '$("#nmregmpj", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtsstime", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtmeschq", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtmesest", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtmesemp", "#divAlteracao").desabilitaCampo();';
+					echo '$("#nmregmpf", "#divAlteracao").val("");';
+					echo '$("#nmregmpj", "#divAlteracao").val("");';
+					echo '$("#qtsstime", "#divAlteracao").val("0");';
+					echo '$("#qtmeschq", "#divAlteracao").val("0");';
+					echo '$("#qtmesest", "#divAlteracao").val("0");';
+					echo '$("#qtmesemp", "#divAlteracao").val("0");';
+				}
 
-			echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
-			echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
-			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
-			echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
-			echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';
-			echo '$("#qtmesemp", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesemp').'");';
-			
-		}
-		echo '$("#divBotoes").css({ "display": "block" });';
-		echo '$("#divAlteracao").css({ "display": "block" });';
-		echo '$("#contigen", "#divAlteracao").focus();';
-		echo '$("#btContinuar", "#divBotoes").show();';
-		echo 'hideMsgAguardo();';
+				echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
+				echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
+				echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
+				echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
+				echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';
+				echo '$("#qtmesemp", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesemp').'");';
+				
+			}
+			echo '$("#divBotoes").css({ "display": "block" });';
+			echo '$("#divAlteracao").css({ "display": "block" });';
+			echo '$("#contigen", "#divAlteracao").focus();';
+			echo '$("#btContinuar", "#divBotoes").show();';
+			echo 'hideMsgAguardo();';
 		}else if($tpproduto == 4){
 			
 			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","nmregmpj","qtsstime","qtmeschq","qtmesest","qtmesemp");

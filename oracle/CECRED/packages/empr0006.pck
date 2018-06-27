@@ -6732,7 +6732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         Frequencia: Sempre que for chamado
         Objetivo  : Rotina de verificacao de pode imprimir a DECLARAÇÃO DE UTILIZAÇÃO DE RECURSOS PARA ISENÇAO DE IOF
         Observacao: -----
-        Alteracoes:
+        Alteracoes: 14/06/2018 - P410 - Ajustes IOF - Marcos (Envolti)
         ..............................................................................*/
 	DECLARE				
 		--Variaveis
@@ -6741,26 +6741,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 		-- Variável de críticas
 		vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic VARCHAR2(10000);
+		
 		-- Tratamento de erros
 		vr_exc_saida EXCEPTION;
-		CURSOR cr_pode_imprimir(pr_cdcooper IN crapcop.cdcooper%TYPE
-							   ,pr_nrdconta IN crapcop.nrdconta%TYPE
-							   ,pr_nrctrato IN crawepr.nrctremp%TYPE) IS
+		CURSOR cr_pode_imprimir IS
 			SELECT crawepr.nrctremp
 			FROM crawepr
-            INNER JOIN crapass ON crapass.nrdconta = crawepr.nrdconta AND crawepr.cdcooper = crapass.cdcooper
-			INNER JOIN CRAPLCR ON CRAPLCR.CDLCREMP = crawepr.cdlcremp AND crawepr.cdcooper = craplcr.cdcooper
-			INNER JOIN CRAPBPR ON CRAPBPR.nrdconta = crawepr.nrdconta AND CRAPBPR.cdcooper = crawepr.cdcooper AND CRAPBPR.nrctrpro = crawepr.nrctremp
-			WHERE crawepr.cdcooper = pr_cdcooper
+            ,craplcr 
+            ,crapbpr 
+            ,crapass 
+       WHERE crapass.nrdconta = crawepr.nrdconta 
+         AND crapass.cdcooper = crawepr.cdcooper
+         
+         AND CRAPLCR.CDLCREMP = crawepr.cdlcremp 
+         AND craplcr.cdcooper = crawepr.cdcooper
+         
+         AND CRAPBPR.nrdconta = crawepr.nrdconta 
+         AND CRAPBPR.cdcooper = crawepr.cdcooper 
+         AND CRAPBPR.nrctrpro = crawepr.nrctremp
+         
+         -- FIltros
+         AND crawepr.cdcooper = pr_cdcooper
 				AND crawepr.nrdconta = pr_nrdconta
 				AND crawepr.nrctremp = pr_nrctrato
                 AND crapass.inpessoa = 1 --somente PF
-				AND upper(CRAPBPR.dscatbem) IN ('APARTAMENTO', 'CASA');
-                --AND crawepr.insitapr = 1; -- aprovada
+				 AND upper(CRAPBPR.dscatbem) IN ('APARTAMENTO', 'CASA')
+         AND craplcr.cdsubmod = '02'; -- Submodalidade Bacen = 02 Aquisições de Bens outros bens
 		rw_pode_imprimir cr_pode_imprimir%ROWTYPE;
+    
 		BEGIN
 			--Consulta
-			OPEN cr_pode_imprimir(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta, pr_nrctrato => pr_nrctrato);
+			OPEN cr_pode_imprimir;
 			FETCH cr_pode_imprimir INTO rw_pode_imprimir;
 			IF cr_pode_imprimir%FOUND THEN
 				vr_des_reto := 'S';
@@ -6768,6 +6779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
 				vr_des_reto := 'N';
 			END IF;
 			CLOSE cr_pode_imprimir;
+      
 			-- Criar cabeçalho do XML
 			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,

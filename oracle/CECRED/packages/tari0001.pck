@@ -563,6 +563,11 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                               ,pr_dscritic OUT VARCHAR2              --> Texto de erro/critica encontrada
                               );
+
+  PROCEDURE pc_efetiva_tarifa (pr_rowid_craplat in ROWID      --Rowid da tarifa
+                              ,pr_dtmvtolt      DATE          --Data Lancamento
+                              ,pr_cdcritic      OUT INTEGER   --Codigo Critica
+                              ,pr_dscritic      OUT VARCHAR2);--Descricao Critica                              
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -1355,6 +1360,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         pr_dscritic:= 'Erro na rotina TARI0001.pc_carrega_dados_tarifa_cobr. '||sqlerrm;
     END;
   END pc_carrega_dados_tarifa_cobr;
+
+---------elt
+ /* Procedure para efetivar tarifa na craplat */
+  PROCEDURE pc_efetiva_tarifa (pr_rowid_craplat in ROWID         --Rowid da tarifa
+                              ,pr_dtmvtolt      DATE             --Data Lancamento
+                              ,pr_cdcritic      OUT INTEGER      --Codigo Critica
+                              ,pr_dscritic      OUT VARCHAR2) IS --Descricao Critica
+   BEGIN
+
+    -- ........................................................................
+    --
+    --  Programa : pc_efetiva_tarifa          
+    --  Sistema  : Cred
+    --  Sigla    : TARI0001
+    --  Autor    : Elton Giusti (AMcom)
+    --  Data     : 20/06/2018.                      Ultima atualizacao: -
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : efetivar tarifa na craplat
+    --
+    --.............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+  
+     
+  BEGIN 
+    
+       --Atualizar tabela lancamento
+      BEGIN
+        UPDATE craplat SET craplat.dtefetiv = pr_dtmvtolt
+                          ,craplat.insitlat = 2  /** Efetivado **/
+        WHERE craplat.ROWID = pr_rowid_craplat;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao atualizar tabela craplat. '||sqlerrm;
+          --Levantar Excecao
+          RAISE vr_exc_saida;
+      END;
+         
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+  
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em TARI0001.pc_efetiva_tarifa: ' || SQLERRM;
+
+    END;
+  END pc_efetiva_tarifa;
+                                         
+
+-----elt
+
 
   /* Procedure para buscar dados da tarifa emprestimo */
   PROCEDURE pc_car_dados_tar_empr_web (pr_cdcooper  IN  INTEGER               --Codigo Cooperativa
@@ -3463,6 +3533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_exc_erro EXCEPTION;
       --Rowid lancamento tarifa
       vr_rowid_craplat ROWID;
+      
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
@@ -4761,9 +4832,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        vr_vlpendente craplat.vltarifa%TYPE;
 	   vr_intipoope INTEGER;
 
+			--Rowid lancamento tarifa efetivada
+      vr_rowid_craplat_new ROWID;
               
        --Variaveis de Excecao
        vr_exc_erro EXCEPTION;
+
+      vr_tab_erro_tar GENE0001.typ_tab_erro;
 
     BEGIN
       
@@ -5048,7 +5123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           -- Debito Parcial, para quando chamado a partir do programa do debitador unico-----------
           ELSIF (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre) > 0 
                AND pr_nmdatela in ('DEBITADOR') THEN			
-		  
+            
             vr_vlpendente := rw_craplat.vltarifa - (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre);
 	      	   --- Tarifa assume saldo disponível
      		    rw_craplat.vltarifa  := (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre);
@@ -5127,6 +5202,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                  WHERE craplat.rowid    = rw_craplat.rowid;
             
 			     vr_intipoope := 2;	-- lançamento parcial da tarifa				 
+
+           
+                  -- gera uma nova tarifa (pendente) com o valor parcial
+                  -- isso é necessário para o caso de estorno da tarifa, pois no estorno exige que 
+                  -- exista esse registro.
+                  TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => rw_craptar.cdcooper   --Codigo Cooperativa
+                                                   ,pr_nrdconta => rw_craplat.nrdconta  --Numero da Conta
+                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt    --Data Lancamento
+                                                   ,pr_cdhistor => rw_craplat.cdhistor   --Codigo Historico
+                                                   ,pr_vllanaut => rw_craplat.vltarifa   --Valor lancamento automatico
+                                                   ,pr_cdoperad => rw_craplat.cdoperad   --Codigo Operador
+                                                   ,pr_cdagenci => rw_craplat.cdagenci   --Codigo Agencia
+                                                   ,pr_cdbccxlt => rw_craplat.cdbccxlt   --Codigo banco caixa
+                                                   ,pr_nrdolote => rw_craplat.nrdolote   --Numero do lote
+                                                   ,pr_tpdolote => rw_craplat.tpdolote   --Tipo do lote
+                                                   ,pr_nrdocmto => rw_craplat.nrdocmto   --Numero do documento
+                                                   ,pr_nrdctabb => rw_craplat.nrdctabb   --Numero da conta
+                                                   ,pr_nrdctitg => rw_craplat.nrdctitg    --Numero da conta integracao
+                                                   ,pr_cdpesqbb => rw_craplat.cdpesqbb  --Codigo pesquisa
+                                                   ,pr_cdbanchq => rw_craplat.cdbanchq  --Codigo Banco Cheque
+                                                   ,pr_cdagechq => rw_craplat.cdagechq  --Codigo Agencia Cheque
+                                                   ,pr_nrctachq => rw_craplat.nrctachq   --Numero Conta Cheque
+                                                   ,pr_flgaviso => false--rw_craplat.flgaviso  --Flag aviso
+                                                   ,pr_tpdaviso => rw_craplat.tpdaviso   --Tipo aviso
+                                                   ,pr_cdfvlcop => rw_craplat.cdfvlcop   --Codigo cooperativa
+                                                   ,pr_inproces => rw_crapdat.inproces --Indicador do Processo                 --Indicador processo, já controlado pelo Debitador
+                                                   ,pr_rowid_craplat => vr_rowid_craplat_new --Rowid do lancamento tarifa
+                                                   ,pr_tab_erro => vr_tab_erro_tar   --Tabela retorno erro
+                                                   ,pr_cdcritic => vr_cdcritic   --Codigo Critica
+                                                   ,pr_dscritic => vr_dscritic); --Descricao Critica
+           	 
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;
+                -- efetiva a tarifa gerada acima
+                TARI0001.pc_efetiva_tarifa (pr_rowid_craplat => vr_rowid_craplat_new     --Rowid da tarifa
+                                           ,pr_dtmvtolt      => rw_crapdat.dtmvtolt       --Data Lancamento
+                                           ,pr_cdcritic      => vr_cdcritic   --Codigo Critica
+                                           ,pr_dscritic      => vr_dscritic); --Descricao Critica
+
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;
+
+
               EXCEPTION
                 WHEN OTHERS THEN        
                   vr_dscritic := 'Problemas na atualizacao da tarifa pendente - Parcial.';
@@ -5596,7 +5720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         END;
 
         -- Ativar faixas de valores de tarifas que esta iniciando a vigencia
-        BEGIN
+  BEGIN
           FORALL idx IN 1..vr_tab_crapfco.COUNT SAVE EXCEPTIONS
             UPDATE crapfco
             SET crapfco.flgvigen = 1
@@ -5615,7 +5739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       WHEN OTHERS THEN
         vr_dscritic := 'Erro não tratado na rotina pc_atualiza_tarifa_vigente: ' || sqlerrm;
         RAISE vr_exc_saida;
-
+        
     END;
     -- fim das procedures 
   BEGIN

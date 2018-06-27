@@ -4037,6 +4037,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
                                
+                  11/06/2018 - Ajuste no insert da tabela crapsab, limitando o numero de caracteres
+                               para 40, numero maximo permitido por esta tabela.
+							   Chamado PRB0040065 - Gabriel (Mouts).
+
   ..............................................................................*/
 
 		DECLARE
@@ -4328,7 +4332,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_qtdiaiof := pr_dtvencto - pr_dtmvtolt;
                               
       --Calcula o IOF
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                       ,pr_cdcooper => pr_cdcooper                            --> Código da cooperativa referente ao contrato de empréstimos
                                         ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
                                         ,pr_nrctremp => pr_nrctremp                            --> Número do contrato de empréstimo
                                         ,pr_vlemprst => pr_vlparepr                            --> Valor do empréstimo para efeito de cálculo
@@ -4736,7 +4741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 														 GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
 														 pr_dtmvtolt,
 														 vr_nrendere,
-                             vr_complend,
+                                 trim(substr(trim(vr_complend),1,40)),
                              1);
 
 			ELSE
@@ -6236,7 +6241,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_qtdiaiof := vr_tab_dados_epr(vr_tab_dados_epr.first).dtdpagto - pr_dtmvtolt;
                               
       --Calcula o IOF
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                       ,pr_cdcooper => pr_cdcooper                            --> Código da cooperativa referente ao contrato de empréstimos
                                         ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
                                         ,pr_nrctremp => pr_nrctremp                            --> Número do contrato de empréstimo
                                         ,pr_vlemprst => pr_vlsdeved                            --> Valor do empréstimo para efeito de cálculo

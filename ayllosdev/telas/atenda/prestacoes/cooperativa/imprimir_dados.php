@@ -22,6 +22,9 @@
 
   12/01/2016 - Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.
 	           (Carlos Rafael Tanholi - Pré-Aprovado fase II).
+             
+  08/06/2018 - P410 - Impressão declaração isento IOF imóvel (Marcos-Envolti)           
+             
  *********************************************************************** */
 
 session_cache_limiter("private");
@@ -56,6 +59,7 @@ $nrdrecid = $_POST["nrdrecid"];
 $nrdconta = $_POST["nrdconta"];
 $nrctremp = $_POST["nrctremp"];
 $idimpres = $_POST["idimpres"];
+$nrcpfcgc = $_POST['nrcpfcgc'];
 
 
 // Verifica se o número da conta é um inteiro válido
@@ -142,6 +146,37 @@ if ($idimpres == '2' || $idimpres == '8') {
     $xml .= '</Root>';
 }
 
+// verifica se opcao eh declaracao financeira isenta iof imóvel
+if ($idimpres == '57'){
+  
+  // Monta o xml de requisição
+  $xml = '';
+  $xml .= '<Root>';
+  $xml .= '	<Dados>';
+  $xml .= '		<cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+  $xml .= '		<nrdconta>' . $nrdconta . '</nrdconta>';
+  $xml .= '		<nrcpfcgc>' . $nrcpfcgc . '</nrcpfcgc>';
+  $xml .= '		<nrctrato>' . $nrctremp . '</nrctrato>';
+  $xml .= '	</Dados>';
+  $xml .= '</Root>';
+  
+  // Executa script para envio do XML
+  $xmlResult = mensageria($xml, "EMPR0003", "IMP_DECUTRECISIOF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+  // Cria objeto para classe de tratamento de XML
+  $xmlObj = simplexml_load_string($xmlResult);
+
+  // Se ocorrer um erro, mostra crítica
+  if ($xmlObj->Erro->Registro->dscritic != '') {
+    $msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
+    ?><script language="javascript">alert('<?php echo $msgErro; ?>');</script><?php
+    exit();
+  }
+
+  // Obtém nome do arquivo PDF 
+  $nmarqpdf = $xmlObj;
+}
+else // verifica se opcao eh contrato
 if ($idimpres == '2' || $idimpres == '8') {
 	
     // Executa script para envio do XML

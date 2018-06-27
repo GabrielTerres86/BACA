@@ -710,6 +710,10 @@
                  10/04/2018 - Adicionada opcao 216 para verificar permissao para adesao do produto
                               pelo tipo de conta. PRJ366 (Lombardi) 
 
+                 12/04/2018 - Inclusao de novos campo para realizaçao 
+                              de analise de fraude. 
+                              PRJ381 - AntiFraude (Odirlei-AMcom)
+
 				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
                               ObterDetalheTituloCobranca (PRJ285 - Novo IB)
 
@@ -791,6 +795,7 @@ DEF VAR aux_dtinicio AS CHAR                                           NO-UNDO.
 DEF VAR aux_lsdatagd AS CHAR                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_nripuser AS CHAR                                           NO-UNDO.
+DEF VAR aux_iddispmobile AS CHAR                                       NO-UNDO.
 DEF VAR aux_dsinserr AS CHAR                                           NO-UNDO.
 DEF VAR aux_cddbloco AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarquiv AS CHAR                                           NO-UNDO.
@@ -1594,6 +1599,11 @@ PROCEDURE process-web-request :
         ASSIGN aux_flmobile = NO.
     ELSE
         ASSIGN aux_flmobile = LOGICAL(GET-VALUE("flmobile")).
+
+    IF GET-VALUE("DISPOSITIVOMOBILEID") <> "" THEN    
+    DO:
+      ASSIGN aux_iddispmobile = GET-VALUE("DISPOSITIVOMOBILEID").
+    END.
 
 	/* Obtém o canal a partir do flmobile */
 	ASSIGN aux_cdcanal = INTE(STRING(aux_flmobile,"10/3")).
@@ -2410,6 +2420,7 @@ PROCEDURE process-web-request :
             IF  aux_operacao = 217 THEN /* Obter Detalhe Titulo Cobranca (SOA) */
                 RUN proc_operacao217.
 
+            
     END.
 /*....................................................................*/
     
@@ -3433,6 +3444,7 @@ PROCEDURE proc_operacao22:
                                                   INPUT aux_dshistor,
                                                   INPUT aux_flmobile,
 												  INPUT aux_nripuser,
+                                                  INPUT aux_iddispmobile,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
            
@@ -3690,6 +3702,8 @@ PROCEDURE proc_operacao27:
                                                   INPUT aux_flmobile,
                                                   INPUT aux_tpcptdoc,
                                                   INPUT aux_cdctrlcs,
+                                                  INPUT aux_nripuser,
+                                                  INPUT aux_iddispmobile,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT aux_msgofatr,
                                                  OUTPUT xml_cdempcon,
@@ -5048,6 +5062,8 @@ PROCEDURE proc_operacao75:
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_nrcpfope,
                                                   INPUT aux_nripuser,
+                                                  INPUT aux_flmobile,
+                                                  INPUT aux_iddispmobile,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
@@ -7530,6 +7546,8 @@ PROCEDURE proc_operacao153:
                                                    INPUT aux_dshistor,
                                                    INPUT aux_indtpaga,
                                                    INPUT aux_vlrlote,
+                                                   INPUT aux_nripuser,
+                                                   INPUT aux_iddispmobile,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
@@ -8672,6 +8690,8 @@ PROCEDURE proc_operacao188:
                                                    INPUT aux_vlapagar,
                                                    INPUT aux_versaldo,
                                                    INPUT aux_tpleitor,
+                                                   INPUT aux_nripuser,
+                                                   INPUT aux_iddispmobile,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao). 
                                                   
@@ -9091,6 +9111,8 @@ PROCEDURE proc_operacao199:
                                                    INPUT aux_versaldo,                    
                                                    INPUT aux_tpleitor,                    
                                                    INPUT aux_nrrefere_199,                    
+                                                   INPUT aux_nripuser,
+                                                   INPUT aux_iddispmobile,
                                                   OUTPUT aux_dsmsgerr,                                                   
                                                   OUTPUT TABLE xml_operacao).
                                                   

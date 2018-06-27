@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Agosto/2016.                       Ultima atualizacao: 14/09/2017
+   Data    : Agosto/2016.                       Ultima atualizacao: 12/04/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -12,6 +12,10 @@
    Objetivo  : Operar pagamento DARF/DAS.
    
    Alteracoes: 14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
+   
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                            de analise de fraude. 
+                            PRJ381 - AntiFraude (Odirlei-AMcom)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -64,6 +68,8 @@ DEF INPUT  PARAM  par_idagenda  AS INTEGER                                NO-UND
 DEF INPUT  PARAM  par_vlapagar  AS DECIMAL                                NO-UNDO.
 DEF INPUT  PARAM  par_versaldo  AS INTEGER                                NO-UNDO.
 DEF INPUT  PARAM  par_tpleitor  AS INTEGER                                NO-UNDO.
+DEF INPUT  PARAM  par_iptransa  AS CHAR                                   NO-UNDO.
+DEF INPUT  PARAM  par_iddispos  AS CHAR                                   NO-UNDO.
 
 DEF OUTPUT PARAM  xml_dsmsgerr  AS CHAR                                   NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -133,6 +139,8 @@ RUN STORED-PROCEDURE pc_InternetBank188
                                        ,INPUT par_vlapagar
                                        ,INPUT par_versaldo
                                        ,INPUT par_tpleitor
+                                       ,INPUT par_iptransa    /* --> IP da transacao  IBank/mobile */
+                                       ,INPUT par_iddispos    /* --> ID Dispositivo mobile         */
                                       ,OUTPUT ""        /* Retorno XML de critica */
                                       ,OUTPUT ""        /* Retorno XML da operação 188 */
                                       ,OUTPUT "").      /* Retorno de critica (OK ou NOK) */

@@ -57,6 +57,15 @@ CREATE OR REPLACE PACKAGE CECRED.NOTI0001 IS
                                ,pr_cdcooper    tbgen_notificacao.cdcooper%TYPE
                                ,pr_nrdconta    tbgen_notificacao.nrdconta%TYPE
                                ,pr_idseqttl    tbgen_notificacao.idseqttl%TYPE DEFAULT NULL);
+
+  -- Cria uma notificação única progress(Recebe os dados da conta quebrados, um por parâmetro, com variáveis)
+  PROCEDURE pc_cria_notif_prgs(pr_cdorigem_mensagem tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE
+                               ,pr_cdmotivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE
+                               ,pr_dhenvio     DATE DEFAULT SYSDATE
+                               ,pr_cdcooper    tbgen_notificacao.cdcooper%TYPE
+                               ,pr_nrdconta    tbgen_notificacao.nrdconta%TYPE
+                               ,pr_idseqttl    tbgen_notificacao.idseqttl%TYPE DEFAULT NULL
+                               ,pr_variaveis   VARCHAR);
                                
   -- Processa e envia as notiicações automáticas
   PROCEDURE pc_job_notificacoes_autom(pr_dhexecucao IN DATE);
@@ -481,6 +490,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
                                    ,pr_compleme => 'pr_cdorigem_mensagem = '||pr_cdorigem_mensagem || ', pr_cdmotivo_mensagem = '||pr_cdmotivo_mensagem);
   END pc_cria_notificacao;
+
+  -- Cria uma notificação única progress (Recebe os dados da conta quebrados, um por parâmetro, com variáveis)
+  PROCEDURE pc_cria_notif_prgs(pr_cdorigem_mensagem tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE
+                               ,pr_cdmotivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE
+                               ,pr_dhenvio     DATE DEFAULT SYSDATE
+                               ,pr_cdcooper    tbgen_notificacao.cdcooper%TYPE
+                               ,pr_nrdconta    tbgen_notificacao.nrdconta%TYPE
+                               ,pr_idseqttl    tbgen_notificacao.idseqttl%TYPE DEFAULT NULL
+                               ,pr_variaveis   VARCHAR) IS
+                               
+    CURSOR cr_destinatarios(pr_dsvariaveis IN VARCHAR2) IS
+    SELECT usu.cdcooper
+          ,usu.nrdconta
+          ,usu.idseqttl
+          ,pr_dsvariaveis dsvariaveis
+      FROM vw_usuarios_internet usu
+     WHERE usu.cdcooper = pr_cdcooper
+       AND usu.nrdconta = pr_nrdconta;
+  
+    vr_destinatarios typ_destinatarios_notif;
+    vr_dsvariaveis tbgen_notificacao.dsvariaveis%TYPE;
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif typ_variaveis_notif;
+    
+    -- Rotina para popular conteúdo das mensagens 
+    PROCEDURE prc_buscar_valor(pr_valores_dinamicos IN VARCHAR2 DEFAULT NULL) IS -- Máscara #Cooperativa=1;#Convenio=123
+     ---------------------------------------------------------------------------------------------------------------
+     --
+     --  Programa : prc_buscar_valor
+     --  Autor    : Everton
+     --  Data     : maio/2018.                   Ultima atualizacao: --/--/----
+     --
+     -- Objetivo  : Popular campo de variavéis dinâmicas
+     ---------------------------------------------------------------------------------------------------------------
+  
+ 
+     /*Quebra os valores da string recebida por parâmetro*/
+      CURSOR cr_parametro IS
+      SELECT regexp_substr(parametro, '[^=]+', 1, 1) parametro
+            ,regexp_substr(parametro, '[^=]+', 1, 2) valor
+        FROM (SELECT regexp_substr(pr_valores_dinamicos, '[^;]+', 1, ROWNUM) parametro
+                FROM dual
+              CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_valores_dinamicos ,'[^;]+','')) + 1);
+  
+    BEGIN
+  
+      -- Sobrescreve os parâmetros
+      FOR rw_parametro IN cr_parametro LOOP
+        --
+        vr_variaveis_notif(rw_parametro.parametro) := TRIM(rw_parametro.valor);
+        --                       
+      END LOOP;
+  
+    END prc_buscar_valor;     
+    --
+  BEGIN
+    
+    prc_buscar_valor(pr_variaveis);
+  
+    vr_dsvariaveis := fn_gera_str_variaveis(vr_variaveis_notif);
+   
+    IF (pr_idseqttl IS NULL) or (pr_idseqttl = 0) THEN -- Se não possuir titular, cria um registro para cada usuário da conta
+      
+      OPEN cr_destinatarios(vr_dsvariaveis);
+     FETCH cr_destinatarios BULK COLLECT
+      INTO vr_destinatarios;
+     CLOSE cr_destinatarios;
+                                 
+    ELSE -- Se recebeu titular por parâmetro, cria apenas um registro fixo
+      
+      -- Cria um objeto de destinatário a partir dos parâmetros
+      vr_destinatarios(1).cdcooper := pr_cdcooper;
+      vr_destinatarios(1).nrdconta := pr_nrdconta;
+      vr_destinatarios(1).idseqttl := pr_idseqttl;
+      vr_destinatarios(1).dsvariaveis := vr_dsvariaveis;
+       
+    END IF;
+    
+    -- Cria as notificações
+    noti0001.pc_cria_notificacoes(pr_cdorigem_mensagem => pr_cdorigem_mensagem
+                                 ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
+                                 ,pr_dhenvio           => SYSDATE
+                                 ,pr_destinatarios     => vr_destinatarios);
+  
+  END;
 
   PROCEDURE pc_job_notificacoes_autom(pr_dhexecucao IN DATE) IS
   

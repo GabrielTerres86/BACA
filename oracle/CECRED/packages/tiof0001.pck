@@ -59,9 +59,10 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                                     ,pr_vltaxa_iof_principal OUT VARCHAR2              --> Valor da Taxa do IOF Principal
                                     ,pr_flgimune             OUT PLS_INTEGER           --> Possui imunidade tributária (1 - Sim / 0 - Não)
                                     ,pr_dscritic             OUT crapcri.dscritic%TYPE); --> Descricao da Critica                              
-                                    
-                                    
-  PROCEDURE pc_calcula_valor_iof_epr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
+                        
+						                                                                 
+  PROCEDURE pc_calcula_valor_iof_epr(pr_tpoperac IN  PLS_INTEGER --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso, 3-> Todos)
+                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta referente ao empréstimo
                                     ,pr_nrctremp IN NUMBER DEFAULT NULL   --> Número do contrato de empréstimo
                                     ,pr_vlemprst IN NUMBER                --> Valor do empréstimo para efeito de cálculo
@@ -237,8 +238,8 @@ CREATE OR REPLACE PACKAGE CECRED.TIOF0001 IS
                           ,pr_nrdolote_lcm   IN tbgen_iof_lancamento.nrdolote_lcm%TYPE DEFAULT NULL --> Chave: Lote do Lancamento
                           ,pr_nrseqdig_lcm   IN tbgen_iof_lancamento.nrseqdig_lcm%TYPE DEFAULT NULL --> Chave: Sequencia do Lancamento
                           ,pr_cdcritic       OUT NUMBER                                             --> Código da Crítica
-                          ,pr_dscritic       OUT VARCHAR2);
-
+                          ,pr_dscritic       OUT VARCHAR2);                          
+  
   --Rotina chamada no processo de desfazer a efetivacao de uma proposta
   PROCEDURE pc_exclui_iof(pr_cdcooper IN  crapepr.cdcooper%TYPE    --> Cooperativa
                          ,pr_nrdconta IN  crapepr.nrdconta%TYPE    --> Numero da conta
@@ -339,7 +340,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       END IF;
          
       ----------------------------------------------------------------------------------------------------------------------
-      -- Tipo de taxa de IOF (1-Taxa para Simples Nacional/ 2-Taxa IOF Principal PF/ 3-Taxa IOF Principal PJ/ 
+      -- Tipo de taxa de IOF --> 1-Taxa para Simples Nacional
+      --                         2-Taxa IOF Principal PF    
+      --                         3-Taxa IOF Principal PJ
       --                      4-Taxa IOF Adicional)
       ----------------------------------------------------------------------------------------------------------------------
       -- Valor Taxa Adicional
@@ -379,11 +382,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
              pr_vliofcpl := 0;
           else
           IF NVL(pr_vltaxa_iof_atraso,0) > 0 THEN
-             pr_vliofcpl := pr_vloperacao * NVL(pr_vltaxa_iof_atraso,0) * vr_qtdiaiof;
+          pr_vliofcpl := pr_vloperacao * NVL(pr_vltaxa_iof_atraso,0) * vr_qtdiaiof;
           ELSE
              pr_vliofcpl := pr_vloperacao * NVL(vr_vltaxa_iof_principal,0) * vr_qtdiaiof;
-          END IF;
         END IF;  
+      END IF;
         END IF;  
       END IF;
       
@@ -417,6 +420,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       
       -- Taxa do IOF Principal
       pr_vltaxa_iof_principal := NVL(vr_vltaxa_iof_principal,0);
+      
+      -- Devolver os valores já arredondando em duas casas decimais
+      pr_vliofpri := round(pr_vliofpri,2);
+      pr_vliofadi := round(pr_vliofadi,2); 
+      pr_vliofcpl := round(pr_vliofcpl,2);
+      
 
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -489,8 +498,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       pr_dscritic := 'Erro ao calcular IOF. Rotina TIOF0001.pc_calcula_valor_iof_prg. '||sqlerrm;
     END;
   END pc_calcula_valor_iof_prg;  
-    
-  PROCEDURE pc_calcula_valor_iof_epr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
+  
+  PROCEDURE pc_calcula_valor_iof_epr(pr_tpoperac IN PLS_INTEGER --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso, 3-> Todos)
+                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa referente ao contrato de empréstimos
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da conta referente ao empréstimo
                                     ,pr_nrctremp IN NUMBER DEFAULT NULL   --> Número do contrato de empréstimo
                                     ,pr_vlemprst IN NUMBER                --> Valor do empréstimo para efeito de cálculo
@@ -589,30 +599,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
          vr_vltotope := pr_vltotope;
       END IF;
       
-      /*-- Para pagamento em atraso
-      IF vr_qtdiaiof > 0 THEN 
+      -- Para pagamento em atraso
+      IF pr_tpoperac = 2 AND vr_qtdiaiof > 0 THEN 
         -- Calcular data do vencimento (Diminuimos data pagamento - dias em atraso pra chegar no dia do vencimento)
         vr_dtvencto := pr_dtmvtolt - vr_qtdiaiof;
-        -- Regra 01 - Parcelas com vencimento acima de 365 dias da contratação não cobram IOF
-        IF (vr_dtvencto - rw_crapepr.dtmvtolt ) >= 365 THEN 
-          vr_qtdiaiof := 0;  
-        -- Regra 02 - Parcela vencida há mais de 365 dias
-        ELSIF vr_qtdiaiof >= 365 THEN
+        -- Regra 01 - Pagamentos superiores a 365 dias da contratação
+        IF (pr_dtmvtolt - rw_crapepr.dtmvtolt ) >= 365 THEN 
           -- Descontamos os dios de IOF já cobrados na liberação
           vr_qtdiaiof := 365 - (vr_dtvencto - rw_crapepr.dtmvtolt);
-        -- Regra 03 - Quando soma dias em atraso + dias cobrado IOF >=365
-        ELSIF (vr_dtvencto - rw_crapepr.dtmvtolt) + (pr_dtmvtolt - vr_dtvencto) >= 365 THEN
-          -- Usaremos a diferença do pagamento - vencimento
+        ELSE -- Regra 02 - PAgamentos entre 365 dias da contratação
+          -- Diferença entre a data do pagamento e o vencimento
           vr_qtdiaiof := pr_dtmvtolt - vr_dtvencto;
-        ELSE
-          -- Cobraremos a quantidade de dias em atraso
-          vr_qtdiaiof := vr_qtdiaiof;
         END IF;
-      END IF;*/
+        -- Garantir que a quantidade de dias não fique negativa
+        vr_qtdiaiof := greatest(vr_qtdiaiof,0);
+      END IF;
       
       -- Procedure para calcular o valor do IOF
       pc_calcula_valor_iof(pr_tpproduto            => 1 --> 1 - Emprestimo
-                          ,pr_tpoperacao           => 3 --> 3 Todos: IOF principal, adicional e complementare
+                          ,pr_tpoperacao           => pr_tpoperac
                           ,pr_cdcooper             => pr_cdcooper
                           ,pr_nrdconta             => pr_nrdconta
                           ,pr_inpessoa             => rw_pessoa.inpessoa
@@ -655,7 +660,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         RAISE vr_exc_erro;
         END IF;
          
-         
       EXCEPTION
         WHEN vr_exc_erro THEN
           pr_dscritic := vr_dscritic;
@@ -689,12 +693,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
 		 Objetivo  :  Verificar insenção do IOF e devolver ID para aplicação nos valores 
                  
                  Regras:
-                    1 - Aquisição de motos/motonetas/motocicletas
+                   1 - Aquisição de motos/motonetas/motocicletas por PF E SUbmodalidade Bacen = 01 Aquisições de Bens Veículos Automotores.
                          valor do IOF principal assumirá zero
                          valor do IOF adicional deve ser calculado 
                          valor do IOF complementar de atraso assumirá zero
                          
-                    2 - Habitação (casa ou apartamento) e linha de crédito for hipoteca
+                   2 - Habitação (casa ou apartamento) por PF e Submodalidade Bacen = 02 Aquisições de Bens outros bens
                          valor do IOF principal assumirá zero
                          valor do IOF adicional assumirá zero
                          valor do IOF complementar de atraso assumirá zero
@@ -704,7 +708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                          valor do IOF adicional assumirá zero
                          valor do IOF complementar de atraso assumirá zero
                          
-                    3.1 - Caso a linha de crédito for 800, 850 e 900
+                   3.1 - Caso a linha de crédito for 800, 850 e 900 ou Cessão de Crédito
                          valor do IOF principal assumirá zero
                          valor do IOF adicional assumirá zero
                          valor do IOF complementar de atraso deverá ser calculado
@@ -712,19 +716,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                    4 - Portabilidade não cobrará IOF
                         valor do IOF principal assumirá zero
                         valor do IOF adicional assumirá zero
+                        valor do IOF complementar de atraso deverá ser calculado
 			
        Alteracoes:  
-				 .............................................................................*/
+			.............................................................................*/
          
-  DECLARE
-       -- Cursor da linha de crédito do empréstimo
-       CURSOR cr_craplcr(pr_cdcooper IN crapcop.cdcooper%TYPE
-                        ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
-         SELECT a.tpctrato, a.flgtaiof, a.cdlcremp
-         FROM craplcr a
-         WHERE a.cdcooper = pr_cdcooper AND a.cdlcremp = pr_cdlcremp;
-       rw_craplcr cr_craplcr%ROWTYPE;
-       
+    DECLARE
       -- Checagem do tipo da pessoa   
        CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -733,44 +730,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
          WHERE crapass.cdcooper = pr_cdcooper
                AND crapass.nrdconta = pr_nrdconta;
          rw_crapass cr_crapass%ROWTYPE;
-       
-  BEGIN
+         
+      -- Cursor da linha de crédito do empréstimo
+      CURSOR cr_craplcr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+        SELECT lcr.tpctrato
+              ,lcr.flgtaiof
+              ,lcr.cdsubmod
+          FROM craplcr lcr
+         WHERE lcr.cdcooper = pr_cdcooper 
+           AND lcr.cdlcremp = pr_cdlcremp;
+      rw_craplcr cr_craplcr%ROWTYPE;
+      
+    BEGIN
       -- Default é cobrar
       pr_idisepri := 1;  
       pr_idiseadi := 1;
       pr_idisecpl := 1;
-      
+         
       -- Retornar tipo da pessoa
          OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
          FETCH cr_crapass INTO rw_crapass;
          CLOSE cr_crapass;
       
-      -- 1 - Aquisição de motos/motonetas/motocicletas
-      IF  UPPER(pr_dscatbem) like '%MOTO%'
-      and rw_crapass.inpessoa = 1 THEN
-         pr_idisepri := 0;
-      END IF;
-
       -- Checar linha de crédito
       OPEN cr_craplcr(pr_cdcooper => pr_cdcooper, pr_cdlcremp => pr_cdlcremp);
       FETCH cr_craplcr INTO rw_craplcr;
       CLOSE cr_craplcr;
          
-      -- 2 - Habitação (casa ou apartamento) e linha de crédito for hipoteca
-      IF UPPER(pr_dscatbem) like '%CASA%' OR UPPER(pr_dscatbem) like '%APARTAMENTO%' THEN
-        IF rw_craplcr.tpctrato = 3 AND rw_crapass.inpessoa = 1 THEN
+      -- Somente para PF
+      IF rw_crapass.inpessoa = 1 THEN
+        -- 1 - Aquisição de motos/motonetas/motocicletas com SubModalidade Bacen = 01 Aquisições de Bens Veículos Automotores.
+        IF rw_craplcr.cdsubmod = '01' AND UPPER(pr_dscatbem) like '%MOTO%' THEN
+          pr_idisepri := 0;
+          pr_idisecpl := 0;
+        -- 2 - Habitação (casa ou apartamento) e submodalidade Bacen = 02 Aquisições de Bens outros bens
+        ELSIF rw_craplcr.cdsubmod = '02' AND (UPPER(pr_dscatbem) like '%CASA%' OR UPPER(pr_dscatbem) like '%APARTAMENTO%') THEN
           pr_idisepri := 0;
           pr_idiseadi := 0;
           pr_idisecpl := 0;
-         END IF;
       END IF;
-      
+      END IF;
+         
       -- 3 - Linha de crédito isenta de IOF (flgtaiof = 0 ==> isentar cobrança de IOF)
       IF rw_craplcr.flgtaiof = 0 THEN
         pr_idisepri := 0;
         pr_idiseadi := 0;
-         -- 3.1 - Caso a linha de crédito for 800, 850 e 900 não isentar cobrança de IOF por atraso
-         IF rw_craplcr.cdlcremp NOT IN (800,850,900,6901) THEN
+        -- 3.1 - Não isentar cobrança de IOF por atraso
+        --     - Caso a linha de crédito for 800, 850 e 900 
+        --     - ou finalidade de cessão de crédito 
+        IF pr_cdlcremp NOT IN (800,850,900) AND empr0001.fn_tipo_finalidade(pr_cdcooper,pr_cdfinemp) <> 1 THEN
            pr_idisecpl := 0;
          END IF;
       END IF;
@@ -977,11 +986,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
           pr_vltxiofpri := 0;
         END IF;
       END IF;
-      
+         
       if pr_cdlcremp in (800, 850, 900, 6901) then
          pr_vltxiofcpl := pr_vltxiofpri;  
       end if;
-      
+           
       vr_dscatbem := '';
       FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta, pr_nrctremp => pr_nrctremp) LOOP
           vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem || '|';
@@ -1001,12 +1010,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-
+         
       -- Se há IOF
       IF (pr_vltxiofpri + pr_vltxiofadc + pr_vltxiofcpl) <> 0 THEN
         -- Checar imunidade tributária
         imut0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
-                                           ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrdconta => pr_nrdconta
                                            ,pr_dtmvtolt => vr_dtmvtolt
                                            ,pr_flgrvvlr => FALSE
                                            ,pr_cdinsenc => 0
@@ -1026,9 +1035,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
             vr_dscritic := 'Não foi possivel verificar a imunidade tributaria';
           END IF;
           RAISE vr_exc_erro;
-        END IF;                            
+      END IF;
       end if;
-                                             
+      
       -- Caso imune
       if vr_flgimuneB then
          pr_vltxiofpri := 0;
@@ -1112,7 +1121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
   PROCEDURE pc_carrega_taxas_iof(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE      --> Data de movimento
                                 ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
     BEGIN
-      /* ..........................................................................
+    /* ..........................................................................
 		   Programa : pc_carrega_taxas_iof
 			 Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
@@ -1121,7 +1130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
 			 Dados referentes ao programa:
 			 Frequencia: Sempre que for solicitado
 			 Objetivo  :  Carregar as taxas de IOF na tabela temporária
-			
+       
        Alteracoes:  
 				 .............................................................................*/
     DECLARE
@@ -1765,8 +1774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     vr_dsreturn VARCHAR2(100);
     vr_tab_erro gene0001.typ_tab_erro;
 
-
-  BEGIN
+         
+    BEGIN
     -- Inicializar parâmetros de saída
     pr_vlpreclc     := pr_vlpreemp;
     pr_vliofpri     := 0;
@@ -1988,7 +1997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
           vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
 
           -- Calculo do valor do IOF de acordo com as novas regras
-          tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+          tiof0001.pc_calcula_valor_iof_epr(pr_tpoperac => 1 -- Contratação
+                                           ,pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
                                            ,pr_nrctremp => pr_nrctremp
                                            ,pr_vlemprst => vr_tab_parcela(vr_ind).vlprincipal
@@ -2078,7 +2088,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
               vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
 
               -- Calculo do valor do IOF de acordo com as novas regras
-              tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+              tiof0001.pc_calcula_valor_iof_epr(pr_tpoperac => 1 -- Contratação
+                                               ,pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => pr_nrdconta
                                                ,pr_nrctremp => pr_nrctremp
                                                ,pr_vlemprst => vr_tab_parcela(vr_ind).vlprincipal
@@ -2222,7 +2233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
           
             -- Aplicar multiplicador de isenção
             vr_vliofaditt := vr_vliofaditt * vr_idiseadi;
-            
+      
             -- Calcula IOF após novo valor 
             TIOF0001.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
                                               ,pr_nrdconta        => pr_nrdconta
@@ -2247,13 +2258,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
             IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
-          END IF;
+      END IF;
         end IF;
-        
+         
       END IF; 
-
-    END IF;  
-    
+           
+      END IF;
+         
     -- Retornar o valor de IOF Principal e Adicional conforme o cálculo
     pr_vliofpri := vr_vliofpritt;
     pr_vliofadi := vr_vliofaditt;
@@ -2264,6 +2275,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     -- Descontar IOFs anteriores tambem para o IOF do primeiro calculo (Usado no Pós)
     vr_vliofpri := greatest(vr_vliofpri-vr_vliofpri_ant,0);
     vr_vliofadi := greatest(vr_vliofadi-vr_vliofadi_ant,0);
+    
+    -- Somente para Pós, e na execução sem gravação de IOF
+    IF pr_tpemprst = 2 AND pr_idgravar NOT IN('C','S') THEN
+      -- Retornaremos o IOF Principal e Adicional do primeiro cálculo
+      pr_vliofpri := vr_vliofpri;
+      pr_vliofadi := vr_vliofadi;
+    END IF;
+    
     -- Checar imunidade tributária
     IMUT0001.pc_verifica_imunidade_trib(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
@@ -2283,7 +2302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic || ' - ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
       ELSE
         vr_dscritic := 'Não foi possivel verificar a imunidade tributaria';
-      END IF;
+        END IF;
       RAISE vr_exc_erro;
     END IF;
 
@@ -2432,10 +2451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
           END IF;
         END LOOP;
       END IF;
-    END IF;
-
-  EXCEPTION
-    WHEN vr_exc_erro THEN
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         -- Buscar a descrição
@@ -2593,7 +2612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
   END pc_calcula_iof_epr_web;    
-  
+    
   PROCEDURE pc_insere_iof (pr_cdcooper	     IN tbgen_iof_lancamento.cdcooper%TYPE                    --> Codigo da Cooperativa 
                           ,pr_nrdconta       IN tbgen_iof_lancamento.nrdconta%TYPE                    --> Numero da Conta Corrente
                           ,pr_dtmvtolt       IN tbgen_iof_lancamento.dtmvtolt%TYPE                    --> Data de Movimento

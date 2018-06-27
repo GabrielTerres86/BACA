@@ -266,7 +266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 07/11/2017
+   Data    : Maio/2015                      Ultima atualizacao: 18/06/2018
 
    Dados referentes ao programa:
 
@@ -293,6 +293,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                07/11/2017 - #756218 Na rotina pc_processo_controlador, melhorado o tratamento de
                             erros, retirando logs que não acrescentavam detalhe algum e cadastro
                             de mensagem de log (prglog_ocorrencia) em duplicidade (Carlos)
+					
+               18/06/2018 - sctask0012758 Na rotina pc_busca_sit_salario, melhoria do cursor cr_lanaut;
+                            rotina pc_busca_rendas_aut, melhoria do cursor cr_tbfolha_lanaut e ajustes de 
+                            performance no xml (Carlos)
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -12350,13 +12354,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
     CURSOR cr_lanaut(pr_cdcooper crapcop.cdcooper%TYPE
                     ,pr_nrdconta craplcm.nrdconta%TYPE
-                    ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
-      SELECT lan.cdhistor
+                    ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
+                    ,pr_hsparfol VARCHAR2) IS 
+      SELECT /*+ index (lan TBFOLHA_LANAUT_IDX01) */ 1
         FROM tbfolha_lanaut lan
        WHERE lan.cdcooper = pr_cdcooper
          AND lan.nrdconta = pr_nrdconta
+         AND lan.cdhistor IN (SELECT regexp_substr(pr_hsparfol, '[^,]+', 1, LEVEL) FROM dual
+                              CONNECT BY regexp_substr(pr_hsparfol, '[^,]+', 1, LEVEL) IS NOT NULL)
          AND lan.dtmvtolt >= pr_dtmvtolt;
     
+    rw_lanaut cr_lanaut%ROWTYPE;
+                        
                         
     vr_dsconteu VARCHAR2(4000);          
     vr_hsparfol VARCHAR2(4000);
@@ -12368,7 +12377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
-    vr_response VARCHAR2(3);
+    vr_response VARCHAR2(3) := 'NAO';
     vr_exc_erro EXCEPTION;
     
     vr_cdcooper INTEGER := 0;
@@ -12406,8 +12415,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     END IF;
     
     CLOSE btch0001.cr_crapdat;
-  
-    vr_response := NULL;
   
     tari0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => vr_cdcooper
                                           ,pr_cdbattar => 'HSTPARTICIPAFOL'
@@ -12450,21 +12457,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     
     CLOSE cr_crapass;
 
-    FOR rw_lanaut IN cr_lanaut(pr_cdcooper => rw_crapass.cdcooper
-                              ,pr_nrdconta => rw_crapass.nrdconta
-                              ,pr_dtmvtolt => (rw_crapdat.dtmvtolt - vr_qtdfolha) ) LOOP
-      
-      IF gene0002.fn_existe_valor(pr_base  => vr_hsparfol
-                                 ,pr_busca => LPAD(rw_lanaut.cdhistor,4,'0')
-                                 ,pr_delimite => ',') = 'S' THEN
+    -- verifica historico parametrizado 
+    FOR rw_lanaut IN cr_lanaut(pr_cdcooper => vr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_dtmvtolt => (rw_crapdat.dtmvtolt - vr_qtdfolha)
+                              ,pr_hsparfol => vr_hsparfol) LOOP
          vr_response := 'SIM';
-      END IF;  
-
+      EXIT;     
     END LOOP;
-
-    IF vr_response IS NULL THEN
-       vr_response := 'NAO';
-    END IF;   
 
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -12506,28 +12506,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     CURSOR cr_tbfolha_lanaut(pr_cdcooper crapcop.cdcooper%TYPE
                             ,pr_nrdconta craplcm.nrdconta%TYPE
                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
-      SELECT * 
-        FROM tbfolha_lanaut lan
+      SELECT /*+ INDEX(lan TBFOLHA_LANAUT_IDX01) */ lan.vlrenda, lan.dtmvtolt, his.dshistor
+        FROM tbfolha_lanaut lan, craphis his
        WHERE lan.cdcooper = pr_cdcooper
          AND lan.nrdconta = pr_nrdconta
          AND lan.dtmvtolt >= pr_dtmvtolt
+         AND lan.cdcooper = his.cdcooper
+         AND lan.cdhistor = his.cdhistor
        ORDER BY lan.dtmvtolt;
        
-    CURSOR cr_craphis(pr_cdcooper crapcop.cdcooper%TYPE
-                     ,pr_cdhistor craphis.cdhistor%TYPE) IS
-       SELECT his.cdhistor
-             ,his.dshistor
-         FROM craphis his
-        WHERE his.cdcooper = pr_cdcooper
-          AND his.cdhistor = pr_cdhistor;
-    rw_craphis cr_craphis%ROWTYPE;         
-        
     vr_contlan  PLS_INTEGER;   
-    vr_contdet  PLS_INTEGER;
     vr_mesatual PLS_INTEGER;
     vr_mesante  PLS_INTEGER;
     vr_vltotmes DECIMAL(10,2);
-    vr_tgmesxml VARCHAR(9);
                      
     vr_dsconteu VARCHAR2(4000);          
     vr_hsparfol VARCHAR2(4000);
@@ -12551,11 +12542,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_cdoperad VARCHAR2(100);
     vr_referenc VARCHAR2(7);
 
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);
+
+    --------------------------- SUBROTINAS INTERNAS --------------------------
 
     FUNCTION fn_busca_data_ret(pr_dtmvtolt crapdat.dtmvtolt%TYPE) RETURN DATE IS
     BEGIN
       RETURN ADD_MONTHS(  TO_DATE('01'||TO_CHAR(pr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR')   ,-3);                 
     END fn_busca_data_ret;
+    
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
     
   BEGIN
 
@@ -12596,12 +12599,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     END IF;    
 
     vr_contlan := 0; /*conta qtos meses*/
-    vr_contdet := 0; /*conta os reg detalhe do mes*/
+
     vr_mesante := 0; /*jogada no loop pra saber qdo quebrou o mes*/
     vr_vltotmes:= 0; /*valor total dos lancamentos em cada mes*/
 
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+    
     -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root>');                      
 
     /* ler a tbfolha_lanaut pegar os ultimos 3 resultados da query
      ou se flultimo estiver ativa pegar apenas o ultimo*/    
@@ -12609,116 +12620,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                               ,pr_nrdconta => pr_nrdconta
                                               ,pr_dtmvtolt => fn_busca_data_ret(rw_crapdat.dtmvtolt) ) LOOP
       
-      OPEN cr_craphis(pr_cdcooper => rw_tbfolha_lanaut.cdcooper
-                     ,pr_cdhistor => rw_tbfolha_lanaut.cdhistor);
-                     
-      FETCH cr_craphis INTO rw_craphis;
-      
-      IF cr_craphis%NOTFOUND THEN
-         CLOSE cr_craphis;
-         CONTINUE;
-      END IF;
-      
-      CLOSE cr_craphis;
-    
       vr_mesatual := TO_NUMBER(TO_CHAR(rw_tbfolha_lanaut.dtmvtolt,'MM'));
-      
       
       IF vr_mesante <> vr_mesatual THEN
         
          /*Cria o registro totalizador*/
          IF vr_vltotmes > 0 THEN
            /*VALOR TOTAL DO MES*/
-           gene0007.pc_insere_tag(pr_xml => pr_retxml
-                                 ,pr_tag_pai => vr_tgmesxml
-                                 ,pr_posicao => vr_contlan - 1 
-                                 ,pr_tag_nova => 'TotalLancMes'
-                                 ,pr_tag_cont => TO_CHAR(vr_vltotmes,'fm9g999g999g999g999g990d00')
-                                 ,pr_des_erro => vr_dscritic);
-                                 
-           /*MES DE REFERENCIA*/
-           gene0007.pc_insere_tag(pr_xml => pr_retxml
-                                 ,pr_tag_pai => vr_tgmesxml
-                                 ,pr_posicao => vr_contlan - 1
-                                 ,pr_tag_nova => 'referencia'
-                                 ,pr_tag_cont => vr_referenc
-                                 ,pr_des_erro => vr_dscritic);
+           pc_escreve_xml('<TotalLancMes>'|| TO_CHAR(vr_vltotmes,'fm9g999g999g999g999g990d00') ||'</TotalLancMes>
+                           <referencia>'|| vr_referenc ||'</referencia></MES>');        
                                   
            vr_vltotmes := 0;            
-           /* vr_contdet  := 0; */
          END IF;
       
-         vr_tgmesxml := 'MES'; 
          vr_referenc :=  LPAD(TO_CHAR(vr_mesatual),2,'0')||'/'||TO_CHAR(rw_tbfolha_lanaut.dtmvtolt,'RRRR');
          
-         gene0007.pc_insere_tag(pr_xml => pr_retxml
-                               ,pr_tag_pai => 'Root'
-                               ,pr_posicao => 0
-                               ,pr_tag_nova => vr_tgmesxml
-                               ,pr_tag_cont => NULL
-                               ,pr_des_erro => vr_dscritic);   
+         --Abre tag do mes
+         pc_escreve_xml('<MES>');
                                
          vr_contlan := vr_contlan + 1;
          vr_mesante := vr_mesatual;
       END IF;
       
-      /*Tag pai lancamento*/
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => vr_tgmesxml
-                            ,pr_posicao => vr_contlan - 1
-                            ,pr_tag_nova => 'Lancamento'
-                            ,pr_tag_cont => NULL
-                            ,pr_des_erro => vr_dscritic);
+      --Data, valor e histórico
+      pc_escreve_xml('<Lancamento><dtalanca>' || TO_CHAR(rw_tbfolha_lanaut.dtmvtolt,'DD/MM/RRRR') || '</dtalanca>
+                       <vlrlanca>' || TO_CHAR(rw_tbfolha_lanaut.vlrenda,'fm9g999g999g999g999g990d00') || '</vlrlanca>
+                       <dshistor>' || rw_tbfolha_lanaut.dshistor || '</dshistor></Lancamento>');
 
-      /* -- Filhos lancamento -- */
-      /*DATA*/
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Lancamento'
-                            ,pr_posicao => vr_contdet
-                            ,pr_tag_nova => 'dtalanca'
-                            ,pr_tag_cont => TO_CHAR(rw_tbfolha_lanaut.dtmvtolt,'DD/MM/RRRR')
-                            ,pr_des_erro => vr_dscritic);
-      
-      /*VALOR*/
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Lancamento'
-                            ,pr_posicao => vr_contdet
-                            ,pr_tag_nova => 'vlrlanca'
-                            ,pr_tag_cont => TO_CHAR(rw_tbfolha_lanaut.vlrenda,'fm9g999g999g999g999g990d00')
-                            ,pr_des_erro => vr_dscritic);
-
-      /*HISTORICO*/
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Lancamento'
-                            ,pr_posicao => vr_contdet
-                            ,pr_tag_nova => 'dshistor'
-                            ,pr_tag_cont => rw_craphis.dshistor
-                            ,pr_des_erro => vr_dscritic);
-                            
       vr_vltotmes := vr_vltotmes + rw_tbfolha_lanaut.vlrenda;
       
-      vr_contdet := vr_contdet + 1;
     END LOOP;
     
     /*Criar lancamento total para ultimo mes do loop*/
     IF vr_vltotmes > 0 THEN
-       /*VALOR TOTAL DO MES*/
-       gene0007.pc_insere_tag(pr_xml => pr_retxml
-                             ,pr_tag_pai => vr_tgmesxml
-                             ,pr_posicao => vr_contlan - 1
-                             ,pr_tag_nova => 'TotalLancMes'
-                             ,pr_tag_cont => TO_CHAR(vr_vltotmes,'fm9g999g999g999g999g990d00')
-                             ,pr_des_erro => vr_dscritic);
-                             
-       /*MES DE REFERENCIA*/
-       gene0007.pc_insere_tag(pr_xml => pr_retxml
-                             ,pr_tag_pai => vr_tgmesxml
-                             ,pr_posicao => vr_contlan - 1
-                             ,pr_tag_nova => 'referencia'
-                             ,pr_tag_cont => vr_referenc
-                             ,pr_des_erro => vr_dscritic);
-                             
                                   
+       /*VALOR TOTAL DO MES E REFERENCIA*/
+       pc_escreve_xml('<TotalLancMes>'|| TO_CHAR(vr_vltotmes,'fm9g999g999g999g999g990d00') ||'</TotalLancMes>
+                       <referencia>'|| vr_referenc ||'</referencia></MES>');
     END IF;
         
     
@@ -12728,30 +12666,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        RAISE vr_exc_fim;
     END IF;
     
+    pc_escreve_xml('</Root>',TRUE);
+
+    pr_retxml := XMLType.createXML(vr_des_xml);
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+
   EXCEPTION 
     WHEN vr_exc_fim THEN
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Root'
-                            ,pr_posicao => 0
-                            ,pr_tag_nova => 'ERRO'
-                            ,pr_tag_cont => 'Nao ha lancamentos para esta conta.'
-                            ,pr_des_erro => vr_dscritic);      
+      pc_escreve_xml('<ERRO>Nao ha lancamentos para esta conta.</ERRO></Root>',TRUE);
+      pr_retxml := XMLType.createXML(vr_des_xml);
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);     
     WHEN vr_exc_erro THEN
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Root'
-                            ,pr_posicao => 0
-                            ,pr_tag_nova => 'ERRO'
-                            ,pr_tag_cont => 'Problemas ao consultar lancamentos para esta conta.'
-                            ,pr_des_erro => vr_dscritic);        
+      pc_escreve_xml('<ERRO>Problemas ao consultar lancamentos para esta conta.</ERRO></Root>',TRUE);
+      pr_retxml := XMLType.createXML(vr_des_xml);
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
     WHEN OTHERS THEN
       CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Root'
-                            ,pr_posicao => 0
-                            ,pr_tag_nova => 'ERRO'
-                            ,pr_tag_cont => 'Problemas ao consultar lancamentos para esta conta.'
-                            ,pr_des_erro => vr_dscritic);
-                            
+      pc_escreve_xml('<ERRO>Problemas ao consultar lancamentos para esta conta.</ERRO></Root>',TRUE);
+      pr_retxml := XMLType.createXML(vr_des_xml);
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);                            
   END pc_busca_rendas_aut;
 
   PROCEDURE pc_inserir_lanaut(pr_cdcooper IN  tbfolha_lanaut.cdcooper%TYPE

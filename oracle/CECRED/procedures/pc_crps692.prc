@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Dezembro/2014                     Ultima atualizacao: 01/12/2016
+       Data    : Dezembro/2014                     Ultima atualizacao: 27/05/2018
 
        Dados referentes ao programa:
 
@@ -27,7 +27,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
 
                    01/12/2016 - Fazer tratamento para incorporação. (Oscar)
 
-				   27/04/2018 - Chama rotina LIMI0002.PC_CANCELA_LIMITE_CREDITO de cancelamento de limite - Daniel(AMcom)      
+				   27/05/2018 - Chama rotina LIMI0002.PC_CANCELA_LIMITE_INADIM de cancelamento de limite - Daniel(AMcom)      
     ............................................................................ */
 
     DECLARE
@@ -849,7 +849,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
       END LOOP; /* END LOOP FOR rw_craprli */
         
       -- Chama rotina de cancelamento de limite - Daniel(AMcom)
-      LIMI0002.PC_CANCELA_LIMITE_CREDITO(pr_cdcooper => pr_cdcooper   -- Cooperativa
+      LIMI0002.PC_CANCELA_LIMITE_INADIM(pr_cdcooper => pr_cdcooper   -- Cooperativa
                                         ,pr_cdcritic => vr_cdcritic   -- Código do erro
                                         ,pr_dscritic => vr_dscritic); -- Descrição do erro
         -- Verifica erro

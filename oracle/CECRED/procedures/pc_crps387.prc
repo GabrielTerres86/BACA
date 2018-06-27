@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 15/05/2018
+   Data    : Abril/2004                        Ultima atualizacao: 08/06/2018
 
    Dados referentes ao programa:
 
@@ -455,6 +455,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                               
                15/05/2018 - Validar autorização somente para novas inclusoes 
                             (Lucas Ranghetti #INC0015198)
+                            
+               08/06/2018 - Incluir tratamento para caracteres especiais de quebra de XML
+                            para o relatório, utilizado a função fn_caract_controle
+                            (Lucas Ranghetti #INC0016783)
 ............................................................................ */
 
     DECLARE
@@ -5936,7 +5940,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                           '<vllanmto>'||vr_dslanmto||'</vllanmto>'||
                                           '<dtmvtolt>'||nvl(to_char(vr_tab_relato(vr_ind).dtmvtolt,'dd/mm/yyyy'),' ')||'</dtmvtolt>'||
                                           '<dscritic>'||substr(vr_dscritic_tmp,1,60) || vr_tab_relato(vr_ind).dscritic || '</dscritic>'||
-                                          '<descrica>'||vr_tab_relato(vr_ind).descrica||'</descrica>'||
+                                          '<descrica>'||gene0007.fn_caract_controle(vr_tab_relato(vr_ind).descrica)||'</descrica>'||
                                         '</conta>');
                 END IF;
 

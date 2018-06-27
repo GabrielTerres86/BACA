@@ -301,6 +301,8 @@ function controlaFoco() {
           $('#qtmeschq', '#divAlteracao').desabilitaCampo();
           $('#qtmesest', '#divAlteracao').desabilitaCampo();
           $('#qtmesemp', '#divAlteracao').desabilitaCampo();
+          $('#nmregmpf', '#divAlteracao').val('');
+          $('#nmregmpj', '#divAlteracao').val('');
           $('#qtsstime', '#divAlteracao').val('0');
           $('#qtmeschq', '#divAlteracao').val('0');
           $('#qtmesest', '#divAlteracao').val('0');
@@ -314,8 +316,8 @@ function controlaFoco() {
           $('#qtmesemp', '#divAlteracao').habilitaCampo();
 	    }
 	    return false;
-	});  	
-  
+	});
+
     $('#anlautom', '#divAlteracao04').unbind('change').bind('change', function (e) {
 
 	    if ($(this).val() == 'NAO') {
@@ -366,7 +368,7 @@ function controlaOperacao() {
 	} else {			
 		LiberaCampos();
 	}
-	
+
 	// Desabilita campo opção
 	cTodosCabecalho = $('input[type="text"],select', '#frmCab');
 	cTodosCabecalho.desabilitaCampo();
@@ -383,9 +385,9 @@ function LiberaCampos() {
     // Desabilita campo opção
     cTodosCabecalho = $('input[type="text"],select', '#frmCab');
     cTodosCabecalho.desabilitaCampo();
-
+   
     if(tpproduto != '4'){
-	$('#frmParest').css({'display': 'block'});
+	    $('#frmParest').css({'display': 'block'});
     }else if(tpproduto == '4'){
         $('#frmParest04').css({'display': 'block'});
     }
@@ -397,7 +399,7 @@ function LiberaCampos() {
 			// Mostra Divs
 	        $('#divBotoes').css({ 'display': 'block' });
             if(tpproduto != '4')
-	        $('#divAlteracao').css({ 'display': 'block' });
+	            $('#divAlteracao').css({ 'display': 'block' });
             else if(tpproduto == '4'){
                 $('#divAlteracao04').css({ 'display': 'block' });
                 $(".nparaTodos").hide();
@@ -443,15 +445,15 @@ function manterRotina(cdopcao) {
 	
    
     if(tpproduto != '4'){
-    var contigen = normalizaNumero($('#contigen', '#' + frmParest).val());
-    var incomite = normalizaNumero($('#incomite', '#' + frmParest).val());
-    var anlautom = normalizaNumero($('#anlautom', '#' + frmParest).val());
-    var nmregmpf = $('#nmregmpf', '#' + frmParest).val();
-    var nmregmpj = $('#nmregmpj', '#' + frmParest).val();
-    var qtsstime = $('#qtsstime', '#' + frmParest).val();
-    var qtmeschq = $('#qtmeschq', '#' + frmParest).val();
-    var qtmesest = $('#qtmesest', '#' + frmParest).val();
-    var qtmesemp = $('#qtmesemp', '#' + frmParest).val();
+        var contigen = normalizaNumero($('#contigen', '#' + frmParest).val());
+        var incomite = normalizaNumero($('#incomite', '#' + frmParest).val());
+        var anlautom = normalizaNumero($('#anlautom', '#' + frmParest).val());
+        var nmregmpf = $('#nmregmpf', '#' + frmParest).val();
+        var nmregmpj = $('#nmregmpj', '#' + frmParest).val();
+        var qtsstime = $('#qtsstime', '#' + frmParest).val();
+        var qtmeschq = $('#qtmeschq', '#' + frmParest).val();
+        var qtmesest = $('#qtmesest', '#' + frmParest).val();
+        var qtmesemp = $('#qtmesemp', '#' + frmParest).val();
     }else if(tpproduto == '4'){
         
         var contigen = $('#contigen', '#frmParest04' ).val()== "SIM" ? 1 : 0;       
@@ -465,7 +467,7 @@ function manterRotina(cdopcao) {
 
     }
     //var tpproduto = $('#tpproduto', '#' + frmParest).val();
-
+    
     $.ajax({
         type: 'POST',
         async: true,

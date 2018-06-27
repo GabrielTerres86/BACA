@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 29/11/2017
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -88,13 +88,13 @@
                             PRJ404 - Garantia.(Odirlei-AMcom)                      
              
                15/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
-                            PRJ366 (Lombardi)
-             
+                            PRJ366 (Lombardi) 
+                            
                17/04/2018 -  Verifica lançamentos/saldo para computar os lançamentos
                              efetuados no último dia, para que esse saldo esteja 
                              atualizado para efetivar ou negar a operaçao, utilizado
-							               na abertura do caixa online mesmo quando o processo 
-							               batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
+							 na abertura do caixa online mesmo quando o processo 
+							 batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
              
 ........................................................................... */
 
@@ -234,7 +234,7 @@ PROCEDURE consulta-conta:
     ASSIGN tt-conta.nome-tit     = crapass.nmprimtl
            tt-conta.magnetico    = 0.
 
-    /*cartao magnético (dtvalcar - validade)*/
+    
     FOR EACH crapcrm WHERE crapcrm.cdcooper = crapcop.cdcooper  AND
                            crapcrm.nrdconta = crapass.nrdconta  NO-LOCK:
                            

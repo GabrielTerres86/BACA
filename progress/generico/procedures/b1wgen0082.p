@@ -283,6 +283,8 @@ PROCEDURE carrega-convenios-ceb:
                tt-cadastro-bloqueto.flsercco = INT(crapcco.flserasa)
                tt-cadastro-bloqueto.qtdfloat = crapceb.qtdfloat 
                tt-cadastro-bloqueto.flprotes = crapceb.flprotes
+			   tt-cadastro-bloqueto.qtlimaxp = crapceb.qtlimaxp
+			   tt-cadastro-bloqueto.qtlimmip = crapceb.qtlimmip
                tt-cadastro-bloqueto.qtdecprz = crapceb.qtdecprz
                tt-cadastro-bloqueto.idrecipr = crapceb.idrecipr
                tt-cadastro-bloqueto.inenvcob = crapceb.inenvcob.

@@ -12,6 +12,7 @@
  * 004: [24/08/2015] Jorge Hamaguchi      : Retirada de caracteres especiais em descricao do bem. SD - 320666
    005: [15/10/2015] Kelvin  (CECRED)     : Adicionado validação para remover caracteres especiais SD 320666 (Kelvin).
    006: [25/01/2016] Tiago Castro (RKAM)  : Retirado IF pois nao era carregado as variaveis.
+ * 007: [13/04/2018] Mateus Z (Mouts)     : Alterado a funcao proximaRotina para chamar a FATCA/CRS. PRJ 414.
  */	  
 
 var nrdrowid = '';
@@ -488,7 +489,7 @@ function proximaRotina () {
 	encerraRotina(false);
 	
 	if (inpessoa == 1) {
-		acessaRotina('CONTA CORRENTE','Conta Corrente','conta_corrente_pf');	
+		acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pf');	
 	}else {
 		acessaRotina('TELEFONES','Telefones','telefones');	
 	}	

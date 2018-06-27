@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 29/06/2017 
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 23/05/2018 
   --
   -- Dados referentes ao programa:
   --
@@ -22,8 +22,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --
   --             09/03/2018 - Adicionado o procedimento pc_renova_autom_limdesctit (Paulo Penteado GFT)
   --
-  --             09/04/2018 - PC_CANCELA_LIMITE60 - Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias - Daniel(AMcom)
-  --             27/04/2018 - PC_CANCELA_LIMITE_CREDITO - Alteração de nome da funcao (Antes era PC_CANCELA_LIMITE60) e de parâmetros para consulta do limite, agora baseado nos campos da craprli (regras de limite de credito) - Marcel(AMCom)
+  --             15/03/2018 - PC_CANCELA_LIMITE_INADIM  - Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa - Daniel(AMcom)
+  --
+  --             23/05/2018 - PC_CANCELA_LIMITE_CREDITO - Rotina para cancelamento de Limite de Crédito - Daniel(AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -73,9 +74,20 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-  PROCEDURE PC_CANCELA_LIMITE_CREDITO(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
+  PROCEDURE pc_cancela_limite_inadim(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                      ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
+
+  PROCEDURE pc_cancela_limite_credito(pr_cdcooper   IN crapcop.cdcooper%TYPE    --> Código da Cooperativa
+                                     ,pr_cdagenci   IN crapass.cdagenci%TYPE    --> Código da agência
+                                     ,pr_nrdcaixa   IN craperr.nrdcaixa%TYPE    --> Número do caixa
+                                     ,pr_cdoperad   IN crapnrc.cdoperad%TYPE    --> Código do operador
+                                     ,pr_nrdconta   IN crapass.nrdconta%TYPE    --> Conta do associado
+                                     ,pr_nrctrlim   IN NUMBER                   --> Número do contrato de Rating
+                                     ,pr_inadimp    IN NUMBER                   --> 1-Inadimplência 0-Normal
+                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                     ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
+
 END LIMI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
@@ -86,7 +98,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 20/09/2017
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 23/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -117,8 +129,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               de proposta do limite de desconto de titulos tabela (crawlim) não vai mais precisar 
                               desse processo de apagar os titulos em estudo (Paulo Penteado (GFT))
 
-                 09/04/2018 - PC_CANCELA_LIMITE60 - Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias - Daniel(AMcom)
-                 27/04/2018 - PC_CANCELA_LIMITE_CREDITO - Alteração de nome da funcao (Antes era PC_CANCELA_LIMITE60) e de parâmetros para consulta do limite, agora baseado nos campos da craprli (regras de limite de credito) - Marcel(AMCom)
+                 15/03/2018 - PC_CANCELA_LIMITE_INADIM  - Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa - Daniel(AMcom)
+  
+                 23/05/2018 - PC_CANCELA_LIMITE_CREDITO - Rotina para cancelamento de Limite de Crédito - Daniel(AMcom)
   */
   ---------------------------------------------------------------------------------------------------------------
   
@@ -373,7 +386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       vr_dstransa             VARCHAR2(1000);
       vr_dsorigem             VARCHAR2(1000);
       vr_emissao_recibo_saque VARCHAR2(100);
-      vr_indtrans             INTEGER;
+      --vr_indtrans             INTEGER;
       vr_nrdrowid             ROWID;
 
     BEGIN
@@ -1537,7 +1550,7 @@ END pc_renova_limdesctit;
             ,rowid
       from   craplim lim
       where((lim.insitlim        = 2  /** Ativo **/
-      and   (lim.dtfimvig between (rw_crapdat.dtmvtolt - 15) and rw_crapdat.dtmvtolt)
+      and   (lim.dtfimvig between (lim.dtfimvig - 15) and rw_crapdat.dtmvtolt)
             ) or lim.insitlim    = 4) /** Vigente **/
       and    lim.tpctrlim        = 3
       and    lim.cdcooper        = vr_cdcooper
@@ -2516,12 +2529,12 @@ END pc_renova_limdesctit;
       
   END pc_crps517;
   
-  PROCEDURE PC_CANCELA_LIMITE_CREDITO(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
+  PROCEDURE pc_cancela_limite_inadim(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /* ............................................................................
-     Programa: PC_CANCELA_LIMITE_CREDITO
+     Programa: PC_CANCELA_LIMITE_INADIM
      Sistema : Atenda - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Daniel Silva(AMcom)
@@ -2530,7 +2543,7 @@ END pc_renova_limdesctit;
      Dados referentes ao programa:
 
      Frequencia: Diária
-     Objetivo  : Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias
+     Objetivo  : Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa
      Alteracoes:
     ..............................................................................*/
 
@@ -2540,22 +2553,12 @@ END pc_renova_limdesctit;
     vr_exc_fimprg exception;
     vr_cdcritic crapcri.cdcritic%TYPE; -- Codigo da critica
     vr_dscritic VARCHAR2(2000);        -- Descricao da critica
-    vr_inusatab BOOLEAN := FALSE;
-    vr_des_reto VARCHAR2(3);
-    vr_tab_erro GENE0001.typ_tab_erro;
+    --vr_inusatab BOOLEAN := FALSE;
+    --vr_des_reto VARCHAR2(3);
+    --vr_tab_erro GENE0001.typ_tab_erro;
 
     -- Cursor Genérico de Calendário
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
-
-  --**************************--
-  --*** CURSORES GENÉRICOS ***--
-  --**************************--
-    -- Busca dos dados da cooperativa
-    CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
-      SELECT cop.nmrescop
-        FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
-      rw_crapcop cr_crapcop%ROWTYPE;
 
     -- Calendário da cooperativa selecionada
     CURSOR cr_dat(pr_cdcooper INTEGER) IS
@@ -2594,13 +2597,135 @@ END pc_renova_limdesctit;
        AND ris.cdcooper  = pr_cdcooper;
      rw_conta cr_conta%ROWTYPE;
 
+
+    --************************--
+    --  INICIO PROCESSAMENTO  --
+    --************************--
+    
+      BEGIN
+        -- Busca calendário para a cooperativa selecionada
+        OPEN cr_dat(pr_cdcooper);
+        FETCH cr_dat INTO rw_dat;
+        -- Se não encontrar calendário
+        IF cr_dat%NOTFOUND THEN
+          CLOSE cr_dat;
+          -- Montar mensagem de critica
+          vr_cdcritic  := 794;
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_dat;
+        END IF;
+
+      -- Leitura do calendário da cooperativa
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic:= 1;
+        RAISE vr_exc_saida;
+      ELSE
+         -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;        
+              
+        FOR rw_conta IN cr_conta(pr_cdcooper) LOOP
+          pc_cancela_limite_credito(pr_cdcooper   => pr_cdcooper                -- Cooperativa
+                                   ,pr_cdagenci   => 0                          -- Agência
+                                   ,pr_nrdcaixa   => 0                          -- Caixa
+                                   ,pr_cdoperad   => '1'                        -- Operador
+                                   ,pr_nrdconta   => rw_conta.nrdconta          -- Conta do associado
+                                   ,pr_nrctrlim   => rw_conta.nrctrlim          -- Contrato de Rating
+                                   ,pr_inadimp    => 1                          -- 1-Inadimplência 0-Normal
+                                   ,pr_cdcritic   => vr_cdcritic                -- Retorno OK / NOK
+                                   ,pr_dscritic   => vr_dscritic);              -- Erros do processo
+          -- Verifica erro
+          IF vr_cdcritic = 0 THEN
+            RAISE vr_exc_saida;
+          END IF;
+        --
+        END LOOP;
+      --END;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro PC_CANCELA_LIMITE_INADIM. Detalhes: '||vr_dscritic;
+      WHEN OTHERS THEN
+        -- Retornar o erro não tratado
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE_INADIM. Detalhes: '||sqlerrm;
+    END;
+  END pc_cancela_limite_inadim;
+  
+  PROCEDURE pc_cancela_limite_credito(pr_cdcooper   IN crapcop.cdcooper%TYPE    --> Código da Cooperativa
+                                     ,pr_cdagenci   IN crapass.cdagenci%TYPE    --> Código da agência
+                                     ,pr_nrdcaixa   IN craperr.nrdcaixa%TYPE    --> Número do caixa
+                                     ,pr_cdoperad   IN crapnrc.cdoperad%TYPE    --> Código do operador
+                                     ,pr_nrdconta   IN crapass.nrdconta%TYPE    --> Conta do associado
+                                     ,pr_nrctrlim   IN NUMBER                   --> Número do contrato de Rating
+                                     ,pr_inadimp    IN NUMBER                   --> 1-Inadimplência 0-Normal                                 
+                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Critica encontrada
+                                     ,pr_dscritic OUT VARCHAR2) IS              --> Texto de erro/critica encontrada
+  BEGIN
+    /* ............................................................................
+     Programa: PC_CANCELA_LIMITE_CREDITO
+     Sistema : Atenda - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Daniel Silva(AMcom)
+     Data    : Maio/2018                           Ultima atualizacao: 23/05/2018
+
+     Dados referentes ao programa:
+
+     Frequencia: Subrotina
+     Objetivo  : Rotina para cancelamento do Limite de Crédito
+     Alteracoes:
+    ..............................................................................*/
+
+  DECLARE
+  --*** VARIÁVEIS ***--
+    vr_exc_saida exception;
+    vr_exc_fimprg exception;
+    vr_cdcritic crapcri.cdcritic%TYPE; -- Codigo da critica
+    vr_dscritic VARCHAR2(2000);        -- Descricao da critica
+    vr_inusatab BOOLEAN := FALSE;
+    vr_des_reto VARCHAR2(3);
+    vr_tab_erro GENE0001.typ_tab_erro;
+
+    -- Cursor Genérico de Calendário
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+  --**************************--
+  --*** CURSORES GENÉRICOS ***--
+  --**************************--
+    -- Busca dos dados da cooperativa
+    CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+      SELECT cop.nmrescop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+    -- Calendário da cooperativa selecionada
+    CURSOR cr_dat(pr_cdcooper INTEGER) IS
+    SELECT dat.dtmvtolt
+         , (SELECT MAX(dtrefere) FROM crapris WHERE cdcooper = pr_cdcooper) dtmvtoan
+         , dat.dtultdma
+      FROM crapdat dat
+     WHERE dat.cdcooper = pr_cdcooper;
+    rw_dat cr_dat%ROWTYPE;
+
   --**************************--
   --***     PROCEDURES     ***--
   --**************************--
     -- Cancela limite de crédito
-    PROCEDURE pc_cancela_limite(pr_cdcooper IN NUMBER         -- Cooperativa
+    PROCEDURE pc_cancela_limite_cre(pr_cdcooper IN NUMBER         -- Cooperativa
                                ,pr_nrdconta IN NUMBER         -- Conta Corrente
                                ,pr_nrctrlim IN NUMBER         -- Contrato de Limite
+                                   ,pr_inadimp  IN NUMBER         -- 1-Inadimplência 0-Normal
                                ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
                                ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo
       BEGIN
@@ -2610,7 +2735,7 @@ END pc_renova_limdesctit;
         -- Efetua cancelamento dos limites
         UPDATE craplim lim
            SET lim.insitlim        = 3 -- Cancelado
-             , lim.ininadim        = 1 -- Inadimplencia
+             , lim.ininadim        = pr_inadimp -- 1 - Inadimplencia
              , lim.cdmotcan        = 0
              , lim.cdopeexc        = '1'
              , lim.cdageexc        = 0
@@ -2625,14 +2750,15 @@ END pc_renova_limdesctit;
        EXCEPTION
          WHEN OTHERS THEN
            pr_cdcritic := 0;
-           pr_dscritic := 'Erro PC_CANCELA_LIMITE: '||SQLERRM;
+           pr_dscritic := 'Erro PC_CANCELA_LIMITE_CRE: '||SQLERRM;
            -- Efetuar rollback
-           ROLLBACK;
-    END pc_cancela_limite;
+           -- ROLLBACK;
+    END pc_cancela_limite_cre;
 
     -- Cancela limite de crédito Conta
-    PROCEDURE pc_cancela_limite_cta(pr_cdcooper IN NUMBER         -- Cooperativa
+    PROCEDURE pc_cancela_limite_ass(pr_cdcooper IN NUMBER         -- Cooperativa
                                    ,pr_nrdconta IN NUMBER         -- Conta Corrente
+                                   ,pr_nrctrlim IN NUMBER         -- Contrato de Limite
                                    ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
                                    ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo
       BEGIN
@@ -2642,16 +2768,23 @@ END pc_renova_limdesctit;
         -- Efetua cancelamento dos limites
         UPDATE crapass ass
            SET ass.vllimcre = 0
+             , ass.tplimcre = (select DISTINCT inbaslim 
+                                 from craplim
+                                where cdcooper = pr_cdcooper
+                                  and nrdconta = pr_nrdconta
+                                  and nrctrlim = pr_nrctrlim
+                                  and rownum   = 1)
+             , ass.dtultlcr = rw_dat.dtmvtolt           
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
          --
        EXCEPTION
          WHEN OTHERS THEN
            pr_cdcritic := 0;
-           pr_dscritic := 'Erro PC_CANCELA_LIMITE_CTA: '||SQLERRM;
+           pr_dscritic := 'Erro PC_CANCELA_LIMITE_ASS: '||SQLERRM;
            -- Efetuar rollback
-           ROLLBACK;
-    END pc_cancela_limite_cta;
+           -- ROLLBACK;
+    END pc_cancela_limite_ass;
 
     -- Cancela Microfilmagem
     PROCEDURE pc_cancela_microfilmagem(pr_cdcooper IN NUMBER  -- Cooperativa
@@ -2682,7 +2815,7 @@ END pc_renova_limdesctit;
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_MICROFILMAGEM: '||SQLERRM;
            -- Efetuar rollback
-           ROLLBACK;
+           -- ROLLBACK;
     END pc_cancela_microfilmagem;
 
     --************************--
@@ -2739,11 +2872,10 @@ END pc_renova_limdesctit;
     --  INICIO PROCESSAMENTO  --
     --************************--
       BEGIN
-        FOR rw_conta IN cr_conta(pr_cdcooper) LOOP
-
-          pc_cancela_limite(pr_cdcooper => pr_cdcooper        -- Cooperativa
-                           ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
-                           ,pr_nrctrlim => rw_conta.nrctrlim  -- Contrato de Limite
+        pc_cancela_limite_cre(pr_cdcooper => pr_cdcooper   -- Cooperativa
+                             ,pr_nrdconta => pr_nrdconta   -- Conta Corrente
+                             ,pr_nrctrlim => pr_nrctrlim   -- Contrato de Limite
+                             ,pr_inadimp  => pr_inadimp    -- 1-Inadimplência 0-Normal                            
                            ,pr_cdcritic => vr_cdcritic        -- Código da crítica
                            ,pr_dscritic => vr_dscritic);      -- Erros do processo
           -- Verifica erro
@@ -2751,8 +2883,9 @@ END pc_renova_limdesctit;
             RAISE vr_exc_saida;
           END IF;
 
-          pc_cancela_limite_cta(pr_cdcooper => pr_cdcooper        -- Cooperativa
-                               ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
+        pc_cancela_limite_ass(pr_cdcooper => pr_cdcooper   -- Cooperativa
+                             ,pr_nrdconta => pr_nrdconta   -- Conta Corrente
+                             ,pr_nrctrlim => pr_nrctrlim   -- Contrato de Limite                                   
                                ,pr_cdcritic => vr_cdcritic        -- Código da crítica
                                ,pr_dscritic => vr_dscritic);      -- Erros do processo
           -- Verifica erro
@@ -2761,8 +2894,8 @@ END pc_renova_limdesctit;
           END IF;
 
           pc_cancela_microfilmagem(pr_cdcooper => pr_cdcooper        -- Cooperativa
-                                  ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
-                                  ,pr_nrctrlim => rw_conta.nrctrlim  -- Contrato de Limite
+                                ,pr_nrdconta => pr_nrdconta   -- Conta Corrente
+                                ,pr_nrctrlim => pr_nrctrlim   -- Contrato de Limite
                                   ,pr_cdcritic => vr_cdcritic        -- Código da crítica
                                   ,pr_dscritic => vr_dscritic);      -- Erros do processo
           -- Verifica erro
@@ -2774,13 +2907,13 @@ END pc_renova_limdesctit;
           -- RATI0001.pc_desativa_rating
           -- Desativar o Rating associado a esta operação
           rati0001.pc_desativa_rating(pr_cdcooper   => pr_cdcooper          -- Cooperativa
-                                     ,pr_cdagenci   => 0                    -- Agência
-                                     ,pr_nrdcaixa   => 0                    -- Caixa
-                                     ,pr_cdoperad   => '1'                  -- Operador
+                                   ,pr_cdagenci   => pr_cdagenci                -- Agência
+                                   ,pr_nrdcaixa   => pr_nrdcaixa                -- Caixa
+                                   ,pr_cdoperad   => pr_cdoperad                -- Operador
                                      ,pr_rw_crapdat => rw_crapdat           -- Vetor com dados de parâmetro (CRAPDAT)
-                                     ,pr_nrdconta   => rw_conta.nrdconta    -- Conta do associado
+                                   ,pr_nrdconta   => pr_nrdconta                -- Conta do associado
                                      ,pr_tpctrrat   => 1                    -- Tipo do Rating (1-Limite de crédito)
-                                     ,pr_nrctrrat   => rw_conta.nrctrlim    -- Contrato de Rating
+                                   ,pr_nrctrrat   => pr_nrctrlim                -- Contrato de Rating
                                      ,pr_flgefeti   => 'S'                  -- Flag para efetivação ou não do Rating
                                      ,pr_idseqttl   => 1                    -- Sequencia de titularidade da conta
                                      ,pr_idorigem   => 1                    -- Indicador da origem da chamada
@@ -2803,10 +2936,6 @@ END pc_renova_limdesctit;
              RAISE vr_exc_saida;
            END IF;
            --
-        END LOOP;
-        --
-        COMMIT;
-        --
       END;
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -2815,16 +2944,13 @@ END pc_renova_limdesctit;
       END IF;
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro PC_CANCELA_LIMITE_CREDITO. Detalhes: '||vr_dscritic;
-        -- Efetuar rollback
-        ROLLBACK;
       WHEN OTHERS THEN
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE_CREDITO. Detalhes: '||sqlerrm;
-        -- Efetuar rollback
-        ROLLBACK;
     END;
-  END PC_CANCELA_LIMITE_CREDITO;
+  END pc_cancela_limite_credito;  
+
 
 end limi0002;
 /

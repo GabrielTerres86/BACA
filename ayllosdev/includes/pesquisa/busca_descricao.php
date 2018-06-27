@@ -15,6 +15,9 @@
     * 006: [06/06/2017] Jonata		 (Mouts): Ajuste para inclusão da busca de dominios - P408.
 	* 007: [13/08/2017] Jonata		 (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
 	* 008: [16/01/2018] Lombardi	(CECRED): Ajuste para busca de tipo de conta - P366.
+    * 008: [14/12/2017] Odirlei Busana (AMcom): Ajustado para não validar numerico para BUSCA_DESC_CONVEN. PRJ406 - FGTS
+	* 009: [17/04/2018] Mateus Z (Mouts): Ajustado para não validar numerico para VALIDA_PAIS, VALIDA_TIPO_DECLARADO e 
+ *                                     VALIDA_TIPO_PROPRIETARIO. PRJ414
  */	
 
 	session_start();
@@ -56,7 +59,7 @@
 
 	// Valida c&oacute;digo
 	if ($codigo == "0") exibirErro('error','O c&oacute;digo '.$tituloPesquisa.' deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if ($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
+	if (($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && $nomeProcedure != 'BUSCA_DESC_CONVEN' && $nomeProcedure != 'VALIDA_PAIS' && $nomeProcedure != 'VALIDA_TIPO_DECLARADO' && $nomeProcedure != 'VALIDA_TIPO_PROPRIETARIO') && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
 	
 	
 	// Verifica se e' uma rotina Progress ou Oracle

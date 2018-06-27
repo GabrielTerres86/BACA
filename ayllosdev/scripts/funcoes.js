@@ -1915,7 +1915,7 @@ $.fn.extend({
             var tag = this.tagName.toLowerCase();
             if ((in_array(tag, ['input', 'select', 'textarea'])) && (type != 'image')) {
 				if (type == 'radio') $(this).css('background', 'none');
-				$(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
+                $(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
 			}
 		});		
@@ -2820,7 +2820,12 @@ function formataVerificaSenhaMagnetico() {
 }
 
 //Solicita senha do cartao magnetico ao cooperado
-function solicitaSenhaMagnetico(retorno, nrdconta) {
+function solicitaSenhaMagnetico(retorno, nrdconta, validaInternet) {
+
+	if(validaInternet)
+		validainternet = "s";
+	else
+		validainternet = "n";
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando tela de senha...");
@@ -2832,7 +2837,8 @@ function solicitaSenhaMagnetico(retorno, nrdconta) {
         data: {
             nrdconta: nrdconta,
             retorno: retorno,
-            redirect: 'html_ajax' // Tipo de retorno do ajax
+            redirect: 'html_ajax', // Tipo de retorno do ajax
+			validainternet : validainternet
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -2874,6 +2880,7 @@ function validaSenhaMagnetico() {
     var cddsenha = $('#cddsenha', '#divSolicitaSenhaMagnetico').val();
     var retorno = $('#retorno', '#divSolicitaSenhaMagnetico').val();
     var nrdconta = $('#nrdconta', '#divSolicitaSenhaMagnetico').val();
+	var validainternet = $('#validainternet', '#divSolicitaSenhaMagnetico').val();
 
     $.ajax({
         type: 'POST',
@@ -2882,6 +2889,7 @@ function validaSenhaMagnetico() {
             nrdconta: nrdconta,
             cddsenha: cddsenha,
             retorno: retorno,
+			validainternet:validainternet,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {

@@ -5,7 +5,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Evandro.
-   Data    : Marco/2010                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2010                      Ultima atualizacao: 04/05/2018
 
    Dados referentes ao programa:
 

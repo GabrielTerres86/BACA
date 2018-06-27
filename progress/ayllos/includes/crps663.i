@@ -151,6 +151,7 @@ PROCEDURE efetua-debito-consorcio:
     DEF VAR aux_cdcritic AS INTE    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR    NO-UNDO.
     DEF VAR aux_mudalote AS LOGICAL NO-UNDO. 
+	DEF VAR aux_dscampos AS CHAR NO-UNDO.
 
     IF  glb_inproces = 1  THEN
          ASSIGN aux_dtrefere = glb_dtmvtolt.
@@ -455,7 +456,32 @@ PROCEDURE efetua-debito-consorcio:
                            craplau.dtdebito = aux_dtrefere
                            craplau.dsorigem = "DEBCNS".
                     VALIDATE craplcm.
-                
+
+                  /* inicio NOTIF */
+                   aux_dscampos = "#valordebito=" + STRING(craplau.vllanaut,"zzz,zz9.99") + ";#datadebito=" + STRING(aux_dtrefere,"99/99/9999") +
+                                  ";#tipodebito=" + craplau.dscedent.
+                                  
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  /* Efetuar a chamada a rotina Oracle */ 
+                   RUN STORED-PROCEDURE pc_cria_notif_prgs
+                   aux_handproc = PROC-HANDLE NO-ERROR 
+                        ( INPUT 10                /* pr_cdorigem_mensagem  */
+                         ,INPUT 1                 /* pr_cdmotivo_mensagem  */
+                         ,INPUT TODAY             /* pr_dhenvio  */
+                         ,INPUT craplau.cdcooper  /* pr_cdcooper  */
+                         ,INPUT aux_nrdconta      /* pr_nrdconta  */
+                         ,INPUT 0                 /* pr_idseqttl  */
+                         ,INPUT aux_dscampos ).   /* pr_variaveis  */
+                                    
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                   CLOSE STORED-PROC pc_cria_notif_prgs
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                           
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                  /* fim NOTIF */   
+				                 
                 END. /* fim else */
                 
                 /* Para aparecer na debcon devemos gravar a critica 717 */

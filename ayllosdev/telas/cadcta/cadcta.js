@@ -1,10 +1,10 @@
 /*!
  * FONTE        : cadcta.js
  * CRIAÇÃO      : Mateus Zimmermann (Mouts)
- * DATA CRIAÇÃO : Janeiro/2010 
- * OBJETIVO     : Biblioteca de funções da tela CONTAS
+ * DATA CRIAÇÃO : Outubro/2017 
+ * OBJETIVO     : Biblioteca de funções da tela CADCTA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : [14/06/2018] Mateus Z (Mouts)     : Nova rotina "FATCA CRS" (PRJ414).
  * --------------
  *
  */
@@ -686,7 +686,7 @@ function controlaLayoutCadcta(operacao){
 
         var camposEditaveis = $('#nmctajur ,#cdconsultor, #incadpos, #flgiddep, #flgrestr, #indserma, #fldevchq, #inlbacen, #nmtalttl, #qtfoltal, #nrinfcad,#nrperger, #nrpatlvr, #dsinfadi', '#frmCadcta');
         var camposEditCab   = $('#nmctajur', '#frmCabCadcta');
-        var botoes = $('#btAlterar, #btContinuar, #btImpressoes, #btGrEconomico, #btImunidadeTributaria, #btClienteFinanceiro, #btOrgaosProtecaoCredito, #btImpedimentosDesligamento, #btDosie', '#frmCadcta');
+        var botoes = $('#btAlterar, #btContinuar, #btImpressoes, #btGrEconomico, #btImunidadeTributaria, #btClienteFinanceiro, #btOrgaosProtecaoCredito, #btImpedimentosDesligamento, #btDosie, #btFatcaCrs', '#frmCadcta');
         var botoesAlteracao = $('#btCancelar, #btSalvar', '#frmCadcta');
         camposEditaveis.habilitaCampo();
         camposEditCab.habilitaCampo();
@@ -1289,6 +1289,11 @@ function formataTela() {
     cDspatlvr.addClass('descricao').css('width','522px');
     cDsperger.addClass('descricao').css('width','522px');
     cDsinfadi.addClass('alphanum').css({'width':'580px','height':'54px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
+	
+	// Exibir o botão FATCA/CRS apenas se for o primeiro titular selecionado
+    if(idseqttl != 1){
+        $('#btFatcaCrs').css('display','none');
+    }
 
     //Exibir blocos de dados 
     $('.cnt2-1').css({'display':'block'});
@@ -1646,6 +1651,15 @@ function abreTelaDetalheRendas(){
     window.scrollTo(0, 0);
     if (inpessoa == 1){
         acessaRotina("RENDAS AUTOMATICAS","Rendas Automaticas","rendas_automaticas");
+    }
+}
+
+function abreTelaFatcaCrs(){
+    window.scrollTo(0, 0);
+    if (inpessoa == 1){
+        acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pf');
+    }else{
+        acessaRotina('FATCA CRS','FATCA/CRS','fatca_crs_pj');
     }
 }
 

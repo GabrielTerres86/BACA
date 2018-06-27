@@ -54,6 +54,7 @@
 	$flgativo = (isset($_POST['flgativo'])) ? $_POST['flgativo'] : 0;
 	$flgregis = (isset($_POST['flgregis'])) ? $_POST['flgregis'] : 0;
 	$flprotes = (isset($_POST['flprotes'])) ? $_POST['flprotes'] : 0;
+	$insrvprt = (isset($_POST['insrvprt'])) ? $_POST['insrvprt'] : 0;
 	$flserasa = (isset($_POST['flserasa'])) ? $_POST['flserasa'] : 0;
 	$qtdfloat = (isset($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : 0;
 	$qtfltate = (isset($_POST['qtfltate'])) ? $_POST['qtfltate'] : 0;
@@ -94,6 +95,7 @@
 	$xml       .=		"<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
 	$xml       .=		"<flgregis>".$flgregis."</flgregis>";
 	$xml       .=		"<flprotes>".$flprotes."</flprotes>";
+	$xml       .=		"<insrvprt>".$insrvprt."</insrvprt>";
 	$xml       .=		"<flserasa>".$flserasa."</flserasa>";
 	$xml       .=		"<qtdfloat>".$qtdfloat."</qtdfloat>";
 	$xml       .=		"<qtfltate>".$qtfltate."</qtfltate>";

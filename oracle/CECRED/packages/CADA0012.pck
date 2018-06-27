@@ -89,7 +89,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                    ,pr_vlrenda_presumida      IN VARCHAR2 -- Valor da renda que foi retornada pelo bureau de consulta
                                    ,pr_dsjustific_outros_rend IN VARCHAR2 -- Justificativa de outros rendimentos
                                    ,pr_cdpais                 IN NUMBER -- Codigo do PAIS (FK CRAPNAT.CDNACION)
-                                   ,pr_nridentificacao        IN NUMBER -- Numero identificacao fiscal
+                                   ,pr_nridentificacao        IN VARCHAR2 -- Numero identificacao fiscal -- Projeto 414 - Marcelo Telles Coelho - Mouts
                                    ,pr_dsnatureza_relacao     IN VARCHAR2 -- Natureza da relacao
                                    ,pr_dsestado               IN VARCHAR2 -- Descricao do estado
                                    ,pr_nrpassaporte           IN NUMBER -- Numero do passaporte
@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE CECRED.cada0012 IS
                                      ,pr_incrs                      IN NUMBER   -- Indica se a pessoa e cadastrado na crs  (0-nao/ 1-sim). crs = lei de conformidade tributaria de contas no exterior para europeus
                                      ,pr_infatca                    IN NUMBER   -- Indica se a pessoa e cadastrado na fatca  (0-nao/ 1-sim). fatca = lei de conformidade tributaria de contas no exterior para americanos
                                      ,pr_cdpais                     IN NUMBER   -- Codigo do pais (fk crapnat.cdnacion)
-                                     ,pr_nridentificacao            IN NUMBER   -- Numero identificacao fiscal
+                                     ,pr_nridentificacao            IN VARCHAR2 -- Numero identificacao fiscal -- Projeto 414 - Marcelo Telles Coelho - Mouts
                                      ,pr_dsnatureza_relacao         IN VARCHAR2 -- Natureza da relacao
                                      ,pr_dsestado                   IN VARCHAR2 -- Descricao do estado
                                      ,pr_nrpassaporte               IN VARCHAR2 -- Numero do passaporte
@@ -1029,7 +1029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                    ,pr_vlrenda_presumida      IN VARCHAR2 -- Valor da renda que foi retornada pelo bureau de consulta
                                    ,pr_dsjustific_outros_rend IN VARCHAR2 -- Justificativa de outros rendimentos
                                    ,pr_cdpais                 IN NUMBER -- Codigo do PAIS (FK CRAPNAT.CDNACION)
-                                   ,pr_nridentificacao        IN NUMBER -- Numero identificacao fiscal
+                                   ,pr_nridentificacao        IN VARCHAR2 -- Numero identificacao fiscal -- Projeto 414 - Marcelo Telles Coelho - Mouts
                                    ,pr_dsnatureza_relacao     IN VARCHAR2 -- Natureza da relacao
                                    ,pr_dsestado               IN VARCHAR2 -- Descricao do estado
                                    ,pr_nrpassaporte           IN NUMBER -- Numero do passaporte
@@ -1148,7 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                      ,pr_incrs                      IN NUMBER   -- Indica se a pessoa e cadastrado na crs  (0-nao/ 1-sim). crs = lei de conformidade tributaria de contas no exterior para europeus
                                      ,pr_infatca                    IN NUMBER   -- Indica se a pessoa e cadastrado na fatca  (0-nao/ 1-sim). fatca = lei de conformidade tributaria de contas no exterior para americanos
                                      ,pr_cdpais                     IN NUMBER   -- Codigo do pais (fk crapnat.cdnacion)
-                                     ,pr_nridentificacao            IN NUMBER   -- Numero identificacao fiscal
+                                     ,pr_nridentificacao            IN VARCHAR2 -- Numero identificacao fiscal -- Projeto 414 - Marcelo Telles Coelho - Mouts
                                      ,pr_dsnatureza_relacao         IN VARCHAR2 -- Natureza da relacao
                                      ,pr_dsestado                   IN VARCHAR2 -- Descricao do estado
                                      ,pr_nrpassaporte               IN VARCHAR2 -- Numero do passaporte
@@ -2529,7 +2529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
   END;
 
   -- Rotina para retorno de CEP
-  PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
+PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
                           ,
                            pr_nmrua              IN VARCHAR2 -- Nome da rua
                           ,

@@ -1,4 +1,4 @@
-/******************************************************************************
+/***********************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +------------------------------------------+----------------------------------------+
@@ -22,7 +22,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 12/04/2018
+    Data      : Julho/2014                Ultima Atualizacao: 15/06/2018
     
     Dados referentes ao programa:
 
@@ -110,6 +110,10 @@
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
+                15/06/2018 - sctask0014400 Utilizacao do retorno de cdfvlcop da 
+                             rotina pc_calcula_tarifa para lançar o código da 
+                             faixa de valor (rotina grava_dados_conta) (Carlos)
+
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -1300,14 +1304,30 @@ PROCEDURE grava_dados_conta PRIVATE:
 
         FIND crawepr WHERE crawepr.cdcooper = par_cdcooper AND crawepr.nrdconta = par_nrdconta AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
         IF NOT AVAIL crawepr THEN DO:
-          MESSAGE "Nao encontrado registro na crawepr".
-          UNDO TRANS_1, LEAVE TRANS_1.
+          ASSIGN aux_cdcritic = 535
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
         END.
 
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND craplcr.cdlcremp = par_cdlcremp NO-LOCK NO-ERROR.
         IF NOT AVAIL craplcr THEN DO:
-          MESSAGE "Nao encontrado registro na craplcr".
-           UNDO TRANS_1, LEAVE TRANS_1.
+          ASSIGN aux_cdcritic = 363
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
         END.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -1344,13 +1364,14 @@ PROCEDURE grava_dados_conta PRIVATE:
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_vlrtarif = 0
+        ASSIGN  aux_vlrtarif = 0
                 aux_vltrfesp = 0
                 aux_vltrfgar = 0
                 par_vltottar = 0
                 aux_vlrtarif = DECI(pc_calcula_tarifa.pr_vlrtarif) WHEN pc_calcula_tarifa.pr_vlrtarif <> ?
                 aux_vltrfesp = DECI(pc_calcula_tarifa.pr_vltrfesp) WHEN pc_calcula_tarifa.pr_vltrfesp <> ?
                 aux_vltrfgar = DECI(pc_calcula_tarifa.pr_vltrfgar) WHEN pc_calcula_tarifa.pr_vltrfgar <> ?
+                aux_cdfvlcop = DECI(pc_calcula_tarifa.pr_cdfvlcop) WHEN pc_calcula_tarifa.pr_cdfvlcop <> ?
                 aux_dscritic = pc_calcula_tarifa.pr_dscritic WHEN pc_calcula_tarifa.pr_dscritic <> ?.   
                 aux_cdhistor = pc_calcula_tarifa.pr_cdhistor.
                 aux_cdhisgar = pc_calcula_tarifa.pr_cdhisgar.
@@ -1839,11 +1860,22 @@ PROCEDURE grava_dados_conta PRIVATE:
              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
              /* Se retornou erro */
-             ASSIGN aux_dscritic = ""
+             ASSIGN aux_cdcritic = 0
+                    aux_cdcritic = INTE(pc_insere_iof.pr_cdcritic) WHEN pc_insere_iof.pr_cdcritic <> ?
+                    aux_dscritic = ""
                     aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
               
-             IF aux_dscritic <> "" THEN
-                RETURN "NOK".
+             IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                DO:
+                
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+                  UNDO TRANS_1, RETURN "NOK".
+                END.
            
            
            END. /* END IF aux_vltxaiof > 0 THEN */

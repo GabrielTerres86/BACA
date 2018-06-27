@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 07/12/2017
+   Data    : Marco/2008                        Ultima atualizacao: 16/06/2018
      
    Dados referentes ao programa:
 
@@ -109,6 +109,9 @@
                31/01/2018 - Adicionado novos campos na temp-table tt-consulta-blt
                             devido ao projeto do novo IB. (PRJ285 - Rafael).  
 
+               16/06/2018 - Adicionado dados cadastrais do beneficiario (cooperado)
+                            para a geracao de carta de anuencia. (PRJ352 - Protesto - Rafael) 
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-consulta-blt
@@ -132,6 +135,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD nrinsava LIKE crapcob.nrinsava
     FIELD cdtpinav LIKE crapcob.cdtpinav
     FIELD nrcnvcob LIKE crapcob.nrcnvcob
+	FIELD insitcrt LIKE crapcob.insitcrt
     FIELD nrcnvceb LIKE crapceb.nrcnvceb
     FIELD nrdctabb LIKE crapcob.nrdctabb
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc
@@ -249,6 +253,13 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD dsorigem_proc AS CHAR
     FIELD dsbcoage AS CHAR
     FIELD dtbloqueio AS DATE
+    FIELD dsendere_bnf LIKE crapenc.dsendere
+    FIELD nrendere_bnf LIKE crapenc.nrendere
+    FIELD nrcepend_bnf LIKE crapenc.nrcepend
+    FIELD complend_bnf LIKE crapenc.complend
+    FIELD nmbairro_bnf LIKE crapenc.nmbairro
+    FIELD nmcidade_bnf LIKE crapenc.nmcidade
+    FIELD cdufende_bnf LIKE crapenc.cdufende
     .
 
 DEF TEMP-TABLE tt-arq-cobranca  

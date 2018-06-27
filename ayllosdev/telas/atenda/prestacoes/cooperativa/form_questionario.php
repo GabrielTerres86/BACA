@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 14/01/2015
  * OBJETIVO     : Formulário do questionario para microcredito
  * 
- * ALTERACOES   :
+ * ALTERACOES   : 08/06/2018 - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti 
  */	
 
  ?>
@@ -117,7 +117,7 @@
 	if ($qt_tot_perguntas > $qtpergun) { ?>
 	 	<input type="image" id="btContinuar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif"  onClick="controlaOperacao('C_MICRO_PERG'); return false;" />
 	<? } else { // Nao tem mais perguntas ?>
-	    <input type="image" id="btContinuar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif"   onClick="controlaOperacao('TC'); return false;" />
+	    <input type="image" id="btContinuar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif"   onClick="controlaOperacao('C_DEMONSTRATIVO_EMPRESTIMO'); return false;" />
 	<? } ?>
 </div>
 

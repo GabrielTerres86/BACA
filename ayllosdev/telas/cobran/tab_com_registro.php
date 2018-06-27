@@ -15,11 +15,9 @@
  *
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
- *              08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
+*               08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
- *              26/06/2017 - Incluido campo flgsacad, Prj. 340 (Jean Michel)  
- *              03/07/2017 - Inclusao da funcao formataTabela(), PRJ340 (Jean Michel)
  */	
 ?>
 
@@ -54,6 +52,7 @@
 								  <input type="hidden" id="nrnosnum" name="nrnosnum" value="<? echo getByTagName($r->tags,'nrnosnum') ?>" />								  
 								  <input type="hidden" id="dsorgarq" name="dsorgarq" value="<? echo getByTagName($r->tags,'dsorgarq') ?>" />								  
 								  <input type="hidden" id="nrdctabb" name="nrdctabb" value="<? echo getByTagName($r->tags,'nrdctabb') ?>" />								  
+								  <input type="hidden" id="insitcrt" name="insitcrt" value="<? echo getByTagName($r->tags,'insitcrt') ?>" />									  
 								  
 								  <input type="hidden" id="cdcooper" name="cdcooper" value="<? echo getByTagName($r->tags,'cdcooper') ?>" />								  
 								  <input type="hidden" id="cdsituac" name="cdsituac" value="<? echo getByTagName($r->tags,'cdsituac') ?>" />								  
@@ -218,6 +217,7 @@
 		<a href="#" class="botao" onclick="buscaConsulta('log'); return false;">Log Boleto</a>
 		<a href="#" class="botao" onclick="buscaConsulta('instrucoes'); return false;"><? echo utf8ToHtml('Instruções');  ?></a>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Exportar Consulta</a>
+		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;"><? echo utf8ToHtml('Imprimir carta anuência');  ?></a>
 	<?php
 	}
 	?>
@@ -234,5 +234,5 @@
 	
 	$('#divRegistros','#divTela').formataTabela();
 	$('#divPesquisaRodape','#divTela').formataRodapePesquisa();
-	
+
 </script>

@@ -292,12 +292,19 @@ DO ON ERROR UNDO , LEAVE:
                   /* Verifica se ha contratos de acordo */            
                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-                 aux_vlbaseiof = ROUND(crappep.vlsdvpar / ((EXP(( 1 + crapepr.txmensal / 100), 
+                 aux_vlbaseiof = ROUND(crappep.vlparepr / ((EXP(( 1 + crapepr.txmensal / 100), 
                                 (crapepr.qtpreemp - crappep.nrparepr + 1) ))), 2).
                                 
+                 /* Usar o menor valor entre o principal e o Saldo Devedor */                 
+                 IF crappep.vlsdvsji < aux_vlbaseiof THEN
+                 DO:
+                    ASSIGN aux_vlbaseiof = crappep.vlsdvsji.
+                 END. 
                           
+                /* Calcula o valor da do IOF complementar do atraso */
                  RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
-                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapepr.cdcooper
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2 /* Somente atraso */
+                                                        ,INPUT crapepr.cdcooper
                                                         ,INPUT crapepr.nrdconta
                                                         ,INPUT crapepr.nrctremp
                                                         ,INPUT aux_vlbaseiof /* vr_vlbaseiof */

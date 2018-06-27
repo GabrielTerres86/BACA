@@ -74,8 +74,12 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                 
             08/12/2017 - Melhoria 458, incluir parametro v_tppagmto na chamada da pc_gera_titulos_iptu_prog
                          Antonio R. Jr (mouts)
-            
+
             16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                         
+            18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo
+                          norturno rodando (Douglas Pagel - AMcom).
+                         
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -1192,7 +1196,7 @@ PROCEDURE process-web-request :
                                 ,INPUT ""                 /* pr_idtitdda */ 
                                 ,INPUT aux_cdsittit      /* pr_cdsittit */ 
                                 ,INPUT 0                 /* pr_flgerlog */ 
-                                ,INPUT crapdat.dtmvtolt  /* pr_dtmvtolt */  
+                                ,INPUT crapdat.dtmvtocd  /* pr_dtmvtolt */  
                                 ,INPUT c_codbarras       /* pr_dscodbar */ 
                                 ,INPUT v_cdctrlcs        /* pr_cdctrlcs */ 
                                ,OUTPUT 0                 /* pr_cdcritic */ 
@@ -1252,7 +1256,7 @@ PROCEDURE process-web-request :
                                  END.
 
                                  RUN liquidacao-intrabancaria-dda IN h-b1wgen0088(INPUT crapcop.cdcooper,
-                                                                                  INPUT crapdat.dtmvtolt,
+                                                                                  INPUT crapdat.dtmvtocd,
                                                                                   INPUT aux_recidcob,   
                                                                                   OUTPUT ret_dsinserr).
                 

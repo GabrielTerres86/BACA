@@ -76,13 +76,15 @@
                             
                04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
                             tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
+
+			    10/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom)
+
+                            
                             
                18/05/2018 - Adicionada chamada pc_ind_impede_talonario para verificar se a 
                             situacao de conta permite a solicitacao de talionario. PRJ366 (Lombardi).
                             
-                            
-               10/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
-                            norturno rodando (Douglas Pagel - AMcom)
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap05.p - Solicitacao/Liberacoes Taloes Normal                   */
@@ -595,7 +597,7 @@ PROCEDURE valida-dados:
                                                    INPUT  p-cod-agencia,
                                                    INPUT  p-nro-caixa,
                                                    0,
-                                                   INPUT  crapdat.dtmvtolt,
+                                                   INPUT  crapdat.dtmvtocd,
                                                    INPUT  "b1crap05",
                                                    INPUT  2, /*CAIXA*/
                                                    OUTPUT TABLE tt-erro).
@@ -1227,7 +1229,6 @@ PROCEDURE solicita-entrega-talao:
      
 
                  /* Atualiza o registro do cheque */
-                 /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/
                  ASSIGN crapfdc.dtretchq = crapdat.dtmvtocd
                         crapfdc.cdoperad = p-operador
                         aux_nrdconta     = crapfdc.nrdconta.

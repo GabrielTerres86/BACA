@@ -11,7 +11,7 @@
 
               12/09/2017 - Inclusao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
   
-
+              14/06/2018 - Adicionado desconto de título como tipo de origem - Luis Fernando (GFT)
  * ********************************************************************* */
 
  session_start();
@@ -43,6 +43,7 @@
 			<option value="PROTESTO" <? echo getByTagName($inf,'dsorgarq') == 'PROTESTO' ? 'selected' : '' ?> >Protesto</option>
 			<option value="EMPRESTIMO" <? echo getByTagName($inf,'dsorgarq') == 'EMPRESTIMO' ? 'selected' : '' ?> >Empr&eacute;stimo</option>
 			<option value="ACORDO" <? echo getByTagName($inf,'dsorgarq') == 'ACORDO' ? 'selected' : '' ?> >Acordo</option>
+			<option value="DESCONTO DE TITULO" <? echo getByTagName($inf,'dsorgarq') == 'DESCONTO DE TITULO' ? 'selected' : '' ?> >Desconto de T&iacute;tulo</option>
 			
 			<?php if($cddopcao != 'I'){?>
 				<option value="MIGRACAO" <? echo getByTagName($inf,'dsorgarq') == 'MIGRACAO' ? 'selected' : '' ?>> Migra&ccedil;&atilde;o</option>
@@ -134,15 +135,16 @@
 		
 		
 		<label for="flprotes"><? echo utf8ToHtml('Usar op&ccedil;&atilde;o protesto:') ?></label>
-		<select id="flprotes" name="flprotes" alt="Informe situacao desejada (Sim/Nao)" disabled>
+		<select id="flprotes" name="flprotes" alt="Informe situacao desejada (Sim/Nao)" onchange="onChangeProtesto()" disabled>
 			<option value="1" <?php echo (getByTagName($inf,'flprotes') == 1 ? "selected" : "");?>> <? echo utf8ToHtml('Sim') ?> </option> 
 			<option value="0" <?php echo (getByTagName($inf,'flprotes') == 0 ? "selected" : "");?>> <? echo utf8ToHtml('Não') ?> </option>
 		</select>
 
-		<label for="flserasa"><? echo utf8ToHtml('Usar op&ccedil;&atilde;o Serasa:') ?></label>
-		<select id="flserasa" name="flserasa" alt="Informe situacao desejada (Sim/Nao)" disabled>
-			<option value="1" <?php echo (getByTagName($inf,'flserasa') == 1 ? "selected" : "");?>> <? echo utf8ToHtml('Sim') ?> </option> 
-			<option value="0" <?php echo (getByTagName($inf,'flserasa') == 0 ? "selected" : "");?>> <? echo utf8ToHtml('Não') ?> </option>
+		<label for="insrvprt"><? echo utf8ToHtml('Serviço de protesto:') ?></label>
+		<select id="insrvprt" name="insrvprt" alt="Informe o serviço de protesto" disabled>
+			<option value="0" id="insrvprt_0" disabled <? echo getByTagName($inf,'insrvprt') == 0 ? 'selected' : "" ?> >Desabilitado</option>
+			<option value="1" id="insrvprt_1" disabled <? echo getByTagName($inf,'insrvprt') == 1 ? 'selected' : "" ?> >IEPTB</option>
+			<option value="2" id="insrvprt_2" disabled <? echo getByTagName($inf,'insrvprt') == 2 ? 'selected' : "" ?> >Banco do Brasil</option>
 		</select>
 
 		</br>
@@ -167,6 +169,13 @@
 			<option value="5" <?php echo (getByTagName($inf,'qtfltate') == 5 ? "selected" : ""); ?>>5</option> 
 		</select>
 		<label class="rotulo-linha">dias</label>
+
+		<label for="flserasa"><? echo utf8ToHtml('Usar op&ccedil;&atilde;o Serasa:') ?></label>
+		<select id="flserasa" name="flserasa" alt="Informe situacao desejada (Sim/Nao)" disabled>
+			<option value="1" <?php echo (getByTagName($inf,'flserasa') == 1 ? "selected" : "");?>> <? echo utf8ToHtml('Sim') ?> </option> 
+			<option value="0" <?php echo (getByTagName($inf,'flserasa') == 0 ? "selected" : "");?>> <? echo utf8ToHtml('Não') ?> </option>
+		</select>
+
 		</br>
 		
 		<label for="qtdecini"><? echo utf8ToHtml('Usar Decurso de Prazo de:') ?></label>

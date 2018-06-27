@@ -15,6 +15,7 @@
  * 005: [13/12/2017] Alteracao da chamada da operacao C_DADOS_AVAL para C_GAROPC. (Jaison/Marcos Martini - PRJ404)
  * 006: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 007: [24/01/2018] Alteração para exibição do campo DSNIVORI como risco de inclusão (Reginaldo - AMcom)
+ * 008: [08/06/2018] P410 - Incluido campo de financiar IOF (Marcos-Envolti)
  */	
  ?>
 
@@ -99,6 +100,12 @@
 		<label for="dtlibera"> <? echo utf8ToHtml("Data Liberação:"); ?> </label>
 		<input name="dtlibera" id="dtlibera" type="text" value="">				
 		</br>	
+		
+    <label for="idfiniof">Financiar IOF e Tarifa:</label>
+    <select name="idfiniof" id="idfiniof">
+        <option value="1" selected="selected">Sim</option>
+        <option value="0">N&atilde;o</option>
+    </select>    
 													
 		<label for="dtdpagto">Data pagto:</label>
 		<input name="dtdpagto" id="dtdpagto" type="text" value="" />
@@ -160,6 +167,6 @@
 <div id="divBotoes">
 	<? if (($operacao == 'C_NOVA_PROP') || ($operacao == 'C_NOVA_PROP_V') ) { ?>
 		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"   onClick="controlaOperacao('TC'); return false;" />
-		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_GAROPC'); return false;" />
+		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_DADOS_AVAL'); return false;" />
 	<? } ?>
 </div>

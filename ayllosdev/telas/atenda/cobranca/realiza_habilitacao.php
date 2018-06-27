@@ -76,6 +76,10 @@
 	$cddopcao = trim($_POST["cddopcao"]);
     $qtdfloat = $_POST["qtdfloat"];
     $flprotes = $_POST["flprotes"];
+	$insrvprt = $_POST["insrvprt"];
+	$flproalt = (int) trim($_POST["flproalt"]);
+	$qtlimaxp = $_POST["qtlimaxp"];
+	$qtlimmip = $_POST["qtlimmip"];
     $qtdecprz = $_POST["qtdecprz"];
     $idrecipr = (int) $_POST["idrecipr"];
 	$inenvcob = (int) $_POST["inenvcob"];
@@ -103,6 +107,9 @@
     $xmlHabilitaConvenio .= "   <flserasa>".$flserasa."</flserasa>";
 	$xmlHabilitaConvenio .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
 	$xmlHabilitaConvenio .= "   <flprotes>".$flprotes."</flprotes>";
+	$xmlHabilitaConvenio .= "   <insrvprt>".$insrvprt."</insrvprt>";
+	$xmlHabilitaConvenio .= "   <qtlimaxp>".$qtlimaxp."</qtlimaxp>";
+	$xmlHabilitaConvenio .= "   <qtlimmip>".$qtlimmip."</qtlimmip>";
     $xmlHabilitaConvenio .= "   <qtdecprz>".$qtdecprz."</qtdecprz>";
     $xmlHabilitaConvenio .= "   <idrecipr>".$idrecipr."</idrecipr>";
     $xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
@@ -160,7 +167,7 @@
 						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.($flgimpri == "1" ? "confirmaImpressao('".$flgregis."','');" : $metodo ).'");';
 	}
 	else
-	if ($flgimpri == 1) {  // Se tem o PDF a mostrar entao chama função para mostrar PDF do impresso gerado no browser
+	if ($flgimpri == 1 || ((int)$flprotes && (int)$flprotes !== $flproalt)) {  // Se tem o PDF a mostrar entao chama função para mostrar PDF do impresso gerado no browser
 		echo 'confirmaImpressao("'.$flgregis.'","");';
 	} 
 	else {	

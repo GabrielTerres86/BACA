@@ -882,6 +882,41 @@ PROCEDURE calcula_atraso_parcela:
                                         INPUT aux_qtdiasld,
                                         OUTPUT par_vljinpar).
        
+       /* calculado na include crps310.i */
+       /*
+       IF   aux_qtdiasld > 59   THEN
+            DO:
+                /* Considerando valor da parcela ate 59 dias */
+                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                                 INPUT crabepr.txmensal,
+                                                 INPUT 59,
+                                                 OUTPUT par_vljinp59).
+                
+                /* Comentado por Irlan. Nao eh necessario calcular, basta subtrair
+                   par_vljinpar - par_vljinpar */
+                
+                /* Considerando valor da parcela retirando os 59 dias */
+
+                /*
+                RUN calcula_juros_normais_total (INPUT aux_vlsldpar + par_vljinp59,
+                                                 INPUT crabepr.txmensal,
+                                                 INPUT aux_qtdiasld - 59,
+                                                 OUTPUT par_vljinp60).
+                */
+
+                par_vljinp60 = par_vljinpar - par_vljinp59.
+
+            END.
+       
+       ELSE
+            DO:
+                /* Considerando valor da parcela ate 59 dias */
+                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                                 INPUT crabepr.txmensal,
+                                                 INPUT aux_qtdiasld,
+                                                 OUTPUT par_vljinp59).
+            END.
+       */
        /* Valor atual parcela */
        ASSIGN par_vlatupar = crabpep.vlsdvpar + par_vljinpar.
 
@@ -905,12 +940,20 @@ PROCEDURE calcula_atraso_parcela:
                     /* Projeto 410 - Novo IOF */
 
                    /* calcula valor base do IOF de acordo com valor principal (parcela - juros) */
-                   ASSIGN aux_vlbasiof = crabpep.vlsdvsji / (EXP((1 + crabepr.txmensal / 100 ), 
+                   ASSIGN aux_vlbasiof = crabpep.vlparepr / (EXP((1 + crabepr.txmensal / 100 ), 
                                                                     ( crabepr.qtpreemp -  crabpep.nrparepr + 1))).                   
+                   
+
+                   /* BAse do IOF Complementar é o menor valor entre o Principal ou o Saldo Devedor */           
+                   IF aux_vlbasiof > crabpep.vlsdvsji THEN
+                   DO:
+                       ASSIGN aux_vlbasiof = crabpep.vlsdvsji.
+                   END.  
                    
                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                    RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
-                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                /* Somente IOF Complementar do Atraso */
+                                                       ,INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
                                                        ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
                                                        ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
                                                        ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */
@@ -2836,8 +2879,8 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
 
        /* Valor da multa */
        IF   aux_vlrmulta > 0  THEN
-            DO:
-                 /* Debita o pagamento da parcela da C/C */                                      
+            DO:                           
+                /* Debita o pagamento da parcela da C/C */                                      
                 RUN cria_lancamento_cc (INPUT par_cdcooper,
                                         INPUT par_dtmvtolt,
                                         INPUT par_cdagenci,
@@ -2851,13 +2894,13 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                         INPUT par_nrparepr,
                                         INPUT par_nrctremp,
                                         INPUT par_nrseqava).
-
+                                              
             END. /* IF   aux_vlmtapar > 0  THEN */
        
        /* Pagamento de juros de mora */
        IF   aux_vlatraso > 0 AND aux_vlpagsld > 0 THEN
-            DO:                           
-                /* Debita o pagamento da parcela da C/C */                                      
+            DO:
+                 /* Debita o pagamento da parcela da C/C */                                      
                 RUN cria_lancamento_cc (INPUT par_cdcooper,
                                         INPUT par_dtmvtolt,
                                         INPUT par_cdagenci,
@@ -2871,9 +2914,9 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                         INPUT par_nrparepr,
                                         INPUT par_nrctremp,
                                         INPUT par_nrseqava).
-                                              
+
             END. /* IF   aux_vlmrapar > 0  THEN */
-            
+       
 
        /* Projeto 410 - efetua o debito do IOF complementar de atraso */
        IF aux_vliofcpl > 0 AND aux_vlpagsld >= 0 THEN DO:
@@ -2911,7 +2954,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                         INPUT par_nrctremp,
                                         INPUT par_nrseqava).
             END. 
-            
+
 
        ASSIGN aux_flgtrans = TRUE.
        

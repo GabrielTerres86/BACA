@@ -13,6 +13,8 @@
  *
  *                09/05/2016 - Controlar o foco dos campos de acordo com a pesquisa (Douglas - Chamado 441759)
  * 
+ *				  01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+ *
  *                26/12/2017 - Ajustar o controle de critica para exibir corretamente as mensagens de erro devolvidas pelo Oracle (Douglas - Chamado 820998)
  * -------------- 
  */
@@ -65,6 +67,7 @@
 	$arquivos 		 = (isset($_POST['arquivos'])) ? $_POST['arquivos'] : '';
 	$vlabatim 		 = (isset($_POST['vlabatim'])) ? $_POST['vlabatim'] : 0;
 	$vldescto 		 = (isset($_POST['vldescto'])) ? $_POST['vldescto'] : 0;
+	$qtdiaprt		 = (isset($_POST['qtdiaprt'])) ? $_POST['qtdiaprt'] : 0;
 		
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
@@ -138,6 +141,7 @@
 	$xml .= '		<nmarqint>'.$nmarqint.'</nmarqint>';
 	$xml .= '		<dsnmarqv>'.$dsnmarqv.'</dsnmarqv>';
 	$xml .= '		<vrsarqvs>'.$vrsarqvs.'</vrsarqvs>';
+	$xml .= '		<qtdiaprt>'.$qtdiaprt.'</qtdiaprt>';
 	$xml .=			xmlFilho($listaArquivos,'Arquivos','Itens');
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
@@ -216,7 +220,7 @@
 	} else if ( $operacao == 'VI' ) {
 		echo "hideMsgAguardo();";
 		
-		if ( $cdinstru == 4 || $cdinstru == 6 || $cdinstru == 7 ) {
+		if ( $cdinstru == 4 || $cdinstru == 6 || $cdinstru == 7 || $cdinstru == 80 /*Instrução automática de protesto (PRJ352)*/ ) {
 			echo "buscaCampo();";
 		} else {
 			echo "msgConfirmacao();";

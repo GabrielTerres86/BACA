@@ -5,7 +5,8 @@
 	* DATA CRIAÇÃO : Junho/2017
 	* OBJETIVO     : Rotina para realizar a busca das nacionalidades
 	* --------------
-	* ALTERAÇÕES   : 
+	* ALTERAÇÕES   : 09/04/2018 - PRJ 414 - Incluido novas colunas na tabela e novos campos
+	*							  no form de alteração (Mateus Z - Mouts)
 	* -------------- 
 	*/		
  
@@ -76,6 +77,11 @@
 					<tr>
 						<th>C&oacute;digo</th>
 						<th>Nacionalidade</th>
+						<th>C&oacute;d</th>
+						<th>Pa&iacute;s</th>
+						<th>Acordo</th>
+						<th>Dt.In&iacute;cio</th>
+						<th>Dt.Fim</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -83,9 +89,21 @@
 						<tr>	
 							<td><span><? echo getByTagName($nacionalidade->tags,'cdnacion'); ?></span><? echo getByTagName($nacionalidade->tags,'cdnacion'); ?> </td>
 							<td><span><? echo getByTagName($nacionalidade->tags,'dsnacion'); ?></span><? echo getByTagName($nacionalidade->tags,'dsnacion'); ?> </td>
+							<!-- Inicio PRJ 414 -->
+							<td><span><? echo getByTagName($nacionalidade->tags,'cdpais'); ?></span><? echo getByTagName($nacionalidade->tags,'cdpais'); ?> </td>
+							<td><span><? echo getByTagName($nacionalidade->tags,'nmpais'); ?></span><? echo getByTagName($nacionalidade->tags,'nmpais'); ?> </td>
+							<td><span><? echo getByTagName($nacionalidade->tags,'inacordo'); ?></span><? echo getByTagName($nacionalidade->tags,'inacordo'); ?> </td>
+							<td><span><? echo getByTagName($nacionalidade->tags,'dtinicio'); ?></span><? echo getByTagName($nacionalidade->tags,'dtinicio'); ?> </td>
+							<td><span><? echo getByTagName($nacionalidade->tags,'dtfinal'); ?></span><? echo getByTagName($nacionalidade->tags,'dtfinal'); ?> </td>
+							<!-- Fim PRJ 414 -->
 							
 							<input type="hidden" id="cdnacion" name="cdnacion" value="<? echo getByTagName($nacionalidade->tags,'cdnacion'); ?>" />
 							<input type="hidden" id="dsnacion" name="dsnacion" value="<? echo getByTagName($nacionalidade->tags,'dsnacion'); ?>" />
+							<input type="hidden" id="cdpais" name="cdpais" value="<? echo getByTagName($nacionalidade->tags,'cdpais'); ?>" />
+							<input type="hidden" id="nmpais" name="nmpais" value="<? echo getByTagName($nacionalidade->tags,'nmpais'); ?>" />
+							<input type="hidden" id="inacordo" name="inacordo" value="<? echo getByTagName($nacionalidade->tags,'inacordo'); ?>" />
+							<input type="hidden" id="dtinicio" name="dtinicio" value="<? echo getByTagName($nacionalidade->tags,'dtinicio'); ?>" />
+							<input type="hidden" id="dtfinal" name="dtfinal" value="<? echo getByTagName($nacionalidade->tags,'dtfinal'); ?>" />
 							
 						</tr>	
 					<? } ?>
@@ -133,8 +151,24 @@
 			<input type="text" id="dsnacion" name="dsnacion" />
 			
 			<input type="hidden" id="cdnacion" name="cdnacion"/>
-														
-			<br />
+			<!-- Inicio PRJ 414 -->
+			<label for="cdpais"><? echo utf8ToHtml('País:') ?></label>
+			<input type="text" id="cdpais" name="cdpais" />
+			<input type="text" id="nmpais" name="nmpais" />
+
+			<label for="inacordo"><? echo utf8ToHtml('Acordo:') ?></label>
+			<select name="inacordo" id="inacordo" class="campo">
+				<option value=""></option>
+				<option value="fatca">FATCA</option>
+				<option value="crs">CRS</option>
+			</select>
+
+			<label for="dtinicio"><? echo utf8ToHtml('Data Início:') ?></label>
+			<input type="text" id="dtinicio" name="dtinicio" />
+
+			<label for="dtfinal"><? echo utf8ToHtml('Data Fim:') ?></label>
+			<input type="text" id="dtfinal" name="dtfinal" />
+			<!-- Fim PRJ 414 -->
 					
 			<br style="clear:both" />
 			
@@ -174,5 +208,6 @@
 	});	
 	
 	formataDetalhes();
+	formataTabelaNacionalidade();	
     	 
 </script>
