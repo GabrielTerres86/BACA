@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Renato Darosci
-   Data    : Setembro/2015                      Ultima atualizacao: 06/09/2017
+   Data    : Setembro/2015                      Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -26,7 +26,18 @@
                
                06/09/2017 - Adiçao de Validaçoes e Detalhamento de código de Barras
                             para projeto Mobile (P356.2 GPS - Ricardo Linhares)
+                            
+               09/10/2017 - Habilitar condicoes especificas do app mobile para
+                            projeto 285 (David).
                
+               12/04/2018 - Inclusao de novos campo para realizaçao 
+                            de analise de fraude. 
+                            PRJ381 - AntiFraude (Odirlei-AMcom)
+
+			   18/04/2018 - Alterar mensagem de retorno e condicional das rotinas
+			                pc_gps_pagamento e pc_gps_agmto_novo.
+							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -61,6 +72,9 @@ DEF INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF INPUT PARAM par_dshistor AS CHAR                                  NO-UNDO.
 DEF INPUT PARAM par_indtpaga AS INTE                                  NO-UNDO.
 DEF INPUT PARAM par_vlrlote  AS DECI                                  NO-UNDO.
+DEF INPUT PARAM par_iptransa AS CHAR                                  NO-UNDO.
+DEF INPUT PARAM par_iddispos AS CHAR                                  NO-UNDO.
+
 
 DEF OUTPUT PARAM par_dsmsgerr AS CHAR                                 NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -70,18 +84,18 @@ DEF VAR aux_dscritic AS CHAR                                          NO-UNDO.
 DEF VAR xml_req      AS LONGCHAR                                      NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                         NO-UNDO.
 DEF VAR aux_dtvalida AS DATE                                          NO-UNDO.
-DEF VAR h-b1wgen0014 AS HANDLE                                        NO-UNDO.	
+DEF VAR h-b1wgen0014 AS HANDLE                                        NO-UNDO.
 DEF VAR aux_idastcjt AS INTE                                          NO-UNDO.
 
-IF par_flmobile = yes THEN DO:
-
-  FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+IF par_idfisjur = 0 THEN DO:
+  FOR FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND 
+                          crapass.nrdconta = par_nrdconta 
+                          NO-LOCK. END.
   
   IF AVAILABLE crapass  THEN
-    ASSIGN par_idfisjur = crapass.inpessoa.
+     ASSIGN par_idfisjur = crapass.inpessoa.
   ELSE 
-    ASSIGN par_idfisjur = 1.
-	
+     ASSIGN par_idfisjur = 1.	
 END.	   
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
@@ -186,7 +200,7 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Desativacao */
                           INPUT "996", /* cdoperad */
                           INPUT "INTERNETBANK", /* nmdatela */
                           INPUT par_dsdrowid,
-						  INPUT par_nrcpfope,
+						              INPUT par_nrcpfope,
                           INPUT INT(par_flmobile),
                           OUTPUT "").
 
@@ -239,6 +253,8 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
                          INPUT par_nrcpfope,
                          INPUT INT(par_flmobile),
                          INPUT par_dshistor,
+                         INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
+                         INPUT par_iddispos,    /* --> ID Dispositivo mobile         */
                          OUTPUT "", /*pr_dsprotoc*/
                          OUTPUT "",
                          OUTPUT 0,
@@ -254,32 +270,18 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
  
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-	IF par_flmobile = yes THEN DO:
-		IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
-			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-			RETURN "NOK".
-		END.
+	
+  IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
+        ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
 
-		CREATE xml_operacao.
-		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
-									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + (IF pc_gps_pagamento.pr_dsprotoc <> ? THEN pc_gps_pagamento.pr_dsprotoc ELSE "") + "</dsprotoc>".
+    CREATE xml_operacao.
+  ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
+                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
+                   "<dsprotoc>" + (IF pc_gps_pagamento.pr_dsprotoc <> ? THEN pc_gps_pagamento.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
-		RETURN "OK".	
-	END.
-	ELSE DO:
-		IF aux_dscritic <> "" THEN DO:
-			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-			RETURN "NOK".
-		END.
-
-		CREATE xml_operacao.
-		ASSIGN xml_operacao.dslinxml = "<dsmsg>Pagamento(s) efetuado(s) com sucesso!</dsmsg>" + 
-									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
-
-		RETURN "OK".
-	END.
+    RETURN "OK".
 END.
 ELSE IF  par_tpoperac = 4 THEN DO: /* Consultar dados da cooperativa quanto ao GPS */
     
@@ -343,6 +345,8 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
                          INPUT par_nrcpfope,
                          INPUT INT(par_flmobile),
                          INPUT par_dshistor,
+                         INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
+                         INPUT par_iddispos,    /* --> ID Dispositivo mobile         */
                          OUTPUT "", /* DSPROTOC */
                          OUTPUT "",
                          OUTPUT 0,
@@ -358,32 +362,18 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
  
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-	IF par_flmobile = yes THEN DO:
-		IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
-			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-			RETURN "NOK".
-		END.
+	
+  IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
+        ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
 
-		CREATE xml_operacao.
-		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
-									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + (IF pc_gps_agmto_novo.pr_dsprotoc <> ? THEN pc_gps_agmto_novo.pr_dsprotoc ELSE "") + "</dsprotoc>".
+    CREATE xml_operacao.
+  ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
+                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
+                   "<dsprotoc>" + (IF pc_gps_agmto_novo.pr_dsprotoc <> ? THEN pc_gps_agmto_novo.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
-		RETURN "OK".	
-	END.
-	ELSE DO:	
-		IF aux_dscritic <> "" THEN DO:
-			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-			RETURN "NOK".
-		END.
-
-		CREATE xml_operacao.
-		ASSIGN xml_operacao.dslinxml = "<dsmsg>Agendamento(s) efetuado(s) com sucesso!</dsmsg>" +
-									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + pc_gps_agmto_novo.pr_dsprotoc + "</dsprotoc>".
-		RETURN "OK".
-	END.
-
+  RETURN "OK".	
 END.
 ELSE IF  par_tpoperac = 6 THEN DO:
      
@@ -426,6 +416,8 @@ ELSE IF  par_tpoperac = 6 THEN DO:
                           INPUT par_nrcpfope,       /* pr_nrcpfope */
                           INPUT INT(par_flmobile),  /* pr_flmobile */
                           INPUT "",   /* pr_dshistor */
+                          INPUT par_iptransa,    /* --> IP da transacao  IBank/mobile */
+                          INPUT par_iddispos,    /* --> ID Dispositivo mobile         */                         
                           OUTPUT "",  /* pr_dslitera */
                           OUTPUT 0,   /* pr_sequenci */
                           OUTPUT 0,   /* pr_nrseqaut */
@@ -550,8 +542,9 @@ ELSE IF par_tpoperac = 8 THEN DO:
                           INPUT DATE(par_dtdiadeb),   /* pr_dtdebito */                          
                           INPUT par_idseqttl,         /* pr_idseqttl */                          
                           INPUT par_tpdpagto,         /* pr_tpdpagto */                          
-                          INPUT par_sftcdbar,         /* pr_dslindig */
-                          INPUT par_cdbarras,         /* pr_cdbarras */
+                          INPUT IF LENGTH(par_sftcdbar) = 48 THEN par_sftcdbar ELSE "", /* pr_dslindig */
+                          INPUT IF par_cdbarras <> "" THEN par_cdbarras ELSE IF LENGTH(par_sftcdbar) = 44 THEN par_sftcdbar ELSE "", /* pr_cdbarras */
+                          INPUT par_dtcompet,         /* pr_mmaacomp */
                           INPUT par_vldoinss,         /* pr_vlrdinss */                          
                           INPUT par_vloutent,         /* pr_vlrouent */
                           INPUT par_vlatmjur,         /* pr_vlrjuros */

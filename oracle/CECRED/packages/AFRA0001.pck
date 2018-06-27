@@ -5,15 +5,25 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
       Sistema  : Rotinas referentes a Analise de Fraude
       Sigla    : AFRA
       Autor    : Odirlei Busana - AMcom
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 04/04/2018
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a Analise de Fraude.
 
-      Alteracoes:
+      Alteracoes:		02/02/2018 - Ajuste na variável pr_dhoperac para que sejam desconsiderados
+								     os segundos, desta forma a cursor se torna compatível com  os 
+									 intervalos cadastrados na Tela CADFRA.
+									 Chamado 789957 - Gabriel (Mouts).
 
+                   03/04/2018 - Inclusao de novo parametro na pc_criar_analise_antifraude 
+                                que possitibilite armazenar o iddispositivo 
+                                PRJ381 - Antifraude (Teobaldo J. - AMcom)
+
+                   04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
+                                e alteracoes na rotina pc_crias_analise_antifraude             
+                                PRJ381 - Antifraude (Teobaldo J. - AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --- Armazenar os campos alterados
@@ -23,6 +33,33 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
   TYPE typ_tab_campo_alt IS TABLE OF typ_rec_campo_alt
        INDEX BY VARCHAR2(50); 
          
+  ---> Manter parametros analise de fraude em memoria
+  ---> 03/04/2018 - Teobaldo
+  TYPE typ_tab_AnaliseFraudeParam IS TABLE OF tbgen_analise_fraude_param%rowtype
+       INDEX BY varchar2(10);
+  vr_tab_AnaliseFraudeParam  typ_tab_AnaliseFraudeParam;
+  
+  TYPE typ_tab_limfimope IS TABLE OF NUMBER
+       INDEX BY PLS_INTEGER;
+  vr_tab_limfimope typ_tab_limfimope;
+  
+  TYPE typ_tab_campos IS TABLE OF VARCHAR2(2000)
+         INDEX BY VARCHAR2(100);
+  
+  TYPE typ_tab_dsopefra IS TABLE OF VARCHAR2(200)
+       INDEX BY PLS_INTEGER;
+  vr_tab_dsopefra typ_tab_dsopefra;
+         
+         
+  -- Rotina para buscar o descrição da operacao de fraude
+  FUNCTION fn_dsoperacao_fraude(pr_cdoperacao IN NUMBER) 
+    RETURN VARCHAR2;
+
+  
+  --> Funcao que retorna flag indicando se operacao deve ser enviada para analide de fraude
+  FUNCTION fn_envia_analise (pr_cdoperacao IN tbgen_analise_fraude_param.cdoperacao%TYPE,
+                             pr_tpoperacao IN tbgen_analise_fraude_param.tpoperacao%TYPE) RETURN NUMBER;
+    
   --> Rotina para atualizar os dados da analise
   PROCEDURE pc_atualizar_analise ( pr_rowid     IN ROWID,
                                    pr_dhdenvio  IN tbgen_analise_fraude.dhenvio_analise%TYPE   DEFAULT NULL,
@@ -37,6 +74,14 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                    pr_dscrilog  IN VARCHAR2,                                   --> Em caso de status de erro, apresentar critica para log
                                    pr_dscritic OUT VARCHAR2 );                                   
   
+  --> Rotina para carregar no objeto json os dados da conta
+  PROCEDURE pc_carregar_conta_json ( pr_cdcooper     IN crapcop.cdcooper%TYPE, --> Codigo da cooperativa
+                                     pr_nrdconta     IN crapass.nrdconta%TYPE, --> Numero da conta do cooperaro
+                                     pr_dstpctdb     IN VARCHAR2,              --> Tipo de conta 
+                                     pr_json     IN OUT NOCOPY json ,          --> Json a ser incrementado
+                                     pr_cdcritic    OUT INTEGER,               --> Retorno de codigo de critica
+                                     pr_dscritic    OUT VARCHAR2 );            --> retorno de descricao de critica
+                                     
   --> Procedure para envio da TED para analise de fraude
   PROCEDURE pc_enviar_ted_analise (pr_idanalis     IN INTEGER,
                                    pr_Fingerprint OUT VARCHAR2, 
@@ -53,11 +98,38 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                          pr_cdcritic    OUT INTEGER,
                                          pr_dscritic    OUT VARCHAR2);                                
                                         
+  --> Procedure para envio da GPS para analise de fraude 
+  PROCEDURE pc_enviar_gps_analise (pr_idanalis     IN INTEGER
+                                  ,pr_Fingerprint OUT VARCHAR2 
+                                  ,pr_dhdenvio    OUT TIMESTAMP   --> Data hora do envio para a analise
+                                  ,pr_dhlimana    OUT TIMESTAMP   --> Data hora de limite de aguardo para a analise
+                                  ,pr_cdcritic    OUT INTEGER
+                                  ,pr_dscritic    OUT VARCHAR2);
+
+  --> Procedure para envio da GPS para analise de fraude
+  PROCEDURE pc_enviar_agend_gps_analise (pr_idanalis     IN INTEGER,
+                                         pr_Fingerprint OUT VARCHAR2, 
+                                         pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                         pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                         pr_cdcritic    OUT INTEGER,
+                                         pr_dscritic    OUT VARCHAR2 );
+
+  --> Rotina responsavel em enviar as analises de fraude pendentes
+  PROCEDURE pc_enviar_analise_fraude (pr_cdcritic  OUT INTEGER,
+                                      pr_dscritic  OUT VARCHAR2 ); 
+                                      
   --> Rotina responsavel em enviar as analises de fraude pendentes
   PROCEDURE pc_enviar_analise_fraude (pr_idanalis   IN INTEGER DEFAULT 0,
+                                      pr_cdoperac   IN INTEGER,
+                                      pr_idparale   IN NUMBER DEFAULT 0,
                                       pr_cdcritic  OUT INTEGER,
                                       pr_dscritic  OUT VARCHAR2 ); 
                                       
+  --> Rotina para retornar situação do parecer da analise de fraude
+  PROCEDURE pc_ret_sit_analise_fraude (pr_idanafra  IN tbgen_analise_fraude.idanalise_fraude%TYPE,
+                                       pr_cdparece OUT tbgen_analise_fraude.cdparecer_analise%TYPE,
+                                       pr_dscritic OUT VARCHAR2 );
+
   --> Excecutar rotinas referentes a aprovação da analise de fraude
   PROCEDURE pc_aprovacao_analise (pr_idanalis   IN INTEGER,    --> Indicador da analise de fraude
                                   pr_cdcritic  OUT INTEGER,
@@ -79,6 +151,8 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                         pr_cdoperacao  IN tbgen_analise_fraude.cdoperacao%TYPE,  --> Codigo de operacao de conta corrente
                                         pr_dstransacao IN tbgen_analise_fraude.dstransacao%TYPE, --> Descrição da transação 
                                         pr_tptransacao IN tbgen_analise_fraude.tptransacao%TYPE, --> Tipo de transação (1-online/ 2-agendada)                                         
+                                        pr_iddispositivo IN VARCHAR2 DEFAULT NULL,  --> identificador dispositivo                                        
+                                        pr_dstoken     IN VARCHAR2 DEFAULT NULL,                 --> Token de acesso
                                         pr_idanalise_fraude OUT tbgen_analise_fraude.idanalise_fraude%TYPE, --> identificador único da transação  
                                         pr_dscritic   OUT VARCHAR2 );                                        
                                         
@@ -103,26 +177,41 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                            pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica 
                                            pr_dsdetcri   OUT VARCHAR2);     --> Detalhe da critica                                            
                                            
-  --> Rotina para estornar TED reprovada pela analise de frude
+  --> Rotina para estornar TED reprovada pela analise de fraude
   PROCEDURE pc_estornar_ted_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, -->Id da análise de fraude
                                      pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
                                      pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
                                      pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
                                      pr_dscritic  OUT VARCHAR2 ); 
                                      
-  --> Rotina para geração de mensagem de estorno para o cooperado
-  PROCEDURE pc_mensagem_estorno (pr_cdcooper  IN crapcop.cdcooper%TYPE,
-                                 pr_nrdconta  IN crapass.nrdconta%TYPE,
-                                 pr_inpessoa  IN crapass.inpessoa%TYPE,
-                                 pr_idseqttl  IN crapttl.idseqttl%TYPE,
-                                 pr_cdproduto IN tbgen_analise_fraude.cdproduto%TYPE,
-                                 pr_tptransacao IN tbgen_analise_fraude.tptransacao%TYPE, --> Tipo de transação (1-online/ 2-agendada)                                  
-                                 pr_vldinami  IN VARCHAR2, --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
-                                 pr_cdcritic  OUT INTEGER,
-                                 pr_dscritic  OUT VARCHAR2 );                                           
+  --> Rotina para estornar GPS reprovada pela analise de fraude
+  PROCEDURE pc_estornar_gps_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                     pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                     pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                     pr_dscritic  OUT VARCHAR2 );                                           
 
-  /* Procedimento para realizar monitoração de fraudes nas TEDs */
-  PROCEDURE pc_monitora_ted ( pr_idanalis IN INTEGER );
+  --> Rotina para estornar Titulo reprovada pela analise de fraude
+  PROCEDURE pc_estornar_titulo_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                        pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                        pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
+                                        pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                        pr_dscritic  OUT VARCHAR2 );
+                                        
+  --> Rotina para estornar Convenio reprovado pela analise de fraude  
+  PROCEDURE pc_estornar_convenio_analise(pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                         pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                         pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
+                                         pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                         pr_dscritic  OUT VARCHAR2 );
+                                         
+  --> Rotina para estornar Tributos reprovada pela analise de fraude
+  PROCEDURE pc_estornar_Tributo_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                         pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                         pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
+                                         pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                         pr_dscritic  OUT VARCHAR2 );
+                                        
+  
 
   PROCEDURE pc_notificar_seguranca (pr_idanalis   IN tbgen_analise_fraude.idanalise_fraude%TYPE,
                                     pr_tpalerta   IN INTEGER, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
@@ -134,9 +223,19 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                         ,pr_tpoperac   IN INTEGER                        --> Tipo de operacao 1 -online 2-agendamento
                                         ,pr_dhoperac   IN TIMESTAMP                      --> Data hora da operação      
                                         ,pr_dtefeope   IN DATE DEFAULT NULL              --> Data que sera efetivada a operacao agendada
+                                        ,pr_cdcooper   IN NUMBER DEFAULT 1               --> Codigo da cooperativa, para uso do limite de operacao
+                                        ,pr_tplimite   IN NUMBER DEFAULT 0               --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao
                                         ,pr_dhlimana  OUT TIMESTAMP                      --> Retorna data hora limite da operacao
                                         ,pr_qtsegret  OUT NUMBER                         --> Retorna tempo em segundo de retenção da analise
                                         ,pr_dscritic  OUT VARCHAR2);   
+                                        
+  --> Procedimento para carregar em memoria parametros da analise de fraude */
+  PROCEDURE pc_ler_parametros_fraude (pr_atualizar IN INTEGER DEFAULT 0);
+  
+  --> Extrair os dados do campo complementar
+  PROCEDURE pc_extrair_dscomple (pr_dscomple      IN VARCHAR2,
+                                 pr_tab_dscomple OUT typ_tab_campos);
+  
 END;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
@@ -153,7 +252,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Frequencia: -----
       Objetivo  : Rotinas referentes a Analise de Fraude.  - PRJ335 - Analise de Fraude
 
-      Alteracoes:
+      Alteracoes:  03/04/2018 - Inclusao de novo parametro na pc_criar_analise_antifraude 
+                                que possibilite armazenar o iddispositivo 
+                                PRJ381 - Antifraude (Teobaldo J. - AMcom)
+                   04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
+                                e alteracoes na rotina pc_crias_analise_antifraude             
+                                PRJ381 - Antifraude (Teobaldo J. - AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -161,6 +265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
   vr_dsformat_data   VARCHAR2(30) := 'DD/MM/RRRR';
   vr_dsformat_dthora VARCHAR2(30) := 'DD/MM/RRRR HH24:MI:SS';
   
+  vr_time_param      NUMBER;
   
   --> Funcao para formatar numero no padrão da OFSSA - Aymaru
   FUNCTION fn_format_number ( pr_campo IN VARCHAR2
@@ -204,6 +309,97 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     WHEN OTHERS THEN
       RETURN NULL;
   END fn_base_cnpj_central;
+  
+    --> Funcao que retorna flag indicando se operacao deve ser enviada para analise de fraude
+  FUNCTION fn_envia_analise (pr_cdoperacao IN tbgen_analise_fraude_param.cdoperacao%TYPE,
+                             pr_tpoperacao IN tbgen_analise_fraude_param.tpoperacao%TYPE) RETURN NUMBER IS
+    /* ..........................................................................
+    --
+    --  Programa : fn_envia_analise       
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Teobaldo Jamunda (AMcom)
+    --  Data     : Abril/2018.                   Ultima atualizacao: 03/04/2018
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Retornar se operacao deve ser enviada para analise de fraude
+    --               (PRJ381 - Analise de Fraude)
+    --
+    --  Alteração  : 
+    --
+    -- ..........................................................................*/
+
+    vr_index    VARCHAR2(10);
+    vr_flgativo NUMBER;
+    vr_time     NUMBER;
+                            
+  BEGIN
+    vr_time := dbms_utility.get_time;
+    
+    -- atualizar parametros de analise em memoria a cada 10min (600 segundos)
+    IF nvl(vr_time_param,0) = 0 OR 
+       (vr_time - Nvl(vr_time_param,0)) > (60 * 100) THEN
+        pc_ler_parametros_fraude(1);
+        vr_time_param := vr_time;
+    END IF;
+    
+    vr_index :=  pr_cdoperacao || '|' || pr_tpoperacao;
+    Begin
+       vr_flgativo := Nvl(vr_tab_AnaliseFraudeParam(vr_Index).flgativo, 0);
+    Exception
+       When NO_DATA_FOUND Then
+            vr_flgativo := 0;
+       When Others Then 
+            vr_flgativo := 0;
+    End;
+    
+    Return vr_flgativo;                           
+  END fn_envia_analise;
+  
+  -- Rotina para buscar o descrição da operacao de fraude
+  FUNCTION fn_dsoperacao_fraude(pr_cdoperacao IN NUMBER) 
+    RETURN VARCHAR2 IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : fn_dsoperacao_fraude
+    --  Autor    : Odirlei Busana (AMcom)
+    --  Data     : Abril/2018.                   Ultima atualizacao: --/--/----
+    --
+    -- Objetivo  : Rotina para buscar o descrição da operacao de fraude
+    ---------------------------------------------------------------------------------------------------------------
+ 
+    vr_tab_dominios gene0010.typ_tab_dominio;
+    vr_dscritic     VARCHAR2(4000);
+  BEGIN
+  
+    IF vr_tab_dsopefra.count = 0 THEN
+      GENE0010.pc_retorna_dominios ( pr_nmmodulo   => 'CC',                      --> Nome do modulo(CADAST, COBRAN, etc.)
+                                     pr_nmdomini   => 'CDOPERAC_ANALISE_FRAUDE', --> Nome do dominio
+                                     -----> OUT <------
+                                     pr_tab_dominios => vr_tab_dominios,         --> retorna os dados dos dominios
+                                     pr_dscritic     => vr_dscritic);            --> retorna descricao da critica
+      IF vr_tab_dominios.count > 0 THEN
+        FOR i IN vr_tab_dominios.first..vr_tab_dominios.last LOOP
+          vr_tab_dsopefra(vr_tab_dominios(i).cddominio) := gene0007.fn_caract_acento(vr_tab_dominios(i).dscodigo);
+        END LOOP;
+      END IF;
+    
+    END IF;
+  
+  
+    IF vr_tab_dsopefra.exists(pr_cdoperacao) THEN
+      RETURN vr_tab_dsopefra(pr_cdoperacao);
+    ELSE
+      RETURN 'OUTROS';
+    END IF;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN 'OUTROS';  
+  END fn_dsoperacao_fraude;  
+
   
   --> Rotina para carregar no objeto Json os telefones do cooperado  
   PROCEDURE pc_carregar_fone_json ( pr_cdcooper     IN crapcop.cdcooper%TYPE, --> Codigo da cooperativa
@@ -264,6 +460,172 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       
   END pc_carregar_fone_json;
   
+  --> Rotina para carregar no objeto json os dados da conta
+  PROCEDURE pc_carregar_conta_json ( pr_cdcooper     IN crapcop.cdcooper%TYPE, --> Codigo da cooperativa
+                                     pr_nrdconta     IN crapass.nrdconta%TYPE, --> Numero da conta do cooperaro
+                                     pr_dstpctdb     IN VARCHAR2,              --> Tipo de conta 
+                                     pr_json     IN OUT NOCOPY json ,          --> Json a ser incrementado
+                                     pr_cdcritic    OUT INTEGER,               --> Retorno de codigo de critica
+                                     pr_dscritic    OUT VARCHAR2 )IS           --> retorno de descricao de critica
+  /* ..........................................................................
+    
+      Programa : pc_carregar_conta_json        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 10/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para carregar no objeto json os dados da conta
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar cooperado
+    CURSOR cr_crapass( pr_cdcooper  crapass.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS                                            
+      SELECT ass.cdagenci,
+             age.nmresage, 
+             cop.cdagectl,
+             pes.nmpessoa,
+             pes.tppessoa,
+             pes.idpessoa,
+             decode(pes.tppessoa,1,'F','J') dstippes, 
+             decode(pes.tppessoa,1,lpad(pes.nrcpfcgc,11,'0'),
+                                   lpad(pes.nrcpfcgc,14,'0')) dscpfcgc      
+        FROM crapass ass,
+             crapage age,
+             crapcop cop,
+             tbcadast_pessoa pes
+       WHERE ass.nrcpfcgc = pes.nrcpfcgc 
+         AND ass.cdcooper = cop.cdcooper
+         AND ass.cdcooper = age.cdcooper
+         AND ass.cdagenci = age.cdagenci
+         AND ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;   
+    
+    --> Buscar titular
+    CURSOR cr_crapttl( pr_cdcooper  crapass.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS   
+      SELECT pes.nmpessoa,
+             ttl.idseqttl
+        FROM crapttl ttl,
+             tbcadast_pessoa pes
+       WHERE ttl.nrcpfcgc = pes.nrcpfcgc 
+         AND ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl > 1
+         AND ttl.idseqttl <= 4
+         ORDER BY idseqttl;
+    rw_crapttl cr_crapttl%ROWTYPE;   
+      
+    --> Buscar representantes da empresa
+    CURSOR cr_repres( pr_idpessoa  crapass.cdcooper%TYPE) IS   
+      SELECT pes.nmpessoa
+        FROM tbcadast_pessoa_juridica_rep rep,
+             tbcadast_pessoa pes
+       WHERE rep.idpessoa_representante = pes.idpessoa
+         AND rep.idpessoa = pr_idpessoa 
+       ORDER BY rep.persocio;     
+                                                                    
+    
+    -----------> VARIAVEIS <----------- 
+    vr_exc_erro   EXCEPTION;
+    vr_cdcritic   INTEGER;
+    vr_dscritic   VARCHAR2(1000);
+      
+    vr_basecnpj   VARCHAR2(20);
+    vr_seq        INTEGER;   
+    
+  BEGIN    
+      
+    OPEN cr_crapass( pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+    
+    ----> ACCOUNT DEBIT
+    vr_basecnpj := fn_base_cnpj_central(pr_cdcooper);
+    pr_json.put('DBT_Acct_Bank'       , to_char(vr_basecnpj));     
+    pr_json.put('DBT_Acct_Branch'     , to_char(rw_crapass.cdagectl));    
+    --Tipo da conta de debito        
+    pr_json.put('DBT_Acct_Type'       , pr_dstpctdb);        
+    pr_json.put('DBT_Acct_Number'     , to_char(pr_nrdconta));        
+    pr_json.put('DBT_Acct_CreditUnion', to_char(pr_cdcooper));
+    pr_json.put('DBT_Acct_PA'         , to_char(rw_crapass.cdagenci));
+    pr_json.put('DBT_Acct_PA_Desc'    , to_char(rw_crapass.nmresage));
+    
+    ----> HOLDER
+    pr_json.put('DBT_Hldr_Type'       , rw_crapass.dstippes);
+    pr_json.put('DBT_Hldr_Document'   , nvl(rw_crapass.dscpfcgc,'0'));        
+    pr_json.put('DBT_Hldr_Name'       , rw_crapass.nmpessoa);
+    
+    --> Se for pessoa fisica
+    IF rw_crapass.tppessoa = 1 THEN
+      --> Buscar outro titular da conta
+      rw_crapttl := NULL;
+      FOR rw_crapttl IN cr_crapttl( pr_cdcooper  => pr_cdcooper,
+                                    pr_nrdconta  => pr_nrdconta) LOOP
+      
+        IF rw_crapttl.nmpessoa IS NOT NULL THEN
+          pr_json.put('Trxn_Contact_'||rw_crapttl.idseqttl||'_Info'       , rw_crapttl.nmpessoa);      
+        END IF;
+                                                      
+      END LOOP;                     
+      
+    
+    ELSE
+      --> inicializar seq, que compoem nome do campo
+      vr_seq := 2;
+      --> Buscar representantes da empresa
+      FOR rw_repres IN cr_repres(pr_idpessoa => rw_crapass.idpessoa) LOOP
+       -- Deve exibir apenas dois Socios/Representantes
+       IF vr_seq > 4 THEN
+         EXIT;
+       END IF;   
+       pr_json.put('Trxn_Contact_'||vr_seq||'_Info'  , rw_repres.nmpessoa);       
+      
+       vr_seq := vr_seq +1 ;
+      END LOOP;
+    
+    END IF;
+    
+    
+    --> carregar os telefones do cooperado  
+    pc_carregar_fone_json ( pr_cdcooper    => pr_cdcooper,     --> Codigo da cooperativa
+                           pr_nrdconta     => pr_nrdconta,     --> Numero da conta do cooperaro
+                           pr_dsprefix     => 'DBT_Hldr',      --> Prefixo do campo dos telefones no json
+                           pr_json         => pr_json,          --> Json a ser incrementado
+                           pr_cdcritic     => vr_cdcritic,     --> Retorno de codigo de critica
+                           pr_dscritic     => vr_dscritic);    --> Retorno de descricao de critica    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel carregar dados do cooperado: '||SQLERRM;
+      
+  END pc_carregar_conta_json;
+  
+  
   --> Procedure para envio da TED para analise de fraude
   PROCEDURE pc_enviar_ted_analise (pr_idanalis     IN INTEGER,
                                    pr_Fingerprint OUT VARCHAR2, 
@@ -298,7 +660,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              fra.nrdconta,
              fra.iptransacao,
              fra.cdoperacao, 
-             fra.tptransacao
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
         FROM tbgen_analise_fraude fra
        WHERE fra.idanalise_fraude = pr_idanalis; 
     rw_fraude cr_fraude%ROWTYPE;
@@ -326,6 +690,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              decode(flgpescr,1,'F','J') dspescrd,
              tvl.cdbccrcb,
              tvl.cdagercb,
+             --Solicitdo pela Segurança Enviar o municipio, pois é mais significativo
+             trim(caf.nmcidade) ||' - '||caf.cdufresd nmageban,
              --tvl.cpfcgrcb,
              decode(tvl.flgpescr,1,lpad(tvl.cpfcgrcb,11,'0'),
                                    lpad(tvl.cpfcgrcb,14,'0')) ds_cpfcgrcb,
@@ -345,18 +711,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
               tvl.vldocrcb,
               tvl.cdfinrcb,
               tvl.dshistor
-              
         FROM craptvl tvl,
              crapcop cop,
              crapass ass,
-             crapban ban
+             crapban ban,
+             crapagb agb,
+             crapcaf caf
        WHERE tvl.cdcooper = cop.cdcooper
          AND tvl.cdcooper = ass.cdcooper
          AND tvl.nrdconta = ass.nrdconta 
          AND tvl.cdbccrcb = ban.cdbccxlt
+         AND tvl.cdbccrcb = agb.cddbanco(+)
+         AND tvl.cdagercb = agb.cdageban(+)
+         AND agb.cdcidade = caf.cdcidade(+)
          AND tvl.idanafrd = pr_idanalis
          AND tvl.cdcooper = pr_cdcooper
          AND tvl.nrdconta = pr_nrdconta;         
+         
     rw_craptvl cr_craptvl%ROWTYPE;
     
     --Tipo de registro do tipo data
@@ -377,8 +748,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_code       VARCHAR2(10);
     vr_Message    VARCHAR2(1000);
     vr_qtsegret   NUMBER;
-    
-    vr_basecnpj   VARCHAR2(20);
     vr_nmarqlog   VARCHAR2(500);
     vr_cdprogra   VARCHAR2(50) := 'pc_enviar_ted_analise';
     
@@ -458,25 +827,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       RAISE vr_exc_erro; 
     END IF;
     
+    vr_ted.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    
     ----> ACCOUNT DEBIT
-    vr_basecnpj := fn_base_cnpj_central(rw_craptvl.cdcooper);
-    vr_ted.put('DBT_Acct_Bank'       , to_char(vr_basecnpj));     
-    vr_ted.put('DBT_Acct_Branch'     , to_char(rw_craptvl.cdagectl));    
-    --Tipo da conta de debito        
-    vr_ted.put('DBT_Acct_Type'       , rw_craptvl.dstpctdb);        
-    vr_ted.put('DBT_Acct_Number'     , to_char(rw_craptvl.nrdconta));        
-    vr_ted.put('DBT_Acct_CreditUnion', to_char(rw_craptvl.cdcooper));
-    vr_ted.put('DBT_Acct_PA'         , to_char(rw_craptvl.cdagenci));
-    
-    ----> HOLDER
-    vr_ted.put('DBT_Hldr_Type'       , rw_craptvl.dspesemi);
-    vr_ted.put('DBT_Hldr_Document'   , rw_craptvl.ds_cpfcgemi);        
-    vr_ted.put('DBT_Hldr_Name'       , rw_craptvl.nmpesemi);
-    
-    --> carregar os telefones do cooperado  
-    pc_carregar_fone_json ( pr_cdcooper     => rw_craptvl.cdcooper, --> Codigo da cooperativa
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craptvl.cdcooper, --> Codigo da cooperativa
                            pr_nrdconta     => rw_craptvl.nrdconta, --> Numero da conta do cooperaro
-                           pr_dsprefix     => 'DBT_Hldr',          --> Prefixo do campo dos telefones no json
+                             pr_dstpctdb     => rw_craptvl.dstpctdb, --> Tipo de conta 
                            pr_json         => vr_ted,              --> Json a ser incrementado
                            pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
                            pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
@@ -489,11 +846,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     ---->  ACCOUNT CREDIT
     vr_ted.put('CDT_Acct_Bank'       , to_char(rw_craptvl.cdbccrcb));
     vr_ted.put('CDT_Acct_Branch'     , to_char(rw_craptvl.cdagercb));
+    vr_ted.put('CDT_Acct_Branch_Desc', rw_craptvl.nmageban);
     vr_ted.put('CDT_Acct_Type'       , rw_craptvl.dstpctcr);
     vr_ted.put('CDT_Acct_Number'     , rw_craptvl.nrcctrcb);
     vr_ted.put('CDT_Acct_CreditUnion', '');
     vr_ted.put('CDT_Hldr_Type'       , rw_craptvl.dspescrd);
-    vr_ted.put('CDT_Hldr_Document'   , rw_craptvl.ds_cpfcgrcb);
+    vr_ted.put('CDT_Hldr_Document'   , nvl(rw_craptvl.ds_cpfcgrcb,'0'));
     vr_ted.put('CDT_Hldr_Name'       , rw_craptvl.nmpesrcb);
     
     ----> TRANSACTION
@@ -504,14 +862,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_ted.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_dthora));
     vr_ted.put('Trxn_Value'          , fn_format_number('Trxn_Value',rw_craptvl.vldocrcb));
     vr_ted.put('Trxn_Purpose'        , to_char(rw_craptvl.cdfinrcb) );
-    vr_ted.put('Trxn_TransferIdentifier', '');
     vr_ted.put('Trxn_History'        , rw_craptvl.dshistor);
     vr_ted.put('Trxn_ScheduledDate'  , '');
     vr_ted.put('Trxn_ScheduledTime'  , '');
     vr_ted.put('Trxn_PreferenceLevel', '');
     vr_ted.put('Trxn_MovementDate'   , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
     vr_ted.put('Trxn_Scheduled'      , '0');
+    vr_ted.put('Token_ID   '         , rw_fraude.dstoken);
     vr_ted.put('Tracking_IP'         , rw_fraude.iptransacao);
+    vr_ted.put('Mobile_Device_ID'    , to_char(rw_fraude.iddispositivo));
     vr_ted.put('Trxn_NLS_Start_Date'   , to_char(pr_dhdenvio,vr_dsformat_dthora));
     vr_ted.put('Trxn_NLS_End_Date'     , to_char(pr_dhlimana,vr_dsformat_dthora));
     
@@ -619,8 +978,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              fra.idanalise_fraude,
              fra.iptransacao,
              fra.cdoperacao, 
-             fra.tptransacao
-      
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken      
         FROM tbgen_analise_fraude fra
        WHERE fra.idanalise_fraude = pr_idanalis; 
     rw_fraude cr_fraude%ROWTYPE;
@@ -650,6 +1010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              decode(cti.inpessoa,1,'F','J') dspescrd,
              lau.cddbanco,
              lau.cdageban,
+             trim(caf.nmcidade) ||' - '||caf.cdufresd nmageban,
              --cti.nrcpfcgc cpfcgrcb,
              decode(cti.inpessoa,1,lpad(cti.nrcpfcgc,11,'0'),
                                    lpad(cti.nrcpfcgc,14,'0')) ds_cpfcgrcb,
@@ -673,7 +1034,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              crapcop cop,
              crapass ass,
              crapban ban,
-             crapcti cti
+             crapcti cti,
+             crapagb agb,
+             crapcaf caf
        WHERE lau.cdcooper = cop.cdcooper
          AND lau.cdcooper = ass.cdcooper
          AND lau.nrdconta = ass.nrdconta 
@@ -683,6 +1046,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND lau.cddbanco = cti.cddbanco
          AND lau.cdageban = cti.cdageban
          AND lau.nrctadst = cti.nrctatrf 
+         AND lau.cddbanco = agb.cddbanco(+)
+         AND lau.cdageban = agb.cdageban(+)
+         AND agb.cdcidade = caf.cdcidade(+)
          AND lau.cdtiptra = 4    
          AND lau.idanafrd = pr_idanalis
          AND lau.cdcooper = pr_cdcooper
@@ -721,7 +1087,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_code       VARCHAR2(10);
     vr_Message    VARCHAR2(1000);
     
-    vr_basecnpj      VARCHAR2(20);
     vr_nmextttl      crapass.nmprimtl%TYPE;
     vr_ds_nrcpfcgc   VARCHAR2(25);
     vr_nrctrlif      VARCHAR2(80);
@@ -825,26 +1190,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       RAISE vr_exc_erro; 
     END IF;
     
+    vr_ted.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
     
     ----> ACCOUNT DEBIT
-    vr_basecnpj := fn_base_cnpj_central(rw_craplau.cdcooper);
-    vr_ted.put('DBT_Acct_Bank'       , to_char(vr_basecnpj));     
-    vr_ted.put('DBT_Acct_Branch'     , to_char(rw_craplau.cdagectl));    
-    --Tipo da conta de debito        
-    vr_ted.put('DBT_Acct_Type'       , rw_craplau.dstpctdb);        
-    vr_ted.put('DBT_Acct_Number'     , to_char(rw_craplau.nrdconta));        
-    vr_ted.put('DBT_Acct_CreditUnion', to_char(rw_craplau.cdcooper));
-    vr_ted.put('DBT_Acct_PA'         , to_char(rw_craplau.cdagenci));
-        
-    ----> HOLDER
-    vr_ted.put('DBT_Hldr_Type'       , rw_craplau.dspesemi);
-    vr_ted.put('DBT_Hldr_Document'   , vr_ds_nrcpfcgc);        
-    vr_ted.put('DBT_Hldr_Name'       , vr_nmextttl);
-    
-    --> carregar os telefones do cooperado  
-    pc_carregar_fone_json ( pr_cdcooper     => rw_craplau.cdcooper, --> Codigo da cooperativa
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplau.cdcooper, --> Codigo da cooperativa
                            pr_nrdconta     => rw_craplau.nrdconta, --> Numero da conta do cooperaro
-                           pr_dsprefix     => 'DBT_Hldr',          --> Prefixo do campo dos telefones no json
+                           pr_dstpctdb     => rw_craplau.dstpctdb, --> Tipo de conta 
                            pr_json         => vr_ted,              --> Json a ser incrementado
                            pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
                            pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
@@ -858,11 +1210,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     ---->  ACCOUNT CREDIT
     vr_ted.put('CDT_Acct_Bank'       , to_char(rw_craplau.cddbanco));
     vr_ted.put('CDT_Acct_Branch'     , to_char(rw_craplau.cdageban));
+    vr_ted.put('CDT_Acct_Branch_Desc', rw_craplau.nmageban);
     vr_ted.put('CDT_Acct_Type'       , rw_craplau.dstpctcr);
     vr_ted.put('CDT_Acct_Number'     , rw_craplau.nrcctrcb);
     vr_ted.put('CDT_Acct_CreditUnion', '');
     vr_ted.put('CDT_Hldr_Type'       , rw_craplau.dspescrd);
-    vr_ted.put('CDT_Hldr_Document'   , rw_craplau.ds_cpfcgrcb);
+    vr_ted.put('CDT_Hldr_Document'   , nvl(rw_craplau.ds_cpfcgrcb,'0'));
     vr_ted.put('CDT_Hldr_Name'       , rw_craplau.nmpesrcb);
     
     ----> TRANSACTION
@@ -886,7 +1239,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_ted.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_dthora));
     vr_ted.put('Trxn_Value'          , fn_format_number('Trxn_Value',rw_craplau.vllanaut));
     vr_ted.put('Trxn_Purpose'        , '10');
-    vr_ted.put('Trxn_TransferIdentifier', '');
     vr_ted.put('Trxn_History'        , '');
     vr_ted.put('Trxn_ScheduledDate'  , to_char(rw_craplau.dtmvtopg,vr_dsformat_data));
     vr_ted.put('Trxn_ScheduledTime'  , '');
@@ -896,7 +1248,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_ted.put('Tracking_IP'         , rw_fraude.iptransacao);  
     vr_ted.put('Trxn_NLS_Start_Date' , to_char(pr_dhdenvio,vr_dsformat_dthora));
     vr_ted.put('Trxn_NLS_End_Date'   , to_char(pr_dhlimana,vr_dsformat_dthora));      
-    vr_ted.print();
+    vr_ted.put('Token_ID   '         , rw_fraude.dstoken);
+    vr_ted.put('Mobile_Device_ID'    , to_char(rw_fraude.iddispositivo));
+     
               
     AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarTedParaAnalise'
                                        ,pr_verbo => WRES0001.POST 
@@ -969,8 +1323,2719 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel realizar o envio do agendamento de TED para analise: '||SQLERRM;
   END pc_enviar_agend_ted_analise;    
   
+  --> Rotina para retornar dados do destinatario do titulo
+  PROCEDURE pc_ret_dados_benef_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE,
+                                       pr_nrcpfcgc OUT NUMBER,
+                                       pr_tppessoa OUT VARCHAR2,
+                                       pr_nmpessoa OUT VARCHAR2) IS
+    /* ..........................................................................
+    
+      Programa : pc_ret_dados_dest_titulo        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 12/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para retornar dados do destinatario do titulo
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    CURSOR cr_npc IS
+      SELECT con.flgcontingencia,
+             con.dsxml
+        FROM tbcobran_consulta_titulo con
+       WHERE con.cdctrlcs = pr_cdctrlcs;  
+    rw_npc cr_npc%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    vr_flnpc    BOOLEAN;
+    vr_tbTitulo NPCB0001.typ_reg_TituloCIP;
+    vr_des_erro VARCHAR2(500);
+    vr_dscritic VARCHAR2(1000);
+    vr_nrcpfcgc NUMBER;
+    
+    
+    
+  BEGIN
+  
+    --> Buscar dados da consulta 
+    OPEN cr_npc;
+    FETCH cr_npc INTO rw_npc;
+    vr_flnpc := cr_npc%FOUND;
+    CLOSE cr_npc;
+              
+    --> Senao estiver em contigencia
+    IF vr_flnpc AND rw_npc.flgcontingencia = 0 THEN
+      npcb0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_npc.dsxml
+                                       , pr_tbtitulo => vr_tbtitulo
+                                       , pr_des_erro => vr_des_erro
+                                       , pr_dscritic => vr_dscritic);
+                                               
+      IF vr_dscritic IS NOT NULL THEN
+        pr_nrcpfcgc := 0;
+        pr_tppessoa := NULL;
+        pr_nmpessoa := NULL;
+      ELSE
+        pr_nrcpfcgc := vr_tbtitulo.CNPJ_CPFBenfcrioOr;
+        pr_tppessoa := vr_tbtitulo.TpPessoaBenfcrioOr;
+        pr_nmpessoa := vr_tbtitulo.Nom_RzSocBenfcrioOr;
+      
+      END IF;
+      
+    ELSE
+      pr_nrcpfcgc := 0;
+      pr_tppessoa := NULL;
+      pr_nmpessoa := NULL;
+    END IF;  
+
+  EXCEPTION 
+    WHEN OTHERS THEN
+      pr_nrcpfcgc := 0;
+      pr_tppessoa := NULL;
+      pr_nmpessoa := NULL;
+  END pc_ret_dados_benef_titulo;
+   
+  --> Procedure para envio de titulo para analise de fraude
+  PROCEDURE pc_enviar_titulo_analise ( pr_idanalis     IN INTEGER,
+                                       pr_Fingerprint OUT VARCHAR2, 
+                                       pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                       pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                       pr_cdcritic    OUT INTEGER,
+                                       pr_dscritic    OUT VARCHAR2 )IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_titulo_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 12/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel pelo envio de titulo para analise de fraude
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do lancamento
+    CURSOR cr_craptit (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT tit.cdcooper,
+             tit.nrdconta,
+             tit.dscodbar,
+             tit.nrcpfcgc,
+             tit.vldpagto,
+             tit.nrautdoc,
+             tit.cdctrlcs,
+             tit.cdbandst,
+             pro.dscedent
+        FROM crappro pro,
+             craptit tit      
+       WHERE pro.nrseqaut = tit.nrautdoc
+         AND pro.dtmvtolt = tit.dtmvtolt
+         AND pro.cdcooper = tit.cdcooper
+         AND pro.nrdconta = tit.nrdconta
+         AND tit.idanafrd = pr_idanalis
+         AND tit.cdcooper = pr_cdcooper
+         AND tit.nrdconta = pr_nrdconta;                
+    rw_craptit cr_craptit%ROWTYPE;
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta   AYMA0001.typ_http_response_aymaru;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+    vr_titulo     json := json();
+    vr_code       VARCHAR2(10);
+    vr_Message    VARCHAR2(1000);
+    vr_qtsegret   NUMBER;
+    
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_titulos_analise';
+    
+    vr_lindigit   VARCHAR2(100);
+    vr_nrcpfcgc_bnf NUMBER;
+    vr_tppessoa_bnf VARCHAR2(10);
+    vr_nmpessoa_bnf VARCHAR2(200);
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+  
+    OPEN cr_craptit( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craptit INTO rw_craptit;
+    
+    IF cr_craptit%NOTFOUND THEN
+      CLOSE cr_craptit;
+      vr_dscritic := 'Não foi possivel localizar craplft';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craptit;
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craptit.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    vr_nrcpfcgc_bnf := NULL;
+    vr_tppessoa_bnf := NULL;
+    vr_nmpessoa_bnf := NULL;
+    
+    IF TRIM(rw_craptit.cdctrlcs) IS NOT NULL THEN
+      --> Retornar dados do destinatario do titulo
+      pc_ret_dados_benef_titulo (pr_cdctrlcs => rw_craptit.cdctrlcs,
+                                 pr_nrcpfcgc => vr_nrcpfcgc_bnf,
+                                 pr_tppessoa => vr_tppessoa_bnf,
+                                 pr_nmpessoa => vr_nmpessoa_bnf);
+    END IF;    
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação                                      
+                                ,pr_dtefeope  => NULL                   --> Data que sera efetivada a operacao agendada
+                                ,pr_cdcooper  => rw_fraude.cdcooper    --> Codigo da cooperativa, para uso do limite de operacao
+                                ,pr_tplimite  => 2                      --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao                                        
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_titulo.put('Trxn_TransferIdentifier', (fn_dsoperacao_fraude(rw_fraude.cdoperacao)));
+    
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craptit.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craptit.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_titulo,           --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    
+    ---->  ACCOUNT CREDIT
+    vr_titulo.put('CDT_Acct_Bank'       , to_char(rw_craptit.cdbandst));
+    vr_titulo.put('CDT_Acct_Branch'     , '0'); 
+       
+    vr_titulo.put('CDT_Hldr_Type'       , nvl(vr_tppessoa_bnf,'0'));
+    vr_titulo.put('CDT_Hldr_Document'   , nvl((CASE upper(vr_tppessoa_bnf) 
+                                             WHEN 'F' THEN lpad(vr_nrcpfcgc_bnf,11,'0')
+                                             WHEN 'J' THEN lpad(vr_nrcpfcgc_bnf,14,'0')
+                                                 ELSE '0'
+                                               END),'0'));
+    vr_titulo.put('CDT_Hldr_Name'       , coalesce(TRIM(rw_craptit.dscedent),vr_nmpessoa_bnf,'0'));
+    
+    
+    ----> TRANSACTION
+    vr_titulo.put('Trxn_Id'                   , to_char(pr_idanalis));
+    vr_titulo.put('Trxn_Channel'              , to_char(rw_fraude.cdcanal_operacao));
+    vr_titulo.put('BillPayment_Bar_Code'      , rw_craptit.dscodbar);
+    
+    vr_lindigit := NULL;
+    COBR0005.pc_calc_linha_digitavel (pr_cdbarras => rw_craptit.dscodbar, 
+                                      pr_lindigit => vr_lindigit);
+                                      
+    vr_titulo.put('BillPayment_Sequence_ID'   , vr_lindigit);
+    vr_titulo.put('Trxn_Value'                , fn_format_number('Trxn_Value',rw_craptit.vldpagto));
+    vr_titulo.put('Trxn_History'              , rw_craptit.dscedent);
+    vr_titulo.put('BillPayment_Authentication' , to_char(rw_craptit.nrautdoc));
+    vr_titulo.put('Trxn_Date'                 , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_titulo.put('Trxn_ScheduledDate'        , '');
+    vr_titulo.put('Trxn_ScheduledTime'        , '');
+    vr_titulo.put('Trxn_PreferenceLevel'      , '');
+    vr_titulo.put('Trxn_MovementDate'         , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_titulo.put('Trxn_Scheduled'            , '0');
+    vr_titulo.put('Token_ID   '               , rw_fraude.dstoken);
+    vr_titulo.put('Tracking_IP'               , rw_fraude.iptransacao);
+    vr_titulo.put('Mobile_Device_ID'          , to_char(rw_fraude.iddispositivo));
+    vr_titulo.put('Trxn_NLS_Start_Date'       , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_titulo.put('Trxn_NLS_End_Date'         , to_char(pr_dhlimana,vr_dsformat_dthora));
+            
+    
+    --> Campos obrigatorios
+    vr_titulo.put('Trxn_MessageCode'       , '0'); 
+    vr_titulo.put('Trxn_ControlNumber'     , '0'); 
+    vr_titulo.put('CDT_Acct_Type'          , '0'); 
+    vr_titulo.put('CDT_Acct_Number'        , '0'); 
+    vr_titulo.put('Trxn_Purpose'           , '0'); 
+    
+            
+--    vr_titulo.print();
+      
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarTituloParaAnalise'
+                                       ,pr_verbo => WRES0001.POST 
+                                       ,pr_servico => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo => vr_titulo
+                                       ,pr_resposta => vr_resposta
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_cdcritic => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio da Titulo para analise: '||SQLERRM;
+  END pc_enviar_titulo_analise;    
+  
+  --> Procedure para envio de agendamento de pagamento de titulo para analise de fraude
+  PROCEDURE pc_enviar_agend_titulo_analise ( pr_idanalis     IN INTEGER,
+                                             pr_Fingerprint OUT VARCHAR2, 
+                                             pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                             pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                             pr_cdcritic    OUT INTEGER,
+                                             pr_dscritic    OUT VARCHAR2 )IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_agend_titulo_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 12/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Procedure para envio de agendamento de pagamento de titulo para analise de fraude
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do lancamento
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,
+             lau.nrdconta,
+             lau.dscodbar,
+             lau.dslindig,
+             lau.idlancto,
+             lau.cdtiptra,
+             lau.cdctrlcs,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.idlancto nrautdoc,
+             lau.dscedent
+        FROM craplau lau      
+       WHERE lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta;                
+    rw_craplau cr_craplau%ROWTYPE;
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta   AYMA0001.typ_http_response_aymaru;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+    vr_titulo     json := json();
+    vr_code       VARCHAR2(10);
+    vr_Message    VARCHAR2(1000);
+    vr_qtsegret   NUMBER;
+    
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_tributos_analise';
+    vr_nrcpfcgc_bnf NUMBER;
+    vr_tppessoa_bnf VARCHAR2(10);
+    vr_nmpessoa_bnf VARCHAR2(200);
+    vr_cdbandst     NUMBER;
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+  
+    OPEN cr_craplau( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplau INTO rw_craplau;
+    
+    IF cr_craplau%NOTFOUND THEN
+      CLOSE cr_craplau;
+      vr_dscritic := 'Não foi possivel localizar craplau';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplau;
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplau.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    vr_nrcpfcgc_bnf := NULL;
+    vr_tppessoa_bnf := NULL;
+    vr_nmpessoa_bnf := NULL;
+    
+    IF TRIM(rw_craplau.cdctrlcs) IS NOT NULL THEN
+      --> Retornar dados do destinatario do titulo
+      pc_ret_dados_benef_titulo (pr_cdctrlcs => rw_craplau.cdctrlcs,
+                                 pr_nrcpfcgc => vr_nrcpfcgc_bnf,
+                                 pr_tppessoa => vr_tppessoa_bnf,
+                                 pr_nmpessoa => vr_nmpessoa_bnf);
+    END IF;
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => rw_craplau.dtmvtopg    --> Data que sera efetivada a operacao agendada
+                                ,pr_cdcooper  => rw_fraude.cdcooper     --> Codigo da cooperativa, para uso do limite de operacao
+                                ,pr_tplimite  => 2                      --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao                                                                        
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_titulo.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplau.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craplau.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_titulo,           --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    --Determinar codigo barras    
+    vr_cdbandst:= to_number(SUBSTR(rw_craplau.dscodbar,01,03));
+    
+    ---->  ACCOUNT CREDIT
+    vr_titulo.put('CDT_Acct_Bank'       , to_char(vr_cdbandst));
+    vr_titulo.put('CDT_Acct_Branch'     , '0'); 
+       
+    vr_titulo.put('CDT_Hldr_Type'       , nvl(vr_tppessoa_bnf,'0'));
+    vr_titulo.put('CDT_Hldr_Document'   , nvl((CASE upper(vr_tppessoa_bnf) 
+                                             WHEN 'F' THEN lpad(vr_nrcpfcgc_bnf,11,'0')
+                                             WHEN 'J' THEN lpad(vr_nrcpfcgc_bnf,14,'0')
+                                             ELSE '0'
+                                           END),'0'));
+    vr_titulo.put('CDT_Hldr_Name'       , coalesce(trim(rw_craplau.dscedent),vr_nmpessoa_bnf,'0'));
+    
+    
+    ----> TRANSACTION
+    vr_titulo.put('Trxn_Id'                   , to_char(pr_idanalis));
+    vr_titulo.put('Trxn_Channel'              , to_char(rw_fraude.cdcanal_operacao));
+    vr_titulo.put('BillPayment_Bar_Code'      , rw_craplau.dscodbar);                                      
+    vr_titulo.put('BillPayment_Sequence_ID'   , rw_craplau.dslindig);
+    vr_titulo.put('Trxn_Value'                , fn_format_number('Trxn_Value',rw_craplau.vllanaut));
+    vr_titulo.put('Trxn_History'              , rw_craplau.dscedent);
+    vr_titulo.put('BillPayment_Authentication' , to_char(rw_craplau.nrautdoc));
+    vr_titulo.put('Trxn_Date'                 , to_char(SYSDATE,vr_dsformat_dthora));
+    
+    vr_titulo.put('Trxn_ScheduledDate'        , to_char(rw_craplau.dtmvtopg,vr_dsformat_data));
+    vr_titulo.put('Trxn_ScheduledTime'        , '');
+    vr_titulo.put('Trxn_PreferenceLevel'      , '');
+    vr_titulo.put('Trxn_MovementDate'         , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_titulo.put('Trxn_Scheduled'            , '1');
+
+    vr_titulo.put('Token_ID   '               , rw_fraude.dstoken);
+    vr_titulo.put('Tracking_IP'               , rw_fraude.iptransacao);
+    vr_titulo.put('Mobile_Device_ID'          , to_char(rw_fraude.iddispositivo));
+    vr_titulo.put('Trxn_NLS_Start_Date'       , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_titulo.put('Trxn_NLS_End_Date'         , to_char(pr_dhlimana,vr_dsformat_dthora));
+    
+    --> Campos obrigatorios
+    vr_titulo.put('Trxn_MessageCode'       , '0'); 
+    vr_titulo.put('Trxn_ControlNumber'     , '0'); 
+    vr_titulo.put('CDT_Acct_Type'          , '0'); 
+    vr_titulo.put('CDT_Acct_Number'        , '0'); 
+    vr_titulo.put('Trxn_Purpose'           , '0'); 
+              
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarTituloParaAnalise'
+                                       ,pr_verbo => WRES0001.POST 
+                                       ,pr_servico => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo => vr_titulo
+                                       ,pr_resposta => vr_resposta
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_cdcritic => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio de agendamento de Titulo para analise: '||SQLERRM;
+  END pc_enviar_agend_titulo_analise;    
+  
+  --> Procedure para envio de tributos para analise de fraude
+  PROCEDURE pc_enviar_tributo_analise ( pr_idanalis     IN INTEGER,
+                                         pr_Fingerprint OUT VARCHAR2, 
+                                         pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                         pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                         pr_cdcritic    OUT INTEGER,
+                                         pr_dscritic    OUT VARCHAR2 )IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_tributo_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 10/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel pelo envio de tributos para analise de fraude
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do lancamento
+    CURSOR cr_craplft (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lft.cdcooper,
+             lft.nrdconta,
+             lft.cdbarras,
+             lft.dtapurac,
+             lft.nrcpfcgc,
+             lft.cdempcon cdempcon_ori,
+             lft.cdempcon ||'-'|| lft.cdsegmto cdempcon,
+             con.nmextcon,
+             con.tparrecd,
+             --Icluir valor de multa e fatura para DARF
+             decode(lft.tpfatura,2,lft.vllanmto + nvl(lft.vlrmulta,0) + nvl(lft.vlrjuros,0),
+                                   lft.vllanmto) vllanmto,
+             lft.nrautdoc,
+             lft.cdtribut,
+             pro.dscedent
+        FROM crappro pro,
+             crapcon con,
+             craplft lft      
+       WHERE pro.nrseqaut = lft.nrautdoc
+         AND pro.dtmvtolt = lft.dtmvtolt
+         AND pro.cdcooper = lft.cdcooper
+         AND pro.nrdconta = lft.nrdconta
+         AND lft.cdcooper = con.cdcooper(+)
+         AND lft.cdempcon = con.cdempcon(+)
+         AND lft.cdsegmto = con.cdsegmto(+)
+         AND lft.idanafrd = pr_idanalis
+         AND lft.cdcooper = pr_cdcooper
+       AND lft.nrdconta = pr_nrdconta;                
+    rw_craplft cr_craplft%ROWTYPE;
+    
+    --> Buscar dados convenio sicredi
+		CURSOR cr_crapscn(pr_cdempres crapscn.cdempres%TYPE,
+		                  pr_tpmeiarr crapstn.tpmeiarr%TYPE)IS
+    SELECT scn.dsnomcnv,
+           scn.cdempcon ||'-'|| scn.cdsegmto cdempcon
+      FROM crapscn scn,
+		       crapstn stn
+     WHERE scn.cdempres = pr_cdempres
+		   AND stn.cdempres = scn.cdempres
+		   AND stn.tpmeiarr = pr_tpmeiarr;
+    rw_crapscn cr_crapscn%ROWTYPE;
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta   AYMA0001.typ_http_response_aymaru;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+    vr_trib       json := json();
+    vr_code       VARCHAR2(10);
+    vr_Message    VARCHAR2(1000);
+    vr_qtsegret   NUMBER;
+    
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_tributos_analise';
+    
+    vr_lindigit   VARCHAR2(100);
+    vr_cdempcon   VARCHAR2(100);
+    
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+  
+    OPEN cr_craplft( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplft INTO rw_craplft;
+    
+    IF cr_craplft%NOTFOUND THEN
+      CLOSE cr_craplft;
+      vr_dscritic := 'Não foi possivel localizar craplft';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplft;
+    END IF;
+    
+    vr_cdempcon := rw_craplft.cdempcon;
+    IF nvl(rw_craplft.cdempcon_ori,0) = 0 THEN
+      -- Pega o nome do convenio
+      OPEN cr_crapscn (pr_cdempres => CASE rw_craplft.cdtribut
+                                           WHEN '6106' THEN 'D0'
+                                           ELSE 'A0' 
+                                      END,
+                       pr_tpmeiarr => CASE rw_fraude.cdcanal_operacao
+                                           WHEN 3 THEN 'D'
+                                           ELSE 'C'
+                                           END);
+      FETCH cr_crapscn INTO rw_crapscn;      
+      CLOSE cr_crapscn;
+			vr_cdempcon := rw_crapscn.cdempcon;      
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplft.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => NULL                   --> Data que sera efetivada a operacao agendada
+                                ,pr_cdcooper  => rw_fraude.cdcooper     --> Codigo da cooperativa, para uso do limite de operacao
+                                ,pr_tplimite  => (CASE rw_craplft.tparrecd
+                                                    WHEN 1 THEN 3 -- Sicredi
+                                                    WHEN 2 THEN 4 -- Bancoob
+                                                    WHEN 3 THEN 2 -- Cecred
+                                                    ELSE 0
+                                                  END )                 --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_trib.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    --> Campos Obrigatorios
+    vr_trib.put('Trxn_MessageCode'    , '0');   
+    vr_trib.put('Trxn_ControlNumber'  , '0');   
+    vr_trib.put('CDT_Acct_Bank'       , '0');   
+    vr_trib.put('CDT_Acct_Branch'     , '0');   
+    vr_trib.put('CDT_Acct_Type'       , '0');   
+    vr_trib.put('CDT_Acct_Number'     , '0');
+    vr_trib.put('CDT_Hldr_Type'       , '0');
+    vr_trib.put('CDT_Hldr_Document'   , '0');
+    vr_trib.put('CDT_Hldr_Name'       , rw_craplft.dscedent);
+    vr_trib.put('Trxn_Purpose'        , '0');
+    
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplft.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craplft.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_trib,             --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    ----> TRANSACTION
+    vr_trib.put('Trxn_Id'                   , to_char(pr_idanalis));
+    vr_trib.put('Trxn_Channel'              , to_char(rw_fraude.cdcanal_operacao));
+    vr_trib.put('BillPayment_Bar_Code'      , rw_craplft.cdbarras);
+    
+    vr_lindigit := NULL;
+    CXON0014.pc_calc_lindig_fatura (pr_cdbarras => rw_craplft.cdbarras, 
+                                    pr_lindigit => vr_lindigit);
+    vr_trib.put('BillPayment_Sequence_ID'   , vr_lindigit);
+    vr_trib.put('BillPayment_Reference_Date', rw_craplft.dtapurac);
+    vr_trib.put('CDT_Hldr_Document'         , nvl(rw_craplft.nrcpfcgc,'0'));
+    vr_trib.put('BillPayment_Consorcy_ID'   , vr_cdempcon);
+    vr_trib.put('BillPayment_Consorcy_Desc' , nvl(rw_craplft.nmextcon,rw_crapscn.dsnomcnv));
+    vr_trib.put('Trxn_Value'                , fn_format_number('Trxn_Value',rw_craplft.vllanmto));
+    vr_trib.put('Trxn_History'              , rw_craplft.dscedent);
+    vr_trib.put('BillPayment_Authentication' , to_char(rw_craplft.nrautdoc));
+    vr_trib.put('Trxn_Date'                 , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_trib.put('Trxn_ScheduledDate'        , '');
+    vr_trib.put('Trxn_ScheduledTime'        , '');
+    vr_trib.put('Trxn_PreferenceLevel'      , '');
+    vr_trib.put('Trxn_MovementDate'         , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_trib.put('Trxn_Scheduled'            , '0');
+    vr_trib.put('Token_ID   '               , rw_fraude.dstoken);
+    vr_trib.put('Tracking_IP'               , rw_fraude.iptransacao);
+    vr_trib.put('Mobile_Device_ID'          , to_char(rw_fraude.iddispositivo));
+    vr_trib.put('Trxn_NLS_Start_Date'       , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_trib.put('Trxn_NLS_End_Date'         , to_char(pr_dhlimana,vr_dsformat_dthora));
+              
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarTributoParaAnalise'
+                                       ,pr_verbo => WRES0001.POST 
+                                       ,pr_servico => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo => vr_trib
+                                       ,pr_resposta => vr_resposta
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_cdcritic => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio da Tributo para analise: '||SQLERRM;
+  END pc_enviar_tributo_analise;    
+  
+  --> Procedure para envio de tributos para analise de fraude
+  PROCEDURE pc_enviar_agend_trib_analise ( pr_idanalis     IN INTEGER,
+                                           pr_Fingerprint OUT VARCHAR2, 
+                                           pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                           pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                           pr_cdcritic    OUT INTEGER,
+                                           pr_dscritic    OUT VARCHAR2 )IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_agend_trib_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 10/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel pelo envio de tributos para analise de fraude
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do agendamento
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,
+             lau.nrdconta,
+             lau.dscodbar,
+             lau.idlancto,
+             lau.cdtiptra,
+             SUBSTR(lau.dscodbar,16,4) cdempcon,
+             SUBSTR(lau.dscodbar, 2,1) cdsegmto,
+             con.cdempcon ||'-'||con.cdsegmto cdempcon_2,             
+             con.nmextcon,
+             con.tparrecd,
+             lau.vllanaut,
+             lau.dtmvtopg,
+--           lau.nrautdoc,
+             lau.dscedent
+        FROM craplau lau,
+             crapcon con      
+       WHERE lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta         
+         AND lau.cdcooper = con.cdcooper(+)
+         AND SUBSTR(lau.dscodbar,16,4) = con.cdempcon(+)
+         AND SUBSTR(lau.dscodbar, 2,1) = con.cdsegmto(+);                
+    rw_craplau cr_craplau%ROWTYPE;
+    
+    --> Buscar detalhes de agend. DARF/DAS
+    CURSOR cr_darf (pr_idlancto craplau.idlancto%TYPE) IS
+      SELECT darf.dtapuracao,
+             darf.nrcpfcgc
+        FROM tbpagto_agend_darf_das darf
+       WHERE darf.idlancto = pr_idlancto;
+    rw_darf cr_darf%ROWTYPE;
+    
+    --> Buscar detalhes de agend. trib
+    CURSOR cr_tributos (pr_idlancto craplau.idlancto%TYPE) IS
+      SELECT trib.dtcompetencia,
+             trib.nridentificacao
+        FROM tbpagto_agend_tributos trib
+       WHERE trib.idlancto = pr_idlancto;
+    rw_tributos cr_tributos%ROWTYPE;
+    
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta   AYMA0001.typ_http_response_aymaru;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+    vr_trib       json := json();
+    vr_code       VARCHAR2(10);
+    vr_Message    VARCHAR2(1000);
+    vr_qtsegret   NUMBER;
+    
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_agend_tributo_analise';
+    
+    vr_lindigit   VARCHAR2(100);
+    vr_dtapurac   DATE;
+    vr_nrcpfcgc   NUMBER;
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+  
+    OPEN cr_craplau( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplau INTO rw_craplau;
+    
+    IF cr_craplau%NOTFOUND THEN
+      CLOSE cr_craplau;
+      vr_dscritic := 'Não foi possivel localizar craplau';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplau;
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplau.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    IF rw_craplau.cdtiptra = 10 THEN
+    
+      --> Buscar detalhes de agend. DARF/DAS
+      rw_darf := NULL;
+      OPEN cr_darf (pr_idlancto => rw_craplau.idlancto);
+      FETCH cr_darf INTO rw_darf;
+      CLOSE cr_darf;
+      
+      vr_dtapurac := rw_darf.dtapuracao;
+      vr_nrcpfcgc := trim(rw_darf.nrcpfcgc);
+      
+    ELSE
+    
+      --> Buscar detalhes de agend. trib
+      rw_tributos := NULL;
+      OPEN cr_tributos (pr_idlancto => rw_craplau.idlancto);
+      FETCH cr_tributos INTO rw_tributos;
+      CLOSE cr_tributos;
+      
+      vr_dtapurac := rw_tributos.dtcompetencia;
+      vr_nrcpfcgc := trim(rw_tributos.nridentificacao);
+    
+    END IF;
+    
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => rw_craplau.dtmvtopg    --> Data que sera efetivada a operacao agendada
+                                ,pr_cdcooper  => rw_fraude.cdcooper    --> Codigo da cooperativa, para uso do limite de operacao
+                                ,pr_tplimite  => (CASE rw_craplau.tparrecd
+                                                    WHEN 1 THEN 3 -- Sicredi
+                                                    WHEN 2 THEN 4 -- Bancoob
+                                                    WHEN 3 THEN 2 -- Cecred
+                                                    ELSE 0
+                                                  END )                 --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao                                
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_trib.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplau.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craplau.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_trib,             --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+
+    ----> TRANSACTION
+    vr_trib.put('Trxn_Id'                   , to_char(pr_idanalis));
+    vr_trib.put('Trxn_Channel'              , to_char(rw_fraude.cdcanal_operacao));
+    vr_trib.put('BillPayment_Bar_Code'      , rw_craplau.dscodbar);
+    
+    vr_lindigit := NULL;
+    CXON0014.pc_calc_lindig_fatura (pr_cdbarras => rw_craplau.dscodbar, 
+                                    pr_lindigit => vr_lindigit);
+    vr_trib.put('BillPayment_Sequence_ID'   , vr_lindigit);
+    vr_trib.put('BillPayment_Reference_Date', vr_dtapurac);
+    vr_trib.put('CDT_Hldr_Document'         , nvl(vr_nrcpfcgc,'0'));
+    vr_trib.put('BillPayment_Consorcy_ID'   , rw_craplau.cdempcon_2);
+    vr_trib.put('BillPayment_Consorcy_Desc' , rw_craplau.nmextcon);
+    vr_trib.put('Trxn_Value'                , fn_format_number('Trxn_Value',rw_craplau.vllanaut));
+    vr_trib.put('Trxn_History'              , rw_craplau.dscedent);
+    vr_trib.put('BillPayment_Authentication' , to_char(rw_craplau.idlancto));
+    vr_trib.put('Trxn_Date'                 , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_trib.put('Trxn_ScheduledDate'        , to_char(rw_craplau.dtmvtopg,vr_dsformat_data));
+    vr_trib.put('Trxn_ScheduledTime'        , '');
+    vr_trib.put('Trxn_PreferenceLevel'      , '');
+    vr_trib.put('Trxn_MovementDate'         , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_trib.put('Trxn_Scheduled'            , '1');
+    vr_trib.put('Token_ID   '               , rw_fraude.dstoken);
+    vr_trib.put('Tracking_IP'               , rw_fraude.iptransacao);
+    vr_trib.put('Mobile_Device_ID'          , to_char(rw_fraude.iddispositivo));
+    vr_trib.put('Trxn_NLS_Start_Date'       , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_trib.put('Trxn_NLS_End_Date'         , to_char(pr_dhlimana,vr_dsformat_dthora));
+    
+    --> Campos obrigatorios
+    vr_trib.put('Trxn_MessageCode'    , '0');   
+    vr_trib.put('Trxn_ControlNumber'  , '0');   
+    vr_trib.put('CDT_Acct_Bank'       , '0');   
+    vr_trib.put('CDT_Acct_Branch'     , '0');   
+    vr_trib.put('CDT_Acct_Type'       , '0');   
+    vr_trib.put('CDT_Acct_Number'     , '0');
+    vr_trib.put('CDT_Hldr_Type'       , '0');
+    vr_trib.put('CDT_Hldr_Document'   , '0');
+    vr_trib.put('CDT_Hldr_Name'       , rw_craplau.dscedent);
+    vr_trib.put('Trxn_Purpose'        , '0');
+
+ 
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarTributoParaAnalise'
+                                       ,pr_verbo => WRES0001.POST 
+                                       ,pr_servico => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo => vr_trib
+                                       ,pr_resposta => vr_resposta
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_cdcritic => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio de Agendamento Tributos para analise: '||SQLERRM;
+  END pc_enviar_agend_trib_analise;    
+  
+
+  --> Procedure para envio da GPS para analise de fraude 
+  PROCEDURE pc_enviar_gps_analise (pr_idanalis    IN  INTEGER
+                                  ,pr_Fingerprint OUT VARCHAR2 
+                                  ,pr_dhdenvio    OUT TIMESTAMP   --> Data hora do envio para a analise
+                                  ,pr_dhlimana    OUT TIMESTAMP   --> Data hora de limite de aguardo para a analise
+                                  ,pr_cdcritic    OUT INTEGER
+                                  ,pr_dscritic    OUT VARCHAR2) IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_gps_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Teobaldo Jamunda (AMcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 05/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel pelo envio da GPS para analise de fraude
+                  (PRJ381 - Analise de Fraude)
+                   
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informacoes GPS
+    CURSOR cr_craplgp (pr_idanalis  craplgp.idanafrd%TYPE,
+                       pr_cdcooper  craplgp.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT lgp.cdcooper,
+             ass.nrdconta,
+             cop.cdagectl,
+             ass.cdagenci,
+             decode(pes.tppessoa, 1, 'F', 'J') dspessoa,
+             decode(pes.tppessoa, 1, lpad(pes.nrcpfcgc,11,'0'),
+                                     lpad(pes.nrcpfcgc,14,'0')) dscpfcgc,
+             pes.nmpessoa,    
+            -- Trxn_Contact_2_info --> melhor forma de obter
+            -- Trxn_Contact_3_info
+            -- Trxn_Contact_4_info
+            lgp.cdbarras,
+            lgp.dslindig,
+            lgp.mmaacomp,
+            lgp.vlrtotal,
+            lgp.nrautdoc,
+            lgp.vlrdinss
+       FROM craplgp lgp,
+            crapcop cop,
+            crapass ass,
+            tbcadast_pessoa pes
+      WHERE lgp.cdcooper = cop.cdcooper
+        AND lgp.cdcooper = ass.cdcooper
+        AND lgp.nrctapag = ass.nrdconta
+        AND ass.nrcpfcgc = pes.nrcpfcgc
+        AND lgp.idanafrd = pr_idanalis  
+        AND lgp.cdcooper = pr_cdcooper  -- 1
+        AND lgp.nrctapag = pr_nrdconta; -- 8199124      
+    rw_craplgp cr_craplgp%ROWTYPE;
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta   AYMA0001.typ_http_response_aymaru;
+    vr_parametros WRES0001.typ_tab_http_parametros;
+    vr_gps        json := json();
+    vr_code       VARCHAR2(10);
+    vr_Message    VARCHAR2(1000);
+    vr_qtsegret   NUMBER;
+    vr_lindigit   VARCHAR2(80);
+        
+    vr_dtapurac   date;
+    vr_nmarqlog   VARCHAR2(500);
+    vr_cdprogra   VARCHAR2(50) := 'pc_enviar_gps_analise';
+    
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+    OPEN cr_craplgp( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplgp INTO rw_craplgp;
+    
+    IF cr_craplgp%NOTFOUND THEN
+      CLOSE cr_craplgp;
+      vr_dscritic := 'Não foi possivel localizar craplgp';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplgp;
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplgp.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => NULL                   --> Data que sera efetivada a operacao agendada
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_gps.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    ---->  ACCOUNT CREDIT
+    --> Carregar no objeto json os dados da conta
+    AFRA0001.pc_carregar_conta_json (pr_cdcooper     => rw_craplgp.cdcooper, --> Codigo da cooperativa
+                                     pr_nrdconta     => rw_craplgp.nrdconta, --> Numero da conta do cooperaro
+                                     pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                                     pr_json         => vr_gps,             --> Json a ser incrementado
+                                     pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                                     pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    ----> TRANSACTION
+    vr_gps.put('Trxn_Id'             , to_char(pr_idanalis));    
+    vr_gps.put('Trxn_ScheduledDate'  , '');
+    vr_gps.put('Trxn_ScheduledTime'  , '');
+    vr_gps.put('Trxn_PreferenceLevel', '');
+    vr_gps.put('Trxn_MovementDate'   , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_gps.put('Trxn_Scheduled'      , '0');
+    vr_gps.put('Trxn_Channel'        , to_char(rw_fraude.cdcanal_operacao));
+    vr_gps.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_gps.put('Trxn_Value'          , fn_format_number('Trxn_Value',rw_craplgp.vlrtotal));
+    vr_gps.put('Trxn_History'        , '');
+    
+    vr_lindigit := NULL;
+    cxon0014.pc_calc_lindig_fatura (pr_cdbarras => rw_craplgp.cdbarras, 
+                                    pr_lindigit => vr_lindigit);
+                               
+    vr_gps.put('BillPayment_Sequence_ID'   , vr_lindigit);
+    vr_gps.put('BillPayment_Bar_Code', rw_craplgp.cdbarras); 
+    
+    BEGIN
+      vr_dtapurac := to_date(lpad(rw_craplgp.mmaacomp,6,0),'MMRRRR');     
+    EXCEPTION  
+      when others then
+          vr_dtapurac := null;
+    END;
+    
+    vr_gps.put('BillPayment_Reference_Date', to_char(vr_dtapurac,vr_dsformat_dthora) ); 
+    vr_gps.put('BillPayment_Authentication', to_char(rw_craplgp.nrautdoc)); 
+    vr_gps.put('BillPayment_Consorcy_ID'   , '270-5');
+    vr_gps.put('BillPayment_Consorcy_Desc' , 'GPS');
+    
+    vr_gps.put('Token_ID'            , rw_fraude.dstoken);
+    vr_gps.put('Tracking_IP'         , rw_fraude.iptransacao);
+    vr_gps.put('Mobile_Device_ID'    , to_char(rw_fraude.iddispositivo));
+    vr_gps.put('Trxn_NLS_Start_Date' , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_gps.put('Trxn_NLS_End_Date'   , to_char(pr_dhlimana,vr_dsformat_dthora));
+    
+    
+    --> Campos obrigatorios
+    vr_gps.put('Trxn_MessageCode'    , '0');
+    vr_gps.put('Trxn_ControlNumber'  , '0');
+    vr_gps.put('CDT_Acct_Bank'       , '0');
+    vr_gps.put('CDT_Acct_Type'       , '0');
+    vr_gps.put('CDT_Acct_Number'     , '0');  
+    vr_gps.put('CDT_Hldr_Type'       , '0');
+    vr_gps.put('CDT_Hldr_Name'       , '0');
+    vr_gps.put('CDT_Hldr_Document'   , '0');
+    vr_gps.put('Trxn_Purpose'        , '0');
+
+    
+    vr_gps.print();
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarGPSParaAnalise'
+                                       ,pr_verbo => WRES0001.POST 
+                                       ,pr_servico => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo => vr_gps
+                                       ,pr_resposta => vr_resposta
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_cdcritic => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio da GPS para analise: '||SQLERRM;
+      
+  END pc_enviar_gps_analise;
+  
+
+  --> Procedure para envio da GPS para analise de fraude
+  PROCEDURE pc_enviar_agend_gps_analise (pr_idanalis     IN INTEGER,
+                                         pr_Fingerprint OUT VARCHAR2, 
+                                         pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                         pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                         pr_cdcritic    OUT INTEGER,
+                                         pr_dscritic    OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_agend_gps_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Teobaldo Jamunda (AMcom)
+      Data     : Abril/2018                     Ultima atualizacao: 06/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel pelo envio dos agendamentos de GPS
+                  para analise de fraude   (PRJ381 - Analise de Fraude)
+                  
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.idanalise_fraude,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao, 
+             fra.iddispositivo,
+             fra.cdcanal_operacao,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do agendamento de GPS
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,
+             lau.nrdconta,
+             lau.dscodbar,
+             lau.idlancto,
+             lau.cdtiptra,
+             SUBSTR(lau.dscodbar,16,4) cdempcon,
+             SUBSTR(lau.dscodbar, 2,1) cdsegmto,
+             con.cdempcon ||'-'||con.cdsegmto cdempcon_2,
+             lau.dslindig,
+             con.nmextcon,
+             con.tparrecd,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.dscedent,
+             lau.idlancto nrautdoc,
+             (select lgp.mmaacomp
+                from craplgp lgp
+               where lgp.cdcooper = lau.cdcooper
+                 and lgp.nrctapag = lau.nrdconta
+                 and lgp.nrseqagp = lau.nrseqagp
+                 and rownum = 1
+             ) mmaacomp
+        FROM craplau lau,
+             crapcon con      
+       WHERE lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta
+         AND lau.cdcooper = con.cdcooper(+)
+         AND SUBSTR(lau.dscodbar,16,4) = con.cdempcon(+)
+         AND SUBSTR(lau.dscodbar, 2,1) = con.cdsegmto(+);                
+    rw_craplau cr_craplau%ROWTYPE;
+        
+    --> Buscar dados do titular
+    CURSOR cr_crapttl (pr_cdcooper  crapttl.cdcooper%TYPE,
+                       pr_nrdconta  crapttl.nrdconta%TYPE,
+                       pr_idseqttl  crapttl.idseqttl%TYPE) IS
+      SELECT ttl.nrcpfcgc,
+             ttl.nmextttl,
+             ttl.inpessoa
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = pr_idseqttl;
+    rw_crapttl cr_crapttl%ROWTYPE;
+    
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic     NUMBER;
+    vr_dscritic     VARCHAR2(4000);
+    vr_cdcritic_aux NUMBER;
+    vr_dscritic_aux VARCHAR2(4000);
+    vr_exc_erro     EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta     AYMA0001.typ_http_response_aymaru;
+    vr_parametros   WRES0001.typ_tab_http_parametros;
+    vr_gps          json := json();
+    vr_code         VARCHAR2(10);
+    vr_Message      VARCHAR2(1000);
+    
+    vr_qtsegret     NUMBER;
+    vr_nmarqlog     VARCHAR2(500);
+    vr_cdprogra     VARCHAR2(50) := 'pc_enviar_agend_gps_analise';
+    vr_cdbandst     NUMBER;
+    vr_dtapurac   date;
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+    OPEN cr_craplau (pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplau INTO rw_craplau;
+    
+    IF cr_craplau%NOTFOUND THEN
+      CLOSE cr_craplau;
+      vr_dscritic := 'Não foi possivel localizar agendamento de GPS';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplau;
+    END IF; 
+   
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplau.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => rw_craplau.dtmvtopg    --> Data que sera efetivada a operacao agendada
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_gps.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    
+    ----> ACCOUNT DEBIT
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplau.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craplau.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_gps,              --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    ---->  ACCOUNT CREDIT
+    vr_gps.put('CDT_Acct_Bank'       , to_char(vr_cdbandst));
+    
+    ----> TRANSACTION
+    vr_gps.put('Trxn_Id'             , to_char(pr_idanalis));
+    vr_gps.put('Trxn_Channel'        , to_char(rw_fraude.cdcanal_operacao));
+    
+    vr_gps.put('Trxn_Date'           , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_gps.put('Trxn_Value'          , fn_format_number('Trxn_Value',rw_craplau.vllanaut));
+    vr_gps.put('Trxn_History'        , rw_craplau.dscedent);
+    vr_gps.put('Trxn_ScheduledDate'  , to_char(rw_craplau.dtmvtopg,vr_dsformat_data));
+    vr_gps.put('Trxn_ScheduledTime'  , '');
+    vr_gps.put('Trxn_PreferenceLevel', '');
+    vr_gps.put('Trxn_MovementDate'   , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_gps.put('Trxn_Scheduled'      , '1');
+   
+    BEGIN
+      vr_dtapurac := to_date(lpad(rw_craplau.mmaacomp,6,0),'MMRRRR');     
+    EXCEPTION  
+      when others then
+          vr_dtapurac := null;
+    END;
+    
+    vr_gps.put('BillPayment_Bar_Code'      , rw_craplau.dscodbar); 
+    vr_gps.put('BillPayment_Sequence_ID'   , rw_craplau.dslindig); 
+    vr_gps.put('BillPayment_Reference_Date', vr_dtapurac); 
+    vr_gps.put('BillPayment_Authentication', to_char(rw_craplau.nrautdoc));    
+    vr_gps.put('BillPayment_Consorcy_ID'   , '270-5');
+    vr_gps.put('BillPayment_Consorcy_Desc' , nvl(rw_craplau.nmextcon,'GPS'));   
+    vr_gps.put('Token_ID'            , rw_fraude.dstoken);  
+    vr_gps.put('Tracking_IP'         , rw_fraude.iptransacao);  
+    vr_gps.put('Mobile_Device_ID'    , to_char(rw_fraude.iddispositivo));  
+    vr_gps.put('Trxn_NLS_Start_Date' , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_gps.put('Trxn_NLS_End_Date'   , to_char(pr_dhlimana,vr_dsformat_dthora));      
+    vr_gps.print();
+    
+    --> Campos obrigatorios
+    vr_gps.put('Trxn_MessageCode'    , '0');
+    vr_gps.put('Trxn_ControlNumber'  , '0');
+    vr_gps.put('CDT_Acct_Bank'       , '0');
+    vr_gps.put('CDT_Acct_Type'       , '0');
+    vr_gps.put('CDT_Acct_Number'     , '0');  
+    vr_gps.put('CDT_Hldr_Type'       , '0');
+    vr_gps.put('CDT_Hldr_Name'       , rw_craplau.dscedent);
+    vr_gps.put('CDT_Hldr_Document'   , '0');
+    vr_gps.put('Trxn_Purpose'        , '0');
+              
+              
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarGPSParaAnalise'
+                                       ,pr_verbo => WRES0001.POST 
+                                       ,pr_servico => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo => vr_gps
+                                       ,pr_resposta => vr_resposta
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_cdcritic => vr_cdcritic); 
+                                                 
+    --> vr_resposta.conteudo.Print();     
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+        
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+        vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+        vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+  
+  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio do agendamento de GPS para analise: '||SQLERRM;
+  END pc_enviar_agend_gps_analise;    
+  
+  
+  --> Procedure para envio de titulo para analise de fraude
+  PROCEDURE pc_enviar_convenio_analise(pr_idanalis    IN  INTEGER,
+                                       pr_Fingerprint OUT VARCHAR2, 
+                                       pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                       pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                       pr_cdcritic    OUT INTEGER,
+                                       pr_dscritic    OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_convenio_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Teobaldo Jamunda (AMcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 17/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel pelo envio de convenio para analise de fraude
+                  (PRJ381 - Antifraude, Teobaldo J. - AMcom)
+                  
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do lancamento
+    CURSOR cr_craplft (pr_idanalis  craplft.idanafrd%TYPE,
+                       pr_cdcooper  craplft.cdcooper%TYPE,
+                       pr_nrdconta  craplft.nrdconta%TYPE) IS
+      SELECT lft.cdcooper,
+             lft.nrdconta,
+             lft.cdbarras,
+             lft.dtapurac,
+             lft.nrcpfcgc,
+             lft.cdempcon ||'-'|| lft.cdsegmto cdempcon,
+             con.nmextcon,
+             con.tparrecd,
+             lft.vllanmto,
+             lft.nrautdoc,
+             pro.dscedent
+        FROM crappro pro,
+             crapcon con,
+             craplft lft      
+       WHERE pro.nrseqaut = lft.nrautdoc
+         AND pro.dtmvtolt = lft.dtmvtolt
+         AND pro.cdcooper = lft.cdcooper
+         AND pro.nrdconta = lft.nrdconta
+         AND lft.cdcooper = con.cdcooper(+)
+         AND lft.cdempcon = con.cdempcon(+)
+         AND lft.cdsegmto = con.cdsegmto(+)
+         AND lft.idanafrd = pr_idanalis
+         AND lft.cdcooper = pr_cdcooper
+         AND lft.nrdconta = pr_nrdconta;                
+    rw_craplft cr_craplft%ROWTYPE;
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta     AYMA0001.typ_http_response_aymaru;
+    vr_parametros   WRES0001.typ_tab_http_parametros;
+    vr_convenio       json := json();
+    vr_code         VARCHAR2(10);
+    vr_Message      VARCHAR2(1000);
+    vr_qtsegret     NUMBER;
+    
+    vr_nmarqlog     VARCHAR2(500);
+    vr_cdprogra     VARCHAR2(50) := 'pc_enviar_convenio_analise';
+    
+    vr_lindigit     VARCHAR2(100);
+    vr_cdbandst     NUMBER;
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+  
+    OPEN cr_craplft( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplft INTO rw_craplft;
+    
+    IF cr_craplft%NOTFOUND THEN
+      CLOSE cr_craplft;
+      vr_dscritic := 'Não foi possivel localizar craplft';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplft;
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplft.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => NULL                   --> Data que sera efetivada a operacao agendada
+                                ,pr_cdcooper  => rw_fraude.cdcooper     --> Codigo da cooperativa, para uso do limite de operacao
+                                ,pr_tplimite  => (CASE rw_craplft.tparrecd
+                                                    WHEN 1 THEN 3 -- Sicredi
+                                                    WHEN 2 THEN 4 -- Bancoob
+                                                    WHEN 3 THEN 2 -- Cecred
+                                                    ELSE 0
+                                                  END )                 --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    vr_convenio.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    vr_convenio.put('Trxn_MessageCode'       , '0');
+    vr_convenio.put('Trxn_ControlNumber'     , '0');    
+    
+    
+    --> Carregar no objeto json os dados da conta (dados DBT e fone)
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplft.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craplft.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_convenio,         --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    
+    ---->  ACCOUNT CREDIT
+    vr_cdbandst:= to_number(SUBSTR(rw_craplft.cdbarras,01,03)); 
+    vr_convenio.put('CDT_Acct_Bank'    , '0');
+    vr_convenio.put('CDT_Acct_Branch'  , '0');   
+    vr_convenio.put('CDT_Acct_Type'    , '0');   
+    vr_convenio.put('CDT_Acct_Number'  , '0');
+    vr_convenio.put('CDT_Hldr_Type'    , '0');
+    vr_convenio.put('CDT_Hldr_Document', '0');
+    vr_convenio.put('CDT_Hldr_Name'    , rw_craplft.dscedent);
+    vr_convenio.put('Trxn_Purpose'     , '0');
+    
+   
+    
+    ----> TRANSACTION
+    vr_convenio.put('Trxn_Id'                   , to_char(pr_idanalis));
+    vr_convenio.put('Trxn_Channel'              , to_char(rw_fraude.cdcanal_operacao));
+    vr_convenio.put('BillPayment_Bar_Code'      , rw_craplft.cdbarras);
+    
+    vr_lindigit := NULL;
+    cxon0014.pc_calc_lindig_fatura (pr_cdbarras => rw_craplft.cdbarras, 
+                                    pr_lindigit => vr_lindigit);
+                                      
+    vr_convenio.put('BillPayment_Sequence_ID'   , vr_lindigit);
+    vr_convenio.put('BillPayment_Reference_Date', to_char(nvl(rw_craplft.dtapurac,trunc(SYSDATE)),vr_dsformat_data));
+    vr_convenio.put('BillPayment_Authentication' , to_char(rw_craplft.nrautdoc));
+    vr_convenio.put('BillPayment_Consorcy_ID'   , rw_craplft.cdempcon);  
+    vr_convenio.put('BillPayment_Consorcy_Desc' , rw_craplft.nmextcon);
+    vr_convenio.put('Trxn_Value'                , fn_format_number('Trxn_Value',rw_craplft.vllanmto));
+    vr_convenio.put('Trxn_History'              , rw_craplft.dscedent);
+    vr_convenio.put('Trxn_Date'                 , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_convenio.put('Trxn_ScheduledDate'        , '');
+    vr_convenio.put('Trxn_ScheduledTime'        , '');
+    vr_convenio.put('Trxn_PreferenceLevel'      , '');
+    vr_convenio.put('Trxn_MovementDate'         , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_convenio.put('Trxn_Scheduled'            , '0');
+    vr_convenio.put('Token_ID'                  , rw_fraude.dstoken);
+    vr_convenio.put('Tracking_IP'               , rw_fraude.iptransacao);
+    vr_convenio.put('Mobile_Device_ID'          , to_char(rw_fraude.iddispositivo));
+    vr_convenio.put('Trxn_NLS_Start_Date'       , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_convenio.put('Trxn_NLS_End_Date'         , to_char(pr_dhlimana,vr_dsformat_dthora));
+            
+    -- vr_convenio.print();
+      
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarConvenioParaAnalise'
+                                       ,pr_verbo      => WRES0001.POST 
+                                       ,pr_servico    => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo   => vr_convenio
+                                       ,pr_resposta   => vr_resposta
+                                       ,pr_dscritic   => vr_dscritic
+                                       ,pr_cdcritic   => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio de Convenio para analise: '||SQLERRM;
+      
+  END pc_enviar_convenio_analise;  
+  
+
+  --> Procedure para envio de agendamento de pagamento de convenio para analise de fraude
+  PROCEDURE pc_enviar_agend_conv_analise (pr_idanalis     IN INTEGER,
+                                          pr_Fingerprint OUT VARCHAR2, 
+                                          pr_dhdenvio    OUT TIMESTAMP,  --> Data hora do envio para a analise
+                                          pr_dhlimana    OUT TIMESTAMP,  --> Data hora de limite de aguardo para a analise
+                                          pr_cdcritic    OUT INTEGER,
+                                          pr_dscritic    OUT VARCHAR2 )IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_agend_conv_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Teobaldo Jamunda (AMcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 17/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Envio de agendamento de pagamento de convenio para analise de fraude
+                  (PRJ381 - Antifraude, Teobaldo J. - AMcom)
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.idanalise_fraude,
+             fra.cdcanal_operacao,
+             fra.dhinicio_analise,
+             fra.dhlimite_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.iptransacao,
+             fra.cdoperacao, 
+             fra.tptransacao,
+             fra.iddispositivo,
+             fra.dstoken
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações do agendamento
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,
+             lau.nrdconta,
+             lau.dscodbar,
+             lau.dslindig,
+             lau.idlancto,
+             lau.cdtiptra,
+             SUBSTR(lau.dscodbar,16,4) cdempcon,
+             SUBSTR(lau.dscodbar, 2,1) cdsegmto,
+             con.cdempcon ||'-'||con.cdsegmto cdempcon_2,
+             con.nmextcon,
+             con.tparrecd,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.idlancto nrautdoc,
+             lau.dscedent
+        FROM craplau lau,
+             crapcon con      
+       WHERE lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta         
+         AND lau.cdcooper = con.cdcooper(+)
+         AND SUBSTR(lau.dscodbar,16,4) = con.cdempcon(+)
+         AND SUBSTR(lau.dscodbar, 2,1) = con.cdsegmto(+);                
+    rw_craplau cr_craplau%ROWTYPE;
+    
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(4000);
+    vr_cdcritic_aux  NUMBER;
+    vr_dscritic_aux  VARCHAR2(4000);
+    vr_exc_erro      EXCEPTION;    
+    
+    --> variaveis para comunicacao AYmaru
+    vr_resposta      AYMA0001.typ_http_response_aymaru;
+    vr_parametros    WRES0001.typ_tab_http_parametros;
+    vr_convenio      json := json();
+    vr_code          VARCHAR2(10);
+    vr_Message       VARCHAR2(1000);
+    vr_qtsegret      NUMBER;
+    
+    vr_nmarqlog      VARCHAR2(500);
+    vr_cdprogra      VARCHAR2(50) := 'pc_enviar_agend_convenio_analise';
+    vr_cdbandst      NUMBER;
+    vr_dtapurac      DATE;
+    
+    
+  BEGIN
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+  
+    OPEN cr_craplau( pr_idanalis => pr_idanalis,
+                     pr_cdcooper => rw_fraude.cdcooper,
+                     pr_nrdconta => rw_fraude.nrdconta);
+    FETCH cr_craplau INTO rw_craplau;
+    
+    IF cr_craplau%NOTFOUND THEN
+      CLOSE cr_craplau;
+      vr_dscritic := 'Não foi possivel localizar craplau';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplau;
+    END IF;
+    
+    --Verificar se a data existe
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craplau.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      CLOSE BTCH0001.cr_crapdat;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    pr_dhdenvio := SYSTIMESTAMP;
+        
+    --> Retornar a data limite da analise
+    pc_ret_data_limite_analise ( pr_cdoperac  => rw_fraude.cdoperacao   --> Codigo da operação
+                                ,pr_tpoperac  => rw_fraude.tptransacao  --> Tipo de operacao 1 -online 2-agendamento
+                                ,pr_dhoperac  => pr_dhdenvio            --> Data hora da operação      
+                                ,pr_dtefeope  => rw_craplau.dtmvtopg    --> Data que sera efetivada a operacao agendada
+                                ,pr_cdcooper  => rw_fraude.cdcooper     --> Codigo da cooperativa, para uso do limite de operacao
+                                ,pr_tplimite  => (CASE rw_craplau.tparrecd
+                                                    WHEN 1 THEN 3 -- Sicredi
+                                                    WHEN 2 THEN 4 -- Bancoob
+                                                    WHEN 3 THEN 2 -- Cecred
+                                                    ELSE 0
+                                                  END )                 --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao                                
+                                ,pr_dhlimana  => pr_dhlimana            --> Retorna data hora limite da operacao
+                                ,pr_qtsegret  => vr_qtsegret            --> Retorna tempo em segundo de retenção da analise
+                                ,pr_dscritic  => vr_dscritic);
+      
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;  
+    
+    --> Incluir analise na fila  
+    AFRA0002.pc_incluir_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                      pr_qtsegret => vr_qtsegret,                --> Tempo em segundos que irá aguardar na fila
+                                      pr_cdcritic => vr_dscritic,
+                                      pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;
+
+    vr_convenio.put('Trxn_TransferIdentifier', fn_dsoperacao_fraude(rw_fraude.cdoperacao));
+    
+    --> Carregar no objeto json os dados da conta
+    pc_carregar_conta_json ( pr_cdcooper     => rw_craplau.cdcooper, --> Codigo da cooperativa
+                             pr_nrdconta     => rw_craplau.nrdconta, --> Numero da conta do cooperaro
+                             pr_dstpctdb     => 'CC',                --> Tipo de conta 
+                             pr_json         => vr_convenio,         --> Json a ser incrementado
+                             pr_cdcritic     => vr_cdcritic,         --> Retorno de codigo de critica
+                             pr_dscritic     => vr_dscritic);        --> Retorno de descricao de critica
+   
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro; 
+    END IF;
+    
+    --Determinar codigo barras    
+    vr_cdbandst:= to_number(SUBSTR(rw_craplau.dscodbar,01,03));
+    
+    ---->  ACCOUNT CREDIT
+    vr_convenio.put('Trxn_MessageCode'  , '0');    
+   	vr_convenio.put('Trxn_ControlNumber', '0');    
+    vr_convenio.put('CDT_Acct_Bank'    , '0');    
+    vr_convenio.put('CDT_Acct_Branch'  , '0');   
+    vr_convenio.put('CDT_Acct_Type'    , '0');   
+    vr_convenio.put('CDT_Acct_Number'  , '0');
+    vr_convenio.put('CDT_Hldr_Type'    , '0');
+    vr_convenio.put('CDT_Hldr_Document', '0');
+    vr_convenio.put('CDT_Hldr_Name'    , rw_craplau.dscedent);
+    vr_convenio.put('Trxn_Purpose'     , '0');
+    
+    ----> TRANSACTION
+    vr_convenio.put('Trxn_Id'                   , to_char(pr_idanalis));
+    vr_convenio.put('Trxn_Channel'              , to_char(rw_fraude.cdcanal_operacao));
+    vr_convenio.put('BillPayment_Bar_Code'      , rw_craplau.dscodbar);    
+    vr_convenio.put('BillPayment_Sequence_ID'   , rw_craplau.dslindig);
+--    vr_convenio.put('BillPayment_Reference_Date', vr_dtapurac);
+    vr_convenio.put('BillPayment_Reference_Date', to_char(nvl(vr_dtapurac,trunc(SYSDATE)),vr_dsformat_data));
+    vr_convenio.put('BillPayment_Authentication' , to_char(rw_craplau.nrautdoc));
+    vr_convenio.put('BillPayment_Consorcy_ID'   , rw_craplau.cdempcon_2);
+    vr_convenio.put('BillPayment_Consorcy_Desc' , rw_craplau.nmextcon);
+    vr_convenio.put('Trxn_Value'                , fn_format_number('Trxn_Value',rw_craplau.vllanaut));
+    vr_convenio.put('Trxn_History'              , rw_craplau.dscedent);
+    vr_convenio.put('Trxn_Date'                 , to_char(SYSDATE,vr_dsformat_dthora));
+    vr_convenio.put('Trxn_ScheduledDate'        , to_char(rw_craplau.dtmvtopg,vr_dsformat_data));
+    vr_convenio.put('Trxn_ScheduledTime'        , '');
+    vr_convenio.put('Trxn_PreferenceLevel'      , '');
+    vr_convenio.put('Trxn_MovementDate'         , to_char(rw_crapdat.dtmvtocd,vr_dsformat_data));
+    vr_convenio.put('Trxn_Scheduled'            , '1');
+    vr_convenio.put('Token_ID'                  , rw_fraude.dstoken);
+    vr_convenio.put('Tracking_IP'               , rw_fraude.iptransacao);
+    vr_convenio.put('Mobile_Device_ID'          , to_char(rw_fraude.iddispositivo));
+    vr_convenio.put('Trxn_NLS_Start_Date'       , to_char(pr_dhdenvio,vr_dsformat_dthora));
+    vr_convenio.put('Trxn_NLS_End_Date'         , to_char(pr_dhlimana,vr_dsformat_dthora));
+
+              
+    AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarConvenioParaAnalise'
+                                       ,pr_verbo  => WRES0001.POST 
+                                       ,pr_servico    => 'ANTIFRAUDE'
+                                       ,pr_parametros => vr_parametros
+                                       ,pr_conteudo   => vr_convenio
+                                       ,pr_resposta   => vr_resposta
+                                       ,pr_dscritic   => vr_dscritic
+                                       ,pr_cdcritic   => vr_cdcritic); 
+    
+    IF TRIM(vr_dscritic) IS NOT NULL OR      
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+    
+    --> Se retorno diferente de 200 - Sucesso
+    IF vr_resposta.status_code <> 200 THEN
+    
+      vr_code    := vr_resposta.conteudo.get('Code').to_char();
+      vr_Message := vr_resposta.conteudo.get('Message').get_string();
+        
+      IF TRIM(vr_code) IS NOT NULL THEN
+         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
+      END IF;
+
+      RAISE vr_exc_erro;
+    ELSE
+      --> se retornou Sucesso, buscar fingerprint
+      pr_Fingerprint  := vr_resposta.conteudo.get('Fingerprint').get_string();
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Excluir analise na fila  
+      AFRA0002.pc_remover_analise_fila (pr_idanalis => rw_fraude.idanalise_fraude, --> Identificador da analise 
+                                        pr_cdcritic => vr_cdcritic_aux,
+                                        pr_dscritic => vr_dscritic_aux);
+                
+      IF TRIM(vr_dscritic_aux) IS NOT NULL OR
+         nvl(vr_cdcritic_aux,0) > 0 THEN
+                
+        --> Se apresentar erro, deve apenas logar e garantir que seja aprovada a analise          
+        vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+        btch0001.pc_gera_log_batch( pr_cdcooper     => 3,
+                                    pr_ind_tipo_log => 2, --> erro tratado
+                                    pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                       ' - '||vr_cdprogra ||' --> ' || vr_dscritic_aux,
+                                    pr_nmarqlog     => vr_nmarqlog);
+             
+      END IF;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar o envio de agendamento de Convenio para analise: '||SQLERRM;
+      
+  END pc_enviar_agend_conv_analise;
+  
+  
+  --> Rotina responsavel em enviar as analises de fraude pendentes
+  PROCEDURE pc_enviar_analise_fraude (pr_cdcritic  OUT INTEGER,
+                                      pr_dscritic  OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_enviar_analise_fraude        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel em enviar as analises de fraude pendentes
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude pendente
+    CURSOR cr_fraude IS
+      SELECT fra.cdoperacao
+        FROM tbgen_analise_fraude fra,
+             tbgen_analise_fraude_param prm
+       WHERE fra.cdstatus_analise  = 0  --> Aguardando envio
+         AND fra.cdparecer_analise = 0 --> Pendente 
+         GROUP BY fra.cdoperacao;
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    vr_cdprogra      VARCHAR2(100) := 'JBGEN_ENVFRA';
+    vr_jobname       VARCHAR2(100);
+    vr_nmarqlog      VARCHAR2(100);
+    vr_idparale      INTEGER; 
+    vr_dsplsql       VARCHAR2(1000);
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(1000);
+    vr_exc_erro      EXCEPTION;
+    
+  BEGIN
+  
+  
+    vr_idparale := gene0001.fn_gera_id_paralelo;
+    -- Se houver algum erro, vr_idparale será 0 (Zero)
+    IF vr_idparale = 0 THEN
+       -- Levantar exceção
+       vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --> listar operações pendentes
+    FOR rw_fraude IN cr_fraude LOOP
+    
+      -- Montar o prefixo do código do programa para o jobname
+      vr_jobname := vr_cdprogra ||'_'|| rw_fraude.cdoperacao || '$'; 
+      
+      -- Cadastra o programa paralelo
+      gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                ,pr_idprogra => LPAD(rw_fraude.cdoperacao,3,'0') --> Utiliza a cdoperacao como id programa
+                                ,pr_des_erro => vr_dscritic);
+    
+      -- Testar saida com erro
+      IF vr_dscritic is not null THEN
+        -- Levantar exceçao
+        raise vr_exc_erro;
+      END IF;
+      
+      vr_dsplsql := 'declare 
+                       vr_cdcritic integer; 
+                       vr_dscritic varchar2(4000); 
+                     begin 
+                       AFRA0001.pc_enviar_analise_fraude (pr_cdoperac  => '||rw_fraude.cdoperacao||',
+                                                          pr_idparale  => '||vr_idparale||',
+                                                          pr_cdcritic  => vr_cdcritic,
+                                                          pr_dscritic  => vr_dscritic ); 
+                    end;';
+      
+      
+      -- Faz a chamada ao programa paralelo atraves de JOB
+      gene0001.pc_submit_job(pr_cdcooper => 3            --> Código da cooperativa
+                            ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                            ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                            ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                            ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                            ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                            ,pr_des_erro => vr_dscritic);    
+    
+      -- Testar saida com erro
+      IF vr_dscritic is not null THEN 
+        -- Levantar exceçao
+        raise vr_exc_erro;
+      END IF; 
+    
+    END LOOP;
+    
+    --Chama rotina de aguardo agora passando 0, para esperar
+    --até que todos os Jobs tenha finalizado seu processamento
+    gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                ,pr_qtdproce => 0
+                                ,pr_des_erro => vr_dscritic);
+                                  
+    -- Testar saida com erro
+    IF  vr_dscritic is not null THEN  
+      -- Levantar exceçao
+      raise vr_exc_erro;
+    END IF;
+    
+    
+  EXCEPTION  
+    WHEN vr_exc_erro THEN
+      ROLLBACK;
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+      vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra ||' --> ' || pr_dscritic,
+                                 pr_nmarqlog     => vr_nmarqlog);
+      
+    
+    WHEN OTHERS THEN
+    
+      ROLLBACK;
+      
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao enviar analise de fraude: '||SQLERRM;
+      
+      vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra ||' --> ' || pr_dscritic,
+                                 pr_nmarqlog     => vr_nmarqlog);     
+  END pc_enviar_analise_fraude;
+  
   --> Rotina responsavel em enviar as analises de fraude pendentes
   PROCEDURE pc_enviar_analise_fraude (pr_idanalis   IN INTEGER DEFAULT 0,
+                                      pr_cdoperac   IN INTEGER,
+                                      pr_idparale   IN NUMBER DEFAULT 0,
                                       pr_cdcritic  OUT INTEGER,
                                       pr_dscritic  OUT VARCHAR2 ) IS
   /* ..........................................................................
@@ -992,9 +4057,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     --> Buscar analise de fraude pendente
     CURSOR cr_fraude IS
       SELECT fra.rowid,
+             fra.cdcooper,
+             fra.cdagenci,
+             fra.nrdconta,
              fra.idanalise_fraude,
              fra.tptransacao,
              fra.cdproduto,
+             fra.cdoperacao,
+             decode(fra.tptransacao, 1, 0, 1) flgagend, /* 1=True, 0=False (indicador agendamento) */
              prm.flgemail_entrega
         FROM tbgen_analise_fraude fra,
              tbgen_analise_fraude_param prm
@@ -1002,11 +4072,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND fra.tptransacao = prm.tpoperacao
          AND fra.cdstatus_analise  = 0  --> Aguardando envio
          AND fra.cdparecer_analise = 0 --> Pendente 
-         AND fra.idanalise_fraude  = decode(pr_idanalis,0,fra.idanalise_fraude,pr_idanalis);
+         AND fra.cdoperacao        = decode(nvl(pr_cdoperac,0),0,fra.cdoperacao,pr_cdoperac) 
+         AND fra.idanalise_fraude  = decode(pr_idanalis,0,fra.idanalise_fraude,pr_idanalis)
+         ORDER BY fra.idanalise_fraude;
     rw_fraude cr_fraude%ROWTYPE;
     
     CURSOR cr_fraude_lock (pr_rowid ROWID) IS
-      SELECT 1
+      SELECT fra.cdoperacao, fra.dhenvio_analise
         FROM tbgen_analise_fraude fra
        WHERE fra.rowid = pr_rowid
          FOR UPDATE NOWAIT; 
@@ -1044,6 +4116,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
           CLOSE cr_fraude_lock;
         EXCEPTION
           WHEN OTHERS THEN
+            IF rw_fraude_lock.dhenvio_analise IS NOT NULL THEN
+              continue;
+            END IF;            
             vr_dscritic := 'Analise de fraude esta em uso.';
             RAISE vr_exc_envio;
         END;
@@ -1077,6 +4152,126 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                     
            
               
+          END IF;
+          
+          IF nvl(vr_cdcritic,0) > 0 OR
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_envio; 
+          END IF; 
+          
+        --> Verificar se o produto for Pagamento Convenio
+        ELSIF rw_fraude.cdproduto = 43 THEN
+        
+          --> Enviar Convenio Agendada
+          IF rw_fraude.tptransacao = 2 THEN
+            vr_dstransa := vr_dstransa || 'Pagamento de Convenio Agendado';
+            pc_enviar_agend_conv_analise ( pr_idanalis     => rw_fraude.idanalise_fraude,
+                                           pr_Fingerprint  => vr_dsfingerprint, 
+                                           pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                           pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                           pr_cdcritic     => vr_cdcritic,
+                                           pr_dscritic     => vr_dscritic); 
+         
+          ELSE
+            -- Enviar Convenio Online
+            vr_dstransa := vr_dstransa || 'Pagamento de Convenio Online';
+            pc_enviar_Convenio_analise ( pr_idanalis     => rw_fraude.idanalise_fraude,
+                                         pr_Fingerprint  => vr_dsfingerprint, 
+                                         pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                         pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                         pr_cdcritic     => vr_cdcritic,
+                                         pr_dscritic     => vr_dscritic);
+                                    
+          END IF; 
+          IF nvl(vr_cdcritic,0) > 0 OR
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_envio; 
+          END IF; 
+        
+        --> Verificar se o produto for Pagamento Titulo
+        ELSIF rw_fraude.cdproduto = 44 THEN
+        
+          --> Enviar titulo Agendada
+          IF rw_fraude.tptransacao = 2 THEN
+            vr_dstransa := vr_dstransa || 'Pagamento de Titulo Agendado';
+            pc_enviar_agend_titulo_analise ( pr_idanalis     => rw_fraude.idanalise_fraude,
+                                             pr_Fingerprint  => vr_dsfingerprint, 
+                                             pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                             pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                             pr_cdcritic     => vr_cdcritic,
+                                             pr_dscritic     => vr_dscritic); 
+         
+          ELSE
+            -- Enviar Titulo Online
+            vr_dstransa := vr_dstransa || 'Pagamento de Titulo Online';
+            pc_enviar_titulo_analise ( pr_idanalis     => rw_fraude.idanalise_fraude,
+                                       pr_Fingerprint  => vr_dsfingerprint, 
+                                       pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                       pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                       pr_cdcritic     => vr_cdcritic,
+                                       pr_dscritic     => vr_dscritic);
+                                    
+          END IF; 
+          IF nvl(vr_cdcritic,0) > 0 OR
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_envio; 
+          END IF; 
+          
+        --> Verificar se o produto for Pagamento de tributos
+        ELSIF rw_fraude.cdproduto IN (46,45) THEN
+        
+          --> Enviar Tributo Agendada
+          IF rw_fraude.tptransacao = 2 THEN
+            vr_dstransa := vr_dstransa || 'Pagamento de Tributo Agendado';
+            pc_enviar_agend_Trib_analise ( pr_idanalis     => rw_fraude.idanalise_fraude,
+                                           pr_Fingerprint  => vr_dsfingerprint, 
+                                           pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                           pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                           pr_cdcritic     => vr_cdcritic,
+                                           pr_dscritic     => vr_dscritic); 
+         
+          ELSE
+            -- Enviar Tributo Online
+            vr_dstransa := vr_dstransa || 'Pagamento de Tributo Online';
+            pc_enviar_Tributo_analise (pr_idanalis     => rw_fraude.idanalise_fraude,
+                                       pr_Fingerprint  => vr_dsfingerprint, 
+                                       pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                       pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                       pr_cdcritic     => vr_cdcritic,
+                                       pr_dscritic     => vr_dscritic);
+                                    
+           
+                  
+          END IF;
+          
+          IF nvl(vr_cdcritic,0) > 0 OR
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_envio; 
+          END IF; 
+          
+        --> Verificar se o produto for GPS
+        ELSIF rw_fraude.cdproduto = 47 THEN
+        
+          --> Enviar GPS Agendada
+          IF rw_fraude.tptransacao = 2 THEN
+            vr_dstransa := vr_dstransa || 'GPS Agendada';
+            pc_enviar_agend_GPS_analise (pr_idanalis     => rw_fraude.idanalise_fraude,
+                                         pr_Fingerprint  => vr_dsfingerprint, 
+                                         pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                         pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                         pr_cdcritic     => vr_cdcritic,
+                                         pr_dscritic     => vr_dscritic); 
+         
+          ELSE
+            -- Enviar TED Online
+            vr_dstransa := vr_dstransa || 'GPS Online';
+            pc_enviar_GPS_analise (pr_idanalis     => rw_fraude.idanalise_fraude,
+                                   pr_Fingerprint  => vr_dsfingerprint, 
+                                   pr_dhdenvio     => vr_dhdenvio,                --> Data hora do envio para a analise
+                                   pr_dhlimana     => vr_dhlimana,                --> Data hora de limite de aguardo para a analise
+                                   pr_cdcritic     => vr_cdcritic,
+                                   pr_dscritic     => vr_dscritic);
+                                               
           END IF;
           
           IF nvl(vr_cdcritic,0) > 0 OR
@@ -1119,7 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       
       IF vr_flgerro = TRUE THEN
         
-        vr_dscritic := 'Falha na entrega ao Middleware: '||vr_dscritic_aux;
+        vr_dscritic := 'Falha envio ao Middleware: '||vr_dscritic_aux;
 
         --> Verificar se deve notificar area de segurança
         IF rw_fraude.flgemail_entrega = 1 THEN
@@ -1183,10 +4378,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         ELSE
         
           --> Verificar se o produto for TED
-          IF rw_fraude.cdproduto = 30 THEN
             --> Notificar monitoração 
-            pc_monitora_ted ( pr_idanalis => rw_fraude.idanalise_fraude); 
-          END IF;
+          --> pc_monitora_ted ( pr_idanalis => rw_fraude.idanalise_fraude); 
+          BEGIN                                
+            AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
+                                          ,pr_nrdconta   => rw_fraude.nrdconta    -- Numero da conta
+                                          ,pr_idseqttl   => NULL                  -- Sequencial titular
+                                          ,pr_vlrtotal   => NULL                  -- Valor total lancamento 
+                                          ,pr_flgagend   => rw_fraude.flgagend    -- Flag agendado /* 1-True, 0-False */ 
+                                          ,pr_idorigem   => rw_fraude.tptransacao -- Indicador de origem
+                                          ,pr_cdoperacao => rw_fraude.cdoperacao  -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                          ,pr_idanalis   => rw_fraude.idanalise_fraude  -- ID Analise Fraude
+                                          ,pr_lgprowid   => NULL                  -- Rowid craplgp
+                                          ,pr_cdcritic   => vr_cdcritic           -- Codigo da critica
+                                          ,pr_dscritic   => vr_dscritic);         -- Descricao da critica
+                                         
+            vr_cdcritic := NULL;                         
+            vr_dscritic := NULL;                         
+          EXCEPTION
+            WHEN OTHERS THEN 
+                 vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+                 btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                            pr_ind_tipo_log => 2, --> erro tratado
+                                            pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                               ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                            pr_nmarqlog     => vr_nmarqlog);
+                                             
+                 vr_cdcritic := NULL;                         
+                 vr_dscritic := NULL;                         
+          END;                             
+                                         
         END IF; 
         
         
@@ -1197,6 +4418,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       COMMIT;
       
     END LOOP;
+    
+    
+    IF nvl(pr_idparale,0) > 0 THEN
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdoperac,3,'0')
+                                  ,pr_des_erro => vr_dscritic);    
+    END IF;
     
     
   EXCEPTION
@@ -1220,6 +4449,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                                     ' - '||vr_cdprogra ||' --> ' || pr_dscritic,
                                  pr_nmarqlog     => vr_nmarqlog);
       
+      -- Encerrar o job do processamento paralelo
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdoperac,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
     
     WHEN OTHERS THEN
     
@@ -1234,6 +4467,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - '||vr_cdprogra ||' --> ' || pr_dscritic,
                                  pr_nmarqlog     => vr_nmarqlog);
+                                 
+      -- Encerrar o job do processamento paralelo
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdoperac,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
       
   END pc_enviar_analise_fraude; 
   
@@ -1249,16 +4487,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_nrdrowid  ROWID;
     vr_dsorigem  VARCHAR2(30) := NULL;
     vr_idx       VARCHAR2(50);
+    vr_dstransa  craplgm.dstransa%TYPE;
       
   BEGIN
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
     
+    BEGIN
+    
+      vr_dstransa := pr_dstransa ||'- ID '||pr_idanalis;
+    EXCEPTION 
+      WHEN OTHERS THEN
+        vr_dstransa := pr_dstransa;    
+    END;
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => 1
                         ,pr_dscritic => substr(pr_dscrilog,1,245)
                         ,pr_dsorigem => vr_dsorigem
-                        ,pr_dstransa => pr_dstransa
+                        ,pr_dstransa => vr_dstransa
                         ,pr_dttransa => TRUNC(SYSDATE)
                         ,pr_flgtrans => (CASE WHEN pr_dscrilog IS NULL THEN 1 ELSE 0 END)
                         ,pr_hrtransa => gene0002.fn_busca_time
@@ -1281,12 +4527,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
               
         --> Verificar se valor foi modificado
         IF nvl(pr_campoalt(vr_idx).dsdadant,' ') <> 
-           nvl(pr_campoalt(vr_idx).dsdadatu,' ') THEN
+           nvl(pr_campoalt(vr_idx).dsdadatu,' ') OR 
+           --> Sempre apresentar estes 3 campos
+           vr_idx IN ('cdparecer_analise','cdcanal_analise','flganalise_manual')
+           THEN
+           
           --> Gravar log 
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => vr_idx,
                               pr_dsdadant => pr_campoalt(vr_idx).dsdadant,
                               pr_dsdadatu => pr_campoalt(vr_idx).dsdadatu);
+        ELSIF vr_idx = 'cdoperacao' THEN
+        
+          --> Gravar log 
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => vr_idx,
+                                    pr_dsdadant => pr_campoalt(vr_idx).dsdadant ||' - '|| fn_dsoperacao_fraude(pr_campoalt(vr_idx).dsdadant),
+                                    pr_dsdadatu => pr_campoalt(vr_idx).dsdadatu ||' - '|| fn_dsoperacao_fraude(pr_campoalt(vr_idx).dsdadatu));
+        
         END IF;
              
         vr_idx := pr_campoalt.next(vr_idx);
@@ -1338,6 +4596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              ,fra.idanalise_fraude  
              ,fra.cdcanal_analise  
              ,fra.flganalise_manual
+             ,fra.cdoperacao
         FROM tbgen_analise_fraude fra
        WHERE fra.rowid =  pr_rowid;
     rw_fraude cr_fraude%ROWTYPE;
@@ -1372,6 +4631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_tab_campo_alt('dsfingerprint'    ).dsdadant := rw_fraude.dsfingerprint;
     vr_tab_campo_alt('cdcanal_analise'  ).dsdadant := rw_fraude.cdcanal_analise;
     vr_tab_campo_alt('flganalise_manual').dsdadant := rw_fraude.flganalise_manual;
+    vr_tab_campo_alt('cdoperacao'       ).dsdadant := rw_fraude.cdoperacao;
     
   
     --> Atualizar tabela
@@ -1392,7 +4652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                  fra.cdparecer_analise,
                  fra.dsfingerprint,
                  fra.cdcanal_analise,
-                 flganalise_manual    
+                 flganalise_manual,
+                 cdoperacao    
             INTO vr_tab_campo_alt('dhenvio_analise'  ).dsdadatu,
                  vr_tab_campo_alt('dhlimite_analise' ).dsdadatu,
                  vr_tab_campo_alt('dhretorno_analise').dsdadatu,
@@ -1400,11 +4661,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                  vr_tab_campo_alt('cdparecer_analise').dsdadatu,
                  vr_tab_campo_alt('dsfingerprint'    ).dsdadatu,
                  vr_tab_campo_alt('cdcanal_analise'  ).dsdadatu,
-                 vr_tab_campo_alt('flganalise_manual').dsdadatu;  
+                 vr_tab_campo_alt('flganalise_manual').dsdadatu,  
+                 vr_tab_campo_alt('cdoperacao'       ).dsdadatu;
      
      IF SQL%ROWCOUNT = 0 THEN
        vr_dscritic := 'Registro de analise de fraude não encontrado.';
        RAISE vr_exc_erro;
+     END IF;
+     
+     --> caso for analise manual pelo ayllos é devido a expiração do tempo
+     IF pr_flganama = 1 AND pr_cdcanal = 1 THEN
+       -- Gerar log especial na verlog
+       vr_tab_campo_alt('Expirou Tempo Analise' ).dsdadatu := 'SIM';
      END IF;
      
      --> Gerar log de analise de fraude
@@ -1423,6 +4691,104 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel atualizar analise de fraude: '||SQLERRM;
   END pc_atualizar_analise; 
   
+  --> Extrair os dados do campo complementar
+  PROCEDURE pc_extrair_dscomple (pr_dscomple      IN VARCHAR2,
+                                 pr_tab_dscomple OUT typ_tab_campos) IS
+  
+    
+    vr_idx VARCHAR2(40);
+    vr_split_reg   gene0002.typ_split;
+    vr_split_campo gene0002.typ_split;
+  
+  BEGIN
+  
+    pr_tab_dscomple.delete;  
+  
+    --> Quebrar registros para não pegar posicional
+    vr_split_reg := gene0002.fn_quebra_string(pr_dscomple,'|');
+      
+    --> Varrer dados
+    IF vr_split_reg.count > 0 THEN
+      FOR i IN vr_split_reg.first..vr_split_reg.last LOOP
+        vr_split_campo := NULL;
+        vr_split_campo := gene0002.fn_quebra_string(vr_split_reg(i),';');
+          
+        IF vr_split_campo.count > 0 THEN
+          
+          pr_tab_dscomple(vr_split_campo(1)) := vr_split_campo(2);          
+             
+        END IF;
+      END LOOP;
+    END IF;
+  END pc_extrair_dscomple;
+  
+  --> Rotina para retornar situação do parecer da analise de fraude
+  PROCEDURE pc_ret_sit_analise_fraude (pr_idanafra  IN tbgen_analise_fraude.idanalise_fraude%TYPE,
+                                       pr_cdparece OUT tbgen_analise_fraude.cdparecer_analise%TYPE,
+                                       pr_dscritic OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_ret_sit_analise_fraude        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para retornar situação do parecer  da analise de fraude
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT  fra.dhenvio_analise  
+             ,fra.dhlimite_analise 
+             ,fra.dhretorno_analise
+             ,fra.cdstatus_analise 
+             ,fra.cdparecer_analise
+             ,fra.dsfingerprint    
+             ,fra.cdcanal_operacao
+             ,fra.cdcooper
+             ,fra.nrdconta  
+             ,fra.idanalise_fraude  
+             ,fra.cdcanal_analise  
+             ,fra.flganalise_manual
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude =  pr_idanafra;
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    
+    
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;    
+                      
+    -----------> SUBROTINA <-----------    
+    
+  BEGIN
+    
+    
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    CLOSE cr_fraude;
+    
+    pr_cdparece := nvl(rw_fraude.cdparecer_analise,0);
+    
+     
+  EXCEPTION
+    WHEN vr_exc_erro THEN      
+      pr_dscritic := vr_dscritic;    
+    WHEN OTHERS THEN
+      pr_dscritic := 'Não foi possivel consultar analise de fraude: '||SQLERRM;
+  END pc_ret_sit_analise_fraude; 
+  
+  
   --> Excecutar rotinas referentes a aprovação da analise de fraude
   PROCEDURE pc_aprovacao_analise (pr_idanalis   IN INTEGER,    --> Indicador da analise de fraude
                                   pr_cdcritic  OUT INTEGER,
@@ -1433,13 +4799,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 06/04/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Excecutar rotinas referentes a aprovação da analise de fraude
-      Alteração : 
+      
+      Alteração : 06/04/2018 - Incluido tratamento para aprovacao de GPS
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1452,7 +4819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              fra.cdproduto,
              fra.tptransacao,
              fra.cdcooper,
-             fra.nrdconta
+             fra.nrdconta,
+             fra.dscomplementar,
+             fra.dtmvtolt
         FROM tbgen_analise_fraude fra
        WHERE fra.idanalise_fraude = pr_idanalis; 
     rw_fraude cr_fraude%ROWTYPE;
@@ -1475,18 +4844,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND tvl.nrdconta = pr_nrdconta;         
     rw_craptvl cr_craptvl%ROWTYPE;
     
+    --> Buscar informacoes GPS
+    CURSOR cr_craplgp (pr_idanalis  craplgp.idanafrd%TYPE,
+                       pr_cdcooper  craplgp.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT lgp.*,
+             lgp.rowid lgprowid,
+             ass.nrdconta,
+             cop.cdagectl,
+             cop.cdagesic
+        FROM craplgp lgp,
+             crapcop cop,
+             crapass ass,
+             crapban ban,
+             tbcadast_pessoa pes
+       WHERE lgp.cdcooper = cop.cdcooper
+         AND lgp.cdcooper = ass.cdcooper
+         AND lgp.nrctapag = ass.nrdconta 
+         AND lgp.cdbccxlt = ban.cdbccxlt
+         AND ass.nrcpfcgc = pes.nrcpfcgc
+         AND lgp.idanafrd = pr_idanalis  
+         AND lgp.cdcooper = pr_cdcooper  
+         AND lgp.nrctapag = pr_nrdconta; 
+    rw_craplgp cr_craplgp%ROWTYPE;
+    
+    --> Buscar informacao 
+    CURSOR cr_crapaut (pr_cdcooper crapaut.cdcooper%TYPE,
+                       pr_cdagenci crapaut.cdagenci%TYPE,
+                       pr_nrdcaixa crapaut.nrdcaixa%TYPE,
+                       pr_dtmvtolt crapaut.dtmvtolt%TYPE,
+                       pr_nrsequen crapaut.nrsequen%TYPE) IS
+      SELECT aut.rowid autrowid
+        FROM crapaut aut
+       WHERE aut.cdcooper = pr_cdcooper
+         AND aut.cdagenci = pr_cdagenci
+         AND aut.nrdcaixa = pr_nrdcaixa
+         AND aut.dtmvtolt = pr_dtmvtolt
+         AND aut.nrsequen = pr_nrsequen;    
+    rw_crapaut cr_crapaut%ROWTYPE;
+    
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
     
-    
+    vr_tab_dscomple  typ_tab_campos;
     vr_tab_protocolo gene0006.typ_tab_protocolo;  
     vr_ind           PLS_INTEGER;
     vr_dsinform      crappro.dsinform##3%TYPE;
     vr_cdidtran      crappro.dsinform##3%TYPE;
     
+    vr_dslitera      VARCHAR2(4000);
+    vr_des_reto      VARCHAR2(4000);
+    vr_dtdenvio      VARCHAR2(19);
+    vr_raizcoop      VARCHAR2(255);
+    vr_msgenvio      VARCHAR2(255);
+    vr_msgreceb      VARCHAR2(255);
+    vr_movarqto      VARCHAR2(255);
+    vr_nmarqlog      VARCHAR2(255);
+    vr_dstiparr      VARCHAR2(255);
+    vr_mmaacomp      VARCHAR2(6);
+    vr_cdidenti      VARCHAR2(20);
     
   BEGIN
   
@@ -1597,7 +5016,179 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         END IF; 
         
       END IF;
-    END IF;        
+    ELSIF rw_fraude.cdproduto = 43 THEN
+      --> Para operaçãoes de 2 - Convenios e 6 Convenios Recorrentes
+      NULL;  
+      --> Para operaçãoes de 4 - Titulos
+    ELSIF rw_fraude.cdproduto IN (44) THEN
+      
+      --> Online
+      IF rw_fraude.tptransacao = 1 AND 
+         --> e possui dados complementares
+         TRIM(rw_fraude.dscomplementar) IS NOT NULL THEN
+         
+        vr_tab_dscomple.delete;
+        --> Extrair os dados do campo complementar
+        pc_extrair_dscomple (pr_dscomple     => rw_fraude.dscomplementar,
+                             pr_tab_dscomple => vr_tab_dscomple);
+                               
+        --> Verificar se possui informacao e se é diferente de 0                     
+        IF vr_tab_dscomple.exists('indpagto') AND 
+           vr_tab_dscomple('indpagto') <> 0 THEN
+             
+          IF vr_tab_dscomple.exists('rowidcob') THEN
+            --> Gravar solicitação de envio da jdda 
+            PAGA0001.pc_solicita_crapdda (pr_cdcooper  => rw_fraude.cdcooper         -- Codigo Cooperativa
+                                         ,pr_dtmvtolt  => rw_fraude.dtmvtolt  -- Data pagamento
+                                         ,pr_cobrowid  => vr_tab_dscomple('rowidcob')         -- rowid de cobranca
+                                         ,pr_dscritic  => vr_dscritic);       -- Descricao da critica
+
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              --Nao mostrar erro para usuario., somente gerar log
+              btch0001.pc_gera_log_batch(pr_cdcooper     => rw_fraude.cdcooper
+                                         ,pr_ind_tipo_log => 2 -- Erro tratato
+                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                          || 'PAGA0001.pc_paga_titulo --> '
+                                                          || 'erro ao gravar crapdda(crapcob.rowid = '||vr_tab_dscomple('rowidcob')||'): '
+                                                          || vr_dscritic );
+
+              vr_dscritic := null;
+            END IF;
+          END IF;
+            
+        END IF;
+      END IF; --> FIM IF tptransacao = 1                     
+      
+      
+    ELSIF rw_fraude.cdproduto IN (45,46) THEN
+      --> Para operaçãoes de 45 - DARF/DAS e 46 - FGTS/DAE, não é necessario nenhuma ação adicional
+      NULL;
+    --> GPS
+    ELSIF rw_fraude.cdproduto = 47 THEN
+      --> Online
+      IF rw_fraude.tptransacao = 1 THEN
+        
+        --> Buscar registro craptlg
+        OPEN cr_craplgp( pr_idanalis => pr_idanalis,
+                         pr_cdcooper => rw_fraude.cdcooper,
+                         pr_nrdconta => rw_fraude.nrdconta);
+        FETCH cr_craplgp INTO rw_craplgp;
+        
+        IF cr_craplgp%NOTFOUND THEN
+          CLOSE cr_craplgp;
+          vr_dscritic := 'Não foi possivel localizar craplgp';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_craplgp;
+        END IF;
+        
+        vr_cdidenti := rw_craplgp.cdidenti;
+        IF LENGTH(vr_cdidenti) = 0 THEN
+          vr_cdidenti := CASE
+                           WHEN LENGTH(rw_craplgp.cdbarras) > 0 THEN
+                            SUBSTR(rw_craplgp.cdbarras, 24, 14)
+                           ELSE
+                            SUBSTR(rw_craplgp.dslindig, 26, 14)
+                         END;
+        END IF;
+
+        -- Mantido tratamento de dados obtidos de INS0002.pc_gps_arrecadar_sicredi
+        vr_mmaacomp := lpad(rw_craplgp.mmaacomp,6,'0');
+
+        vr_raizcoop := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                            ,pr_cdcooper => rw_fraude.cdcooper
+                                            ,pr_nmsubdir => NULL);
+                                            
+        vr_nmarqlog := vr_raizcoop || '/log/' || 'SICREDI_Soap_LogErros.log';
+
+        -- Mantido o alterado por Renato Darosci - 05/09/2016 - SD 514294
+        -- da INS0002.pc_gps_arrecadar_sicredi
+        vr_msgenvio := vr_raizcoop || '/arq/' ||
+                       'GPS.' ||   -- ENVIO ARRECADACAO
+                       LPAD(vr_cdidenti,14,'0') || '.' ||
+                       to_char(rw_craplgp.dtmvtolt, 'RRRRMMDD') || '.' ||
+                       to_char(SYSTIMESTAMP, 'hh24miss.FF6') || '.' ||
+                       'E.A.' ||
+                       rw_craplgp.cdopecxa;
+                       
+        vr_msgreceb := vr_raizcoop || '/arq/' ||
+                       'GPS.' ||   -- RECEBIMENTO ARRECADACAO
+                       LPAD(vr_cdidenti,14,'0') || '.' ||
+                       to_char(rw_craplgp.dtmvtolt, 'RRRRMMDD') || '.' ||
+                       to_char(SYSTIMESTAMP, 'hh24miss.FF6') || '.' ||
+                       'R.A.' ||
+                       rw_craplgp.cdopecxa;
+
+        vr_movarqto := vr_raizcoop || '/salvar/gps/';
+        
+        /* APESAR DE A TAG DataVencimento SIGNIFICAR  QUE DEVE SER INFORMADA
+        A DATA DE VENCIMENTO DA GUIA GPS, O SICREDI UTILIZA ESSA TAG PARA
+        A DATA DE PAGAMENTO DA GUIA GPS JUNTO A RECEITA FEDERAL. POR ISSO
+        DEVE SER INFORMADA A DATA DO DIA NESSA TAG AO ENVIAR PARA SICREDI  */
+        vr_dtdenvio := to_char(rw_craplgp.dtmvtolt,'YYYY-MM-DD') || 'T' || to_char(sysdate,'hh24:mi:ss');
+        
+        IF rw_craplgp.tpdpagto = 2 THEN -- 2-Sem Cod Barras
+          vr_dstiparr := 'ELETRONICA';
+        ELSE
+          vr_dstiparr := 'GPS COM CODIGO DE BARRAS ELETRONICA';
+        END IF;
+        
+        
+         --> Buscar registro crapaut
+        OPEN cr_crapaut( pr_cdcooper => rw_fraude.cdcooper,
+                         pr_cdagenci => rw_craplgp.cdagenci,
+                         pr_nrdcaixa => rw_craplgp.nrdcaixa,
+                         pr_dtmvtolt => rw_craplgp.dtmvtolt,
+                         pr_nrsequen => rw_craplgp.nrautdoc );
+        FETCH cr_crapaut INTO rw_crapaut;
+        
+        IF cr_crapaut%NOTFOUND THEN
+          CLOSE cr_crapaut;
+          vr_dscritic := 'Não foi possivel localizar cr_crapaut';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crapaut;
+        END IF;
+        
+        
+        INSS0002.pc_gps_enviar_pagamento (pr_cdcooper => rw_fraude.cdcooper   --> Cooperativa 
+                                         ,pr_cdagenci => rw_craplgp.cdagenci     --> Cod. Agencia
+                                         ,pr_nrdcaixa => rw_craplgp.nrdcaixa     --> Nr Caixa
+                                         ,pr_cdoperad => rw_craplgp.cdopecxa     --> Operador
+                                         ,pr_nrdconta => rw_craplgp.nrdconta     --> Nr Conta
+                                         ,pr_idorigem => rw_fraude.tptransacao   --> Cod. Origem
+                                         ,pr_cdagesic => rw_craplgp.cdagesic     --> Nr Agencia Sicredi
+                                         ,pr_cdidenti => vr_cdidenti             --> Nr Identificador GPS
+                                         ,pr_nmdatela => 'INTERNETBANK'          --> fixo
+                                         ,pr_cddpagto => rw_craplgp.cddpagto     --> Cod pgto da GPS
+                                         ,pr_dtdenvio => vr_dtdenvio             --> data de pagamento GPS para Sicredi  
+                                         ,pr_cdbarras => rw_craplgp.cdbarras     --> Codigo de barras
+                                         ,pr_dslindig => rw_craplgp.dslindig     --> Linha digitavel
+                                         ,pr_vlrdinss => rw_craplgp.vlrdinss     --> Valor GPS
+                                         ,pr_vlrouent => rw_craplgp.vlrouent     --> Valor Outros
+                                         ,pr_vlrjuros => rw_craplgp.vlrjuros     --> Valor dos Juros
+                                         ,pr_registro => rw_crapaut.autrowid     --> Rowid crapaut
+                                         ,pr_nrautsic => rw_craplgp.nrautsic     --> Nr Autenticacao Pgto envio Sicredi
+                                         ,pr_dstiparr => vr_dstiparr             --> Descricao tipo de pagamento/arrecadacao
+                                         ,pr_lgprowid => rw_craplgp.lgprowid     --> Rowid craplgp
+                                         ,pr_msgenvio => vr_msgenvio             --> msg envio arrecadacao (arquivo)
+                                         ,pr_msgreceb => vr_msgreceb             --> msg recebimento arrecadacao (arquivo)
+                                         ,pr_movarqto => vr_movarqto             --> 
+                                         ,pr_nmarqlog => vr_nmarqlog             --> arquivo de log
+                                         ,pr_mmaacomp => vr_mmaacomp             --> Mes e ano competencia pgto guia
+                                         ---- SAIDA ----
+                                         ,pr_cdcritic => vr_cdcritic             --> Codigo do erro
+                                         ,pr_dscritic => vr_dscritic             --> Descricao do erro
+                                         ,pr_dslitera => vr_dslitera 
+                                         ,pr_des_reto => vr_des_reto);           --> Saida OK/NOK
+
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF; 
+
+      END IF;
+    END IF;   
     
     
   EXCEPTION
@@ -1628,16 +5219,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Novembro/2016.                   Ultima atualizacao: 06/06/2017
+      Data     : Novembro/2016.                   Ultima atualizacao: 09/04/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Excecutar rotinas referentes a reprovação da analise de fraude
-      
+      Alteração : 
+        
       Alteração : 06/06/2017 - Ajustado para usar a data dtmvtocd para estornar a TED.
                                PRJ335- Analise de fraude(Odirlei-AMcom)
         
+                  09/04/2018 - Inclusao de chamada para pc_estornar_gps_analise .
+                               PRJ381 Analise de fraude (Teobaldo - AMcom)
     ..........................................................................*/
     -----------> CURSORES <-----------
     
@@ -1697,7 +5291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     --> TED
     IF rw_fraude.cdproduto = 30 THEN
     
-      --> Rotina para estornar TED reprovada pela analise de frude
+      --> Rotina para estornar TED reprovada pela analise de fraude
       pc_estornar_ted_analise (pr_idanalis  => rw_fraude.idanalise_fraude, -->Id da análise de fraude
                                pr_dtmvtolt  => rw_crapdat.dtmvtocd,  --> Data do sistema
                                pr_inproces  => rw_crapdat.inproces,  --> Indicar de execução do processo batch
@@ -1709,8 +5303,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         RAISE vr_exc_erro;
       END IF;
         
+    --> Convenio
+    ELSIF rw_fraude.cdproduto = 43 THEN
+    
+      --> Rotina para estornar convenio reprovado pela analise de frude
+      pc_estornar_convenio_analise (pr_idanalis  => rw_fraude.idanalise_fraude, --> Id da análise de fraude
+                                    pr_dtmvtolt  => rw_crapdat.dtmvtocd,        --> Data do sistema
+                                    pr_inproces  => rw_crapdat.inproces,        --> Indicar de execução do processo batch
+                                    pr_cdcritic  => vr_cdcritic,                --> Retorno de critica
+                                    pr_dscritic  => vr_dscritic);          
+        
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;        
+    
+    --> Titulo
+    ELSIF rw_fraude.cdproduto = 44 THEN
+    
+      --> Rotina para estornar titulo reprovada pela analise de frude
+      pc_estornar_Titulo_analise ( pr_idanalis  => rw_fraude.idanalise_fraude, -->Id da análise de fraude
+                                   pr_dtmvtolt  => rw_crapdat.dtmvtocd,        --> Data do sistema
+                                   pr_inproces  => rw_crapdat.inproces,        --> Indicar de execução do processo batch
+                                   pr_cdcritic  => vr_cdcritic,                --> Retorno de critica
+                                   pr_dscritic  => vr_dscritic);          
+        
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    --> Tributos
+    ELSIF rw_fraude.cdproduto IN(45,46) THEN
+    
+      --> Rotina para estornar Tributos reprovada pela analise de frude
+      pc_estornar_Tributo_analise (pr_idanalis  => rw_fraude.idanalise_fraude, --> Id da análise de fraude
+                                   pr_dtmvtolt  => rw_crapdat.dtmvtocd,        --> Data do sistema
+                                   pr_inproces  => rw_crapdat.inproces,        --> Indicar de execução do processo batch
+                                   pr_cdcritic  => vr_cdcritic,                --> Retorno de critica
+                                   pr_dscritic  => vr_dscritic);          
+        
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;  
     END IF;        
     
+    
+    --> GPS
+    IF rw_fraude.cdproduto = 47 THEN
+    
+      --> Rotina para estornar TED reprovada pela analise de fraude
+      pc_estornar_gps_analise (pr_idanalis  => rw_fraude.idanalise_fraude, --> Id da análise de fraude
+                               pr_dtmvtolt  => rw_crapdat.dtmvtocd,        --> Data do sistema
+                               pr_cdcritic  => vr_cdcritic,                --> Retorno de critica
+                               pr_dscritic  => vr_dscritic);          
+    END IF;
+        
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro;
+    END IF;
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1741,6 +5394,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                         pr_cdoperacao  IN tbgen_analise_fraude.cdoperacao%TYPE,  --> Codigo de operacao de conta corrente
                                         pr_dstransacao IN tbgen_analise_fraude.dstransacao%TYPE, --> Descrição da transação 
                                         pr_tptransacao IN tbgen_analise_fraude.tptransacao%TYPE, --> Tipo de transação (1-online/ 2-agendada)                                         
+                                        pr_iddispositivo IN VARCHAR2 DEFAULT NULL,               --> identificador dispositivo                                        
+                                        pr_dstoken     IN VARCHAR2 DEFAULT NULL,                 --> Token de acesso
                                         pr_idanalise_fraude OUT tbgen_analise_fraude.idanalise_fraude%TYPE, --> identificador único da transação  
                                         pr_dscritic   OUT VARCHAR2 ) IS
   /* ..........................................................................
@@ -1749,14 +5404,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 05/04/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para Inclusao do registro de analise de fraude
-      Alteração : 
-        
+      Alteração : 03/04/2018 - Inclusão de novo parâmetro que possibilite 
+                               armazenar o ID do dispositivo (Teobaldo J)
+                  04/04/2018 - Inclusao de verificacao para decidir se deve 
+                               criar Analise de Fraude
     ..........................................................................*/
     -----------> CURSORES <-----------
     
@@ -1765,42 +5422,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
     
+    vr_criar_analise Number;
+    
   BEGIN
      
+    --> Verifica se deve criar analise para codigo e tipo de operacao (transacao)
+    vr_criar_analise := fn_envia_analise(pr_cdoperacao, pr_tptransacao); 
+    IF vr_criar_analise > 0 THEN  
   
-    --> inserir registro
-    INSERT INTO tbgen_analise_fraude
-                (cdcanal_operacao
-                ,dstransacao
-                ,iptransacao
-                ,dhinicio_analise 
-                ,dtmvtolt
-                ,dhlimite_analise 
-                ,cdstatus_analise
-                ,cdparecer_analise
-                ,cdproduto
-                ,cdcooper
-                ,cdagenci
-                ,nrdconta
-                ,tptransacao
-                ,cdoperacao) 
-         VALUES( pr_cdcanal       --> cdcanal
-                ,pr_dstransacao   --> dstransacao
-                ,pr_iptransacao   --> iptransacao
-                ,SYSTIMESTAMP     --> dhinicio_analise 
-                ,pr_dtmvtolt      --> dtmvtolt
-                ,NULL             --> dhlimite_analise
-                ,0 --> Aguardando envio --> cdstatus_analise
-                ,0 --> Pendente         --> cdparecer_analise
-                ,pr_cdproduto     --> cdproduto
-                ,pr_cdcooper      --> cdcooper
-                ,pr_cdagenci      --> cdagenci
-                ,pr_nrdconta      --> nrdconta
-                ,pr_tptransacao   --> tptransacao
-                ,pr_cdoperacao    --> cdoperacao
-                
-                )RETURNING idanalise_fraude INTO pr_idanalise_fraude ;
-       
+      --> inserir registro
+      INSERT INTO tbgen_analise_fraude
+                  (cdcanal_operacao
+                  ,dstransacao
+                  ,iptransacao
+                  ,dhinicio_analise 
+                  ,dtmvtolt
+                  ,dhlimite_analise 
+                  ,cdstatus_analise
+                  ,cdparecer_analise
+                  ,cdproduto
+                  ,cdcooper
+                  ,cdagenci
+                  ,nrdconta
+                  ,tptransacao
+                  ,cdoperacao
+                  ,iddispositivo
+                  ,dstoken) 
+           VALUES( pr_cdcanal       --> cdcanal
+                  ,pr_dstransacao   --> dstransacao
+                  ,pr_iptransacao   --> iptransacao
+                  ,SYSTIMESTAMP     --> dhinicio_analise 
+                  ,pr_dtmvtolt      --> dtmvtolt
+                  ,NULL             --> dhlimite_analise
+                  ,0 --> Aguardando envio --> cdstatus_analise
+                  ,0 --> Pendente         --> cdparecer_analise
+                  ,pr_cdproduto     --> cdproduto
+                  ,pr_cdcooper      --> cdcooper
+                  ,pr_cdagenci      --> cdagenci
+                  ,pr_nrdconta      --> nrdconta
+                  ,pr_tptransacao   --> tptransacao
+                  ,pr_cdoperacao    --> cdoperacao
+                  ,TRIM(pr_iddispositivo) --> iddispositivo
+                  ,TRIM(pr_dstoken)       --> dstoken
+                  )RETURNING idanalise_fraude INTO pr_idanalise_fraude ;
+    END IF;   
      
   EXCEPTION
     WHEN vr_exc_erro THEN      
@@ -1809,6 +5474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel criar analise de fraude: '||SQLERRM;
 
   END pc_criar_analise_antifraude;
+  
   
   --> Rotina responsavel por registrar o parecer de retorno da análise do sistema antifraude
   PROCEDURE pc_reg_reto_analise_antifraude(pr_idanalis    IN  NUMBER,       --> Id Unico da transação 
@@ -1845,13 +5511,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              fra.cdparecer_analise,
              fra.cdcooper,
              fra.nrdconta,
+             fra.tptransacao,
              fra.dhenvio_analise,
              fra.dhlimite_analise,
              fra.dhretorno_analise,
              fra.cdstatus_analise,
              fra.cdcanal_analise,
              fra.cdproduto,
+             fra.cdoperacao,
              fra.flganalise_manual,
+             decode(fra.tptransacao, 1, 0, 1) flgagend, /* 1=True, 0=False (indicador agendamento) */
              prm.flgemail_retorno
         FROM tbgen_analise_fraude fra,
              tbgen_analise_fraude_param prm
@@ -1869,12 +5538,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_dsdetcri VARCHAR2(4000);
     vr_exc_erro EXCEPTION;
     vr_exc_apro EXCEPTION;    
+    vr_exc_repro EXCEPTION;    
     
     vr_dstransa craplgm.dstransa%TYPE;  
     vr_campoalt typ_tab_campo_alt;
     vr_nmarqlog VARCHAR2(200);
     
+    vr_cdprogra   VARCHAR2(50) := 'pc_reg_reto_analise_antifraude';
+
+    
     ----------> SUB-ROTINAS <----------
+    --> Tratar erro na aprovação
     PROCEDURE pc_tratar_erro_aprovacao IS
     BEGIN
         --> Verificar se deve notificar area de segurança
@@ -1892,7 +5566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                               pr_idorigem => pr_cdcanal,
                               pr_dstransa => vr_dstransa,
                               pr_idanalis => rw_fraude.idanalise_fraude,
-                              pr_dscrilog => 'Falha ao enviar TED para o SPB na procedure AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
+                              pr_dscrilog => 'Falha ao realizar aprovacao analise, AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
                               pr_campoalt => vr_campoalt);
           
          --> Atualizar analise e gerar log 
@@ -1927,7 +5601,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     END pc_tratar_erro_aprovacao;
     
-    --> Tratar erro na aprovação
+    --> Tratar erro na reprovação    
+    PROCEDURE pc_tratar_erro_reprovacao IS
+    BEGIN
+        --> Verificar se deve notificar area de segurança
+        IF rw_fraude.flgemail_retorno = 1 THEN
+          pc_notificar_seguranca (pr_idanalis   => pr_idanalis,
+                                  pr_tpalerta   => 2, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
+                                  pr_dsalerta   => vr_dscritic,
+                                  pr_dscritic   => vr_dscritic_aux); 
+        END IF;
+
+        vr_dscritic_aux := NULL;
+        
+        pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
+                              pr_nrdconta => rw_fraude.nrdconta,
+                              pr_idorigem => pr_cdcanal,
+                              pr_dstransa => vr_dstransa,
+                              pr_idanalis => rw_fraude.idanalise_fraude,
+                              pr_dscrilog => 'Falha ao reprovar/estornar analise AFRA0001.pc_reg_reto_analise_antifraude: '||vr_dsdetcri,
+                              pr_campoalt => vr_campoalt);
+          
+         --> Atualizar analise e gerar log 
+        pc_atualizar_analise ( pr_rowid => rw_fraude.rowid,
+                               pr_dhdenvio => NULL,
+                               pr_cdstatus => NULL,             --> erro comuicação midleware
+                               pr_cdparece => 1,                --> Aprovado
+                               pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
+                               pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
+                               pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                               pr_dscritic => vr_dscritic_aux);
+         
+        IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
+            vr_dscritic := vr_dscritic_aux;
+            ROLLBACK;
+            RAISE vr_exc_erro;
+        END IF;
+
+        --> Excecutar rotinas referentes a reprovação da analise de fraude
+        pc_aprovacao_analise (pr_idanalis  => rw_fraude.idanalise_fraude,    --> Indicador da analise de fraude
+                              pr_cdcritic  => vr_cdcritic,
+                              pr_dscritic  => vr_dscritic_aux );
+             
+        IF TRIM(vr_dscritic) IS NOT NULL OR 
+           nvl(vr_cdcritic,0) > 0 THEN    
+           vr_dscritic := vr_dscritic_aux;
+           ROLLBACK;
+           RAISE vr_exc_erro;
+        END IF;
+        
+        COMMIT;
+    
+    END pc_tratar_erro_reprovacao;
     
     --> Tratar erro caso seja requisição da fila exception
     PROCEDURE pc_tratar_erro_fila_excep(pr_dscritic IN VARCHAR2) IS
@@ -1994,10 +5719,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
           RAISE vr_exc_apro;
         ELSE
            
-           IF rw_fraude.cdproduto = 30 THEN                
-              --> Notificar monitoração 
-              pc_monitora_ted ( pr_idanalis => pr_idanalis);
-           END IF;   
+          --> Notificar monitoração 
+          ---pc_monitora_ted ( pr_idanalis => pr_idanalis);
+          BEGIN                                
+            AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
+                                          ,pr_nrdconta   => rw_fraude.nrdconta    -- Numero da conta
+                                          ,pr_idseqttl   => NULL                  -- Sequencial titular
+                                          ,pr_vlrtotal   => NULL                  -- Valor total lancamento 
+                                          ,pr_flgagend   => rw_fraude.flgagend    -- Flag agendado /* 1-True, 0-False */ 
+                                          ,pr_idorigem   => rw_fraude.tptransacao -- Indicador de origem
+                                          ,pr_cdoperacao => rw_fraude.cdoperacao  -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                          ,pr_idanalis   => rw_fraude.idanalise_fraude  -- ID Analise Fraude
+                                          ,pr_lgprowid   => NULL                  -- Rowid craplgp
+                                          ,pr_cdcritic   => vr_cdcritic           -- Codigo da critica
+                                          ,pr_dscritic   => vr_dscritic);         -- Descricao da critica
+                                         
+            vr_cdcritic := NULL;                         
+            vr_dscritic := NULL;                         
+          EXCEPTION
+            WHEN OTHERS THEN 
+                 vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+                 btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                            pr_ind_tipo_log => 2, --> erro tratado
+                                            pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                               ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                            pr_nmarqlog     => vr_nmarqlog);
+                                             
+                 vr_cdcritic := NULL;                         
+                 vr_dscritic := NULL;                         
+             
+          END;                                             
 
          END IF; 
       
@@ -2010,7 +5761,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     BEGIN
     
     vr_campoalt.delete;
-    vr_dstransa := 'Retorno paracer da Analise de Fraude';
+    CASE 
+      WHEN pr_flganama = 0 THEN
+        vr_dstransa := 'Retorno Automatico do parecer da Analise de Fraude';
+      WHEN pr_flganama = 1 AND pr_cdcanal = 12 THEN
+        vr_dstransa := 'Retorno Manual do parecer da Analise de Fraude';
+      WHEN pr_flganama = 1 AND pr_cdcanal = 1 THEN  
+        vr_dstransa := 'Expiração do parecer da Analise de Fraude';
+      ELSE
+        vr_dstransa := 'Retorno do parecer da Analise de Fraude';
+    END CASE;     
+          
     
     --> Buscar analise de fraude
     OPEN cr_fraude;
@@ -2091,10 +5852,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                            pr_dscritic   => vr_dscritic); 
                 END IF;
                 
-                IF rw_fraude.cdproduto = 30 THEN                
-                   --> Notificar monitoração 
-                   pc_monitora_ted ( pr_idanalis => pr_idanalis);
-                END IF; 
+                
+                --> Notificar monitoração 
+                
+                BEGIN                                
+                  AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
+                                                ,pr_nrdconta   => rw_fraude.nrdconta    -- Numero da conta
+                                                ,pr_idseqttl   => NULL                  -- Sequencial titular
+                                                ,pr_vlrtotal   => NULL                  -- Valor total lancamento 
+                                                ,pr_flgagend   => rw_fraude.flgagend    -- Flag agendado /* 1-True, 0-False */ 
+                                                ,pr_idorigem   => rw_fraude.tptransacao -- Indicador de origem
+                                                ,pr_cdoperacao => rw_fraude.cdoperacao  -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                                ,pr_idanalis   => rw_fraude.idanalise_fraude  -- ID Analise Fraude
+                                                ,pr_lgprowid   => NULL                  -- Rowid craplgp
+                                                ,pr_cdcritic   => vr_cdcritic           -- Codigo da critica
+                                                ,pr_dscritic   => vr_dscritic);         -- Descricao da critica
+                                               
+                  vr_cdcritic := NULL;                         
+                  vr_dscritic := NULL;                         
+                EXCEPTION
+                  WHEN OTHERS THEN 
+                       vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+                       btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                                  pr_ind_tipo_log => 2, --> erro tratado
+                                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                                     ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                                  pr_nmarqlog     => vr_nmarqlog);
+                                                   
+                       vr_cdcritic := NULL;                         
+                       vr_dscritic := NULL;                         
+                END;                                             
                
              ELSIF rw_fraude.cdparecer_analise = 2 THEN /* Reprovar */
                
@@ -2207,7 +5994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
               IF TRIM(vr_dsdetcri) IS NOT NULL OR 
                  nvl(vr_cdcritic,0) > 0 THEN
                 vr_cdcritic := 996; 
-                RAISE vr_exc_erro;
+                RAISE vr_exc_repro;
               END IF;
         END IF;
       ELSE
@@ -2331,7 +6118,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                     pr_ind_tipo_log => 2, --> erro tratado
                                     pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                       ' - AFRA0001.pc_reg_reto_analise_antifraude --> ' || pr_dscritic,
+                                                       ' - AFRA0001.pc_reg_reto_analise_antifraude --> idanalis: ' ||pr_idanalis ||
+                                                       ', cdparece: '|| pr_cdparece ||
+                                                       ' - '||pr_dscritic,
                                     pr_nmarqlog     => vr_nmarqlog);
       
       END IF;
@@ -2343,6 +6132,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         ROLLBACK; 
         pc_tratar_erro_aprovacao;
       
+    WHEN vr_exc_repro THEN
+        --> Caso não consiga reprovar, tentará aprovar a analise
+        ROLLBACK; 
+        pc_tratar_erro_reprovacao;
     WHEN OTHERS THEN
       pr_cdcritic := 996;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
@@ -2423,7 +6216,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              --fra.cdcanal,
              fra.cdstatus_analise,
              fra.cdproduto,
+             fra.cdoperacao,
              fra.tptransacao,
+             decode(fra.tptransacao, 1, 0, 1) flgagend, /* 1=True, 0=False (indicador agendamento) */
              prm.flgemail_retorno
         FROM tbgen_analise_fraude fra,
              tbgen_analise_fraude_param prm
@@ -2449,9 +6244,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_nmarqlog VARCHAR2(500)   := NULL;
     vr_dscrilog VARCHAR2(500)   := NULL;
     vr_cdcanal  INTEGER         := NULL;
+    
+    vr_cdprogra   VARCHAR2(50) := 'pc_reg_conf_entrega_antifraude';
+
   BEGIN
   
-    vr_dstransa := 'Confirmação de entrega parecer da Analise de Fraude';
+    vr_dstransa := 'Confirmação de entrega da operação para Analise de Fraude';
     
     --> Buscar analise de fraude
     OPEN cr_fraude;
@@ -2553,12 +6351,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          END IF;
          
       ELSE
-        --> TED 
-        IF rw_fraude.cdproduto = 30 THEN
-           --> Notificar monitoração 
-           pc_monitora_ted ( pr_idanalis => pr_idanalis);
+        
+        
+        --> Notificar monitoração         
 
-        END IF;   
+        BEGIN                                
+          AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
+                                        ,pr_nrdconta   => rw_fraude.nrdconta    -- Numero da conta
+                                        ,pr_idseqttl   => NULL                  -- Sequencial titular
+                                        ,pr_vlrtotal   => NULL                  -- Valor total lancamento 
+                                        ,pr_flgagend   => rw_fraude.flgagend    -- Flag agendado /* 1-True, 0-False */ 
+                                        ,pr_idorigem   => rw_fraude.tptransacao -- Indicador de origem
+                                        ,pr_cdoperacao => rw_fraude.cdoperacao  -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                        ,pr_idanalis   => rw_fraude.idanalise_fraude  -- ID Analise Fraude
+                                        ,pr_lgprowid   => NULL                  -- Rowid craplgp
+                                        ,pr_cdcritic   => vr_cdcritic           -- Codigo da critica
+                                        ,pr_dscritic   => vr_dscritic);         -- Descricao da critica
+                                         
+          vr_cdcritic := NULL;                         
+          vr_dscritic := NULL;                         
+        EXCEPTION
+          WHEN OTHERS THEN 
+               vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+               btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                          pr_ind_tipo_log => 2, --> erro tratado
+                                          pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                             ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                          pr_nmarqlog     => vr_nmarqlog);
+                                             
+               vr_cdcritic := NULL;                         
+               vr_dscritic := NULL;                         
+        END;                                             
       
       END IF;
       
@@ -2871,13 +6694,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                      '#DTDEBITO#='||to_char(rw_craptvl.dtmvtolt,'DD/MM/RRRR');
       
       --> Gerar uma notificação no IB para o cooperado      
-      pc_mensagem_estorno (pr_cdcooper  => rw_craptvl.cdcooper,
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craptvl.cdcooper,
                            pr_nrdconta  => rw_craptvl.nrdconta,
                            pr_inpessoa  => rw_craptvl.inpessoa,
                            pr_idseqttl  => rw_craptvl.idseqttl,
                            pr_cdproduto => rw_fraude.cdproduto,
                            pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
                            pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                           pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
                            pr_cdcritic  => vr_cdcritic,
                            pr_dscritic  => vr_dscritic );
       
@@ -2915,7 +6739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                           ,pr_dtmvtage => rw_craplau.dtmvtolt  --> Data do agendamento
                           ,pr_nrdocmto => rw_craplau.nrdocmto  --> Numero do documento
                           ,pr_nmdatela => NULL                 --> Nome da tela
-                                      
+                          ,pr_idoriest => 12                   --> Origem do cancelamento/estorno            
                           --> parametros de saida
                           ,pr_dstransa => vr_dstransa          --> descrição de transação									                    
                           ,pr_dscritic => vr_dscritic );          --> Descricao critica  
@@ -2930,13 +6754,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                      '#DTDEBITO#='||to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR');
       
       --> Gerar uma notificação no IB para o cooperado      
-      pc_mensagem_estorno (pr_cdcooper  => rw_craplau.cdcooper,
+      AFRA0004.pc_mensagem_estorno (pr_cdcooper  => rw_craplau.cdcooper,
                            pr_nrdconta  => rw_craplau.nrdconta,
                            pr_inpessoa  => rw_craplau.inpessoa,
                            pr_idseqttl  => rw_craplau.idseqttl,
                            pr_cdproduto => rw_fraude.cdproduto,
                            pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
                            pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                    pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
                            pr_cdcritic  => vr_cdcritic,
                            pr_dscritic  => vr_dscritic );
       
@@ -2968,161 +6793,857 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel realizar estorno da TED para analise: '||SQLERRM;
   END pc_estornar_ted_analise; 
   
-  --> Rotina para geração de mensagem de estorno para o cooperado
-  PROCEDURE pc_mensagem_estorno (pr_cdcooper  IN crapcop.cdcooper%TYPE,
-                                 pr_nrdconta  IN crapass.nrdconta%TYPE,
-                                 pr_inpessoa  IN crapass.inpessoa%TYPE,
-                                 pr_idseqttl  IN crapttl.idseqttl%TYPE,
-                                 pr_cdproduto IN tbgen_analise_fraude.cdproduto%TYPE,
-                                 pr_tptransacao IN tbgen_analise_fraude.tptransacao%TYPE, --> Tipo de transação (1-online/ 2-agendada)                                  
-                                 pr_vldinami  IN VARCHAR2, --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
-                                 pr_cdcritic  OUT INTEGER,
-                                 pr_dscritic  OUT VARCHAR2 ) IS
+
+  --> Rotina para estornar Titulo reprovada pela analise de fraude
+  PROCEDURE pc_estornar_titulo_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                        pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                        pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
+                                        pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                        pr_dscritic  OUT VARCHAR2 ) IS
   /* ..........................................................................
     
-      Programa : pc_mensagem_estorno        
+      Programa : pc_estornar_titulo_analise        
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Janeiro/2017.                   Ultima atualizacao: 
+      Data     : Abril/2018.                   Ultima atualizacao: 
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
-      Objetivo  : Rotina responsavel pela geração de mensagem de estorno para o cooperado
+      Objetivo  : Rotina responsavel por estornar Titulo reprovado pela analise de fraude
+      
       Alteração : 
         
     ..........................................................................*/
     -----------> CURSORES <-----------
-    --> buscar dados da cooper
-    CURSOR cr_crapcop IS
-      SELECT cop.nmrescop
-        FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper; 
-    rw_crapcop cr_crapcop%ROWTYPE;
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.rowid,
+             fra.dsfingerprint,
+             fra.cdparecer_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             --fra.cdcanal,
+             fra.cdstatus_analise,
+             fra.cdlantar,
+             fra.tptransacao,
+             fra.cdproduto
+
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis
+         AND fra.cdproduto = 44; 
+    rw_fraude cr_fraude%ROWTYPE;
     
-    --> Buscar nome do associado
-    CURSOR cr_crapass IS 
-      SELECT ass.nmprimtl
-        FROM crapass ass
-       WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;
-         
-    --> Buscar nome do titular
-    CURSOR cr_crapttl( pr_cdcooper crapttl.cdcooper%TYPE,
-                       pr_nrdconta crapttl.nrdconta%TYPE,
-                       pr_idseqttl crapttl.idseqttl%TYPE) IS
-      SELECT ttl.nmextttl
-        FROM crapttl ttl 
-       WHERE ttl.cdcooper = pr_cdcooper
-         AND ttl.nrdconta = pr_nrdconta
-         AND ttl.idseqttl = pr_idseqttl;    
+    --> Buscar informações do Titulo
+    CURSOR cr_craptit (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT tit.cdcooper,
+             tit.cdagenci,
+             tit.nrdconta,             
+             tit.dscodbar,
+             tit.vldpagto,
+             tit.dtmvtolt,
+             tit.cdctrbxo,
+             tit.nrdident,
+             tit.idseqttl,
+             ass.inpessoa              
+        FROM craptit tit,
+             crapass ass
+       WHERE tit.cdcooper = ass.cdcooper
+         AND tit.nrdconta = ass.nrdconta
+         AND tit.idanafrd = pr_idanalis
+         AND tit.cdcooper = pr_cdcooper
+         AND tit.nrdconta = pr_nrdconta;         
+    rw_craptit cr_craptit%ROWTYPE;
     
-    --Selecionar titulares com senhas ativas
-    CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
-                      ,pr_nrdconta IN crapsnh.nrdconta%TYPE) IS
-      SELECT crapsnh.nrcpfcgc
-            ,crapsnh.cdcooper
-            ,crapsnh.nrdconta
-            ,crapsnh.idseqttl
-        FROM crapsnh
-       WHERE crapsnh.cdcooper = pr_cdcooper
-         AND crapsnh.nrdconta = pr_nrdconta
-         AND crapsnh.cdsitsnh = 1
-         AND crapsnh.tpdsenha = 1;
-    rw_crapsnh cr_crapsnh%ROWTYPE;
-    
+    --> Buscar informações do agendamento
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,             
+             lau.nrdconta,
+             lau.idseqttl,             
+             lau.nrdocmto,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.dtmvtolt,
+             lau.dsorigem,
+             lau.cdagenci,   
+             ass.inpessoa
+        FROM craplau lau,
+             crapass ass
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.cdtiptra = 2   
+         AND lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta;         
+    rw_craplau cr_craplau%ROWTYPE;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
-    
-    vr_dsdassun crapmsg.dsdassun%TYPE;
-    vr_dsdplchv crapmsg.dsdplchv%TYPE;
-    vr_dsdmensg crapmsg.dsdmensg%TYPE;
-    vr_cdtipmsg tbgen_tipo_mensagem.cdtipo_mensagem%TYPE;
-    vr_vldinami VARCHAR2(1000);
-    vr_nmprimtl crapass.nmprimtl%TYPE;
+    vr_dsprotoc crappro.dsprotoc%TYPE;
+    vr_dstransa craplgm.dstransa%TYPE;
+    vr_vldinami VARCHAR2(4000);
     
     
   BEGIN
   
-    OPEN cr_crapcop;
-    FETCH cr_crapcop INTO rw_crapcop;
-    CLOSE cr_crapcop;
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
     
-    IF pr_cdproduto = 30 THEN
-      --> Online
-      IF pr_tptransacao = 1 THEN
-        vr_dsdassun := 'TED Estornada';
-      ELSE
-        vr_dsdassun := 'Agendamento de TED Estornado';
-      END IF;
-      vr_dsdplchv := 'TED';
+    IF cr_fraude%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
     END IF;
     
     --> Online
-    IF pr_tptransacao = 1 THEN
-      IF pr_inpessoa = 1 THEN
-        vr_cdtipmsg := 21;
+    IF rw_fraude.tptransacao = 1 THEN
+    
+      OPEN cr_craptit (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craptit INTO rw_craptit;
+      
+      IF cr_craptit%NOTFOUND THEN
+        CLOSE cr_craptit;
+        vr_dscritic := 'Não foi possivel localizar pagamento do titulo.';
+        RAISE vr_exc_erro;
       ELSE
-        vr_cdtipmsg := 18;
+        CLOSE cr_craptit;
       END IF;
-    --> Agendada
-    ELSIF pr_tptransacao = 2 THEN
-      IF pr_inpessoa = 1 THEN
-        vr_cdtipmsg := 19;
-      ELSE
-        vr_cdtipmsg := 20;
-      END IF;
-    END IF; 
-    
-    --> Buscar pessoas que possuem acesso a conta
-    FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
-                                 ,pr_nrdconta  => pr_nrdconta) LOOP
-                                   
-      IF pr_inpessoa = 1 AND rw_crapsnh.idseqttl > 0 THEN
-        OPEN cr_crapttl(pr_cdcooper => pr_cdcooper,
-                        pr_nrdconta => pr_nrdconta,
-                        pr_idseqttl => rw_crapsnh.idseqttl);
-        FETCH cr_crapttl INTO vr_nmprimtl;
-        CLOSE cr_crapttl;
-      ELSE
-        OPEN cr_crapass;
-        FETCH cr_crapass INTO vr_nmprimtl;
-        CLOSE cr_crapass;    
-      END IF;
-    
-      vr_vldinami := '#NOME#='||vr_nmprimtl||';'||
-                     pr_vldinami;
-    
-      --> buscar mensagem 
-      vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper
-                                                ,pr_cdproduto         => pr_cdproduto
-                                                ,pr_cdtipo_mensagem   => vr_cdtipmsg
-                                                ,pr_sms               => 0             -- Indicador se mensagem é SMS (pois deve cortar em 160 caracteres)
-                                                ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
-    
-      --> Criar mensagem
-      GENE0003.pc_gerar_mensagem ( pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta
-                                  ,pr_idseqttl => rw_crapsnh.idseqttl
-                                  ,pr_cdprogra => 'AFRA0001'
-                                  ,pr_inpriori => 1
-                                  ,pr_dsdmensg => vr_dsdmensg
-                                  ,pr_dsdassun => vr_dsdassun
-                                  ,pr_dsdremet => rw_crapcop.nmrescop
-                                  ,pr_dsdplchv => vr_dsdplchv
-                                  ,pr_cdoperad => ''
-                                  ,pr_cdcadmsg => 0
-                                  ,pr_dscritic => vr_dscritic);
-     
+      
+      --> Procedimento para estornar titulo
+      PAGA0004.pc_estorna_titulo (pr_cdcooper  => rw_craptit.cdcooper  --> Codigo da cooperativa
+                                 ,pr_cdagenci  => rw_craptit.cdagenci  --> Codigo da agencia
+                                 ,pr_dtmvtolt  => rw_craptit.dtmvtolt  --> Data de movimento
+                                 ,pr_nrdconta  => rw_craptit.nrdconta  --> Numero da conta
+                                 ,pr_idseqttl  => rw_craptit.idseqttl  --> Sequencial titular
+                                 ,pr_cdbarras  => rw_craptit.dscodbar  --> Codigo de barras
+                                 ,pr_dscedent  => ''                   --> Cedente
+                                 ,pr_vlfatura  => rw_craptit.vldpagto  --> Valor da fatura
+                                 ,pr_cdoperad  => '1'                  --> Codigo do operador
+                                 ,pr_idorigem  => 12 /* Antifraude */  --> Id de origem da operação
+                                 ,pr_cdctrbxo  => rw_craptit.cdctrbxo  --> Codigo de controle de baixa
+                                 ,pr_nrdident  => rw_craptit.nrdident  --> Identificador do titulo NPC
+                                 ,pr_dstransa  => vr_dstransa          --> Retorna Descrição da transação
+                                 ,pr_dscritic  => vr_dscritic          --> Retorna critica
+                                 ,pr_dsprotoc  => vr_dsprotoc);        --> Retorna protocolo
+          
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-    END LOOP;
+      
+      vr_vldinami := '#VALOR#='||to_char(rw_craptit.vldpagto,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craptit.dtmvtolt,'DD/MM/RRRR');
+      
+
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craptit.cdcooper,
+                           pr_nrdconta  => rw_craptit.nrdconta,
+                           pr_inpessoa  => rw_craptit.inpessoa,
+                           pr_idseqttl  => rw_craptit.idseqttl,
+                           pr_cdproduto => rw_fraude.cdproduto,
+                           pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                           pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                           pr_cdcritic  => vr_cdcritic,
+                           pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    --> Agendamento
+    ELSIF rw_fraude.tptransacao = 2 THEN  
+      
+      OPEN cr_craplau (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplau INTO rw_craplau;
+      
+      IF cr_craplau%NOTFOUND THEN
+        CLOSE cr_craplau;
+        vr_dscritic := 'Não foi possivel localizar agendamento de Tributo';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplau;
+      END IF;
+    
+      --> cancelar agendamento 
+      PAGA0002.pc_cancelar_agendamento
+                         ( pr_cdcooper => rw_craplau.cdcooper  --> Codigo da cooperativa
+                          ,pr_cdagenci => rw_craplau.cdagenci  --> Codigo da agencia
+                          ,pr_nrdcaixa => 900                  --> Numero do caixa
+                          ,pr_cdoperad => '1'                  --> Codigo do operador
+                          ,pr_nrdconta => rw_craplau.nrdconta  --> Numero da conta do cooperado
+                          ,pr_idseqttl => rw_craplau.idseqttl  --> Sequencial do titular
+                          ,pr_dtmvtolt => rw_craplau.dtmvtolt  --> Data do movimento
+                          ,pr_dsorigem => rw_craplau.dsorigem  --> Descrição de origem do registro
+                          ,pr_dtmvtage => rw_craplau.dtmvtolt  --> Data do agendamento
+                          ,pr_nrdocmto => rw_craplau.nrdocmto  --> Numero do documento
+                          ,pr_nmdatela => NULL                 --> Nome da tela                                      
+                          ,pr_idoriest => 12                   --> Origem do cancelamento/estorno                                      
+                          --> parametros de saida
+                          ,pr_dstransa => vr_dstransa          --> descrição de transação                                      
+                          ,pr_dscritic => vr_dscritic );       --> Descricao critica  
+    
+    
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF; 
+     
+      vr_vldinami := '#VALOR#='||to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR');
+      
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craplau.cdcooper,
+                           pr_nrdconta  => rw_craplau.nrdconta,
+                           pr_inpessoa  => rw_craplau.inpessoa,
+                           pr_idseqttl  => rw_craplau.idseqttl,
+                           pr_cdproduto => rw_fraude.cdproduto,
+                           pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                           pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                           pr_cdcritic  => vr_cdcritic,
+                           pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar estorno de titulo para analise: '||SQLERRM;
+  END pc_estornar_titulo_analise;  
+  
+  
+  --> Rotina para estornar Tributos reprovada pela analise de fraude
+  PROCEDURE pc_estornar_Tributo_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                         pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                         pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
+                                         pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                         pr_dscritic  OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_estornar_Tributo_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por estornar Tributos reprovada pela analise de fraude
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.rowid,
+             fra.dsfingerprint,
+             fra.cdparecer_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             --fra.cdcanal,
+             fra.cdstatus_analise,
+             fra.cdlantar,
+             fra.tptransacao,
+             fra.cdproduto
+
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações de tributos
+    CURSOR cr_craplft (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lft.cdcooper,
+             lft.nrdconta,             
+             lft.cdbarras,
+             lft.cdseqfat,
+             --Icluir valor de multa e fatura para DARF
+             decode(lft.tpfatura,2,lft.vllanmto + nvl(lft.vlrmulta,0) + nvl(lft.vlrjuros,0),
+                                   lft.vllanmto) vllanmto,
+             lft.dtmvtolt,
+             lft.idseqttl,
+             ass.inpessoa              
+        FROM craplft lft,
+             crapass ass
+       WHERE lft.cdcooper = ass.cdcooper
+         AND lft.nrdconta = ass.nrdconta
+         AND lft.idanafrd = pr_idanalis
+         AND lft.cdcooper = pr_cdcooper
+         AND lft.nrdconta = pr_nrdconta;         
+    rw_craplft cr_craplft%ROWTYPE;
+    
+    --> Buscar informações do agendamento
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,             
+             lau.nrdconta,
+             lau.idseqttl,             
+             lau.nrdocmto,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.dtmvtolt,
+             lau.dsorigem,
+             lau.cdagenci,   
+             ass.inpessoa
+        FROM craplau lau,
+             crapass ass
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta;         
+    rw_craplau cr_craplau%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;    
+    vr_dsprotoc crappro.dsprotoc%TYPE;
+    vr_dstransa craplgm.dstransa%TYPE;
+    vr_vldinami VARCHAR2(4000);
+    
+    
+  BEGIN
+  
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+    --> Online
+    IF rw_fraude.tptransacao = 1 THEN
+    
+      OPEN cr_craplft (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplft INTO rw_craplft;
+      
+      IF cr_craplft%NOTFOUND THEN
+        CLOSE cr_craplft;
+        vr_dscritic := 'Não foi possivel localizar pagamento de tributo.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplft;
+      END IF;
+      
+      PAGA0004.pc_estorna_convenio( pr_cdcooper  => rw_craplft.cdcooper  --> Codigo da cooperativa
+                                   ,pr_nrdconta  => rw_craplft.nrdconta  --> Numero da conta
+                                   ,pr_idseqttl  => rw_craplft.idseqttl  --> Sequencial titular
+                                   ,pr_cdbarras  => rw_craplft.cdbarras  --> Codigo de barras
+                                   ,pr_dscedent  => ''                   --> Cedente
+                                   ,pr_cdseqfat  => rw_craplft.cdseqfat  --> sequencial da fatura
+                                   ,pr_vlfatura  => rw_craplft.vllanmto  --> Valor da fatura
+                                   ,pr_cdoperad  => '1'                  --> Codigo do operador
+                                   ,pr_idorigem  => 12 /* Antifraude */  --> Id de origem da operação
+                                   --> OUT <--
+                                   ,pr_dstransa  => vr_dstransa   --> Retorna Descrição da transação
+                                   ,pr_dscritic  => vr_dscritic   --> Retorna critica
+                                   ,pr_dsprotoc  => vr_dsprotoc);   --> Retorna protocolo
+      
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      vr_vldinami := '#VALOR#='||to_char(rw_craplft.vllanmto,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craplft.dtmvtolt,'DD/MM/RRRR');
+      
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craplft.cdcooper,
+                           pr_nrdconta  => rw_craplft.nrdconta,
+                           pr_inpessoa  => rw_craplft.inpessoa,
+                           pr_idseqttl  => rw_craplft.idseqttl,
+                           pr_cdproduto => rw_fraude.cdproduto,
+                           pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                           pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                           pr_cdcritic  => vr_cdcritic,
+                           pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    --> Agendamento
+    ELSIF rw_fraude.tptransacao = 2 THEN  
+      
+      OPEN cr_craplau (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplau INTO rw_craplau;
+      
+      IF cr_craplau%NOTFOUND THEN
+        CLOSE cr_craplau;
+        vr_dscritic := 'Não foi possivel localizar agendamento de Tributo';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplau;
+      END IF;
+    
+      --> cancelar agendamento 
+      PAGA0002.pc_cancelar_agendamento
+                         ( pr_cdcooper => rw_craplau.cdcooper  --> Codigo da cooperativa
+                          ,pr_cdagenci => rw_craplau.cdagenci  --> Codigo da agencia
+                          ,pr_nrdcaixa => 900                  --> Numero do caixa
+                          ,pr_cdoperad => '1'                  --> Codigo do operador
+                          ,pr_nrdconta => rw_craplau.nrdconta  --> Numero da conta do cooperado
+                          ,pr_idseqttl => rw_craplau.idseqttl  --> Sequencial do titular
+                          ,pr_dtmvtolt => rw_craplau.dtmvtolt  --> Data do movimento
+                          ,pr_dsorigem => rw_craplau.dsorigem  --> Descrição de origem do registro
+                          ,pr_dtmvtage => rw_craplau.dtmvtolt  --> Data do agendamento
+                          ,pr_nrdocmto => rw_craplau.nrdocmto  --> Numero do documento
+                          ,pr_nmdatela => NULL                 --> Nome da tela                                      
+                          ,pr_idoriest => 12                   --> Origem do cancelamento/estorno            
+                          --> parametros de saida
+                          ,pr_dstransa => vr_dstransa          --> descrição de transação                                      
+                          ,pr_dscritic => vr_dscritic );       --> Descricao critica  
+    
+    
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF; 
+     
+      vr_vldinami := '#VALOR#='||to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR');
+      
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craplau.cdcooper,
+                           pr_nrdconta  => rw_craplau.nrdconta,
+                           pr_inpessoa  => rw_craplau.inpessoa,
+                           pr_idseqttl  => rw_craplau.idseqttl,
+                           pr_cdproduto => rw_fraude.cdproduto,
+                           pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                           pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                           pr_cdcritic  => vr_cdcritic,
+                           pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar estorno de tributo para analise: '||SQLERRM;
+  END pc_estornar_tributo_analise; 
+  
+  
+  --> Rotina para estornar GPS reprovada pela analise de fraude
+  PROCEDURE pc_estornar_gps_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, -->Id da análise de fraude
+                                     pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                     pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                     pr_dscritic  OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_estornar_gps_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Teobaldo Jamunda (AMcom)
+      Data     : Abril/2018.                   Ultima atualizacao: 20/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para estornar GPS reprovada pela analise de fraude
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude - GPS
+    CURSOR cr_fraude IS
+      SELECT fra.rowid,
+             fra.dsfingerprint,
+             fra.cdparecer_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.cdstatus_analise,
+             fra.cdlantar,
+             fra.tptransacao,
+             fra.cdproduto
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis
+         AND fra.cdproduto = 47; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informacoes GPS
+    CURSOR cr_craplgp (pr_idanalis  craplgp.idanafrd%TYPE,
+                       pr_cdcooper  craplgp.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT lgp.cdcooper,
+             ass.nrdconta,
+             lgp.cdidenti,
+             cop.cdagectl,
+             ass.cdagenci,
+             pes.nmpessoa, 
+             ass.inpessoa,   
+             lgp.cdbarras,
+             lgp.dslindig,
+             lgp.mmaacomp,
+             lgp.nrautdoc,
+             lgp.vlrtotal,
+             lgp.vlrdinss,
+             lgp.idseqttl,
+             lgp.flgpagto,
+             lgp.nrseqdig,
+             lgp.nrdcaixa,
+             lgp.rowid
+        FROM craplgp lgp,
+             crapcop cop,
+             crapass ass,
+             crapban ban,
+             tbcadast_pessoa pes
+       WHERE lgp.cdcooper = cop.cdcooper
+         AND lgp.cdcooper = ass.cdcooper
+         AND lgp.nrctapag = ass.nrdconta 
+         AND lgp.cdbccxlt = ban.cdbccxlt
+         AND ass.nrcpfcgc = pes.nrcpfcgc
+         AND lgp.idanafrd = pr_idanalis  
+         AND lgp.cdcooper = pr_cdcooper  
+         AND lgp.nrctapag = pr_nrdconta;       
+    rw_craplgp cr_craplgp%ROWTYPE;
+    
+    --> Buscar informações do agendamento de GPS
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,             
+             lau.nrdconta,
+             lau.idseqttl,             
+             lau.nrdocmto,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.dtmvtolt,
+             lau.dsorigem,
+             lau.cdagenci,   
+             ass.inpessoa,
+             lau.flmobile,
+             lau.nrcpfope,
+             (SELECT gps.rowid
+                FROM tbinss_agendamento_gps  gps
+               WHERE gps.cdcooper = lau.cdcooper
+                 AND gps.nrdconta = lau.nrdconta
+                 AND gps.nrseqagp = lau.nrseqagp) rowid_tbinss
+        FROM craplau lau,
+             crapass ass
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.cdtiptra = 2    
+         AND lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta;         
+    rw_craplau cr_craplau%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;    
+    vr_dsprotoc crappro.dsprotoc%TYPE;    
+    vr_vldinami VARCHAR2(4000);
+    vr_nrdolote craplgp.nrdolote%TYPE;
+    
+    rw_craplot lote0001.cr_craplot%ROWTYPE;
+    
+  BEGIN
+  
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+    --> Online
+    IF rw_fraude.tptransacao = 1 THEN
+      
+      --> Buscar dados da GPS
+      OPEN cr_craplgp( pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplgp INTO rw_craplgp;
+      
+      IF cr_craplgp%NOTFOUND THEN
+        CLOSE cr_craplgp;
+        vr_dscritic := 'Não foi possivel localizar cr_craplgp';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplgp;
+      END IF;
+      
+      IF rw_craplgp.flgpagto = 1 THEN -- TRUE/PAGO
+        vr_dscritic := 'Pagamento ja enviado. Estorno não permitido.';
+        RAISE vr_exc_erro;      
+      END IF;
+      
+      vr_nrdolote:= 31000 + rw_craplgp.nrdcaixa;
+
+      -- Inserir o lote e não deixar tabela lockada
+      lote0001.pc_insere_lote( pr_cdcooper => rw_craplgp.cdcooper                      
+                              ,pr_dtmvtolt => pr_dtmvtolt                      
+                              ,pr_cdagenci => rw_craplgp.cdagenci                      
+                              ,pr_cdbccxlt => 100 /* Fixo */                   
+                              ,pr_nrdolote => vr_nrdolote                      
+                              ,pr_cdoperad => 1                      
+                              ,pr_nrdcaixa => rw_craplgp.nrdcaixa                      
+                              ,pr_tplotmov => 30                               
+                              ,pr_cdhistor => 1414 /* Historico gps sicredi */ 
+                              ,pr_craplot  => rw_craplot 
+                              ,pr_dscritic => pr_dscritic);
+
+      -- se encontrou erro ao buscar lote, abortar programa
+      IF pr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;      
+      
+      --> Estornar lançamento de débito do valor da GPS da conta corrente
+      BEGIN
+      
+        INSERT INTO craplcm 
+                    (dtmvtolt, 
+                     cdagenci, 
+                     cdbccxlt, 
+                     nrdolote, 
+                     nrdconta, 
+                     nrdocmto, 
+                     cdhistor, 
+                     nrseqdig, 
+                     vllanmto, 
+                     nrdctabb, 
+                     cdpesqbb, 
+                     dtrefere, 
+                     hrtransa, 
+                     cdoperad, 
+                     cdcooper, 
+                     cdorigem )
+             VALUES (pr_dtmvtolt,           -- dtmvtolt
+                     rw_craplot.cdagenci,   -- cdagenci 
+                     rw_craplot.cdbccxlt,   -- cdbccxlt 
+                     rw_craplot.nrdolote,   -- nrdolote 
+                     rw_craplgp.nrdconta,   -- nrdconta
+                     rw_craplgp.nrautdoc,   -- nrdocmto 
+                     2280,                  -- cdhistor (Estorno de Arrecadacao)
+                     rw_craplot.nrseqdig,   -- nrseqdig
+                     rw_craplgp.vlrtotal,   -- vllanmto  
+                     rw_craplgp.nrdconta,   -- nrdctabb
+                     'EST GPS',             -- cdpesqbb  
+                     TRUNC(SYSDATE),        -- dtrefere
+                     gene0002.fn_busca_time,-- hrtransa
+                     '1',                   -- cdoperad
+                     rw_craplgp.cdcooper,   -- cdcooper
+                     12);                   -- cdorigem 
+        
+      EXCEPTION  
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel gerar lançamento de estorno de GPS:'||SQLERRM;
+          RAISE vr_exc_erro;
+      END;    
+      
+      --> Alterar a situação do comprovante no IB/Mobile para ESTORNADO.  
+      GENE0006.pc_estorna_protocolo(pr_cdcooper => rw_craplgp.cdcooper,
+                                    pr_dtmvtolt => pr_dtmvtolt,
+                                    pr_nrdconta => rw_craplgp.nrdconta,
+                                    pr_cdtippro => 13,              --> GPS
+                                    pr_nrdocmto => rw_craplgp.nrseqdig,
+                                    pr_dsprotoc => vr_dsprotoc,     --> Descrição do protocolo
+                                    pr_retorno  => vr_dscritic);
+                                    
+      IF nvl(vr_dscritic,'OK')<> 'OK' THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Atualiza o registro de movimento da internet
+      paga0001.pc_insere_movimento_internet(pr_cdcooper => rw_craplgp.cdcooper
+                                           ,pr_nrdconta => rw_craplgp.nrdconta
+                                           ,pr_idseqttl => rw_craplgp.idseqttl
+                                           ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                           ,pr_cdoperad => 1
+                                           ,pr_inpessoa => rw_craplgp.inpessoa
+                                           ,pr_tpoperac => 2 -- Pagamento
+                                           ,pr_vllanmto => (rw_craplgp.vlrtotal * -1) -- Diminuir valor
+                                           ,pr_dscritic => vr_dscritic);
+                                           
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+      END IF;
+      
+      vr_vldinami := '#VALOR#='||to_char(rw_craplgp.vlrtotal,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(pr_dtmvtolt,'DD/MM/RRRR');
+      
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno (pr_cdcooper => rw_craplgp.cdcooper,
+                                   pr_nrdconta  => rw_craplgp.nrdconta,
+                                   pr_inpessoa  => rw_craplgp.inpessoa,
+                                   pr_idseqttl  => rw_craplgp.idseqttl,   
+                                   pr_cdproduto => rw_fraude.cdproduto,
+                                   pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                                   pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                                   pr_cdcritic  => vr_cdcritic,
+                                   pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      BEGIN
+        -- Excluir
+        DELETE craplgp lgp
+         WHERE lgp.rowid = rw_craplgp.rowid;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := 'Erro no Pagamento do Agendamento! (Erro: '|| to_char(SQLCODE) || ')';
+          RAISE vr_exc_erro;
+      END;        
+      
+      -- verificar se lote esta lockado
+      IF cxon0020.fn_verifica_lote_uso(pr_rowid => rw_craplot.rowid ) = 1 THEN
+        vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';  
+        RAISE vr_exc_erro;
+      END IF;
+        
+      -- Atualizar lote
+      BEGIN
+        UPDATE craplot
+           SET craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
+               craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
+               --> CREDITO 
+               craplot.vlcompcr = nvl(craplot.vlcompcr,0) + rw_craplgp.vlrtotal,
+               craplot.vlinfocr = nvl(craplot.vlinfocr,0) + rw_craplgp.vlrtotal
+         WHERE craplot.rowid = rw_craplot.rowid; 
+      EXCEPTION 
+        WHEN OTHERS THEN
+          vr_dscritic := 'Não foi possivel atualizar lote '||rw_craplot.nrdolote||' :'||SQLERRM;
+          RAISE vr_exc_erro;
+      END; 
+      
+    --> Agendamento
+    ELSIF rw_fraude.tptransacao = 2 THEN  
+      
+      OPEN cr_craplau (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplau INTO rw_craplau;
+      
+      IF cr_craplau%NOTFOUND THEN
+        CLOSE cr_craplau;
+        vr_dscritic := 'Não foi possivel localizar agendamento de GPS';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplau;
+      END IF;
+      
+      --> cancelar agendamento  GPS
+      INSS0002.pc_gps_agmto_desativar(pr_cdcooper => rw_craplau.cdcooper     --> Codigo da cooperativa
+                                     ,pr_nrdconta => rw_craplau.nrdconta     --> Numero da conta do cooperado
+                                     ,pr_idorigem => 12                      --> Origem Analise de Fraude
+                                     ,pr_cdoperad => '1'                     --> Codigo do operador
+                                     ,pr_nmdatela => NULL                    --> Nome da tela
+                                     ,pr_dsdrowid => rw_craplau.rowid_tbinss --> ROWID da tbinss_agendamento_gps 
+                                     ,pr_nrcpfope => rw_craplau.nrcpfope     --> numero do cpf do operador 
+                                     ,pr_flmobile => rw_craplau.flmobile     --> indicador de operacao atraves sistema mobile 
+                                     ,pr_dscritic => vr_dscritic);           --> Descricao critica 
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF; 
+      
+      vr_vldinami := '#VALOR#='||to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR');
+      
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno (pr_cdcooper  => rw_craplau.cdcooper,
+                                    pr_nrdconta  => rw_craplau.nrdconta,
+                                    pr_inpessoa  => rw_craplau.inpessoa,
+                                    pr_idseqttl  => rw_craplau.idseqttl,
+                                    pr_cdproduto => rw_fraude.cdproduto,
+                                    pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                                    pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                    pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                                    pr_cdcritic  => vr_cdcritic,
+                                    pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;
+  
   
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3139,8 +7660,254 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Não foi gerar mensagem de estorno ao cooperado: '||SQLERRM;
-  END pc_mensagem_estorno; 
+      pr_dscritic := 'Não foi possivel realizar estorno da GPS para analise: '||SQLERRM;
+  END pc_estornar_gps_analise;
+  
+  
+  --> Rotina para estornar Convenio reprovado pela analise de fraude  
+  PROCEDURE pc_estornar_convenio_analise(pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
+                                         pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
+                                         pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
+                                         pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
+                                         pr_dscritic  OUT VARCHAR2 ) IS
+  /* ..........................................................................
+    
+      Programa : pc_estornar_convenio_analise        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Teobaldo Jamunda (AMcom)
+      Data     : Abril/2018.                    Ultima atualizacao: 17/04/2018
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por estornar Convenio reprovado pela analise de fraude
+                  (PRJ381 - Analide de Fraude, Teobaldo Jamunda - AMcom)             
+      
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    --> Buscar analise de fraude
+    CURSOR cr_fraude IS
+      SELECT fra.rowid,
+             fra.dsfingerprint,
+             fra.cdparecer_analise,
+             fra.cdcooper,
+             fra.nrdconta,
+             fra.cdstatus_analise,
+             fra.cdlantar,
+             fra.tptransacao,
+             fra.cdproduto
+        FROM tbgen_analise_fraude fra
+       WHERE fra.idanalise_fraude = pr_idanalis; 
+    rw_fraude cr_fraude%ROWTYPE;
+    
+    --> Buscar informações de convenios
+    CURSOR cr_craplft (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lft.cdcooper,
+             lft.nrdconta,             
+             lft.cdbarras,
+             lft.cdseqfat,
+             lft.vllanmto,
+             lft.dtmvtolt,
+             lft.idseqttl,
+             ass.inpessoa              
+        FROM craplft lft,
+             crapass ass
+       WHERE lft.cdcooper = ass.cdcooper
+         AND lft.nrdconta = ass.nrdconta
+         AND lft.idanafrd = pr_idanalis
+         AND lft.cdcooper = pr_cdcooper
+         AND lft.nrdconta = pr_nrdconta;         
+    rw_craplft cr_craplft%ROWTYPE;
+    
+    --> Buscar informações do agendamento
+    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
+                       pr_cdcooper  craplau.cdcooper%TYPE,
+                       pr_nrdconta  craplau.nrdconta%TYPE) IS
+      SELECT lau.cdcooper,             
+             lau.nrdconta,
+             lau.idseqttl,             
+             lau.nrdocmto,
+             lau.vllanaut,
+             lau.dtmvtopg,
+             lau.dtmvtolt,
+             lau.dsorigem,
+             lau.cdagenci,   
+             ass.inpessoa
+        FROM craplau lau,
+             crapass ass
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.idanafrd = pr_idanalis
+         AND lau.cdcooper = pr_cdcooper
+         AND lau.nrdconta = pr_nrdconta;         
+    rw_craplau cr_craplau%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic  NUMBER;
+    vr_dscritic  VARCHAR2(4000);
+    vr_exc_erro  EXCEPTION;    
+    vr_dsprotoc  crappro.dsprotoc%TYPE;
+    vr_dstransa  craplgm.dstransa%TYPE;
+    vr_vldinami  VARCHAR2(4000);
+
+    
+  BEGIN
+  
+    --> Buscar analise de fraude
+    OPEN cr_fraude;
+    FETCH cr_fraude INTO rw_fraude;
+    
+    IF cr_fraude%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro de analise de fraude não encontrado.';
+      CLOSE cr_fraude;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_fraude;
+    END IF;
+    
+    --> Online
+    IF rw_fraude.tptransacao = 1 THEN
+    
+      OPEN cr_craplft (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplft INTO rw_craplft;
+      
+      IF cr_craplft%NOTFOUND THEN
+        CLOSE cr_craplft;
+        vr_dscritic := 'Não foi possivel localizar pagamento de tributo.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplft;
+      END IF;
+      
+      PAGA0004.pc_estorna_convenio( pr_cdcooper  => rw_craplft.cdcooper  --> Codigo da cooperativa
+                                   ,pr_nrdconta  => rw_craplft.nrdconta  --> Numero da conta
+                                   ,pr_idseqttl  => rw_craplft.idseqttl  --> Sequencial titular
+                                   ,pr_cdbarras  => rw_craplft.cdbarras  --> Codigo de barras
+                                   ,pr_dscedent  => ''                   --> Cedente
+                                   ,pr_cdseqfat  => rw_craplft.cdseqfat  --> sequencial da fatura
+                                   ,pr_vlfatura  => rw_craplft.vllanmto  --> Valor da fatura
+                                   ,pr_cdoperad  => '1'                  --> Codigo do operador
+                                   ,pr_idorigem  => 12 /* Antifraude */  --> Id de origem da operação
+                                   --> OUT <--
+                                   ,pr_dstransa  => vr_dstransa          --> Retorna Descrição da transação
+                                   ,pr_dscritic  => vr_dscritic          --> Retorna critica
+                                   ,pr_dsprotoc  => vr_dsprotoc);        --> Retorna protocolo
+      
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      vr_vldinami := '#VALOR#='||to_char(rw_craplft.vllanmto,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craplft.dtmvtolt,'DD/MM/RRRR');
+
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craplft.cdcooper,
+                                   pr_nrdconta  => rw_craplft.nrdconta,
+                                   pr_inpessoa  => rw_craplft.inpessoa,
+                                   pr_idseqttl  => rw_craplft.idseqttl,
+                                   pr_cdproduto => rw_fraude.cdproduto,
+                                   pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                                   pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                                   pr_cdcritic  => vr_cdcritic,
+                                   pr_dscritic  => vr_dscritic );
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    --> Agendamento
+    ELSIF rw_fraude.tptransacao = 2 THEN  
+      
+      OPEN cr_craplau (pr_idanalis => pr_idanalis,
+                       pr_cdcooper => rw_fraude.cdcooper,
+                       pr_nrdconta => rw_fraude.nrdconta);
+      FETCH cr_craplau INTO rw_craplau;
+      
+      IF cr_craplau%NOTFOUND THEN
+        CLOSE cr_craplau;
+        vr_dscritic := 'Não foi possivel localizar agendamento de Convenio';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplau;
+      END IF;
+    
+      --> cancelar agendamento 
+      PAGA0002.pc_cancelar_agendamento
+                         ( pr_cdcooper => rw_craplau.cdcooper  --> Codigo da cooperativa
+                          ,pr_cdagenci => rw_craplau.cdagenci  --> Codigo da agencia
+                          ,pr_nrdcaixa => 900                  --> Numero do caixa
+                          ,pr_cdoperad => '1'                  --> Codigo do operador
+                          ,pr_nrdconta => rw_craplau.nrdconta  --> Numero da conta do cooperado
+                          ,pr_idseqttl => rw_craplau.idseqttl  --> Sequencial do titular
+                          ,pr_dtmvtolt => rw_craplau.dtmvtolt  --> Data do movimento
+                          ,pr_dsorigem => rw_craplau.dsorigem  --> Descrição de origem do registro
+                          ,pr_dtmvtage => rw_craplau.dtmvtolt  --> Data do agendamento
+                          ,pr_nrdocmto => rw_craplau.nrdocmto  --> Numero do documento
+                          ,pr_nmdatela => NULL                 --> Nome da tela                                      
+                          ,pr_idoriest => 12                   --> Origem do cancelamento/estorno            
+                          --> parametros de saida
+                          ,pr_dstransa => vr_dstransa          --> descrição de transação                                      
+                          ,pr_dscritic => vr_dscritic );       --> Descricao critica  
+    
+    
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF; 
+     
+      vr_vldinami := '#VALOR#='||to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
+                     '#DTDEBITO#='||to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR');
+      
+      --> Gerar uma notificação no IB para o cooperado      
+      AFRA0004.pc_mensagem_estorno(pr_cdcooper  => rw_craplau.cdcooper,
+                                   pr_nrdconta  => rw_craplau.nrdconta,
+                                   pr_inpessoa  => rw_craplau.inpessoa,
+                                   pr_idseqttl  => rw_craplau.idseqttl,
+                                   pr_cdproduto => rw_fraude.cdproduto,
+                                   pr_tptransacao => rw_fraude.tptransacao, --> Tipo de transação (1-online/ 2-agendada)                                  
+                                   pr_vldinami  => vr_vldinami,             --> Permite Passar valores dinamicos para a mensagem ex. #VALOR#=58,99;#DTDEBITO#=18/01/2017; 
+                                   pr_programa  => 'AFRA0001',              --> Nome do programa/package de origem da mensagem
+                                   pr_cdcritic  => vr_cdcritic,
+                                   pr_dscritic  => vr_dscritic );
+
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND 
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel realizar estorno de convenio para analise: '||SQLERRM;
+  END pc_estornar_convenio_analise;
+  
+  
+  
   
   PROCEDURE pc_notificar_seguranca (pr_idanalis   IN tbgen_analise_fraude.idanalise_fraude%TYPE,
                                     pr_tpalerta   IN INTEGER, --> Tipo de alerta 1 - Entrega midware, 2 - Retorno falha  Entrega OFFSA
@@ -3172,6 +7939,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              ,prm.dsassunto_retorno
              ,prm.dscorpo_retorno
              ,fra.cdcooper
+             ,fra.cdoperacao
+             ,fra.nrdconta
+             ,fra.dstransacao
         FROM tbgen_analise_fraude fra,
              tbgen_analise_fraude_param prm
        WHERE fra.cdoperacao  = prm.cdoperacao
@@ -3212,6 +7982,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     END IF;
     
     vr_dsdcorpo := vr_dsdcorpo||'<br> ID Analise: '||pr_idanalis;
+    vr_dsdcorpo := vr_dsdcorpo||'<br> Tipo de Operação: '||fn_dsoperacao_fraude(rw_afraprm.cdoperacao);
+    vr_dsdcorpo := vr_dsdcorpo||'<br> Transação: '||rw_afraprm.dstransacao;
+    vr_dsdcorpo := vr_dsdcorpo||'<br> Cooperativa: '||rw_afraprm.cdcooper;
+    vr_dsdcorpo := vr_dsdcorpo||'<br> Conta: '||gene0002.fn_mask_conta(rw_afraprm.nrdconta);
     
     IF pr_dsalerta IS NOT NULL THEN
       vr_dsdcorpo := vr_dsdcorpo||'<br> Critica: '||pr_dsalerta;
@@ -3289,11 +8063,109 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel realizar o envio da TED para analise: '||SQLERRM;
   END pc_envia_template; 
   
+  -- Rotina para buscar o tempo final da operação online
+  FUNCTION fn_limite_fim_operacao( pr_cdcooper IN NUMBER,
+                                   pr_tplimite IN NUMBER) 
+    RETURN NUMBER IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : fn_limite_fim_operacao
+    --  Autor    : Odirlei Busana (AMcom)
+    --  Data     : Abril/2018.                   Ultima atualizacao: --/--/----
+    --
+    -- Objetivo  : Rotina para buscar o tempo final da operação online
+    ---------------------------------------------------------------------------------------------------------------
+    vr_exc_erro     EXCEPTION;
+    vr_dstextab     craptab.dstextab%TYPE;
+    vr_dscritic     VARCHAR2(4000);
+    vr_hrfimpag     NUMBER := 0;
+    
+  BEGIN
+  
+    IF vr_tab_limfimope.exists(pr_tplimite) THEN    
+      RETURN vr_tab_limfimope(pr_tplimite);
+    END IF;
+  
+  
+    --> Cecred
+    IF pr_tplimite = 2 THEN
+    
+      --> Verifica horario limite para pagamentos via internet
+      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 0
+                                              ,pr_cdacesso => 'HRTRTITULO'
+                                              ,pr_tpregist => 90);
+      --Se nao encontrou
+      IF vr_dstextab IS NULL THEN
+        RAISE vr_exc_erro;
+      ELSE      
+        vr_hrfimpag:= SubStr(vr_dstextab,3,5);
+      END IF;
+    
+    --> Sicredi  
+    ELSIF pr_tplimite = 3 THEN
+      
+      --Selecionar Horarios Limites Internet
+      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 0
+                                              ,pr_cdacesso => 'HRPGSICRED'
+                                              ,pr_tpregist => 90);
+
+      --Se nao encontrou
+      IF vr_dstextab IS NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSE
+        --Hora Fim
+        vr_hrfimpag:= GENE0002.fn_busca_entrada(2,vr_dstextab,' ');
+      END IF;
+      
+    --> Bancoob   
+    ELSIF pr_tplimite = 4 THEN
+   
+      --Selecionar Horarios Limites Internet
+      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 0
+                                              ,pr_cdacesso => 'HRPGBANCOOB'
+                                              ,pr_tpregist => 90);
+
+      --Se nao encontrou
+      IF vr_dstextab IS NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSE
+        --Hora Fim
+        vr_hrfimpag:= GENE0002.fn_busca_entrada(2,vr_dstextab,' ');
+      END IF;
+   
+    END IF;
+   
+    IF nvl(vr_hrfimpag,0) <> 0 THEN
+      vr_tab_limfimope(pr_tplimite) := vr_hrfimpag;
+    END IF;
+   
+    RETURN nvl(vr_hrfimpag,0);
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      RETURN 0;  
+    WHEN OTHERS THEN
+      RETURN 0;  
+  END fn_limite_fim_operacao;  
+  
   --> Retornar a data limite da analise
   PROCEDURE pc_ret_data_limite_analise ( pr_cdoperac  IN tbcc_operacao.cdoperacao%TYPE  --> Codigo da operação
                                         ,pr_tpoperac  IN INTEGER                        --> Tipo de operacao 1 -online 2-agendamento
                                         ,pr_dhoperac  IN TIMESTAMP                      --> Data hora da operação      
                                         ,pr_dtefeope  IN DATE DEFAULT NULL              --> Data que sera efetivada a operacao agendada
+                                        ,pr_cdcooper  IN NUMBER DEFAULT 1               --> Codigo da cooperativa, para uso do limite de operacao
+                                        ,pr_tplimite  IN NUMBER DEFAULT 0               --> Tipo de limite de operacao, utilizado para o tipo de retencao 3 - limite operacao
                                         ,pr_dhlimana OUT TIMESTAMP                      --> Retorna data hora limite da operacao
                                         ,pr_qtsegret OUT NUMBER                         --> Retorna tempo em segundo de retenção da analise
                                         ,pr_dscritic  OUT VARCHAR2) IS  
@@ -3315,7 +8187,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     -----------> CURSORES <-----------
     --> Buscar parametrização da analise
     CURSOR cr_afraprm IS 
-      SELECT w.hrretencao
+      SELECT w.hrretencao,
+             w.tpretencao
         FROM tbgen_analise_fraude_param w 
        WHERE w.cdoperacao = pr_cdoperac
          AND w.tpoperacao = pr_tpoperac;
@@ -3327,8 +8200,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         FROM tbgen_analise_fraude_interv w 
        WHERE w.cdoperacao = pr_cdoperac
          AND w.tpoperacao = pr_tpoperac     
-         AND w.hrinicio <= to_char(pr_dhoperac,'SSSSS')
-         AND w.hrfim    >= to_char(pr_dhoperac,'SSSSS');
+         AND w.hrinicio <= to_char(trunc(pr_dhoperac,'MI'),'SSSSS')
+         AND w.hrfim    >= to_char(trunc(pr_dhoperac,'MI'),'SSSSS');
     rw_afrainter cr_afrainter%ROWTYPE;     
 
     
@@ -3336,6 +8209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     -- Tratamento de erros
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
+    
+    vr_hrlimope NUMBER;
+    
   BEGIN
   
     OPEN cr_afraprm;
@@ -3350,7 +8226,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
   
     -- Online
     IF pr_tpoperac = 1 THEN
-    
+      --> Intervalo
+      IF rw_afraprm.tpretencao = 1 THEN
       OPEN cr_afrainter;
       FETCH cr_afrainter INTO rw_afrainter;
       --> Se nao localizar registro, usar valor padrão
@@ -3364,6 +8241,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       --> Calcular tempo limite
       pr_dhlimana := pr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
       pr_qtsegret := rw_afrainter.qtdminutos_retencao * 60;
+      
+      --> Fixo   
+      ELSIF rw_afraprm.tpretencao = 2 THEN
+        --> Calcular tempo limite
+        pr_dhlimana := to_date(to_char(pr_dhoperac,'DD/MM/RRRR') ||' ' ||
+                               to_char(to_date(rw_afraprm.hrretencao,'SSSSS'),'HH24:MI:SS')
+                               ,'DD/MM/RRRR HH24:MI:SS');
+        --Calcular a quantidade de segundos do dia da operacao
+        -- ate o dia de limite da analise
+        pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
+                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                       ) * 86400;
+      
+      --> Limite da operacao    
+      ELSIF rw_afraprm.tpretencao = 3 THEN
+        
+        --> Buscar hora de limite final da operacao
+        vr_hrlimope := fn_limite_fim_operacao( pr_cdcooper => pr_cdcooper,
+                                               pr_tplimite => pr_tplimite);
+        
+        
+        --> Calcular tempo limite
+        IF vr_hrlimope > 0 THEN
+          pr_dhlimana := to_date(to_char(pr_dhoperac,'DD/MM/RRRR') ||' ' ||
+                                 to_char(to_date(vr_hrlimope,'SSSSS'),'HH24:MI:SS')                                 
+                                 ,'DD/MM/RRRR HH24:MI:SS');
+                                 
+          --> Se a hora de limite analise for maior que a data atual
+          --> utilizar a propria data e apenas irá incrementar os minutos
+          IF pr_dhlimana <= SYSDATE THEN
+            pr_dhlimana := pr_dhoperac;
+          END IF;                       
+        ELSE
+          --> Caso nao tenha encontrado o horario limite, 
+          --> irá apenas incrementar a quantidade de minutos
+          pr_dhlimana := pr_dhoperac;
+        END IF;  
+                             
+        --> incrementar o tempo de retencao
+        pr_dhlimana := pr_dhlimana + (rw_afraprm.hrretencao / 24 / 60);
+                               
+        --Calcular a quantidade de segundos do dia da operacao
+        -- ate o dia de limite da analise
+        pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
+                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                       ) * 86400;
+      
+      END IF;
+    
+      
       
     ELSIF pr_tpoperac = 2 THEN
       
@@ -3381,6 +8308,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                       to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                      ) * 86400;
     
+    
+      IF pr_qtsegret < 0 THEN
+        vr_dscritic := 'Nao foi possivel def. tempo limite para analise, tempo limite ja ultrapassado. ';
+        RAISE vr_exc_erro; 
+      END IF;
     END IF;
   
     
@@ -3395,633 +8327,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel calcular a data limite da analise: '||SQLERRM;
   END pc_ret_data_limite_analise;   
   
-  /* Procedimento para realizar monitoração de fraudes nas TEDs */
-  PROCEDURE pc_monitora_ted ( pr_idanalis IN INTEGER ) IS
-                            
-     
+
+  /* Procedimento para carregar em memoria parametros da analise de fraude */
+  PROCEDURE pc_ler_parametros_fraude (pr_atualizar IN INTEGER DEFAULT 0) IS
     /* ..........................................................................
     --
-    --  Programa : pc_monitora_ted       
+    --  Programa : pc_ler_parametros_fraude       
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
-    --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2016.                   Ultima atualizacao: 02/05/2016
+    --  Autor    : Teobaldo Jamunda (AMcom)
+    --  Data     : Abril/2018.                   Ultima atualizacao: 03/04/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Procedure utilizada para realizar monitoração de fraudes nas TEDs
+    --   Objetivo  : Procedure utilizada para carregar em memoria parametros 
+    --               para analise de fraude.    (PRJ381 - Analise de Fraude)
     --
-    --  Alteração  : 07/04/2016 - Criacao dos parametros PR_INPESSOA e PR_INTIPCTA. 
-    --                            Buscar informacoes que vinham da CRAPPRM e agora
-    --                            vem da CRAPCOP. (Jaison/Marcos - SUPERO)
-    --
-    --               02/05/2016 - Se valor da TED ou do Limite ficarem abaixo dos
-    --                            monitoraveis, buscar PRM e se existir, mandar email
-    --                            para o email encontrado, senao nao havera envio.
-    --                            (Jaison/Marcos - SUPERO)
+    --  Alteração  : 
     --
     -- ..........................................................................*/
     
-    ---------------> CURSORES <----------------- 
+    --> Buscar parametros analise de fraude
+    CURSOR cr_param IS
+       SELECT afp.cdoperacao, 
+              afp.tpoperacao, 
+              afp.hrretencao, 
+              afp.flgemail_entrega, 
+              afp.dsemail_entrega, 
+              afp.dsassunto_entrega, 
+              afp.dscorpo_entrega, 
+              afp.flgemail_retorno, 
+              afp.dsemail_retorno, 
+              afp.dsassunto_retorno, 
+              afp.dscorpo_retorno, 
+              afp.flgativo
+        FROM tbgen_analise_fraude_param afp;
     
-    --> Buscar analise de fraude
-    CURSOR cr_fraude IS
-      SELECT fra.idanalise_fraude,
-             fra.cdcanal_operacao,
-             fra.dhinicio_analise,
-             fra.dhlimite_analise,
-             fra.cdcooper,
-             fra.nrdconta,
-             fra.iptransacao,
-             fra.cdoperacao, 
-             fra.tptransacao
-        FROM tbgen_analise_fraude fra
-       WHERE fra.idanalise_fraude = pr_idanalis; 
-    rw_fraude cr_fraude%ROWTYPE;
+    vr_Index Varchar2(10);
     
-    --> Buscar informações da TED
-    CURSOR cr_craptvl (pr_idanalis  craplau.idanafrd%TYPE,
-                       pr_cdcooper  craplau.cdcooper%TYPE,
-                       pr_nrdconta  craplau.nrdconta%TYPE) IS
-      SELECT tvl.cdcooper,
-             tvl.nrdconta,
-             cop.nmrescop,
-             tvl.idseqttl,
-             tvl.cdbccrcb,
-             tvl.cdagercb,
-             tvl.nrcctrcb,
-             tvl.nmpesrcb,
-             tvl.cpfcgrcb,
-             tvl.vldocrcb,
-             decode(substr(tvl.idopetrf, length(tvl.idopetrf), 1), 'M',1,0) flmobile,
-             tvl.flgpescr,
-             tvl.tpdctacr
-     
-        FROM craptvl tvl,
-             crapcop cop,
-             crapass ass,
-             crapban ban
-       WHERE tvl.cdcooper = cop.cdcooper
-         AND tvl.cdcooper = ass.cdcooper
-         AND tvl.nrdconta = ass.nrdconta 
-         AND tvl.cdbccrcb = ban.cdbccxlt
-         AND tvl.idanafrd = pr_idanalis
-         AND tvl.cdcooper = pr_cdcooper
-         AND tvl.nrdconta = pr_nrdconta;         
-    rw_craptvl cr_craptvl%ROWTYPE;
-    
-    --> Buscar informações do agendamento de TED
-    CURSOR cr_craplau (pr_idanalis  craplau.idanafrd%TYPE,
-                       pr_cdcooper  craplau.cdcooper%TYPE,
-                       pr_nrdconta  craplau.nrdconta%TYPE) IS                      
-               
-      SELECT lau.cdcooper,
-             lau.nrdconta,
-             cop.nmrescop,
-             lau.idseqttl,
-             lau.cddbanco,
-             lau.cdageban,
-             lau.nrctadst,
-             cti.nmtitula,
-             cti.nrcpfcgc,
-             lau.vllanaut,
-             lau.flmobile,
-             cti.inpessoa,
-             cti.intipcta
-              
-        FROM craplau lau,
-             crapcop cop,
-             crapass ass,
-             crapban ban,
-             crapcti cti
-       WHERE lau.cdcooper = cop.cdcooper
-         AND lau.cdcooper = ass.cdcooper
-         AND lau.nrdconta = ass.nrdconta 
-         AND lau.cddbanco = ban.cdbccxlt         
-         AND lau.cdcooper = cti.cdcooper
-         AND lau.nrdconta = cti.nrdconta
-         AND lau.cddbanco = cti.cddbanco
-         AND lau.cdageban = cti.cdageban
-         AND lau.nrctadst = cti.nrctatrf 
-         AND lau.cdtiptra = 4    
-         AND lau.idanafrd = pr_idanalis
-         AND lau.cdcooper = pr_cdcooper
-         AND lau.nrdconta = pr_nrdconta;         
-    rw_craplau cr_craplau%ROWTYPE;
-    
-    --> Selecionar informacoes de senhas
-    CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
-                      ,pr_nrdconta IN crapsnh.nrdconta%type
-                      ,pr_idseqttl IN crapsnh.idseqttl%TYPE) IS
-      SELECT crapsnh.nrcpfcgc
-            ,crapsnh.cdcooper
-            ,crapsnh.nrdconta
-            ,crapsnh.vllimted
-      FROM crapsnh
-      WHERE crapsnh.cdcooper = pr_cdcooper
-      AND   crapsnh.nrdconta = pr_nrdconta
-      AND   crapsnh.idseqttl = pr_idseqttl
-      AND   crapsnh.tpdsenha = 1;
-    rw_crapsnh cr_crapsnh%ROWTYPE;
-    
-    --> Buscar dados a agencia destino
-    CURSOR cr_crapagb(pr_cddbanco crapagb.cddbanco%TYPE,
-                      pr_cdageban crapagb.cdageban%TYPE) IS
-      SELECT ban.nmresbcc
-            ,agb.nmageban
-            ,caf.cdufresd
-        FROM crapban ban,
-             crapagb agb,
-             crapcaf caf
-       WHERE agb.cddbanco = pr_cddbanco
-         AND agb.cdageban = pr_cdageban
-         AND agb.cddbanco = ban.cdbccxlt
-         AND agb.cdcidade = caf.cdcidade;         
-    rw_crapagb cr_crapagb%ROWTYPE;
-    
-    --> Buscar dados do associado
-    CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
-                       pr_nrdconta  crapass.nrdconta%TYPE) IS
-      SELECT ass.inpessoa,
-             ass.nmprimtl,
-             ass.nrcpfcgc,
-             ass.cdagenci,
-             age.nmresage
-        FROM crapass ass
-            ,crapage age
-       WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta
-         AND ass.cdcooper = age.cdcooper
-         AND ass.cdagenci = age.cdagenci;
-    rw_crapass cr_crapass%ROWTYPE;
-    rw_crabass cr_crapass%ROWTYPE;
-    
-    vr_crabass BOOLEAN;
-    
-    --Selecionar informacoes dos titulares da conta
-    CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE
-                      ,pr_nrdconta IN crapttl.nrdconta%TYPE
-                      ,pr_idseqttl IN crapttl.idseqttl%type) IS
-      SELECT crapttl.cdcooper
-            ,crapttl.nrdconta
-            ,crapttl.cdempres
-            ,crapttl.cdturnos
-            ,crapttl.nmextttl
-            ,crapttl.idseqttl
-      FROM crapttl crapttl
-      WHERE crapttl.cdcooper = pr_cdcooper
-      AND   crapttl.nrdconta = pr_nrdconta
-      AND   (
-            (trim(pr_idseqttl) IS NOT NULL AND crapttl.idseqttl = pr_idseqttl) OR
-            (trim(pr_idseqttl) IS NULL)
-            );
-    rw_crapttl cr_crapttl%ROWTYPE;
-    
-    --Selecionar dados Pessoa Juridica
-    CURSOR cr_crapjur (pr_cdcooper IN crapjur.cdcooper%type
-                      ,pr_nrdconta IN crapjur.nrdconta%type) IS
-      SELECT crapjur.nmextttl
-      FROM crapjur
-      WHERE crapjur.cdcooper = pr_cdcooper
-      AND   crapjur.nrdconta = pr_nrdconta;
-    rw_crapjur cr_crapjur%ROWTYPE;
-    
-    --Selecionar Avalistas
-    CURSOR cr_crapavt (pr_cdcooper IN crapavt.cdcooper%type
-                      ,pr_nrdconta IN crapavt.nrdconta%type
-                      ,pr_tpctrato IN crapavt.tpctrato%type) IS
-      SELECT crapavt.nrdctato
-            ,crapavt.nmdavali
-            ,crapavt.cdcooper
-      FROM crapavt
-      WHERE crapavt.cdcooper = pr_cdcooper
-      AND   crapavt.nrdconta = pr_nrdconta
-      AND   crapavt.tpctrato = pr_tpctrato;
-    
-    --Selecionar os telefones do titular
-    CURSOR cr_craptfc (pr_cdcooper IN craptfc.cdcooper%type
-                      ,pr_nrdconta IN craptfc.nrdconta%type) IS
-      SELECT craptfc.nrdddtfc
-            ,craptfc.nrtelefo
-            ,craptfc.nmpescto
-      FROM craptfc
-      WHERE craptfc.cdcooper = pr_cdcooper
-      AND   craptfc.nrdconta = pr_nrdconta;
-    rw_craptfc cr_craptfc%ROWTYPE;
-    
-    --Selecionar os dados da cooperativa
-    CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-      SELECT crapcop.dsestted
-            ,crapcop.vlinited
-            ,crapcop.vlmnlmtd
-            ,crapcop.flmobted
-            ,crapcop.flmstted
-            ,crapcop.flnvfted
-            ,crapcop.flmntage
-        FROM crapcop
-       WHERE crapcop.cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-    
-    --Buscar se o favorecido esta cadastrado na CRAPCTI ha mais de um dia
-    CURSOR cr_crapcti (pr_cdcooper IN crapcti.cdcooper%TYPE
-                      ,pr_nrdconta IN crapcti.nrdconta%TYPE
-                      ,pr_cddbanco IN crapcti.cddbanco%TYPE
-                      ,pr_nrctatrf IN crapcti.nrctatrf%TYPE
-                      ,pr_cdageban IN crapcti.cdageban%TYPE
-                      ,pr_inpessoa IN crapcti.inpessoa%TYPE
-                      ,pr_intipcta IN crapcti.intipcta%TYPE
-                      ,pr_nrcpfcgc IN crapcti.nrcpfcgc%TYPE) IS
-      SELECT COUNT(1)
-        FROM crapcti cti
-       WHERE cti.cdcooper = pr_cdcooper
-         AND cti.nrdconta = pr_nrdconta
-         AND cti.cddbanco = pr_cddbanco
-         AND cti.nrctatrf = pr_nrctatrf
-         AND cti.cdageban = pr_cdageban
-         AND cti.inpessoa = pr_inpessoa
-         AND cti.intipcta = pr_intipcta
-         AND cti.nrcpfcgc = pr_nrcpfcgc
-         AND TRUNC(cti.dttransa) < TRUNC(SYSDATE); -- Cadastrados ha mais de um dia
-    
-    ---------------> VARIAVEIS <-----------------
-    vr_exc_naomonit EXCEPTION;
-    vr_exc_erro     EXCEPTION;
-    vr_dscritic     VARCHAR2(2000);
-    
-    vr_vlr_minmonted    NUMBER := 0;
-    vr_vlr_minported    NUMBER := 0;
-    vr_flmonmob         NUMBER := 0;
-    vr_dsufsmon         VARCHAR2(4000)  := NULL;
-    vr_dsassunt         VARCHAR2(500)   := NULL;
-    vr_conteudo         VARCHAR2(32000) := NULL;
-    vr_email_dest       VARCHAR2(500)   := NULL;
-    vr_qtregistro       NUMBER;
-    
-    vr_cdcooper crapcop.cdcooper%TYPE;   --> Codigo da cooperativa                            
-    vr_nmrescop crapcop.nmrescop%TYPE;   --> Nome da cooperativa 
-    vr_nrdconta crapttl.nrdconta%TYPE;   --> Numero da conta
-    vr_idseqttl crapttl.idseqttl%TYPE;   --> Sequencial titular                             
-    vr_cddbanco crapcti.cddbanco%TYPE;   --> Codigo do banco                             
-    vr_cdageban crapcti.cdageban%TYPE;   --> codigo da agencia bancaria. 
-    vr_nrctatrf crapcti.nrctatrf%TYPE;   --> conta que recebe a transferencia. 
-    vr_nmtitula crapcti.nmtitula%TYPE;   --> nome do titular da conta. 
-    vr_nrcpfcgc crapcti.nrcpfcgc%TYPE;   --> cpf/cnpj do titular da conta.  
-    vr_vllanmto craplcm.vllanmto%TYPE;   --> Valor do lançamento
-    vr_flmobile INTEGER;                 --> Indicador se origem é do Mobile
-    vr_iptransa VARCHAR2(100);           --> IP da transacao no IBank/mobile
-    vr_inpessoa crapcti.inpessoa%TYPE;   --> Tipo de pessoa da conta
-    vr_intipcta crapcti.intipcta%TYPE;   --> Tipo da conta
-    vr_idagenda INTEGER;                 --> Tipo de agendamento
-    
-    PRAGMA AUTONOMOUS_TRANSACTION;
-      
   BEGIN
-  
-    --> Buscar analise de fraude
-    OPEN cr_fraude;
-    FETCH cr_fraude INTO rw_fraude;
-    
-    IF cr_fraude%NOTFOUND THEN
-      vr_dscritic := 'Registro de analise de fraude não encontrado.';
-      CLOSE cr_fraude;
-      RAISE vr_exc_erro;
-    ELSE
-      CLOSE cr_fraude;
-    END IF;
-    
-    -- Se for TED Online
-    IF rw_fraude.tptransacao = 1 THEN
-  
-      OPEN cr_craptvl( pr_idanalis => pr_idanalis,
-                       pr_cdcooper => rw_fraude.cdcooper,
-                       pr_nrdconta => rw_fraude.nrdconta);
-      FETCH cr_craptvl INTO rw_craptvl;
+    IF pr_atualizar > 0 THEN 
+      vr_tab_AnaliseFraudeParam.Delete;
       
-      IF cr_craptvl%NOTFOUND THEN
-        CLOSE cr_craptvl;
-        vr_dscritic := 'Não foi possivel localizar craptvl';
-        RAISE vr_exc_erro;
-      ELSE
-        CLOSE cr_craptvl;
-      END IF;
-      
-      vr_cdcooper := rw_fraude.cdcooper;   --> Codigo da cooperativa                            
-      vr_nmrescop := rw_craptvl.nmrescop;  --> Nome da cooperativa 
-      vr_nrdconta := rw_craptvl.nrdconta;  --> Numero da conta
-      vr_idseqttl := rw_craptvl.idseqttl;  --> Sequencial titular                             
-      vr_cddbanco := rw_craptvl.cdbccrcb;  --> Codigo do banco                             
-      vr_cdageban := rw_craptvl.cdagercb;  --> codigo da agencia bancaria. 
-      vr_nrctatrf := rw_craptvl.nrcctrcb;  --> conta que recebe a transferencia. 
-      vr_nmtitula := rw_craptvl.nmpesrcb;  --> nome do titular da conta. 
-      vr_nrcpfcgc := rw_craptvl.cpfcgrcb;  --> cpf/cnpj do titular da conta.  
-      vr_vllanmto := rw_craptvl.vldocrcb;  --> Valor do lançamento
-      vr_flmobile := rw_craptvl.flmobile;  --> Indicador se origem é do Mobile
-      vr_iptransa := rw_fraude.iptransacao;   --> IP da transacao no IBank/mobile
-      vr_inpessoa := rw_craptvl.flgpescr;  --> Tipo de pessoa da conta
-      vr_intipcta := rw_craptvl.tpdctacr;  --> Tipo da conta
-      vr_idagenda := 1;                    --> Tipo de agendamento      
-      
-    ELSE
-      
-      OPEN cr_craplau( pr_idanalis => pr_idanalis,
-                       pr_cdcooper => rw_fraude.cdcooper,
-                       pr_nrdconta => rw_fraude.nrdconta);
-      FETCH cr_craplau INTO rw_craplau;
-      
-      IF cr_craplau%NOTFOUND THEN
-        CLOSE cr_craplau;
-        vr_dscritic := 'Não foi possivel localizar craplau';
-        RAISE vr_exc_erro;
-      ELSE
-        CLOSE cr_craplau;
-      END IF;
-      
-      vr_cdcooper := rw_fraude.cdcooper;   --> Codigo da cooperativa                            
-      vr_nmrescop := rw_craplau.nmrescop;  --> Nome da cooperativa 
-      vr_nrdconta := rw_craplau.nrdconta;  --> Numero da conta
-      vr_idseqttl := rw_craplau.idseqttl;  --> Sequencial titular                             
-      vr_cddbanco := rw_craplau.cddbanco;  --> Codigo do banco                             
-      vr_cdageban := rw_craplau.cdageban;  --> codigo da agencia bancaria. 
-      vr_nrctatrf := rw_craplau.nrctadst;  --> conta que recebe a transferencia. 
-      vr_nmtitula := rw_craplau.nmtitula;  --> nome do titular da conta. 
-      vr_nrcpfcgc := rw_craplau.nrcpfcgc;  --> cpf/cnpj do titular da conta.  
-      vr_vllanmto := rw_craplau.vllanaut;  --> Valor do lançamento
-      vr_flmobile := rw_craplau.flmobile;  --> Indicador se origem é do Mobile
-      vr_iptransa := rw_fraude.iptransacao;   --> IP da transacao no IBank/mobile
-      vr_inpessoa := rw_craplau.inpessoa;  --> Tipo de pessoa da conta
-      vr_intipcta := rw_craplau.intipcta;  --> Tipo da conta
-      vr_idagenda := 1;                   --> Tipo de agendamento
-    
+      For rw_param in cr_param Loop
+        vr_Index := rw_param.cdoperacao || '|' || rw_param.tpoperacao; 
+        
+        vr_tab_AnaliseFraudeParam(vr_Index).cdoperacao := rw_param.cdoperacao;
+        vr_tab_AnaliseFraudeParam(vr_Index).tpoperacao := rw_param.tpoperacao;
+        vr_tab_AnaliseFraudeParam(vr_Index).hrretencao := rw_param.hrretencao;
+        vr_tab_AnaliseFraudeParam(vr_Index).flgemail_entrega := rw_param.flgemail_entrega;
+        vr_tab_AnaliseFraudeParam(vr_Index).dsemail_entrega := rw_param.dsemail_entrega;
+        vr_tab_AnaliseFraudeParam(vr_Index).dsassunto_entrega := rw_param.dsassunto_entrega;
+        vr_tab_AnaliseFraudeParam(vr_Index).dscorpo_entrega := rw_param.dscorpo_entrega;
+        vr_tab_AnaliseFraudeParam(vr_Index).flgemail_retorno := rw_param.flgemail_retorno;
+        vr_tab_AnaliseFraudeParam(vr_Index).dsemail_retorno := rw_param.dsemail_retorno;
+        vr_tab_AnaliseFraudeParam(vr_Index).dsassunto_retorno := rw_param.dsassunto_retorno;
+        vr_tab_AnaliseFraudeParam(vr_Index).dscorpo_retorno := rw_param.dscorpo_retorno;
+        vr_tab_AnaliseFraudeParam(vr_Index).flgativo:= rw_param.flgativo;
+      End Loop;              
     END IF;
-  
-  
-    vr_dsassunt := (CASE 
-                      WHEN vr_idagenda = 1 THEN 'TED/'
-                      ELSE                      'Agendamento de TED/'
-                    END) ||
-                    vr_nmrescop||'/'|| 
-                   ltrim(gene0002.fn_mask_conta(vr_nrdconta))||
-                   '/R$ '||TRIM(to_char(vr_vllanmto,'fm999g999g990d00'));
-  
-    --> Busca dados da cooperativa
-    OPEN  cr_crapcop(pr_cdcooper => vr_cdcooper);
-    FETCH cr_crapcop INTO rw_crapcop;
-    CLOSE cr_crapcop;
-  
-    --> Buscar valor de limite minimo de monitoramento da TED
-    vr_vlr_minmonted := rw_crapcop.vlmnlmtd;
-  
-    --> Buscar valor minimo de monitoramento por TED
-    vr_vlr_minported := rw_crapcop.vlinited;
-    
-    --> Verificar se deve monitorar TEDs mobile
-    vr_flmonmob := rw_crapcop.flmobted;
-    
-    --> Buscar lista de UFs a serem monitoradas
-    vr_dsufsmon := rw_crapcop.dsestted;        
-                                              
-    ------------> INICIAR VALIDAÇÔES DO TED <------------
-    
-    --> Verificar se precisa monitorar TEDs oriundas do mobile
-    IF vr_flmobile = 1 AND vr_flmonmob = 0 THEN
-      --> sair sem monitorar
-      RAISE vr_exc_naomonit;
-    END IF;
-    
-    --> Buscar informacoes da agencia destino
-    OPEN cr_crapagb (pr_cddbanco => vr_cddbanco,
-                     pr_cdageban => vr_cdageban);
-    FETCH cr_crapagb INTO rw_crapagb;    
-    IF cr_crapagb%NOTFOUND THEN
-      CLOSE cr_crapagb;
-      vr_dscritic := 'Nao foi possivel localizar dados da agencia destino.';     
-      RAISE vr_exc_erro;      
-    END IF;
-    CLOSE cr_crapagb;
-    
-    --> caso esteja nulo deve considerar todos os UFs
-    IF TRIM(vr_dsufsmon) IS NOT NULL THEN
-      -- Verificar se estado da agencia destino consta a lista de monitoracao
-      IF gene0002.fn_existe_valor(pr_base     => upper(vr_dsufsmon), 
-                                  pr_busca    => upper(rw_crapagb.cdufresd),
-                                  pr_delimite => ';') = 'N' THEN
-        --> sair sem monitorar
-        RAISE vr_exc_naomonit;
-      END IF;
-    END IF;
-    
-    --> Se eh para trazer somente novos favorecidos
-    IF rw_crapcop.flnvfted = 1 THEN
-      -- Buscar se o favorecido esta cadastrado na CRAPCTI ha mais de um dia
-      OPEN cr_crapcti(pr_cdcooper => vr_cdcooper
-                     ,pr_nrdconta => vr_nrdconta
-                     ,pr_cddbanco => vr_cddbanco
-                     ,pr_nrctatrf => vr_nrctatrf
-                     ,pr_cdageban => vr_cdageban
-                     ,pr_inpessoa => vr_inpessoa
-                     ,pr_intipcta => vr_intipcta
-                     ,pr_nrcpfcgc => vr_nrcpfcgc);
-      FETCH cr_crapcti INTO vr_qtregistro;
-      -- Fecha cursor
-      CLOSE cr_crapcti;
-      -- Esta cadastrado na CRAPCTI ha mais de um dia
-      IF vr_qtregistro > 0 THEN
-        --> sair sem monitorar
-        RAISE vr_exc_naomonit;
-      END IF;
-    END IF;
-                   
-    -- buscar dados do cooperado
-    OPEN cr_crapass (pr_cdcooper => vr_cdcooper,
-                     pr_nrdconta => vr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    IF cr_crapass%NOTFOUND THEN
-      vr_dscritic:= 'Associado nao cadastrado.';
-      CLOSE cr_crapass;
-      RAISE vr_exc_erro;
-    END IF;
-    CLOSE cr_crapass;
-     
-    --> Se nao houver monitoracao para TEDs da mesma titularidade
-    IF rw_crapcop.flmstted = 0 AND rw_crapass.nrcpfcgc = vr_nrcpfcgc THEN
-      --> sair sem monitorar
-      RAISE vr_exc_naomonit;
-    END IF;
-    
-    --> Se nao é para monitorar agendamento de TED
-    IF vr_idagenda > 1 AND rw_crapcop.flmntage = 0 THEN
-      --> sair sem monitorar
-      RAISE vr_exc_naomonit;
-    END IF;    
-    
-    --> Buscar limite de TED do cooperado
-    OPEN cr_crapsnh (pr_cdcooper => vr_cdcooper
-                    ,pr_nrdconta => vr_nrdconta
-                    ,pr_idseqttl => vr_idseqttl);
-    FETCH cr_crapsnh INTO rw_crapsnh;
-    --> caso nao encontrar o limite de TED
-    IF cr_crapsnh%NOTFOUND THEN
-      CLOSE cr_crapsnh;
-      vr_dscritic := 'Nao foi possivel localizar limite de TED do cooperado.';
-      RAISE vr_exc_erro;      
-    END IF;
-    CLOSE cr_crapsnh;
- 
-    --> Se o valor da TED é menor que o valor minimo para monitoracao
-    IF vr_vllanmto < vr_vlr_minported
-      OR
-      --> Se o valor de limite de ted é menor que o valor de limite minimo para monitoracao
-      rw_crapsnh.vllimted < vr_vlr_minmonted
-    THEN
-      --Buscar destinatario email
-      vr_email_dest:= gene0001.fn_param_sistema('CRED',vr_cdcooper,'MONITORA_TED_ABAIXO');
-           
-      --Se nao encontrou destinatario
-      IF vr_email_dest IS NULL THEN
-        --> sair sem monitorar
-        RAISE vr_exc_naomonit;
-      END IF;
-    ELSE
-      --Buscar destinatario email
-      vr_email_dest:= gene0001.fn_param_sistema('CRED',vr_cdcooper,'MONITORAMENTO_TED');
-
-      --Se nao encontrou destinatario
-      IF vr_email_dest IS NULL THEN
-        --Montar mensagem de erro
-        vr_dscritic:= 'Nao foi encontrado destinatario para os e-mails de monitoramento.';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-    END IF;
-    ------------> MONTAR CORPO E-MAIL <------------
-    
-    vr_conteudo := 'Dados do Favorecido: '|| vr_nmtitula ||'<br>'||
-                   'Banco: '       || vr_cddbanco ||'-'|| rw_crapagb.nmresbcc ||'<br>'||
-                   'Agencia: '     || vr_cdageban||'-'|| rw_crapagb.nmageban ||'<br>'||
-                   'Estado: '      || rw_crapagb.cdufresd ||'<br>'||
-                   'Conta: '       || gene0002.fn_mask_conta(vr_nrctatrf)||'<br>'||
-                   'IP Transacao: '|| vr_iptransa ||'<br>'||
-                   'Limite diário TED: R$'|| to_char(rw_crapsnh.vllimted,'fm999g999g999g990d00')||'<br>'||
-                   'Dados cooperado: '|| gene0002.fn_mask_conta(vr_nrdconta)||'<br>'||
-                   'PA: '|| rw_crapass.cdagenci ||' - '||rw_crapass.nmresage|| '<br>';
-     
-    -- Se for pessoa fisica
-    IF rw_crapass.inpessoa = 1 THEN
-      --> Lista todos os titulares
-      FOR rw_crapttl IN cr_crapttl (pr_cdcooper => vr_cdcooper
-                                   ,pr_nrdconta => vr_nrdconta
-                                   ,pr_idseqttl => NULL) LOOP
-        --Concatenar Conteudo
-        vr_conteudo:= vr_conteudo||'Titular '|| rw_crapttl.idseqttl ||
-                                   ': '||rw_crapttl.nmextttl|| '<BR>';
-      END LOOP;
-    
-    -- Se for pessoa juridica
-    ELSIF rw_crapass.inpessoa = 2 THEN
-      --> Lista o nome da empresa 
-      OPEN cr_crapjur (pr_cdcooper => vr_cdcooper
-                      ,pr_nrdconta => vr_nrdconta);
-      FETCH cr_crapjur INTO rw_crapjur;
-      --Se Encontrou
-      IF cr_crapjur%FOUND THEN
-        --Concatenar o nome da empresa
-        vr_conteudo:= vr_conteudo||'Empresa: '|| rw_crapjur.nmextttl;
-      END IF;
-      --Fechar Cursor
-      CLOSE cr_crapjur;
-      --Concatenar Procuradores/Representantes
-      vr_conteudo:= vr_conteudo||'<BR><BR>'||
-                    'Procuradores/Representantes: <BR>';
-    
-      --> Lista os procuradores/representantes 
-      FOR rw_crapavt IN cr_crapavt (pr_cdcooper => vr_cdcooper
-                                   ,pr_nrdconta => vr_nrdconta
-                                   ,pr_tpctrato => 6) LOOP
-        vr_crabass:= FALSE;
-        --Se tem Contato
-        IF rw_crapavt.nrdctato <> 0 THEN
-          OPEN cr_crapass (pr_cdcooper => rw_crapavt.cdcooper
-                          ,pr_nrdconta => rw_crapavt.nrdctato);
-          --Posicionar Proximo Registro
-          FETCH cr_crapass INTO rw_crabass;
-          --Se Encontrou
-          vr_crabass:= cr_crapass%FOUND;
-          --Fechar Cursor
-          CLOSE cr_crapass;
-        END IF;
-        IF rw_crapavt.nrdctato <> 0 AND vr_crabass THEN
-          --Concatenar nome avalista
-          vr_conteudo:= vr_conteudo||rw_crabass.nmprimtl|| '<BR>';
-        ELSE
-          --Concatenar nome avalista
-          vr_conteudo:= vr_conteudo||rw_crapavt.nmdavali|| '<BR>';
-        END IF;
-      END LOOP;    
-    END IF; --> Fim IF inpessoa
-    
-    --> Fones 
-    vr_conteudo:= vr_conteudo|| '<BR>Fones:<BR>';
-    --Encontrar numeros de telefone
-    FOR rw_craptfc IN cr_craptfc (pr_cdcooper => vr_cdcooper
-                                 ,pr_nrdconta => vr_nrdconta) LOOP
-      --Montar Conteudo
-      vr_conteudo:= vr_conteudo||'(' ||rw_craptfc.nrdddtfc|| ') '
-                                     ||rw_craptfc.nrtelefo|| ' - '
-                                     ||rw_craptfc.nmpescto|| '<BR>';
-    END LOOP;
-    
-    vr_conteudo := vr_conteudo ||'<BR>'||'Valor TED: R$ '|| to_char(vr_vllanmto,'fm999g999g999g990d00')||'<br>';
-    
-    --Enviar Email
-    GENE0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper    --> Cooperativa conectada
-                              ,pr_cdprogra        => 'PAGA0002'     --> Programa conectado
-                              ,pr_des_destino     => vr_email_dest  --> Um ou mais detinatários separados por ';' ou ','
-                              ,pr_des_assunto     => vr_dsassunt    --> Assunto do e-mail
-                              ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
-                              ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
-                              ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
-                              ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
-                              ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
-                              ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
-                              ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
-                              ,pr_flg_log_batch   => 'N'            --> Incluir inf. no log
-                              ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
-    --Se ocorreu erro
-    IF vr_dscritic IS NOT NULL THEN
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
-    
-    COMMIT;
-    
-  EXCEPTION
-    -- sair sem gerar monitoracao
-    WHEN vr_exc_naomonit THEN
-      NULL;
-      COMMIT;
-    WHEN vr_exc_erro THEN
-      ROLLBACK;
-      -- Gerar log
-      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                 pr_ind_tipo_log => 2, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - AFRA0001.pc_monitora_ted --> '|| vr_dsassunt ||': '||vr_dscritic,
-                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
-      
-      COMMIT;
-    WHEN OTHERS THEN
-      ROLLBACK;
-      vr_dscritic := SQLerrm;  
-    
-      -- Gerar log
-      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                 pr_ind_tipo_log => 2, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - AFRA0001.pc_monitora_ted --> '|| vr_dsassunt ||': '||vr_dscritic,
-                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
-      COMMIT;
-  END pc_monitora_ted;        
+        
+  END pc_ler_parametros_fraude;      
   
 END;
 /
