@@ -974,7 +974,7 @@ function controlaFoco(opcao) {
                 $(".FirstInputModal").focus(function () {
                     $(this).bind('keydown', function (e) {
                         if (e.keyCode == 27) {
-                            encerraRotina().click();
+                            encerraRotina();
                         }
                     })              
                 });
@@ -1123,7 +1123,7 @@ function controlaFoco(opcao) {
     if (opcao == "U") { //Últimas alterações
         $('#divConteudoOpcao').bind('keydown', function (e) {
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
         })
 
@@ -1136,7 +1136,7 @@ function controlaFoco(opcao) {
 
         $('#divConteudoOpcao').bind('keydown', function (e) {
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
         })
 
@@ -1165,7 +1165,7 @@ function controlaFoco(opcao) {
                             $(".LastInputModal").click();
                         }
                         if (e.keyCode == 27) {
-                            encerraRotina().click();
+                            encerraRotina();
                         }
                         if (e.keyCode == 16) {
                             pressedShift = true;//Quando tecla shift for pressionada passa valor true 
@@ -1197,7 +1197,7 @@ function controlaFoco(opcao) {
     if (opcao == "P") { //Cons.Lim.Proposto
         $('#divConteudoOpcao').bind('keydown', function (e) {
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
         })
 
@@ -1219,7 +1219,7 @@ function controlaFoco(opcao) {
                     $(this).click();
                 }
                 if (e.keyCode == 27) {
-                    encerraRotina().click();
+                    encerraRotina();
 }
             });
         });

@@ -155,7 +155,7 @@ function controlaFoco() {
             if (e.keyCode == 27) {
                 e.stopPropagation();
                 e.preventDefault();
-                encerraRotina().click();
+                encerraRotina();
             }
         });
     });

@@ -50,7 +50,7 @@ function controlaFoco() {
     $(".FirstInputModal").focus(function () {
         $(this).bind('keydown', function (e) {   
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
             //e.stopPropagation();
             //e.preventDefault();
@@ -72,7 +72,7 @@ function controlaFoco() {
             e.preventDefault();
 
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
             if (e.keyCode == 13) {
                 $(".LastInputModal").click();

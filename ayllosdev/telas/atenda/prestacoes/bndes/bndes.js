@@ -60,7 +60,7 @@ function controlaFoco() {
             if (e.keyCode == 27) {
                 fechaRotina($('#divUsoGenerico'), divRotina).click();
                 fechaRotina($('#divRotina')).click();
-                encerraRotina().click();
+                encerraRotina();
             }
         });
     });

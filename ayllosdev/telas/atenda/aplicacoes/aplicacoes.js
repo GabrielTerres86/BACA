@@ -191,7 +191,7 @@ function controlaFoco() {
     $(".FluxoNavega").focus(function () {
         $(this).bind('keydown', function (e) {
             if (e.keyCode == 27) {
-                encerraRotina(true).click();
+                encerraRotina(true);
             }
         });
     });
