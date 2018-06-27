@@ -57,6 +57,7 @@
  * 045: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 046: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
  * 047: [07/06/2018} P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti    
+ * 048: [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -1941,7 +1942,7 @@ function controlaFoco() {
             if (e.keyCode == 27) {
                 fechaRotina($('#divUsoGenerico'), divRotina).click();
                 fechaRotina($('#divRotina')).click();
-                encerraRotina().click();
+                encerraRotina();
             }
         });
     });

@@ -12,6 +12,7 @@
  * 24/08/2015 - Projeto Reformulacao cadastral		   
  *  			(Tiago Castro - RKAM)
  * 25/07/2016 - (Evandro - RKAM) : Adicionado função controlaFoco. 
+ * 27/06/2018 - Christian Grosch (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
  * --------------
  */
 
@@ -59,7 +60,7 @@ function controlaFoco() {
             if (e.keyCode == 13) {
                 e.stopPropagation();
                 e.preventDefault();
-                encerraRotina().click();
+                encerraRotina();
             }
         });
     });
