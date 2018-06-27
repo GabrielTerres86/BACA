@@ -42,7 +42,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 17/01/2018
+   Data    : 12/09/2005                      Ultima atualizacao: 30/05/2018
 
    Dados referentes ao programa:
 
@@ -409,10 +409,10 @@
 							 
                 10/07/2016 - inclusão do campo vllimcpa na tabela tt-saldos  (M441 - Roberto Holz (Mouts))
 
-				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
-
+                18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
+                             
                 17/01/2018 - Ajustar chamada da rotina carrega_dados_tarifa_vigente
                              pois haviam casos em que nao estavamos entrando na rotina
                              na procedure gera-tarifa-extrato (Lucas Ranghetti #787894)
@@ -424,6 +424,7 @@
 
                 03/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi).
 
+	            30/05/2018 - Carregado campo dscomple na tt-extrato_conta (Alcemir Mout's - Prj. 467).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -687,7 +688,7 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.dsprotoc = xText:NODE-VALUE WHEN xField:NAME = "dsprotoc".
                     ASSIGN tt-extrato_conta.flgdetal = INT(xText:NODE-VALUE) WHEN xField:NAME = "flgdetal".
                     ASSIGN tt-extrato_conta.idlstdom = INT(xText:NODE-VALUE) WHEN xField:NAME = "idlstdom".
-
+	                ASSIGN tt-extrato_conta.dscomple = xText:NODE-VALUE WHEN xField:NAME = "dscomple".
                 END. 
 
             END.
@@ -1478,47 +1479,47 @@ PROCEDURE gera-tarifa-extrato:
     /** Lista apenas para impres.p atenda/extrato exceto crps029.p **/
    
     IF  par_dtrefere < ( crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-            DO:
-                IF par_nrterfin <> 0 THEN /* TAA */ 
-                    DO:
-						  ASSIGN aux_tipotari = 9.
+        DO:
+            IF par_nrterfin <> 0 THEN /* TAA */ 
+                DO:
+                    ASSIGN aux_tipotari = 9.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTPETAAPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTPETAAPJ".
-                    END.
-                ELSE
-                    DO:
-						  ASSIGN aux_tipotari = 8.
-
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTPEPREPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTPEPREPJ".
-                    END. 
-            END.
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTPETAAPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTPETAAPJ".
+                END.
             ELSE
-            DO:
-                IF par_nrterfin <> 0 THEN /* TAA */ 
-                    DO:
-						  ASSIGN aux_tipotari = 7.
+                DO:
+                    ASSIGN aux_tipotari = 8.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTMETAAPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                    END.
-                ELSE
-                    DO:
-						  ASSIGN aux_tipotari = 6.
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTPEPREPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTPEPREPJ".
+                END. 
+        END.
+    ELSE
+        DO:
+            IF par_nrterfin <> 0 THEN /* TAA */ 
+                DO:
+                    ASSIGN aux_tipotari = 7.
 
-                        IF crapass.inpessoa = 1 THEN /* Fisica */
-                            ASSIGN aux_cdbattar = "EXTMEPREPF".
-                        ELSE
-                            ASSIGN aux_cdbattar = "EXTMEPREPJ".
-                    END.
-            END.
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTMETAAPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTMETAAPJ".
+                END.
+            ELSE
+                DO:
+                    ASSIGN aux_tipotari = 6.
+
+                    IF crapass.inpessoa = 1 THEN /* Fisica */
+                        ASSIGN aux_cdbattar = "EXTMEPREPF".
+                    ELSE
+                        ASSIGN aux_cdbattar = "EXTMEPREPJ".
+                END.
+        END.
 
     IF  par_flgtarif  THEN
         DO:
@@ -6420,7 +6421,7 @@ FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
     DEF VAR aux_dstipcta AS CHAR                              NO-UNDO.
     DEF VAR aux_des_erro AS CHAR                              NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                              NO-UNDO.
-    
+
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
     RUN STORED-PROCEDURE pc_descricao_tipo_conta
@@ -6447,7 +6448,7 @@ FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
     
     IF aux_des_erro = "NOK"  THEN
         RETURN STRING(crapass.cdtipcta,"z9").
-    
+
     RETURN STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
 
 END FUNCTION.

@@ -79,6 +79,9 @@
                             rotina p_imprime_cabec, incluindo a Altovale, 
                             retirando as inativas e atualizando os novos 
                             nomes (Acredicoop e Acentra) (Carlos)  
+               
+			   30/05/2018 - valida dscomple e concatena com tt-extrato_conta.dsextrat 
+			               (Alcemir Mout's - Prj. 467).							  
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -131,6 +134,7 @@ DEF VAR aux_vlsdrdca AS DECI FORMAT "zzz,zzz,zzz,zz9.99-"              NO-UNDO.
 DEF VAR aux_vlsdrdpp AS DECI DECIMALS 8                                NO-UNDO.
 DEF VAR aux_vlblqjud AS DECI                                           NO-UNDO.            
 DEF VAR aux_vlresblq AS DECI                                           NO-UNDO.            
+DEF VAR aux_dscomple AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
 DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.          
 
@@ -1090,9 +1094,15 @@ PROCEDURE p_extrato_mes:
                                       BY tt-extrato_conta.dtmvtolt
                                          BY tt-extrato_conta.nrsequen:
 
+						 
+                         ASSIGN aux_dscomple = "".
+                         IF tt-extrato_conta.dscomple <> ?  AND  
+                            tt-extrato_conta.dscomple <> "" THEN						 						
+						    aux_dscomple =  STRING(" - " + tt-extrato_conta.dscomple).    
+						                           
                          aux_dsdlinha = STRING(tt-extrato_conta.dtmvtolt,
                                                "99/99/99") + " " +
-                                        STRING(tt-extrato_conta.dsextrat,
+                                        STRING(tt-extrato_conta.dsextrat + aux_dscomple,
                                                "x(21)") + " " +
                                         STRING(SUBSTR(tt-extrato_conta.dtliblan,2,5),
                                               "X(05)") + " " +
@@ -1532,7 +1542,7 @@ PROCEDURE p_extrato_apl:
 
             {&OUT} aux_dsdlinha '\n'.
         END.
-        
+
     IF aux_vlblqapl_gar > 0 THEN 
         DO: 
             aux_dsdlinha = "Valor Bloqueado Cobertura de Garantia e de: " + 

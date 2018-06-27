@@ -11,6 +11,8 @@
  *                15/08/2013 - Alteração da sigla PAC para PA (Carlos)
  *                27/06/2014 - Incluir o campo COOP (Chamado 163044) - (Jonata - RKAM)
  *				  03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *          30/05/2018 - Concatenar dscomple com historico (Alcemir Mout's - Prj. 467).
+ *                11/06/2018 - Ajuste para concatenar dscomple (tags[31]) com historico, o traço deve ficar no front (Douglas - Prj. 467).
  * --------------
  */
  
@@ -41,7 +43,7 @@
 					if (getByTagName($extrato[0]->tags,'nrsequen') == "0" ) {
 						$dshistor = getByTagName($extrato[0]->tags,'dshistor');
 					}
-					else {
+					else {          
 						$dshistor = formataNumericos('9999',getByTagName($extrato[0]->tags,'cdhistor')) . "-" . getByTagName($extrato[0]->tags,'dshistor');
 					}					
 				?>
@@ -76,7 +78,14 @@
 					$dshistor = getByTagName($extrato[$i]->tags,'dshistor');
 				}
 			    else {
-					$dshistor = formataNumericos('9999',getByTagName($extrato[$i]->tags,'cdhistor')) . "-" . getByTagName($extrato[$i]->tags,'dshistor');
+					// verificar se existe complemento para ser adicionado ao extrato
+					if (strlen(getByTagName($extrato[$i]->tags,'dscomple')) > 0 ) {
+						// Exibe o complemento
+						$dshistor = formataNumericos('9999',getByTagName($extrato[$i]->tags,'cdhistor')) . "-" . getByTagName($extrato[$i]->tags,'dshistor')." - ".getByTagName($extrato[$i]->tags,'dscomple');
+					} else {
+						// Exibe apenas o extrato
+						$dshistor = formataNumericos('9999',getByTagName($extrato[$i]->tags,'cdhistor')) . "-" . getByTagName($extrato[$i]->tags,'dshistor');
+					}
 				}
 								
 				?>
