@@ -45,6 +45,7 @@
  * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
  * 034: [13/12/2017] Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)	 
  * 035: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
+ * 036: [22/05/2018] - Ajuste para calcular a antecipação da parcela parcial do projeto 298 - Pos Fixado. (James)
  */
 ?>
 
@@ -765,7 +766,6 @@
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
 		$xml .= "		<nrparepr>".$nrparepr_pos."</nrparepr>";
-		$xml .= "		<dtvencto>".$dtvencto."</dtvencto>";
 		$xml .= "		<vlsdvpar>".$vlpagpar_pos."</vlsdvpar>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";

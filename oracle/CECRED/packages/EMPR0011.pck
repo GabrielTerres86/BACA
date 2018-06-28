@@ -1686,6 +1686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_vltxaiof     tbgen_iof_taxa.vltaxa_iof%TYPE;
       vr_flgimune     PLS_INTEGER;
       vr_vlparcela_sem_juros NUMBER(25,2);
+      vr_vlbaseiof    NUMBER(25,2);
       
       -- Variaveis tratamento de erros
       vr_cdcritic     crapcri.cdcritic%TYPE;
@@ -1759,12 +1760,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Valor da Parcela sem o Juros
       vr_vlparcela_sem_juros := NVL(pr_vlparepr,0) - NVL(vr_vllanmto,0);
       
+      -- BAse do IOF Complementar é o menor valor entre o Saldo Devedor ou O Principal
+      vr_vlbaseiof := LEAST(vr_vlparcela_sem_juros,pr_vlsdvpar);
+      
       -- Calcula o valor da do IOF e tarifa
       TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 --> Somente atraso
                                        ,pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
-                                       ,pr_vlemprst => vr_vlparcela_sem_juros
+                                       ,pr_vlemprst => vr_vlbaseiof
                                        ,pr_vltotope => pr_vlemprst
                                        ,pr_dscatbem => ''
                                        ,pr_cdfinemp => rw_crawepr.cdfinemp
@@ -3195,12 +3199,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
           -- A Vencer
           pr_tab_parcelas(vr_indice).insitpar := 3;          
+          
           -- Somente sera carregado os valores de vencimento a vencer, dentro do mês (LAUTOM)
           IF (to_char(rw_crappep.dtvencto,'RRRRMM') = to_char(pr_dtmvtolt,'RRRRMM')) THEN
             pr_tab_parcelas(vr_indice).vlpraven := NVL(rw_crappep.vlsdvpar,0);
           END IF;         
+          
         END IF;
-        
         -- Valor atual da parcela mais multa e juros de mora
         pr_tab_parcelas(vr_indice).vlatrpag := NVL(pr_tab_parcelas(vr_indice).vlatupar,0)
                                              + NVL(pr_tab_parcelas(vr_indice).vlmtapar,0)
@@ -4028,7 +4033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;    
         -- Acumular emprestimo + TArifa
         vr_vlemprst := round(pr_vlemprst + nvl(vr_vltarifaN,0),2);
-        vr_vlemprst := ROUND(vr_vlemprst / ((vr_vlemprst - nvl(vr_retorno02,0) - nvl(vr_retorno03,0)) / vr_vlemprst),2);
+        vr_vlemprst := ROUND(vr_vlemprst / ((vr_vlemprst - nvl(vr_retorno02,0) - nvl(vr_retorno03,0)) / vr_vlemprst),2)+0.01;
       ELSE
         -- Valor do empréstimo normal
         vr_vlemprst := pr_vlemprst;
@@ -6211,6 +6216,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Se for Financiamento
+        IF pr_floperac THEN
+          vr_cdhistor := 2608;
+        ELSE
+          vr_cdhistor := 2607;
+        END IF;
+        
+   			EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
+                                       ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
+                                       ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
+                                       ,pr_cdbccxlt => 100           -- Codigo Caixa
+                                       ,pr_cdoperad => pr_cdoperad   -- Operador
+                                       ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
+                                       ,pr_tplotmov => 5             -- Tipo movimento
+                                       ,pr_nrdolote => 650004        -- Numero Lote
+                                       ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
+                                       ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
+                                       ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
+                                       ,pr_vllanmto => vr_vliofcpl   -- Valor Lancamento
+                                       ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
+                                       ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
+                                       ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
+                                       ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
+                                       ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
+                                       ,pr_flgincre => TRUE          -- Indicador Credito
+                                       ,pr_flgcredi => TRUE          -- Credito
+                                       ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
+                                       ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
+                                       ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
+                                       ,pr_dscritic => vr_dscritic); -- Descricao Erro
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;        
         
         -- Se for Financiamento
         IF pr_floperac THEN

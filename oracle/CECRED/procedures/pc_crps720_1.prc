@@ -138,20 +138,23 @@ BEGIN
       -- Atualizar Parcelas
       BEGIN
         FORALL idx IN 1..pr_tab_parc_pep.COUNT SAVE EXCEPTIONS
-        UPDATE crappep
-           SET vlparepr = pr_tab_parc_pep(idx).vlparepr
-              ,vlsdvpar = pr_tab_parc_pep(idx).vlparepr
-              ,vltaxatu = pr_tab_parc_pep(idx).vltaxatu
-         WHERE cdcooper = pr_tab_parc_pep(idx).cdcooper
-           AND nrdconta = pr_tab_parc_pep(idx).nrdconta
-           AND nrctremp = pr_tab_parc_pep(idx).nrctremp
-           AND nrparepr = pr_tab_parc_pep(idx).nrparepr
-           AND inliquid = 0;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar crappep: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
-          RAISE vr_exc_saida;
-      END;
+          UPDATE crappep
+             SET vlparepr = pr_tab_parc_pep(idx).vlparepr
+                ,vlsdvpar = pr_tab_parc_pep(idx).vlparepr - (nvl(crappep.vlpagpar,0) + 
+                                                             nvl(crappep.vldstrem,0) + 
+                                                             nvl(crappep.vldstcor,0) + 
+                                                             nvl(crappep.vldespar,0))
+                ,vltaxatu = pr_tab_parc_pep(idx).vltaxatu
+           WHERE cdcooper = pr_tab_parc_pep(idx).cdcooper
+             AND nrdconta = pr_tab_parc_pep(idx).nrdconta
+             AND nrctremp = pr_tab_parc_pep(idx).nrctremp
+             AND nrparepr = pr_tab_parc_pep(idx).nrparepr
+             AND inliquid = 0;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar crappep: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+            RAISE vr_exc_saida;
+        END;
 
       -- Atualizar Emprestimos
       BEGIN
