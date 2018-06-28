@@ -90,7 +90,7 @@
 			 29/11/2017 - Validacao sobre valor bloqueado. M460 - BancenJud (Thiago Rodrigues)
 
              01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
-
+			 
              18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
 			 04/04/2018 - Ajuste para chamar as rotinas de validacao do valor de adesao do produto e 
@@ -528,37 +528,6 @@ function acessaOpcaoCadastroResgate() {
     });
 }
 
-//Função para validar o bloqueio da aplicação
-function validaBloqueioAplicacao(tporigem){
-	// Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, validando bloqueio aplica&ccedil;&atilde;o ...");
-
-    // Executa script de consulta através de ajax
-    $.ajax({
-        type: "POST",
-        dataType: "html",
-        url: UrlSite + "telas/atenda/aplicacoes/valida_bloqueio_apli.php",
-        data: {
-            nrdconta: nrdconta,
-            nraplica: nraplica,
-			tporigem: tporigem,
-            redirect: "script_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            try {
-                eval(response);
-            } catch (error) {
-                hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-            }
-        }
-    });
-}
-
 // Função para cadastro do resgate
 function cadastrarResgate(flmensag) {
 
@@ -570,8 +539,8 @@ function cadastrarResgate(flmensag) {
     var dtresgat = $("#dtresgat", "#frmResgate").val();
     var flgctain = $("#flgctain", "#frmResgate").val();
     // consiste check "Autorizar operação" 
-    var cdopera2 = ($("#flautori").is(':checked')) ? $("#cdopera2", "#frmResgate").val() : '';
-    var cddsenha = ($("#flautori").is(':checked')) ? $("#cddsenha", "#frmResgate").val() : '';
+    var cdopera2 = ( $("#flautori").is(':checked') ) ? $("#cdopera2", "#frmResgate").val() : '';
+    var cddsenha = ( $("#flautori").is(':checked') ) ? $("#cddsenha", "#frmResgate").val() : '';
 
     if (tpresgat == "P" || tpresgat == 1) {
         // Valida valor do resgate
@@ -3335,8 +3304,37 @@ function ativaCampo() {
 }
 
 function validaValorProdutoResgate (executa, campo, form) {
-	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
+	var vlresgat = 0;
+	var tpresgat = $("#tpresgat", "#frmResgate").val();
+	
+	if (form == 'frmResgate' && tpresgat == "T") {
+		$.ajax({
+			type: "POST",
+			dataType: "html",
+			url: UrlSite + "telas/atenda/aplicacoes/busca_saldo_resgate_aplicacao.php",
+			data: {
+				nrdconta: nrdconta,
+				nraplica: nraplica,
+				redirect: "script_ajax"
+			},
+			error: function (objAjax, responseError, objExcept) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function (response) {
+				try {
+					eval(response);
 					validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
+				} catch (error) {
+					hideMsgAguardo();
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}
+		});
+	} else {
+		vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
+	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
+}
 }
 
 function senhaCoordenador(executaDepois) {
