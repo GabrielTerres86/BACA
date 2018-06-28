@@ -25096,6 +25096,4 @@ PROCEDURE verifica-pa-piloto-ws-bancob:
            ASSIGN par_flpiloto = TRUE.
       END.
 
-  ASSIGN par_flpiloto = TRUE.
-
 END.
