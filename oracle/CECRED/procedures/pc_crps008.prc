@@ -1301,6 +1301,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS008"(pr_cdcooper IN crapcop.cdcooper%
                  IF vr_dscritic IS NOT NULL THEN
                     RAISE vr_exc_saida;
                  END IF;
+                 -- fecha o lote criado.
+                 CLOSE cr_craplot;
                  
                  -- capturar o craplot criado
                  OPEN cr_craplot (pr_cdcooper => pr_cdcooper
