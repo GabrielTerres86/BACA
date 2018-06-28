@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
+  --  Data    : Abril/2006                     Ultima Atualizacao: 28/06/2018
   --
   --  Dados referentes ao programa:
   --
@@ -285,6 +285,10 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
 	--
   --        10/05/2017 - Fixar na pc_valores_a_creditar os códigos de histórico 2277 e 2278, para os prejuizos 
   --                     Projeto 210_2 (Lombardi).
+  --        
+  --         28/06/2018 - Remover caracteres especiais ao inserir na tabela craplcm, para o campo dscedent.
+  --                      (Alcemir Mout's) - PRB0040107.
+  
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -8283,12 +8287,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,rw_crapaut.cdhistor
               ,rw_crapaut.vldocmto
               ,rw_crapaut.nrsequen
-              ,(CASE -- se não for informado cedente, utilizar o nome no convenio
+              ,GENE0007.fn_caract_acento((CASE -- se não for informado cedente, utilizar o nome no convenio
                   WHEN pr_dscedent IS NULL      OR
                        pr_dscedent = rw_crapcon.nmextcon THEN
                     rw_crapcon.nmrescon
                   ELSE pr_dscedent
-                END)
+                END),1)
               ,pr_cdcoptfn
               ,pr_cdagetfn
               ,pr_nrterfin
@@ -9801,7 +9805,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,rw_crapaut.cdhistor
               ,rw_crapaut.vldocmto
               ,rw_crapaut.nrsequen
-              ,Upper(pr_dscedent)
+              ,Upper(GENE0007.fn_caract_acento(pr_dscedent,1))
               ,pr_cdcoptfn
               ,pr_cdagetfn
               ,pr_nrterfin
