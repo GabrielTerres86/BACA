@@ -83,6 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
    Alteracoes: 27/06/2018 - P450 - Criação de procedure para consulta de saldos - pc_consulta_sld_cta_prj (Daniel/AMcom)
                27/06/2018 - P450 - Criação de procedure para efetuar lançamentos - pc_gera_lcm_cta_prj (Daniel/AMcom)  
+               28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom
 
 ..............................................................................*/
 
@@ -126,11 +127,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     Objetivo  : Efetua as transferencias de prejuizo de conta corrente.
 
-
     Alteracoes:
+    
+                28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom                
+                
     ..............................................................................*/
-    --
-
+    
     CURSOR cr_tab(pr_cdcooper IN crawepr.cdcooper%TYPE) IS
       SELECT t.dstextab
       FROM craptab t
@@ -176,7 +178,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
               ris.dtdrisco,
               pass.cdsitdct,
               ris.vldivida,
-              ris.dtrefere
+              ris.dtrefere,
+              ris.qtdiaatr
         FROM crapris ris,
              crapass pass
        WHERE ris.cdcooper  = pass.cdcooper
@@ -200,6 +203,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                     AND   cyc.cdmotcin = 2)
        AND   ris.dtrefere =  pr_dtrefere
        AND   ris.vldivida > pr_valor_arrasto; -- Materialidade
+       
+     -- Cursor para buscar email(s) para envio do arquivo de contingência de prejuízo
+     CURSOR cr_crapprm IS
+     SELECT c.dsvlrprm
+       FROM crapprm c
+      WHERE c.cdacesso = 'PREJ0003_EMAILS_PREJU';
+     rw_crapprm cr_crapprm%ROWTYPE;
 
      vr_cdcritic  NUMBER(3);
      vr_dscritic  VARCHAR2(1000);
@@ -216,7 +226,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
      vr_tab_erro cecred.gene0001.typ_tab_erro;
      vr_des_reto VARCHAR2(100);
-
+     --
+     vr_nrdocmto  NUMBER;
+      
+     -- clob para conter o dados do excel/csv  
+     vr_clobarq   CLOB;  
+     vr_texto_completo  VARCHAR2(32600);  
+     vr_mailprej  VARCHAR2(1000);
+     -- diretorio de geracao do relatorio
+     vr_nom_direto  VARCHAR2(100);
+     vr_diasrisco NUMBER:= 0;
+     -- Código do programa
+     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'PREJ0003';
+     
+     -- Subrotina para escrever texto na variável CLOB do XML
+     PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB,
+                                pr_des_dados IN VARCHAR2,
+                                pr_fecha_arq IN BOOLEAN DEFAULT FALSE) IS
+     BEGIN
+        gene0002.pc_escreve_xml(pr_clobdado, vr_texto_completo, pr_des_dados, pr_fecha_arq);
+     END;
+     
   BEGIN
 
       -- Leitura do calendário da cooperativa
@@ -407,7 +437,106 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
         END IF ;
       END;  
     END LOOP;
-
+    
+    -- Diego Simas (AMcom) Contingência para a não transferência de prejuízo
+    -- Se por algum erro de processamento não houve transferência de prejuízo  
+    -- Cria arquivo com as contas para mandar por email para a recuperação de crédito  
+    -- Email: recuperacaodecredito@cecred.coop.br
+    -- INÍCIO
+    
+    -- Busca do diretório base da cooperativa para CSV
+    vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+                                          
+    --Montar cabeçalho arquivo csv
+    dbms_lob.createtemporary(vr_clobarq, TRUE, dbms_lob.CALL);
+    dbms_lob.open(vr_clobarq, dbms_lob.lob_readwrite);
+    vr_texto_completo := 0;
+    pc_escreve_clob(vr_clobarq,'Cooperativa; Conta; Risco; Dias no Risco; Dias de atraso; Motivo'||chr(13));
+    
+    FOR rw_crapris IN cr_crapris(pr_cdcooper
+                                ,vr_dtrefere_aux
+                                ,rw_crapdat.dtmvtolt
+                                ,vr_valor_arrasto) LOOP
+      BEGIN
+                
+        -- ASSUNTO: Atenção! Houve erro na transferência para prejuízo.
+        -- EMAIL: recuperacaodecredito@cecred.coop.br
+        -- ARQUIVO ANEXO DEVE CONTER: cooperativa, conta, risco, dias no risco, 
+        --                            dias de atraso e motivo pelo qual a conta 
+        --                            não foi transferida.
+        -- 'Erro na transferecia de prejuizo (Transferencia Automatica).'
+        
+        vr_diasrisco := rw_crapdat.dtmvtolt - rw_crapris.dtdrisco;
+        
+        -- Escreve linha CSV        
+        pc_escreve_clob(vr_clobarq, pr_cdcooper ||';' -- Cooperativa
+                      ||gene0002.fn_mask(rw_crapris.nrdconta,'z.zzz.zz9')||';' -- Conta
+                      ||'H'||';' -- Risco
+                      ||to_char(vr_diasrisco)||';' -- Dias no Risco
+                      ||to_char(rw_crapris.qtdiaatr)||';' -- Dias de Atraso
+                      ||'Erro na transferecia de prejuizo (Transferencia Automatica).'||';' -- Motivo
+                      ||chr(13));
+                                     
+      END;
+        
+    END LOOP;    
+    
+    -- Pega lista de e-mails para mandar e-mail com anexo do arquivo que contém as 
+    -- contas não transferidas para prejuízo
+    OPEN cr_crapprm;
+    FETCH cr_crapprm
+    INTO rw_crapprm;
+    
+    -- Se não encontrar
+    IF cr_crapprm%NOTFOUND THEN
+       -- Fechar o cursor
+       CLOSE cr_crapprm;
+       --Montar mensagem erro
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Nao foi possivel encontrar a lista de '
+                   ||'emails para envio de contigencia de transferencia de prejuizo.';
+       --Levantar Excecao
+       RAISE vr_exc_saida;
+    ELSE
+       CLOSE cr_crapprm;
+       vr_mailprej := rw_crapprm.dsvlrprm;
+    END IF;
+    
+    pc_escreve_clob(vr_clobarq,chr(13),true);
+        
+    -- Submeter a geração do arquivo txt puro
+    gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper                 --> Cooperativa conectada
+                                       ,pr_cdprogra  => vr_cdprogra                 --> Programa chamador
+                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento atual
+                                       ,pr_dsxml     => vr_clobarq                  --> Arquivo XML de dados
+                                       ,pr_cdrelato  => 'preju'                     --> Código do relatório
+                                       ,pr_dsarqsaid => vr_nom_direto||'/salvar/'|| --> Arquivo final com o path
+                                          'preju'||rw_crapdat.dtmvtolt||'.csv'      
+                                       ,pr_flg_gerar => 'N'                         --> Geraçao na hora
+                                       ,pr_flgremarq => 'N'                         --> Após cópia, remover arquivo de origem
+                                       ,pr_dsmailcop => vr_mailprej                 --> Lista sep. por ';' de emails para envio do arquivo
+                                       ,pr_dsassmail => 'Atencao! Houve erro na '
+                                          ||'transferencia para prejuizo'           --> Assunto do e-mail que enviará o arquivo
+                                       ,pr_dscormail => '<p><b>Em anexo a este '    --> HTML corpo do email que enviará o arquivo
+                                          ||'e-mail, segue a lista de contas que'
+                                          ||' nao foram transferidas para'
+                                          ||' prejuizo</b></p>'                     
+                                       ,pr_des_erro  => pr_dscritic);               --> Saída com erro
+                                           
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_clobarq);
+    dbms_lob.freetemporary(vr_clobarq);
+    -- Testar se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      -- Gerar exceção
+      RAISE vr_exc_saida;
+    END IF;
+     
+    -- FIM
+    -- Diego Simas (AMcom) Contingência para a não transferência de prejuízo
+    
 
   EXCEPTION
     WHEN OTHERS THEN
