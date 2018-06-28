@@ -58,6 +58,7 @@
  * 046: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
  * 047: [07/06/2018} P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti    
  * 048: [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
+ * 047: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -3395,17 +3396,15 @@ function verificaDesconto(campo , flgantec , parcela) {
 
 }
 
-function verificaDescontoPos(campo , insitpar , parcela , vencto) {
+function verificaDescontoPos(campo , insitpar , parcela) {
 
 	var vlpagan = $("#vlpagan_" + parcela,"#divTabela");
 
 	if (isHabilitado(campo) && retiraMascara(vlpagan.val()) != retiraMascara(campo.val()) && insitpar == 3) { // 3 - A Vencer
         nrparepr_pos = parcela;
         vlpagpar_pos = converteMoedaFloat(campo.val());
-        dtvencto = vencto;
         controlaOperacao("C_DESCONTO_POS");
 	}
-
 	vlpagan.val(campo.val());
 
 }

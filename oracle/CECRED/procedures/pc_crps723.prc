@@ -80,7 +80,8 @@ BEGIN
          AND crappep.nrdconta = pr_nrdconta
          AND crappep.nrctremp = pr_nrctremp
          AND crappep.dtvencto >= pr_dtvencto
-         AND crappep.vldespar > 0;
+         AND crappep.vldespar > 0
+         AND crappep.inliquid = 1;
          
     -- Soma valor pago da parcela
     CURSOR cr_vltotal_parcela(pr_cdcooper IN crappep.cdcooper%TYPE
@@ -127,27 +128,34 @@ BEGIN
       ,nrparepr  crappep.nrparepr%TYPE
       ,vlsdvatu  crappep.vlsdvatu%TYPE
       ,vlmrapar  crappep.vlmrapar%TYPE
-      ,vlmtapar  crappep.vlmtapar%TYPE);
+      ,vlmtapar  crappep.vlmtapar%TYPE
+      ,vlpagpar  crappep.vlpagpar%TYPE
+      ,dtdstjur  crappep.dtdstjur%TYPE
+      ,vldstcor  crappep.vldstcor%TYPE
+      ,vldstrem  crappep.vldstrem%TYPE);
+      
     TYPE typ_tab_crappep IS TABLE OF typ_reg_crappep INDEX BY PLS_INTEGER;
     vr_tab_crappep  typ_tab_crappep;
 
     vr_tab_parcelas EMPR0011.typ_tab_parcelas;
 
     ------------------------------- VARIAVEIS -------------------------------
-    vr_vlsprojt         crapepr.vlsprojt%TYPE;
-    vr_flgachou         BOOLEAN;
-    vr_dtdpagto         crapepr.dtdpagto%TYPE;
-    vr_dtvencto         crappep.dtvencto%TYPE;
-    vr_qtmesdec         crapepr.qtmesdec%TYPE;
-    vr_index            PLS_INTEGER;
-    vr_index_pos        PLS_INTEGER;
-    vr_vlsdvctr         NUMBER;
-    vr_vlsdevat         NUMBER;
-    vr_vlpreapg         NUMBER;
-    vr_vlprepag         NUMBER;
-    vr_vltotal_juros    NUMBER(25,2);
-    vr_vltotal_parcela	NUMBER(25,2);
-    vr_vltotal_pago     NUMBER(25,2);
+    vr_txdiaria                craplcr.txdiaria%TYPE;
+    vr_vlsprojt                crapepr.vlsprojt%TYPE;
+    vr_flgachou                BOOLEAN;
+    vr_dtdpagto                crapepr.dtdpagto%TYPE;
+    vr_dtvencto                crappep.dtvencto%TYPE;
+    vr_qtmesdec                crapepr.qtmesdec%TYPE;
+    vr_index                   PLS_INTEGER;
+    vr_index_pos               PLS_INTEGER;
+    vr_vlsdvctr                NUMBER;
+    vr_vlsdevat                NUMBER;
+    vr_vlpreapg                NUMBER;
+    vr_vlprepag                NUMBER;
+    vr_vltotal_juros           NUMBER(25,2);
+    vr_vltotal_parcela	       NUMBER(25,2);
+    vr_vltotal_pago            NUMBER(25,2);    
+    vr_dtcomptecia             DATE;
     
     -- Função buscar os meses decorridos
     FUNCTION fn_retorna_meses_decorridos(pr_cdcooper IN crapepr.cdcooper%TYPE             
@@ -184,7 +192,6 @@ BEGIN
       
       RETURN 0;                             
     END;
-
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
 
@@ -219,14 +226,15 @@ BEGIN
     -- Listagem dos contratos
     FOR rw_crapepr IN cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP
       -- Reseta as variaveis
-      vr_qtmesdec        := rw_crapepr.qtmesdec;
-      vr_vlsprojt        := rw_crapepr.vlsprojt;
-      vr_vlsdvctr        := 0;
-      vr_vlsdevat        := 0;
-      vr_vlpreapg        := 0;
-      vr_vlprepag        := 0;
-      vr_vltotal_juros   := 0;
-      vr_vltotal_parcela := 0;
+      vr_qtmesdec                := rw_crapepr.qtmesdec;
+      vr_vlsprojt                := rw_crapepr.vlsprojt;
+      vr_txdiaria                := POWER(1 + (NVL(rw_crapepr.txmensal,0) / 100),(1 / 30)) - 1;
+      vr_vlsdvctr                := 0;
+      vr_vlsdevat                := 0;
+      vr_vlpreapg                := 0;
+      vr_vlprepag                := 0;
+      vr_vltotal_juros           := 0;
+      vr_vltotal_parcela         := 0;
       
       -- Busca as parcelas para pagamento
       EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
@@ -264,33 +272,44 @@ BEGIN
       -- Percorre as pascelas
       WHILE vr_index_pos IS NOT NULL LOOP
         -- Saldo Contratado
-        vr_vlsdvctr := vr_vlsdvctr + vr_tab_parcelas(vr_index_pos).vlatupar;
+        vr_vlsdvctr    := vr_vlsdvctr + vr_tab_parcelas(vr_index_pos).vlatupar;
         -- Saldo devedor atualizado
-        vr_vlsdevat := vr_vlsdevat + vr_tab_parcelas(vr_index_pos).vlatupar;
+        vr_vlsdevat    := vr_vlsdevat + vr_tab_parcelas(vr_index_pos).vlatupar;
+        -- Data da competencia da parcela
+        vr_dtcomptecia := TO_DATE(TO_CHAR(vr_tab_parcelas(vr_index_pos).dtvencto,'DD')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
         -- Se estiver 1-Em dia ou 2-Em Atraso
         IF vr_tab_parcelas(vr_index_pos).insitpar IN (1,2) THEN
           vr_vlpreapg := vr_vlpreapg + vr_tab_parcelas(vr_index_pos).vlatupar;
         END IF;
         
+        -- Se estiver 1-Em dia ou 3-A Vencer
+        IF vr_tab_parcelas(vr_index_pos).insitpar IN (1,3) THEN
+          -- Somente na competencia da parcela
+          IF vr_dtcomptecia > rw_crapdat.dtmvtoan AND vr_dtcomptecia <= rw_crapdat.dtmvtolt AND vr_tab_parcelas(vr_index_pos).vlpagpar > 0 THEN
+            -- Grava a data da atualizacao da correcao do valor pago
+            vr_tab_parcelas(vr_index_pos).dtdstjur := vr_dtcomptecia;
+            -- Gravar o Desconto Juros Remuneratorio atualizado
+            vr_tab_parcelas(vr_index_pos).vldstcor := vr_tab_parcelas(vr_index_pos).vldstcor_atu;
+            -- Gravar o Desconto Juros Correcao atualizado
+            vr_tab_parcelas(vr_index_pos).vldstrem := vr_tab_parcelas(vr_index_pos).vldstrem_atu;
+          END IF;
+        END IF;
+
         -- Atualiza os valores das Parcelas
         vr_index := vr_tab_crappep.count + 1;
         vr_tab_crappep(vr_index).cdcooper := pr_cdcooper;
         vr_tab_crappep(vr_index).nrdconta := rw_crapepr.nrdconta;
         vr_tab_crappep(vr_index).nrctremp := rw_crapepr.nrctremp;
         vr_tab_crappep(vr_index).nrparepr := vr_tab_parcelas(vr_index_pos).nrparepr;
-        vr_tab_crappep(vr_index).vlsdvatu := vr_tab_parcelas(vr_index_pos).vlatupar;        
+        vr_tab_crappep(vr_index).vlsdvatu := vr_tab_parcelas(vr_index_pos).vlatupar;
         vr_tab_crappep(vr_index).vlmrapar := vr_tab_parcelas(vr_index_pos).vlmrapar;
-        vr_tab_crappep(vr_index).vlmtapar := vr_tab_parcelas(vr_index_pos).vlmtapar;        
+        vr_tab_crappep(vr_index).vlmtapar := vr_tab_parcelas(vr_index_pos).vlmtapar;
+        vr_tab_crappep(vr_index).dtdstjur := vr_tab_parcelas(vr_index_pos).dtdstjur;
+        vr_tab_crappep(vr_index).vldstcor := vr_tab_parcelas(vr_index_pos).vldstcor;
+        vr_tab_crappep(vr_index).vldstrem := vr_tab_parcelas(vr_index_pos).vldstrem;
         -- Proximo indice
         vr_index_pos := vr_tab_parcelas.NEXT(vr_index_pos);
       END LOOP;
-
-      -- Busca a soma do valor pago da parcela
-      OPEN cr_vltotal_pag_par(pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => rw_crapepr.nrdconta
-                             ,pr_nrctremp => rw_crapepr.nrctremp);
-      FETCH cr_vltotal_pag_par INTO vr_vlprepag;
-      CLOSE cr_vltotal_pag_par;
 
       -- Data de Vencimento correspondente do mês
       vr_dtvencto := TO_DATE(TO_CHAR(vr_dtdpagto,'DD')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'MM')||'/'||TO_CHAR(rw_crapdat.dtmvtolt,'RRRR'),'DD/MM/RRRR');                             
@@ -323,11 +342,21 @@ BEGIN
         CLOSE cr_vltotal_parcela;
         
         -- Valor Total do Saldo Projetado
-        vr_vlsprojt := NVL(rw_crapepr.vlemprst,0) + NVL(vr_vltotal_juros,0) - NVL(vr_vltotal_parcela,0) - NVL(vr_vltotal_pago,0);
-      END IF;            
+        vr_vlsprojt := NVL(rw_crapepr.vlemprst,0) + 
+                       NVL(vr_vltotal_juros,0) - 
+                       NVL(vr_vltotal_parcela,0) - 
+                       NVL(vr_vltotal_pago,0);
+      END IF;
+
+      -- Busca a soma do valor pago da parcela
+      OPEN cr_vltotal_pag_par(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_crapepr.nrdconta
+                             ,pr_nrctremp => rw_crapepr.nrctremp);
+      FETCH cr_vltotal_pag_par INTO vr_vlprepag;
+      CLOSE cr_vltotal_pag_par;
 
       -- Calcula os meses decorridos
-      vr_qtmesdec := vr_qtmesdec + NVL(fn_retorna_meses_decorridos(pr_cdcooper => pr_cdcooper            
+      vr_qtmesdec := vr_qtmesdec + NVL(fn_retorna_meses_decorridos(pr_cdcooper => pr_cdcooper
                                                                   ,pr_nrdconta => rw_crapepr.nrdconta
                                                                   ,pr_nrctremp => rw_crapepr.nrctremp
                                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -353,6 +382,9 @@ BEGIN
            set vlsdvatu = vr_tab_crappep(idx).vlsdvatu
               ,vlmrapar = vr_tab_crappep(idx).vlmrapar
               ,vlmtapar = vr_tab_crappep(idx).vlmtapar
+              ,dtdstjur = vr_tab_crappep(idx).dtdstjur
+              ,vldstcor = vr_tab_crappep(idx).vldstcor
+              ,vldstrem = vr_tab_crappep(idx).vldstrem
          where cdcooper = vr_tab_crappep(idx).cdcooper
            AND nrdconta = vr_tab_crappep(idx).nrdconta
            AND nrctremp = vr_tab_crappep(idx).nrctremp

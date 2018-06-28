@@ -70,6 +70,10 @@ BEGIN
             ,crappep.dtultpag
             ,crappep.vlpagmta
             ,crappep.vltaxatu
+            ,crappep.vlpagpar
+            ,crappep.vldstrem
+            ,crappep.vldstcor
+            ,crappep.dtdstjur
             ,crapass.vllimcre
             ,crawepr.dtdpagto
             ,crapepr.dtrefcor
@@ -354,6 +358,11 @@ BEGIN
                                            ,pr_ehmensal => vr_flmensal
                                            ,pr_vlsldisp => vr_vlsldisp
                                            ,pr_dtrefcor => rw_epr_pep.dtrefcor
+                                           ,pr_txmensal => rw_epr_pep.txmensal
+                                           ,pr_dtdstjur => rw_epr_pep.dtdstjur
+                                           ,pr_vlpagpar_atu => NVL(rw_epr_pep.vlpagpar,0) + 
+                                                               NVL(rw_epr_pep.vldstrem,0) + 
+                                                               NVL(rw_epr_pep.vldstcor,0)
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
         -- Se houve erro
