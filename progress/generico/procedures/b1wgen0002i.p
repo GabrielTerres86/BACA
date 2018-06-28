@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 06/10/2017
+   Data    : 23/03/2011                        Ultima atualizacao: 26/05/2018
     
    Dados referentes ao programa:
 
@@ -257,7 +257,7 @@
                             do PDF para envio da esteira (Oscar).
                                                    
                10/10/2016 - Ajuste sempre gerar o PDF para esteira de credito (Oscar).                                    
-                           
+			   
 			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
 						    (Adriano - SD 614408).
                
@@ -274,11 +274,14 @@
                             PRJ339 - CRM (Odirlei-AMcom)  
 
                15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
-                            pois estourava para conta com muitos AVAIS (Marcos-Supero)   
-
+                            pois estourava para conta com muitos AVAIS (Marcos-Supero)               
+                            
                06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
                             
                04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi)
+                            
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
 .............................................................................*/
 
@@ -4414,7 +4417,7 @@ PROCEDURE impressao-prnf:
         " (SPC,SERASA,CADIN ...) ALEM DO CADASTRO DA CENTRAL DE RISCO DO"  
         "BANCO CENTRAL DO BRASIL E SISTEMA"  
         SKIP
-        " CECRED."            
+        " AILOS."            
         SKIP(1)
         rel_lbconjug            
         crapprp.flgdocje
@@ -8422,7 +8425,7 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.nmprimtl =    (xText:NODE-VALUE) WHEN xField:NAME = "nmprimtl". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
                     ASSIGN w-co-responsavel.vlemprst = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlemprst".
-                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved".
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
                     ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
                     ASSIGN w-co-responsavel.vlprepag = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepag".
                     ASSIGN w-co-responsavel.vljurmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vljurmes".
@@ -8495,7 +8498,7 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.tipoempr =    (xText:NODE-VALUE) WHEN xField:NAME = "tipoempr". 
                     ASSIGN w-co-responsavel.qtimpctr = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtimpctr". 
                     ASSIGN w-co-responsavel.dtapgoib = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtapgoib".
-                    
+
                         END.
 
            END. 

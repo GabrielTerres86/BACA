@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Carlos Henrique
-   Data    : Maio/2014                       Ultima atualizacao: 06/10/2016
+   Data    : Maio/2014                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -20,6 +20,10 @@
 
                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
                             (Guilherme/SUPERO)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -133,7 +137,7 @@ FORM "PA"                        AT 1
      "Qtd. GPS"                  AT 8
      "Valor GPS"                 AT 34
      "Tarifa SICREDI"            AT 47
-     "Receita CECRED"            AT 64
+     "Receita AILOS"             AT 64
      WITH WIDTH 80 FRAME f_cab_mensal.
 
 FORM tt-rel.cdagenci NO-LABEL AT 1
@@ -155,7 +159,7 @@ FORM "Coop"                      AT 1
      "Qtd. GPS"                  AT 14
      "Valor GPS"                 AT 33
      "Tarifa SICREDI"            AT 46
-     "Receita CECRED"            AT 63 
+     "Receita AILOS"             AT 63 
      WITH WIDTH 80 FRAME f_cab_mensal_cecred.
 
 FORM tt-rel.cdcooper NO-LABEL AT 1

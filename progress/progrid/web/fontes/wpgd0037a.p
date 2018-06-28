@@ -32,6 +32,8 @@ Alterações:  03/11/2008 - Inclusao widget-pool (martin)
 			 
 			 23/05/2018 - Chamado #SCTASK0014587, evitar erro ao acessar crapadp.
 			              Faltava colunas na clausula where do FIND. (Wagner/Sustentação).
+
+			 06/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).    
 						  
 ............................................................................. */
 
@@ -513,7 +515,7 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
 
           IF AVAILABLE crapcop THEN
              DO:
-                ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif".
+                ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif".
                
                 IF INDEX(crapcop.nmrescop, " ") <> 0  THEN
                    DO: 

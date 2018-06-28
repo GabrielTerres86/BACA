@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Precise
-   Data    : Fevereiro/2010                   Ultima atualizacao: 05/12/2013
+   Data    : Fevereiro/2010                   Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -33,7 +33,11 @@
                
                05/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
-                            Inclusao do VALIDATE ( André Euzébio / SUPERO)                     
+                            Inclusao do VALIDATE ( André Euzébio / SUPERO)      
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			   
+			                  
 ..............................................................................*/
                           
 DEF STREAM str_1.
@@ -754,7 +758,7 @@ PROCEDURE gerar_resumo_migradas.
         RUN enviar_email IN b1wgen0011
                            (INPUT glb_cdcooper,
                             INPUT glb_cdprogra,
-                            INPUT "compe@cecred.coop.br",
+                            INPUT "compe@ailos.coop.br",
                             INPUT "Contas migradas nao integradas do " +
                                   "arquivo ICF615",
                             INPUT "email_crrl557.txt", 

@@ -1403,7 +1403,7 @@ PROCEDURE envia-email :
          RUN enviar_email_completo IN b1wgen0011 (INPUT INTEGER(ab_unmap.aux_cdcooper),
                                                   INPUT "wpgd0056",
                                                   INPUT "",
-                                                  INPUT "progrid@cecred.coop.br",
+                                                  INPUT "progrid@ailos.coop.br",
                                                   INPUT "Liberação de Agenda - PRÉ-ASSEMBLEIAS",
                                                   INPUT "",
                                                   INPUT "",

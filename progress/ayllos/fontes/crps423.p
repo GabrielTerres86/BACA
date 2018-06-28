@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Novembro/2004                    Ultima atualizacao: 25/09/2015
+   Data    : Novembro/2004                    Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -95,6 +95,10 @@
              depois chama o CRPS423. No procmessage colocar o operador que 
              processou o arquivo, o arquivo e a chave completa da tabela 
              crawcrd para consulta (Carlos)
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ............................................................................ */
 
 { includes/var_batch.i }   
@@ -420,7 +424,7 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                      RUN enviar_email IN b1wgen0011
                                         (INPUT glb_cdcooper,
                                          INPUT glb_cdprogra,
-                                         INPUT "willian@cecred.coop.br",
+                                         INPUT "willian@ailos.coop.br",
                                          INPUT '"ERRO DE SEQUENCIA - "' +
                                                '"COO510 - "' +
                                                crapcop.nmrescop,
@@ -430,8 +434,8 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                      RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br",
                                 INPUT '"ERRO DE SEQUENCIA - "' +
                                       '"COO510 - "' +
                                       crapcop.nmrescop,
@@ -533,9 +537,9 @@ PROCEDURE proc_processa_arquivo.
             RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br," +
-                                      "cobranca@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br," +
+                                      "cobranca@ailos.coop.br",
                                 INPUT '"ERROS DIVERSOS - "' +
                                       '"COO510 - "' + crapcop.nmrescop,
                                 INPUT SUBSTRING(aux_nmarquiv,8),
@@ -933,9 +937,9 @@ PROCEDURE proc_processa_arquivo.
             RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br," +
-                                      "cobranca@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br," +
+                                      "cobranca@ailos.coop.br",
                                 INPUT '"ERRO DE SEQUENCIA - "' +
                                       '"COO510 - "' + crapcop.nmrescop,
                                 INPUT SUBSTRING(aux_nmarquiv,8),

@@ -30,6 +30,9 @@
                         
              09/08/2016 - Incluir filtro por tipo de evento
                           PRJ229 - Melhorias OQS  (Odirlei-AMcom)
+
+			 01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
  */
 
  CREATE WIDGET-POOL.
@@ -511,7 +514,7 @@ DO:
     
     IF  AVAILABLE crapcop THEN
         DO:
-           ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif".
+           ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif".
 
            IF  INDEX(crapcop.nmrescop, " ") <> 0  THEN
                DO: 

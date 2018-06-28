@@ -768,11 +768,15 @@
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
               
+			 
+
 			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
               22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
                            Incluida validacao das linhas de credito 100,800,900 e 6901 e do campo
                            par_idquapro. PRJ366 (Lombardi)
+           
+		      26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 		      16/06/2018 - Alterado para verificar o campo nrplnovo na crapbpr, caso tenha valor neste campo,
 			               deve ser pego este campo, caso contrario pegar do campo nrdplaca.
@@ -2368,7 +2372,7 @@ PROCEDURE obtem-propostas-emprestimo:
                       RETURN "NOK".
                                  
                     
-                    
+                                 
                                  
                     IF  AVAIL crapepr THEN
                       ASSIGN aux_dtlibera = crapepr.dtmvtolt.
@@ -4490,7 +4494,7 @@ PROCEDURE valida-dados-gerais:
                      ASSIGN aux_vlrtarif = 0
                             aux_vlrdoiof = 0 
                             aux_vlpreemp = 0.
-                                   
+                     
                      /* Calcular o IOF para retornar o valor do IOF e da prestação */
                         /* Busca os bens em garantia */
                         ASSIGN aux_dscatbem = "".
@@ -6378,7 +6382,7 @@ PROCEDURE verifica-outras-propostas:
     							 CREATE tt-msg-confirma.
 								 ASSIGN aux_contador = aux_contador + 1				  
 										tt-msg-confirma.inconfir = aux_contador
-										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.".
 							END.
 
 					END.
@@ -7060,8 +7064,8 @@ PROCEDURE grava-proposta-completa:
                          INPUT par_nrdcaixa,
                          INPUT 1, /*sequencia*/
                          INPUT aux_cdcritic,
-                         INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
         END.        
                      
         /* Se financiar IOF, calcula esses valores e soma ao total emprestado, para enviar ao cálculo da parcela*/                             
@@ -7159,9 +7163,9 @@ PROCEDURE grava-proposta-completa:
                               INPUT 0,
                               INPUT-OUTPUT aux_dscritic).
                RETURN "NOK".
-          END.
+        END.
     END.     
-         
+    
     ASSIGN par_qtpromis = INTEGER(craptab.dstextab).
 
     IF  par_qtpromis = 0 THEN

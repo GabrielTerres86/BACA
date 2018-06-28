@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro   
-   Data    : Julho/2005.                     Ultima atualizacao: 10/04/2017
+   Data    : Julho/2005.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -94,6 +94,8 @@
                08/03/2018 - Buscar descricao do tipo de conta do oracle. Substituir
                             "cdtipcta = 1, 2, 3 e 4" pela flag de conta integracao
                             do oracle. PRJ366 (Lombardi).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                
                03/05/2018 - Buscar descricao do tipo de conta do oracle. 
                             PRJ366 (Lombardi).
@@ -923,7 +925,7 @@ IF  aux_flrel510 THEN
                 RUN enviar_email IN b1wgen0011
                                    (INPUT glb_cdcooper,
                                     INPUT glb_cdprogra,
-                                    INPUT "cartoes@cecred.coop.br",
+                                    INPUT "cartoes@ailos.coop.br",
                                     INPUT "CRITICAS ARQUIVO COO510 ",
                                     INPUT aux_nmarqenv,
                                     INPUT TRUE).

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 08/01/2016 
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -29,6 +29,9 @@
                08/01/2015 - Alterado procedimento solicitar_envio_email para chamar
                             a rotina convertida na b1wgen0011.p 
                             SD356863 (Odirlei-AMcom)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
  ........................................................................... */
 { includes/var_batch.i }
 { sistema/generico/includes/var_oracle.i }
@@ -101,7 +104,7 @@ DO WHILE aux_contador >= -12:
 
         /* UTILIZACAO DA ROTINA EM ORACLE PL/SQL PARA ENVIO DE E-MAIL */
         RUN envia_email_log (INPUT glb_cdprogra,
-                             INPUT "rafael.fagundes@cecred.coop.br, klaus.ulrich@cecred.coop.br ",
+                             INPUT "rafael.fagundes@ailos.coop.br, klaus.ulrich@ailos.coop.br ",
                              INPUT "ATENCAO- nao foi possível atualizar o valor dos planos de capital",
                              INPUT glb_dscritic ).
 

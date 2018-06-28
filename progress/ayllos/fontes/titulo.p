@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Setembro/2000                   Ultima alteracao: 07/02/2018
+   Data    : Setembro/2000                   Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -176,6 +176,8 @@
 
 			   07/02/2018 - Ajustado horario limite para digitacao dos titulos ate 22
 							(Adriano - SD 845726).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
 
 ............................................................................ */
@@ -253,7 +255,7 @@ DEF        VAR tel_cdbcoenv AS CHAR   FORMAT "x(15)" VIEW-AS COMBO-BOX
       "TODOS",
       "BANCO DO BRASIL",
       "BANCOOB",
-      "CECRED"  INIT "TODOS" NO-UNDO.
+      "AILOS"  INIT "TODOS" NO-UNDO.
 
 DEF        VAR aux_cdbcoenv AS CHAR    INIT "0"                      NO-UNDO.
 DEF        VAR aux_dsbcoenv AS CHAR                                  NO-UNDO.
@@ -471,9 +473,9 @@ ON RETURN OF tel_cdbcoenv DO:
         ASSIGN aux_cdbcoenv = "756"
                aux_dsbcoenv = "BANCOOB".
    ELSE
-   IF   SUBSTRING(tel_cdbcoenv:SCREEN-VALUE,1,6) = "CECRED" THEN
+   IF   SUBSTRING(tel_cdbcoenv:SCREEN-VALUE,1,6) = "AILOS" THEN
         ASSIGN aux_cdbcoenv = STRING(crapcop.cdbcoctl)
-               aux_dsbcoenv = "CECRED".
+               aux_dsbcoenv = "AILOS".
    ELSE DO:
           IF aux_flgenvio THEN /* Enviados */
 
@@ -2939,7 +2941,7 @@ PROCEDURE imprimir_carta_remessa:
           glb_nmformul = "80col"           
           glb_cdrelato = 554
           aux_cdbcoenv = STRING(crapcop.cdbcoctl)
-          aux_dsbcoenv = "CECRED"
+          aux_dsbcoenv = "AILOS"
           aux_dsbcoctl = STRING(INT(aux_cdbcoenv),"999") + " - " + aux_dsbcoenv
           aux_dscooper = crapcop.nmextcop /*crapcop.nmrescop*/
           aux_cdagectl = crapcop.cdagectl

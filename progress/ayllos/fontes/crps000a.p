@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Novembro/2009.                     Ultima atualizacao: 21/02/2014
+   Data    : Novembro/2009.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -18,6 +18,8 @@
 
                 21/02/2014 - Aumento do format de crapcop.nmrescop de 11 para
                              20 (Carlos)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
    
 ............................................................................ */
 
@@ -71,11 +73,11 @@ IF  AVAIL gncontr  THEN
                 RUN enviar_email_completo IN h-b1wgen0011
                             (INPUT glb_cdcooper,
                              INPUT "crps000",
-                             INPUT "CECRED<cecred@cecred.coop.br>",
-                             INPUT "rosangela@cecred.coop.br," +
-                                   "mirtes@cecred.coop.br,"    +
-                                   "margarete@cecred.coop.br,"  +
-                                   "suporte.operacional@cecred.coop.br",
+                             INPUT "AILOS<ailos@ailos.coop.br>",
+                             INPUT "rosangela@ailos.coop.br," +
+                                   "mirtes@ailos.coop.br,"    +
+                                   "margarete@ailos.coop.br,"  +
+                                   "suporte.operacional@ailos.coop.br",
                              INPUT "Arquivos de debito Brasil Telecom",
                              INPUT "",
                              INPUT "",

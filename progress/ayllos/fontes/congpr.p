@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Paulo - Precise
-   Data    : Julho/2009.                       Ultima atualizacao: 10/09/2013
+   Data    : Julho/2009.                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -76,7 +76,10 @@
                19/03/2013 - Incluir valores de transferencia (Gabriel). 
                
                10/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).                                        
+                            a escrita será PA (André Euzébio - Supero).          
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			                                 
  ..........................................................................*/
 
 {includes/var_online.i}
@@ -445,7 +448,7 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
                     "Total Debitos;Faturas;Total Faturas" + ";" +
                     "Coop. Saque;Coop. Transacoes;Coop utiliz. Cartao;" +
      
-                    "Cecred Visa;Data;Cartoes;Cooperados;Percentual;" + 
+                    "Ailos Visa;Data;Cartoes;Cooperados;Percentual;" + 
                     "Limite Concedido;Quant.Saques;"+
                     "Total sacado;Qtd Faturas;" +
                     "Faturas;Qtd. Anuidades;Total Anuidade;Coop Saque;" +
@@ -887,7 +890,7 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
                STRING(aux_qtasstbb,"999999999") + ";" +
                STRING(aux_qtasqtbb,"999999999") + ";" +
                            
-               "Cartao Cecred Visa;" + 
+               "Cartao Ailos Visa;" + 
                STRING(MONTH (crapgpr.dtrefere),"99") + "/" + 
                /* cecred visa */
                STRING(YEAR (crapgpr.dtrefere),"9999") + ";" + 

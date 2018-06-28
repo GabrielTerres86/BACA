@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Janeiro/2004                    Ultima alteracao: 01/12/2016
+   Data    : Janeiro/2004                    Ultima alteracao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -135,6 +135,9 @@
                
                01/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -241,7 +244,7 @@ DEF       VAR tel_cdbcoenv  AS CHAR FORMAT "x(15)" VIEW-AS COMBO-BOX
       "TODOS",
       "BANCO DO BRASIL",
       "BANCOOB",
-      "CECRED"  INIT "TODOS" NO-UNDO.
+      "AILOS"  INIT "TODOS" NO-UNDO.
 
 DEF        VAR aux_cdbcoenv AS CHAR INIT "0"                         NO-UNDO.
 DEF        VAR aux_vldocrcb AS DEC  FORMAT "999,999,999,999.99"      NO-UNDO.
@@ -466,7 +469,7 @@ ON RETURN OF tel_cdbcoenv DO:
    IF   SUBSTRING(tel_cdbcoenv:SCREEN-VALUE,1,7) = "BANCOOB" THEN
         aux_cdbcoenv = "756".
    ELSE
-   IF   SUBSTRING(tel_cdbcoenv:SCREEN-VALUE,1,6) = "CECRED" THEN
+   IF   SUBSTRING(tel_cdbcoenv:SCREEN-VALUE,1,6) = "AILOS" THEN
         aux_cdbcoenv = STRING(crapcop.cdbcoctl).
    ELSE DO:
       IF tel_flgenvio THEN /* Enviados */ 

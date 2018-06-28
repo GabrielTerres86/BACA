@@ -14,7 +14,9 @@
                              o respectivo nome (David Kruger).
                 
                 04/09/2013 - Nova forma de chamar as agências, de PA agora 
-                            a escrita será PA (André Euzébio - Supero).             
+                            a escrita será PA (André Euzébio - Supero).    
+							
+				01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).         
  
  */
 
@@ -575,7 +577,7 @@ ELSE DO:
 
    IF AVAILABLE crapcop THEN
       DO:
-         ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif"
+         ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif"
                 nomedacooperativa    = TRIM(crapcop.nmrescop).
          
          IF INDEX(crapcop.nmrescop, " ") <> 0  THEN

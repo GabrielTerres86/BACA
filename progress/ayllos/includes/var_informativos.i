@@ -4,9 +4,9 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Setembro/2006                     Ultima atualizacao: 12/07/2011
+   Data    : Setembro/2006                     Ultima atualizacao: 26/05/2018
 
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
 
    Frequencia:
    Objetivo  : Definir variaveis para ser utilizada na geracao dos Formularios
@@ -51,6 +51,10 @@
                12/07/2011 - Incluida a variavel aux_nrseqenv para calculo 
                             de sequencial (crapinf.nrseqenv) no include 
                             gera_dados_inform.i (GATI - Eder).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ............................................................................ */
  
 DEF    STREAM str_1.
@@ -61,7 +65,7 @@ DEF    VAR aux_imcorre2  AS CHAR
 DEF    VAR aux_imcorre1  AS CHAR  
        INIT "laser/imagens/reintegracao_correio_grande.pcx"         NO-UNDO.
 DEF    VAR aux_impostal  AS CHAR
-       INIT "laser/imagens/chancela_ect_cecred.pcx"                 NO-UNDO.
+       INIT "laser/imagens/chancela_ect_ailos.pcx"                  NO-UNDO.
 DEF    VAR aux_imgvazio  AS CHAR 
        INIT "laser/imagens/vazio.pcx"                               NO-UNDO.
 DEF    VAR aux_cdacesso  AS CHAR                                    NO-UNDO.

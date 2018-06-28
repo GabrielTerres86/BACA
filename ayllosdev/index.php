@@ -30,6 +30,7 @@
  * 016: [23/02/2018] - Tiago (Cecred)           : Setar o foco no campo PA de Trabalho e carrega o PA assim que entrar na tela #851204
  * 017: [23/02/2018] - Reinert (Cecred)         : Ajuste de segurança para validar operador informado.
  * 018: [06/03/2018] - Carlos Weinhold (Cecred) : #856961 Alterados os nomes das cooperativas que trocaram de nome e retiradas as cooperativas inativas.
+ * 019: [29/05/2018] - Jonata (Mouts)           : Ajustes referente alteracao da nova marca (P413 ).
  */
 ?> 
 <?php	
@@ -343,7 +344,7 @@ $(document).ready(function () {
 						<table border="0" cellpadding="0" cellspacing="0">
 							<tr>
 								<td width="15" height="49">&nbsp;</td>
-								<td width="215"><img src="<?php echo $UrlImagens; ?>logos/logo_cecred.gif"></td>
+								<td width="215"><img src="<?php echo $UrlImagens; ?>logos/logo_ailos.gif"></td>
 								<td align="right" valign="bottom"><img src="<?php echo $UrlImagens; ?>geral/tit_login.gif" width="210" height="27"></td>
 								<td width="15">&nbsp;</td>
 							</tr>
@@ -383,7 +384,7 @@ $(document).ready(function () {
 															<select name="cdcooper" class="campo" id="cdcooper" style="width:120px;">
 																<option value="1"<?php if ($cdcooper == "1") { echo " selected"; } ?>>Viacredi</option>
 																<option value="2"<?php if ($cdcooper == "2") { echo " selected"; } ?>>Acredicoop</option>
-																<option value="3"<?php if ($cdcooper == "3") { echo " selected"; } ?>>Cecred</option>
+																<option value="3"<?php if ($cdcooper == "3") { echo " selected"; } ?>>Ailos</option>
 																<option value="5"<?php if ($cdcooper == "5") { echo " selected"; } ?>>Acentra</option>
 																<option value="6"<?php if ($cdcooper == "6") { echo " selected"; } ?>>Credifiesc</option>
 																<option value="7"<?php if ($cdcooper == "7") { echo " selected"; } ?>>Credcrea</option>
@@ -393,7 +394,7 @@ $(document).ready(function () {
 																<option value="11"<?php if ($cdcooper == "11") { echo " selected"; } ?>>Credifoz</option>
 																<option value="12"<?php if ($cdcooper == "12") { echo " selected"; } ?>>Crevisc</option>
 																<option value="13"<?php if ($cdcooper == "13") { echo " selected"; } ?>>ScrCred</option>
-																<option value="14"<?php if ($cdcooper == "14") { echo " selected"; } ?>>Rodocredito</option>
+																<option value="14"<?php if ($cdcooper == "14") { echo " selected"; } ?>>Evolua</option>
 																<option value="16"<?php if ($cdcooper == "16") { echo " selected"; } ?>>Viacredi Alto Vale</option>
 															</select>
 														</td>

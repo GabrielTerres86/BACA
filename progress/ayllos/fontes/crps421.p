@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro/Diego
-   Data    : Abril/2006                      Ultima atualizacao: 16/08/2013
+   Data    : Abril/2006                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -55,6 +55,9 @@
                
                07/03/2018 - Ajuste para buscar os tipo de conta integracao 
                             da Package CADA0006 do orcale. (Lombardi).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 { sistema/generico/includes/var_oracle.i } 
@@ -312,8 +315,8 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                      RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br",
                                 INPUT '"ERRO DE SEQUENCIA - "' +
                                       '"COO501 - "' +
                                       crapcop.nmrescop,
@@ -405,8 +408,8 @@ PROCEDURE proc_processa_arquivo:
             RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br",
                                 INPUT '"ERROS DIVERSOS - "' +
                                       '"COO501 - "' + crapcop.nmrescop,
                                 INPUT SUBSTRING(aux_nmarquiv,8),
@@ -474,8 +477,8 @@ PROCEDURE proc_processa_arquivo:
             RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br",
                                 INPUT '"RECUSA TOTAL - "' +
                                       '"COO501 - "' + 
                                       crapcop.nmrescop,

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Junho/2011                        Ultima atualizacao: 05/12/2013
+   Data    : Junho/2011                        Ultima atualizacao: 26/05/2018
                                                                           
    Dados referentes ao programa:
 
@@ -16,6 +16,8 @@
                05/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( André Euzébio / SUPERO)  
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ............................................................................. */
 
 EMPTY TEMP-TABLE w_retorno.
@@ -72,7 +74,7 @@ IF   aux_lsretarq <> ""   THEN
                  RUN enviar_email IN h-b1wgen0011
                                     (INPUT glb_cdcooper,
                                      INPUT glb_cdprogra,
-                                     INPUT "dp@cecred.coop.br," +
+                                     INPUT "dp@ailos.coop.br," +
                                            "driele@hsprocessamento.com.br",
                                      INPUT "RETORNO COMPROVANTE PAGAMENTO",
                                      INPUT aux_lsretarq,

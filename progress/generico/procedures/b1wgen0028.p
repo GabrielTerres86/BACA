@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 27/11/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -533,9 +533,11 @@
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo.
                            - Chamar rotina pc_valida_adesao_produto e pc_valida_valor_de_adesao na 
                              proc valida_nova_proposta. PRJ366 (Lombardi).
-                
+
                04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
                             PRJ366 (Lombardi).
+                
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
 ..............................................................................*/
 
@@ -734,10 +736,10 @@ FUNCTION retorna-situacao RETURNS CHAR
                                   "Cancel"
                                ELSE
                                   "Encer."
-                                                  ELSE
+						  ELSE
                           IF   par_insitcrd = 8  THEN 
                                "Em Analise"
-                                                  ELSE
+						  ELSE
                           IF   par_insitcrd = 9  THEN 
                                "Enviado Bancoob"
                           ELSE "??????".  
@@ -1937,7 +1939,7 @@ PROCEDURE valida_nova_proposta:
            RETURN "NOK".
         
         END.
-
+        
 
   IF crapass.inpessoa = 2  AND par_flgdebit  AND   crapass.idastcjt = 1 THEN
     DO:
@@ -2260,7 +2262,7 @@ PROCEDURE valida_nova_proposta:
     IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN  /* 2-CARTOES */
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "Administradora de cartoes CECRED VISA " +
+                   aux_dscritic = "Administradora de cartoes AILOS VISA " +
                                    "bloqueada.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -2636,7 +2638,7 @@ PROCEDURE valida_nova_proposta:
                      crawcrd.nrcpftit = par_nrcpfcgc AND
                      crawcrd.cdadmcrd <= 80          AND
                      crawcrd.cdadmcrd >= 10 NO-LOCK:
-
+                   
                 IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ AND 
                      crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
                      NEXT.
@@ -3123,7 +3125,7 @@ PROCEDURE valida_nova_proposta:
     ELSE
     IF CAN-DO("15,17",STRING(crapadc.cdadmcrd)) THEN
         ASSIGN aux_cdprodut = 24. /* Cartao Cred Empresarial */
-    
+
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
     RUN STORED-PROCEDURE pc_valida_adesao_produto
@@ -3156,7 +3158,7 @@ PROCEDURE valida_nova_proposta:
                
             RETURN "NOK".
          END.
-    
+
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
     RUN STORED-PROCEDURE pc_valida_valor_de_adesao
@@ -3184,7 +3186,7 @@ PROCEDURE valida_nova_proposta:
                           WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
            aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
                           WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
-    
+
     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
          DO:
             
@@ -3394,7 +3396,7 @@ PROCEDURE cadastra_novo_cartao:
 
     TRANS_1:
     DO TRANSACTION ON ERROR UNDO TRANS_1, LEAVE TRANS_1:
-
+    
     
        /* Procedimento temporario - valicao Piloto */
        RUN verifica-pa-piloto-ws-bancob (INPUT par_cdcooper,
@@ -3527,7 +3529,7 @@ PROCEDURE cadastra_novo_cartao:
                                              INPUT 1,            /** Sequencia **/
                                              INPUT aux_cdcritic,
                                              INPUT-OUTPUT aux_dscritic).                
-                                         
+                             
                               UNDO TRANS_1, LEAVE TRANS_1.
                             END.
                       
@@ -3540,7 +3542,7 @@ PROCEDURE cadastra_novo_cartao:
                                                  crawcrd.flgprcrd = 1
                                                  NO-LOCK : 
             ASSIGN aux_flgprcrd = 0.
-        END.
+        END.       
 
 
         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
@@ -8103,7 +8105,7 @@ PROCEDURE carrega_dados_limcred_cartao:
     IF  crawcrd.cdadmcrd = 3 AND crapope.cddepart <> 2 THEN   /* 2-CARTOES */ 
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Administradora de cartoes CECRED VISA bloqueada".
+                   aux_dscritic = "Administradora de cartoes AILOS VISA bloqueada".
         
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -9398,7 +9400,7 @@ PROCEDURE carrega_dados_dtvencimento_cartao:
     IF   crawcrd.cdadmcrd = 3  THEN /* CECRED VISA */ 
          DO:
              ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Administradora de cartoes CECRED VISA " +
+                    aux_dscritic = "Administradora de cartoes AILOS VISA " +
                                    "bloqueada.".
                                    
              RUN gera_erro (INPUT par_cdcooper,
@@ -10036,7 +10038,7 @@ PROCEDURE carrega_dados_solicitacao2via_cartao:
          crapope.cddepart <> 2 THEN /* CECRED VISA */ 
          DO:
              ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Administradora de cartoes CECRED VISA " +
+                    aux_dscritic = "Administradora de cartoes AILOS VISA " +
                                    "bloqueada.".
 
              RUN gera_erro (INPUT par_cdcooper,
@@ -15534,7 +15536,7 @@ PROCEDURE carrega_dados_proposta:
          aux_dsadicio = crapadc.nmresadm.
 
     IF   crapadc.cdadmcrd = 3   THEN
-         ASSIGN aux_dsdestin = "CECRED" 
+         ASSIGN aux_dsdestin = "AILOS" 
                 aux_dscontat = "ADMINISTRATIVO/FINANCEIRO".
     ELSE
          ASSIGN aux_dsdestin = crapadc.nmresadm
@@ -17161,14 +17163,14 @@ PROCEDURE contrato_cecred_bdn_visa:
     
     IF   crapass.inpessoa = 1   THEN
          IF   crawcrd.cdadmcrd = 3   THEN
-              ASSIGN aux_nmcartao = "CECRED/VISA"
+              ASSIGN aux_nmcartao = "AILOS/VISA"
                      aux_dsvincul = "COOPERATIVA FILIADA.".
          ELSE
               ASSIGN aux_nmcartao = "BRADESCO/VISA"
                      aux_dsvincul = "PORTADOR.".
     
     ELSE
-         ASSIGN aux_nmcartao = "CECRED/VISA"
+         ASSIGN aux_nmcartao = "AILOS/VISA"
                 aux_dsvincul = "COOPERATIVA FILIADA.". /* PJ */
 
     IF   crapass.inpessoa = 1   THEN
@@ -17829,7 +17831,7 @@ PROCEDURE contrato_cecred_bdn_visa:
       END.
          
     ELSE
-          DO:
+      DO:
          RUN valor-extenso IN h-b1wgen9999 (INPUT craphcj.vllimglb,
                                             INPUT 45,
                                             INPUT 73,
@@ -21454,9 +21456,9 @@ PROCEDURE gera_impressao_entrega_cartao_bancoob:
     ASSIGN aux_returnvl = "NOK".
 
     FORM SKIP
-         "PROTOCOLO DE ENTREGA DO CARTAO CECRED" AT 23
+         "PROTOCOLO DE ENTREGA DO CARTAO AILOS" AT 23
          SKIP(2)
-         "1 - Protocolo de Entrega do cartao CECRED"
+         "1 - Protocolo de Entrega do cartao AILOS"
          SKIP(1)
          "Declaro que recebi nesta data o cartao listado abaixo, "
          "identificado pelos digitos:"
@@ -23897,27 +23899,27 @@ PROCEDURE altera_administradora:
           ELSE
              DO: /* Amasonas - Supero - */
                 IF  f_verifica_adm(crawcrd.cdadmcrd) <> 2 THEN
-             DO:
+                  DO:
                   
-                 FIND craptlc WHERE craptlc.cdcooper = crawcrd.cdcooper AND
-                                    craptlc.cdadmcrd = par_codnadmi     AND
-                                    craptlc.insittab = 0                AND
-                                    craptlc.dddebito = 0                AND
-                                    craptlc.vllimcrd = crawcrd.vllimcrd
-                                    NO-LOCK NO-ERROR.
-                                    
-                 IF NOT AVAILABLE craptlc THEN
-                    DO:
-                        ASSIGN aux_dscritic = "Linha de limite de credito nao habilitada, verificar tela Limcrd".
-                        RUN gera_erro (INPUT par_cdcooper,
-                                       INPUT par_cdagenci,
-                                       INPUT par_nrdcaixa,
-                                       INPUT 1,
-                                       INPUT aux_cdcritic,
-                                       INPUT-OUTPUT aux_dscritic).
-                        RETURN "NOK".                  
-                    
-                    END. /* END IF NOT AVAILABLE craptlc THEN */
+                      FIND craptlc WHERE craptlc.cdcooper = crawcrd.cdcooper AND
+                                          craptlc.cdadmcrd = par_codnadmi     AND
+                                          craptlc.insittab = 0                AND
+                                          craptlc.dddebito = 0                AND
+                                          craptlc.vllimcrd = crawcrd.vllimcrd
+                                          NO-LOCK NO-ERROR.
+                                          
+                       IF NOT AVAILABLE craptlc THEN
+                          DO:
+                              ASSIGN aux_dscritic = "Linha de limite de credito nao habilitada, verificar tela Limcrd".
+                              RUN gera_erro (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT 1,
+                                             INPUT aux_cdcritic,
+                                             INPUT-OUTPUT aux_dscritic).
+                              RETURN "NOK".                  
+                          
+                          END. /* END IF NOT AVAILABLE craptlc THEN */
                   
                   END.
                  ELSE
@@ -25054,8 +25056,8 @@ PROCEDURE grava_dados_senha_letras_taa:
                            
    RETURN "OK".
 END.
-   
 
+   
 PROCEDURE verifica-pa-piloto-ws-bancob:
    DEF  INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                NO-UNDO.
    DEF  INPUT PARAM par_cdagenci LIKE crapage.cdagenci                NO-UNDO.
@@ -25095,5 +25097,5 @@ PROCEDURE verifica-pa-piloto-ws-bancob:
         ELSE
            ASSIGN par_flpiloto = TRUE.
       END.
-   
+
 END.

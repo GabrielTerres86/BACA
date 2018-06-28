@@ -7,7 +7,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Janeiro/1999.                      Ultima atualizacao: 28/04/2016
+   Data    : Janeiro/1999.                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -143,6 +143,9 @@
 			   28/04/2016 - Adicionada chamada para a procedure 
 							pc_verifica_tarifa_operacao para verificar a isencao
 							ou nao da cobranca de tarifa. PRJ 218/2. (Reinert)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 DEF STREAM str_1.  /*  Para relatorio dos cartoes magneticos  */
@@ -890,8 +893,8 @@ IF   aux_nrseqcar > 0   THEN
                                  (INPUT glb_cdcooper,
                                   INPUT glb_cdprogra,
                                   INPUT "arquivos@fbcards.com.br," +
-                                        "fernanda@cecred.coop.br," +
-                                        "fernanda.eccher@cecred.coop.br,",
+                                        "fernanda@ailos.coop.br," +
+                                        "fernanda.eccher@ailos.coop.br,",
                                   INPUT "CARTOES MAGNETICOS DA " + 
                                          crapcop.nmrescop +
                                         " - Cartao Operador" ,
@@ -902,8 +905,8 @@ IF   aux_nrseqcar > 0   THEN
                                  (INPUT glb_cdcooper,
                                   INPUT glb_cdprogra,
                                   INPUT "arquivos@fbcards.com.br," +
-                                        "fernanda@cecred.coop.br," +
-                                        "fernanda.eccher@cecred.coop.br,",                                         
+                                        "fernanda@ailos.coop.br," +
+                                        "fernanda.eccher@ailos.coop.br,",                                         
                                   INPUT "CARTOES MAGNETICOS DA " + 
                                          crapcop.nmrescop,
                                   INPUT aux_nmarqsai,

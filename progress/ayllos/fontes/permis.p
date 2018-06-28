@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Sidnei 
-   Data    : Outubro/2008.                       Ultima atualizacao: 06/12/2016
+   Data    : Outubro/2008.                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -58,6 +58,9 @@
 							
 			    22/12/2016 - Ajustar bloqueio dos departamentos para VIACREDI e CECRED, conforme
 			                 solicitação feita no chamado 549118 (Renato Darosci - Supero)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 DEF NEW SHARED VAR shr_nmdatela AS CHAR                                NO-UNDO.
@@ -2384,7 +2387,7 @@ PROCEDURE proc_traz_operadores:
                           crapope.nvoperad = par_nvoperad   NO-LOCK:
                           
             /* Ignora operadores CECRED */
-       IF   crapope.nmoperad MATCHES "*CECRED*"    OR
+       IF   crapope.nmoperad MATCHES "*AILOS*"     OR
             crapope.cddepart = 20 /* TI */         THEN
 
             NEXT.

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001.                      Ultima atualizacao: 29/05/2014
+   Data    : Maio/2001.                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -67,6 +67,8 @@
                             
                29/05/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
 ............................................................................. */
 
@@ -502,7 +504,7 @@ DO aux_contador = 1 TO 1:
                      aux_nmbancmp = "BANCOOB".
                 ELSE
                 IF   crawchd.cdbanchq = crapcop.cdbcoctl THEN
-                     aux_nmbancmp = "CECRED".
+                     aux_nmbancmp = "AILOS".
 
                 DISPLAY STREAM str_1 par_dtmvtolt aux_nmbancmp 
                                      WITH FRAME f_cab.

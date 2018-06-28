@@ -2,7 +2,7 @@
 
     Programa: b1wgen0035.p
     Autor   : Magui/David
-    Data    : Setembro/2008                   Ultima Atualizacao: 03/03/2016
+    Data    : Setembro/2008                   Ultima Atualizacao: 26/05/2018
            
     Dados referentes ao programa:
                 
@@ -38,6 +38,9 @@
                 03/03/2016 - Alterar o e-mail de "jccosta@cecred.coop.br" para 
 				             "fernando.schmitt@cecred.coop.br" na procedure
 							 gera_arquivo_dlo (Douglas - Chamado 410956)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 .............................................................................~ .*/
 
 { sistema/generico/includes/b1wgen0035.i }
@@ -79,7 +82,7 @@ PROCEDURE gera_arquivo_dlo:
     EMPTY TEMP-TABLE tt-erro.
           
     /** E-Mail do contador **/
-    ASSIGN aux_dsemlctr  = "fernando.schmitt@cecred.coop.br"
+    ASSIGN aux_dsemlctr  = "fernando.schmitt@ailos.coop.br"
            par_nmctrcop  = "FERNANDO ANDRE SCHMITT".
 
     /***

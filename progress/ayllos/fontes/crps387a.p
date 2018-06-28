@@ -3,7 +3,7 @@
    Programa: fontes/crps387a.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Data    : Abril/2004                     Ultima atualizacao: 17/06/2013
+   Data    : Abril/2004                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -25,6 +25,8 @@
                             (Julio).
                             
                17/06/2013 - Envio de email quando ocorrer critica 476(Jean Michel).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 
@@ -201,8 +203,8 @@ FOR EACH crawarq BY crawarq.nrsequen
              RUN enviar_email_completo IN h-b1wgen0011
                 (INPUT glb_cdcooper,
                  INPUT "crps387a",                
-                 INPUT "cpd@cecred.coop.br",
-                 INPUT "convenios@cecred.coop.br",
+                 INPUT "cpd@ailos.coop.br",
+                 INPUT "convenios@ailos.coop.br",
                  INPUT "Arquivo Fora de Sequencia - " + gnconve.nmempres,
                  INPUT "",
                  INPUT "",

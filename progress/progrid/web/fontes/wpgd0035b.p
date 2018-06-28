@@ -29,6 +29,9 @@
 
               13/04/2017 - Alterado para nao exibir assinatura de algumas coops. pois a assinatura
                            estara na propria imagem de fundo SD624455 (Odirlei-Amcom)
+
+			  01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -256,7 +259,7 @@ FUNCTION montaTela RETURNS LOGICAL ().
             /* DIV NOME PRESIDENTE */
             {&out} '<div id="assinatura_texto" name="assinatura_texto" style="border: 0px solid green; position: absolute; margin-left: 150px; margin-top:200px; float:left; z-index:5;">' SKIP.
             {&out} '<a align="center" class="a4">_____________________________________________________________</a></br>' SKIP.
-            {&out} '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema CECRED</a>' SKIP.
+            {&out} '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema AILOS</a>' SKIP.
             {&out} '</div>' SKIP.
             /* FIM DIV NOME PRESIDENTE */
             {&out} '</div>' SKIP.

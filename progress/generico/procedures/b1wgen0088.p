@@ -50,7 +50,7 @@
 
    Programa: sistema/internet/procedures/b1wgen0088.p
    Autor   : Guilherme/Supero
-   Data    : 15/03/2011                        Ultima atualizacao: 16/02/2018
+   Data    : 15/03/2011                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -244,7 +244,10 @@
 			                (Douglas - Chamado 564039)
 							
 			   16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
-							(Gustavo Sene - GFT)							
+							(Gustavo Sene - GFT)		
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			   					
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0087tt.i }
@@ -4548,8 +4551,8 @@ PROCEDURE inst-titulo-migrado:
         RUN enviar_email_completo IN h-b1wgen0011
                     (INPUT bcrapcob.cdcooper,
                      INPUT "b1wgen0088",
-                     INPUT "CECRED<cecred@cecred.coop.br>",
-                     INPUT "cobranca@cecred.coop.br",
+                     INPUT "AILOS<ailos@ailos.coop.br>",
+                     INPUT "cobranca@ailos.coop.br",
                      INPUT "Solicitacao de instrucao de " + par_dsdinstr,
                      INPUT "",
                      INPUT "",

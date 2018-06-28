@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme/Supero
-    Data    : Dezembro/2010                     Ultima atualizacao: 25/08/2015 
+    Data    : Dezembro/2010                     Ultima atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -41,7 +41,10 @@
                             
                 25/08/2015 - Inclusao do parametro pr_cdpesqbb na procedure
                             tari0001.pc_cria_lan_auto_tarifa, projeto de 
-                            Tarifas-218(Jean Michel)                         
+                            Tarifas-218(Jean Michel)                   
+							
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+				      
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cddevolu AS INT        /* Sempre 4 */             NO-UNDO.
@@ -710,7 +713,7 @@ PROCEDURE gera_impressao:
                      ASSIGN rel_qtchqdev = 0
                             rel_vlchqdev = 0.
 
-                 aux_nmdbanco = "CECRED".
+                 aux_nmdbanco = "AILOS".
                                    
                  DISPLAY STREAM str_1 aux_nmcidade glb_dtmvtolt
                                       aux_nmdbanco glb_dtmvtoan  
@@ -849,7 +852,7 @@ PROCEDURE gera_impressao:
                                            "fabiano@viacredi.coop.br," +
                                            "moraes@viacredi.coop.br",
                                      INPUT "Relatorio de Devolucoes Cheques " + 
-                                           "CECRED das Contas do PA 58",
+                                           "AILOS das Contas do PA 58",
                                      INPUT aux_nmarquiv,
                                      INPUT FALSE).
     

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima alteracao: 18/05/2017
+   Data    : Agosto/2000.                    Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -118,6 +118,8 @@
                             3, conforme solicitado no chamado 627236. (Kelvin)
                             
                18/05/2017 - Retirar glb_cddopcao do form f_lanrqe (Lucas Ranghetti #646559)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                
                21/03/2018 - Substituida verificacao "cdtipcta = 4,5,6,7,..." pela modalidade igual a "2,3".
                           - Substituida verificacao "cdtipcta < 12" pelo indicador de conta integraçao = 0.
@@ -452,13 +454,13 @@ DO WHILE TRUE:
                 IF  aux_flopabbc   THEN
                     DO:
                         IF  crapcop.cdbcoctl = 0  THEN
-                            glb_dscritic = "Nao ha cadastro de IF CECRED " +
+                            glb_dscritic = "Nao ha cadastro de IF AILOS " +
                                            "na tela CADCOP.".
                         ELSE
                             IF  crapass.cdbcochq <> crapcop.cdbcoctl  THEN
                                 glb_dscritic = 
                                     "Banco para emissao de cheques " +
-                                    "da conta deve ser IF CECRED " + 
+                                    "da conta deve ser IF AILOS " + 
                                     STRING(crapcop.cdbcoctl,"999") + ".".
                      END.
              END.

@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 29/10/2015 - Inclusão da função validaMesAno e Alteração da validaData - Vanessa
  *				        30/11/2015 - Criacao da function montaSelect() para montagem dos selects de eixo,tema,evento - Carlos Rafael
  *				        15/12/2015 - Adicionei a forma correta de selecao(option:selected) para os campos cdcooperPesquisa,cdagenciPesquisa - Carlos Rafael
+ *                      01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
  * --------------
  */ 	 
 
@@ -1422,7 +1423,7 @@ function montaHtmlImpressao( titulo ) {
 	var htmlImpressao = '';
 	htmlImpressao  = '<html>';
 	htmlImpressao += '	<head>';
-	htmlImpressao += '		<title>Impress?o CECRED - '+titulo+'</title>';
+	htmlImpressao += '		<title>Impress?o AILOS - '+titulo+'</title>';
 	htmlImpressao += '		<style type="text/css">';
 	htmlImpressao += '      	body{background-color:#DEE3D6;text-align:center;font-size:12px;color:#333;padding:50px;}';
 	htmlImpressao += '		</style>';

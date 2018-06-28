@@ -33,7 +33,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 06/10/2016
+   Data    : Marco/2001                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -310,6 +310,8 @@
 
                06/10/2016 - Incluido tratamento na procedure identifica-titulo-coop,
 							para origem de "ACORDO", Prj. 302 (Jean Michel).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................ */
 
@@ -777,8 +779,8 @@ PROCEDURE retorna-valores-titulo-iptu.
                   RUN enviar_email_completo IN h-b1wgen0011
                        (INPUT crapcop.cdcooper,
                         INPUT "INTERNETBANK",
-                        INPUT "cpd@cecred.coop.br",
-                        INPUT "prevencaodefraudes@cecred.coop.br",
+                        INPUT "cpd@ailos.coop.br",
+                        INPUT "prevencaodefraudes@ailos.coop.br",
                         INPUT "Tentativa de pagamento cod. barras fraudulento" ,
                         INPUT "",
                         INPUT "",
@@ -2903,7 +2905,7 @@ PROCEDURE identifica-titulo-coop:
                                             ASSIGN i-cod-erro  = 0     
                                                    c-desc-erro = 
                                                       "882 - Convenio " + 
-                                                      "CECRED nao encontrado. (" +
+                                                      "AILOS nao encontrado. (" +
                                                       STRING(aux-nrconvceb, "9999") +
                                                       ")".
               
@@ -4128,8 +4130,8 @@ PROCEDURE envia_vrboleto_spb:
             RUN enviar_email_completo IN h-b1wgen0011
               (INPUT par_cdcooper,
                INPUT "INTERNETBANK",
-               INPUT "cpd@cecred.coop.br",
-               INPUT "spb@cecred.coop.br,compe@cecred.coop.br",
+               INPUT "cpd@ailos.coop.br",
+               INPUT "spb@ailos.coop.br,compe@ailos.coop.br",
                INPUT "PAGTO " +
                      crapcop.nmrescop + " " +
                      TRIM(STRING(par_nrinssac)) + " R$ " +

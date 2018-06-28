@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Setembro/2002.                     Ultima atualizacao: 24/05/2004.
+   Data    : Setembro/2002.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -22,6 +22,9 @@
                             banco win13 (Junior).
                             
                24/05/2004 - Mudar crapsin para crapint (Junior).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
  .............................................................................*/
 
 DEF         VAR aux_dsparam   AS CHAR        NO-UNDO.
@@ -34,10 +37,10 @@ DEF         VAR aux_nmpathdb  AS CHAR        NO-UNDO.
 
 FORM '<?xml version="1.0"?>' SKIP
      '<?xml-stylesheet type="text/xsl" href="viacredi.xsl"?>' SKIP
-     '<CECRED>'
+     '<AILOS>'
      WITH DOWN NO-BOX NO-LABELS WIDTH 80 FRAME f_inicio.
 
-FORM "</CECRED>" 
+FORM "</AILOS>" 
      WITH DOWN NO-BOX NO-LABELS WIDTH 80 FRAME f_final.
 
 aux_dsparam = SESSION:PARAMETER.

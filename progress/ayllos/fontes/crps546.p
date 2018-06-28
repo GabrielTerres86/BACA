@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Fernando
-    Data    : Dezembro/2009                     Ultima alteracao: 20/06/2017
+    Data    : Dezembro/2009                     Ultima alteracao: 26/05/2018
 
     Dados referentes ao programa:
 
@@ -67,7 +67,10 @@
                             
                20/06/2017 - Geraçao de tabela com lançamentos contábeis centralizados de 
                             cada cooperativa filiada na central para posterior geraçao de 
-                            arquivo para o Matera. (Jonatas-Supero)                                  
+                            arquivo para o Matera. (Jonatas-Supero)        
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			                             
 ..............................................................................*/
 
 { includes/var_batch.i }
@@ -505,7 +508,7 @@ PROCEDURE pi_gera_tab_lct_central:
                                   tt-detlctctl.nrctacrd = 1455
                                   tt-detlctctl.dsrefere = "DEBITO C/C " + 
                                                           STRING(par_nrctacmp,"zzzz,zzz,9") + 
-                                                          " COMPE CECRED REF. TIB – SPB"
+                                                          " COMPE AILOS  REF. TIB – SPB"
                                   tt-detlctctl.intiplct = 0.
                                          
                       END.
@@ -542,7 +545,7 @@ PROCEDURE pi_gera_tab_lct_central:
                                   tt-detlctctl.nrctacrd = 1455
                                   tt-detlctctl.dsrefere = "DEBITO C/C " + 
                                                           STRING(par_nrctacmp,"zzzz,zzz,9") + 
-                                                          " COMPE CECRED REF. TIB – SPB"
+                                                          " COMPE AILOS  REF. TIB – SPB"
                                   tt-detlctctl.intiplct = 1.
                                          
                       END.
@@ -573,7 +576,7 @@ PROCEDURE pi_gera_tab_lct_central:
                                       tt-detlctctl.nrctacrd = 7264
                                       tt-detlctctl.dsrefere = "CREDITO C/C " + 
                                                                STRING(par_nrctacmp,"zzzz,zzz,9") + 
-                                                               " COMPE CECRED REF. TIB – SPB"
+                                                               " COMPE AILOS  REF. TIB – SPB"
                                       tt-detlctctl.intiplct = 0.
                                          
                            END.
@@ -610,7 +613,7 @@ PROCEDURE pi_gera_tab_lct_central:
                                       tt-detlctctl.nrctacrd = 7264
                                       tt-detlctctl.dsrefere = "CREDITO C/C " + 
                                                                STRING(par_nrctacmp,"zzzz,zzz,9") + 
-                                                               " COMPE CECRED REF. TIB – SPB"
+                                                               " COMPE AILOS  REF. TIB – SPB"
                                       tt-detlctctl.intiplct = 1.
                                          
                            END.

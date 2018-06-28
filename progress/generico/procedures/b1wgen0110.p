@@ -3,7 +3,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0110.p
    Autor  : Adriano
-   Data   : Agosto/2011                      Ultima alteracao: 05/08/2014
+   Data   : Agosto/2011                      Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -29,6 +29,10 @@
                             (Reinert)
                             
                05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0110tt.i }
@@ -287,7 +291,7 @@ PROCEDURE envia_email_alerta:
                                                INPUT aux_lsemails,
                                                INPUT (crapcop.nmrescop + " - " +
                                                       "CADASTRO RESTRITIVO!"),
-                                               INPUT "controles.internos@cecred.coop.br",
+                                               INPUT "controles.internos@ailos.coop.br",
                                                INPUT "",
                                                INPUT aux_conteudo,
                                                INPUT FALSE).

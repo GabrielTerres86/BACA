@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2005.                     Ultima atualizacao: 04/08/2014
+   Data    : Abril/2005.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -63,7 +63,10 @@
                15/04/2013 - Retirado e-mail de cobranca na rotina enviar_email
                            (Daniele).    
                            
-               04/08/2014 - Alteração da Nomeclatura para PA (Vanessa).                      
+               04/08/2014 - Alteração da Nomeclatura para PA (Vanessa).   
+			   
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			                      
 ............................................................................. */
 DEF STREAM str_1.     /*  Para relatorio  */
 DEF STREAM str_2.     /*  Para arquivo de leitura  */
@@ -325,8 +328,8 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                          RUN enviar_email IN b1wgen0011
                                   (INPUT glb_cdcooper,
                                    INPUT glb_cdprogra,
-                                   INPUT "convenios@cecred.coop.br," +  
-                                         "cartoes@cecred.coop.br",
+                                   INPUT "convenios@ailos.coop.br," +  
+                                         "cartoes@ailos.coop.br",
                                    INPUT '"ERRO DE SEQUENCIA - "' +
                                          '"COO507 - "' +
                                          crapcop.nmrescop,
@@ -687,8 +690,8 @@ PROCEDURE p_recusa:
     RUN enviar_email IN b1wgen0011
                        (INPUT glb_cdcooper,
                         INPUT glb_cdprogra,
-                        INPUT "convenios@cecred.coop.br," +
-                              "cartoes@cecred.coop.br",
+                        INPUT "convenios@ailos.coop.br," +
+                              "cartoes@ailos.coop.br",
                         INPUT par_tprecusa + '" - COO507 - "' +
                               crapcop.nmrescop,
                         INPUT SUBSTRING(aux_nmarqimp, 5),

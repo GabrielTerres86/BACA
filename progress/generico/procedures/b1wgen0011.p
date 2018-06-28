@@ -34,7 +34,7 @@
 
     Programa: b1wgen0011.p
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 21/09/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -143,6 +143,8 @@
 	    
                   21/09/2017 - #756235 Criada a funcao f_validar_email para nao ter 
                                problemas na geracao dos arquivos de spool (Carlos)
+
+				  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -430,7 +432,7 @@ PROCEDURE enviar_email.
                                               ,INPUT  "N"                 /* par_flg_remove_anex  */
                                               ,INPUT  "N"                 /* par_flg_remete_coop  */
                                               ,INPUT  "Sistema de Relacionamento"/* par_des_nome_reply   */
-                                              ,INPUT  "progrid@cecred.coop.br" /* par_des_email_reply  */
+                                              ,INPUT  "progrid@ailos.coop.br" /* par_des_email_reply  */
                                               ,INPUT  "N"                 /* par_flg_log_batch    */
                                               ,INPUT  "S"                 /* par_flg_enviar       */
                                               ,OUTPUT aux_dscritic        /* par_des_erro         */
@@ -446,7 +448,7 @@ PROCEDURE enviar_email.
                       /* Enviar com remetente Rosangela - Prod. Negocios*/
                       DO:
                         ASSIGN aux_nomreply = "Rosangela Wirth"
-                               aux_emailrep = "rosangela@cecred.coop.br".
+                               aux_emailrep = "rosangela@ailos.coop.br".
                       END.
                       
                  run solicita_email_oracle(    INPUT  p-cod_cooper        /* par_cdcooper         */
@@ -717,7 +719,7 @@ PROCEDURE enviar_email_completo:
                                           LENGTH(aux_nmremete) - 2).
           END.
        
-/*       IF aux_dsdemail = "testedesen@cecred.coop.br" THEN
+/*       IF aux_dsdemail = "testedesen@ailos.coop.br" THEN
        
        DO:
            ASSIGN aux_dscomand = "gnusend-desen.pl --para='" + aux_dsdemail +
@@ -757,8 +759,8 @@ PROCEDURE enviar_email_completo:
 
        IF  par_cdprogra <> "ATENDA"                               AND 
            par_cdprogra <> "B1WNET0002"                           AND
-           aux_dsdemail <> "monitoracaodefraudes@cecred.coop.br"  AND 
-           aux_dsdemail <> "prevencaodefraudes@cecred.coop.br"    THEN
+           aux_dsdemail <> "monitoracaodefraudes@ailos.coop.br"  AND 
+           aux_dsdemail <> "prevencaodefraudes@ailos.coop.br"    THEN
            DO:    
                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - "  +
                                  par_cdprogra + "' --> '"                   + 

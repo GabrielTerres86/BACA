@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/92.                         Ultima atualizacao: 30/12/2016
+   Data    : Outubro/92.                         Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -46,6 +46,8 @@
 
 			   30/12/2016 - Ajuste para logar a operacao de bloqueio
 							(Adriano - SD 559724).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 
@@ -140,7 +142,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                            STRING(tel_qtfolhas,"z,zzz,zzz").
        ELSE
        IF   crapped.cdbanchq = crapcop.cdbcoctl   THEN  /* IF CECRED */
-            tel_dspedido = "IF CECRED     " +
+            tel_dspedido = "IF AILOS      " +
                            STRING(tel_qtfolhas,"z,zzz,zzz").
 
        IF   CAN-DO(aux_lspedrou,STRING(tel_nrpedido))   THEN

@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Maio/2013                       Ultima Atualizacao : 17/08/2017
+    Data    : Maio/2013                       Ultima Atualizacao : 26/05/2018
     
     Dados referente ao programa:
     
@@ -34,6 +34,9 @@
                               usar o nmrescop, para casos que nem da Viacredi AV nao
                               iriamos enviar o arquivo em anexo pelo fato de quebrar o 
                               script pelo espaco entre viacredi e av (Lucas Ranghetti #735360)
+
+				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO COMPACTADO  */
@@ -323,8 +326,8 @@ FOR EACH crapcop NO-LOCK.
             RUN enviar_email_completo IN h-b1wgen0011
                                   (INPUT glb_cdcooper,
                                    INPUT glb_cdprogra,
-                                   INPUT "cpd@cecred.coop.br",
-                                   INPUT "convenios@cecred.coop.br",
+                                   INPUT "cpd@ailos.coop.br",
+                                   INPUT "convenios@ailos.coop.br",
                                    INPUT "RELATORIO DE CRITICAS DE DARFS - DI",
                                    INPUT "",
                                    INPUT aux_dsanexos,
@@ -424,8 +427,8 @@ FOR EACH crapcop NO-LOCK.
             RUN enviar_email_completo IN h-b1wgen0011
                                   (INPUT glb_cdcooper,
                                    INPUT glb_cdprogra,
-                                   INPUT "cpd@cecred.coop.br",
-                                   INPUT "convenios@cecred.coop.br",
+                                   INPUT "cpd@ailos.coop.br",
+                                   INPUT "convenios@ailos.coop.br",
                                    INPUT "INCONSISTENCIAS DOS ARQUIVOS DE DEBITOS EFETUADOS - OS",
                                    INPUT "",
                                    INPUT aux_dsanexos,
@@ -491,7 +494,7 @@ FOR EACH crapcop NO-LOCK.
             RUN solicita_email_oracle IN h-b1wgen0011
                                    ( INPUT glb_cdcooper /* par_cdcooper */
                                     ,INPUT glb_cdprogra /* par_cdprogra */
-                                    ,INPUT "convenios@cecred.coop.br" 
+                                    ,INPUT "convenios@ailos.coop.br" 
                                     ,INPUT "RELATORIO DE CRITICAS DEBITOS EFETUADOS - DE" /* par_des_assunto */
                                     ,INPUT aux_conteudo /* par_des_corpo */
                                     ,INPUT aux_nmarqema /* par_des_anexo */
@@ -604,8 +607,8 @@ IF  aux_dsanexos <> "" THEN
         RUN enviar_email_completo IN h-b1wgen0011
                               (INPUT glb_cdcooper,
                                INPUT glb_cdprogra,
-                               INPUT "cpd@cecred.coop.br",
-                               INPUT "convenios@cecred.coop.br",
+                               INPUT "cpd@ailos.coop.br",
+                               INPUT "convenios@ailos.coop.br",
                                INPUT "INCONSISTENCIAS DE DEBITOS EFETUADOS - BO",
                                INPUT "",
                                INPUT aux_dsanexos,
@@ -762,8 +765,8 @@ IF  aux_dsanexos <> "" THEN
         RUN enviar_email_completo IN h-b1wgen0011
                               (INPUT glb_cdcooper,
                                INPUT glb_cdprogra,
-                               INPUT "cpd@cecred.coop.br",
-                               INPUT "convenios@cecred.coop.br",
+                               INPUT "cpd@ailos.coop.br",
+                               INPUT "convenios@ailos.coop.br",
                                INPUT "RELATORIO DE CRITICAS DE ARQUIVOS DE DARFS - OQ",
                                INPUT "",
                                INPUT aux_dsanexos,

@@ -7,6 +7,8 @@ Alteracoes: 15/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
             12/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
 
+		    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -377,7 +379,7 @@ PROCEDURE process-web-request :
 					"</center></b></font>" SKIP
 					"Conforme circular CIR042/2009, a partir de 26 de junho de 2009 "
 					"o acesso ao Caixa On-Line deve ser realizado, exclusivamente, "
-					"através do link localizado na intranet Cecred (Caixa Online).<br><br>" SKIP
+					"através do link localizado na intranet Ailos (Caixa Online).<br><br>" SKIP
 					"Para isto, deve-se excluir os cookies, fechar todas as janelas do Internet " SKIP
 					"Explorer e realizar o acesso normalmente.<br><br>" SKIP
 					"No primeiro acesso ao sistema será necessário informar o número do PA, "
@@ -387,7 +389,7 @@ PROCEDURE process-web-request :
 					"Para excluir os cookies, clique em "					
 					"<input type='submit' name='excluir' value='Excluir Cookies'><br><br>" SKIP
 					"Atenciosamente,<BR>" SKIP
-					"Suporte Operacional Cecred." SKIP
+					"Suporte Operacional Ailos." SKIP
 					"</form>" SKIP.
              LEAVE.
          END.

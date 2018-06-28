@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 26/12/2017
+    Data    : Novembro/2007                  Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -346,6 +346,8 @@
                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                 26/12/2017 - #820634 Aumentado o limite de saque noturno, 
                              de R$300 para R$500 (Carlos)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -2889,7 +2891,7 @@ PROCEDURE efetua_saque:
                                                   " - " + crapage.nmcidade + " - " + STRING(craptfn.nrterfin) + " - " +
                                                   craptfn.nmterfin
 
-                                   aux_dsdemail = "prevencaodefraudes@cecred.coop.br"
+                                   aux_dsdemail = "prevencaodefraudes@ailos.coop.br"
                                    
                                    aux_dsdcorpo = "PA: " + STRING(craptfn.cdagenci) + " - " + crapage.nmresage + "\n\n" + 
                                                   "Conta: " + STRING(par_nrdconta) + "\n".
@@ -2952,7 +2954,7 @@ PROCEDURE efetua_saque:
                             RUN enviar_email_completo IN h-b1wgen0011
                                   (INPUT par_cdcooper,
                                    INPUT "b1wgen0025",
-                                   INPUT "prevencaodefraudes@cecred.coop.br",
+                                   INPUT "prevencaodefraudes@ailos.coop.br",
                                    INPUT aux_dsdemail,
                                    INPUT aux_dsassunt,
                                    INPUT "",
@@ -4835,7 +4837,7 @@ PROCEDURE envia_email_cartao_bloqueado:
                           " - " + crapage.nmcidade + " - " + STRING(craptfn.nrterfin) + " - " +
                           craptfn.nmterfin
 
-           aux_dsdemail = "prevencaodefraudes@cecred.coop.br"
+           aux_dsdemail = "prevencaodefraudes@ailos.coop.br"
            
            aux_dsdcorpo = "PA: " + STRING(craptfn.cdagenci) + " - " + crapage.nmresage + "\n\n" + 
                           "Conta: " + STRING(par_nrdconta) + "\n".
@@ -4894,7 +4896,7 @@ PROCEDURE envia_email_cartao_bloqueado:
     RUN enviar_email_completo IN h-b1wgen0011
                   (INPUT par_cdcooper,
                    INPUT "b1wgen0025",
-                   INPUT "prevencaodefraudes@cecred.coop.br",                   
+                   INPUT "prevencaodefraudes@ailos.coop.br",                   
                    INPUT aux_dsdemail,
                    INPUT aux_dsassunt,
                    INPUT "",
@@ -6239,7 +6241,7 @@ PROCEDURE valida_senha_tp_cartao:
             IF  NOT AVAILABLE crapcrd THEN
                 DO:
                     ASSIGN par_cdcritic  = 0
-                           par_dscritic  = "Erro na obtençao de dados do cartao CECRED.".
+                           par_dscritic  = "Erro na obtençao de dados do cartao AILOS.".
                     RETURN "NOK".
                 END.
                 

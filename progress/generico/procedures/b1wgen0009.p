@@ -293,6 +293,8 @@
 					                
            11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
                                                         
+           26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                                         
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -858,7 +860,7 @@ PROCEDURE busca_dados_limite_incluir:
 				DO:
     					CREATE tt-msg-confirma.
 						ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
 				END.
 
 		END.
@@ -1970,7 +1972,7 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
-    
+
     DEFINE OUTPUT PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -4283,7 +4285,7 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_nrperger AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgerlog AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_idcobope AS INTEGER     NO-UNDO.
-    
+
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
     DEFINE VARIABLE h-b1wgen0021 AS HANDLE  NO-UNDO.
@@ -13685,7 +13687,7 @@ PROCEDURE altera-numero-proposta-limite:
 
         /* Novo numero de contrato */
         ASSIGN crapprp.nrctrato = par_nrctrlim.
-   
+
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao 

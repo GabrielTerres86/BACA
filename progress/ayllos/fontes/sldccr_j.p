@@ -4,12 +4,12 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : André Euzébio - Supero.                   
-   Data    : Julho/2011                      Ultima atualizacao:  /  / 
+   Data    : Julho/2011                      Ultima atualizacao: 26/05/2018
 
 
    Objetivo  : Rotina para consultar extrato do cartao de credito.
 
-   Alteracoes: 
+   Alteracoes: 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
   
 ............................................................................ */
 
@@ -78,7 +78,7 @@ DEF VAR tel_dtextrat AS CHAR                                           NO-UNDO.
 
 
 
-FORM "EXTRATO CARTAO DE CREDITO CECRED VISA:"                     AT 47 SKIP(2)
+FORM "EXTRATO CARTAO DE CREDITO AILOS  VISA:"                     AT 47 SKIP(2)
      tt-extrato-cartao.nrdconta LABEL "NR CONTA"                  AT 2    
      tt-extrato-cartao.nmprimtl LABEL "NOME"      FORMAT "x(50)"  AT 42 SKIP 
      aux_nrcrcard               LABEL "NR CARTAO" FORMAT "x(22)"  AT 1

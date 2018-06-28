@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2010                      Ultima atualizacao: 07/08/2015
+   Data    : Dezembro/2010                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -35,6 +35,8 @@
                 07/08/2015 - Ajuste na consulta na tabela craplcm para melhorias
                             de performace SD281896 (Odirlei-AMcom) 
                
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -342,7 +344,7 @@ DO WHILE TRUE:
            ELSE 
                 DO:
                     MESSAGE "Devolucao exclusiva de Contas Transf. do PA 58" +
-                            " e Cheques do Banco 085 - CECRED".
+                            " e Cheques do Banco 085 - AILOS".
                     LEAVE.
                 END.
     
@@ -382,7 +384,7 @@ DO WHILE TRUE:
      
            CREATE w_lancto.
      
-           ASSIGN w_lancto.dsbccxlt = "CECRED"
+           ASSIGN w_lancto.dsbccxlt = "AILOS"
                   w_lancto.nrdocmto = craplcm.nrdocmto   
                   w_lancto.vllanmto = craplcm.vllanmto   
                   w_lancto.nrdctitg = craplcm.nrdctitg   
