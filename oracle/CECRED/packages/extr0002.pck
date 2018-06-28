@@ -5519,28 +5519,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         CLOSE cr_crapsld;
         --Saldo Negativo mes
         IF nvl(rw_crapsld.vlsmnmes,0) <> 0 THEN
-          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
-          --Resultado 1
-          vr_tab_resulta(1):= (rw_crapsld.vlsmnmes * vr_txjurneg) * -1;
-          --Incrementar Contador conta
-          vr_contadct:= vr_contadct + 1;
-          --Incrementar contador lancamentos na tabela
-          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
-          --Criar Lancamento Futuro na tabela
-          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
-          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
-          pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. TAXA C/C NEG.';
-          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
-          pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
-          pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(1);
-          -- SM4 - Paulo Martins - Mout큦
-          pr_tab_lancamento_futuro(vr_index).cdhistor:= 37;
-          if rw_crapass.cdsitdct  = 7 then
-            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
-          else
-            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
-          end if;		  
-        END IF;
+          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) AND 
+            (PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper 
+                                                            ,pr_nrdconta => pr_nrdconta) = true) THEN
+            --Resultado 1
+            vr_tab_resulta(1):= (rw_crapsld.vlsmnmes * vr_txjurneg) * -1;
+            --Incrementar Contador conta
+            vr_contadct:= vr_contadct + 1;
+            --Incrementar contador lancamentos na tabela
+            vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+            --Criar Lancamento Futuro na tabela
+            pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
+            pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. TAXA C/C NEG.';
+            pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
+            pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
+            pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(1);
+            -- SM4 - Paulo Martins - Mout큦
+            pr_tab_lancamento_futuro(vr_index).cdhistor:= 37;
+            if rw_crapass.cdsitdct  = 7 then
+              pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+            else
+              pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+            end if;		  
+          END IF;
         END IF;
         --Saldo
         IF rw_crapsld.vlsmnesp <> 0 OR
@@ -5612,30 +5614,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_tab_resulta(2):= (rw_crapsld.vlsmnesp * (rw_craplrt.txmensal / 100)) * -1;
           END IF;        
           
-          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) THEN
-          --Incrementar Conta          
-          vr_contadct:= vr_contadct + 1;
-          --Incrementar contador lancamentos na tabela
-          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
-          --Criar Lancamento Futuro na tabela
-          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
-          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
-          pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. JUROS CH.ESP.';
-          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
-          pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
-          pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(2);
-          -- SM4 - Paulo Martins - Mout큦
-          pr_tab_lancamento_futuro(vr_index).cdhistor:= 38;
-          if rw_crapass.cdsitdct  = 7 then
-            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
-          else
-            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
-          end if;     		  
+          IF (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) AND 
+            (PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                                            ,pr_nrdconta => pr_nrdconta) = true) THEN
+            --Incrementar Conta          
+            vr_contadct:= vr_contadct + 1;
+            --Incrementar contador lancamentos na tabela
+            vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+            --Criar Lancamento Futuro na tabela
+            pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapdat.dtmvtolt;
+            pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY');
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'PRV. JUROS CH.ESP.';
+            pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
+            pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
+            pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(2);
+            -- SM4 - Paulo Martins - Mout큦
+            pr_tab_lancamento_futuro(vr_index).cdhistor:= 38;
+            if rw_crapass.cdsitdct  = 7 then
+              pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+            else
+              pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+            end if;     		  
           END IF;
         END IF; --crapsld.vlsmnesp <> 0
         --Valor Bloqueado
         IF rw_crapsld.vlsmnblq <> 0 AND  
-          (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL )THEN 
+          (pr_indebcre = 'D' OR nvl(trim(pr_indebcre),'') IS NULL ) AND 
+            (PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper 
+                                             ,pr_nrdconta => pr_nrdconta) = true) THEN 
           --Resultado 3
           vr_tab_resulta(3):= (rw_crapsld.vlsmnblq * (vr_txjursaq)) * -1;
           --Incrementar Conta          
