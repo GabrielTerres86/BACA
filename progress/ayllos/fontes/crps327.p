@@ -3,7 +3,7 @@
    Programa: Fontes/crps327.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Ze Eduardo        
+   Autor   : Ze Eduardo
    Data    : Setembro/2002                   Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
@@ -17,73 +17,73 @@
    Alteracoes: 28/12/2002 - Verificar se o LCM esta cadastrado antes de Cria-lo
                             (Ze Eduardo).
                08/01/2003 - Tratar contas isentas de tarifa (Deborah)
-               
+
                12/02/2003 - Tratamento de nrcheque iguais (Ze Eduardo).
-               
+
                06/05/2003 - Tratamento de cheques bloqueados (Ze Eduardo).
-               
+
                28/05/2003 - Acerto no historico crapdpb (Ze Eduardo).
-               
+
                26/06/2003 - Acerto na data liberacao do bloq. (Ze Eduardo).
-               
+
                26/06/2003 - Atualizacao no cadastro de crapcec. (Ze Eduardo).
-               
+
                07/07/2003 - Tratamento erro quando nao achar o arq. (Ze).
-               
+
                30/06/2005 - Alimentado campo cdcooper das tabelas craplot
                             craplcm (Diego).
 
-               21/09/2005 - Modificado FIND FIRST para FIND na tabela 
+               21/09/2005 - Modificado FIND FIRST para FIND na tabela
                             crapcop.cdcooper = glb_cdcooper (Diego).
 
                07/10/2005 - Alterado para ler tbm na tabela crapali o codigo
                             da cooperativa (Diego).
-                            
-               17/02/2006 - Unificacao dos bancos - SQLWorks - Eder 
-                          
+
+               17/02/2006 - Unificacao dos bancos - SQLWorks - Eder
+
                18/04/2007 - Alterado relatorio 277, para imprimir 2 vias na
                             mesma folha (Elton).
-               
+
                01/06/2007 - Efetuar apenas 1 copia de impressao ref. rel.277
                             (Guilherme).
-                            
+
                06/06/2007 - Verifica se eh devolucao de cheque descontado
                             e lanca com o historico 399 (Ze).
-                            
+
                04/07/2007 - Envia email avisando que nao existe arquivo para
                             ser integrado (Elton).
-               
+
                27/08/2007 - Nao enviar email(Guilherme).
-               
+
                12/08/2008 - Estava gerando o total na primeira pagina(Guilherme)
 
                16/09/2008 - Retirado log no proc_batch.log quando cheque for
                             inexistente, gerar nova critica no caso de
                             caracteres invalidos e incluido conta do cheque
                             no form f_lanc_erro_276 (Gabriel).
-               
+
                13/04/2009 - Alterada a forma de verificar se o registro lido eh
                             o trailer do arquivo (Elton).
 
                06/08/2009 - Diferenciar do lanctos BB e Bancoob atraves do
                             campo craplcm.dsidenti  (Ze).
-                            
+
                05/03/2010 - Tratamento para cheques custodiados (Ze).
 
                15/09/2010 - Acertar nome do arquivo a ser lido. Estava
                             entrando arquivos da nossa IF (Magui).
-                            
-               01/10/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).
-                            
-               31/10/2013 - Alterado para nao utilizar telefone da crapass mas 
+
+               01/10/2013 - Nova forma de chamar as agÃªncias, de PAC agora
+                            a escrita serÃ¡ PA (AndrÃ© EuzÃ©bio - Supero).
+
+               31/10/2013 - Alterado para nao utilizar telefone da crapass mas
                             sim da craptfc.
                           - Alterado totalizador de 99 para 999. (Reinert)
-                          
-               21/01/2014 - Incluir VALIDATE craplot, craplcm (Lucas R.) 
+
+               21/01/2014 - Incluir VALIDATE craplot, craplcm (Lucas R.)
 
 	           24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
+			                crapass, crapttl, crapjur
 							(Adriano - P339).
 
 
@@ -95,14 +95,15 @@ DEF STREAM str_3.   /*  Para relatorio - 276 TOTAL  */
 DEF STREAM str_4.   /*  Para arquivo                */
 DEF STREAM str_5.   /*  Para arquivo                */
 
-{ includes/var_batch.i }   
+{ includes/var_batch.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF TEMP-TABLE crawrel                                               NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD nmprimtl LIKE crapass.nmprimtl
     FIELD nrfonres AS CHAR
-    FIELD cdcmpchq LIKE crapchd.cdcmpchq 
+    FIELD cdcmpchq LIKE crapchd.cdcmpchq
     FIELD cdagechq LIKE crapchd.cdagechq
     FIELD cdbanchq LIKE crapchd.cdbanchq
     FIELD nrctachq LIKE crapchd.nrctachq
@@ -127,7 +128,7 @@ DEF TEMP-TABLE rel277                                                NO-UNDO
     FIELD auxqtdch AS INTEGER
     FIELD totchequ AS DECIMAL.
 
-                      
+
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 5       NO-UNDO.
 DEF        VAR rel_nmresemp AS CHAR                                  NO-UNDO.
@@ -138,7 +139,7 @@ DEF        VAR rel_nmmodulo AS CHAR    FORMAT "x(15)" EXTENT 5
                                              "EMPRESTIMOS    ",
                                              "DIGITACAO      ",
                                              "GENERICO       "]      NO-UNDO.
-                                                                           
+
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
 DEF        VAR aux_nmarquiv AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nmarqdeb AS CHAR                                  NO-UNDO.
@@ -163,23 +164,27 @@ DEF        VAR aux_vltarifa AS DECIMAL                               NO-UNDO.
 DEF        VAR aux_cdhistor AS INT                                   NO-UNDO.
 DEF        VAR aux_dsalinea AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nrcheque AS DECIMAL                               NO-UNDO.
- 
+
 DEF        VAR aux_qtdecheq AS INT                                   NO-UNDO.
 DEF        VAR aux_totdcheq AS DECIMAL                               NO-UNDO.
 DEF        VAR tot_qtdecheq AS INT                                   NO-UNDO.
 DEF        VAR tot_totdcheq AS DECIMAL                               NO-UNDO.
-DEF        VAR aux_lscontas AS CHAR                                  NO-UNDO.   
+DEF        VAR aux_lscontas AS CHAR                                  NO-UNDO.
 
 DEF        VAR aux_cdbanchq AS INT                                   NO-UNDO.
 DEF        VAR aux_cdagechq AS INT                                   NO-UNDO.
 DEF        VAR aux_nrctachq AS DEC                                   NO-UNDO.
 DEF        VAR aux_nrdocheq AS INT                                   NO-UNDO.
 
+DEF        VAR h-b1wgen0200 AS HANDLE                                NO-UNDO.
+DEF        VAR aux_incrineg AS INT                                   NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                   NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 FORM aux_setlinha  FORMAT "x(161)"
      WITH FRAME AA WIDTH 161 NO-BOX NO-LABELS.
 
-FORM SKIP(1) 
+FORM SKIP(1)
      crawrel.cdagenci   AT 02  FORMAT "zz9"             LABEL "PA"
      crawrel.nrdconta   AT 16  FORMAT "zzzz,zz9,9"      LABEL "CONTA/DV"
      " - "              AT 36
@@ -187,17 +192,17 @@ FORM SKIP(1)
      SKIP
      crawrel.nrfonres   AT 16  FORMAT "x(40)"           LABEL "FONE"
      SKIP(1)
-     "RELACAO DE CHEQUES DEVOLVIDOS:"   AT 01                
+     "RELACAO DE CHEQUES DEVOLVIDOS:"   AT 01
      SKIP(1)
-     "BANCO"            AT 01                           
-     "CHEQUE"           AT 16                           
-     "ALINEA"           AT 30                           
-     "VALOR"            AT 76                           
+     "BANCO"            AT 01
+     "CHEQUE"           AT 16
+     "ALINEA"           AT 30
+     "VALOR"            AT 76
      SKIP(1)
      WITH NO-BOX DOWN SIDE-LABELS WIDTH 80 FRAME f_cabec_277.
 
-FORM crawrel.cdbanchq   AT 01  FORMAT "zz9"          
-     crawrel.nrcheque   AT 15  FORMAT "zzz,zz9"     
+FORM crawrel.cdbanchq   AT 01  FORMAT "zz9"
+     crawrel.nrcheque   AT 15  FORMAT "zzz,zzz,zzz,zz9"
      crawrel.nralinea   AT 33  FORMAT "z9"
      " - "              AT 35
      aux_dsalinea       AT 38  FORMAT "x(25)"
@@ -208,7 +213,7 @@ FORM SKIP(1)
      "TOTAL -->"        AT 01
      aux_qtdecheq       AT 15  FORMAT "zzz,zz9"               NO-LABEL
      aux_totdcheq       AT 63  FORMAT "zzz,zzz,zzz,zz9.99"    NO-LABEL
-     SKIP(3)  
+     SKIP(3)
      "TERMO    DE    RECEBIMENTO"   AT 28
      SKIP(3)
   "Declaro   para  os  devidos  fins,  ter  recebido  o(s)  documento(s)  acima"
@@ -217,10 +222,10 @@ FORM SKIP(1)
      "Tarifa para cada cheque  R$"   AT 39
      aux_vltarifa       AT 70 FORMAT "zz9.99"                 NO-LABEL
      SKIP(3)
-     "TITULAR"             AT 01 SKIP(5)         
-     "-----------------------------------"       AT 01 
+     "TITULAR"             AT 01 SKIP(5)
+     "-----------------------------------"       AT 01
      "-------------------------"                 AT 50
-     SKIP 
+     SKIP
      crawrel.nmprimtl     AT 01  FORMAT "x(40)"         NO-LABEL
      "Cadastro e Visto"   AT 56
      crawrel.nrdconta     AT 01  FORMAT "zzzz,zz9,9"    LABEL "CONTA/DV"
@@ -230,17 +235,17 @@ FORM SKIP(1)
      "TOTAL -->"        AT 01
      aux_qtdecheq       AT 15  FORMAT "zzz,zz9"               NO-LABEL
      aux_totdcheq       AT 63  FORMAT "zzz,zzz,zzz,zz9.99"    NO-LABEL
-     SKIP(3)   
+     SKIP(3)
      "TERMO    DE    RECEBIMENTO"   AT 28
      SKIP(3)
   "Declaro   para  os  devidos  fins,  ter  recebido  o(s)  documento(s)  acima"
      AT 5   SKIP(1)
-     "especificado(s) em ____/____/______ ."  AT 01  
+     "especificado(s) em ____/____/______ ."  AT 01
      SKIP(3)
-     "TITULAR"             AT 01 SKIP(5)  
-     "-----------------------------------"       AT 01 
+     "TITULAR"             AT 01 SKIP(5)
+     "-----------------------------------"       AT 01
      "-------------------------"                 AT 50
-     SKIP 
+     SKIP
      crawrel.nmprimtl     AT 01  FORMAT "x(40)"         NO-LABEL
      "Cadastro e Visto"   AT 56
      crawrel.nrdconta     AT 01  FORMAT "zzzz,zz9,9"    LABEL "CONTA/DV"
@@ -248,7 +253,7 @@ FORM SKIP(1)
 
 /****Para 2 via ****/
 
-FORM SKIP(1) 
+FORM SKIP(1)
      rel277.cdagenci    AT 02  FORMAT "zz9"             LABEL "PA"
      rel277.nrdconta    AT 16  FORMAT "zzzz,zz9,9"      LABEL "CONTA/DV"
      " - "              AT 36
@@ -256,17 +261,17 @@ FORM SKIP(1)
      SKIP
      rel277.nrfonres    AT 16  FORMAT "x(40)"           LABEL "FONE"
      SKIP(1)
-     "RELACAO DE CHEQUES DEVOLVIDOS:"   AT 01                
+     "RELACAO DE CHEQUES DEVOLVIDOS:"   AT 01
      SKIP(1)
-     "BANCO"            AT 01                           
-     "CHEQUE"           AT 16                           
-     "ALINEA"           AT 30                           
-     "VALOR"            AT 76                           
+     "BANCO"            AT 01
+     "CHEQUE"           AT 16
+     "ALINEA"           AT 30
+     "VALOR"            AT 76
      SKIP(1)
      WITH NO-BOX DOWN SIDE-LABELS WIDTH 80 FRAME f_cabec_rel277.
 
-FORM rel277.cdbanchq    AT 01  FORMAT "zz9"          
-     rel277.nrcheque    AT 15  FORMAT "zzz,zz9"     
+FORM rel277.cdbanchq    AT 01  FORMAT "zz9"
+     rel277.nrcheque    AT 15  FORMAT "zzz,zzz,zzz,zz9"
      rel277.nralinea    AT 33  FORMAT "z9"
      " - "              AT 35
      rel277.auxaline    AT 38  FORMAT "x(25)"
@@ -277,17 +282,17 @@ FORM SKIP(1)
      "TOTAL -->"        AT 01
      rel277.auxqtdch    AT 15  FORMAT "zzz,zz9"               NO-LABEL
      rel277.totchequ    AT 63  FORMAT "zzz,zzz,zzz,zz9.99"    NO-LABEL
-     SKIP(2)  
+     SKIP(2)
      "TERMO    DE    RECEBIMENTO"   AT 28
      SKIP(3)
   "Declaro   para  os  devidos  fins,  ter  recebido  o(s)  documento(s)  acima"
      AT 5   SKIP(1)
-     "especificado(s) em ____/____/______ ."  AT 01      
+     "especificado(s) em ____/____/______ ."  AT 01
      SKIP(3)
-     "TITULAR"             AT 01 SKIP(5)          
-     "-----------------------------------"       AT 01 
+     "TITULAR"             AT 01 SKIP(5)
+     "-----------------------------------"       AT 01
      "-------------------------"                 AT 50
-     SKIP 
+     SKIP
      rel277.nmprimtl      AT 01  FORMAT "x(40)"         NO-LABEL
      "Cadastro e Visto"   AT 56
      rel277.nrdconta      AT 01  FORMAT "zzzz,zz9,9"    LABEL "CONTA/DV"
@@ -297,19 +302,19 @@ FORM SKIP(1)
      "TOTAL -->"        AT 01
      rel277.auxqtdch    AT 15  FORMAT "zzz,zz9"               NO-LABEL
      rel277.totchequ    AT 63  FORMAT "zzz,zzz,zzz,zz9.99"    NO-LABEL
-     SKIP(2)  
+     SKIP(2)
      "TERMO    DE    RECEBIMENTO"   AT 28
      SKIP(3)
   "Declaro   para  os  devidos  fins,  ter  recebido  o(s)  documento(s)  acima"
      AT 5   SKIP(1)
-     "especificado(s) em ____/____/______ ."  AT 01      
+     "especificado(s) em ____/____/______ ."  AT 01
      "Tarifa para cada cheque  R$"   AT 39
      aux_vltarifa       AT 70 FORMAT "zz9.99"                 NO-LABEL
      SKIP(3)
-     "TITULAR"             AT 01 SKIP(5)          
-     "-----------------------------------"       AT 01 
+     "TITULAR"             AT 01 SKIP(5)
+     "-----------------------------------"       AT 01
      "-------------------------"                 AT 50
-     SKIP 
+     SKIP
      rel277.nmprimtl      AT 01  FORMAT "x(40)"         NO-LABEL
      "Cadastro e Visto"   AT 56
      rel277.nrdconta      AT 01  FORMAT "zzzz,zz9,9"    LABEL "CONTA/DV"
@@ -330,7 +335,7 @@ FORM crawrel.nmprimtl   AT 01  FORMAT "x(40)"       LABEL "DESCRICAO DO ERRO"
      crawrel.vlcheque   AT 57  FORMAT "zz,zzz,zzz,zz9.99"  LABEL "VALOR"
      SKIP
      crawrel.nralinea   AT 01  FORMAT "z9"          LABEL "ALINEA"
-     crawrel.nrcheque   AT 21  FORMAT "zzz,zz9"     LABEL "CHEQUE"
+     crawrel.nrcheque   AT 21  FORMAT "zzz,zzz,zzz,zz9"     LABEL "CHEQUE"
      SKIP(2)
      WITH NO-BOX DOWN SIDE-LABEL WIDTH 80 FRAME f_lanc_erro_276.
 
@@ -342,24 +347,24 @@ FORM SKIP(3)
      SKIP(3)
      "CONTA/DV"         AT 03
      "NOME"             AT 13
-     "BANCO"            AT 47                           
-     "CHEQUE"           AT 54                           
-     "ALINEA"           AT 61                           
-     "VALOR"            AT 76                           
+     "BANCO"            AT 47
+     "CHEQUE"           AT 54
+     "ALINEA"           AT 61
+     "VALOR"            AT 76
      SKIP(1)
      WITH NO-BOX NO-LABEL WIDTH 80 FRAME f_cabec_276.
 
 FORM crawrel.nrdconta   AT 01  FORMAT "zzzz,zz9,9"
      crawrel.nmprimtl   AT 13  FORMAT "x(33)"
-     crawrel.cdbanchq   AT 49  FORMAT "zz9"          
-     crawrel.nrcheque   AT 53  FORMAT "zzz,zz9"     
+     crawrel.cdbanchq   AT 49  FORMAT "zz9"
+     crawrel.nrcheque   AT 53  FORMAT "zzz,zzz,zzz,zz9"
      crawrel.nralinea   AT 64  FORMAT "z9"
      crawrel.vlcheque   AT 68  FORMAT "zz,zzz,zz9.99"
      WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_lanc_276.
 
 FORM SKIP(1)
      "TOTAL -->"        AT 01
-     aux_qtdecheq       AT 53  FORMAT "zzz,zz9"          
+     aux_qtdecheq       AT 53  FORMAT "zzz,zz9"
      aux_totdcheq       AT 63  FORMAT "zzz,zzz,zzz,zz9.99"
      WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_total_276.
 
@@ -371,7 +376,7 @@ FORM SKIP(7)
 
 FORM SKIP(2)
      "TOTAL GERAL -->"  AT 01
-     tot_qtdecheq       AT 53  FORMAT "zzz,zz9"          
+     tot_qtdecheq       AT 53  FORMAT "zzz,zz9"
      tot_totdcheq       AT 63  FORMAT "zzz,zzz,zzz,zz9.99"
      WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_total_geral_276.
 
@@ -382,13 +387,13 @@ FORM SKIP(3)
      "----------" AT 71
      SKIP(2)
      WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_tracejado1.
-     
+
 FORM SKIP(4)
      "----------------------------------------------------------------------"
      "----------" AT 71
      SKIP(2)
      WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_tracejado2.
-     
+
 FORM SKIP(5)
      "----------------------------------------------------------------------"
      "----------" AT 71
@@ -402,7 +407,7 @@ ASSIGN glb_cdprogra = "crps327"
 RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
-     RETURN.           
+     RETURN.
 
 /* Busca dados da cooperativa */
 
@@ -412,7 +417,6 @@ IF   NOT AVAILABLE crapcop THEN
      DO:
          glb_cdcritic = 651.
          RUN fontes/critic.p.
-         MESSAGE glb_dscritic.
          RETURN.
      END.
 
@@ -458,25 +462,26 @@ FIND craptab WHERE craptab.cdcooper = glb_cdcooper  AND
 
 IF   NOT AVAILABLE craptab   THEN
      aux_lscontas = "".
-ELSE                   
+ELSE
      aux_lscontas = craptab.dstextab.
-                              
-ASSIGN  aux_nmarqdeb = "integra/1" + string(crapcop.cdagebcb,"9999") + "*DV*".
+
+ASSIGN  aux_nmarqdeb = "./integra/1" + string(crapcop.cdagebcb,"9999") + "*DV*".
         aux_contador = 0.
-                    
+
+
 INPUT STREAM str_4 THROUGH VALUE( "ls " + aux_nmarqdeb + " 2> /dev/null")
       NO-ECHO.
 
 DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
    SET STREAM str_4 aux_nmarquiv FORMAT "x(40)" .
-  
+
    UNIX SILENT VALUE("quoter " + aux_nmarquiv + " > " +
                       aux_nmarquiv + ".q 2> /dev/null").
 
    ASSIGN aux_contador = aux_contador + 1
           tab_nmarquiv[aux_contador] = aux_nmarquiv.
-   
+
 END.  /*  Fim do DO WHILE TRUE  */
 
 INPUT STREAM str_4 CLOSE.
@@ -490,40 +495,40 @@ IF   aux_contador = 0 THEN
                             " >> log/proc_batch.log").
 
          RUN fontes/fimprg.p.
-         RETURN.                
+         RETURN.
      END.
 
 DO  i = 1 TO aux_contador:
-      
+
     ASSIGN aux_contareg = 1
            aux_flgrejei = FALSE.
-           
+
     glb_cdcritic = 219.
     RUN fontes/critic.p.
     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + "' --> '" +
                        glb_dscritic + "' --> '" + tab_nmarquiv[i] +
                       " >> log/proc_batch.log").
-    
+
     glb_cdcritic = 0.
 
     INPUT STREAM str_5 FROM VALUE(tab_nmarquiv[i] + ".q") NO-ECHO.
 
     SET STREAM str_5 aux_setlinha  WITH FRAME AA WIDTH 161.
-    
+
     IF    SUBSTR(aux_setlinha,48,06) <> "CEL615" THEN
           glb_cdcritic = 473.
     ELSE
     IF    INTEGER(SUBSTR(aux_setlinha,151,10)) <> aux_contareg THEN
-          glb_cdcritic = 166.       
-    ELSE              
+          glb_cdcritic = 166.
+    ELSE
     IF   SUBSTR(aux_setlinha,66,08) <> aux_dtauxili THEN
          glb_cdcritic = 013.
-   
+
     IF    glb_cdcritic <> 0 THEN
           DO:
               RUN fontes/critic.p.
-              aux_nmarquiv = "integra/err" + SUBSTR(tab_nmarquiv[i],12,29).
+              aux_nmarquiv = "./integra/err" + SUBSTR(tab_nmarquiv[i],12,29).
               UNIX SILENT VALUE("rm " + tab_nmarquiv[i] + ".q 2> /dev/null").
               UNIX SILENT VALUE("mv " + tab_nmarquiv[i] + " " + aux_nmarquiv).
               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
@@ -535,21 +540,21 @@ DO  i = 1 TO aux_contador:
               NEXT.
           END.
 
-     
+
     DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
        SET STREAM str_5 aux_setlinha WITH FRAME AA WIDTH 161.
 
        ASSIGN aux_contareg = aux_contareg + 1.
-       
+
        /*  Verifica se eh final do Arquivo  */
-       
-       IF   SUBSTR(aux_setlinha,1,10)  = "9999999999" AND   
+
+       IF   SUBSTR(aux_setlinha,1,10)  = "9999999999" AND
             SUBSTR(aux_setlinha,48,06) = "CEL615"     THEN
-            DO:            
+            DO:
                 IF    INTEGER(SUBSTR(aux_setlinha,151,10)) <> aux_contareg THEN
                       glb_cdcritic = 166.
-        
+
                 IF    glb_cdcritic <> 0 THEN
                       DO:
                           RUN fontes/critic.p.
@@ -558,12 +563,12 @@ DO  i = 1 TO aux_contador:
                                glb_dscritic + " " + tab_nmarquiv[i] + " Seq." +
                                STRING(aux_contareg, "9999") +
                                " >> log/proc_batch.log").
-                        
+
                           ASSIGN glb_cdcritic = 0
                                  aux_flgrejei = TRUE.
-                           
+
                           CREATE crawrel.
-                          ASSIGN 
+                          ASSIGN
                              crawrel.cdagenci = 0
                              crawrel.nrdconta = INT(SUBSTR(aux_setlinha,67,12))
                              crawrel.nmprimtl = glb_dscritic
@@ -573,28 +578,28 @@ DO  i = 1 TO aux_contador:
                              crawrel.cdagechq = INT(SUBSTR(aux_setlinha,07,04))
                              crawrel.nrctachq = DEC(SUBSTR(aux_setlinha,12,12))
                              crawrel.nrcheque = INT(SUBSTR(aux_setlinha,25,06))
-                             crawrel.vlcheque = 
+                             crawrel.vlcheque =
                                    (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100).
                       END.
 
                 LEAVE.
             END.
-          
+
        IF   INTEGER(SUBSTR(aux_setlinha,151,10)) <> aux_contareg THEN
             glb_cdcritic = 166.
-       
+
        IF   glb_cdcritic <> 0 THEN
             DO:
                 RUN fontes/critic.p.
                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                   " - " + glb_cdprogra + "' --> '" +
-                                  glb_dscritic + " " + tab_nmarquiv[i] 
+                                  glb_dscritic + " " + tab_nmarquiv[i]
                                   + " Seq." + STRING(aux_contareg, "9999")
                                   + " >> log/proc_batch.log").
-            
+
                 ASSIGN glb_cdcritic = 0
                        aux_flgrejei = TRUE.
-           
+
                 CREATE crawrel.
                 ASSIGN crawrel.cdagenci = 0
                        crawrel.nrdconta = INT(SUBSTR(aux_setlinha,67,12))
@@ -605,11 +610,11 @@ DO  i = 1 TO aux_contador:
                        crawrel.cdagechq = INT(SUBSTR(aux_setlinha,07,04))
                        crawrel.nrctachq = DEC(SUBSTR(aux_setlinha,12,12))
                        crawrel.nrcheque = INT(SUBSTR(aux_setlinha,25,06))
-                       crawrel.vlcheque = 
+                       crawrel.vlcheque =
                               (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100).
-                
+
                 NEXT.
-                 
+
             END.
 
        ASSIGN aux_cdbanchq = INT(SUBSTR(aux_setlinha,04,03))
@@ -621,8 +626,9 @@ DO  i = 1 TO aux_contador:
             DO:
                 glb_cdcritic = 843.
             END.
-       ELSE     
+       ELSE
             DO:
+             
                 FIND FIRST crapchd WHERE
                            crapchd.cdcooper = glb_cdcooper   AND
                            crapchd.cdbanchq = aux_cdbanchq   AND
@@ -633,16 +639,16 @@ DO  i = 1 TO aux_contador:
 
                 IF   NOT AVAILABLE crapchd THEN
                      glb_cdcritic = 244.
-            
+
             END.
-       
+
        IF   glb_cdcritic <> 0 THEN
             DO:
                RUN fontes/critic.p.
-                
+
                ASSIGN glb_cdcritic = 0
                       aux_flgrejei = TRUE.
-                 
+
                CREATE crawrel.
                ASSIGN crawrel.cdagenci = 0
                       crawrel.nrdconta = INT(SUBSTR(aux_setlinha,67,12))
@@ -653,19 +659,19 @@ DO  i = 1 TO aux_contador:
                       crawrel.cdagechq = aux_cdagechq
                       crawrel.nrctachq = aux_nrctachq
                       crawrel.nrcheque = aux_nrdocheq
-                      crawrel.vlcheque = 
+                      crawrel.vlcheque =
                       (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100).
 
                NEXT.
-                     
+
             END.
-            
+
        FIND crapass WHERE crapass.cdcooper = glb_cdcooper      AND
                           crapass.nrdconta = crapchd.nrdconta  NO-LOCK NO-ERROR.
 
        IF   NOT AVAILABLE crapass THEN
             glb_cdcritic = 009.
-       
+
        FIND crapdpb WHERE crapdpb.cdcooper = glb_cdcooper       AND
                           crapdpb.dtmvtolt = crapchd.dtmvtolt   AND
                           crapdpb.cdagenci = crapchd.cdagenci   AND
@@ -674,7 +680,7 @@ DO  i = 1 TO aux_contador:
                           crapdpb.nrdconta = crapchd.nrdconta   AND
                           crapdpb.nrdocmto = crapchd.nrdocmto
                           USE-INDEX crapdpb1 NO-ERROR.
-                          
+
        IF   NOT AVAILABLE crapdpb THEN
             aux_cdhistor = 351.
        ELSE
@@ -686,22 +692,22 @@ DO  i = 1 TO aux_contador:
                          ELSE
                               DO:
                                   CASE crapdpb.cdhistor:
-                               
+
                                        WHEN 3   THEN aux_cdhistor = 24.
                                        WHEN 4   THEN aux_cdhistor = 27.
                                        WHEN 357 THEN aux_cdhistor = 657.
                                        OTHERWISE     aux_cdhistor = 351.
-                         
+
                                   END CASE.
-                              END.    
+                              END.
                      END.
                 ELSE
                      aux_cdhistor = 351.
             END.
-       
+
        IF   crapchd.cdbccxlt = 700 THEN  /*  desconto de cheques  */
             aux_cdhistor = 399.
-       
+
        DO TRANSACTION:
 
           DO WHILE TRUE:
@@ -747,7 +753,7 @@ DO  i = 1 TO aux_contador:
                                 craplcm.cdbccxlt = 100                  AND
                                 craplcm.nrdolote = 4650                 AND
                                 craplcm.nrdctabb = crapchd.nrdconta     AND
-                                craplcm.nrdocmto = aux_nrcheque     
+                                craplcm.nrdocmto = aux_nrcheque
                                 USE-INDEX craplcm1
                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -755,46 +761,96 @@ DO  i = 1 TO aux_contador:
                   aux_nrcheque = (aux_nrcheque + 1000000).
              ELSE
                   LEAVE.
-          
+
           END.  /*  Fim do DO WHILE TRUE  */
 
-          
-          CREATE craplcm.
-          ASSIGN craplcm.dtmvtolt = glb_dtmvtolt
-                 craplcm.cdagenci = 1
-                 craplcm.cdbccxlt = 100
-                 craplcm.nrdolote = 4650
-                 craplcm.nrdconta = crapchd.nrdconta 
-                 craplcm.nrdocmto = aux_nrcheque
-                 craplcm.cdhistor = aux_cdhistor
-                 craplcm.nrseqdig = craplot.nrseqdig + 1
-                 craplcm.vllanmto = (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100)
-                 craplcm.nrdctabb = crapchd.nrdconta
-                 craplcm.nrdctitg = STRING(crapchd.nrdconta,"99999999")
-                 craplcm.cdpesqbb = SUBSTR(aux_setlinha,54,02)
-                 craplcm.vldoipmf = 0
-                 craplcm.nrautdoc = 0
-                 craplcm.nrsequni = 0
-                 craplcm.cdbanchq = crapchd.cdbanchq
-                 craplcm.cdcmpchq = crapchd.cdcmpchq
-                 craplcm.cdagechq = crapchd.cdagechq
-                 craplcm.nrctachq = crapchd.nrctachq
-                 craplcm.nrlotchq = 0
-                 craplcm.sqlotchq = 0
-                 craplcm.cdcooper = glb_cdcooper
-                 craplcm.dsidenti = "BCB"
-                 
-                 craplot.nrseqdig = craplot.nrseqdig + 1
+          IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+            RUN sistema/generico/procedures/b1wgen0200.p
+              PERSISTENT SET h-b1wgen0200.
+
+          RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+            (INPUT glb_dtmvtolt                                 /* par_dtmvtolt */
+            ,INPUT 1                                            /* par_cdagenci */
+            ,INPUT 100                                          /* par_cdbccxlt */
+            ,INPUT 4650                                         /* par_nrdolote */
+            ,INPUT crapchd.nrdconta                             /* par_nrdconta */
+            ,INPUT aux_nrcheque                                 /* par_nrdocmto */
+            ,INPUT aux_cdhistor                                 /* par_cdhistor */
+            ,INPUT craplot.nrseqdig + 1                         /* par_nrseqdig */
+            ,INPUT (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100)  /* par_vllanmto */
+            ,INPUT crapchd.nrdconta                             /* par_nrdctabb */
+            ,INPUT SUBSTR(aux_setlinha,54,02)                   /* par_cdpesqbb */
+            ,INPUT 0                                            /* par_vldoipmf */
+            ,INPUT 0                                            /* par_nrautdoc */
+            ,INPUT 0                                            /* par_nrsequni */
+            ,INPUT crapchd.cdbanchq                             /* par_cdbanchq */
+            ,INPUT crapchd.cdcmpchq                             /* par_cdcmpchq */
+            ,INPUT crapchd.cdagechq                             /* par_cdagechq */
+            ,INPUT crapchd.nrctachq                             /* par_nrctachq */
+            ,INPUT 0                                            /* par_nrlotchq */
+            ,INPUT 0                                            /* par_sqlotchq */
+            ,INPUT ""                                           /* par_dtrefere */
+            ,INPUT ""                                           /* par_hrtransa */
+            ,INPUT 0                                            /* par_cdoperad */
+            ,INPUT "BCB"                                        /* par_dsidenti */
+            ,INPUT glb_cdcooper                                 /* par_cdcooper */
+            ,INPUT STRING(crapchd.nrdconta,"99999999")          /* par_nrdctitg */
+            ,INPUT ""                                           /* par_dscedent */
+            ,INPUT 0                                            /* par_cdcoptfn */
+            ,INPUT 0                                            /* par_cdagetfn */
+            ,INPUT 0                                            /* par_nrterfin */
+            ,INPUT 0                                            /* par_nrparepr */
+            ,INPUT 0                                            /* par_nrseqava */
+            ,INPUT 0                                            /* par_nraplica */
+            ,INPUT 0                                            /* par_cdorigem */
+            ,INPUT 0                                            /* par_idlautom */
+            /* CAMPOS OPCIONAIS DO LOTE                                                            */
+            ,INPUT 0                              /* Processa lote                                 */
+            ,INPUT 0                              /* Tipo de lote a movimentar                     */
+            /* CAMPOS DE SAï¿½DA                                                                     */
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contï¿½m o retorno do lanï¿½amento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crï¿½tica de negï¿½cio               */
+            ,OUTPUT aux_cdcritic                  /* Cï¿½digo da crï¿½tica                             */
+            ,OUTPUT aux_dscritic).                /* Descriï¿½ao da crï¿½tica                          */
+
+          IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                              " - " + glb_cdprogra + "' --> " +
+                              aux_dscritic + "'" +
+                              " nrdconta" + STRING(crapchd.nrdconta,"99999999") +
+                              " nrcheque" + STRING(aux_nrcheque,"99999999") +
+                              " >> log/proc_batch.log").
+            ASSIGN glb_cdcritic = 0
+                   aux_flgrejei = TRUE.
+
+            CREATE crawrel.
+            ASSIGN crawrel.cdagenci = 1
+                   crawrel.nrdconta = crapchd.nrdconta
+                   crawrel.nmprimtl = aux_dscritic
+                   crawrel.nrfonres = ""
+                   crawrel.cdcmpchq = crapchd.cdcmpchq
+                   crawrel.cdagechq = crapchd.cdagechq
+                   crawrel.cdbanchq = crapchd.cdbanchq
+                   crawrel.nrctachq = crapchd.nrctachq
+                   crawrel.nrcheque = aux_nrcheque
+                   crawrel.nralinea = INTEGER(SUBSTR(aux_setlinha,54,02))
+                   crawrel.vlcheque = (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100).
+
+            NEXT.
+          END.
+
+          IF  VALID-HANDLE(h-b1wgen0200) THEN
+            DELETE PROCEDURE h-b1wgen0200.
+
+          ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                  craplot.qtcompln = craplot.qtcompln + 1
                  craplot.qtinfoln = craplot.qtinfoln + 1
                  craplot.vlcompdb = craplot.vlcompdb +
-                                    craplcm.vllanmto
+                                     (DECIMAL(SUBSTR(aux_setlinha,34,17)) / 100)
                  craplot.vlcompcr = 0
                  craplot.vlinfodb = craplot.vlcompdb
-                 craplot.vlinfocr = 0. 
-          
+                 craplot.vlinfocr = 0.
           VALIDATE craplot.
-          VALIDATE craplcm.
 
           /*   Tratamento de Cheques Bloqueados  */
           IF   craplcm.cdhistor = 24    OR
@@ -805,8 +861,8 @@ DO  i = 1 TO aux_contador:
                          crapdpb.inlibera = 2.   /* Dep. Estornado */
                     ELSE
                          /*  Deposito com varios cheques */
-                         crapdpb.vllanmto = (crapdpb.vllanmto - 
-                                            craplcm.vllanmto). 
+                         crapdpb.vllanmto = (crapdpb.vllanmto -
+                                            craplcm.vllanmto).
                END.
 
           CREATE crawrel.
@@ -837,9 +893,8 @@ DO  i = 1 TO aux_contador:
                                             STRING(craptfc.nrtelefo).
               END.
 
-                                  
           /*   Atualizacao no Cadastro de Emitentes de Cheques  */
-          
+
           FIND crapcec WHERE crapcec.cdcooper = glb_cdcooper        AND
                              crapcec.cdcmpchq = crapchd.cdcmpchq    AND
                              crapcec.cdbanchq = crapchd.cdbanchq    AND
@@ -847,32 +902,31 @@ DO  i = 1 TO aux_contador:
                              crapcec.nrctachq = crapchd.nrctachq    AND
                              crapcec.nrdconta = 0
                              EXCLUSIVE-LOCK NO-ERROR.
- 
+
           IF   AVAILABLE crapcec THEN
                ASSIGN crapcec.dtultdev = glb_dtmvtolt
                       crapcec.qtchqdev = crapcec.qtchqdev + 1.
-    
+
        END.   /*    Fim do Transaction   */
 
     END.  /*   Fim  do DO WHILE TRUE  */
 
     INPUT STREAM str_5 CLOSE.
 
-    UNIX SILENT VALUE("mv " + tab_nmarquiv[i] + " salvar"). 
+    UNIX SILENT VALUE("mv " + tab_nmarquiv[i] + " ./salvar").
     UNIX SILENT VALUE("rm " + tab_nmarquiv[i] + ".q 2> /dev/null").
 
-    glb_cdcritic = IF   aux_flgrejei THEN 
-                        191 
-                   ELSE 
+    glb_cdcritic = IF   aux_flgrejei THEN
+                        191
+                   ELSE
                         190.
- 
+
     RUN fontes/critic.p.
-    
+
     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + "' --> '" +
                       glb_dscritic + "' --> '" +  tab_nmarquiv[i] +
                       " >> log/proc_batch.log").
-
 END.   /*   Fim  do DO TO   */
 
 /***   Geracao dos Avisos de Devolucao - 277   ***/
@@ -881,47 +935,47 @@ END.   /*   Fim  do DO TO   */
 
 aux_flgfirst = TRUE.
 
-FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci 
-                                             BY crawrel.nrdconta:    
-                                              
-    IF   crawrel.cdagenci = 0 THEN   
-         NEXT.                            
-    
+FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
+                                             BY crawrel.nrdconta:
+
+    IF   crawrel.cdagenci = 0 THEN
+         NEXT.
+
     IF   aux_flgfirst THEN
          DO:
              aux_nmarqimp = "rl/crrl277.lst".
-    
+
              OUTPUT STREAM str_1 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 85.
 
              VIEW STREAM str_1 FRAME f_cabrel080_1.
 
              ASSIGN aux_flgfirst = FALSE.
          END.
-    
+
     IF   FIRST-OF(crawrel.nrdconta) THEN
          DO:
              ASSIGN aux_qtdecheq = 0
                     aux_totdcheq = 0.
-         
+
              DISPLAY STREAM str_1 crawrel.cdagenci crawrel.nrdconta
                                   crawrel.nmprimtl crawrel.nrfonres
                                   WITH FRAME f_cabec_277.
-         
+
          END.
 
     ASSIGN aux_qtdecheq = aux_qtdecheq + 1
            aux_totdcheq = aux_totdcheq + crawrel.vlcheque.
-    
+
     FIND crapali WHERE crapali.cdalinea = crawrel.nralinea  NO-LOCK NO-ERROR.
-    
-    IF   NOT AVAILABLE crapali THEN 
+
+    IF   NOT AVAILABLE crapali THEN
          aux_dsalinea = "NAO CADASTRADA".
     ELSE
          aux_dsalinea = crapali.dsalinea.
-    
+
     DISPLAY STREAM str_1 crawrel.cdbanchq  crawrel.nrcheque
                          crawrel.nralinea  aux_dsalinea
-                         crawrel.vlcheque  
+                         crawrel.vlcheque
                          WITH FRAME f_lanc_277.
 
     DOWN STREAM str_1 WITH FRAME f_lanc_277.
@@ -930,7 +984,7 @@ FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
     ASSIGN rel277.cdagenci = crawrel.cdagenci
            rel277.nrdconta = crawrel.nrdconta
            rel277.nmprimtl = crawrel.nmprimtl
-           rel277.nrfonres = crawrel.nrfonres 
+           rel277.nrfonres = crawrel.nrfonres
            rel277.cdbanchq = crawrel.cdbanchq
            rel277.nrcheque = crawrel.nrcheque
            rel277.nralinea = crawrel.nralinea
@@ -938,24 +992,24 @@ FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
            rel277.auxaline = aux_dsalinea
            rel277.auxqtdch = aux_qtdecheq
            rel277.totchequ = aux_totdcheq.
-      
-      
+
+
     IF   LAST-OF(crawrel.nrdconta) THEN
-         DO:           
+         DO:
              IF   CAN-DO(aux_lscontas,STRING(crawrel.nrdconta)) THEN
                   DISPLAY STREAM str_1 aux_qtdecheq     aux_totdcheq
                                        crawrel.nmprimtl crawrel.nrdconta
                                        WITH FRAME f_total_isento_277.
-             ELSE           
+             ELSE
                   DISPLAY STREAM str_1 aux_qtdecheq     aux_totdcheq
                           aux_vltarifa crawrel.nmprimtl crawrel.nrdconta
                                        WITH FRAME f_total_277.
-             
+
              IF   aux_qtdecheq > 3  THEN
                   PAGE STREAM str_1.
              ELSE
              IF   aux_qtdecheq = 1  THEN
-                  DO:                               
+                  DO:
                       DISPLAY STREAM str_1 WITH FRAME f_tracejado3.
                       DISPLAY STREAM str_1 WITH FRAME f_cabrel080_1.
                   END.
@@ -967,12 +1021,12 @@ FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
                   END.
              ELSE
                   IF   aux_qtdecheq = 3  THEN
-                       DO: 
+                       DO:
                            DISPLAY STREAM str_1 WITH FRAME f_tracejado1.
                            DISPLAY STREAM str_1 WITH FRAME f_cabrel080_1.
                        END.
-         
-         
+
+
              FOR EACH rel277 BREAK BY rel277.cdagenci
                                       BY rel277.nrdconta:
 
@@ -982,60 +1036,60 @@ FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
                                                rel277.nrdconta
                                                rel277.nmprimtl
                                                rel277.nrfonres
-                                               WITH FRAME f_cabec_rel277. 
-                      END.        
-       
+                                               WITH FRAME f_cabec_rel277.
+                      END.
+
                  DISPLAY STREAM str_1 rel277.cdbanchq  rel277.nrcheque
                                       rel277.nralinea  rel277.auxaline
-                                      rel277.vlcheque  
+                                      rel277.vlcheque
                                       WITH FRAME f_lanc_rel277.
-                                  
-                 DOWN STREAM str_1 WITH FRAME f_lanc_rel277. 
-               
+
+                 DOWN STREAM str_1 WITH FRAME f_lanc_rel277.
+
                  IF   LAST-OF(rel277.nrdconta)  THEN
                       DO:
                          IF   CAN-DO(aux_lscontas,STRING(rel277.nrdconta)) THEN
-                              DISPLAY STREAM str_1 rel277.auxqtdch     
+                              DISPLAY STREAM str_1 rel277.auxqtdch
                                                    rel277.totchequ
-                                                   rel277.nmprimtl 
+                                                   rel277.nmprimtl
                                                    rel277.nrdconta
                                                WITH FRAME f_total_isento_rel277.
-                         ELSE           
-                              DISPLAY STREAM str_1 rel277.auxqtdch     
+                         ELSE
+                              DISPLAY STREAM str_1 rel277.auxqtdch
                                                    rel277.totchequ
                                                    aux_vltarifa
                                                    rel277.nmprimtl
                                                    rel277.nrdconta
                                                    WITH FRAME f_total_rel277.
-                          
+
                          IF   rel277.auxqtdch > 3  THEN
-                              PAGE STREAM str_1.                             
+                              PAGE STREAM str_1.
                       END.
              END.
-             
+
              EMPTY TEMP-TABLE  rel277.
-         
+
          END.
-    
+
 END.   /*   Fim  do rel.  crrl277  */
- 
+
 IF   NOT aux_flgfirst THEN
      DO:
          OUTPUT STREAM str_1 CLOSE.
- 
+
          ASSIGN glb_nrcopias = 1
                 glb_nmformul = "80col"
                 glb_nmarqimp = aux_nmarqimp.
-                     
-         RUN fontes/imprim.p.        
+
+         RUN fontes/imprim.p.
      END.
- 
+
 /***   Geracao do Resumo das Devolucoes - 276   ***/
 
-ASSIGN aux_flgfirst = TRUE    
+ASSIGN aux_flgfirst = TRUE
        aux_flgerro2 = TRUE
        tot_qtdecheq = 0
-       tot_totdcheq = 0        
+       tot_totdcheq = 0
        aux_qtdecheq = 0
        aux_totdcheq = 0.
 
@@ -1043,18 +1097,18 @@ ASSIGN aux_flgfirst = TRUE
 { includes/cabrel080_3.i }
 
 FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
-                                             BY crawrel.nrdconta:    
-    
+                                             BY crawrel.nrdconta:
+
     IF   aux_flgfirst THEN
          DO:
              ASSIGN aux_nmarqrl1 = "rl/crrl276_999.lst"
                     aux_flgfirst = FALSE.
-             
+
              OUTPUT STREAM str_2 TO VALUE(aux_nmarqrl1) PAGED PAGE-SIZE 84.
 
              VIEW STREAM str_2 FRAME f_cabrel080_2.
          END.
-    
+
     IF   crawrel.cdagenci = 0 THEN
          DO:
              IF   aux_flgerro2 THEN
@@ -1068,47 +1122,47 @@ FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
 
              DISPLAY STREAM str_2 crawrel.nmprimtl crawrel.nrdconta
                                   crawrel.cdcmpchq crawrel.cdbanchq
-                                  crawrel.cdagechq crawrel.vlcheque           
+                                  crawrel.cdagechq crawrel.vlcheque
                                   crawrel.nralinea crawrel.nrcheque
                                   WITH FRAME f_lanc_erro_276.
 
              DOWN STREAM str_2 WITH FRAME f_lanc_erro_276.
-             
+
              NEXT.
          END.
-    
+
     IF   FIRST-OF(crawrel.cdagenci) THEN
          DO:
              aux_nmarqrl2 = "rl/crrl276_" + STRING(crawrel.cdagenci,"999") +
                             ".lst".
-    
+
              OUTPUT STREAM str_3 TO VALUE(aux_nmarqrl2) PAGED PAGE-SIZE 84.
 
              VIEW STREAM str_3 FRAME f_cabrel080_3.
 
              ASSIGN aux_qtdecheq = 0
                     aux_totdcheq = 0.
-         
+
              FIND crapage WHERE crapage.cdcooper = glb_cdcooper     AND
-                                crapage.cdagenci = crawrel.cdagenci 
+                                crapage.cdagenci = crawrel.cdagenci
                                 NO-LOCK NO-ERROR.
-                                
+
              IF   NOT AVAILABLE crapage THEN
                   DO:
                       glb_cdcritic = 015.
                       RUN fontes/critic.p.
                       UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                         " - " + glb_cdprogra + "' --> '" +
-                                        glb_dscritic + "  " + 
+                                        glb_dscritic + "  " +
                                         aux_nmarqrl2 + " " +
                                         " >> log/proc_batch.log").
                       glb_cdcritic = 0.
                       NEXT.
                   END.
-             
+
              DISPLAY STREAM str_2 crawrel.cdagenci crapage.nmresage
                                   WITH FRAME f_cabec_276.
-             
+
              DISPLAY STREAM str_3 crawrel.cdagenci crapage.nmresage
                                   WITH FRAME f_cabec_276.
          END.
@@ -1117,54 +1171,54 @@ FOR EACH crawrel USE-INDEX crawrel1 BREAK BY crawrel.cdagenci
                          crawrel.cdbanchq  crawrel.nrcheque
                          crawrel.nralinea  crawrel.vlcheque
                          WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_lanc_276.
- 
+
     DISPLAY STREAM str_3 crawrel.nrdconta  crawrel.nmprimtl
                          crawrel.cdbanchq  crawrel.nrcheque
                          crawrel.nralinea  crawrel.vlcheque
                          WITH NO-BOX NO-LABEL DOWN WIDTH 80 FRAME f_lanc_276.
-                     
+
     DOWN STREAM str_2 WITH FRAME f_lanc_276.
-    
+
     DOWN STREAM str_3 WITH FRAME f_lanc_276.
 
     ASSIGN aux_qtdecheq = aux_qtdecheq + 1
            aux_totdcheq = aux_totdcheq + crawrel.vlcheque
            tot_qtdecheq = tot_qtdecheq + 1
            tot_totdcheq = tot_totdcheq + crawrel.vlcheque.
-        
+
     IF   LINE-COUNTER(str_2) > 77 THEN
          PAGE STREAM str_2.
-         
+
     IF   LINE-COUNTER(str_3) > 77 THEN
          PAGE STREAM str_3.
- 
+
     IF   LAST-OF(crawrel.cdagenci) THEN
          DO:
-             DISPLAY STREAM str_2 aux_qtdecheq aux_totdcheq 
+             DISPLAY STREAM str_2 aux_qtdecheq aux_totdcheq
                      WITH FRAME f_total_276.
-       
-             DISPLAY STREAM str_3 aux_qtdecheq aux_totdcheq 
+
+             DISPLAY STREAM str_3 aux_qtdecheq aux_totdcheq
                      WITH FRAME f_total_276.
 
              DISPLAY STREAM str_3 WITH FRAME f_visto_276.
-       
+
              OUTPUT STREAM str_3 CLOSE.
          END.
-                           
+
 END.   /*   Fim  do rel.  crrl276  */
- 
+
 IF   tot_qtdecheq > 0 THEN
      DO:
-         DISPLAY STREAM str_2 tot_qtdecheq tot_totdcheq 
+         DISPLAY STREAM str_2 tot_qtdecheq tot_totdcheq
                      WITH FRAME f_total_geral_276.
-       
+
          OUTPUT STREAM str_2 CLOSE.
- 
+
          ASSIGN glb_nrcopias = 1
                 glb_nmformul = "80col"
                 glb_nmarqimp = aux_nmarqrl1.
-                    
-         RUN fontes/imprim.p.  
+
+         RUN fontes/imprim.p.
      END.
 
 RUN fontes/fimprg.p.
