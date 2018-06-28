@@ -35,16 +35,6 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             12/07/2017 - #706116 Melhoria na pc_lista_aplicacoes_web, utilizando pc_escreve_xml no 
   --                          lugar de gene0007.pc_insere_tag pois a mesma fica lenta para xmls muito grandes (Carlos)
-  --
-  --             18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
-  --
-  --             04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
-  --                          com debito em Conta Investimento.
-  --                          Heitor (Mouts) - Chamado 821010.
-  --
-  --             29/01/2018 - #770327 Criada a rotina pc_lista_demons_apli para a impressão do demonstrativo de
-  --                          aplicação com filtro de datas (Carlos)
-  --
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -1835,6 +1825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         END IF;
 
         --Executar rotina para acumular aplicacoes
+        
         APLI0001.pc_acumula_aplicacoes (pr_cdcooper        => pr_cdcooper             --> Cooperativa
                                        ,pr_cdprogra        => 'ATENDA'                --> Nome do programa chamador
                                        ,pr_nrdconta        => rw_crapass.nrdconta     --> Nro da conta da aplicação RDCA
@@ -3301,6 +3292,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_index_resgate VARCHAR2(25);
       vr_index_acumula INTEGER;
 
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
+
       -- CURSORES --
       
       -- Selecionar os dados da Cooperativa
@@ -3739,6 +3733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                       ,pr_retorno => vr_retorno
                                       ,pr_tab_acumula => vr_tab_acumula 
                                       ,pr_tab_erro => vr_tab_erro);
+                                      
         IF vr_retorno = 'NOK' THEN
           -- Tenta buscar o erro no vetor de erro
           IF vr_tab_erro.COUNT > 0 THEN
@@ -3998,6 +3993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
             vr_dscritic := 'Erro ao inserir registro na CRAPLOT.';
             RAISE vr_exc_saida;
         END;   
+        
       ELSE
         CLOSE cr_craplot;
 
@@ -4496,7 +4492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         END;
 
         -- Fim CRÉDITO
-        
+/*
         -- Consulta de lote
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -4505,6 +4501,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                        ,pr_nrdolote => 8501);
 
         FETCH cr_craplot INTO rw_craplot;
+
+        -- Fecha cursor
+        CLOSE cr_craplot;
+          
+         
 
         -- Verifica se encontrou registro de lote
         IF cr_craplot%NOTFOUND THEN
@@ -4596,9 +4597,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
               RAISE vr_exc_saida;
           END;
         END IF;
-
+        */
         -- Insercao de Registro de lancamento de debito
         BEGIN
+          /*
           INSERT INTO
             craplcm(
               cdcooper
@@ -4628,7 +4630,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
            ,pr_vlaplica
            ,rw_crapcpc.cdhscacc
            ,vr_nraplica);
+           */
+           LANC0001.pc_gerar_lancamento_conta(
+                          pr_cdcooper => pr_cdcooper      
+                         ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                         ,pr_cdagenci => rw_craplot.cdagenci
+                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdctabb => pr_nrdconta
+                         ,pr_nrdocmto => vr_nraplica
+                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                         ,pr_dtrefere => rw_craplot.dtmvtolt
+                         ,pr_vllanmto => pr_vlaplica
+                         ,pr_cdhistor => rw_crapcpc.cdhscacc
+                         ,pr_nraplica => vr_nraplica
+                         ,pr_inprolot => 1
+                         ,pr_tplotmov => 1
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
 
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+               IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                  RAISE vr_exc_saida;
+               ELSE -- Não foi possível debitar (crítica de negócio)
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
+                  RAISE vr_exc_saida;
+               END IF;
+            END IF;        
+          
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
@@ -6137,7 +6171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 				 WHERE cpc.cdprodut = pr_cdprodut
            AND cpc.cddindex = ind.cddindex;         
 			rw_crapcpc cr_crapcpc%ROWTYPE;
-			
+	
 			-- Seleciona registro de resgate disponível
 			CURSOR cr_craprga_disp(pr_cdcooper craprga.cdcooper%TYPE
 														,pr_nrdconta craprga.nrdconta%TYPE
@@ -7168,7 +7202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
 		EXCEPTION
 			WHEN vr_exc_saida THEN
-				
+
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
 			  pr_cdcritic := vr_cdcritic;
@@ -11047,7 +11081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 					RAISE vr_exc_saida;
 				END IF;
 			
-			ELSIF	rw_craprac.idtippro = 2 THEN -- Pós-fixada
+      ELSIF  rw_craprac.idtippro = 2 THEN -- Pós-fixada
 			
 			  -- Buscar as taxas acumuladas da aplicação
 				APLI0006.pc_taxa_acumul_aplic_pos(pr_cdcooper => pr_cdcooper,          --> Código da Cooperativa
@@ -13776,7 +13810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                            ,pr_vlbloque_poupa => vr_vlbloque_poupa
                                            ,pr_vlbloque_ambos => vr_vlbloque_ambos
                                            ,pr_dscritic => vr_dscritic);
-                                         
+                                   
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;                                 
