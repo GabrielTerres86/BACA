@@ -63,6 +63,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Alterado: 23/01/2018 - Reginaldo (AMcom)
   -- Ajuste: Criada procedure pc_busca_dados_risco
   --
+  --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_monta_reg_conta_xml(pr_retxml     IN OUT NOCOPY XMLType
@@ -79,7 +81,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_ris_agravado  IN crawepr.dsnivris%TYPE
                                ,pr_ris_operacao  IN crawepr.dsnivris%TYPE
                                ,pr_ris_cpf       IN crawepr.dsnivris%TYPE
-                               ,pr_numero_grupo  IN crapgrp.nrdgrupo%TYPE
+                               ,pr_numero_grupo  IN crapris.nrdgrupo%TYPE
                                ,pr_ris_melhora   IN crawepr.dsnivris%TYPE
                                ,pr_ris_final     IN crawepr.dsnivris%TYPE
                                ,pr_tipo_registro IN VARCHAR2) IS
@@ -336,8 +338,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         ORDER BY ordem;
       rw_contas_do_titular cr_contas_do_titular%ROWTYPE;
 
-    -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
+    -- Contas dos grhupos econômicos aos quais o titular da conta base está ligado
+    -- Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
     CURSOR cr_contas_grupo_economico(rw_cbase IN cr_base%ROWTYPE) IS
+    WITH grupos AS (
+        SELECT gi.cdcooper
+             , gi.nrdconta
+             , gi.tppessoa
+             , (SELECT to_char(nrcpfcgc, DECODE(inpessoa, 1, '00000000000','00000000000000')) 
+                  FROM crapass WHERE cdcooper = gi.cdcooper AND nrdconta = gi.nrdconta) nrcpfcgc
+             , DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, '00000000000'),
+                                      substr(to_char(gi.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+             , ge.idgrupo
+             ,decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
+                                      ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH')  dsdrisgp
+             , (SELECT DECODE(ass.inpessoa, 1, to_char(ass.nrcpfcgc, '00000000000'),
+                                              substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) 
+                  FROM crapass ass
+                 WHERE ass.cdcooper = gi.cdcooper 
+                   AND ass.nrdconta = gi.nrdconta) nrcpfcgc_nrdconta
+          FROM tbcc_grupo_economico        ge
+              ,tbcc_grupo_economico_integ  gi
+         WHERE gi.cdcooper = rw_cbase.cdcooper
+           AND gi.cdcooper = ge.cdcooper
+           AND gi.idgrupo = ge.idgrupo
+           AND ge.idgrupo IN (SELECT ge.idgrupo
+                                FROM tbcc_grupo_economico        ge
+                                    ,tbcc_grupo_economico_integ  gi
+                               WHERE ge.cdcooper = rw_cbase.cdcooper
+                                 AND gi.cdcooper = ge.cdcooper
+                                 AND gi.idgrupo = ge.idgrupo
+                                 AND DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, '00000000000'),
+                                            substr(to_char(gi.nrcpfcgc, '00000000000000'),1,8)) = rw_cbase.nrcpfcgc_compara
+                              )
+      )
+      SELECT DISTINCT grp.nrdconta
+           , grp.nrcpfcgc
+           , (SELECT dsnivris FROM crapass WHERE cdcooper = grp.cdcooper AND nrdconta = grp.nrdconta) dsnivris
+           , grp.idgrupo
+           , grp.dsdrisgp
+        FROM grupos  grp
+       WHERE grp.nrcpfcgc_nrdconta <> rw_cbase.nrcpfcgc_compara;
+
+/* -- versão antiga do grupo
     WITH grupos AS (
         SELECT gr.cdcooper
              , gr.nrdconta
@@ -377,6 +420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        WHERE grp.nrcpfcgc_nrdconta <> rw_cbase.nrcpfcgc_compara
          AND grp.nrcpfcgc_nrctasoc <> rw_cbase.nrcpfcgc_compara
          ;
+    */
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 
     -- Dados dos riscos
