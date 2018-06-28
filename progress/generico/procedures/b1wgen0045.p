@@ -3114,7 +3114,10 @@ PROCEDURE proc_cancelamento.
             IF LINE-COUNTER(str_1) = PAGE-SIZE(str_1) THEN
                DO:
                   PAGE STREAM str_1.
-                  VIEW STREAM str_1 FRAME f_seg.
+				  IF par_tprelato = 5 THEN
+					VIEW STREAM str_1 FRAME f_seg.
+		          ELSE
+                    VIEW STREAM str_1 FRAME f_seg_vida.
                END.
 
             DISP STREAM str_1 crapass.cdagenci 
