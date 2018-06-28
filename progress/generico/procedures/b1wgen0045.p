@@ -113,7 +113,10 @@
 			    16/05/2018 - Alteração nas procedures "gera-relatorio" e "proc_cancelamento"
 				             para inclusão do relatório do tipo 7 (Motivos de Cancelamento 
 							 de seguros de vida individual) (Reginaldo/AMcom)
-                         
+
+
+                28/06/2018 - Correção para exibição correta do cabeçalho na quebra de página
+				             do relatório de cancelamentos do seguro de vida. (Reginaldo/AMcom)         
 ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
