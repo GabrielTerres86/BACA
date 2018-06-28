@@ -283,22 +283,24 @@ BEGIN
       END IF;
 
       -- Chama o calculo da proxima parcela
-      EMPR0011.pc_calcula_prox_parcela_pos(pr_cdcooper => pr_cdcooper, 
-                                           pr_flgbatch => TRUE, 
-                                           pr_dtcalcul => pr_dtmvtolt, 
-                                           pr_dtefetiv => rw_epr_pep.dtmvtolt, 
-                                           pr_dtdpagto => rw_epr_pep.dtdpagto, 
-                                           pr_txmensal => rw_epr_pep.txmensal,
-                                           pr_vlrdtaxa => vr_tab_craptxi(vr_tab_craplcr(rw_epr_pep.cdlcremp)),
-                                           pr_qtpreemp => rw_epr_pep.qtpreemp, 
-                                           pr_vlsprojt => rw_epr_pep.vlsprojt, 
-                                           pr_vlemprst => rw_epr_pep.vlemprst, 
-                                           pr_nrparepr => rw_epr_pep.nrparepr,
-                                           pr_dtvencto => rw_epr_pep.dtvencto,
-                                           pr_qtdias_carencia => vr_qtdias_carencia,
-                                           pr_tab_parcelas => vr_tab_parcelas, 
-                                           pr_cdcritic => vr_cdcritic, 
-                                           pr_dscritic => vr_dscritic);
+      EMPR0011.pc_calcula_prox_parcela_pos(pr_cdcooper => pr_cdcooper
+                                          ,pr_flgbatch => TRUE
+                                          ,pr_dtcalcul => pr_dtmvtolt
+                                          ,pr_nrdconta => rw_epr_pep.nrdconta
+                                          ,pr_nrctremp => rw_epr_pep.nrctremp
+                                          ,pr_dtefetiv => rw_epr_pep.dtmvtolt
+                                          ,pr_dtdpagto => rw_epr_pep.dtdpagto
+                                          ,pr_txmensal => rw_epr_pep.txmensal
+                                          ,pr_vlrdtaxa => vr_tab_craptxi(vr_tab_craplcr(rw_epr_pep.cdlcremp))
+                                          ,pr_qtpreemp => rw_epr_pep.qtpreemp
+                                          ,pr_vlsprojt => rw_epr_pep.vlsprojt
+                                          ,pr_vlemprst => rw_epr_pep.vlemprst
+                                          ,pr_nrparepr => rw_epr_pep.nrparepr
+                                          ,pr_dtvencto => rw_epr_pep.dtvencto
+                                          ,pr_qtdias_carencia => vr_qtdias_carencia
+                                          ,pr_tab_parcelas => vr_tab_parcelas
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
       -- Se houve erro
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
@@ -344,21 +346,21 @@ BEGIN
     pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
                   ,pr_tab_parc_epr => vr_tab_parc_epr);
 
-    -- Encerrar o job do processamento paralelo dessa agencia
-    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                ,pr_idprogra => pr_cdagenci
-                                ,pr_des_erro => pr_dscritic);
-    -- Se houve erro
-    IF pr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-
     -- Finaliza agencia no controle do batch
     GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
                                        ,pr_cdcritic   => vr_cdcritic
                                        ,pr_dscritic   => vr_dscritic);
     -- Se houve erro
     IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Encerrar o job do processamento paralelo dessa agencia
+    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                ,pr_idprogra => pr_cdagenci
+                                ,pr_des_erro => pr_dscritic);
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
 
