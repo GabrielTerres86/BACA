@@ -10,9 +10,13 @@
  *				  23/02/2016 - Validacao nonome do funcionario (Jean Michel). 
  *
  *				  27/07/2016 - Adicionar chamada da funcao validaDados no Titular (Lucas Ranghetti #457281)
-				  
-				  18/08/2016 - Adicionado maxlength no nome do funcionario 
-							   conforme solicitado no chamado 504050. (Kelvin)
+ *				  
+ *				  18/08/2016 - Adicionado maxlength no nome do funcionario 
+ *							   conforme solicitado no chamado 504050. (Kelvin)
+ *							   
+ *				  14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+ *                             Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
+ *			   
  * --------------
  */ 
 ?>
@@ -50,6 +54,13 @@
 	<a style="padding: 3px 0 0 3px;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 	
 	<input id="dsbantrf" name="dsbantrf" type="text" value="<? echo getByTagName($registro,'dsbantrf') ?>" />
+	
+	<label for="tpctatrf"><? echo utf8ToHtml('Tipo de Conta:') ?></label>
+	<select id="tpctatrf" name="tpctatrf">
+		<option value="1" <?php if (getByTagName($registro,'tpctatrf') == "1"){ echo " selected"; } ?>> CONTA CORRENTE </option>
+		<option value="2" <?php if (getByTagName($registro,'tpctatrf') == "2"){ echo " selected"; } ?>> <? echo utf8ToHtml('POUPANCA') ?> </option>
+		<option value="3" <?php if (getByTagName($registro,'tpctatrf') == "3"){ echo " selected"; } ?>> <? echo utf8ToHtml('CONTA DE PAGAMENTO') ?> </option>
+	</select>
 	
 	<label for="cdagetrf"><? echo utf8ToHtml('Agencia:') ?></label>
 	<input id="cdagetrf" name="cdagetrf" type="text" onChange="buscaAgencia($(this).val()); return false;" value="<? echo getByTagName($registro,'cdagetrf') ?>" />	
