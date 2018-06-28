@@ -100,7 +100,10 @@ IF  aux_xml_operacao <> "" THEN
 IF aux_dsstatus = "OK" THEN
   RETURN "OK".
 ELSE
-  RETURN "NOK".
+  DO:
+	  par_dsmsgerr = aux_xml_operacao.
+	  RETURN "NOK".
+  END.
 
 
     

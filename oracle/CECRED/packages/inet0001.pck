@@ -242,7 +242,9 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
            ,qtmesagd INTEGER
            ,qtmesrec INTEGER
            ,qtmesfut INTEGER
-           ,idtpdpag INTEGER);    /* 1 - Transf / 2 - Pagamento */
+           ,idtpdpag INTEGER    /* 1 - Transf / 2 - Pagamento */
+           ,hrcancel VARCHAR2(5)
+           ,nrhrcanc INTEGER);
 
   --Tipo de tabela de memoria para limites
   TYPE typ_tab_limite IS TABLE OF typ_reg_limite INDEX BY PLS_INTEGER;
@@ -767,10 +769,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
+
+      --Cursores
+      CURSOR cr_hrcancel IS
+      SELECT age.hrcancel
+        FROM crapage age
+       WHERE age.cdcooper = pr_cdcooper
+         AND age.cdagenci = pr_cdagenci;
+
       --Variaveis Locais
       vr_flsgproc BOOLEAN;
       vr_hrinipag INTEGER;
       vr_hrfimpag INTEGER;
+      vr_hrcancel INTEGER;
       vr_qtmesagd INTEGER;
       vr_qtmesfut INTEGER;
       vr_qtmesrec INTEGER;
@@ -1033,12 +1044,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_idesthor:= 2;
           END IF;
 
+          OPEN cr_hrcancel;
+          FETCH cr_hrcancel
+          INTO vr_hrcancel;
+          CLOSE cr_hrcancel;
+
           --Criar registro para tabela limite horarios
           vr_index_limite:= pr_tab_limite.Count+1;
           pr_tab_limite(vr_index_limite).hrinipag:= GENE0002.fn_converte_time_data(vr_hrinipag);
           pr_tab_limite(vr_index_limite).hrfimpag:= GENE0002.fn_converte_time_data(vr_hrfimpag);
+          pr_tab_limite(vr_index_limite).hrcancel:= GENE0002.fn_converte_time_data(vr_hrcancel);
           pr_tab_limite(vr_index_limite).nrhorini:= vr_hrinipag;
           pr_tab_limite(vr_index_limite).nrhorfim:= vr_hrfimpag;
+          pr_tab_limite(vr_index_limite).nrhrcanc:= vr_hrcancel;
           pr_tab_limite(vr_index_limite).idesthor:= vr_idesthor;
           pr_tab_limite(vr_index_limite).iddiauti:= NULL;
           pr_tab_limite(vr_index_limite).flsgproc:= vr_flsgproc;
@@ -4638,7 +4656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             -- Tenta buscar o erro no vetor de erro
             IF vr_tab_erro.COUNT > 0 THEN
               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-              vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+              vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrctatrf;
             ELSE
               vr_cdcritic:= 0;
               vr_dscritic:= 'Erro na validacao da conta destino.';
