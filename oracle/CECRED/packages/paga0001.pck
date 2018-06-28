@@ -1611,7 +1611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)        
 
-	   27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. (Mario Bernat - AMcom)
+	   27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. Inclusão de PRAGMA (Mario Bernat - AMcom)
 		
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -15983,7 +15983,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
   PROCEDURE pc_insere_crapcre(pr_cdcooper IN crapcob.cdcooper%TYPE
                              ,pr_nrcnvcob IN crapcre.nrcnvcob%TYPE
                              ,pr_dtmvtolt IN crapcre.dtmvtolt%TYPE
-                             ,pr_nrremret IN OUT crapcre.nrremret%TYPE
+                             ,pr_nrremret IN crapcre.nrremret%TYPE
                              ,pr_intipmvt IN crapcre.intipmvt%TYPE
                              ,pr_nmarquiv IN crapcre.nmarquiv%TYPE
                              ,pr_flgproce IN crapcre.flgproce%TYPE
@@ -16022,34 +16022,22 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     EXCEPTION
       WHEN Dup_val_on_index THEN
 
-        --Realiza mais uma atualização incrementando sequencia
-        pr_nrremret := pr_nrremret +1;
-        --Criar movimento retorno
-        BEGIN
-          INSERT INTO crapcre
-                     (crapcre.cdcooper
-                     ,crapcre.nrcnvcob
-                     ,crapcre.dtmvtolt
-                     ,crapcre.nrremret
-                     ,crapcre.intipmvt
-                     ,crapcre.nmarquiv
-                     ,crapcre.flgproce
-                     ,crapcre.cdoperad
-                     ,crapcre.dtaltera)
-              VALUES
-                     (pr_cdcooper
-                     ,pr_nrcnvcob
-                     ,pr_dtmvtolt
-                     ,pr_nrremret
-                     ,pr_intipmvt
-                     ,pr_nmarquiv
-                     ,pr_flgproce
-                     ,pr_cdoperad
-                     ,pr_dtaltera);
-        EXCEPTION
-          WHEN Others THEN
-            pr_dscritic:= 'Erro ao inserir na tabela crapcre. '||sqlerrm;
-        END;
+        -- buscar o ultimo movimento de retorno do convenio do dia
+        OPEN cr_crapcre1 (pr_cdcooper => pr_cdcooper
+                         ,pr_nrcnvcob => pr_nrcnvcob
+                         ,pr_dtmvtolt => pr_dtmvtolt
+                         ,pr_intipmvt => 2);   --Retorno
+        --Posicionar no proximo registro
+        FETCH cr_crapcre1 INTO rw_crapcre;
+        --Se nao encontrar
+        IF cr_crapcre1%NOTFOUND THEN
+          
+          --Selecionar movimento retorno
+          pr_dscritic:= 'Erro ao buscar ultimo movimento de retorno do convenio: '|| pr_nrcnvcob ||'.';
+        END IF;
+        
+        --Fechar Cursor       
+        CLOSE cr_crapcre1;
 
       WHEN Others THEN
         pr_dscritic:= 'Erro ao inserir na tabela crapcre. '||sqlerrm;
