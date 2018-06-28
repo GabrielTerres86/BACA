@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Oscar A. Junior
-   Data    : Setembro/2011.                     Ultima atualizacao: 27/02/2014
+   Data    : Setembro/2011.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -20,8 +20,10 @@
                         02/08/2012 - Ajuste do format no campo nmrescop 
                                      (David Kruger).
                                      
-   27/02/2014 - Mudancas nos formats para comportar o aumento do nome resumido
-                das cooperativas para 20 chars (Carlos)
+                        27/02/2014 - Mudancas nos formats para comportar o aumento do nome resumido
+                                     das cooperativas para 20 chars (Carlos)
+
+						26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
    ........................................................................ */
 
@@ -121,7 +123,7 @@ FORM crapcop.nmrescop FORMAT "X(20)"
 FORM SKIP
      aux_fill[1]
      SKIP
-     "TOTAL CECRED"
+     "TOTAL AILOS"
      aux_vltotcre[1]     AT 24
      aux_vltotcre[2]
      aux_vltotcre[3]
@@ -180,7 +182,7 @@ FORM crapcop.nmrescop  FORMAT "X(20)"
 
 FORM aux_fill[1]
      SKIP
-     "TOTAL CECRED"
+     "TOTAL AILOS"
      aux_vltotcal[1] AT 24
      aux_vltotcal[2]
      aux_vltotcal[3]
@@ -193,7 +195,7 @@ FORM aux_fill[1]
 
 FORM aux_fill[1]
      SKIP
-     "TOTAL CECRED"
+     "TOTAL AILOS"
      aux_vltotcal[6] AT 24
      aux_vltotcal[7]
      aux_vltotcal[8]

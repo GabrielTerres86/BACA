@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 29/03/2017
+   Data    : Marco/2004                        Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa:
                      
@@ -256,13 +256,13 @@ FORM "Opcao:"       AT 6
                      HELP "Informe Codigo de Historico para Debito Automatico"
      tel_vltrfdeb    AT 41  LABEL "Tarifa Debito Automatico"
                      HELP "Informe Valor tarifa para debito automatico"
-     tel_cdhisrep           LABEL "Hist.Repasse Cecred"
+     tel_cdhisrep           LABEL "Hist.Repasse Ailos"
                      VALIDATE(CAN-FIND(craphis WHERE
                                   craphis.cdcooper = glb_cdcooper        AND  
                                   craphis.cdhistor = INPUT tel_cdhisrep) OR
                               tel_cdhisrep = 0,
                               "526 - Historico nao Cadastrado")
-                     HELP "Informe Codigo de historico para repasse CECRED"
+                     HELP "Informe Codigo de historico para repasse AILOS"
      tel_tprepass    AT 28 LABEL "Forma de Repasse"
                      HELP "Selecione o tipo de repasse"
      tel_flgdbssd    AT 55 LABEL "Debita sem Saldo"

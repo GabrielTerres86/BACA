@@ -33,6 +33,8 @@
                              
                 21/08/2014 - Alterado l-semInteg para iniciar como true para nao retornar sempre verdadeiro
                              mesmo que nao encontre registros na funcao ttlSemIntegracao (Lucas R. Softdesk 161454)
+
+				01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                                         
                 
 */
@@ -540,7 +542,7 @@ FUNCTION montaTela RETURNS LOGICAL():
 
     IF AVAILABLE crapcop THEN
        DO:
-          ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif"
+          ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif"
                  nomedacooperativa    = TRIM(crapcop.nmrescop).
          
           IF INDEX(crapcop.nmrescop, " ") <> 0  THEN

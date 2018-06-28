@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------------------
 
-    Ultima Atualizacao : 14/07/2017.
+    Ultima Atualizacao : 01/06/2018
                         
     Alteracoes: 20/10/2008 - Chamar BO que envia email-s na procedure
 	                           envia-email (Gabriel).
@@ -32,6 +32,8 @@
 														 
 						    14/07/2017 - Alteração da leitura da tabela crapedp para desconsiderar
 														 eventos EAD na procedure EnviaPac, SD.710219 (Jean Michel)
+
+			    01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 														 
 ------------------------------------------------------------------------------*/
 
@@ -723,7 +725,7 @@ PROCEDURE envia-email:
                                                    ,INPUT  "N"                                        /* par_flg_remove_anex */
                                                    ,INPUT  "N"                                        /* par_flg_remete_coop */
                                                    ,INPUT  "Sistema de Relacionamento"                /* par_des_nome_reply  */
-                                                   ,INPUT  "gc.oqs@cecred.coop.br"                    /* par_des_email_reply */
+                                                   ,INPUT  "gc.oqs@ailos.coop.br"                    /* par_des_email_reply */
                                                    ,INPUT  "N"                                        /* par_flg_log_batch   */
                                                    ,INPUT  "N"                                        /* par_flg_enviar      */
                                                    ,OUTPUT aux_dscritic).                             /* par_des_erro        */

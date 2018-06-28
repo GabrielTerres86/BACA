@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Setembro/2004                   Ultima atualizacao: 22/01/2014
+   Data    : Setembro/2004                   Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -95,6 +95,9 @@
                            (Daniele).        
                            
               22/01/2014 - Incluir VALIDATE crapeca (Lucas R).   
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 .............................................................................*/
 
 { includes/var_batch.i }
@@ -324,8 +327,8 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                      RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br", 
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br", 
                                 INPUT '"ERRO DE SEQUENCIA - "' +
                                       '"COO505 - "' +
                                       crapcop.nmrescop,
@@ -424,8 +427,8 @@ PROCEDURE proc_processa_arquivo.
             RUN enviar_email IN b1wgen0011
                                (INPUT glb_cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "convenios@cecred.coop.br," +
-                                      "cartoes@cecred.coop.br",
+                                INPUT "convenios@ailos.coop.br," +
+                                      "cartoes@ailos.coop.br",
                                 INPUT '"ERROS DIVERSOS - "' +
                                       '"COO505 - "' + crapcop.nmrescop,
                                 INPUT SUBSTRING(aux_nmarquiv,8),
@@ -512,8 +515,8 @@ PROCEDURE proc_processa_arquivo.
             RUN enviar_email IN b1wgen0011
                                 (INPUT glb_cdcooper,
                                  INPUT glb_cdprogra,
-                                 INPUT "convenios@cecred.coop.br," +
-                                       "cartoes@cecred.coop.br",
+                                 INPUT "convenios@ailos.coop.br," +
+                                       "cartoes@ailos.coop.br",
                                  INPUT '"RECUSA TOTAL - "' +
                                        '"COO505 - "' + 
                                        crapcop.nmrescop,

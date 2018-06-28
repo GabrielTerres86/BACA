@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 06/10/2017
+   Data    : 03/10/2006                        Ultima atualizacao: 28/05/2018
 
    Dados referentes ao programa:
 
@@ -169,6 +169,8 @@
                
                04/04/2018 - Adicionada chamada pc_permite_lista_prod_tipo para verificar se o 
                             tipo de conta permite a contrataçao dos produtos. PRJ366 (Lombardi).
+
+			   28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                
 ..............................................................................*/
 
@@ -2188,7 +2190,7 @@ PROCEDURE obtem-acesso-anterior.
            aux_flgtrans = FALSE.
            
     IF  par_flmobile  THEN
-        ASSIGN aux_dstransa = "Consulta data do acesso anterior ao Cecred Mobile".
+        ASSIGN aux_dstransa = "Consulta data do acesso anterior ao AILOS Mobile".
     ELSE
         ASSIGN aux_dstransa = "Consulta data do acesso anterior a Conta On-Line".    
 
@@ -4572,8 +4574,8 @@ PROCEDURE confirma-senha:
                                 RUN enviar_email_completo IN h-b1wgen0011 
                                    (INPUT par_cdcooper,
                                     INPUT "B1WNET0002",
-                                    INPUT "CECRED" +
-                                          "<cpd@cecred.coop.br>",
+                                    INPUT "AILOS" +
+                                          "<cpd@ailos.coop.br>",
                                     INPUT aux_emailseg,
                                     INPUT "Conta On-Line - Senha Incorreta",
                                     INPUT "",

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Maio/2008.                       Ultima atualizacao: 05/12/2016.
+   Data    : Maio/2008.                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -42,6 +42,8 @@
                             Concred pela Viacredi (Daniel).
 
                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 
@@ -279,7 +281,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
       IF   INT(SUBSTR(aux_setlinha,1,4)) <> crabcop.cdagebcb  THEN
            DO:
                RUN cria_rejeitado 
-                   (INPUT "Codigo de Agencia nao pertence a CECRED.").
+                   (INPUT "Codigo de Agencia nao pertence ao AILOS.").
                 
                NEXT.
            END.
@@ -289,7 +291,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
            DO:
                RUN cria_rejeitado 
                    (INPUT "Codigo de Agencia da Conta " + 
-                       "Centralizadora pertence a CECRED.").
+                       "Centralizadora pertence ao AILOS.").
                NEXT.
            END.
 

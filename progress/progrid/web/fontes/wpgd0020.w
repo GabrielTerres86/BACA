@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------------------
     
-    Ultima Alteracao : 19/10/2015.
+    Ultima Alteracao : 01/06/2018
 
     Alteracoes: 20/10/2008 - Chamar BO que envia e-mails na procedure envia-email (Gabriel).
 
@@ -29,6 +29,8 @@
                 27/05/2016 - Alterada a mensagem "Informe a Quantidade de Eventos para o(s) 
                              Eixo(s) Temático(s) selecionado(s)." pela "Preencha o campo Quantidade
                              de Eventos para os Eventos Selecionados" (Vanessa)
+
+				01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 -----------------------------------------------------------------------------*/
 { includes/var_progrid.i }
@@ -681,7 +683,7 @@ PROCEDURE envia-email :
                   DO:                  
            RUN enviar_email IN b1wgen0011(INPUT crapcop.cdcooper,
                                        INPUT "wpgd0020",
-                                       INPUT "progrid@cecred.coop.br",
+                                       INPUT "progrid@ailos.coop.br",
                                        INPUT "PROGRID - EVENTOS SELECIONADOS"  +
                                              " - " + crapcop.nmrescop + " - " +
                                              crapage.nmresage,

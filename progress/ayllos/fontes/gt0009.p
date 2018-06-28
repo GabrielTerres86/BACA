@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Outubro/2004.                       Ultima atualizacao: 30/05/2014
+   Data    : Outubro/2004.                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -56,6 +56,9 @@
                
                30/05/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 .............................................................................*/
 { includes/var_online.i }
 
@@ -732,7 +735,7 @@ DO WHILE TRUE:
                                 BELL.
                                 MESSAGE glb_dscritic.
                                 MESSAGE "Opcao valida somente para a"
-                                        "cooperativa 3-CECRED".
+                                        "cooperativa 3-AILOS".
                                 glb_cdcritic = 0.
                                 RETURN.
                             END.

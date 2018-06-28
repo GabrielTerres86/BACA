@@ -9,7 +9,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Marco/2002.                        Ultima atualizacao: 10/06/2013
+   Data    : Marco/2002.                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -86,7 +86,8 @@
                             
                10/06/2013 - Alteração função enviar_email_completo para
                             nova versão (Jean Michel).
-                            
+                     
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).       
 ............................................................................. */
 
 { includes/var_batch.i "NEW" }
@@ -438,7 +439,7 @@ IF   aux_flgfxser   THEN
                   RUN enviar_email_completo IN b1wgen0011
                                   (INPUT glb_cdcooper,
                                    INPUT "crps321",
-                                   INPUT "cpd@cecred.coop.br",
+                                   INPUT "cpd@ailos.coop.br",
                                    INPUT "vendas@blucopy.com.br," +
                                          "variaveis@blucopy.com.br",
                                    INPUT "Cartas " + crapcop.nmrescop ,

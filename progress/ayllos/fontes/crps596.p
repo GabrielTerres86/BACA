@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gati - Diego
-   Data    : Maio/2011                       Ultima atualizacao: 25/09/2015
+   Data    : Maio/2011                       Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -68,6 +68,9 @@
                             (Tiago/Gielow #332160).             
                             
                05/01/2016 - Adicionado coluna de pre-aprovado (Anderson)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 DEF STREAM str_1. /* GERAL */
@@ -327,7 +330,7 @@ IF   rel_totsegpr > 0   THEN
                             (INPUT glb_cdcooper,
                              INPUT glb_cdprogra,
                              INPUT "projetocecred@mdsinsure.com," +
-                                   "seguros@cecred.coop.br",
+                                   "seguros@ailos.coop.br",
                              INPUT "SEGUROS PRESTAMISTAS",
                              INPUT SUBSTRING(aux_nmarqimp,4,7) + ".txt",
                              INPUT FALSE).

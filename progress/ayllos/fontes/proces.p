@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Junho/2004.                     Ultima atualizacao: 15/08/2017
+   Data    : Junho/2004.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -46,6 +46,9 @@
                            
                15/08/2017 - Exibir a quantidade de pendencias quando solicitar o processo
                             (Lucas Ranghetti #665982)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -263,7 +266,7 @@ REPEAT:
                      choice = 4 THEN
                       DO:  
                           IF  choice = 4 AND glb_cdcooper <> 3 THEN
-                              MESSAGE "Opcao disponivel somente para CECRED.".
+                              MESSAGE "Opcao disponivel somente para AILOS.".
                           ELSE
                           RUN fontes/criticas_proces.p. /* Verifica processo */
                       END.

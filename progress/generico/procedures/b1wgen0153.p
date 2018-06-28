@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 21/11/2017
+    Data    : Fevereiro/2013                Ultima Atualizacao: 26/05/2018
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -156,6 +156,8 @@
                 19/03/2018 - Procedure lista-tipo-conta deletada pois nao sera mais usada. 
                              Alteracao para buscar descricao do tipo de conta do Oracle.
                              PRJ366 (Lombardi).
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -170,7 +172,7 @@
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
-DEF VAR aux_dsemail AS CHAR INITIAL "tarifas@cecred.coop.br"           NO-UNDO.
+DEF VAR aux_dsemail AS CHAR INITIAL "tarifas@ailos.coop.br"            NO-UNDO.
 DEF VAR aux_dsassunto AS CHAR                                          NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.

@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Gabriel
-    Data    : Novembro/2008                   Ultima Atualizacao : 13/12/2013
+    Data    : Novembro/2008                   Ultima Atualizacao : 26/05/2018
     
     Dados referente ao programa:
     
@@ -59,6 +59,9 @@
                              a escrita será PA (André Euzébio - Supero).              
                               
                 13/12/2013 - Incluir VALIDATE crapseg, crawseg (Lucas R.)
+
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/
 
 DEF STREAM str_1.  /* Rel496 - Registros importados e rejeitados */
@@ -429,7 +432,7 @@ IF   VALID-HANDLE (b1wgen0011)   THEN
                                  (INPUT glb_cdcooper,
                                   INPUT glb_cdprogra,
                                   INPUT "projetocecred@addmakler.com.br," +
-                                        "cecredseguros@cecred.coop.br",
+                                        "cecredseguros@ailos.coop.br",
                                   INPUT "Seguros Auto", 
                                   INPUT "crrl496.doc",
                                   INPUT TRUE). 
@@ -444,7 +447,7 @@ IF   VALID-HANDLE (b1wgen0011)   THEN
                                   (INPUT glb_cdcooper,
                                    INPUT glb_cdprogra,
                                    INPUT "projetocecred@addmakler.com.br," +
-                                         "cecredseguros@cecred.coop.br",
+                                         "cecredseguros@ailos.coop.br",
                                    INPUT "Seguros Auto", 
                                    INPUT "crrl496.doc;crrl496.txt",
                                    INPUT TRUE). 

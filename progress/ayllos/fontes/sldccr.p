@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/97.                          Ultima atualizacao: 06/12/2016
+   Data    : Marco/97.                          Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -110,7 +110,9 @@
                             número do cartão (Lunelli).
                                                       
                06/12/2016 - Alterado campo dsdepart para cddepart.
-                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)       
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).      
                                                       
 .............................................................................*/
 
@@ -750,7 +752,7 @@ IF  par_flgtecla  THEN
                                             IF  aux_flgadmbb  = FALSE AND 
                                                 glb_cddepart <> 2     THEN /* CARTOES */
                                                 DO:
-                                                    glb_dscritic = "Administradora de cartoes CECRED VISA bloqueada.".
+                                                    glb_dscritic = "Administradora de cartoes AILOS VISA bloqueada.".
                                                     MESSAGE glb_dscritic.
                                                     glb_dscritic = "".
                                                     PAUSE 2 NO-MESSAGE.
@@ -979,7 +981,7 @@ IF  par_flgtecla  THEN
     
                          END. /* Fim do IF  tt-cartoes.cdadmcrd = 3 */
                     ELSE
-                        MESSAGE "Opcao valida somente para cartoes CECRED VISA".
+                        MESSAGE "Opcao valida somente para cartoes AILOS VISA".
                     END.
 
                 END. /* Fim do IF  aux_flgliber */

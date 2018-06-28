@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Marco/2008                          Ultima Atualizacao: 22/06/2012
+   Data    : Marco/2008                          Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa :
 
@@ -19,7 +19,10 @@
    
                16/04/2012 - Fonte substituido por gt0008p.p (Tiago).
                
-               22/06/2012 - Substituido gncoper por crapcop (Tiago).          
+               22/06/2012 - Substituido gncoper por crapcop (Tiago).      
+			   
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			       
 ..............................................................................*/
 
 { includes/var_online.i  }
@@ -154,7 +157,7 @@ DO WHILE TRUE:
                BELL.
                MESSAGE glb_dscritic.
                MESSAGE "Opcao valida somente para a"
-                       "cooperativa 3-CECRED".
+                       "cooperativa 3-AILOS".
                glb_cdcritic = 0.
                RETURN.
            END.

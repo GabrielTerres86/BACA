@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0078.p
     Autor     : David/Gabriel
-    Data      : Marco/2011                   Ultima Atualizacao: 01/12/2014
+    Data      : Marco/2011                   Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -24,6 +24,9 @@
 
 				         14/03/2018 -  Ajuste para buscar a descricao do tipo de conta do oracle. 
                                PRJ366 (Lombardi)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 
 .............................................................................*/
 
@@ -648,7 +651,7 @@ PROCEDURE imprime-termo-adesao:
          SKIP(3)
          "COOPERATIVA"
          SKIP(1)
-         "Cooperativa filiada a Cooperativa Central de Credito Urbano - CECRED,"
+         "Cooperativa filiada a Cooperativa Central de Credito Urbano - AILOS,"
          "prestadora do servico de DDA"
          SKIP(1)
          aux_nmextcop FORMAT "x(100)"
@@ -1035,7 +1038,7 @@ PROCEDURE imprime-termo-exclusao:
          SKIP(3)
          "COOPERATIVA"
          SKIP(1)
-         "Cooperativa filiada a Cooperativa Central de Credito Urbano - CECRED,"
+         "Cooperativa filiada a Cooperativa Central de Credito Urbano - AILOS,"
          "prestadora do servico de DDA"
          SKIP(1)
          aux_nmextcop FORMAT "x(100)"

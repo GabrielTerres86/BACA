@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 16/05/2018
+   Data    : 12/09/2005                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -470,6 +470,7 @@
 			                Manutencao, registros que possuam o campo cdmensag com o valor nulo.
 			                Chamado INC0011898 - Gabriel (Mouts).
 
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                08/06/2018 - Cobranças com campo "dtvctori" nulo não eram apresentados no Internet Banking
                             na Tela: Cobrancas Bancarias >> Manutencao. Logica alterada para verificar
                             o campo, caso ele seja nulo, utilizar dtvencto, se não utilizar o proprio campo.
@@ -8577,7 +8578,7 @@ PROCEDURE buca_log:
                                 ASSIGN aux_dsoperad = "001-BB".
                             ELSE
                             IF  crapcco.cddbanco = 085 THEN
-                                ASSIGN aux_dsoperad = "085-CECRED".
+                                ASSIGN aux_dsoperad = "085-AILOS".
                             ELSE
                                 ASSIGN aux_dsoperad = "000-Nao encontrado".
                         END.

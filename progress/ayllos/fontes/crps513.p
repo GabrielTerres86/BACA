@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Junho/2008.                       Ultima atualizacao: 19/09/2017.
+   Data    : Junho/2008.                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -36,6 +36,8 @@
                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
                19/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................ */
 
@@ -438,7 +440,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
       IF   gnctace.cdcooper = 3 THEN   /* Central */     
            DO:
                RUN cria_rejeitado 
-                   (INPUT "Para este hist. Conta CECRED nao integrado.").
+                   (INPUT "Para este hist. Conta AILOS nao integrado.").
                NEXT.           
       END.
 

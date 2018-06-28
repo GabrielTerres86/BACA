@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2008                     Ultima atualizacao: 12/09/2011
+   Data    : Janeiro/2008                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -18,6 +18,8 @@
                             
                12/09/2011 - Alterado o email de inss@bancoob.com.br para 
                             francieli@cecred.coop.br (Henrique).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
 ............................................................................. */
 
@@ -101,7 +103,7 @@ IF   aux_contador > 0   THEN
                      
          RUN enviar_email IN h-b1wgen0011 (INPUT glb_cdcooper,
                                            INPUT glb_cdprogra,
-                                           INPUT "francieli@cecred.coop.br",
+                                           INPUT "francieli@ailos.coop.br",
                                            INPUT "INSS - 2a. VIA DE " +
                                                  "CARTOES/SENHAS",
                                            INPUT "crps502.txt",

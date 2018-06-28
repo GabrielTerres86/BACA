@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Gabriel
-   Data    : Outubro/2011                          Ultima alteracao: 03/10/2017
+   Data    : Outubro/2011                          Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -33,7 +33,10 @@
                             cada cooperativa filiada na central para posterior geraçao de 
                             arquivo para o Matera. (Jonatas-Supero)                                  
                             
-               03/10/2017 - SD762958 - Ajuste no rateio das tarifas por PA (Marcos-Supero)             
+               03/10/2017 - SD762958 - Ajuste no rateio das tarifas por PA (Marcos-Supero)     
+			   
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			           
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -401,7 +404,7 @@ PROCEDURE emite-relatorio-609:
                                     tt-detlctctl.nrctacrd = 7254
                                     tt-detlctctl.dsrefere = "CREDITO C/C " + 
                                                             STRING(crabcop.nrctactl,"zzzz,zzz,9") + 
-                                                            " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                            " AILOS REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
                                                             " RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA"
                                     tt-detlctctl.intiplct = 0.
                     
@@ -426,7 +429,7 @@ PROCEDURE emite-relatorio-609:
                                     tt-detlctctl.nrctacrd = 1452
                                     tt-detlctctl.dsrefere = "DEBITO C/C " + 
                                                             STRING(crapcop.nrctactl,"zzzz,zzz,9") + 
-                                                            " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                            " AILOS REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
                                                             " PAGAS A OUTRAS COOPERATIVAS DO SISTEMA"
                                     tt-detlctctl.intiplct = 0.
                     
@@ -473,7 +476,7 @@ PROCEDURE emite-relatorio-609:
                                          tt-detlctctl.nrctacrd = 1452
                                          tt-detlctctl.dsrefere = "DEBITO C/C " + 
                                                                  STRING(crapcop.cdagectl,"zzzz,zzz,9") + 
-                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                                 " AILOS REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
                                                                  " PAGAS A OUTRAS COOPERATIVAS DO SISTEMA"
                                          tt-detlctctl.intiplct = 1.
                              END.
@@ -520,7 +523,7 @@ PROCEDURE emite-relatorio-609:
                                          tt-detlctctl.nrctacrd = 7254
                                          tt-detlctctl.dsrefere = "CREDITO C/C " + 
                                                                  STRING(crabcop.nrctactl,"zzzz,zzz,9") + 
-                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                                 " AILOS REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
                                                                  " RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA"
                                          tt-detlctctl.intiplct = 1.
                              END.

@@ -40,7 +40,9 @@
                           Prj. 322 (Jean Michel).   
 						  
              22/02/2018 - Pj 322 - SM 10 - Alteração Relatório de Inscrições (Márcio Mouts)
-                        - Incluir as colunas de Telefone, Celular e e-mail no relatório de inscrições no menu Assembleias			 
+                        - Incluir as colunas de Telefone, Celular e e-mail no relatório de inscrições no menu Assembleias		
+						
+			 06/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).	 
                           
  ****************************************************************************/
  
@@ -451,7 +453,7 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
 
           IF AVAILABLE crapcop   THEN
              DO:
-                ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif"
+                ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif"
                        nomeDaCooperativa    = TRIM(crapcop.nmrescop).
             
                 IF INDEX(crapcop.nmrescop, " ") <> 0  THEN

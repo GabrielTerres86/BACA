@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -113,6 +113,8 @@
                05/10/2017 - Alterado rotina alterar-endereco-viainternetbank
                             para garantir que nao crie 2 enc com tipo 12. 
 							              PRJ339 -CRM (Odirlei-AMcom).	
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 .............................................................................*/
 
 
@@ -2113,7 +2115,7 @@ PROCEDURE alterar-endereco:
               IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
                 DO:
                   ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
-                                      + " Entre em contato com a equipe do CDC da Cecred."
+                                      + " Entre em contato com a equipe do CDC da Ailos."
                          aux_flgtrans = TRUE.
                   LEAVE TRANS_ENDERECO.
                 END.

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 29/03/2017
+   Data    : Marco/2004                        Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -110,6 +110,8 @@
 
 			   29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
 							(Jonata RKAM M311)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 DEF VAR log_nrseqatu LIKE gnconve.nrseqatu           NO-UNDO.  
@@ -957,7 +959,7 @@ PROCEDURE gera_log:
                      INPUT STRING(aux_vltrfdeb),
                      INPUT STRING(log_vltrfdeb)).
 
-    RUN alterar_log (INPUT "codigo do historico de repasse de arrecadacoes para a CECRED",
+    RUN alterar_log (INPUT "codigo do historico de repasse de arrecadacoes para o AILOS",
                      INPUT STRING(aux_cdhisrep),
                      INPUT STRING(log_cdhisrep)).
    

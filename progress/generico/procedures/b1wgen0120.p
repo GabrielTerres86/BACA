@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 15/08/2017
+    Data    : Outubro/2011                     Ultima atualizacao: 26/05/2018
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -118,6 +118,9 @@
 
 				24/01/2018 - Aumentar o campo AUX_BLIDENTI de 40 para 59 posições, pois estava truncando a tag "Final do BL"
 				             SD 812596 - Marcelo Telles Coelho
+
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+							
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -3630,7 +3633,7 @@ PROCEDURE Gera_Fita_Caixa:
                            SKIP(2)
                            "*** ATENCAO!!!! Diferenca entre o BOLETIM"
                            "e a FITA DO CAIXA" SKIP(1)
-                           "*** AVISE O Suporte CECRED ***"
+                           "*** AVISE O Suporte AILOS  ***"
                            SKIP(2)
                            WITH NO-BOX FRAME f_aviso.
         

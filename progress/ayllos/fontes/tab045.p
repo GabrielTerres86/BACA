@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Agosto/2007                        Ultima alteracao: 07/12/2016
+   Data    : Agosto/2007                        Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -94,6 +94,8 @@
                
                07/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                
 ............................................................................. */
 
@@ -166,7 +168,7 @@ FORM tel_inpessoa LABEL "Tipo de Pessoa" AUTO-RETURN
 
     
 FORM "Operacional"   AT 48
-     "CECRED"        AT 69
+     "AILOS"         AT 69
      SKIP(1)
      "Valor Limite/Dia (Transf/Pagamentos):" AT 06
      tel_vllimweb[1] AT 45 NO-LABEL 
@@ -237,7 +239,7 @@ FORM "Operacional"   AT 48
           FRAME f_dados_fisica.
           
 FORM "Operacional"   AT 47
-     "CECRED"        AT 68
+     "AILOS"         AT 68
      SKIP(1)
      "Valor Limite/Dia Transferencia:" AT 11
      tel_vllimtrf[1] AT 44 NO-LABEL 
@@ -314,7 +316,7 @@ FORM "Operacional"   AT 47
           FRAME f_dados_juridica.      
 
 FORM "Operacional"   AT 48
-     "CECRED"        AT 69
+     "AILOS"         AT 69
      SKIP(1)
      "Valor maximo aplicacao:"          AT 21
      tel_vlmaxapl[1] NO-LABEL 
@@ -642,7 +644,7 @@ DO WHILE TRUE:
                      IF tel_vllimweb[1] > tel_vllimweb[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vllimweb[1]
                                        WITH FRAME f_dados_fisica.
@@ -653,7 +655,7 @@ DO WHILE TRUE:
                      IF tel_vllimted[1] > tel_vllimted[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vllimted[1]
                                        WITH FRAME f_dados_fisica.
@@ -665,7 +667,7 @@ DO WHILE TRUE:
                      IF tel_vlvrbole[1] > tel_vlvrbole[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vlvrbole[1]
                                        WITH FRAME f_dados_fisica.
@@ -677,7 +679,7 @@ DO WHILE TRUE:
                      IF tel_qtdiatro[1] > tel_qtdiatro[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_qtdiatro[1]
                                        WITH FRAME f_dados_fisica.
@@ -689,7 +691,7 @@ DO WHILE TRUE:
                      IF tel_qtdiaaso[1] > tel_qtdiaaso[2]  THEN
                         DO:
                             MESSAGE "O valor deve ser inferior ou igual " +
-                                    "ao estipulado pela CECRED.".
+                                    "ao estipulado pelo AILOS.".
       
                             NEXT-PROMPT tel_qtdiaaso[1]
                                         WITH FRAME f_dados_fisica.
@@ -701,7 +703,7 @@ DO WHILE TRUE:
                      IF tel_qtdiablo[1] > tel_qtdiablo[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_qtdiablo[1]
                                        WITH FRAME f_dados_fisica.
@@ -740,7 +742,7 @@ DO WHILE TRUE:
                      IF tel_vllimtrf[1] > tel_vllimtrf[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vllimtrf[1]
                                        WITH FRAME f_dados_juridica.
@@ -752,7 +754,7 @@ DO WHILE TRUE:
                      IF tel_vllimpgo[1] > tel_vllimpgo[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vllimpgo[1]
                                        WITH FRAME f_dados_juridica.
@@ -764,7 +766,7 @@ DO WHILE TRUE:
                      IF tel_vllimted[1] > tel_vllimted[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vllimted[1]
                                        WITH FRAME f_dados_juridica.
@@ -776,7 +778,7 @@ DO WHILE TRUE:
                      IF tel_vlvrbole[1] > tel_vlvrbole[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_vlvrbole[1]
                                        WITH FRAME f_dados_juridica.
@@ -788,7 +790,7 @@ DO WHILE TRUE:
                      IF tel_qtdiatro[1] > tel_qtdiatro[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_qtdiatro[1]
                                        WITH FRAME f_dados_juridica.
@@ -800,7 +802,7 @@ DO WHILE TRUE:
                      IF tel_qtdiaaso[1] > tel_qtdiaaso[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_qtdiaaso[1]
                                        WITH FRAME f_dados_juridica.
@@ -812,7 +814,7 @@ DO WHILE TRUE:
                      IF tel_qtdiablo[1] > tel_qtdiablo[2]  THEN
                         DO:
                            MESSAGE "O valor deve ser inferior ou igual " +
-                                   "ao estipulado pela CECRED.".
+                                   "ao estipulado pelo AILOS.".
       
                            NEXT-PROMPT tel_qtdiablo[1]
                                        WITH FRAME f_dados_juridica.
@@ -1088,7 +1090,7 @@ DO WHILE TRUE:
                         IF tel_vlmaxapl[1] > tel_vlmaxapl[2]  THEN
                            DO:
                               MESSAGE "O valor deve ser inferior ou igual " +
-                                      "ao estipulado pela CECRED.".
+                                      "ao estipulado pelo AILOS.".
       
                               NEXT-PROMPT tel_vlmaxapl[1]
                                    WITH FRAME f_dados_captacao.
@@ -1100,7 +1102,7 @@ DO WHILE TRUE:
                         IF tel_vlminapl[1] > tel_vlminapl[2]  THEN
                            DO:
                               MESSAGE "O valor deve ser inferior ou igual " +
-                                      "ao estipulado pela CECRED.".
+                                      "ao estipulado pelo AILOS.".
       
                               NEXT-PROMPT tel_vlminapl[1]
                                    WITH FRAME f_dados_captacao.
@@ -1112,7 +1114,7 @@ DO WHILE TRUE:
                         IF tel_vlmaxres[1] > tel_vlmaxres[2]  THEN
                            DO:
                               MESSAGE "O valor deve ser inferior ou igual " +
-                                      "ao estipulado pela CECRED.".
+                                      "ao estipulado pelo AILOS.".
       
                               NEXT-PROMPT tel_vlmaxres[1]
                                    WITH FRAME f_dados_captacao.
@@ -1124,7 +1126,7 @@ DO WHILE TRUE:
                         IF tel_mesested[1] > tel_mesested[2]  THEN
                            DO:
                               MESSAGE "O valor deve ser inferior ou igual " +
-                                      "ao estipulado pela CECRED.".
+                                      "ao estipulado pelo AILOS.".
       
                               NEXT-PROMPT tel_mesested[1]
                                    WITH FRAME f_dados_captacao.
@@ -1136,7 +1138,7 @@ DO WHILE TRUE:
                         IF tel_mrecoted[1] > tel_mrecoted[2]  THEN
                            DO:
                               MESSAGE "O valor deve ser inferior ou igual " +
-                                      "ao estipulado pela CECRED.".
+                                      "ao estipulado pelo AILOS.".
       
                               NEXT-PROMPT tel_mrecoted[1]
                                    WITH FRAME f_dados_captacao.
@@ -1148,7 +1150,7 @@ DO WHILE TRUE:
                         IF tel_vctoproc[1] > tel_vctoproc[2]  THEN
                            DO:
                               MESSAGE "O valor deve ser inferior ou igual " +
-                                      "ao estipulado pela CECRED.".
+                                      "ao estipulado pelo AILOS.".
       
                               NEXT-PROMPT tel_vctoproc[1]
                                    WITH FRAME f_dados_captacao.
@@ -1161,7 +1163,7 @@ DO WHILE TRUE:
                        IF tel_vllimint[1] > tel_vllimint[2]  THEN
                           DO:
                              MESSAGE "O valor deve ser inferior ou igual " +
-                                     "ao estipulado pela CECRED.".
+                                     "ao estipulado pelo AILOS.".
         
                              NEXT-PROMPT tel_vllimint[1]
                                          WITH FRAME f_dados_captacao.
@@ -1708,7 +1710,7 @@ PROCEDURE grava_dados:
                        " " + STRING(TIME,"HH:MM:SS") + "' -->'"               +
                        " Operador " + par_cdoperad                            +
                        " alterou o Valor do limite da internet de"            +
-                       " Pessoa " + aux_dspessoa + " da CECRED de R$ "        +
+                       " Pessoa " + aux_dspessoa + " do AILOS de R$ "         +
                        STRING(DECI(ENTRY(7,aux_dstextab,";")),"zzz,zzz,zz9.99")   +
                        " para R$ " + STRING(par_vllimweb[2],"zzz,zzz,zz9.99")     +
                        " >> log/tab045.log").
@@ -1719,7 +1721,7 @@ PROCEDURE grava_dados:
                        " " + STRING(TIME,"HH:MM:SS") + "' -->'"              + 
                        " Operador " + par_cdoperad                           +
                        " alterou o Valor do limite de TED"                   +
-                       " Pessoa " + aux_dspessoa + " da CECRED de R$ "       +
+                       " Pessoa " + aux_dspessoa + " do AILOS de R$ "        +
                        STRING(DECI(ENTRY(14,aux_dstextab,";")),"zzz,zzz,zz9.99") +
                        " para R$ " + STRING(par_vllimted[2],"zzz,zzz,zz9.99")    +
                        " >> log/tab045.log").
@@ -1730,7 +1732,7 @@ PROCEDURE grava_dados:
                         " " + STRING(TIME,"HH:MM:SS") + "' -->'"               + 
                         " Operador " + par_cdoperad                            +
                         " alterou o Valor VR Boleto "                          +
-                        " Pessoa " + aux_dspessoa + " da CECRED de R$ "        +
+                        " Pessoa " + aux_dspessoa + " do AILOS de R$ "         +
                         STRING(DECI(ENTRY(16,aux_dstextab,";")),"zzz,zzz,zz9.99")  +
                         " para R$ " + STRING(par_vlvrbole[2],"zzz,zzz,zz9.99") +
                         " >> log/tab045.log").
@@ -1787,7 +1789,7 @@ PROCEDURE grava_dados:
                        " Operador " + par_cdoperad                              +
                        " alterou o Valor do limite de transferencia"            +
                        " da internet de Pessoa " + aux_dspessoa                 +
-                       " da CECRED de R$ "                                      +
+                       " do AILOS de R$ "                                       +
                        STRING(DECI(ENTRY(7,aux_dstextab,";")),"zzz,zzz,zz9.99")     +
                        " para R$ " + STRING(par_vllimtrf[2],"zzz,zzz,zz9.99")       +
                        " >> log/tab045.log").
@@ -1798,7 +1800,7 @@ PROCEDURE grava_dados:
                        " Operador " + par_cdoperad                              +
                        " alterou o Valor do limite de pagamento"                +
                        " da internet de Pessoa " + aux_dspessoa                 +
-                       " da CECRED de R$ "                                      +
+                       " do AILOS de R$ "                                       +
                        STRING(DECI(ENTRY(12,aux_dstextab,";")),"zzz,zzz,zz9.99")    +
                        " para R$ " + STRING(par_vllimpgo[2],"zzz,zzz,zz9.99")       +
                        " >> log/tab045.log").
@@ -1808,7 +1810,7 @@ PROCEDURE grava_dados:
                        " " + STRING(TIME,"HH:MM:SS") + "' -->'"                 + 
                        " Operador " + par_cdoperad                              +
                        " alterou o Valor do limite de TED"                      +
-                       " Pessoa " + aux_dspessoa + " da CECRED de R$ "          +
+                       " Pessoa " + aux_dspessoa + " do AILOS de R$ "           +
                        STRING(DECI(ENTRY(14,aux_dstextab,";")),"zzz,zzz,zz9.99")    +
                        " para R$ " + STRING(par_vllimted[2],"zzz,zzz,zz9.99")       +
                        " >> log/tab045.log").
@@ -1818,7 +1820,7 @@ PROCEDURE grava_dados:
                         " " + STRING(TIME,"HH:MM:SS") + "' -->'"                 + 
                         " Operador " + par_cdoperad                              +
                         " alterou o Valor VR Boleto "                            +
-                        " Pessoa " + aux_dspessoa + " da CECRED de R$ "          +
+                        " Pessoa " + aux_dspessoa + " do AILOS de R$ "           +
                         STRING(DECI(ENTRY(16,aux_dstextab,";")),"zzz,zzz,zz9.99")    +
                         " para R$ " + STRING(par_vlvrbole[2],"zzz,zzz,zz9.99")   +
                         " >> log/tab045.log").
@@ -1828,7 +1830,7 @@ PROCEDURE grava_dados:
                         " " + STRING(TIME,"HH:MM:SS") + "' -->'"                 + 
                         " Operador " + par_cdoperad                              +
                         " alterou Qtd. meses para aviso antes venct. procuracao " +
-                        " Pessoa " + aux_dspessoa + " da CECRED de "             +
+                        " Pessoa " + aux_dspessoa + " do AILOS de "              +
                         STRING(INTE(ENTRY(30,aux_dstextab,";")),"zz9")    +
                         " para " + STRING(par_vctoproc[2],"zz9")   +
                         " >> log/tab045.log").
@@ -1880,7 +1882,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                 +
                  " Operador " + par_cdoperad                              +
                  " alterou o Limite de erros para senha incorreta de"     +
-                 " Pessoa " + aux_dspessoa + " da CECRED de "             +
+                 " Pessoa " + aux_dspessoa + " do AILOS de "              +
                  STRING(INTE(ENTRY(8,aux_dstextab,";")),"z9")             +
                  " para " + STRING(par_nrderros[2],"z9")                  +
                  " >> log/tab045.log").
@@ -1890,7 +1892,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                 +
                  " Operador " + par_cdoperad                              +
                  " alterou o Limite de dias para primeiro acesso a"       +
-                 " internet de Pessoa " + aux_dspessoa + " da CECRED de " +
+                 " internet de Pessoa " + aux_dspessoa + " do AILOS de "  +
                  STRING(INTE(ENTRY(9,aux_dstextab,";")),"zz9")            +
                  " para " + STRING(par_qtdiaace[2],"zz9")                 +
                  " >> log/tab045.log").                      
@@ -1900,7 +1902,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                  +
                  " Operador " + par_cdoperad                               +
                  " alterou o Valor para conferencia envio"                 +
-                 " de Pessoa " + aux_dspessoa + " da CECRED de R$ "        +
+                 " de Pessoa " + aux_dspessoa + " do  AILOS de R$ "        +
                  STRING(DECI(ENTRY(10,aux_dstextab,";")),"z,zzz,zz9.99")     +
                  " para R$ " + STRING(par_vlpconfe[2],"z,zzz,zz9.99")        +
                  " >> log/tab045.log").
@@ -1910,7 +1912,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                  +
                  " Operador " + par_cdoperad                               +
                  " alterou o Limite de meses para agendamento na internet" +
-                 " de Pessoa " + aux_dspessoa + " da CECRED de "           +
+                 " de Pessoa " + aux_dspessoa + " do AILOS de "            +
                  STRING(INTE(ENTRY(11,aux_dstextab,";")),"zz9")            +
                  " para " + STRING(par_qtmesagd[2],"zz9")                  +
                  " >> log/tab045.log").
@@ -1920,7 +1922,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                  +
                  " Operador " + par_cdoperad                               +
                  " alterou o prazo de solicitacao de troca de senha na "   +
-                 " internet de Pessoa " + aux_dspessoa + " da CECRED de "  +
+                 " internet de Pessoa " + aux_dspessoa + " do AILOS de "   +
                  STRING(INTE(ENTRY(20,aux_dstextab,";")),"zz9")            +
                  " para " + STRING(par_qtdiatro[2],"zz9")                  +
                  " >> log/tab045.log").
@@ -1930,7 +1932,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                     +
                  " Operador " + par_cdoperad                                  +
                  " alterou o prazo de alteracao de senha apos solicitacao"    +
-                 " na internet de Pessoa " + aux_dspessoa + " da CECRED de "  +
+                 " na internet de Pessoa " + aux_dspessoa + " do AILOS de "   +
                  STRING(INTE(ENTRY(21,aux_dstextab,";")),"zz9")               +
                  " para " + STRING(par_qtdiaaso[2],"zz9")                     +
                  " >> log/tab045.log").
@@ -1940,7 +1942,7 @@ PROCEDURE grava_dados:
                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                  +
                  " Operador " + par_cdoperad                               +
                  " alterou o prazo de bloqueio acesso a conta na  "        +
-                 " internet de Pessoa " + aux_dspessoa + " da CECRED de "  +
+                 " internet de Pessoa " + aux_dspessoa + " do AILOS de "   +
                  STRING(INTE(ENTRY(22,aux_dstextab,";")),"zz9")            +
                  " para " + STRING(par_qtdiablo[2],"zz9")                  +
                  " >> log/tab045.log").
@@ -1977,7 +1979,7 @@ PROCEDURE grava_dados:
                 " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
                 " Operador " + par_cdoperad + " alterou o valor maximo "       +
                 "da aplicacao de Pessoa " + aux_dspessoa                       +
-                " da CECRED de " + " de "                                      +
+                " do AILOS de " + " de "                                       +
                 STRING(DECI(ENTRY(26,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99")  +
                 " para " + STRING(par_vlmaxapl[2],"zzz,zzz,zzz,zz9.99")           +
                 " >> log/tab045.log").
@@ -1987,7 +1989,7 @@ PROCEDURE grava_dados:
                 " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
                 " Operador " + par_cdoperad + " alterou o valor minimo "       +
                 "da aplicacao de Pessoa " + aux_dspessoa                       + 
-                " da CECRED de " + " de "                                      +
+                " do AILOS de " + " de "                                       +
                 STRING(DECI(ENTRY(27,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99")  +
                 " para " + STRING(par_vlminapl[2],"zzz,zzz,zzz,zz9.99")           +
                 " >> log/tab045.log").
@@ -1997,7 +1999,7 @@ PROCEDURE grava_dados:
                 " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
                 " Operador " + par_cdoperad + " alterou o valor maximo "       +
                 "de resgate de pessoa " + aux_dspessoa                         + 
-                " da CECRED de " + " de "                                      +
+                " do AILOS de " + " de "                                       +
                 STRING(DECI(ENTRY(28,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99")  +
                 " para " + STRING(par_vlmaxres[2],"zzz,zzz,zzz,zz9.99")           +
                 " >> log/tab045.log").
@@ -2016,7 +2018,7 @@ PROCEDURE grava_dados:
                 " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
                 " Operador " + par_cdoperad + " alterou a quantidade de meses " +
                 "para agendamento TED de pessoa " + aux_dspessoa               + 
-                " da CECRED de " + STRING(INTE(ENTRY(32,aux_dstextab,";")),"999") +
+                " do AILOS de " + STRING(INTE(ENTRY(32,aux_dstextab,";")),"999") +
                 " para " + STRING(par_mesested[2],"999")                       +
                 " >> log/tab045.log").
 
@@ -2034,7 +2036,7 @@ PROCEDURE grava_dados:
                 " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
                 " Operador " + par_cdoperad + " alterou a quantidade de meses " +
                 "para agendamento recorrente de TED de pessoa " + aux_dspessoa + 
-                " da CECRED de " + STRING(INTE(ENTRY(34,aux_dstextab,";")),"999") +
+                " do AILOS de " + STRING(INTE(ENTRY(34,aux_dstextab,";")),"999") +
                 " para " + STRING(par_mrecoted[1],"999")                       +
                 " >> log/tab045.log").
                 
@@ -2054,7 +2056,7 @@ PROCEDURE grava_dados:
                   " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
                   " Operador " + par_cdoperad + " alterou o valor maximo " +
                   " de integralizacao de cotas de pessoa " + aux_dspessoa + 
-                  " da CECRED de " + STRING(INTE(ENTRY(36,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99") +
+                  " do AILOS de " + STRING(INTE(ENTRY(36,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99") +
                   " para " + STRING(par_vllimint[2],"zzz,zzz,zzz,zz9.99")                       +
                   " >> log/tab045.log").                
         

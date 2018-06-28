@@ -730,7 +730,7 @@
               15/12/2017 - Inserção do campo idcobope. Inclusão do vinculo com a cobertura. PRJ404 (Lombardi)
 
               01/12/2017 - P410 - Alteracao Calculo IOF - incluir o Valor IOF complementar por atraso (Jean -Mout´s)
-  
+
                           21/11/2017 - Inclusão do campo flgpreap na procedure altera-valor-proposta,
                                                          Prj. 402 (Jean Michel)
 	  
@@ -767,13 +767,17 @@
               
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
-              
+
+			 
+
 			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
               22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
                            Incluida validacao das linhas de credito 100,800,900 e 6901 e do campo
                            par_idquapro. PRJ366 (Lombardi)
            
+		      26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 		      16/06/2018 - Alterado para verificar o campo nrplnovo na crapbpr, caso tenha valor neste campo,
 			               deve ser pego este campo, caso contrario pegar do campo nrdplaca.
 						   (Alcemir Mout's) - (PRB0040101).
@@ -3025,7 +3029,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
                        tt-proposta-epr.vliofepr = 0
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof.
-
+                       
                        
 				IF  AVAIL crapepr THEN
                   DO:
@@ -3085,11 +3089,11 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).
                         END.
                 END.
-                      
+
                      ASSIGN aux_qtdias_carencia = 0.
                      IF crawepr.idcarenc > 0 THEN
                      DO:
-                     
+
                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                        
                        /* Efetuar a chamada a rotina Oracle  */
@@ -3941,7 +3945,7 @@ PROCEDURE valida-dados-gerais:
                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
                         
                         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                        
+
                         ASSIGN aux_cdcritic = 0
                                aux_dscritic = ""
                                aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
@@ -4873,22 +4877,22 @@ PROCEDURE proc_qualif_operacao:
                    NO-LOCK NO-ERROR.
 
         IF  AVAIL crabepr THEN DO:
-		    FOR FIRST crapris FIELDS(qtdiaatr) 
-                WHERE crapris.cdcooper = par_cdcooper 
+		FOR FIRST crapris FIELDS(qtdiaatr) 
+            WHERE crapris.cdcooper = par_cdcooper 
                   AND crapris.dtrefere = aux_dtmvtoan
                   AND crapris.inddocto = 1
-		    	  AND crapris.nrdconta = par_nrdconta
+			  AND crapris.nrdconta = par_nrdconta
 		    	  AND crapris.nrctremp = crabepr.nrctremp
-		    	  AND crapris.cdorigem = 3
+			  AND crapris.cdorigem = 3
               NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-            END.
+        END.
 
-          /* Se contrato a liquidar já é um refinanciamento, força 
-		     qualificação mínima como "Renegociação" 
+		/* Se contrato a liquidar já é um refinanciamento, força 
+		    qualificação mínima como "Renegociação" 
 		     Reginaldo (AMcom) - Mar/2018                     */
-          IF crabepr.idquaprc > 1 THEN
-			 ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+		IF crabepr.idquaprc > 1 THEN
+			ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
 
         END.
 
@@ -6382,7 +6386,7 @@ PROCEDURE verifica-outras-propostas:
     							 CREATE tt-msg-confirma.
 								 ASSIGN aux_contador = aux_contador + 1				  
 										tt-msg-confirma.inconfir = aux_contador
-										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.".
 							END.
 
 					END.
@@ -6811,7 +6815,7 @@ PROCEDURE grava-proposta-completa:
 
        END.
       END.
-    
+
     ASSIGN aux_contbens = 0
            aux_contabns = 0
            aux_idchsdup = FALSE.

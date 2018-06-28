@@ -292,7 +292,9 @@
                             (Diogo - MoutS)
 					                
            11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
-                                                        
+               
+           26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                                         
 		   10/06/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
 ............................................................................. */
 
@@ -859,7 +861,7 @@ PROCEDURE busca_dados_limite_incluir:
 				DO:
     					CREATE tt-msg-confirma.
 						ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
 				END.
 
 		END.

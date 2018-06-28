@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme/Supero
-    Data    : Fevereiro/2010                   Ultima atualizacao: 13/01/2017
+    Data    : Fevereiro/2010                   Ultima atualizacao: 26/05/2018
 
     Dados referentes ao programa:
 
@@ -166,6 +166,8 @@
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
 
 			   13/01/2017 - Tratamento incorporacao Transposul (Diego).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -777,7 +779,7 @@ DO WHILE TRUE:
         DO:
             BELL.
             MESSAGE "Operador sem autorizacao para processar arquivos"
-                    "do Banco CECRED".
+                    "do Banco AILOS".
             NEXT.
         END.
      
@@ -809,7 +811,7 @@ DO WHILE TRUE:
 				   tel_nmprgexe <> "DEVOLU" AND
 				   tel_nmprgexe <> "DEVDOC" THEN
 				DO:
-				  MESSAGE tel_nmprgexe + ", deve ser executada na cooperativa CECRED".
+				  MESSAGE tel_nmprgexe + ", deve ser executada na cooperativa AILOS".
 				  NEXT.
 				END.
 
@@ -3276,7 +3278,7 @@ PROCEDURE verifica_arquivos:
 
           CREATE crawarq.
           ASSIGN crawarq.dscooper = IF   aux_tparquiv = "RELACIONAMENTO" THEN
-                                         "CECRED"
+                                         "AILOS"
                                     ELSE crapcop.nmrescop
                  crawarq.tparquiv = aux_tparquiv
                  crawarq.nmarquiv = aux_nmarquiv.

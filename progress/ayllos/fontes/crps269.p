@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah 
-   Data    : Agosto/1999                       Ultima atualizacao: 05/06/2017
+   Data    : Agosto/1999                       Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -81,6 +81,10 @@
 							
 			   23/01/2017 - Adicionada nova coluna de premio do seguro,
 							conforme solicitado no chamado 829811. (Kelvin)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -385,9 +389,9 @@ IF   tot_qtsegnov > 0 OR tot_qtsegcan > 0 OR tot_qtsegalt > 0 THEN
          RUN enviar_email IN b1wgen0011
                             (INPUT glb_cdcooper,
                              INPUT glb_cdprogra,
-                             INPUT "cecred.ftpchubb@mdsinsure.com,"         +
-                                   "pendencia.cecredseguros@mdsinsure.com," +
-                                   "seguros@cecred.coop.br",
+                             INPUT "ailos.ftpchubb@mdsinsure.com,"         +
+                                   "pendencia.ailosseguros@mdsinsure.com," +
+                                   "seguros@ailos.coop.br",
                              INPUT "SEGUROS DE VIDA",
                              INPUT SUBSTRING(aux_nmarqimp,4,7) + ".txt",
                              INPUT FALSE).

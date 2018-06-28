@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                      Ultima atualizacao: 16/06/2017
+   Data    : Abril/2004                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -146,6 +146,9 @@
 
               16/06/2017 - Adicionado e-mail convenios@cecred.coop.br, conforme
                            solicitado no chamado 687836 (Kelvin).
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 .............................................................................*/
                         
 { includes/var_batch.i}
@@ -449,8 +452,8 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         RUN enviar_email IN b1wgen0011
                          (INPUT glb_cdcooper,
                           INPUT glb_cdprogra,
-                          INPUT "financeiro@cecred.coop.br," +
-                                "convenios@cecred.coop.br",
+                          INPUT "financeiro@ailos.coop.br," +
+                                "convenios@ailos.coop.br",
                           INPUT '"Lancamentos Arrecadacoes Convenios"' +
                                 " - " + CAPS(crabcop.nmrescop),
                           INPUT SUBSTRING(aux_arqrel_1, 4),
@@ -544,8 +547,8 @@ PROCEDURE processa_convenios_deb_cred.
         
         DOWN STREAM str_1 WITH FRAME f_movtos.
     
-        IF   TRIM(aux_nmrescop) = "CECRED"   OR
-             TRIM(aux_nmcopdom) = "CECRED"   THEN
+        IF   TRIM(aux_nmrescop) = "AILOS"   OR
+             TRIM(aux_nmcopdom) = "AILOS"   THEN
              DO:
     
                 DISP STREAM str_2
@@ -851,7 +854,7 @@ PROCEDURE processa_convenios_deb_cred.
                     WITH FRAME f_movtos_dom.
                DOWN STREAM str_1 WITH FRAME f_movtos_dom.
 
-               IF  TRIM(crapcop.nmrescop) = "CECRED"   THEN
+               IF  TRIM(crapcop.nmrescop) = "AILOS"   THEN
                    DO: 
                        DISP  STREAM str_2
                              aux_nmrescop
@@ -908,7 +911,7 @@ PROCEDURE processa_convenios_deb_cred.
                                            INPUT aux_vlrrepas, /* vldocmto */
                                            INPUT aux_nrdconta_debito, /* nrdconta */
                                            INPUT 1, /* idseqttl */
-                                           INPUT "CECRED", /* nmprimtl */
+                                           INPUT "AILOS", /* nmprimtl */
                                            INPUT 05463212, /* nrcpfcgc */
                                            INPUT 2, /* inpessoa */
                                            INPUT gnconve.cdbccrcb, /* cdbanfav */
@@ -972,7 +975,7 @@ PROCEDURE processa_convenios_deb_cred.
                     WITH FRAME f_movtos_dom.
                DOWN STREAM str_1 WITH FRAME f_movtos_dom.
                
-               IF   TRIM(crapcop.nmrescop) = "CECRED"   THEN
+               IF   TRIM(crapcop.nmrescop) = "AILOS"   THEN
                     DO:
                         DISP  STREAM str_2
                               aux_nmrescop

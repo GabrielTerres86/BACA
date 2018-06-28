@@ -584,7 +584,7 @@ PROCEDURE envia-email :
 				
 			    RUN enviar_email_completo IN b1wgen0011(INPUT INTEGER(ab_unmap.aux_cdcooper)
 				  									   ,INPUT "wpgd0055"
-					  								   ,INPUT "progrid@cecred.com.br"
+					  								   ,INPUT "progrid@ailos.com.br"
 													   ,INPUT aux_dsdemail
 													   ,INPUT "ASSEMBLEIAS - EVENTOS SELECIONADOS - " + crapcop.nmrescop
 													   ,INPUT ""

@@ -3,7 +3,7 @@
    Programa: fontes/crps547.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009                       Ultima atualizacao: 13/03/2013
+   Data    : Dezembro/2009                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -46,6 +46,8 @@
                13/03/2013 - Retirar STR0028,STR0028R2,PAG0124,PAG0124R2.
                             (Gabriel).           
                           
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 
@@ -486,8 +488,8 @@ RUN converte_arquivo IN h-b1wgen0011 (INPUT glb_cdcooper,
 
 RUN enviar_email IN h-b1wgen0011 (INPUT glb_cdcooper,
                                   INPUT glb_cdprogra,
-                                  INPUT "financeiro@cecred.coop.br",
-                                  INPUT "FECHAMENTO SPB - CECRED",
+                                  INPUT "financeiro@ailos.coop.br",
+                                  INPUT "FECHAMENTO SPB - AILOS",
                                   INPUT SUBSTR(glb_nmarqimp,4),
                                   INPUT TRUE).
                        

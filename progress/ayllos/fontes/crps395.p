@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Maio/2004                         Ultima atualizacao: 17/07/2017
+   Data    : Maio/2004                         Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -187,7 +187,9 @@
                            PRJ339 - CRM (Odirlei-AMcom)             
                            
               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
-                           PRJ339 - CRM (Odirlei-AMcom)                
+                           PRJ339 - CRM (Odirlei-AMcom)     
+						   
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).           
 
 ..............................................................................*/
 
@@ -405,7 +407,7 @@ FORM SKIP(4)
      "CONFERIDO POR: ________-______________________________________________"
      SKIP
      "CADASTRO" AT 16
-     "VISTO ( CECRED )" AT 37
+     "VISTO  ( AILOS )" AT 37
      SKIP(3)
      WITH NO-BOX NO-LABELS WIDTH 80 FRAME f_assina_355.
 
@@ -868,7 +870,7 @@ PROCEDURE Busca_Dados:
                   tt-crawcrd.nrcepend = STRING(crapenc.nrcepend, "zzzzzzz9")    WHEN AVAIL crapenc
                   tt-crawcrd.cdufende = crapenc.cdufende                        WHEN AVAIL crapenc
                   tt-crawcrd.cdsexotl = aux_cdsexotl
-                  tt-crawcrd.dsdemail = "cartoes@cecred.coop.br"                                       
+                  tt-crawcrd.dsdemail = "cartoes@ailos.coop.br"                                       
                   tt-crawcrd.dsestcvl = aux_dsestcvl
                   tt-crawcrd.dsnacion = aux_dsnacion                            
                   tt-crawcrd.nmmaettl = aux_nmmaettl                            
@@ -1156,7 +1158,7 @@ PROCEDURE Busca_Dados:
              tt-crawcrd.nrcepend = STRING(crapenc.nrcepend, "zzzzzzz9")
              tt-crawcrd.cdufende = crapenc.cdufende
              tt-crawcrd.cdsexotl = aux_cdsexotl  
-             tt-crawcrd.dsdemail = "cartoes@cecred.coop.br"                                      
+             tt-crawcrd.dsdemail = "cartoes@ailos.coop.br"                                      
              tt-crawcrd.dsestcvl = aux_dsestcvl                           
              tt-crawcrd.dsnacion = aux_dsnacion                           
              tt-crawcrd.nmmaettl = aux_nmmaettl                           
@@ -1235,12 +1237,12 @@ PROCEDURE Busca_Dados_Coop:
            IF   par_cdadmcrd = 3   THEN
                 DO:
 
-                    IF   rel_nmrescop = "CECRED"   THEN
+                    IF   rel_nmrescop = "AILOS"   THEN
                          ASSIGN rel_dsgravar = rel_dsgravar + 
                                                STRING(glb_cdcooper,"99").
 
-                    ASSIGN aux_arqxlscr = "CECRED2v_" 
-                           aux_arqxlssn = "CECRED2vs_".
+                    ASSIGN aux_arqxlscr = "AILOS2v_" 
+                           aux_arqxlssn = "AILOS2vs_".
                 END.
                 ELSE
                     ASSIGN aux_arqxlscr = rel_nmrescop + "2v_"
@@ -1455,7 +1457,7 @@ PROCEDURE Exporta_Dados:
           RUN Busca_Dados_Coop(tt-crawcrd.cdadmcrd,
                                tt-crawcrd.tpimpres). {&TrataErroInt}
 
-          ASSIGN aux_nmarqimp = "CECRED_"                   +
+          ASSIGN aux_nmarqimp = "AILOS_"                   +
                            STRING(crapcop.cdcooper,"99")    +
                            STRING(tt-crawcrd.cdadmcrd,"99") +
                            STRING(DAY(glb_dtmvtolt),"99")   + 
@@ -1584,7 +1586,7 @@ PROCEDURE Converte_Arquivo:
                          craptlc.dddebito > 0             
                    NO-LOCK ON ERROR UNDO, RETURN "NOK":
 
-      ASSIGN aux_nmarqimp = "CECRED_" + STRING(crapcop.cdcooper,"99")    +
+      ASSIGN aux_nmarqimp = "AILOS_" + STRING(crapcop.cdcooper,"99")    +
                                         STRING(craptlc.cdadmcrd,"99") +
                                         STRING(DAY(glb_dtmvtolt),"99")   + 
                                         STRING(MONTH(glb_dtmvtolt),"99") + 

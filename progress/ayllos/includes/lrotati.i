@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Abril/2007.                         Ultima atualizacao: 23/04/2014
+   Data    : Abril/2007.                         Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -34,6 +34,9 @@
               23/04/2014 - Remover a parte de tarifas da tela, e incluir
                            Central de Risco com campos Origem do Recurso,
                            Modalidade e Submodalidade (Guilherme/SUPERO)
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 IF   CAN-FIND(craplrt WHERE craplrt.cdcooper = glb_cdcooper    AND
@@ -118,7 +121,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_I, RETRY:
       IF   tel_vllimmax  > tel_vllmaxce           THEN
            DO:
                MESSAGE "Valor Limite maximo Operacional maior que Valor " +
-                       "Limite maximo CECRED.".
+                       "Limite maximo AILOS.".
                NEXT.
            END.
       

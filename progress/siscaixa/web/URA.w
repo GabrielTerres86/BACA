@@ -7,7 +7,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2006.                    Ultima atualizacao: 12/03/2018
+   Data    : Janeiro/2006.                    Ultima atualizacao: 29/05/2018
       
    Dados referentes ao programa:
 
@@ -80,7 +80,9 @@
                             retirando as inativas e atualizando os novos 
                             nomes (Acredicoop e Acentra) (Carlos)
                30/05/2018 - valida dscomple e concatena com tt-extrato_conta.dsextrat 
-			               (Alcemir Mout's - Prj. 467).							  
+			               (Alcemir Mout's - Prj. 467).		
+						   
+		       29/05/2018 - Ajustes referente alteracao da nova marca (Jonata Mouts - P413 ).					  
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -456,7 +458,7 @@ PROCEDURE p_imprime_cabec:
         aux_dsdlinha = "@@imagem /dg/som/scrcred.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 14  THEN
-        aux_dsdlinha = "@@imagem /dg/som/rodocredito.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/evolua.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 16  THEN
         aux_dsdlinha = "@@imagem /dg/som/altovale.bmp,16,0".

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego   
-   Data    : Janeiro/2007                       Ultima atualizacao: 15/05/2015
+   Data    : Janeiro/2007                       Ultima atualizacao: 26/05/2018
       
    Dados referentes ao programa:
 
@@ -21,6 +21,8 @@
 
                15/05/2015 - Projeto 158 - Servico Folha de Pagto
                             (Andre Santos - SUPERO)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ............................................................................. */
 
 DEF STREAM str_1.  
@@ -164,7 +166,7 @@ DO:
      RUN enviar_email IN b1wgen0011
                    (INPUT glb_cdcooper,
                     INPUT glb_cdprogra,
-                    INPUT "willian@cecred.coop.br",
+                    INPUT "willian@ailos.coop.br",
                     INPUT '"PENDENCIAS COM CONVENIOS"',
                     INPUT SUBSTRING(aux_nmarqimp, 4),
                     INPUT FALSE).

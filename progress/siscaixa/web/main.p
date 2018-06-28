@@ -19,6 +19,8 @@
   
         18/03/2015 - Melhoria SD 260475 (Lunelli).
 
+		26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ------------------------------------------------------------------------*/
 /*           This .W file was created with the Progress AppBuilder.     */
 /*----------------------------------------------------------------------*/
@@ -198,7 +200,7 @@ PROCEDURE process-web-request :
     "<HTML>":U SKIP
     "<HEAD>":U SKIP
     "<script language=JavaScript src='/script/formatadadosie.js'></script>" SKIP
-    "<TITLE> CECRED - CAIXA ON-LINE </TITLE>"
+    "<TITLE> AILOS - CAIXA ON-LINE </TITLE>"
     "</HEAD>":U SKIP.
   
   /* Output your custom HTML to WEBSTREAM here (using {&OUT}).                */

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 06/02/2018
+    Data    : Maio/2010                   Ultima atualizacao: 26/05/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -250,6 +250,8 @@
 			                de SIM para NAO ou vice e versa, sera gravado log na tabela CRAPLGM. Esta 
 							alteracao pode ser feita na tela CONTAS, opção Conta Corrente. 
 							Chamado INC0013673 - Gabriel (Mouts).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 .............................................................................*/
 
@@ -1515,7 +1517,7 @@ PROCEDURE Valida_Dados_Altera:
                           crapcop.cdagectl = 0             THEN
                           DO:
                              ASSIGN par_dscritic = "ATENCAO! Agencia da IF " +
-                                                   "CECRED nao cadastrada."
+                                                   "AILOS nao cadastrada."
                                     par_nmdcampo = "cdtipcta".
 
                              LEAVE ValidaAltera.

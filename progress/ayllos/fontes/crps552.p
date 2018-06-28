@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Precise
-   Data    : Janeiro/2010.                    Ultima atualizacao: 13/01/2014
+   Data    : Janeiro/2010.                    Ultima atualizacao: 26/05/2018
                                                                           
    Dados referentes ao programa:
 
@@ -40,7 +40,10 @@
                             
                20/06/2017 - Geraçao de tabela com lançamentos contábeis centralizados de 
                             cada cooperativa filiada na central para posterior geraçao de 
-                            arquivo para o Matera. (Jonatas-Supero)                                
+                            arquivo para o Matera. (Jonatas-Supero)         
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			                          
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -278,7 +281,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                   tt-detlctctl.nrctacrd = 1455
                                   tt-detlctctl.dsrefere = "DEBITO C/C " +
                                                           STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
-                                                          " COMPE CECRED REF. TAXA DEVOLUCAO CHEQUE"
+                                                          " COMPE AILOS REF. TAXA DEVOLUCAO CHEQUE"
                                   tt-detlctctl.intiplct = 1.
                                          
                       END.
@@ -320,7 +323,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                   tt-detlctctl.nrctacrd = 1455
                                   tt-detlctctl.dsrefere = "DEBITO C/C " +
                                                           STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
-                                                          " COMPE CECRED REF. TAXA ICF"
+                                                          " COMPE AILOS REF. TAXA ICF"
                                   tt-detlctctl.intiplct = 1.
                                          
                       END.
@@ -361,7 +364,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                   tt-detlctctl.nrctacrd = 1455
                                   tt-detlctctl.dsrefere = "DEBITO C/C " +
                                                           STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
-                                                          " COMPE CECRED REF. TAXA CCF"
+                                                          " COMPE AILOS REF. TAXA CCF"
                                   tt-detlctctl.intiplct = 1.
                                          
                       END.
@@ -423,7 +426,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                            tt-detlctctl.nrctacrd = 7264
                                           tt-detlctctl.dsrefere = "CREDITO C/C " + 
                                                                   STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
-                                                                  " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                                                  " COMPE AILOS REF. TIB CHEQUE ROUBO"
                                           tt-detlctctl.intiplct = 0.
                                          
                               END.
@@ -442,7 +445,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                           tt-detlctctl.nrctacrd = 1455
                                           tt-detlctctl.dsrefere = "DEBITO C/C " + 
                                                                   STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
-                                                                  " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                                                  " COMPE AILOS REF. TIB CHEQUE ROUBO"
                                           tt-detlctctl.intiplct = 0.
                                          
                               END.
@@ -470,7 +473,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                                  tt-detlctctl.nrctacrd = 7264
                                                  tt-detlctctl.dsrefere = "CREDITO C/C " + 
                                                                          STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
-                                                                         " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                                                         " COMPE AILOS REF. TIB CHEQUE ROUBO"
                                                  tt-detlctctl.intiplct = 1.
                                          
                                      END.
@@ -497,7 +500,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                                  tt-detlctctl.nrctacrd = 1455
                                                  tt-detlctctl.dsrefere = "DEBITO C/C " + 
                                                                          STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
-                                                                         " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                                                         " COMPE AILOS REF. TIB CHEQUE ROUBO"
                                                  tt-detlctctl.intiplct = 1.
                                          
                                      END.
@@ -531,7 +534,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                           tt-detlctctl.nrctacrd = 1455
                                           tt-detlctctl.dsrefere = "DEBITO C/C " +
                                                                   STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
-                                                                  " COMPE CECRED REF. TAXA DEVOLUCAO CHEQUE"
+                                                                  " COMPE AILOS REF. TAXA DEVOLUCAO CHEQUE"
                                           tt-detlctctl.intiplct = 0.
                                          
                               END.
@@ -564,7 +567,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                           tt-detlctctl.nrctacrd = 1455
                                           tt-detlctctl.dsrefere = "DEBITO C/C " +
                                                                   STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
-                                                                  " COMPE CECRED REF. TAXA ICF"
+                                                                  " COMPE AILOS REF. TAXA ICF"
                                           tt-detlctctl.intiplct = 0.
                                          
                               END.
@@ -596,7 +599,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                           tt-detlctctl.nrctacrd = 1455
                                           tt-detlctctl.dsrefere = "DEBITO C/C " +
                                                                   STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
-                                                                  " COMPE CECRED REF. TAXA CCF"
+                                                                  " COMPE AILOS REF. TAXA CCF"
                                           tt-detlctctl.intiplct = 0.
                                          
                               END.

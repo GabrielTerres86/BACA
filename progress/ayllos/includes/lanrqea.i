@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima atualizacao: 18/05/2017
+   Data    : Agosto/2000.                    Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -73,6 +73,9 @@
                21/03/2018 - Substituida verificacao "cdtipcta = 8,9,10,11" pela consulta 
                             se o produto de folhas de cheque está liberado para o tipo 
                             de conta. PRJ366 (Lombardi).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................ */
 
 DO WHILE TRUE:
@@ -376,13 +379,13 @@ DO WHILE TRUE:
                           DO:
                               IF  crapcop.cdbcoctl = 0  THEN
                                   glb_dscritic = 
-                                      "Nao ha cadastro de IF CECRED " +
+                                      "Nao ha cadastro de IF AILOS " +
                                       "na tela CADCOP.".
                               ELSE
                               IF  crapass.cdbcochq <> crapcop.cdbcoctl  THEN
                                   glb_dscritic = 
                                       "Banco para emissao de cheques " +
-                                      "da conta deve ser IF CECRED " + 
+                                      "da conta deve ser IF AILOS " + 
                                       STRING(crapcop.cdbcoctl,"999") + ".".
                           END.
                    END.

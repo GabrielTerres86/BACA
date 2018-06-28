@@ -2,7 +2,7 @@
 
    Programa  : b1wgen0028i.p
    Autor     : Sandro (GATI)
-   Data      : Novembro/2010                    Ultima Atualizacao: 14/02/2017
+   Data      : Novembro/2010                    Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -64,6 +64,8 @@
 			   14/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
 							SD 594718 (Kelvin).
                
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -767,7 +769,7 @@ FORM "\033\1071) DAS PARTES:  "
      ","
      tt-bdn_visa_cecred.cdufdcop
      " filiada a \033\107COOPERATIVA  CENTRAL  DE  CREDITO  URBANO -"
-     "CECRED\033\110, Cooperativa Central de"
+     "AILOS\033\110, Cooperativa Central de"
      SKIP
      "Credito, de  responsabilidade  limitada, inscrita  no  CNPJ/MF sob o n."
      " 05.463.212/0001-29,  estabelecida  na  Rua  Frei  Estanislau"
@@ -806,7 +808,7 @@ FORM "\033\1073) DO CONTRATO DE INTERMEDIACAO:\033\110 A \033\107COOPERATIVA"
      "\033\110, na condicao de intermediaria, para o fornecimento do Cartao"
      "de  Credito  do  Sistema"
      SKIP
-     "VISA, tipo CECRED - EMPRESARIAL a seus associados, subscreveu o"
+     "VISA, tipo AILOS - EMPRESARIAL a seus associados, subscreveu o"
      "contrato/regulamento de  adesao  ao  sistema  de  cartao  de  credito"
      SKIP
      "oferecido pelo BRADESCO, de acordo com o instrumento registrado no 1o"
@@ -1213,7 +1215,7 @@ FORM aux_dstopico FORMAT "x(202)"
 
 FORM aux_dstopico FORMAT "x(182)"
      SKIP
-     "VISA,  tipo  CECRED  -  EMPRESARIAL  a  seus  associados, subscreveu o contrato/regulamento de adesao ao sistema de cartao de credito"
+     "VISA,  tipo  AILOS   -  EMPRESARIAL  a  seus  associados, subscreveu o contrato/regulamento de adesao ao sistema de cartao de credito"
      SKIP
      "oferecido  pelo  BRADESCO, de acordo com o instrumento registrado no primeiro Cartorio de Registro de Titulos e Documentos de Osasco,"
      SKIP
@@ -1481,7 +1483,7 @@ FORM aux_dstopico FORMAT "x(182)"
 
     FORM aux_dstopico FORMAT "x(183)"
          SKIP
-         "cooperativismo,  o  Sistema  CECRED,  ao  estatuto  social da \033\107Cooperativa\033\110, as deliberacoes assembleares desta e as do seu Conselho de"
+         "cooperativismo,  o  Sistema   AILOS,  ao  estatuto  social da \033\107Cooperativa\033\110, as deliberacoes assembleares desta e as do seu Conselho de"
          SKIP
          "Administracao, aos quais a \033\107Cooperada\033\110 livre e espontaneamente aderiu ao integrar o quadro social da \033\107Cooperativa\033\110, e cujo teor as partes"
          SKIP
@@ -1779,7 +1781,7 @@ FORM aux_dstopico FORMAT "x(182)"
 
             ASSIGN aux_dslinhax  =  tt-bdn_visa_cecred.nrdocnpj + ", " +
                                     "estabelecida a " + tt-bdn_visa_cecred.dsendcop + ", n. " + TRIM(STRING(tt-bdn_visa_cecred.nrendcop,"zzz,zz9")) + ", Bairro " + tt-bdn_visa_cecred.nmbairro + ", " + tt-bdn_visa_cecred.nmcidade + ", " + tt-bdn_visa_cecred.cdufdcop + ", " +
-                                    "filiada  a  COOPERATIVA CENTRAL DE CREDITO URBANO - CECRED, Cooperativa Central de Credito, de responsabilidade limitada, inscrita no " +            
+                                    "filiada  a  COOPERATIVA CENTRAL DE CREDITO URBANO -  AILOS, Cooperativa Central de Credito, de responsabilidade limitada, inscrita no " +            
                                     "CNPJ/MF  sob  o  n.  05.463.212/0001-29, estabelecida a Rua Frei Estanislau Schaette, n. 1.201, CEP 89.037-003, Bairro Agua Verde, no " +           
                                     "municipio de Blumenau, Estado de Santa Catarina.".
 
@@ -2351,7 +2353,7 @@ PROCEDURE gera_impressao_contrato_bb:
          ","
          tt-ctr_bb.cdufdcop
          " filiada a \033\107COOPERATIVA  CENTRAL  DE  CREDITO  URBANO -"
-         "CECRED\033\110, Cooperativa Central de"
+         "AILOS\033\110, Cooperativa Central de"
          SKIP
          "Credito, de  responsabilidade  limitada, inscrita  no  CNPJ/MF sob o n."
          " 05.463.212/0001-29,  estabelecida  na  Rua  Frei  Estanislau"
@@ -3414,7 +3416,7 @@ PROCEDURE gera_impressao_entrega_carta:
                              
         ASSIGN aux_desclin1 = tt-termo-entreg-pj.nome + ", pessoa juridica de direito privado, inscrita no CNPJ sob n. " + string(tt-termo-entreg-pj.cnpj,"zz,zzz,zzz,zzzz,zz") + ", com sede na Rua " +                                                                                                                 
                               tt-termo-entreg-pj.dsendere + ", n. " + string(tt-termo-entreg-pj.nrendere) + ", Bairro " + tt-termo-entreg-pj.nmbairro + ", CEP " + string(tt-termo-entreg-pj.nrcepend,"zz,zzz,zz9") + ", na cidade de " + tt-termo-entreg-pj.nmcidade + ", Estado de " + tt-termo-entreg-pj.cdufende + ", representada" +
-                              " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA Pessoa Juridica, na pessoa do(a) Sr(a) " + string(tt-termo-entreg-pj.nmrepsol) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", declara que neste ato recebeu da Cooperativa " + 
+                              " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA Pessoa Juridica, na pessoa do(a) Sr(a) " + string(tt-termo-entreg-pj.nmrepsol) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", declara que neste ato recebeu da Cooperativa " + 
                               string(tt-termo-entreg-pj.nmrescop) + ", Inscrita no CNPJ/MF sob n. " 
                aux_desclin2 = string(tt-termo-entreg-pj.nrdocnpj,"zz,zzz,zzz,zzzz,zz") + ", o cartao de credito empresarial do seguinte portador:"
                
@@ -3608,7 +3610,7 @@ PROCEDURE gera_impressao_emissao_cartao:
          SKIP
          "a) Declaram as partes, abaixo assinadas, que a \033\107Cooperada\033\110, na pessoa de seus representantes legais, propoe e a \033\107Cooperativa\033\110 aceita que,"
          SKIP
-         "nos  termos  do  Contrato  Corporativo para Utilizacao de Cartao de Credito CECRED/VISA, seja fornecido cartao de credito corporativo"
+         "nos  termos  do  Contrato  Corporativo para Utilizacao de Cartao de Credito  AILOS/VISA, seja fornecido cartao de credito corporativo"
          SKIP
          "para a pessoa abaixo qualificada."
          SKIP
@@ -3783,7 +3785,7 @@ PROCEDURE gera_impressao_emissao_cartao:
 
     ASSIGN aux_dslinhax  = "1.2. COOPERADA: " + tt-dados_prp_emiss_ccr.nmprimtl + ", CNPJ/MF n. " + tt-dados_prp_emiss_ccr.nrcpfcgc + ", Conta corrente: " + 
                             TRIM(STRING(tt-dados_prp_emiss_ccr.nrdconta,"zzzz,zzz,9")) + 
-                            ", representada neste ato na forma do " + "estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA - Pessoa Juridica.".
+                            ", representada neste ato na forma do " + "estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA - Pessoa Juridica.".
 
    RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT SET h-b1wgen9999.
 
@@ -4059,11 +4061,11 @@ PROCEDURE segunda_via_cartao:
     
     ASSIGN aux_desclin1 = tt-segvia-cartao.nome + ", pessoa juridica de direito privado, inscrita no CNPJ sob n. " + string(tt-segvia-cartao.cnpj,"zz,zzz,zzz,zzzz,zz") + ", com sede na Rua " +                                                                                                                 
                           tt-segvia-cartao.dsendere + ", n. " + string(tt-segvia-cartao.nrendere) + ", Bairro " + tt-segvia-cartao.nmbairro + ", CEP " + string(tt-segvia-cartao.nrcepend,"zz,zzz,zz9") + ", na cidade de " + tt-segvia-cartao.nmcidade + ", Estado de " + tt-segvia-cartao.cdufende + ", representada" +
-                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA Pessoa Juridica," 
+                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA Pessoa Juridica," 
            aux_nomesoli =  tt-segvia-cartao.nmrepsol.
 
     ASSIGN aux_tituloIm = "\033\107 SOLICITACAO DE SEGUNDA VIA DE CARTAO DE CREDITO \033\110"
-           aux_desclin2 = "na pessoa do(a) Sr(a) " + string(tt-segvia-cartao.dsrepcar) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, a segunda via de cartao de credito CECRED/VISA, por motivo de " + tt-segvia-cartao.dsmotivo +
+           aux_desclin2 = "na pessoa do(a) Sr(a) " + string(tt-segvia-cartao.dsrepcar) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, a segunda via de cartao de credito  AILOS/VISA, por motivo de " + tt-segvia-cartao.dsmotivo +
                           " para o seguinte portador:".
 
     ASSIGN aux_nrcpfcgc = string(tt-segvia-cartao.nrcpftit,"99999999999")
@@ -4361,11 +4363,11 @@ PROCEDURE segunda_via_senha_cartao:
     
     ASSIGN aux_desclin1 = tt-segviasen-cartao.nome + ", pessoa juridica de direito privado, inscrita no CNPJ sob n. " + string(tt-segviasen-cartao.cnpj,"zz,zzz,zzz,zzzz,zz") + ", com sede na Rua " +                                                                                                                 
                           tt-segviasen-cartao.dsendere + ", n. " + string(tt-segviasen-cartao.nrendere) + ", Bairro " + tt-segviasen-cartao.nmbairro + ", CEP " + string(tt-segviasen-cartao.nrcepend,"zz,zzz,zz9") + ", na cidade de " + tt-segviasen-cartao.nmcidade + ", Estado de " + tt-segviasen-cartao.cdufende + ", representada" +
-                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA Pessoa Juridica," 
+                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA Pessoa Juridica," 
            aux_nomesoli =  tt-segviasen-cartao.nmrepsol.
 
     ASSIGN aux_tituloIm = "\033\107 SOLICITACAO DE SEGUNDA VIA DE SENHA DE CARTAO DE CREDITO \033\110"
-           aux_desclin2 = "na pessoa do(a) Sr(a) " + string(tt-segviasen-cartao.dsrepsen) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, uma segunda via de senha para o cartao de credito CECRED/VISA, para o seguinte portador:".
+           aux_desclin2 = "na pessoa do(a) Sr(a) " + string(tt-segviasen-cartao.dsrepsen) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, uma segunda via de senha para o cartao de credito  AILOS/VISA, para o seguinte portador:".
 
     ASSIGN aux_nrcpfcgc = string(tt-segviasen-cartao.nrcpftit,"99999999999")
            aux_nrcpfcgc = STRING(aux_nrcpfcgc,"xxx.xxx.xxx-xx").
@@ -4661,11 +4663,11 @@ PROCEDURE termo_cancela_cartao:
     
     ASSIGN aux_desclin1 = tt-termocan-cartao.nome + ", pessoa juridica de direito privado, inscrita no CNPJ sob n. " + string(tt-termocan-cartao.cnpj,"zz,zzz,zzz,zzzz,zz") + ", com sede na Rua " +                                                                                                                 
                           tt-termocan-cartao.dsendere + ", n. " + string(tt-termocan-cartao.nrendere) + ", Bairro " + tt-termocan-cartao.nmbairro + ", CEP " + string(tt-termocan-cartao.nrcepend,"zz,zzz,zz9") + ", na cidade de " + tt-termocan-cartao.nmcidade + ", Estado de " + tt-termocan-cartao.cdufende + ", representada" +
-                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA Pessoa Juridica," 
+                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA Pessoa Juridica," 
            aux_nomesoli =  tt-termocan-cartao.nmrepsol.
 
     ASSIGN aux_tituloIm = "\033\107 TERMO DE CANCELAMENTO DE CARTAO DE CREDITO \033\110"
-           aux_desclin2 = "na pessoa do(a) Sr(a) " + string(tt-termocan-cartao.dsrepcan) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, cancelamento do cartao de credito CECRED/VISA, para o seguinte portador:".
+           aux_desclin2 = "na pessoa do(a) Sr(a) " + string(tt-termocan-cartao.dsrepcan) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, cancelamento do cartao de credito  AILOS/VISA, para o seguinte portador:".
 
     ASSIGN aux_nrcpfcgc = string(tt-termocan-cartao.nrcpftit,"99999999999")
            aux_nrcpfcgc = STRING(aux_nrcpfcgc,"xxx.xxx.xxx-xx").
@@ -4954,8 +4956,8 @@ PROCEDURE altera_limite_pj:
         
     ASSIGN aux_desclin1 = tt-alt-limite-pj.nome + ", pessoa juridica de direito privado, inscrita no CNPJ sob n. " + string(tt-alt-limite-pj.cnpj,"zz,zzz,zzz,zzzz,zz") + ", com sede na Rua " +                                                                                                                 
                            tt-alt-limite-pj.dsendere + ", n. " + string(tt-alt-limite-pj.nrendere) + ", Bairro " + tt-alt-limite-pj.nmbairro + ", CEP " + string(tt-alt-limite-pj.nrcepend,"zz,zzz,zz9") + ", na cidade de " + tt-alt-limite-pj.nmcidade + ", Estado de " + tt-alt-limite-pj.cdufende + ", representada" +
-                           " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA Pessoa Juridica," +                                                                                                                                 
-                           "na pessoa do(a) Sr(a) " + string(tt-alt-limite-pj.nmrepsol) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, alteracao do limite do cartao de credito CECRED/VISA,"
+                           " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA Pessoa Juridica," +                                                                                                                                 
+                           "na pessoa do(a) Sr(a) " + string(tt-alt-limite-pj.nmrepsol) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc + ", solicita pela presente, alteracao do limite do cartao de credito  AILOS/VISA,"
            aux_desclin2  = "para o seguinte portador:"
 
            aux_nomesoli =  tt-alt-limite-pj.nmrepsol
@@ -5664,8 +5666,8 @@ PROCEDURE imprime_Alt_data_PJ:
             
     ASSIGN aux_desclin1 = tt-alt-dtvenc-pj.nome + ", pessoa juridica de direito privado, inscrita no CNPJ sob n. " + string(tt-alt-dtvenc-pj.cnpj,"zz,zzz,zzz,zzzz,zz") + ", com sede na Rua " +                                                                                                                 
                           tt-alt-dtvenc-pj.dsendere + ", n. " + string(tt-alt-dtvenc-pj.nrendere) + ", Bairro " + tt-alt-dtvenc-pj.nmbairro + ", CEP " + string(tt-alt-dtvenc-pj.nrcepend,"zz,zzz,zz9") + ", na cidade de " + tt-alt-dtvenc-pj.nmcidade + ", Estado de " + tt-alt-dtvenc-pj.cdufende + ", representada" +
-                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito CECRED/VISA Pessoa Juridica, na pessoa do(a) Sr(a) " + string(tt-alt-dtvenc-pj.nmrepsol) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc +
-                          ", solicita pela presente, alteracao da data de vencimento da fatura de cartao de credito CECRED/VISA,"
+                          " neste ato na forma do estabelecido no Contrato Para Utilizacao de Cartao de Credito  AILOS/VISA Pessoa Juridica, na pessoa do(a) Sr(a) " + string(tt-alt-dtvenc-pj.nmrepsol) + ", inscrito no CPF/MF sob n. " + aux_nrcpfcgc +
+                          ", solicita pela presente, alteracao da data de vencimento da fatura de cartao de credito  AILOS/VISA,"
 
             aux_desclin2 = "para o seguinte portador:"
             
@@ -5831,7 +5833,7 @@ PROCEDURE imprime_Alt_data_PF:
      "\033\016" tt-termo_alt_dt_venc.dsemsctr "."
      SKIP(5)
      "\0330\033x0\033\017"
-     "\033\016A CECRED"  SKIP
+     "\033\016A AILOS"  SKIP
      "\0330\033x0\033\017"
      "\033\016A/C ADMINISTRATIVO/FINANCEIRO"  SKIP(5)
      "\0330\033x0\033\017"
@@ -6499,7 +6501,7 @@ FORM SKIP
 
     OUTPUT STREAM str_1 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 84.
 
-    ASSIGN aux_tituloIm = "EXTRATO CARTAO DE CREDITO CECRED VISA".
+    ASSIGN aux_tituloIm = "EXTRATO CARTAO DE CREDITO AILOS VISA".
 
     /** TITULO **/
     DISPLAY STREAM str_1

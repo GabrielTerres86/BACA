@@ -2,7 +2,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0101.p
    Autor  : Adriano
-   Data   : Agosto/2011                      Ultima alteracao: 27/07/2017
+   Data   : Agosto/2011                      Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -68,6 +68,9 @@
                              PRJ406-FGTS(Odirlei-AMcom)      
                                      
                17/01/2018 - Alteraçoes referente ao PJ406.
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/var_internet.i } 
@@ -391,7 +394,7 @@ PROCEDURE consulta_faturas:
                 /* Convenios CECRED */ 
                 ELSE
                 DO: 
-                    ASSIGN tt-dados-pesqti.nmarrecd = 'CECRED'.
+                    ASSIGN tt-dados-pesqti.nmarrecd = 'AILOS'.
                 END.    
                 
                 

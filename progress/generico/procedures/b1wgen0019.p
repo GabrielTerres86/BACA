@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 06/03/2018 
+   Data    : 21/06/2007                        Ultima atualizacao: 26/05/2018
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -318,6 +318,8 @@
 				 20/03/2018 - Substituida verificacao "cdtipcta = 8,9,10,11" pela consulta se 
                               o produto limite de credito está liberado para o tipo de conta.
                             - Retirada alteracao do tipo de conta. Projeto 366 (Lombardi).
+
+				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -3782,7 +3784,7 @@ PROCEDURE cadastrar-novo-limite:
                              CREATE tt-msg-confirma.
                              ASSIGN aux_contador = aux_contador + 1				  
                                     tt-msg-confirma.inconfir = aux_contador
-                                    tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+                                    tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.".
                           END.
 
                     END.

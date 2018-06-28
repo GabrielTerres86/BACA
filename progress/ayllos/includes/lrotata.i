@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Abril/2007.                         Ultima atualizacao: 23/04/2014
+   Data    : Abril/2007.                         Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -44,6 +44,9 @@
 
 			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
 			                do departamento pelo código do mesmo (Renato Darosci)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................. */
 
 TRANS_A:
@@ -213,7 +216,7 @@ ELSE
            tel_vllimmax  > tel_vllmaxce           THEN
            DO:
                MESSAGE "Valor Limite maximo Operacional maior que Valor " +
-                       "Limite maximo CECRED.".
+                       "Limite maximo AILOS.".
                NEXT.
            END.
 
@@ -222,7 +225,7 @@ ELSE
            glb_cddepart = 20 ) AND	 /* TI                   */
            tel_vllmaxce < tel_vllimmax     THEN
            DO:
-               MESSAGE "Valor Limite maximo CECRED menor que Valor " +
+               MESSAGE "Valor Limite maximo AILOS menor que Valor " +
                        "Limite maximo Operacional.".
                NEXT.
            END.
@@ -449,7 +452,7 @@ ELSE
    IF   aux_qtvcapce <> tel_qtvcapce   THEN
         RUN gera_log (STRING(aux_qtvcapce,"zzz,zzz,zz9.99"),
                       STRING(tel_qtvcapce,"zzz,zzz,zz9.99"),
-                      "Quantidade de vezes do capital - CECRED").
+                      "Quantidade de vezes do capital - AILOS").
 
    IF   aux_vllimmax <> tel_vllimmax   THEN
         RUN gera_log (STRING(aux_vllimmax,"zzz,zzz,zz9.99"),
@@ -459,7 +462,7 @@ ELSE
    IF   aux_vllmaxce <> tel_vllmaxce   THEN
         RUN gera_log (STRING(aux_vllmaxce,"zzz,zzz,zz9.99"),
                       STRING(tel_vllmaxce,"zzz,zzz,zz9.99"),
-                      "Valor Limite maximo - CECRED").
+                      "Valor Limite maximo - AILOS").
 
 
    IF   aux_qtdiavig <> tel_qtdiavig   THEN

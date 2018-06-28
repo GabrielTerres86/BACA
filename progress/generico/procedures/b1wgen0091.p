@@ -55,7 +55,7 @@
 
    Programa: b1wgen0091.p                  
    Autora  : André - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 06/12/2016
+   Data    : 16/05/2011                        Ultima atualizacao: 26/05/2018
     
    Dados referentes ao programa:
    
@@ -361,6 +361,8 @@
              
                06/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
  ............................................................................*/
 
@@ -7352,7 +7354,7 @@ PROCEDURE comprova_vida:
          crapcop.nmextcop       NO-LABEL                      AT 18
          SKIP                                                 
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 13
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 28
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 28
          par_hrtransa NO-LABEL                                AT 65 
          SKIP                                                 
          "COMPROVANTE DE RENOVACAO PROVA DE VIDA INSS"        AT 21
@@ -7388,7 +7390,7 @@ PROCEDURE comprova_vida:
          crapcop.nmextcop       NO-LABEL                      AT 18
          SKIP                                                
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 13
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 28
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 28
          par_hrtransa NO-LABEL                                AT 65 
          SKIP                                                
          "COMPROVANTE DE RENOVACAO PROVA DE VIDA INSS"        AT 21
@@ -7415,7 +7417,7 @@ PROCEDURE comprova_vida:
 
   FORM   aux_nmextcop FORMAT "X(44)" NO-LABEL                 AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - " 
@@ -7446,7 +7448,7 @@ PROCEDURE comprova_vida:
   FORM   SKIP(5)
          aux_nmextcop FORMAT "X(44)" NO-LABEL                 AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - " 
@@ -7477,7 +7479,7 @@ PROCEDURE comprova_vida:
 
   FORM   aux_nmextcop FORMAT "X(44)"  NO-LABEL                AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - "
@@ -7516,7 +7518,7 @@ PROCEDURE comprova_vida:
 
   FORM   aux_nmextcop FORMAT "X(44)"  NO-LABEL                AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - "

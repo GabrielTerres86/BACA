@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                    Ultima Atualizacao: 29/03/2017
+   Data    : Marco/2004                    Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -106,6 +106,8 @@
 
 			  29/03/2017 - Ajutes devido ao tratamento da versao do layout FEBRABAN
 							(Jonata RKAM M311)
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 
@@ -616,7 +618,7 @@ PROCEDURE gera_incluir_log:
     RUN incluir_log (INPUT "valor da tarifa de debito automatico",
                      INPUT STRING(gnconve.vltrfdeb)).
 
-    RUN incluir_log (INPUT "codigo do historico de repasse de arrecadacoes para a CECRED",
+    RUN incluir_log (INPUT "codigo do historico de repasse de arrecadacoes para o AILOS",
                      INPUT STRING(gnconve.cdhisrep)).
 
     RUN incluir_log (INPUT "nome do arquivo a ser enviado para atualizacao cadastral",

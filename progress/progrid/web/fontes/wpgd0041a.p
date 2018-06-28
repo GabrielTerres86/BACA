@@ -42,6 +42,8 @@ Alterações: 28/01/2008 - Efetuado acerto na contagem de Participantes (Diego).
             09/09/2016 - Incluida a opcao de geração de todos relatórios
             quando o tipo for "TABULADA", Prj. 229. (Jean Michel).
 
+			01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ******************************************************************************/
 
 create widget-pool.
@@ -1180,7 +1182,7 @@ DO:
   
   IF AVAILABLE crapcop   THEN
   DO:
-    ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif"
+    ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif"
     nomeDaCooperativa    = TRIM(crapcop.nmrescop).
     
     IF INDEX(crapcop.nmrescop, " ") <> 0  THEN

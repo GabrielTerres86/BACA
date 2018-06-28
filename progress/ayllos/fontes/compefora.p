@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jonatas - Supero TI
-   Data    : Julho/2010.                     Ultima atualizacao:
+   Data    : Julho/2010.                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -12,6 +12,8 @@
                quando o mesmo nao chegou a tempo.
 
    Alteracoes: 18/12/2013 - Inclusao de VALIDATE crapsol (Carlos)
+
+               26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 
@@ -767,7 +769,7 @@ PROCEDURE pi_verifica_arquivos.
                     aux_cdprogra = "crps543"
                     aux_cdrelato = "-"
                     aux_posidata = 12
-                    aux_nmdbanco = 'CECRED'.
+                    aux_nmdbanco = 'AILOS'.
                    
              RUN pi_lista_arquivos.
                 
@@ -777,7 +779,7 @@ PROCEDURE pi_verifica_arquivos.
                     aux_cdprogra = "crps544"
                     aux_cdrelato = "-"
                     aux_posidata = 12
-                    aux_nmdbanco = 'CECRED'.
+                    aux_nmdbanco = 'AILOS'.
                    
              RUN pi_lista_arquivos.
                 
@@ -787,7 +789,7 @@ PROCEDURE pi_verifica_arquivos.
                     aux_cdprogra = "crps571"
                     aux_cdrelato = "-"
                     aux_posidata = 12
-                    aux_nmdbanco = 'CECRED'.
+                    aux_nmdbanco = 'AILOS'.
                    
              RUN pi_lista_arquivos.                        
          END.
