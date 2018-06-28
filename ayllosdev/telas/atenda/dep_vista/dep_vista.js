@@ -1,29 +1,32 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 24/01/2018
+   Data : Fevereiro/2007                  Última Alteração: 26/06/2018
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
 
-   Alterações: 02/10/2009 - Tratamento para listagem de depositos identificados no extrato (David).							
+   Altera??es: 02/10/2009 - Tratamento para listagem de depositos identificados no extrato (David).							
                02/09/2010 - Ajuste na função obtemSaldos (David).		
                29/06/2011 - Imprimir Extrato - Alterado para layout padrão (Rogerius - DB1).
                29/08/2011 - Imprimir Extrato - Nova coluna: Parcela (Marcelo L. Pereira - GATI).
-							 01/09/2011 - Incluir informacoes de historico e data liberacao no rodape (Gabriel)
-							 26/06/2012 - Alterado funcao Gera_Impressao(), novo esquema para impressao (Jorge)			   
-							 31/05/2013 - Fixado valor do campo inisenta e na procedure validarImpressao (Daniel)			   
-							 04/06/2013 - Incluir label[for="vlblqjud"] em controlaLayout (Lucas R.)           	   
-							 27/08/2015 - Ajuste para inclusão da nova rotina "Créditos Recebidos" (Gabriel - RKAM -> Projeto 127).	
-							 14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos. SD 320300 (Kelvin).
-							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
-							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
-							 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
-                             04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
-                                          (Jonata - RKAM P364).
-							 24/01/2018 - Na funcao controlaLayout havia erros de sintaxe ocasionando problemas na 
-							              formatação da tela (Tiago #824708)
-							 12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+               01/09/2011 - Incluir informacoes de historico e data liberacao no rodape (Gabriel)
+               26/06/2012 - Alterado funcao Gera_Impressao(), novo esquema para impressao (Jorge)			   
+               31/05/2013 - Fixado valor do campo inisenta e na procedure validarImpressao (Daniel)			   
+               04/06/2013 - Incluir label[for="vlblqjud"] em controlaLayout (Lucas R.)           	   
+               27/08/2015 - Ajuste para inclusão da nova rotina "Créditos Recebidos" (Gabriel - RKAM -> Projeto 127).	
+               14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos. SD 320300 (Kelvin).
+               25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
+               06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
+               11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
+               04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
+				  		              (Jonata - RKAM P364).
+               24/01/2018 - Na funcao controlaLayout havia erros de sintaxe ocasionando problemas na 
+                            formatação da tela (Tiago #824708)
+               12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+               26/06/2018 - Campos do pagamento do prejuízo(Conta Transitória)
+                            P450 - Diego Simas - AMcom
+			   
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -372,7 +375,7 @@ function navega(iniregis) {
 // Função que formata o layout
 function controlaLayout( nomeForm ){
 
-	var altura = '253px';
+	var altura = '310px';
 
 	if (nomeForm == 'frmDadosDepVista') {
         //Seleção dos Labels e Inputs
@@ -420,6 +423,9 @@ function controlaLayout( nomeForm ){
         var Lvllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
         var Cvllimcre = $('#vllimcre', '#' + nomeForm);
 
+		var Lvlsldctr = $('label[for="vlsldctr"]', '#' + nomeForm);
+		var Cvlsldctr = $('#vlsldctr', '#' + nomeForm);
+
         var Ldtultlcr = $('label[for="dtultlcr"]', '#' + nomeForm);
         var Cdtultlcr = $('#dtultlcr', '#' + nomeForm);
 
@@ -448,6 +454,7 @@ function controlaLayout( nomeForm ){
         Lvlblqjud.addClass('rotulo').css('width', '110px');
         Lvlstotal.addClass('rotulo').css('width', '110px');
         Lvllimcre.addClass('rotulo').css('width', '110px');
+		Lvlsldctr.addClass('rotulo').css('width', '110px');
         Ldtultlcr.css('width', '180px');
         Lvllimdis.css('width', '180px');
         Ldtliberacao.css('width', '180px');
@@ -467,6 +474,7 @@ function controlaLayout( nomeForm ){
         Cvlblqjud.css('width', '87px').addClass('monetario');
         Cvlstotal.css('width', '87px').addClass('monetario');
         Cvllimcre.css('width', '87px').addClass('monetario');
+		Cvlsldctr.css('width', '87px').addClass('monetario');
         Cdtultlcr.css('width', '93px').addClass('data');
         Cvllimdis.css('width', '93px').addClass('monetario');
         Cdtliberacao.css('width', '93px').addClass('data');
@@ -665,6 +673,7 @@ function controlaLayout( nomeForm ){
         rVlsdindi = $('label[for="vlsdindi"]', '#' + nomeForm);
         rVlstotal = $('label[for="vlstotal"]', '#' + nomeForm);
         rVllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
+		rVlsldctr = $('label[for="vlsldctr"]', '#' + nomeForm);
         rVlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
         rVllimcpa = $('label[for="vllimcpa"]', '#' + nomeForm);
         
@@ -678,6 +687,7 @@ function controlaLayout( nomeForm ){
         rVlsdindi.addClass('rotulo').css({ 'width': '200px' });
         rVlstotal.addClass('rotulo').css({ 'width': '200px' });
         rVllimcre.addClass('rotulo').css({ 'width': '200px' });
+		rVlsldctr.addClass('rotulo').css({ 'width': '200px' });
         rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
         rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
 	
@@ -691,6 +701,7 @@ function controlaLayout( nomeForm ){
         cVlsdindi = $('#vlsdindi', '#' + nomeForm);
         cVlstotal = $('#vlstotal', '#' + nomeForm);
         cVllimcre = $('#vllimcre', '#' + nomeForm);
+		cVlsldctr = $('#vlsldctr', '#' + nomeForm);
         cVlblqjud = $('#vlblqjud', '#' + nomeForm);
         cVllimcpa = $('#vllimcpa', '#' + nomeForm);
 
@@ -703,6 +714,7 @@ function controlaLayout( nomeForm ){
         cVlsdindi.css({ 'width': '75px', 'text-align': 'right' });
         cVlstotal.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
+		cVlsldctr.css({ 'width': '75px', 'text-align': 'right' });
         cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
 		
@@ -823,4 +835,66 @@ function mostraDetalhesAtraso() {
             bloqueiaFundo($('#divUsoGenerico'));
         }
     });
+}
+
+function mostraDetalhesCT() {
+	showMsgAguardo('Aguarde, abrindo detalhes da conta transitoria...');
+
+    exibeRotina($('#divUsoGenerico'));
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/dep_vista/detalhes_conta_transitoria.php',
+        data: {
+          	nrdconta: nrdconta,
+          	cdcooper: cdcooper,
+          	redirect: 'html_ajax'
+        },
+        error: function(objAjax,responseError,objExcept) {
+          	hideMsgAguardo();
+          	showError('error','N?o foi poss?vel concluir a requisi??o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+			//console.log(response);
+			$('#divUsoGenerico').html(response);
+			//layoutPadrao();
+			hideMsgAguardo();
+			bloqueiaFundo($('#divUsoGenerico'));
+        }
+    });
+}
+
+// Fun??o que formata a tabela lan?amentos Contra Transit?ria
+function formataLancamentosCT() {
+
+	var divRegistro = $('div.divRegistros', '#divTabContraOrdens');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '235px', 'width': '650px' });
+
+	var ordemInicial = new Array();
+
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '67px';
+	arrayLargura[1] = '100px';
+	arrayLargura[2] = '100px';
+	arrayLargura[3] = '100px';
+	arrayLargura[4] = '100px';
+	arrayLargura[5] = '100px';
+	
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'center';
+	
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+	ajustarCentralizacao();
+	return false;
 }

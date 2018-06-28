@@ -3,19 +3,20 @@
 	 /************************************************************************
 	   Fonte: principal.php
 	   Autor: Guilherme
-	   Data : Fevereiro/2008                 Última Alteração: 06/10/2015
+	   Data : Fevereiro/2008                 Última Alteração: 26/06/2018
 
-	   Objetivo  : Mostrar opcao Principal da rotina de Dep. Vista
-                   da tela ATENDA
+	   Objetivo  : Mostrar opcao Principal da rotina de Dep. Vista da tela ATENDA
 
 	   Alterações: 02/09/2010 - Ajuste no xml de retorno (David).
-				   24/06/2011 - Alterado para layout padrão (Gabriel - DB1).
-				   12/04/2012 - Ajustar leitura das tags do XML (David).
-				   04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)
-				   06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos,
-								Prj. 302 (Jean Michel).
-				   11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
-					 12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+                 24/06/2011 - Alterado para layout padrão (Gabriel - DB1).
+                 12/04/2012 - Ajustar leitura das tags do XML (David).
+                 04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)
+                 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos,
+							  Prj. 302 (Jean Michel).
+                 11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
+                 12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
+			 	 26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória) 
+				   			  P450 - Diego Simas - AMcom
 
 	 ************************************************************************/
 
@@ -81,6 +82,28 @@
 	if (strtoupper($xmlGetDepVista->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlGetDepVista->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
+
+	//SIMAS
+	//Busca Saldo atual da conta transitória
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_SALDO_ATUAL_CT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+	}else{
+		$sldatuct = getByTagName($param->tags,'sldatuct');	    
+	}			
+	//SIMAS
 
 	// Montar o xml de Requisicao das datas de prejuizo
 	$xml = "";
@@ -208,16 +231,23 @@
 	</fieldset>
 
 	<fieldset>
-
 		<label for="vllimcre"><? echo utf8ToHtml('Limite Crédito:') ?></label>
 		<input name="vllimcre" id="vllimcre" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vllimcre")),2,",","."); ?>" />
-
 		<label for="dtultlcr"><? echo utf8ToHtml('Útima Atualização:') ?></label>
 		<input name="dtultlcr" id="dtultlcr" type="text" value="<?php echo getByTagName($depvista,"dtultlcr"); ?>" />
 		<br />
-
 	</fieldset>
 
+  <?php //if($sldatuct > 0){ ?>
+	<fieldset>
+		<legend>Conta Transit&oacute;ria</legend>
+		<label for="vlsldctr"><? echo utf8ToHtml('Saldo:') ?></label>
+		<input name="vlsldctr" id="vlsldctr" type="text" value="<?php echo number_format(str_replace(",",".",$sldatuct),2,",","."); ?>" />
+		<div style="float: right; padding-right: 5px;">
+			<a href="#" class="botao" id="btDetalhesCT" onClick="mostraDetalhesCT();" style="padding: 3px 6px;">Detalhes</a>
+		</div>
+	</fieldset>
+  <?php// } ?>
 </form>
 
 <script type="text/javascript">
