@@ -372,20 +372,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
   
   CURSOR cr_mensagem IS
   SELECT aut.cdmensagem
+        ,NVL(aut.inmensagem_ativa, 0) inmensagem_ativa
     FROM tbgen_notif_automatica_prm aut
    WHERE aut.cdorigem_mensagem = pr_cdorigem_mensagem
      AND aut.cdmotivo_mensagem = pr_cdmotivo_mensagem;
-  vr_cdmensagem tbgen_notificacao.cdmensagem%TYPE;
+  rw_mensagem cr_mensagem%ROWTYPE;
   
   BEGIN
     
     OPEN cr_mensagem;
     FETCH cr_mensagem
-    INTO vr_cdmensagem;
+    INTO rw_mensagem;
     CLOSE cr_mensagem;
     
-    IF vr_cdmensagem > 0 THEN
-      pc_cria_notificacoes(pr_cdmensagem    => vr_cdmensagem
+    IF rw_mensagem.inmensagem_ativa = 1 AND rw_mensagem.cdmensagem > 0 THEN
+      pc_cria_notificacoes(pr_cdmensagem    => rw_mensagem.cdmensagem
                           ,pr_dhenvio       => pr_dhenvio
                           ,pr_destinatarios => pr_destinatarios);
     END IF;
@@ -436,7 +437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     
       vr_dsvariaveis := fn_gera_str_variaveis(pr_variaveis);
      
-      IF pr_idseqttl IS NULL THEN -- Se não possuir titular, cria um registro para cada usuário da conta
+      IF pr_idseqttl IS NULL OR pr_idseqttl = 0 THEN -- Se não possuir titular, cria um registro para cada usuário da conta
         
         OPEN cr_destinatarios(vr_dsvariaveis);
        FETCH cr_destinatarios BULK COLLECT
@@ -493,86 +494,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
 
   -- Cria uma notificação única progress (Recebe os dados da conta quebrados, um por parâmetro, com variáveis)
   PROCEDURE pc_cria_notif_prgs(pr_cdorigem_mensagem tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE
-                               ,pr_cdmotivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE
-                               ,pr_dhenvio     DATE DEFAULT SYSDATE
-                               ,pr_cdcooper    tbgen_notificacao.cdcooper%TYPE
-                               ,pr_nrdconta    tbgen_notificacao.nrdconta%TYPE
-                               ,pr_idseqttl    tbgen_notificacao.idseqttl%TYPE DEFAULT NULL
-                               ,pr_variaveis   VARCHAR) IS
-                               
-    CURSOR cr_destinatarios(pr_dsvariaveis IN VARCHAR2) IS
-    SELECT usu.cdcooper
-          ,usu.nrdconta
-          ,usu.idseqttl
-          ,pr_dsvariaveis dsvariaveis
-      FROM vw_usuarios_internet usu
-     WHERE usu.cdcooper = pr_cdcooper
-       AND usu.nrdconta = pr_nrdconta;
-  
-    vr_destinatarios typ_destinatarios_notif;
-    vr_dsvariaveis tbgen_notificacao.dsvariaveis%TYPE;
-    -- Objetos para armazenar as variáveis da notificação
-    vr_variaveis_notif typ_variaveis_notif;
+                              ,pr_cdmotivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE
+                              ,pr_dhenvio     DATE DEFAULT SYSDATE
+                              ,pr_cdcooper    tbgen_notificacao.cdcooper%TYPE
+                              ,pr_nrdconta    tbgen_notificacao.nrdconta%TYPE
+                              ,pr_idseqttl    tbgen_notificacao.idseqttl%TYPE DEFAULT NULL
+                              ,pr_variaveis   VARCHAR) IS
     
-    -- Rotina para popular conteúdo das mensagens 
-    PROCEDURE prc_buscar_valor(pr_valores_dinamicos IN VARCHAR2 DEFAULT NULL) IS -- Máscara #Cooperativa=1;#Convenio=123
-     ---------------------------------------------------------------------------------------------------------------
-     --
-     --  Programa : prc_buscar_valor
-     --  Autor    : Everton
-     --  Data     : maio/2018.                   Ultima atualizacao: --/--/----
-     --
-     -- Objetivo  : Popular campo de variavéis dinâmicas
-     ---------------------------------------------------------------------------------------------------------------
-  
- 
-     /*Quebra os valores da string recebida por parâmetro*/
-      CURSOR cr_parametro IS
-      SELECT regexp_substr(parametro, '[^=]+', 1, 1) parametro
-            ,regexp_substr(parametro, '[^=]+', 1, 2) valor
-        FROM (SELECT regexp_substr(pr_valores_dinamicos, '[^;]+', 1, ROWNUM) parametro
-                FROM dual
-              CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_valores_dinamicos ,'[^;]+','')) + 1);
-  
-    BEGIN
-  
-      -- Sobrescreve os parâmetros
-      FOR rw_parametro IN cr_parametro LOOP
-        --
-        vr_variaveis_notif(rw_parametro.parametro) := TRIM(rw_parametro.valor);
-        --                       
-      END LOOP;
-  
-    END prc_buscar_valor;     
-    --
+    CURSOR cr_parametro IS
+    SELECT regexp_substr(parametro, '[^=]+', 1, 1) parametro
+          ,regexp_substr(parametro, '[^=]+', 1, 2) valor
+      FROM (SELECT regexp_substr(pr_variaveis, '[^;]+', 1, ROWNUM) parametro
+              FROM dual
+            CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_variaveis ,'[^;]+','')) + 1);
+    vr_variaveis_notif typ_variaveis_notif;  
+    
   BEGIN
     
-    prc_buscar_valor(pr_variaveis);
-  
-    vr_dsvariaveis := fn_gera_str_variaveis(vr_variaveis_notif);
-   
-    IF (pr_idseqttl IS NULL) or (pr_idseqttl = 0) THEN -- Se não possuir titular, cria um registro para cada usuário da conta
-      
-      OPEN cr_destinatarios(vr_dsvariaveis);
-     FETCH cr_destinatarios BULK COLLECT
-      INTO vr_destinatarios;
-     CLOSE cr_destinatarios;
-                                 
-    ELSE -- Se recebeu titular por parâmetro, cria apenas um registro fixo
-      
-      -- Cria um objeto de destinatário a partir dos parâmetros
-      vr_destinatarios(1).cdcooper := pr_cdcooper;
-      vr_destinatarios(1).nrdconta := pr_nrdconta;
-      vr_destinatarios(1).idseqttl := pr_idseqttl;
-      vr_destinatarios(1).dsvariaveis := vr_dsvariaveis;
-       
-    END IF;
+    FOR rw_parametro IN cr_parametro LOOP
+      --
+      vr_variaveis_notif(rw_parametro.parametro) := TRIM(rw_parametro.valor);
+      --                       
+    END LOOP;
     
     -- Cria as notificações
-    noti0001.pc_cria_notificacoes(pr_cdorigem_mensagem => pr_cdorigem_mensagem
-                                 ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
-                                 ,pr_dhenvio           => SYSDATE
-                                 ,pr_destinatarios     => vr_destinatarios);
+    noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => pr_cdorigem_mensagem
+                                ,pr_cdmotivo_mensagem => pr_cdmotivo_mensagem
+                                ,pr_dhenvio           => SYSDATE
+                                ,pr_cdcooper          => pr_cdcooper
+                                ,pr_nrdconta          => pr_nrdconta
+                                ,pr_idseqttl          => pr_idseqttl
+                                ,pr_variaveis         => vr_variaveis_notif);
   
   END;
 
@@ -581,24 +533,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
     CURSOR cr_mensagens IS
       WITH hoje AS
        (SELECT data
-              ,to_char(data, 'DD') nrdia
-              ,to_char(data, 'MM') nrmes
-              ,to_char(data, 'D') nrdiasemana
-              ,to_char(ceil(to_number(to_char(data, 'DD')) / 7)) nrsemana -- Obtém o dia e divide por 7, arredondando pra cima
+              ,to_number(to_char(data, 'DD')) nrdia
+              ,to_number(to_char(data, 'MM')) nrmes
+              ,to_number(to_char(data, 'D')) nrdiasemana
+              ,to_number(to_char(ceil(to_number(to_char(data, 'DD')) / 7))) nrsemana -- Obtém o dia e divide por 7, arredondando pra cima
               ,CASE WHEN to_number(to_char(last_day(data), 'DD')) - to_number(to_char(data, 'DD')) < 7 THEN 'U' END inultimasemana
           FROM (SELECT pr_dhexecucao data FROM dual))
       /*RECORRÊNCIA SEMANAL*/
       SELECT aut.cdorigem_mensagem
             ,aut.cdmotivo_mensagem
             ,aut.cdmensagem
-            ,(TRUNC(hoje.data) + aut.hrenvio_mensagem / 60 / 60 / 24) dhenvio_mensagem
+            ,(TRUNC(hoje.data) + (aut.hrenvio_mensagem / 60 / 60 / 24)) dhenvio_mensagem
             ,aut.nmfuncao_contas
         FROM tbgen_notif_automatica_prm aut
             ,hoje
        WHERE aut.inmensagem_ativa = 1 -- ATIVAS
-         AND (TRUNC(hoje.data) + aut.hrenvio_mensagem / 60 / 60 / 24) <= hoje.data -- Verifica se já chegou a hora de enviar a notificação
-         AND TRUNC(aut.dhultima_execucao) < TRUNC(hoje.data)
-         AND (aut.intipo_repeticao = 1 -- Semanal
+         AND (TRUNC(hoje.data) + (aut.hrenvio_mensagem / 60 / 60 / 24)) <= hoje.data -- Verifica se já chegou a hora de enviar a notificação
+         AND TRUNC(NVL(aut.dhultima_execucao,to_date('01/01/1900','DD/MM/YYYY'))) < TRUNC(hoje.data) -- Garante que o job não vai enviar 2 vezes a mesma mensagem no mesmo dia
+         AND ((aut.intipo_repeticao = 1 -- Semanal
              AND (INSTR(',' || aut.nrsemanas_repeticao || ',',',' || hoje.nrsemana || ',') > 0 -- Verifica se a semana atual está na lista de semanas para executar
               OR INSTR(',' || UPPER(aut.nrsemanas_repeticao) || ',',',' || hoje.inultimasemana || ',') > 0) -- Verifica se está na última semana do mês, e se deve executar
              AND INSTR(',' || aut.nrdias_semana || ',',',' || hoje.nrdiasemana || ',') > 0 -- Verifica se o dia da semana atual está na lista de dias da semana
@@ -606,7 +558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
           OR (aut.intipo_repeticao = 2 -- Mensal
              AND INSTR(',' || aut.nrmeses_repeticao || ',',',' || hoje.nrmes || ',') > 0 -- Verifica se o mês atual está na lista de meses para executar
              AND INSTR(',' || aut.nrdias_mes || ',', ',' || hoje.nrdia || ',') > 0 -- Verifica se o dia de hj está na lista de dias para executar
-             )
+             ))
          FOR UPDATE;
     TYPE typ_cr_mensagens IS TABLE OF cr_mensagens%ROWTYPE INDEX BY BINARY_INTEGER;
     vr_mensagens typ_cr_mensagens; -- Cria uma tabela temporária baseada no cursor
