@@ -10,6 +10,8 @@
  *				  30/10/2017 - Adicionado os campos vlpertar, vlmaxtar, vlmintar 
  *							   e tpcobtar na tela. PRJ M150 (Mateus Z - Mouts)
  *
+ *                28/06/2017 - Correcao na validacao de Valor Min. > Valor Max., estava utilizando as variaveis erradas
+ *                             INC0017641 - Heitor (Mouts)
  * -------------- 
  */
 
@@ -1120,7 +1122,7 @@ function realizaOperacao(cddopfco) {
         vlmaxnov = $('#vlmaxnov_' + i,'#frmAtribuicaoDetalhamento').val().replace('.', '').replace(',', '.');
         if (vltarnew > 0 || vlpercno > 0 || vlminnov > 0 || vlmaxnov > 0) {
 
-        	if(vlmintar > vlmaxtar){
+        	if(parseFloat(vlminnov) > parseFloat(vlmaxnov)) {
         		hideMsgAguardo();
         		showError("error","O valor do campo Min. Novo deve ser menor que o Max. Novo","Alerta - Ayllos","unblockBackground(parseInt($('#divRotina').css('z-index')))");
         		return false;
