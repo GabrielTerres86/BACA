@@ -692,13 +692,14 @@ function formataBorderos() {
     ordemInicial = [[0, 0]];
     var arrayLargura = new Array();
     arrayLargura[0] = '100px';
-    arrayLargura[1] = '100px';
-    arrayLargura[2] = '100px';
+    arrayLargura[1] = '70px';
+    arrayLargura[2] = '70px';
     arrayLargura[3] = '100px';
     arrayLargura[4] = '100px'; //tipo cobranca
     arrayLargura[5] = '100px';
     arrayLargura[6] = '100px';
-    arrayLargura[7] = '';
+    arrayLargura[7] = '100px';
+    arrayLargura[8] = '';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -707,8 +708,9 @@ function formataBorderos() {
     arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'right';
     arrayAlinha[5] = 'center';
-    arrayAlinha[6] = 'right';
-    arrayAlinha[7] = 'center';
+    arrayAlinha[6] = 'center';
+    arrayAlinha[7] = 'right';
+    arrayAlinha[8] = 'center';
 
     var metodoTabela = '';
 
