@@ -36,7 +36,7 @@
 
 			   18/04/2018 - Alterar mensagem de retorno e condicional das rotinas
 			                pc_gps_pagamento e pc_gps_agmto_novo.
-							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom)
+							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom) 
 
 ..............................................................................*/
     

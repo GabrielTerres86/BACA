@@ -3346,11 +3346,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              con.tparrecd,
              lft.vllanmto,
              lft.nrautdoc,
-             nvl(TRIM(lcm.dscedent), pro.dscedent) dscedent
+             pro.dscedent
         FROM crappro pro,
              crapcon con,
-             craplft lft,
-             craplcm lcm      
+             craplft lft      
        WHERE pro.nrseqaut = lft.nrautdoc
          AND pro.dtmvtolt = lft.dtmvtolt
          AND pro.cdcooper = lft.cdcooper
@@ -3358,11 +3357,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND lft.cdcooper = con.cdcooper(+)
          AND lft.cdempcon = con.cdempcon(+)
          AND lft.cdsegmto = con.cdsegmto(+)
-         AND pro.cdcooper = lcm.cdcooper
-         AND pro.dtmvtolt = lcm.dtmvtolt
-         AND pro.nrdconta = lcm.nrdconta
-         AND pro.nrdocmto = lcm.nrdocmto         
-         AND pro.vldocmto = lcm.vllanmto
          AND lft.idanafrd = pr_idanalis
          AND lft.cdcooper = pr_cdcooper
          AND lft.nrdconta = pr_nrdconta;                

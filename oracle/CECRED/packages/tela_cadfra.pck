@@ -8,7 +8,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADFRA IS
                           ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
                           ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                           ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
-                          ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
+                          ,pr_des_erro    OUT VARCHAR2); --> Erros do processo 
 
   PROCEDURE pc_busca_intervalo(pr_cdoperacao   IN tbgen_analise_fraude_interv.cdoperacao%TYPE --> Codigo da operacao
                               ,pr_tpoperacao   IN tbgen_analise_fraude_interv.tpoperacao%TYPE --> Tipo da operacao
