@@ -831,6 +831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              t.vlrabono,
              t.vljuprej,
              t.vlsdprej,
+	         t.vljur60_ctneg,
+             t.vljur60_lcred,
              t.vldivida_original
         FROM tbcc_prejuizo t
        WHERE t.cdcooper = pr_cdcooper
@@ -995,10 +997,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         IF cr_crapsld%FOUND THEN 
           CLOSE cr_crapsld;
           vr_iof := rw_crapsld.vliofmes;
-          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes));          
+          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes + rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred));          
         ELSE          
           CLOSE cr_crapsld;     
-          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej));        
+          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred));        
         END IF;
         
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
