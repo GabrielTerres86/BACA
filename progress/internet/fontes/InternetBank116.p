@@ -23,6 +23,8 @@
                20/04/2018 - Adicionado validacao da adesao do produto 41 resgate 
                             de aplicacao. PRJ366 (Lombardi).
 
+               28/06/2018 - Inserido tratamento para Resgate via URA
+
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -54,6 +56,7 @@ DEF INPUT PARAM par_cdprogra AS CHAR                                   NO-UNDO.
    de cada aplicacao devem ser separadas por ";"
    EX: nraplica;tpresgat;vlresgat|nraplica;tpresgat;vlresgat*/
 DEF INPUT PARAM par_aplicacao AS CHAR                                  NO-UNDO.
+DEF INPUT PARAM par_vltotrgt AS DECI                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -293,8 +296,9 @@ DO:
 
 END.
 
-IF par_flmensag OR (NOT par_flmensag AND aux_idastcjt = 0) THEN
+IF (par_flmensag OR (NOT par_flmensag AND aux_idastcjt = 0)) AND par_idorigem <> 6 THEN
 DO:
+
     IF  NOT VALID-HANDLE(h-b1wgen0081) THEN
         RUN sistema/generico/procedures/b1wgen0081.p 
             PERSISTENT SET h-b1wgen0081.
@@ -361,6 +365,108 @@ DO:
                              "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".
     
 END.
+/* Origem URA */
+ELSE IF par_idorigem = 6 THEN
+DO:
+ 
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+    RUN STORED-PROCEDURE pc_resgata_aplicacao
+        aux_handproc = PROC-HANDLE NO-ERROR
+                       (INPUT  par_cdcooper,
+                        INPUT  par_nrdconta,
+                        INPUT  par_vltotrgt,
+                        INPUT  par_cdagenci,
+                        INPUT  par_nrdcaixa,
+                        INPUT  par_cdoperad,
+                        INPUT  par_nmdatela,
+                        INPUT  par_idorigem,
+                        INPUT  par_idseqttl,
+                        INPUT  "A",
+                        INPUT  INT(par_flmensag),
+                        INPUT  aux_idastcjt,
+                        INPUT  aux_nrcpfcgc,
+                        OUTPUT "",
+                        OUTPUT "").
+
+    CLOSE STORED-PROC pc_resgata_aplicacao 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dscritic = ""
+           aux_nrdocmto = ""
+           aux_dscritic = pc_resgata_aplicacao.pr_dscritic
+                          WHEN pc_resgata_aplicacao.pr_dscritic <> ?
+           aux_nrdocmto = pc_resgata_aplicacao.pr_nrdocmto
+                          WHEN pc_resgata_aplicacao.pr_nrdocmto <> ?.                           
+
+    IF aux_dscritic <> ""  THEN
+    DO:
+        ASSIGN aux_dslinxml = "<MSGCONFIRMA>" + 
+                                  "<inconfir>" + '2' + "</inconfir>" +
+                                  "<dsmensag>" + STRING(aux_dscritic) + "</dsmensag>" +
+                              "</MSGCONFIRMA>".
+
+    END. 
+    
+    
+    IF NOT par_flmensag THEN 
+       ASSIGN aux_dslinxml = aux_dslinxml + 
+                             "<APLICACOES>" + 
+                                  "<nrdocmto>" + aux_nrdocmto + "</nrdocmto>" +
+                                  "<dsprotoc></dsprotoc>" + /* Implementaçao futura */
+                             "</APLICACOES>" +
+                             "<dsmsgsuc>Resgate realizado com sucesso.</dsmsgsuc>" +
+                             "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".
+                             
+
+    /* Se for assinatura conjunta */
+    IF aux_idastcjt = 1 THEN
+    DO:
+     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
+             SET h-b1wgen0014.
+    
+     IF  VALID-HANDLE(h-b1wgen0014)  THEN
+     DO:
+         aux_dstransa = "Cadastrar resgate da aplicacao".
+
+         RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
+                                       INPUT "996",
+                                       INPUT aux_dscritic,
+                                       INPUT "INTERNET",
+                                       INPUT aux_dstransa,
+                                       INPUT aux_datdodia,
+                                       INPUT TRUE,
+                                       INPUT TIME,
+                                       INPUT par_idseqttl,
+                                       INPUT "InternetBank",
+                                       INPUT par_nrdconta,
+                                       OUTPUT aux_nrdrowid).
+
+         RUN gera_log_item IN h-b1wgen0014 
+             (INPUT aux_nrdrowid,
+              INPUT "CPF Representate/Procurador" ,
+              INPUT "",
+              INPUT aux_nrcpfcgc).
+
+        RUN gera_log_item IN h-b1wgen0014 
+             (INPUT aux_nrdrowid,
+              INPUT "Nome Representate/Procurador" ,
+              INPUT "",
+              INPUT aux_nmprimtl).
+
+         DELETE PROCEDURE h-b1wgen0014.
+     END.
+
+     ASSIGN aux_dscritic = "Resgate registrado com sucesso. "    + 
+                           "Aguardando aprovacao da operacao pelos "  +
+                           "demais responsaveis."   
+            aux_dslinxml = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>" +
+                           "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".                             
+    END.
+END.
+
 ELSE IF NOT par_flmensag AND aux_idastcjt = 1 THEN
 DO: 
     FOR EACH tt-dados-resgate NO-LOCK:
