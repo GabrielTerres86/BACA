@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="boleto_ayllos" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="505" leftMargin="45" rightMargin="45" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="249"/>
+	<property name="ireport.y" value="0"/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="boleto"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -1554,7 +1554,7 @@
 				<textElement>
 					<font fontName="Arial" size="8"/>
 				</textElement>
-				<text><![CDATA[PAGAVEL PREFERENCIALMENTE NAS COOPERATIVAS DO SISTEMA CECRED.]]></text>
+				<text><![CDATA[PAGAVEL PREFERENCIALMENTE NAS COOPERATIVAS DO SISTEMA AILOS.]]></text>
 			</staticText>
 			<textField pattern="">
 				<reportElement uuid="a3fe8f06-eb30-46f7-8e24-f8f11201fe27" x="224" y="342" width="29" height="10">

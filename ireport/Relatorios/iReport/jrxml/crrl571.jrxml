@@ -165,7 +165,7 @@
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
-				<text><![CDATA[INFORMACOES FINANCEIRAS - CONSOLIDADO SISTEMA CECRED - Posicao em]]></text>
+				<text><![CDATA[INFORMACOES FINANCEIRAS - CONSOLIDADO SISTEMA AILOS - Posicao em]]></text>
 			</staticText>
 			<textField>
 				<reportElement uuid="ba448d8e-2ff8-4419-afb6-1ba7dd6487ce" x="243" y="24" width="100" height="8"/>

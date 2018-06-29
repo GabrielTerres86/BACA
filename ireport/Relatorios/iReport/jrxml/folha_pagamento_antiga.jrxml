@@ -105,7 +105,7 @@
 		<band height="57">
 			<image>
 				<reportElement uuid="d126988b-b251-434c-abca-58a4c6fdff97" mode="Opaque" x="223" y="22" width="139" height="29"/>
-				<imageExpression><![CDATA["LogoSistemaCecred.png"]]></imageExpression>
+				<imageExpression><![CDATA["LogoSistemaAilos.png"]]></imageExpression>
 			</image>
 			<staticText>
 				<reportElement uuid="c9e330cd-eeb5-4a28-b3a8-dcf8c5da79e3" x="111" y="4" width="252" height="18" forecolor="#666666"/>
