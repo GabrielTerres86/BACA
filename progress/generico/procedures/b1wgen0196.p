@@ -310,7 +310,7 @@ PROCEDURE grava_dados:
                                              INPUT "", /* cdmodali */
                                              INPUT ?, /* par_idcarenc */
                                              INPUT ?, /* par_dtcarenc */
-											 INPUT 0, /* par_idfiniof */
+											                       INPUT 0, /* par_idfiniof */
                                              INPUT 1,            /* par_idquapro */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
@@ -788,14 +788,32 @@ END PROCEDURE. /* END grava_dados */
                            crawepr.nrctremp = par_nrctremp 
                            NO-LOCK.
         IF NOT AVAIL crawepr THEN DO:
-          MESSAGE "Nao encontrado registro na crapepr".
-          UNDO TRANS_1, LEAVE TRANS_1.
+          
+          ASSIGN aux_cdcritic = 535
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
+          
         END.
 
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND craplcr.cdlcremp = par_cdlcremp NO-LOCK.
         IF NOT AVAIL craplcr THEN DO:
-          MESSAGE "Nao encontrado registro na craplcr".
-           UNDO TRANS_1, LEAVE TRANS_1.
+          ASSIGN aux_cdcritic = 363
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
         END.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -1097,12 +1115,22 @@ END PROCEDURE. /* END grava_dados */
                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
                /* Se retornou erro */
-               ASSIGN aux_dscritic = ""
+               ASSIGN aux_cdcritic = 0
+                      aux_cdcritic = INTE(pc_insere_iof.pr_cdcritic) WHEN pc_insere_iof.pr_cdcritic <> ?
+                      aux_dscritic = ""
                       aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
                 
-               IF aux_dscritic <> "" THEN
-                  RETURN "NOK".
+               IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
                   
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    UNDO TRANS_1, RETURN "NOK".
+                  END.
                
                /* Atualiza IOF pago e base de calculo no crapcot */
                DO WHILE TRUE:
