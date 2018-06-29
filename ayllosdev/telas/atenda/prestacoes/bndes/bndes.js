@@ -7,6 +7,7 @@
  * ALTERAÇÕES   :
  * --------------
  *  [27/07/2016] Adicionado função controlaFoco(Evandro - RKAM)
+ *  [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
   */
 
 var glbDsdprodu, glbNrctremp, glbVlropepr, glbVlparepr, glbVlsdeved, glbQtdmesca, glbPerparce, glbDtinictr, glbDtlibera, glbQtparctr, glbDtpripag, glbDtpricar, glbPercaren, arrBndes;
@@ -60,7 +61,7 @@ function controlaFoco() {
             if (e.keyCode == 27) {
                 fechaRotina($('#divUsoGenerico'), divRotina).click();
                 fechaRotina($('#divRotina')).click();
-                encerraRotina().click();
+                encerraRotina();
             }
         });
     });

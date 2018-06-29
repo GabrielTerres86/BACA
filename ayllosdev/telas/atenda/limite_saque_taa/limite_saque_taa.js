@@ -9,6 +9,7 @@
  **************** Cuidado ao alterar o fonte, pois o mesmo é utilizado na rotina de Cartão Magnético e Cartão de Crédito.
  *
  *                30/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+ * 				  27/06/2018 - Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
  */
 function acessaOpcaoAbaLimiteSaqueTAA() {
 
@@ -50,7 +51,7 @@ function controlaFoco() {
     $(".FirstInputModal").focus(function () {
         $(this).bind('keydown', function (e) {   
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
             //e.stopPropagation();
             //e.preventDefault();
@@ -72,7 +73,7 @@ function controlaFoco() {
             e.preventDefault();
 
             if (e.keyCode == 27) {
-                encerraRotina().click();
+                encerraRotina();
             }
             if (e.keyCode == 13) {
                 $(".LastInputModal").click();

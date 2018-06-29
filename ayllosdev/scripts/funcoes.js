@@ -110,6 +110,7 @@
  * 097: [02/04/2018] Lombardi 		  (CECRED) : Adicionado função validaAdesaoProduto para verificar se o tipo de conta permite a contratação do produto. (PRJ366)
  * 098: [07/04/2018] Renato Darosci   (SUPERO) : Ajustar controle de navegação para que a funcionalidade F1 funcione também na tela GAROPC. (PRJ404). 
  * 099: [16/04/2018] Lombardi 		  (CECRED) : Adicionado função validaValorProduto para verificar se o tipo de conta permite o valor da contratação do produto. (PRJ366)
+ * 100: [26/04/2018] Christian		  (CECRED) : Tratativas no controle de tecla ESC. Chamadas a metodos indevidos, causando erros apenas na execucao do Ayllos embarcado no CRM.
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -350,13 +351,13 @@ $(document).ready(function () {
 					
                 } else if ($('#divMsgsAlerta').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
-                        encerraMsgsAlerta().click();
+                        encerraMsgsAlerta();
 					} 
 					return true;														
 				
                 } else if ($('#divAnotacoes').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
-                        encerraAnotacoes().click();
+                        encerraAnotacoes();
                     }
                     return true;
 

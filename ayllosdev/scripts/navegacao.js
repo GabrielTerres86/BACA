@@ -12,6 +12,7 @@
 //*** [21/07/2016] Evandro (RKAM)   :  adicionado condição de navegação para janelas modals;
 //***
 //*** [17/04/2018] Marcos (MOUTS)   :  Removido chamada .click do UnblockBackground. (CRM)
+//*** [27/06/2018] Christian (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
 //************************************************************************//
 
 /** Navegação com o teclado nos campos **/
@@ -115,25 +116,26 @@ onload = function () {
                 //Condição para voltar foco na opção selecionada
                 var CaptaIdRetornoFoco = '';
                 CaptaIdRetornoFoco = $(".SetFoco").attr("id");
-                var DefaultFoco = CaptaIdRetornoFoco.substring(0, 9);
                 if (CaptaIdRetornoFoco) { 
+					var DefaultFoco = CaptaIdRetornoFoco.substring(0, 9);
+					
                     $('#divError').css('display', 'none');
                     if (DefaultFoco == '#labelRot') {
                         $('#divConfirm').css('display','none');
                         $(CaptaIdRetornoFoco).focus();
                         unblockBackground();
-                        encerraRotina().click();
+                        encerraRotina();
                     }
                     else {
                         $(CaptaIdRetornoFoco).focus();
-                        fechaSimulacoes(true).click();
-                        fechaRotina($('#divUsoGenerico')).click();
-                        fechaRotina(divRotina).click();
-                        encerraRotina().click();
+                        fechaSimulacoes(true);
+                        fechaRotina($('#divUsoGenerico'));
+                        fechaRotina(divRotina);
+                        encerraRotina();
                     }
                 }
                 else {
-                    encerraAnotacoes().click();
+                    encerraAnotacoes();
                 };
                 break;
 
