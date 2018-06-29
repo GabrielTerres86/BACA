@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 13/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 28/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -273,6 +273,9 @@ BEGIN
                      (Adriano - REQ0016678).
                      
 		     13/06/2018 - Ajuste para inicializar variável  de estado de crise (Adriano).
+
+			 28/06/2018 - Ajuste no controle de envio do arquivo para a pasta "salvar"
+				         (Adriano - INC0018303).
                      
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -4918,9 +4921,14 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
+          
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+          
           -- Retornar pois o processo finalizou
           RETURN;
         END IF;
+        
       ELSIF vr_aux_CodMsg IN('STR0010R2','PAG0111R2') THEN
         -- Gera devolucao com mesmo numero de documento da mensagem gerada pelo Legado
         vr_aux_nrdocmto := TO_NUMBER(SUBSTR(vr_aux_NumCtrlIF,LENGTH(vr_aux_NumCtrlIF) - 8,8));
@@ -5155,8 +5163,13 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
+          
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+
           -- Processo finalizado
           RETURN;
+          
         ELSE
           -- Se estava na SPB
           IF vr_aux_tagCABInf  THEN
@@ -5206,6 +5219,10 @@ END;
             -- Gerar LOG
             pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                            ,pr_msgderro  => vr_dscritic);
+            
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+          
             -- Retornar a execução
             RETURN;
           END IF;
@@ -5226,6 +5243,10 @@ END;
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
+            
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+            
             -- Retornar a execução
             RETURN;
 
@@ -5291,6 +5312,10 @@ END;
               -- Gerar LOG
               pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                              ,pr_msgderro  => vr_dscritic);
+              
+              -- Salvar o arquivo
+              pc_salva_arquivo;
+            
               -- Retornar a execução
               RETURN;
 
@@ -5343,7 +5368,10 @@ END;
                                         ,pr_ind_tipo_log => 1
                                         ,pr_des_log      => vr_dscritic
                                         ,pr_nmarqlog     => 'logprt');
-
+                                        
+              -- Salvar o arquivo
+              pc_salva_arquivo;
+          
               -- Retornar a execução
               RETURN;
             END IF;
@@ -5353,6 +5381,10 @@ END;
 
         -- Caso seja estorno de TED de repasse de convenio entao despreza
         IF vr_aux_CodMsg IN('STR0007','STR0020') THEN
+          
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+            
           -- Retornar
           RETURN;
         END IF;
@@ -5399,6 +5431,9 @@ END;
             vr_dscritic := null;
           END IF;
 
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+            
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5431,7 +5466,10 @@ END;
             -- Limpar critica
             vr_dscritic := null;
           END IF;
-
+          
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+            
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5469,6 +5507,9 @@ END;
             vr_dscritic := null;
           END IF;
 
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+            
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5502,6 +5543,9 @@ END;
               raise vr_exc_saida;
             END IF;
 
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+            
             -- Retornar a execução
             RETURN;
           ELSE
@@ -5564,6 +5608,9 @@ END;
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'REJEITADA BACENJUD');
 
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+            
             -- Retornar a execução
             RETURN;
 
@@ -5600,6 +5647,9 @@ END;
               raise vr_exc_saida;
             END IF;
 
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+            
             -- Retornar a execução
             RETURN;
 
@@ -5653,6 +5703,9 @@ END;
                 raise vr_exc_saida;
               END IF;
 
+              -- Salvar o arquivo
+              pc_salva_arquivo;
+            
               -- Retornar a execução
               RETURN;
 
@@ -5729,6 +5782,10 @@ END;
           pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA NAO OK'
                          ,pr_msgderro  => 'DEVOLUCAO BACENJUD');
 
+          
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+            
           -- Retornar a execução
           RETURN;
 
@@ -5794,6 +5851,9 @@ END;
             pc_gera_log_SPB(pr_tipodlog  => vr_tipolog
                            ,pr_msgderro  => vr_log_msgderro);
 
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+          
             -- Retornar a execução
             RETURN;
 
@@ -5845,7 +5905,7 @@ END;
                 vr_aux_DSCONTA_CREDITADA := rw_tbfin_rec_con.nrdconta;
                 VR_AUX_CDAGENCI_CREDITADA := rw_tbfin_rec_con.cdagenci;
               END IF;
-            END IF;
+              END IF;
 
             CLOSE cr_tbfin_rec_con;
 
@@ -6200,7 +6260,7 @@ END;
                                     ,pr_ind_tipo_log => 1
                                     ,pr_des_log      => vr_dscritic
                                     ,pr_nmarqlog     => 'logprt');
-          RETURN;
+          
         ELSE
           -- Conforme o tipo do Empréstimo
           IF vr_aux_tpemprst = 1 THEN -- PP
@@ -6225,6 +6285,9 @@ END;
 
           -- Se retornou erro na Liquidação
           IF vr_dscritic IS NOT NULL THEN
+            -- Salvar o arquivo
+            pc_salva_arquivo;
+          
             -- Retornar a execução
             RETURN;
           END IF;
@@ -6337,6 +6400,9 @@ END;
         pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                        ,pr_msgderro  => NULL);
       END IF;
+      
+      -- Salvar o arquivo
+      pc_salva_arquivo;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -7505,12 +7571,7 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
           END IF;
-
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-          -- Processo finalizado
-          RAISE vr_exc_next;
-
+		  
         END IF;
 
       EXCEPTION

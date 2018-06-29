@@ -2789,7 +2789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     DECLARE
 
       -- Vetor Local
-      TYPE typ_mot_can IS VARRAY(11) OF VARCHAR2(100);
+      TYPE typ_mot_can IS VARRAY(12) OF VARCHAR2(100);
       vr_mot_can typ_mot_can:= typ_mot_can('Nao Interesse pelo Seguro'
                                           ,'Desligamento da Empresa (Estipulante)'
                                           ,'Falecimento'

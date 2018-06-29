@@ -386,7 +386,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                             ,pr_dtiniper IN craprda.dtiniper%TYPE        --> Data de inicio da aplicacao
                             ,pr_dtfimper IN craprda.dtfimper%TYPE        --> Data de termino da aplicacao
                             ,pr_txaplica IN NUMBER                       --> Taxa aplicada
-                            ,pr_flggrvir    IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
+                            ,pr_flggrvir IN BOOLEAN DEFAULT FALSE        --> Identificador se deve gravar valor insento
                             ,pr_tab_crapdat IN BTCH0001.cr_crapdat%ROWTYPE  --> Dados da tabela de datas
                             ,pr_cdprogra IN VARCHAR2 DEFAULT NULL        --> Codigo do programa chamador
                             ,pr_vlsdrdca IN OUT NUMBER                   --> Saldo da aplicacao pos calculo
@@ -4443,8 +4443,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
                  07/04/2014 - Alterações referente ao novo indexador de poupanca
                               (Jean Michel).
-				 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
-							  cr_crapmfx (Jean Michel).
+								 22/04/2014 - Inclusão do crapmfx.tpmoefix = 20 no cursor
+															cr_crapmfx (Jean Michel).
 
                  24/06/2014 - Retirada leitura da craptab e incluido data de
                               liberacao do projeto do novo indexador de
@@ -4492,7 +4492,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
@@ -4664,23 +4664,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
       IF rw_crapdat.inproces > 1 THEN
-        -- Se o vetor de dias uteis ainda não possuir informacoes
-        IF vr_tab_qtdiaute.COUNT = 0 THEN
-          -- Buscar os dias uteis
-          FOR rw_craptrd IN (SELECT *
-                               FROM (SELECT craptrd.dtiniper
-                                           ,craptrd.qtdiaute
-                                           ,count(*) over (partition by craptrd.dtiniper
-                                                           order by craptrd.progress_recid) registro
-                                       FROM craptrd
-                                       WHERE craptrd.cdcooper = pr_cdcooper)
-                              WHERE registro = 1) LOOP
-            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-            IF rw_craptrd.registro = 1 THEN
-              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
-            END IF;
-          END LOOP;
-        END IF;
+      -- Se o vetor de dias uteis ainda não possuir informacoes
+      IF vr_tab_qtdiaute.COUNT = 0 THEN
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT *
+                             FROM (SELECT craptrd.dtiniper
+                                         ,craptrd.qtdiaute
+                                         ,count(*) over (partition by craptrd.dtiniper
+                                                         order by craptrd.progress_recid) registro
+                                     FROM craptrd
+                                     WHERE craptrd.cdcooper = pr_cdcooper)
+                            WHERE registro = 1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          END IF;
+        END LOOP;
+      END IF;
 
       -- Se o vetor de moedas ainda não possuir informacoes
       IF vr_tab_moedatx.COUNT = 0 THEN
@@ -4698,23 +4698,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END LOOP;
       END IF;
       ELSE -- inproces <= 1
-        
+
         -- Se o vetor de dias uteis ainda não possuir informacoes
         IF vr_tab_qtdiaute.COUNT = 0 THEN
-          -- Buscar os dias uteis
-          FOR rw_craptrd IN (SELECT craptrd.dtiniper
-                                   ,craptrd.qtdiaute
-                                   ,count(*) over (partition by craptrd.dtiniper
-                                                       order by craptrd.progress_recid) registro
-                               FROM craptrd
-                              WHERE craptrd.cdcooper = pr_cdcooper
-                                AND craptrd.dtiniper > vr_dtiniper -1) LOOP
-            -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
-            IF rw_craptrd.registro = 1 THEN
-              vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                 ,craptrd.qtdiaute
+                                 ,count(*) over (partition by craptrd.dtiniper
+                                                     order by craptrd.progress_recid) registro
+                             FROM craptrd
+                            WHERE craptrd.cdcooper = pr_cdcooper
+                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
               EXIT;
-            END IF;
-          END LOOP;
+          END IF;
+        END LOOP;
         END IF;
 
         -- Buscar todos os registros das moedas do tipo 6 e 8
@@ -5419,7 +5419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
-    
+
     --Variáveis acumulo lote
     vr_vlinfocr         craplot.vlinfocr%type := 0;
     vr_vlcompcr         craplot.vlcompcr%type := 0; 
@@ -5614,8 +5614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_des_erro := gene0001.fn_busca_critica(427)||
                        ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy');
         raise vr_exc_erro;
-      end if;      
-      
+      end if;
+
       -- Para o programa CRPS148, foi realizado o upate no próprio crps, visto que teríamos problemas
       -- no paralelismo           
       if vr_cdprogra = 'CRPS148' then
@@ -5632,25 +5632,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
           if vr_des_erro is not null then
             raise vr_exc_erro; 
-          end if;
-        
+    end if;
+
         exception
           when others then
             vr_des_erro := 'Erro ao chamar procedure apli0001.pc_insere_tab_wrk: '||sqlerrm;
             raise vr_exc_erro;              
         end;
       else
-        -- Atualiza o indicador de cálculo
-        begin
-          update craptrd
+      -- Atualiza o indicador de cálculo
+      begin
+        update craptrd
              set incalcul = 1
-           where rowid = rw_craptrd.rowid;
-        exception
-          when others then
-            vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
-            raise vr_exc_erro;
-        end;
-      end if;
+         where rowid = rw_craptrd.rowid;
+      exception
+        when others then
+          vr_des_erro := 'Erro ao atualizar indicador de calculo na craptrd: '||sqlerrm;
+          raise vr_exc_erro;
+      end;
+    end if;
     end if;
 
     --
@@ -5676,7 +5676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         -- Próxima data
         vr_dtcalcul := vr_dtcalcul + 1;
       end loop;  /* Fim do WHILE */
-    end if;      
+    end if;
 
     /*  Arredondamento dos valores calculados  */
     vr_vlsdrdpp := fn_round(vr_vlsdrdpp,2);
@@ -5878,43 +5878,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       --
       if vr_vlrentot > 0 then
         if vr_cdprogra <> 'CRPS148' then
-          -- Atualizar o tipo do lote
+        -- Atualizar o tipo do lote
+        begin
+          update craplot
+             set craplot.tplotmov = 14
+           where craplot.cdcooper = pr_cdcooper
+             and craplot.dtmvtolt = vr_dtdolote
+             and craplot.cdagenci = vr_cdagenci
+             and craplot.cdbccxlt = vr_cdbccxlt
+             and craplot.nrdolote = vr_nrdolote
+          returning craplot.nrseqdig into vr_nrseqdig;
+        exception
+          when others then
+              vr_des_erro := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
+            raise vr_exc_erro;
+        end;
+        
+        if sql%rowcount = 0 then
           begin
-            update craplot
-               set craplot.tplotmov = 14
-             where craplot.cdcooper = pr_cdcooper
-               and craplot.dtmvtolt = vr_dtdolote
-               and craplot.cdagenci = vr_cdagenci
-               and craplot.cdbccxlt = vr_cdbccxlt
-               and craplot.nrdolote = vr_nrdolote
-            returning craplot.nrseqdig into vr_nrseqdig;
+            insert into craplot (dtmvtolt,
+                                 cdagenci,
+                                 cdbccxlt,
+                                 nrdolote,
+                                 tplotmov,
+                                 cdcooper)
+            values (vr_dtdolote,
+                    vr_cdagenci,
+                    vr_cdbccxlt,
+                    vr_nrdolote,
+                    14,
+                    pr_cdcooper)
+             returning 0 into vr_nrseqdig;
           exception
             when others then
-              vr_des_erro := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
+              vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
               raise vr_exc_erro;
           end;
-        
-          if sql%rowcount = 0 then
-            begin
-              insert into craplot (dtmvtolt,
-                                   cdagenci,
-                                   cdbccxlt,
-                                   nrdolote,
-                                   tplotmov,
-                                   cdcooper)
-              values (vr_dtdolote,
-                      vr_cdagenci,
-                      vr_cdbccxlt,
-                      vr_nrdolote,
-                      14,
-                      pr_cdcooper)
-               returning 0 into vr_nrseqdig;
-            exception
-              when others then
-                vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
-                raise vr_exc_erro;
-            end;
-          end if;
+        end if;
         
         end if;
        
@@ -5959,7 +5959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           when others then
             vr_des_erro := 'Erro ao inserir lançamento de poupança programada: '||sqlerrm;
             raise vr_exc_erro;
-        end;  
+        end;
         
         -- Atualiza a capa do lote
         if vr_cdprogra = 'CRPS148' then
@@ -5970,24 +5970,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           vr_qtcompln := vr_qtcompln + 1;        
       
         else
-          begin
-            update craplot
-               set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + nvl(vr_vlrentot, 0),
-                   craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + nvl(vr_vlrentot, 0),
-                   craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
-                   craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
+        begin
+          update craplot
+             set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + nvl(vr_vlrentot, 0),
+                 craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + nvl(vr_vlrentot, 0),
+                 craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
+                 craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
                    craplot.nrseqdig = vr_nrseqdig
-             where craplot.cdcooper = pr_cdcooper
-               and craplot.dtmvtolt = vr_dtdolote
-               and craplot.cdagenci = vr_cdagenci
-               and craplot.cdbccxlt = vr_cdbccxlt
-               and craplot.nrdolote = vr_nrdolote
-            returning nrseqdig into vr_nrseqdig;
-          exception
-            when others then
-              vr_des_erro := 'Erro ao atualizar a capa de lote (2): '||sqlerrm;
-              raise vr_exc_erro;
-          end;
+           where craplot.cdcooper = pr_cdcooper
+             and craplot.dtmvtolt = vr_dtdolote
+             and craplot.cdagenci = vr_cdagenci
+             and craplot.cdbccxlt = vr_cdbccxlt
+             and craplot.nrdolote = vr_nrdolote
+          returning nrseqdig into vr_nrseqdig;
+        exception
+          when others then
+            vr_des_erro := 'Erro ao atualizar a capa de lote (2): '||sqlerrm;
+            raise vr_exc_erro;
+        end;
         end if;
         --
         IF vr_cdprogra = 'CRPS148' and
@@ -6039,7 +6039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --     
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          vr_cdhistor = 151 and
@@ -6261,7 +6261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           
         end if;
       end if;
-      --        
+      --
       
       IF vr_cdprogra = 'CRPS148' and
          rw_craprpp.vlabcpmf > 0 then
@@ -6369,7 +6369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           end;
         end if;
       end if;
-      --       
+      --
       if vr_cdprogra in ('CRPS147', 'CRPS148') then
         /* Ajuste */
         vr_vlajuste := vr_vlprovis - vr_vllan152;
@@ -6399,62 +6399,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;            
             
           else
-            -- Faz a alteração dos campos necessários na capa do lote
-            begin
-              update craplot
-                 set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + vr_vlajuste_cr,
-                     craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + vr_vlajuste_cr,
-                     craplot.vlinfodb = nvl(craplot.vlinfodb, 0) + vr_vlajuste_db,
-                     craplot.vlcompdb = nvl(craplot.vlcompdb, 0) + vr_vlajuste_db,
-                     craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
-                     craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
+          -- Faz a alteração dos campos necessários na capa do lote
+          begin
+            update craplot
+               set craplot.vlinfocr = nvl(craplot.vlinfocr, 0) + vr_vlajuste_cr,
+                   craplot.vlcompcr = nvl(craplot.vlcompcr, 0) + vr_vlajuste_cr,
+                   craplot.vlinfodb = nvl(craplot.vlinfodb, 0) + vr_vlajuste_db,
+                   craplot.vlcompdb = nvl(craplot.vlcompdb, 0) + vr_vlajuste_db,
+                   craplot.qtinfoln = nvl(craplot.qtinfoln, 0) + 1,
+                   craplot.qtcompln = nvl(craplot.qtcompln, 0) + 1,
                      craplot.nrseqdig = craplot.nrseqdig + 1
-               where craplot.cdcooper = pr_cdcooper
-                 and craplot.dtmvtolt = vr_dtdolote
-                 and craplot.cdagenci = vr_cdagenci
-                 and craplot.cdbccxlt = vr_cdbccxlt
-                 and craplot.nrdolote = 8384
+             where craplot.cdcooper = pr_cdcooper
+               and craplot.dtmvtolt = vr_dtdolote
+               and craplot.cdagenci = vr_cdagenci
+               and craplot.cdbccxlt = vr_cdbccxlt
+               and craplot.nrdolote = 8384
              returning craplot.nrseqdig into vr_nrseqdig;
+          exception
+            when others then
+                vr_des_erro := 'Erro ao atualizar a capa do lote (9): '||sqlerrm;
+              raise vr_exc_erro;
+          end;
+
+          -- Caso não exista a capa do lote, cria um novo registro
+          if sql%rowcount = 0 then
+            begin
+              insert into craplot (dtmvtolt,
+                                   cdagenci,
+                                   cdbccxlt,
+                                   nrdolote,
+                                   tplotmov,
+                                   cdcooper,
+                                   vlinfocr,
+                                   vlcompcr,
+                                   vlinfodb,
+                                   vlcompdb,
+                                   qtinfoln,
+                                     qtcompln)
+              values (vr_dtdolote,
+                      vr_cdagenci,
+                      vr_cdbccxlt,
+                      8384, -- Fixado por Renato Darosci conforme update acima - 21/04/2014
+                      14,
+                      pr_cdcooper,
+                      vr_vlajuste_cr,
+                      vr_vlajuste_cr,
+                      vr_vlajuste_db,
+                      vr_vlajuste_db,
+                      1,
+                      1)
+                returning craplot.nrseqdig into vr_nrseqdig;
             exception
               when others then
-                vr_des_erro := 'Erro ao atualizar a capa do lote (9): '||sqlerrm;
+                vr_des_erro := 'Erro ao inserir a capa do lote (8): '||sqlerrm;
                 raise vr_exc_erro;
             end;
-
-            -- Caso não exista a capa do lote, cria um novo registro
-            if sql%rowcount = 0 then
-              begin
-                insert into craplot (dtmvtolt,
-                                     cdagenci,
-                                     cdbccxlt,
-                                     nrdolote,
-                                     tplotmov,
-                                     cdcooper,
-                                     vlinfocr,
-                                     vlcompcr,
-                                     vlinfodb,
-                                     vlcompdb,
-                                     qtinfoln,
-                                     qtcompln)
-                values (vr_dtdolote,
-                        vr_cdagenci,
-                        vr_cdbccxlt,
-                        8384, -- Fixado por Renato Darosci conforme update acima - 21/04/2014
-                        14,
-                        pr_cdcooper,
-                        vr_vlajuste_cr,
-                        vr_vlajuste_cr,
-                        vr_vlajuste_db,
-                        vr_vlajuste_db,
-                        1,
-                        1)
-                returning craplot.nrseqdig into vr_nrseqdig;
-              exception
-                when others then
-                  vr_des_erro := 'Erro ao inserir a capa do lote (8): '||sqlerrm;
-                  raise vr_exc_erro;
-              end;
-            end if;
+          end if;
           end if;
          
           -- Insere histórico de ajuste nos lançamentos da poupança programada
@@ -6528,8 +6528,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       end if;
 
-    end if;    
-    
+    end if;
+
   exception
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
@@ -12308,6 +12308,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                       
                          01/06/2016 - Ajustado a leitura da craptab para utilizar a rotina
                                       da TABE0001 (Douglas - Chamado 454248)
+
+                         15/05/2018 - Retirar o bloqueio para aplicações antigas (SM404).
                                       
                          06/06/2018 - P411 - Incluir a CUSAPL na lista de programas para extrado
                                       completo + usar pr_dtinicio e pr_dtfim ao inves do calendario 
@@ -12432,6 +12434,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
          AND craplot.nrdolote = pr_nrdolote;
     rw_craplot cr_craplot%ROWTYPE;
 
+		-- Cursor para se a aplicação está disponivel para saque
+		CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+										 ,pr_nmsistem IN craptab.nmsistem%TYPE
+										 ,pr_tptabela IN craptab.tptabela%TYPE
+										 ,pr_cdempres IN craptab.cdempres%TYPE
+										 ,pr_cdacesso IN craptab.cdacesso%TYPE
+										 ,pr_dstextab IN craptab.dstextab%TYPE) IS
+			SELECT tab.dstextab
+				FROM craptab tab
+			 WHERE tab.cdcooper = pr_cdcooper
+				 AND UPPER(tab.nmsistem) = UPPER(pr_nmsistem)
+				 AND UPPER(tab.tptabela) = UPPER(pr_tptabela)
+				 AND tab.cdempres        = pr_cdempres
+				 AND UPPER(tab.cdacesso) = UPPER(pr_cdacesso)
+				 AND SUBSTR(tab.dstextab,1,7) = pr_dstextab;
+			--rw_craptab cr_craptab%ROWTYPE;  
+
 
     -- Definicao do tipo para a tabela de datas
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -12469,7 +12488,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_dtmvtopr DATE;
     vr_dtmvtocd DATE;
     vr_dstextab craptab.dstextab%TYPE;
-
+	--
+	vr_idbloqueia BOOLEAN;
+	--
   BEGIN
     -- Inicializa as variaveis
     vr_dscritic := NULL;
@@ -12768,7 +12789,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Vefificar se a situacao da aplicacao esta bloqueada
       -- Indice composto por "Numero da conta com 12" + "Numero da aplicacao com 8"
       IF vr_tab_craptab.exists(LPAD(pr_nrdconta,12,'0') || LPAD(rw_craprda.nraplica, 8,'0')) THEN
+				-- SM404
+				vr_idbloqueia := TRUE;
+				--
+				IF pr_nrorigem = 5 AND
+					upper(pr_cdprogra) = 'RESGATE' THEN -- Ayllos Web
+					-- Verifica se a aplicacao esta Bloqueada
+					OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+												 ,pr_nmsistem => 'CRED'
+												 ,pr_tptabela => 'BLQRGT'
+												 ,pr_cdempres => 0
+												 ,pr_cdacesso => gene0002.fn_mask(to_char(pr_nrdconta),'9999999999')
+												 ,pr_dstextab => gene0002.fn_mask(to_char(rw_craprda.nraplica), '9999999')
+												 );
+				  --
+					FETCH cr_craptab INTO vr_dstextab;
+					--
+					IF cr_craptab%FOUND THEN
+						--
+						vr_idbloqueia := FALSE;
+						--
+					END IF;
+					--
+					CLOSE cr_craptab;
+					--
+				END IF;
+				--
+				IF vr_idbloqueia THEN
+					--
         vr_indebcre := 'B';  -- Bloqueada
+					--
+				END IF;
+				--
       ELSE
         IF rw_craprda.tpaplica = 3 THEN -- RDCA30
           IF rw_craprda.inaniver = 1 OR -- Completou 1 mes
@@ -13081,7 +13133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       END LOOP;
     END IF;
   END;
-  
+
   PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
                              ,pr_nrdconta     in tbgen_batch_relatorio_wrk.nrdconta%type
                              ,pr_cdprogra     in tbgen_batch_relatorio_wrk.cdprograma%type

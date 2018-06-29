@@ -250,16 +250,24 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 $("#btnexcl").css('cursor', 'default');
 			}
 
-			//(situacao == "APROV.") || 
-            if ( (situacao == "EM USO" || (situacao.indexOf("LIBER") > -1)) && (cdadmcrd != 16 && cdadmcrd != 17)){
+			
+            if ((cdadmcrd > 10 && cdadmcrd < 17) &&  (situacao == "EM USO" ) && (cdadmcrd != 16 && cdadmcrd != 17)){
 			//if ( true){
                 $("#btnalterarLimite").removeAttr("disabled");
+				$("#btnalterarLimite").removeAttr("situacao");
                 $("#btnalterarLimite").attr("nrcrcard", nrcrcard);
                 $("#btnalterarLimite").attr("cdAdmCartao", cdAdmCartao);
             }  
             else{
-                 $("#btnalterarLimite").prop("disabled", true);
-				 console.log("disabilitando btao de alterar");
+                 //$("#btnalterarLimite").prop("disabled", true);
+				 $("#btnalterarLimite").removeAttr("disabled");
+				 $("#btnalterarLimite").attr("situacao", "situacao");
+				 
+            }
+			
+			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
+				$("#btncanc").removeAttr("disabled");
+				$("#btncanc").css('cursor', 'pointer');
             }
 
 
@@ -1357,6 +1365,12 @@ function opcaoNovoOld(cdcooper) {
 // - CECRED CArt�o fase III - Amasonas Supero
 function alteraCartao(elem, nrdconta) {
 //idAnt
+	//fix Rehabilitar alerta
+	if($("#btnalterarLimite").attr("situacao") != undefined && $("#btnalterarLimite").attr("situacao") == "situacao"){
+		showError("error", "Altera&ccedil;&atilde;o de limite permitida apenas para cart&otilde;es com a situa&ccedil;&atilde;o 'Em Uso'.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return;
+	}
+
     if (cdcooper == 17) {
         showError("error", "Solicita&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
@@ -1885,8 +1899,8 @@ function senhaCoordenador(executaDepois) {
 		$(".campo").blur(function(){
 			if( $(this).attr('id') =='cdopelib'){
 				faprovador = $(this).val();
-}
-
+			}
+			
 		});
 		
 		$(".campo").change(function(){
@@ -3736,9 +3750,42 @@ function encerramentoCartao(indposic) {
 /**************************************************************************************************************/
 /*********************************          OPÇÃO CANCELAMENTO/BLOQUEIO         *********************************/
 /*************************************************************************************************************/
+
+function cancelaContrato(){
+	var objTosend = {
+		nrctrcrd : nrctrcrd,
+		nrdconta : nrdconta
+	};
+	showMsgAguardo();
+	$.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + "telas/atenda/cartao_credito/cancelamento_contrato.php",
+        data: objTosend,
+        error: function(objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();			
+			
+			eval(response);
+			
+            return false;
+        }
+    });
+}
+
+
 // Função para mostrar a opção CancBloq do cartão
 function opcaoCancBloq() {
 
+	
+	if(cdadmcrd >= 11 && cdadmcrd < 17){
+		//todo implementar canclamento cecred
+		 showConfirmacao("Deseja cancelar este contrato? ", "Confirma&ccedil;&atilde;o - Ayllos", "cancelaContrato();", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+		return;
+	}
     var flgliber = $('#flgliber', '#divCartoes').val();
 
     if (executandoImpedimentos){
@@ -4574,12 +4621,12 @@ function validarUpDown() {
 			
             eval(response);
 			if(!error)
-			    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
 			    if (iPiloto == 1) {
-				atualizaUpgradeDowngrade();
+					atualizaUpgradeDowngrade();
 				} else {					
 					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
-        }
+				}
 					
         }
     });
@@ -5805,6 +5852,7 @@ function mostraHisLimite() {
 
 function carregaHistorico(type) {
     showMsgAguardo("Aguarde, carregando hist&oacute;rico ...");
+	var sitcrd = $("#dssituac").val();
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -5813,7 +5861,8 @@ function carregaHistorico(type) {
             nrcrcard: nrcrcard,
             nrdconta: nrdconta,
             nrctrcrd: nrctrcrd,
-            type: type
+            type: type,
+			dssituac : sitcrd
         },
         error: function (objAjax, responseError, objExcept) {
 
@@ -5849,7 +5898,7 @@ function validarSenha(nrctrcrd) {
         //if (inpessoa == 1 ) {
 		if(false){
 			log4console("indo solicitar senha");
-            solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\')', nrdconta, '', 'sim.gif', 'nao.gif');
+            solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\')', nrdconta, true);
             return;
         }
         if ($("#agentPassword:checked").val() != undefined) {

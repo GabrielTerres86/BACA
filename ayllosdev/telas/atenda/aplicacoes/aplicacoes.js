@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 18/12/2017
+ Data : Setembro/2009                Última Alteração: 27/06/2018
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -98,6 +98,10 @@
 
 			 14/05/2018 - Ajustes na function validaValorProdutoResgate. PRJ366 (Lombardi).	
 
+             10/05/2018 - SM404 - Permitir o resgate de aplicações bloqueadas
+
+			 27/06/2018 - Problemas com JS em tela Embarcada CRM.
+
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -191,7 +195,7 @@ function controlaFoco() {
     $(".FluxoNavega").focus(function () {
         $(this).bind('keydown', function (e) {
             if (e.keyCode == 27) {
-                encerraRotina(true).click();
+                encerraRotina(true);
             }
         });
     });
@@ -2634,7 +2638,7 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
     var camposPc = '';
     var dadosPrc = '';
     var cdopera2 = $("#cdopera2", "#frmResgateVarias").val();
-    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");;
+    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");
 
     if (formaResgate == "automatica") {
         camposPc = retornaCampos(lstDadosResgate, '|');

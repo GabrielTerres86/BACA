@@ -75,6 +75,7 @@
 			              de operadores (Andrei-MOUTs)
 
 			 06/04/2018 - Inclusao das function validaValorAdesao e senhaCoordenador. PRJ366 (Lombardi).
+			 27/06/2018 - Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
 
 *********************************************************************************/
 
@@ -155,7 +156,7 @@ function controlaFoco() {
             if (e.keyCode == 27) {
                 e.stopPropagation();
                 e.preventDefault();
-                encerraRotina().click();
+                encerraRotina();
             }
         });
     });

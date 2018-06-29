@@ -421,6 +421,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --               18/04/2018 - P450 - Ajuste para buscar valores de juros,taxas,mora etc... de contas
   --                            correntes negativas e caso possuir com limites de credito estourado
   --                            Projeto Contrataçao de Credito (Rangel Decker) AMCom
+  --
+  --               26/06/2018 - P450 - Ajuste calculo Juros60 (Rangel/AMcom)
   -- ......................................................................................................
 
 
@@ -509,6 +511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_fleprces          INTEGER := 0;
     vr_dtmvtolt          DATE;
     vr_dtcorte_prm       DATE;
+    vr_data_60dias_atraso      DATE;
+    vr_data_corte_dias_uteis   DATE; --Data de corte para calculoar dias uteis
 
 
     --Busca conta corrente em ADP saldo negativo e se houver limite estourado (Rangel Decker AMcom)
@@ -532,7 +536,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     --Retorna os laçamentos de taxas cobradas na situação de conta negativa (Rangel Decker AMcom)
     CURSOR cr_conta_juros60 (pr_cdcooper IN craplcm.cdcooper%TYPE,
                              pr_nrdconta IN craplcm.nrdconta%TYPE,
-                             pr_datacorte  IN craplcm.dtmvtolt%TYPE) IS
+                             pr_datacorte  IN craplcm.dtmvtolt%TYPE,
+                             pr_dt60datr IN crapris.dtinictr%TYPE ) IS
 
       SELECT /*+ index (lcm CRAPLCM##CRAPLCM2) */
             'DF' periodo
@@ -570,7 +575,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       AND lcm.cdhistor  = his.cdhistor
       AND lcm.cdcooper  = pr_cdcooper
       AND lcm.nrdconta  = pr_nrdconta
-      AND lcm.dtmvtolt  > pr_datacorte  -- BETWEEN pr_dataini AND pr_datafim
+      AND lcm.dtmvtolt   > pr_datacorte
+      AND lcm.dtmvtolt   >=pr_dt60datr -- Data em que completou 60 dias em ADP
       AND his.indebcre ='D'
       AND his.cdhistor in(38,37,57);
 
@@ -599,6 +605,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     pr_juros57.valorpf:=0;
     pr_juros57.valorpj:=0;
+
+
 
 
     FOR rw_crapris_jur IN cr_crapris_jur(par_cdcooper,
@@ -853,11 +861,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                                            ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
                                                            ,'DD/MM/RRRR');
 
+
+        vr_data_corte_dias_uteis := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                                      ,pr_nmsistem => 'CRED'
+                                                                      ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                                      ,'DD/MM/RRRR');
+
+
+
+
         FOR  rw_conta_negativa in cr_conta_negativa(pr_cdcooper =>par_cdcooper) LOOP
+
+          IF rw_conta_negativa.dtinictr < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
+              vr_data_60dias_atraso := TELA_ATENDA_DEPOSVIS.fn_soma_dias_uteis_data(par_cdcooper,rw_conta_negativa.dtinictr, 60); -- Conta dias úteis
+           ELSE
+              vr_data_60dias_atraso :=  rw_conta_negativa.dtinictr+ 60; -- Conta dias corridos
+           END IF;
+
+
 
           FOR  rw_conta_juros60 in cr_conta_juros60(pr_cdcooper   => par_cdcooper,
                                                     pr_nrdconta   => rw_conta_negativa.nrdconta,
-                                                    pr_datacorte  => vr_dtcorte_prm) LOOP
+                                                    pr_datacorte  => vr_dtcorte_prm,
+                                                    pr_dt60datr => vr_data_60dias_atraso) LOOP
 
 
                 IF rw_conta_negativa.inpessoa = 1 THEN  --Pessoa Fisica
@@ -965,7 +991,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         END LOOP;
 
      END IF;
-
 
   END pc_calcula_juros_60k;
 

@@ -336,7 +336,9 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                STRING(aux_nrcpfpre) +
                                "</nrcpfpre><nrcpfcgc>" +
                                STRING(aux_nrcpfcgc) + 
-                               "</nrcpfcgc></CORRENTISTA>".
+                               "</nrcpfcgc><cdsitdct>" + 
+                               STRING(crapass.cdsitdct) + 
+                               "</cdsitdct></CORRENTISTA>".
 
 RETURN "OK".
 
