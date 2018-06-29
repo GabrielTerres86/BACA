@@ -16236,6 +16236,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
+
+	  -- Deve ser feito após o  UPDATE da cob devido ao indpagto ser atualizado nesse update
+      vr_cdmotivo := 0;
+
+      IF pr_cdbanpag = 85 THEN
+         vr_cdmotivo := pr_dsmotivo;
+      END IF;
       
       /* Gerar dados para tt-lcm-consolidada */
       PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
@@ -16243,7 +16250,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                           ,pr_tplancto => 'T'         --Tipo Lancamento
                                           ,pr_vltarifa => 0           --Valor Tarifa
                                           ,pr_cdhistor => 0           --Codigo Historico
-                                          ,pr_cdmotivo => pr_dsmotivo --Codigo motivo
+                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
                                           ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
                                           ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                           ,pr_dscritic => vr_dscritic); --Descricao Critica
