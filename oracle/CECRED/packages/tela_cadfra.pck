@@ -1105,6 +1105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
 
       END IF;
 
+      BEGIN
       IF vr_tab_param.COUNT > 0 THEN
         IF vr_tab_param(0).flgativo = 1 AND 
            pr_flgativo = 0 THEN
@@ -1121,7 +1122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
                                 
           --> Buscar dados do operador
           rw_crapope := NULL;
-          OPEN cr_crapope(pr_cdcooper => vr_cdoperad,
+            OPEN cr_crapope(pr_cdcooper => vr_cdcooper,
                           pr_cdoperad => vr_cdoperad);
           FETCH cr_crapope INTO rw_crapope;
           CLOSE cr_crapope;
@@ -1144,7 +1145,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
            
         END IF;   
       END IF;
-
+      --> tratativa para nao abortar a rotina  
+      EXCEPTION
+        WHEN OTHERS THEN
+          NULL;
+      END;
 
       pc_item_log(pr_cdcooper   => vr_cdcooper
                  ,pr_cddopcao   => vr_cddopcao
