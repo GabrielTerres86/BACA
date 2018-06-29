@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 28/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 13/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -273,9 +273,6 @@ BEGIN
                      (Adriano - REQ0016678).
                      
 		     13/06/2018 - Ajuste para inicializar variável  de estado de crise (Adriano).
-
-			 28/06/2018 - Ajuste no controle de envio do arquivo para a pasta "salvar"
-				         (Adriano - INC0018303).
                      
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -373,6 +370,11 @@ BEGIN
     vr_aux_CtCredtd             VARCHAR2(100);
     vr_aux_CNPJ_CPFCred         VARCHAR2(100);
     vr_aux_NomCliCredtd         VARCHAR2(100);
+    vr_aux_NomArqSLC            VARCHAR2(200);
+    vr_aux_NumCtrlLTROr         VARCHAR2(100);
+    vr_aux_IndrDevLiquid        VARCHAR2(100);
+    vr_aux_NumCtrlEmissorArq    VARCHAR2(100);
+    vr_aux_TpTranscSLC          VARCHAR2(100);
     vr_aux_TpPessoaCred         VARCHAR2(100);
     vr_aux_CodDevTransf         VARCHAR2(100);
     vr_aux_TpCtCredtd           VARCHAR2(100);
@@ -2846,7 +2848,143 @@ BEGIN
           pr_dscritic := 'Erro no tratamento do Node pc_trata_transfere -->'||sqlerrm;
       END;
 
-PROCEDURE pc_trata_arquivo_slc(pr_node      IN xmldom.DOMNode
+PROCEDURE pc_trata_arquivo_slc0005(pr_node      IN xmldom.DOMNode
+                                  ,pr_dscritic OUT VARCHAR2) IS
+
+        -- SubItens da SLC0005
+        vr_elem_node xmldom.DOMElement;
+        vr_node_list xmldom.DOMNodeList;
+        vr_node_name VARCHAR2(100);
+        vr_item_node xmldom.DOMNode;
+        vr_valu_node xmldom.DOMNode;
+
+        -- SubItens de Grupo
+        vr_elem_node_grpsit xmldom.DOMElement;
+        vr_node_list_grpsit xmldom.DOMNodeList;
+        vr_node_name_grpsit VARCHAR2(100);
+        vr_item_node_grpsit xmldom.DOMNode;
+        vr_valu_node_grpsit xmldom.DOMNode;
+
+        -- Genéricas
+        vr_aux_descrica     VARCHAR2(1000);
+
+        vr_ind  NUMBER;
+        vr_ind1 NUMBER;
+        vr_ind2 NUMBER;
+
+BEGIN
+    -- Reiniciar globais
+    vr_aux_CodMsg := 'SLC0005';
+
+    -- Buscar todos os filhos deste nó
+    vr_elem_node := xmldom.makeElement(pr_node);
+    -- Faz o get de toda a lista de filhos
+    vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+    -- Percorrer os elementos
+    FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+      -- Buscar o item atual
+      vr_item_node := xmldom.item(vr_node_list, vr_ind);
+      -- Captura o nome e tipo do nodo
+      vr_node_name := xmldom.getNodeName(vr_item_node);
+
+      -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+      vr_valu_node := xmldom.getFirstChild(vr_item_node);
+      vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+      -- Copiar para a respectiva variavel conforme nome da tag
+      IF vr_node_name = 'CodMsg' THEN
+        vr_aux_codmsg := vr_aux_descrica;
+      ELSIF vr_node_name = 'NumCtrlSLC' THEN
+        vr_aux_NumCtrlSLC := vr_aux_descrica;
+      ELSIF vr_node_name = 'ISPBIF' THEN
+        vr_aux_ISPBIF := vr_aux_descrica;
+      ELSIF vr_node_name = 'NumCtrlLTROr' THEN
+        vr_aux_NumCtrlLTROr := vr_aux_descrica;
+      ELSIF vr_node_name = 'TpDeb_Cred' THEN
+        vr_aux_TpDebCred := vr_aux_descrica;
+      ELSIF vr_node_name = 'ISPBIFDebtd' then
+        vr_aux_ISPBIFDebtd := vr_aux_descrica;
+      ELSIF vr_node_name = 'CNPJNLiqdantDebtd' THEN
+        vr_aux_CNPJNLiqdantDebtd := vr_aux_descrica;
+      ELSIF vr_node_name = 'NomCliDebtd' THEN
+        vr_aux_NomCliDebtd := vr_aux_descrica;
+      ELSIF vr_node_name = 'ISPBIFCredtd' then
+        vr_aux_ISPBIFCredtd := vr_aux_descrica;
+      ELSIF vr_node_name = 'CNPJNLiqdantCredtd' then
+        vr_aux_CNPJNLiqdantCredtd := vr_aux_descrica;
+      ELSIF vr_node_name = 'NomCliCredtd' then
+        vr_aux_NomCliCredtd := vr_aux_descrica;
+      ELSIF vr_node_name = 'VlrLanc' then
+        vr_aux_VlrLanc := gene0002.fn_char_para_number(vr_aux_descrica);
+      /*ELSIF vr_node_name = 'SubTpAtv' then
+        vr_aux_SubTpAtv := vr_aux_descrica;
+      ELSIF vr_node_name = 'DescAtv' then
+        vr_aux_DescAtv := vr_aux_descrica;*/
+      ELSIF vr_node_name = 'IndrDevLiquid' then
+        vr_aux_IndrDevLiquid := vr_aux_descrica;
+      ELSIF vr_node_name = 'NomArqSLC' then
+        vr_aux_NomArqSLC := vr_aux_descrica;
+      ELSIF vr_node_name = 'NumCtrlEmissorArq' then
+        vr_aux_NumCtrlEmissorArq := vr_aux_descrica;
+      ELSIF vr_node_name = 'DtHrSLC' then
+        vr_aux_DtHrSLC := vr_aux_descrica;
+      ELSIF vr_node_name = 'DtMovto' THEN
+        vr_aux_DtMovto := vr_aux_descrica;
+      END IF;
+
+    END LOOP;
+
+    cecred.ccrd0006.pc_insere_msg_slc(vr_aux_VlrLanc
+                                     ,vr_aux_codmsg
+                                     ,vr_aux_NumCtrlSLC
+                                     ,vr_aux_ISPBIF
+                                     ,NULL --vr_aux_DtLiquid
+                                     ,NULL --vr_aux_NumSeqCicloLiquid
+                                     ,NULL --vr_aux_CodProdt
+                                     ,NULL --vr_aux_IdentLinhaBilat
+                                     ,vr_aux_TpDebCred
+                                     ,vr_aux_ISPBIFCredtd
+                                     ,vr_aux_ISPBIFDebtd
+                                     ,vr_aux_CNPJNLiqdantDebtd
+                                     ,vr_aux_NomCliDebtd
+                                     ,vr_aux_CNPJNLiqdantCredtd
+                                     ,vr_aux_NomCliCredtd
+                                     ,vr_aux_DtHrSLC
+                                     ,vr_aux_DtMovto
+                                     ,NULL --vr_aux_TpTranscSLC
+                                     ,vr_aux_NomArqSLC
+                                     ,vr_aux_NumCtrlLTROr
+                                     ,vr_aux_IndrDevLiquid
+                                     ,vr_aux_NumCtrlEmissorArq
+                                     ,vr_dscritic);
+
+    -- Se retornou erro
+    IF vr_dscritic IS NOT NULL THEN
+       -- Acionar rotina de LOG
+       BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                 ,pr_ind_tipo_log  => 2 -- Erro não tratado
+                                 ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                                      ||' - '|| vr_glb_cdprogra ||' --> '
+                                                      || 'pc_insere_msg_slc0005 --> '||vr_dscritic
+                                 ,pr_nmarqlog      => vr_logprogr
+                                 ,pr_cdprograma    => vr_glb_cdprogra
+                                 ,pr_dstiplog      => 'E'
+                                 ,pr_tpexecucao    => 3
+                                 ,pr_cdcriticidade => 0
+                                 ,pr_flgsucesso    => 1
+                                 ,pr_cdmensagem    => vr_cdcritic);
+    END IF;
+    
+    pc_gera_log_SPB('RECEBIDA OK'
+                   ,'SLC RECEBIDA');
+
+EXCEPTION
+WHEN OTHERS THEN
+   pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_SLC0005 -->'||sqlerrm;
+END;
+
+
+PROCEDURE pc_trata_arquivo_slc0001(pr_node      IN xmldom.DOMNode
+
                               ,pr_dscritic OUT VARCHAR2) IS
 
         -- SubItens da SLC0001
@@ -2985,6 +3123,9 @@ BEGIN
                          ELSIF vr_node_name_grpsit2 = 'NomCliCredtd' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
                             vr_aux_NomCliCredtd := fn_getValue(vr_valu_node_grpsit2);
+                         ELSIF vr_node_name_grpsit2 = 'TpTranscSLC' THEN
+                            vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
+                            vr_aux_TpTranscSLC := fn_getValue(vr_valu_node_grpsit2);
 
                             IF  vr_aux_TpInf = 'D' THEN -- Apenas para mensagens com tipo = D - Definitiva
 
@@ -3005,6 +3146,11 @@ BEGIN
                                                                  ,vr_aux_NomCliCredtd
                                                                  ,vr_aux_DtHrSLC
                                                                  ,vr_aux_DtMovto
+                                                                 ,vr_aux_TpTranscSLC
+                                                                 ,NULL
+                                                                 ,NULL
+                                                                 ,NULL
+                                                                 ,NULL			
                                                                  ,vr_dscritic);
 
                                 -- Se retornou erro
@@ -3014,7 +3160,7 @@ BEGIN
                                                              ,pr_ind_tipo_log  => 2 -- Erro não tratado
                                                              ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
                                                                                   ||' - '|| vr_glb_cdprogra ||' --> '
-                                                                                  || 'pc_insere_msg_slc --> '||vr_dscritic
+                                                                                  || 'pc_insere_msg_slc0001 --> '||vr_dscritic
                                                              ,pr_nmarqlog      => vr_logprogr
                                                              ,pr_cdprograma    => vr_glb_cdprogra
                                                              ,pr_dstiplog      => 'E'
@@ -3055,7 +3201,7 @@ BEGIN
 
 EXCEPTION
 WHEN OTHERS THEN
-   pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_slc -->'||sqlerrm;
+   pr_dscritic := 'Erro no tratamento do Node pc_trata_arquivo_slc0001 -->'||sqlerrm;
 END;
 
 PROCEDURE pc_trata_arquivo_ldl(pr_node      IN xmldom.DOMNode
@@ -3411,7 +3557,11 @@ END;
                                       ,pr_dscritic    => vr_dscritic);
           ELSIF vr_node_name = 'SLC0001' THEN
             -- Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017
-            pc_trata_arquivo_slc(pr_node        => vr_item_node
+            pc_trata_arquivo_slc0001(pr_node        => vr_item_node
+                                    ,pr_dscritic    => vr_dscritic);
+          ELSIF vr_node_name = 'SLC0005' THEN
+            -- Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017
+            pc_trata_arquivo_slc0005(pr_node        => vr_item_node
                                 ,pr_dscritic    => vr_dscritic);
           ELSIF vr_node_name = 'LDL0024' THEN
             -- Inclusão tratamento mensagem LDL0024 - Alexandre (Mouts) - 12/12/2017
@@ -4921,14 +5071,9 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
-          
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-          
           -- Retornar pois o processo finalizou
           RETURN;
         END IF;
-        
       ELSIF vr_aux_CodMsg IN('STR0010R2','PAG0111R2') THEN
         -- Gera devolucao com mesmo numero de documento da mensagem gerada pelo Legado
         vr_aux_nrdocmto := TO_NUMBER(SUBSTR(vr_aux_NumCtrlIF,LENGTH(vr_aux_NumCtrlIF) - 8,8));
@@ -5163,13 +5308,8 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
-          
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-
           -- Processo finalizado
           RETURN;
-          
         ELSE
           -- Se estava na SPB
           IF vr_aux_tagCABInf  THEN
@@ -5219,10 +5359,6 @@ END;
             -- Gerar LOG
             pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                            ,pr_msgderro  => vr_dscritic);
-            
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-          
             -- Retornar a execução
             RETURN;
           END IF;
@@ -5243,10 +5379,6 @@ END;
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
-            
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
 
@@ -5312,10 +5444,6 @@ END;
               -- Gerar LOG
               pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                              ,pr_msgderro  => vr_dscritic);
-              
-              -- Salvar o arquivo
-              pc_salva_arquivo;
-            
               -- Retornar a execução
               RETURN;
 
@@ -5368,10 +5496,7 @@ END;
                                         ,pr_ind_tipo_log => 1
                                         ,pr_des_log      => vr_dscritic
                                         ,pr_nmarqlog     => 'logprt');
-                                        
-              -- Salvar o arquivo
-              pc_salva_arquivo;
-          
+
               -- Retornar a execução
               RETURN;
             END IF;
@@ -5381,10 +5506,6 @@ END;
 
         -- Caso seja estorno de TED de repasse de convenio entao despreza
         IF vr_aux_CodMsg IN('STR0007','STR0020') THEN
-          
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
           -- Retornar
           RETURN;
         END IF;
@@ -5431,9 +5552,6 @@ END;
             vr_dscritic := null;
           END IF;
 
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5466,10 +5584,7 @@ END;
             -- Limpar critica
             vr_dscritic := null;
           END IF;
-          
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
+
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5507,9 +5622,6 @@ END;
             vr_dscritic := null;
           END IF;
 
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5543,9 +5655,6 @@ END;
               raise vr_exc_saida;
             END IF;
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
           ELSE
@@ -5608,9 +5717,6 @@ END;
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'REJEITADA BACENJUD');
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
 
@@ -5647,9 +5753,6 @@ END;
               raise vr_exc_saida;
             END IF;
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-            
             -- Retornar a execução
             RETURN;
 
@@ -5703,9 +5806,6 @@ END;
                 raise vr_exc_saida;
               END IF;
 
-              -- Salvar o arquivo
-              pc_salva_arquivo;
-            
               -- Retornar a execução
               RETURN;
 
@@ -5782,10 +5882,6 @@ END;
           pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA NAO OK'
                          ,pr_msgderro  => 'DEVOLUCAO BACENJUD');
 
-          
-          -- Salvar o arquivo
-          pc_salva_arquivo;
-            
           -- Retornar a execução
           RETURN;
 
@@ -5851,9 +5947,6 @@ END;
             pc_gera_log_SPB(pr_tipodlog  => vr_tipolog
                            ,pr_msgderro  => vr_log_msgderro);
 
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-          
             -- Retornar a execução
             RETURN;
 
@@ -5905,7 +5998,7 @@ END;
                 vr_aux_DSCONTA_CREDITADA := rw_tbfin_rec_con.nrdconta;
                 VR_AUX_CDAGENCI_CREDITADA := rw_tbfin_rec_con.cdagenci;
               END IF;
-              END IF;
+            END IF;
 
             CLOSE cr_tbfin_rec_con;
 
@@ -6260,7 +6353,7 @@ END;
                                     ,pr_ind_tipo_log => 1
                                     ,pr_des_log      => vr_dscritic
                                     ,pr_nmarqlog     => 'logprt');
-          
+          RETURN;
         ELSE
           -- Conforme o tipo do Empréstimo
           IF vr_aux_tpemprst = 1 THEN -- PP
@@ -6285,9 +6378,6 @@ END;
 
           -- Se retornou erro na Liquidação
           IF vr_dscritic IS NOT NULL THEN
-            -- Salvar o arquivo
-            pc_salva_arquivo;
-          
             -- Retornar a execução
             RETURN;
           END IF;
@@ -6400,9 +6490,6 @@ END;
         pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                        ,pr_msgderro  => NULL);
       END IF;
-      
-      -- Salvar o arquivo
-      pc_salva_arquivo;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -6568,7 +6655,7 @@ END;
                                ,'STR0025R2','PAG0121R2'                         -- Transferencia Judicial - Andrino
                                ,'LTR0005R2'                                     -- Antecipaçao de Recebíveis - LTR - Mauricio
                                ,'LDL0020R2','LDL0022','LTR0004'                 -- Alexandre - Mouts
-                               ,'SLC0001'                                       -- Requisição de Transferência de cliente para IF - Mauricio
+                               ,'SLC0001','SLC0005'                             -- Requisição de Transferência de cliente para IF - Mauricio
                                ,'LDL0024'                                       -- Aviso Alteração Horários Câmara LDL - Alexandre Borgmann - Mouts
                                ,'STR0006R2'                                     -- Cielo finalidade 15 gravar e não gerar STR0010 - Alexandre Borgmann - Mouts
                                ,'PAG0108R2','PAG0143R2'                         -- TED
@@ -7571,7 +7658,12 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
           END IF;
-		  
+
+          -- Salvar o arquivo
+          pc_salva_arquivo;
+          -- Processo finalizado
+          RAISE vr_exc_next;
+
         END IF;
 
       EXCEPTION
