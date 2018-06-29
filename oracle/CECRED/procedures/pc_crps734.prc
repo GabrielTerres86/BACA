@@ -46,6 +46,8 @@ BEGIN
              craptdb.cdbandoc,
              craptdb.nrcnvcob,
              craptdb.nrdctabb,
+             craptdb.vlmratit,
+             craptdb.vljura60,
              craptdb.nrdocmto
         FROM craptdb, crapbdt
        WHERE craptdb.cdcooper =  crapbdt.cdcooper
@@ -61,6 +63,7 @@ BEGIN
     TYPE typ_reg_craptdb IS RECORD
       (vlmtatit craptdb.vlmtatit%TYPE
       ,vlmratit craptdb.vlmratit%TYPE
+      ,vljura60 craptdb.vljura60%TYPE
       ,vlioftit craptdb.vliofcpl%TYPE
       ,vr_rowid ROWID);
       
@@ -161,17 +164,25 @@ BEGIN
       
       vr_index := vr_tab_craptdb.COUNT + 1;
       
+      -- Realiza o cálculo dos juros + 60 de mora do título
+      IF (rw_crapdat.dtmvtopr - rw_craptdb.dtvencto) > 60 THEN
+        vr_tab_craptdb(vr_index).vljura60 := rw_craptdb.vljura60 + (vr_vlmratit - rw_craptdb.vlmratit);  
+      ELSE
+        vr_tab_craptdb(vr_index).vljura60 := 0;
+      END IF;
+      
       vr_tab_craptdb(vr_index).vlmtatit := vr_vlmtatit;
       vr_tab_craptdb(vr_index).vlmratit := vr_vlmratit;
       vr_tab_craptdb(vr_index).vlioftit := vr_vlioftit;
       vr_tab_craptdb(vr_index).vr_rowid := rw_craptdb.ROWID;   
     END LOOP;
     
-    -- Atualiza os valores de multa, juros de mora e iof de do atraso do título
+    -- Atualiza os valores de multa, juros de mora, juros + 60 e iof do atraso do título
     BEGIN
       FORALL idx IN INDICES OF vr_tab_craptdb SAVE EXCEPTIONS
         UPDATE craptdb
            SET craptdb.vlmtatit = vr_tab_craptdb(idx).vlmtatit,    
+               craptdb.vljura60 = vr_tab_craptdb(idx).vljura60,    
                craptdb.vlmratit = vr_tab_craptdb(idx).vlmratit,    
                craptdb.vliofcpl = vr_tab_craptdb(idx).vlioftit   
          WHERE ROWID = vr_tab_craptdb(idx).vr_rowid;
