@@ -16,9 +16,7 @@
  *
  *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e 
  *                             "Valor Maximo" (Mateus - MoutS)
- * 
- *                25/06/2018 - Ajuste na chamada da funcao carregaAtribuicaoDetalhamento, para funcionar corretamente a paginação.
- *                             (Alcemir - Mout's) - INC0017668.
+ *
  * -------------- 
  */
 ?> 
@@ -42,7 +40,7 @@
 	$cdtipcat		= (isset($_POST['cdtipcat'])) ? $_POST['cdtipcat'] : 0  ;
 
 	$flgtodos 	= TRUE;
-	$nrregist	= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 250;
+	$nrregist	= 250;
 	$nriniseq	= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1;
 
 	// Dependendo da operação, chamo uma procedure diferente
@@ -217,11 +215,11 @@
 	
 	$('a.paginacaoAnt').unbind('click').bind('click', function() {
 
-		carregaAtribuicaoDetalhamento(<? echo "'".($nriniseq - $nrregist)."'"; ?>, <? echo "'".$nrregist."'"; ?>);
+		carregaAtribuicaoDetalhamento($('#cdfaixav','#frmDetalhaTarifa').val(), <? echo "'".($nriniseq - $nrregist)."'"; ?>, true);
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
 
-		carregaAtribuicaoDetalhamento(<? echo "'".($nriniseq + $nrregist)."'"; ?>, <? echo "'".$nrregist."'"; ?>);
+		carregaAtribuicaoDetalhamento($('#cdfaixav','#frmDetalhaTarifa').val(), <? echo "'".($nriniseq + $nrregist)."'"; ?>, true);
 	});	
 	
 	$('#divPesquisaRodape', '#divTabDetalhamento').formataRodapePesquisa();
