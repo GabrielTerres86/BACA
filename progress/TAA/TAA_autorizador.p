@@ -311,6 +311,17 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                          PRJ404 - Garantia.(Odirlei-AMcom)                 
+
+            21/05/2018 - Inclusao de parametros devido a analise de fraude.
+                         PRJ381 - Antifraude(Odirlei-AMcom)
+                      
+			26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			   
+            18/06/2018 - Retornar o complemento na consulta de extrato
+                         (Douglas - Prj 467)
+						 
+			
+			            
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -3913,6 +3924,8 @@ PROCEDURE efetua_transferencia:
                                  INPUT ' ', /* dshistor */
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
+                                 INPUT '', /* par_iddispos */
+                                 
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
                                 OUTPUT 0,
@@ -4066,7 +4079,7 @@ PROCEDURE efetua_transferencia:
                                           " - " + crapage.nmcidade + " - " + STRING(craptfn.nrterfin) + " - " +
                                           craptfn.nmterfin
     
-                           aux_dsdemail = "prevencaodefraudes@cecred.coop.br"
+                           aux_dsdemail = "prevencaodefraudes@ailos.coop.br"
     
                            aux_dsdcorpo = "PA: " + STRING(craptfn.cdagenci) + " - " + crapage.nmresage + "\n\n" + 
                                           "Conta: " + STRING(aux_nrdconta) + "\n".
@@ -4129,7 +4142,7 @@ PROCEDURE efetua_transferencia:
                     RUN enviar_email_completo IN h-b1wgen0011 
                         (INPUT aux_cdcooper,
                          INPUT "TAA_autorizador",
-                         INPUT "prevencaodefraudes@cecred.coop.br",
+                         INPUT "prevencaodefraudes@ailos.coop.br",
                          INPUT aux_dsdemail,
                          INPUT aux_dsassunt,
                          INPUT "",
@@ -4748,6 +4761,9 @@ PROCEDURE paga_titulo:
                                                      INPUT 0,
                                                      INPUT aux_tpcptdoc,
                                                      INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
+                                                     INPUT 0,  /* par_flmobile */
+                                                     INPUT '', /* par_iptransa */
+                                                     INPUT '', /* par_iddispos */
                                                     OUTPUT aux_dstrans1,
                                                     OUTPUT aux_dscritic,
                                                     OUTPUT aux_dsprotoc,
@@ -4799,6 +4815,8 @@ PROCEDURE paga_titulo:
                                                    INPUT ' ', /* dshistor */
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
+                                                   INPUT '', /* pr_iddispos */
+                                                   
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
                                                    OUTPUT 0,
@@ -5276,6 +5294,9 @@ PROCEDURE paga_convenio:
                                                       INPUT aux_nrterfin,
                                                       INPUT 0, /* nrcpfope */
                                                       INPUT aux_tpcptdoc,
+                                                      INPUT 0,  /* par_flmobile */
+                                                      INPUT '', /* par_iptransa */
+                                                      INPUT '', /* par_iddispos */                                                     
                                                      OUTPUT aux_dstransa,
                                                      OUTPUT aux_dscritic,
                                                      OUTPUT aux_dsprotoc,
@@ -5330,6 +5351,8 @@ PROCEDURE paga_convenio:
                                                   INPUT ' ', /* dshistor */
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
+                                                  INPUT '', /* par_iddispos */
+                                                  
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
                                                  OUTPUT 0,
@@ -5822,6 +5845,7 @@ PROCEDURE efetua_agendamento_mensal:
                                     INPUT ' ', /* dstransf */
                                     INPUT ' ', /* dshistor */
                                     INPUT '',  /* iptransa */
+                                    INPUT '',  /* iddispos */ 
                                     OUTPUT "",  /* pr_dstransa */        
                                     OUTPUT "",  /* pr_cdcritic */        
                                     OUTPUT ""). /* pr_dscritic */        
