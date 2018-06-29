@@ -232,8 +232,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
 			                quando chamado pelo CRPS538. (Mário- AMcom)
     
-                27/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
-                             da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)				              
+               27/06/2018 - P450 Regulatório de Credito - Substituido o insert na craplcm pela chamada 
+                            da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)				              
 
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */

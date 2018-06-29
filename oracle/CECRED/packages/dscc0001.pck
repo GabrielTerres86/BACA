@@ -453,8 +453,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				  
 	    27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
 
-      27/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
-                   da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)				              
+      27/06/2018 - P450 Regulatório de Credito - Substituido o insert na craplcm pela chamada 
+                   da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)				              
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
