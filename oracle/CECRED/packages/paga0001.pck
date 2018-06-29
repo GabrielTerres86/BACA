@@ -20370,7 +20370,7 @@ end;';
              cob.nrdocmto,
              cco.dsorgarq,
              cob.rowid rowid_cob,
-             ret.rowid rowid_ret
+             ret.rowid rowid_ret,
 						 cob.cdbandoc -- PRJ352
         FROM crapret ret
             ,crapcco cco
