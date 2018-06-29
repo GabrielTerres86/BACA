@@ -27,7 +27,7 @@
 	?>
 	
 <div id="divBotoes" style="margin-bottom:10px">
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_sistema_cecred.gif" onClick="obtemCntsCad(1);return false;" />
+	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_sistema_ailos.gif" onClick="obtemCntsCad(1);return false;" />
 	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_de_outras_ifs.gif" onClick="obtemCntsCad(2);return false;"  />
 </div>
 	

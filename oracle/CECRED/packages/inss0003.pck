@@ -611,7 +611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
     -- Mandar email para INSS com o resultado do processo
     gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
                               ,pr_cdprogra        => pr_cdprogra
-                              ,pr_des_destino     => 'inss@cecred.coop.br'
+                              ,pr_des_destino     => 'inss@ailos.coop.br'
                               ,pr_des_assunto     => 'SICREDI - PLANILHA PROVA DE VIDA - LOG'
                               ,pr_des_corpo       => 'Em anexo a PLANILHA e o LOG de processamento.'  ||
                                                      '</br></br>' ||
@@ -658,7 +658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
       -- Mandar email para INSS com o resultado do processo
       gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
                                 ,pr_cdprogra        => pr_cdprogra
-                                ,pr_des_destino     => 'inss@cecred.coop.br'
+                                ,pr_des_destino     => 'inss@ailos.coop.br'
                                 ,pr_des_assunto     => 'SICREDI - PLANILHA PROVA DE VIDA - ERRO'
                                 ,pr_des_corpo       => 'Houve erro no processamento da planilha.</br>' ||
                                                        'Em anexo a PLANILHA e o LOG de processamento.'  ||
@@ -696,7 +696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
       -- Mandar email para INSS com o resultado do processo
       gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
                                 ,pr_cdprogra        => pr_cdprogra
-                                ,pr_des_destino     => 'inss@cecred.coop.br'
+                                ,pr_des_destino     => 'inss@ailos.coop.br'
                                 ,pr_des_assunto     => 'SICREDI - PLANILHA PROVA DE VIDA - ERRO'
                                 ,pr_des_corpo       => 'Houve erro no processamento da planilha.</br>' ||
                                                        'Em anexo a PLANILHA e o LOG de processamento.'  ||

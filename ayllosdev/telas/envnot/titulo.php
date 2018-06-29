@@ -90,7 +90,7 @@
 			</tr>
 			<tr style="height: 25px;">
 				<td colspan="3">
-					<label><? echo utf8ToHtml('Mensagem (Exibida na Central de Notificações e nas notificações PUSH do Cecred Mobile, m&aacute;ximo de 140 caracteres.):'); ?></label>
+					<label><? echo utf8ToHtml('Mensagem (Exibida na Central de Notificações e nas notificações PUSH do Ailos Mobile, m&aacute;ximo de 140 caracteres.):'); ?></label>
 				</td>
 			</tr>
 			<tr>

@@ -1500,7 +1500,7 @@ function montaHtmlImpressao( titulo ) {
 	var htmlImpressao = '';
 	htmlImpressao  = '<html>';
 	htmlImpressao += '	<head>';
-	htmlImpressao += '		<title>Impressão CECRED - '+titulo+'</title>';
+	htmlImpressao += '		<title>Impressão AILOS - '+titulo+'</title>';
 	htmlImpressao += '		<style type="text/css">';
 	htmlImpressao += '      	body{background-color:#DEE3D6;text-align:center;font-size:12px;color:#333;padding:50px;}';
 	htmlImpressao += '		</style>';

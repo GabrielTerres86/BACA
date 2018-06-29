@@ -853,7 +853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                        'Lembramos que você poderá aprová-los novamente, mas deverá ter saldo e/ou limite de crédito '||
                        'suficiente em sua conta corrente.<br /><br />'||
                        'Atenciosamente,<br />'||
-                       'Sistema CECRED';
+                       'Sistema AILOS';
 
         -- Enviar Email de para o departamento de contabilidade comunicando sobre a gerac?o do arquivo
         gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
@@ -1014,7 +1014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                            'de utilização nos últimos '||to_Char(vr_qtmescan)||' meses.<br>'||
                            'Entre em contato com seu Posto de Atendimento e solicite novamente a adesão ao serviço. <br><br>'||
                            'Atenciosamente, <br>'||
-                           'Sistema CECRED';
+                           'Sistema AILOS';
 
             -- Enviar Email comunicando o cancelamento do produto
             gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
@@ -1320,7 +1320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                               '<br>'||
                               'Atenciosamente,' ||
                               '<br>'||
-                              'Sistema CECRED.';
+                              'Sistema AILOS.';
 
           -- Enviar Email para o departamento de contabilidade comunicando sobre
           -- a geracao do arquivo
@@ -1987,7 +1987,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                     ,pr_des_corpo       => 'Olá,<br> Houve(ram) problema(s) com o(s) lançamentos de folha de pagamento agendados em sua Conta-Online. <br>'||
                                                            'Com isso, efetuamos o estorno no valor total de R$ '||TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.')|| '.<br>'||
                                                            'Para maiores detalhes dos problemas ocorridos, favor verificar sua Conta-Online ou acionar seu Posto de Atendimento. <br><br> ' ||
-                                                           'Atenciosamente,<br>Sistema CECRED.'
+                                                           'Atenciosamente,<br>Sistema AILOS.'
                                     ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
                                     ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
                                     ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
@@ -2317,7 +2317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                              ' junto a Cooperativa. Todos os pagamentos pendentes foram automaticamente reprovados, e os' ||
                              ' agendamentos não mais ocorrerão.<br><br>' ||
                              'Atenciosamente, <br>'||
-                             'Sistema CECRED';
+                             'Sistema AILOS';
 
               --Traz o email da Central
               vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'FOLHAIB_EMAIL_ALERT_PROC');
@@ -2383,7 +2383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                            || 'e aprove-os novamente em sua Conta-On-Line. <br>'
                            || 'Lembramos que toda solicitação de estouro dependerá de análise / aprovação de '
                            || 'seu Posto de Atendimento. <br><br> '
-                           || 'Atenciosamente,<br>Sistema CECRED.';
+                           || 'Atenciosamente,<br>Sistema AILOS.';
 
               -- Enviar e-mail informando para a empresa a falta de saldo.
               gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
@@ -2409,7 +2409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           ||' dois dias. Todos os pagamentos pendentes e com data prevista de debito'
                           ||' anterior a ' || TO_CHAR(pr_rw_crapdat.dtmvtoan,'DD/MM/YY') ||' foram'
                           ||' automaticamente reprovados, e os agendamentos não mais ocorrerão.<br><br>'
-                          ||'Atenciosamente, <br> Sistema CECRED';
+                          ||'Atenciosamente, <br> Sistema AILOS';
 
               -- Buscando o email do PA
               OPEN cr_crapage(pr_cdcooper => pr_cdcooper,
@@ -2501,7 +2501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                  'Saldo + Limite: R$ '||TO_CHAR(vr_vlsldisp, 'FM999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')|| '<br><br>'||
                                  'Você poderá solicitar o estouro de conta desde que cancele estes pagamentos e aprove-os novamente em sua Conta-On-Line. <br>' ||
                                  'Lembramos que toda solicitação de estouro dependerá de análise / aprovação de seu Posto de Atendimento. <br><br> ' ||
-                                 'Atenciosamente,<br>Sistema CECRED.';
+                                 'Atenciosamente,<br>Sistema AILOS.';
 
                    -- Enviar e-mail informando para a empresa a falta de saldo.
                    gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
@@ -7633,7 +7633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       vr_email_corpo := 'Olá,<br> Houve(ram) problema(s) com o(s) lançamentos de folha de pagamento agendados em sua Conta-Online. <br>'||
                         'Com isso, efetuamos o estorno no valor total de R$ '||TO_CHAR(tb_lancamentos(vr_chave).vllanmto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.')|| '.<br>'||
                         'Para maiores detalhes dos problemas ocorridos, favor verificar sua Conta-Online ou acionar seu Posto de Atendimento. <br><br> ' ||
-                        'Atenciosamente,<br>Sistema CECRED.';
+                        'Atenciosamente,<br>Sistema AILOS.';
       -- Enviar e-mail informando para a empresa a falta de saldo.
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                 ,pr_cdprogra        => 'FOLH0001'

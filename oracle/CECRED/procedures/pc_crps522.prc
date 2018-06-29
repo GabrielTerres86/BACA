@@ -673,7 +673,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS522 ( pr_cdcooper  IN crapcop.cdcooper
                     || ' ) esta localizado no diretorio ' || vr_nom_direto
                     || ' para ser enviado ao BACEN.<br><br>'
                     || 'Cooperativa Central de Credito Urbano<br>'
-                    || 'CECRED';
+                    || 'AILOS';
 
       -- Busca o e-mail do departamento de contabilidade da cooperativa
       vr_dsemlctr := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper

@@ -29,7 +29,7 @@
 	<div class="condensado" style="padding-top: 15px;">
 		<fieldset>
 			<legend>
-				<label for="inexibe_botao_acao_mobile"><? echo utf8ToHtml('Botão de A&ccedil;&atilde;o no Cecred Mobile:') ?></label>
+				<label for="inexibe_botao_acao_mobile"><? echo utf8ToHtml('Botão de A&ccedil;&atilde;o no Ailos Mobile:') ?></label>
 				<input type="checkbox" name="inexibe_botao_acao_mobile" id="inexibe_botao_acao_mobile" <?php echo($inexibe_botao_acao_mobile);?> onClick="exibeAcao();" />
 			</legend>
 			<div id="divBtnAcaoConteudo" name="divBtnAcaoConteudo" >
@@ -50,7 +50,7 @@
 					<tr style="height: 30px;">
 						<td>
 							<input type="radio" value="2" name="idacao_botao_acao_mobile" id="idacao_botao_acao_mobile_tela" onClick="acaoRadio(2,this.value);" />
-							<label for="cdmenu_acao_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Abrir tela do Cecred Mobile:') ?></label>
+							<label for="cdmenu_acao_mobile">&nbsp;&nbsp;<? echo utf8ToHtml('Abrir tela do Ailos Mobile:') ?></label>
 							<select id="cdmenu_acao_mobile" name="cdmenu_acao_mobile" class="Campo" style="width:290px;">
 								<option value="0">-- SELECIONE --</option>
 								 <?php 

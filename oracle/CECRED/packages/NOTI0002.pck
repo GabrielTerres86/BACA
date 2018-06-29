@@ -551,14 +551,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
           ,lst.cdorigem_mensagem
           ,lst.inpush_ativo);
       
-      vr_dstransa := 'Alteração das configurações das notificações no Cecred Mobile.';
+      vr_dstransa := 'Alteração das configurações das notificações no Ailos Mobile.';
       vr_dsmsgsuc := 'Configurações alteradas com sucesso.';
     ELSE
       IF pr_recbpush = 1 THEN
-         vr_dstransa := 'Habilitação das notificações no Cecred Mobile.';
+         vr_dstransa := 'Habilitação das notificações no Ailos Mobile.';
          vr_dsmsgsuc := 'Notificações habilitadas com sucesso.';
       ELSE
-         vr_dstransa := 'Desabilitação das notificações no Cecred Mobile.';
+         vr_dstransa := 'Desabilitação das notificações no Ailos Mobile.';
          vr_dsmsgsuc := 'Notificações desabilitadas com sucesso.';
       END IF;
     END IF;

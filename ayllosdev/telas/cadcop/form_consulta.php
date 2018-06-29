@@ -193,7 +193,7 @@
 
         <legend>Compe</legend>
 
-        <label for="cdbcoctl"><?php echo utf8ToHtml("Cod.COMPE Cecred:"); ?></label>
+        <label for="cdbcoctl"><?php echo utf8ToHtml("Cod.COMPE Ailos:"); ?></label>
         <input type="text" id="cdbcoctl" name="cdbcoctl" value="<?php echo getByTagName($cooperativa->tags,'cdbcoctl');?>" >
 
         <label for="cdagectl"><?php echo utf8ToHtml("C&oacute;digo de Ag&ecirc;ncia:"); ?></label>
@@ -284,7 +284,7 @@
         <label for="nrctabbd"><?php echo utf8ToHtml("Conta conv&ecirc;nio BB:"); ?></label>
         <input type="text" id="nrctabbd" name="nrctabbd" value="<?php echo getByTagName($cooperativa->tags,'nrctabbd');?>" >
 
-        <label for="nrctactl"><?php echo utf8ToHtml("Conta na CECRED:"); ?></label>
+        <label for="nrctactl"><?php echo utf8ToHtml("Conta na Ailos:"); ?></label>
         <input type="text" id="nrctactl" name="nrctactl" value="<?php echo getByTagName($cooperativa->tags,'nrctactl');?>" >
 
         <br />
@@ -297,7 +297,7 @@
 
         <br />
 
-        <label for="nrctacmp"><?php echo utf8ToHtml("Conta Compe. CECRED:"); ?></label>
+        <label for="nrctacmp"><?php echo utf8ToHtml("Conta Compe. Ailos:"); ?></label>
         <input type="text" id="nrctacmp" name="nrctacmp" value="<?php echo getByTagName($cooperativa->tags,'nrctacmp');?>" >
 
         <label for="nrdconta"><?php echo utf8ToHtml("Conta/dv:"); ?></label>

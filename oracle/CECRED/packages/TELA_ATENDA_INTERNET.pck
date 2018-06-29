@@ -212,7 +212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_INTERNET IS
     vr_modelo     dispositivomobile.modelo%TYPE;
     vr_titularid  dispositivomobile.titularid%TYPE;
     vr_nrdconta   dispositivomobile.numeroconta%TYPE;
-    vr_dstransa   craplgm.dstransa%TYPE := 'Desativação de alertas push em dispositivo do Cecred Mobile.';
+    vr_dstransa   craplgm.dstransa%TYPE := 'Desativação de alertas push em dispositivo do Ailos Mobile.';
     vr_nrdrowid ROWID;
   BEGIN
     

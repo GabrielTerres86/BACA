@@ -8816,7 +8816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       ELSIF pr_indtipo_cartao = 1 THEN -- Se foi feito com cartao magnetico
         vr_dstransa := 'Saque com cartao magnetico';
       ELSE -- Se foi feito com cartao Cecred
-        vr_dstransa := 'Saque com cartao CECRED';
+        vr_dstransa := 'Saque com cartao AILOS';
       END IF;
     ELSIF pr_indoperacao = 2 THEN -- Se for DOC
       vr_dstransa := 'DOC';
@@ -12076,7 +12076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             '</br></br>' ||
                             'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
                             'contato com seu Posto de Atendimento ou através do SAC da cooperativa, '||
-                            'pelo 0800 647 2200 ou e-mail sac@cecred.coop.br.';
+                            'pelo 0800 647 2200 ou e-mail sac@ailos.coop.br.';
 
              vr_notif_origem   := 7;
              vr_notif_motivo   := 1;
@@ -12099,7 +12099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             '</br>' ||
                             'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
                             'contato pelo SAC 0800 647 2200 ou através do e-mail '                   ||
-                            'sac@cecred.coop.br, todos os dias (incluindo domingos e feriados), '    ||
+                            'sac@ailos.coop.br, todos os dias (incluindo domingos e feriados), '    ||
                             'das 6h às 22h.';
 
              vr_notif_origem   := 7;

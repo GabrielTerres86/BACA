@@ -1898,7 +1898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         IF vr_envemail THEN
           -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
           gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
-                                    ,pr_des_destino => 'convenios@cecred.coop.br'
+                                    ,pr_des_destino => 'convenios@ailos.coop.br'
                                     ,pr_des_assunto => 'ERRO - Validacao GPS WebService Sicredi'
                                     ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
                                                      ||' WebService do Sicredi.</br></br>'

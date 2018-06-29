@@ -1393,7 +1393,7 @@ BEGIN -- Principal
                        TO_CHAR(rw_crapmof.dtfimper,'DD/MM/YYYY')   ||
                        '.'||chr(13)||chr(13)||
                        'Cooperativa Central de Credito Urbano'||CHR(13)||
-                       'CECRED';
+                       'AILOS';
 
         -- Enviar e-mail com o log gerado
         gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper

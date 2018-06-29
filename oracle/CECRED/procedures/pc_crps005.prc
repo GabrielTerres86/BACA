@@ -5216,7 +5216,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                       ,pr_fldosmail => 'S'                 --> Flag para converter arquivo para dos antes de enviar email
                                       ,pr_dspathcop => vr_nom_dircop||'/converte/' --> Lista sep. por ';' de diretórios a copiar o relatório
                                       ,pr_dsmailcop => vr_email_dest       --> Lista sep. por ';' de emails para envio do relatório
-                                      ,pr_dsassmail => 'FUNCIONARIOS DA CECRED COM ESTOURO DE CONTA NA '||Upper(pr_nmrescop)    --> Assunto do e-mail que enviará o relatório
+                                      ,pr_dsassmail => 'FUNCIONARIOS DA AILOS COM ESTOURO DE CONTA NA '||Upper(pr_nmrescop)    --> Assunto do e-mail que enviará o relatório
                                       ,pr_dscormail => NULL                --> HTML corpo do email que enviará o relatório
                                       ,pr_des_erro  => vr_des_erro);       --> Saída com erro
 

@@ -74,10 +74,10 @@
 				<label for="tpfiltro_mobile_0">&nbsp;&nbsp;<? echo utf8ToHtml('Todas as Plataformas') ?></label>
 				<br/>
 				<input type="radio" value="1" name="tpfiltro_mobile" id="tpfiltro_mobile_1" style="clear:both;" />
-				<label for="tpfiltro_mobile_1">&nbsp;&nbsp;<? echo utf8ToHtml('Cooperados sem Cecred Mobile') ?></label>
+				<label for="tpfiltro_mobile_1">&nbsp;&nbsp;<? echo utf8ToHtml('Cooperados sem Ailos Mobile') ?></label>
 				<br/>
 				<input type="radio" value="2" name="tpfiltro_mobile" id="tpfiltro_mobile_2" style="clear:both;" />
-				<label for="tpfiltro_mobile_2">&nbsp;&nbsp;<? echo utf8ToHtml('Todos os Cooperados com Cecred Mobile') ?></label>
+				<label for="tpfiltro_mobile_2">&nbsp;&nbsp;<? echo utf8ToHtml('Todos os Cooperados com Ailos Mobile') ?></label>
 				<br/>
 				<input type="radio" value="3" name="tpfiltro_mobile" id="tpfiltro_mobile_3" style="clear:both;" />
 				<label for="tpfiltro_mobile_3">&nbsp;&nbsp;<? echo utf8ToHtml('Somente Cooperados com Android') ?></label>

@@ -4458,7 +4458,7 @@ END pc_gera_titulos_iptu_prog;
                      CLOSE cr_crapceb4;
                      --Mensagem erro
                      vr_des_erro:= '882 - Convenio '||
-                                   'CECRED nao encontrado. ('||gene0002.fn_mask(vr_nrconvceb,'9999')||')';
+                                   'AILOS nao encontrado. ('||gene0002.fn_mask(vr_nrconvceb,'9999')||')';
                      --Criar erro
                      CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
                                           ,pr_cdagenci => pr_cod_agencia
@@ -5527,7 +5527,7 @@ END pc_gera_titulos_iptu_prog;
           -- Envio de e-mail informando que houve a tentativa
           gene0003.pc_solicita_email(pr_cdcooper => pr_cooper,
                                      pr_cdprogra => 'PAGA0001',
-                                     pr_des_destino => 'prevencaodefraudes@cecred.coop.br',
+                                     pr_des_destino => 'prevencaodefraudes@ailos.coop.br',
                                      pr_des_assunto => 'Tentativa de pagamento cod. barras fraudulento',
                                      pr_des_corpo => vr_des_corpo,
                                      pr_des_anexo => NULL,

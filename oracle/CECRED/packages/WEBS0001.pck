@@ -2409,7 +2409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Montar mensagem de critica
         vr_status      := 400;
         vr_cdcritic    := 138;
-        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch CECRED esta em execucao.';
+        vr_msg_detalhe := 'Parecer nao foi atualizado, o processo batch AILOS esta em execucao.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -2922,7 +2922,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         vr_status      := 400;
         vr_cdcritic    := 138;
         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch '
-                       || 'CECRED esta em execucao.';
+                       || 'AILOS esta em execucao.';
         RAISE vr_exc_saida;
       END IF;	
       
@@ -3625,7 +3625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      if  nvl(rw_crapdat.inproces,0) <> 1 then
          vr_status      := 400;
          vr_cdcritic    := 138;
-         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch CECRED esta em execucao.';
+         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch AILOS esta em execucao.';
          raise vr_exc_saida;
      end if;	
         

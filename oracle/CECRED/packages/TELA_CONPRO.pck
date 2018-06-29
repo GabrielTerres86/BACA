@@ -706,7 +706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       CURSOR cr_crapope IS
         SELECT TRIM(LOWER(operador) || ' - ' || INITCAP((SUBSTR(nome, 1, INSTR(nome, ' ') - 1)))) nmoperad,
                UPPER(operador) cdoperad
-          FROM (SELECT TRIM(REPLACE(REPLACE(ope.nmoperad, 'CECRED', ' '), '-', ' ')) nome,
+          FROM (SELECT TRIM(REPLACE(REPLACE(ope.nmoperad, 'AILOS', ' '), '-', ' ')) nome,
                        UPPER(ope.cdoperad) operador
                   FROM crapope ope
                  WHERE ope.cdcooper = pr_cdcooper);
@@ -1743,9 +1743,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                INITCAP(TO_CHAR(A.CDAGENCI_ACIONAMENTO) || ' - ' || P.NMRESAGE) nmagenci,
                upper(a.cdoperad) cdoperad,
                INITCAP(TO_CHAR(A.CDOPERAD) || ' - ' ||
-                       INITCAP((SUBSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '), '-', ' ')),
+                       INITCAP((SUBSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'AILOS', ' '), '-', ' ')),
                                        1,
-                                       INSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '),
+                                       INSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'AILOS', ' '),
                                                           '-',
                                                           ' ')),
                                              ' ') - 1)))) nmoperad,

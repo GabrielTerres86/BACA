@@ -145,7 +145,7 @@ function formataFormularioLrotat(){
     $('label[for="dsencfin2"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[for="dsencfin2"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[id="Operacional"]', "#frmLrotat").addClass("rotulo").css({ "width": "310px" });
-    $('label[id="Cecred"]', "#frmLrotat").addClass("rotulo-linha").css({ "width": "90px" });
+    $('label[id="Ailos"]', "#frmLrotat").addClass("rotulo-linha").css({ "width": "90px" });
     $('label[for="origrecu"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[for="cdmodali"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });
     $('label[for="cdsubmod"]', "#frmLrotat").addClass("rotulo").css({ "width": "215px" });

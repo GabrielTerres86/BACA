@@ -668,7 +668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- Incluir log do destinário somente em alguns casos específicos
         IF upper(rw_crapsle.cdprogra) <> 'ATENDA'      AND
            upper(rw_crapsle.cdprogra) <> 'B1WNET0002'  AND
-           upper(rw_crapsle.dsendere) <> 'MONITORACAODEFRAUDES@CECRED.COOP.BR' THEN
+           upper(rw_crapsle.dsendere) <> 'MONITORACAODEFRAUDES@AILOS.COOP.BR' THEN
           -- Envia log com o destinatário
           pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '|| rw_crapsle.cdprogra || ' --> Coop: '||rw_crapsle.cdcooper||' --> Enviando solicitação de e-mail nº '||pr_nrseqsol||' para '||rw_crapsle.dsendere||'.');
           -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017

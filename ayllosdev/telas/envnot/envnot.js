@@ -396,13 +396,13 @@ function validaDados(){
 		flgerror = true;
 	}else if(inexibe_botao_acao_mobile == 1){
 		if(dstexto_botao_acao_mobile == ""){
-		  dscritic = "O texto do bot&atilde;o de a&ccedil;&atilde;o do Cecred Mobile &eacute; obrigat&oacute;rio";
+		  dscritic = "O texto do bot&atilde;o de a&ccedil;&atilde;o do Ailos Mobile &eacute; obrigat&oacute;rio";
 			flgerror = true;
 		}else if(idacao_botao_acao_mobile == 1 && dslink_acao_mobile == ""){
 			dscritic = "URL do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;rio";
 			flgerror = true;
 		}else if(idacao_botao_acao_mobile == 2 && cdmenu_acao_mobile == ""){
-			dscritic = "Tela do Cecred Mobile do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;ria";	
+			dscritic = "Tela do Ailos Mobile do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;ria";	
 			flgerror = true;
 		}
 	}	

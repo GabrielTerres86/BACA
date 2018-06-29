@@ -20,7 +20,7 @@
 		<legend><?php echo utf8ToHtml('Parâmetros') ?></legend>
 		
 		<label id="tituloO"><?php echo utf8ToHtml('Operacional') ?></label>
-		<label id="tituloC"><?php echo utf8ToHtml('Cecred') ?></label>
+		<label id="tituloC"><?php echo utf8ToHtml('Ailos') ?></label>
 		
 		<br style="clear:both" />
 		<table cellspacing="0">

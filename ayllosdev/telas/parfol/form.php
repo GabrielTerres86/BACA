@@ -132,7 +132,7 @@
                             </td></tr>
                             <tr><td colspan="4" align="center">
                                 <fieldset style="width:95%;" >
-                                    <legend align="left"><? echo 'Cecred (Bco 85)' ?></legend>
+                                    <legend align="left"><? echo 'Ailos (Bco 85)' ?></legend>
                                     <table style="width:95%;">
                                         <tr>
                                             <td  class="txtNormalBold" style="width:40%;text-align:right;"> <label for="dsvlrprm_18" align = "right" style="width:100%;">Lote TRF:</label></td>

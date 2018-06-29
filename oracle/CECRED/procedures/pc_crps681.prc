@@ -276,7 +276,7 @@ BEGIN -- Principal
   
   --Buscar destinatario email
   vr_email_dest:= nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS681_EMAIL')
-                      ,'compe@cecred.coop.br');
+                      ,'compe@ailos.coop.br');
   -- buscar nome do programa
   OPEN cr_crapprg(pr_cdprogra => vr_cdprogra);
   FETCH cr_crapprg

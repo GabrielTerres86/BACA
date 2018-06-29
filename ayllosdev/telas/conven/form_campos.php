@@ -50,7 +50,7 @@
         <label style="margin-left:180px"><? echo utf8ToHtml('Arrecada') ?></label>
         
         <br style="clear:both" />
-        <label for="flgaccec"><? echo utf8ToHtml('CECRED:') ?></label>
+        <label for="flgaccec"><? echo utf8ToHtml('AILOS:') ?></label>
         <input name="flgaccec" id="flgaccec_1" type="radio" class="radio" value="1"   style="height: 20px; margin: 3px 2px 3px 10px !important;"/>
         <label for="flgaccec_1" class="radio">Sim</label>
         <input name="flgaccec" id="flgaccec_0" type="radio" class="radio" value="0"   style="height: 20px; margin: 3px 2px 3px 10px !important;"/>

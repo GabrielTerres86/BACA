@@ -116,7 +116,7 @@
 <div class="divTituloExtrato">
 	<table width="100%">
 		<tr>
-			<td align="Center"><b><? echo utf8ToHtml('EXTRATO CART&Atilde;O DE CR&Eacute;DITO CECRED VISA')?></b>
+			<td align="Center"><b><? echo utf8ToHtml('EXTRATO CART&Atilde;O DE CR&Eacute;DITO AILOS VISA')?></b>
 			</td>
 		</tr>
 	</table>

@@ -2083,7 +2083,7 @@ BEGIN
                           gene0001.fn_param_sistema('CRED',pr_cdcooper,'SUFIXO_RELATO_TOTAL')||'_migrado.lst';
           -- Atualiza as variaveis para envio do arquivo por email
           vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRRL529_EMAIL');
-          vr_dsassmail  := 'Relatorio de Devolucao Cheques Dep. CECRED';
+          vr_dsassmail  := 'Relatorio de Devolucao Cheques Dep. AILOS';
         END IF;
 
         -- Nao imprimir se for migrado e cooperativa diferente de 1

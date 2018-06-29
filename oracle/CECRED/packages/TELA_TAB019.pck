@@ -869,7 +869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF pr_vllimite > pr_vllimite_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vllimite';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -879,7 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF pr_vlmaxemi > pr_vlmaxemi_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vlmaxemi';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -889,7 +889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF pr_qtprzmax > pr_qtprzmax_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtprzmax';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -898,7 +898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_pctollim) > to_number(pr_pctollim_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'pctollim';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -916,7 +916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF pr_qtdiasli < pr_qtdiasli_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'A qtd de dias deve ser superior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'A qtd de dias deve ser superior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtdiasli';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -928,7 +928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
         
         -- Montar mensagem de critica
         vr_cdcritic := 0;
-        vr_dscritic := 'O horario deve ser inferior ou igual ao estipulado pela CECRED';
+        vr_dscritic := 'O horario deve ser inferior ou igual ao estipulado pela AILOS';
         pr_nmdcampo := 'horalimt';
         -- volta para o programa chamador
         RAISE vr_exc_saida;
@@ -939,7 +939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
          (pr_minlimit > pr_minlimit_c) THEN
         -- Montar mensagem de critica
         vr_cdcritic := 0;
-        vr_dscritic := 'O horario deve ser inferior ou igual ao estipulado pela CECRED';
+        vr_dscritic := 'O horario deve ser inferior ou igual ao estipulado pela AILOS';
         pr_nmdcampo := 'minlimit';
         -- volta para o programa chamador
         RAISE vr_exc_saida;
@@ -979,7 +979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_Przmxcmp) > to_number(pr_Przmxcmp_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'przmxcmp';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1006,7 +1006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_Prcliqui) > to_number(pr_Prcliqui_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'prcliqui';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1015,7 +1015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_Qtmesliq) > to_number(pr_Qtmesliq_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmesliq';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1024,7 +1024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_Vlrenlim) > to_number(pr_Vlrenlim_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vlrenlim';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1033,7 +1033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_Qtmxrede) > to_number(pr_Qtmxrede_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'qtmxrede';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1042,7 +1042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     IF to_number(pr_Vlmxassi) > to_number(pr_Vlmxassi_c) THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
-      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela CECRED';
+      vr_dscritic := 'O valor deve ser inferior ou igual ao estipulado pela AILOS';
       pr_nmdcampo := 'vlmxassi';
       -- volta para o programa chamador
       RAISE vr_exc_saida;
@@ -1126,7 +1126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o limite maximo do contrato CECRED de R$ ' ||
+                    pr_dscdolog => 'alterou o limite maximo do contrato AILOS de R$ ' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).vllimite_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') || 
                                     ' para R$ ' || to_char(pr_vllimite_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));  
       
@@ -1168,7 +1168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou a qtd. de dias de prazo maximo do cheque CECRED de ' ||
+                    pr_dscdolog => 'alterou a qtd. de dias de prazo maximo do cheque AILOS de ' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).qtprzmax_c) || 
                                     ' para ' || to_char(pr_qtprzmax_c));
       
@@ -1208,7 +1208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o valor maximo permitido por emitente CECRED de R$ ' ||
+                    pr_dscdolog => 'alterou o valor maximo permitido por emitente AILOS de R$ ' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).vlmaxemi_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') || 
                                     ' para R$ ' || to_char(pr_vlmaxemi_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
@@ -1264,7 +1264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou a tolencia para limite excedido no contrato CECRED de ' ||
+                    pr_dscdolog => 'alterou a tolencia para limite excedido no contrato AILOS de ' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).pctollim_c) || 
                                     ' para ' || to_char(pr_pctollim_c)); 
     END IF;
@@ -1294,7 +1294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou a quantidade de dias/hora limite para resgate de cheque CECRED de ' ||
+                    pr_dscdolog => 'alterou a quantidade de dias/hora limite para resgate de cheque AILOS de ' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).qtdiasli_c,'FM99') || ' dia(s) ' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).horalimt_c,'FM99') || ':' ||
                                     to_char(vr_tab_lim_desconto(pr_inpessoa).minlimit_c,'FM00')   || 'h para ' ||
@@ -1322,9 +1322,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     -- Flemipar_c    -- Verificar se Emitente é Conjugue do Cooperado
     IF vr_tab_lim_desconto(pr_inpessoa).flemipar_c <> pr_Flemipar_c THEN
       IF pr_inpessoa = 1 THEN
-        vr_dsccampo := 'indicador se Verifica se Emitente é Conjugue do Cooperado CECRED';
+        vr_dsccampo := 'indicador se Verifica se Emitente é Conjugue do Cooperado AILOS';
       ELSE
-        vr_dsccampo := 'indicador se Verifica se Emitente é Sócio do Cooperado CECRED';
+        vr_dsccampo := 'indicador se Verifica se Emitente é Sócio do Cooperado AILOS';
       END IF;
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
@@ -1347,7 +1347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     
     --Przmxcmp_c  -- Prazo Máximo de Compensação
     IF vr_tab_lim_desconto(pr_inpessoa).Przmxcmp_c <> pr_Przmxcmp_c THEN
-      vr_dsccampo := 'Prazo Máximo de Compensação CECRED';
+      vr_dsccampo := 'Prazo Máximo de Compensação AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
@@ -1370,7 +1370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
      
     -- Flpjzemi_c  -- Verificar Prejuízo do Emitente
     IF vr_tab_lim_desconto(pr_inpessoa).Flpjzemi_c <> pr_Flpjzemi_c THEN
-      vr_dsccampo := 'indicador Verificar Prejuízo do Emitente CECRED';
+      vr_dsccampo := 'indicador Verificar Prejuízo do Emitente AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
@@ -1392,7 +1392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     
     -- Flemisol -- Verificar Emitente x Conta Solicitante
     IF vr_tab_lim_desconto(pr_inpessoa).Flemisol_c <> pr_Flemisol_c THEN
-      vr_dsccampo := 'indicador Verificar Emitente x Conta Solicitante CECRED';
+      vr_dsccampo := 'indicador Verificar Emitente x Conta Solicitante AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
@@ -1414,7 +1414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     
     -- Prcliqui  -- Percentual de Liquidez
     IF vr_tab_lim_desconto(pr_inpessoa).Prcliqui_c <> pr_Prcliqui_c THEN
-      vr_dsccampo := 'Percentual de Liquidez CECRED';
+      vr_dsccampo := 'Percentual de Liquidez AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
@@ -1436,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     
     --Qtmesliq    -- Qtd. Meses Cálculo Percentual de Liquidez
     IF vr_tab_lim_desconto(pr_inpessoa).Qtmesliq_c <> pr_Qtmesliq_c THEN
-      vr_dsccampo := 'Qtd. Meses Cálculo Percentual de Liquidez CECRED';
+      vr_dsccampo := 'Qtd. Meses Cálculo Percentual de Liquidez AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
@@ -1458,7 +1458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
      
     -- Vlrenlim    -- Renda x Limite Desconto
     IF vr_tab_lim_desconto(pr_inpessoa).Vlrenlim_c <> pr_Vlrenlim_c THEN
-      vr_dsccampo := 'Renda x Limite Desconto CECRED';
+      vr_dsccampo := 'Renda x Limite Desconto AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
@@ -1480,7 +1480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     
     -- Qtmxrede    -- Qtd. Máxima Redesconto    
     IF vr_tab_lim_desconto(pr_inpessoa).Qtmxrede_c <> pr_Qtmxrede_c THEN
-      vr_dsccampo := 'Qtd. Máxima Redesconto CECRED';
+      vr_dsccampo := 'Qtd. Máxima Redesconto AILOS';
       --> gerar log da tela
       pc_log_tab019(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,

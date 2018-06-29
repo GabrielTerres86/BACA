@@ -150,7 +150,7 @@
 			<option value="MICROCREDITO PNMPO ABN" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO ABN') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO ABN</option>
 			<option value="MICROCREDITO PNMPO BB" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BB') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BB</option>
 			<option value="MICROCREDITO PNMPO BNDES" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BNDES') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BNDES</option>
-			<option value="MICROCREDITO PNMPO BNDES CECRED" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BNDES CECRED') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BNDES CECRED</option>
+			<option value="MICROCREDITO PNMPO BNDES AILOS" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BNDES AILOS') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BNDES AILOS</option>
 			<option value="MICROCREDITO PNMPO BRDE" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BRDE') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BRDE</option>
 			<option value="MICROCREDITO PNMPO CAIXA" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO CAIXA') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO CAIXA</option>
 			<option value="MICROCREDITO PNMPO DIM" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO DIM') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO DIM</option>

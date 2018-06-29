@@ -833,7 +833,7 @@
 			$this->Cell(5,0.4,", ".$dadosBdnCeVis["NMCIDADE"],0,0,"L",0,"");
 			$this->Cell(1,0.4,", ".$dadosBdnCeVis["CDUFDCOP"],0,1,"L",0,"");
 			$this->SetFont("Courier","B",8);
-			$this->Cell(7.0,0.4,"COOPERATIVA CENTRAL DE CRÉDITO - CECRED",0,0,"L",0,"");
+			$this->Cell(7.0,0.4,"COOPERATIVA CENTRAL DE CRÉDITO - AILOS",0,0,"L",0,"");
 			$this->SetFont("Courier","",8);
 			$this->Cell(13,0.4,"Cooperativa Central de Crédito  de  responsabilidade  limitada, inscrita no",0,1,"L",0,"");
 			$this->Cell(20,0.4,"CNPJ/MF sob o n. 05.463.212/0001-29,  estabelecida  na  Rua Frei Estanislau Schaette, n. 1201, bairro  Água Verde, na",0,1,"L",0,"");
@@ -888,7 +888,7 @@
 			$this->Cell(2,0.4,"COOPERATIVA",0,0,"L",0,"");
 			$this->SetFont("Courier","",8);
 			$this->Cell(12.25,0.4,", na  condição  de  intermediária,  para  o fornecimento  do  Cartão de",0,1,"L",0,"");
-			$this->Cell(20,0.4,"Crédito do Sistema VISA,  tipo CECRED - EMPRESARIAL a seus associados, subscreveu o contrato/regulamento de adesão ao",0,1,"L",0,""); 
+			$this->Cell(20,0.4,"Crédito do Sistema VISA,  tipo AILOS - EMPRESARIAL a seus associados, subscreveu o contrato/regulamento de adesão ao",0,1,"L",0,""); 
 			$this->Cell(20,0.4,"sistema  de  cartão de crédito  oferecido pelo  BRADESCO,  de acordo  com o instrumento  registrado no 1o Cartório de",0,1,"L",0,"");
 			$this->Cell(20,0.4,"Registro de Títulos e Documentos de Osasco,  Estado de São Paulo sob n.  64.053,  no  livro 'A',  funcionando naquele",0,1,"L",0,"");
 			$this->Cell(4.5,0.4,"contrato/regulamento como",0,0,"L",0,"");
@@ -1525,7 +1525,7 @@
 			$this->Ln();
 			$this->Ln();
 
-			$this->Cell(18,0.4,"A CECRED",0,1,"L",0,"");
+			$this->Cell(18,0.4,"A AILOS",0,1,"L",0,"");
 			$this->Cell(18,0.4,"A/C ADMINISTRATIVO/FINANCEIRO",0,1,"L",0,"");
 			
 			$this->Ln();

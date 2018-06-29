@@ -2360,7 +2360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                         pr_dscritic  => vr_dscritic);
         vr_cdcritic := 0;
         vr_dscritic := 0;
-        vr_dsdmesag := 'Adesão do produto em análise na CECRED. Dúvidas, entre em contato ' || 
+        vr_dsdmesag := 'Adesão do produto em análise na AILOS. Dúvidas, entre em contato ' || 
                        'com a área de cobrança bancária.';
       END IF;
       

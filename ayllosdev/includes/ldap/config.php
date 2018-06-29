@@ -1,5 +1,5 @@
 <?
-$TIT_PAGINA = "CECRED - Intranet";
+$TIT_PAGINA = "AILOS - Intranet";
 $COR_FUNDO_PAGINA  = "#DFE0D6";
 $COD_CECRED = 1;
 $COD_CECRED_LDAP = 3;
@@ -25,7 +25,7 @@ $path_upload_ico_item = "/images/icones";
 //Caminho para criar a pasta raiz de cada Cooperativa
 $path_pasta_raiz = "/documentos";
 //Caminho para criar a pasta raiz de cada Cooperativa
-$path_email = "intranet@cecred.coop.br";
+$path_email = "intranet@ailos.coop.br";
 //Caminho para download de arquivos (seção download)
 $path_download = "/download/arquivos";
 //Caminho para armazenar imagens das notícias.

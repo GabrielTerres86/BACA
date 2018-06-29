@@ -142,7 +142,7 @@
 	
     escreveLinha( preencheString('Por final, declara que, de forma livre e espontanea esta integrando o',69) );
     escreveLinha( preencheString('quadro social da Cooperativa, vinculando-se as disposicoes legais que',69) );
-    escreveLinha( preencheString('regulam o cooperativismo, ao Sistema CECRED, ao  Estatuto  Social  da',69) );
+    escreveLinha( preencheString('regulam o cooperativismo, ao Sistema Ailos, ao  Estatuto  Social  da',69) );
     escreveLinha( preencheString('Cooperativa, ao seu Regimento Interno, as  deliberacoes  assembleares',69) );
     escreveLinha( preencheString('desta e as do seu Conselho de Administracao,  reconhecendo  desde  ja',69) );
     escreveLinha( preencheString('que qualquer celebracao  de  contrato,  seja  ativo,  passivo  ou  de',69) );

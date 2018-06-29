@@ -1054,7 +1054,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           '<lancamentos>'||
             '<ordem>3</ordem>'||
             '<linha>'||
-              '<nrdctabb>CECRED</nrdctabb>'||
+              '<nrdctabb>AILOS</nrdctabb>'||
               '<qtlancom>'||to_char(nvl(vr_rel_qtlancom,0),'fm999G999G990')       ||'</qtlancom>'||
               '<vllancom>'||to_char(nvl(vr_rel_vllancom,0),'fm999G999G999G990D00')||'</vllancom>'||
               '<vlmedcom>'||to_char(nvl(vr_rel_vlmedcom,0),'fm999G999G999G990D00')||'</vlmedcom>'||

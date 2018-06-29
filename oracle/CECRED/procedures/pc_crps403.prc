@@ -754,7 +754,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps403(pr_cdcooper IN crapcop.cdcooper%TY
         IF rw_crapneg.nrseqreg = 1 THEN
           --Definir nome do banco
           IF rw_crapneg.cdbanchq = rw_crapcop.cdbcoctl  THEN
-            vr_rel_nmdbanco := 'IF CECRED';
+            vr_rel_nmdbanco := 'IF AILOS';
           ELSIF rw_crapneg.cdbanchq = 756 THEN
             vr_rel_nmdbanco := 'BANCOOB';
           ELSIF rw_crapneg.cdbanchq = 1  THEN

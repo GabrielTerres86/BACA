@@ -646,10 +646,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- .............................................................................
     BEGIN
       -- Retornar o usuário através da função SYS_CONTEXT
-      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'CECRED');
+      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'AILOS');
     EXCEPTION
       WHEN OTHERS THEN
-        RETURN 'CECRED';
+        RETURN 'AILOS';
     END;
   END fn_OSuser;
 

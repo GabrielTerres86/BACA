@@ -534,7 +534,7 @@ BEGIN
               LPAD(' ', 13,' ')                                                   || -- 10.0 - Conta/Digito
               LPAD(' ',1,' ')                                                     || -- 12.0 - Dig Verf Age/Cta
               substr(rpad(rw_crapcop.nmextcop,30,' '),1,30)                       || -- 13.0 - Nome Empresa
-              LPAD('CECRED',30,' ')                                               || -- 14.0 - Nome Banco
+              LPAD('AILOS',30,' ')                                                || -- 14.0 - Nome Banco
               LPAD(' ',10,' ')                                                    || -- 15.0 - Brancos
               '1'                                                                 || -- 16.0 - Código Remessa/Retorno
               to_char(SYSDATE,'DDMMYYYY')                                         || -- 17.0 - Data de Geração do Arquivo

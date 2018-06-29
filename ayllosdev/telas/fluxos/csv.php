@@ -89,15 +89,15 @@
 
     $str  = 'INSTITUIÇÃO;TIPO;REMESSA;PROJETADO;REALIZADO;DIFERENÇA_VALOR;DIFERENÇA_PERCENTUAL'."\r\n";
 
-    $str .= 'CECRED;Entrada;NR CHEQUES;'.$arrRegist['0853']['VLCHEQUE'].';'.$arrRegist['0851']['VLCHEQUE'].';'.$arrRegist['0854']['DIF_RS_VLCHEQUE'].';'.$arrRegist['0854']['DIF_PC_VLCHEQUE']."\r\n";
-    $str .= 'CECRED;Entrada;SR DOC;'.$arrRegist['0853']['VLTOTDOC'].';'.$arrRegist['0851']['VLTOTDOC'].';'.$arrRegist['0854']['DIF_RS_VLTOTDOC'].';'.$arrRegist['0854']['DIF_PC_VLTOTDOC']."\r\n";
-    $str .= 'CECRED;Entrada;SR TED;'.$arrRegist['0853']['VLTOTTED'].';'.$arrRegist['0851']['VLTOTTED'].';'.$arrRegist['0854']['DIF_RS_VLTOTTED'].';'.$arrRegist['0854']['DIF_PC_VLTOTTED']."\r\n";
-    $str .= 'CECRED;Entrada;SR TÍTULOS;'.$arrRegist['0853']['VLTOTTIT'].';'.$arrRegist['0851']['VLTOTTIT'].';'.$arrRegist['0854']['DIF_RS_VLTOTTIT'].';'.$arrRegist['0854']['DIF_PC_VLTOTTIT']."\r\n";
-    $str .= 'CECRED;Entrada;DEV. CHEQUE REMETIDO;'.$arrRegist['0853']['VLDEVOLU'].';'.$arrRegist['0851']['VLDEVOLU'].';'.$arrRegist['0854']['DIF_RS_VLDEVOLU'].';'.$arrRegist['0854']['DIF_PC_VLDEVOLU']."\r\n";
-    $str .= 'CECRED;Entrada;TRANSF INTER;'.$arrRegist['0853']['VLTRFITC'].';'.$arrRegist['0851']['VLTRFITC'].';'.$arrRegist['0854']['DIF_RS_VLTRFITC'].';'.$arrRegist['0854']['DIF_PC_VLTRFITC']."\r\n";
-    $str .= 'CECRED;Entrada;DEP INTER;'.$arrRegist['0853']['VLDEPITC'].';'.$arrRegist['0851']['VLDEPITC'].';'.$arrRegist['0854']['DIF_RS_VLDEPITC'].';'.$arrRegist['0854']['DIF_PC_VLDEPITC']."\r\n";
-    $str .= 'CECRED;Entrada;SAQUE TAA INTERC;'.$arrRegist['0853']['VLSATAIT'].';'.$arrRegist['0851']['VLSATAIT'].';'.$arrRegist['0854']['DIF_RS_VLSATAIT'].';'.$arrRegist['0854']['DIF_PC_VLSATAIT']."\r\n";
-    $str .= 'CECRED;Entrada;RECOLHIMENTO NUMERÁRIO;'.$arrRegist['0853']['VLNUMERA'].';'.$arrRegist['0851']['VLNUMERA'].';'.$arrRegist['0854']['DIF_RS_VLNUMERA'].';'.$arrRegist['0854']['DIF_PC_VLNUMERA']."\r\n";
+    $str .= 'AILOS;Entrada;NR CHEQUES;'.$arrRegist['0853']['VLCHEQUE'].';'.$arrRegist['0851']['VLCHEQUE'].';'.$arrRegist['0854']['DIF_RS_VLCHEQUE'].';'.$arrRegist['0854']['DIF_PC_VLCHEQUE']."\r\n";
+    $str .= 'AILOS;Entrada;SR DOC;'.$arrRegist['0853']['VLTOTDOC'].';'.$arrRegist['0851']['VLTOTDOC'].';'.$arrRegist['0854']['DIF_RS_VLTOTDOC'].';'.$arrRegist['0854']['DIF_PC_VLTOTDOC']."\r\n";
+    $str .= 'AILOS;Entrada;SR TED;'.$arrRegist['0853']['VLTOTTED'].';'.$arrRegist['0851']['VLTOTTED'].';'.$arrRegist['0854']['DIF_RS_VLTOTTED'].';'.$arrRegist['0854']['DIF_PC_VLTOTTED']."\r\n";
+    $str .= 'AILOS;Entrada;SR TÍTULOS;'.$arrRegist['0853']['VLTOTTIT'].';'.$arrRegist['0851']['VLTOTTIT'].';'.$arrRegist['0854']['DIF_RS_VLTOTTIT'].';'.$arrRegist['0854']['DIF_PC_VLTOTTIT']."\r\n";
+    $str .= 'AILOS;Entrada;DEV. CHEQUE REMETIDO;'.$arrRegist['0853']['VLDEVOLU'].';'.$arrRegist['0851']['VLDEVOLU'].';'.$arrRegist['0854']['DIF_RS_VLDEVOLU'].';'.$arrRegist['0854']['DIF_PC_VLDEVOLU']."\r\n";
+    $str .= 'AILOS;Entrada;TRANSF INTER;'.$arrRegist['0853']['VLTRFITC'].';'.$arrRegist['0851']['VLTRFITC'].';'.$arrRegist['0854']['DIF_RS_VLTRFITC'].';'.$arrRegist['0854']['DIF_PC_VLTRFITC']."\r\n";
+    $str .= 'AILOS;Entrada;DEP INTER;'.$arrRegist['0853']['VLDEPITC'].';'.$arrRegist['0851']['VLDEPITC'].';'.$arrRegist['0854']['DIF_RS_VLDEPITC'].';'.$arrRegist['0854']['DIF_PC_VLDEPITC']."\r\n";
+    $str .= 'AILOS;Entrada;SAQUE TAA INTERC;'.$arrRegist['0853']['VLSATAIT'].';'.$arrRegist['0851']['VLSATAIT'].';'.$arrRegist['0854']['DIF_RS_VLSATAIT'].';'.$arrRegist['0854']['DIF_PC_VLSATAIT']."\r\n";
+    $str .= 'AILOS;Entrada;RECOLHIMENTO NUMERÁRIO;'.$arrRegist['0853']['VLNUMERA'].';'.$arrRegist['0851']['VLNUMERA'].';'.$arrRegist['0854']['DIF_RS_VLNUMERA'].';'.$arrRegist['0854']['DIF_PC_VLNUMERA']."\r\n";
 
     $str .= 'BANCO DO BRASIL;Entrada;SR TÍTULOS;'.$arrRegist['0013']['VLTOTTIT'].';'.$arrRegist['0011']['VLTOTTIT'].';'.$arrRegist['0014']['DIF_RS_VLTOTTIT'].';'.$arrRegist['0014']['DIF_PC_VLTOTTIT']."\r\n";
     $str .= 'BANCO DO BRASIL;Entrada;MVTO CONTA ITG;'.$arrRegist['0013']['VLMVTITG'].';'.$arrRegist['0011']['VLMVTITG'].';'.$arrRegist['0014']['DIF_RS_VLMVTITG'].';'.$arrRegist['0014']['DIF_PC_VLMVTITG']."\r\n";
@@ -177,17 +177,17 @@
         $arrRegist[getByTagName($r->tags,'CODIGO')]['DIF_PC_VLCARDEB'] = getByTagName($r->tags,'DIF_PC_VLCARDEB');
     }
 
-    $str .= 'CECRED;Saída;SR CHEQUES;'.$arrRegist['0854']['VLCHEQUE'].';'.$arrRegist['0852']['VLCHEQUE'].';'.$arrRegist['0854']['DIF_RS_VLCHEQUE'].';'.$arrRegist['0854']['DIF_PC_VLCHEQUE']."\r\n";
-    $str .= 'CECRED;Saída;NR DOC;'.$arrRegist['0854']['VLTOTDOC'].';'.$arrRegist['0852']['VLTOTDOC'].';'.$arrRegist['0854']['DIF_RS_VLTOTDOC'].';'.$arrRegist['0854']['DIF_PC_VLTOTDOC']."\r\n";
-    $str .= 'CECRED;Saída;NR TED/TEC;'.$arrRegist['0854']['VLTOTTED'].';'.$arrRegist['0852']['VLTOTTED'].';'.$arrRegist['0854']['DIF_RS_VLTOTTED'].';'.$arrRegist['0854']['DIF_PC_VLTOTTED']."\r\n";
-    $str .= 'CECRED;Saída;NR TÍTULOS;'.$arrRegist['0854']['VLTOTTIT'].';'.$arrRegist['0852']['VLTOTTIT'].';'.$arrRegist['0854']['DIF_RS_VLTOTTIT'].';'.$arrRegist['0854']['DIF_PC_VLTOTTIT']."\r\n";
-    $str .= 'CECRED;Saída;DEV. CHEQUE RECEBIDO;'.$arrRegist['0854']['VLDEVOLU'].';'.$arrRegist['0852']['VLDEVOLU'].';'.$arrRegist['0854']['DIF_RS_VLDEVOLU'].';'.$arrRegist['0854']['DIF_PC_VLDEVOLU']."\r\n";
-    $str .= 'CECRED;Saída;TRANSF INTER;'.$arrRegist['0854']['VLTRFITC'].';'.$arrRegist['0852']['VLTRFITC'].';'.$arrRegist['0854']['DIF_RS_VLTRFITC'].';'.$arrRegist['0854']['DIF_PC_VLTRFITC']."\r\n";
-    $str .= 'CECRED;Saída;DEP INTER;'.$arrRegist['0854']['VLDEPITC'].';'.$arrRegist['0852']['VLDEPITC'].';'.$arrRegist['0854']['DIF_RS_VLDEPITC'].';'.$arrRegist['0854']['DIF_PC_VLDEPITC']."\r\n";
-    $str .= 'CECRED;Saída;SAQUE TAA INTERC;'.$arrRegist['0854']['VLSATAIT'].';'.$arrRegist['0852']['VLSATAIT'].';'.$arrRegist['0854']['DIF_RS_VLSATAIT'].';'.$arrRegist['0854']['DIF_PC_VLSATAIT']."\r\n";
-    $str .= 'CECRED;Saída;CARTÃO DE CRÉDITO;'.$arrRegist['0854']['VLCARCRE'].';'.$arrRegist['0852']['VLCARCRE'].';'.$arrRegist['0854']['DIF_RS_VLCARCRE'].';'.$arrRegist['0854']['DIF_PC_VLCARCRE']."\r\n";
-    $str .= 'CECRED;Saída;SUPRIMENTO NUMERÁRIO;'.$arrRegist['0854']['VLNUMERA'].';'.$arrRegist['0852']['VLNUMERA'].';'.$arrRegist['0854']['DIF_RS_VLNUMERA'].';'.$arrRegist['0854']['DIF_PC_VLNUMERA']."\r\n";
-    $str .= 'CECRED;Saída;CONVÊNIOS;'.$arrRegist['0854']['VLCONVEN'].';'.$arrRegist['0852']['VLCONVEN'].';'.$arrRegist['0854']['DIF_RS_VLCONVEN'].';'.$arrRegist['0854']['DIF_PC_VLCONVEN']."\r\n";
+    $str .= 'AILOS;Saída;SR CHEQUES;'.$arrRegist['0854']['VLCHEQUE'].';'.$arrRegist['0852']['VLCHEQUE'].';'.$arrRegist['0854']['DIF_RS_VLCHEQUE'].';'.$arrRegist['0854']['DIF_PC_VLCHEQUE']."\r\n";
+    $str .= 'AILOS;Saída;NR DOC;'.$arrRegist['0854']['VLTOTDOC'].';'.$arrRegist['0852']['VLTOTDOC'].';'.$arrRegist['0854']['DIF_RS_VLTOTDOC'].';'.$arrRegist['0854']['DIF_PC_VLTOTDOC']."\r\n";
+    $str .= 'AILOS;Saída;NR TED/TEC;'.$arrRegist['0854']['VLTOTTED'].';'.$arrRegist['0852']['VLTOTTED'].';'.$arrRegist['0854']['DIF_RS_VLTOTTED'].';'.$arrRegist['0854']['DIF_PC_VLTOTTED']."\r\n";
+    $str .= 'AILOS;Saída;NR TÍTULOS;'.$arrRegist['0854']['VLTOTTIT'].';'.$arrRegist['0852']['VLTOTTIT'].';'.$arrRegist['0854']['DIF_RS_VLTOTTIT'].';'.$arrRegist['0854']['DIF_PC_VLTOTTIT']."\r\n";
+    $str .= 'AILOS;Saída;DEV. CHEQUE RECEBIDO;'.$arrRegist['0854']['VLDEVOLU'].';'.$arrRegist['0852']['VLDEVOLU'].';'.$arrRegist['0854']['DIF_RS_VLDEVOLU'].';'.$arrRegist['0854']['DIF_PC_VLDEVOLU']."\r\n";
+    $str .= 'AILOS;Saída;TRANSF INTER;'.$arrRegist['0854']['VLTRFITC'].';'.$arrRegist['0852']['VLTRFITC'].';'.$arrRegist['0854']['DIF_RS_VLTRFITC'].';'.$arrRegist['0854']['DIF_PC_VLTRFITC']."\r\n";
+    $str .= 'AILOS;Saída;DEP INTER;'.$arrRegist['0854']['VLDEPITC'].';'.$arrRegist['0852']['VLDEPITC'].';'.$arrRegist['0854']['DIF_RS_VLDEPITC'].';'.$arrRegist['0854']['DIF_PC_VLDEPITC']."\r\n";
+    $str .= 'AILOS;Saída;SAQUE TAA INTERC;'.$arrRegist['0854']['VLSATAIT'].';'.$arrRegist['0852']['VLSATAIT'].';'.$arrRegist['0854']['DIF_RS_VLSATAIT'].';'.$arrRegist['0854']['DIF_PC_VLSATAIT']."\r\n";
+    $str .= 'AILOS;Saída;CARTÃO DE CRÉDITO;'.$arrRegist['0854']['VLCARCRE'].';'.$arrRegist['0852']['VLCARCRE'].';'.$arrRegist['0854']['DIF_RS_VLCARCRE'].';'.$arrRegist['0854']['DIF_PC_VLCARCRE']."\r\n";
+    $str .= 'AILOS;Saída;SUPRIMENTO NUMERÁRIO;'.$arrRegist['0854']['VLNUMERA'].';'.$arrRegist['0852']['VLNUMERA'].';'.$arrRegist['0854']['DIF_RS_VLNUMERA'].';'.$arrRegist['0854']['DIF_PC_VLNUMERA']."\r\n";
+    $str .= 'AILOS;Saída;CONVÊNIOS;'.$arrRegist['0854']['VLCONVEN'].';'.$arrRegist['0852']['VLCONVEN'].';'.$arrRegist['0854']['DIF_RS_VLCONVEN'].';'.$arrRegist['0854']['DIF_PC_VLCONVEN']."\r\n";
 
     $str .= 'BANCO DO BRASIL;Saída;NR TÍTULOS;'.$arrRegist['0014']['VLTOTTIT'].';'.$arrRegist['0012']['VLTOTTIT'].';'.$arrRegist['0014']['DIF_RS_VLTOTTIT'].';'.$arrRegist['0014']['DIF_PC_VLTOTTIT']."\r\n";
     $str .= 'BANCO DO BRASIL;Saída;MVTO CONTA ITG;'.$arrRegist['0014']['VLMVTITG'].';'.$arrRegist['0012']['VLMVTITG'].';'.$arrRegist['0014']['DIF_RS_VLMVTITG'].';'.$arrRegist['0014']['DIF_PC_VLMVTITG']."\r\n";
