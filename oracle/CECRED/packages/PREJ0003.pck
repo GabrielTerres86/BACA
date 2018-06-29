@@ -127,12 +127,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     Objetivo  : Efetua as transferencias de prejuizo de conta corrente.
 
-    Alteracoes:
-    
-                28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom                
-                
+    Alteracoes: 21/06/2018 - Popular a tabela TBCC_PREJUIZO quando a conta é transferida para prejuízo.
+                            Quantidade de dias em atraso
+                            Valor saldo prejuízo Rangel Decker (AMcom)
+
+                28/06/2018 - P450 - Contingência para contas não transferidas para prejuízo - Diego Simas - AMcom
+
     ..............................................................................*/
-    
+
     CURSOR cr_tab(pr_cdcooper IN crawepr.cdcooper%TYPE) IS
       SELECT t.dstextab
       FROM craptab t
@@ -204,6 +206,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
        AND   ris.dtrefere =  pr_dtrefere
        AND   ris.vldivida > pr_valor_arrasto; -- Materialidade
        
+       
+     --Busca valor de limite de credito do associado
+    CURSOR cr_crapass  (pr_cdcooper  crapass.cdcooper%TYPE,
+                        pr_nrdconta  crapass.nrdconta%TYPE) IS
+
+     SELECT  a.vllimcre
+     FROM crapass a
+     WHERE a.cdcooper = pr_cdcooper
+     AND a.nrdconta   = pr_nrdconta;
+
+     rw_crapass  cr_crapass%ROWTYPE;
+     
+    --Busca os lançamentos de debito 38 e 37 para conta em prejuizo
+    CURSOR cr_crapsld  (pr_cdcooper  crapsld.cdcooper%TYPE,
+                        pr_nrdconta  crapsld.nrdconta%TYPE) IS
+
+     SELECT  s.vljuresp
+             ,h.cdhistor
+             ,h.dshistor
+             ,s.nrdconta
+     FROM crapsld s,
+          craphis h,
+          crapass a
+     WHERE s.cdcooper = pr_cdcooper
+     AND s.nrdconta   = pr_nrdconta
+     AND h.cdcooper   = s.cdcooper
+     AND h.cdhistor   IN (38,37)
+     AND a.cdcooper   = s.cdcooper
+     AND a.nrdconta   = s.nrdconta
+     AND s.vljuresp > 0;
+
+     rw_crapsld  cr_crapsld%ROWTYPE;
+
+     vr_incrineg   PLS_INTEGER;
+     -- Variáveis de CPMF
+     vr_dtinipmf DATE;
+     vr_dtfimpmf DATE;
+     vr_txcpmfcc NUMBER(12,6);
+     vr_txrdcpmf NUMBER(12,6);
+     vr_indabono INTEGER;
+     vr_dtiniabo DATE;
+
      vr_cdcritic  NUMBER(3);
      vr_dscritic  VARCHAR2(1000);
      vr_des_erro  VARCHAR2(1000);
@@ -221,10 +265,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      vr_des_reto VARCHAR2(100);
      --
      vr_nrdocmto  NUMBER;
-      
-     -- clob para conter o dados do excel/csv  
-     vr_clobarq   CLOB;  
-     vr_texto_completo  VARCHAR2(32600);  
+
+     -- clob para conter o dados do excel/csv
+     vr_clobarq   CLOB;
+     vr_texto_completo  VARCHAR2(32600);
      vr_mailprej  VARCHAR2(1000);
      -- diretorio de geracao do relatorio
      vr_nom_direto  VARCHAR2(100);
@@ -232,6 +276,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      -- Código do programa
      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'PREJ0003';
      
+     vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+     vr_tab_retorno LANC0001.typ_reg_retorno; -- REcord com dados retornados pela "pc_gerar_lancamento_conta"
+
+     --Tipo da tabela de saldos
+     vr_tab_saldo EXTR0001.typ_tab_saldos;
+
+     --Variaveis dos saldos
+     vr_vlsddisp  NUMBER:= 0;
+
+
      -- Subrotina para escrever texto na variável CLOB do XML
      PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB,
                                 pr_des_dados IN VARCHAR2,
@@ -239,7 +293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      BEGIN
         gene0002.pc_escreve_xml(pr_clobdado, vr_texto_completo, pr_des_dados, pr_fecha_arq);
      END;
-     
+
   BEGIN
 
       -- Leitura do calendário da cooperativa
@@ -286,23 +340,174 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
 
     --Transfere as contas em prejuizo para a tabela HIST...
+    --Transfere as contas em prejuizo para a tabela HIST...
     FOR rw_crapris IN cr_crapris(pr_cdcooper
                                 ,vr_dtrefere_aux
                                 ,rw_crapdat.dtmvtolt
                                 ,vr_valor_arrasto) LOOP
       BEGIN
 
+         -- Verifica se a cooperativa esta cadastrada
+         OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                         pr_nrdconta => rw_crapris.nrdconta);
+         FETCH cr_crapass INTO rw_crapass;
+         -- Se não encontrar
+         IF cr_crapass%NOTFOUND THEN
+           -- Fechar o cursor pois haverá raise
+           CLOSE cr_crapass;
+           -- Montar mensagem de critica
+           vr_cdcritic:= 651;
+           RAISE vr_exc_saida;
+         ELSE
+           -- Apenas fechar o cursor
+           CLOSE cr_crapass;
+         END IF;
+
+              -- Procedimento padrão de busca de informações de CPMF
+             gene0005.pc_busca_cpmf(pr_cdcooper  => pr_cdcooper
+                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                   ,pr_dtinipmf  => vr_dtinipmf
+                                   ,pr_dtfimpmf  => vr_dtfimpmf
+                                   ,pr_txcpmfcc  => vr_txcpmfcc
+                                   ,pr_txrdcpmf  => vr_txrdcpmf
+                                   ,pr_indabono  => vr_indabono
+                                   ,pr_dtiniabo  => vr_dtiniabo
+                                   ,pr_cdcritic  => vr_cdcritic
+                                   ,pr_dscritic  => vr_dscritic);
+              -- Se retornou erro
+              IF vr_dscritic IS NOT NULL THEN
+               -- Gerar raise
+                RAISE vr_exc_saida;
+             END IF;
+
+
+
+           --Gerar lançamentos para historico 37 e 38 e atualizar a situação de lançamento
+           --automatico para 2 (Pago)
+           FOR rw_crapsld IN cr_crapsld(pr_cdcooper,
+                                        rw_crapris.nrdconta  ) LOOP
+             BEGIN
+                 --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+                     LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1    --rw_craplot.cdagenci
+                                                       , pr_cdbccxlt => 100  --rw_craplot.cdbccxlt
+                                                       , pr_nrdolote => 8450 --rw_craplot.nrdolote
+                                                       , pr_cdhistor => rw_crapsld.cdhistor
+                                                       , pr_dtmvtolt => rw_crapdat.dtmvtolt--rw_craplot.dtmvtolt
+                                                       , pr_nrdconta => rw_crapsld.nrdconta
+                                                       , pr_nrdctabb => rw_crapsld.nrdconta
+                                                       , pr_nrdctitg => GENE0002.FN_MASK(rw_crapsld.nrdconta, '99999999')
+                                                       , pr_nrdocmto => '999999'||TO_CHAR(rw_crapsld.cdhistor)
+                                                       --, pr_nrseqdig => Nvl(rw_craplot.nrseqdig,0) + 1
+                                                       , pr_vllanmto => rw_crapsld.vljuresp
+                                                       , pr_cdcooper => pr_cdcooper
+                                                       , pr_cdcoptfn => 0
+                                                       , pr_vldoipmf => TRUNC(rw_crapsld.vljuresp * vr_txcpmfcc,2)
+
+                                                       , pr_inprolot => 1
+                                                       , pr_tplotmov => 1
+                                                       , pr_tab_retorno => vr_tab_retorno
+                                                       , pr_incrineg => vr_incrineg
+                                                       , pr_cdcritic => vr_cdcritic
+                                                       , pr_dscritic => vr_dscritic
+                                                       );
+
+                      IF vr_dscritic IS NOT NULL
+                        AND vr_incrineg = 0 THEN -- Erro de sistema/BD
+                         RAISE vr_exc_saida;
+                      END IF;
+
+
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
+                        --Sair do programa
+                        RAISE vr_exc_saida;
+                    END;
+
+
+                    BEGIN
+
+                      UPDATE craplau lau
+                      SET   lau.insitlau = 2
+                      WHERE lau.cdcooper = pr_cdcooper
+                      AND lau.nrdconta = rw_crapsld.nrdconta
+                      AND lau.cdhistor in (37,38)
+                      AND lau.insitlau = 1;
+
+                     EXCEPTION
+                       WHEN OTHERS THEN
+                         vr_dscritic := 'Erro ao atualizar a tabela craplau. '||SQLERRM;
+                         --Sair do programa
+                         RAISE vr_exc_saida;
+                     END;
+
+            END LOOP;
+
+           --Transfere conta para prejuizo
+           BEGIN
+             -- Verificar Saldo do cooperado
+             extr0001.pc_obtem_saldo_dia(pr_cdcooper =>  pr_cdcooper,
+                                         pr_rw_crapdat => rw_crapdat,
+                                         pr_cdagenci => 1,
+                                         pr_nrdcaixa => 0,
+                                         pr_cdoperad => '1',
+                                         pr_nrdconta => rw_crapris.nrdconta,
+                                         pr_vllimcre => rw_crapass.vllimcre,
+                                         pr_dtrefere => rw_crapdat.dtmvtolt,
+                                         pr_flgcrass => FALSE,
+                                         pr_tipo_busca => 'A', -- Tipo Busca(A-dtmvtoan)
+                                         pr_des_reto => vr_des_erro,
+                                         pr_tab_sald => vr_tab_saldo,
+                                         pr_tab_erro => vr_tab_erro);
+
+               --Se ocorreu erro
+               IF vr_des_erro = 'NOK' THEN
+                -- Tenta buscar o erro no vetor de erro
+                IF vr_tab_erro.COUNT > 0 THEN
+                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                  vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_crapsld.nrdconta;
+                ELSE
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapsld.nrdconta;
+                END IF;
+
+              IF vr_cdcritic <> 0 THEN
+                vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' Conta: '||rw_crapsld.nrdconta;
+              END IF;
+
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            ELSE
+              vr_dscritic:= NULL;
+            END IF;
+            --Verificar o saldo retornado
+            IF vr_tab_saldo.Count = 0 THEN
+              --Montar mensagem erro
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            ELSE
+              vr_vlsddisp := nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
+                             nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
+            END IF;
+
+        END;
+
         INSERT INTO TBCC_PREJUIZO(cdcooper
                                   ,nrdconta
                                   ,dtinclusao
                                   ,cdsitdct_original
-                                  ,vldivida_original)
+                                  ,vldivida_original
+                                  ,qtdiaatr
+                                  ,VLSDPREJ)
          VALUES (pr_cdcooper,
                  rw_crapris.nrdconta,
                  rw_crapris.dtinc_prejuizo,
                  rw_crapris.cdsitdct,
-                 rw_crapris.vldivida);
-
+                 vr_vlsddisp,
+                 rw_crapris.qtdiaatr,
+                 vr_vlsddisp);
 
 
         UPDATE crapass pass
@@ -357,7 +562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
            ELSE
              --Cancelamento Limite de Credito
 
-    
+
              LIMI0002.pc_cancela_limite_credito(pr_cdcooper   => pr_cdcooper                -- Cooperativa
                                                ,pr_cdagenci   => 0                          -- Agência
                                                ,pr_nrdcaixa   => 0                          -- Caixa
@@ -366,7 +571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                                ,pr_nrctrlim   => rw_craplim.nrctrlim          -- Contrato de Rating
                                                ,pr_inadimp    => 1                          -- 1-Inadimplência 0-Normal
                                                ,pr_cdcritic   => vr_cdcritic                -- Retorno OK / NOK
-                                               ,pr_dscritic   => vr_dscritic);              -- Erros do processo                                               
+                                               ,pr_dscritic   => vr_dscritic);              -- Erros do processo
 
 
             --Se Ocorreu erro
@@ -385,9 +590,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
               END IF;
 
              pr_cdcritic := vr_cdcritic;
-             pr_dscritic := vr_dscritic;  
+             pr_dscritic := vr_dscritic;
 
-           END IF;                                               
+           END IF;
 
            CLOSE cr_craplim;
          END IF;
@@ -420,50 +625,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                                                   pr_cdcritic  => vr_cdcritic,
                                                                   pr_dscritic  => vr_dscritic,
                                                                   pr_des_reto  => vr_des_reto);--> OK ou NOK
-              
+
                 IF vr_des_reto <> 'OK' THEN
                    pr_cdcritic := vr_cdcritic;
-                   pr_dscritic := vr_dscritic;  
-                END IF;   
+                   pr_dscritic := vr_dscritic;
+                END IF;
 
               CLOSE cr_crapcrm;
         END IF ;
-      END;  
+      END;
     END LOOP;
-    
+
     -- Diego Simas (AMcom) Contingência para a não transferência de prejuízo
-    -- Se por algum erro de processamento não houve transferência de prejuízo  
-    -- Cria arquivo com as contas para mandar por email para a recuperação de crédito  
+    -- Se por algum erro de processamento não houve transferência de prejuízo
+    -- Cria arquivo com as contas para mandar por email para a recuperação de crédito
     -- Email: recuperacaodecredito@cecred.coop.br
     -- INÍCIO
-    
+
     -- Busca do diretório base da cooperativa para CSV
     vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                           ,pr_cdcooper => pr_cdcooper
                                           ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-                                          
+
     --Montar cabeçalho arquivo csv
     dbms_lob.createtemporary(vr_clobarq, TRUE, dbms_lob.CALL);
     dbms_lob.open(vr_clobarq, dbms_lob.lob_readwrite);
     vr_texto_completo := 0;
     pc_escreve_clob(vr_clobarq,'Cooperativa; Conta; Risco; Dias no Risco; Dias de atraso; Motivo'||chr(13));
-    
+
     FOR rw_crapris IN cr_crapris(pr_cdcooper
                                 ,vr_dtrefere_aux
                                 ,rw_crapdat.dtmvtolt
                                 ,vr_valor_arrasto) LOOP
       BEGIN
-                
+
         -- ASSUNTO: Atenção! Houve erro na transferência para prejuízo.
         -- EMAIL: recuperacaodecredito@cecred.coop.br
-        -- ARQUIVO ANEXO DEVE CONTER: cooperativa, conta, risco, dias no risco, 
-        --                            dias de atraso e motivo pelo qual a conta 
+        -- ARQUIVO ANEXO DEVE CONTER: cooperativa, conta, risco, dias no risco,
+        --                            dias de atraso e motivo pelo qual a conta
         --                            não foi transferida.
         -- 'Erro na transferecia de prejuizo (Transferencia Automatica).'
-        
+
         vr_diasrisco := rw_crapdat.dtmvtolt - rw_crapris.dtdrisco;
-        
-        -- Escreve linha CSV        
+
+        -- Escreve linha CSV
         pc_escreve_clob(vr_clobarq, pr_cdcooper ||';' -- Cooperativa
                       ||gene0002.fn_mask(rw_crapris.nrdconta,'z.zzz.zz9')||';' -- Conta
                       ||'H'||';' -- Risco
@@ -471,15 +676,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                       ||to_char(rw_crapris.qtdiaatr)||';' -- Dias de Atraso
                       ||'Erro na transferecia de prejuizo (Transferencia Automatica).'||';' -- Motivo
                       ||chr(13));
-                                     
+
       END;
-        
-    END LOOP;    
-    
+
+    END LOOP;
+
     vr_mailprej := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => pr_cdcooper, pr_cdacesso => 'PREJ0003_EMAILS_PREJU' );
- 
+
     pc_escreve_clob(vr_clobarq,chr(13),true);
-        
+
     -- Submeter a geração do arquivo txt puro
     gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper                 --> Cooperativa conectada
                                        ,pr_cdprogra  => vr_cdprogra                 --> Programa chamador
@@ -487,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                        ,pr_dsxml     => vr_clobarq                  --> Arquivo XML de dados
                                        ,pr_cdrelato  => 'preju'                     --> Código do relatório
                                        ,pr_dsarqsaid => vr_nom_direto||'/salvar/'|| --> Arquivo final com o path
-                                          'preju'||rw_crapdat.dtmvtolt||'.csv'      
+                                          'preju'||rw_crapdat.dtmvtolt||'.csv'
                                        ,pr_flg_gerar => 'N'                         --> Geraçao na hora
                                        ,pr_flgremarq => 'N'                         --> Após cópia, remover arquivo de origem
                                        ,pr_dsmailcop => vr_mailprej                 --> Lista sep. por ';' de emails para envio do arquivo
@@ -496,9 +701,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                        ,pr_dscormail => '<p><b>Em anexo a este '    --> HTML corpo do email que enviará o arquivo
                                           ||'e-mail, segue a lista de contas que'
                                           ||' nao foram transferidas para'
-                                          ||' prejuizo</b></p>'                     
+                                          ||' prejuizo</b></p>'
                                        ,pr_des_erro  => pr_dscritic);               --> Saída com erro
-                                           
+
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_clobarq);
     dbms_lob.freetemporary(vr_clobarq);
@@ -507,18 +712,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       -- Gerar exceção
       RAISE vr_exc_saida;
     END IF;
-     
+
     -- FIM
     -- Diego Simas (AMcom) Contingência para a não transferência de prejuízo
-    
+
 
   EXCEPTION
     WHEN OTHERS THEN
-      ROLLBACK; 
+      ROLLBACK;
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic ||SQLERRM;
-        
+
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => 1
                            ,pr_nrdcaixa => 1
