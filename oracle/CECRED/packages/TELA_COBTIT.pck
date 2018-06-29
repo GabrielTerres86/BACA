@@ -21,6 +21,7 @@ create or replace package cecred.TELA_COBTIT is
                   qtaprova INTEGER,
                   vlaprova NUMBER,
                   qtvencid INTEGER,
+                  qtjexvip INTEGER,
                   vlvencid NUMBER,
                   nrctrlim crapbdt.nrctrlim%TYPE,
                   dtlibbdt crapbdt.dtlibbdt%TYPE,
@@ -424,7 +425,30 @@ create or replace package body cecred.TELA_COBTIT is
           (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insitapr=1) AS qtaprova,
           (SELECT SUM(vltitulo) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insitapr=1) AS vlaprova,
           (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insittit=4 AND  gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt) AS qtvencid,
-          (SELECT SUM(vltitulo) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insittit=4 AND  gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt) AS vlvencid,
+          (NVL((SELECT (cyc.flgjudic + cyc.flextjud + cyc.flgehvip)
+            FROM craptdb tdb
+              INNER JOIN tbdsct_titulo_cyber ttc ON ttc.cdcooper = tdb.cdcooper AND ttc.nrdconta = tdb.nrdconta AND ttc.nrborder = tdb.nrborder AND ttc.nrtitulo = tdb.nrtitulo
+              INNER JOIN crapcyc cyc ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
+            WHERE tdb.cdcooper = bdt.cdcooper
+              AND tdb.nrdconta = bdt.nrdconta
+              AND tdb.nrborder = bdt.nrborder
+              AND tdb.insittit = 4
+              AND gene0005.fn_valida_dia_util(14, tdb.dtvencto) < pr_dtmvtolt),0)) AS qtjexvip,
+          (SELECT SUM(vltitulo) 
+            FROM craptdb tdb 
+            WHERE tdb.nrborder = bdt.nrborder 
+              AND tdb.nrdconta=bdt.nrdconta 
+              AND tdb.cdcooper=bdt.cdcooper 
+              AND tdb.insittit=4 
+              AND gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt 
+              AND NVL((SELECT cyc.flgjudic + cyc.flextjud + cyc.flgehvip 
+                FROM tbdsct_titulo_cyber ttc 
+                  INNER JOIN crapcyc cyc ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
+                  WHERE ttc.cdcooper = tdb.cdcooper
+                  AND   ttc.nrdconta = tdb.nrdconta 
+                  AND   ttc.nrborder = tdb.nrborder
+                  AND   ttc.nrtitulo = tdb.nrtitulo),0) = 0
+          ) AS vlvencid,
           bdt.dtlibbdt,
           CASE WHEN (SELECT COUNT(1) FROM craplim WHERE craplim.nrctrlim=bdt.nrctrlim AND craplim.cdcooper = bdt.cdcooper AND craplim.tpctrlim=3 AND (nrctaav1>0 OR nrctaav2>0 OR dscpfav1 IS NOT NULL  OR dscpfav2 IS NOT NULL)) >0 THEN
               1
@@ -441,7 +465,7 @@ create or replace package body cecred.TELA_COBTIT is
             AND flverbor = 1
       )
       WHERE 
-        qtvencid >0
+        qtvencid-qtjexvip >0
     ;
     rw_crapbdt cr_crapbdt%rowtype;
     
@@ -461,7 +485,8 @@ create or replace package body cecred.TELA_COBTIT is
         pr_tab_dados_bordero(vr_index).vlaprova := rw_crapbdt.vlaprova;
         pr_tab_dados_bordero(vr_index).qtaprova := rw_crapbdt.qtaprova;
         pr_tab_dados_bordero(vr_index).vlvencid := rw_crapbdt.vlvencid;
-        pr_tab_dados_bordero(vr_index).qtvencid := rw_crapbdt.qtvencid;
+        pr_tab_dados_bordero(vr_index).qtvencid := rw_crapbdt.qtvencid - rw_crapbdt.qtjexvip;
+        pr_tab_dados_bordero(vr_index).qtjexvip := rw_crapbdt.qtjexvip;
         pr_tab_dados_bordero(vr_index).dtlibbdt := rw_crapbdt.dtlibbdt;
         pr_tab_dados_bordero(vr_index).flavalis := rw_crapbdt.flavalis;
       END LOOP;
@@ -577,6 +602,7 @@ create or replace package body cecred.TELA_COBTIT is
                               '<vlaprova>' || vr_tab_dados_borderos(vr_index).vlaprova || '</vlaprova>' ||
                               '<qtaprova>' || vr_tab_dados_borderos(vr_index).qtaprova || '</qtaprova>' ||
                               '<qtvencid>' || vr_tab_dados_borderos(vr_index).qtvencid || '</qtvencid>' ||
+                              '<qtjexvip>' || vr_tab_dados_borderos(vr_index).qtjexvip || '</qtjexvip>' ||
                               '<vlvencid>' || vr_tab_dados_borderos(vr_index).vlvencid || '</vlvencid>' ||
                               '<nrctrlim>' || vr_tab_dados_borderos(vr_index).nrctrlim || '</nrctrlim>' ||
                               '<dtlibbdt>' || to_char(vr_tab_dados_borderos(vr_index).dtlibbdt,'dd/mm/rrrr') || '</dtlibbdt>' ||
@@ -815,6 +841,14 @@ create or replace package body cecred.TELA_COBTIT is
          AND    tdb.nrdconta = pr_nrdconta
          AND    tdb.cdcooper = pr_cdcooper
          AND    tdb.insittit = 4 
+         AND    NVL((SELECT (cyc.flgjudic + cyc.flextjud + cyc.flgehvip) FROM tbdsct_titulo_cyber ttc 
+                  INNER JOIN crapcyc cyc
+                        ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
+                  WHERE ttc.cdcooper = tdb.cdcooper
+                  AND   ttc.nrdconta = tdb.nrdconta 
+                  AND   ttc.nrborder = tdb.nrborder
+                  AND   ttc.nrtitulo = tdb.nrtitulo)
+               ,0) = 0
          
        ORDER BY tdb.dtvencto ASC, tdb.vltitulo DESC
        ;
@@ -5868,7 +5902,7 @@ create or replace package body cecred.TELA_COBTIT is
 		CURSOR cr_crapbdt(pr_cdcooper IN crapbdt.cdcooper%TYPE,
                       pr_nrdconta IN crapbdt.nrdconta%TYPE,
                       pr_nrborder IN crapbdt.nrborder%TYPE) IS
-      SELECT 1
+      SELECT nrborder,flverbor
         FROM crapbdt
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -6105,6 +6139,14 @@ create or replace package body cecred.TELA_COBTIT is
             WHEN OTHERS THEN
               vr_blnachou := FALSE;
           END;
+          -- Se o borderô está no modelo antigo
+          IF rw_crapbdt.flverbor=0 THEN
+            pc_inclui_critica(pr_idarquivo => rw_arquivo.idarquivo,
+                              pr_idboleto  => vr_idboleto,
+                              pr_idmotivo  => 67, -- Borderô criado no modelo antigo.
+                              pr_vlrcampo  => vr_vet_dado(3));
+            vr_lin_nrborder := 0;
+          END IF;
 
           -- Se NAO achou
           IF NOT vr_blnachou THEN
@@ -7179,7 +7221,7 @@ create or replace package body cecred.TELA_COBTIT is
           /*Verificar o valor devido e o valor do desconto */
           IF vr_vlparbdt > vr_vlorigem THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Valor calculado superios ao saldo devedor.';
+            vr_dscritic := 'Valor calculado superior ao saldo devedor.';
             RAISE vr_exc_critica;
           END IF;
           

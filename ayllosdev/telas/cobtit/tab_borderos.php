@@ -19,6 +19,7 @@
                     <th>Qtd. Aprovados</th>
                     <th>Vlr. Aprovados</th>
                     <th>Qtd. Vencidos</th>
+                    <th>Qtd. Vip/Exj/Jud</th>
                     <th>Vlr. Vencidos</th>
                     <th>Data de Libera&ccedil;&atilde;o</th>
                 </tr>
@@ -36,6 +37,7 @@
 					<td><?php echo $r->qtaprova ?></td>
                     <td><?php echo formataMoeda($r->vlaprova) ?></td>
                     <td><?php echo $r->qtvencid ?></td>
+                    <td><?php echo $r->qtjexvip ?></td>
                     <td><?php echo formataMoeda($r->vlvencid) ?></td>
                     <td><?php echo $r->dtlibbdt ?></td>
                 </tr>
