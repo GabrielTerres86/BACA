@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/2003.                       Ultima atualizacao: 23/09/2014
+   Data    : Outubro/2003.                       Ultima atualizacao: 21/06/2018
 
    Dados referentes ao programa:
 
@@ -63,6 +63,9 @@
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
                             
+               21/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
+                            da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)
+              
 ............................................................................. */
 
 { includes/var_online.i }
@@ -70,6 +73,7 @@
 { includes/var_lanbdc.i }
 
 { includes/proc_conta_integracao.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF BUFFER crablot FOR craplot.
 DEF BUFFER crablcm FOR craplcm.
@@ -95,7 +99,14 @@ DEF        VAR aux_qtdias   AS INT                                   NO-UNDO.
 DEF        VAR aux_qtdiasli AS INT                                   NO-UNDO.
 DEF        VAR aux_hrlimite AS INT                                   NO-UNDO.
 
+DEF VAR aux_cdcritic        AS INTE                                NO-UNDO.
+DEF VAR aux_dscritic        AS CHAR                                NO-UNDO.
+
 DEF        VAR h-b1wgen0009 AS HANDLE                                NO-UNDO.
+
+/* Variáveis de uso da BO 200 */
+DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
+DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
 
 DEF TEMP-TABLE crawljd                                               NO-UNDO 
     LIKE crapljd.
@@ -1314,7 +1325,78 @@ PROCEDURE proc_recalculo:
    IF   glb_cdcritic > 0   THEN
         RETURN.
    
-   /*  Cria lancamento da conta do associado ................................ */
+   /* P450 - Regulatório de Crédito */
+   /* BLOCO DA INSERÇAO DA CRAPLCM */
+   IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+       RUN sistema/generico/procedures/b1wgen0200.p 
+       PERSISTENT SET h-b1wgen0200.
+      
+   /*  Cria lancamento da conta do associado ................................ */ 
+   RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+        (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+        ,INPUT craplot.cdagenci               /* par_cdagenci */
+        ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+        ,INPUT craplot.nrdolote               /* par_nrdolote */
+        ,INPUT crapcdb.nrdconta               /* par_nrdconta */
+        ,INPUT crablot.nrseqdig + 1           /* par_nrdocmto */
+        ,INPUT 271                            /* par_cdhistor */
+        ,INPUT crablot.nrseqdig + 1           /* par_nrseqdig */
+        ,INPUT crapcdb.vlcheque - (aux_vlliqnov - aux_vlliqori)  /* par_vllanmto */
+        ,INPUT crapcdb.nrdconta               /* par_nrdctabb */
+        ,INPUT "Resgate de cheque descontado " +
+                             crapcdb.dsdocmc7 + " Bordero " +
+                             STRING(crapcdb.nrborder)           /* par_cdpesqbb */
+        ,INPUT 0                              /* par_vldoipmf */
+        ,INPUT 0                              /* par_nrautdoc */
+        ,INPUT 0                              /* par_nrsequni */
+        ,INPUT crapcdb.cdbanchq               /* par_cdbanchq */
+        ,INPUT 0                              /* par_cdcmpchq */
+        ,INPUT crapcdb.cdagechq               /* par_cdagechq */
+        ,INPUT crapcdb.nrctachq               /* par_nrctachq */
+        ,INPUT 0                              /* par_nrlotchq */
+        ,INPUT 0                              /* par_sqlotchq */
+        ,INPUT ""                             /* par_dtrefere */
+        ,INPUT ""                             /* par_hrtransa */
+        ,INPUT ""                             /* par_cdoperad */
+        ,INPUT ""                             /* par_dsidenti */
+        ,INPUT glb_cdcooper                   /* par_cdcooper */
+        ,INPUT ""                             /* par_nrdctitg */
+        ,INPUT ""                             /* par_dscedent */
+        ,INPUT 0                              /* par_cdcoptfn */
+        ,INPUT 0                              /* par_cdagetfn */
+        ,INPUT 0                              /* par_nrterfin */
+        ,INPUT 0                              /* par_nrparepr */
+        ,INPUT 0                              /* par_nrseqava */
+        ,INPUT 0                              /* par_nraplica */
+        ,INPUT 0                              /* par_cdorigem */
+        ,INPUT 0                              /* par_idlautom */
+        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+        ,INPUT 0                              /* Processa lote                                 */
+        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+        /* CAMPOS DE SAÍDA                                                                     */                                            
+        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+        ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+        ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+        ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+        
+   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+      DO:  
+        MESSAGE aux_dscritic.
+        glb_cdcritic = aux_cdcritic.
+        UNDO, RETURN.
+      END.   
+   ELSE 
+      DO:
+         /* 21/06/2018- Posicionando no registro da craplcm criado acima */
+         FIND FIRST tt-ret-lancto.
+         FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+      END.
+
+
+   IF  VALID-HANDLE(h-b1wgen0200) THEN
+       DELETE PROCEDURE h-b1wgen0200.
+   
+   /*
    CREATE crablcm.
    ASSIGN crablcm.dtmvtolt = crablot.dtmvtolt 
           crablcm.cdagenci = crablot.cdagenci
@@ -1344,7 +1426,19 @@ PROCEDURE proc_recalculo:
           
           crapcdb.vlliqdev = aux_vlliqnov.
    VALIDATE crablcm.
+   */
+   
+    ASSIGN 
+          crablot.nrseqdig = crablcm.nrseqdig
+          crablot.qtinfoln = crablot.qtinfoln + 1
+          crablot.qtcompln = crablot.qtcompln + 1
+          
+          crablot.vlinfodb = crablot.vlinfodb + crablcm.vllanmto
+          crablot.vlcompdb = crablot.vlcompdb + crablcm.vllanmto
+          
+          crapcdb.vlliqdev = aux_vlliqnov.
 
+   
 END PROCEDURE.
 
 PROCEDURE proc_lautom:
