@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
 
    Alteracoes: 27/06/2018 - P450 - Criação de procedure para consulta de saldos - pc_consulta_sld_cta_prj (Daniel/AMcom)
                27/06/2018 - P450 - Criação de procedure para efetuar lançamentos - pc_gera_lcm_cta_prj (Daniel/AMcom)  
-
+               28/06/2018 - P450 - Criação de procedure para liquidar conta em prejuizo - pc_liquida_prejuizo_cc (Rangel/Amcom)
 ..............................................................................*/
 
  FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
@@ -27,6 +27,14 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                     ,pr_dscritic OUT VARCHAR2
                                     ,pr_tab_erro OUT gene0001.typ_tab_erro);
+
+
+/* Rotina para liquidar prejuizo de Conta Corrente*/
+  PROCEDURE pc_liquida_prejuizo_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Coop conectada
+                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                   ,pr_dscritic OUT VARCHAR2
+                                   ,pr_tab_erro OUT gene0001.typ_tab_erro  );
+
 
   -- calcula juros remuneratorios de uma determinada conta em cooperativa
   FUNCTION fn_calcula_juros_preju_cc( pr_cdcooper IN NUMBER           --> Cooperativa
@@ -736,6 +744,139 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
   END pc_transfere_prejuizo_cc;
 --
+PROCEDURE pc_liquida_prejuizo_cc(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Coop conectada
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                  ,pr_dscritic OUT VARCHAR2
+                                  ,pr_tab_erro OUT gene0001.typ_tab_erro  ) IS
+                                  
+
+ /* .............................................................................
+
+    Programa: pc_liquida_prejuizo_cc
+    Sistema :
+    Sigla   : PREJ
+    Autor   : Rangel Decker  AMcom
+    Data    : Junho/2018.                  Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  :Alteração do Tipo de Conta em prejuízo liquidado
+
+    Alteracoes:
+    ..............................................................................*/
+                                  
+
+  CURSOR cr_conta_liquida (pr_cdooper  IN tbcc_prejuizo.cdcooper%TYPE) IS
+   SELECT  tbprj.nrdconta,
+           tbprj.cdsitdct_original   
+   FROM tbcc_prejuizo tbprj
+   WHERE tbprj.cdcooper = pr_cdcooper
+   AND   tbprj.dtliquidacao IS NULL
+   AND  (tbprj.vlsdprej + 
+         tbprj.vljuprej + 0 + 0) = 0; 
+  
+
+  vr_cdcritic  NUMBER(3);
+  vr_dscritic  VARCHAR2(1000);
+  vr_des_erro  VARCHAR2(1000);
+  vr_exc_saida exception;
+  vr_sldconta NUMBER;
+  vr_nmdcampo VARCHAR2(100);
+ -- vr_des_erro VARCHAR2(100);
+ vr_xmllog VARCHAR2(100);
+ 
+ vr_retxml XMLType;
+
+ BEGIN 
+   
+    --Transfere as contas em prejuizo para a tabela HIST...
+    FOR rw_conta_liquida IN cr_conta_liquida(pr_cdcooper) LOOP
+          BEGIN
+            UPDATE tbcc_prejuizo tbprj
+            SET tbprj.dtliquidacao = TRUNC(SYSDATE)
+            WHERE tbprj.cdcooper = pr_cdcooper
+            AND   tbprj.nrdconta  = rw_conta_liquida.nrdconta;  
+            
+          
+            EXCEPTION
+             WHEN OTHERS THEN
+                vr_cdcritic :=99999;
+                vr_dscritic := 'Erro ao atualizar a tabela crapass. '||SQLERRM;
+                
+                 --Sair do programa
+                 RAISE vr_exc_saida;
+            END;
+
+          
+          BEGIN
+             
+            UPDATE crapass a
+            SET a.inprejuz    = 0,
+                a.cdsitdct    = rw_conta_liquida.cdsitdct_original 
+            WHERE a.cdcooper  = pr_cdcooper
+            AND   a.nrdconta  = rw_conta_liquida.nrdconta;
+            
+            EXCEPTION
+             WHEN OTHERS THEN
+                vr_cdcritic :=99999;
+                vr_dscritic := 'Erro ao atualizar a tabela crapass. '||SQLERRM;
+                
+                 --Sair do programa
+                 RAISE vr_exc_saida;
+            END;
+            
+            vr_sldconta:= fn_sld_cta_prj(pr_cdcooper => pr_cdcooper 
+                                        ,pr_nrdconta => rw_conta_liquida.nrdconta  );
+            
+            IF vr_sldconta > 0 THEN
+            
+            
+              pc_gera_lcm_cta_prj(pr_cdcooper  => pr_cdcooper               --> Código da Cooperativa
+                                 ,pr_nrdconta  => rw_conta_liquida.nrdconta --> Número da conta
+                                 ,pr_tpope     => 'T'                       --> Tipo de Operação(E-Empréstimo T-Transferência S-Saque)
+                                 ,pr_cdcoperad => 1                       --> Código do Operador
+                                 ,pr_vlrlanc   => vr_sldconta               --> Valor do Lançamento
+                                 ,pr_xmllog    => vr_xmllog          --> XML com informações de LOG
+                                 ,pr_cdcritic  => vr_cdcritic       --> Código da crítica
+                                 ,pr_dscritic  => vr_dscritic          --> Descrição da crítica
+                                 ,pr_retxml    => vr_retxml--> Arquivo de retorno do XML
+                                 ,pr_nmdcampo  => vr_nmdcampo           --> Nome do campo com erro
+                                 ,pr_des_erro  => vr_des_erro) ;                            
+
+              IF   vr_cdcritic <> 0 THEN   
+                 
+                 RAISE vr_exc_saida;
+              END IF;
+                      
+            END IF;  
+      
+    END LOOP;  
+    
+    
+    
+    EXCEPTION
+    WHEN OTHERS THEN
+      ROLLBACK;
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic ||SQLERRM;
+
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => 1
+                           ,pr_nrdcaixa => 1
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => pr_tab_erro);
+
+
+     
+    
+ END  pc_liquida_prejuizo_cc;
+
+
 
  -- atualiza juros remuneratorios de uma determinada conta em cooperativa
   FUNCTION fn_calcula_juros_preju_cc( pr_cdcooper IN NUMBER           --> Cooperativa
