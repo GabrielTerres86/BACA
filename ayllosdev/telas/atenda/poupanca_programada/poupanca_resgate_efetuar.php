@@ -11,6 +11,9 @@
 	//***                          pois dava problema na validacao         ***//
 	//***                          (Tiago/Gielow).                         ***//
 	//***                                                                  ***//	 
+	//***             18/05/2018 - Validar bloqueio de poupança programada ***//
+    //***                          (SM404).                                ***//
+	//***                                                                  ***//
 	//***			  26/07/2016 - Corrigi o tratamento para retorno de    ***//
 	//***						   erro do XML. SD 479874 (Carlos R.)	   ***//
 	//************************************************************************//
@@ -107,8 +110,44 @@
 	$xmlObjResgate = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (isset($xmlObjResgate->roottag->tags[0]->name) && strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
+	if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	// Senão, gera log com os dados da autorização e exclui o bloqueio no caso de resgate total (SM404)
+	}else{
+		if(isset($_SESSION['cdopelib'])) {
+			$vlresgat = str_replace(',','.',str_replace('.','',$vlresgat));
+			// Montar o xml de Requisicao
+			$xml .= "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>"; // Código da cooperativa
+			$xml .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>"; // Código do operador
+			$xml .= "   <cdopelib>".$_SESSION['cdopelib']."</cdopelib>"; // Código do coordenador
+			$xml .= "   <nrdconta>".$nrdconta."</nrdconta>"; // Número da Conta
+			$xml .= "   <nraplica>".$nrctrrpp."</nraplica>"; // Número da Aplicação
+			$xml .= "   <vlresgat>".$vlresgat."</vlresgat>"; // Valor do resgate
+			$xml .= "   <tpresgat>".$tpresgat."</tpresgat>"; // Tipo do resgate
+			$xml .= "	<idseqttl>1</idseqttl>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+			
+			$xmlResult = mensageria($xml, "APLI0002", "PROC_POS_RESGATE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$xmlObj = getObjectXML($xmlResult);
+		}
+						
+		//-----------------------------------------------------------------------------------------------
+		// Controle de Erros
+		//-----------------------------------------------------------------------------------------------
+		
+		if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+			$msgErro = $xmlObj->roottag->tags[0]->cdata;
+			
+			if($msgErro == null || $msgErro == ''){
+				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			}
+			
+			exibeErro($msgErro,$frm);			
+			exit();
+		}
 	} 
 	
 	echo 'flgoprgt = true;';
