@@ -54,9 +54,9 @@ $saldoDevedorTotal = $registros->tags[0]->tags[3]->cdata;
 							</tr>
 						</table>
 					</td>
-				</tr>				
+				</tr>
 				<tr>
-					<td class="tdConteudoTela" align="center">					    
+					<td class="tdConteudoTela" align="center">
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px 2px 8px;">
@@ -64,16 +64,16 @@ $saldoDevedorTotal = $registros->tags[0]->tags[3]->cdata;
 										<form action="" method="post" name="frmDadosDetalhesAtraso" id="frmDadosDetalhesAtraso" class="formulario" >
 											<fieldset>
 												<div id="divTabContraOrdens">
-													<div class="divRegistros">	
+													<div class="divRegistros">
 														<table>
 															<thead>
 																<tr>
 																	<th><? echo utf8ToHtml('Data'); ?></th>
 																	<th><? echo utf8ToHtml('Histórico');  ?></th>
 																	<th><? echo utf8ToHtml('Docmto');  ?></th>
-																	<th><? echo utf8ToHtml('D/C');  ?></th>					
-																	<th><? echo utf8ToHtml('Valor');  ?></th>					
-																	<th><? echo utf8ToHtml('Saldo');  ?></th>					
+																	<th><? echo utf8ToHtml('D/C');  ?></th>
+																	<th><? echo utf8ToHtml('Valor');  ?></th>
+																	<th><? echo utf8ToHtml('Saldo');  ?></th>
 																</tr>
 															</thead>
 															<tbody>
@@ -89,13 +89,13 @@ $saldoDevedorTotal = $registros->tags[0]->tags[3]->cdata;
 																	</td>
 																	<td><span>Teste</span>
 																		Teste
-																	</td>	
+																	</td>
 																	<td><span>Teste</span>
 																		Teste
 																	</td>
 																	<td><span>Teste</span>
 																		Teste
-																	</td>					
+																	</td>
 																</tr>
 																<tr>
 																	<td><span>Teste</span>
@@ -109,25 +109,25 @@ $saldoDevedorTotal = $registros->tags[0]->tags[3]->cdata;
 																	</td>
 																	<td><span>Teste</span>
 																		Teste
-																	</td>	
+																	</td>
 																	<td><span>Teste</span>
 																		Teste
 																	</td>
 																	<td><span>Teste</span>
 																		Teste
-																	</td>					
+																	</td>
 																</tr>
 															</tbody>
 														</table>
-													</div>	
+													</div>
 												</div>
 											</fieldset>
 										</form>
 										<div id="divBotoes">
 											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Pagamento de Empr&eacute;stimo</a>
 											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Libera&ccedil;&atilde;o de Saque</a>
-											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Pagamento de Preju&iacute;zo</a>
-											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Imprimir Extrato</a>		
+											<a href="#" class="botao" id="btDetVoltar" onClick="mostraPagamentoPrejuzCC();">Pagamento Preju&iacute;zo c/c</a>
+											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Imprimir Extrato</a>
 											</br></br>
 											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>
 										</div>

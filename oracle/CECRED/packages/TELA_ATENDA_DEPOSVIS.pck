@@ -39,6 +39,29 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);            --> Descricao do erro                       
+
+  -- retorna dados da conta em prejuizo, em XML
+  PROCEDURE pc_busca_vlrs_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                     ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                     ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2);                                
+
+  -- efetua pagamento de conta em prejuizo
+  PROCEDURE pc_paga_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                     ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                     ,pr_vlrpagto  IN NUMBER                --> valor pago
+                                     ,pr_vlrabono  IN NUMBER                --> valor de abono pago
+                                     ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2);                                
+
 END TELA_ATENDA_DEPOSVIS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
@@ -672,6 +695,177 @@ END pc_busca_saldos_devedores;
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_consulta_preju_cc;               
+
+    /* .............................................................................
+
+     Programa: pc_busca_dts_preju_atraso
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Marcel Kohls
+     Data    : Junho/2018.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Retorna XML com os valores do prejuizo da conta corrente
+
+     Alteracoes:
+     ..............................................................................*/
+  PROCEDURE pc_busca_vlrs_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                     ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                     ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2)  IS
+    -- CURSORES --    
+    CURSOR cr_tbcc_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                            pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+      SELECT prej.vlsdprej, prej.vljuprej, sld.vliofmes
+        FROM tbcc_prejuizo prej
+        LEFT JOIN crapsld sld
+               ON sld.nrdconta = prej.nrdconta
+              AND sld.cdcooper = prej.cdcooper
+       WHERE prej.cdcooper = pr_cdcooper
+         AND prej.nrdconta = pr_nrdconta
+         AND prej.dtliquidacao IS NULL;
+    rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;    
+
+    -- variaveis
+    vr_vlsdprej           tbcc_prejuizo.vlsdprej%TYPE := 1;
+    vr_vlttjurs           tbcc_prejuizo.vljuprej%TYPE := 2;
+    vr_vltotiof           crapsld.vliofmes%TYPE := 0;
+
+    -- erros
+    vr_exc_erro EXCEPTION;
+
+		-- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+  BEGIN
+    OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => pr_nrdconta);
+
+    FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
+    
+    IF cr_tbcc_prejuizo%FOUND THEN
+      vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej;
+      vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
+      vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
+    END IF;
+    
+    CLOSE cr_tbcc_prejuizo;
+
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'vlsdprej'
+                          ,pr_tag_cont => to_char(vr_vlsdprej,
+                                                 '9G999G990D00',
+                                                 'nls_numeric_characters='',.''')
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'vlttjurs'
+                          ,pr_tag_cont => to_char(vr_vlttjurs,
+                                                 '9G999G990D00',
+                                                 'nls_numeric_characters='',.''')
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'vltotiof'
+                          ,pr_tag_cont => to_char(vr_vltotiof,
+                                                 '9G999G990D00',
+                                                 'nls_numeric_characters='',.''')
+                          ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION             
+        WHEN vr_exc_erro THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+        WHEN OTHERS THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+
+  END pc_busca_vlrs_prejuz_cc;
+  
+      /* .............................................................................
+
+     Programa: pc_busca_dts_preju_atraso
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Marcel Kohls
+     Data    : Junho/2018.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : efetua pagamento de conta em prejuizo
+
+     Alteracoes:
+     ..............................................................................*/
+  PROCEDURE pc_paga_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                     ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                     ,pr_vlrpagto  IN NUMBER                --> valor pago
+                                     ,pr_vlrabono  IN NUMBER                --> valor de abono pago
+                                     ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2)  IS
+    -- erros
+    vr_exc_erro EXCEPTION;
+
+		-- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+  BEGIN
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    --vr_dscritic := 'erro teste de erro';
+    --RAISE vr_exc_erro;
+    
+    EXCEPTION             
+        WHEN vr_exc_erro THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+        WHEN OTHERS THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+
+  END pc_paga_prejuz_cc;
   
 END TELA_ATENDA_DEPOSVIS;
-
+/

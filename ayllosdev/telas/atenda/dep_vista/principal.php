@@ -15,7 +15,7 @@
 							  Prj. 302 (Jean Michel).
                  11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
                  12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
-			 	 26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória) 
+			 	 26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória)
 				   			  P450 - Diego Simas - AMcom
 
 	 ************************************************************************/
@@ -85,7 +85,7 @@
 
 	//SIMAS
 	//Busca Saldo atual da conta transitória
-	$xml  = "";
+	/*$xml  = "";
 	$xml .= "<Root>";
 	$xml .= "  <Dados>";
 	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
@@ -93,16 +93,16 @@
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_SALDO_ATUAL_CT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_SALDO_ATUAL_CT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
 
 	$param = $xmlObjeto->roottag->tags[0]->tags[0];
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false);
 	}else{
-		$sldatuct = getByTagName($param->tags,'sldatuct');	    
-	}			
+		$sldatuct = getByTagName($param->tags,'sldatuct');
+	}			*/
 	//SIMAS
 
 	// Montar o xml de Requisicao das datas de prejuizo
