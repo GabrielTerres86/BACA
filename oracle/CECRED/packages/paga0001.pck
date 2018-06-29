@@ -16014,9 +16014,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         --
         IF pr_dsmotivo = '08' THEN
           --
+					IF rw_crapcob.cdbandoc = 85 THEN
+						--
           vr_cdhistor := 2631;
           --
         ELSE
+          --
+        vr_cdhistor:= 0;
+          --
+        END IF;
+        --
+      ELSE
           --
         vr_cdhistor:= 0;
           --
@@ -20667,7 +20675,15 @@ end;';
                ELSE
                   IF rw_cursor1.cdocorre IN (6,76) THEN
 										IF rw_cursor1.cdmotivo = '08' THEN
+											IF rw_cursor1.cdbandoc = 85 THEN
+												--
 										  vr_cdhistor := 2631; -- liq boleto em cartorio
+												--
+											ELSE
+												--
+												vr_cdhistor := 0;
+												--
+											END IF;
                     ELSE
                   vr_cdhistor := 987;
 										END IF;
@@ -20972,7 +20988,16 @@ end;';
              ELSE
                 IF rw_cursor2.cdocorre IN (6,76) THEN
 									IF rw_cursor2.cdmotivo = '08' THEN
+										IF rw_cursor2.cdbandoc = 85 THEN
+											--
 										  vr_cdhistor := 2631; -- liq boleto em cartorio
+											--
+										ELSE
+											--
+											vr_cdhistor := 0;
+											--
+										END IF;
+										--
                     ELSE
                 vr_cdhistor := 987;
 										END IF;
