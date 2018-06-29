@@ -20371,6 +20371,7 @@ end;';
              cco.dsorgarq,
              cob.rowid rowid_cob,
              ret.rowid rowid_ret
+						 cob.cdbandoc -- PRJ352
         FROM crapret ret
             ,crapcco cco
             ,crapcob cob
@@ -20411,7 +20412,8 @@ end;';
              cob.tpjurmor,
              cob.nrdocmto,
              cob.rowid rowid_cob,
-             ret.rowid rowid_ret
+             ret.rowid rowid_ret,
+						 cob.cdbandoc
         FROM crapret ret
             ,crapcco cco
             ,crapcob cob
