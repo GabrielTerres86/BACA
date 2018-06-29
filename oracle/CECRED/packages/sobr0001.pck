@@ -243,6 +243,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                21/12/2017 - Alteracao para desconsiderar se o cooperado esta eliminado ou nao.
                             Adequar lancamentos para cooperados eliminados para voltar a lancar
                             o credito das sobras/juros. (Anderson SD820374).
+               
+               14/05/2018 - Ajustar para atualizar a sobras e capital para a situação 8
+                            (Rafael - Mouts).
+                            
+               28/06/2018 - P450 Criação de procedure para efetuar lançamentos - LANC0001.PC_GERAR_LANCAMENTO_CONTA 
+                           (Anderson Heckmann/AMcom) 
+  
 ............................................................................. */
 
       -- Código do programa
@@ -423,6 +430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
       -- variaveis utilizadas no relatorio
       vr_rel_dsagenci VARCHAR2(100);
+      
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -651,10 +661,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
          e nem juros sobre o capital - Incorporacao Transulcred -> Transpocred */
       TYPE vr_typ_cta_proibidas IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
       vr_tab_cta_proibidas vr_typ_cta_proibidas;
-      
+      --
+      CURSOR cr_crapass (prc_cdcooper IN crapass.cdcooper%TYPE
+                        ,prc_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT ass.cdsitdct
+          FROM crapass ass
+         WHERE ass.cdcooper = prc_cdcooper
+           AND ass.nrdconta = prc_nrdconta;
       -- Vetor para armazenar os dados para o processo definitivo
       vr_tab_crrl048 typ_tab_crrl048;
       vr_indice      PLS_INTEGER := 0;      
+      vr_cdsitdct       crapass.cdsitdct%TYPE;      
       
       /* escrita no log centralizada */
       PROCEDURE pc_controle_critica IS
@@ -913,6 +930,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_nrdocaux := lpad(pr_nrseqdig,10,'0');
             vr_nrdocmto := '8005'||lpad(substr(vr_nrdocaux,length(vr_nrdocaux)-4,length(vr_nrdocaux)),5,'0'); --Em tela existe o limite de 9 caracteres
             BEGIN
+              /*
               INSERT INTO craplcm
                 (dtmvtolt,
                  cdagenci,
@@ -939,6 +957,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                  pr_vlcapital,
                  pr_nrseqdig,
                  pr_cdcooper);
+               */  
+               LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrdctabb => pr_nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta,'99999999')
+                         ,pr_nrdocmto => vr_nrdocmto
+                         ,pr_cdhistor => vr_cdhistor
+                         ,pr_vllanmto => pr_vlcapital                         
+                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                 IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                   RAISE vr_exc_saida;
+                 ELSE -- Não foi possível debitar (crítica de negócio)
+                   vr_cdcritic := 0;
+                   vr_dscritic := 'Erro ao inserir registro de lancamento de depósito a vista.';
+                   RAISE vr_exc_saida;
+                 END IF;
+               END IF; 
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -1835,7 +1882,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Perceorre a tabela que foi populada para o processo definitivo
         vr_indice := vr_tab_crrl048.first;
         WHILE vr_indice IS NOT NULL LOOP
-
+          vr_cdsitdct := 0;
+          FOR rw_crapass IN cr_crapass (pr_cdcooper,
+                                        vr_tab_crrl048(vr_indice).nrdconta) LOOP
+            vr_cdsitdct := rw_crapass.cdsitdct;
+          END LOOP;
           /*  Credito do retorno  */
           IF vr_increret = 1 THEN           
 
@@ -1882,7 +1933,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                 
                 /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1908,6 +1960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               -- Lançamento em C/C  
               IF vr_tab_crrl048(vr_indice).vlretcrd_cta > 0 THEN
                 BEGIN
+                  /*
                   INSERT INTO craplcm
                       (dtmvtolt,
                        cdagenci,
@@ -1934,6 +1987,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_tab_crrl048(vr_indice).vlretcrd_cta,
                        rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
+                       */
+                      LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisopc_cta
+                         ,pr_cdhistor => vr_cdhisopc_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vlretcrd_cta                         
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                          RAISE vr_exc_saida;
+                        ELSE -- Não foi possível debitar (crítica de negócio)
+                          vr_cdcritic := 0;
+                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
+                          RAISE vr_exc_saida;
+                        END IF;
+                      END IF;   
                   EXCEPTION
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -1946,7 +2028,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                 
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2020,7 +2103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2046,6 +2130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
                   BEGIN
+                    /*
                     INSERT INTO craplcm
                       (dtmvtolt,
                        cdagenci,
@@ -2072,6 +2157,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta,
                        rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
+                     */
+                     LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisdep_cta
+                         ,pr_cdhistor => vr_cdhisdep_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta                         
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                          RAISE vr_exc_saida;
+                        ELSE -- Não foi possível debitar (crítica de negócio)
+                          vr_cdcritic := 0;
+                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
+                          RAISE vr_exc_saida;
+                        END IF;
+                      END IF;  
                   EXCEPTION
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2083,7 +2197,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2156,7 +2271,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                 /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2182,6 +2298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta > 0 THEN
                   BEGIN
+                    /*
                     INSERT INTO craplcm
                       (dtmvtolt,
                        cdagenci,
@@ -2208,6 +2325,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          vr_tab_crrl048(vr_indice).vljursdm_cta,
                          rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
+                     */
+                      LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisdpa_cta
+                         ,pr_cdhistor => vr_cdhisdpa_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljursdm_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                          RAISE vr_exc_saida;
+                        ELSE -- Não foi possível debitar (crítica de negócio)
+                          vr_cdcritic := 0;
+                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
+                          RAISE vr_exc_saida;
+                        END IF;
+                      END IF;    
                   EXCEPTION
                     WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2219,7 +2365,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2289,7 +2436,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                     
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2315,6 +2463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
                   BEGIN
+                      /*
                       INSERT INTO craplcm
                       (dtmvtolt,
                        cdagenci,
@@ -2341,6 +2490,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          vr_tab_crrl048(vr_indice).vljurapl_cta,
                          rw_craplot.nrseqdig + 1,
                        pr_cdcooper);
+                     */
+                     LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisdpp_cta
+                         ,pr_cdhistor => vr_cdhisdpp_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljurapl_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                          RAISE vr_exc_saida;
+                        ELSE -- Não foi possível debitar (crítica de negócio)
+                          vr_cdcritic := 0;
+                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
+                          RAISE vr_exc_saida;
+                        END IF;
+                      END IF;  
                   EXCEPTION
                     WHEN OTHERS THEN
                         vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2351,7 +2529,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                     
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                     vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2473,7 +2652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           /* Se teve juros ao capital e a conta esta eliminada, vamos zerar o saldo de cotas e 
              criar o registro na tabela de devolucao de cotas */
           IF vr_tab_crrl048(vr_indice).vljurcap > 0 AND
-             vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+            (vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+             vr_cdsitdct = 8) THEN -- Para quando estiver com situação 8 atualizar cotas
              
             -- Atualizar informações do lote  
             rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
@@ -2540,7 +2720,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2566,6 +2747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             -- Lançamento em C/C  
             IF vr_tab_crrl048(vr_indice).vljurtar_cta > 0 THEN
               BEGIN
+                /*
                 INSERT INTO craplcm
                   (dtmvtolt,
                    cdagenci,
@@ -2592,6 +2774,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_tab_crrl048(vr_indice).vljurtar_cta,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
+                 */
+                 LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhistar_cta
+                         ,pr_cdhistor => vr_cdhistar_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljurtar_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                          RAISE vr_exc_saida;
+                        ELSE -- Não foi possível debitar (crítica de negócio)
+                          vr_cdcritic := 0;
+                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
+                          RAISE vr_exc_saida;
+                        END IF;
+                      END IF;    
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2602,7 +2813,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2670,7 +2882,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2696,6 +2909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             -- Lançamento em C/C  
             IF vr_tab_crrl048(vr_indice).vljuraut_cta > 0 THEN
               BEGIN
+                /*
                 INSERT INTO craplcm
                   (dtmvtolt,
                    cdagenci,
@@ -2722,6 +2936,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                    vr_tab_crrl048(vr_indice).vljuraut_cta,
                    rw_craplot.nrseqdig + 1,
                    pr_cdcooper);
+                 */
+                 LANC0001.pc_gerar_lancamento_conta(
+                          pr_dtmvtolt => vr_dtmvtolt
+                         ,pr_cdagenci => vr_cdagenci
+                         ,pr_cdbccxlt => vr_cdbccxlt
+                         ,pr_nrdolote => vr_nrdolote                         
+                         ,pr_nrdconta => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctabb => vr_tab_crrl048(vr_indice).nrdconta
+                         ,pr_nrdctitg => gene0002.fn_mask(vr_tab_crrl048(vr_indice).nrdconta,'99999999')
+                         ,pr_nrdocmto => 8005||vr_cdhisaut_cta
+                         ,pr_cdhistor => vr_cdhisaut_cta
+                         ,pr_vllanmto => vr_tab_crrl048(vr_indice).vljuraut_cta
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdcooper => pr_cdcooper 
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                          RAISE vr_exc_saida;
+                        ELSE -- Não foi possível debitar (crítica de negócio)
+                          vr_cdcritic := 0;
+                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
+                          RAISE vr_exc_saida;
+                        END IF;
+                      END IF;   
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
@@ -2732,7 +2975,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2891,7 +3135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                              '</crrl043>'
                                              ,pr_fecha_xml => TRUE);
           
-      -- Chamada do iReport para gerar o arquivo de saida
+      -- Chamada do iReport para gerar o arquivo de saida      
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,                    --> Cooperativa conectada
                                   pr_cdprogra  => vr_cdprogra,                    --> Programa chamador
                                   pr_dtmvtolt  => vr_dtmvtolt,            --> Data do movimento atual
