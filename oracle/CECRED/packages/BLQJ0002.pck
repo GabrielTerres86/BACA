@@ -24,7 +24,10 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 			    30/11/2017 - Alterações referentes a M460 BACENJUD. (Thiago Rodrigues)
 
 				15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
-				  22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
+
+				22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
+
+				29/06/2018 - Alterada a procedure pc_resgata_aplicacao para utilização do Projeto URA (Everton Mouts)
 
   .............................................................................*/
 
