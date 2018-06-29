@@ -6,7 +6,7 @@
    Autor   : Deborah/Edson
    Data    : Outubro/96.                     Ultima atualizacao: 23/04/2018
 
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
 
    Frequencia: Diario (on-line)
    Objetivo  : Rotina para tratamento da inclusao da PROPOSTA DE
@@ -445,11 +445,11 @@
 	        14/03/2016 - Incluir campo cdpactra na chamada da rotina 
 			             grava-proposta-completa. PRJ207 - Esteira 
 						 (Odirlei-AMcom)
-
+						 						                  
             15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
 
             24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
-
+            
             23/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
 
 ........................................................................... */
@@ -908,6 +908,7 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
                                             INPUT ?, /* par_idcarenc */
                                             INPUT ?, /* par_dtcarenc */
 											INPUT tt-proposta-epr.idfiniof,
+                                            INPUT tt-proposta-epr.idquapro,
                                             OUTPUT TABLE tt-erro,
                                             OUTPUT TABLE tt-msg-confirma,
                                             OUTPUT TABLE tt-grupo,
@@ -1021,8 +1022,8 @@ IF   FRAME-FIELD = "cdfinemp"  THEN
                                crapbpr.nrctrpro = tt-proposta-epr.nrctremp  AND 
                                crapbpr.tpctrpro = 90 NO-LOCK:
             ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
-            END.
-
+         END.
+         
          RUN buscar_liquidacoes_contrato IN h-b1wgen0002(INPUT glb_cdcooper,
                                                          INPUT par_nrdconta,
                                                          INPUT tt-proposta-epr.nrctremp,

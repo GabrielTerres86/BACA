@@ -310,7 +310,8 @@ PROCEDURE grava_dados:
                                              INPUT "", /* cdmodali */
                                              INPUT ?, /* par_idcarenc */
                                              INPUT ?, /* par_dtcarenc */
-											 INPUT 0, /* par_idfiniof */
+											                       INPUT 0, /* par_idfiniof */
+                                             INPUT 1,            /* par_idquapro */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
