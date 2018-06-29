@@ -17,77 +17,69 @@ DECLARE
          FROM tbcc_grupo_economico x, crapass ass
         WHERE ass.nrdconta = x.nrdconta
           AND ass.cdcooper = x.cdcooper 
---          AND x.cdcooper   = 5
           ;
-         
 
    var_idintegrante   number(10) := 0;
    var_encontrou      number(10)  := 0;
    
-   BEGIN
-     -- carrega o codigo do ultimo integrante sequencia unica do grupo integrantes
+BEGIN
+--   carrega o codigo do ultimo integrante sequencia unica do grupo integrantes
 --     select max(t.idintegrante)  into var_idintegrante
 --       from CECRED.TBCC_GRUPO_ECONOMICO_INTEG t;
 
-     var_idintegrante:=0;
+  var_idintegrante := 0;
 
-     for reg_c1 in c1 loop
+  FOR reg_c1 in c1 loop
 
-       BEGIN
-         -- Verificar se o CPF/CNPJ já está no grupo integrante
-         select count(*) into var_encontrou
-           from cecred.tbcc_grupo_economico_integ inte
-          where inte.idgrupo  = reg_c1.idgrupo
-            AND inte.nrcpfcgc = reg_c1.nrcpfcgc;
+    BEGIN
+      -- Verificar se o CPF/CNPJ já está no grupo integrante
+      select count(*) into var_encontrou
+        from cecred.tbcc_grupo_economico_integ inte
+       where inte.idgrupo  = reg_c1.idgrupo
+         AND inte.nrcpfcgc = reg_c1.nrcpfcgc;
 
-         --
-         IF var_encontrou = 0 THEN
+      --
+      IF var_encontrou = 0 THEN
            
-           var_idintegrante := var_idintegrante + 1;
+        var_idintegrante := var_idintegrante + 1;
        
-           BEGIN
-             insert into TBCC_GRUPO_ECONOMICO_INTEG( 
-                           idintegrante 
-                          ,idgrupo 
-                          ,nrcpfcgc 
-                          ,cdcooper 
-                          ,nrdconta 
-                          ,tppessoa  
-                          ,tpcarga 
-                          ,tpvinculo 
-                          ,peparticipacao 
-                          ,dtinclusao 
-                          ,cdoperad_inclusao 
-                          ,cdoperad_exclusao 
-                          ,nmintegrante )
-                          values (
-                           null -- var_idintegrante 
-                          ,reg_c1.idgrupo 
-                          ,reg_c1.nrcpfcgc 
-                          ,reg_c1.cdcooper 
-                          ,reg_c1.nrdconta 
-                          ,reg_c1.tppessoa  
-                          ,reg_c1.tpcarga 
-                          ,reg_c1.tpvinculo 
-                          ,reg_c1.peparticipacao 
-                          ,reg_c1.dtinclusao 
-                          ,reg_c1.cdoperad_inclusao 
-                          ,reg_c1.cdoperad_exclusao 
-                          ,reg_c1.nmintegrante);
-           exception
-             when others then 
-               dbms_output.put_line('Erro ao inserir: ' || reg_c1.idgrupo || reg_c1.nrcpfcgc || reg_c1.nrdconta);
-           end;
-           dbms_output.put_line('Cont: ' || var_idintegrante ||
-                                ' - Inserido: ' || reg_c1.cdcooper
-                                    || ' - ' || reg_c1.idgrupo
-                                    || ' - ' || reg_c1.nrcpfcgc
-                                    || ' - ' || reg_c1.nrdconta);
-         end if;
-       end;
+        BEGIN
+          insert into TBCC_GRUPO_ECONOMICO_INTEG( 
+                        idintegrante 
+                        ,idgrupo 
+                        ,nrcpfcgc 
+                        ,cdcooper 
+                        ,nrdconta 
+                        ,tppessoa  
+                        ,tpcarga 
+                        ,tpvinculo 
+                        ,peparticipacao 
+                        ,dtinclusao 
+                        ,cdoperad_inclusao 
+                        ,cdoperad_exclusao 
+                        ,nmintegrante )
+                        values (
+                        null -- var_idintegrante 
+                        ,reg_c1.idgrupo 
+                        ,reg_c1.nrcpfcgc 
+                        ,reg_c1.cdcooper 
+                        ,reg_c1.nrdconta 
+                        ,reg_c1.tppessoa  
+                        ,reg_c1.tpcarga 
+                        ,reg_c1.tpvinculo 
+                        ,reg_c1.peparticipacao 
+                        ,reg_c1.dtinclusao 
+                        ,reg_c1.cdoperad_inclusao 
+                        ,reg_c1.cdoperad_exclusao 
+                        ,reg_c1.nmintegrante);
+        EXCEPTION
+          WHEN OTHERS THEN
+            dbms_output.put_line('Erro ao inserir: ' || reg_c1.idgrupo || reg_c1.nrcpfcgc || reg_c1.nrdconta);
+        END;
+      END IF;
+    END;
 
-     end loop;
+  END LOOP;
 
-     --commit;
-End;
-
+  COMMIT;
+END;
