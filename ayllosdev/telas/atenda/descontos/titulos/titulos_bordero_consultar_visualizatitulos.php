@@ -168,6 +168,7 @@
 								<th>Situa&ccedil;&atilde;o</th>
 								<th>Decis&atilde;o</th>
 								<th>Saldo Devedor</th>
+								<th>Nr. Ctr. Cyber</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -249,6 +250,7 @@
 									?>	
 								</td>
 								<td><?php echo number_format(str_replace(",",".",$t->tags[16]->cdata),2,",",".");?></td> 
+								<td><?php echo $t->tags[17]->cdata; ?></td> 
 							</tr>							
 						<?php 
 							}

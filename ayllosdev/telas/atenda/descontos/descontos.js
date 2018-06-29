@@ -1471,11 +1471,12 @@ function formataLayout(nomeForm){
 		arrayLargura[2] = '63px';//Valor
 		arrayLargura[3] = '80px';//Valor Líquido
 		arrayLargura[4] = '30px';//Prz
-		arrayLargura[5] = '260px';//Pagador
+		arrayLargura[5] = '';//Pagador
 		arrayLargura[6] = '108px';// CPF/CNPJ
 		arrayLargura[7] = '80px';//130 //Situação 50 30
 		arrayLargura[8] = '70px';//130 //Decisao 50 30
 		arrayLargura[9] = '80px';//Saldo Devedor
+		arrayLargura[10] = '80px';//Nr Ctr Cyber
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';// Vencto
@@ -1488,6 +1489,7 @@ function formataLayout(nomeForm){
 		arrayAlinha[7] = 'center';//Situação
 		arrayAlinha[8] = 'center';//Decisao
 		arrayAlinha[9] = 'right';//Saldo Devedor
+		arrayAlinha[10] = 'center';//Saldo Devedor
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
