@@ -48,6 +48,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                    Cancelamento automático de seguro para debitos não efetuados;
                                    Envio de mensagens para cooperados que tiveram seguros cancelados por inadimplência.
                             Marcel Kohls (AMcom)
+														
+							 29/06/2018 - Remoção de RAISE que estava gerando interrupção indevida na diária.
+							              Reginaldo (AMcom - P450)
 
   ............................................................................... */
 
@@ -100,7 +103,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
               ,seg.qtprevig
               ,seg.qtprepag
               ,seg.tpseguro
-							,seg.dtfimvig
+              ,seg.dtfimvig
               ,sld.qtddsdev
         FROM crapseg seg, crapsld sld
         WHERE seg.cdcooper  = pr_cdcooper
@@ -176,7 +179,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       vr_rowidlcm     ROWID;             --> ROWID do lançamento inserido na CRAPLCM
       vr_nmtabela     VARCHAR2(60);      --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
       vr_incrineg     INTEGER;           --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
-			vr_dtfimvig     DATE;              --> Data do fim de vigência do seguro, para fins de cancelamento
+      vr_dtfimvig     DATE;              --> Data do fim de vigência do seguro, para fins de cancelamento
 
       vr_dsseguro     VARCHAR2(50);
       vr_rowid_log    rowid;
@@ -393,17 +396,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                                  , pr_incrineg => vr_incrineg
                                                  , pr_cdcritic => vr_cdcritic
                                                  , pr_dscritic => vr_dscritic);
-            ELSE
+          ELSE
               vr_cdcritic := 1134; -- nao foi possivel realizar debito 
               vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
-			  vr_incrineg := 1;
-            END IF;
+              vr_incrineg := 1;
+          END IF;
 
           -- se não foi possivel debitar, então cancela seguro
-          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN						
             IF vr_incrineg = 0 THEN -- Erro de sistema/BD
               RAISE vr_exc_saida;
             ELSE
+							-- Limpa variáveis de crítica para não refletir em RAISE posterior
+							vr_cdcritic := NULL;
+   						vr_dscritic := NULL;
+							
               IF (rw_crapseg.tpseguro = 3) THEN
                  vr_dtfimvig := rw_crapdat.dtmvtolt;
                ELSE
@@ -632,10 +639,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       -- Retornar nome do módulo original, para que tire o action gerado pelo programa chamado acima
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                 ,pr_action => NULL);
-      -- Testar saída de erro
-      IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
 
       -- Chamar rotina para eliminação do restart para evitarmos
       -- reprocessamento das aplicações indevidamente
