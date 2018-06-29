@@ -235,66 +235,73 @@ IF  par_idrelato = 1 OR
                 CREATE xml_operacao.
                    
                 IF  par_idrelato = 1 OR par_idrelato = 4 THEN    
-                    xml_operacao.dslinxml = "<boleto><nossonro>" +
-                                            tt-consulta-blt.nrnosnum +
-                                            "</nossonro><nmdsacad>" +
-                                            tt-consulta-blt.nmdsacad +
-                                            "</nmdsacad><nrinssac>" +
-                                            STRING(tt-consulta-blt.nrinssac) +
-                                            "</nrinssac><cdtpinsc>" +
-                                            STRING(tt-consulta-blt.cdtpinsc) +
-                                            "</cdtpinsc><nrdocmto>" +
-                                            STRING(tt-consulta-blt.nrdocmto) +
-                                            "</nrdocmto><dtmvtolt>" +
-                                            STRING(tt-consulta-blt.dtmvtolt,
-                                                   "99/99/9999") +
-                                            "</dtmvtolt><dtvencto>" +
-                                            STRING(tt-consulta-blt.dtvencto,
-                                                   "99/99/9999") +
-                                            "</dtvencto><dtdpagto>" +
-                                           (IF  tt-consulta-blt.dtdpagto = ? 
-                                            THEN 
-                                               (IF tt-consulta-blt.dtdbaixa = ?
-                                                THEN " " ELSE
-                                                STRING(tt-consulta-blt.dtdbaixa,
-                                                          "99/99/9999"))
-                                            ELSE 
-                                                STRING(tt-consulta-blt.dtdpagto,
-                                                       "99/99/9999")) +
-                                            "</dtdpagto><vltitulo>" +
-                                            TRIM(STRING(tt-consulta-blt.vltitulo,
-                                                        "zzzzzzzzz9.99")) +
-                                            "</vltitulo><vldpagto>" + 
-                                            TRIM(STRING(tt-consulta-blt.vldpagto,
-                                                        "zzzzzzzzz9.99")) +
-                                            "</vldpagto><cdbanpag>" +
-                                            STRING(tt-consulta-blt.cdbanpag) +
-                                            "</cdbanpag><cdagepag>" + 
-                                            STRING(tt-consulta-blt.cdagepag) +
-                                            "</cdagepag><cdsituac>" +
-                                            tt-consulta-blt.cdsituac +
-                                            "</cdsituac><dssituac>" + 
-                                            SUBSTR(tt-consulta-blt.dssituac,1,10) + tt-consulta-blt.flgdesco +
-                                            "</dssituac><flgdesco>" +
-                                            tt-consulta-blt.flgdesco +
-                                            "</flgdesco><dtelimin>" +
-                                           (IF  tt-consulta-blt.dtelimin = ? 
-                                            THEN
-                                                " "
-                                            ELSE
-                                                STRING(tt-consulta-blt.dtelimin,
-                                                       "99/99/9999")) +
-                                            "</dtelimin><dsdoccop>" +
-                                            tt-consulta-blt.dsdoccop +
-                                            "</dsdoccop><nrborder>" +
-                                            STRING(tt-consulta-blt.nrborder) +
-                                            "</nrborder><nrctrlim>" +
-                                            STRING(tt-consulta-blt.nrctrlim) +
-                                            "</nrctrlim><dsemitnt>" +
-                                            tt-consulta-blt.dsemitnt + 
-                                            "</dsemitnt><dtdocmto>" +
-                                             STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +
-                                            "</dtdocmto></boleto>".            
+                    DO:
+                        ASSIGN tt-consulta-blt.dssituac = SUBSTR(tt-consulta-blt.dssituac,1,10).
+                
+                        IF  R-INDEX(tt-consulta-blt.dssituac,"/TD") > 0 THEN
+                            ASSIGN tt-consulta-blt.dssituac = SUBSTR(tt-consulta-blt.dssituac,1,R-INDEX(tt-consulta-blt.dssituac,"/TD") - 1).                                                     
+                    
+                        xml_operacao.dslinxml = "<boleto><nossonro>" +
+                                                tt-consulta-blt.nrnosnum +
+                                                "</nossonro><nmdsacad>" +
+                                                tt-consulta-blt.nmdsacad +
+                                                "</nmdsacad><nrinssac>" +
+                                                STRING(tt-consulta-blt.nrinssac) +
+                                                "</nrinssac><cdtpinsc>" +
+                                                STRING(tt-consulta-blt.cdtpinsc) +
+                                                "</cdtpinsc><nrdocmto>" +
+                                                STRING(tt-consulta-blt.nrdocmto) +
+                                                "</nrdocmto><dtmvtolt>" +
+                                                STRING(tt-consulta-blt.dtmvtolt,
+                                                       "99/99/9999") +
+                                                "</dtmvtolt><dtvencto>" +
+                                                STRING(tt-consulta-blt.dtvencto,
+                                                       "99/99/9999") +
+                                                "</dtvencto><dtdpagto>" +
+                                               (IF  tt-consulta-blt.dtdpagto = ? 
+                                                THEN 
+                                                   (IF tt-consulta-blt.dtdbaixa = ?
+                                                    THEN " " ELSE
+                                                    STRING(tt-consulta-blt.dtdbaixa,
+                                                              "99/99/9999"))
+                                                ELSE 
+                                                    STRING(tt-consulta-blt.dtdpagto,
+                                                           "99/99/9999")) +
+                                                "</dtdpagto><vltitulo>" +
+                                                TRIM(STRING(tt-consulta-blt.vltitulo,
+                                                            "zzzzzzzzz9.99")) +
+                                                "</vltitulo><vldpagto>" + 
+                                                TRIM(STRING(tt-consulta-blt.vldpagto,
+                                                            "zzzzzzzzz9.99")) +
+                                                "</vldpagto><cdbanpag>" +
+                                                STRING(tt-consulta-blt.cdbanpag) +
+                                                "</cdbanpag><cdagepag>" + 
+                                                STRING(tt-consulta-blt.cdagepag) +
+                                                "</cdagepag><cdsituac>" +
+                                                tt-consulta-blt.cdsituac +
+                                                "</cdsituac><dssituac>" + 
+                                                tt-consulta-blt.dssituac + tt-consulta-blt.flgdesco +
+                                                "</dssituac><flgdesco>" +
+                                                tt-consulta-blt.flgdesco +
+                                                "</flgdesco><dtelimin>" +
+                                               (IF  tt-consulta-blt.dtelimin = ? 
+                                                THEN
+                                                    " "
+                                                ELSE
+                                                    STRING(tt-consulta-blt.dtelimin,
+                                                           "99/99/9999")) +
+                                                "</dtelimin><dsdoccop>" +
+                                                tt-consulta-blt.dsdoccop +
+                                                "</dsdoccop><nrborder>" +
+                                                STRING(tt-consulta-blt.nrborder) +
+                                                "</nrborder><nrctrlim>" +
+                                                STRING(tt-consulta-blt.nrctrlim) +
+                                                "</nrctrlim><dsemitnt>" +
+                                                tt-consulta-blt.dsemitnt + 
+                                                "</dsemitnt><dtdocmto>" +
+                                                 STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +                                               
+                                                "</dtdocmto></boleto>".            
+                    END.
                 ELSE
                 IF  par_idrelato = 3  THEN
                     xml_operacao.dslinxml = "<boleto><nossonro>" +
