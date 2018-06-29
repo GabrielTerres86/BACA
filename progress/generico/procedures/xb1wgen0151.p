@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0151.p
      Autor   : Gabriel Capoia
-     Data    : 26/01/2013                    Ultima atualizacao: 07/08/2017
+     Data    : 26/01/2013                    Ultima atualizacao: 14/05/2018
 
      Objetivo  : BO de Comunicacao XML x BO - Tela CTASAL
 
@@ -16,6 +16,10 @@
 						
 			     07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
 							  inclusao, conforme solicitado no chamado 689996. (Kelvin)
+                
+           14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+                              Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
+                              
 ............................................................................*/
 
 
@@ -44,6 +48,7 @@ DEF VAR aux_cdagetrf  AS INTE                                        NO-UNDO.
 DEF VAR aux_nrctatrf  AS DECI                                        NO-UNDO.
 DEF VAR aux_nrcpfcgc  AS DECI                                        NO-UNDO.
 DEF VAR aux_flgsolic  AS LOGI                                        NO-UNDO.
+DEF VAR aux_tpctatrf  AS INTE                                        NO-UNDO.
 
 DEF VAR aux_nmdcampo  AS CHAR                                        NO-UNDO.
 DEF VAR aux_msgconfi  AS CHAR                                        NO-UNDO.
@@ -87,6 +92,7 @@ DEF VAR aux_nrdconrt  AS INTE                                        NO-UNDO.
              WHEN "cdagetrf"  THEN aux_cdagetrf = INTE(tt-param.valorCampo).
              WHEN "nrctatrf"  THEN aux_nrctatrf = DECI(tt-param.valorCampo).
              WHEN "nrcpfcgc"  THEN aux_nrcpfcgc = DECI(tt-param.valorCampo).
+             WHEN "tpctatrf"  THEN aux_tpctatrf = INTE(tt-param.valorCampo).
              WHEN "flgsolic"  THEN aux_flgsolic = IF   tt-param.valorCampo = "YES" THEN
                                                        TRUE
                                                   ELSE FALSE.
@@ -173,6 +179,7 @@ PROCEDURE Valida_Dados:
                     INPUT aux_nrctatrf,
                     INPUT aux_nrdigtrf,
                     INPUT aux_nrcpfcgc,
+                    INPUT aux_tpctatrf,
                    OUTPUT aux_nmdcampo, 
                    OUTPUT TABLE tt-erro).
     
@@ -220,6 +227,7 @@ PROCEDURE Grava_Dados:
                     INPUT aux_nrdigtrf,
                     INPUT aux_nrctatrf,
                     INPUT aux_nrcpfcgc,
+                    INPUT aux_tpctatrf,
                     INPUT TRUE, /* flgerlog */
                    OUTPUT aux_nmdcampo,
                    OUTPUT aux_dtcantrf,
@@ -274,6 +282,7 @@ PROCEDURE Gera_Impressao:
                        INPUT aux_cdbantrf,
                        INPUT aux_cdagetrf,
                        INPUT aux_flgsolic,
+                       INPUT aux_tpctatrf,
                        INPUT aux_dsiduser,
                        INPUT TRUE, /* flgerlog */
                       OUTPUT aux_nmarqimp,

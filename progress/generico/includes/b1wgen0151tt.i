@@ -2,13 +2,15 @@
 
     Programa: sistema/generico/includes/b1wgen0151tt.i
     Autor(a): Gabriel Capoia (DB1)
-    Data    : 07/02/2013                      Ultima atualizacao:
+    Data    : 07/02/2013                      Ultima atualizacao: 14/05/2018
   
     Dados referentes ao programa:
   
     Objetivo  : Include com Temp-Tables para a BO b1wgen0151.
   
-    Alteracoes: 
+    Alteracoes: 14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+                             Projeto 479-Catalogo de Servicos SPB
+                             (Mateus Z - Mouts)
     
 .............................................................................*/ 
 
@@ -28,4 +30,5 @@ DEF TEMP-TABLE tt-crapccs NO-UNDO
     FIELD nmresemp LIKE crapemp.nmresemp
     FIELD dsbantrf LIKE crapban.nmresbcc
     FIELD nrdconta LIKE crapccs.nrdconta
+    FIELD tpctatrf LIKE crapccs.tpctatrf
     FIELD dsagetrf AS CHAR.

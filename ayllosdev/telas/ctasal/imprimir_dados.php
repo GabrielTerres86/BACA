@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 11/01/2013
  * OBJETIVO     : Carregar dados para impressões da CTASAL	
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+ *                              Projeto 479-Catalogo de Servicos SPB
+ *                              (Mateus Z - Mouts)
  * -------------- 
  */ 
 ?>
@@ -39,7 +41,8 @@
 		!isset($_POST['cdempres']) ||
 		!isset($_POST['cdbantrf']) ||
 		!isset($_POST['cdagetrf']) ||
-		!isset($_POST['flgsolic'])) {
+		!isset($_POST['flgsolic']) ||
+		!isset($_POST['tpctatrf'])) {
 		?><script language="javascript">alert('Par&acirc;metros incorretos.');</script><?php
 		exit();
 	}
@@ -53,6 +56,7 @@
 	$cdbantrf = $_POST['cdbantrf'];
 	$cdagetrf = $_POST['cdagetrf'];
 	$flgsolic = $_POST['flgsolic'];	
+	$tpctatrf = $_POST['tpctatrf'];	
 	$dsiduser 	= session_id();	
 	
 	$nrdconta = str_replace($aux,"",$nrdconta);
@@ -79,6 +83,7 @@
 	$xml .= '		<cdbantrf>'.$cdbantrf.'</cdbantrf>';
 	$xml .= '		<cdagetrf>'.$cdagetrf.'</cdagetrf>';
 	$xml .= '		<flgsolic>'.$flgsolic.'</flgsolic>';	
+	$xml .= '		<tpctatrf>'.$tpctatrf.'</tpctatrf>';	
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 
