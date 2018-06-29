@@ -431,7 +431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 27/04/2018
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 27/06/2018
   --
   --  Dados referentes ao programa:
   --
@@ -451,8 +451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				  
       03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
 				  
-	  27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
-				              
+	    27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
+
+      27/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
+                   da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)				              
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 

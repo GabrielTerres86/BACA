@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     Sistema  : Procedimentos envolvendo desconto titulos
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Julho/2013.                   Ultima atualizacao: 16/02/2018
+    Data     : Julho/2013.                   Ultima atualizacao: 27/06/2018
   
    Dados referentes ao programa:
   
@@ -232,6 +232,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
 			                quando chamado pelo CRPS538. (Mário- AMcom)
     
+                27/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
+                             da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)				              
+
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
