@@ -5,7 +5,8 @@
  * DATA CRIACAO : 19/07/2017
  * OBJETIVO     : Tabela que apresenta as parcelas para antecipar o pagamento
 
-   ALTERACOES   : 
+   ALTERACOES   : 21/05/2018 - Ajuste para calcular a antecipacao parcial da parcela
+   
  */
 ?>
 <div id="divVlPagar "align="right">
@@ -59,7 +60,8 @@
 						<td><? echo number_format(str_replace(",",".",$vliofcpl),2,",","."); ?></td>
 						<td id="vldespar_<? echo $nrparepr; ?>">0,00</td>
 						<td><? echo $vlatupar; ?></td>
-						<td style="width:70px;"><input type="text" id="vlpagpar_<? echo $nrparepr; ?>" name="vlpagpar[]" size="10" value="0,00" />
+						<td style="width:70px;"><input type="text" id="vlpagpar_<? echo $nrparepr; ?>" name="vlpagpar[]" size="10" onblur="verificaDescontoPos( $(this) ,<?= $insitpar ?>, <?= $nrparepr; ?>); return false;" value = "<?= number_format(0); ?>" >
+						
 						<td style="width:10px;"><input type="image" id="btDesconto" src="<?php echo $UrlImagens; ?>geral/refresh.png" onClick="descontoPos('<? echo $nrparepr ?>','<? echo $vldescto; ?>'); return false;" /></td>
 
 						<input type="hidden" id="vlmtapar_<? echo $nrparepr; ?>" name="vlmtapar[]" value="<? echo $vlmtapar; ?>">
