@@ -1959,6 +1959,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --               08/12/2015 - Ajustado query da craplcm para melhor performace SD358495 (Odirlei-AMcom)
     --
     --               16/04/2018 - PJ 416 - Considerar o saldo do bloqueio que está sendo monitorado
+    --
+    --               29/06/2018 - Inserido tratamento para erros genéricos. Em casos onde o sistema 
+    --                            entrava neste excessão, era retornado o valor 'NOK' sem dados na 
+    --                            tabela de memoria de erro para a RECP0002. Isto resultava na 
+    --                            apresentação da crítica 983 para o usuário.
+    --                            Chamado SCTASK0015964 - Gabriel (Mouts).
+    --
     DECLARE
       -- Descrição e código da critica
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2373,6 +2380,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       WHEN OTHERS THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
+
+        /* Tratamento de Exception - Chamado: SCTASK0015964 */
+
+        IF SQLCODE < 0 THEN
+          -- Caso ocorra exception gerar o código do erro com a linha do erro
+          vr_dscritic:= vr_dscritic ||
+          dbms_utility.format_error_backtrace;               
+        END IF;  
+
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na EXTR0001.pc_obtem_saldo_dia --> ' ||
+        vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
+                       
+        -- Remover as ASPAS que quebram o texto
+        vr_dscritic:= replace(vr_dscritic,'"', '');
+        vr_dscritic:= replace(vr_dscritic,'''','');
+        -- Remover as quebras de linha
+        vr_dscritic:= replace(vr_dscritic,chr(10),'');
+        vr_dscritic:= replace(vr_dscritic,chr(13),'');
+
+        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => 0
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+
+
     END;
   END pc_obtem_saldo_dia;
 
