@@ -204,13 +204,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
        AND   ris.dtrefere =  pr_dtrefere
        AND   ris.vldivida > pr_valor_arrasto; -- Materialidade
        
-     -- Cursor para buscar email(s) para envio do arquivo de contingência de prejuízo
-     CURSOR cr_crapprm IS
-     SELECT c.dsvlrprm
-       FROM crapprm c
-      WHERE c.cdacesso = 'PREJ0003_EMAILS_PREJU';
-     rw_crapprm cr_crapprm%ROWTYPE;
-
      vr_cdcritic  NUMBER(3);
      vr_dscritic  VARCHAR2(1000);
      vr_des_erro  VARCHAR2(1000);
@@ -483,27 +476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
         
     END LOOP;    
     
-    -- Pega lista de e-mails para mandar e-mail com anexo do arquivo que contém as 
-    -- contas não transferidas para prejuízo
-    OPEN cr_crapprm;
-    FETCH cr_crapprm
-    INTO rw_crapprm;
-    
-    -- Se não encontrar
-    IF cr_crapprm%NOTFOUND THEN
-       -- Fechar o cursor
-       CLOSE cr_crapprm;
-       --Montar mensagem erro
-       vr_cdcritic:= 0;
-       vr_dscritic:= 'Nao foi possivel encontrar a lista de '
-                   ||'emails para envio de contigencia de transferencia de prejuizo.';
-       --Levantar Excecao
-       RAISE vr_exc_saida;
-    ELSE
-       CLOSE cr_crapprm;
-       vr_mailprej := rw_crapprm.dsvlrprm;
-    END IF;
-    
+    vr_mailprej := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => pr_cdcooper, pr_cdacesso => 'PREJ0003_EMAILS_PREJU' );
+ 
     pc_escreve_clob(vr_clobarq,chr(13),true);
         
     -- Submeter a geração do arquivo txt puro
