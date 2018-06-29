@@ -1,12 +1,13 @@
 <? 
 /*!
- * FONTE        : manter_rotina.php
- * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 11/01/2013
- * OBJETIVO     : Rotina para manter as operações da tela MANCCF
- * --------------
- * ALTERAÇÕES   :  
- * -------------- 
+   FONTE        : manter_rotina.php
+   CRIAÇÃO      : Gabriel Capoia (DB1)
+   DATA CRIAÇÃO : 11/01/2013
+   OBJETIVO     : Rotina para manter as operações da tela MANCCF
+   --------------
+   ALTERAÇÕES   : 07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+ 						       inclusao, conforme solicitado no chamado 689996. (Kelvin)
+   -------------- 
  */
 ?> 
 
@@ -89,6 +90,8 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
 	}
 	
+	$nrdconrt = $xmlObjeto->roottag->tags[0]->attributes['NRDCONRT'];
+	
 	// Busca os dados do contrato e os avalista
 	if ( $operacao == 'valida' ) {
 		
@@ -97,7 +100,12 @@
 	
 	}else{
 		if ( $cddopcao == "E" || $cddopcao == "I" || $cddopcao == "X" || $cddopcao == "S" ){
-			echo "Gera_Impressao();";
+			if ($cddopcao == "I") {
+				echo "showError('inform','Conta criada com sucesso. Conta: " . $nrdconrt . "','Alerta - Ayllos','');";
+				echo "Gera_Impressao('" . $nrdconrt . "');";
+			}
+			else 
+				echo "Gera_Impressao();";			
 		}else{
 			echo "showError('inform','Registro salvo com sucesso','Alerta - Ayllos','');";
 		}

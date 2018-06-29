@@ -1,15 +1,28 @@
 /*!
- * FONTE        : pesqdp.js
- * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 11/01/2013
- * OBJETIVO     : Biblioteca de funções da tela PESQDP
- * --------------
- * ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
- *
- *				  23/04/2015 - Ajustando a tela CTASAL
- *                             Projeto 158 - Servico Folha de Pagto
- *                             (Andre Santos - SUPERO)
- * --------------
+   FONTE        : pesqdp.js
+   CRIAÇÃO      : Gabriel Capoia (DB1)
+   DATA CRIAÇÃO : 11/01/2013
+   OBJETIVO     : Biblioteca de funções da tela PESQDP
+   --------------
+   ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
+   --------------
+  				  23/04/2015 - Ajustando a tela CTASAL
+                               Projeto 158 - Servico Folha de Pagto
+                               (Andre Santos - SUPERO)
+  
+                  23/02/2016 - Inclusao da function retirarAcentuacao para
+                               validacao do nome dos funcionario (Jean Michel).
+  
+  				  27/07/2016 - Adicionar funcao validaDados() para validar se nome do funcionario esta em branco ou nao (Lucas Ranghetti #457281)
+				  
+				  07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+							   inclusao, conforme solicitado no chamado 689996. (Kelvin)
+  
+				  08/02/2018 - Ajuste para caracteres especiais não gerarem problemas. (SD 845660 - Kelvin).		
+					
+				  05/04/2018 - Ajuste na tela ctasal para que caso o operador tente inserir o nome do funcionario
+							   com apenas um caractere especial, não permita cadastrar. (SD 866541 - Kelvin)
+  
  */
 
  var nometela;
@@ -33,7 +46,7 @@ $(document).ready(function() {
 	divTabela		= $('#divTabela');
 	estadoInicial();
 	nrregist = 20;
-
+    
 	return false;
 
 });
@@ -107,6 +120,17 @@ function formataCabecalho() {
 		}
 	});
 
+	
+	cCddopcao.unbind('change').bind('change', function(){
+		if(cCddopcao.val() == "I"){			
+		  	cNrdconta.desabilitaCampo();			
+			cNrdconta.val("");
+		}else{
+			cNrdconta.val("");
+			cNrdconta.habilitaCampo();			
+		}		
+	});
+	
 	highlightObjFocus( $('#frmCab') );
 
 	layoutPadrao();
@@ -201,12 +225,19 @@ function controlaLayout() {
 }
 
 // imprimir
-function Gera_Impressao() {
+function Gera_Impressao(nrdconrt) {
 
 	var action = UrlSite + 'telas/ctasal/imprimir_dados.php';
 	var sidlogin = $("#sidlogin", "#frmMenu").val();
+	var nrdconta;
+
+	if (cCddopcao.val() == 'I') 
+		 nrdconta = nrdconrt;
+	else 
+		nrdconta = cNrdconta.val();
+		
 	
-	$('#frmDados').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + cNrdconta.val() + '" />')
+	$('#frmDados').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />')
 				  .append('<input type="hidden" id="flgsolic" name="flgsolic" value="' + controlaFlag() + '" />')
 				  .append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + sidlogin + '" />');
 
@@ -424,7 +455,7 @@ function manterRotina( operacao ) {
 				cddopcao	: cddopcao,
 				cdagenca	: cdagenca,
 				cdempres    : cdempres,
-				nmfuncio    : nmfuncio,
+				nmfuncio    : removeCaracteresInvalidos(nmfuncio),
 				cdagetrf    : cdagetrf,
 				cdbantrf    : cdbantrf,
 				nrdigtrf    : nrdigtrf,
@@ -722,4 +753,21 @@ function selecionaAvalista() {
 	fechaRotina( $('#divRotina') );
 	buscaDados();
 	return false;
+}
+
+function retirarAcentuacao(str) {    
+    str = removeAcentos(str);
+    $('#nmfuncio', '#frmDados').val(str);
+}
+
+function validaDados(){
+	
+	nmfuncio = $.trim($('#nmfuncio','#frmDados').val());	
+	nmfuncio = retiraCaracteres(nmfuncio,'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ',true);
+	
+	$('#nmfuncio', '#frmDados').val(nmfuncio);
+	
+	if (nmfuncio == '') {
+		showError('error','Informe o Titular.','Alerta - Ayllos','focaCampoErro(\'nmfuncio\',\'frmDados\');'); 		
+	}	
 }

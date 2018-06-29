@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 20/04/2016
+    Data    : 07/02/2013                     Ultima atualizacao: 07/08/2017
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -41,6 +41,24 @@
         20/04/2016 - Alterada a Valida_Conta_Salario para validar diretamente
                      no Oracle(pc_valida_lancto_folha) quando for banco 085
                      (Guilherme/SUPERO)
+
+		29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
+		             do campo rel_nrctatrf, pois nao estava imprimindo o 
+					 dv do numero da conta. (Chamado 499004) - (Fabricio)
+
+		13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
+ 					 esta estourando o format pois deixa digitar 
+					 maior que INTE na tela (Tiago/Thiago 581315).
+        
+        25/04/2017 - Adicionar conta na menssage da verificacao da conta salario
+                     para mais de um cpf (Lucas Ranghetti #654576)
+                     
+        04/08/2017 - Alterado rotina grava-dados para gerar numero de conta 
+                     automaticamente da mesma forma que a matrci faz 
+                     (Tiago/Thiago #689996)
+					 
+		07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+				     inclusao, conforme solicitado no chamado 689996. (Kelvin)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -105,6 +123,8 @@ PROCEDURE Busca_Dados:
         EMPTY TEMP-TABLE tt-crapccs.
         EMPTY TEMP-TABLE tt-erro.
 
+        IF  par_cddopcao <> "I" THEN
+            DO:
         /* Validar o digito da conta */
         IF  NOT ValidaDigFun ( INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -115,8 +135,7 @@ PROCEDURE Busca_Dados:
                        aux_dscritic = "".
                 LEAVE Busca.
             END.
-
-
+            END.
 
         FIND crapccs WHERE crapccs.cdcooper = par_cdcooper AND
                            crapccs.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
@@ -275,7 +294,7 @@ PROCEDURE Valida_Conta_Salario:
     DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctatrf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     
@@ -445,7 +464,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctatrf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
 
@@ -562,7 +581,8 @@ PROCEDURE Valida_Dados:
                 IF  AVAIL crapccs THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "Este CPF ja possui uma conta salario."
+                               aux_dscritic = "Este CPF ja esta associado a conta salario " +
+                                              STRING(crapccs.nrdconta,"zzzz,zzz,z").
                                par_nmdcampo = "nrcpfcgc".
                         LEAVE Valida.
                     END.
@@ -713,7 +733,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctatrf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
@@ -721,10 +741,12 @@ PROCEDURE Grava_Dados:
     DEF OUTPUT PARAM aux_dtcantrf AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM aux_dtadmiss AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM aux_cdsitcta AS CHAR                           NO-UNDO.
+	DEF OUTPUT PARAM aux_nrdconrt LIKE crapass.nrdconta 			NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
+    DEF VAR h-b1wgen0052 AS HANDLE                                  NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     
@@ -743,6 +765,22 @@ PROCEDURE Grava_Dados:
 
         IF  par_cddopcao = "I" THEN DO:
 
+            RUN sistema/generico/procedures/b1wgen0052.p PERSISTENT SET h-b1wgen0052.
+             
+            RUN Retorna_Conta IN h-b1wgen0052 (INPUT par_cdcooper,
+                                               INPUT par_idorigem,
+                                              OUTPUT aux_nrdconrt).
+                   
+            DELETE PROCEDURE h-b1wgen0052.
+              
+            IF  aux_nrdconrt <= 0  THEN
+                DO:
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Nao foi possivel gerar numero de conta".
+                          
+                  LEAVE Grava.
+                END.
+
             CREATE crapccs.
             ASSIGN crapccs.cdagenci = par_cdagenca
                    crapccs.cdempres = par_cdempres
@@ -752,7 +790,7 @@ PROCEDURE Grava_Dados:
                    crapccs.cdopeadm = par_cdoperad
                    crapccs.cdopecan = ""
                    crapccs.nrdigtrf = par_nrdigtrf
-                   crapccs.nrdconta = par_nrdconta
+                   crapccs.nrdconta = aux_nrdconrt
                    crapccs.nrctatrf = par_nrctatrf
                    crapccs.nrcpfcgc = par_nrcpfcgc
                    crapccs.nmfuncio = par_nmfuncio
@@ -940,7 +978,7 @@ PROCEDURE Gera_Impressao:
          "Agencia "         
          crapccs.cdagetrf   FORMAT "z,zz9"
          ", Conta-Corrente no"
-         rel_nrctatrf       FORMAT "x(18)"
+         rel_nrctatrf       FORMAT "x(20)"
          "da qual sou titular." 
          SKIP(3)
          WITH COLUMN 3 NO-BOX NO-LABELS SIDE-LABELS WIDTH 80 FRAME f_solicitacao.    
@@ -969,8 +1007,8 @@ PROCEDURE Gera_Impressao:
          ",  Agencia" crapccs.cdagetrf   FORMAT "z,zz9"
          "," 
          "Conta-Corrente" 
-         rel_nrctatrf       FORMAT "x(18)"
-         ", tambem de minha  titularidade,  quando  do"
+         rel_nrctatrf       FORMAT "x(20)"
+         ", tambem de minha  titularidade, quando do"
          SKIP
          "credito das verbas salariais pela Empresa " 
          rel_nmextemp       FORMAT "x(35)"
@@ -1067,10 +1105,10 @@ PROCEDURE Gera_Impressao:
                  ASSIGN aux_cdcritic = 15
                         aux_dscritic = "".
              END.
-
+		 
          ASSIGN aux_dsmesref = "JANEIRO,FEVEREIRO,MARCO,ABRIL,MAIO,JUNHO," +
                         "JULHO,AGOSTO,SETEMBRO,OUTUBRO,NOVEMBRO,DEZEMBRO"
-
+				
                 rel_nrcpfcgc = STRING(STRING(crapccs.nrcpfcgc,
                                                 "99999999999"),"999.999.999-99")
                 rel_nrctatrf = STRING(crapccs.nrctatrf,"zz,zzz,zzz,zzz,9") 
