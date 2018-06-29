@@ -449,6 +449,12 @@ DEFINE VARIABLE aux_dsmsgsms AS CHAR                        NO-UNDO.
 DEFINE VARIABLE aux_cdctrlcs AS CHAR                        NO-UNDO.
 DEFINE VARIABLE aux_flgsitrc AS INTEGER                     NO-UNDO.
 
+/* TOKEN  para validar autenticidade da senha */
+DEFINE VARIABLE aux_token    AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_idtaanew AS INTE INIT 0                 NO-UNDO.
+DEFINE VARIABLE aux_idopeexe AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_tpintera AS CHAR                        NO-UNDO.
+
 /* para exclusao de agendamentos */
 DEFINE VARIABLE aux_dtmvtopg AS DATE                        NO-UNDO.
 
@@ -636,6 +642,9 @@ DO:
         xField:GET-CHILD(xText,1).
 
         /* Validacao dos parametros de configuracao */
+        IF  xField:NAME = "OPERACAO"   THEN
+            aux_operacao = INT(xText:NODE-VALUE).
+        ELSE
         IF   xField:NAME = "CDCOPTFN"   THEN
              DO:
                  FIND crapcop WHERE crapcop.cdcooper = INT(xText:NODE-VALUE) NO-LOCK NO-ERROR.
@@ -659,10 +668,10 @@ DO:
                  NEXT.
              END.
 
-        IF   NOT AVAIL crapcop   OR
+        IF   (NOT AVAIL crapcop   OR
              NOT AVAIL crapdat   OR
              NOT AVAIL crapage   OR
-             NOT AVAIL craptfn   THEN
+             NOT AVAIL craptfn) AND aux_operacao <> 200   THEN
              DO:
                  aux_dscritic = "Parâmetros Inválidos.".
                  LEAVE REQUISICAO.
@@ -1038,7 +1047,20 @@ DO:
         ELSE
         IF   xField:NAME = "LSDATAGD" THEN
              aux_lsdatagd = xText:NODE-VALUE.
-
+        ELSE
+        /* Projeto 363 - Novo ATM - Inicio */
+        IF   xField:NAME = "TOKEN" THEN
+             aux_token = xText:NODE-VALUE.
+        ELSE
+        IF   xField:NAME = "IDTAANEW" THEN
+             aux_idtaanew = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "IDOPEEXE" THEN
+             aux_idopeexe = xText:NODE-VALUE.
+        ELSE
+        IF   xField:NAME = "TPINTERA" THEN
+             aux_tpintera = xText:NODE-VALUE.
+        /* Projeto 363 - Novo ATM - Fim */
     END.
 
     IF   aux_operacao = 0   THEN
@@ -1119,7 +1141,7 @@ DO:
                       NEXT.
              END.
         ELSE
-        IF   aux_operacao = 2  THEN
+        IF   aux_operacao = 2 OR aux_operacao = 200 THEN
              DO:
                  RUN valida_senha.
 
@@ -2049,6 +2071,15 @@ END PROCEDURE.
 
 PROCEDURE valida_senha:
 
+    DEF VAR aux_token AS CHAR NO-UNDO.
+
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_idtaanew = 1 THEN
+    DO:
+        /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
+        ASSIGN aux_dssencar = ENCODE(aux_dssencar).
+    END.
+
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
     RUN valida_senha IN h-b1wgen0025( INPUT aux_cdcooper, 
@@ -2064,7 +2095,54 @@ PROCEDURE valida_senha:
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
 
+    /* 
+      Se nao ocorreu erro na validacao de senha devera se criado um TOKEN
+      esse TOKEN sera validado em outras rotinas TA para garantir que a senha eh valida
+    */ 
+    
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_idtaanew = 1 THEN
+    DO:
+        /* Somente o sistema novo terá a geracao do TOKEN */
+        
+        /* 
+          Foram criados os seguintes parametros para na mensageria, que serao enviados gravados nessa nova tabela
+          aux_idopeexe -> ID da Operacao que está sendo executado (Ex: "IB027","TA037","IB181")
+          aux_tpintera -> Tipo de Interacao (O IB181 , além de outros, que possuim mais de uma operacao mas sempre sao chamados pelo mesmo codigo)
+        */
+        
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+         RUN STORED-PROCEDURE pc_cria_autenticacao_cartao
+         aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT aux_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT aux_nrdconta  /* pr_nrdconta --> Número da Conta do associado */
+                   ,INPUT STRING(aux_nrcartao)  /* pr_nrcartao --> Número do cartao do associado */
+                   ,INPUT aux_idopeexe  /* pr_cdoperacao  --> ID da Operaçao que está sendo executado (Ex: "IB027","TA037","IB181") */
+                   ,INPUT aux_tpintera  /* pr_tpinteracao --> Tipo de Interaçao (O IB181 , além de outros, que possuim mais de uma operacao mas sempre sao chamados pelo mesmo codigo) */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_token    --> Token gerado na transaçao */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                   
+         /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_cria_autenticacao_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+                            
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+        ASSIGN aux_token = pc_cria_autenticacao_cartao.pr_token
+                      WHEN pc_cria_autenticacao_cartao.pr_token <> ?.
+        ASSIGN aux_dscritic = pc_cria_autenticacao_cartao.pr_dscritic
+                      WHEN pc_cria_autenticacao_cartao.pr_dscritic <> ?.  
 
+        IF  aux_dscritic <> "" THEN
+            DO:
+               RETURN "NOK".
+            END.        
+       
+    END.
 
     /* ---------- */
     xDoc:CREATE-NODE(xField,"SENHA","ELEMENT").
@@ -2073,6 +2151,14 @@ PROCEDURE valida_senha:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = "OK".
     xField:APPEND-CHILD(xText).
+
+    /* Devolver o TOKEN que geramos */
+    xDoc:CREATE-NODE(xField,"TOKEN","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = aux_token.
+    xField:APPEND-CHILD(xText). 
 
     RETURN "OK".
 END PROCEDURE.
