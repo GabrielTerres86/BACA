@@ -1145,12 +1145,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     ROLLBACK;
     
     -- Coloca o registro da solicitacao como processado com Erro
-    IF pr_idatualiza_ordem = 1 THEN
-    pc_atualiza_situacao(pr_idordem => pr_idordem,
-                         pr_instatus => 4, -- Erro
-                         pr_dslog_erro => pr_dsinconsit);
+	IF pr_idatualiza_ordem = 1 THEN
+      pc_atualiza_situacao(pr_idordem => pr_idordem,
+                           pr_instatus => 4, -- Erro
+                           pr_dslog_erro => pr_dsinconsit);
     END IF;
-      
+
     -- Insere na inconsistencia
     gene0005.pc_gera_inconsistencia(pr_cdcooper => pr_cdcooper
                                    ,pr_iddgrupo => 1 -- Inconsistencia Bloqueio Judicial
@@ -1543,6 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- CURSORES
     -- Busca os dados da cooperativa selecionada
     CURSOR cr_crapcop(pr_nrdocnpj crapcop.nrdocnpj%TYPE) IS
+      SELECT cdcooper
       SELECT cdcooper,
              nmrescop
         FROM crapcop
@@ -1890,6 +1891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           IF (vr_cdmodali = 2 AND vr_tab_cooperado(vr_ind).vlsldapl = 0) OR -- Aplicacao
              (vr_cdmodali = 3 AND vr_tab_cooperado(vr_ind).vlsldppr = 0) THEN -- Poupanca
               continue;
+            END IF;
           END IF;
 
           -- Fim Pj 416
@@ -2247,7 +2249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- PJ 416 -- Se não foi possível bloquear o valor original para modalidade 1 - Conta Corrente
       -- Grava a tabela de monitoramento
       IF rw_solicitacao.cdmodali = 1 AND rw_solicitacao.vlordem <  vr_vlbloque_ori THEN
-
+      
       -- Buscar o último progress_recid da tabela de lançamento para gravar na tabela de monitoramento
       -- Isto é necessário pois quando a rotina de bloqueio busca o valor do saldo total
       -- ela utiliza além do valor disponível, os valores de créditos e débitos existentes na tabela de lançamento
@@ -2635,7 +2637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              tbblqj_ordem_online a
        WHERE a.instatus  = 5 -- Processada, porem sem TED gerada
          AND b.idordem   = a.idordem;
-    
+
     CURSOR cr_ted_reenvio IS
       SELECT c.rowid,
              a.cdcooper,
@@ -3437,42 +3439,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Busca as ordens no monitoramento
     CURSOR cr_monitoramento IS
       SELECT
-            a.nrdconta,
-            a.cdagenci,
-            a.cdmodali, 
-            c.dsoficio, 
-            a.dsprocesso, 
-            a.nmjuiz,
-            b.tpordem,
-            b.cdcooper,
-            c.idordem,
-            c.vlsaldo VLORDEM,
-            c.idprogres_recid PROGRESS_RECID_MON,
-            a.vlordem VLORDEMORI,
-            c.vlbloqueado,
-            d.nmprimtl,
-            e.nmrescop,
-            c.nrcpfcnpj
+            A.NRDCONTA,
+            A.CDAGENCI,
+            A.CDMODALI, 
+            C.DSOFICIO, 
+            A.DSPROCESSO, 
+            A.NMJUIZ,
+            B.TPORDEM,
+            B.CDCOOPER,
+            C.IDORDEM,
+            C.VLSALDO VLORDEM,
+            C.IDPROGRES_RECID PROGRESS_RECID_MON,
+            A.VLORDEM VLORDEMORI,
+            C.VLBLOQUEADO,
+            D.NMPRIMTL,
+            E.NMRESCOP,
+            C.NRCPFCNPJ
        FROM 
-            tbblqj_monitora_ordem_bloq c,
-            tbblqj_ordem_bloq_desbloq  a,
-            tbblqj_ordem_online        b,
-            crapass                    d,
-            crapcop                    e
+            TBBLQJ_MONITORA_ORDEM_BLOQ C,
+            TBBLQJ_ORDEM_BLOQ_DESBLOQ  A,
+            TBBLQJ_ORDEM_ONLINE        B,
+            CRAPASS                    D,
+            CRAPCOP                    E
       WHERE
-            a.idordem  = B.idordem
-        AND c.idordem  = B.idordem
-        AND a.cdmodali = 1 -- Depósito a Vista - Conta Corrente
-        AND a.idordem  = B.idordem
-        AND d.cdcooper = B.cdcooper
-        AND d.nrdconta = A.nrdconta
-        AND e.cdcooper = B.cdcooper
+            A.IDORDEM  = B.IDORDEM
+        AND C.IDORDEM  = B.IDORDEM
+        AND A.CDMODALI = 1 -- Depósito a Vista - Conta Corrente
+        AND A.IDORDEM  = B.IDORDEM
+        AND D.CDCOOPER = B.CDCOOPER
+        AND D.NRDCONTA = A.NRDCONTA
+        AND E.CDCOOPER = B.CDCOOPER
    ORDER BY
-            c.nrcpfcnpj,
-            c.dsoficio,
-            b.cdcooper,            
-            c.nrdconta,
-            c.idordem;
+            C.NRCPFCNPJ,
+            C.DSOFICIO,
+            B.CDCOOPER,            
+            C.NRDCONTA,
+            C.IDORDEM;
 
   -- Busca de lançamentos na data 
     CURSOR cr_lancamento(pr_cdcooper        IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
@@ -3552,47 +3554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             TBBLQJ_MONITORA_ORDEM_BLOQ C
       WHERE
             C.VLSALDO = 0;
-
-    CURSOR conta_monitorada is
-      SELECT
-            'Cooperativa: '||c.nmrescop||
-            ' Conta: '||t2.nrdconta||
-            ' CPF/CNPJ: '||t.nrcpfcnpj||
-            ' Ofício: '||t2.dsoficio||                        
-            ' Valor Monitorado: '||to_char(t2.vl_diferenca_bloqueio,'99,999,990.00')||
-            ' Valor Bloqueado: '||to_char(nvl(t2.vloperacao,0),'99,999,990.00') Conta,
-            c.cdcooper,
-            t2.nrdconta
-      FROM 
-            tbblqj_ordem_online t,
-            tbblqj_ordem_bloq_desbloq t2,
-            crapcop c
-      WHERE 
-            trunc(t.dhrequisicao)           = trunc(sysdate)
-        AND t.tpordem                       = 2 -- Bloqueio
-        AND c.cdcooper                      = t.cdcooper
-        AND t2.idordem                      = t.idordem
-        AND nvl(t2.vl_diferenca_bloqueio,0) <> 0 
-      ORDER BY 
-           t.cdcooper,t.nrcpfcnpj  ;
-     
-    CURSOR lancamentos_conta(pr_cdcooper in crapcop.cdcooper%type,
-                             pr_nrdconta in crapass.nrdconta%type,
-                             pr_dtmvtolt in crapdat.dtmvtolt%type) is
-      SELECT
-           distinct(lpad(ch.cdhistor,4,' ')||' - '||ch.dshistor) lancamento,
-           ch.cdhistor
-      FROM
-            craplcm cl,
-            craphis ch
-      WHERE 
-            ch.cdcooper = cl.cdcooper
-        AND ch.cdhistor = cl.cdhistor
-        AND cl.cdcooper = pr_cdcooper
-        AND cl.nrdconta = pr_nrdconta 
-        AND cl.dtmvtolt = pr_dtmvtolt         
-      ORDER BY 
-            ch.cdhistor;  
+    
             
     -- Registro sobre a data do sistema
     rw_crapdat                btch0001.cr_crapdat%ROWTYPE;
@@ -3603,52 +3565,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_dsinconsist            tbgen_inconsist.dsinconsist%TYPE; -- Descricao do registro que esta sendo processado    
     vr_valor_bloquear         tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; 
     vr_progress_recid_blq     craplcm.progress_recid%type;
-    vr_texto_email            varchar2(32767);
+    vr_texto_email            varchar2(4000);
     vr_email_juridico         crapprm.dsvlrprm%type:='';
     vr_hororario_encerramento number;
     vr_nrcpfcnpj              tbblqj_monitora_ordem_bloq.nrcpfcnpj%TYPE; 
     vr_dsoficio               tbblqj_monitora_ordem_bloq.dsoficio%TYPE;  
     vr_saldo                  tbblqj_monitora_ordem_bloq.vlsaldo%TYPE;     
-    vr_rw_crapdat             btch0001.cr_crapdat%ROWTYPE;    
-    vr_dsdircop               VARCHAR2(400); 
-    -- Handle para arquivo
-    vr_ind_arq                UTL_FILE.FILE_TYPE;   
-    vr_des_erro               VARCHAR2(4000);    
 
     -- Variaveis de erro
     vr_cdcritic               PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic               VARCHAR2(4000); --> descricao do erro
     vr_exc_saida              EXCEPTION; --> Excecao prevista
   BEGIN
-     -- Busca os endereços de e-mail do jurídico para envio se for necessário
-    OPEN cr_email_juridico;
-    FETCH cr_email_juridico INTO rw_email_juridico;
-    IF cr_email_juridico%NOTFOUND THEN
-      CLOSE cr_email_juridico;
-      vr_dscritic := 'E-mail do jurídico não cadastrado!';
-      RAISE vr_exc_saida;
-    ELSE
-       vr_email_juridico := rw_email_juridico.dsvlrprm;
-    END IF;
-    CLOSE cr_email_juridico;
-	    
+    
      -- Busca o horário de encerramento
-    OPEN cr_horario_encerramento;
-    FETCH cr_horario_encerramento INTO rw_horario_encerramento;
-    IF cr_horario_encerramento%NOTFOUND THEN
-      CLOSE cr_horario_encerramento;
+    OPEN CR_HORARIO_ENCERRAMENTO;
+    FETCH CR_HORARIO_ENCERRAMENTO INTO RW_HORARIO_ENCERRAMENTO;
+    IF CR_HORARIO_ENCERRAMENTO%NOTFOUND THEN
+      CLOSE CR_HORARIO_ENCERRAMENTO;
       vr_dscritic := 'Horário de encerramento do monitoramento não cadatrado!';
       RAISE vr_exc_saida;
     ELSE
-       vr_hororario_encerramento := rw_horario_encerramento.dsvlrprm;
+       vr_hororario_encerramento := RW_HORARIO_ENCERRAMENTO.dsvlrprm;
     END IF;
-    CLOSE cr_horario_encerramento;
+    CLOSE CR_HORARIO_ENCERRAMENTO;
       
    -- Verifica o horário da execução para definir se irá verificar os créditos
    -- para atender as solicitações ou se vai encerrar as solicitações
    -- monitoradas
    IF to_number(to_char(sysdate, 'HH24MI')) > vr_hororario_encerramento THEN
-     
      -- Busca os dados do monitoramento
      FOR rw_monitoramento IN cr_monitoramento LOOP
       -- Atualiza na tabela de bloqueios
@@ -3660,7 +3605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
           RAISE vr_exc_saida;
-      END;
+  END;
 
       -- Coloca o registro de solicitacao como processado com sucesso      
       pc_atualiza_situacao(pr_idordem => rw_monitoramento.idordem,
@@ -3676,53 +3621,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           RAISE vr_exc_saida;
       END;       
      END LOOP;
-     -- Salvar antes do envio do e-mail, pois se der algum erro no envio não prejudica o processo
-     COMMIT;
-     
-     -- Busca do diretório para gravação
-     vr_dsdircop := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/Coop
-                                         ,pr_cdcooper => 3 -- Vai gravar sempre no diretório da Cecred
-                                         ,pr_nmsubdir => null);
-                                         
-     -- Tenta abrir o arquivo para envio das informações
-     gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdircop    --> Diretório do arquivo
-                             ,pr_nmarquiv => 'monitoramento.txt'    --> Nome do arquivo
-                             ,pr_tipabert => 'W'            --> Modo de abertura (R,W,A)
-                             ,pr_utlfileh => vr_ind_arq     --> Handle do arquivo aberto
-                             ,pr_des_erro => vr_des_erro);
-     IF vr_des_erro IS NOT NULL THEN
-       RAISE vr_exc_saida;
-     END IF;
-     -- Envia e-mail para o jurídico com os lançamentos das contas monitoradas
-     for c1 in conta_monitorada loop
-         -- Busca a data do sistema
-       OPEN btch0001.cr_crapdat(c1.cdcooper);
-       FETCH btch0001.cr_crapdat INTO vr_rw_crapdat;
-       CLOSE btch0001.cr_crapdat;
-        
-  --     vr_texto_email:=vr_texto_email||c1.conta||'<br>';
-       gene0001.pc_escr_linha_arquivo(vr_ind_arq,c1.conta);       
-       for c2 in lancamentos_conta(c1.cdcooper,c1.nrdconta,vr_rw_crapdat.dtmvtolt) loop
-  --       vr_texto_email:=vr_texto_email||'  '||c2.lancamento||'<br>';         
-         gene0001.pc_escr_linha_arquivo(vr_ind_arq,'  '||c2.lancamento);                
-       end loop;
-       gene0001.pc_escr_linha_arquivo(vr_ind_arq,' ');              
-     end loop;
-     -- Fecha o arquivo
-     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq);     
-
-     -- Comando para enviar e-mail para o Jurídico
-     GENE0003.pc_solicita_email(pr_cdcooper        => 3 --> Cooperativa conectada
-                               ,pr_cdprogra        => 'BLQJ0002.PC_MONITORA_BLQ_JUD' --> Programa conectado
-                               ,pr_des_destino     => vr_email_juridico --> Um ou mais detinatários separados por ';' ou ','
-                               ,pr_des_assunto     => 'Relatório de lançamentos' --> Assunto do e-mail
-                               ,pr_des_corpo       => 'Informações das contas monitoradas e seus lançamentos. <br> <br>' --> Corpo (conteudo) do e-mail
-                               ,pr_des_anexo       => vr_dsdircop||'/monitoramento.txt' --> Um ou mais anexos separados por ';' ou ','
-                               ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
-                               ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                               ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                               ,pr_des_erro        => vr_dscritic);          
    ELSE 
+     -- Busca os endereços de e-mail do jurídico para envio se for necessário
+    OPEN CR_EMAIL_JURIDICO;
+    FETCH CR_EMAIL_JURIDICO INTO RW_EMAIL_JURIDICO;
+    IF CR_EMAIL_JURIDICO%NOTFOUND THEN
+      CLOSE CR_EMAIL_JURIDICO;
+      vr_dscritic := 'E-mail do jurídico não cadastrado!';
+      RAISE vr_exc_saida;
+    ELSE
+       vr_email_juridico := RW_EMAIL_JURIDICO.dsvlrprm;
+    END IF;
+    CLOSE CR_EMAIL_JURIDICO;
+    
      -- Busca os dados do monitoramento
      FOR rw_monitoramento IN cr_monitoramento LOOP
        -- Se mudou a cooperativa
@@ -3896,7 +3807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                       ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
                                       ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
                                       ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                                      ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                      ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                       ,pr_des_erro        => vr_dscritic);          
          END IF;
          
