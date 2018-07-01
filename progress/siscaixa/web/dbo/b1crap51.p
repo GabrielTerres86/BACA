@@ -143,8 +143,9 @@
                29/10/2015 - Adicionado validacao para que cheques do banco 479 sejam
                             ignorados, conforme solicitado no chamado 329206. (Kelvin)
 
-			   26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
-			                comprovantes, melhoria 112 (Tiago/Elton) 
+			         26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
+			                      comprovantes, melhoria 112 (Tiago/Elton) 
+                            ]
                20/06/2016 - Adicionado validacao para nao permitir o recebimento 
                             de cheques de bancos que nao participam da COMPE
                             (Douglas - Chamado 417655)
@@ -153,9 +154,9 @@
                             "Erro de captura. Tente novamente. INF(ENTRY) = ..."
                             (Carlos)
 
-			   18/07/2016 - Tratamento para inclusao de chave duplicada 
-			                quando realizar deposito via envolope rotina 61
-							e 51 (Tiago/Thiago).
+			         18/07/2016 - Tratamento para inclusao de chave duplicada 
+			                      quando realizar deposito via envolope rotina 61
+							              e 51 (Tiago/Thiago).
 
                27/10/2016 - Alterado validacao para nao permitir o recebimento 
                             de cheques de bancos que nao participam da COMPE
@@ -163,18 +164,21 @@
                             (Tiago - Chamado 546031)
 
                17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+			                      crapass, crapttl, crapjur 
+							              (Adriano - P339).
 
                01/06/2017 - Incluso tratativa para critica 757 apenas quando 
-			                cheque nao estiver descontado. (Daniel)	
+			                      cheque nao estiver descontado. (Daniel)	
                             
                21/06/2017 - Substituidos os históricos 3 e 4 pelo histórico 2433-DEPOSITO BLOQ. 
                             PRJ367 - Compe Sessao Unica (Lombardi)
-               
                       
                16/03/2018 - Substituida verificacao "cdtipcta entre 8 e 11" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
+                            
+               27/06/2018 - PRJ450 - Chamada da rotina para consistir lançamentos em conta 
+                            corrente (LANC0001) na tabela CRAPLCM  (Teobaldo J. - AMcom)
+                            
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -184,6 +188,7 @@
 
 { dbo/bo-erro1.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/b1wgen0200tt.i }
 
 DEF  VAR glb_nrcalcul   AS DECIMAL                        NO-UNDO.
 DEF  VAR glb_dsdctitg   AS CHAR                           NO-UNDO.
@@ -3863,6 +3868,13 @@ PROCEDURE atualiza-deposito-com-captura:
     DEF OUTPUT PARAM  p-nro-docto               AS INT  NO-UNDO.
 
     DEF VAR aux_contalot AS INTE NO-UNDO.
+
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
+
  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
     
@@ -4045,7 +4057,7 @@ PROCEDURE atualiza-deposito-com-captura:
          END.    /* Verifica Horario de Corte */
 
     ASSIGN c-docto-salvo = STRING(time).
-
+    
     /* 5 tentativas para pegar lock no craplot */
     DO aux_contalot = 1 TO 5:
     
@@ -4252,23 +4264,81 @@ PROCEDURE atualiza-deposito-com-captura:
                                RETURN "NOK".
                            END.
                       
-                      CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INTE(c-docto)
-                             craplcm.vllanmto = crapmrw.vldepdin
-                             craplcm.cdhistor = 1
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrautdoc = p-ult-sequencia
-                             craplcm.cdpesqbb = "CRAP51"
-                             craplcm.nrdctitg = glb_dsdctitg.
+                      /* BLOCO DA INSERÇAO DA CRAPLCM */
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                          PERSISTENT SET h-b1wgen0200.
+                          
+                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        ,INPUT p-cod-agencia                  /* par_cdagenci */
+                        ,INPUT 11                             /* par_cdbccxlt */
+                        ,INPUT i-nro-lote                     /* par_nrdolote */
+                        ,INPUT aux_nrdconta                   /* par_nrdconta */
+                        ,INPUT INTE(c-docto)                  /* par_nrdocmto */
+                        ,INPUT 1                              /* par_cdhistor */
+                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT crapmrw.vldepdin               /* par_vllanmto */
+                        ,INPUT p-nro-conta                    /* par_nrdctabb */
+                        ,INPUT "CRAP51"                       /* par_cdpesqbb */
+                        ,INPUT 0                              /* par_vldoipmf */
+                        ,INPUT p-ult-sequencia                /* par_nrautdoc */
+                        ,INPUT 0                              /* par_nrsequni */
+                        ,INPUT 0                              /* par_cdbanchq */
+                        ,INPUT 0                              /* par_cdcmpchq */
+                        ,INPUT 0                              /* par_cdagechq */
+                        ,INPUT 0                              /* par_nrctachq */
+                        ,INPUT 0                              /* par_nrlotchq */
+                        ,INPUT 0                              /* par_sqlotchq */
+                        ,INPUT ""                             /* par_dtrefere */
+                        ,INPUT ""                             /* par_hrtransa */
+                        ,INPUT ""                             /* par_cdoperad */
+                        ,INPUT p-identifica                   /* par_dsidenti */
+                        ,INPUT crapcop.cdcooper               /* par_cdcooper */
+                        ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+                        ,INPUT ""                             /* par_dscedent */
+                        ,INPUT 0                              /* par_cdcoptfn */
+                        ,INPUT 0                              /* par_cdagetfn */
+                        ,INPUT 0                              /* par_nrterfin */
+                        ,INPUT 0                              /* par_nrparepr */
+                        ,INPUT 0                              /* par_nrseqava */
+                        ,INPUT 0                              /* par_nraplica */
+                        ,INPUT 0                              /* par_cdorigem */
+                        ,INPUT 0                              /* par_idlautom */
+                        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                        ,INPUT 0                              /* Processa lote                                 */
+                        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                        /* CAMPOS DE SAIDA                                                                     */                                            
+                        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+                        ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                        
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO: 
+                             /* Tratamento de erros conforme anteriores */
+                             ASSIGN i-cod-erro  = 0
+                                    c-desc-erro = aux_dscritic.
+                                    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.   
+                      ELSE 
+                         DO:
+                           /* Posicionando no registro da craplcm criado acima */
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                         END.                
+                      
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
 
+                               
                       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                              craplot.qtcompln  = craplot.qtcompln + 1
                              craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -4334,23 +4404,81 @@ PROCEDURE atualiza-deposito-com-captura:
                                RETURN "NOK".
                            END.
                       
-                      CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INT(c-docto)
-                             craplcm.vllanmto = crapmrw.vlchqcop
-                             craplcm.cdhistor = 386
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrautdoc = p-ult-sequencia
-                             craplcm.cdpesqbb = "CRAP51"
-                             craplcm.nrdctitg = glb_dsdctitg.
-
+                      /* BLOCO DA INSERÇAO DA CRAPLCM */
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                          PERSISTENT SET h-b1wgen0200.
+                          
+                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        ,INPUT p-cod-agencia                  /* par_cdagenci */
+                        ,INPUT 11                             /* par_cdbccxlt */
+                        ,INPUT i-nro-lote                     /* par_nrdolote */
+                        ,INPUT aux_nrdconta                   /* par_nrdconta */
+                        ,INPUT INT(c-docto)                   /* par_nrdocmto */
+                        ,INPUT 386                            /* par_cdhistor */
+                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT crapmrw.vlchqcop               /* par_vllanmto */
+                        ,INPUT p-nro-conta                    /* par_nrdctabb */
+                        ,INPUT "CRAP51"                       /* par_cdpesqbb */
+                        ,INPUT 0                              /* par_vldoipmf */
+                        ,INPUT p-ult-sequencia                /* par_nrautdoc */
+                        ,INPUT 0                              /* par_nrsequni */
+                        ,INPUT 0                              /* par_cdbanchq */
+                        ,INPUT 0                              /* par_cdcmpchq */
+                        ,INPUT 0                              /* par_cdagechq */
+                        ,INPUT 0                              /* par_nrctachq */
+                        ,INPUT 0                              /* par_nrlotchq */
+                        ,INPUT 0                              /* par_sqlotchq */
+                        ,INPUT ""                             /* par_dtrefere */
+                        ,INPUT ""                             /* par_hrtransa */
+                        ,INPUT ""                             /* par_cdoperad */
+                        ,INPUT p-identifica                   /* par_dsidenti */
+                        ,INPUT crapcop.cdcooper               /* par_cdcooper */
+                        ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+                        ,INPUT ""                             /* par_dscedent */
+                        ,INPUT 0                              /* par_cdcoptfn */
+                        ,INPUT 0                              /* par_cdagetfn */
+                        ,INPUT 0                              /* par_nrterfin */
+                        ,INPUT 0                              /* par_nrparepr */
+                        ,INPUT 0                              /* par_nrseqava */
+                        ,INPUT 0                              /* par_nraplica */
+                        ,INPUT 0                              /* par_cdorigem */
+                        ,INPUT 0                              /* par_idlautom */
+                        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                        ,INPUT 0                              /* Processa lote                                 */
+                        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                        /* CAMPOS DE SAIDA                                                                     */                                            
+                        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+                        ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                        
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO: 
+                             /* Tratamento de erros conforme anteriores */
+                             ASSIGN i-cod-erro  = 0
+                                    c-desc-erro = aux_dscritic.
+                                    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.   
+                      ELSE 
+                         DO:
+                           /* Posicionando no registro da craplcm criado acima */
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                         END.                
+                      
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+                      
+                      
                       ASSIGN i-seq-386 =  craplot.nrseqdig + 1.
 
                       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
@@ -4360,12 +4488,12 @@ PROCEDURE atualiza-deposito-com-captura:
                                                  crapmrw.vlchqcop
                              craplot.vlinfocr  = craplot.vlinfocr +  
                                                  crapmrw.vlchqcop.
-                      VALIDATE craplcm.
+                      /* VALIDATE craplcm. */
                   END.
              
          END. /* if  avail crapmrw */
 
-    /* Cheques praça e fora praça serao dinamicos 
+    /* Cheques praça e fora praça serao dinamicos   ####################################
        pela influencia do CAF */
 
     ASSIGN aux_nrsequen = 0.
@@ -4427,39 +4555,97 @@ PROCEDURE atualiza-deposito-com-captura:
                                 INPUT YES).
                  RETURN "NOK".
              END.
-        /*----------------------------------------------------*/        
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = INT(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 2433
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
+        /*----------------------------------------------------*/      
 
-               VALIDATE craplcm.
+        /* BLOCO DA INSERÇAO DA CRAPLCM */
+        IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+          RUN sistema/generico/procedures/b1wgen0200.p 
+            PERSISTENT SET h-b1wgen0200.
+            
+        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+          (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+          ,INPUT p-cod-agencia                  /* par_cdagenci */
+          ,INPUT 11                             /* par_cdbccxlt */
+          ,INPUT i-nro-lote                     /* par_nrdolote */
+          ,INPUT aux_nrdconta                   /* par_nrdconta */
+          ,INPUT INT(c-docto)                   /* par_nrdocmto */
+          ,INPUT 2433                           /* par_cdhistor */
+          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT tt-cheques.vlcompel            /* par_vllanmto */
+          ,INPUT p-nro-conta                    /* par_nrdctabb */
+          ,INPUT "CRAP51"                       /* par_cdpesqbb */
+          ,INPUT 0                              /* par_vldoipmf */
+          ,INPUT p-ult-sequencia                /* par_nrautdoc */
+          ,INPUT 0                              /* par_nrsequni */
+          ,INPUT 0                              /* par_cdbanchq */
+          ,INPUT 0                              /* par_cdcmpchq */
+          ,INPUT 0                              /* par_cdagechq */
+          ,INPUT 0                              /* par_nrctachq */
+          ,INPUT 0                              /* par_nrlotchq */
+          ,INPUT 0                              /* par_sqlotchq */
+          ,INPUT ""                             /* par_dtrefere */
+          ,INPUT ""                             /* par_hrtransa */
+          ,INPUT ""                             /* par_cdoperad */
+          ,INPUT p-identifica                   /* par_dsidenti */
+          ,INPUT crapcop.cdcooper               /* par_cdcooper */
+          ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+          ,INPUT ""                             /* par_dscedent */
+          ,INPUT 0                              /* par_cdcoptfn */
+          ,INPUT 0                              /* par_cdagetfn */
+          ,INPUT 0                              /* par_nrterfin */
+          ,INPUT 0                              /* par_nrparepr */
+          ,INPUT 0                              /* par_nrseqava */
+          ,INPUT 0                              /* par_nraplica */
+          ,INPUT 0                              /* par_cdorigem */
+          ,INPUT 0                              /* par_idlautom */
+          /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+          ,INPUT 0                              /* Processa lote                                 */
+          ,INPUT 0                              /* Tipo de lote a movimentar                     */
+          /* CAMPOS DE SAIDA                                                                     */                                            
+          ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+          ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+          
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+           DO: 
+               /* Tratamento de erros conforme anteriores */
+               ASSIGN i-cod-erro  = 0
+                      c-desc-erro = aux_dscritic.
+                      
+               RUN cria-erro (INPUT p-cooper,
+                              INPUT p-cod-agencia,
+                              INPUT p-nro-caixa,
+                              INPUT i-cod-erro,
+                              INPUT c-desc-erro,
+                              INPUT YES).
+               RETURN "NOK".
+           END.   
+        ELSE 
+           DO:
+             /* Posicionando no registro da craplcm criado acima */
+             FIND FIRST tt-ret-lancto.
+             FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+           END.                
+        
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
+          DELETE PROCEDURE h-b1wgen0200.
+
+
+        /* Guarda o sequencial usado no lancamento */
+        ASSIGN tt-cheques.nrseqlcm = craplcm.nrseqdig.
+
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
                craplot.qtinfoln  = craplot.qtinfoln + 1
-              craplot.vlcompcr  = craplot.vlcompcr + tt-cheques.vlcompel
-              craplot.vlinfocr  = craplot.vlinfocr + tt-cheques.vlcompel.
+               craplot.vlcompcr  = craplot.vlcompcr + tt-cheques.vlcompel
+               craplot.vlinfocr  = craplot.vlinfocr + tt-cheques.vlcompel.
         CREATE crapdpb.
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 2433
+               crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
                crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
@@ -4933,6 +5119,12 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
     DEF VAR aux_des_erro AS CHAR NO-UNDO.
     DEF VAR aux_dscritic AS CHAR NO-UNDO.
     
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+
+
     /* cooperativa nova */
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
 
@@ -5318,24 +5510,81 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                               INPUT YES).
                                RETURN "NOK".
                            END.
+                           
+                      /* BLOCO DA INSERÇAO DA CRAPLCM */
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                          PERSISTENT SET h-b1wgen0200.
+                          
+                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        ,INPUT p-cod-agencia                  /* par_cdagenci */
+                        ,INPUT 11                             /* par_cdbccxlt */
+                        ,INPUT i-nro-lote                     /* par_nrdolote */
+                        ,INPUT aux_nrdconta                   /* par_nrdconta */
+                        ,INPUT INTE(c-docto)                  /* par_nrdocmto */
+                        ,INPUT 1                              /* par_cdhistor */
+                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT crapmrw.vldepdin               /* par_vllanmto */
+                        ,INPUT p-nro-conta                    /* par_nrdctabb */
+                        ,INPUT "CRAP51"                       /* par_cdpesqbb */
+                        ,INPUT 0                              /* par_vldoipmf */
+                        ,INPUT p-ult-sequencia                /* par_nrautdoc */
+                        ,INPUT 0                              /* par_nrsequni */
+                        ,INPUT 0                              /* par_cdbanchq */
+                        ,INPUT 0                              /* par_cdcmpchq */
+                        ,INPUT 0                              /* par_cdagechq */
+                        ,INPUT 0                              /* par_nrctachq */
+                        ,INPUT 0                              /* par_nrlotchq */
+                        ,INPUT 0                              /* par_sqlotchq */
+                        ,INPUT ""                             /* par_dtrefere */
+                        ,INPUT ""                             /* par_hrtransa */
+                        ,INPUT ""                             /* par_cdoperad */
+                        ,INPUT p-identifica                   /* par_dsidenti */
+                        ,INPUT crapcop.cdcooper               /* par_cdcooper */
+                        ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+                        ,INPUT ""                             /* par_dscedent */
+                        ,INPUT 0                              /* par_cdcoptfn */
+                        ,INPUT 0                              /* par_cdagetfn */
+                        ,INPUT 0                              /* par_nrterfin */
+                        ,INPUT 0                              /* par_nrparepr */
+                        ,INPUT 0                              /* par_nrseqava */
+                        ,INPUT 0                              /* par_nraplica */
+                        ,INPUT 0                              /* par_cdorigem */
+                        ,INPUT 0                              /* par_idlautom */
+                        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                        ,INPUT 0                              /* Processa lote                                 */
+                        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                        /* CAMPOS DE SAIDA                                                                     */                                            
+                        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+                        ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                        
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO: 
+                             /* Tratamento de erros conforme anteriores */
+                             ASSIGN i-cod-erro  = 0
+                                    c-desc-erro = aux_dscritic.
+                                    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.   
+                      ELSE 
+                         DO:
+                           /* Posicionando no registro da craplcm criado acima */
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                         END.                
                       
-                      CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INTE(c-docto)
-                             craplcm.vllanmto = crapmrw.vldepdin
-                             craplcm.cdhistor = 1
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrautdoc = p-ult-sequencia
-                             craplcm.cdpesqbb = "CRAP51"
-                             craplcm.nrdctitg = glb_dsdctitg.
-                      VALIDATE craplcm.
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+                           
 
                       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                              craplot.qtcompln  = craplot.qtcompln + 1
@@ -5401,24 +5650,81 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                               INPUT YES).
                                RETURN "NOK".
                            END.
+
+                      /* BLOCO DA INSERÇAO DA CRAPLCM */
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                          PERSISTENT SET h-b1wgen0200.
+                          
+                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        ,INPUT p-cod-agencia                  /* par_cdagenci */
+                        ,INPUT 11                             /* par_cdbccxlt */
+                        ,INPUT i-nro-lote                     /* par_nrdolote */
+                        ,INPUT aux_nrdconta                   /* par_nrdconta */
+                        ,INPUT INT(c-docto)                   /* par_nrdocmto */
+                        ,INPUT 386                            /* par_cdhistor */
+                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT crapmrw.vlchqcop               /* par_vllanmto */
+                        ,INPUT p-nro-conta                    /* par_nrdctabb */
+                        ,INPUT "CRAP51"                       /* par_cdpesqbb */
+                        ,INPUT 0                              /* par_vldoipmf */
+                        ,INPUT p-ult-sequencia                /* par_nrautdoc */
+                        ,INPUT 0                              /* par_nrsequni */
+                        ,INPUT 0                              /* par_cdbanchq */
+                        ,INPUT 0                              /* par_cdcmpchq */
+                        ,INPUT 0                              /* par_cdagechq */
+                        ,INPUT 0                              /* par_nrctachq */
+                        ,INPUT 0                              /* par_nrlotchq */
+                        ,INPUT 0                              /* par_sqlotchq */
+                        ,INPUT ""                             /* par_dtrefere */
+                        ,INPUT ""                             /* par_hrtransa */
+                        ,INPUT ""                             /* par_cdoperad */
+                        ,INPUT p-identifica                   /* par_dsidenti */
+                        ,INPUT crapcop.cdcooper               /* par_cdcooper */
+                        ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+                        ,INPUT ""                             /* par_dscedent */
+                        ,INPUT 0                              /* par_cdcoptfn */
+                        ,INPUT 0                              /* par_cdagetfn */
+                        ,INPUT 0                              /* par_nrterfin */
+                        ,INPUT 0                              /* par_nrparepr */
+                        ,INPUT 0                              /* par_nrseqava */
+                        ,INPUT 0                              /* par_nraplica */
+                        ,INPUT 0                              /* par_cdorigem */
+                        ,INPUT 0                              /* par_idlautom */
+                        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                        ,INPUT 0                              /* Processa lote                                 */
+                        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                        /* CAMPOS DE SAIDA                                                                     */                                            
+                        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+                        ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                        
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO: 
+                             /* Tratamento de erros conforme anteriores */
+                             ASSIGN i-cod-erro  = 0
+                                    c-desc-erro = aux_dscritic.
+                                    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.   
+                      ELSE 
+                         DO:
+                           /* Posicionando no registro da craplcm criado acima */
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                         END.                
                       
-                      CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INT(c-docto)
-                             craplcm.vllanmto = crapmrw.vlchqcop
-                             craplcm.cdhistor = 386
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrautdoc = p-ult-sequencia
-                             craplcm.cdpesqbb = "CRAP51"
-                             craplcm.nrdctitg = glb_dsdctitg.
-                      VALIDATE craplcm.
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+
 
                       ASSIGN i-seq-386 =  craplot.nrseqdig + 1.
 
@@ -5497,26 +5803,84 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
              END.
         
         /*----------------------------------------------------*/        
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = INT(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 2433
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
-        VALIDATE craplcm.
+
+        /* BLOCO DA INSERÇAO DA CRAPLCM */
+        IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+          RUN sistema/generico/procedures/b1wgen0200.p 
+            PERSISTENT SET h-b1wgen0200.
+            
+        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+          (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+          ,INPUT p-cod-agencia                  /* par_cdagenci */
+          ,INPUT 11                             /* par_cdbccxlt */
+          ,INPUT i-nro-lote                     /* par_nrdolote */
+          ,INPUT aux_nrdconta                   /* par_nrdconta */
+          ,INPUT INT(c-docto)                   /* par_nrdocmto */
+          ,INPUT 2433                           /* par_cdhistor */
+          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT tt-cheques.vlcompel            /* par_vllanmto */
+          ,INPUT p-nro-conta                    /* par_nrdctabb */
+          ,INPUT "CRAP51"                       /* par_cdpesqbb */
+          ,INPUT 0                              /* par_vldoipmf */
+          ,INPUT p-ult-sequencia                /* par_nrautdoc */
+          ,INPUT 0                              /* par_nrsequni */
+          ,INPUT 0                              /* par_cdbanchq */
+          ,INPUT 0                              /* par_cdcmpchq */
+          ,INPUT 0                              /* par_cdagechq */
+          ,INPUT 0                              /* par_nrctachq */
+          ,INPUT 0                              /* par_nrlotchq */
+          ,INPUT 0                              /* par_sqlotchq */
+          ,INPUT ""                             /* par_dtrefere */
+          ,INPUT ""                             /* par_hrtransa */
+          ,INPUT ""                             /* par_cdoperad */
+          ,INPUT p-identifica                   /* par_dsidenti */
+          ,INPUT crapcop.cdcooper               /* par_cdcooper */
+          ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+          ,INPUT ""                             /* par_dscedent */
+          ,INPUT 0                              /* par_cdcoptfn */
+          ,INPUT 0                              /* par_cdagetfn */
+          ,INPUT 0                              /* par_nrterfin */
+          ,INPUT 0                              /* par_nrparepr */
+          ,INPUT 0                              /* par_nrseqava */
+          ,INPUT 0                              /* par_nraplica */
+          ,INPUT 0                              /* par_cdorigem */
+          ,INPUT 0                              /* par_idlautom */
+          /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+          ,INPUT 0                              /* Processa lote                                 */
+          ,INPUT 0                              /* Tipo de lote a movimentar                     */
+          /* CAMPOS DE SAIDA                                                                     */                                            
+          ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+          ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+          
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+           DO: 
+               /* Tratamento de erros conforme anteriores */
+               ASSIGN i-cod-erro  = 0
+                      c-desc-erro = aux_dscritic.
+                      
+               RUN cria-erro (INPUT p-cooper,
+                              INPUT p-cod-agencia,
+                              INPUT p-nro-caixa,
+                              INPUT i-cod-erro,
+                              INPUT c-desc-erro,
+                              INPUT YES).
+               RETURN "NOK".
+           END.   
+        ELSE 
+           DO:
+             /* Posicionando no registro da craplcm criado acima */
+             FIND FIRST tt-ret-lancto.
+             FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+           END.                
+        
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
+          DELETE PROCEDURE h-b1wgen0200.
+
+
+        /* Guarda o sequencial usado no lancamento */
+        ASSIGN tt-cheques.nrseqlcm = craplcm.nrseqdig.
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
@@ -5529,7 +5893,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 2433
+               crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
                crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
@@ -6122,6 +6486,12 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
     DEF BUFFER cra2lcm FOR craplcm.
 
     DEF VAR aux_contalot AS INTE NO-UNDO.
+    
+    /* Variaveis para rotina de lancamento craplcm */
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
+    DEF VAR aux_cdcritic AS INT     NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR    NO-UNDO.
 
     /* cooperativa antiga */
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
@@ -6508,24 +6878,81 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                                               INPUT YES).
                                RETURN "NOK".
                            END.
+
+                      /* BLOCO DA INSERÇAO DA CRAPLCM */
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                          PERSISTENT SET h-b1wgen0200.
+                          
+                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        ,INPUT p-cod-agencia                  /* par_cdagenci */
+                        ,INPUT 11                             /* par_cdbccxlt */
+                        ,INPUT i-nro-lote                     /* par_nrdolote */
+                        ,INPUT aux_nrdconta                   /* par_nrdconta */
+                        ,INPUT INTE(c-docto)                  /* par_nrdocmto */
+                        ,INPUT 1                              /* par_cdhistor */
+                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT crapmrw.vldepdin               /* par_vllanmto */
+                        ,INPUT p-nro-conta                    /* par_nrdctabb */
+                        ,INPUT "CRAP51"                       /* par_cdpesqbb */
+                        ,INPUT 0                              /* par_vldoipmf */
+                        ,INPUT p-ult-sequencia                /* par_nrautdoc */
+                        ,INPUT 0                              /* par_nrsequni */
+                        ,INPUT 0                              /* par_cdbanchq */
+                        ,INPUT 0                              /* par_cdcmpchq */
+                        ,INPUT 0                              /* par_cdagechq */
+                        ,INPUT 0                              /* par_nrctachq */
+                        ,INPUT 0                              /* par_nrlotchq */
+                        ,INPUT 0                              /* par_sqlotchq */
+                        ,INPUT ""                             /* par_dtrefere */
+                        ,INPUT ""                             /* par_hrtransa */
+                        ,INPUT ""                             /* par_cdoperad */
+                        ,INPUT p-identifica                   /* par_dsidenti */
+                        ,INPUT crapcop.cdcooper               /* par_cdcooper */
+                        ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+                        ,INPUT ""                             /* par_dscedent */
+                        ,INPUT 0                              /* par_cdcoptfn */
+                        ,INPUT 0                              /* par_cdagetfn */
+                        ,INPUT 0                              /* par_nrterfin */
+                        ,INPUT 0                              /* par_nrparepr */
+                        ,INPUT 0                              /* par_nrseqava */
+                        ,INPUT 0                              /* par_nraplica */
+                        ,INPUT 0                              /* par_cdorigem */
+                        ,INPUT 0                              /* par_idlautom */
+                        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                        ,INPUT 0                              /* Processa lote                                 */
+                        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                        /* CAMPOS DE SAIDA                                                                     */                                            
+                        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+                        ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                        
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO: 
+                             /* Tratamento de erros conforme anteriores */
+                             ASSIGN i-cod-erro  = 0
+                                    c-desc-erro = aux_dscritic.
+                                    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.   
+                      ELSE 
+                         DO:
+                           /* Posicionando no registro da craplcm criado acima */
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                         END.                
                       
-                      CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INTE(c-docto)
-                             craplcm.vllanmto = crapmrw.vldepdin
-                             craplcm.cdhistor = 1
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrautdoc = p-ult-sequencia
-                             craplcm.cdpesqbb = "CRAP51"
-                             craplcm.nrdctitg = glb_dsdctitg.
-                      VALIDATE craplcm.
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+                               
 
                       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                              craplot.qtcompln  = craplot.qtcompln + 1
@@ -6590,24 +7017,81 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                                               INPUT YES).
                                RETURN "NOK".
                            END.
+
+                      /* BLOCO DA INSERÇAO DA CRAPLCM */
+                      IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                        RUN sistema/generico/procedures/b1wgen0200.p 
+                          PERSISTENT SET h-b1wgen0200.
+                          
+                      RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        ,INPUT p-cod-agencia                  /* par_cdagenci */
+                        ,INPUT 11                             /* par_cdbccxlt */
+                        ,INPUT i-nro-lote                     /* par_nrdolote */
+                        ,INPUT aux_nrdconta                   /* par_nrdconta */
+                        ,INPUT INT(c-docto)                   /* par_nrdocmto */
+                        ,INPUT 386                            /* par_cdhistor */
+                        ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+                        ,INPUT crapmrw.vlchqcop               /* par_vllanmto */
+                        ,INPUT p-nro-conta                    /* par_nrdctabb */
+                        ,INPUT "CRAP51"                       /* par_cdpesqbb */
+                        ,INPUT 0                              /* par_vldoipmf */
+                        ,INPUT p-ult-sequencia                /* par_nrautdoc */
+                        ,INPUT 0                              /* par_nrsequni */
+                        ,INPUT 0                              /* par_cdbanchq */
+                        ,INPUT 0                              /* par_cdcmpchq */
+                        ,INPUT 0                              /* par_cdagechq */
+                        ,INPUT 0                              /* par_nrctachq */
+                        ,INPUT 0                              /* par_nrlotchq */
+                        ,INPUT 0                              /* par_sqlotchq */
+                        ,INPUT ""                             /* par_dtrefere */
+                        ,INPUT ""                             /* par_hrtransa */
+                        ,INPUT ""                             /* par_cdoperad */
+                        ,INPUT p-identifica                   /* par_dsidenti */
+                        ,INPUT crapcop.cdcooper               /* par_cdcooper */
+                        ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+                        ,INPUT ""                             /* par_dscedent */
+                        ,INPUT 0                              /* par_cdcoptfn */
+                        ,INPUT 0                              /* par_cdagetfn */
+                        ,INPUT 0                              /* par_nrterfin */
+                        ,INPUT 0                              /* par_nrparepr */
+                        ,INPUT 0                              /* par_nrseqava */
+                        ,INPUT 0                              /* par_nraplica */
+                        ,INPUT 0                              /* par_cdorigem */
+                        ,INPUT 0                              /* par_idlautom */
+                        /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                        ,INPUT 0                              /* Processa lote                                 */
+                        ,INPUT 0                              /* Tipo de lote a movimentar                     */
+                        /* CAMPOS DE SAIDA                                                                     */                                            
+                        ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+                        ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+                        ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+                        ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+                        
+                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                         DO: 
+                             /* Tratamento de erros conforme anteriores */
+                             ASSIGN i-cod-erro  = 0
+                                    c-desc-erro = aux_dscritic.
+                                    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.   
+                      ELSE 
+                         DO:
+                           /* Posicionando no registro da craplcm criado acima */
+                           FIND FIRST tt-ret-lancto.
+                           FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+                         END.                
                       
-                      CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INT(c-docto)
-                             craplcm.vllanmto = crapmrw.vlchqcop
-                             craplcm.cdhistor = 386
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrautdoc = p-ult-sequencia
-                             craplcm.cdpesqbb = "CRAP51"
-                             craplcm.nrdctitg = glb_dsdctitg.
-                      VALIDATE craplcm.
+                      IF  VALID-HANDLE(h-b1wgen0200) THEN
+                        DELETE PROCEDURE h-b1wgen0200.
+
 
                       ASSIGN i-seq-386 =  craplot.nrseqdig + 1.
 
@@ -6684,26 +7168,84 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                  RETURN "NOK".
              END.
         /*----------------------------------------------------*/        
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = INT(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 2433
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
+
+        /* BLOCO DA INSERÇAO DA CRAPLCM */
+        IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+          RUN sistema/generico/procedures/b1wgen0200.p 
+            PERSISTENT SET h-b1wgen0200.
+            
+        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+          (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+          ,INPUT p-cod-agencia                  /* par_cdagenci */
+          ,INPUT 11                             /* par_cdbccxlt */
+          ,INPUT i-nro-lote                     /* par_nrdolote */
+          ,INPUT aux_nrdconta                   /* par_nrdconta */
+          ,INPUT INT(c-docto)                   /* par_nrdocmto */
+          ,INPUT 2433                           /* par_cdhistor */
+          ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+          ,INPUT tt-cheques.vlcompel            /* par_vllanmto */
+          ,INPUT p-nro-conta                    /* par_nrdctabb */
+          ,INPUT "CRAP51"                       /* par_cdpesqbb */
+          ,INPUT 0                              /* par_vldoipmf */
+          ,INPUT p-ult-sequencia                /* par_nrautdoc */
+          ,INPUT 0                              /* par_nrsequni */
+          ,INPUT 0                              /* par_cdbanchq */
+          ,INPUT 0                              /* par_cdcmpchq */
+          ,INPUT 0                              /* par_cdagechq */
+          ,INPUT 0                              /* par_nrctachq */
+          ,INPUT 0                              /* par_nrlotchq */
+          ,INPUT 0                              /* par_sqlotchq */
+          ,INPUT ""                             /* par_dtrefere */
+          ,INPUT ""                             /* par_hrtransa */
+          ,INPUT ""                             /* par_cdoperad */
+          ,INPUT p-identifica                   /* par_dsidenti */
+          ,INPUT crapcop.cdcooper               /* par_cdcooper */
+          ,INPUT glb_dsdctitg                   /* par_nrdctitg */
+          ,INPUT ""                             /* par_dscedent */
+          ,INPUT 0                              /* par_cdcoptfn */
+          ,INPUT 0                              /* par_cdagetfn */
+          ,INPUT 0                              /* par_nrterfin */
+          ,INPUT 0                              /* par_nrparepr */
+          ,INPUT 0                              /* par_nrseqava */
+          ,INPUT 0                              /* par_nraplica */
+          ,INPUT 0                              /* par_cdorigem */
+          ,INPUT 0                              /* par_idlautom */
+          /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+          ,INPUT 0                              /* Processa lote                                 */
+          ,INPUT 0                              /* Tipo de lote a movimentar                     */
+          /* CAMPOS DE SAIDA                                                                     */                                            
+          ,OUTPUT TABLE tt-ret-lancto           /* Collection que contem o retorno do lancamento */
+          ,OUTPUT aux_incrineg                  /* Indicador de critica de negocio               */
+          ,OUTPUT aux_cdcritic                  /* Codigo da critica                             */
+          ,OUTPUT aux_dscritic).                /* Descricao da critica                          */
+          
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+           DO: 
+               /* Tratamento de erros conforme anteriores */
+               ASSIGN i-cod-erro  = 0
+                      c-desc-erro = aux_dscritic.
+                      
+               RUN cria-erro (INPUT p-cooper,
+                              INPUT p-cod-agencia,
+                              INPUT p-nro-caixa,
+                              INPUT i-cod-erro,
+                              INPUT c-desc-erro,
+                              INPUT YES).
+               RETURN "NOK".
+           END.   
+        ELSE 
+           DO:
+             /* Posicionando no registro da craplcm criado acima */
+             FIND FIRST tt-ret-lancto.
+             FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+           END.                
+        
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
+          DELETE PROCEDURE h-b1wgen0200.
+
                
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
-        VALIDATE craplcm.
+        /* Guarda o sequencial usado no lancamento */
+        ASSIGN tt-cheques.nrseqlcm = craplcm.nrseqdig.
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
@@ -6716,7 +7258,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 2433
+               crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
                crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
