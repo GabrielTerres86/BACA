@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+   Data    : Maio/2017                      Ultima atualizacao: 11/06/2018
 
    Dados referentes ao programa:
 
@@ -204,7 +204,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Objetivo  : Centralizar os procedimentos e funcoes referente aos processos de 
                transferência para prejuízo
 
-   Alteracoes:
+   Alteracoes: 
+
+   11/06/2018 - INC0014258 Na rotina pc_controla_exe_job, não registrar as validações
+                de execução do job como erro, para que o plantão não seja acionado (Carlos)
 
 ..............................................................................*/
 
@@ -6846,12 +6849,14 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
         END IF;
         
       ELSE
-        -- Não retornar o erro - Chamado 831545 - 16/01/2018
-        IF vr_dserro NOT LIKE '%Processo noturno nao finalizado para cooperativa%' THEN
-          vr_cdcritic := 0;
-          vr_dscritic := vr_dserro;
-          RAISE vr_exc_erro;  
-        END IF;
+        cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                               ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+                               ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                               ,pr_tpocorrencia  => 4             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                               ,pr_cdcriticidade => 0             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               ,pr_dsmensagem    => vr_dserro    --> dscritic
+                               ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
       END IF;
       --
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
@@ -6880,9 +6885,6 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
                             pr_dstiplog => 'E',
                             pr_dscritic => vr_dscritic);
-                            
-      cecred.pc_internal_exception(pr_cdcooper => nvl(vr_cdcooper,3),
-                                   pr_compleme => vr_dscritic);                            
 
       ROLLBACK;
         
