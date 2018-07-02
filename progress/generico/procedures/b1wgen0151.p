@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 07/08/2017
+    Data    : 07/02/2013                     Ultima atualizacao: 14/05/2018
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -59,6 +59,10 @@
 					 
 		07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
 				     inclusao, conforme solicitado no chamado 689996. (Kelvin)
+             
+    14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+                 Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
+                           
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -180,7 +184,8 @@ PROCEDURE Busca_Dados:
                tt-crapccs.dtadmiss = crapccs.dtadmiss                       
                tt-crapccs.cdsitcta = IF   crapccs.cdsitcta = 1 THEN         
                                           "ATIVO"                           
-                                     ELSE "CANCELADO".
+                                     ELSE "CANCELADO"
+               tt-crapccs.tpctatrf = crapccs.tpctatrf.                      
 
          FIND crapage WHERE crapage.cdcooper = par_cdcooper AND
                             crapage.cdagenci = tt-crapccs.cdagenci
@@ -212,6 +217,20 @@ PROCEDURE Busca_Dados:
                  LEAVE Busca.
              END.
                        
+         /* Validar o campo cdagetrf apenas se o tpctatrf for 1 (conta corrente) ou 2 (poupanca)*/    
+         IF crapccs.tpctatrf = 1 OR crapccs.tpctatrf = 2 THEN
+             DO:
+                 FIND crapagb WHERE crapagb.cddbanco = tt-crapccs.cdbantrf AND
+                                    crapagb.cdageban = tt-crapccs.cdagetrf NO-LOCK NO-ERROR.
+                 
+                 IF  NOT AVAILABLE crapagb THEN
+                     DO:
+                         ASSIGN aux_cdcritic = 15
+                                aux_dscritic = "".
+                         LEAVE Busca.
+                     END.
+             END.
+         
          FIND crapagb WHERE crapagb.cddbanco = tt-crapccs.cdbantrf AND
                             crapagb.cdageban = tt-crapccs.cdagetrf NO-LOCK NO-ERROR.
 
@@ -467,6 +486,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctatrf AS INTE                           NO-UNDO.
 
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
@@ -493,6 +513,23 @@ PROCEDURE Valida_Dados:
 
         IF  par_cddopcao = "S" THEN
             DO:
+                
+                /* Validar o campo cdagetrf apenas se o tpctatrf for 1 (conta corrente) ou 2 (poupanca)*/    
+                IF par_tpctatrf = 1 OR par_tpctatrf = 2 THEN
+                    DO:
+                        FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
+                                           crapagb.cdageban = par_cdagetrf
+                                           NO-LOCK NO-ERROR.
+
+                        IF  NOT AVAIL crapagb THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 15
+                                       aux_dscritic = ""
+                                       par_nmdcampo = "cdagetrf".
+                                LEAVE Valida.
+                            END.
+                    END.
+            
                 RUN Valida_Conta_Salario(
                     INPUT par_cdcooper,
                     INPUT par_cdagenci,
@@ -629,6 +666,23 @@ PROCEDURE Valida_Dados:
                         LEAVE Valida.
                         
                     END.
+                    
+                /* Validar o campo cdagetrf apenas se o tpctatrf for 1 (conta corrente) ou 2 (poupanca)*/    
+                IF par_tpctatrf = 1 OR par_tpctatrf = 2 THEN
+                    DO:
+                        FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
+                                           crapagb.cdageban = par_cdagetrf
+                                           NO-LOCK NO-ERROR.
+
+                        IF  NOT AVAIL crapagb THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 15
+                                       aux_dscritic = ""
+                                       par_nmdcampo = "cdagetrf".
+                                LEAVE Valida.
+                            END.
+                    END.    
+                    
 
                 FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
                                    crapagb.cdageban = par_cdagetrf
@@ -735,6 +789,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrctatrf AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctatrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
@@ -796,7 +851,8 @@ PROCEDURE Grava_Dados:
                    crapccs.nmfuncio = par_nmfuncio
                    crapccs.dtcantrf = ?
                    crapccs.cdsitcta = 1
-                   crapccs.dtadmiss = par_dtmvtolt.
+                   crapccs.dtadmiss = par_dtmvtolt
+                   crapccs.tpctatrf = par_tpctatrf.
             VALIDATE crapccs.
 
             LEAVE Grava.
@@ -860,7 +916,8 @@ PROCEDURE Grava_Dados:
                 ASSIGN crapccs.cdbantrf = par_cdbantrf
                        crapccs.cdagetrf = par_cdagetrf
                        crapccs.nrctatrf = par_nrctatrf
-                       crapccs.nrdigtrf = par_nrdigtrf.
+                       crapccs.nrdigtrf = par_nrdigtrf
+                       crapccs.tpctatrf = par_tpctatrf.
 
             END. /* par_cddopcao = S */
 
@@ -926,6 +983,7 @@ PROCEDURE Gera_Impressao:
     DEF  INPUT PARAM par_cdbantrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagetrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgsolic AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctatrf AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
@@ -1096,6 +1154,19 @@ PROCEDURE Gera_Impressao:
                  ASSIGN aux_cdcritic = 57
                         aux_dscritic = "".
              END.
+             
+         /* Validar o campo cdagetrf apenas se o tpctatrf for 1 (conta corrente) ou 2 (poupanca)*/    
+         IF par_tpctatrf = 1 OR par_tpctatrf = 2 THEN
+             DO:
+                 FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
+                                    crapagb.cdageban = par_cdagetrf NO-LOCK NO-ERROR.
+
+                 IF  NOT AVAILABLE crapagb THEN
+                     DO:
+                         ASSIGN aux_cdcritic = 15
+                                aux_dscritic = "".
+                     END.
+             END.    
                        
          FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
                             crapagb.cdageban = par_cdagetrf NO-LOCK NO-ERROR.

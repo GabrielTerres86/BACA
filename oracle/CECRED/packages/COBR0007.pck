@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
+ÔªøCREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : COBR0007
@@ -10,13 +10,13 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
-  -- Objetivo  : Rotinas para instruÁoes banc·rias - Cob. Registrada 
+  -- Objetivo  : Rotinas para instru√ßoes banc√°rias - Cob. Registrada 
   --
   --  Alteracoes:
   --
-  --    02/02/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+  --    02/02/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
   -- 
-  --    16/02/2018 - Ref. HistÛria KE00726701-36 - Inclus„o de Filtro e Par‚metro por Tipo de Pessoa na TAB052
+  --    16/02/2018 - Ref. Hist√≥ria KE00726701-36 - Inclus√£o de Filtro e Par√¢metro por Tipo de Pessoa na TAB052
   --                (Gustavo Sene - GFT)    
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -217,7 +217,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
                                 ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
                                 ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
                                 );
-  -- Procedure para excluir Protesto com Carta de AnuÍncia EletrÙnica
+  -- Procedure para excluir Protesto com Carta de Anu√™ncia Eletr√¥nica
  PROCEDURE pc_exc_prtst_anuencia_eletr(pr_cdcooper            IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                        ,pr_nrdconta            IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                        ,pr_nrcnvcob            IN crapcob.nrcnvcob%TYPE --> Numero do Convenio
@@ -304,7 +304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
-  -- Objetivo  : Rotinas para instruÁoes banc·rias - Cob. Registrada 
+  -- Objetivo  : Rotinas para instru√ßoes banc√°rias - Cob. Registrada 
   --
   --  Alteracoes: 19/05/2016 - Incluido upper em cmapos de index utilizados em cursores (Andrei - RKAM).
   --
@@ -325,19 +325,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   ---------------------------------------------------------------------------------------------------------------
   
   04/10/2017 - #751605 Alteradas as rotinas "pc_inst_canc_sms" e "pc_inst_envio_sms". Na de cancelamento, 
-               removida a chamada da rotina de validaÁ„o "pc_efetua_val_recusa_padrao" pois n„o faz sentido 
-               validar a situaÁ„o do boleto para este caso. Na rotina que habilita o envio, removida a rotina de 
-               validaÁ„o e feita verificaÁ„o da situaÁ„o do boleto. Caso a situaÁ„o for diferente de "ABERTO" n„o
-               habilitar SMS e n„o retornar como um erro, seguir o fluxo normal. (Carlos)
+               removida a chamada da rotina de valida√ß√£o "pc_efetua_val_recusa_padrao" pois n√£o faz sentido 
+               validar a situa√ß√£o do boleto para este caso. Na rotina que habilita o envio, removida a rotina de 
+               valida√ß√£o e feita verifica√ß√£o da situa√ß√£o do boleto. Caso a situa√ß√£o for diferente de "ABERTO" n√£o
+               habilitar SMS e n√£o retornar como um erro, seguir o fluxo normal. (Carlos)
 
-  02/02/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+  02/02/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
 
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
   vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0007';
   
   ------------------------------- CURSORES ---------------------------------    
-  -- Busca as informaÁıes da cooperativa conectada
+  -- Busca as informa√ß√µes da cooperativa conectada
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT cop.cdcooper
           ,cop.dsdircop
@@ -535,7 +535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
        AND rem.dtaltera = pr_dtaltera
      ORDER BY rem.progress_recid DESC;
      
-  -- Par‚metros do cadastro de cobranÁa
+  -- Par√¢metros do cadastro de cobran√ßa
   CURSOR cr_crapcco(pr_cdcooper IN crapcob.cdcooper%type
                    ,pr_nrconven IN crapcco.nrconven%TYPE) IS
     SELECT cco.cddbanco
@@ -563,7 +563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ORDER BY ret.progress_recid ASC;
 
   ------------------------------ PROCEDURES --------------------------------    
-  --> Grava informaÁıes para resolver erro de programa/ sistema
+  --> Grava informa√ß√µes para resolver erro de programa/ sistema
   PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
                        ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
                        ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
@@ -576,13 +576,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Programa : pc_gera_log
     --  Sistema  : Rotina para gravar logs em tabelas
     --  Sigla    : CRED
-    --  Autor    : Ana L˙cia E. Volles - Envolti
+    --  Autor    : Ana L√∫cia E. Volles - Envolti
     --  Data     : Janeiro/2018           Ultima atualizacao: 20/02/2018
     --  Chamado  : 788828
     --
     -- Dados referentes ao programa:
     -- Frequencia: Rotina executada em qualquer frequencia.
-    -- Objetivo  : Controla gravaÁ„o de log em tabelas.
+    -- Objetivo  : Controla grava√ß√£o de log em tabelas.
     --
     -- Alteracoes:  
     --             
@@ -590,7 +590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     --
   BEGIN         
-    --> Controlar geraÁ„o de log de execuÁ„o dos jobs                                
+    --> Controlar gera√ß√£o de log de execu√ß√£o dos jobs                                
     CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
                            pr_cdcooper      => pr_cdcooper, 
                            pr_tpocorrencia  => pr_ind_tipo_log, 
@@ -627,8 +627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Alteracoes: 11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                            (Douglas - Importacao de Arquivos CNAB)
     --
-    --               26/12/2017 - Ajuste na mensagem para informar que a instruÁ„o sÛ pode ser
-    --                            executada em dia ˙til (Douglas - Chamado 820998)
+    --               26/12/2017 - Ajuste na mensagem para informar que a instru√ß√£o s√≥ pode ser
+    --                            executada em dia √∫til (Douglas - Chamado 820998)
     -- ...........................................................................................
     
   BEGIN
@@ -671,8 +671,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           RETURN;
         END IF;
         --Montar Mensagem Critica
-        vr_dscritic:= 'Este tipo de instruÁ„o È permitida apenas em dias ˙teis no hor·rio das '||
-                       vr_tab_limite(vr_tab_limite.FIRST).hrinipag ||' atÈ '||
+        vr_dscritic:= 'Este tipo de instru√ß√£o √© permitida apenas em dias √∫teis no hor√°rio das '||
+                       vr_tab_limite(vr_tab_limite.FIRST).hrinipag ||' at√© '||
                        vr_tab_limite(vr_tab_limite.FIRST).hrfimpag ||'.';
                        
         --Levantar Excecao
@@ -799,27 +799,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure responsavel em efetuar validacao padrao dos motivos de recusa
     --
-    --   AlteraÁıes:
+    --   Altera√ß√µes:
     --          20/01/2014 - Ajuste processo leitura crapcob para ganho de performace ( Renato - Supero )
     --
-    --          27/06/2014 - Faltou verificar se o tÌtulo È do Banco do Brasil (001) antes de verificar
+    --          27/06/2014 - Faltou verificar se o t√≠tulo √© do Banco do Brasil (001) antes de verificar
     --                       se existe registro de ent_confirmada. (Rafael)
     --
-    --          02/01/2015 - Ajustado para n„o gerar critica de titulo descontado caso a situaÁ„o seja 0 e
+    --          02/01/2015 - Ajustado para n√£o gerar critica de titulo descontado caso a situa√ß√£o seja 0 e
     --                       que ja esteja vencido. SD237726 (Odirlei-AMcom)
     --
     --          11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                       (Douglas - Importacao de Arquivos CNAB)
     --
-    --          27/10/2017 - N„o validar Desconto de Titulo no envio de SMS
+    --          27/10/2017 - N√£o validar Desconto de Titulo no envio de SMS
 	--						 (Andrey Formigari - Mouts) SD: 740630
     --
     --          06/04/2018 - Ajustes para atender ao PRJ352
     --
-    --          16/02/2018 - Ref. HistÛria KE00726701-36 - Inclus„o de Filtro e Par‚metro por Tipo de Pessoa na TAB052
+    --          16/02/2018 - Ref. Hist√≥ria KE00726701-36 - Inclus√£o de Filtro e Par√¢metro por Tipo de Pessoa na TAB052
     --                      (Gustavo Sene - GFT)    
 	--
-	--          06/06/2018 - Validar se o titulo esta negativado, caso esteja n„o deixar alterar a data de vencimento (Chamado 844126).
+	--          06/06/2018 - Validar se o titulo esta negativado, caso esteja n√£o deixar alterar a data de vencimento (Chamado 844126).
     --                      (Alcemir Mout's).   
 
     -- ...........................................................................................
@@ -854,7 +854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       rw_crapcco COBR0007.cr_crapcco%ROWTYPE;
 
 
-	    -- verificar negativaÁ„o serasa
+	    -- verificar negativa√ß√£o serasa
       CURSOR cr_tbcobran_his_neg_serasa (pr_cdcooper IN craptdb.cdcooper%type
                         ,pr_nrdconta IN craptdb.nrdconta%type
                         ,pr_nrdctabb IN craptdb.nrdctabb%type
@@ -875,7 +875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
 
 	  CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE           --> Cooperativa
-                       ,pr_cdacesso IN craptab.cdacesso%TYPE) IS       --> Texto de par‚metros
+                       ,pr_cdacesso IN craptab.cdacesso%TYPE) IS       --> Texto de par√¢metros
         SELECT to_number(substr(tab.dstextab,instr(tab.dstextab,';',1,31)+1,3))
           FROM craptab tab
          WHERE tab.cdcooper = pr_cdcooper
@@ -920,11 +920,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --Fechar Cursor
       CLOSE cr_crapcop;
 
-      -- Buscar par‚metros do cadastro de cobranÁa
+      -- Buscar par√¢metros do cadastro de cobran√ßa
       OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
                       ,pr_nrconven => pr_nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
-      -- Se n„o encontrar registro
+      -- Se n√£o encontrar registro
       IF cr_crapcco%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_crapcco;
@@ -970,7 +970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
            --1=Pendente Envio, 2=Solicitacao enviada, 3=Pendente Cancelamento, 4=Pendente Envio Cancel, 5-Negativada, 6=Recusada Serasa 7=Acao Judicial. 
            IF rw_tbcobran_his_neg_serasa.inserasa  in (1,2,3,4,5,6,7) THEN
               vr_cdcritic:= 0;
-              vr_dscritic:= 'OperaÁ„o n„o efetuada. O Titulo tem pendÍncias no serasa.';
+              vr_dscritic:= 'Opera√ß√£o n√£o efetuada. O Titulo tem pend√™ncias no serasa.';
               RAISE vr_exc_erro;
 
            END IF;
@@ -1019,7 +1019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           END IF;
         ELSE
           IF pr_cdinstru = '09' THEN -- Protestar 
-						-- SÛ valida hor·rio se n„o for instruÁ„o de protesto pelo IEPTB
+						-- S√≥ valida hor√°rio se n√£o for instru√ß√£o de protesto pelo IEPTB
 						IF rw_crapcco.insrvprt <> 1 THEN	
             -- Instrucao de protesto possui horario limite de comando da instrucao
             -- exceto para o operador "1" 
@@ -1149,16 +1149,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         end   if;
         close cr_crapass;
       
-        if    rw_crapass.inpessoa = 1 then -- Pessoa FÌsica
-              if    rw_crapcob.flgregis = 1 then -- CobranÁa Com Registro
+        if    rw_crapass.inpessoa = 1 then -- Pessoa F√≠sica
+              if    rw_crapcob.flgregis = 1 then -- Cobran√ßa Com Registro
                     vr_cdacesso := 'LIMDESCTITCRPF';
-              elsif rw_crapcob.flgregis = 0 then -- CobranÁa Sem Registro
+              elsif rw_crapcob.flgregis = 0 then -- Cobran√ßa Sem Registro
                     vr_cdacesso := 'LIMDESCTITPF';
               end if;
-        elsif rw_crapass.inpessoa = 2 then -- Pessoa JurÌdica
-              if    rw_crapcob.flgregis = 1 then -- CobranÁa Com Registro
+        elsif rw_crapass.inpessoa = 2 then -- Pessoa Jur√≠dica
+              if    rw_crapcob.flgregis = 1 then -- Cobran√ßa Com Registro
                     vr_cdacesso := 'LIMDESCTITCRPJ';
-              elsif rw_crapcob.flgregis = 0 then -- CobranÁa Sem Registro
+              elsif rw_crapcob.flgregis = 0 then -- Cobran√ßa Sem Registro
                     vr_cdacesso := 'LIMDESCTITPJ';
               end if;
         end   if;
@@ -1184,9 +1184,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           vr_dtcalcul := rw_craptdb.dtvencto + vr_qtdiacar + 1;
           vr_dtcalcul := gene0005.fn_valida_dia_util(rw_crapcob.cdcooper,vr_dtcalcul,'P',TRUE,FALSE);
           
-		  IF pr_cdinstru <> '95' THEN -- N√O VALIDAR INSTRUCAO 95, POIS E ENVIO SMS
+		  IF pr_cdinstru <> '95' THEN -- N√ÉO VALIDAR INSTRUCAO 95, POIS E ENVIO SMS
 
-          -- e a situaÁ„o È em estudo e n„o esta vencido
+          -- e a situa√ß√£o √© em estudo e n√£o esta vencido
           IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
             rw_craptdb.insittit = 4)  THEN -- LIBERADO
 
@@ -1666,12 +1666,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Frequencia : Sempre que for chamado
     --   Objetivo   : Procedure para enviar titulo para protesto
     --
-    --   AlteraÁıes : 24/06/2014 - UtilizaÁ„o da fn_sequence para a gravaÁ„o na crapcob
-    --                             conforme solicitaÁ„o do Rafael Cechet (Marcos-Supero)
+    --   Altera√ß√µes : 24/06/2014 - Utiliza√ß√£o da fn_sequence para a grava√ß√£o na crapcob
+    --                             conforme solicita√ß√£o do Rafael Cechet (Marcos-Supero)
     --
-    --                01/07/2014 - AlteraÁ„o da fn_sequence para a gravaÁ„o na crapcob.
+    --                01/07/2014 - Altera√ß√£o da fn_sequence para a grava√ß√£o na crapcob.
     --                             Faltou ';' ao concatenar os campos da sequence feito
-    --                             pelo Marcos na vers„o anterior. (Rafael)
+    --                             pelo Marcos na vers√£o anterior. (Rafael)
     --
     --                12/12/2016 - Adicionar LOOP para buscar o numero do convenio de protesto
     --                             (Douglas - Chamado 564039)
@@ -1871,7 +1871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           END LOOP;
         END IF;
         
-        -- Verificar se È o ultimo convenio de protesto
+        -- Verificar se √© o ultimo convenio de protesto
         IF vr_ultnrceb = vr_nrcnvceb_max THEN
           -- Deixar mensagem de erro no log do boleto quando Protesto for por arquivo
           vr_dsmotivo:= 'Erro: numero CEB excedeu o limite de ' || 
@@ -1965,17 +1965,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
       --------------------------------------------------------------------------------------------
       -- Renato Darosci - Supero - 15/07/2014
-      -- Retirada do savepoint e alteraÁ„o na lÛgica.
-      --   O savepoint n„o pode ser utilizado desta forma, pois
+      -- Retirada do savepoint e altera√ß√£o na l√≥gica.
+      --   O savepoint n√£o pode ser utilizado desta forma, pois
       --   causa erro no processo, devido ao acesso via gateway
-      --   para a transaÁ„o do JDDA.
-      --   Devido essa deficiencia o savepoint ser· retirado,
-      --   ser· realizado a tentativa de insert antes da atualizaÁ„o
+      --   para a transa√ß√£o do JDDA.
+      --   Devido essa deficiencia o savepoint ser√° retirado,
+      --   ser√° realizado a tentativa de insert antes da atualiza√ß√£o
       --   da crapcob. Em caso de erro no update, o registro criado
-      --   ser· apagado. Dessa forma eliminamos a necessidade do
+      --   ser√° apagado. Dessa forma eliminamos a necessidade do
       --   savepoint e mantemos os controles do programa.
       --
-      --    ### ATEN«√O: N„o incluir SAVEPOINT nesta rotina. ###
+      --    ### ATEN√á√ÉO: N√£o incluir SAVEPOINT nesta rotina. ###
       --
       --    --Atualizar titulo Cobranca Atual
       --    SAVEPOINT protestar;
@@ -2374,7 +2374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para Protestar Titulo Migrado
     --
-    --   AlteraÁıes: 20/01/2014 - Ajuste migracao Acredi->Viacredi. ( Renato - Supero )
+    --   Altera√ß√µes: 20/01/2014 - Ajuste migracao Acredi->Viacredi. ( Renato - Supero )
     --
     --               11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                            (Douglas - Importacao de Arquivos CNAB)
@@ -2422,7 +2422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --Email Destino
       vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_idregcob.cdcooper,'INST_TIT_MIGRADO');
       --Se nao encontrou destinatario para as cooperativas 1 ou 16
-      -- O programa progress n„o envia e-mail para as demais cooperativas
+      -- O programa progress n√£o envia e-mail para as demais cooperativas
       IF vr_email_dest IS NULL AND pr_idregcob.cdcooper IN (1,16) THEN
         vr_dscritic:= 'Email de destino para titulo migrado nao encontrado.';
         RAISE vr_exc_erro;
@@ -2435,7 +2435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                   ,pr_des_corpo       => vr_conteudo
                                   ,pr_des_anexo       => NULL
                                   ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                  ,pr_flg_remete_coop => 'N' --> Se o envio ser· do e-mail da Cooperativa
+                                  ,pr_flg_remete_coop => 'N' --> Se o envio ser√° do e-mail da Cooperativa
                                   ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                   ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
                                   ,pr_des_erro        => vr_dscritic);
@@ -2484,10 +2484,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para gerar protesto dos titulos
     --
-    --   AlteraÁıes
+    --   Altera√ß√µes
     --
     --        04/12/2014 - De acordo com a circula 3.656 do Banco Central,substituir
-    --                     nomenclaturas Cedente por Benefici·rio e  Sacado por Pagador
+    --                     nomenclaturas Cedente por Benefici√°rio e  Sacado por Pagador
     --                      Chamado 229313 (Jean Reddiga - RKAM).
     --
     --        11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
@@ -2495,7 +2495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --							
     --        19/05/2016 - Incluido upper em cmapos de index utilizados em cursores (Andrei - RKAM).
     --
-    --        27/09/2017 - Adicionar validaÁ„o para n„o permitir Protestar um Titulo que j·
+    --        27/09/2017 - Adicionar valida√ß√£o para n√£o permitir Protestar um Titulo que j√°
     --                     tenha sido negativado no Serasa (Douglas - Chamado 754911)
     -- ...........................................................................................
   BEGIN
@@ -2578,7 +2578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         RAISE vr_exc_erro;
       END IF;
       ------ VALIDACOES PARA RECUSAR ------
-
+      
       --- Verificar se possui SERASA --- 
       IF rw_crapcob_ret.flserasa = 1    AND
          (rw_crapcob_ret.qtdianeg <> 0  OR
@@ -2891,7 +2891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           RAISE vr_exc_erro;
         END IF;
       ELSIF rw_crapcob_ret.cdbandoc = 85 THEN
-        -- Verifica qual serviÁo de protesto est· sendo utilizado
+        -- Verifica qual servi√ßo de protesto est√° sendo utilizado
         
         OPEN cr_crapcco (pr_cdcooper => rw_crapcob_ret.cdcooper
                         ,pr_nrconven => rw_crapcob_ret.nrcnvcob);
@@ -2956,7 +2956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           BEGIN                      
             --
             UPDATE crapcob
-               SET crapcob.insitcrt = 1 -- Com instruÁ„o de protesto
+               SET crapcob.insitcrt = 1 -- Com instru√ß√£o de protesto
                   ,crapcob.dtbloque = pr_dtmvtolt
                   ,crapcob.dtsitcrt = pr_dtmvtolt
                   ,crapcob.insrvprt = rw_crapcco.insrvprt
@@ -2985,9 +2985,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
         
         IF pr_cdoperad = '1' THEN
-          vr_cdmotivo := 'H2'; -- confirmaÁ„o do protesto autom·tico;
+          vr_cdmotivo := 'H2'; -- confirma√ß√£o do protesto autom√°tico;
         ELSE
-          vr_cdmotivo := 'H1'; -- confirmaÁ„o de solicitacao de protesto pelo cooperado;
+          vr_cdmotivo := 'H1'; -- confirma√ß√£o de solicitacao de protesto pelo cooperado;
         END IF;          
         
         --Prepara retorno cooperado
@@ -3037,7 +3037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END;
   END pc_inst_protestar;
 
-  -- Procedure para retornar os dias ˙teis para o cancelamento
+  -- Procedure para retornar os dias √∫teis para o cancelamento
 	PROCEDURE pc_calc_dias_cancel(pr_cdcooper IN  NUMBER
 		                           ,pr_dtsitcrt IN  DATE
 		                           ,pr_qtdias   IN  NUMBER
@@ -3076,7 +3076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                       ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data de Movimentacao
                                       ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do Operador
                                       ,pr_nrremass  IN crapcob.nrremass%TYPE --> Numero da Remessa
-                                      ,pr_idgerbai  IN NUMBER                --> Indica se deve gerar baixa ou n„o (0-N„o, 1-Sim)
+                                      ,pr_idgerbai  IN NUMBER                --> Indica se deve gerar baixa ou n√£o (0-N√£o, 1-Sim)
                                       ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada
                                       ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
                                       ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
@@ -3092,7 +3092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Procedure para Cancelar o Protesto dos tÌtulos do banco 085
+    --   Objetivo  : Procedure para Cancelar o Protesto dos t√≠tulos do banco 085
     --
     --   Alteracao : 
     --
@@ -3141,7 +3141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -3307,16 +3307,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ELSE -- Fim das validacoes de negativacao Serasa
       
       -- verificar se existe instrucao de sustacao caso o titulo
-      -- tenha sido enviado pra cartorio (2) ou j· em cartorio (3)
+      -- tenha sido enviado pra cartorio (2) ou j√° em cartorio (3)
       IF rw_crapcob.insitcrt IN (2,3) THEN
         -- Verifica se ja existe lote de remessa do convenio
-        IF rw_crapcob.insitcrt = 2 THEN -- se j· foi enviado, verificar no dia seguinte
+        IF rw_crapcob.insitcrt = 2 THEN -- se j√° foi enviado, verificar no dia seguinte
           vr_dtmvtaux := rw_crapdat.dtmvtopr;
         ELSE
           vr_dtmvtaux := pr_dtmvtolt;
         END IF;
         
-        -- se j· est· em cartÛrio, verificar se h· instruÁ„o no dia
+        -- se j√° est√° em cart√≥rio, verificar se h√° instru√ß√£o no dia
         OPEN cr_crapcre (pr_cdcooper => rw_crapcob.cdcooper
                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
                         ,pr_dtmvtolt => vr_dtmvtaux
@@ -3479,7 +3479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     AND craprem.nrcnvcob = rw_crapcob.nrcnvcob
                     AND craprem.nrdconta = rw_crapcob.nrdconta
                     AND craprem.nrdocmto = rw_crapcob.nrdocmto
-                    AND craprem.cdocorre = 9; -- Confirmar a ocorrÍncia -- Revisar            
+                    AND craprem.cdocorre = 9; -- Confirmar a ocorr√™ncia -- Revisar            
           EXCEPTION
             WHEN OTHERS THEN          
               vr_dscritic := 'Erro ao excluir inst de protesto da remessa: ' || SQLERRM;
@@ -3630,7 +3630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     
         WHEN 3 THEN -- titulo com entrada em cartorio
           
-          -- Verifica o prazo de cancelamento do protesto no cartÛrio
+          -- Verifica o prazo de cancelamento do protesto no cart√≥rio
           BEGIN
             --
             SELECT qtdias_cancelamento
@@ -3705,7 +3705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 						PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
 																				 ,pr_cdoperad => pr_cdoperad   --Operador
 																				 ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-																				 ,pr_dsmensag => 'InstruÁ„o de Baixa - Aguardando cancelamento do Protesto' --Descricao Mensagem
+																				 ,pr_dsmensag => 'Instru√ß√£o de Baixa - Aguardando cancelamento do Protesto' --Descricao Mensagem
 																				 ,pr_des_erro => vr_des_erro   --Indicador erro
 																				 ,pr_dscritic => vr_dscritic); --Descricao erro
 					  --
@@ -4047,15 +4047,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            (Douglas - Importacao de Arquivos CNAB)
     --
   --               20/02/2018 - Ajustes mensagens incorretas
-  --                            Para erros ocorridos nas intruÁıes, logar na CRAPCOL
-  --                            Inclus„o raise nos erros de insert/update/delete
+  --                            Para erros ocorridos nas intru√ß√µes, logar na CRAPCOL
+  --                            Inclus√£o raise nos erros de insert/update/delete
   --                            Ajuste erro cursor aberto
-  --                            SusbtituiÁ„o de algumas mensagens por cadastro na CRAPCRI
-  --                            Inclus„o pc_set_modulo
+  --                            Susbtitui√ß√£o de algumas mensagens por cadastro na CRAPCRI
+  --                            Inclus√£o pc_set_modulo
   --                            Ajuste registro de logs com mensagens corretas
   --                            (Ana - Envolti - Ch. 839539)
   --
-  --               09/05/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+  --               09/05/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
     -- ...........................................................................................
   BEGIN
     DECLARE
@@ -4355,8 +4355,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           END IF;
 
           --Grava log de erro da chamada pc_procedimentos_dda_jd
-          vr_cdcritic := vr_cdcritic2;
-          vr_dscritic := vr_dscritic2;
+          vr_cdcritic:= vr_cdcritic2;
+          vr_dscritic:= vr_dscritic2;
           --Levantar Excecao
           RAISE vr_exc_erro;
 
@@ -4416,7 +4416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         BEGIN
           UPDATE crapcob 
           SET    crapcob.idopeleg = rw_crapcob_ret.idopeleg
-          WHERE  crapcob.rowid    = rw_crapcob_ret.rowid;
+          WHERE crapcob.rowid = rw_crapcob_ret.rowid;
         EXCEPTION
           WHEN OTHERS THEN
             --Gravar tabela especifica de log - 20/02/2018 - Ch 839539
@@ -4563,7 +4563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             UPDATE crapcob 
             SET    crapcob.incobran = 3
                               ,crapcob.dtdbaixa = pr_dtmvtolt
-            WHERE  crapcob.rowid = rw_crapcob_ret.rowid;
+            WHERE crapcob.rowid = rw_crapcob_ret.rowid;
           EXCEPTION
             WHEN OTHERS THEN
               --Gravar tabela especifica de log - 20/02/2018 - Ch 839539
@@ -4772,7 +4772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             UPDATE crapcob 
             SET    crapcob.incobran = 3
                               ,crapcob.dtdbaixa = pr_dtmvtolt
-            WHERE  crapcob.rowid = rw_crapcob_ret.rowid;
+            WHERE crapcob.rowid = rw_crapcob_ret.rowid;
           EXCEPTION
             WHEN OTHERS THEN
               --Gravar tabela especifica de log - 20/02/2018 - Ch 839539
@@ -4931,8 +4931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                      ,pr_nrdocmto => rw_crapcob_id.nrdocmto  --> Numero do documento(boleto) 
                                      ,pr_nrremass => pr_nrremass  --> Numero da Remessa
                                      ,pr_cdoperad => pr_cdoperad  --> Codigo do operador
-                                     ,pr_cdcritic => vr_cdcritic  --> CÛdigo da crÌtica
-                                     ,pr_dscritic => vr_dscritic);--> DescriÁ„o da crÌtica
+                                     ,pr_cdcritic => vr_cdcritic  --> C√≥digo da cr√≠tica
+                                     ,pr_dscritic => vr_dscritic);--> Descri√ß√£o da cr√≠tica
 
        -- Verificar se ocorreu erro durante a execucao da instrucao
        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
@@ -4972,7 +4972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         --Gravar tabela especifica de log - 20/02/2018 - Ch 839539
         CECRED.pc_internal_exception;
 
-        -- Montar descriÁ„o de erro n„o tratado
+        -- Montar descri√ß√£o de erro n√£o tratado
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0007.pc_inst_pedido_baixa. '||sqlerrm;
 
@@ -5012,7 +5012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Alteracao : 11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
     --                            (Douglas - Importacao de Arquivos CNAB)
     --
-    --               09/02/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+    --               09/02/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
     --
     -- ...........................................................................................
   BEGIN
@@ -5128,7 +5128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 																		,pr_dtmvtolt            => pr_dtmvtolt
 																		,pr_cdoperad            => pr_cdoperad
 																		,pr_nrremass            => pr_nrremass
-																		,pr_idgerbai            => 1 -- Indica se deve gerar baixa ou n„o (0-N„o, 1-Sim)
+																		,pr_idgerbai            => 1 -- Indica se deve gerar baixa ou n√£o (0-N√£o, 1-Sim)
 																		,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																		,pr_cdcritic            => pr_cdcritic
 																		,pr_dscritic            => pr_dscritic
@@ -5247,11 +5247,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --Fechar Cursor
       CLOSE cr_crapcop;
 
-      -- Buscar par‚metros do cadastro de cobranÁa
+      -- Buscar par√¢metros do cadastro de cobran√ßa
       OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
                       ,pr_nrconven => pr_nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
-      -- Se n„o encontrar registro
+      -- Se n√£o encontrar registro
       IF cr_crapcco%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_crapcco;
@@ -5334,7 +5334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para efetuar a baixa do titulo por decurso de prazo
     --
-    --   AlteraÁıes:
+    --   Altera√ß√µes:
     --          20/01/2014 - Ajuste processo leitura crapcob para ganho de performace ( Renato - Supero )
     --
     --          11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
@@ -5343,9 +5343,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --          31/07/2017 - Fixado valor '5' para baixa por decurso de prazo na CIP. (Rafael)
     --
     --          03/08/2017 - Fixado valor '4' para baixa por decurso de prazo na CIP.
-    --                       A JD est· utilizando cÛdigos diferentes da CIP para baixa. (Rafael)
+    --                       A JD est√° utilizando c√≥digos diferentes da CIP para baixa. (Rafael)
     --
-    --          21/08/2017 - Conforme conversado com o Victor/CobranÁa, ser· fixado valor '2' 
+    --          21/08/2017 - Conforme conversado com o Victor/Cobran√ßa, ser√° fixado valor '2' 
     --                       para baixa por decurso de prazo na CIP. (Rafael)    
     -- ...........................................................................................
   BEGIN
@@ -5428,11 +5428,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --Fechar Cursor
       CLOSE cr_crapcop;
 
-      -- Buscar par‚metros do cadastro de cobranÁa
+      -- Buscar par√¢metros do cadastro de cobran√ßa
       OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
                       ,pr_nrconven => pr_nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
-      -- Se n„o encontrar registro
+      -- Se n√£o encontrar registro
       IF cr_crapcco%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_crapcco;
@@ -5730,7 +5730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para Sustar Protesto e Baixar Titulo
     --
-    --   AlteraÁıes:
+    --   Altera√ß√µes:
     --          20/01/2014 - Ajuste processo leitura crapcob para ganho de performace ( Renato - Supero )
     --
     --          11/01/2016 - Procedure movida da package PAGA0001 para COBR0007 
@@ -5785,11 +5785,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
 
-      -- Buscar par‚metros do cadastro de cobranÁa
+      -- Buscar par√¢metros do cadastro de cobran√ßa
       OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
                       ,pr_nrconven => pr_nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
-      -- Se n„o encontrar registro
+      -- Se n√£o encontrar registro
       IF cr_crapcco%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_crapcco;
@@ -5893,7 +5893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_vltitabr   NUMBER(25,2);
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -6104,7 +6104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END IF;
 
     vr_vltitabr := rw_crapcob.vltitulo - rw_crapcob.vldescto - pr_vlabatim;
-    --> Verificar se valor do titulo ficar· menor que o valor minimo
+    --> Verificar se valor do titulo ficar√° menor que o valor minimo
     IF rw_crapcob.inpagdiv = 1 AND 
        rw_crapcob.vlminimo > vr_vltitabr THEN
       -- Gerar o retorno para o cooperado 
@@ -6205,7 +6205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     -- tratamento para titulos migrados
     IF rw_crapcob.flgregis = 1    AND
        rw_crapcob.cdbandoc = 001  THEN
-      -- Realizar a pesquisa dos Par‚metros do cadastro de cobranÁa
+      -- Realizar a pesquisa dos Par√¢metros do cadastro de cobran√ßa
       OPEN cr_crapcco (pr_cdcooper => rw_crapcob.cdcooper,
                        pr_nrconven => rw_crapcob.nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
@@ -6489,7 +6489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -7048,7 +7048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -7296,7 +7296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END IF;
     
     IF rw_crapcob.incobran = 0  AND   -- 0 - Em Aberto
-       rw_crapcob.insitcrt <> 0 THEN  -- Qualquer situaÁao diferente de zero
+       rw_crapcob.insitcrt <> 0 THEN  -- Qualquer situa√ßao diferente de zero
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                          ,pr_cdocorre => 26   -- Instrucao Rejeitada
@@ -7654,7 +7654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -7865,7 +7865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     END IF;
     
     vr_vltitabr := rw_crapcob.vltitulo - pr_vldescto - rw_crapcob.vlabatim;
-    --> Verificar se valor do titulo ficar· menor que o valor minimo
+    --> Verificar se valor do titulo ficar√° menor que o valor minimo
     IF rw_crapcob.inpagdiv = 1 AND 
        rw_crapcob.vlminimo > vr_vltitabr THEN
       -- Gerar o retorno para o cooperado 
@@ -8270,7 +8270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -8563,7 +8563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Atualizar Cobranca
     BEGIN
       UPDATE crapcob SET crapcob.vldescto = rw_crapcob.vldescto,
-                         crapcob.cdmensag = 0, --> marcar como n„o possui desconto
+                         crapcob.cdmensag = 0, --> marcar como n√£o possui desconto
                          crapcob.idopeleg = rw_crapcob.idopeleg
       WHERE crapcob.rowid = rw_crapcob.rowid;
     EXCEPTION
@@ -8835,7 +8835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -9207,7 +9207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-      vr_dscritic:= 'Praca nao executante de protesto ñ Instrucao nao efetuada';
+      vr_dscritic:= 'Praca nao executante de protesto ‚Äì Instrucao nao efetuada';
       --Retornar
       RAISE vr_exc_erro;
     END IF;
@@ -9308,7 +9308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --   Alteracao : 22/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
     --
-    --               08/02/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+    --               08/02/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
     --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -9342,7 +9342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de controle retorno titulos bancarios
     rw_crapcre    COBR0007.cr_crapcre%ROWTYPE;
@@ -9735,7 +9735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       -- Recusar a instrucao
       vr_dscritic := 'Boleto do Banco 085 - Instr. Sustar nao efetuada!';*/
       
-      -- Verifica o prazo de cancelamento do protesto no cartÛrio
+      -- Verifica o prazo de cancelamento do protesto no cart√≥rio
       IF rw_crapcob.insitcrt = 3 THEN
         --
         BEGIN
@@ -9955,11 +9955,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --               09/06/2017 - Ajustar para tratar as negativacoes do serasa (Douglas - Melhoria 271.2)
     --
-    --               08/02/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+    --               08/02/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
     --
     --               29/09/2017 - Ajustado com UPPER para remover a mensagem "** SERVICO DE PROTESTO 
     --                            SERA EFETUADO PELO BANCO DO BRASIL **" quando cancelar a 
-    --                            instruÁ„o de protesto (Douglas - Chamado 754911)
+    --                            instru√ß√£o de protesto (Douglas - Chamado 754911)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -10005,7 +10005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -10526,7 +10526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     END IF;
     END IF;
-
+    
     --Se tem remesssa dda na tabela
     IF vr_tab_remessa_dda.COUNT > 0 THEN
       rw_crapcob.idopeleg:= vr_tab_remessa_dda(vr_tab_remessa_dda.LAST).idopeleg;
@@ -10736,7 +10736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     END IF;
     END IF;
-
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
@@ -10782,9 +10782,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --               29/09/2017 - Ajustado com UPPER para remover a mensagem "** SERVICO DE PROTESTO 
     --                            SERA EFETUADO PELO BANCO DO BRASIL **" quando cancelar a 
-    --                            instruÁ„o de protesto (Douglas - Chamado 754911)
+    --                            instru√ß√£o de protesto (Douglas - Chamado 754911)
     --
-    --               08/02/2018 - AlteraÁıes referente ao PRJ352 - Nova soluÁ„o de protesto
+    --               08/02/2018 - Altera√ß√µes referente ao PRJ352 - Nova solu√ß√£o de protesto
     --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -10798,7 +10798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     --
     rw_crapcco    COBR0007.cr_crapcco%ROWTYPE;
@@ -10822,11 +10822,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Fechar Cursor
     CLOSE cr_crapcop;
 
-    -- Buscar par‚metros do cadastro de cobranÁa
+    -- Buscar par√¢metros do cadastro de cobran√ßa
     OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
                     ,pr_nrconven => pr_nrcnvcob);
     FETCH cr_crapcco INTO rw_crapcco;
-    -- Se n„o encontrar registro
+    -- Se n√£o encontrar registro
     IF cr_crapcco%NOTFOUND THEN
       --Fechar Cursor
       CLOSE cr_crapcco;
@@ -10852,7 +10852,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Posicionar no proximo registro
     FETCH cr_crapcob INTO rw_crapcob;
     CLOSE cr_crapcob;
-
+		--
+    IF rw_crapcob.inserasa <> 0 THEN
+			--
+			SSPC0002.pc_cancelar_neg_serasa(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+																		 ,pr_nrcnvcob => pr_nrcnvcob --> Numero do convenio de cobranca. 
+																		 ,pr_nrdconta => pr_nrdconta --> Numero da conta/dv do associado.
+																		 ,pr_nrdocmto => pr_nrdocmto --> Numero do documento(boleto) 
+																		 ,pr_nrremass => pr_nrremass --> Numero da Remessa
+																		 ,pr_cdoperad => pr_cdoperad --> Codigo do operador
+																		 ,pr_cdcritic => vr_cdcritic --> C√≥digo da cr√≠tica
+																		 ,pr_dscritic => vr_dscritic --> Descri√ß√£o da cr√≠tica
+																		 );
+			--
+		ELSE
+			--
     IF rw_crapcob.cdbandoc = 085 THEN
       --
       pc_inst_cancel_protesto_85(pr_cdcooper            => pr_cdcooper
@@ -10863,7 +10877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                 ,pr_dtmvtolt => pr_dtmvtolt
                                 ,pr_cdoperad => pr_cdoperad
                                 ,pr_nrremass => pr_nrremass
-                                ,pr_idgerbai            => 0 -- Indica se deve gerar baixa ou n„o (0-N„o, 1-Sim)
+                                ,pr_idgerbai            => 0 -- Indica se deve gerar baixa ou n√£o (0-N√£o, 1-Sim)
                                 ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
                                 ,pr_cdcritic            => pr_cdcritic
                                 ,pr_dscritic            => pr_dscritic
@@ -10909,6 +10923,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
       --
     END IF;
+    --
+		END IF;
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -10967,7 +10983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -11060,7 +11076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                          ,pr_cdocorre => 26   -- Instrucao Rejeitada
-                                         ,pr_cdmotivo => 'A7' -- Titulo j· possui instrucao
+                                         ,pr_cdmotivo => 'A7' -- Titulo j√° possui instrucao
                                          ,pr_vltarifa => 0    -- Valor da Tarifa  
                                          ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                                          ,pr_cdagectl => rw_crapcop.cdagectl
@@ -11082,7 +11098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
     -----  VALIDACOES PARA RECUSAR  -----
     IF rw_crapcob.incobran = 0  AND   -- 0 - Em Aberto
-       rw_crapcob.insitcrt NOT IN (0, 4) THEN  -- Qualquer situaÁ„o diferente de zero ou quatro
+       rw_crapcob.insitcrt NOT IN (0, 4) THEN  -- Qualquer situa√ß√£o diferente de zero ou quatro
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
                                          ,pr_cdocorre => 26   -- Instrucao Rejeitada
@@ -11102,10 +11118,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
       -- Recusar a instrucao
       vr_dscritic := 'Titulo com movimentacao cartoraria' ||
-                     ' - Inst. Auto. Protesto n„o efetuada!';
+                     ' - Inst. Auto. Protesto n√£o efetuada!';
       RAISE vr_exc_erro;
     END IF;
-    -- Verifica se a quantidade de dias est· dentro do mÌnimo e m·ximo parametrizados na CRAPCEB
+    -- Verifica se a quantidade de dias est√° dentro do m√≠nimo e m√°ximo parametrizados na CRAPCEB
     vr_dscritic := NULL;
     --
     BEGIN
@@ -11132,11 +11148,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 				WHEN no_data_found THEN
 					NULL;
 				WHEN OTHERS THEN
-					vr_dscritic := 'Erro ao buscar a parametrizaÁ„o dos dias min e max de limite para protesto: ' || SQLERRM;
+					vr_dscritic := 'Erro ao buscar a parametriza√ß√£o dos dias min e max de limite para protesto: ' || SQLERRM;
 					RAISE vr_exc_erro;
 			END;       
          
-      -- 2) se o cooperado n„o possuir os limites, ent„o consultar os limites da cooperativa
+      -- 2) se o cooperado n√£o possuir os limites, ent√£o consultar os limites da cooperativa
       IF vr_qtlimmip = 0 AND 
          vr_qtlimaxp = 0 THEN
          
@@ -11146,8 +11162,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                                ,pr_des_erro => vr_des_erro
                                                ,pr_dscritic => vr_dscritic2);
                                                
-         -- se a cooperativa n„o possuir os limites, ent„o utilizar os limites
-         -- j· utilizados nos convÍnios de cobranÁa BB
+         -- se a cooperativa n√£o possuir os limites, ent√£o utilizar os limites
+         -- j√° utilizados nos conv√™nios de cobran√ßa BB
          IF vr_qtlimmip = 0 AND
             vr_qtlimaxp = 0 THEN
             vr_qtlimmip := 5;
@@ -11157,7 +11173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao buscar a parametrizaÁ„o dos dias min e max de limite para protesto: ' || SQLERRM;
+        vr_dscritic := 'Erro ao buscar a parametriza√ß√£o dos dias min e max de limite para protesto: ' || SQLERRM;
     END;
     --
     IF vr_dscritic IS NULL THEN
@@ -11193,7 +11209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --
     END IF;
 		
-		-- Verificar se o prazo È v·lido
+		-- Verificar se o prazo √© v√°lido
     IF (rw_crapcob.dtvencto + pr_qtdiaprt) <= pr_dtmvtolt THEN
 			-- Gerar o retorno para o cooperado 
         COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
@@ -11218,7 +11234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 			--
 		END IF;
     
-    -- se o cooperado n„o estiver habilitado para protestar, criticar
+    -- se o cooperado n√£o estiver habilitado para protestar, criticar
     IF nvl(vr_flprotes,0) = 0 THEN
         
       -- Gerar o retorno para o cooperado 
@@ -11243,6 +11259,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;       
         
     END IF;
+    
+		-- Verificar se j√° possui servi√ßo do SERASA
+    IF rw_crapcob.flserasa = 1 OR rw_crapcob.qtdianeg > 0 OR rw_crapcob.inserasa > 0 THEN
+			-- Gerar o retorno para o cooperado 
+			COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+																				,pr_cdocorre => 26   -- Instrucao Rejeitada
+																				,pr_cdmotivo => '39' -- Motivo
+																				,pr_vltarifa => 0    -- Valor da Tarifa  
+																				,pr_cdbcoctl => rw_crapcop.cdbcoctl
+																				,pr_cdagectl => rw_crapcop.cdagectl
+																				,pr_dtmvtolt => pr_dtmvtolt
+																				,pr_cdoperad => pr_cdoperad
+																				,pr_nrremass => pr_nrremass
+																				,pr_cdcritic => vr_cdcritic
+																				,pr_dscritic => vr_dscritic
+																				);
+        -- Verifica se ocorreu erro durante a execucao
+        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Recusar a instrucao
+        vr_dscritic := 'Boleto com instru√ß√£o de negativa√ß√£o!';
+        RAISE vr_exc_erro;
+			--
+		END IF;
     
     ------ FIM - VALIDACOES PARA RECUSAR ------
 
@@ -11367,7 +11409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
   END pc_inst_aut_protesto;
   
-  -- Procedure para excluir Protesto com Carta de AnuÍncia EletrÙnica
+  -- Procedure para excluir Protesto com Carta de Anu√™ncia Eletr√¥nica
   PROCEDURE pc_exc_prtst_anuencia_eletr(pr_cdcooper            IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                        ,pr_nrdconta            IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                        ,pr_nrcnvcob            IN crapcob.nrcnvcob%TYPE --> Numero do Convenio
@@ -11391,7 +11433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Procedure para excluir Protesto com Carta de AnuÍncia EletrÙnica
+    --   Objetivo  : Procedure para excluir Protesto com Carta de Anu√™ncia Eletr√¥nica
     --
     --   Alteracao : 
     --
@@ -11440,7 +11482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -11564,7 +11606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         RAISE vr_exc_erro;
       --
     END;
-    -- Verifica se o estado permite carta de anuÍncia eletrÙnica
+    -- Verifica se o estado permite carta de anu√™ncia eletr√¥nica
     BEGIN
       --
       SELECT NVL(INSTR(dsuf,vr_cdufsaca),0)
@@ -11576,7 +11618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       WHEN OTHERS THEN
          vr_dscritic := 'Erro ao buscar a parametrizacao de UFs que permitem carta de anuencia eletronica: ' || SQLERRM;
     END;
-    -- Verifica se encontrou o estado na lista de estados com permiss„o de emiss„o de carta de anuÍncia eletrÙnica
+    -- Verifica se encontrou o estado na lista de estados com permiss√£o de emiss√£o de carta de anu√™ncia eletr√¥nica
     IF vr_idpercar = 0 THEN
       -- Preparar Lote de Retorno Cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
@@ -11601,7 +11643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --
     END IF;
       
-    -- Verifica se j· existe exclusao de protesto emitida para o boleto
+    -- Verifica se j√° existe exclusao de protesto emitida para o boleto
     vr_idpercar := 0;
     --
     BEGIN
@@ -11613,8 +11655,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
          AND crapret.nrcnvcob = rw_crapcob.nrcnvcob
          AND crapret.nrdconta = rw_crapcob.nrdconta
          AND crapret.nrdocmto = rw_crapcob.nrdocmto
-         AND crapret.cdocorre = 98 -- exclus„o de protesto
-         AND crapret.cdmotivo = 'F1'; -- exclus„o enviada ao cartÛrio
+         AND crapret.cdocorre = 98 -- exclus√£o de protesto
+         AND crapret.cdmotivo = 'F1'; -- exclus√£o enviada ao cart√≥rio
       --
     EXCEPTION
       WHEN no_data_found THEN
@@ -11622,7 +11664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao verificar se ja existe carta de anuencia eletronica emitida para o boleto: ' || SQLERRM;
     END;
-    -- Verifica se encontrou lanÁamento de carta de anuÍncia eletrÙnica
+    -- Verifica se encontrou lan√ßamento de carta de anu√™ncia eletr√¥nica
     IF vr_idpercar > 0 THEN
       -- Preparar Lote de Retorno Cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
@@ -11791,7 +11833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS --------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -11863,7 +11905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
     END IF;
 
-    -- Verificar se boleto j· est· na situaÁao pretendida
+    -- Verificar se boleto j√° est√° na situa√ßao pretendida
     IF rw_crapcob.inemiten = 3  THEN
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
@@ -11883,7 +11925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
 
       -- Recusar a instrucao
-      vr_dscritic := 'Boleto ja e Cooperativa Emite e Expede ñ Alteracao nao efetuada';
+      vr_dscritic := 'Boleto ja e Cooperativa Emite e Expede ‚Äì Alteracao nao efetuada';
       RAISE vr_exc_erro;
     END IF;
 
@@ -11913,7 +11955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
 
       -- Recusar a instrucao
-      vr_dscritic := 'Cooperado nao possui modalidade de emissao Cooperativa/EE habilitada ñ Alteracao nao efetuada';
+      vr_dscritic := 'Cooperado nao possui modalidade de emissao Cooperativa/EE habilitada ‚Äì Alteracao nao efetuada';
       RAISE vr_exc_erro;
     END IF;
     IF cr_crapceb%ISOPEN THEN
@@ -12164,7 +12206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS --------------------------------
     -- Registro da Cooperativa
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
     -- Registro de Remessa
     rw_craprem    COBR0007.cr_craprem%ROWTYPE;
@@ -12685,7 +12727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
     ------------------------------- VARIAVEIS -------------------------------
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob2%ROWTYPE;
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
 
@@ -12709,7 +12751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Fechar Cursor
     CLOSE cr_crapcop;
     
-    -- Verificar cobranÁa
+    -- Verificar cobran√ßa
     OPEN cr_crapcob2(pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
                      pr_nrcnvcob => pr_nrcnvcob,
@@ -12869,7 +12911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     ------------------------------- VARIAVEIS -------------------------------
     rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
 
-    -- Registro de CobranÁa
+    -- Registro de Cobran√ßa
     rw_crapcob    COBR0007.cr_crapcob2%ROWTYPE;
 
   BEGIN
@@ -12892,7 +12934,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Fechar Cursor
     CLOSE cr_crapcop;
     
-    -- Verificar cobranÁa
+    -- Verificar cobran√ßa
     OPEN cr_crapcob2(pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
                      pr_nrcnvcob => pr_nrcnvcob,
@@ -12909,7 +12951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Fechar Cursor
     CLOSE cr_crapcob2;    
 
-    -- Caso a situaÁ„o for diferente de "ABERTO" n„o habilitar SMS e n„o retornar como um erro 
+    -- Caso a situa√ß√£o for diferente de "ABERTO" n√£o habilitar SMS e n√£o retornar como um erro 
     -- (seguir o fluxo normal)
     IF rw_crapcob.incobran <> 0 THEN
       RAISE vr_exc_saida;

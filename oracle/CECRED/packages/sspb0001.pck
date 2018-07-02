@@ -78,6 +78,10 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
 	     	        17/04/2018 - Ajuste nas mensagens PAG0101 para inativar a situacao das PAGs
                              que nao estiverem no arquivo (SD 639810 - Andrino (Mouts))
+
+                23/04/2018 - Inclusao da conta de pagamento para PAG0137 e STR0037
+                             (Andrino - Mouts / RITM0011281)
+
 ..............................................................................*/
 
   --criação TempTable
@@ -3053,11 +3057,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <CtDebtd>'||     pr_nrdconta ||'</CtDebtd>
                         <CPFCliDebtd>'|| pr_cpfcgemi ||'</CPFCliDebtd>
                         <NomCliDebtd>'|| pr_nmpesemi ||'</NomCliDebtd>
-                        <ISPBIFCredtd>'||pr_ispbcred ||'</ISPBIFCredtd>
-                        <AgCredtd>'||    vr_cdagenbc ||'</AgCredtd>
+                        <ISPBIFCredtd>'||pr_ispbcred ||'</ISPBIFCredtd>');
+      -- Verificar se eh Conta Corrente/Poupanca
+      IF pr_dsdctacr = 'PG' THEN
+        -- Enviar apenas quando for Conta de Pagamento
+        pc_escreve_xml(  '<TpCtCredtd>'|| pr_dsdctacr  ||'</TpCtCredtd>  
+                          <CtPgtoCredtd>' || vr_nrcctrcb2 || '</CtPgtoCredtd>');  
+      ELSE
+        -- Enviar agencia e conta apenas quando for Conta Corrente/Poupanca
+        pc_escreve_xml(  '<AgCredtd>'  || vr_cdagenbc  || '</AgCredtd>
                         <TpCtCredtd>'||  pr_dsdctacr ||'</TpCtCredtd>
-                        <CtCredtd>'||    pr_nrcctrcb ||'</CtCredtd>
-                        <VlrLanc>'||     vr_vldocmto ||'</VlrLanc>
+                          <CtCredtd>'  || vr_nrcctrcb1 || '</CtCredtd>');
+      END IF;
+      -- Escreve o resto da mensagem
+      pc_escreve_xml(  '<VlrLanc>'||     vr_vldocmto ||'</VlrLanc>
                         <DtMovto>'||     pr_dtmvtolt ||'</DtMovto>
                       </'||vr_nmmsgenv ||'>
                       </SISMSG>');
@@ -4172,6 +4185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              ,ccs.nrdigtrf
              ,ccs.nmfuncio
              ,ccs.nrcpfcgc
+             ,ccs.tpctatrf -- Andrino
              ,lcs.nrdocmto
              ,lcs.vllanmto
              ,lcs.dtmvtolt
@@ -4240,6 +4254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        nrdocmto craplcs.nrdocmto%TYPE,
        vllanmto craplcs.vllanmto%TYPE,
        dtmvtolt craplcs.dtmvtolt%TYPE,
+       tpctatrf crapccs.tpctatrf%TYPE, -- Andrino
        tppessoa INTEGER,
        nrridlfp craplcs.progress_recid%TYPE);
 
@@ -4614,6 +4629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            vr_tab_crattem(vr_contador).nrdocmto := rw_crapccs.nrdocmto;
            vr_tab_crattem(vr_contador).vllanmto := rw_crapccs.vllanmto;
            vr_tab_crattem(vr_contador).dtmvtolt := rw_crapccs.dtmvtolt;
+           vr_tab_crattem(vr_contador).tpctatrf := rw_crapccs.tpctatrf; -- Andrino
            vr_tab_crattem(vr_contador).tppessoa := 1;
            vr_tab_crattem(vr_contador).nrridlfp := rw_crapccs.nrridlfp;
 
@@ -4687,7 +4703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_nrcctrcb => vr_tab_crattem(vr_idxtbtem).nrctatrf   --> Nr.Ct.destino
                                 ,pr_cdfinrcb => 10                                     --> Finalidade
                                 ,pr_tpdctadb => 1                                      --> Tp. conta deb
-                                ,pr_tpdctacr => 1                                      --> Tp conta cred
+                                ,pr_tpdctacr => vr_tab_crattem(vr_idxtbtem).tpctatrf   --> Tp conta cred
                                 ,pr_nmpesemi => vr_tab_crattem(vr_idxtbtem).nmfuncio   --> Nome Do titular
                                 ,pr_nmpesde1 => ''                                     --> Nome De 2TTT
                                 ,pr_cpfcgemi => to_number(vr_tab_crattem(vr_idxtbtem).nrcpfcgc)   --> CPF/CNPJ Do titular
@@ -4882,6 +4898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              ,ccs.nrdigtrf
              ,ccs.nmfuncio
              ,ccs.nrcpfcgc
+             ,ccs.tpctatrf -- Andrino
              ,lcs.nrdocmto
              ,lcs.vllanmto
              ,lcs.dtmvtolt
@@ -4927,6 +4944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        nrdocmto craplcs.nrdocmto%TYPE,
        vllanmto craplcs.vllanmto%TYPE,
        dtmvtolt craplcs.dtmvtolt%TYPE,
+       tpctatrf crapccs.tpctatrf%TYPE, -- Andrino
        tppessoa INTEGER);
 
   TYPE typ_tab_crattem IS
@@ -5197,6 +5215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        vr_tab_crattem(vr_contador).nrdocmto := rw_crapccs.nrdocmto;
        vr_tab_crattem(vr_contador).vllanmto := rw_crapccs.vllanmto;
        vr_tab_crattem(vr_contador).dtmvtolt := rw_crapccs.dtmvtolt;
+       vr_tab_crattem(vr_contador).tpctatrf := rw_crapccs.tpctatrf; -- Andrino
        vr_tab_crattem(vr_contador).tppessoa := 1;
 
          -- Atualiza a capa do lote
@@ -5274,7 +5293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_nrcctrcb => vr_tab_crattem(vr_idxtbtem).nrctatrf   --> Nr.Ct.destino
                                 ,pr_cdfinrcb => 10                                     --> Finalidade
                                 ,pr_tpdctadb => 1                                      --> Tp. conta deb
-                                ,pr_tpdctacr => 1                                      --> Tp conta cred
+                                ,pr_tpdctacr => vr_tab_crattem(vr_idxtbtem).tpctatrf   --> Tp conta cred
                                 ,pr_nmpesemi => vr_tab_crattem(vr_idxtbtem).nmfuncio   --> Nome Do titular
                                 ,pr_nmpesde1 => ''                                     --> Nome De 2TTT
                                 ,pr_cpfcgemi => to_number(vr_tab_crattem(vr_idxtbtem).nrcpfcgc)   --> CPF/CNPJ Do titular

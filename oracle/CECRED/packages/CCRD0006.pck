@@ -10,8 +10,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --
   --  Alteracoes: 14/06/2017 - Criação da rotina.
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
+  --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
 
-
+   
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
   vr_dtprocessoexec          crapdat.dtmvtolt%TYPE;
@@ -419,6 +420,11 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                               ,pr_NomCliCredtd       IN VARCHAR2
                               ,pr_DtHrSLC            IN VARCHAR2
                               ,pr_DtMovto            IN VARCHAR2
+                              ,pr_Tptransacao_SLC    IN VARCHAR2
+                              ,pr_nmarquivo_slc      IN VARCHAR2
+                              ,pr_cdcontrole_slc_original IN VARCHAR2
+                              ,pr_tpdevolucao_liquidacao  IN VARCHAR2
+                              ,pr_nrcontrole_emissor_arq  IN VARCHAR2
                               ,pr_dscritic           OUT VARCHAR2);
 
   FUNCTION fn_valida_liquid_antecipacao (pr_vlrlancto     IN NUMBER
@@ -10496,6 +10502,11 @@ from  (
                               ,pr_NomCliCredtd       IN VARCHAR2
                               ,pr_DtHrSLC            IN VARCHAR2
                               ,pr_DtMovto            IN VARCHAR2
+                              ,pr_Tptransacao_SLC    IN VARCHAR2
+                              ,pr_nmarquivo_slc      IN VARCHAR2
+                              ,pr_cdcontrole_slc_original IN VARCHAR2
+                              ,pr_tpdevolucao_liquidacao  IN VARCHAR2
+                              ,pr_nrcontrole_emissor_arq  IN VARCHAR2
                               ,pr_dscritic           OUT VARCHAR2) IS
   BEGIN
     INSERT INTO TBDOMIC_LIQTRANS_MENSAGEM_SLC
@@ -10517,7 +10528,12 @@ from  (
           ,NMCLIENTE_CREDITADO
           ,DHSLC
           ,DTMOVIMENTO
-          ,INSITUACAO)
+          ,INSITUACAO
+          ,TPTRANSACAO_SLC 
+          ,NMARQUIVO_SLC
+          ,CDCONTROLE_SLC_ORIGINAL
+          ,TPDEVOLUCAO_LIQUIDACAO
+          ,NRCONTROLE_EMISSOR_ARQUIVO)
     VALUES
           (trunc(SYSDATE)
           ,pr_CodMsg
@@ -10537,7 +10553,13 @@ from  (
           ,decode(pr_NomCliCredtd,'-1',NULL,pr_NomCliCredtd)
           ,to_date(pr_DtHrSLC, 'YYYY-MM-DD"T"HH24:MI:SS')
           ,to_date(pr_DtMovto, 'YYYY-MM-DD')
-          ,0);
+          ,0
+          ,decode(pr_tptransacao_slc,'-1',NULL,pr_tptransacao_slc)
+          ,decode(pr_nmarquivo_slc,'-1',NULL,pr_nmarquivo_slc)
+          ,decode(pr_cdcontrole_slc_original,'-1',NULL,pr_cdcontrole_slc_original)
+          ,decode(pr_tpdevolucao_liquidacao,'-1',NULL,pr_tpdevolucao_liquidacao)
+          ,decode(pr_nrcontrole_emissor_arq,'-1',NULL,pr_nrcontrole_emissor_arq)
+          );
 
   EXCEPTION
      when DUP_VAL_ON_INDEX THEN 

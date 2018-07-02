@@ -22,6 +22,9 @@
 					
 				  05/04/2018 - Ajuste na tela ctasal para que caso o operador tente inserir o nome do funcionario
 							   com apenas um caractere especial, não permita cadastrar. (SD 866541 - Kelvin)
+							   
+				  14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+                               Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
   
  */
 
@@ -64,6 +67,7 @@ function carregaDados(){
 	nrdigtrf = $('#nrdigtrf','#frmDados').val();
 	nrctatrf = $('#nrctatrf','#frmDados').val();
 	nrcpfcgc = $('#nrcpfcgc','#frmDados').val();
+	tpctatrf = $('#tpctatrf','#frmDados').val();
 
 	nrdconta = normalizaNumero( nrdconta );
 	nrcpfcgc = normalizaNumero( nrcpfcgc );
@@ -202,6 +206,7 @@ function controlaLayout() {
 			cCdagetrf.habilitaCampo();
 			cNrctatrf.habilitaCampo();
 			cNrdigtrf.habilitaCampo();
+			cTpctatrf.habilitaCampo();
 			break;
 		case "X":
 			cTodosDados.desabilitaCampo();
@@ -220,6 +225,22 @@ function controlaLayout() {
 			$('#frmDados').limpaFormulario();
 			break;
 	}
+	
+	// Sempre que entrar na tela e o valor do campo Tipo de Conta for 3 (conta de pagamento) ira desabilitar e limpar o campo Agencia
+	if (cTpctatrf.val() == 3) {
+		cCdagetrf.desabilitaCampo();
+		cCdagetrf.val('');
+	}
+
+	cTpctatrf.unbind('change').bind('change', function(e) {
+		if ($(this).val() == 3) {
+			cCdagetrf.val('');
+			cDsagetrf.val('');
+			cCdagetrf.desabilitaCampo();
+		} else {
+			cCdagetrf.habilitaCampo();
+		}
+	});
 
 	return false;
 }
@@ -230,7 +251,7 @@ function Gera_Impressao(nrdconrt) {
 	var action = UrlSite + 'telas/ctasal/imprimir_dados.php';
 	var sidlogin = $("#sidlogin", "#frmMenu").val();
 	var nrdconta;
-	
+
 	if (cCddopcao.val() == 'I') 
 		 nrdconta = nrdconrt;
 	else 
@@ -372,6 +393,7 @@ function formataDados(){
 	rDtcantrf = $('label[for="dtcantrf"]','#frmDados');
 	rCdsitcta = $('label[for="cdsitcta"]','#frmDados');
 	rCdagetrf = $('label[for="cdagetrf"]','#frmDados');
+	rTpctatrf = $('label[for="tpctatrf"]','#frmDados');
 
 	cNmfuncio = $('#nmfuncio','#frmDados').addClass('alpha');
 	cNrcpfcgc = $('#nrcpfcgc','#frmDados');
@@ -388,6 +410,7 @@ function formataDados(){
 	cCdsitcta = $('#cdsitcta','#frmDados');
 	cCdagetrf = $('#cdagetrf','#frmDados');
 	cDsagetrf = $('#dsagetrf','#frmDados');
+	cTpctatrf = $('#tpctatrf','#frmDados');
 
 	rNmfuncio.css({'width':'100px'}).addClass('rotulo');
 	rNrcpfcgc.css({'width':'100px'}).addClass('rotulo');
@@ -404,6 +427,7 @@ function formataDados(){
 	rDtadmiss.css({'width':'90px'});
 	rDtcantrf.addClass('rotulo-linha');
 	rCdsitcta.addClass('rotulo-linha');
+	rTpctatrf.css({'width':'262px'}).addClass('rotulo');
 
 	cNmfuncio.css({'width':'380px'});
 	cNrcpfcgc.css({'width':'100px'});
@@ -420,6 +444,7 @@ function formataDados(){
 	cDtadmiss.css({'width':'75px' }).addClass('data');
 	cDtcantrf.css({'width':'75px' }).addClass('data');
 	cCdsitcta.css({'width':'100px'});
+	cTpctatrf.css({'width':'218px'});
 
 	highlightObjFocus( $('#frmDados') );
 
@@ -461,6 +486,7 @@ function manterRotina( operacao ) {
 				nrdigtrf    : nrdigtrf,
 				nrctatrf    : nrctatrf,
 				nrcpfcgc    : nrcpfcgc,
+				tpctatrf    : tpctatrf,
 				redirect	: 'script_ajax'
 			},
 			error: function(objAjax,responseError,objExcept) {

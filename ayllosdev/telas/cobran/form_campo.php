@@ -21,16 +21,16 @@
 	require_once('../../class/xmlfile.php');
 	
 	$cdinstru 	= $_POST['cdinstru'];
+	
+	if ($cdinstru == 80) {
 	$nrdconta 	= $_POST['nrdconta'];
-	$nrconven 	= $_POST['nrconven'];
-	$nrcnvceb	= '0';
+		$nrcnvcob 	= $_POST['nrcnvcob'];
 	
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <nrconven>".$nrconven."</nrconven>";
-	$xml .= "   <nrcnvceb>".$nrcnvceb."</nrcnvceb>";
+		$xml .= "   <nrconven>".$nrcnvcob."</nrconven>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
@@ -47,8 +47,9 @@
 	  exit();
 	}
 	
-	$qtlimmip = $xmlObj->roottag->tags[0]->tags[4]->tags[0]->cdata;
-	$qtlimaxp = $xmlObj->roottag->tags[0]->tags[4]->tags[1]->cdata;
+		$qtlimmip = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+		$qtlimaxp = $xmlObj->roottag->tags[0]->tags[1]->cdata;
+	}
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" >
