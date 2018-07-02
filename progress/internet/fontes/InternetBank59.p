@@ -235,6 +235,12 @@ IF  par_idrelato = 1 OR
                 CREATE xml_operacao.
                    
                 IF  par_idrelato = 1 OR par_idrelato = 4 THEN    
+                    DO:
+                        ASSIGN tt-consulta-blt.dssituac = SUBSTR(tt-consulta-blt.dssituac,1,10).
+                
+                        IF  R-INDEX(tt-consulta-blt.dssituac,"/TD") > 0 THEN
+                            ASSIGN tt-consulta-blt.dssituac = SUBSTR(tt-consulta-blt.dssituac,1,R-INDEX(tt-consulta-blt.dssituac,"/TD") - 1).                                                     
+                    
                     xml_operacao.dslinxml = "<boleto><nossonro>" +
                                             tt-consulta-blt.nrnosnum +
                                             "</nossonro><nmdsacad>" +
@@ -274,7 +280,7 @@ IF  par_idrelato = 1 OR
                                             "</cdagepag><cdsituac>" +
                                             tt-consulta-blt.cdsituac +
                                             "</cdsituac><dssituac>" + 
-                                            SUBSTR(tt-consulta-blt.dssituac,1,10) + tt-consulta-blt.flgdesco +
+                                                tt-consulta-blt.dssituac + tt-consulta-blt.flgdesco +
                                             "</dssituac><flgdesco>" +
                                             tt-consulta-blt.flgdesco +
                                             "</flgdesco><dtelimin>" +
@@ -295,6 +301,7 @@ IF  par_idrelato = 1 OR
                                             "</dsemitnt><dtdocmto>" +
                                              STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +
                                             "</dtdocmto></boleto>".            
+                    END.
                 ELSE
                 IF  par_idrelato = 3  THEN
                     xml_operacao.dslinxml = "<boleto><nossonro>" +
