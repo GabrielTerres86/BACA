@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 23/08/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 27/06/2018
 
    Dados referentes ao programa:
 
@@ -125,6 +125,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 							  pelo AD. (PRJ339 - Reinert)
                  
                  18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+				 
+                 27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+				                       PC_INCLUIR_NOVA_APLICACAO e PC_EFETUA_RESGATE_ONLINE
+			   
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -357,6 +361,11 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
     TYPE typ_tab_extrato_rdca IS TABLE OF typ_reg_extrato_rdca INDEX BY PLS_INTEGER;
     
   vr_tab_agen_det typ_tab_agen_det; 	
+  
+  -- Tabela de retorno LANC0001 (PRJ450 27/06/2018).
+  vr_tab_retorno  lanc0001.typ_reg_retorno;
+  vr_incrineg     number;
+	  
   
   /******************************************************************************/
   /**    Procedure para obter carencias de determinada faixa de dias (taxas)   **/
@@ -1173,7 +1182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 05/12/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 27/06/2018
 
    Dados referentes ao programa:
 
@@ -1394,6 +1403,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
                              com debito em Conta Investimento.
                              Heitor (Mouts) - Chamado 821010.
+							 
+                27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+                             PC_INCLUIR_NOVA_APLICACAO e PC_EFETUA_RESGATE_ONLINE
+			 
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -4255,6 +4268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              data de resgate cair em final de semana em vez de antecipar o resgate
                              para o dia útil anterior, mantém resgate com data do final de semana.
                              (AJFink - SD#543149)
+							 
+                27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
 
   .......................................................................................*/
   PROCEDURE pc_incluir_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -4276,7 +4291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                      ,pr_flgerlog IN INTEGER
                                      ,pr_nmdcampo OUT VARCHAR2      
                                      ,pr_nrdocmto OUT craplcm.nrdocmto%TYPE
-																		 ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
+                                     ,pr_dsprotoc OUT crappro.dsprotoc%TYPE
                                      ,pr_tab_msg_confirma OUT typ_tab_msg_confirma
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
@@ -4480,6 +4495,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       -- Registro de Taxa
       vr_dstextab_taxa craptab.dstextab%TYPE;
+
+      -- PRJ450 - 27/06/2018.	  
+      vr_tpaplica_lcm INTEGER := 0;
       
     BEGIN
       
@@ -5839,7 +5857,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             -- Gera exceção
             RAISE vr_exc_erro;
         END;
-        
+
+        -- PRJ450 - 27/06/2018.
+        select DECODE(pr_tpaplica,3,114,4,145,5,177,7,472,8,527,106)
+          into vr_tpaplica_lcm 
+          from dual;
+		
+        lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                         , pr_cdagenci => rw_Craplot.cdagenci
+                                         , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                         , pr_nrdolote => rw_craplot.nrdolote
+                                         , pr_nrdconta => pr_nrdconta
+                                         , pr_nrdocmto => vr_nrdocmto
+                                         , pr_cdhistor => vr_tpaplica_lcm -- 3(RDCA30) = 114 - 4(UNIFICACAO) = 145 - 5(RDCA60) = 177 - 7(RDCPRE) = 472 - 8(RDCPOS) = 527  
+                                         , pr_nrseqdig => rw_craplot.nrseqdig
+                                         , pr_vllanmto => pr_vllanmto
+                                         , pr_nrdctabb => pr_nrdconta
+                                         --, pr_cdpesqbb => lt_d_nmaprese
+                                         --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                         --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                         --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                         --, pr_cdbanchq => lt_d_nrbanori
+                                         --, pr_cdcmpchq => lt_d_cdcmpori
+                                         --, pr_cdagechq => lt_d_nrageori
+                                         --, pr_nrctachq => lt_d_nrctarem
+                                         --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                         --, pr_sqlotchq => lt_d_nrsequen
+                                         --, pr_dtrefere IN  craplcm.dtrefere%TYPE DEFAULT NULL
+                                         , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                         --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                         --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                         , pr_cdcooper => pr_cdcooper
+                                         , pr_nrdctitg => TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                                         --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                         --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                         --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                         --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                         --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                         --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                         --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                         --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                         --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                         -------------------------------------------------
+                                         -- Dados do lote (Opcional)
+                                         -------------------------------------------------
+                                         --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                         --, pr_tplotmov  => 1
+                                         , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                         , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                         , pr_cdcritic  => vr_cdcritic      -- OUT
+                                         , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+        IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+          IF vr_incrineg = 0 THEN  
+            vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+            RAISE vr_exc_erro;	
+          ELSE
+            -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
+            -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
+            -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
+            --CONTINUE;  
+            RETURN;			
+          END IF;  
+        END IF;				
+
+        BEGIN
+          SELECT craplcm.ROWID
+                ,craplcm.cdhistor
+                ,craplcm.cdcooper
+                ,craplcm.dtmvtolt
+                ,craplcm.hrtransa
+                ,craplcm.nrdconta
+                ,craplcm.nrdocmto
+                ,craplcm.vllanmto
+            INTO vr_rowid
+                ,rw_craplcm.cdhistor
+                ,rw_craplcm.cdcooper
+                ,rw_craplcm.dtmvtolt
+                ,rw_craplcm.hrtransa
+                ,rw_craplcm.nrdconta
+                ,rw_craplcm.nrdocmto
+                ,rw_craplcm.vllanmto
+            FROM craplcm
+           WHERE craplcm.cdcooper = pr_cdcooper
+             AND craplcm.dtmvtolt = rw_craplot.dtmvtolt
+             AND craplcm.cdagenci = rw_Craplot.cdagenci
+             AND craplcm.cdbccxlt = rw_craplot.cdbccxlt
+             AND craplcm.nrdolote = rw_craplot.nrdolote
+             AND craplcm.nrdctabb = pr_nrdconta
+             AND craplcm.nrdocmto = vr_nrdocmto;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- Monta critica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao ler lançamento criado!';
+            
+            -- Gera exceção
+            RAISE vr_exc_erro;
+        END;
+		
+		
+/* PRJ450 - 27/06/2018.         
         -- Criar registro na lcm
         BEGIN
           INSERT INTO craplcm
@@ -5895,7 +6014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             RAISE vr_exc_erro;
             
         END;
-        
+ */
+ 
         /*RDCPRE OU RDCPOS*/
         IF pr_tpaplica = 7 OR pr_tpaplica = 8 THEN
           
@@ -10901,6 +11021,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              
                 09/05/2017 - Implementei o tratamento de erro para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)
+							 
+                27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+							 
   .......................................................................................*/
   PROCEDURE pc_efetua_resgate_online(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -11682,6 +11805,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 -- Atualizar o valor para a proxima sequencia de registro no lote
                 vr_nrseqdig := rw_craplot.nrseqdig + 1;
 
+                -- PRJ450 - 27/06/2018.
+                lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                 , pr_cdagenci => rw_craplot.cdagenci
+                                                 , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                                 , pr_nrdolote => rw_craplot.nrdolote
+                                                 , pr_nrdconta => rw_craprda.nrdconta
+                                                 , pr_nrdocmto => rw_craplrg.nrdocmto
+                                                 , pr_cdhistor => NVL(vr_cdhistor,0)
+                                                 , pr_nrseqdig => NVL(vr_nrseqdig,0)
+                                                 , pr_vllanmto => NVL(vr_vlresgat,0)
+                                                 , pr_nrdctabb => rw_craprda.nrdconta
+                                                 , pr_cdpesqbb => NVL(vr_cdpesqbb,0)
+                                                 --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                                 --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                                 --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                                 --, pr_cdbanchq => lt_d_nrbanori
+                                                 --, pr_cdcmpchq => lt_d_cdcmpori
+                                                 --, pr_cdagechq => lt_d_nrageori
+                                                 --, pr_nrctachq => lt_d_nrctarem
+                                                 --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                                 --, pr_sqlotchq => lt_d_nrsequen
+                                                 , pr_dtrefere => rw_craprda.dtmvtolt
+                                                 --, pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                                 --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                                 --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                                 , pr_cdcooper => pr_cdcooper
+                                                 , pr_nrdctitg => TO_CHAR(gene0002.fn_mask(rw_craprda.nrdconta,'99999999'))
+                                                 --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                                 --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                                 --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                                 --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                                 --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                                 --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                                 --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                                 --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                 --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                                 -------------------------------------------------
+                                                 -- Dados do lote (Opcional)
+                                                 -------------------------------------------------
+                                                 --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                 --, pr_tplotmov  => 1
+                                                 , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                 , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                 , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                 , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+        
+                IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                  -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                  IF vr_incrineg = 0 THEN  
+                    vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+                    RAISE vr_exc_erro;	
+                  ELSE
+                    -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
+                    -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
+                    -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
+                    CONTINUE;  
+                  END IF;  
+                END IF;				
+				
+/* PRJ450 - 27/06/2018 
                 -- Gera lançamento na conta corrente
                 BEGIN
                   INSERT INTO craplcm
@@ -11723,7 +11906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                     RAISE vr_exc_erro;
                     
                 END;
-              
+ */             
                 BEGIN
                   UPDATE craplot
                      SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -13069,7 +13252,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                    END IF;
                    
                  END IF;  
-          
+
+		         -- PRJ450 - 27/06/2018.
+				 vr_nrseqdig := (rw_craplot.nrseqdig + 1);
+                 lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                  , pr_cdagenci => rw_craplot.cdagenci
+                                                  , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                                  , pr_nrdolote => rw_craplot.nrdolote
+                                                  , pr_nrdconta => rw_craprda.nrdconta
+                                                  , pr_nrdocmto => (rw_craplot.nrseqdig + 1)
+                                                  , pr_cdhistor => NVL(vr_cdhistor,0)
+                                                  , pr_nrseqdig => (rw_craplot.nrseqdig + 1)
+                                                  , pr_vllanmto => NVL(vr_vlresgat,0)
+                                                  , pr_nrdctabb => rw_craprda.nrdconta
+                                                  , pr_cdpesqbb => NVL(vr_cdpesqbb,0)
+                                                  --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                                  --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                                  --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                                  --, pr_cdbanchq => lt_d_nrbanori
+                                                  --, pr_cdcmpchq => lt_d_cdcmpori
+                                                  --, pr_cdagechq => lt_d_nrageori
+                                                  --, pr_nrctachq => lt_d_nrctarem
+                                                  --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                                  --, pr_sqlotchq => lt_d_nrsequen
+                                                  , pr_dtrefere =>  rw_craprda.dtmvtolt
+                                                  --, pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                                  --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                                  --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                                  , pr_cdcooper => pr_cdcooper
+                                                  , pr_nrdctitg => TO_CHAR(gene0002.fn_mask(rw_craprda.nrdconta,'99999999'))
+                                                  --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                                  --, pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                                  --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                                  --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                                  --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                                  --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                                  --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                                  --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                  --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                                  -------------------------------------------------
+                                                  -- Dados do lote (Opcional)
+                                                  -------------------------------------------------
+                                                  --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                  --, pr_tplotmov  => 1
+                                                  , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                  , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                  , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                  , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+                 IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                   -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                   IF vr_incrineg = 0 THEN  
+                     vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+                     RAISE vr_exc_erro;	
+                   ELSE
+                     -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
+                     -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
+                     -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
+                     CONTINUE;  
+                   END IF;  
+                 END IF;				
+				 
+/* PRJ450 - 27/06/2018          
                  -- Gera lançamento na conta corrente
                  BEGIN
                    INSERT INTO craplcm
@@ -13113,7 +13357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                      RAISE vr_exc_erro;
                        
                  END;
-                   
+*/                   
                  BEGIN
                    UPDATE craplot
                       SET craplot.qtinfoln = craplot.qtinfoln + 1
@@ -15332,6 +15576,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                       RAISE vr_exc_erro;
                   END;
 
+                  -- PRJ450 - 27/06/2018.
+                  lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_craplot.dtmvtolt
+                                                   , pr_cdagenci => rw_craplot.cdagenci
+                                                   , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                                   , pr_nrdolote => rw_craplot.nrdolote
+                                                   , pr_nrdconta => rw_craprda.nrdconta
+                                                   , pr_nrdocmto => gene0002.fn_char_para_number(vr_nraplica)
+                                                   , pr_cdhistor => NVL(vr_cdhistorc,0)
+                                                   , pr_nrseqdig => rw_craplot.nrseqdig
+                                                   , pr_vllanmto => NVL(vr_vlresgat,0)
+                                                   , pr_nrdctabb => rw_craprda.nrdconta
+                                                   , pr_cdpesqbb => NVL(vr_cdpesqbb,0)
+                                                   --, pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                                   --, pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                                   --, pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                                   --, pr_cdbanchq => lt_d_nrbanori
+                                                   --, pr_cdcmpchq => lt_d_cdcmpori
+                                                   --, pr_cdagechq => lt_d_nrageori
+                                                   --, pr_nrctachq => lt_d_nrctarem
+                                                   --, pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                                   --, pr_sqlotchq => lt_d_nrsequen
+                                                   , pr_dtrefere =>  rw_craprda.dtmvtolt
+                                                   --, pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                                   --, pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                                   --, pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                                   , pr_cdcooper => pr_cdcooper
+                                                   , pr_nrdctitg => gene0002.fn_mask(rw_craprda.nrdconta, '99999999')
+                                                   --, pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                                   , pr_cdcoptfn => 0
+                                                   --, pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                                   --, pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                                   --, pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                                   --, pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                                   --, pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                                   --, pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                                   --, pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                                   -------------------------------------------------
+                                                   -- Dados do lote (Opcional)
+                                                   -------------------------------------------------
+                                                   --, pr_inprolot  => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                                   --, pr_tplotmov  => 1
+                                                   , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                   , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                   , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                   , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+                  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                    -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                    IF vr_incrineg = 0 THEN  
+                      vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+                      RAISE vr_exc_erro;	
+                    ELSE
+                      -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
+                      -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
+                      -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
+                      CONTINUE;  
+                    END IF;  
+                  END IF;				
+				  
+/* PRJ450 - 27/06/2018.				  
                   BEGIN
                     INSERT INTO craplcm(dtmvtolt
                                        ,dtrefere
@@ -15369,6 +15673,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                       vr_dscritic := 'Erro ao inserir  CRAPLCM. ' || sqlerrm;
                       RAISE vr_exc_erro;
                   END;
+*/				  
                   -- Sai do loop
                   exit;
                 ELSE
