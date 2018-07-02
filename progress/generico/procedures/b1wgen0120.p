@@ -5685,7 +5685,7 @@ PROCEDURE gera_tt-histor:
     /*Deposito a vista*/   
 	/*Projeto 367 - DEP. CHQ. OUTROS BANCOS:  inferiores e superiores */
     IF CAN-DO("2433,372",STRING(crabhis.cdhistor)) AND
-	   par_dtmvtolt >= 16/04/2018  THEN  /* Inicio COMPE SESSAO UNICA */
+	   par_dtmvtolt >= 04/16/2018  THEN  /* Inicio COMPE SESSAO UNICA */
        DO:
            ASSIGN par_vlchqout = par_vlchqout + par_vllanmto
                   par_qtchqout = par_qtchqout + 1.
