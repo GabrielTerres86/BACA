@@ -188,7 +188,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
   PROCEDURE pc_estornar_gps_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
                                      pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
                                      pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
-                                 pr_dscritic  OUT VARCHAR2 );                                           
+                                     pr_dscritic  OUT VARCHAR2 );                                           
 
   --> Rotina para estornar Titulo reprovada pela analise de fraude
   PROCEDURE pc_estornar_titulo_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                         pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
                                         pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
                                         pr_dscritic  OUT VARCHAR2 );
-
+                                        
   --> Rotina para estornar Convenio reprovado pela analise de fraude  
   PROCEDURE pc_estornar_convenio_analise(pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, --> Id da análise de fraude
                                          pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
@@ -1250,7 +1250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_ted.put('Trxn_NLS_End_Date'   , to_char(pr_dhlimana,vr_dsformat_dthora));      
     vr_ted.put('Token_ID   '         , rw_fraude.dstoken);
     vr_ted.put('Mobile_Device_ID'    , to_char(rw_fraude.iddispositivo));
-              
+     
               
     AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Transacoes/AntiFraude/EnviarTedParaAnalise'
                                        ,pr_verbo => WRES0001.POST 
@@ -4182,12 +4182,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                          pr_cdcritic     => vr_cdcritic,
                                          pr_dscritic     => vr_dscritic);
                                     
-        END IF;
+          END IF; 
           IF nvl(vr_cdcritic,0) > 0 OR
              TRIM(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_envio; 
           END IF; 
-            
+        
         --> Verificar se o produto for Pagamento Titulo
         ELSIF rw_fraude.cdproduto = 44 THEN
         
@@ -4408,7 +4408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                  vr_dscritic := NULL;                         
           END;                             
                                          
-          END IF;
+        END IF; 
         
         
       END IF;
@@ -4467,7 +4467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - '||vr_cdprogra ||' --> ' || pr_dscritic,
                                  pr_nmarqlog     => vr_nmarqlog);
-      
+                                 
       -- Encerrar o job do processamento paralelo
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdoperac,3,'0')
@@ -5188,7 +5188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         END IF; 
 
       END IF;
-    END IF;        
+    END IF;   
     
     
   EXCEPTION
@@ -5226,7 +5226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Frequencia: Sempre que for chamado
       Objetivo  : Excecutar rotinas referentes a reprovação da analise de fraude
       Alteração : 
-      
+        
       Alteração : 06/06/2017 - Ajustado para usar a data dtmvtocd para estornar a TED.
                                PRJ335- Analise de fraude(Odirlei-AMcom)
         
@@ -5331,8 +5331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       IF TRIM(vr_dscritic) IS NOT NULL OR
          nvl(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_erro;
-    END IF;        
-    
+      END IF;
+      
     --> Tributos
     ELSIF rw_fraude.cdproduto IN(45,46) THEN
     
@@ -5430,43 +5430,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_criar_analise := fn_envia_analise(pr_cdoperacao, pr_tptransacao); 
     IF vr_criar_analise > 0 THEN  
   
-    --> inserir registro
-    INSERT INTO tbgen_analise_fraude
-                (cdcanal_operacao
-                ,dstransacao
-                ,iptransacao
-                ,dhinicio_analise 
-                ,dtmvtolt
-                ,dhlimite_analise 
-                ,cdstatus_analise
-                ,cdparecer_analise
-                ,cdproduto
-                ,cdcooper
-                ,cdagenci
-                ,nrdconta
-                ,tptransacao
+      --> inserir registro
+      INSERT INTO tbgen_analise_fraude
+                  (cdcanal_operacao
+                  ,dstransacao
+                  ,iptransacao
+                  ,dhinicio_analise 
+                  ,dtmvtolt
+                  ,dhlimite_analise 
+                  ,cdstatus_analise
+                  ,cdparecer_analise
+                  ,cdproduto
+                  ,cdcooper
+                  ,cdagenci
+                  ,nrdconta
+                  ,tptransacao
                   ,cdoperacao
                   ,iddispositivo
                   ,dstoken) 
-         VALUES( pr_cdcanal       --> cdcanal
-                ,pr_dstransacao   --> dstransacao
-                ,pr_iptransacao   --> iptransacao
-                ,SYSTIMESTAMP     --> dhinicio_analise 
-                ,pr_dtmvtolt      --> dtmvtolt
-                ,NULL             --> dhlimite_analise
-                ,0 --> Aguardando envio --> cdstatus_analise
-                ,0 --> Pendente         --> cdparecer_analise
-                ,pr_cdproduto     --> cdproduto
-                ,pr_cdcooper      --> cdcooper
-                ,pr_cdagenci      --> cdagenci
-                ,pr_nrdconta      --> nrdconta
-                ,pr_tptransacao   --> tptransacao
-                ,pr_cdoperacao    --> cdoperacao
+           VALUES( pr_cdcanal       --> cdcanal
+                  ,pr_dstransacao   --> dstransacao
+                  ,pr_iptransacao   --> iptransacao
+                  ,SYSTIMESTAMP     --> dhinicio_analise 
+                  ,pr_dtmvtolt      --> dtmvtolt
+                  ,NULL             --> dhlimite_analise
+                  ,0 --> Aguardando envio --> cdstatus_analise
+                  ,0 --> Pendente         --> cdparecer_analise
+                  ,pr_cdproduto     --> cdproduto
+                  ,pr_cdcooper      --> cdcooper
+                  ,pr_cdagenci      --> cdagenci
+                  ,pr_nrdconta      --> nrdconta
+                  ,pr_tptransacao   --> tptransacao
+                  ,pr_cdoperacao    --> cdoperacao
                   ,TRIM(pr_iddispositivo) --> iddispositivo
                   ,TRIM(pr_dstoken)       --> dstoken
-                )RETURNING idanalise_fraude INTO pr_idanalise_fraude ;
+                  )RETURNING idanalise_fraude INTO pr_idanalise_fraude ;
     END IF;   
-       
+     
   EXCEPTION
     WHEN vr_exc_erro THEN      
       pr_dscritic := vr_dscritic;    
@@ -5611,7 +5611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                   pr_dsalerta   => vr_dscritic,
                                   pr_dscritic   => vr_dscritic_aux); 
         END IF;
-    
+
         vr_dscritic_aux := NULL;
         
         pc_log_analise_fraude(pr_cdcooper => rw_fraude.cdcooper,
@@ -5719,7 +5719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
           RAISE vr_exc_apro;
         ELSE
            
-              --> Notificar monitoração 
+          --> Notificar monitoração 
           ---pc_monitora_ted ( pr_idanalis => pr_idanalis);
           BEGIN                                
             AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
@@ -5733,7 +5733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                           ,pr_lgprowid   => NULL                  -- Rowid craplgp
                                           ,pr_cdcritic   => vr_cdcritic           -- Codigo da critica
                                           ,pr_dscritic   => vr_dscritic);         -- Descricao da critica
-
+                                         
             vr_cdcritic := NULL;                         
             vr_dscritic := NULL;                         
           EXCEPTION
@@ -5771,7 +5771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       ELSE
         vr_dstransa := 'Retorno do parecer da Analise de Fraude';
     END CASE;     
-    
+          
     
     --> Buscar analise de fraude
     OPEN cr_fraude;
@@ -5853,8 +5853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                 END IF;
                 
                 
-                   --> Notificar monitoração 
-               
+                --> Notificar monitoração 
+                
                 BEGIN                                
                   AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
                                                 ,pr_nrdconta   => rw_fraude.nrdconta    -- Numero da conta
@@ -6353,7 +6353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       ELSE
         
         
-           --> Notificar monitoração 
+        --> Notificar monitoração         
 
         BEGIN                                
           AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_fraude.cdcooper    -- Codigo da cooperativa
@@ -6367,7 +6367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                         ,pr_lgprowid   => NULL                  -- Rowid craplgp
                                         ,pr_cdcritic   => vr_cdcritic           -- Codigo da critica
                                         ,pr_dscritic   => vr_dscritic);         -- Descricao da critica
-      
+                                         
           vr_cdcritic := NULL;                         
           vr_dscritic := NULL;                         
         EXCEPTION
@@ -6799,7 +6799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                         pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,                      --> Data do sistema
                                         pr_inproces  IN crapdat.inproces%TYPE,                      --> Indicar de execução do processo batch
                                         pr_cdcritic  OUT INTEGER,                                   --> Retorno de critica
-                                 pr_dscritic  OUT VARCHAR2 ) IS
+                                        pr_dscritic  OUT VARCHAR2 ) IS
   /* ..........................................................................
     
       Programa : pc_estornar_titulo_analise        
@@ -7066,7 +7066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Objetivo  : Rotina responsavel por estornar Tributos reprovada pela analise de fraude
       
       Alteração : 
-    
+        
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar analise de fraude
@@ -7081,7 +7081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              fra.cdlantar,
              fra.tptransacao,
              fra.cdproduto
-         
+
         FROM tbgen_analise_fraude fra
        WHERE fra.idanalise_fraude = pr_idanalis; 
     rw_fraude cr_fraude%ROWTYPE;
@@ -7157,7 +7157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       CLOSE cr_fraude;
     END IF;
     
-      --> Online
+    --> Online
     IF rw_fraude.tptransacao = 1 THEN
     
       OPEN cr_craplft (pr_idanalis => pr_idanalis,
@@ -7249,7 +7249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       IF TRIM(vr_dscritic) IS NOT NULL OR
          nvl(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_erro;
-      END IF;
+      END IF; 
      
       vr_vldinami := '#VALOR#='||to_char(rw_craplau.vllanaut,'999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''')||';'||
                      '#DTDEBITO#='||to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR');
@@ -7269,8 +7269,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       IF TRIM(vr_dscritic) IS NOT NULL OR
          nvl(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_erro;
-    END IF;
-    
+      END IF;
+      
     END IF;
     
   EXCEPTION
@@ -7642,7 +7642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         RAISE vr_exc_erro;
       END IF;
       
-      END IF;
+    END IF;
   
   
   EXCEPTION
@@ -7653,8 +7653,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         TRIM(vr_dscritic) IS NULL THEN
         -- Busca descricao        
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
-    END IF; 
-    
+      END IF;  
+      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
@@ -7762,15 +7762,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     --> Buscar analise de fraude
     OPEN cr_fraude;
     FETCH cr_fraude INTO rw_fraude;
-                                   
+    
     IF cr_fraude%NOTFOUND THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Registro de analise de fraude não encontrado.';
       CLOSE cr_fraude;
       RAISE vr_exc_erro;
-      ELSE
+    ELSE
       CLOSE cr_fraude;
-      END IF;
+    END IF;
     
     --> Online
     IF rw_fraude.tptransacao = 1 THEN
@@ -7779,7 +7779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                        pr_cdcooper => rw_fraude.cdcooper,
                        pr_nrdconta => rw_fraude.nrdconta);
       FETCH cr_craplft INTO rw_craplft;
-    
+      
       IF cr_craplft%NOTFOUND THEN
         CLOSE cr_craplft;
         vr_dscritic := 'Não foi possivel localizar pagamento de tributo.';
@@ -7787,7 +7787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       ELSE
         CLOSE cr_craplft;
       END IF;
-    
+      
       PAGA0004.pc_estorna_convenio( pr_cdcooper  => rw_craplft.cdcooper  --> Codigo da cooperativa
                                    ,pr_nrdconta  => rw_craplft.nrdconta  --> Numero da conta
                                    ,pr_idseqttl  => rw_craplft.idseqttl  --> Sequencial titular
@@ -7801,7 +7801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                    ,pr_dstransa  => vr_dstransa          --> Retorna Descrição da transação
                                    ,pr_dscritic  => vr_dscritic          --> Retorna critica
                                    ,pr_dsprotoc  => vr_dsprotoc);        --> Retorna protocolo
-     
+      
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
@@ -7887,7 +7887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       END IF;
       
     END IF;
-  
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       
@@ -8195,7 +8195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     rw_afraprm cr_afraprm%ROWTYPE;     
     
     --> Buscar intervalo Online valida hora
-     CURSOR cr_afrainter IS 
+     CURSOR cr_afrainter(pr_dhoperac DATE) IS 
       SELECT w.qtdminutos_retencao 
         FROM tbgen_analise_fraude_interv w 
        WHERE w.cdoperacao = pr_cdoperac
@@ -8211,6 +8211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_exc_erro EXCEPTION;    
     
     vr_hrlimope NUMBER;
+    vr_dhoperac DATE;
+    vr_fldiauti INTEGER;  --Idenrifica se é dia util
     
   BEGIN
   
@@ -8224,34 +8226,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       CLOSE cr_afraprm;
     END IF;
   
+    vr_fldiauti := 1;
+    
     -- Online
     IF pr_tpoperac = 1 THEN
+      
+      --> Verificar se o dia atual é dia util
+      vr_dhoperac := gene0005.fn_valida_dia_util( pr_cdcooper  => pr_cdcooper, 
+                                                  pr_dtmvtolt  => trunc(pr_dhoperac), 
+                                                  pr_tipo      => 'P');
+    
+      IF trunc(vr_dhoperac) <> trunc(pr_dhoperac) THEN
+        --> Caso nao for, deve setar a data do proximo dia
+        vr_fldiauti := 0;
+        vr_dhoperac := to_date(
+                              to_char(vr_dhoperac,'DD/MM/RRRR')||' '||to_char(pr_dhoperac,'HH24:MI:SS')
+                             ,'DD/MM/RRRR HH24:MI:SS');
+      ELSE
+        vr_fldiauti := 1;
+        vr_dhoperac := pr_dhoperac;
+      END IF;
+            
       --> Intervalo
       IF rw_afraprm.tpretencao = 1 THEN
-      OPEN cr_afrainter;
-      FETCH cr_afrainter INTO rw_afrainter;
-      --> Se nao localizar registro, usar valor padrão
-      IF cr_afrainter%NOTFOUND THEN
-        CLOSE cr_afrainter;
-        rw_afrainter.qtdminutos_retencao := 10;
-      ELSE
-        CLOSE cr_afrainter;
-      END IF;      
+        
+        --> Caso nao for dia util
+        IF vr_fldiauti = 0 THEN
+          --> deve setar como as 09:00 do proximo dia util
+          vr_dhoperac := to_date(
+                              to_char(vr_dhoperac,'DD/MM/RRRR')||' 09:00:00'
+                             ,'DD/MM/RRRR HH24:MI:SS');
+        
+        END IF;
+      
+        OPEN cr_afrainter(pr_dhoperac => vr_dhoperac);
+        FETCH cr_afrainter INTO rw_afrainter;
+        --> Se nao localizar registro, usar valor padrão
+        IF cr_afrainter%NOTFOUND THEN
+          CLOSE cr_afrainter;
+          rw_afrainter.qtdminutos_retencao := 10;
+        ELSE
+          CLOSE cr_afrainter;
+        END IF;      
     
-      --> Calcular tempo limite
-      pr_dhlimana := pr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
-      pr_qtsegret := rw_afrainter.qtdminutos_retencao * 60;
+        --> Calcular tempo limite
+        pr_dhlimana := vr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
+        pr_qtsegret := rw_afrainter.qtdminutos_retencao * 60;
       
       --> Fixo   
       ELSIF rw_afraprm.tpretencao = 2 THEN
         --> Calcular tempo limite
-        pr_dhlimana := to_date(to_char(pr_dhoperac,'DD/MM/RRRR') ||' ' ||
+        pr_dhlimana := to_date(to_char(vr_dhoperac,'DD/MM/RRRR') ||' ' ||
                                to_char(to_date(rw_afraprm.hrretencao,'SSSSS'),'HH24:MI:SS')
                                ,'DD/MM/RRRR HH24:MI:SS');
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       --> Limite da operacao    
@@ -8264,19 +8295,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         
         --> Calcular tempo limite
         IF vr_hrlimope > 0 THEN
-          pr_dhlimana := to_date(to_char(pr_dhoperac,'DD/MM/RRRR') ||' ' ||
+          pr_dhlimana := to_date(to_char(vr_dhoperac,'DD/MM/RRRR') ||' ' ||
                                  to_char(to_date(vr_hrlimope,'SSSSS'),'HH24:MI:SS')                                 
                                  ,'DD/MM/RRRR HH24:MI:SS');
                                  
           --> Se a hora de limite analise for maior que a data atual
           --> utilizar a propria data e apenas irá incrementar os minutos
           IF pr_dhlimana <= SYSDATE THEN
-            pr_dhlimana := pr_dhoperac;
+            pr_dhlimana := vr_dhoperac;
           END IF;                       
         ELSE
           --> Caso nao tenha encontrado o horario limite, 
           --> irá apenas incrementar a quantidade de minutos
-          pr_dhlimana := pr_dhoperac;
+          pr_dhlimana := vr_dhoperac;
         END IF;  
                              
         --> incrementar o tempo de retencao
@@ -8285,7 +8316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       END IF;
@@ -8312,10 +8343,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       IF pr_qtsegret < 0 THEN
         vr_dscritic := 'Nao foi possivel def. tempo limite para analise, tempo limite ja ultrapassado. ';
         RAISE vr_exc_erro; 
-    END IF;
+      END IF;
     END IF;
   
-    
+  
   
     
   
@@ -8329,7 +8360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       pr_dscritic := 'Não foi possivel calcular a data limite da analise: '||SQLERRM;
   END pc_ret_data_limite_analise;   
   
-                            
+
   /* Procedimento para carregar em memoria parametros da analise de fraude */
   PROCEDURE pc_ler_parametros_fraude (pr_atualizar IN INTEGER DEFAULT 0) IS
     /* ..........................................................................
@@ -8371,10 +8402,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
   BEGIN
     IF pr_atualizar > 0 THEN 
       vr_tab_AnaliseFraudeParam.Delete;
-  
+      
       For rw_param in cr_param Loop
         vr_Index := rw_param.cdoperacao || '|' || rw_param.tpoperacao; 
-    
+        
         vr_tab_AnaliseFraudeParam(vr_Index).cdoperacao := rw_param.cdoperacao;
         vr_tab_AnaliseFraudeParam(vr_Index).tpoperacao := rw_param.tpoperacao;
         vr_tab_AnaliseFraudeParam(vr_Index).hrretencao := rw_param.hrretencao;
@@ -8389,7 +8420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         vr_tab_AnaliseFraudeParam(vr_Index).flgativo:= rw_param.flgativo;
       End Loop;              
     END IF;
-    
+        
   END pc_ler_parametros_fraude;      
   
 END;
