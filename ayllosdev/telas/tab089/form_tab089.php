@@ -115,7 +115,7 @@
 		<label>&nbsp;%</label>
 		<br style="clear:both" />
 		
-		<label for="qtdictcc" class='labelPri'>Prazo p/ transfer&ecirc;ncia de valor da conta transit&oacute;ria para a CC:</label>
+		<label for="qtdictcc" class='labelPri'>Prazo p/ transfer&ecirc;ncia autom&aacute;tica de valor de preju&iacute;zo bloqueado para a CC:</label>
 		<input type="text" id="qtdictcc" name="qtdictcc" value="<?php echo $qtdictcc == 0 ? '' : $qtdictcc ?>" maxlength="3" style="text-align:right;"/>	
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
