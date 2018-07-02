@@ -159,7 +159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                        
         
      /* Rotina para estornar pagamento de  prejuizo PP, TR e CC */
-    PROCEDURE pc_estorno_pagamento(pr_cdcooper in number
+            PROCEDURE pc_estorno_pagamento(pr_cdcooper in number
                                   ,pr_cdagenci in number
                                   ,pr_nrdconta in number
                                   ,pr_nrctremp in number
@@ -276,10 +276,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
          WHERE crapbpr.cdcooper = pr_cdcooper
            AND crapbpr.nrdconta = pr_nrdconta
            AND crapbpr.nrctrpro = pr_nrctremp
+           AND crapbpr.dtdbaixa = pr_dtmvtolt
            AND crapbpr.tpctrpro IN (90,99)
            AND crapbpr.cdsitgrv IN (1,4) -- Em processamento, Baixado
            AND crapbpr.flgbaixa = 1           
-           --AND crapbpr.tpdbaixa = 'A'
+           AND crapbpr.tpdbaixa = 'A'
            ;           
       vr_existbpr_baixado PLS_INTEGER := 0;
       --               
