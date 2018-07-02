@@ -329,17 +329,20 @@ function validaOpcaoOrigem(){
 		$('#nrctremp','#frmCab').val('').desabilitaCampo();
 		$('#nrborder','#frmCab').val('').desabilitaCampo();
 		$('#nrtitulo','#frmCab').val('').desabilitaCampo();
+		$('#nrdocmto','#frmCab').val('').desabilitaCampo();
 
 
 	} else if($('#cdorigem','#frmCab').val() == '4'){
 		$('#nrctremp','#frmCab').val('').desabilitaCampo();
 		$('#nrborder','#frmCab').val('').habilitaCampo();
 		$('#nrtitulo','#frmCab').val('').habilitaCampo();
+		$('#nrdocmto','#frmCab').val('').habilitaCampo();
 		
 	} else {
 		$('#nrctremp','#frmCab').val('').habilitaCampo();
 		$('#nrborder','#frmCab').val('').desabilitaCampo();
 		$('#nrtitulo','#frmCab').val('').desabilitaCampo();
+		$('#nrdocmto','#frmCab').val('').desabilitaCampo();
 		
 	}	
 }
@@ -539,13 +542,13 @@ function btnContinuar() {
 	var nrctremp = $("#nrctremp","#frmCab").val();
 	var nrborder = $("#nrborder","#frmCab").val();
 	var nrtitulo = $("#nrtitulo","#frmCab").val();
+	var nrdocmto = $("#nrdocmto","#frmCab").val();
 	var operacao = $("#cddopcao","#frmCab").val();
 	var cdorigem = $("#cdorigem","#frmCab").val();
 	var dtenvcbr = $("#dtenvcbr","#frmCab").val();
 	var cdassess = $("#cdassessoria","#frmCab").val();
 	var cdmotcin = $("#cdmotivocin","#frmCab").val();
 	var nrborder = $("#nrborder","#frmCab").val();
-	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	
 	
 	if (cdorigem == "1") {
@@ -616,6 +619,7 @@ function btnContinuar() {
 				nrctremp: nrctremp,
 				nrborder: nrborder,
 				nrtitulo: nrtitulo,
+				nrdocmto: nrdocmto,
 				cdorigem: cdorigem,
 				flgjudic: flgjudic,
 				flextjud: flextjud,
@@ -807,8 +811,8 @@ function carregaTabela(){
 						'<td id="nrborder"><span>'+arrAssociado[i].nrborder+'</span>'
 							      +arrAssociado[i].nrborder+
 						'</td>'+
-						'<td id="nrtitulo"><span>'+arrAssociado[i].nrtitulo+'</span>'
-							      +arrAssociado[i].nrtitulo+
+						'<td id="nrtitulo"><span>'+arrAssociado[i].nrdocmto+'</span>'
+							      +arrAssociado[i].nrdocmto+
 						'</td>'+
 						'<td><span>'+arrAssociado[i].flgjudic+'</span>'
 							      +arrAssociado[i].flgjudic+
@@ -897,7 +901,7 @@ function formataTabela() {
 	return false;
 }
 
-function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
+function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, nrdocmto, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
 
 	var judicial, extjudic, coopvip, dsorigem; 
 	if (flgjudic == 'false') {
@@ -939,7 +943,7 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, f
 	}
 	
 	if ( flgCria == true ) { 
-		var objAssociado = new associado(dsorigem, nrdconta, nrctremp, nrborder, nrtitulo, judicial, extjudic, coopvip, dtenvcbr, cdassess, cdmotcin);
+		var objAssociado = new associado(dsorigem, nrdconta, nrctremp, nrborder, nrtitulo, nrdocmto, judicial, extjudic, coopvip, dtenvcbr, cdassess, cdmotcin);
 		arrAssociado.push( objAssociado );
 	} else {
 		//showError("error",$msgErro,"Alerta - Ayllos","limparCamposCabecalho();",NaN);
@@ -947,12 +951,13 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, f
 	}
 }
 
-function associado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
+function associado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, nrdocmto, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
 	this.cdorigem=cdorigem;
 	this.nrdconta=nrdconta;
 	this.nrctremp=nrctremp;
 	this.nrborder=nrborder;
 	this.nrtitulo=nrtitulo;
+	this.nrdocmto=nrdocmto;
 	this.flgjudic=flgjudic;
 	this.flextjud=flextjud;
 	this.flgehvip=flgehvip;
@@ -1274,16 +1279,18 @@ function mostrarPesquisaMotivoCin(){
 
 // Função para abrir a pesquisa de borderos, usando número do título
 function mostrarPesquisaBorderoPorTitulo(){
+	$('#frmCab #nrdocmto').val('');
 	var normNrconta = normalizaNumero($('#frmCab #nrdconta').val()) > 0 ? normalizaNumero($('#frmCab #nrdconta').val()) : '';
 	var nrBorder    = normalizaNumero($('#frmCab #nrborder').val()) > 0 ? $('#frmCab #nrborder').val() : '';
+
 	if( $('#nrtitulo','#frmCab').prop("disabled") ) {
 		return false;
 	}
 	//Definição dos filtros
 	// |;nrborder;;N;;N;nrborder|;nrtitulo;;N;;N;nrtitulo
-	var filtros	= "Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrborder;;S;"+nrBorder+";S;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Numero Doc;nrdocmto;;N;;N;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto";
+	var filtros	= "Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrborder;;S;"+nrBorder+";S;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Nr. Documento;nrdocmto;;S;;S;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto";
 	//Campos que serão exibidos na tela
-	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Titulo;nrtitulo;20%;center|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center';			
+	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Titulo;nrtitulo;0%;center;;N|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center';			
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_TITULOS_BORDERO", "Titulos e Bordero","100",filtros,colunas);
 }

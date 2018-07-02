@@ -52,7 +52,8 @@
 		<input type="text" id="nrborder" name="nrborder" value="" />
 
 		<label for="nrtitulo">T&iacute;tulo:</label>
-		<input type="text" id="nrtitulo" name="nrtitulo" />
+		<input readonly type="text" id="nrdocmto" name="nrdocmto" />
+		<input type="hidden" id="nrtitulo" name="nrtitulo" />
 
 		
 

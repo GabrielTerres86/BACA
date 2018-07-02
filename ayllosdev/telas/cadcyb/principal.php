@@ -25,6 +25,7 @@
 	$nrctremp = (isset($_POST["nrctremp"])) ? $_POST["nrctremp"] : 0 ; 
 	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0 ; 
 	$nrtitulo = (isset($_POST["nrtitulo"])) ? $_POST["nrtitulo"] : 0 ; 
+	$nrdocmto = (isset($_POST["nrdocmto"])) ? $_POST["nrdocmto"] : 0 ; 
 	$cdorigem = (isset($_POST["cdorigem"])) ? $_POST["cdorigem"] : 0 ; 
 	$flgjudic = $_POST["flgjudic"];
 	$flextjud = $_POST["flextjud"];
@@ -79,6 +80,7 @@
 	                              ."', '". $nrctremp 
 	                              ."', '". $nrborder 
 	                              ."', '". $nrtitulo 
+	                              ."', '". $nrdocmto 
 	                              ."', '". $flgjudic 
 	                              ."', '". $flextjud 
 	                              ."', '". $flgehvip 
