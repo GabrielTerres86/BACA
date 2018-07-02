@@ -8195,7 +8195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     rw_afraprm cr_afraprm%ROWTYPE;     
     
     --> Buscar intervalo Online valida hora
-     CURSOR cr_afrainter IS 
+     CURSOR cr_afrainter(pr_dhoperac DATE) IS 
       SELECT w.qtdminutos_retencao 
         FROM tbgen_analise_fraude_interv w 
        WHERE w.cdoperacao = pr_cdoperac
@@ -8211,6 +8211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_exc_erro EXCEPTION;    
     
     vr_hrlimope NUMBER;
+    vr_dhoperac DATE;
+    vr_fldiauti INTEGER;  --Idenrifica se é dia util
     
   BEGIN
   
@@ -8224,34 +8226,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       CLOSE cr_afraprm;
     END IF;
   
+    vr_fldiauti := 1;
+    
     -- Online
     IF pr_tpoperac = 1 THEN
+      
+      --> Verificar se o dia atual é dia util
+      vr_dhoperac := gene0005.fn_valida_dia_util( pr_cdcooper  => pr_cdcooper, 
+                                                  pr_dtmvtolt  => trunc(pr_dhoperac), 
+                                                  pr_tipo      => 'P');
+    
+      IF trunc(vr_dhoperac) <> trunc(pr_dhoperac) THEN
+        --> Caso nao for, deve setar a data do proximo dia
+        vr_fldiauti := 0;
+        vr_dhoperac := to_date(
+                              to_char(vr_dhoperac,'DD/MM/RRRR')||' '||to_char(pr_dhoperac,'HH24:MI:SS')
+                             ,'DD/MM/RRRR HH24:MI:SS');
+      ELSE
+        vr_fldiauti := 1;
+        vr_dhoperac := pr_dhoperac;
+      END IF;
+            
       --> Intervalo
       IF rw_afraprm.tpretencao = 1 THEN
-      OPEN cr_afrainter;
-      FETCH cr_afrainter INTO rw_afrainter;
-      --> Se nao localizar registro, usar valor padrão
-      IF cr_afrainter%NOTFOUND THEN
-        CLOSE cr_afrainter;
-        rw_afrainter.qtdminutos_retencao := 10;
-      ELSE
-        CLOSE cr_afrainter;
-      END IF;      
+        
+        --> Caso nao for dia util
+        IF vr_fldiauti = 0 THEN
+          --> deve setar como as 09:00 do proximo dia util
+          vr_dhoperac := to_date(
+                              to_char(vr_dhoperac,'DD/MM/RRRR')||' 09:00:00'
+                             ,'DD/MM/RRRR HH24:MI:SS');
+        
+        END IF;
+      
+        OPEN cr_afrainter(pr_dhoperac => vr_dhoperac);
+        FETCH cr_afrainter INTO rw_afrainter;
+        --> Se nao localizar registro, usar valor padrão
+        IF cr_afrainter%NOTFOUND THEN
+          CLOSE cr_afrainter;
+          rw_afrainter.qtdminutos_retencao := 10;
+        ELSE
+          CLOSE cr_afrainter;
+        END IF;      
     
       --> Calcular tempo limite
-      pr_dhlimana := pr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
+        pr_dhlimana := vr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
       pr_qtsegret := rw_afrainter.qtdminutos_retencao * 60;
       
       --> Fixo   
       ELSIF rw_afraprm.tpretencao = 2 THEN
         --> Calcular tempo limite
-        pr_dhlimana := to_date(to_char(pr_dhoperac,'DD/MM/RRRR') ||' ' ||
+        pr_dhlimana := to_date(to_char(vr_dhoperac,'DD/MM/RRRR') ||' ' ||
                                to_char(to_date(rw_afraprm.hrretencao,'SSSSS'),'HH24:MI:SS')
                                ,'DD/MM/RRRR HH24:MI:SS');
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       --> Limite da operacao    
@@ -8264,19 +8295,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         
         --> Calcular tempo limite
         IF vr_hrlimope > 0 THEN
-          pr_dhlimana := to_date(to_char(pr_dhoperac,'DD/MM/RRRR') ||' ' ||
+          pr_dhlimana := to_date(to_char(vr_dhoperac,'DD/MM/RRRR') ||' ' ||
                                  to_char(to_date(vr_hrlimope,'SSSSS'),'HH24:MI:SS')                                 
                                  ,'DD/MM/RRRR HH24:MI:SS');
                                  
           --> Se a hora de limite analise for maior que a data atual
           --> utilizar a propria data e apenas irá incrementar os minutos
           IF pr_dhlimana <= SYSDATE THEN
-            pr_dhlimana := pr_dhoperac;
+            pr_dhlimana := vr_dhoperac;
           END IF;                       
         ELSE
           --> Caso nao tenha encontrado o horario limite, 
           --> irá apenas incrementar a quantidade de minutos
-          pr_dhlimana := pr_dhoperac;
+          pr_dhlimana := vr_dhoperac;
         END IF;  
                              
         --> incrementar o tempo de retencao
@@ -8285,7 +8316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       END IF;
