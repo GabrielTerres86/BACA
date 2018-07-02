@@ -160,6 +160,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       
+      -- Variaveis locais
+      vr_tab_conta_bloq APLI0001.typ_tab_ctablq;
+      vr_tab_craplpp    APLI0001.typ_tab_craplpp;
+      vr_tab_craplrg    APLI0001.typ_tab_craplpp;
+      vr_tab_resgate    APLI0001.typ_tab_resgate;
+      vr_tab_dados_rpp  APLI0001.typ_tab_dados_rpp;
+      
       -- Variaveis auxiliares
       vr_valopera   NUMBER       := 0;
       vr_vlroriginal         NUMBER       := 0;
@@ -172,6 +179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       vr_vltotpre            NUMBER(25,2) := 0;
       vr_qtprecal            NUMBER(10) := 0;
       vr_dstipapl            VARCHAR2(50);
+      vr_percenir            NUMBER       := 0;
+      vr_vlsaldo_poup        NUMBER       := 0;     
     
     BEGIN
       
@@ -215,13 +224,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
       
       FOR rw_craprpp IN cr_craprpp(pr_cdcooper => vr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta) LOOP
+                                  
+         -- Carregar tabela de memoria de contas bloqueadas
+         TABE0001.pc_carrega_ctablq(pr_cdcooper => vr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_tab_cta_bloq => vr_tab_conta_bloq);
+      
+         -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
+         vr_percenir:= GENE0002.fn_char_para_number(TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                                                              ,pr_nmsistem => 'CRED'
+                                                                              ,pr_tptabela => 'CONFIG'
+                                                                              ,pr_cdempres => 0
+                                                                              ,pr_cdacesso => 'PERCIRAPLI'
+                                                                              ,pr_tpregist => 0));
+      
+         -- Buscar informações e Saldos das Poupanças Programadas:
+         apli0001.pc_consulta_poupanca(pr_cdcooper => vr_cdcooper --> Cooperativa
+                                      ,pr_cdagenci => 1 --> Codigo da Agencia
+                                      ,pr_nrdcaixa => 1 --> Numero do caixa
+                                      ,pr_cdoperad => 1 --> Codigo do Operador
+                                      ,pr_idorigem => 5 --> Identificador da Origem
+                                      ,pr_nrdconta => pr_nrdconta --> Nro da conta associado
+                                      ,pr_idseqttl => 1 --> Identificador Sequencial
+                                      ,pr_nrctrrpp => 0 --> Contrato Poupanca Programada
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                      ,pr_dtmvtopr => rw_crapdat.dtmvtopr --> Data do proximo movimento
+                                      ,pr_inproces => rw_crapdat.inproces --> Indicador de processo
+                                      ,pr_cdprogra => 'BLQRGT' --> Nome do programa chamador
+                                      ,pr_flgerlog => FALSE --> Flag erro log
+                                      ,pr_percenir => vr_percenir --> % IR para Calculo Poupanca
+                                      ,pr_tab_craptab => vr_tab_conta_bloq --> Tipo de tabela de Conta Bloqu
+                                      ,pr_tab_craplpp => vr_tab_craplpp --> Tipo de tabela com lcto poup
+                                      ,pr_tab_craplrg => vr_tab_craplrg --> Tipo de tabela com resgates
+                                      ,pr_tab_resgate => vr_tab_resgate --> Tabela com valores dos resgates
+                                      ,pr_vlsldrpp => vr_vlsaldo_poup --> Valor saldo poup progr
+                                      ,pr_retorno => vr_des_reto --> Descricao erro/sucesso OK/NOK
+                                      ,pr_tab_dados_rpp => vr_tab_dados_rpp --> Poupancas Programadas
+                                      ,pr_tab_erro => vr_tab_erro); --> Saida com erros;                                   
+      
         -- Registros
         pr_retxml := XMLTYPE.appendChildXML(pr_retxml
                                             ,'/Root/bloq_apli'
                                             ,XMLTYPE('<bloq>'
                                                    ||'  <dstipapl>'||rw_craprpp.dstipapl||'</dstipapl>'
                                                    ||'  <nrctrrpp>'||rw_craprpp.nrctrrpp||'</nrctrrpp>'
-                                                   ||'  <vlsdrdpp>'||rw_craprpp.vlsdrdpp||'</vlsdrdpp>'
+                                                   ||'  <vlsdrdpp>'||nvl(vr_vlsaldo_poup,0)||'</vlsdrdpp>'
                                                    ||'  <tpaplica>1</tpaplica>'
                                                    ||'  <idtipapl>A</idtipapl>'
                                                    ||'  <nmprodut> </nmprodut>'

@@ -1164,6 +1164,34 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                                        ,pr_cdcritic OUT NUMBER                    --> Codigo da critica
                                        ,pr_dscritic OUT VARCHAR2);                --> Descrição da critica
 
+  -- Rotina para retornar se a aplicação está bloqueada
+	PROCEDURE pc_valida_bloqueio_aplica(pr_cdcooper IN  craptab.cdcooper%TYPE -- Código da cooperativa
+																		 ,pr_nrdconta IN  craprda.nrdconta%TYPE -- Número da conta
+																		 ,pr_nraplica IN  craprda.nraplica%TYPE -- Número da aplicação
+																		 ,pr_xmllog   IN VARCHAR2                 -- XML com informações de LOG
+																		 ,pr_cdcritic OUT PLS_INTEGER             -- Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2
+																		 ,pr_retxml   IN OUT NOCOPY XMLType       -- Arquivo de retorno do XML
+																		 ,pr_nmdcampo OUT VARCHAR2                -- Nome do Campo
+																		 ,pr_des_erro OUT VARCHAR2
+																		 );
+  -- Rotina para geração dos logs e exclusão do bloqueio da apicação (Antiga) para resgates totais
+	PROCEDURE pc_proc_pos_resgate(pr_cdcooper IN  craptab.cdcooper%TYPE -- Código da cooperativa
+		                           ,pr_cdoperad IN  VARCHAR2              -- Código do operador
+															 ,pr_cdopelib IN  VARCHAR2              -- Código do liberador
+															 ,pr_nrdconta IN  craprda.nrdconta%TYPE -- Número da conta
+															 ,pr_nraplica IN  craprda.nraplica%TYPE -- Número da aplicação
+															 ,pr_vlresgat IN  NUMBER                -- Valor do resgate
+															 ,pr_tpresgat IN  VARCHAR2              -- Tipo do resgate
+															 ,pr_idseqttl IN  VARCHAR2              
+															 ,pr_xmllog   IN  VARCHAR2              -- XML com informações de LOG
+															 ,pr_cdcritic OUT PLS_INTEGER           -- Código da crítica
+															 ,pr_dscritic OUT VARCHAR2
+															 ,pr_retxml   IN OUT NOCOPY XMLType     -- Arquivo de retorno do XML
+															 ,pr_nmdcampo OUT VARCHAR2              -- Nome do Campo
+															 ,pr_des_erro OUT VARCHAR2
+		                           );
+  --
 END APLI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
@@ -12850,8 +12878,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             CLOSE cr_craptab;
               
             IF vr_dstextab IS NULL THEN
+							-- SM404
+							IF pr_idorigem <> 5 OR pr_cdprogra NOT IN('ATENDA') THEN
               -- Monta critica
               vr_cdcritic := 640;
+								--
+							END IF;
                                      
             ELSIF rw_craprda.insaqtot = 1 THEN
               
@@ -14189,12 +14221,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
           -- Caso a busca encontre registros
           IF cr_craptab2%FOUND THEN
-            
+            -- SM404
+						IF pr_idorigem <> 5 OR pr_cdprogra NOT IN('ATENDA') THEN
+              --
             vr_cdcritic := 640;
             
             CLOSE cr_craptab2;
             
             CONTINUE;
+							--
+						END IF;
           ELSE
             CLOSE cr_craptab2;
           END IF;
@@ -15853,6 +15889,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     --             06/06/2016 - Ajuste para utilizar UPPER nos campos de indice ao ler a tabela
     --                          craptab
     --                          (Adriano - SD 452932).       
+		--
+		--             07/05/2018 - Retirado validação de bloqueio da aplicação - 669 (SM404).
+		--
     -- .......................................................................................*/
     ------------------------------- CURSORES ---------------------------------
     
@@ -16121,8 +16160,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
     END IF;  -- fim if craprda.tpaplica
     
-    
     IF pr_flcadrgt = 1/*TRUE*/  THEN
+      -- Não verifica o bloqueio da aplicação se a rotina for chamada pela tela ATENDA do Ayllos Web (SM404)
+			IF NOT (pr_idorigem = 5 AND -- Ayllos Web
+				 pr_nmdatela = 'ATENDA') THEN
+					
       /** Verifica se a aplicacao esta Bloqueada **/
       OPEN cr_craptab(pr_cdcooper => pr_cdcooper
                      ,pr_nmsistem => 'CRED'
@@ -16139,7 +16181,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         close cr_craptab;
         raise vr_exc_erro;
       END IF;    
-      
+			--
+			END IF;
+			--
       vr_vlrresga := 0;
       
       -- Verificar resgate da aplicação
@@ -16999,6 +17043,170 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     END;
   END pc_obtem_dados_aplicacoes;
   
+	PROCEDURE pc_busca_saldo_apli(pr_cdcooper       IN  crapcop.cdcooper%TYPE       --> Codigo Cooperativa
+															 ,pr_cdoperad       IN  crapope.cdoperad%TYPE       --> Codigo do Operador
+															 ,pr_nmdatela       IN  craptel.nmdatela%TYPE       --> Nome da Tela
+															 ,pr_idorigem       IN  INTEGER                     --> Origem
+															 ,pr_nrdcaixa       IN  INTEGER                     --> Numero do Caixa
+															 ,pr_nrdconta       IN  crapass.nrdconta%TYPE       --> Número da Conta
+															 ,pr_idseqttl       IN  crapttl.idseqttl%TYPE       --> Sequencia do Titular
+															 ,pr_cdagenci       IN  crapass.cdagenci%TYPE       --> Codigo Agencia
+															 ,pr_cdprogra       IN  craptel.nmdatela%TYPE       --> Codigo do Programa
+															 ,pr_nraplica       IN  craprda.nraplica%TYPE       --> Número da Aplicação
+															 ,pr_cdprodut       IN  craprac.cdprodut%TYPE       --> Código do Produto
+															 ,pr_dtmvtolt       IN  crapdat.dtmvtolt%TYPE       --> Data de Movimentação
+															 ,pr_idconsul       IN  INTEGER                     --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+															 ,pr_idgerlog       IN  INTEGER                     --> Identificador de Log (0 – Não / 1 – Sim) 																 
+															 ,pr_dsoperac       IN  VARCHAR2 DEFAULT NULL       --> Descrição da operação
+															 ,pr_tab_saldo_rdca OUT apli0001.typ_tab_saldo_rdca --> Tabela com os dados da aplicação
+															 ,pr_sltotres       OUT NUMBER
+															 ,pr_cdcritic       OUT NUMBER
+															 ,pr_dscritic       OUT VARCHAR2
+															 ) IS
+
+		-- Cursor para buscar o cadastro dos lancamentos de resgates solicitados.
+		CURSOR cr_craplrg(pr_cdcooper IN crapcop.cdcooper%TYPE
+										 ,pr_nrdconta IN craprda.nrdconta%TYPE
+										 ,pr_nraplica IN craprda.nraplica%TYPE
+										 ,pr_tpaplica IN craprda.tpaplica%TYPE
+										 ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+		SELECT craplrg.vllanmto
+					,craplrg.tpresgat
+			FROM craplrg
+		 WHERE craplrg.cdcooper = pr_cdcooper
+			 AND craplrg.nrdconta = pr_nrdconta
+			 AND craplrg.nraplica = pr_nraplica
+			 AND craplrg.tpaplica = pr_tpaplica
+			 AND craplrg.dtresgat >= pr_dtmvtolt
+			 AND craplrg.inresgat = 0; -- Indicador de resgate (0 - NÃO RESGATOU)
+		rw_craplrg cr_craplrg%ROWTYPE;
+					
+		-- Cursor para buscar o cadastro dos lancamentos de resgates solicitados de novas aplicacaoes.
+		CURSOR cr_craprga(pr_cdcooper IN crapcop.cdcooper%TYPE
+										 ,pr_nrdconta IN craprda.nrdconta%TYPE
+										 ,pr_nraplica IN craprda.nraplica%TYPE
+										 ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+		SELECT craprga.vlresgat
+					,craprga.idtiprgt
+			FROM craprga
+		 WHERE craprga.cdcooper = pr_cdcooper
+			 AND craprga.nrdconta = pr_nrdconta
+			 AND craprga.nraplica = pr_nraplica
+			 AND craprga.dtresgat >= pr_dtmvtolt
+			 AND craprga.idresgat = 0; -- Indicador de resgate (0 - NÃO RESGATOU)
+		rw_craprga cr_craprga%ROWTYPE;
+		--
+		vr_foundlrg NUMBER;
+		vr_ind      NUMBER;
+		--
+	BEGIN
+		--
+		apli0005.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper       --> Código da Cooperativa
+																,pr_cdoperad   => pr_cdoperad       --> Código do Operador
+																,pr_nmdatela   => pr_nmdatela       --> Nome da Tela
+																,pr_idorigem   => pr_idorigem       --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
+																,pr_nrdcaixa   => pr_nrdcaixa       --> Numero do Caixa                  
+																,pr_nrdconta   => pr_nrdconta       --> Número da Conta
+																,pr_idseqttl   => pr_idseqttl       --> Titular da Conta
+																,pr_cdagenci   => pr_cdagenci       --> Codigo da Agencia
+																,pr_cdprogra   => pr_cdprogra       --> Codigo do Programa
+																,pr_nraplica   => pr_nraplica       --> Número da Aplicação - Parâmetro Opcional
+																,pr_cdprodut   => pr_cdprodut       --> Código do Produto – Parâmetro Opcional 
+																,pr_dtmvtolt   => pr_dtmvtolt       --> Data de Movimento
+																,pr_idconsul   => pr_idconsul       --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+																,pr_idgerlog   => pr_idgerlog       --> Identificador de Log (0 – Não / 1 – Sim)                                  
+																,pr_cdcritic   => pr_cdcritic       --> Código da crítica
+																,pr_dscritic   => pr_dscritic       --> Descrição da crítica
+																,pr_saldo_rdca => pr_tab_saldo_rdca --> Tabela com os dados da aplicação
+																);
+	        
+		-- Vai para o primeiro registro
+		vr_ind := pr_tab_saldo_rdca.first; 
+	        
+		-- loop sobre a tabela de saldo
+		WHILE vr_ind IS NOT NULL LOOP
+			-- Verifica a data de movimentação,
+			-- se existe saldo para resgate
+			-- e se a aplicação está disponível ou não possui descrição
+			IF pr_tab_saldo_rdca(vr_ind).dtmvtolt < pr_dtmvtolt AND 
+				 pr_tab_saldo_rdca(vr_ind).sldresga > 0           AND
+				(pr_tab_saldo_rdca(vr_ind).dssitapl = 'DISPONIVEL' OR
+				 TRIM(pr_tab_saldo_rdca(vr_ind).dssitapl) IS NULL) THEN
+				--
+				IF pr_tab_saldo_rdca(vr_ind).cdprodut > 0 THEN
+					--
+					vr_foundlrg := 0;
+					--
+					FOR rw_craprga IN cr_craprga(pr_cdcooper => pr_cdcooper
+																			,pr_nrdconta => pr_nrdconta
+																			,pr_nraplica => pr_tab_saldo_rdca(vr_ind).nraplica
+																			,pr_dtmvtolt => pr_dtmvtolt
+																			)LOOP
+						--
+						vr_foundlrg := 1;
+						--
+						IF rw_craprga.idtiprgt = 2 THEN
+							-- Se o tipo de resgate for total, não incrementa o valor total de resgate
+							CONTINUE;
+							--
+						ELSE
+							-- Incrementar o valor total de resgate
+							pr_sltotres := NVL(pr_sltotres,0) + (pr_tab_saldo_rdca(vr_ind).sldresga - rw_craprga.vlresgat);
+							--
+						END IF;
+						--
+					END LOOP;                            
+					--
+				ELSE
+					--
+					vr_foundlrg := 0;
+					-- Buscar as informações do cadastro dos lancamentos de resgates solicitados
+					FOR rw_craplrg IN cr_craplrg(pr_cdcooper => pr_cdcooper
+																			,pr_nrdconta => pr_nrdconta
+																			,pr_nraplica => pr_tab_saldo_rdca(vr_ind).nraplica
+																			,pr_tpaplica => pr_tab_saldo_rdca(vr_ind).tpaplica
+																			,pr_dtmvtolt => pr_dtmvtolt
+																			)LOOP
+						--
+						vr_foundlrg := 1;
+						--
+						IF rw_craplrg.tpresgat = 2 THEN
+							-- Se o tipo de resgate for total, não incrementa o valor total de resgate
+							CONTINUE;
+							--
+						ELSE
+							-- Incrementar o valor total de resgate
+							pr_sltotres := NVL(pr_sltotres,0) + (pr_tab_saldo_rdca(vr_ind).sldresga - rw_craplrg.vllanmto);
+							--
+						END IF;
+						--
+					END LOOP;
+					--
+				END IF;
+
+				-- Verifica se foi encontrado registro para a craplrg
+				IF vr_foundlrg = 0 THEN
+					-- Se não encontrou lancamento de resgate, incrementamos com o valor de resgate
+					pr_sltotres := NVL(pr_sltotres,0) + pr_tab_saldo_rdca(vr_ind).sldresga;
+					--
+				END IF;
+				--
+			ELSIF pr_dsoperac = 'EXCLUIAPL'                        AND --> Apenas na exclusão
+						pr_tab_saldo_rdca(vr_ind).dtmvtolt = pr_dtmvtolt AND --> Aplicação realizada na mesma data
+						pr_tab_saldo_rdca(vr_ind).sldresga > 0           AND
+					 (pr_tab_saldo_rdca(vr_ind).dssitapl = 'DISPONIVEL' OR
+					 TRIM(pr_tab_saldo_rdca(vr_ind).dssitapl) IS NULL) THEN
+				-- Somente incrementamos com o valor de resgate
+				pr_sltotres := NVL(pr_sltotres,0) + pr_tab_saldo_rdca(vr_ind).sldresga;
+				--
+			END IF;
+			-- Vai para o proximo registro
+			vr_ind := pr_tab_saldo_rdca.next(vr_ind);
+			--
+		END LOOP;
+		--
+	END pc_busca_saldo_apli;
+  
   /* Procedure para obter os valores Bloqueados de aplic. */
   PROCEDURE pc_ver_val_bloqueio_aplica(pr_cdcooper IN crapcop.cdcooper%TYPE      --> Codigo Cooperativa
                                      ,pr_cdagenci IN crapass.cdagenci%TYPE      --> Codigo Agencia
@@ -17022,7 +17230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   --
   -- Programa: pc_ver_val_bloqueio_aplica  - Antiga b1wgen0081.p/ver-valores-bloqueados-judicial
   -- Autor   : ---
-  -- Data    : ---                        Ultima atualizacao: 17/12/2014
+  -- Data    : ---                        Ultima atualizacao: 09/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -17042,10 +17250,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   --                          e incluido bloqueio por garantia.
   --                          PRJ404 - Garantia(Odirlei-AMcom)
   --
+	--             09/05/2018 - Retirado validação de bloqueio da aplicação - 640 (SM404).
+  --
   -- .......................................................................................
     BEGIN
       DECLARE
         vr_sltotres NUMBER(20,2);
+		vr_sltotgar NUMBER(20,2); -- SM404
         vr_vlresgat NUMBER(20,2);
         vr_vlblqjud NUMBER(20,2);
         vr_vlresblq NUMBER(20,2);
@@ -17107,6 +17318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         
         -- Inicializar as variaveis
         vr_sltotres := 0;
+		vr_sltotgar := 0; -- SM404
         vr_vlresgat := 0;
         vr_vlblqjud := 0;
         vr_vlresblq := 0;
@@ -17116,6 +17328,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         vr_dstransa := '';
         
         -- Consulta de aplicacoes novas e antigas
+				-- SM404
+				pc_busca_saldo_apli(pr_cdcooper       => pr_cdcooper       -- IN  --> Codigo Cooperativa
+													 ,pr_cdoperad       => pr_cdoperad       -- IN  --> Codigo do Operador
+													 ,pr_nmdatela       => pr_nmdatela       -- IN  --> Nome da Tela
+													 ,pr_idorigem       => pr_idorigem       -- IN  --> Origem
+													 ,pr_nrdcaixa       => pr_nrdcaixa       -- IN  --> Numero do Caixa
+													 ,pr_nrdconta       => pr_nrdconta       -- IN  --> Número da Conta
+													 ,pr_idseqttl       => pr_idseqttl       -- IN  --> Sequencia do Titular
+													 ,pr_cdagenci       => pr_cdagenci       -- IN  --> Codigo Agencia
+													 ,pr_cdprogra       => 'RESGATE'         -- IN  --> Codigo do Programa
+													 ,pr_nraplica       => 0                 -- IN  --> Número da Aplicação
+													 ,pr_cdprodut       => 0                 -- IN  --> Código do Produto
+													 ,pr_dtmvtolt       => pr_dtmvtolt       -- IN  --> Data de Movimentação
+													 ,pr_idconsul       => 6                 -- IN  --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+													 ,pr_idgerlog       => 1                 -- IN  --> Identificador de Log (0 – Não / 1 – Sim) 																 
+													 ,pr_dsoperac       => pr_dsoperac       -- IN  --> Descrição da operação
+													 ,pr_tab_saldo_rdca => vr_tab_saldo_rdca -- OUT --> Tabela com os dados da aplicação
+													 ,pr_sltotres       => vr_sltotres       -- OUT
+													 ,pr_cdcritic       => vr_cdcritic       -- OUT
+													 ,pr_dscritic       => vr_dscritic       -- OUT
+													 );
+        /* -- SM404
         apli0005.pc_lista_aplicacoes(pr_cdcooper  => pr_cdcooper          --> Código da Cooperativa
                                     ,pr_cdoperad  => pr_cdoperad          --> Código do Operador
                                     ,pr_nmdatela  => pr_nmdatela          --> Nome da Tela
@@ -17206,6 +17440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- Vai para o proximo registro
           vr_ind := vr_tab_saldo_rdca.next(vr_ind);
         END LOOP;
+				-- */
         
         -- Verificar se possui valor de resgate como parametro
         IF NVL(pr_vlresgat,0) = 0 THEN
@@ -17302,9 +17537,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           RAISE vr_exc_erro;
         END IF;
 
+				-- SM404
+				pc_busca_saldo_apli(pr_cdcooper       => pr_cdcooper       -- IN  --> Codigo Cooperativa
+													 ,pr_cdoperad       => pr_cdoperad       -- IN  --> Codigo do Operador
+													 ,pr_nmdatela       => pr_nmdatela       -- IN  --> Nome da Tela
+													 ,pr_idorigem       => pr_idorigem       -- IN  --> Origem
+													 ,pr_nrdcaixa       => pr_nrdcaixa       -- IN  --> Numero do Caixa
+													 ,pr_nrdconta       => pr_nrdconta       -- IN  --> Número da Conta
+													 ,pr_idseqttl       => pr_idseqttl       -- IN  --> Sequencia do Titular
+													 ,pr_cdagenci       => pr_cdagenci       -- IN  --> Codigo Agencia
+													 ,pr_cdprogra       => 'RESGATE1'        -- IN  --> Codigo do Programa
+													 ,pr_nraplica       => 0                 -- IN  --> Número da Aplicação
+													 ,pr_cdprodut       => 0                 -- IN  --> Código do Produto
+													 ,pr_dtmvtolt       => pr_dtmvtolt       -- IN  --> Data de Movimentação
+													 ,pr_idconsul       => 6                 -- IN  --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+													 ,pr_idgerlog       => 1                 -- IN  --> Identificador de Log (0 – Não / 1 – Sim) 																 
+													 ,pr_dsoperac       => pr_dsoperac       -- IN  --> Descrição da operação
+													 ,pr_tab_saldo_rdca => vr_tab_saldo_rdca -- OUT --> Tabela com os dados da aplicação
+													 ,pr_sltotres       => vr_sltotgar       -- OUT
+													 ,pr_cdcritic       => vr_cdcritic       -- OUT
+													 ,pr_dscritic       => vr_dscritic       -- OUT
+													 );
+       -- SM404
+			 vr_sltotres := vr_sltotgar;
+			 --
        BLOQ0001.pc_calc_bloqueio_garantia ( pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
-                                            ,pr_vlsldpou => vr_sltotres
+                                            ,pr_vlsldpou => vr_sltotres -- SM404
                                             ,pr_vlblqpou => vr_vlblqjud
                                             ,pr_vlbloque_aplica => vr_vlblqapl
                                             ,pr_vlbloque_poupa  => vr_vlblqpou
@@ -22733,5 +22992,270 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
   END pc_processa_lote_resgt;
   
+	-- Rotina para retornar se a aplicação está bloqueada
+	PROCEDURE pc_valida_bloqueio_aplica(pr_cdcooper IN  craptab.cdcooper%TYPE -- Código da cooperativa
+																		 ,pr_nrdconta IN  craprda.nrdconta%TYPE -- Número da conta
+																		 ,pr_nraplica IN  craprda.nraplica%TYPE -- Número da aplicação
+																		 ,pr_xmllog   IN VARCHAR2                 -- XML com informações de LOG
+																		 ,pr_cdcritic OUT PLS_INTEGER             -- Código da crítica
+																		 ,pr_dscritic OUT VARCHAR2
+																		 ,pr_retxml   IN OUT NOCOPY XMLType       -- Arquivo de retorno do XML
+																		 ,pr_nmdcampo OUT VARCHAR2                -- Nome do Campo
+																		 ,pr_des_erro OUT VARCHAR2
+																		 ) IS
+		/* .............................................................................
+       
+		 Programa: pc_valida_bloqueio_aplica
+		 Autor   : Supero
+		 Data    : Maio/2018.                    Ultima atualizacao: 
+
+		 Objetivo  : Procedure para validar o bloqueio da aplicação (SM404)
+
+		 Alteracoes:  
+                                 
+		..............................................................................*/
+		
+		-- Cursor para se a aplicação está disponivel para saque
+    CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                     ,pr_nmsistem IN craptab.nmsistem%TYPE
+                     ,pr_tptabela IN craptab.tptabela%TYPE
+                     ,pr_cdempres IN craptab.cdempres%TYPE
+                     ,pr_cdacesso IN craptab.cdacesso%TYPE
+                     ,pr_dstextab IN craptab.dstextab%TYPE
+										 ) IS
+      SELECT tab.dstextab
+        FROM craptab tab
+       WHERE tab.cdcooper               = pr_cdcooper
+         AND UPPER(tab.nmsistem)        = UPPER(pr_nmsistem)
+         AND UPPER(tab.tptabela)        = UPPER(pr_tptabela)
+         AND tab.cdempres               = pr_cdempres
+         AND UPPER(tab.cdacesso)        = UPPER(pr_cdacesso)
+         AND SUBSTR(tab.dstextab, 1, 7) = pr_dstextab;
+    --
+		rw_craptab cr_craptab%ROWTYPE;
+		--
+		vr_bloqueado INT := 0;
+		--
+	BEGIN
+		-- Verifica se a aplicação esta Bloqueada
+		OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+									 ,pr_nmsistem => 'CRED'
+									 ,pr_tptabela => 'BLQRGT'
+									 ,pr_cdempres => 0
+									 ,pr_cdacesso => gene0002.fn_mask(TO_CHAR(pr_nrdconta),'9999999999')
+									 ,pr_dstextab => gene0002.fn_mask(TO_CHAR(pr_nraplica),'9999999')
+									 );
+    --
+		FETCH cr_craptab INTO rw_craptab;
+		-- Se encontrar, devolve como bloqueado
+		IF cr_craptab%FOUND THEN
+			--
+			vr_bloqueado := 1;
+			close cr_craptab;
+			--
+		END IF;
+		
+		-- Criar XML de retorno para uso na Web
+     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><bloqueio>' || NVL(TO_CHAR(vr_bloqueado),'0') || '</bloqueio>');
+		-- Retorno
+		pr_des_erro := 'OK';
+		--
+	EXCEPTION
+		WHEN OTHERS THEN
+			-- Retorno não OK
+			pr_des_erro:= 'NOK';        
+			pr_cdcritic:= 0;
+        
+			-- Chamar rotina de gravação de erro
+			pr_dscritic:= 'Erro na apli0002.pc_valida_bloqueio_aplica --> ' || SQLERRM;
+	END pc_valida_bloqueio_aplica;
+  
+	-- Rotina para geração dos logs e exclusão do bloqueio da apicação (Antiga) para resgates totais
+	PROCEDURE pc_proc_pos_resgate(pr_cdcooper IN  craptab.cdcooper%TYPE -- Código da cooperativa
+		                           ,pr_cdoperad IN  VARCHAR2              -- Código do operador
+															 ,pr_cdopelib IN  VARCHAR2              -- Código do liberador
+															 ,pr_nrdconta IN  craprda.nrdconta%TYPE -- Número da conta
+															 ,pr_nraplica IN  craprda.nraplica%TYPE -- Número da aplicação
+															 ,pr_vlresgat IN  NUMBER                -- Valor do resgate
+															 ,pr_tpresgat IN  VARCHAR2              -- Tipo do resgate
+															 ,pr_idseqttl IN  VARCHAR2              
+															 ,pr_xmllog   IN  VARCHAR2              -- XML com informações de LOG
+															 ,pr_cdcritic OUT PLS_INTEGER           -- Código da crítica
+															 ,pr_dscritic OUT VARCHAR2
+															 ,pr_retxml   IN OUT NOCOPY XMLType     -- Arquivo de retorno do XML
+															 ,pr_nmdcampo OUT VARCHAR2              -- Nome do Campo
+															 ,pr_des_erro OUT VARCHAR2
+		                           ) IS
+		/* .............................................................................
+       
+		 Programa: pc_proc_pos_resgate
+		 Autor   : Supero
+		 Data    : Maio/2018.                    Ultima atualizacao: 
+
+		 Objetivo  : Procedure para geração dos logs e exclusão do bloqueio da apicação
+		             (Antiga) para resgates totais (SM404).
+
+		 Alteracoes:  
+                                 
+		..............................................................................*/
+		--
+		CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE
+		                 ,pr_cdoperad crapope.cdoperad%TYPE
+		                 ) IS
+			SELECT crapope.cdoperad || ' - ' || crapope.nmoperad dsoperad
+				FROM crapope
+			 WHERE crapope.cdsitope = 1
+				 AND crapope.cdoperad = pr_cdoperad
+				 AND crapope.cdcooper = pr_cdcooper;
+		--
+		rw_crapope cr_crapope%ROWTYPE;
+		--
+		vr_nrdrowid ROWID;
+		-- Variaveis retornadas da gene0004.pc_extrai_dados
+		/*vr_cdcooper NUMBER;
+		vr_cdoperad VARCHAR2(100);
+		vr_nmdatela VARCHAR2(100);
+		vr_nmeacao  VARCHAR2(100);
+		vr_cdagenci VARCHAR2(100);
+		vr_nrdcaixa VARCHAR2(100);
+		vr_idorigem VARCHAR2(100);*/
+		--
+		vr_exc_erro EXCEPTION;
+		--
+	BEGIN
+		/*-- Extrai dados do xml
+		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => pr_dscritic
+														);
+    
+		-- Se retornou alguma crítica
+		IF TRIM(pr_dscritic) IS NOT NULL THEN
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;*/
+		-- Busca os dados do operador do resgate
+		OPEN cr_crapope(pr_cdcooper
+		               ,pr_cdoperad
+									 );
+		--
+		FETCH cr_crapope INTO rw_crapope;
+		--
+		IF cr_crapope%NOTFOUND THEN
+			--
+			pr_dscritic := 'Operador não cadastrado/ativo!';
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+		CLOSE cr_crapope;
+		-- Gerar informações do log
+		GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+												,pr_cdoperad => pr_cdoperad
+												,pr_dscritic => NULL
+												,pr_dsorigem => gene0001.vr_vet_des_origens('1')
+												,pr_dstransa => 'Autorização de resgate manual de título bloqueado - ' || rw_crapope.dsoperad || ' – ' || to_char(SYSDATE, 'DD/MM/YYYY HH24:MI:SS') || ' - ' || to_char(pr_vlresgat,'fm999g999g999g990d00')
+												,pr_dttransa => TRUNC(SYSDATE)
+												,pr_flgtrans => 1 --> TRUE
+												,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+												,pr_idseqttl => pr_idseqttl
+												,pr_nmdatela => 'ATENDA'
+												,pr_nrdconta => pr_nrdconta
+												,pr_nrdrowid => vr_nrdrowid
+												);
+		-- Operador que efetuou o resgate
+		GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+														 ,pr_nmdcampo => 'Operador resgate'
+														 ,pr_dsdadant => NULL
+														 ,pr_dsdadatu => pr_cdoperad
+														 );
+		-- Valor do resgate
+		GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+														 ,pr_nmdcampo => 'Valor resgate'
+														 ,pr_dsdadant => NULL
+														 ,pr_dsdadatu => to_char(pr_vlresgat,'fm999g999g999g990d00')
+														 );
+		-- Busca os dados do liberador do resgate
+		OPEN cr_crapope(pr_cdcooper
+		               ,pr_cdopelib
+									 );
+		--
+		FETCH cr_crapope INTO rw_crapope;
+		--
+		IF cr_crapope%NOTFOUND THEN
+			--
+			pr_dscritic := 'Liberador não cadastrado/ativo!';
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+		CLOSE cr_crapope;
+		-- Gerar informações do log
+		GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+												,pr_cdoperad => pr_cdoperad
+												,pr_dscritic => NULL
+												,pr_dsorigem => gene0001.vr_vet_des_origens('1')
+												,pr_dstransa => 'Autorização de resgate manual de título bloqueado - ' || rw_crapope.dsoperad || ' – ' || to_char(SYSDATE, 'DD/MM/YYYY HH24:MI:SS') || ' - ' || to_char(pr_vlresgat,'fm999g999g999g990d00')
+												,pr_dttransa => TRUNC(SYSDATE)
+												,pr_flgtrans => 1 --> TRUE
+												,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+												,pr_idseqttl => pr_idseqttl
+												,pr_nmdatela => 'ATENDA'
+												,pr_nrdconta => pr_nrdconta
+												,pr_nrdrowid => vr_nrdrowid
+												);
+		-- Liberador que autorizou o resgate
+		GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+														 ,pr_nmdcampo => 'Liberador resgate'
+														 ,pr_dsdadant => NULL
+														 ,pr_dsdadatu => pr_cdopelib
+														 );
+		-- Valor do resgate
+		GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+														 ,pr_nmdcampo => 'Valor resgate'
+														 ,pr_dsdadant => NULL
+														 ,pr_dsdadatu => pr_cdoperad
+														 );
+		-- Exclui o bloqueio se o tipo de resgate for total
+		IF nvl(pr_tpresgat, ' ') = 'T' THEN
+			--
+			BEGIN
+				--
+				DELETE
+					FROM craptab tab
+				 WHERE tab.cdcooper               = pr_cdcooper
+					 AND UPPER(tab.nmsistem)        = 'CRED'
+					 AND UPPER(tab.tptabela)        = 'BLQRGT'
+					 AND tab.cdempres               = 0
+					 AND UPPER(tab.cdacesso)        = gene0002.fn_mask(to_char(pr_nrdconta), '9999999999')
+					 AND SUBSTR(tab.dstextab, 1, 7) = gene0002.fn_mask(to_char(pr_nraplica), '9999999');
+				--
+			EXCEPTION
+				WHEN OTHERS THEN
+					pr_dscritic := 'Erro ao tentar excluir o bloqueio: ' || SQLERRM;
+					RAISE vr_exc_erro;
+			END;
+			--
+		END IF;
+		--
+	EXCEPTION
+		WHEN vr_exc_erro THEN
+			-- Retorno não OK
+			pr_des_erro:= 'NOK';        
+			pr_cdcritic:= 0;
+		WHEN OTHERS THEN
+			-- Retorno não OK
+			pr_des_erro:= 'NOK';        
+			pr_cdcritic:= 0;
+			-- Chamar rotina de gravação de erro
+			pr_dscritic:= 'Erro na apli0002.pc_proc_pos_resgate --> ' || SQLERRM;
+	END pc_proc_pos_resgate;
+	--  
 END APLI0002;
 /

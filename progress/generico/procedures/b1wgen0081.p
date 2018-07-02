@@ -44,7 +44,7 @@
 
    Programa: b1wgen0081.p                  
    Autora  : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 30/11/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 10/05/2018
 
    Dados referentes ao programa:
 
@@ -205,6 +205,8 @@
                30/11/2017 - Removido rotina ver-valores-bloqueados-judicial,
                             pois foi convertida e nao é mais utilizada.
                             PRJ404-Garantia(Odirlei-AMcom)             
+              
+               10/05/2018 - Permitir resgate de aplicaçoes bloqueadas (SM404)
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -1491,7 +1493,7 @@ PROCEDURE valida-acesso-opcao-resgate:
                        INTE(SUBSTR(craptab.dstextab,1,7)) =
                                craprda.nraplica              NO-LOCK NO-ERROR.
 
-            IF  AVAILABLE craptab  THEN
+            IF  AVAILABLE craptab AND(par_idorigem <> 5 OR par_nmdatela <> "ATENDA") THEN
                 DO:
                     ASSIGN aux_cdcritic = 669
                            aux_dscritic = "".
@@ -1503,7 +1505,7 @@ PROCEDURE valida-acesso-opcao-resgate:
                                    INPUT aux_cdcritic,
                                    INPUT-OUTPUT aux_dscritic).
                                    
-                    IF  par_flgerlog  THEN
+                    /*IF  par_flgerlog  THEN*/
                         RUN proc_gerar_log (INPUT par_cdcooper,
                                             INPUT par_cdoperad,
                                             INPUT aux_dscritic,
@@ -3286,7 +3288,7 @@ PROCEDURE efetua-resgate-online:
                            INTE(SUBSTR(craptab.dstextab,1,7)) = craplrg.nraplica
                            NO-LOCK NO-ERROR.
              
-                IF  AVAILABLE craptab  THEN
+                IF  AVAILABLE craptab AND(par_idorigem <> 5 OR par_cdprogra <> "ATENDA" )  THEN
                     ASSIGN aux_cdcritic = 640.    
                 ELSE   
                 IF  crabrda.insaqtot = 1  THEN
