@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 26/05/2018
+   Data    : 23/03/2011                        Ultima atualizacao: 03/07/2018
     
    Dados referentes ao programa:
 
@@ -281,7 +281,9 @@
                04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi)
                             
 
-			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).								
+               
+               03/07/2018 - Utilizar trata-impressao-modelo1 para linhas de credito com tpctrato = 4. SCTASK0016657 (Lombardi)
                                                    
 .............................................................................*/
 
@@ -1328,7 +1330,7 @@ PROCEDURE gera-impressao-empr:
 
         IF  NOT aux_flimpcet THEN
             DO:
-                IF  craplcr.tpctrato = 1  THEN
+                IF  craplcr.tpctrato = 1 OR craplcr.tpctrato = 4  THEN
                     DO:
                         IF  aux_flgimpct  THEN
                             IF  aux_nrpagina = 0  THEN
