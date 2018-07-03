@@ -3666,8 +3666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := vr_cdcritic;
-      
+            
       pr_cdcritic := NVL(vr_cdcritic,0);
       
       IF NVL(pr_cdcritic,0) <> 0 THEN
