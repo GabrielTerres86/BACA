@@ -68,6 +68,21 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                        ,pr_vlendivi    OUT NUMBER                        --> Valor dívida
                                        ,pr_des_erro    OUT VARCHAR2);                    --> Descrição de erros
 
+  /* Procedure responsavel por calcular e gravar o risco e o endividamento do grupo */
+  PROCEDURE pc_calc_endivid_risco_grp_tbcc(pr_cdcooper    IN PLS_INTEGER                 --> Código da cooperativa
+                                          ,pr_cdagenci    IN PLS_INTEGER                 --> Agência
+                                          ,pr_nrdcaixa    IN PLS_INTEGER                 --> Número de caixa
+                                          ,pr_cdoperad    IN VARCHAR2                    --> Código cooperativa adicional
+                                          ,pr_cdprogra    IN VARCHAR2                    --> Código programa
+                                          ,pr_idorigem    IN PLS_INTEGER                 --> Origem
+                                          ,pr_nrdgrupo    IN PLS_INTEGER                 --> Número do grupo
+                                          ,pr_tpdecons    IN BOOLEAN                     --> Tipo de consulta
+                                          ,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE    --> Informações de data do sistema
+                                          ,pr_dstextab    IN craptab.dstextab%TYPE       --> Valor de descrição e taxas
+                                          ,pr_dsdrisco    OUT VARCHAR2                   --> Descrição do risco
+                                          ,pr_vlendivi    OUT NUMBER                     --> Valor dívida
+                                          ,pr_des_erro    OUT VARCHAR2);                 --> Descrição de erros
+
   /* Procedure para gravar log de simulação */
   PROCEDURE pc_log_simula_perc(pr_cdcooper IN PLS_INTEGER --> Código da cooperativa
                               ,pr_dtmvtolt IN DATE        --> Data de movimento
@@ -969,6 +984,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         WHERE cg.cdcooper = pr_cdcooper
         ORDER BY cg.nrdgrupo;
 
+      /* Buscar dados da formação de grupos */
+      CURSOR cr_crapgrp_tbcc(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT distinct ge.idgrupo
+        FROM tbcc_grupo_economico ge
+        WHERE ge.cdcooper = pr_cdcooper
+        ORDER BY ge.idgrupo;
+
+
+
       /* Join das tabelas CRAPASS e CRAPAVT para buscar dados os proprietários por juros e condição economica */
       CURSOR cr_vtass(pr_cdcooper IN crapavt.cdcooper%TYPE      --> Código da cooperativa
                      ,pr_persocio IN crapavt.persocio%TYPE) IS  --> Percentual do sócio
@@ -1832,10 +1856,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         END IF;
       END LOOP;
 
+		  -- Calcular endividamento do grupo conforme a nova forma (TBCC_GRUPO_ECONOMICO)
+      pc_calc_endivid_risco_grp_TBCC(pr_cdcooper    => pr_cdcooper
+                                    ,pr_cdagenci    => pr_cdagenci
+                                    ,pr_nrdcaixa    => pr_nrdcaixa
+                                    ,pr_cdoperad    => pr_cdoperad
+                                    ,pr_cdprogra    => pr_cdprogra
+                                    ,pr_idorigem    => pr_idorigem
+                                    ,pr_nrdgrupo    => 0
+                                    ,pr_tpdecons    => TRUE
+                                    ,pr_tab_crapdat => pr_tab_crapdat
+                                    ,pr_dstextab    => vr_dstextab
+                                    ,pr_dsdrisco    => opt_dsdrisco
+                                    ,pr_vlendivi    => opt_vlendivi
+                                    ,pr_des_erro    => pr_dscritic);  
+
+      -- Inclui nome do modulo logado
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_forma_grupo_economico');
+
       -- Finalização com sucesso
       pr_dscritic := 'OK';
 
-      -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
+      -- Inclui nome do modulo logado
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 
     EXCEPTION
@@ -2220,6 +2262,325 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
     END;
   END pc_calc_endivid_risco_grupo;
+
+
+  /* Procedure responsavel por calcular e gravar o risco e o endividamento do grupo TBCC */
+  PROCEDURE pc_calc_endivid_risco_grp_tbcc(pr_cdcooper    IN PLS_INTEGER                    --> Código da cooperativa
+                                          ,pr_cdagenci    IN PLS_INTEGER                    --> Agência
+                                          ,pr_nrdcaixa    IN PLS_INTEGER                    --> Número de caixa
+                                          ,pr_cdoperad    IN VARCHAR2                       --> Código cooperativa adicional
+                                          ,pr_cdprogra    IN VARCHAR2                       --> Código programa
+                                          ,pr_idorigem    IN PLS_INTEGER                    --> Origem
+                                          ,pr_nrdgrupo    IN PLS_INTEGER                    --> Número do grupo
+                                          ,pr_tpdecons    IN BOOLEAN                        --> Tipo de consulta
+                                          ,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE       --> Informações de data do sistema
+                                          ,pr_dstextab    IN craptab.dstextab%TYPE          --> Valor da execução de descrição
+                                          ,pr_dsdrisco    OUT VARCHAR2                      --> Descrição do risco
+                                          ,pr_vlendivi    OUT NUMBER                        --> Valor dívida
+                                          ,pr_des_erro    OUT VARCHAR2) IS                  --> Descrição de erros
+  /* .............................................................................
+
+   Programa: pc_calc_endivid_risco_grupo       (Antigo: b1wgen0138.p --> pc_calc_endivid_risco_grupo)
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Mario - AMcom
+   Data    : Junho/2018.                        Ultima atualizacao: 20/06/2018
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Calcular e gravar o risco e o endividamento do grupo TBCC.
+
+   Alteracoes: 20/06/2018 - Criação da procedure utilizando novas tabelas de grupo
+                          - TBCC_GRUPO_ECONOMICO, TBCC_GRUPO_ECONOMICO_INTEG (Mario - AMcom)
+
+  ............................................................................. */
+  BEGIN
+    DECLARE
+
+      /* Variáveis do processo */
+      vr_innivris     PLS_INTEGER;        --> Inicial do processo
+      vr_opt_innivris PLS_INTEGER;        --> Sumarização do inicial do processo
+      vr_exec         PLS_INTEGER;        --> Armazenar ID de execução do SQL dinâmico
+      vr_retorno      PLS_INTEGER;        --> Controle da existencia de registros
+      vr_dctrl        DATE;               --> Armazenar o formato de data pelo programa chamador
+
+      vr_datarefere   DATE;               --> Armazenar data de acordo com o programa
+      vr_cdcritic     PLS_INTEGER;        --> Código da crítica
+      vr_exc_erro     EXCEPTION;          --> Controle de erros
+
+      -- Buscar Grupos Economicos relacionando CRAPRIS e TBCC_GRUPO_ECONOMICO
+      cursor cr_tbcc_grp (pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
+                         ,pr_dtrefere IN crapris.dtrefere%TYPE                  --> Data de referencia
+                         ,pr_idgrupo  IN tbcc_grupo_economico.idgrupo%TYPE) IS  --> Código do Grupo TBCC
+        select distinct 
+               ge.cdcooper
+              ,ge.idgrupo
+              ,ge.inrisco_grupo
+              ,ri.nrdgrupo
+          from tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi
+              ,crapris ri
+        where ge.cdcooper = pr_cdcooper
+          and gi.cdcooper = ge.cdcooper
+          and gi.idgrupo = ge.idgrupo
+          and ge.idgrupo = decode(pr_idgrupo,0,ge.idgrupo,pr_idgrupo)
+          and gi.dtexclusao is null
+          and ri.dtrefere = pr_dtrefere
+          and ri.cdcooper = gi.cdcooper
+          and ri.nrdconta = gi.nrdconta
+          and ri.inddocto = 1
+        order by ge.idgrupo;
+
+      --Busca grupo economico por nrdconta
+      CURSOR cr_crapgrp_2(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
+                         ,pr_idgrupo  IN tbcc_grupo_economico.idgrupo%TYPE) IS  --> Número do grupo
+        select gi.nrdconta
+              ,gi.nrcpfcgc
+              ,gi.cdcooper
+              ,gi.idgrupo
+              ,gi.tppessoa
+              ,ge.inrisco_grupo
+          from tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi
+         where ge.cdcooper = pr_cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null
+           and gi.idgrupo = pr_idgrupo
+         order by gi.nrdconta
+              ,gi.nrcpfcgc
+              ,gi.cdcooper
+              ,gi.idgrupo
+              ,gi.tppessoa
+              ,ge.inrisco_grupo;
+      rw_crapgrp2  cr_crapgrp_2%rowtype;
+
+      -- Buscar dados da formação de grupos
+      CURSOR cr_grupo_econ_tbcc(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE    --> Código da cooperativa
+                               ,pr_idgrupo  IN tbcc_grupo_economico.idgrupo%TYPE) IS --> Número do grupo
+        SELECT  ge.idgrupo
+               ,ge.inrisco_grupo
+          FROM tbcc_grupo_economico ge
+         WHERE ge.cdcooper = pr_cdcooper
+           and ge.idgrupo = decode(pr_idgrupo,0,ge.idgrupo,pr_idgrupo)
+         ORDER BY ge.idgrupo;
+
+      -- Buscar pior risco dos grupo para arrasto por nrdconta e nrcgccpf
+      CURSOR cr_grupo_risco(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
+                           ,pr_idgrupo  IN tbcc_grupo_economico.idgrupo%TYPE) IS  --> Código do Grupo TBCC
+        select gr.cdcooper
+              ,gr.idgrupo
+              ,gr.inrisco_grupo
+          from ( 
+        -- Buscar os grupos e risco por nrdconta
+        select ge.cdcooper
+              ,ge.idgrupo
+              ,ge.inrisco_grupo 
+          from tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi
+              ,tbcc_grupo_economico ge2
+              ,tbcc_grupo_economico_integ gi2 
+        where       
+               ge2.cdcooper =pr_cdcooper
+           and ge2.idgrupo =  pr_idgrupo
+           and gi2.cdcooper = ge2.cdcooper
+           and gi2.idgrupo = ge2.idgrupo
+           and gi2.dtexclusao is null
+           and
+               gi2.nrdconta = gi.nrdconta
+           and ge2.cdcooper = gi.cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null        
+        union
+        -- Buscar os grupos e risco considerando o CPF e base do CNPJ 
+        select ge.cdcooper
+              ,ge.idgrupo
+              ,ge.inrisco_grupo 
+          from tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi
+              ,tbcc_grupo_economico ge2
+              ,tbcc_grupo_economico_integ gi2
+        where       
+               ge2.cdcooper = pr_cdcooper
+           and ge2.idgrupo =  pr_idgrupo
+           and gi2.cdcooper = ge2.cdcooper
+           and gi2.idgrupo = ge2.idgrupo
+           and gi2.dtexclusao is null
+           and
+               ((gi.tppessoa = 1 and gi2.nrcpfcgc = gi.nrcpfcgc)
+            or  (gi.tppessoa = 2 and round(gi2.nrcpfcgc,-6) = round(gi.nrcpfcgc,-6)))              
+           and ge2.cdcooper = gi.cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null) gr       
+         order by gr.inrisco_grupo desc, gr.idgrupo;
+    --
+    BEGIN
+      -- Inicializa variáveis
+      vr_innivris := 0;
+      vr_opt_innivris := 0;
+      pr_dsdrisco := '';
+
+      -- Inclui nome do modulo logado
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_calc_endivid_risco_grupo_tbcc');
+  
+      -- Buscar parâmetro de data
+      IF UPPER(pr_cdprogra) = 'CRPS634' THEN
+        vr_datarefere := pr_tab_crapdat.dtmvtolt;
+      ELSE
+        vr_datarefere := pr_tab_crapdat.dtultdia;
+      END IF;
+
+      --Busca grupos
+      FOR rw_tbcc_grp in cr_tbcc_grp (pr_cdcooper => pr_cdcooper   --> Código da cooperativa
+                                     ,pr_dtrefere => vr_datarefere --> Data de referencia
+                                     ,pr_idgrupo  => pr_nrdgrupo)  --> Número do grupo
+      LOOP
+        -- Zerar valores da iteração anterior
+        vr_opt_innivris := 0;
+        vr_innivris := 0;
+
+        --Busca grupos por nrconta
+        FOR rw_crapgrp2 in cr_crapgrp_2(pr_cdcooper => pr_cdcooper          --> Código da cooperativa
+                                       ,pr_idgrupo  => rw_tbcc_grp.idgrupo) --> Número do grupo
+        LOOP
+
+          -- Verificar se o número da conta é maior que zero
+          IF rw_crapgrp2.nrdconta > 0 THEN
+
+            -- Buscar risco individual
+            geco0001.pc_calc_risco_individual(pr_cdcooper  => rw_crapgrp2.cdcooper
+                                             ,pr_nrctasoc  => rw_crapgrp2.nrdconta
+                                             ,pr_dtrefere  => vr_datarefere
+                                             ,pr_dstextab  => pr_dstextab
+                                             ,pr_innivris  => vr_opt_innivris
+                                             ,pr_dsdrisco  => pr_dsdrisco
+                                             ,pr_des_erro  => pr_des_erro);
+            -- Verifica se existe erro
+            IF pr_des_erro <> 'OK' THEN
+              CONTINUE;
+            END IF;
+
+            -- Inclui nome do modulo logado
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_calc_endivid_risco_grupo_TBCC');
+          END IF;
+
+          -- Sumarizar valores
+          IF vr_opt_innivris > 0 AND vr_opt_innivris <= 10 AND vr_innivris < vr_opt_innivris THEN
+            vr_innivris := vr_opt_innivris;
+          END IF;
+        END LOOP;
+
+        -- Grupo nao pode estar em prejuizo, sendo assim é trocado para ir em risco H
+        IF vr_innivris = 0 then
+          vr_innivris := 2;
+        ELSIF vr_innivris = 10 THEN
+          vr_innivris := 9;
+        END IF;
+
+        -- Leitura de todos do grupo para atualizar o risco do grupo
+        BEGIN
+          UPDATE tbcc_grupo_economico ge
+             SET ge.inrisco_grupo = vr_innivris
+           WHERE ge.cdcooper = pr_cdcooper
+             AND ge.idgrupo  = rw_tbcc_grp.idgrupo;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_cdcritic := 1035;
+            pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'TBCC_GRUPO_ECONOMICO::' 
+                           ||', inrisco_grupo:'||vr_innivris
+                           ||' com cdcooper:'||pr_cdcooper
+                           ||', idgrupo:'|| rw_tbcc_grp.idgrupo
+                           ||'. '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      END LOOP;
+
+      --Busca grupos economicos
+      --Efetua arrasto do risco levando em consideração as nrdconta e nrcpfcgc
+      FOR rw_grupo_econ_tbcc in cr_grupo_econ_tbcc(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                                                  ,pr_idgrupo  => pr_nrdgrupo) --> Número do grupo
+      LOOP
+        -- Zerar valores da iteração anterior
+        vr_opt_innivris := -1;
+
+        --Busca grupos e riscos
+        FOR rw_grupo_risco in cr_grupo_risco (pr_cdcooper => pr_cdcooper                 --> Código da cooperativa
+                                             ,pr_idgrupo  => rw_grupo_econ_tbcc.idgrupo) --> Número do grupo
+        LOOP
+          -- Tratar o risco máximo
+          if vr_opt_innivris = -1 then           
+            if rw_grupo_risco.inrisco_grupo = 10 then
+              vr_opt_innivris := 9;
+            else
+              vr_opt_innivris := rw_grupo_risco.inrisco_grupo; 
+            end if;
+          end if;
+
+          --Verificar se autiza o risco
+          if vr_opt_innivris <> rw_grupo_risco.inrisco_grupo then            
+
+            -- Atualizar o risco
+            begin
+              update tbcc_grupo_economico ge
+                 set ge.inrisco_grupo = vr_opt_innivris
+               WHERE ge.cdcooper = pr_cdcooper
+                 and ge.idgrupo = rw_grupo_risco.idgrupo;
+            exception
+              WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                vr_cdcritic := 1035;
+                pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'TBCC_GRUPO_ECONOMICO::' 
+                               ||', inrisco_grupo:'||vr_opt_innivris
+                               ||' com cdcooper:'||pr_cdcooper
+                               ||', idgrupo:'|| rw_grupo_risco.idgrupo
+                               ||'. '||SQLERRM;
+                RAISE vr_exc_erro;
+            end;
+          end if;
+        END LOOP;
+      END LOOP;
+
+      -- Mensagem em caso de sucesso
+      pr_des_erro := 'OK';
+
+      -- Inclui nome do modulo logado
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        --Log
+        pc_gera_log(pr_cdcooper      => pr_cdcooper
+                   ,pr_cdprogra      => pr_cdprogra
+                   ,pr_dstiplog      => 'E'
+                   ,pr_dscritic      => pr_des_erro
+                   ,pr_cdcriticidade => 1
+                   ,pr_cdmensagem    => vr_cdcritic
+                   ,pr_tpocorrencia  => 2);
+
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+        vr_cdcritic := 9999;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_calc_endivid_risco_grupo. ' || SQLERRM;
+
+        --Log
+        pc_gera_log(pr_cdcooper      => pr_cdcooper
+                   ,pr_cdprogra      => pr_cdprogra
+                   ,pr_dstiplog      => 'E'
+                   ,pr_dscritic      => pr_des_erro
+                   ,pr_cdcriticidade => 2
+                   ,pr_cdmensagem    => vr_cdcritic
+                   ,pr_tpocorrencia  => 3);
+
+    END;
+  END pc_calc_endivid_risco_grp_tbcc;
 
   /* Procedure para gravar log de simulação */
   PROCEDURE pc_log_simula_perc(pr_cdcooper IN PLS_INTEGER   --> Código da cooperativa

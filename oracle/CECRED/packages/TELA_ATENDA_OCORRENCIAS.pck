@@ -65,6 +65,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --
   --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --
+  --           03/07/2018 - Adequação em cursor principal TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_monta_reg_conta_xml(pr_retxml     IN OUT NOCOPY XMLType
@@ -304,8 +306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
            , cb.inrisctl
            , cb.dtrisctl
            , DECODE(cb.inpessoa, 1,
-                     to_char(cb.nrcpfcgc, '00000000000'),
-                     substr(to_char(cb.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+                     to_char(cb.nrcpfcgc, 'fm00000000000'),
+                     substr(to_char(cb.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
         FROM crapass cb
        WHERE cb.cdcooper = pr_cdcooper
          AND cb.nrdconta = pr_nrdconta;
@@ -320,8 +322,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                , to_char(ass.nrcpfcgc,
                                     DECODE(ass.inpessoa, 1, '00000000000','00000000000000')) nrcpfcgc
                , DECODE(ass.inpessoa, 1,
-                     to_char(ass.nrcpfcgc, '00000000000'),
-                     substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+                     to_char(ass.nrcpfcgc, 'fm00000000000'),
+                     substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
                , ass.dsnivris
             FROM crapass ass
            WHERE cdcooper = rw_cbase.cdcooper
@@ -345,15 +347,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         SELECT gi.cdcooper
              , gi.nrdconta
              , gi.tppessoa
-             , (SELECT to_char(nrcpfcgc, DECODE(inpessoa, 1, '00000000000','00000000000000')) 
+             , (SELECT to_char(nrcpfcgc, DECODE(inpessoa, 1, 'fm00000000000','fm00000000000000')) 
                   FROM crapass WHERE cdcooper = gi.cdcooper AND nrdconta = gi.nrdconta) nrcpfcgc
-             , DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, '00000000000'),
-                                      substr(to_char(gi.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+             , DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, 'fm00000000000'),
+                                      substr(to_char(gi.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
              , ge.idgrupo
              ,decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
                                       ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH')  dsdrisgp
-             , (SELECT DECODE(ass.inpessoa, 1, to_char(ass.nrcpfcgc, '00000000000'),
-                                              substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) 
+             , (SELECT DECODE(ass.inpessoa, 1, to_char(ass.nrcpfcgc, 'fm00000000000'),
+                                              substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8)) 
                   FROM crapass ass
                  WHERE ass.cdcooper = gi.cdcooper 
                    AND ass.nrdconta = gi.nrdconta) nrcpfcgc_nrdconta
@@ -368,8 +370,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                WHERE ge.cdcooper = rw_cbase.cdcooper
                                  AND gi.cdcooper = ge.cdcooper
                                  AND gi.idgrupo = ge.idgrupo
-                                 AND DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, '00000000000'),
-                                            substr(to_char(gi.nrcpfcgc, '00000000000000'),1,8)) = rw_cbase.nrcpfcgc_compara
+                                 AND DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, 'fm00000000000'),
+                                            substr(to_char(gi.nrcpfcgc, 'fm00000000000000'),1,8)) = rw_cbase.nrcpfcgc_compara
                               )
       )
       SELECT DISTINCT grp.nrdconta

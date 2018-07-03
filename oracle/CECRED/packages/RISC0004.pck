@@ -1,4 +1,16 @@
 CREATE OR REPLACE PACKAGE CECRED.RISC0004 IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : RISC0004
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Reginaldo (AMcom)
+  --  Data     : Maço/2018.
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Procedimentos e funções auxiliares para a manipulação de dados de risco
+  --
+  ---------------------------------------------------------------------------------------------------------------
 
 -- Calendário da cooperativa selecionada
     CURSOR cr_dat(pr_cdcooper INTEGER) IS
@@ -93,11 +105,11 @@ FUNCTION fn_traduz_risco(innivris NUMBER)
 	RETURN crawepr.dsnivris%TYPE;
 
 -- Busca nível de risco do grupo economico
-FUNCTION fn_busca_niv_risco_ge(pr_cdcooper     IN NUMBER
-																 ,pr_nrdconta     IN NUMBER
-																 ,pr_nrcpfcgc     IN NUMBER
-																 ,pr_nrdgrupo     IN NUMBER)
-	RETURN crapgrp.innivrge%TYPE;
+FUNCTION fn_busca_niv_risco_ge(pr_cdcooper    IN NUMBER
+									            ,pr_nrdconta    IN NUMBER
+								           	  ,pr_nrcpfcgc    IN NUMBER
+							                ,pr_idgrupo     IN NUMBER)
+	RETURN crapris.innivris%TYPE;
 
 -- Busca a quantidade de dias em atraso e o risco final para uma conta/contrato na central de riscos (diária)
 PROCEDURE pc_busca_dados_diaria(pr_cdcooper    IN NUMBER
@@ -136,10 +148,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos e funções auxiliares para a manipulação de dados de risco
   --
-  -- Alterado:
+  -- Alterado: 
+  --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
-
+  
 -- Retorna o dia útil anterior do calendário da cooperativa
 FUNCTION fn_dia_anterior(pr_cdcooper NUMBER)
 	RETURN DATE AS dia_anterior DATE;
@@ -569,26 +582,37 @@ BEGIN
 END fn_traduz_cdmodali_tpctr;
 
 -- Busca nível de risco do grupo economico
-FUNCTION fn_busca_niv_risco_ge(pr_cdcooper     IN NUMBER
-																 ,pr_nrdconta     IN NUMBER
-																 ,pr_nrcpfcgc     IN NUMBER
-																 ,pr_nrdgrupo     IN NUMBER)
-	RETURN crapgrp.innivrge%TYPE AS vr_risco_grupo crapgrp.innivrge%TYPE;
+FUNCTION fn_busca_niv_risco_ge(pr_cdcooper    IN NUMBER
+														  ,pr_nrdconta    IN NUMBER
+															,pr_nrcpfcgc    IN NUMBER
+												      ,pr_idgrupo     IN NUMBER)
+	RETURN crapris.innivris%TYPE AS vr_risco_grupo crapris.innivris%TYPE;
 
 	CURSOR cr_grupo IS
 	SELECT DISTINCT
-				 g.innivrge
-		FROM crapgrp g
-	 WHERE g.cdcooper(+) = pr_cdcooper
-		 AND g.nrctasoc(+) = pr_nrdconta
-		 AND g.nrcpfcgc(+) = pr_nrcpfcgc
-		 AND g.nrdgrupo(+) = pr_nrdgrupo;
+				 ge.inrisco_grupo
+    FROM tbcc_grupo_economico        ge
+        ,tbcc_grupo_economico_integ  gi
+   WHERE gi.cdcooper = ge.cdcooper
+     AND gi.idgrupo = ge.idgrupo
+	   AND gi.cdcooper = decode(nvl(pr_cdcooper,0),0,gi.cdcooper,pr_cdcooper)
+		 AND gi.nrdconta = decode(nvl(pr_nrdconta,0),0,gi.nrdconta,pr_nrdconta)
+		 AND gi.nrcpfcgc = decode(nvl(pr_nrcpfcgc,0),0,gi.nrcpfcgc,pr_nrcpfcgc)
+		 AND gi.idgrupo  = decode(nvl(pr_idgrupo,0),0,gi.idgrupo,pr_idgrupo);
 	rw_grupo cr_grupo%ROWTYPE;
+
+	--SELECT DISTINCT
+	--			 g.innivrge
+	--	FROM crapgrp g
+	-- WHERE g.cdcooper(+) = pr_cdcooper
+	--	 AND g.nrctasoc(+) = pr_nrdconta
+	--	 AND g.nrcpfcgc(+) = pr_nrcpfcgc
+	--	 AND g.nrdgrupo(+) = pr_nrdgrupo;
 BEGIN
 	OPEN cr_grupo;
 	FETCH cr_grupo INTO rw_grupo;
 
-	vr_risco_grupo  := rw_grupo.innivrge;
+	vr_risco_grupo  := rw_grupo.inrisco_grupo;
 
 	CLOSE cr_grupo;
 
@@ -631,15 +655,29 @@ PROCEDURE pc_busca_grupo_economico(pr_cdcooper     IN NUMBER
 																 , vr_numero_grupo OUT NUMBER
 																 , vr_risco_grupo  OUT VARCHAR2) IS
 
+    --  26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+
 		--- >>> CURSORES <<< ---
 		CURSOR cr_grupo IS
-		SELECT g.nrdgrupo
-				 , g.dsdrisgp
-			FROM crapgrp g
-		 WHERE g.cdcooper(+) = pr_cdcooper
-			 AND g.nrctasoc(+) = pr_nrdconta
-			 AND g.nrcpfcgc(+) = pr_nrcpfcgc;
+		SELECT ge.idgrupo
+				 , decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
+                                            ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') dsdrisgp
+      FROM tbcc_grupo_economico        ge
+          ,tbcc_grupo_economico_integ  gi
+     WHERE gi.cdcooper = ge.cdcooper
+       AND gi.idgrupo = ge.idgrupo
+		   AND gi.cdcooper = decode(nvl(pr_cdcooper,0),0,gi.cdcooper,pr_cdcooper)
+			 AND gi.nrdconta = decode(nvl(pr_nrdconta,0),0,gi.nrdconta,pr_nrdconta)
+			 AND gi.nrcpfcgc = decode(nvl(pr_nrcpfcgc,0),0,gi.nrcpfcgc,pr_nrcpfcgc);
 		rw_grupo cr_grupo%ROWTYPE;
+		
+		--SELECT g.nrdgrupo
+		--		 , g.dsdrisgp
+		--	FROM crapgrp g
+		-- WHERE g.cdcooper(+) = pr_cdcooper
+		--	 AND g.nrctasoc(+) = pr_nrdconta
+		--	 AND g.nrcpfcgc(+) = pr_nrcpfcgc;
+
 BEGIN
 	OPEN cr_grupo;
 
@@ -647,7 +685,7 @@ BEGIN
 
 	CLOSE cr_grupo;
 
-	vr_numero_grupo := rw_grupo.nrdgrupo;
+	vr_numero_grupo := rw_grupo.idgrupo;
 	vr_risco_grupo  := rw_grupo.dsdrisgp;
 END pc_busca_grupo_economico;
 

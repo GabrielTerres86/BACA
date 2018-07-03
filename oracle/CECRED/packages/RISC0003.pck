@@ -17,6 +17,8 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
   -- Atualizações: 09/04/2018 - Incluída procedure para cálculo dos dados Brutos do Risco - Daniel(AMcom)
   --                            pc_risco_central_ocr - tabela TBRISCO_CENTRAL_OCR
   --
+  --               26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   ----------------------------- TIPOS E REGISTROS -------------------------
@@ -175,6 +177,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   -- Atualizações: 09/04/2018 - Incluída procedure para cálculo dos dados Brutos do Risco - Daniel(AMcom)
   --                            pc_risco_central_ocr - tabela TBRISCO_CENTRAL_OCR
   --
+  --               26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Cursor Generico para busca das informações dos domínios
@@ -241,15 +245,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   rw_crapris_last cr_crapris_last%ROWTYPE;
       
   -- Buscar risco de grupo econônomico
-  CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
-                   ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
-    SELECT crapgrp.innivrge,
-           crapgrp.nrdgrupo
-      FROM crapgrp
-     WHERE crapgrp.cdcooper = pr_cdcooper
-       AND crapgrp.nrctasoc = pr_nrctasoc;
-  rw_crapgrp cr_crapgrp%ROWTYPE; 
-  
+  CURSOR cr_grupo_economico(pr_cdcooper IN tbcc_grupo_economico_integ.cdcooper%TYPE
+                           ,pr_nrdconta IN tbcc_grupo_economico_integ.nrdconta%TYPE) IS
+    SELECT ge.inrisco_grupo,
+           ge.idgrupo
+      FROM tbcc_grupo_economico        ge
+          ,tbcc_grupo_economico_integ  gi
+     WHERE gi.cdcooper = ge.cdcooper
+       AND gi.idgrupo  = ge.idgrupo
+       AND gi.cdcooper = pr_cdcooper
+       AND gi.nrdconta = pr_nrdconta;
+  rw_grupo_economico cr_grupo_economico%ROWTYPE; 
+    --SELECT crapgrp.innivrge,
+    --       crapgrp.nrdgrupo
+    --  FROM crapgrp
+    -- WHERE crapgrp.cdcooper = pr_cdcooper
+    --   AND crapgrp.nrctasoc = pr_nrctasoc; 
   
   -- Função que irá retornar se o operador poderá fazer alterações no período informado
   FUNCTION fn_periodo_habilitado(pr_cdcooper IN NUMBER
@@ -822,7 +833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       vr_dstextab     craptab.dstextab%TYPE;        
       vr_innivris     crapris.innivris%TYPE;
       vr_innivris_csv crapris.innivris%TYPE;
-      vr_nrdgrupo     crapgrp.nrdgrupo%TYPE;
+      vr_nrdgrupo     crapris.nrdgrupo%TYPE;
       vr_vlarrasto    NUMBER;      
       vr_fcrapris     BOOLEAN;
       
@@ -920,18 +931,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           -- que verificar se o risco delas não é superior ao calculado acima
           
           -- Vamos verificar se possui grupo economico
-          OPEN cr_crapgrp(pr_cdcooper => rw_movto.cdcooper
-                         ,pr_nrctasoc => rw_movto.nrdconta);
-          FETCH cr_crapgrp INTO rw_crapgrp;          
-          IF cr_crapgrp%FOUND THEN
-            CLOSE cr_crapgrp;            
-            vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+          OPEN cr_grupo_economico(pr_cdcooper => rw_movto.cdcooper
+                                 ,pr_nrdconta => rw_movto.nrdconta);
+          FETCH cr_grupo_economico INTO rw_grupo_economico;          
+          IF cr_grupo_economico%FOUND THEN
+            CLOSE cr_grupo_economico;            
+            vr_nrdgrupo := rw_grupo_economico.idgrupo;
             -- Caso nao possuir nenhuma operacao na mensal, vamos assumir o risco do grupo economico
             IF NOT vr_fcrapris THEN
-              vr_innivris := rw_crapgrp.innivrge;
+              vr_innivris := rw_grupo_economico.inrisco_grupo;
             END IF;
           ELSE
-            CLOSE cr_crapgrp;
+            CLOSE cr_grupo_economico;
           END IF;
           
           
@@ -3198,7 +3209,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
              ass.cdcooper
            , ass.nrcpfcgc
            , ass.nrdconta
-           , nvl(grp.nrdgrupo,0) nrdgrupo
+           , nvl(gi.idgrupo,0) idgrupo
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
                   WHEN ass.dsnivris = 'B'  THEN 3
                   WHEN ass.dsnivris = 'C'  THEN 4
@@ -3221,11 +3232,12 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                   WHEN ass.inrisctl = 'HH' THEN 10
                ELSE NULL END innivris_ctl
         FROM crapass ass
-           , crapgrp grp
+          --,crapgrp grp
+            ,tbcc_grupo_economico_integ  gi
        WHERE ass.cdcooper = pr_cdcooper
-         AND ass.cdcooper = grp.cdcooper(+)
-         AND ass.nrdconta = grp.nrctasoc(+)
-         AND ass.nrcpfcgc = grp.nrcpfcgc(+)
+         AND ass.cdcooper = gi.cdcooper(+)
+         AND ass.nrdconta = gi.nrdconta(+)
+         AND ass.nrcpfcgc = gi.nrcpfcgc(+)
          AND ass.dtdemiss IS NOT NULL -- Não gera registro para cooperados falecidos ou demitidos
          AND NOT EXISTS (SELECT 1
                            FROM crapris ris
@@ -3759,14 +3771,24 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
     FUNCTION fn_busca_grupo_economico(pr_cdcooper     IN NUMBER
                                      ,pr_nrdconta     IN NUMBER
                                      ,pr_nrcpfcgc     IN NUMBER)
-      RETURN crapgrp.innivrge%TYPE AS vr_risco_grupo crapgrp.innivrge%TYPE;
+      RETURN tbcc_grupo_economico.inrisco_grupo%TYPE AS vr_risco_grupo tbcc_grupo_economico.inrisco_grupo%TYPE;
 
+      --CURSOR cr_grupo IS
+      --SELECT max(g.innivrge) innivrge
+      --  FROM crapgrp g
+      -- WHERE g.cdcooper(+) = pr_cdcooper
+      --   AND g.nrctasoc(+) = pr_nrdconta
+      --   AND g.nrcpfcgc(+) = pr_nrcpfcgc;
+      --rw_grupo cr_grupo%ROWTYPE;
       CURSOR cr_grupo IS
-      SELECT max(g.innivrge) innivrge
-        FROM crapgrp g
-       WHERE g.cdcooper(+) = pr_cdcooper
-         AND g.nrctasoc(+) = pr_nrdconta
-         AND g.nrcpfcgc(+) = pr_nrcpfcgc;
+      SELECT max(ge.inrisco_grupo) innivrge
+      FROM tbcc_grupo_economico        ge
+          ,tbcc_grupo_economico_integ  gi
+     WHERE gi.cdcooper = ge.cdcooper
+       AND gi.idgrupo  = ge.idgrupo
+       AND gi.cdcooper = decode(nvl(pr_cdcooper,0),0,gi.cdcooper,pr_cdcooper)
+       AND gi.nrdconta = decode(nvl(pr_nrdconta,0),0,gi.nrdconta,pr_nrdconta)
+       AND gi.nrcpfcgc = decode(nvl(pr_nrcpfcgc,0),0,gi.nrcpfcgc,pr_nrcpfcgc);
       rw_grupo cr_grupo%ROWTYPE;
     BEGIN
       OPEN cr_grupo;
@@ -3782,19 +3804,19 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
     -- Busca grupo economico
     FUNCTION fn_busca_grp_economico(pr_cdcooper     IN NUMBER
                                    ,pr_nrdconta     IN NUMBER)
-      RETURN crapgrp.nrdgrupo%TYPE AS vr_grpecn crapgrp.nrdgrupo%TYPE;
+      RETURN tbcc_grupo_economico.idgrupo%TYPE AS vr_grpecn tbcc_grupo_economico.idgrupo%TYPE;
 
       CURSOR cr_grp IS
-      SELECT distinct g.nrdgrupo
-        FROM crapgrp g
-       WHERE g.cdcooper(+) = pr_cdcooper
-         AND g.nrctasoc(+) = pr_nrdconta;
+      SELECT distinct gi.idgrupo
+        FROM tbcc_grupo_economico_integ  gi
+       WHERE gi.cdcooper = decode(nvl(pr_cdcooper,0),0,gi.cdcooper,pr_cdcooper)
+         AND gi.nrdconta = decode(nvl(pr_nrdconta,0),0,gi.nrdconta,pr_nrdconta);
       rw_grp cr_grp%ROWTYPE;
     BEGIN
       OPEN cr_grp;
       FETCH cr_grp INTO rw_grp;
 
-      vr_grpecn  := rw_grp.nrdgrupo;
+      vr_grpecn  := rw_grp.idgrupo;
 
       CLOSE cr_grp;
 

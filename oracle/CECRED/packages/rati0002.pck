@@ -2523,17 +2523,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       rw_crapcje cr_crapcje%ROWTYPE;
       
       -- Cursor para busca das contas do grupo economico
-      CURSOR cr_crapgrp IS
-        SELECT DISTINCT crapass.nrdconta,
+      CURSOR cr_grupo_economico IS
+        SELECT DISTINCT 
+               crapass.nrdconta,
                crapass.inpessoa,
                crapass.nrcpfcgc
-          FROM crapass,
-               crapgrp
-         WHERE crapgrp.cdcooper = pr_cdcooper
-           AND crapgrp.nrdconta = pr_nrdconta
-           AND crapgrp.nrctasoc <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
-           AND crapass.cdcooper = crapgrp.cdcooper
-           AND crapass.nrdconta = crapgrp.nrctasoc
+               ,gi.idgrupo
+          FROM crapass
+               --,crapgrp
+               ,tbcc_grupo_economico_integ  gi
+               ,tbcc_grupo_economico_integ  gi2
+         WHERE gi.cdcooper = pr_cdcooper
+           AND gi.nrdconta = pr_nrdconta
+           and gi2.cdcooper = gi.cdcooper
+           and gi2.idgrupo = gi.idgrupo
+           AND gi2.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
+           AND crapass.cdcooper = gi2.cdcooper
+           AND crapass.nrdconta = gi2.nrdconta
            AND crapass.dtelimin IS NULL -- Somente ativos
            AND crapass.inpessoa = 1; -- Somente PF
 
@@ -2736,14 +2742,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         CLOSE cr_crapcje;
       ELSE
         -- Busca os cooperados que fazem parte do GRUPO ECONOMICO
-        FOR rw_crapgrp IN cr_crapgrp LOOP
+        FOR rw_grupo_economico IN cr_grupo_economico LOOP
           -- Insere o integrante do grupo economico para ser consultado
           vr_ind := vr_ind + 1;
-          vr_tab_consulta(vr_ind).nrdconta := rw_crapgrp.nrdconta;
-          vr_tab_consulta(vr_ind).nrcpfcgc := rw_crapgrp.nrcpfcgc;
-          vr_tab_consulta(vr_ind).inpessoa := rw_crapgrp.inpessoa;
+          vr_tab_consulta(vr_ind).nrdconta := rw_grupo_economico.nrdconta;
+          vr_tab_consulta(vr_ind).nrcpfcgc := rw_grupo_economico.nrcpfcgc;
+          vr_tab_consulta(vr_ind).inpessoa := rw_grupo_economico.inpessoa;
           vr_tab_consulta(vr_ind).intippes := 4; -- Grupo economico
-          vr_tab_contas(rw_crapgrp.nrdconta).nrdconta := rw_crapgrp.nrdconta;
+          vr_tab_contas(rw_grupo_economico.nrdconta).nrdconta := rw_grupo_economico.nrdconta;
           -- Informa que tem grupo economico
           vr_ingrpeco := 'S';
         END LOOP;      
