@@ -424,7 +424,7 @@ PROCEDURE Busca_Dados:
 
                     CREATE tt-terminal.
                     ASSIGN tt-terminal.nmterfin = craptfn.nmterfin
-                           tt-terminal.dsterfin = " - " + craptfn.nmterfin
+                           tt-terminal.dsterfin = craptfn.nmterfin
                            tt-terminal.dstempor = STRING(craptfn.nrtempor) + 
                                                                  " SEGUNDOS"
                            tt-terminal.nrtempor = craptfn.nrtempor
