@@ -85,6 +85,9 @@
 	$cddlinha = (isset($_POST['cddlinha'])) ? $_POST['cddlinha'] : 0  ;
 	$form 	  = (isset($_POST['frmOpcao'])) ? $_POST['frmOpcao'] : '' ;
 	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : '' ;
+	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : '1' ;
+	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : '50' ;
+
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : 'CONTRATO' ;
 
 	$inctrmnt = (isset($_POST['inctrmnt'])) ? $_POST['inctrmnt'] : 0;
@@ -295,6 +298,8 @@
 	    $xml .= "	<nrnosnum>".$nrnosnum."</nrnosnum>";
 	    $xml .= "	<nrctrlim>".$nrctrlim."</nrctrlim>";
 	    $xml .= "	<nrborder>".$nrborder."</nrborder>";
+	    $xml .= "	<nriniseq>".$nriniseq."</nriniseq>";
+	    $xml .= "	<nrregist>".$nrregist."</nrregist>";
 		$xml .= "	<insitlim>2</insitlim>";
 		$xml .= "	<tpctrlim>3</tpctrlim>";
 	    $xml .= " </Dados>";
@@ -312,7 +317,7 @@
 			exit;
 		}
     	$dados = $root->dados;
-    	// var_dump($dados);die();
+    	
         $qtregist = $dados->getAttribute('QTREGIST');
     	if($qtregist>0){
 	    	$html = "<table class='tituloRegistros'>";
@@ -354,6 +359,53 @@
 	    	}
 	    	$html .= "</tbody>
 	    			</table>";
+
+	    	//Rodape paginação
+	    	$html .= "<div id='divPesquisaRodape' class='divPesquisaRodape'>
+						<table>	
+							<tr>
+								<td>";
+			//Cria o botão de voltar								
+			if ($nriniseq > 1) { 
+			 	$html .= "         <a class='paginacaoAnt'><<< Anterior</a>";
+			} else {
+				$html .=           "&nbsp;";
+			}
+			$html .=            "</td>
+			      			 	 <td>";
+			//De - Até      			 	 
+			if (isset($nriniseq)) { 
+				if (($nriniseq + $nrregist) > $qtregist){
+					$qtnumregist = $qtregist;
+				}else{
+					$qtnumregist .= ($nriniseq + $nrregist - 1);
+				}
+				$html .=          "Exibindo ".$nriniseq." at&eacute ".$qtnumregist." de ".$qtregist;
+			}
+			$html .=           "</td>
+								<td>";
+
+			//Cria o botão de Avançar									
+			if ($qtregist > ($nriniseq + $nrregist - 1)) {
+				$html .= "<a class='paginacaoProx'>Pr&oacute;ximo >>></a>";
+			}else{
+				$html .=           "&nbsp;";
+			}
+			$html .=            "</td>
+						    </tr>
+						</table>
+					</div>";
+
+			//Javascript da paginação		
+	        $html .= "<script>";
+	        $html .= "$('a.paginacaoAnt').unbind('click').bind('click', function() {
+						buscarTitulosBorderoPaginacao(".($nriniseq - $nrregist).",".$nrregist.");
+					  });";
+			$html .= "$('a.paginacaoProx').unbind('click').bind('click', function() {
+	        			console.log('ini=".$nriniseq ." regist=". $nrregist."');
+						buscarTitulosBorderoPaginacao(".($nriniseq + $nrregist).",".$nrregist.");
+					  });";
+			$html .= "</script>";
 	    	echo $html;
 	    }
 	    else{

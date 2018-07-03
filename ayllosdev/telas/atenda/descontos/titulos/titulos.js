@@ -379,7 +379,7 @@ function calculaSaldoBordero(){
     qtseleci.val(selecionados.find("input[name='selecionados']").length);
 }
 //Busca os titulos do bordero
-function buscarTitulosBordero() {
+function buscarTitulosBordero(nriniseq, nrregist) {
     showMsgAguardo('Aguarde, buscando dados da Conta...');  
     var nomeForm = "formPesquisaTitulos";
     var nrdconta = normalizaNumero($("#nrdconta","#"+nomeForm).val());
@@ -404,6 +404,8 @@ function buscarTitulosBordero() {
                     nrnosnum: nrnosnum,
                     nrborder: nrborder,
                     frmOpcao: nomeForm,
+                    nriniseq: nriniseq,
+                    nrregist: nrregist,
                     redirect: 'script_ajax'
 
                 },
@@ -419,11 +421,15 @@ function buscarTitulosBordero() {
                     var table = registros.find(">table");
                     var ordemInicial = new Array();
                     table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
+                    $('#divPesquisaRodape', '#divIncluirBordero').formataRodapePesquisa();
                     bloqueiaFundo(divRotina);
                 }
     }); 
 }
+function buscarTitulosBorderoPaginacao(nriniseq, nrregist){
+    buscarTitulosBordero(nriniseq, nrregist);
 
+}
 //Busca os titulos disponiveis para resgate
 function buscarTitulosResgatar() {
     showMsgAguardo('Aguarde, buscando dados da Conta...');  
