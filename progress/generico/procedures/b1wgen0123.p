@@ -73,8 +73,8 @@
                25/07/2017 - #712156 Melhoria 274, criação da rotina verifica_notas_cem,
                             operacao 75, para verificar se o TAA utiliza notas de cem;
                             Inclusão do par flgntcem na rotina Grava_Dados e campo 
-							flgntcem na temp-table das opções A e C (Carlos)
-
+                            flgntcem na temp-table das opções A e C (Carlos)
+                            
                03/07/2018 - sctask0014656 permitir alterar a descricao do TAA (Carlos)
 
 ............................................................................*/
@@ -424,7 +424,7 @@ PROCEDURE Busca_Dados:
 
                     CREATE tt-terminal.
                     ASSIGN tt-terminal.nmterfin = craptfn.nmterfin
-                           tt-terminal.dsterfin = " - " + craptfn.nmterfin
+                           tt-terminal.dsterfin = craptfn.nmterfin
                            tt-terminal.dstempor = STRING(craptfn.nrtempor) + 
                                                                  " SEGUNDOS"
                            tt-terminal.nrtempor = craptfn.nrtempor
@@ -2794,7 +2794,7 @@ PROCEDURE Grava_Dados:
                             STRING(craptfn.flgntcem,'Sim/Nao') + " para: " + 
                             STRING(par_flgntcem,'Sim/Nao').
                     END.
-                    
+
                     IF aux_dslogtel <> "" THEN
                         UNIX SILENT VALUE("echo " +
                         aux_dslogtel              +
