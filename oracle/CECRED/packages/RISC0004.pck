@@ -954,7 +954,7 @@ BEGIN
 
       vr_inrisco_refin := rw_crapepr.inrisco_refin;
       vr_inrisco_inclusao := fn_traduz_nivel_risco(rw_crapepr.dsnivori);
-      vr_inrisco_melhora := fn_traduz_nivel_risco(rw_crapepr.dsnivris);
+      vr_inrisco_melhora := CASE WHEN rw_crapepr.dsnivris < rw_crapepr.dsnivori THEN fn_traduz_nivel_risco(rw_crapepr.dsnivris) ELSE NULL END;
       vr_qtdias_atraso_refin := rw_crapepr.qtdias_atraso_refin;
     ELSE
       vr_inrisco_refin := NULL;
