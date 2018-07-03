@@ -101,12 +101,12 @@ var ObjRepresent = new Object();
 var sPortaPinpad = '';
 var flagIdprocess = false;
 var dsadmcrdList = {
-    16: "CECRED DEBITO",
-    14: "CECRED PLATINUM",
-    13: "CECRED GOLD",
-    12: "CECRED GOLD",
-    11: "CECRED ESSENCIAL",
-    15: "CECRED EMPRESAS"
+    16: "AILOS DEBITO",
+    14: "AILOS PLATINUM",
+    13: "AILOS GOLD",
+    12: "AILOS GOLD",
+    11: "AILOS ESSENCIAL",
+    15: "AILOS EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
 var faprovador;
