@@ -831,7 +831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              t.vlrabono,
              t.vljuprej,
              t.vlsdprej,
-	         t.vljur60_ctneg,
+           t.vljur60_ctneg,
              t.vljur60_lcred,
              t.vldivida_original
         FROM tbcc_prejuizo t
@@ -1003,6 +1003,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
           vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred));        
         END IF;
         
+        IF vr_saldodev < 0 THEN 
+           vr_saldodev := vr_saldodev * -1;   
+        END IF;
+        
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
@@ -1077,7 +1081,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlslddev', -- Saldo Devedor
-                               pr_tag_cont => abs(least(vr_saldodev,0)),
+                               --pr_tag_cont => abs(least(vr_saldodev,0)),
+                               pr_tag_cont => vr_saldodev,
                                pr_des_erro => vr_dscritic);  
          
       ELSE
