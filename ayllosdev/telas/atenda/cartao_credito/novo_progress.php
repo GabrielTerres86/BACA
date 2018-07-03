@@ -623,4 +623,5 @@
 	?>
 	
 	contigenciaAtiva = false;
+	justificativaCartao = undefined;
 </script>
