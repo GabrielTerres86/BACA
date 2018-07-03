@@ -162,8 +162,7 @@ BEGIN
     vr_flgerar        CONSTANT VARCHAR2(1) := 'N';    --> Flag de execução dos relatórios não hora ou não
     
     vr_cdprogra       CONSTANT crapprg.cdprogra%TYPE := 'CRPS147'; --> Código do programa executor
-    vr_exc_erro       EXCEPTION;                      --> Controle de exceção personalizada
-    vr_exc_fimprg     exception;
+    vr_exc_saida      EXCEPTION;                      --> Controle de exceção personalizada
     vr_dscritic       VARCHAR2(4000);
 
     vr_nom_dir        VARCHAR2(100);                  --> Nome da pasta
@@ -712,7 +711,7 @@ BEGIN
       CLOSE cr_crapcop;
       vr_cdcritic := 651;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 651);
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
     ELSE
       CLOSE cr_crapcop;
     END IF;
@@ -736,7 +735,7 @@ BEGIN
     -- Caso retorno crítica busca a descrição
     IF vr_cdcritic <> 0 THEN
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
     END IF;
 
     --Selecionar informacoes das datas
@@ -769,7 +768,7 @@ BEGIN
         when others then
           vr_dscritic := 'Erro ao verificar informações da capa de lote: '||sqlerrm;
           vr_cdcritic := 0;
-          raise vr_exc_erro;
+          raise vr_exc_saida;
       END;
       if sql%rowcount = 0 then
         begin
@@ -791,7 +790,7 @@ BEGIN
           when others then
             vr_dscritic := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
             vr_cdcritic := 0;
-            raise vr_exc_erro;
+            raise vr_exc_saida;
         end;
       end if; 
       -- Grava LOG de ocorrência final da atualização da craplot
@@ -819,7 +818,7 @@ BEGIN
       IF vr_idparale = 0 THEN
          -- Levantar exceção
          vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_ID_paral.';
-         RAISE vr_exc_erro;
+         RAISE vr_exc_saida;
       END IF;
                                             
       -- Verifica se algum job paralelo executou com erro
@@ -846,7 +845,7 @@ BEGIN
         -- Testar saida com erro
         if vr_dscritic is not null then
           -- Levantar exceçao
-          raise vr_exc_erro;
+          raise vr_exc_saida;
         end if;     
         
         -- Montar o bloco PLSQL que será executado
@@ -877,7 +876,7 @@ BEGIN
          -- Testar saida com erro
          if vr_dscritic is not null then 
            -- Levantar exceçao
-           raise vr_exc_erro;
+           raise vr_exc_saida;
          end if;
 
          -- Chama rotina que irá pausar este processo controlador
@@ -889,7 +888,7 @@ BEGIN
          -- Testar saida com erro
          if  vr_dscritic is not null then 
            -- Levantar exceçao
-           raise vr_exc_erro;
+           raise vr_exc_saida;
          end if;
          
       end loop;
@@ -902,7 +901,7 @@ BEGIN
       -- Testar saida com erro
       if  vr_dscritic is not null then 
         -- Levantar exceçao
-        raise vr_exc_erro;
+        raise vr_exc_saida;
       end if;    
 
       -- Verifica se algum job executou com erro
@@ -914,7 +913,7 @@ BEGIN
       if vr_qterro > 0 then 
         vr_cdcritic := 0;
         vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
-        raise vr_exc_erro;
+        raise vr_exc_saida;
       end if;    
     else
       
@@ -940,7 +939,7 @@ BEGIN
       -- Testar saida com erro
       if vr_dscritic is not null then 
         -- Levantar exceçao
-        raise vr_exc_erro;
+        raise vr_exc_saida;
       end if;    
       
       --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
@@ -1029,7 +1028,7 @@ BEGIN
                                             ,pr_ind_tipo_log => 2 -- Erro tratato
                                             ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
                                                                 vr_dscritic || '. ');
-                  RAISE vr_exc_erro;
+                  RAISE vr_exc_saida;
                 END IF;
 
                 -- Dados para o resumo
@@ -1117,7 +1116,7 @@ BEGIN
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[CRRL147]: ' || SQLERRM;
-                        RAISE vr_exc_erro;
+                        RAISE vr_exc_saida;
                     END;
                   END IF;
                 END IF;
@@ -1157,7 +1156,7 @@ BEGIN
                 WHEN OTHERS THEN
                   vr_cdcritic := 0;
                   vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
-                  RAISE vr_exc_erro;
+                  RAISE vr_exc_saida;
               END;
             END IF;
 
@@ -1174,7 +1173,7 @@ BEGIN
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
                 vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
-                RAISE vr_exc_erro;
+                RAISE vr_exc_saida;
             END;
 
             -- Atribuir valores para as variáveis agrupando por tipo de pessoa
@@ -1263,14 +1262,14 @@ BEGIN
             END IF;
 
           EXCEPTION
-            WHEN vr_exc_erro then
+            WHEN vr_exc_saida then
               CLOSE cr_craprpp;
-              raise vr_exc_erro;
+              raise vr_exc_saida;
             WHEN OTHERS THEN
               CLOSE cr_craprpp;
               vr_cdcritic := 0;
               vr_dscritic := 'Erro ao validar dados: ' || SQLERRM;
-              RAISE vr_exc_erro;
+              RAISE vr_exc_saida;
           END;
         END LOOP; -- loop do bulk collect
       END LOOP; -- loop do fetch
@@ -1306,7 +1305,7 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[prazos]: ' || SQLERRM;
-              RAISE vr_exc_erro;
+              RAISE vr_exc_saida;
           END;
         END LOOP;
         
@@ -1338,7 +1337,7 @@ BEGIN
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[BNDES]: ' || SQLERRM;
-                RAISE vr_exc_erro;
+                RAISE vr_exc_saida;
             END;
           END IF;
           vr_idx_bndes := vr_tab_cta_bndes.next(vr_idx_bndes);
@@ -1379,7 +1378,7 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[TOTAL]: ' || SQLERRM;
-              RAISE vr_exc_erro;
+              RAISE vr_exc_saida;
           END;
         END LOOP;
         
@@ -1437,7 +1436,7 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[CRRL147]: ' || SQLERRM;
-            RAISE vr_exc_erro;
+            RAISE vr_exc_saida;
         END;
       END IF;
 
@@ -1453,7 +1452,7 @@ BEGIN
     
     -- Verificar se ocorreram críticas
     IF vr_cdcritic > 0 THEN
-      RAISE vr_exc_erro;
+      RAISE vr_exc_saida;
     END IF;
     
     -- Se for o programa principal ou sem paralelismo
@@ -1654,7 +1653,7 @@ BEGIN
             WHEN OTHERS THEN
               vr_cdcritic := 0;
               vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
-              RAISE vr_exc_erro;
+              RAISE vr_exc_saida;
           END;
         END IF;
 
@@ -1664,7 +1663,7 @@ BEGIN
       -- Verifica se foram encontradas críticas no processo
       IF vr_cdcritic > 0 THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        RAISE vr_exc_erro;
+        RAISE vr_exc_saida;
       END IF;
 
       -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
@@ -1701,7 +1700,7 @@ BEGIN
           END IF;
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
-          RAISE vr_exc_erro;
+          RAISE vr_exc_saida;
       END;
 
       -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
@@ -1750,7 +1749,7 @@ BEGIN
           when others then
             vr_cdcritic := 0;
             vr_dscritic := 'Erro ao atualizar tabela craplot: '||sqlerrm;
-            raise vr_exc_erro;            
+            raise vr_exc_saida;            
         END;
       end if;    
       --Fecha cursor
@@ -1808,7 +1807,7 @@ BEGIN
           -- Se ocorrer erros no processo
           IF vr_dscritic IS NOT NULL THEN
             vr_cdcritic := 0;
-            RAISE vr_exc_erro;
+            RAISE vr_exc_saida;
           END IF;
 
           -- Valida histórico para fazer sumarização
@@ -2659,7 +2658,7 @@ BEGIN
          
          -- Se houve erro na geração
          IF vr_dscritic IS NOT NULL THEN
-           RAISE vr_exc_erro;
+           RAISE vr_exc_saida;
          END IF;
 
       END IF;
@@ -2718,7 +2717,7 @@ BEGIN
       -- Verifica se ocorreram erros
       IF vr_dscritic IS NOT NULL THEN
         vr_cdcritic := 0;
-        RAISE vr_exc_erro;
+        RAISE vr_exc_saida;
       END IF;
       
       -- Gerar relatório 147
@@ -2751,7 +2750,7 @@ BEGIN
       -- Verifica se ocorreram erros
       IF vr_dscritic IS NOT NULL THEN
         vr_cdcritic := 0;
-        RAISE vr_exc_erro;
+        RAISE vr_exc_saida;
       END IF;      
 
       -- Limpa os registros da tabela de trabalho 
@@ -2765,7 +2764,7 @@ BEGIN
         when others then
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao deletar tabela tbgen_batch_relatorio_wrk: '||sqlerrm;
-          raise vr_exc_erro;            
+          raise vr_exc_saida;            
       end;
            
       -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
@@ -2792,7 +2791,7 @@ BEGIN
         -- Testar saida com erro
         if  vr_dscritic is not null then 
           -- Levantar exceçao
-          raise vr_exc_erro;
+          raise vr_exc_saida;
         end if;                                       
       end if; 
  
@@ -2821,33 +2820,7 @@ BEGIN
     END IF;  
       
   EXCEPTION
-    WHEN vr_exc_fimprg THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-
-      -- Se foi gerada critica para envio ao log
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
-      END IF;
-
-      -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                               ,pr_cdprogra => vr_cdprogra
-                               ,pr_infimsol => pr_infimsol
-                               ,pr_stprogra => pr_stprogra);
-
-      -- Efetuar commit pois gravaremos o que foi processo até então
-      COMMIT;
-      
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         -- Buscar a descrição
@@ -2857,6 +2830,45 @@ BEGIN
       -- Devolvemos código e critica encontradas
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
+      
+      -- Na execução paralela
+      IF nvl(pr_idparale,0) <> 0 THEN
+
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);                                     
+        
+        -- Grava LOG de erro com as críticas retornadas                           
+        pc_log_programa(pr_dstiplog      => 'E', 
+                        pr_cdprograma    => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper      => pr_cdcooper,
+                        pr_tpexecucao    => vr_tpexecucao,
+                        pr_tpocorrencia  => 3,
+                        pr_cdcriticidade => 1,
+                        pr_cdmensagem    => pr_cdcritic,
+                        pr_dsmensagem    => pr_dscritic,
+                        pr_flgsucesso    => 0,
+                        pr_idprglog      => vr_idlog_ini_par);  
+                        
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);                        
+                                    
+      ELSE
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || vr_dscritic );
+        END IF;
+      END IF;
 
       -- Efetuar rollback
       ROLLBACK;
@@ -2864,7 +2876,31 @@ BEGIN
       -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
-
+      
+      -- Na execução paralela
+      if nvl(pr_idparale,0) <> 0 then 
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 2,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);  
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if; 
+      
       -- Efetuar rollback
       ROLLBACK;
   END;
