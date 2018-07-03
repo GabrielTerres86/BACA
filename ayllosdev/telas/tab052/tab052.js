@@ -1125,7 +1125,7 @@ function liberaCamposCooper(){
 }
 
 function liberaCamposCecred() {
-    $("#idctrlab", "#frmTab052").val('CECRED')
+    $("#idctrlab", "#frmTab052").val('AILOS')
    
     $('.editcecred', '#frmTab052').habilitaCampo();
     $('.editcooper', '#frmTab052').desabilitaCampo();
@@ -1141,7 +1141,7 @@ function back(){
         estadoInicial();
         return false;
     }
-    if ($("#idctrlab", "#frmTab052").val() == 'CECRED') {
+    if ($("#idctrlab", "#frmTab052").val() == 'AILOS') {
         if (validarCampos()) {
             liberaCamposCooper();
         }
@@ -1175,7 +1175,7 @@ function confirmaOperacao() {
         }
         
         
-    } else if ($("#idctrlab", "#frmTab052").val() == 'CECRED'){
+    } else if ($("#idctrlab", "#frmTab052").val() == 'AILOS'){
         if (validarCampos()){
             showConfirmacao('Confirma a Opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'executar();', '', 'sim.gif', 'nao.gif');
         }
@@ -1187,7 +1187,7 @@ function confirmaOperacao() {
 
 function validarCampos() {
 
-    var isCECRED = ($("#idctrlab", "#frmTab052").val() == 'CECRED');
+    var isCECRED = ($("#idctrlab", "#frmTab052").val() == 'AILOS');
 
     /* coop */
     if(!isCECRED){
@@ -1229,7 +1229,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#vllimite', '#frmTab052').val()) > converteMoedaFloat($('#vllimite_c', '#frmTab052').val())  ){
         showError(
             'error',
-        'O valor do limite m&aacute;ximo do contrato deve ser inferior ou igual ao estipulado pela CECRED',
+        'O valor do limite m&aacute;ximo do contrato deve ser inferior ou igual ao estipulado pela AILOS',
         'Alerta - Ayllos',
          (isCECRED)? "$(\'#vllimite_c\',\'#frmTab052\').focus();" :"$(\'#vllimite\',\'#frmTab052\').focus();");
         return false;
@@ -1240,7 +1240,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtprzmax', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val())  ){
         showError(
             'error',
-            'O prazo m&aacute;ximo deve ser inferior ou igual ao estipulado pela CECRED',
+            'O prazo m&aacute;ximo deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
             (isCECRED)? "$(\'#qtprzmax_c\',\'#frmTab052\').focus();" :"$(\'#qtprzmax\',\'#frmTab052\').focus();");
         return false;
@@ -1250,7 +1250,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#pctolera', '#frmTab052').val()) > converteMoedaFloat($('#pctolera_c', '#frmTab052').val())  ){
         showError(
             'error',
-            'A toler&acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela CECRED',
+            'A toler&acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
             (isCECRED)? "$(\'#pctolera_c\',\'#frmTab052\').focus();" :"$(\'#pctolera\',\'#frmTab052\').focus();");
         return false;
@@ -1260,7 +1260,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtmxdene', '#frmTab052').val()) > converteMoedaFloat($('#qtmxdene_c', '#frmTab052').val())  ){
         showError(
             'error',
-            'A quantidade m&aacute;ximo de dias deve ser inferior ou igual ao estipulado pela CECRED',
+            'A quantidade m&aacute;ximo de dias deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
            (isCECRED)? "$(\'#qtmxdene_c\',\'#frmTab052\').focus();" :"$(\'#qtmxdene\',\'#frmTab052\').focus();");
         return false;
@@ -1270,7 +1270,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtmxtbib', '#frmTab052').val()) > converteMoedaFloat($('#qtmxtbib_c', '#frmTab052').val())  ){
         showError(
             'error',
-            'A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; IB deve ser inferior ou igual ao estipulado pela CECRED',
+            'A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; IB deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
             (isCECRED)? "$(\'#qtmxtbib_c\',\'#frmTab052\').focus();" :"$(\'#qtmxtbib\',\'#frmTab052\').focus();");
         return false;
@@ -1281,7 +1281,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtdiavig', '#frmTab052').val()) > converteMoedaFloat($('#qtdiavig_c', '#frmTab052').val())  ){
         showError(
             'error',
-            'O valor de Vig&ecirc;ncia M&iacute;nima deve ser inferior ou igual ao estipulado pela CECRED',
+            'O valor de Vig&ecirc;ncia M&iacute;nima deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
             (isCECRED)? "$(\'#qtdiavig_c\',\'#frmTab052\').focus();" :"$(\'#qtdiavig\',\'#frmTab052\').focus();");
         return false;
@@ -1291,7 +1291,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtmxtbay', '#frmTab052').val()) > converteMoedaFloat($('#qtmxtbay_c', '#frmTab052').val())  ){
         showError(
             'error',
-            'A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; Ayllos deve ser inferior ou igual ao estipulado pela CECRED',
+            'A quantidade m&aacute;xima de t&iacute;tulos por border&ocirc; Ayllos deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
             (isCECRED)? "$(\'#qtmxtbay_c\',\'#frmTab052\').focus();" :"$(\'#qtmxtbay\',\'#frmTab052\').focus();");
         return false;
@@ -1304,7 +1304,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtprzmin_c', '#frmTab052').val()) > converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val())){
         showError(
             'error',
-            'O prazo m&iacute;nimo da CECRED deve ser menor ou igual ao prazo m&aacute;ximo da CECRED',
+            'O prazo m&iacute;nimo da AILOS deve ser menor ou igual ao prazo m&aacute;ximo da AILOS',
             'Alerta - Ayllos',"$(\'#qtprzmax_c\',\'#frmTab052\').focus();");
         return false;
     }
@@ -1314,7 +1314,7 @@ function validarCampos() {
     if( converteMoedaFloat($('#qtprzmax_c', '#frmTab052').val()) > 360 ){
         showError(
             'error',
-            'O valo de vig&ecirc;ncia m&aacute;xima da CECRED deve ser menor ou igual que 360',
+            'O valo de vig&ecirc;ncia m&aacute;xima da AILOS deve ser menor ou igual que 360',
             'Alerta - Ayllos',"$(\'#qtprzmax_c\',\'#frmTab052\').focus();");
         return false;
     }
@@ -1322,7 +1322,7 @@ function validarCampos() {
     
     /* pcdmulta_c > 2 = O valor deve ser inferior ou igual ao estipulado pela CECRED*/
     if( converteMoedaFloat($('#pcdmulta_c', '#frmTab052').val()) > 2 ){
-        showError('error','O percentual de multa da CECRED nao deve ser superior a 2% (Exig&ecirc;ncia Legal).','Alerta - Ayllos',"$(\'#pcdmulta_c\',\'#frmTab052\').focus();");
+        showError('error','O percentual de multa da AILOS nao deve ser superior a 2% (Exig&ecirc;ncia Legal).','Alerta - Ayllos',"$(\'#pcdmulta_c\',\'#frmTab052\').focus();");
         return false;
     }
     

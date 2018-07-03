@@ -551,7 +551,9 @@ PROCEDURE processa_convenios_deb_cred.
         DOWN STREAM str_1 WITH FRAME f_movtos.
     
         IF   TRIM(aux_nmrescop) = "AILOS"   OR
-             TRIM(aux_nmcopdom) = "AILOS"   THEN
+             TRIM(aux_nmcopdom) = "AILOS"   OR
+             TRIM(aux_nmrescop) = "CECRED"  OR
+             TRIM(aux_nmcopdom) = "CECRED"  THEN
              DO:
     
                 DISP STREAM str_2
@@ -857,7 +859,8 @@ PROCEDURE processa_convenios_deb_cred.
                     WITH FRAME f_movtos_dom.
                DOWN STREAM str_1 WITH FRAME f_movtos_dom.
 
-               IF  TRIM(crapcop.nmrescop) = "AILOS"   THEN
+               IF  TRIM(crapcop.nmrescop) = "AILOS" OR
+                   TRIM(crapcop.nmrescop) = "CECRED" THEN
                    DO: 
                        DISP  STREAM str_2
                              aux_nmrescop
@@ -978,7 +981,8 @@ PROCEDURE processa_convenios_deb_cred.
                     WITH FRAME f_movtos_dom.
                DOWN STREAM str_1 WITH FRAME f_movtos_dom.
                
-               IF   TRIM(crapcop.nmrescop) = "AILOS"   THEN
+               IF   TRIM(crapcop.nmrescop) = "AILOS" OR
+                    TRIM(crapcop.nmrescop) = "CECRED" THEN
                     DO:
                         DISP  STREAM str_2
                               aux_nmrescop
