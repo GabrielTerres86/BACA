@@ -65,8 +65,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   --
   --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --
-  --           03/07/2018 - Adequação em cursor principal TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
-  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_monta_reg_conta_xml(pr_retxml     IN OUT NOCOPY XMLType
@@ -443,7 +441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          , RISC0004.fn_traduz_risco(ris.inrisco_cpf) risco_cpf
          , RISC0004.fn_traduz_risco(ris.inrisco_grupo) risco_grupo
          , RISC0004.fn_traduz_risco(ris.inrisco_final) risco_final
-             , ris.cdmodali as ris_cdmodali
+         , ris.cdmodali as ris_cdmodali
          , decode (ris.cdmodali
                  , 0, 'CTA'
                  , 101, 'CTA'
@@ -461,8 +459,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              , lcr.flgstlcr as lcr_flgstlcr
              , epr.dtinicio_atraso_refin
       FROM tbrisco_central_ocr ris
-     LEFT JOIN crapepr epr ON epr.cdcooper = ris.cdcooper AND epr.nrdconta = ris.nrdconta AND ris.nrctremp = epr.nrctremp
-     LEFT JOIN craplcr lcr ON lcr.cdlcremp = epr.cdlcremp AND lcr.cdcooper = ris.cdcooper
+      LEFT JOIN crapepr epr ON epr.cdcooper = ris.cdcooper
+                           AND epr.nrdconta = ris.nrdconta
+                           AND epr.nrctremp = ris.nrctremp
+                           AND ris.cdorigem = 3
+      LEFT JOIN craplcr lcr ON lcr.cdlcremp = epr.cdlcremp
+                           AND lcr.cdcooper = epr.cdcooper
+                           AND ris.cdorigem = 3
      WHERE ris.cdcooper = pr_cdcooper
        AND ris.nrdconta = pr_nrdconta
        AND ris.dtrefere = pr_dtmvtoan
@@ -555,11 +558,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                  , rw_dat.dtmvtoan) LOOP
 
                 -- trata tipo de registro Refinanciamento (REF)
-                IF rw_tabrisco_central.ris_cdmodali IN (4, 3) 
-                  OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
-                  OR (rw_tabrisco_central.lcr_flgrefin = 1 
-                      AND rw_tabrisco_central.lcr_flgstlcr = 1) 
-                  OR rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
+                IF rw_tabrisco_central.epr_idquaprc IN (4, 3) 
+                OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
+                OR (rw_tabrisco_central.lcr_flgrefin = 1 AND
+                    rw_tabrisco_central.lcr_flgstlcr = 1) 
+                OR rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
                      vr_tiporegistro := 'REF';
                 ELSE
                    vr_tiporegistro := rw_tabrisco_central.tipo_registro;
@@ -599,11 +602,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                  , rw_dat.dtmvtoan) LOOP
 
                    -- trata tipo de registro Refinanciamento (REF)
-                IF rw_tabrisco_central.ris_cdmodali IN (4, 3) 
-                  OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
-                  OR (rw_tabrisco_central.lcr_flgrefin = 1 
-                      AND rw_tabrisco_central.lcr_flgstlcr = 1) 
-                  OR rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
+                IF rw_tabrisco_central.epr_idquaprc IN (4, 3) 
+                OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
+                OR (rw_tabrisco_central.lcr_flgrefin = 1 AND
+                    rw_tabrisco_central.lcr_flgstlcr = 1) 
+                OR rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
                      vr_tiporegistro := 'REF';
                 ELSE
                    vr_tiporegistro := rw_tabrisco_central.tipo_registro;
