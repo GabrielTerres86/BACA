@@ -1223,7 +1223,7 @@ begin
         elsif vr_totais(vr_ind_totais).tprelato = 2 then
           pc_escreve_xml('<tipo tprelato="B.BRASIL">');
         elsif vr_totais(vr_ind_totais).tprelato = 3 then
-          pc_escreve_xml('<tipo tprelato="CECRED">');
+          pc_escreve_xml('<tipo tprelato="AILOS">');
         end if;
         -- Inclui os totais (primeiro registro de cada tprelato)
         pc_escreve_xml('<tot_qtd_nossodoc>'||to_char(vr_totais(vr_ind_totais).qtd_nossodoc, 'fm999G990')||'</tot_qtd_nossodoc>'||

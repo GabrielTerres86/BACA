@@ -3,7 +3,7 @@
 	/**************************************************************************
 	      Fonte: contas_incluir.php      	                      	       
 	      Autor: Lucas                                                     
-	      Data : Maio/2012                   Última Alteração: 31/07/2013		       
+	Data : Maio/2012                   Última Alteração: 26/07/2016		       
 	                                                                       
 	      Objetivo  : Mostrar forms para inclusão de cnts para transf.     
 	                                                                       	 
@@ -11,6 +11,8 @@
 	      Alterações: 08/04/2013 - Transferencia intercoopertiva (Gabriel)	
                 	  31/07/2013 - Correção transferencia intercoop. (Lucas)
                       24/04/2015 - Inclusão do campo ISPB SD271603 FDR041 (Vanessa) 
+				26/07/2016 - Corrigi a forma de recuperacao do erro no XML e tratei as variaveis 
+							 vindas do post. SD 479874 (Carlos R.)
 	                                                                                                                                  
 	****************************************************************************/
 	
@@ -37,20 +39,20 @@
 	}	
 	
 	//Utilizado na exibição de dados após validação da Senha
-	$nrdconta = $_POST["nrdconta"];
-	$idseqttl = $_POST["idseqttl"];
-	$nrctatrf = $_POST["nrctatrf"];
-	$intipdif = $_POST["intipdif"];
-	$cddsenha = $_POST["cdsnhnew"];
-	$cdsnhrep = $_POST["cdsnhrep"];
-	$cddbanco = $_POST["cddbanco"];
-	$cdageban = $_POST["cdageban"];
-	$nmtitula = $_POST["nmtitula"];
-	$dscpfcgc = $_POST["dscpfcgc"];
-	$inpessoa = $_POST["inpessoa"];
-	$nrcpfcgc = $_POST["nrcpfcgc"];
-	$intipcta = $_POST["intipcta"];
-    $cdispbif = $_POST["cdispbif"];
+	$nrdconta = ( isset($_POST["nrdconta"]) ) ? $_POST["nrdconta"] : null;
+	$idseqttl = ( isset($_POST["idseqttl"]) ) ? $_POST["idseqttl"] : null;
+	$nrctatrf = ( isset($_POST["nrctatrf"]) ) ? $_POST["nrctatrf"] : null;
+	$intipdif = ( isset($_POST["intipdif"]) ) ? $_POST["intipdif"] : null;
+	$cddsenha = ( isset($_POST["cdsnhnew"]) ) ? $_POST["cdsnhnew"] : null;
+	$cdsnhrep = ( isset($_POST["cdsnhrep"]) ) ? $_POST["cdsnhrep"] : null;
+	$cddbanco = ( isset($_POST["cddbanco"]) ) ? $_POST["cddbanco"] : null;
+	$cdageban = ( isset($_POST["cdageban"]) ) ? $_POST["cdageban"] : null;
+	$nmtitula = ( isset($_POST["nmtitula"]) ) ? $_POST["nmtitula"] : null;
+	$dscpfcgc = ( isset($_POST["dscpfcgc"]) ) ? $_POST["dscpfcgc"] : null;
+	$inpessoa = ( isset($_POST["inpessoa"]) ) ? $_POST["inpessoa"] : null;
+	$nrcpfcgc = ( isset($_POST["nrcpfcgc"]) ) ? $_POST["nrcpfcgc"] : null;
+	$intipcta = ( isset($_POST["intipcta"]) ) ? $_POST["intipcta"] : null;
+    $cdispbif = ( isset($_POST["cdispbif"]) ) ? $_POST["cdispbif"] : null;
 	
 	// Verifica se o n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -94,7 +96,7 @@
 		$registros = $xmlObjPendentes->roottag->tags[0]->tags;
 
 		// Se ocorrer um erro, mostra cr&iacute;tica
-		if (strtoupper($xmlObjPendentes->roottag->tags[0]->name) == "ERRO") {
+		if (isset($xmlObjPendentes->roottag->tags[0]->name) && strtoupper($xmlObjPendentes->roottag->tags[0]->name) == "ERRO") {
 			exibeErro($xmlObjPendentes->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
 		
@@ -109,7 +111,7 @@
 ?>
 	
 <div id="divBotoes" style="margin-bottom:10px">
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_sistema_cecred.gif" onClick="limpaFormularios(); exibeFormInclusaoContas(1); return false;" />
+	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_sistema_ailos.gif" onClick="limpaFormularios(); exibeFormInclusaoContas(1); return false;" />
 	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_de_outras_ifs.gif" onClick="limpaFormularios(); exibeFormInclusaoContas(2); return false;"  />
 </div>
 

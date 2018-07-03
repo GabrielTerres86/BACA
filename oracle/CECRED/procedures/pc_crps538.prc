@@ -2678,7 +2678,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    -- Se não encontrar e-mail cadastrado no parametro, deve mandar 
                    -- para o e-mail do processual de credito
                    IF vr_email_proc_cred IS NULL THEN
-                     vr_email_proc_cred := 'processualdecredito@cecred.coop.br';
+                     vr_email_proc_cred := 'processualdecredito@ailos.coop.br';
                    END IF;
                    
                    /* Envio do arquivo detalhado via e-mail */
@@ -7153,7 +7153,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            -- Se não encontrar e-mail cadastrado no parametro, deve mandar 
            -- para o e-mail da cobrança da CECRED ( Renato - Supero )
            IF vr_email_tarif IS NULL THEN
-             vr_email_tarif := 'cobranca@cecred.coop.br';
+             vr_email_tarif := 'cobranca@ailos.coop.br';
            END IF;
          
            /* Envio do arquivo detalhado via e-mail */

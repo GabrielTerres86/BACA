@@ -45,7 +45,10 @@
               31/05/2016 - Ajustado numero de participantes previstos EAD
                            PRJ229 - Melhorias EAD (Odirlei-AMcom)
                            
-              30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).             
+              30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).     
+			  
+			  01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			          
             
 ***********************************************************************************************/
 create widget-pool.
@@ -1541,7 +1544,7 @@ FUNCTION montaCabecalho RETURNS LOGICAL ():
 	/* *** Cabecalho padrao com logo CECRED *** */
     {&out} '<table border="0" cellspacing="0" cellpadding="0" width="100%" >' SKIP
            '   <tr>' SKIP
-           '      <td align="center" width="25%"><img src="/cecred/images/geral/logo_cecred.gif" border="0"></td>' SKIP
+           '      <td align="center" width="25%"><img src="/cecred/images/geral/logo_ailos.gif" border="0"></td>' SKIP
            '      <td class="tdTitulo1" align="center">Fechamento Geral - ' dtAnoAge '</td>' SKIP
            '   </tr>' SKIP
            '   <tr>' SKIP
@@ -1951,7 +1954,7 @@ FUNCTION montaTelaTotal RETURNS LOGICAL ():
 	/* *** Logo Cooperativa *** */
     {&out} '<br><div width="100%" style="text-align:left;"><table border="0" cellspacing="0" style="padding-top:20px; float:left;" cellpadding="0" >' SKIP
            '   <tr>' SKIP
-           '      <td align="left">&nbsp;&nbsp;&nbsp;<img src="/cecred/images/geral/logo_cecred.gif" border="0"></td>' SKIP
+           '      <td align="left">&nbsp;&nbsp;&nbsp;<img src="/cecred/images/geral/logo_ailos.gif" border="0"></td>' SKIP
            '      <td class="tdTitulo1" align="left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TOTAL GERAL</td>' SKIP		   
            '   </tr>' SKIP
            '</table><div>' SKIP. 

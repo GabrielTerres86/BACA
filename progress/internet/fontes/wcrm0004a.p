@@ -10,6 +10,8 @@
  *
  *              13/04/2017 - Alterado para nao exibir assinatura de algumas coops. pois a assinatura
  *                           estara na propria imagem de fundo SD624455 (Odirlei-Amcom)
+ *
+ *              28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 */
 
 	{ sistema/generico/includes/var_log_progrid.i }
@@ -124,7 +126,7 @@ FUNCTION montaCertificado RETURNS LOGICAL():
                     '<div id="assinatura_texto" name="assinatura_texto" style="position: absolute; padding-left: 270px; margin-top: 580px; z-index:5;">'
                     '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ________________________________________________________ </a>'
                     '</br>'
-                    '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema CECRED</a>' 
+                    '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema AILOS</a>' 
                     '</div><div style="clear:both">' SKIP.
               END.
             ELSE

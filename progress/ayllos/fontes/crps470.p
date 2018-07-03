@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 25/11/2014
+   Data    : Marco/2007                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -31,7 +31,9 @@
                             (Odirlei/AMcom).         
                             
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
-                            (Lucas R./Rodrigo)                             
+                            (Lucas R./Rodrigo)                           
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).  
 ..............................................................................*/
 
 { includes/var_batch.i }
@@ -305,7 +307,7 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                     RUN enviar_email IN b1wgen0011
                                        (INPUT glb_cdcooper,
                                         INPUT glb_cdprogra,
-                                        INPUT "willian@cecred.coop.br",
+                                        INPUT "willian@ailos.coop.br",
                                         INPUT '"ERRO DE SEQUENCIA - "' +
                                               '"RET_BCB_CCF - "' +
                                               crapcop.nmrescop,

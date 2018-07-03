@@ -154,7 +154,7 @@
 																						  <label for="flgidlog" class="txtNormalBold">Log:</label>
 																							  <select name="flgidlog" id="flgidlog" class="campo">
 																								  <option value="1">Bancoob</option>
-																								  <option value="2" selected>Cecred</option>
+																								  <option value="2" selected>Ailos</option>
 																								  <option value="3">Sicredi</option>
 																							  </select>
 																						  </div>

@@ -562,7 +562,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA EXTRATO C/C TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA EXTRATO C/C TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -572,7 +572,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA EXTRATO C/C TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA EXTRATO C/C TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);                                             
                                                 
               
@@ -585,7 +585,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA SAQUE TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA SAQUE TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -595,7 +595,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA SAQUE TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA SAQUE TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
                                                           
               ELSIF pr_cdhisdeb = 915 THEN
@@ -607,7 +607,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA PAGAMENTO DE TITULOS TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA PAGAMENTO DE TITULOS TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -617,7 +617,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA PAGAMENTO DE TITULOS TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA PAGAMENTO DE TITULOS TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
               ELSIF pr_cdhisdeb = 945 THEN
 
@@ -628,7 +628,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA TRANSFERENCIA TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA TRANSFERENCIA TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -638,7 +638,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA TRANSFERENCIA TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA TRANSFERENCIA TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 1);
                                                           
               END IF; 
@@ -689,7 +689,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA EXTRATO C/C TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA EXTRATO C/C TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -699,7 +699,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA EXTRATO C/C TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA EXTRATO C/C TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);                                             
                                                 
               
@@ -712,7 +712,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA SAQUE TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA SAQUE TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -722,7 +722,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA SAQUE TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA SAQUE TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
                                                           
               ELSIF pr_cdhisdeb = 915 THEN
@@ -734,7 +734,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA PAGAMENTO DE TITULOS TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA PAGAMENTO DE TITULOS TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -744,7 +744,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA PAGAMENTO DE TITULOS TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA PAGAMENTO DE TITULOS TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
               ELSIF pr_cdhisdeb = 945 THEN
 
@@ -755,7 +755,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctadeb,
                                     pr_nrctadeb          => 8308,
                                     pr_nrctacrd          => 1452,
-                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' CECRED REF. TARIFA TRANSFERENCIA TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'DEBITO C/C '||v_nrctafmt_deb||' AILOS REF. TARIFA TRANSFERENCIA TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
                 --                              
                 pc_cria_tab_arq_ctb(pr_cdcooper          => vr_tab_lancamentos(vr_ind).cdcoptfn, 
@@ -765,7 +765,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps581 (pr_cdcooper IN crapcop.cdcooper%T
                                     pr_nrdconta          => vr_nrctacre,
                                     pr_nrctadeb          => 1452,
                                     pr_nrctacrd          => 7254,
-                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' CECRED REF. TARIFA TRANSFERENCIA TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
+                                    pr_dsrefere          => 'CREDITO C/C '||v_nrctafmt_crd||' AILOS REF. TARIFA TRANSFERENCIA TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA',
                                     pr_intipo_lancamento => 0);
                                                           
               END IF; 

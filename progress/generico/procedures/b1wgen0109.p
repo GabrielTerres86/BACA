@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0109.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 31/08/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 26/05/2018
 
     Objetivo  : Tranformacao BO tela IMPREL
 
@@ -73,6 +73,10 @@
                              
                 31/08/2016 - #500713 Inclusao do relatorio 626 (Relac. de 
                              ocorrencias TIC) (Carlos)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -178,7 +182,7 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        cmd[29] = "456-Credito aplicacoes RDC"
        cmd[30] = "481-Poupanca a vencer em 5 dias uteis"
        cmd[31] = "497-Tit. Dscto Debitados Beneficiario"
-       cmd[32] = "529-Cheque Devolvido (CECRED)        "
+       cmd[32] = "529-Cheque Devolvido (AILOS)         "
        cmd[33] = "593-Cheques nao digitalizados        "
        cmd[34] = "597-Contratacao Seguro Prestamista   "
        cmd[35] = "598-Emprestimos Sem Seg.Prestamista  "

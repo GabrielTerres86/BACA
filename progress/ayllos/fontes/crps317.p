@@ -9,7 +9,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Dezembro/2001                      Ultima atualizacao: 26/08/2016
+   Data    : Dezembro/2001                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -89,6 +89,8 @@
                                             
                 26/08/2016 - Realiza envio das cartas para a Engecopy de todas
                              as cooperativas (Elton - SD 494092 ).
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                                             
 ............................................................................. */
 
@@ -362,7 +364,7 @@ IF   aux_flgfxser THEN
                   RUN enviar_email_completo IN b1wgen0011
                                   (INPUT glb_cdcooper,
                                    INPUT "crps317",
-                                   INPUT "cpd@cecred.coop.br",
+                                   INPUT "cpd@ailos.coop.br",
                                    INPUT "vendas@blucopy.com.br," +
                                          "variaveis@blucopy.com.br",
                                    INPUT "Cartas " + crapcop.nmrescop ,

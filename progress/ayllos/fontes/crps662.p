@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 24/01/2018
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -106,6 +106,8 @@
                 
                 30/05/2018 - Ajustes na execucao do CCF, mudanca de horarios para o retorno.
                              Chamado SCTASK0012791 - Heitor (Mouts)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 .............................................................................*/
 
@@ -3085,7 +3087,7 @@ PROCEDURE verifica_arquivos:
        DO TRANSACTION:         
           CREATE crawarq.
           ASSIGN crawarq.dscooper = IF   aux_tparquiv = "RELACIONAMENTO" THEN
-                                         "CECRED"
+                                         "AILOS"
                                     ELSE crabcop.nmrescop
                  crawarq.tparquiv = aux_tparquiv
                  crawarq.nmarquiv = aux_nmarquiv.
@@ -3500,26 +3502,26 @@ PROCEDURE imp_arq:
                  RUN gera_log_execucao (INPUT par_nmprgexe + "(FAC)",
                                         INPUT "Inicio execucao", 
                                         INPUT par_cdcooper,
-                                        INPUT "(CECRED)"). 
+                                        INPUT "(AILOS)"). 
                  /* Executa FAC */
                  RUN fontes/crps543.p.
     
                  RUN gera_log_execucao (INPUT par_nmprgexe + "(FAC)",
                                         INPUT "Fim execucao", 
                                         INPUT par_cdcooper,
-                                        INPUT "(CECRED)").
+                                        INPUT "(AILOS)").
 
                  RUN gera_log_execucao (INPUT par_nmprgexe + "(ROC)",
                                         INPUT "Inicio execucao", 
                                         INPUT par_cdcooper,
-                                        INPUT "(CECRED)").
+                                        INPUT "(AILOS)").
                  /* Executa ROC */
                  RUN fontes/crps544.p.
     
                  RUN gera_log_execucao (INPUT par_nmprgexe + "(ROC)",
                                         INPUT "Fim execucao", 
                                         INPUT par_cdcooper,
-                                        INPUT "(CECRED)").
+                                        INPUT "(AILOS)").
     
                  /* Limpa solicitacao se existente */
                  DO  TRANSACTION:

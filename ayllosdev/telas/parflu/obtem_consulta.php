@@ -111,7 +111,7 @@
             $xmlObject = getObjectXML($xmlResult);
             $reghistor = $xmlObject->roottag->tags[0]->tags;
             
-            $arrBancos = array(1 => '01 - Banco do Brasil', 85 => '85 - Cecred', 756 => '756 - Bancoob', 748 => '748 - Sicredi');
+            $arrBancos = array(1 => '01 - Banco do Brasil', 85 => '85 - Ailos', 756 => '756 - Bancoob', 748 => '748 - Sicredi');
         }
 
         include('form_r.php');

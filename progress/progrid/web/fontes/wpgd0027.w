@@ -23,6 +23,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                          e EAD Assemblear não sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
 
+		    01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ...............................................................................*/
 { includes/var_progrid.i }
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -1518,7 +1521,7 @@ PROCEDURE envia-email :
          RUN enviar_email_completo IN b1wgen0011 (INPUT INTEGER(ab_unmap.aux_cdcooper),
                                                   INPUT "wpgd0027",
                                                   INPUT "",
-                                                  INPUT "progrid@cecred.coop.br",
+                                                  INPUT "progrid@ailos.coop.br",
                                                   INPUT "Liberação de Agenda",
                                                   INPUT "",
                                                   INPUT "",

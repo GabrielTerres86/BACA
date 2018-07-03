@@ -400,7 +400,7 @@
 						<label for="dtultace"><? echo utf8ToHtml('Conta Online:') ?></label>
 						<input type="text" id="dtultace" value="<?php echo trim($titulares[$i]->tags[8]->cdata) == "" ? null : $titulares[$i]->tags[8]->cdata.' '.$titulares[$i]->tags[9]->cdata; ?>" />
 
-						<label for="dtacemob"><? echo utf8ToHtml('Cecred Mobile:') ?></label>
+						<label for="dtacemob"><? echo utf8ToHtml('Ailos Mobile:') ?></label>
 						<input type="text" id="dtacemob" value="<?php echo trim($titulares[$i]->tags[23]->cdata) == "" ? null : $titulares[$i]->tags[23]->cdata.' '.$titulares[$i]->tags[24]->cdata; ?>" />
 					</fieldset>
 

@@ -7,7 +7,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2006.                    Ultima atualizacao: 12/03/2018
+   Data    : Janeiro/2006.                    Ultima atualizacao: 29/05/2018
       
    Dados referentes ao programa:
 
@@ -78,7 +78,9 @@
                12/03/2018 - #856961 Correção das imagens das cooperativas na
                             rotina p_imprime_cabec, incluindo a Altovale, 
                             retirando as inativas e atualizando os novos 
-                            nomes (Acredicoop e Acentra) (Carlos)  
+                            nomes (Acredicoop e Acentra) (Carlos)
+                            
+		       29/05/2018 - Ajustes referente alteracao da nova marca (Jonata Mouts - P413 ).					  
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -453,7 +455,7 @@ PROCEDURE p_imprime_cabec:
         aux_dsdlinha = "@@imagem /dg/som/scrcred.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 14  THEN
-        aux_dsdlinha = "@@imagem /dg/som/rodocredito.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/evolua.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 16  THEN
         aux_dsdlinha = "@@imagem /dg/som/altovale.bmp,16,0".
@@ -1089,7 +1091,7 @@ PROCEDURE p_extrato_mes:
                              BREAK BY tt-extrato_conta.nrdconta
                                       BY tt-extrato_conta.dtmvtolt
                                          BY tt-extrato_conta.nrsequen:
-
+                         
                          aux_dsdlinha = STRING(tt-extrato_conta.dtmvtolt,
                                                "99/99/99") + " " +
                                         STRING(tt-extrato_conta.dsextrat,
@@ -1532,7 +1534,7 @@ PROCEDURE p_extrato_apl:
 
             {&OUT} aux_dsdlinha '\n'.
         END.
-        
+
     IF aux_vlblqapl_gar > 0 THEN 
         DO: 
             aux_dsdlinha = "Valor Bloqueado Cobertura de Garantia e de: " + 

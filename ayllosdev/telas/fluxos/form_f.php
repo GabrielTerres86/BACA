@@ -16,7 +16,7 @@
     <br />
 
 	<fieldset id="fsetCECRED" name="fsetCECRED" style="padding:10px;">
-	<legend> CECRED </legend>
+	<legend> AILOS </legend>
         <table width="800" cellpadding="10" cellspacing="2" style="text-align:right; margin-right:20px;">
         <tr>
             <td width="200">&nbsp;</td>

@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 30/05/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 27/02/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -395,8 +395,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                20/03/2018 - Substituida validacao "cdtipcta IN (6,7,17,18)" pelo "cdmodali = 3".
                             Substituida validacao "cdtipcta IN (2,4,9,11,13,15)" pela chamada
                             da procedure pc_permite_produto_tipo. (Josiane - AMcom)
-                            
-               30/05/2018 - inc0016347 Inclusão de log de backtrace nas exceptions others (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -1774,7 +1772,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
         commit;
        EXCEPTION
          WHEN OTHERS THEN
-          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           --Montar mensagem de erro
           pr_des_erro:= 'Erro ao inserir na tabela tbgen_batch_relatorio_wrk. '||SQLERRM;
        END pc_popular_tbgen_batch_rel_wrk;
@@ -2113,7 +2110,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_geral: '||sqlerrm;
          END;
        END pc_grava_tab_men_geral;
@@ -2164,7 +2160,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            END LOOP;
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl055: '||sqlerrm;
          END;
        END pc_grava_tab_men_crrl055;
@@ -2216,7 +2211,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            END LOOP;
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl030: '||sqlerrm;
          END;
        END pc_grava_tab_men_crrl030;
@@ -2272,7 +2266,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            END LOOP;
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl225: '||sqlerrm;
          END;
        END pc_grava_tab_men_crrl225;
@@ -2327,7 +2320,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            END LOOP;
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl226: '||sqlerrm;
          END;
        END pc_grava_tab_men_crrl226;
@@ -2623,7 +2615,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl007 '||sqlerrm;
        END pc_grava_tab_men_crrl007;
        
@@ -3324,7 +3315,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
     
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl006: '||sqlerrm;
          END;
        END pc_grava_tab_men_crrl006;
@@ -3369,7 +3359,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            END LOOP;
          EXCEPTION
            WHEN OTHERS THEN
-              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               pr_des_erro:= 'Erro pc_grava_tab_men_crrl372: '||sqlerrm;
          END;
        END pc_grava_tab_men_crrl372;    
@@ -3623,7 +3612,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_geral)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro pc_grava_tab_wrk_geral: '||sqlerrm;
        END pc_grava_tab_wrk_geral;
 
@@ -3666,7 +3654,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl055)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL055: '||sqlerrm;
        END pc_grava_tab_wrk_crrl055;
        
@@ -3711,7 +3698,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl030)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL030: '||sqlerrm;
        END pc_grava_tab_wrk_crrl030;
        
@@ -3757,7 +3743,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl225)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL225: '||sqlerrm;
        END pc_grava_tab_wrk_crrl225; 
        
@@ -3802,7 +3787,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl226)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL226: '||sqlerrm;
        END pc_grava_tab_wrk_crrl226; 
        
@@ -4033,7 +4017,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl007)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL007: '||sqlerrm;
        END pc_grava_tab_wrk_crrl007; 
 
@@ -4578,7 +4561,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl006)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL006: '||sqlerrm;
        END pc_grava_tab_wrk_crrl006; 
        
@@ -4617,7 +4599,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
             pr_des_erro:= vr_des_erro||' (pc_grava_tab_wrk_crrl372)';
          WHEN OTHERS THEN
-            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             pr_des_erro:= 'Erro PC_GRAVA_TAB_WRK_CRRL372: '||sqlerrm;
        END pc_grava_tab_wrk_crrl372; 
                  
@@ -5235,7 +5216,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                       ,pr_fldosmail => 'S'                 --> Flag para converter arquivo para dos antes de enviar email
                                       ,pr_dspathcop => vr_nom_dircop||'/converte/' --> Lista sep. por ';' de diretórios a copiar o relatório
                                       ,pr_dsmailcop => vr_email_dest       --> Lista sep. por ';' de emails para envio do relatório
-                                      ,pr_dsassmail => 'FUNCIONARIOS DA CECRED COM ESTOURO DE CONTA NA '||Upper(pr_nmrescop)    --> Assunto do e-mail que enviará o relatório
+                                      ,pr_dsassmail => 'FUNCIONARIOS DA AILOS COM ESTOURO DE CONTA NA '||Upper(pr_nmrescop)    --> Assunto do e-mail que enviará o relatório
                                       ,pr_dscormail => NULL                --> HTML corpo do email que enviará o relatório
                                       ,pr_des_erro  => vr_des_erro);       --> Saída com erro
 
@@ -7651,7 +7632,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          WHEN vr_exc_erro THEN
            pr_des_erro:= vr_des_erro;
          WHEN OTHERS THEN
-          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_cdcritic := 1115;
           pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crrl372. '||sqlerrm;
        END;
@@ -9752,7 +9732,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                     WHEN vr_exc_pula THEN
                       NULL;
                     WHEN OTHERS THEN
-                      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                       vr_cdcritic := 1036;
                       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crapepr '||
                                     'com nrdconta:'||rw_crapass.nrdconta||
@@ -9768,7 +9747,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               WHEN vr_exc_pula THEN
                 NULL;
               WHEN OTHERS THEN
-                cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                 vr_cdcritic := 1036;  --Erro ao selecionar associado
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' associado ('||rw_crapass.nrdconta||') '||
                               'com nrdconta:'||rw_crapepr.nrdconta||

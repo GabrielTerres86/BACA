@@ -291,7 +291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     PRAGMA AUTONOMOUS_TRANSACTION;
     
     -- CONSTANTES
-    vr_dsdemail     CONSTANT VARCHAR2(50) := 'estrategiadecobranca@cecred.coop.br'; -- Email de destino
+    vr_dsdemail     CONSTANT VARCHAR2(50) := 'estrategiadecobranca@ailos.coop.br'; -- Email de destino
     vr_dsassunt     CONSTANT VARCHAR2(10) := 'ACORDO';
     
     -- VARIÁVEIS

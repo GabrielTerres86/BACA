@@ -18,6 +18,8 @@
              04/04/2013 - Alteração para receber logo na alto vale,
                           recebendo nome de viacrediav e buscando com
                           o respectivo nome (David Kruger).       
+
+			 01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                           
 **************************************************************************** */
 
@@ -731,7 +733,7 @@ ELSE DO:
 
    IF AVAILABLE crapcop THEN
       DO:
-          ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_cecred.gif"
+          ASSIGN imagemDoProgrid      = "/cecred/images/geral/logo_ailos.gif"
                  nomedacooperativa    = TRIM(crapcop.nmrescop)
                  nomeDoRelatorio      = " - PPR PARTICIPACAO SOCIAL - " + STRING(nrPeriodo,"9") + "o SEMESTRE DE " + STRING(dtAnoAge,"9999").
          

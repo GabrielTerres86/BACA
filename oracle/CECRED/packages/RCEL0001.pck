@@ -1079,7 +1079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Envio de e-mail informando que houve a tentativa
 				gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
 																	 pr_cdprogra => 'RCEL0001',
-																	 pr_des_destino => 'monitoracaodefraudes@cecred.coop.br',
+																	 pr_des_destino => 'monitoracaodefraudes@ailos.coop.br',
 																	 pr_des_assunto => 'Atencao - Tentativa de Recarga de Celular para numero em restritivo',
 																	 pr_des_corpo => vr_des_corpo,
 																	 pr_des_anexo => NULL,
@@ -5378,7 +5378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                          ,pr_cdfinrcb => rw_cdfinrcb         --> Finalidade 
                                          ,pr_tpdctadb => rw_tpdctadb         --> Tp. conta deb 
                                          ,pr_tpdctacr => rw_tpdctacr         --> Tp conta cred 
-                                         ,pr_nmpesemi => 'CECRED-RECARGA'    --> Nome Do titular 
+                                         ,pr_nmpesemi => 'AILOS-RECARGA'    --> Nome Do titular 
                                          ,pr_nmpesde1 =>  NULL               --> Nome De 2TTT 
                                          ,pr_cpfcgemi => rw_cpfcgemi         --> CPF/CNPJ Do titular 
                                          ,pr_cpfcgdel =>  0                  --> CPF sec TTL

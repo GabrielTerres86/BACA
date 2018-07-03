@@ -707,7 +707,7 @@ BEGIN
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                 ,pr_cdprogra        => vr_cdprogra
                                 ,pr_des_destino     => vr_email_dest
-                                ,pr_des_assunto     => 'Fluxo de compensacao BB/Bancoob/Cecred'
+                                ,pr_des_assunto     => 'Fluxo de compensacao BB/Bancoob/Ailos'
                                 ,pr_des_corpo       => NULL
                                 ,pr_des_anexo       => vr_nmdiretorio||'/converte/crrl579.csv'
                                 ,pr_flg_remove_anex => 'N' --> Remover os anexos passados

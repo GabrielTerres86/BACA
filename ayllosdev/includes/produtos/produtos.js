@@ -8,7 +8,7 @@
 			
 			01/10/2015 - Projeto 217 Reformulacao Cadastral
 			(Tiago Castro - RKAM).
-			
+
 			11/08/2016 - Adicionado função controlaFoco.
 			(Evandro - RKAM).
                                                                   
@@ -66,7 +66,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao, opeProdutos) {
         success: function (response) {
             $("#divConteudoOpcao").html(response);
             controlaFoco();
-        }
+}
     });
 
 }
@@ -501,7 +501,7 @@ function alimtentaTelas(operacao) {
                         //CONSORCIO 
                     case "7":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link CECRED CONSORCIOS no portal.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link AILOS CONSORCIOS no portal.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -585,7 +585,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO AUTO
                     case "17":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link CECRED SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -617,14 +617,14 @@ function alimtentaTelas(operacao) {
                         // CARTAO DE CREDITO CECRED
                     case "21":
 
-                        produtosTelasServicos[index] = "showError('error','Para o cartão de crédito CECRED deve-se primeiramente preencher proposta pré-impressa.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para o cartão de crédito AILOS deve-se primeiramente preencher proposta pré-impressa.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
 
                     case "22":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link CECRED SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -784,7 +784,7 @@ function alimtentaTelas(operacao) {
                         //CONSORCIO 
                     case "7":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link CECRED CONSORCIOS no portal.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link AILOS CONSORCIOS no portal.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -836,7 +836,7 @@ function alimtentaTelas(operacao) {
                             produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
                         } else {
                             produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite Empresarial\',\'limite_credito\');';
-                        }
+}
 
                         index++;
 
@@ -869,7 +869,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO AUTO 
                     case "17":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link CECRED SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -901,7 +901,7 @@ function alimtentaTelas(operacao) {
                         // CARTAO DE CREDITO CECRED
                     case "21":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para o cartão de crédito CECRED deve-se primeiramente preencher proposta pré-impressa.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para o cartão de crédito AILOS deve-se primeiramente preencher proposta pré-impressa.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -909,7 +909,7 @@ function alimtentaTelas(operacao) {
                         // SEGURO VIDA GRUPO	
                     case "22":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link CECRED SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -994,11 +994,11 @@ function alimtentaTelas(operacao) {
 
                         break;
 						
-                }
+}
 
                 produtosTelasServicosAdicionais[index - 1] = 'cdproduto = ' + $(this).attr('id') + ";" + produtosTelasServicosAdicionais[index - 1];
 
-            }
+}
 
         });
 

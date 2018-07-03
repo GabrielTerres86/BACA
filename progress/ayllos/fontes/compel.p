@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001                           Ultima alteracao: 07/02/2018
+   Data    : Maio/2001                           Ultima alteracao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -189,10 +189,12 @@
                02/01/2017 - Inserir bloqueio da opcoes "B" e "X" para
                             borderos gerados com data posterior a da 
                             liberaçao do projeto 300. (Lombardi)
-
+                            
 
 			   07/02/2018 - Ajustado horario limite para digitacao dos cheques ate 22
 							(Adriano - SD 845726).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
 ............................................................................. */
 
@@ -1250,7 +1252,7 @@ DO WHILE TRUE:
                       WITH FRAME f_refere.
 
                ASSIGN aux_cdbcoenv = STRING(crapcop.cdbcoctl)
-                      aux_dsbcoenv = "CECRED".
+                      aux_dsbcoenv = "AILOS".
 
                IF   aux_flgenvio THEN /* Enviados */
                     ASSIGN aux_cdbcoenv = "0,1,756," + STRING(crapcop.cdbcoctl).
@@ -2612,7 +2614,7 @@ PROCEDURE imprimir_carta_remessa:
           glb_nmformul = "80col"           
           glb_cdrelato = 555
           aux_cdbcoenv = STRING(crapcop.cdbcoctl)
-          aux_dsbcoenv = "CECRED"
+          aux_dsbcoenv = "AILOS"
           aux_dsbcoctl = STRING(INT(aux_cdbcoenv),"999") + " - " + aux_dsbcoenv
           aux_dscooper = crapcop.nmextcop /*crapcop.nmrescop*/
           aux_cdagectl = crapcop.cdagectl

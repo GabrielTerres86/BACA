@@ -325,12 +325,12 @@
 		
         //CNPJ Responsabilidade social				
 		if( verificaCpfCnpjBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, 2, $GLOBALS['nrcpfcgc']) == true ){			
-			exibirErro('error','CNPJ n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema CECRED.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
+			exibirErro('error','CNPJ n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
 		} 
 	   
         //CNAE Responsabilidade social				
 		if( verificaCnaeBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $GLOBALS['cdcnae'], $GLOBALS['nrcpfcgc']) == '1'){				
-			exibirErro('error','CNAE n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema CECRED.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);					
+			exibirErro('error','CNAE n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);					
 		} 
 		
 		//Natureza jurídica

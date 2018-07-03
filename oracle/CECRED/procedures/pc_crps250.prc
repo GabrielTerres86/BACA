@@ -1926,7 +1926,7 @@ BEGIN
       IF pr_cdcooper = 2 THEN
         GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
                                   ,pr_cdprogra        => vr_cdprogra    --> Programa conectado
-                                  ,pr_des_destino     => 'suporte@viacredi.coop.br,compe@cecred.coop.br' --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_destino     => 'suporte@viacredi.coop.br,compe@ailos.coop.br' --> Um ou mais detinatários separados por ';' ou ','
                                   ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
                                   ,pr_des_corpo       => ''             --> Corpo (conteudo) do e-mail
                                   ,pr_des_anexo       => vr_dsdirarq    --> Um ou mais anexos separados por ';' ou ','
@@ -1940,7 +1940,7 @@ BEGIN
       ELSIF pr_cdcooper = 1 THEN                                  
         GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
                                   ,pr_cdprogra        => vr_cdprogra    --> Programa conectado
-                                  ,pr_des_destino     => 'compe@cecred.coop.br,suporte@viacredialtovale.coop.br'  --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_destino     => 'compe@ailos.coop.br,suporte@viacredialtovale.coop.br'  --> Um ou mais detinatários separados por ';' ou ','
                                   ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
                                   ,pr_des_corpo       => ''             --> Corpo (conteudo) do e-mail
                                   ,pr_des_anexo       => vr_dsdirarq    --> Um ou mais anexos separados por ';' ou ','

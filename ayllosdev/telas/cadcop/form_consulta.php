@@ -193,7 +193,7 @@
 
         <legend>Compe</legend>
 
-        <label for="cdbcoctl"><?php echo utf8ToHtml("Cod.COMPE Cecred:"); ?></label>
+        <label for="cdbcoctl"><?php echo utf8ToHtml("Cod.COMPE Ailos:"); ?></label>
         <input type="text" id="cdbcoctl" name="cdbcoctl" value="<?php echo getByTagName($cooperativa->tags,'cdbcoctl');?>" >
 
         <label for="cdagectl"><?php echo utf8ToHtml("C&oacute;digo de Ag&ecirc;ncia:"); ?></label>
@@ -284,7 +284,7 @@
         <label for="nrctabbd"><?php echo utf8ToHtml("Conta conv&ecirc;nio BB:"); ?></label>
         <input type="text" id="nrctabbd" name="nrctabbd" value="<?php echo getByTagName($cooperativa->tags,'nrctabbd');?>" >
 
-        <label for="nrctactl"><?php echo utf8ToHtml("Conta na CECRED:"); ?></label>
+        <label for="nrctactl"><?php echo utf8ToHtml("Conta na Ailos:"); ?></label>
         <input type="text" id="nrctactl" name="nrctactl" value="<?php echo getByTagName($cooperativa->tags,'nrctactl');?>" >
 
         <br />
@@ -297,7 +297,7 @@
 
         <br />
 
-        <label for="nrctacmp"><?php echo utf8ToHtml("Conta Compe. CECRED:"); ?></label>
+        <label for="nrctacmp"><?php echo utf8ToHtml("Conta Compe. Ailos:"); ?></label>
         <input type="text" id="nrctacmp" name="nrctacmp" value="<?php echo getByTagName($cooperativa->tags,'nrctacmp');?>" >
 
         <label for="nrdconta"><?php echo utf8ToHtml("Conta/dv:"); ?></label>
@@ -603,6 +603,36 @@
 
     </fieldset>
 
+    <fieldset id="fsetBancoob" name="fsetBancoob" style="padding:0px; margin:0px; padding-bottom:10px;">
+
+        <legend>BANCOOB</legend>
+
+        <label for="nrctabcb"><?php echo utf8ToHtml("Conta Bancoob:"); ?></label>
+        <input type="text" id="nrctabcb" name="nrctabcb" value="<?php echo getByTagName($cooperativa->tags,'nrctabcb');?>" >
+        
+        <label for="nrouvbcb"><?php echo utf8ToHtml("Telefone Ouvidoria:"); ?></label>
+        <input type="text" id="nrouvbcb" name="nrouvbcb" value="<?php echo getByTagName($cooperativa->tags,'nrouvbcb');?>" >
+                
+        <br />
+        <label for="vltarbcb"><?php echo utf8ToHtml("Tarifa Arrecadação:"); ?></label>
+        <input type="text" id="vltarbcb" name="vltarbcb" value="<?php echo getByTagName($cooperativa->tags,'vltarbcb');?>" >
+        
+        <label for="nrsacbcb"><?php echo utf8ToHtml("SAC:"); ?></label>
+        <input type="text" id="nrsacbcb" name="nrsacbcb" value="<?php echo getByTagName($cooperativa->tags,'nrsacbcb');?>" >        
+        
+        <br />
+        
+        <?php // campo vlgarbcb será exibido apenas na cecred 
+        if (getByTagName($cooperativa->tags,'cdcooper') == 3 ){ ?>
+            
+            <label for="vlgarbcb"><?php echo utf8ToHtml("Garantia para arrecadação de convênios:"); ?></label>
+            <input type="text" id="vlgarbcb" name="vlgarbcb" value="<?php echo getByTagName($cooperativa->tags,'vlgarbcb');?>" >
+            
+            <br />
+        <?php }?>
+
+    </fieldset> 
+    
     <fieldset id="fsetSangria" name="fsetSangria" style="padding:0px; margin:0px; padding-bottom:10px;">
 
         <legend>Sangria de CAIXA</legend>

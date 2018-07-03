@@ -30,6 +30,7 @@
 	<input type="hidden" id="hdn_cdmotivo_mensagem" name="hdn_cdmotivo_mensagem" value="<?php echo($cdmotivo_mensagem); ?>" />
 	<input type="hidden" id="cdtipo_mensagem" name="cdtipo_mensagem" value="<?php echo($cdtipo_mensagem); ?>" />
 	<input type="hidden" id="dsurl_sevidor_imagem" name="dsurl_sevidor_imagem" value="<?php echo($dsurl_sevidor_imagem ); ?>" />
+	<input type="hidden" id="hdnOpcao" name="hdnOpcao" value="<?php echo($cddopcao); ?>" />
 	<div class="condensado" style="border-top: 0px; border-bottom: 0px;">
 		<table style="width: 100%;">
 			<tr style="height: 25px;">
@@ -63,7 +64,7 @@
 					<div id="divIcone" name="divIcone" style="border: 1px solid gray; height:48px; width:48px; "></div>
 				</td>
 			</tr>
-			<?php if($cddopcao != "N"){ ?>
+			<?php if($cddopcao != "N" && $cddopcao != "CM"){ ?>
 			<tr style="height: 25px;">
 				<td style="text-align:right;">
 					<label for="inmensagem_ativa" ><? echo utf8ToHtml('Situação da Notificação:'); ?></label>
@@ -89,7 +90,7 @@
 			</tr>
 			<tr style="height: 25px;">
 				<td colspan="3">
-					<label><? echo utf8ToHtml('Mensagem (Exibida na Central de Notificações e nas notificações PUSH do Cecred Mobile, m&aacute;ximo de 140 caracteres.):'); ?></label>
+					<label><? echo utf8ToHtml('Mensagem (Exibida na Central de Notificações e nas notificações PUSH do Ailos Mobile, m&aacute;ximo de 140 caracteres.):'); ?></label>
 				</td>
 			</tr>
 			<tr>

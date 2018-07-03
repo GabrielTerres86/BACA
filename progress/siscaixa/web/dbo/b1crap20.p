@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 12/12/2017
+    Ultima Atualizacao: 26/05/2018
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -251,6 +251,9 @@
 							
                 12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 -----------------------------------------------------------------------------*/
                              
 {dbo/bo-erro1.i}
@@ -624,7 +627,7 @@ PROCEDURE valida-valores:
          DO:
             ASSIGN i-cod-erro  = 0.
                    c-desc-erro = "Nao é posssivel efetuar transferencia entre "
-                                 + "IFs do Sistema CECRED".
+                                 + "IFs do Sistema AILOS".
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
                            INPUT p-nro-caixa,

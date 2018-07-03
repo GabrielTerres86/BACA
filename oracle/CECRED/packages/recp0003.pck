@@ -1501,7 +1501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         -- Envia email aos responsaveis pela importacao do arquivo CB117
         GENE0003.pc_solicita_email(pr_cdcooper        => 3
                                   ,pr_cdprogra        => 'RECP0003'
-                                  ,pr_des_destino     => 'estrategiadecobranca@cecred.coop.br'
+                                  ,pr_des_destino     => 'estrategiadecobranca@ailos.coop.br'
                                   ,pr_des_assunto     => 'IMPORTACAO ARQUIVO ACORDO'
                                   ,pr_des_corpo       => vr_dscemail
                                   ,pr_des_anexo       => NULL --> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.

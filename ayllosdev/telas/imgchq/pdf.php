@@ -41,7 +41,7 @@ $pdf->AddPage();
 // 210 x 297
 
 $pdf->SetFont('Arial','B',15);
-$pdf->Cell(40,15, 'Consulta de Imagem - CECRED', 0, 1);
+$pdf->Cell(40,15, 'Consulta de Imagem - AILOS', 0, 1);
 
 $pdf->SetFont('Arial','B',12);
 $pdf->Cell(60,10, "Cooperativa: $nmrescop");

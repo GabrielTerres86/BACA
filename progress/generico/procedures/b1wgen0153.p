@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 21/11/2017
+    Data    : Fevereiro/2013                Ultima Atualizacao: 26/05/2018
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -158,6 +158,8 @@
                              PRJ366 (Lombardi).
                 10/05/2018 - Incluido o tratamento de estorno e geração da tarifa quando for suspensão de tarifa.
                              Projeto Debitador Unico -- Josiane Stiehler (AMcom)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -172,7 +174,7 @@
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
-DEF VAR aux_dsemail AS CHAR INITIAL "tarifas@cecred.coop.br"           NO-UNDO.
+DEF VAR aux_dsemail AS CHAR INITIAL "tarifas@ailos.coop.br"            NO-UNDO.
 DEF VAR aux_dsassunto AS CHAR                                          NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
@@ -4586,7 +4588,7 @@ PROCEDURE busca-associado-reltar:
 
     CLOSE STORED-PROC pc_descricao_tipo_conta
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-    
+
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
     ASSIGN aux_dstipcta = ""
@@ -7492,7 +7494,7 @@ PROCEDURE carrega-tabassociado:
                                       OUTPUT "",               /* Descriçao do Tipo de conta */
                                       OUTPUT "",               /* Flag Erro */
                                       OUTPUT "").              /* Descriçao da crítica */
-            
+    
             CLOSE STORED-PROC pc_descricao_tipo_conta
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
             
@@ -7719,7 +7721,7 @@ PROCEDURE lista-associado:
                                        WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
                        aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
                                        WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-                
+
                 IF aux_des_erro = "OK"  THEN
                     DO:
                         CREATE tt-associados.
@@ -8248,7 +8250,7 @@ PROCEDURE estorno-baixa-tarifa:
                                                                                   
                                       END.
 
-                                END.
+                            END.
 
                             END.
                         ELSE /* 2 - Baixa */

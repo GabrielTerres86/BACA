@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Dezembro/2009                     Ultima atualizacao: 27/03/2017
+    Data    : Dezembro/2009                     Ultima atualizacao: 26/05/2018
 
     Dados referentes ao programa:
 
@@ -63,6 +63,8 @@
                 26/06/2017 - Listar uma única linha para NR CHQ e outra para SR CHQ, com o
                              somatório dos antigos valores que estao separados em CHQ SUP 
                              e CHQ INF. Relatório 547 nao será mais gerado. Projeto 367 (Lombardi)
+
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -177,7 +179,7 @@ FORM SKIP(3)
      "FAC"                                        AT 035
      "ROC"                                        AT 053
      "PROCESSADO ABBC"                            AT 059
-     "INTEGRADO CECRED"                           AT 076
+     "INTEGRADO AILOS"                            AT 076
      "GERADO COOP"                                AT 099
      "INTEGRADO COOP"                             AT 114
      SKIP
@@ -762,7 +764,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  /** Integrado Cecred **/
 
                  RUN cria_tt_relatorio (INPUT gncpchq.cdcooper,
-                                        INPUT "4 - INTEGRADO CECRED",
+                                        INPUT "4 - INTEGRADO AILOS",
                                         OUTPUT aux_rowid).
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
@@ -805,7 +807,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                       gncpchq.cdcritic <> 0) THEN
                       DO:
                           RUN cria_tt_relatorio (INPUT gncpchq.cdcooper,
-                                                 INPUT "4 - INTEGRADO CECRED",
+                                                 INPUT "4 - INTEGRADO AILOS",
                                                  OUTPUT aux_rowid).
                           FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                                  EXCLUSIVE-LOCK NO-ERROR.
@@ -884,7 +886,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  /** Integrado CECRED **/
 
                  RUN cria_tt_relatorio (INPUT gncptit.cdcooper,
-                                        INPUT "4 - INTEGRADO CECRED",
+                                        INPUT "4 - INTEGRADO AILOS",
                                         OUTPUT aux_rowid).
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
@@ -995,7 +997,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                       gncptit.cdcritic <> 0) THEN
                       DO:
                            RUN cria_tt_relatorio (INPUT gncptit.cdcooper,
-                                                  INPUT "4 - INTEGRADO CECRED",
+                                                  INPUT "4 - INTEGRADO AILOS",
                                                   OUTPUT aux_rowid).
                            FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                                   EXCLUSIVE-LOCK NO-ERROR.
@@ -1176,7 +1178,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                                 
     /** Integrado CECRED **/                                
     RUN cria_tt_relatorio (INPUT crapcop.cdcooper,
-                           INPUT "4 - INTEGRADO CECRED",
+                           INPUT "4 - INTEGRADO AILOS",
                            OUTPUT aux_rowid).
     FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                            EXCLUSIVE-LOCK NO-ERROR.
@@ -1274,7 +1276,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  /** Integrado Cecred **/
 
                  RUN cria_tt_relatorio (INPUT gncpdoc.cdcooper,
-                                        INPUT "4 - INTEGRADO CECRED",
+                                        INPUT "4 - INTEGRADO AILOS",
                                         OUTPUT aux_rowid).
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
@@ -1335,7 +1337,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                       gncpdoc.cdcritic <> 0) THEN
                       DO:
                           RUN cria_tt_relatorio (INPUT gncpdoc.cdcooper,
-                                                 INPUT "4 - INTEGRADO CECRED",
+                                                 INPUT "4 - INTEGRADO AILOS",
                                                  OUTPUT aux_rowid).
                           FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                                  EXCLUSIVE-LOCK NO-ERROR.
@@ -1411,7 +1413,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  /** Integrado Cecred **/
                  
                  RUN cria_tt_relatorio (INPUT gncpdev.cdcooper,
-                                        INPUT "4 - INTEGRADO CECRED",
+                                        INPUT "4 - INTEGRADO AILOS",
                                         OUTPUT aux_rowid).
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
@@ -1469,7 +1471,7 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                       gncpdev.cdcritic <> 0) THEN
                       DO:
                           RUN cria_tt_relatorio (INPUT gncpdev.cdcooper,
-                                                 INPUT "4 - INTEGRADO CECRED",
+                                                 INPUT "4 - INTEGRADO AILOS",
                                                  OUTPUT aux_rowid).
                           FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                                  EXCLUSIVE-LOCK NO-ERROR.
@@ -1574,7 +1576,7 @@ PROCEDURE imprime_relat_analitico:
                          WITH FRAME f_titulo_area.
 
                  IF   bw-relatorio.cdtipreg = "3 - PROCESSADO ABBC"  OR
-                      bw-relatorio.cdtipreg = "4 - INTEGRADO CECRED" THEN
+                      bw-relatorio.cdtipreg = "4 - INTEGRADO AILOS" THEN
                       VIEW STREAM str_2 FRAME f_cabec_analitico_1_1.
 
                  IF   bw-relatorio.cdtipreg = "5 - GERADO COOP" THEN
@@ -1587,7 +1589,7 @@ PROCEDURE imprime_relat_analitico:
         CASE bw-relatorio.cdtipreg:
 
             WHEN "3 - PROCESSADO ABBC"  OR
-            WHEN "4 - INTEGRADO CECRED" THEN
+            WHEN "4 - INTEGRADO AILOS" THEN
                  DO:
                      DISPLAY STREAM str_2 aux_dscooper  bw-relatorio.nrchqsup
                                  bw-relatorio.srchqsup  bw-relatorio.nrchqinf
@@ -1649,7 +1651,7 @@ PROCEDURE imprime_relat_analitico:
                  /* Mostra TOTAL do Tipo */
                  CASE w-relatorio.cdtipreg:
                       WHEN "3 - PROCESSADO ABBC"  OR
-                      WHEN "4 - INTEGRADO CECRED" THEN
+                      WHEN "4 - INTEGRADO AILOS" THEN
                           DO:
                                DISPLAY STREAM str_2 
                                    aux_dscooper          w-relatorio.nrchqsup
@@ -1744,7 +1746,7 @@ PROCEDURE imprime_relat_analitico:
 
     RUN enviar_email IN h-b1wgen0011 (INPUT glb_cdcooper,
                                       INPUT glb_cdprogra,
-                                      INPUT "compe@cecred.coop.br",
+                                      INPUT "compe@ailos.coop.br",
                                       INPUT "RELATORIO FECHAMENTO COMPE " +
                                             "ABBC - ANALITICO",
                                       INPUT SUBSTR(aux_nmarqimp,4),
@@ -1773,7 +1775,7 @@ PROCEDURE imprime_relat_sintetico:
                 ASSIGN aux_extend = 2.
             WHEN "3 - PROCESSADO ABBC"  THEN  /* EXTEND = 3 */
                 ASSIGN aux_extend = 3.
-            WHEN "4 - INTEGRADO CECRED" THEN  /* EXTEND = 4 */
+            WHEN "4 - INTEGRADO AILOS" THEN  /* EXTEND = 4 */
                 ASSIGN aux_extend = 4.
             WHEN "5 - GERADO COOP"      THEN  /* EXTEND = 5 */
                 ASSIGN aux_extend = 5.
@@ -2165,7 +2167,7 @@ PROCEDURE imprime_relat_sintetico:
 
     RUN enviar_email IN h-b1wgen0011 (INPUT glb_cdcooper,
                                       INPUT glb_cdprogra,
-                                      INPUT "compe@cecred.coop.br",
+                                      INPUT "compe@ailos.coop.br",
                                       INPUT "RELATORIO FECHAMENTO COMPE " +
                                             "ABBC - SINTETICO",
                                       INPUT SUBSTR(aux_nmarqimp,4),

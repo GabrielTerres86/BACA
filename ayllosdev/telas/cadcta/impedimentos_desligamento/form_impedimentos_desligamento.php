@@ -124,7 +124,7 @@
 							</tr>
 							<tr>
 								<td>								
-									<label class="checkbox">Cart&atilde;o Cecred/BB/Bradesco</label>
+									<label class="checkbox">Cart&atilde;o Ailos/BB/Bradesco</label>
 								</td>
 								<td>
 									<?if (getByTagName($regServicos2->tags,'vllimcar') > 0){?>

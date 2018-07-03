@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Maio/2008                         Ultima atualizacao: 09/09/2013
+   Data    : Maio/2008                         Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -57,6 +57,9 @@
                
                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/
 
 DEF STREAM str_1.
@@ -318,8 +321,8 @@ PROCEDURE Inicia_Programa:
          aux_anomovto    = STRING(YEAR(glb_dtmvtolt))
          rel_nmressbr[1] = TRIM(rel_nmrescop[1])
          rel_nmressbr[2] = "    " + TRIM(rel_nmrescop[2])
-         aux_nmsolici    = "CECRED"               
-         aux_dsdemail    = "cpd@cecred.coop.br".
+         aux_nmsolici    = "AILOS"               
+         aux_dsdemail    = "cpd@ailos.coop.br".
 
 END PROCEDURE. /* Inicia_Programa */
 /******************************************************************************/
@@ -982,7 +985,7 @@ DEF VAR aux_nmarquiv   AS CHAR                     NO-UNDO.
         RUN enviar_email IN b1wgen0011
                    (INPUT glb_cdcooper,
                     INPUT glb_cdprogra,
-                    INPUT "cartoes@cecred.coop.br",
+                    INPUT "cartoes@ailos.coop.br",
                     INPUT "Cartoes Bradesco " + STRING(aux_dtentreg,"99999999"),
                     INPUT (aux_nmarquiv),
                     INPUT TRUE).

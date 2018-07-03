@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 11/05/2018
+    Data    : Marco/07.                       Ultima atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -241,6 +241,8 @@
 			  11/05/2018 - Ajuste para processar cheques com alinea 35, os mesmos nao estavam
 			               sendo processados e nao apareciam no Relatorio 219.
 			               Chamado SCTASK0012893 - Gabriel (Mouts).
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -2409,7 +2411,7 @@ PROCEDURE gera_arquivo_cecred:
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                               glb_cdprogra + "' --> '" +
                               " PA Sede nao cadastrado." +
-                              " Avise a Equipe de Suporte da CECRED." +
+                              " Avise a Equipe de Suporte do AILOS." +
                               " Coop: " + STRING(p-cdcooper) +
                               " >> log/proc_message.log").
             RETURN "NOK".
@@ -3239,11 +3241,11 @@ PROCEDURE gera_arquivo_cecred:
                RUN enviar_email_completo IN h-b1wgen0011(
                                          INPUT p-cdcooper,
                                          INPUT "crps264",
-                                         INPUT "cpd@cecred.coop.br",
+                                         INPUT "cpd@ailos.coop.br",
                                          INPUT 
                                          "suporte@viacredialtovale.coop.br",
                                          INPUT "Relatorio de Devolucoes " + 
-                                               "Cheques CECRED",
+                                               "Cheques AILOS",
                                          INPUT "",
                                          INPUT aux_nmarqdev,
                                          INPUT "",
@@ -3253,10 +3255,10 @@ PROCEDURE gera_arquivo_cecred:
                RUN enviar_email_completo IN h-b1wgen0011(
                                          INPUT p-cdcooper,
                                          INPUT "crps264",
-                                         INPUT "cpd@cecred.coop.br",
+                                         INPUT "cpd@ailos.coop.br",
                                          INPUT "suporte@viacredi.coop.br",
                                          INPUT "Relatorio de Devolucoes " + 
-                                               "Cheques CECRED",
+                                               "Cheques AILOS",
                                          INPUT "",
                                          INPUT aux_nmarqdev,
                                          INPUT "",
@@ -3302,7 +3304,7 @@ PROCEDURE verifica_locks:
                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                   glb_cdprogra + "' --> '" +
                                   " Registro utilizando por " + aux_nmusuari +
-                                  " Avise a Equipe de Suporte da CECRED" +
+                                  " Avise a Equipe de Suporte do AILOS" +
                                   " Coop: " + STRING(p-cdcooper) +
                                   " Banco do Cheque: " + STRING(aux_cdbanchq) +
                                   " Tabela: crapdev " +
@@ -3337,7 +3339,7 @@ PROCEDURE verifica_locks:
                                        " CTA: " + STRING(crapdev.nrdconta) +
                                        " CBS: " + STRING(crapdev.nrdctabb) +
                                        " DOC: " + STRING(crapdev.nrcheque) +
-                                       " Avise a Equipe de Suporte da CECRED" +
+                                       " Avise a Equipe de Suporte do AILOS" +
                                        " >> log/proc_message.log").
                                   glb_cdcritic = 0.
                                   RETURN "NOK".
@@ -3358,7 +3360,7 @@ PROCEDURE verifica_locks:
                                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                                              glb_cdprogra + "' --> '" +
                                                              " Registro utilizando por " + aux_nmusuari +
-                                                             " Avise a Equipe de Suporte da CECRED" +
+                                                             " Avise a Equipe de Suporte do AILOS" +
                                                              " Coop: " + STRING(p-cdcooper) +
                                                              " CTA: " + STRING(crapdev.nrdconta) +
                                                              " CBS: " + STRING(crapdev.nrdctabb) +
@@ -3408,7 +3410,7 @@ PROCEDURE verifica_locks:
                         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                           glb_cdprogra + "' --> '" +
                                           " Registro utilizando por " + aux_nmusuari +
-                                          " Avise a Equipe de Suporte da CECRED" +
+                                          " Avise a Equipe de Suporte do AILOS" +
                                           " Coop: " + STRING(p-cdcooper) +
                                           " Tabela: craplot " +
                                           " RECID: " + STRING(aux_nrdrecid) +

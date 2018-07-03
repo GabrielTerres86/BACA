@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 30/11/2016
+   Data    : Marco/2010                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -41,7 +41,9 @@
                             (Lucas R./Rodrigo)  
 
                29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
-               
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
                29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
                             Chamado SCTASK0012791 (Heitor - Mouts)
 
@@ -684,7 +686,7 @@ PROCEDURE proc_processa_arquivo:
                     END.
     END. /*** Fim do DO WHILE TRUE ***/
             END. 
-           
+     
     INPUT STREAM str_1 CLOSE.
    
     UNIX SILENT VALUE("rm " + crawarq.nmarquiv + ".q 2> /dev/null").

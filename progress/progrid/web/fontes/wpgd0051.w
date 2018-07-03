@@ -15,6 +15,8 @@
                                    pois as vezes o cdagenci do crapidp não está 
                                    cadastrada (Lucas R. #232389)
 
+					  01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ...............................................................................*/
 
 
@@ -723,7 +725,7 @@ PROCEDURE GeraRelatorio :
   /* Lista totalizador Sistema Cecred */
   ASSIGN tot_percent = tot_particip / tot_qtdassoc * 100.
   
-  DISP STREAM str_1 "Sistema Cecred" @  tt-progrid.nmrescop
+  DISP STREAM str_1 "Sistema Ailos" @  tt-progrid.nmrescop
                     tt-progrid.dtanoage
                     aux_mes
                     tot_particip @ aux_qtdeprgd  
@@ -948,7 +950,7 @@ PROCEDURE GeraRelatorio :
    /* Lista totalizador Sistema Cecred */
   ASSIGN tot_percent = tot_particip / tot_qtdassoc * 100.
   
-  DISP STREAM str_1 "Sistema Cecred" @  tt-progrid.nmrescop
+  DISP STREAM str_1 "Sistema Ailos" @  tt-progrid.nmrescop
                     tt-progrid.dtanoage
                     aux_mes
                     tot_particip @ aux_qtdeprgd  

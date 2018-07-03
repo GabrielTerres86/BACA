@@ -5596,7 +5596,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                     --Montar o conteúdo do email
                     vr_conteudo:= NULL;
                     --Montar o assunto do Email
-                    vr_des_assunto:= 'Relatorio de Integracao Cheques CECRED';
+                    vr_des_assunto:= 'Relatorio de Integracao Cheques AILOS';
 
                     --Recuperar emails de destino
                     vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'RELAT_INTEGRACAO');

@@ -32,7 +32,7 @@
 
     Programa: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 02/06/2017
+    Data    : Outubro/2009                    Ultima Atualizacao: 26/05/2018
            
     Dados referentes ao programa:
                 
@@ -146,6 +146,9 @@
                              rotina proc_envia_tec_ted (Carlos)
                              
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/                                                                             
 { sistema/generico/includes/b1wgen0046tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -456,7 +459,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
     IF   crapcop.flgopstr   THEN
          IF   crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME   THEN
               ASSIGN aux_flgutstr = TRUE.             
-         
+
     /*-- Operando com mensagens PAG --*/
     IF   crapcop.flgoppag   THEN
          IF   crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME   THEN
@@ -563,7 +566,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
         ASSIGN aux_cdcritic = 0
                aux_dscritic = "Dados inconsistentes.
                                Impossibilidade de realizar a transação.
-                               Entre em contato com a área de Segurança Corporativa da CECRED.".
+                               Entre em contato com a área de Segurança Corporativa do AILOS.".
         
         RUN gera_erro (INPUT par_cdcooper,
                      INPUT par_cdagenci,
@@ -587,8 +590,8 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             RUN enviar_email_completo IN h-b1wgen0011
               (INPUT par_cdcooper,
                INPUT "CAIXAONLINE",
-               INPUT "cpd@cecred.coop.br",
-               INPUT "monitoracaodefraudes@cecred.coop.br",
+               INPUT "cpd@ailos.coop.br",
+               INPUT "monitoracaodefraudes@ailos.coop.br",
                INPUT "Atencao - Tentativa de TED para CPF/CNPJ em restritivo",
                INPUT "",
                INPUT "",
@@ -633,7 +636,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
                                          INPUT-OUTPUT aux_dscritic).
                           
                           RETURN "NOK".
-                       END.
+                END.
                 END.
                                
             RUN gera_xml(INPUT par_cdcooper,
@@ -706,7 +709,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
                                          INPUT-OUTPUT aux_dscritic).
                           
                           RETURN "NOK".
-                       END.
+                END.
                 END.
                                            
             RUN gera_xml(INPUT par_cdcooper,

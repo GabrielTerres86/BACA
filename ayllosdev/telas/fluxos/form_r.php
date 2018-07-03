@@ -20,7 +20,7 @@
         <table width="800" cellpadding="10" cellspacing="2">
         <tr>
             <td>&nbsp;</td>
-            <td align="right">CECRED &nbsp;</td>
+            <td align="right">AILOS &nbsp;</td>
             <td align="right">BANCO DO BRASIL &nbsp;</td>
             <td align="right">BANCOOB &nbsp;</td>
             <td align="right">SICREDI &nbsp;</td>

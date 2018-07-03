@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 10/12/2014
+   Data    : Marco/2007                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -24,7 +24,9 @@
                
                10/12/2014 - Ajustes incorporação credimilsul/concredi
                             verificar se conta cheque é uma conta migrada
-                            e buscar crapcch pelo numero da conta do cheque(Odirlei/AMcom)           
+                            e buscar crapcch pelo numero da conta do cheque(Odirlei/AMcom)     
+							
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).      
 
 ..............................................................................*/
 
@@ -298,7 +300,7 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                     RUN enviar_email IN b1wgen0011
                                        (INPUT glb_cdcooper,
                                         INPUT glb_cdprogra,
-                                        INPUT "willian@cecred.coop.br",
+                                        INPUT "willian@ailos.coop.br",
                                         INPUT '"ERRO DE SEQUENCIA - "' +
                                               '"RET_BCB_CONTRAO - "' +
                                               crapcop.nmrescop,

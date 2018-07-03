@@ -104,7 +104,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
     BEGIN
        gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                  ,pr_cdprogra        => 'CRPS711'
-                                 ,pr_des_destino     => 'cobranca@cecred.coop.br'
+                                 ,pr_des_destino     => 'cobranca@ailos.coop.br'
                                  ,pr_des_assunto     => 'Erro CRPS711'
                                  ,pr_des_corpo       => pr_dscritic
                                  ,pr_des_anexo       => NULL

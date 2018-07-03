@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 06/11/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
 
     Dados referentes ao programa:
 
@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 06/12/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
 
     Dados referentes ao programa:
 
@@ -222,6 +222,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
                              na leitura dessas mensagens na Conta Online.
                              Heitor (Mouts) - Chamado 807108
+
+               21/05/2018 - Alteração no tamanho da variavel de controle de anexos, de VARCHAR2 500 para 4000 
+                             Belli (Envolti) - Chamado REQ0014900
 
 ..............................................................................*/
 
@@ -577,7 +580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_dsnmrepl   crapsle.dsnmrepl%TYPE;
       vr_dsemrepl   crapsle.dsemrepl%TYPE;
       --String com os anexos para gravar no .SH
-      vr_dsanexos varchar2(500);
+      vr_dsanexos varchar2(4000); -- Aumento do tamanho de 500 para 4000 - Chamado REQ0014900 - 21/05/2018
       --Variavel para montar o comando que será salvo no .SH
       vr_dscomdSH varchar2(10000);
       --Diretorio da cooperativa para manter os anexos
@@ -668,7 +671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- Incluir log do destinário somente em alguns casos específicos
         IF upper(rw_crapsle.cdprogra) <> 'ATENDA'      AND
            upper(rw_crapsle.cdprogra) <> 'B1WNET0002'  AND
-           upper(rw_crapsle.dsendere) <> 'MONITORACAODEFRAUDES@CECRED.COOP.BR' THEN
+           upper(rw_crapsle.dsendere) <> 'MONITORACAODEFRAUDES@AILOS.COOP.BR' THEN
           -- Envia log com o destinatário
           pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '|| rw_crapsle.cdprogra || ' --> Coop: '||rw_crapsle.cdcooper||' --> Enviando solicitação de e-mail nº '||pr_nrseqsol||' para '||rw_crapsle.dsendere||'.');
           -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
@@ -685,7 +688,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         utl_smtp.write_data(vr_conexao, 'Reply-To: ' || vr_dsnmrepl || ' <'||vr_dsemrepl||'>'|| vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Subject: ' || replace(UTL_ENCODE.mimeheader_encode(rw_crapsle.dsassunt),UTL_TCP.CRLF, UTL_TCP.CRLF || ' ') || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Content-Type: multipart/mixed; boundary="'||vr_des_limite||'"'|| vr_des_quebra || vr_des_quebra);
-        
         -- Envia  mensagem HTML
         utl_smtp.write_data(vr_conexao, '--' || vr_des_limite || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Content-Type: text/html; charset="iso-8859-1"' || vr_des_quebra || vr_des_quebra);

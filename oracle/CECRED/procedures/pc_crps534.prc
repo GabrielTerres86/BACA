@@ -1372,7 +1372,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
           -- Buscar a descrição da crítica
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
-                         || ' - Integrando via CECRED - '
+                         || ' - Integrando via AILOS - '
                          || 'Arquivo: ' || pr_tbarquiv(vr_nrindice);
           -- Envio centralizado de log de erro
           pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
@@ -3467,7 +3467,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       vr_dsmailcop := gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRRL527_EMAIL');
 
       -- Montar o assunto do e-mail
-      vr_dsassmail := 'Relatório de Integração DOCs CECRED';
+      vr_dsassmail := 'Relatório de Integração DOCs AILOS';
 
       -- Montar o corpo do e-mail
       vr_dscormail := NULL; -- Em branco

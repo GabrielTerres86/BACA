@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 29/11/2016
+   Data    : Marco/2010                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -39,6 +39,8 @@
                             (Odirlei/AMcom)
 
                29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -322,8 +324,8 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
             RUN enviar_email IN b1wgen0011
                                (INPUT crapcop.cdcooper,
                                 INPUT glb_cdprogra,
-                                INPUT "willian@cecred.coop.br," +
-                                      "compe@cecred.coop.br",
+                                INPUT "willian@ailos.coop.br," +
+                                      "compe@ailos.coop.br",
                                 INPUT '"ERRO DE SEQUENCIA - "' +
                                       '"SER00005 - "' +
                                       crapcop.nmrescop,

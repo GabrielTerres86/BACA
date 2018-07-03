@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 03/05/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -459,6 +459,8 @@
 
                03/05/2017 - #601794 Inclusao dos parametros de criacao de 
                             chamado (Carlos)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                             
 ............................................................................ */
 
@@ -1163,12 +1165,12 @@ IF   glb_cdcooper = 3 THEN
 
          RUN enviar_email IN h-b1wgen0011 (INPUT glb_cdcooper,
                                            INPUT glb_cdprogra,
-                                           INPUT "financeiro@cecred.coop.br," +
-                                                 "compe@cecred.coop.br," +
-                                                 "atendimento.usuario@cecred.coop.br," +
-                                                 "cic@cecred.coop.br",
+                                           INPUT "financeiro@ailos.coop.br," +
+                                                 "compe@ailos.coop.br," +
+                                                 "atendimento.usuario@ailos.coop.br," +
+                                                 "cic@ailos.coop.br",
                                            INPUT "FIM DO PROCESSO " +
-                                             "DA CECRED - REF:" +
+                                             "DO AILOS - REF:" +
                                              STRING(crapdat.dtmvtoan,
                                                     "99/99/9999"),
                                            INPUT "",
@@ -1654,7 +1656,7 @@ PROCEDURE verifica_dolar:
             RUN enviar_email IN b1wgen0011
                        (INPUT glb_cdcooper,
                         INPUT glb_cdprogra,
-                        INPUT "cartoes@cecred.coop.br",
+                        INPUT "cartoes@ailos.coop.br",
                         INPUT '"DOLAR PARA FATURA DO CARTAO VISA VIACREDI"',
                         INPUT SUBSTRING(aux_nmarqimp, 5),
                         INPUT FALSE).

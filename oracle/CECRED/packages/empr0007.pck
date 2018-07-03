@@ -7331,7 +7331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																		 ,pr_cdrelato  => '702'                         --> Cód. relatório
                                      ,pr_flg_gerar => 'S'                           --> gerar PDF
  																		 ,pr_dsmailcop  => pr_dsdemail                  --> Email
-																		 ,pr_dsassmail => 'Boleto Bancario - CECRED 085' --> Assunto do e-mail que enviará o arquivo
+																		 ,pr_dsassmail => 'Boleto Bancario - AILOS 085' --> Assunto do e-mail que enviará o arquivo
 																		 ,pr_dscormail => vr_dscorema                   --> Corpor do email
 																		 ,pr_nmformul  => '132col'                      --> Nome do formulário para impressão
 																		 ,pr_nrcopias  => 1                             --> Número de cópias

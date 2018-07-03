@@ -81,7 +81,7 @@
 				<textElement>
 					<font fontName="Courier New" size="7"/>
 				</textElement>
-				<text><![CDATA[----- BANCO DO BRASIL -----     --------  BANCOOB --------     --------- CECRED ----------     --------- TOTAIS ---------]]></text>
+				<text><![CDATA[----- BANCO DO BRASIL -----     --------  BANCOOB --------     --------- AILOS ----------     --------- TOTAIS ---------]]></text>
 			</staticText>
 			<staticText>
 				<reportElement uuid="8da297e9-c701-4f6a-ba29-cffd08aa34a2" x="0" y="24" width="595" height="8" isRemoveLineWhenBlank="true"/>

@@ -36,7 +36,7 @@
 	<fieldset id="fsetConsulta" name="fsetConsulta" style="padding:0px; margin:0px; padding-bottom:10px;">
 		
 		<legend>Informa&ccedil;&otilde;es</legend>
-			
+
 		<label for="tpprodut"><? echo utf8ToHtml("Produto:"); ?></label>
 		<select id="tpprodut" name="tpprodut" onchange="exibeFieldIndexador();">
 			<option value="1" <?php echo (getByTagName($linha->tags,'tpprodut') == 1 ? 'selected' : ''); ?>>Price TR/Price Pr&eacute;-Fixado</option>
@@ -150,7 +150,7 @@
 			<option value="MICROCREDITO PNMPO ABN" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO ABN') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO ABN</option>
 			<option value="MICROCREDITO PNMPO BB" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BB') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BB</option>
 			<option value="MICROCREDITO PNMPO BNDES" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BNDES') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BNDES</option>
-			<option value="MICROCREDITO PNMPO BNDES CECRED" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BNDES CECRED') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BNDES CECRED</option>
+			<option value="MICROCREDITO PNMPO BNDES AILOS" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BNDES AILOS') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BNDES AILOS</option>
 			<option value="MICROCREDITO PNMPO BRDE" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO BRDE') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO BRDE</option>
 			<option value="MICROCREDITO PNMPO CAIXA" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO CAIXA') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO CAIXA</option>
 			<option value="MICROCREDITO PNMPO DIM" <?php if (getByTagName($linha->tags,'dsorgrec') == 'MICROCREDITO PNMPO DIM') { ?> selected <?php } ?> >Microcr&eacute;dito PNMPO DIM</option>
@@ -190,7 +190,7 @@
 	<fieldset id="fsetTaxa" name="fsetTaxa" style="padding:0px; margin:0px; padding-bottom:10px;">
 		
 		<legend>Taxa</legend>
-				
+
 		<div id="divIndexador">
             <label for="cddindex"><? echo utf8ToHtml("Indexador:"); ?></label>
             <select id="cddindex" name="cddindex">

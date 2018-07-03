@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Vitor
-   Data    : Fevereiro/2011                   Ultima Atualizacao: 16/09/2014
+   Data    : Fevereiro/2011                   Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -29,6 +29,8 @@
               16/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
    
 .............................................................................*/
 
@@ -287,7 +289,7 @@ DO WHILE TRUE:
               DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
                   IF   glb_cdcooper <> 3   THEN  
                        DO:
-                           MESSAGE "Opcao permitida apenas para a CECRED.".
+                           MESSAGE "Opcao permitida apenas para a AILOS.".
                            PAUSE(2) NO-MESSAGE.
                            LEAVE.
                        END. 
@@ -730,7 +732,7 @@ DO WHILE TRUE:
                  DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
                      IF   glb_cdcooper <> 3   THEN  
                           DO:
-                              MESSAGE "Opcao permitida apenas para a CECRED.".
+                              MESSAGE "Opcao permitida apenas para a AILOS.".
                               PAUSE(2) NO-MESSAGE.
                               LEAVE.
                           END. 

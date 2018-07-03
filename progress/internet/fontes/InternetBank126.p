@@ -4,7 +4,7 @@
    Sistema : Mobile - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Outubro/2014.                       Ultima atualizacao: 10/06/2015
+   Data    : Outubro/2014.                       Ultima atualizacao: 28/05/2018
 
    Dados referentes ao programa:
 
@@ -17,6 +17,8 @@
                             
                28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                             da chamada é do mobile (Dionathan)
+
+			   28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ..............................................................................*/
 
 /* Criacao do objeto de saida */
@@ -372,9 +374,9 @@ DO:
                                     RUN enviar_email_completo IN h-b1wgen0011 
                                        (INPUT par_cdcooper,
                                         INPUT "INTERNETBANK126",
-                                        INPUT "CECRED" +
-                                              "<cpd@cecred.coop.br>",
-                                        INPUT "diego.gomes@cecred.coop.br",
+                                        INPUT "AILOS" +
+                                              "<cpd@ailos.coop.br>",
+                                        INPUT "diego.gomes@ailos.coop.br",
                                         INPUT "Conta Mobile - Senha Incorreta",
                                         INPUT "",
                                         INPUT "",

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Abril/2010                       Ultima atualizacao: 10/06/2013.
+   Data    : Abril/2010                       Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -33,6 +33,8 @@
                
                10/06/2013 - Alteração função enviar_email_completo para
                             nova versão (Jean Michel).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -122,7 +124,7 @@ IF   glb_cdcooper = 3 THEN
                  RUN pi_valida_hora_limite_abbc (OUTPUT aux_lghrexec, 
                                                  OUTPUT aux_hrlimite).
          
-                 RUN pi_gera_log(INPUT "Aguardando arquivo FAC da CECRED - " +
+                 RUN pi_gera_log(INPUT "Aguardando arquivo FAC do AILOS - " +
                                        "Centralizacao ABBC... " +
                                        "- Horario limite: " +  aux_hrlimite).
                  RUN pi_gera_log(INPUT "Arquivo esperado: " +
@@ -171,7 +173,7 @@ IF   glb_cdcooper = 3 THEN
                  RUN pi_valida_hora_limite_abbc (OUTPUT aux_lghrexec, 
                                                  OUTPUT aux_hrlimite).
          
-                 RUN pi_gera_log(INPUT "Aguardando arquivo ROC640 da CECRED - "
+                 RUN pi_gera_log(INPUT "Aguardando arquivo ROC640 do AILOS - "
                                        + "Centralizacao ABBC... " +
                                        "- Horario limite: " +  aux_hrlimite).
                  RUN pi_gera_log(INPUT "Arquivo esperado: " +
@@ -220,7 +222,7 @@ IF   glb_cdcooper = 3 THEN
                  RUN pi_valida_hora_limite_abbc (OUTPUT aux_lghrexec, 
                                                  OUTPUT aux_hrlimite).
          
-                 RUN pi_gera_log(INPUT "Aguardando arquivo ROC650 da CECRED - "
+                 RUN pi_gera_log(INPUT "Aguardando arquivo ROC650 do AILOS - "
                                        + "Centralizacao ABBC... " +
                                        "- Horario limite: " +  aux_hrlimite).
                  RUN pi_gera_log(INPUT "Arquivo esperado: " +
@@ -483,10 +485,10 @@ PROCEDURE enviar_email:
     RUN enviar_email_completo IN h-b1wgen0011
                 (INPUT crapcop.cdcooper,
                  INPUT "crps568",
-                 INPUT "CECRED<cecred@cecred.coop.br>",
-                 INPUT "cpd@cecred.coop.br," +
-                       "eduardo@cecred.coop.br," +
-                       "mirtes@cecred.coop.br",
+                 INPUT "AILOS<ailos@ailos.coop.br>",
+                 INPUT "cpd@ailos.coop.br," +
+                       "eduardo@ailos.coop.br," +
+                       "mirtes@ailos.coop.br",
                  INPUT "Processo da Cooperativa " +
                        STRING(crapcop.cdcooper) + " - ABBC - " + 
                        "Nao Recebeu Arquivo: " + STRING(aux_dscritic),

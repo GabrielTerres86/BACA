@@ -3259,7 +3259,7 @@ function btnGerarArquivoParceiro() {
     showError('error', 'N&atilde;o permitido Gera&ccedil;&atilde;o de Arquivo para Remessa Pendente.', 'Alerta - Ayllos', "unblockBackground()");
     return false;
   }
-  showConfirmacao('Deseja efetuar nova gera&ccedil;&atilde;o do arquivo BPC_CECRED_' + lpad(glbIdarquivo, 6) + '.csv para empresa parceira?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gera_arquivo_parceiro();',
+  showConfirmacao('Deseja efetuar nova gera&ccedil;&atilde;o do arquivo BPC_AILOS_' + lpad(glbIdarquivo, 6) + '.csv para empresa parceira?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gera_arquivo_parceiro();',
                   'showError("inform", "Opera&ccedil;&atilde;o Cancelada.", "Alerta - Ayllos", "unblockBackground()");', 'sim.gif', 'nao.gif');
 
   return false;

@@ -361,7 +361,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                           pr_cdhistor gnconve.cdhiscxa%TYPE) IS
         SELECT con.cdconven 
           FROM gnconve con
-         WHERE con.cdhiscxa = pr_cdhistor;
+         WHERE con.cdcooper = pr_cdcooper
+           AND con.cdhiscxa = pr_cdhistor;
       rw_gnconve cr_gnconve%ROWTYPE;
       
       ----------->>> VARIAVEIS <<<--------
@@ -481,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
         FETCH cr_gnconve INTO rw_gnconve;
         IF cr_gnconve%NOTFOUND THEN
           CLOSE cr_gnconve;
-          vr_dscritic := 'Operação não permitida. Histórico para débito de convênio CECRED não parametrizado na tela GT0001.';
+          vr_dscritic := 'Operação não permitida. Histórico para débito de convênio AILOS não parametrizado na tela GT0001.';
           RAISE vr_exc_erro;
           
         ELSE
@@ -573,12 +574,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
                                                   CASE rw_crapcon.tparrecd 
                                                        WHEN 1 THEN 'SICREDI' 
                                                        WHEN 2 THEN 'BANCOOB' 
-                                                       WHEN 3 THEN 'CECRED' 
+                                                       WHEN 3 THEN 'AILOS' 
                                                        ELSE NULL END||
                                                  ' para '|| CASE pr_tparrecd 
                                                                  WHEN 1 THEN 'SICREDI' 
                                                                  WHEN 2 THEN 'BANCOOB' 
-                                                                 WHEN 3 THEN 'CECRED' 
+                                                                 WHEN 3 THEN 'AILOS' 
                                                                  ELSE NULL END);
           END IF;
           
@@ -586,7 +587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONVEN IS
           IF nvl(pr_flgaccec,'') <> nvl(rw_crapcon.flgaccec,'') THEN
             pr_gera_log_conven (pr_cdcooper => vr_cdcooper
                                ,pr_dscdolog => vr_dscdolog ||
-                                                 ' o Indicador de aceitação para CECRED de ' || CASE rw_crapcon.flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END ||
+                                                 ' o Indicador de aceitação para AILOS de ' || CASE rw_crapcon.flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END ||
                                                  ' para '|| CASE pr_flgaccec WHEN 1 THEN 'Sim' ELSE 'Não' END);
           END IF;
           

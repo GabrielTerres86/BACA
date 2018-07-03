@@ -499,7 +499,7 @@ function buscaParamSingulares() {
 function buscaParamCecred() {
 
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, buscando par&acirc;metros da Cecred...");	
+	showMsgAguardo("Aguarde, buscando par&acirc;metros da Ailos...");	
 	
 	var cdcooper = cCdcooper.val();
 	

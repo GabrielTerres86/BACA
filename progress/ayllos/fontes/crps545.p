@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 02/02/2017
+   Data    : Dezembro/2009.                     Ultima atualizacao: 26/05/2018
                                                                           
    Dados referentes ao programa:
 
@@ -94,6 +94,8 @@
                07/03/2017 - Na mensagem STR0010R2 originada pelo sistema MATERA
                             foi adicionado tratamento para enviar por e-mail.
                             (Ricardo Linhares - Chamado 625310)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                                              
 ............................................................................. */
 
@@ -616,8 +618,8 @@ PROCEDURE enviar_email_devolucoes_matera:
   RUN enviar_email_completo IN h-b1wgen0011
                 (INPUT glb_cdcooper,
                  INPUT glb_cdprogra,
-                 INPUT "cecred@cecred.coop.br",                   
-                 INPUT "contasapagar@cecred.coop.br,spb@cecred.coop.br",
+                 INPUT "ailos@ailos.coop.br",                   
+                 INPUT "contasapagar@ailos.coop.br,spb@ailos.coop.br",
                  INPUT "Devoluções de TED - MATERA",
                  INPUT "",
                  INPUT "",

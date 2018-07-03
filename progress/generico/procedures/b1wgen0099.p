@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0099.p
     Autor   : Gabriel
-    Data    : Maio/2011               Ultima Atualizacao: 13/06/2017
+    Data    : Maio/2011               Ultima Atualizacao: 26/05/2018
      
     Dados referentes ao programa:
    
@@ -12,6 +12,7 @@
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							 (Adriano - P339).	
 
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }                              
@@ -430,7 +431,7 @@ PROCEDURE gera-declaracao:
          IF   par_cdconven <> 900   THEN
               DO:
                   ASSIGN rel_nmempres = "CONVENIO " + gnconve.nmempres +
-                                        " - CECRED"
+                                        " - AILOS"
              
                          rel_nmempre2 = gnconve.nmempres.
 

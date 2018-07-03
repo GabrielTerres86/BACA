@@ -116,7 +116,7 @@
 				<textElement>
 					<font fontName="Courier New" size="7"/>
 				</textElement>
-				<textFieldExpression><![CDATA["INFORMACOES FINANCEIRAS - CONSOLIDADO SISTEMA CECRED - Posicao em " + $F{dtmvtoan}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["INFORMACOES FINANCEIRAS - CONSOLIDADO SISTEMA AILOS - Posicao em " + $F{dtmvtoan}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="16" width="842" height="8" isPrintWhenDetailOverflows="true"/>

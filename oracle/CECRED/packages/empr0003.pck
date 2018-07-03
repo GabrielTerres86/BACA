@@ -257,6 +257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --             12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
   --		                  crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
   --						 (Adriano - P339).
+  --
+  --              12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1622,7 +1624,7 @@ BEGIN
      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcredito
         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
-        IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
+        IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES AILOS') THEN -- Origem do recurso
             vr_nmarqim := '/crrl100_12_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
             vr_dsjasper := 'crrl100_08.jasper'; -- nome do jasper
@@ -1698,7 +1700,7 @@ BEGIN
       ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 Aplicação
            rw_craplcr.cdusolcr = 1 THEN -- Cod Uso = MICROCRÉDITO
        IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
-           IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
+           IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES AILOS') THEN -- Origem do recurso
              vr_nmarqim := '/crrl100_07_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
              -- titulo do relatorio
              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
@@ -1710,7 +1712,7 @@ BEGIN
              vr_dsjasper := 'crrl100_16.jasper'; -- nome jasper
            END IF;
        ELSE -- Tipo TR
-          IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
+          IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES AILOS') THEN -- Origem do recurso
               vr_nmarqim := '/crrl100_18_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
               -- Titulo do relatorio
               vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO MICROCRÉDITO–COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
@@ -1748,7 +1750,7 @@ BEGIN
       ELSIF  rw_craplcr.tpctrato IN (1,4) AND -- MODELO: = 1 NORMAL ou 4 = APLICAÇÃO
         rw_crawepr.tpemprst = 1 AND -- Tipo PP
         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcreditorw_craplcr.dsoperac IN ('FINANCIAMENTO', 'EMPRESTIMO') AND
-        rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
+        rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES AILOS') THEN -- Origem do recurso
        vr_nmarqim := '/crrl100_01_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
        vr_dsjasper := 'crrl100_01.jasper';--nome do jasper

@@ -886,7 +886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     -- Validar codigo do banco favorecido
     IF pr_cdbanfav = rw_crapcop.cdbcoctl THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema CECRED.';
+      vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema AILOS.';
       RAISE vr_exc_erro;
     END IF;
     
@@ -995,7 +995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       -- Envio de e-mail informando que houve a tentativa
       gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
                                  pr_cdprogra => 'CXON0020',
-                                 pr_des_destino => 'monitoracaodefraudes@cecred.coop.br',
+                                 pr_des_destino => 'monitoracaodefraudes@ailos.coop.br',
                                  pr_des_assunto => 'Atencao - Tentativa de TED para CPF/CNPJ em restritivo',
                                  pr_des_corpo => vr_des_corpo,
                                  pr_des_anexo => NULL,

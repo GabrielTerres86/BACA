@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-10-31T10:13:31 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl729" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -65,7 +63,7 @@
 		<band height="32">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="50" y="16" width="500" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="4bb4d8e2-a7de-4064-983a-c3b36f6d3524">
+				<reportElement uuid="4bb4d8e2-a7de-4064-983a-c3b36f6d3524" mode="Transparent" x="50" y="16" width="500" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -82,7 +80,7 @@
 		<band height="24">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<frame>
-				<reportElement x="20" y="8" width="555" height="8" uuid="a5d42e1d-95fb-41d3-8fff-d4bd70739617">
+				<reportElement uuid="a5d42e1d-95fb-41d3-8fff-d4bd70739617" x="20" y="8" width="555" height="8">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -95,7 +93,7 @@
 					<rightPen lineWidth="1.0"/>
 				</box>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="0" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="4034633b-7104-4110-a8ac-0b9bb06f7070">
+					<reportElement uuid="4034633b-7104-4110-a8ac-0b9bb06f7070" mode="Transparent" x="0" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
@@ -103,11 +101,11 @@
 						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 						<paragraph lineSpacing="Single"/>
 					</textElement>
-					<textFieldExpression><![CDATA["&nbsp;Cooperativa filiada à Cooperativa Central de Crédito Urbano – CECRED."]]></textFieldExpression>
+					<textFieldExpression><![CDATA["&nbsp;Cooperativa filiada à Cooperativa Central de Crédito Urbano – AILOS."]]></textFieldExpression>
 				</textField>
 			</frame>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="20" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="9a2cc0fe-8f47-4657-98ec-9f507a740648">
+				<reportElement uuid="9a2cc0fe-8f47-4657-98ec-9f507a740648" mode="Transparent" x="20" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -118,7 +116,7 @@
 				<textFieldExpression><![CDATA["&nbsp;" + $F{nmextcop}]]></textFieldExpression>
 			</textField>
 			<frame>
-				<reportElement x="20" y="16" width="555" height="8" uuid="91f81ef4-41d0-47f3-aca2-2f677f9c0e82">
+				<reportElement uuid="91f81ef4-41d0-47f3-aca2-2f677f9c0e82" x="20" y="16" width="555" height="8">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -131,7 +129,7 @@
 					<rightPen lineWidth="1.0"/>
 				</box>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="0" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="fcd3e037-0ef4-4994-b1f9-c8644cfc31b2">
+					<reportElement uuid="fcd3e037-0ef4-4994-b1f9-c8644cfc31b2" mode="Transparent" x="0" y="0" width="360" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
@@ -148,7 +146,7 @@
 		<band height="24" splitType="Stretch">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<frame>
-				<reportElement x="20" y="8" width="555" height="16" uuid="37f5573b-8c92-4651-aedc-6af46adad9f7">
+				<reportElement uuid="37f5573b-8c92-4651-aedc-6af46adad9f7" x="20" y="8" width="555" height="16">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -161,7 +159,7 @@
 					<rightPen lineWidth="1.0"/>
 				</box>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="0" y="0" width="280" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="216ec747-28d4-4bc9-bbc9-48c1b9c7de6a">
+					<reportElement uuid="216ec747-28d4-4bc9-bbc9-48c1b9c7de6a" mode="Transparent" x="0" y="0" width="280" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -179,7 +177,7 @@
 					<textFieldExpression><![CDATA["&nbsp;Nome/Razão Social:<br>&nbsp; "   + $F{nmprimtl}]]></textFieldExpression>
 				</textField>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="280" y="0" width="275" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="3e4d4cb0-1dcd-4455-940d-191c05b55985">
+					<reportElement uuid="3e4d4cb0-1dcd-4455-940d-191c05b55985" mode="Transparent" x="280" y="0" width="275" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -202,7 +200,7 @@
 		<band height="32">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<frame>
-				<reportElement x="20" y="0" width="555" height="32" uuid="4cf74108-e117-4980-9ad3-2b07959d8cab">
+				<reportElement uuid="4cf74108-e117-4980-9ad3-2b07959d8cab" x="20" y="0" width="555" height="32">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -215,7 +213,7 @@
 					<rightPen lineWidth="1.0"/>
 				</box>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="0" y="0" width="280" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="4a5ff139-9010-418f-b5a5-efea9421dcaa">
+					<reportElement uuid="4a5ff139-9010-418f-b5a5-efea9421dcaa" mode="Transparent" x="0" y="0" width="280" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -233,7 +231,7 @@
 					<textFieldExpression><![CDATA["&nbsp;Contrato:<br>&nbsp; "   + $F{idcontrato}]]></textFieldExpression>
 				</textField>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="280" y="0" width="275" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="17215996-60a4-4f06-885b-77d374e057bf">
+					<reportElement uuid="17215996-60a4-4f06-885b-77d374e057bf" mode="Transparent" x="280" y="0" width="275" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -252,7 +250,7 @@
 					<textFieldExpression><![CDATA["&nbsp;Modalidade SMS:<br>&nbsp; "   + $F{dspacote}]]></textFieldExpression>
 				</textField>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="280" y="16" width="275" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1df702ec-bf7c-414b-84c3-0d5da4559605">
+					<reportElement uuid="1df702ec-bf7c-414b-84c3-0d5da4559605" mode="Transparent" x="280" y="16" width="275" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -271,7 +269,7 @@
 					<textFieldExpression><![CDATA[" &nbsp;Término da vigência:: <br>&nbsp; " + $F{dhcancela}]]></textFieldExpression>
 				</textField>
 				<textField pattern="" isBlankWhenNull="false">
-					<reportElement mode="Transparent" x="0" y="16" width="280" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="302c0537-77d1-4041-9b52-5bc68c7ae2f9">
+					<reportElement uuid="302c0537-77d1-4041-9b52-5bc68c7ae2f9" mode="Transparent" x="0" y="16" width="280" height="16" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -294,7 +292,7 @@
 		<band height="64">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="false">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="8" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="3a48f8a8-0de1-4235-b5b7-74da5b9b8f21">
+				<reportElement uuid="3a48f8a8-0de1-4235-b5b7-74da5b9b8f21" positionType="Float" mode="Transparent" x="20" y="8" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -305,7 +303,7 @@
 				<textFieldExpression><![CDATA["Pelo presente instrumento, o COOPERADO requer o cancelamento do Pacote de SMS ou SMS Individual, nos moldes abaixo."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="24" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="d2b1be06-ea15-4887-947c-54555ff06013">
+				<reportElement uuid="d2b1be06-ea15-4887-947c-54555ff06013" positionType="Float" mode="Transparent" x="20" y="24" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -316,7 +314,7 @@
 				<textFieldExpression><![CDATA["1- O COOPERADO declara estar ciente que com o cancelamento tanto do Pacote de SMS, como do serviço de SMS Individual, este não poderá mais fazer uso do serviço para informar o(s) seu(s) PAGADOR(ES) acerca da situação dos boletos bancários emitidos pelo COOPERADO, os quais encontram-se próximos do vencimento ou vencidos, bem como cancelará automaticamente todas as instruções programadas para envio de SMS nos boletos emitidos pelos convênios de cobrança registrada."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="40" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="6381c526-91ec-4819-a5a3-0b52ac138ab5">
+				<reportElement uuid="6381c526-91ec-4819-a5a3-0b52ac138ab5" positionType="Float" mode="Transparent" x="20" y="40" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -327,7 +325,7 @@
 				<textFieldExpression><![CDATA["2 – OCOOPERADO poderá solicitar o cancelamento do Pacote de SMS e/ou do serviço de SMS Individual à COOPERATIVA, ainda que existam valores pendentes de pagamento referente ao serviço outrora contratado. Nesta hipótese, a COOPERATIVA poderá continuar realizando tentativas de débitos até a quitação total do valor devido."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="56" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="4adcfffa-4cc3-43f3-9b35-1d54321798ea">
+				<reportElement uuid="4adcfffa-4cc3-43f3-9b35-1d54321798ea" positionType="Float" mode="Transparent" x="20" y="56" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -341,7 +339,7 @@
 		<band height="64">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="16" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="75641487-ed27-4009-b00c-912e53366501">
+				<reportElement uuid="75641487-ed27-4009-b00c-912e53366501" positionType="Float" mode="Transparent" x="20" y="16" width="555" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -352,7 +350,7 @@
 				<textFieldExpression><![CDATA[$F{nmcidcop} + ", "+ $F{dtmvtolt_ext}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="48" width="230" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="368e6c1d-ef54-4983-840e-f1ac97e368e0">
+				<reportElement uuid="368e6c1d-ef54-4983-840e-f1ac97e368e0" positionType="Float" mode="Transparent" x="20" y="48" width="230" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -363,7 +361,7 @@
 				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="20" y="48" width="230" height="1" uuid="76c5897e-7e32-4914-bace-91c42c034b1d">
+				<reportElement uuid="76c5897e-7e32-4914-bace-91c42c034b1d" x="20" y="48" width="230" height="1">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -373,7 +371,7 @@
 				</graphicElement>
 			</line>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement positionType="Float" mode="Transparent" x="20" y="56" width="230" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="38dd072c-6df4-407e-9409-b595783896f4">
+				<reportElement uuid="38dd072c-6df4-407e-9409-b595783896f4" positionType="Float" mode="Transparent" x="20" y="56" width="230" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>

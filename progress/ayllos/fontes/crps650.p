@@ -4,7 +4,7 @@
    Sistema : MITRA - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : JULHO/2013                      Ultima atualizacao: 09/10/2017
+   Data    : JULHO/2013                      Ultima atualizacao: 26/05/2018
    
    Dados referentes ao programa:
 
@@ -39,6 +39,8 @@
 							credito. Chamado 595673 (Andrey - MOUTS)
 
                09/10/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
  .......................................................................... */
 
@@ -639,7 +641,7 @@ PROCEDURE carrega_dados:
                                                     + "_"
                                                     + STRING(craplim.nrctrlim)
                        tt-dados-mitra.nome = "LIMITE_DISPONIVEL"
-                       tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                       tt-dados-mitra.carteira = "AILOS_PROPRIA"
                        tt-dados-mitra.inicio = STRING(craplim.dtinivig,
                                                        "99/99/9999")
                        tt-dados-mitra.vencimento = STRING((craplim.dtinivig +
@@ -675,7 +677,7 @@ PROCEDURE carrega_dados:
                                                       + "_"
                                                       + STRING(craplim.nrctrlim)
                                      tt-dados-mitra.nome = "CCB_CDI - RF"
-                                     tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                                     tt-dados-mitra.carteira = "AILOS_PROPRIA"
                                      tt-dados-mitra.data_entrada = STRING(glb_dtmvtolt,
                                                                           "99/99/9999")
                                      tt-dados-mitra.quantidade = "1"
@@ -718,7 +720,7 @@ PROCEDURE carrega_dados:
                                                       STRING(crapjur.nrdconta)
                                                       + "_1"
                                tt-dados-mitra.nome = "DEPOSITO_A_ VISTA"
-                               tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                               tt-dados-mitra.carteira = "AILOS_PROPRIA"
                                tt-dados-mitra.valor = STRING(crapsda.vlsddisp)
                                tt-dados-mitra.contraparte = crapjur.nmfansia
                                tt-dados-mitra.codigo = tt-dados-mitra.identificacao
@@ -744,7 +746,7 @@ PROCEDURE carrega_dados:
                                                        + STRING(crapjur.nrdconta)
                                                        + "_1"            
                                tt-dados-mitra.nome = "ADIANT DEP_PRE - RF"
-                               tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                               tt-dados-mitra.carteira = "AILOS_PROPRIA"
                                tt-dados-mitra.data_entrada = STRING(glb_dtmvtolt,
                                                                     "99/99/9999")
                                tt-dados-mitra.quantidade = "1"
@@ -807,7 +809,7 @@ PROCEDURE carrega_dados:
                                                  + STRING(crapjur.nrdconta) + "_"
                                                  + STRING(tt-saldo-rdca.nraplica)
                    tt-dados-mitra.nome = "RDC_CDI - RF"
-                   tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                   tt-dados-mitra.carteira = "AILOS_PROPRIA"
                    tt-dados-mitra.data_entrada = STRING(glb_dtmvtolt, 
                                                         "99/99/9999")
                    tt-dados-mitra.quantidade = "1"
@@ -933,7 +935,7 @@ PROCEDURE carrega_dados:
                                                  + STRING(crapjur.nrdconta) + "_"
                                                  + STRING(aux_nraplica)
                    tt-dados-mitra.nome = "RDC_CDI - RF"
-                   tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                   tt-dados-mitra.carteira = "AILOS_PROPRIA"
                    tt-dados-mitra.data_entrada = STRING(glb_dtmvtolt, 
                                                         "99/99/9999")
                    tt-dados-mitra.quantidade = "1"
@@ -1045,7 +1047,7 @@ PROCEDURE carrega_dados:
   
            CREATE tt-dados-mitra.
            ASSIGN tt-dados-mitra.identificacao = aux_identifi
-                  tt-dados-mitra.carteira = "CECRED_PROPRIA"
+                  tt-dados-mitra.carteira = "AILOS_PROPRIA"
                   tt-dados-mitra.data_entrada = STRING(crapepr.dtmvtolt,"99/99/9999")
                   tt-dados-mitra.quantidade = "1"
                   tt-dados-mitra.pu = STRING(crapepr.vlemprst)

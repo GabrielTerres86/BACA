@@ -9,7 +9,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego   
-   Data    : Junho/2005                         Ultima Atualizacao: 29/05/2014
+   Data    : Junho/2005                         Ultima Atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -124,6 +124,10 @@
                
                29/05/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+
 ............................................................................. */
 
 { includes/var_online.i  } 
@@ -673,7 +677,7 @@ PROCEDURE proc_imprimirelacao.
                          STRING(MONTH(glb_dtmvtolt), "99") + "_" +
                          STRING(tel_cdagenci, "999") + ".dat"
           aux_imgvazio = "laser/imagens/vazio_grande.pcx"
-          aux_impostal = "laser/imagens/chancela_ect_cecred_grande.pcx"
+          aux_impostal = "laser/imagens/chancela_ect_ailos_grande.pcx"
           aux_cdacesso = "MSGCONVITE".      
 
    OUTPUT STREAM str_3 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 84.
@@ -877,7 +881,7 @@ PROCEDURE proc_imprimirelacao.
              RUN enviar_email IN b1wgen0011
                                  (INPUT glb_cdcooper,
                                   INPUT glb_cdprogra,
-                                  INPUT "mariahelena@cecred.coop.br",
+                                  INPUT "mariahelena@ailos.coop.br",
                                   INPUT '"ASSOCIADOS - "' +
                                         crapcop.nmrescop + '" - PA "' +
                                         STRING(tel_cdagenci,"999"),
@@ -936,7 +940,7 @@ PROCEDURE proc_imprimirelacao.
                      RUN enviar_email_completo IN b1wgen0011
                                      (INPUT glb_cdcooper,
                                       INPUT glb_cdprogra,
-                                      INPUT "cpd@cecred.coop.br",
+                                      INPUT "cpd@ailos.coop.br",
                                       INPUT "vendas@blucopy.com.br," +
                                             "variaveis@blucopy.com.br",
                                       INPUT "Cartas " + crapcop.nmrescop ,

@@ -7973,7 +7973,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                                                    ,7053
                                                    ,7468 
                                                       ,rw_craprej.vlsdapli
-                                                   ,'"RECEITA COBRANCA CECRED (MANUAL) - PESSOA FISICA"');
+                                                   ,'"RECEITA COBRANCA AILOS (MANUAL) - PESSOA FISICA"');
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7986,7 +7986,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                                                    ,7053
                                                    ,7343
                                                    ,rw_craprej.vlsdapli
-                                                   ,'"RECEITA COBRANCA CECRED (MANUAL) - PESSOA JURIDICA"');
+                                                   ,'"RECEITA COBRANCA AILOS (MANUAL) - PESSOA JURIDICA"');
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_setlinha); --> Texto para escrita
                     

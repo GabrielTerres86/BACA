@@ -30,7 +30,7 @@
 			</br></br>
 			- N&atilde;o &eacute; poss&iacute;vel fazer upload de arquivo de imagem com nome j&aacute; existente no servidor.
 			</br></br>
-			- Qualquer conte&uacute;do na &aacute;rea vermelha da imagem n&atilde;o ser&aacute; vis&iacute;vel no Cecred Mobile.
+			- Qualquer conte&uacute;do na &aacute;rea vermelha da imagem n&atilde;o ser&aacute; vis&iacute;vel no Ailos Mobile.
 			</br></br>
 			<input type="file" name="arq_upload[]" id="dirimagem_banner" style="width: 350px;" onChange="carregaImagem(0);"/>
 		</div>

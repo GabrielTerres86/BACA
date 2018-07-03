@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-    Alteracoes: 
+    Alteracoes: 01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 ------------------------------------------------------------------------------*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -610,7 +610,7 @@ PROCEDURE envia-email:
 																					 ,INPUT  "S"                                            /* par_flg_remove_anex */
 																					 ,INPUT  "N"                                            /* par_flg_remete_coop */
 																					 ,INPUT  "Sistema de Relacionamento"                    /* par_des_nome_reply  */
-																					 ,INPUT  "gc.oqs@cecred.coop.br"                        /* par_des_email_reply */
+																					 ,INPUT  "gc.oqs@ailos.coop.br"                        /* par_des_email_reply */
 																					 ,INPUT  "N"                                            /* par_flg_log_batch   */
 																					 ,INPUT  "S"                                            /* par_flg_enviar      */
 																					 ,OUTPUT "").                                 					/* par_des_erro        */

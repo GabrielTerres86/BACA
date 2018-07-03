@@ -12,8 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps681(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Marco/2014.                  Ultima atualizacao: 05/12/2016
-
+   Data    : Marco/2014.                  Ultima atualizacao: 10/11/2015
    Dados referentes ao programa: Projeto automatiza compe.
 
    Frequencia : Diario (Batch).
@@ -28,12 +27,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps681(pr_cdcooper IN crapcop.cdcooper%TY
                 10/11/2015 - Filtrado tabela gncpddc com dtliquid para pegar apenas
                              registros relevantes ao relatorio 675
                              (Tiago / Elton SD340990).             
-							
+                             
 			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
 							da rotina padrão. (Rodrigo)                             
-
-                05/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
-
   ............................................................................ */
 
 
@@ -177,7 +173,7 @@ BEGIN -- Principal
 
   -- Apenas fechar o cursor
   CLOSE cr_crapcop;
-  
+
   -- Verifica se a Cooperativa esta preparada para executa COMPE 85 - ABBC
   vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                            ,pr_nmsistem => 'CRED'
@@ -246,14 +242,15 @@ BEGIN -- Principal
   END IF;
 
   -- Para cooperativas com Incorporação
-  IF pr_cdcooper in(1,9,13) THEN
+  IF pr_cdcooper in(1,13) THEN
     -- Buscar dados da cooperativa incorporada
-    CASE pr_cdcooper
-      WHEN 1   THEN OPEN cr_crapcop(4);  --    VIACREDI --> CONCREDI
-      WHEN 13  THEN OPEN cr_crapcop(15); --     SCRCRED --> CREDIMILSUL
-      WHEN 9   THEN OPEN cr_crapcop(17); -- TRANSPOCRED --> TRANSULCRED
-    END CASE;    
-
+    IF pr_cdcooper = 1 THEN
+      -- Para Viacredi >> Concredi
+      OPEN cr_crapcop(4);
+    ELSE
+      -- Para ScrCred >> Credimilsul
+      OPEN cr_crapcop(15);
+    END IF;
     -- Retornar as informações
     FETCH cr_crapcop
      INTO rw_crapcop_incorp;
@@ -279,7 +276,7 @@ BEGIN -- Principal
   
   --Buscar destinatario email
   vr_email_dest:= nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS681_EMAIL')
-                      ,'compe@cecred.coop.br');
+                      ,'compe@ailos.coop.br');
   -- buscar nome do programa
   OPEN cr_crapprg(pr_cdprogra => vr_cdprogra);
   FETCH cr_crapprg
@@ -375,8 +372,7 @@ BEGIN -- Principal
 
           vr_conteudo := vr_conteudo || 
                          'Nao foi possível processar arquivo <b>'||vr_vet_arquivos(ind)||':'||
-                         '</b><br>'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||
-                         ' - '||to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||
+                         '</b><br>&nbsp&nbsp&nbsp&nbsp - '||to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||
                          ' --> '|| pr_dscritic ||'<br><br>';
           
           -- Reinicializa a variável de críticas

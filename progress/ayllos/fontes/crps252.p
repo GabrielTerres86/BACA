@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98.                       Ultima atualizacao: 24/04/2017
+   Data    : Novembro/98.                       Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:                                               
 
@@ -142,6 +142,8 @@
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ............................................................................. */
 
@@ -1351,7 +1353,7 @@ PROCEDURE gera_relatorio_205_99:
                                      INPUT glb_cdcooper,
                                      INPUT "crps252",
                                      INPUT "suporte@viacredi.coop.br," +
-                                           "compe@cecred.coop.br", 
+                                           "compe@ailos.coop.br", 
                                      INPUT "Relatorio Integracao " +
                                            "DOCs Bancoob",
                                      INPUT aux_nmarqimp,
@@ -1361,7 +1363,7 @@ PROCEDURE gera_relatorio_205_99:
          RUN enviar_email IN h-b1wgen0011(
                                      INPUT glb_cdcooper,
                                      INPUT "crps252",
-                                     INPUT "compe@cecred.coop.br," +
+                                     INPUT "compe@ailos.coop.br," +
                                            "suporte@viacredialtovale.coop.br",
                                      INPUT "Relatorio Integracao " +
                                            "DOCs Bancoob",

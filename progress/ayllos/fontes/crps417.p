@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Novembro/2004                   Ultima atualizacao: 05/03/2018.
+   Data    : Novembro/2004                   Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -98,6 +98,9 @@
                             
                05/03/2018 - Ajustes para por extensao .txt no arquivo enviado por email
                             e no titulo do email adicionado qual cooperativa gerou o email.
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 /*----------------------------------------------------------------------------*/
 
                             
@@ -597,12 +600,12 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
   IF  aux_flgenvio  THEN    
       RUN enviar_email IN b1wgen0011(INPUT glb_cdcooper,
                                      INPUT glb_cdprogra,
-                                     INPUT "suporte.operacional@cecred.coop.br,"
-                                           + "compe@cecred.coop.br,"
-                                           + "eduardo@cecred.coop.br,"
-                                           + "anderson.fossa@cecred.coop.br,"  
-                                           + "jean.deschamps@cecred.coop.br,"  
-                                           + "james.junior@cecred.coop.br", 
+                                     INPUT "suporte.operacional@ailos.coop.br,"
+                                           + "compe@ailos.coop.br,"
+                                           + "eduardo@ailos.coop.br,"
+                                           + "anderson.fossa@ailos.coop.br,"  
+                                           + "jean.deschamps@ailos.coop.br,"  
+                                           + "james.junior@ailos.coop.br", 
                                      INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).
@@ -612,16 +615,16 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                      INPUT "noc@multitask.com.br,"  +
                                            "luiz@multitasknet.com.br," +
                                            "pinotti@multitasknet.com.br," +
-                                           "cpd@cecred.coop.br," +
-                                           "compe@cecred.coop.br," + 
-                                           "suporte.operacional@cecred.coop.br," +
-                                           "mirtes@cecred.coop.br," +
-                                           "eduardo@cecred.coop.br," +
-                                           "anderson.fossa@cecred.coop.br," + 
-                                           "jean.deschamps@cecred.coop.br," + 
-                                           "james.junior@cecred.coop.br," +
-										   "custodia@cecred.coop.br," +
-                                           "tesouraria@cecred.coop.br", 
+                                           "cpd@ailos.coop.br," +
+                                           "compe@ailos.coop.br," + 
+                                           "suporte.operacional@ailos.coop.br," +
+                                           "mirtes@ailos.coop.br," +
+                                           "eduardo@ailos.coop.br," +
+                                           "anderson.fossa@ailos.coop.br," + 
+                                           "jean.deschamps@ailos.coop.br," + 
+                                           "james.junior@ailos.coop.br," +
+										   "custodia@ailos.coop.br," +
+                                           "tesouraria@ailos.coop.br", 
                                      INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).

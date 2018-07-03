@@ -95,9 +95,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                              (Douglas - Chamado 524133)
     ............................................................................. */
     DECLARE
-
+    
     BEGIN
-      
+    
       INSERT INTO tbspb_mensagem
         (nrctrlif, cdcooper, dtmensagem, nmevento, dsxml)
       VALUES
@@ -117,7 +117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
       
         pc_internal_exception(pr_cdcooper => pr_cdcooper,
                               pr_compleme => pr_dscritic);
-
+      
     END;
   END pc_grava_mensagem_ted;
 
@@ -167,9 +167,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
 
     ............................................................................. */
     DECLARE
-
+    
     BEGIN
-
+    
       INSERT INTO tbspb_trans_rejeitada
         (cdcooper,
          nrdconta,
@@ -232,7 +232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
                        ', Valor: ' || pr_vldocmto || 
                        ', Motivo Erro: ' || pr_dsmotivo_rejeicao ||
                       -- Dados do banco de origem
-                       ', # CECRED - Banco ' || pr_cdbanco_origem ||
+                       ', # AILOS - Banco ' || pr_cdbanco_origem ||
                        ', Agencia: ' || pr_cdagencia_origem ||
                        ', Titular: ' || pr_nmtitular_origem || 
                        ', CPF: ' || pr_nrcpf_origem ||

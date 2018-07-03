@@ -286,7 +286,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        vr_nrseqblt    NUMBER:= 1;    -- Numero Sequencial do Boleto
        vr_dsdespec    VARCHAR2(10);  -- Especia do Titulo
        vr_tab_cob     cecred.cobr0005.typ_tab_cob;
-       vr_dstxtpgt    VARCHAR2(70):='PAGAVEL PREFERENCIALMENTE NAS COOPERATIVAS DO SISTEMA CECRED.';
+       vr_dstxtpgt    VARCHAR2(70):='PAGAVEL PREFERENCIALMENTE NAS COOPERATIVAS DO SISTEMA AILOS.';
        vr_dtvencto    DATE; -- Data de vencimento calculada
        vr_cdbarras    VARCHAR2(100); -- Codigo de barras
        vr_lindigit    VARCHAR2(100); -- Linha digitavel do codigo de barras
@@ -392,7 +392,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                                        lPad(rw_crapcop.nrdddtel,4,'0')         || --> Número de DDD do telefone
                                                        lPad(rw_crapcop.nrtelvoz,8,'0')         || --> Número do telefone
                                                        RPad(' ',4,' ')                         || --> Número de ramal 
-                                                       RPad('Cecred Cobrancas',70,' ')         || --> Nome do contato da Instituição Conveniada   
+                                                       RPad('Ailos Cobrancas',70,' ')         || --> Nome do contato da Instituição Conveniada   
                                                        RPad('SERASA-CONVEM07',15,' ')          || --> Identificação do arquivo fixo 'SERASA-CONVEM07'
                                                        LPAD(vr_nrseqarq,6,'0')                 || --> Número da remessa do arquivo seqüencial
                                                        'E'                                     || --> Código de envio de arquivo  = 'E' (ENTRADA) e 'R' (RETORNO)

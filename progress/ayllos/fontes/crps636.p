@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 23/10/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 26/05/2018
     
     Dados referente ao programa:
     
@@ -151,6 +151,9 @@
                               
                  23/10/2017 - Incluir tratamento para os consorcios igual ao do chamado 684123
                               (Lucas Ranghetti #739738)
+
+				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1901,8 +1904,8 @@ FOR EACH crapcop NO-LOCK.
             RUN enviar_email_completo IN h-b1wgen0011
                 (INPUT crapcop.cdcooper,
                  INPUT "crps636",
-                 INPUT "cpd@cecred.coop.br",
-                 INPUT "convenios@cecred.coop.br",
+                 INPUT "cpd@ailos.coop.br",
+                 INPUT "convenios@ailos.coop.br",
                  INPUT "Arquivo de arrecadacao de faturas - " + 
                        crapcop.nmrescop + " - " + aux_nmarqexp,
                  INPUT "",
@@ -1946,8 +1949,8 @@ FOR EACH crapcop NO-LOCK.
             RUN enviar_email_completo IN h-b1wgen0011
                 (INPUT crapcop.cdcooper,
                  INPUT "crps636",
-                 INPUT "cpd@cecred.coop.br",
-                 INPUT "convenios@cecred.coop.br",
+                 INPUT "cpd@ailos.coop.br",
+                 INPUT "convenios@ailos.coop.br",
                  INPUT "Arquivo de arrecadacao de DARFs - " + 
                        crapcop.nmrescop + " - " + aux_nmarqdar,
                  INPUT "",

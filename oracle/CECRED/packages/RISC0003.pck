@@ -1894,7 +1894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           -- Importações só podem ser feitas na central
           IF pr_cdcooper <> 3 THEN   
             -- Gerar critica 
-            pr_dscritic := 'Problema na Importacao -> Favor selecionar a Cooperativa 3 - Cecred (Central)!';  
+            pr_dscritic := 'Problema na Importacao -> Favor selecionar a Cooperativa 3 - Ailos (Central)!';  
             RETURN;      
           END IF;
           -- Para Bancoob 

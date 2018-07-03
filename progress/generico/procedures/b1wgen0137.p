@@ -326,9 +326,14 @@
                 20/04/2018 - Incluir novos documentos para batime1nto de digitalizaçao.
                              Projeto 414 - Regulatório FATCA/CRS (Marcelo Telles Coelho - Mouts).
 
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
                 06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
+
+				
+
 
 .............................................................................*/
 
@@ -1133,7 +1138,7 @@ PROCEDURE efetua_batimento_ged_matricula:
             RUN enviar_email_completo IN h-b1wgen0011 
                                      (INPUT crapcop.cdcooper,
                                       INPUT "b1wgen00137",
-                                      INPUT "CECRED<cecred@cecred.coop.br>",
+                                      INPUT "AILOS<ailos@ailos.coop.br>",
                                       INPUT par_emailbat,
                                       INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                             " DE MATRICULAS NAO DIGITALIZADOS",
@@ -1190,7 +1195,7 @@ PROCEDURE efetua_batimento_ged_matricula:
                             RUN enviar_email_completo IN h-b1wgen0011 
                                (INPUT crapcop.cdcooper,
                                 INPUT "b1wgen00137",
-                                INPUT "CECRED<cecred@cecred.coop.br>",
+                                INPUT "AILOS<ailos@ailos.coop.br>",
                                 INPUT ENTRY(3,craptab.dstextab,";"),
                                 INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                       " DE MATRICULAS NAO DIGITALIZADOS",
@@ -1428,7 +1433,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                     WHEN 51 THEN
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
-                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
+                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/ 
                     WHEN 58 THEN
                         ASSIGN aux_conttabs = 58. /*TERMO DE ALTERACAO DE TITULARIDADE*/
                     WHEN 59 THEN
@@ -1890,7 +1895,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             RUN enviar_email_completo IN h-b1wgen0011 (INPUT crapcop.cdcooper,
                                                        INPUT "b1wgen00137",
-                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                        INPUT par_emailbat,
                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                              " DE CADASTROS NAO DIGITALIZADOS",
@@ -1944,7 +1949,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                             
                             RUN enviar_email_completo IN h-b1wgen0011 (INPUT crapcop.cdcooper,
                                                                        INPUT "b1wgen00137",
-                                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                                        INPUT ENTRY(3,craptab.dstextab,";"),
                                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                                              " DE CADASTROS NAO DIGITALIZADOS",
@@ -2939,7 +2944,7 @@ PROCEDURE efetua_batimento_ged_credito:
       
             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                        INPUT "b1wgen00137",
-                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                        INPUT par_emailbat,
                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                              " DE CREDITO NAO DIGITALIZADOS",
@@ -2992,7 +2997,7 @@ PROCEDURE efetua_batimento_ged_credito:
                             
                             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                                        INPUT "b1wgen00137",
-                                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                                        INPUT ENTRY(3,craptab.dstextab,";"),
                                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                                              " DE CREDITO NAO DIGITALIZADOS",
@@ -4128,7 +4133,7 @@ PROCEDURE efetua_batimento_ged_termos:
       
             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                        INPUT "b1wgen00137",
-                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                        INPUT par_emailbat,
                                                        INPUT "Rel.620 - TERMOS DE FOLHA PAGTO NAO DIGITALIZADOS",
                                                        INPUT "",
@@ -4181,7 +4186,7 @@ PROCEDURE efetua_batimento_ged_termos:
                             
                             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                                        INPUT "b1wgen00137",
-                                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                                        INPUT ENTRY(3,craptab.dstextab,";"),
                                                                        INPUT "Rel.620 - TERMOS DE FOLHA PAGTO NÃO DIGITALIZADOS",
                                                                        INPUT "",
@@ -4935,7 +4940,7 @@ PROCEDURE gera-relatorio-pendencias:
     RUN enviar_email_completo IN h-b1wgen0011 
                                      (INPUT crapcop.cdcooper,
                                       INPUT "b1wgen00137",
-                                      INPUT "CECRED<cecred@cecred.coop.br>",
+                                      INPUT "AILOS<ailos@ailos.coop.br>",
                                       INPUT par_dsdemail,
                                       INPUT "Pendencias - PRCGED",
                                       INPUT "",

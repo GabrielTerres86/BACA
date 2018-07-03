@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -116,6 +116,8 @@
                             
                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)             
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 .............................................................................*/
 
 
@@ -1903,7 +1905,7 @@ PROCEDURE alterar-endereco:
         /* Verificar se eh o ende. residencial da PF ou comercial da PJ */
         IF  (crapass.inpessoa = 1  AND par_tpendass = 10) OR 
             (crapass.inpessoa <> 1 AND par_tpendass = 9) THEN 
-        DO:
+            DO:
           IF  crapenc.dsendere <> par_dsendere OR
               crapenc.nrendere <> par_nrendere OR
               crapenc.nrcepend <> par_nrcepend OR
@@ -1914,7 +1916,7 @@ PROCEDURE alterar-endereco:
                   IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                     RUN sistema/generico/procedures/b1wgen0137.p 
                         PERSISTENT SET h-b1wgen0137.
-
+    
                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                               ( INPUT par_cdcooper,
                                 INPUT par_nrdconta,
@@ -1925,14 +1927,14 @@ PROCEDURE alterar-endereco:
                                 INPUT par_cdoperad,
                                OUTPUT aux_cdcritic,
                                OUTPUT aux_dscritic).
-
+                                            
                     IF  VALID-HANDLE(h-b1wgen0137) THEN
                       DELETE OBJECT h-b1wgen0137.
                     /* Rotina nao gerava critica
                     IF RETURN-VALUE <> "OK" THEN*/
-        
-              END.
-         END. 
+
+                END.
+            END.
         CREATE tt-crapenc-old.
         BUFFER-COPY crapenc TO tt-crapenc-old.
         
@@ -2092,7 +2094,7 @@ PROCEDURE alterar-endereco:
               IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
                 DO:
                   ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
-                                      + " Entre em contato com a equipe do CDC da Cecred."
+                                      + " Entre em contato com a equipe do CDC da Ailos."
                          aux_flgtrans = TRUE.
                   LEAVE TRANS_ENDERECO.
                 END.

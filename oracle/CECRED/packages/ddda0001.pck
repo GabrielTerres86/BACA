@@ -421,7 +421,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                                      ,pr_cdcodbar IN VARCHAR2    --> Codigo de barras do titulo
                                      ,pr_des_erro OUT VARCHAR2   --> Indicador erro OK/NOK
                                      ,pr_dscritic OUT VARCHAR2); --> Descricao erro
-  
+
   -- Procedure para criação de notificação e Push para DDA                                   
   PROCEDURE pc_notif_novo_dda (pr_cdcooper IN crapcop.cdcooper%TYPE
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -569,7 +569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ,crapcob.dtmvtolt
           ,crapcob.qtdiaprt
           ,crapcob.vljurdia
-		  ,decode(nvl(crapcob.tpdmulta,0),1,1,2,2,3) tpdmulta /*SD#769996*/
+          ,decode(nvl(crapcob.tpdmulta,0),1,1,2,2,3) tpdmulta /*SD#769996*/
           ,crapcob.vlrmulta
           ,crapcob.flgaceit
           ,crapcob.cdcartei
@@ -2915,7 +2915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                   ,pr_nrdconta  => rw_dadostitulo.ctclipagdr
                   ,pr_notif_dda => vr_notifi_dda);
       END IF;
-      
+    
     
       -- Busca o nome do cedente
       IF rw_dadostitulo.NomRzSocBenfcrioOr IS NOT NULL THEN
@@ -3988,9 +3988,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     -- 
     --             20/10/2017 - Retirar cursor cr_abertura e utilizar função fn_datamov (SD#754622 - AJFink)
     --
-	--             26/10/2017 - Incluir gravacao de log NPCB0001.pc_gera_log_npc no when others
-	--                          dos inserts (SD#769996 - AJFink)
-	--
+    --             26/10/2017 - Incluir gravacao de log NPCB0001.pc_gera_log_npc no when others
+    --                          dos inserts (SD#769996 - AJFink)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4329,15 +4329,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT. ' ||
                            sqlerrm;
 
-			--> Gerar log para facilitar identificação de erros SD#769996
-			BEGIN
-			  NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
-										pr_nmrotina => 'pc_remessa_titulos_dda',
-										pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
-			EXCEPTION
-			  WHEN OTHERS THEN
-				NULL;
-			END; 
+            --> Gerar log para facilitar identificação de erros SD#769996
+            BEGIN
+              NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
+                                        pr_nmrotina => 'pc_remessa_titulos_dda',
+                                        pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
+            EXCEPTION
+              WHEN OTHERS THEN
+                NULL;
+            END; 
 
             pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
             pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;
@@ -4375,15 +4375,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
               vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL. '||SQLERRM;
 
-			  --> Gerar log para facilitar identificação de erros SD#769996
-			  BEGIN
-				NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
-										  pr_nmrotina => 'pc_remessa_titulos_dda',
-										  pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
-			  EXCEPTION
-				WHEN OTHERS THEN
-				  NULL;
-			  END;
+              --> Gerar log para facilitar identificação de erros SD#769996
+              BEGIN
+                NPCB0001.pc_gera_log_npc( pr_cdcooper => vr_cdcooper,
+                                          pr_nmrotina => 'pc_remessa_titulos_dda',
+                                          pr_dsdolog  => 'CodBar:'||pr_tab_remessa_dda(vr_index).dscodbar||'-'||vr_dscritic);
+              EXCEPTION
+                WHEN OTHERS THEN
+                  NULL;
+              END;
 
               pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
               pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;                           
@@ -5216,7 +5216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       --> Enviar Email
       GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
                                 ,pr_cdprogra        => 'COBRANCA'     --> Programa conectado
-                                ,pr_des_destino     => nvl(vr_dsdemail_dst,'segurancacorporativa@cecred.coop.br')  --> Um ou mais detinatários separados por ';' ou ','
+                                ,pr_des_destino     => nvl(vr_dsdemail_dst,'segurancacorporativa@ailos.coop.br')  --> Um ou mais detinatários separados por ';' ou ','
                                 ,pr_des_assunto     => vr_dsAssunt    --> Assunto do e-mail
                                 ,pr_des_corpo       => vr_dsdcorpo    --> Corpo (conteudo) do e-mail
                                 ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','

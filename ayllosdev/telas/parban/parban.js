@@ -263,7 +263,7 @@ function validaDados() {
             dscritic = "URL do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;rio";
             flgerror = true;
         } else if (idacao_banner == 2 && cdmenu_acao_mobile == "") {
-            dscritic = "Tela do Cecred Mobile do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;ria";
+            dscritic = "Tela do Ailos Mobile do bot&atilde;o de a&ccedil;&atilde;o &eacute; obrigat&oacute;ria";
             flgerror = true;
         }
     } else if (inexibir_quando == 1) {

@@ -4,14 +4,14 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jean Michel
-   Data    : Junho/2015.                       Ultima atualizacao: 18/06/2015
+   Data    : Junho/2015.                       Ultima atualizacao: 28/05/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    
    Objetivo  : Envio de susgestões para cursos do Progrid.
       
-   Alteracoes:
+   Alteracoes: 28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 --------------------------------------------------------------------------------->
 <script language="SpeedScript">
   DEF VAR aux_cdcooper AS INTE   NO-UNDO.
@@ -446,8 +446,8 @@
                               END.
                             RUN enviar_email_completo IN b1wgen0011(aux_cdcooper
                                                                    ,"wcrm0006"
-                                                                   ,"sugestoes@cecred.coop.br" /*REMETENTE*/
-                                                                   ,"sugestoes@cecred.coop.br" /*DESTINATARIO*/
+                                                                   ,"sugestoes@ailos.coop.br" /*REMETENTE*/
+                                                                   ,"sugestoes@ailos.coop.br" /*DESTINATARIO*/
                                                                    ,STRING(aux_nmrescop) + " - Sugestão de Tema - Progrid"
                                                                    ,""
                                                                    ,""

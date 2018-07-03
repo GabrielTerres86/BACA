@@ -29,7 +29,7 @@ $dsjustif   	= (isset($_POST['dsjustif'])) ? $_POST['dsjustif'] : '' ;
 
 $msg="";
 $rodapeMsg="Atenciosamente,
-Sistema CECRED";
+Sistema AILOS";
 
 if($cdeftpag==4){$msg="aprovado e os pagamentos de Folha serão efetuados.";}
 if($cdeftpag==3){$msg="reprovado e os pagamentos de Folha não serão efetuados.

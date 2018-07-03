@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Novembro/2004                     Ultima atualizacao: 22/09/2014
+   Data    : Novembro/2004                     Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -100,6 +100,9 @@
                22/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa) 
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -984,7 +987,7 @@ PROCEDURE rel_enviados.
              RUN enviar_email IN b1wgen0011
                                 (INPUT glb_cdcooper,
                                  INPUT glb_cdprogra,
-                                 INPUT "cartoes@cecred.coop.br",
+                                 INPUT "cartoes@ailos.coop.br",
                                  INPUT "TITULARES ENVIADOS CARTAO CREDITO " +
                                        "BB - " + CAPS(crapcop.nmrescop),
                                  INPUT aux_nmarqenv,

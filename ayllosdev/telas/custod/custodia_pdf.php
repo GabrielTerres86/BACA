@@ -40,7 +40,7 @@
 	 */
 	function adicionaCabecalhoRelatorio($pdf,$global){
 		$pdf->SetFont('Arial','B',15);
-		$pdf->Cell(185,0, 'Custódia de Cheques - CECRED', 0, 1, 'C');
+		$pdf->Cell(185,0, 'Custódia de Cheques - AILOS', 0, 1, 'C');
 		$pdf->Ln(5);
 
 		$pdf->SetFont('Arial','B',12);

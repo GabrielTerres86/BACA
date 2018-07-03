@@ -314,6 +314,14 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             21/05/2018 - Inclusao de parametros devido a analise de fraude.
                          PRJ381 - Antifraude(Odirlei-AMcom)
+                      
+			26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+			   
+            18/06/2018 - Retornar o complemento na consulta de extrato
+                         (Douglas - Prj 467)
+						 
+			
+			            
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -4071,7 +4079,7 @@ PROCEDURE efetua_transferencia:
                                           " - " + crapage.nmcidade + " - " + STRING(craptfn.nrterfin) + " - " +
                                           craptfn.nmterfin
     
-                           aux_dsdemail = "prevencaodefraudes@cecred.coop.br"
+                           aux_dsdemail = "prevencaodefraudes@ailos.coop.br"
     
                            aux_dsdcorpo = "PA: " + STRING(craptfn.cdagenci) + " - " + crapage.nmresage + "\n\n" + 
                                           "Conta: " + STRING(aux_nrdconta) + "\n".
@@ -4134,7 +4142,7 @@ PROCEDURE efetua_transferencia:
                     RUN enviar_email_completo IN h-b1wgen0011 
                         (INPUT aux_cdcooper,
                          INPUT "TAA_autorizador",
-                         INPUT "prevencaodefraudes@cecred.coop.br",
+                         INPUT "prevencaodefraudes@ailos.coop.br",
                          INPUT aux_dsdemail,
                          INPUT aux_dsassunt,
                          INPUT "",
@@ -6195,7 +6203,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
                                               INPUT  0, /* Idlancto */
-											                        INPUT  "TAA", /*Nome da tela*/
+											  INPUT  "TAA", /*Nome da tela*/
                                               INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).
