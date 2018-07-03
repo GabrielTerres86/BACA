@@ -361,7 +361,7 @@ function incluiTituloBordero(td){
             vlseleci.val(number_format(total,2,',','.'));
             calculaSaldoBordero();
         }   
-
+        $('#divPesquisaRodape', '#divIncluirBordero').formataRodapePesquisa();
     }
 }
 

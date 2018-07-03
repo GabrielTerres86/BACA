@@ -402,7 +402,6 @@
 						buscarTitulosBorderoPaginacao(".($nriniseq - $nrregist).",".$nrregist.");
 					  });";
 			$html .= "$('a.paginacaoProx').unbind('click').bind('click', function() {
-	        			console.log('ini=".$nriniseq ." regist=". $nrregist."');
 						buscarTitulosBorderoPaginacao(".($nriniseq + $nrregist).",".$nrregist.");
 					  });";
 			$html .= "</script>";
