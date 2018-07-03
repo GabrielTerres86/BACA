@@ -968,8 +968,7 @@ BEGIN
                                   , nvl(vr_inrisco_rating, 2)
                                   , vr_inrisco_atraso
                                   , nvl(vr_inrisco_refin, 2)
-                                  , CASE WHEN vr_inrisco_melhora = 2
-                                              AND vr_inrisco_melhora <> vr_inrisco_inclusao
+                                  , CASE WHEN vr_inrisco_melhora < vr_inrisco_inclusao
                                          THEN vr_inrisco_melhora
                                          ELSE vr_inrisco_inclusao END);
 
@@ -1086,8 +1085,7 @@ BEGIN
                                   , nvl(vr_inrisco_rating, 2)
                                   , vr_inrisco_atraso
                                   , nvl(vr_inrisco_refin, 2)
-                                  , CASE WHEN vr_inrisco_melhora = 2
-                                              AND vr_inrisco_melhora <> vr_inrisco_inclusao
+                                  , CASE WHEN vr_inrisco_melhora < vr_inrisco_inclusao
                                          THEN vr_inrisco_melhora
                                          ELSE vr_inrisco_inclusao END);
 
