@@ -104,7 +104,7 @@ var dsadmcrdList = {
     16: "AILOS DEBITO",
     14: "AILOS PLATINUM",
     13: "AILOS GOLD",
-    12: "AILOS GOLD",
+    12: "AILOS CLASSICO",
     11: "AILOS ESSENCIAL",
     15: "AILOS EMPRESAS"
 };
