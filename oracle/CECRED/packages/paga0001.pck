@@ -1628,6 +1628,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
        27/03/2018 - Ajustes referente ao PRJ352
                                      
+
+	   27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. Inclusão de PRAGMA (Mario Bernat - AMcom)
+		
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -8400,7 +8403,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             IF nvl(vr_cdcritic,0) > 0 OR                                    
                TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_exc_erro;   
-                  END IF;
+                    END IF;
 
           EXCEPTION
             WHEN vr_exc_erro THEN
@@ -12070,7 +12073,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_flsgproc PLS_INTEGER;
       vr_newindex VARCHAR2(80);
       vr_index    VARCHAR2(300);
-
+      
       -- Objetos para armazenar as variáveis da notificação
       vr_variaveis_notif NOTI0001.typ_variaveis_notif;
       vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
@@ -15594,6 +15597,82 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+
+----------------
+
+  -- Procedimento para inserir ou atualizar a crapmvi e não deixar tabela lockada
+  PROCEDURE pc_insere_crapcre(pr_cdcooper IN crapcob.cdcooper%TYPE
+                             ,pr_nrcnvcob IN crapcre.nrcnvcob%TYPE
+                             ,pr_dtmvtolt IN crapcre.dtmvtolt%TYPE
+                             ,pr_nrremret IN crapcre.nrremret%TYPE
+                             ,pr_intipmvt IN crapcre.intipmvt%TYPE
+                             ,pr_nmarquiv IN crapcre.nmarquiv%TYPE
+                             ,pr_flgproce IN crapcre.flgproce%TYPE
+                             ,pr_cdoperad IN crapcre.cdoperad%TYPE
+                             ,pr_dtaltera IN crapcre.dtaltera%TYPE
+                             ,pr_dscritic OUT VARCHAR2) IS
+  
+    -- Pragma - abre nova sessao para tratar a atualizacao
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    
+    BEGIN
+    pr_dscritic := null;  
+  
+    --Criar movimento retorno
+    BEGIN
+      INSERT INTO crapcre
+                 (crapcre.cdcooper
+                 ,crapcre.nrcnvcob
+                 ,crapcre.dtmvtolt
+                 ,crapcre.nrremret
+                 ,crapcre.intipmvt
+                 ,crapcre.nmarquiv
+                 ,crapcre.flgproce
+                 ,crapcre.cdoperad
+                 ,crapcre.dtaltera)
+          VALUES
+                 (pr_cdcooper
+                 ,pr_nrcnvcob
+                 ,pr_dtmvtolt
+                 ,pr_nrremret
+                 ,pr_intipmvt
+                 ,pr_nmarquiv
+                 ,pr_flgproce
+                 ,pr_cdoperad
+                 ,pr_dtaltera);
+    EXCEPTION
+      WHEN Dup_val_on_index THEN
+
+        -- buscar o ultimo movimento de retorno do convenio do dia
+        OPEN cr_crapcre1 (pr_cdcooper => pr_cdcooper
+                         ,pr_nrcnvcob => pr_nrcnvcob
+                         ,pr_dtmvtolt => pr_dtmvtolt
+                         ,pr_intipmvt => 2);   --Retorno
+        --Posicionar no proximo registro
+        FETCH cr_crapcre1 INTO rw_crapcre;
+        --Se nao encontrar
+        IF cr_crapcre1%NOTFOUND THEN
+          
+          --Selecionar movimento retorno
+          pr_dscritic:= 'Erro ao buscar ultimo movimento de retorno do convenio: '|| pr_nrcnvcob ||'.';
+        END IF;
+        
+        --Fechar Cursor       
+        CLOSE cr_crapcre1;
+
+      WHEN Others THEN
+        pr_dscritic:= 'Erro ao inserir na tabela crapcre. '||sqlerrm;
+    END;
+
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ROLLBACK;
+      -- se ocorreu algum erro durante a criac?o
+      pr_dscritic := 'Erro ao gravar crapcre i(Convenio: ' || pr_nrcnvcob || ', Data: '|| to_char(pr_dtmvtolt,'dd/mm/yyyy') ||'): ' ||
+                     SQLERRM;
+  END pc_insere_crapcre;
+
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
@@ -15654,35 +15733,25 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         END IF;
         --Montar Nome arquivo
         vr_nmarquiv:= 'ret085_'||To_Char(pr_dtmvtolt,'DDMM')||'_'||To_Char(rw_crapcob.nrcnvcob,'fm000000');
-        --Criar movimento retorno
-        BEGIN
-          INSERT INTO crapcre
-            (crapcre.cdcooper
-            ,crapcre.nrcnvcob
-            ,crapcre.dtmvtolt
-            ,crapcre.nrremret
-            ,crapcre.intipmvt
-            ,crapcre.nmarquiv
-            ,crapcre.flgproce
-            ,crapcre.cdoperad
-            ,crapcre.dtaltera)
-          VALUES
-            (rw_crapcob.cdcooper
-            ,rw_crapcob.nrcnvcob
-            ,pr_dtmvtolt
-            ,vr_nrremret
-            ,2 /* retorno */
-            ,vr_nmarquiv
-            ,0 --FALSE
-            ,pr_cdoperad
-            ,pr_dtmvtolt);
-        EXCEPTION
-          WHEN Others THEN
+       
+        --Inserir movimento retorno
+        --Ajuste no INC0017437 - falha na inserção do crapcre no paralelismo
+        pc_insere_crapcre(pr_cdcooper => rw_crapcob.cdcooper
+                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                         ,pr_dtmvtolt => pr_dtmvtolt
+                         ,pr_nrremret => vr_nrremret
+                         ,pr_intipmvt => 2 /* retorno */
+                         ,pr_nmarquiv => vr_nmarquiv
+                         ,pr_flgproce => 0 --FALSE
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_dtaltera => pr_dtmvtolt
+                         ,pr_dscritic => vr_dscritic);
+
+        if vr_dscritic is not null then
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao inserir na tabela crapcre. '||sqlerrm;
             --Levantar Excecao
             RAISE vr_exc_erro;
-        END;
+        end if;
       ELSE
         --Numero remessa
         vr_nrremret:= rw_crapcre.nrremret;
@@ -15949,9 +16018,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         --
         IF pr_dsmotivo = '08' THEN
           --
+					IF rw_crapcob.cdbandoc = 85 THEN
+						--
           vr_cdhistor := 2631;
           --
         ELSE
+          --
+        vr_cdhistor:= 0;
+          --
+        END IF;
+        --
+      ELSE
           --
         vr_cdhistor:= 0;
           --
@@ -16163,6 +16240,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
+
+	  -- Deve ser feito após o  UPDATE da cob devido ao indpagto ser atualizado nesse update
+      vr_cdmotivo := 0;
+
+      IF pr_cdbanpag = 85 THEN
+         vr_cdmotivo := pr_dsmotivo;
+      END IF;
       
       /* Gerar dados para tt-lcm-consolidada */
       PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob --ROWID da cobranca
@@ -16170,7 +16254,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                           ,pr_tplancto => 'T'         --Tipo Lancamento
                                           ,pr_vltarifa => 0           --Valor Tarifa
                                           ,pr_cdhistor => 0           --Codigo Historico
-                                          ,pr_cdmotivo => pr_dsmotivo --Codigo motivo
+                                          ,pr_cdmotivo => vr_cdmotivo --Codigo motivo
                                           ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
                                           ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                           ,pr_dscritic => vr_dscritic); --Descricao Critica
@@ -20134,84 +20218,84 @@ end;';
 
     if to_date(ddda0001.fn_datamov,'yyyymmdd') = trunc(sysdate) then --SCTASK0015832
 
-    --buscar registros não processados
-    FOR rw_crapdda IN cr_crapdda LOOP
-      IF rw_crapdda.incobran = 5 THEN
-    
-      --Executar baixa efetiva NPC
-      ddda0001.pc_baixa_efetiva_npc (pr_rowid_cob => rw_crapdda.cobrowid    -- ROWID da Cobranca
-                                           ,pr_cdcritic  => vr_cdcritic            -- Codigo de Erro
-                                           ,pr_dscritic  => vr_dscritic);          -- Descricao de Erro
+      --buscar registros não processados
+      FOR rw_crapdda IN cr_crapdda LOOP
+        IF rw_crapdda.incobran = 5 THEN
+      
+        --Executar baixa efetiva NPC
+        ddda0001.pc_baixa_efetiva_npc (pr_rowid_cob => rw_crapdda.cobrowid    -- ROWID da Cobranca
+                                             ,pr_cdcritic  => vr_cdcritic            -- Codigo de Erro
+                                             ,pr_dscritic  => vr_dscritic);          -- Descricao de Erro
 
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        IF NVL(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        --Se ocorreu erro
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          IF NVL(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+            -- Buscar a descrição
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          END IF;
+
+          pc_monta_erro(rw_crapdda,vr_dscritic);
+
+        END IF;
+        ELSE
+          vr_dscritic := 'Boleto não está liquidado';      
         END IF;
 
-        pc_monta_erro(rw_crapdda,vr_dscritic);
+        --atualizar crapdda
+        BEGIN
+          UPDATE crapdda
+             SET crapdda.dtproces = sysdate,
+                 crapdda.flgerado = 'S',
+                 crapdda.dscritic = substr(vr_dscritic,1,4000)
+           WHERE crapdda.rowid = rw_crapdda.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar crapdda: '||SQLERRM;
+            pc_monta_erro(rw_crapdda,vr_dscritic);
+        END;
 
+      END LOOP;
+
+      --se gerou algum erro deve mandar email
+      IF vr_flgerro THEN
+        --finalizar tags
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</table>',TRUE);
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</meta>');
+
+        -- Buscar o diretório converte
+        vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                            ,pr_cdcooper => 3 /*cecred*/
+                                            ,pr_nmsubdir => 'converte');
+
+        gene0002.pc_clob_para_arquivo (pr_clob     => vr_dshmtl
+                                      ,pr_caminho  => vr_dsdircop
+                                      ,pr_arquivo  => 'proc_intrabancdda_erro.html'
+                                      ,pr_des_erro => vr_dserro);
+
+        -- Liberando a memória alocada pro CLOB
+        dbms_lob.close(vr_dshmtl);
+        dbms_lob.freetemporary(vr_dshmtl);
+
+        -- Busca a lista dos responsáveis nesta coop
+        vr_dslista_email := gene0001.fn_param_sistema('CRED',3/*CECRED*/,'INTRABANC_EMAIL_AVISO');
+
+        -- Solicitar o e-mail
+        gene0003.pc_solicita_email(pr_cdcooper      => 3/*cecred*/         --> Cooperativa conectada
+                                  ,pr_cdprogra      => null                --> Programa conectado
+                                  ,pr_des_destino   => vr_dslista_email    --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_assunto   => 'Criticas comunidacao JDDA' --> Assunto do e-mail
+                                  ,pr_des_corpo     => vr_dscorpo          --> Corpo (conteudo) do e-mail
+                                  ,pr_des_anexo     => vr_dsdircop||'/proc_intrabancdda_erro.html'               --> Um ou mais anexos separados por ';
+                                  ,pr_flg_remove_anex => 'S'               --> Remover o anexo
+                                  ,pr_flg_log_batch => 'N'                 --> Incluir no log a informação do anexo?
+                                  ,pr_des_erro      => vr_dserro);
+        IF vr_dserro IS NOT NULL THEN
+          -- Gerar log
+          gene0002.pc_gera_log_relato(pr_cdcooper => 3 /*CECRED*/
+                                     ,pr_des_log  => to_char(SYSDATE,'hh24:mi:ss')||' Erro ao enviar email de alerta de JDDA com problema --> '||vr_dserro);
+
+        END IF;
       END IF;
-      ELSE
-        vr_dscritic := 'Boleto não está liquidado';      
-      END IF;
-
-      --atualizar crapdda
-      BEGIN
-        UPDATE crapdda
-           SET crapdda.dtproces = sysdate,
-               crapdda.flgerado = 'S',
-               crapdda.dscritic = substr(vr_dscritic,1,4000)
-         WHERE crapdda.rowid = rw_crapdda.rowid;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar crapdda: '||SQLERRM;
-          pc_monta_erro(rw_crapdda,vr_dscritic);
-      END;
-
-    END LOOP;
-
-    --se gerou algum erro deve mandar email
-    IF vr_flgerro THEN
-      --finalizar tags
-      gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</table>',TRUE);
-      gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</meta>');
-
-      -- Buscar o diretório converte
-      vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C'
-                                          ,pr_cdcooper => 3 /*cecred*/
-                                          ,pr_nmsubdir => 'converte');
-
-      gene0002.pc_clob_para_arquivo (pr_clob     => vr_dshmtl
-                                    ,pr_caminho  => vr_dsdircop
-                                    ,pr_arquivo  => 'proc_intrabancdda_erro.html'
-                                    ,pr_des_erro => vr_dserro);
-
-      -- Liberando a memória alocada pro CLOB
-      dbms_lob.close(vr_dshmtl);
-      dbms_lob.freetemporary(vr_dshmtl);
-
-      -- Busca a lista dos responsáveis nesta coop
-      vr_dslista_email := gene0001.fn_param_sistema('CRED',3/*CECRED*/,'INTRABANC_EMAIL_AVISO');
-
-      -- Solicitar o e-mail
-      gene0003.pc_solicita_email(pr_cdcooper      => 3/*cecred*/         --> Cooperativa conectada
-                                ,pr_cdprogra      => null                --> Programa conectado
-                                ,pr_des_destino   => vr_dslista_email    --> Um ou mais detinatários separados por ';' ou ','
-                                ,pr_des_assunto   => 'Criticas comunidacao JDDA' --> Assunto do e-mail
-                                ,pr_des_corpo     => vr_dscorpo          --> Corpo (conteudo) do e-mail
-                                ,pr_des_anexo     => vr_dsdircop||'/proc_intrabancdda_erro.html'               --> Um ou mais anexos separados por ';
-                                ,pr_flg_remove_anex => 'S'               --> Remover o anexo
-                                ,pr_flg_log_batch => 'N'                 --> Incluir no log a informação do anexo?
-                                ,pr_des_erro      => vr_dserro);
-      IF vr_dserro IS NOT NULL THEN
-        -- Gerar log
-        gene0002.pc_gera_log_relato(pr_cdcooper => 3 /*CECRED*/
-                                   ,pr_des_log  => to_char(SYSDATE,'hh24:mi:ss')||' Erro ao enviar email de alerta de JDDA com problema --> '||vr_dserro);
-
-      END IF;
-    END IF;
 
     end if; --SCTASK0015832
 
@@ -20290,7 +20374,8 @@ end;';
              cob.nrdocmto,
              cco.dsorgarq,
              cob.rowid rowid_cob,
-             ret.rowid rowid_ret
+             ret.rowid rowid_ret,
+						 cob.cdbandoc -- PRJ352
         FROM crapret ret
             ,crapcco cco
             ,crapcob cob
@@ -20331,7 +20416,8 @@ end;';
              cob.tpjurmor,
              cob.nrdocmto,
              cob.rowid rowid_cob,
-             ret.rowid rowid_ret
+             ret.rowid rowid_ret,
+						 cob.cdbandoc
         FROM crapret ret
             ,crapcco cco
             ,crapcob cob
@@ -20602,7 +20688,15 @@ end;';
                ELSE
                   IF rw_cursor1.cdocorre IN (6,76) THEN
 										IF rw_cursor1.cdmotivo = '08' THEN
+											IF rw_cursor1.cdbandoc = 85 THEN
+												--
 										  vr_cdhistor := 2631; -- liq boleto em cartorio
+												--
+											ELSE
+												--
+												vr_cdhistor := 0;
+												--
+											END IF;
                     ELSE
                   vr_cdhistor := 987;
 										END IF;
@@ -20907,7 +21001,16 @@ end;';
              ELSE
                 IF rw_cursor2.cdocorre IN (6,76) THEN
 									IF rw_cursor2.cdmotivo = '08' THEN
+										IF rw_cursor2.cdbandoc = 85 THEN
+											--
 										  vr_cdhistor := 2631; -- liq boleto em cartorio
+											--
+										ELSE
+											--
+											vr_cdhistor := 0;
+											--
+										END IF;
+										--
                     ELSE
                 vr_cdhistor := 987;
 										END IF;
