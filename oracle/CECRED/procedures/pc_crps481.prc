@@ -415,8 +415,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      -- variavel para trata cdageass sem informação - Chamado 775817 - 27/10/2017
      vr_cdageass_craprda   craprda.cdageass%TYPE;
 
+     --Procedure para gerar ocorrencia
+     PROCEDURE pc_gera_ocorrencia( pr_ind_tipo_log  IN NUMBER
+                                  ,pr_cdcritic      IN INTEGER
+                                  ,pr_dscritic      IN VARCHAR2
+                                 )
+      /* .............................................................................
 
+         Programa: pc_crps481
+         Sistema : Conta-Corrente - Cooperativa de Credito
+         Sigla   : CRED
+         Data    : Oktober/2017                     Ultima atualizacao: 27/10/2017
+         Autor   : Belli - Envolti - Chamado 786752
 
+         Dados referentes ao programa:
 
          Frequencia: Disparado pela propria procedure.
          Objetivo  : Gerar Log de ocorrencia centralizado.
@@ -2104,12 +2116,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                -- Calculo da data de vencimento
                rw_craprda.qtdiaapl := rw_craprda.dtvencto - rw_craprda.dtmvtolt;
                vr_dtvencto := rw_craprda.dtvencto + rw_craprda.qtdiaapl;
-               /* Retirado a validação de vencimento que cai no fim de semana pois pode ocorrer
-               vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                         ,pr_dtmvtolt => vr_dtvencto
-                                                         ,pr_tipo => 'P');*/
-                                                         
-
+              
                -- Reaplicação com as mesmas caracteristicas da anterior
                APLI0002.pc_incluir_nova_aplicacao(pr_cdcooper => pr_cdcooper
                                                  ,pr_cdagenci => rw_craprda.cdageass
@@ -2119,7 +2126,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                                  ,pr_idorigem => 1
                                                  ,pr_nrdconta => rw_craprda.nrdconta
                                                  ,pr_idseqttl => 1
-                                                 ,pr_dtmvtolt => rw_craprda.dtvencto
+                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtopr
                                                  ,pr_tpaplica => rw_crapdtc.tpaplica
                                                  ,pr_qtdiaapl => rw_craprda.qtdiaapl
                                                  ,pr_dtresgat => vr_dtvencto
