@@ -496,7 +496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 13/06/2018
     --
     --  Dados referentes ao programa:
     --
@@ -531,6 +531,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --                       - Pc_set_modulo, cecred.pc_internal_exception
     --                       - Tratamento erros others
     --                         Chamado 788828 - Ana Volles (Envolti)
+    --
+    --            13/06/2018 - Sincronizar o horario do email com o horario do servidor que hoje se encontra
+    --                         divergente. (Kelvin/Saqueta).
     -- .............................................................................
 
     DECLARE
@@ -678,7 +681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- Abrir conexão de dados
         utl_smtp.open_data(vr_conexao);
         -- Enviar header
-        utl_smtp.write_data(vr_conexao, 'Date: ' || TO_CHAR(TO_TIMESTAMP_TZ(TO_CHAR(SYSDATE,'DDMMYYYYHH24MISS')||' AMERICA/SAO_PAULO','DDMMYYYYHH24MISS TZR'),'DD-MON-YYYY HH24:MI:SS') || vr_des_quebra);
+        utl_smtp.write_data(vr_conexao, 'Date: ' || TO_CHAR(to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR'), 'DD-MON-YYYY HH24:MI:SS') || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'MIME-Version: 1.0' || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'To: ' || rw_crapsle.dsendere || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'From: ' || vr_des_nome || ' <' || vr_des_remete ||'>'|| vr_des_quebra);
