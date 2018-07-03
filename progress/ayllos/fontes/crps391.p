@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                      Ultima atualizacao: 02/09/2015
+   Data    : Abril/2004                      Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -120,21 +120,38 @@
                             batimento do lote processo. (Fabricio)
                
               29/08/2014 - Incluso parametro par_dshistor na proc_envia_tec_ted
-                           referente a descrição do histórico(Vanessa). 
+                           referente a descriÃ§Ã£o do histÃ³rico(Vanessa). 
                            
               24/10/2014 - Enviar hora da transacao (Jonata-RKAM).
                             
-              11/12/2014 - Conversão da fn_sequence para procedure para não
+              11/12/2014 - ConversÃ£o da fn_sequence para procedure para nÃ£o
                            gerar cursores abertos no Oracle. (Dionathan)
                            
               03/06/2015 - Remover validacao do conveio 53 Foz do brasil
                            (Lucas Ranghetti #292200)
                            
-              05/06/2015 - Inclusão do paramentro par_cdispbif = 0 na procedure
+              05/06/2015 - InclusÃ£o do paramentro par_cdispbif = 0 na procedure
                            proc_envia_tec_ted (Vanessa - FDR041 SD271603)
                            
-              02/09/2015 - Inclusao da geraçao do arquivo REPCNVFIL.TXT para 
+              02/09/2015 - Inclusao da geraÃ§ao do arquivo REPCNVFIL.TXT para 
                            cada cooperativa  PRJ-214 (Vanessa) 
+
+
+              07/10/2016 - AlteraÃ§Ã£o do diretÃ³rio para geraÃ§Ã£o de arquivo contÃ¡bil.
+                           P308 (Ricardo Linhares).                            
+                            
+                           
+			  10/01/2017 - Ajuste para enviar TED somente se o valor for maior que zero 
+						  (Adriano  - SD 597906).		       
+
+              16/06/2017 - Adicionado e-mail convenios@cecred.coop.br, conforme
+                           solicitado no chamado 687836 (Kelvin).
+
+              06/03/2018 - Retirado filtro "cdtipcta = 1" e colocado filtro da conta buscando
+                           do campo "nrctactl" da tabela "crapcop". PRJ366 (Lombardi).
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 .............................................................................*/
                         
 { includes/var_batch.i}
@@ -284,7 +301,7 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         aux_arqrel_3 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
                                  + STRING(MONTH(glb_dtmvtolt),"99")
                                  + STRING(DAY(glb_dtmvtolt),"99") + "_REPCNVFIL.txt".
-
+                                 
  {includes/cabrel132_1.i }
  {includes/cabrel132_2.i }
 
@@ -410,11 +427,14 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
          IF  LAST-OF(tt-arq-radar.cdcooper) THEN
          DO: 
             OUTPUT STREAM str_3 CLOSE.
+            
+            /* Move para nova pasta */
+            
             UNIX SILENT VALUE("ux2dos " + aux_arqrel_3 + 
-              " > /micros/" + tt-arq-radar.dsdircop + "/contab/"
+              " > /usr/sistemas/arquivos_contabeis/ayllos/"
                             + SUBSTRING(STRING(YEAR(tt-arq-radar.dtmvtolt),"9999"),3,2)
                             + STRING(MONTH(tt-arq-radar.dtmvtolt),"99")
-                            + STRING(DAY(tt-arq-radar.dtmvtolt),"99") + "_REPCNVFIL.txt 2>/dev/null").
+                            + STRING(DAY(tt-arq-radar.dtmvtolt),"99") + "_" + STRING(tt-arq-radar.cdcooper,"99") + "_REPCNVFIL.txt 2>/dev/null").
                         
          END.
      END.
@@ -435,7 +455,8 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         RUN enviar_email IN b1wgen0011
                          (INPUT glb_cdcooper,
                           INPUT glb_cdprogra,
-                          INPUT "financeiro@cecred.coop.br",    
+                          INPUT "financeiro@ailos.coop.br," +
+                                "convenios@ailos.coop.br",
                           INPUT '"Lancamentos Arrecadacoes Convenios"' +
                                 " - " + CAPS(crabcop.nmrescop),
                           INPUT SUBSTRING(aux_arqrel_1, 4),
@@ -529,8 +550,10 @@ PROCEDURE processa_convenios_deb_cred.
         
         DOWN STREAM str_1 WITH FRAME f_movtos.
     
-        IF   TRIM(aux_nmrescop) = "CECRED"   OR
-             TRIM(aux_nmcopdom) = "CECRED"   THEN
+        IF   TRIM(aux_nmrescop) = "AILOS"   OR
+             TRIM(aux_nmcopdom) = "AILOS"   OR
+             TRIM(aux_nmrescop) = "CECRED"  OR
+             TRIM(aux_nmcopdom) = "CECRED"  THEN
              DO:
     
                 DISP STREAM str_2
@@ -836,7 +859,8 @@ PROCEDURE processa_convenios_deb_cred.
                     WITH FRAME f_movtos_dom.
                DOWN STREAM str_1 WITH FRAME f_movtos_dom.
 
-               IF  TRIM(crapcop.nmrescop) = "CECRED"   THEN
+               IF  TRIM(crapcop.nmrescop) = "AILOS" OR
+                   TRIM(crapcop.nmrescop) = "CECRED" THEN
                    DO: 
                        DISP  STREAM str_2
                              aux_nmrescop
@@ -875,7 +899,8 @@ PROCEDURE processa_convenios_deb_cred.
                        DOWN STREAM str_2  WITH FRAME f_movtos_dom.
 
                        IF aux_tpdcontr_1 = 1 AND 
-                          aux_tpdcontr_2 = 4 THEN
+                          aux_tpdcontr_2 = 4 AND 
+						  aux_vlrrepas > 0   THEN /*Somente enviar a TED se valor for maior que zero (SD  567906)*/
                        DO:
                            IF UPPER(SUBSTRING(aux_dsccdrcb2, 9, 1)) = "X" THEN
                                ASSIGN aux_dsccdrcb2 = 
@@ -892,7 +917,7 @@ PROCEDURE processa_convenios_deb_cred.
                                            INPUT aux_vlrrepas, /* vldocmto */
                                            INPUT aux_nrdconta_debito, /* nrdconta */
                                            INPUT 1, /* idseqttl */
-                                           INPUT "CECRED", /* nmprimtl */
+                                           INPUT "AILOS", /* nmprimtl */
                                            INPUT 05463212, /* nrcpfcgc */
                                            INPUT 2, /* inpessoa */
                                            INPUT gnconve.cdbccrcb, /* cdbanfav */
@@ -956,7 +981,8 @@ PROCEDURE processa_convenios_deb_cred.
                     WITH FRAME f_movtos_dom.
                DOWN STREAM str_1 WITH FRAME f_movtos_dom.
                
-               IF   TRIM(crapcop.nmrescop) = "CECRED"   THEN
+               IF   TRIM(crapcop.nmrescop) = "AILOS" OR
+                    TRIM(crapcop.nmrescop) = "CECRED" THEN
                     DO:
                         DISP  STREAM str_2
                               aux_nmrescop
@@ -1025,7 +1051,15 @@ PROCEDURE prepara_lancamento.
    FIND FIRST crapass WHERE
               crapass.cdcooper = glb_cdcooper      AND
               crapass.nrcpfcgc = crapcop.nrdocnpj  AND         
-              crapass.cdtipcta = 1 NO-ERROR.
+              crapass.nrdconta = crapcop.nrctactl  NO-ERROR.
+              
+   IF NOT AVAILABLE crapass THEN
+      DO:
+          ASSIGN glb_dscritic = "Conta para arrecadacao de convenio nao encontrada.".
+          MESSAGE glb_dscritic.
+          RETURN "NOK".
+      END.
+          
    ASSIGN aux_nrdconta_debito  = crapass.nrdconta.
 
    /* Cooperativa a receber o credito */
@@ -1462,8 +1496,3 @@ PROCEDURE enviar-ted:
 END PROCEDURE.
 
 /*............................................................................*/
-
-
-
-
-
