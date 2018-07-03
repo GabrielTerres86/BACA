@@ -365,6 +365,9 @@ BEGIN
 
                  01/03/2018 - Alterado a Data do Risco e Quantidade de Dias Risco para considerar a diária
                               nos relatórios 354 e 227. (Diego Simas - AMcom)
+
+                 26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+
   ............................................................................. */
 
   DECLARE
@@ -937,9 +940,10 @@ BEGIN
     rw_crapris_last cr_crapris_last%ROWTYPE;
 
     -- Verifica se a conta em questao pertence a algum grupo economico
-    CURSOR cr_crapgrp(pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE) IS
+    -- Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
+    CURSOR cr_grupo_economico(pr_nrcpfcgc IN tbcc_grupo_economico_integ.nrcpfcgc%TYPE) IS
       SELECT '*'
-        FROM crapgrp
+        FROM tbcc_grupo_economico_integ
        WHERE cdcooper = pr_cdcooper
          AND nrcpfcgc = pr_nrcpfcgc;
 
@@ -4070,10 +4074,10 @@ BEGIN
         vr_pertenge := '';
 
         -- Verifica se a conta em questao pertence a algum grupo economico
-        OPEN cr_crapgrp(pr_nrcpfcgc => vr_tab_crapris(vr_des_chave_crapris).nrcpfcgc);
-        FETCH cr_crapgrp
+        OPEN cr_grupo_economico(pr_nrcpfcgc => vr_tab_crapris(vr_des_chave_crapris).nrcpfcgc);
+        FETCH cr_grupo_economico
           INTO vr_pertenge; --> Se encontrar registros na consulta, a variavel receberá '*'
-        CLOSE cr_crapgrp;
+        CLOSE cr_grupo_economico;
         -- Se houve atraso
         IF vr_qtpreatr > 0 THEN
           -- Acumular no totalizador de saldo devedor

@@ -41,7 +41,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                    26/01/2018 - Arrasto do Grupo Economico para CPFs/CNPJs do grupo (Guilherme/AMcom)
 
                    05/04/2018 - #inc0011132 Forçado o índice CRAPRIS2 na rotina pc_validar_data_risco, 
-                                cursor cr_crapris (Carlos) 
+                                cursor cr_crapris (Carlos)
+ 
+                   20/06/2018 - Criação da procedure utilizando novas tabelas de grupo
+                              - TBCC_GRUPO_ECONOMICO, TBCC_GRUPO_ECONOMICO_INTEG (Mario - AMcom)
+                                    
     ............................................................................ */
 
     DECLARE
@@ -104,35 +108,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
       vr_dtrefere_aux DATE;       --> Data de referência auxiliar do processo
       vr_dtdrisco   crapris.dtdrisco%TYPE; -- Data da atualização do risco
       vr_dttrfprj   DATE;
-      
+      vr_opt_innivris PLS_INTEGER;
       ------------------------------- CURSORES ---------------------------------
 
       
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-      
+
       --Cadastro de formacao dos grupos economicos
-      CURSOR cr_crapgrp IS
-        SELECT * FROM (SELECT crapgrp.nrctasoc
-                             ,crapgrp.nrdconta
-                             ,crapgrp.innivrge
-                             ,crapgrp.nrdgrupo
-                             ,row_number() OVER(PARTITION BY crapgrp.cdcooper
-                                                            ,crapgrp.nrctasoc 
-                                                    ORDER BY crapgrp.nrctasoc
-                                                            ,crapgrp.nrdconta 
-                                                            ,crapgrp.innivrge
-                                                            ,crapgrp.nrdgrupo) seq
-                       FROM crapgrp
-                      WHERE cdcooper = pr_cdcooper
-                      ORDER BY crapgrp.nrctasoc
-                              ,crapgrp.nrdconta
-                              ,crapgrp.innivrge
-                              ,crapgrp.nrdgrupo) grupo
-        WHERE grupo.seq = 1;
+      CURSOR cr_grupo_econ IS
+        SELECT distinct 
+               gi.nrdconta
+              ,ge.inrisco_grupo
+              ,gi.idgrupo
+          FROM tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi
+         WHERE ge.cdcooper = pr_cdcooper
+           AND gi.idgrupo = ge.idgrupo
+           AND gi.cdcooper = ge.cdcooper
+         ORDER BY gi.nrdconta
+                 ,ge.inrisco_grupo
+                 ,gi.idgrupo;
 
       -- Cadastro de informacoes de central de riscos
-      CURSOR cr_crapris(pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
+      CURSOR cr_crapris(pr_nrctasoc IN crapris.nrdconta%TYPE) IS
         SELECT  /*+ INDEX(crapris CRAPRIS##CRAPRIS1) */
                  crapris.cdcooper
                 ,crapris.dtrefere
@@ -195,323 +194,125 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                   , r.dtdrisco DESC;
         rw_crapris_last cr_crapris_last%ROWTYPE;
 
-        -- Comentado cursor original cr_crapris_last Daniel(AMcom)
-        /*SELECT dtrefere
-              ,innivris
-              ,dtdrisco
-          FROM crapris
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           -- Buscar somente informações do dia anterior - Daniel(AMcom)
-           --AND dtrefere < vr_dtrefere
-           AND dtrefere >= rw_crapdat.dtmvtoan
-           --
-           AND dtrefere <> pr_dtrefere
-           AND inddocto = 1 -- 3020 e 3030
-           AND innivris < 10
-         ORDER BY dtrefere DESC --> Retornar o ultimo gravado
-                 ,innivris DESC  --> Retornar o ultimo gravado
-                 ,dtdrisco DESC;*/--> Retornar o ultimo gravado
+      -- Buscar dados da formação de grupos
+      CURSOR cr_grupo_econ_tbcc(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE) IS  --> Código da cooperativa
+        SELECT  ge.idgrupo
+               ,ge.inrisco_grupo
+          FROM tbcc_grupo_economico ge
+         WHERE ge.cdcooper = pr_cdcooper
+         ORDER BY ge.idgrupo;
 
+      -- Buscas os riscos dos contratos
+      CURSOR cr_grupo_risco(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
+                           ,pr_dtrefere IN crapris.dtrefere%TYPE                  --> Data de referencia
+                           ,pr_idgrupo  IN tbcc_grupo_economico.idgrupo%TYPE) IS  --> Código do Grupo TBCC
+        select ge.cdcooper
+              ,ge.idgrupo
+              ,gi.nrdconta
+              ,ge.inrisco_grupo 
+              ,ri.innivris
+              ,ri.rowid
+          from tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi 
+              ,crapris ri
+         where ge.cdcooper = pr_cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null
+           and ri.dtrefere = pr_dtrefere
+           and ri.cdcooper = gi.cdcooper
+           and ri.nrdconta = gi.nrdconta
+           and ri.inddocto = 1
+           and ge.idgrupo = pr_idgrupo
+         order by ge.inrisco_grupo desc, ge.idgrupo, gi.nrdconta;
 
+      -- Buscar os niveis dos grupos por CPFCGC
+      CURSOR cr_arrasto_risco_grupo(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE) IS --> Código da cooperativa
+        select ge.idgrupo
+              ,ge.inrisco_grupo
+              ,gi.nrdconta
+              ,gi.nrcpfcgc
+              ,decode(ass.dsnivris,' ', 2 ,'AA', 1 ,'A', 2 ,'B', 3 ,'C', 4 ,'D', 5 
+                                  ,'E', 6 ,'F', 7  ,'G', 8 ,'H', 9 ,'HH',10) innivris_ass
+              ,ass.dsnivris
+              ,ass.rowid
+          from tbcc_grupo_economico ge
+              ,tbcc_grupo_economico_integ gi
+              ,crapass ass
+         where ge.cdcooper = pr_cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null
+           and gi.cdcooper = ass.cdcooper
+           and ((ass.inpessoa = 1 and gi.nrcpfcgc = ass.nrcpfcgc)
+            or  (ass.inpessoa = 2 and round(gi.nrcpfcgc,-6) = round(ass.nrcpfcgc,-6) ))
+           and ge.inrisco_grupo <> decode(ass.dsnivris,' ', 2 ,'AA', 1 ,'A', 2 ,'B', 3 ,'C', 4 ,'D', 5 
+                                                      ,'E', 6 ,'F', 7  ,'G', 8 ,'H', 9 ,'HH',10);
 
+      -- Buscar os niveis dos contratos por CPFCGC
+      CURSOR cr_arrasto_risco_contrato(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
+                                      ,pr_dtrefere IN crapris.dtrefere%TYPE) IS              --> Data de referencia
+        select distinct
+               ge.cdcooper
+              ,ge.idgrupo 
+              ,ri.innivris
+              ,decode(ass.dsnivris,' ', 2 ,'AA', 1 ,'A', 2 ,'B', 3 ,'C', 4 ,'D', 5 
+                                  ,'E', 6 ,'F', 7  ,'G', 8 ,'H', 9 ,'HH',10) innivris_ass
+              ,ass.dsnivris
+              ,ass.rowid             
+          from
+                crapass ass
+               ,crapris ri
+               ,tbcc_grupo_economico_integ gi 
+               ,tbcc_grupo_economico ge
+         where ge.cdcooper = pr_cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null
+           and ri.cdcooper = gi.cdcooper
+           and ri.nrdconta = gi.nrdconta
+           and ri.dtrefere = pr_dtrefere
+         --and ri.innivris = 10
+           and ri.inddocto = 1
+           and gi.cdcooper = ass.cdcooper
+           and ((ass.inpessoa = 1 and gi.nrcpfcgc = ass.nrcpfcgc)
+            or  (ass.inpessoa = 2 and round(gi.nrcpfcgc,-6) = round(ass.nrcpfcgc,-6) ))
+           and ri.innivris <> decode(ass.dsnivris,' ', 2 ,'AA', 1 ,'A', 2 ,'B', 3 ,'C', 4 ,'D', 5 
+                                                     ,'E', 6 ,'F', 7  ,'G', 8 ,'H', 9 ,'HH',10);
 
-      PROCEDURE pc_popula_ass_arrasto(pr_cpfcnpj  IN VARCHAR2
-                                     ,pr_inpessoa IN INTEGER
-                                     ,pr_innivris IN INTEGER
-                                     ,pr_des_erro OUT VARCHAR2) IS
-    
-        -- BUSCA TODAS AS CONTAS DE UM CNPJ RAIZ
-        CURSOR cr_cpfcnpj IS
-          SELECT ass.nrdconta, ass.nrcpfcgc
-            FROM crapass ass
-           WHERE ass.cdcooper = pr_cdcooper
-             AND ((pr_inpessoa = 1 AND ass.nrcpfcgc  = to_number(pr_cpfcnpj)) Or
-                  (pr_inpessoa = 2 AND ass.nrcpfcgc >= to_number(pr_cpfcnpj||'000000') 
-                                   AND ass.nrcpfcgc <= to_number(pr_cpfcnpj||'999999')) );
+      -- Buscar os dados do associado que não possuem grupo
+      CURSOR cr_associado_sem_grupo(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE) IS
+        select distinct
+               ge.cdcooper
+              ,ge.idgrupo 
+              ,ass.dsnivris
+              ,ass.nmprimtl
+              ,ass.inpessoa
+              ,ass.nrcpfcgc nrcpfcgc_ass
+              ,ass.nrdconta nrdconta_ass
+              ,ass.rowid             
+          from  crapass ass
+               ,tbcc_grupo_economico_integ gi 
+               ,tbcc_grupo_economico ge
+         where ge.cdcooper = pr_cdcooper
+           and gi.cdcooper = ge.cdcooper
+           and gi.idgrupo = ge.idgrupo
+           and gi.dtexclusao is null
+           and gi.cdcooper = ass.cdcooper
+           and ((ass.inpessoa = 1 and gi.nrcpfcgc = ass.nrcpfcgc)
+            or  (ass.inpessoa = 2 and round(gi.nrcpfcgc,-6) = round(ass.nrcpfcgc,-6) ))
+           and not exists(select 1 
+                            from tbcc_grupo_economico_integ gi2
+                           where gi2.cdcooper = ass.cdcooper
+                             and gi2.nrcpfcgc = ass.nrcpfcgc
+                             and gi2.nrdconta = ass.nrdconta);
 
-    BEGIN
-          
-        -- SE PF, POPULA DIRETO O CPF COM O RISCO (não ha variacoes de cpf)
-        IF pr_inpessoa = 1 THEN
-           --se for maior que ao ja existente, atualiza.
-           IF vr_tab_ass_cpfcnpj.exists(pr_cpfcnpj) THEN
-             IF pr_innivris > vr_tab_risco(vr_tab_ass_cpfcnpj(pr_cpfcnpj)) THEN
-               vr_tab_ass_cpfcnpj(pr_cpfcnpj) := vr_tab_risco_num(pr_innivris);
-             END IF;
-           ELSE
-             vr_tab_ass_cpfcnpj(pr_cpfcnpj) := vr_tab_risco_num(pr_innivris);
-           END IF;
-        ELSE
-          -- SE FOR JURIDICA, PEGA TODAS AS CONTAS DO CNPJ RAIZ(8digitos)
-          FOR rw_cpfcnpj IN cr_cpfcnpj LOOP
-            IF vr_tab_ass_cpfcnpj.exists(rw_cpfcnpj.nrcpfcgc) THEN
-              --se for maior que ao ja existente, atualiza.
-              IF pr_innivris > vr_tab_risco(vr_tab_ass_cpfcnpj(rw_cpfcnpj.nrcpfcgc)) THEN
-            vr_tab_ass_cpfcnpj(rw_cpfcnpj.nrcpfcgc) := vr_tab_risco_num(pr_innivris);
-              END IF;
-            ELSE
-              vr_tab_ass_cpfcnpj(rw_cpfcnpj.nrcpfcgc) := vr_tab_risco_num(pr_innivris);              
-            END IF;
-          END LOOP;
-        END IF;
-        
-      EXCEPTION
-        WHEN vr_exc_fimprg THEN
-          pr_des_erro := 'pc_popula_ass_arrasto --> Erro ao popular arrasto associado.'
-                       ||' PARAM: CPF/CNPJ: ' || pr_cpfcnpj || ' RISCO: ' || pr_innivris;
-
-        WHEN OTHERS THEN
-          pr_des_erro := 'pc_popula_ass_arrasto --> Erro não tratado ao popular arrasto associado.'
-                       ||' PARAM: CPF/CNPJ: ' || pr_cpfcnpj || ' RISCO: ' || pr_innivris
-                       ||' Detalhes: '||sqlerrm;
-      END;
-
-
-
-      -- Rotina gerar o arrasto para CPF/CNPJ
-      PROCEDURE pc_efetua_arrasto_cpfcnpj(pr_des_erro OUT VARCHAR2) IS
-
-        -- Variaveis auxiliares
-        vr_dsmsgerr     VARCHAR2(200);
-        vr_chave_ass    VARCHAR2(14);
-        vr_chave_assris INTEGER;
-        vr_maxrisco     INTEGER:=-10;
-
-        -- LISTAR CONTAS DO GRUPO ECON. QUE ESTÃO COM RISCO MENOR QUE DO GRUPO
-        CURSOR cr_contas_grupo IS
-          SELECT grupo.* 
-            FROM (SELECT crapgrp.nrctasoc
-                        , CASE 
-                             WHEN crapgrp.innivrge > crapgrp.innivris THEN 'GRP'
-                             WHEN crapgrp.innivris > crapgrp.innivrge THEN 'RIS'
-                             ELSE 'IGUAL'
-                          END STATUS
-                        ,ass.inpessoa
-                        ,DECODE(ass.inpessoa
-                                     ,1,to_char(ass.nrcpfcgc,'FM00000000000')
-                                       ,SUBSTR(to_char(ass.nrcpfcgc,'FM00000000000000')
-                                              ,1,8) )   CPF_CNPJ -- Agrupar pela raiz do CNPJ
-                        ,crapgrp.nrcpfcgc
-                        ,crapgrp.nrdconta
-                        ,crapgrp.innivrge
-                        ,crapgrp.innivris
-                        ,crapgrp.nrdgrupo
-                        ,row_number() OVER(PARTITION BY crapgrp.cdcooper
-                                                       ,crapgrp.nrctasoc 
-                                               ORDER BY crapgrp.nrctasoc
-                                                       ,crapgrp.nrdconta 
-                                                       ,crapgrp.innivrge
-                                                       ,crapgrp.nrdgrupo) seq
-                    FROM crapgrp, crapass ass
-                   WHERE crapgrp.cdcooper = pr_cdcooper
-                     AND ass.cdcooper = crapgrp.cdcooper
-                     AND ass.nrdconta = crapgrp.nrctasoc
-                   ORDER BY crapgrp.nrctasoc
-                           ,crapgrp.nrdconta
-                           ,crapgrp.innivrge
-                           ,crapgrp.nrdgrupo) grupo
-          WHERE grupo.seq    = 1       -- APENAS A PRIMEIRA DE UMA CONTA
-            AND grupo.status = 'GRP'   -- APENAS AQUELES QUE TEM O RISCO DO GRUPO MAIOR QUE INNIVRIS
-          ORDER BY nrdgrupo;
-
-        CURSOR cr_crapass(pr_cdcooper NUMBER,
-                          pr_cpf_cnpj NUMBER) IS
-          SELECT ass.nrdconta
-            FROM crapass ass
-           WHERE ass.cdcooper = pr_cdcooper
-             AND ((ass.inpessoa = 1 AND ass.nrcpfcgc  = to_number(pr_cpf_cnpj)) OR
-                  (ass.inpessoa = 2 AND ass.nrcpfcgc >= to_number(pr_cpf_cnpj||'000000')
-                                    AND ass.nrcpfcgc <= to_number(pr_cpf_cnpj||'999999')) );              
-
-        -- Busca todos os riscos que deverão ser arrastados
-        -- É passado apenas a raíz do cnpj, por isso a função
-        CURSOR cr_riscos_cpfcnpj( pr_nrdconta IN crapass.nrdconta%TYPE
-                                 ,pr_innivris IN crapris.innivris%TYPE) IS
-          SELECT  ris.nrdconta
-                 ,ris.innivris
-                 ,ris.dtdrisco
-                 ,ris.nrcpfcgc
-                 ,ris.qtdiaatr
-                 -- CDCOOPER, DTREFERE, NRDCONTA, INNIVRIS, CDMODALI, NRCTREMP, NRSEQCTR, CDVENCTO
-                 ,ris.cdmodali
-                 ,ris.nrctremp
-                 ,ris.nrseqctr
-                 ,rowid
-            FROM crapris ris
-           WHERE ris.cdcooper = pr_cdcooper
-             AND ris.dtrefere = pr_dtrefere
-             AND ris.nrdconta = pr_nrdconta
-             AND ris.inddocto = 1
-             AND ris.vldivida > pr_vlr_arrasto --> Valor dos parâmetros
-             AND ris.innivris < pr_innivris;
-
-        BEGIN
-
-
-        vr_tab_ass_cpfcnpj.DELETE;
-
-
-        -- CONTAS DO GRUPO COM RISCO MENOR QUE O GRUPO (Serão arrastadas)
-        FOR rw_contas_grupo IN cr_contas_grupo LOOP          
-
-          vr_tab_ass_ris.DELETE;
-
-          -- NAO LEVA PARA O PREJUIZO  
-          IF rw_contas_grupo.innivrge = 10 THEN
-            vr_maxrisco := 9;
-          ELSE 
-            vr_maxrisco := rw_contas_grupo.innivrge;
-          END IF;
-
-          -- POPULAR OS VR TAB ASSOCIADOS BASEADO NO CNPJ RAIZ E CPF
-          FOR rw_crapass IN cr_crapass(pr_cdcooper => pr_cdcooper,
-                                       pr_cpf_cnpj => rw_contas_grupo.cpf_cnpj ) LOOP
-                                       
-            vr_tab_ass_ris(rw_crapass.nrdconta).cdcooper := pr_cdcooper;
-            vr_tab_ass_ris(rw_crapass.nrdconta).nrdconta := rw_crapass.nrdconta;
-
-          END LOOP;
-
-          -- PERCORRER TODAS AS CONTAS QUE PRECISAM SER AJUSTADAS
-          vr_chave_assris := vr_tab_ass_ris.FIRST;
-          LOOP
-            EXIT WHEN vr_chave_assris IS NULL;
-
-          -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO  
-            FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrdconta => vr_chave_assris
-                                                     ,pr_innivris => vr_maxrisco) LOOP
-              vr_dttrfprj := NULL;
-              IF vr_maxrisco >= 9 THEN
-                vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
-                                                                     vr_maxrisco,
-                                                                     rw_riscos_cpfcnpj.qtdiaatr,
-                                                                     pr_dtrefere);            
-              END IF;
-            -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
-            BEGIN
-              UPDATE crapris
-                 SET innivris = vr_maxrisco
-                    ,inindris = vr_maxrisco
-                    ,dtdrisco = pr_dtrefere
-                    ,dttrfprj = vr_dttrfprj
-               WHERE rowid = rw_riscos_cpfcnpj.rowid;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'pc_efetua_arrasto_cpfcnpj - '
-                            || 'Erro ao atualizar a data e Risco com base no risco mais elevado --> '
-                            || 'Conta: '    ||rw_riscos_cpfcnpj.nrdconta
-                            ||', Rowid: '   ||rw_riscos_cpfcnpj.rowid
-                            ||'. Detalhes:'||sqlerrm;
-                RAISE vr_exc_fimprg;
-            END;
-
-            -- ATUALIZAR VENCIMENTOS RISCO COM BASE NO MAIOR RISCO
-            BEGIN
-              UPDATE crapvri
-                 SET innivris = vr_maxrisco
-               WHERE cdcooper = pr_cdcooper
-                 AND dtrefere = pr_dtrefere
-                 AND nrdconta = rw_riscos_cpfcnpj.nrdconta
-                 AND cdmodali = rw_riscos_cpfcnpj.cdmodali
-                 AND nrctremp = rw_riscos_cpfcnpj.nrctremp
-                 AND nrseqctr = rw_riscos_cpfcnpj.nrseqctr;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'pc_efetua_arrasto_cpfcnpj - '
-                            || 'Erro ao atualizar Vencimentos Risco com base no risco mais elevado --> '
-                            || 'Conta: '        ||rw_riscos_cpfcnpj.nrdconta
-                            ||', Modalidade: '  ||rw_riscos_cpfcnpj.cdmodali
-                            ||', Nr.Ctr.Emp.: ' ||rw_riscos_cpfcnpj.nrctremp
-                            ||', Seq.Ctr.Emp.: '||rw_riscos_cpfcnpj.nrseqctr
-                            || '. Detalhes:'||sqlerrm;
-                RAISE vr_exc_fimprg;
-            END;
-
-          END LOOP; -- FIM LOOP - CONTRATOS DA CONTA
-            -- Buscar o próximo
-            vr_chave_assris := vr_tab_ass_ris.NEXT(vr_chave_assris);
-
-          END LOOP; -- LOOP DAS CONTAS
-
-
-
-          -- Atualiza participante do Grupo Economico com o valor do arrasto
-          BEGIN
-            -- APENAS DO GRUPO ATUAL
-            UPDATE crapgrp grp
-               SET grp.innivris = vr_maxrisco
-                  ,grp.dsdrisco = vr_tab_risco_num(vr_maxrisco)
-                  ,grp.dtrefere = pr_dtrefere
-             WHERE grp.cdcooper = pr_cdcooper
-               AND grp.nrdgrupo = rw_contas_grupo.nrdgrupo
-               AND grp.nrcpfcgc = rw_contas_grupo.nrcpfcgc
-               AND grp.nrctasoc = rw_contas_grupo.nrctasoc;
-          EXCEPTION
-            WHEN OTHERS THEN
-              --gera critica
-              vr_dscritic := 'pc_efetua_arrasto_cpfcnpj - '
-                           ||'Erro ao atualizar Grupo Economico com base no risco mais elevado. '||
-                             'Erro: '||SQLERRM;
-              RAISE vr_exc_fimprg;
-          END;
-
-
-          -- Atualiza todas as contas do CPF/CNPJ
-          pc_popula_ass_arrasto(rw_contas_grupo.cpf_cnpj
-                               ,rw_contas_grupo.inpessoa
-                               ,vr_maxrisco
-                               ,pr_des_erro => vr_dscritic);
-          -- Se retornou derro
-          IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_fimprg;
-          END IF;
-
-        END LOOP;     -- FIM cr_contas_grupo
-
-
-       -- Atualiza todas as contas do CPF/CNPJ
-        vr_chave_ass := vr_tab_ass_cpfcnpj.FIRST;
-        LOOP
-          EXIT WHEN vr_chave_ass IS NULL;
-
-          BEGIN
-            -- Atualizar utilizar a tabela de-para de texto do nível com base no indice
-            UPDATE crapass
-               SET dsnivris = vr_tab_ass_cpfcnpj(vr_chave_ass)
-             WHERE cdcooper = pr_cdcooper
-               AND nrcpfcgc = to_number(vr_chave_ass);
-
-            -- Buscar o próximo
-            vr_chave_ass := vr_tab_ass_cpfcnpj.NEXT(vr_chave_ass);
-
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'pc_efetua_arrasto_cpfcnpj - '
-                            || 'Erro ao atualizar Risco da Conta com base no risco mais elevado --> '
-                            ||'CPF/CNPJ: '||vr_chave_ass
-                            || '. Detalhes:'||SQLERRM;
-                RAISE vr_exc_fimprg;
-            END;
-
-        END LOOP;
-
-       
-        
-        EXCEPTION
-          WHEN vr_exc_fimprg THEN
-               pr_des_erro := 'pc_efetua_arrasto_cpfcnpj --> Erro ao processar arrasto CPF/CNPJ. Detalhes: '||vr_dscritic;
-          WHEN OTHERS THEN
-               pr_des_erro := 'pc_efetua_arrasto_cpfcnpj --> Erro não tratado ao processar arrasto CPF/CNPJ. Detalhes: '||sqlerrm;
-        END; -- FIM PROCEDURE pc_efetua_arrasto_cpfcnpj
-
-    
+      -- Validar a data do risco    
       PROCEDURE pc_validar_data_risco(pr_des_erro OUT VARCHAR2) IS
 
         -- Variaveis auxiliares
         vr_dsmsgerr     VARCHAR2(200);
         vr_maxrisco     INTEGER:=-10;
-
 
         -- Busca de todos os riscos
         CURSOR cr_crapris (pr_dtrefant IN crapris.dtrefere%TYPE) IS
@@ -549,7 +350,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             -- Utilizar a data atual
             vr_dtrefere_aux := rw_crapdat.dtmvtoan;
           END IF;
-
   
           FOR rw_crapris IN cr_crapris (vr_dtrefere_aux) LOOP
             vr_dttrfprj := NULL;
@@ -573,9 +373,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                'Erro: '||SQLERRM;
                 RAISE vr_exc_fimprg;
             END;
-
           END LOOP;
-
 
         EXCEPTION
           WHEN vr_exc_fimprg THEN
@@ -642,13 +440,99 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
       END IF;  
       
       vr_dtrefere := rw_crapdat.dtmvtolt;
-         
-      FOR rw_crapgrp IN cr_crapgrp -- busca grupos economicos
+
+      -- Chamar rotina de geração do arrasto por CPF/CNPJ
+      --Efetuar arrasto do risco levando em consideração nrcpfcgc do grupo
+      FOR rw_arrasto_risco_grupo in cr_arrasto_risco_grupo (pr_cdcooper => pr_cdcooper)
+      LOOP           
+        -- Atualizar o risco
+        begin
+          update crapass
+             set dsnivris = vr_tab_risco_num(rw_arrasto_risco_grupo.inrisco_grupo)
+           where rowid = rw_arrasto_risco_grupo.rowid;
+        exception
+          WHEN OTHERS THEN
+            --gera critica
+            vr_dscritic := 'Erro ao atualizar CRAPASS com o risco do grupo. '||
+                           'Erro: '||SQLERRM;
+            RAISE vr_exc_fimprg;
+        end;
+      END LOOP;
+
+      --Efetua arrasto do risco levando em consideração nrcpfcgc do grupo
+      FOR rw_arrasto_risco_contrato in cr_arrasto_risco_contrato (pr_cdcooper => pr_cdcooper
+                                                                 ,pr_dtrefere => pr_dtrefere)
+      LOOP      
+        -- Atualizar o risco
+        begin
+          update crapass
+             set dsnivris = vr_tab_risco_num(rw_arrasto_risco_contrato.innivris)
+           where rowid = rw_arrasto_risco_contrato.rowid;
+        exception
+          WHEN OTHERS THEN
+            --gera critica
+            vr_dscritic := 'Erro ao atualizar CRAPASS com o risco do contrato. '||
+                           'Erro: '||SQLERRM;
+            RAISE vr_exc_fimprg;
+        end;
+      END LOOP;
+
+      --Efetua arrasto do risco levando em consideração nrcpfcgc do grupo
+      FOR rw_associado_sem_grupo in cr_associado_sem_grupo (pr_cdcooper => pr_cdcooper)  --> Código da cooperativa
       LOOP
-        EXIT WHEN cr_crapgrp%NOTFOUND;
-        FOR rw_crapris IN cr_crapris(rw_crapgrp.nrctasoc) -- busca controle de riscos
-        LOOP
-          EXIT WHEN cr_crapris%NOTFOUND;          
+        -- Insere cooperado no grupo
+        BEGIN
+          INSERT INTO tbcc_grupo_economico_integ
+                     (idgrupo
+                     ,nrcpfcgc
+                     ,cdcooper
+                     ,nrdconta
+                     ,tppessoa
+                     ,tpcarga
+                     ,tpvinculo
+                     ,peparticipacao
+                     ,dtinclusao
+                     ,cdoperad_inclusao
+                     ,nmintegrante)
+              VALUES (rw_associado_sem_grupo.idgrupo
+                     ,rw_associado_sem_grupo.nrcpfcgc_ass
+                     ,pr_cdcooper
+                     ,rw_associado_sem_grupo.nrdconta_ass
+                     ,rw_associado_sem_grupo.inpessoa
+                     ,2 -- Carga JOB
+                     ,7
+                     ,null
+                     ,TRUNC(SYSDATE)
+                     ,1
+                     ,rw_associado_sem_grupo.nmprimtl);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao gravar o integrante do grupo economico (conta): '||SQLERRM;
+            RAISE vr_exc_fimprg;
+        END;
+      END LOOP;
+ 
+      --gera log de sucesso
+      vr_dscritic := 'Arrasto riscos CPF/CNPJ efetuada com sucesso.';
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                 || vr_cdprogra || ' --> '
+                                                 || vr_dscritic );
+
+      pc_validar_data_risco(pr_des_erro => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_fimprg;
+      END IF;
+         
+      --
+      -- Inicio procedimento de Grupo e Risco/Grupo pela tabela TBCC_GRUPO_ECONOMICO ----
+      --
+      FOR rw_grupo_econ IN cr_grupo_econ -- busca grupos economicos
+      LOOP
+        --EXIT WHEN cr_grupo_econ%NOTFOUND;
+        FOR rw_crapris IN cr_crapris(rw_grupo_econ.nrdconta) -- busca controle de riscos
+        LOOP          
            --busca vencimento de riscos
           FOR rw_crapvri IN cr_crapvri( rw_crapris.cdcooper
                                        ,rw_crapris.dtrefere
@@ -659,8 +543,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                        ,rw_crapris.nrseqctr
                                        )
           LOOP
-            EXIT WHEN cr_crapvri%NOTFOUND;
-            
             -- Regra para carga de data para o cursor
             -- Se for rotina mensal - Daniel(AMcom)
             IF to_char(rw_crapdat.dtmvtoan, 'MM') <> to_char(rw_crapdat.dtmvtolt, 'MM') THEN
@@ -683,12 +565,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             IF cr_crapris_last%FOUND THEN
               -- Se a data de refência é diferente do ultimo dia do mês anterior
               -- OU o nível deste registro é diferente do nível do risco no cursor principal
-              -- e o nível do risco principal seja diferente de HH(10)
+              --    e o nível do risco principal seja diferente de HH(10)
               -- ATENCAO: caso seja alterada esta regra, ajustar em crps310_i tb
               --
               -- Comentado comparativo de datas(dtrefere <> dtultdma), pois esta condição sempre irá existir - Daniel(AMcom)
-              IF /*rw_crapris_last.dtrefere <> rw_crapdat.dtultdma
-              OR */(rw_crapris_last.innivris <> rw_crapgrp.innivrge /*AND rw_crapris.innivris <> 10*/) THEN
+              IF (rw_crapris_last.innivris <> rw_grupo_econ.inrisco_grupo) THEN
                 -- Utilizar a data de referência do processo
                 vr_dtdrisco := vr_dtrefere;
               ELSE
@@ -708,9 +589,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             CLOSE cr_crapris_last;
             
             vr_dttrfprj := NULL;
-            IF rw_crapgrp.innivrge >= 9 THEN
+            IF rw_grupo_econ.inrisco_grupo >= 9 THEN
               vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
-                                                                   rw_crapgrp.innivrge,
+                                                                   rw_grupo_econ.inrisco_grupo,
                                                                    rw_crapris.qtdiaatr,
                                                                    vr_dtdrisco);            
             END IF;            
@@ -718,7 +599,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             -- atualiza controle de riscos.
             BEGIN
               UPDATE  crapris
-              SET     crapris.innivris = rw_crapgrp.innivrge,
+              SET     crapris.innivris = rw_grupo_econ.inrisco_grupo,
+                      crapris.inindris = rw_grupo_econ.inrisco_grupo,
                       crapris.dtdrisco = vr_dtdrisco,
                       crapris.dttrfprj = vr_dttrfprj
               WHERE   cdcooper         = rw_crapris.cdcooper       
@@ -735,8 +617,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             END;    
             BEGIN -- atualiza vencimento dos riscos
               UPDATE crapvri
-                 SET crapvri.innivris = rw_crapgrp.innivrge
-               WHERE ROWID = rw_crapvri.rowid;
+              SET     crapvri.innivris = rw_grupo_econ.inrisco_grupo
+              WHERE   ROWID = rw_crapvri.rowid;
             EXCEPTION
               WHEN OTHERS THEN
                 --gera critica
@@ -750,9 +632,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         -- Atualiza Grupo Economico
         BEGIN          
           UPDATE crapris
-             SET nrdgrupo = rw_crapgrp.nrdgrupo
+             SET nrdgrupo = rw_grupo_econ.idgrupo
            WHERE cdcooper = pr_cdcooper
-             AND nrdconta = rw_crapgrp.nrctasoc
+             AND nrdconta = rw_grupo_econ.nrdconta
              AND dtrefere = pr_dtrefere;
         EXCEPTION
           WHEN OTHERS THEN
@@ -763,6 +645,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
         END;
 
       END LOOP;
+
       --gera log de sucesso
       vr_dscritic := 'Atualizacao dos riscos efetuada com sucesso.';
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -771,27 +654,50 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                                    || vr_cdprogra || ' --> '
                                                    || vr_dscritic );
 
+      --Busca grupos economicos
+      --Efetua arrasto do risco levando em consideração as nrdconta
+      FOR rw_grupo_econ_tbcc in cr_grupo_econ_tbcc(pr_cdcooper => pr_cdcooper) LOOP
 
-      -- Chamar rotina de geração do arrasto por CPF/CNPJ
-      pc_efetua_arrasto_cpfcnpj(pr_des_erro => vr_dscritic);
-      -- Se retornou derro
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_fimprg;
-      END IF;
-      --gera log de sucesso
-      vr_dscritic := 'Arrasto riscos CPF/CNPJ efetuada com sucesso.';
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
+        -- Zerar valores da iteração anterior
+        vr_opt_innivris := -1;
 
+        --Busca grupos e riscos
+        FOR rw_grupo_risco in cr_grupo_risco (pr_cdcooper => pr_cdcooper
+                                             ,pr_dtrefere => pr_dtrefere
+                                             ,pr_idgrupo  => rw_grupo_econ_tbcc.idgrupo) LOOP
+          -- Tratar o risco máximo
+          if vr_opt_innivris = -1 then           
+            if rw_grupo_risco.inrisco_grupo = 10 then
+              vr_opt_innivris := 9;
+            else
+              vr_opt_innivris := rw_grupo_risco.innivris; 
+            end if;
+          end if;
 
+          --Verificar se autiza o risco
+          if vr_opt_innivris <> rw_grupo_risco.innivris and
+             rw_grupo_risco.innivris <> 10 then
+            
+            -- Atualizar o risco
+            begin
+              update crapris
+                 set innivris = vr_opt_innivris
+                    ,inindris = vr_opt_innivris
+                    ,dtdrisco = pr_dtrefere
+               where rowid = rw_grupo_risco.rowid;
+            exception
+              WHEN OTHERS THEN
+                --gera critica
+                vr_dscritic := 'Erro ao atualizar Grupo Economico TBCC das informacoes da central de risco(crapris). '||
+                               'Erro: '||SQLERRM;
+                RAISE vr_exc_fimprg;
+            end;
+          end if;
+        END LOOP;
 
-      pc_validar_data_risco(pr_des_erro => vr_dscritic);
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_fimprg;
-      END IF;
+      END LOOP;
+
+      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_fimprg THEN        

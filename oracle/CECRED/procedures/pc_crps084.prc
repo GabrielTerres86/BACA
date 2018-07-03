@@ -110,7 +110,10 @@ BEGIN
              17/08/2015 - Ajuste no calculo do Risco, Projeto de Provisao. (James)
              
              21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
-                          (Carlos Rafael Tanholi).             
+                          (Carlos Rafael Tanholi).
+                          
+             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+        
   ............................................................................. */
 
 DECLARE
@@ -201,7 +204,7 @@ DECLARE
   --Definicao dos tipos de tabelas de memoria
   TYPE typ_tab_tot       IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
   TYPE typ_tab_cpf       IS TABLE OF typ_reg_cpf INDEX BY VARCHAR2(51);
-  TYPE typ_tab_crapgrp   IS TABLE OF crapgrp.nrdgrupo%type INDEX BY VARCHAR2(40);
+  TYPE typ_tab_grupo_economico IS TABLE OF tbcc_grupo_economico.idgrupo%type INDEX BY VARCHAR2(40);
   TYPE typ_tab_relato    IS TABLE OF typ_reg_relato INDEX BY VARCHAR2(200);
   TYPE typ_tab_crapass   IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
   TYPE typ_tab_crapcdb   IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
@@ -211,22 +214,22 @@ DECLARE
   TYPE typ_tab_crapljd   IS TABLE OF NUMBER INDEX BY VARCHAR2(85);
   
   --Definicao das tabelas de memoria
-  vr_tab_devedores    typ_tab_devedores;
-  vr_tab_dev_conta    typ_tab_devedores;
-  vr_tab_dsdrisco     typ_tab_dsdrisco;
-  vr_tab_crapass      typ_tab_crapass;
-  vr_tab_crapgrp      typ_tab_crapgrp;
-  vr_tab_relato       typ_tab_relato;
-  vr_tab_crapepr      typ_tab_tot;
-  vr_tab_crapebn      typ_tab_tot;
-  vr_tab_craptdb      typ_tab_tot;
-  vr_tab_crapris      typ_tab_tot;
-  vr_tab_crapcdb      typ_tab_crapcdb;
-  vr_tab_crapljt      typ_tab_crapljt;
-  vr_tab_crapljd      typ_tab_crapljd;
-  vr_tab_crapcob      typ_tab_crapljd;
-  vr_tab_cpf          typ_tab_cpf;
-  
+  vr_tab_devedores       typ_tab_devedores;
+  vr_tab_dev_conta       typ_tab_devedores;
+  vr_tab_dsdrisco        typ_tab_dsdrisco;
+  vr_tab_crapass         typ_tab_crapass;
+  vr_tab_grupo_economico typ_tab_grupo_economico;
+  vr_tab_relato          typ_tab_relato;
+  vr_tab_crapepr         typ_tab_tot;
+  vr_tab_crapebn         typ_tab_tot;
+  vr_tab_craptdb         typ_tab_tot;
+  vr_tab_crapris         typ_tab_tot;
+  vr_tab_crapcdb         typ_tab_crapcdb;
+  vr_tab_crapljt         typ_tab_crapljt;
+  vr_tab_crapljd         typ_tab_crapljd;
+  vr_tab_crapcob         typ_tab_crapljd;
+  vr_tab_cpf             typ_tab_cpf;
+
   
   --Cursores da rotina crps323
   
@@ -497,16 +500,29 @@ DECLARE
       from cte where rn = 1;  
   
    --Selecionar informacoes dos grupos
-   CURSOR cr_crapgrp (pr_cdcooper IN crapgrp.cdcooper%type) IS
-     SELECT  crapgrp.nrctasoc
-            ,crapgrp.nrcpfcgc
-            ,crapgrp.nrdgrupo
-            ,crapgrp.dsdrisco
-            ,crapgrp.innivris
-            ,crapgrp.innivrge
-     FROM crapgrp
-     WHERE crapgrp.cdcooper = pr_cdcooper;
-   rw_crapgrp cr_crapgrp%ROWTYPE;
+   CURSOR cr_grupo_economico (pr_cdcooper IN tbcc_grupo_economico.cdcooper%type) IS
+     SELECT  gi.nrdconta
+            ,gi.nrcpfcgc
+            ,gi.idgrupo
+            , decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
+                                      ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') dsdrisco
+            ,ge.inrisco_grupo innivris
+            ,ge.inrisco_grupo innivrge
+      FROM tbcc_grupo_economico        ge
+          ,tbcc_grupo_economico_integ  gi
+     WHERE ge.cdcooper = pr_cdcooper
+       AND gi.cdcooper = ge.cdcooper
+       AND gi.idgrupo = ge.idgrupo;
+   rw_grupo_economico cr_grupo_economico%ROWTYPE;
+	   
+     --SELECT  crapgrp.nrctasoc
+     --       ,crapgrp.nrcpfcgc
+     --       ,crapgrp.nrdgrupo
+     --       ,crapgrp.dsdrisco
+     --       ,crapgrp.innivris
+     --       ,crapgrp.innivrge
+     --FROM crapgrp
+     --WHERE crapgrp.cdcooper = pr_cdcooper;
   
   --Tipo do Cursor de risco para Bulk Collect
   TYPE typ_crapris IS TABLE of cr_crapris_teste%ROWTYPE;
@@ -550,7 +566,7 @@ DECLARE
   vr_index_dev      VARCHAR2(25);
   vr_index_relato   VARCHAR2(200);
   vr_index_cpf      VARCHAR2(51);
-  vr_index_crapgrp  VARCHAR2(40);
+  vr_index_grupo_economico  VARCHAR2(40);
   vr_index_crapljt  VARCHAR2(60);
   vr_index_crapljd  VARCHAR2(85);
   
@@ -589,7 +605,7 @@ DECLARE
     vr_tab_crapebn.DELETE;
     vr_tab_craptdb.DELETE;
     vr_tab_crapass.DELETE;
-    vr_tab_crapgrp.DELETE;
+    vr_tab_grupo_economico.DELETE;
     vr_tab_relato.DELETE;
     vr_tab_crapcdb.DELETE;
     vr_tab_crapljt.DELETE;
@@ -1330,11 +1346,11 @@ DECLARE
     END LOOP;
  
     --Carregar tabela de memoria de emprestimos bndes
-    FOR rw_crapgrp IN cr_crapgrp (pr_cdcooper => pr_cdcooper) LOOP
+    FOR rw_grupo_economico IN cr_grupo_economico (pr_cdcooper => pr_cdcooper) LOOP
       --Montar Indice para acesso tabela memoria
-      vr_index_crapgrp:= lpad(rw_crapgrp.nrctasoc,10,'0')||
-                         lpad(rw_crapgrp.nrcpfcgc,25,'0');
-      vr_tab_crapgrp(vr_index_crapgrp):= rw_crapgrp.nrdgrupo;
+      vr_index_grupo_economico:= lpad(rw_grupo_economico.nrdconta,10,'0')||
+                                 lpad(rw_grupo_economico.nrcpfcgc,25,'0');
+      vr_tab_grupo_economico(vr_index_grupo_economico):= rw_grupo_economico.idgrupo;
     END LOOP;
  
     --Carregar tabela de memoria de juros de titulos
@@ -1628,12 +1644,12 @@ DECLARE
           --Informacoes do Grupo Economico
           vr_nrdgrupo:= 0;
           --Montar indice para grupo
-          vr_index_crapgrp:= lpad(rw_crapsld.nrdconta,10,'0')||
-                             lpad(vr_tab_crapass(rw_crapsld.nrdconta).nrcpfcgc,25,'0');
+          vr_index_grupo_economico:= lpad(rw_crapsld.nrdconta,10,'0')||
+                                     lpad(vr_tab_crapass(rw_crapsld.nrdconta).nrcpfcgc,25,'0');
           --Se existir o grupo
-          IF vr_tab_crapgrp.EXISTS(vr_index_crapgrp) THEN
+          IF vr_tab_grupo_economico.EXISTS(vr_index_grupo_economico) THEN
             --utilizar o grupo encontrado
-            vr_nrdgrupo:= vr_tab_crapgrp(vr_index_crapgrp);
+            vr_nrdgrupo:= vr_tab_grupo_economico(vr_index_grupo_economico);
           END IF;
 
           vr_set_nrgrpeco:= vr_nrdgrupo;

@@ -217,9 +217,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                09/01/2018 - #826598 Concatenação da crítica no parâmetro de retorno do crps (Carlos)
 			   
-			   01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
+               01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
                             feitos na CRAPLEM e parametrizados na tela PARCYB.
-							Zerar o saldo devedor de registros que tenha sido efetuado acordo.
+                            Zerar o saldo devedor de registros que tenha sido efetuado acordo.
                             Heitor (Mouts) - Chamado 798744
 
                27/02/2018 - Enviar registros da LCM somente para TR, alguns historicos especificos e que conseguimos filtrar
@@ -227,9 +227,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             Ajustes no envio de pagamentos de conta corrente.
                             Heitor (Mouts)
 
-			   26/04/2018 - Enviar registro da LCM do historico 2386 - Recuperacao de prejuizo, pois na tabela CRAPLEM ele se divide
+               26/04/2018 - Enviar registro da LCM do historico 2386 - Recuperacao de prejuizo, pois na tabela CRAPLEM ele se divide
                             entre alguns historicos que nao devem ser enviados.
-							Heitor (Mouts) - Prj 324.
+                            Heitor (Mouts) - Prj 324.
+
+               26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+
      ............................................................................. */
 
      DECLARE
@@ -2568,13 +2571,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            rw_crapsld cr_crapsld%ROWTYPE;
 
            --Informações de Estouros
-           CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
-                            ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
-             SELECT crapgrp.dsdrisgp
-               FROM crapgrp
-              WHERE crapgrp.cdcooper = pr_cdcooper
-                AND crapgrp.nrctasoc = pr_nrctasoc;
-           rw_crapgrp cr_crapgrp%ROWTYPE;
+           --Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
+           CURSOR cr_grupo_economico(pr_cdcooper IN tbcc_grupo_economico_integ.cdcooper%TYPE
+                                    ,pr_nrdconta IN tbcc_grupo_economico_integ.nrdconta%TYPE) IS
+             SELECT decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
+                                            ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') dsdrisgp
+               FROM tbcc_grupo_economico        ge
+                   ,tbcc_grupo_economico_integ  gi
+              WHERE ge.cdcooper = pr_cdcooper
+                AND gi.cdcooper = ge.cdcooper
+                AND gi.idgrupo = ge.idgrupo
+                AND gi.nrdconta = pr_nrdconta;
+             --SELECT crapgrp.dsdrisgp
+             --  FROM crapgrp
+             -- WHERE crapgrp.cdcooper = pr_cdcooper
+             --   AND crapgrp.nrctasoc = pr_nrctasoc;
+           rw_grupo_economico cr_grupo_economico%ROWTYPE;
 
            --Selecionar Cadastro Cyber
            CURSOR cr_crapcyc (pr_cdcooper IN crapcyc.cdcooper%type
@@ -2598,7 +2610,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_qtddtdev crapsld.qtddtdev%TYPE; -- Estouros
            vr_inlbacen crapass.inlbacen%TYPE; -- CCF
            vr_inrisctl crapass.inrisctl%TYPE; -- Risco do Cooperado
-           vr_dsdrisgp crapgrp.dsdrisgp%TYPE; -- Risco do Grupo Econômico
+           vr_dsdrisgp crapass.dsnivris%TYPE; -- Risco do Grupo Econômico
            vr_dtdpagto crapepr.dtdpagto%TYPE; -- Data de Pagamento
            vr_tpemprst crapepr.tpemprst%TYPE; -- Produto
            vr_vldocet  crawepr.percetop%TYPE; -- CET
@@ -2665,13 +2677,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            CLOSE cr_crapsld;
 
            -- Buscar as informações do Risco do Grupo economico
-           OPEN cr_crapgrp(pr_cdcooper => pr_cdcooper
-                          ,pr_nrctasoc => pr_nrdconta);
-           FETCH cr_crapgrp INTO rw_crapgrp;
-           IF cr_crapgrp%FOUND THEN
-             vr_dsdrisgp:= rw_crapgrp.dsdrisgp;
+           OPEN cr_grupo_cconomico(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta);
+           FETCH cr_grupo_cconomico INTO rw_grupo_cconomico;
+           IF cr_grupo_cconomico%FOUND THEN
+             vr_dsdrisgp:= rw_grupo_cconomico.dsdrisgp;
            END IF;
-           CLOSE cr_crapgrp;
+           CLOSE cr_grupo_cconomico;
 
            -- Selecionar Cadastro Cyber
            OPEN cr_crapcyc(pr_cdcooper => pr_cdcooper
