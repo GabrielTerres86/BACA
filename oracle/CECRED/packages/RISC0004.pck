@@ -834,7 +834,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   -- Busca risco final para uma conta na TBRISCO_CENTRAL_OCR
   CURSOR cr_risco_final(pr_nrdconta tbrisco_central_ocr.nrdconta%TYPE
                       , pr_dtrefere tbrisco_central_ocr.dtrefere%TYPE) IS
-  SELECT DISTINCT inrisco_final
+  SELECT DISTINCT nvl(inrisco_final, 2)
     FROM tbrisco_central_ocr ocr
    WHERE ocr.cdcooper = pr_cdcooper
      AND ocr.nrdconta = pr_nrdconta
@@ -886,7 +886,7 @@ BEGIN
   OPEN cr_tab;
   FETCH cr_tab INTO rw_tab;
   CLOSE cr_tab;
-  vr_vlarrast := 0; --TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
+  vr_vlarrast := TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
 
   -- Percorre os dados carregados da CRAPRIS
   FOR rw_crapris
