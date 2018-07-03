@@ -299,7 +299,10 @@ IF  par_idrelato = 1 OR
                                                 "</nrctrlim><dsemitnt>" +
                                                 tt-consulta-blt.dsemitnt + 
                                                 "</dsemitnt><dtdocmto>" +
-                                                 STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +                                               
+                                               (IF tt-consulta-blt.dtdocmto <> ? THEN
+                                                 STRING(tt-consulta-blt.dtdocmto, "99/99/9999") 
+                                                ELSE
+                                                 "") +
                                                 "</dtdocmto></boleto>".            
                     END.
                 ELSE
