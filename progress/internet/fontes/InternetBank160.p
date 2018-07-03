@@ -23,6 +23,7 @@ CREATE WIDGET-POOL.
                                                                          
 DEF INPUT PARAM par_cdcooper AS INTE                                    NO-UNDO.
 DEF INPUT PARAM par_nrdconta AS INTE                                    NO-UNDO.
+DEF INPUT PARAM par_idseqttl AS INTE                                    NO-UNDO.
 DEF INPUT PARAM par_nrrecben AS INTE                                    NO-UNDO.
 DEF INPUT PARAM par_dtmescom AS CHAR                                    NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                   NO-UNDO.
@@ -50,7 +51,13 @@ RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
                    aux_ponteiro = PROC-HANDLE
                    ("SELECT DISTINCT 1 FROM tbinss_dcb dcb " +
                                       "WHERE dcb.cdcooper = " + STRING(par_cdcooper) +
-                                      "  AND dcb.nrdconta = " + STRING(par_nrdconta)).
+                                      "  AND dcb.nrdconta = " + STRING(par_nrdconta) + 
+						        " UNION " +
+						        "SELECT DISTINCT 1 FROM crapdbi dbi, crapttl ttl " +
+										                  "WHERE ttl.cdcooper = " + STRING(par_cdcooper) +
+                                      "  AND ttl.nrdconta = " + STRING(par_nrdconta) + 
+                                      "  AND ttl.idseqttl = " + STRING(par_idseqttl) +
+                                      "  AND dbi.nrcpfcgc = ttl.nrcpfcgc").                             
 
 FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
    ASSIGN aux_flgbinss = INT(proc-text).
