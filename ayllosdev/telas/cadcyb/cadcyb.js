@@ -977,13 +977,12 @@ function btnExcluir() {
 }
 
 function excluirRegistro() {
-	
 	for(x=0;x<arrAssociado.length;x++) {
 		if  ( (arrAssociado[x].cdorigem == glbTabCdorigem) && 
 			  (arrAssociado[x].nrdconta == glbTabNrdconta) && 
 			  (arrAssociado[x].nrctremp == glbTabNrctremp) && 
 			  (arrAssociado[x].nrborder == glbTabNrborder) && 
-			  (arrAssociado[x].nrtitulo == glbTabNrtitulo) ) {
+			  (arrAssociado[x].nrdocmto == glbTabNrtitulo) ) {
 			arrAssociado.splice(x,1);
 		}		
 	}
