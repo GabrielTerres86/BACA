@@ -3346,10 +3346,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
              con.tparrecd,
              lft.vllanmto,
              lft.nrautdoc,
-             pro.dscedent
+             nvl(TRIM(lcm.dscedent), pro.dscedent) dscedent
         FROM crappro pro,
              crapcon con,
-             craplft lft      
+             craplft lft,
+             craplcm lcm      
        WHERE pro.nrseqaut = lft.nrautdoc
          AND pro.dtmvtolt = lft.dtmvtolt
          AND pro.cdcooper = lft.cdcooper
@@ -3357,6 +3358,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND lft.cdcooper = con.cdcooper(+)
          AND lft.cdempcon = con.cdempcon(+)
          AND lft.cdsegmto = con.cdsegmto(+)
+         AND pro.cdcooper = lcm.cdcooper
+         AND pro.dtmvtolt = lcm.dtmvtolt
+         AND pro.nrdconta = lcm.nrdconta
+         AND pro.nrdocmto = lcm.nrdocmto         
+         AND pro.vldocmto = lcm.vllanmto
          AND lft.idanafrd = pr_idanalis
          AND lft.cdcooper = pr_cdcooper
          AND lft.nrdconta = pr_nrdconta;                
@@ -8211,7 +8217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_exc_erro EXCEPTION;    
     
     vr_hrlimope NUMBER;
-    vr_dhoperac DATE;
+    vr_dhoperac TIMESTAMP;
     vr_fldiauti INTEGER;  --Idenrifica se é dia util
     
   BEGIN
@@ -8272,6 +8278,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --> Calcular tempo limite
         pr_dhlimana := vr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
         pr_qtsegret := rw_afrainter.qtdminutos_retencao * 60;
+        
+        --> Caso nao for dia util
+        IF vr_fldiauti = 0 THEN
+          --Calcular a quantidade de segundos do dia da operacao
+          -- ate o dia de limite da analise
+          pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
+                          to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                         ) * 86400;
+        
+        END IF;
       
       --> Fixo   
       ELSIF rw_afraprm.tpretencao = 2 THEN
@@ -8282,7 +8298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       --> Limite da operacao    
@@ -8316,7 +8332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       END IF;
