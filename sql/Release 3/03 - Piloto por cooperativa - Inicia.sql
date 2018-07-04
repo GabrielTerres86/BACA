@@ -127,6 +127,19 @@ BEGIN
 
   /*Bloqueia a tela LANBDT do ayllos caracter*/
   UPDATE craptel SET FLGTELBL = 0 WHERE nmdatela = 'LANBDT' AND cdcooper = pr_cdcooper;
-
+  
+  /* Atualiza o saldo devedor dos títulos de borderôs em aberto que foram liberados no processo antigo*/
+  UPDATE craptdb
+     SET vlsldtit = vltitulo
+   WHERE cdcooper = pr_cdcooper
+     AND dtlibbdt IS NOT NULL
+     AND insittit = 4
+     AND nrborder IN (SELECT nrborder 
+                        FROM crapbdt 
+                       WHERE cdcooper = pr_cdcooper
+                         AND insitbdt = 3
+                         AND dtlibbdt IS NOT NULL
+                         AND flverbor = 0);
+  
   COMMIT;
 END;
