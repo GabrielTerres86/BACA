@@ -15837,7 +15837,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - AMcom
-    Data     : Fevereiro/2015                           Ultima atualizacao: 05/12/2016
+    Data     : Fevereiro/2015                           Ultima atualizacao: 04/07/2018
   
     Dados referentes ao programa:
    
@@ -15872,7 +15872,11 @@ create or replace package body cecred.INSS0001 as
                                                
                  16/06/2017 - Codigo 1 onde na rotina final faz de para gerar 4 alerta - (Belli Envolti) Ch 664301
 
-                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
+                 23/06/2017 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
+                 
+                 04/07/2018 - Tratamento para quando a data de vencimento da prova de vida na nossa base de dados
+                              for menor que a data retornada no xml atualizar a data da base de dados para evitar
+                              messagem de erro de que a prova de vida ainda nao foi realizada (Tiago PRB0040088)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -16008,6 +16012,15 @@ create or replace package body cecred.INSS0001 as
        AND crapenc.tpendass = pr_tpendass;
     rw_crapenc cr_crapenc%ROWTYPE;        
 
+
+    CURSOR cr_inssdcb(pr_nrrecben tbinss_dcb.nrrecben%TYPE)  IS
+      SELECT dcb.id_dcb, 
+             dcb.nrrecben,
+             dcb.dtvencpv
+        FROM tbinss_dcb dcb
+       WHERE dcb.nrrecben = pr_nrrecben;   
+    rw_inssdcb cr_inssdcb%ROWTYPE;    
+
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000); 
@@ -16035,6 +16048,8 @@ create or replace package body cecred.INSS0001 as
     vr_dig       VARCHAR2(1);
     vr_crapenc   BOOLEAN:=FALSE;
     vr_auxnmarq  VARCHAR2(30);
+    vr_dtvencpv  tbinss_dcb.dtvencpv%TYPE;
+    
     
     --Variaveis de Indice
     vr_index PLS_INTEGER;
@@ -16633,6 +16648,31 @@ create or replace package body cecred.INSS0001 as
                       IF instr(xmldom.getNodeValue(vr_nodo),'4713') = 0 THEN
                         --Data Vencimento Prova Vida
                         pr_tab_beneficiario(vr_index).dtdvenci:= to_date(xmldom.getNodeValue(vr_nodo),'YYYY-MM-DD-HH24:MI');
+                        
+                        --Este trecho de codigo serve pra atualizar a data de vencimento
+                        --da prova de vida pois em certas situações a data da base de dados
+                        --divergia com o que tinha no xml                   
+                        OPEN cr_inssdcb(pr_nrrecben => pr_nrrecben);
+                        FETCH cr_inssdcb INTO rw_inssdcb;                    
+                        
+                        IF cr_inssdcb%FOUND THEN
+                          vr_dtvencpv := to_date(xmldom.getNodeValue(vr_nodo),'YYYY-MM-DD-HH24:MI');
+                          IF rw_inssdcb.dtvencpv < vr_dtvencpv THEN
+                        
+                            BEGIN
+                              UPDATE tbinss_dcb
+                                 SET tbinss_dcb.dtvencpv = vr_dtvencpv
+                               WHERE tbinss_dcb.nrrecben = rw_inssdcb.nrrecben;
+                            EXCEPTION
+                              WHEN OTHERS THEN
+                                vr_dscritic:= 'Nao foi possivel atualizar Data Vencimento do beneficio '||TO_CHAR(pr_nrrecben);
+                                RAISE vr_exc_saida;                              
+                            END;
+                            
+                          END IF;
+                          
+                        END IF;
+                        --fim atualizacao data vencimento
                       END IF;
 
                     WHEN 'DataAtualizacao' THEN
