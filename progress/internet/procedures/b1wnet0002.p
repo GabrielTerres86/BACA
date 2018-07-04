@@ -3285,15 +3285,7 @@ PROCEDURE permissoes-menu-mobile:
     
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 603. /* RESGATE APLICACAO*/
-           tt-itens-menu-mobile.flcreate = aux_flgresga.  
-    
-    FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
-							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
-    
-    IF crapass.idastcjt = 1 OR AVAILABLE crapopi THEN
-      DO:
-          tt-itens-menu-mobile.flcreate = TRUE.
-      END.
+           tt-itens-menu-mobile.flcreate = aux_flgresga.
     
   RETURN "OK".
     

@@ -10983,10 +10983,8 @@ create or replace package body cecred.PAGA0002 is
       RAISE vr_exc_erro;
     END IF;
   
-    -- Extrair campos do codigo de barras para avaliação
+    -- Extrair tipo do codigo de barras
     vr_idprodut := SUBSTR(pr_cdbarras,  1, 1);
-    vr_cdsegmto := SUBSTR(pr_cdbarras,  2, 1);
-    vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     
     pr_tpdpagto := 0;
     
@@ -10995,28 +10993,10 @@ create or replace package body cecred.PAGA0002 is
       pr_tpdpagto := 1; --> Titulo    
       
     ELSE
-    
-      --> Verificar convenio 
-      OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
-                      ,pr_cdempcon => vr_cdempcon
-                      ,pr_cdsegmto => vr_cdsegmto);
-      FETCH cr_crapcon INTO rw_crapcon;
-      IF cr_crapcon%NOTFOUND THEN
       
-        CLOSE cr_crapcon;
-        vr_dscritic:= 'Empresa nao Conveniada '||vr_cdsegmto ||'/'||vr_cdempcon;
-        RAISE vr_exc_erro;
-      ELSE      
-        CLOSE cr_crapcon;
-        
-        --> Internet/Mobile
-        IF pr_cdcanal IN (3,10)   AND 
-           rw_crapcon.flginter = 0 THEN --false
-          vr_dscritic:= 'Convenio nao habilitado para internet.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;        
-      END IF; 
+      -- Extrair campos do codigo de barras para avaliação
+      vr_cdsegmto := SUBSTR(pr_cdbarras,  2, 1);
+      vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     
       --> Se for diferente de tributos
       IF vr_cdsegmto <> 5 THEN
@@ -11038,6 +11018,30 @@ create or replace package body cecred.PAGA0002 is
             pr_tpdpagto := 2;  --> Convenios
         END CASE;  
       
+      END IF;
+      
+      IF pr_tpdpagto <> 9 THEN -- Se não for GPS
+        --> Verificar convenio 
+        OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
+                        ,pr_cdempcon => vr_cdempcon
+                        ,pr_cdsegmto => vr_cdsegmto);
+        FETCH cr_crapcon INTO rw_crapcon;
+        IF cr_crapcon%NOTFOUND THEN
+        
+          CLOSE cr_crapcon;
+          vr_dscritic:= 'Empresa nao Conveniada '||vr_cdsegmto ||'/'||vr_cdempcon;
+          RAISE vr_exc_erro;
+        ELSE      
+          CLOSE cr_crapcon;
+          
+          --> Internet/Mobile
+          IF pr_cdcanal IN (3,10)   AND 
+             rw_crapcon.flginter = 0 THEN --false
+            vr_dscritic:= 'Convenio nao habilitado para internet.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;        
+        END IF;
       END IF;
     
     END IF;

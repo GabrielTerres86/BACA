@@ -1657,15 +1657,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     
     -- Cursor para buscar a situação da mensagem
     CURSOR cr_menumobile IS
-     SELECT men.menumobileid AS menumobileid
-           ,replace(NVL2(men.menupaiid, pai.nome || ' - ','') || men.nome,'–','-') AS nome
-       FROM menumobile men
-           ,menumobile pai
-      WHERE men.menupaiid = pai.menumobileid(+)
-        AND NOT EXISTS (SELECT 1 FROM menumobile sub
-                         WHERE sub.menupaiid = men.menumobileid) -- Somente menus que não possuem filhos (itens clicáveis)
-      ORDER BY NVL(pai.sequencia, men.sequencia)
-                  ,men.sequencia;
+     SELECT menumobileid
+           ,nome
+      FROM (SELECT m.menumobileid
+                  ,ltrim(sys_connect_by_path(m.nome, ' -> '), ' -> ') nome
+                  ,sys_connect_by_path(LPAD(m.sequencia, 3, '0'), '-') seq
+              FROM (SELECT menumobileid
+                          ,nome
+                          ,menupaiid
+                          ,sequencia
+                      FROM menumobile
+                     WHERE versaomaximaapp IS NULL) m
+             START WITH m.menupaiid IS NULL
+            CONNECT BY PRIOR m.menumobileid = m.menupaiid
+             ORDER BY seq);
 
     rw_menumobile cr_menumobile%ROWTYPE;
      
