@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 13/06/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 02/07/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -276,6 +276,12 @@ BEGIN
                      
 			 28/06/2018 - Ajuste no controle de envio do arquivo para a pasta "salvar"
 				         (Adriano - INC0018303).
+
+			 02/07/2018 - Ajuste na utilização da função SYSDATE somente na geração dos logs,
+                    nos demais locais que irão gerar dados em tabelas, irá utilizar a mesma
+                    variavel global que terá o mesmo horário (HRTRANSA). Evitando erros na
+                    impressão do comprovante do extrato na conta do cooperado.
+				           (Wagner - PRB0040144).
                      
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -286,11 +292,12 @@ BEGIN
   DECLARE
 
     -- Constantes do programa
-    vr_glb_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'crps531';
-    vr_glb_cdagenci CONSTANT PLS_INTEGER := 1;
-    vr_glb_cdbccxlt CONSTANT PLS_INTEGER := 100;
-    vr_glb_nrdolote CONSTANT PLS_INTEGER := 10115;
-    vr_glb_tplotmov CONSTANT PLS_INTEGER := 1;
+    vr_glb_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'crps531';
+    vr_glb_cdagenci  CONSTANT PLS_INTEGER := 1;
+    vr_glb_cdbccxlt  CONSTANT PLS_INTEGER := 100;
+    vr_glb_nrdolote  CONSTANT PLS_INTEGER := 10115;
+    vr_glb_tplotmov  CONSTANT PLS_INTEGER := 1;
+    vr_glb_dataatual CONSTANT DATE := SYSDATE;
 
     -- Tratamento de erros
     vr_exc_next   EXCEPTION;
@@ -714,8 +721,8 @@ BEGIN
         -- Escrever no arquivo de LOG apenas
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
-                                  ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                   || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                  ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                   || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                    || ' Erro ao mover arquivo da execução paralela - PID: '
                                                    || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
                                                    || ' Mensagem: ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml
@@ -727,8 +734,8 @@ BEGIN
         -- Escrever no arquivo de LOG apenas
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
-                                  ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                   || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                  ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                   || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                    || ' Erro ao mover arquivo da execução paralela - PID: '
                                                    || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
                                                    || ' Mensagem: ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml
@@ -758,8 +765,8 @@ BEGIN
       -- Iniciar LOG de execução
       BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 1 -- Processo normal
-                                ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                 || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                 || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                  || ' Fim da execução paralela - PID: '
                                                  || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
                                                  || ' Mensagem: ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml
@@ -1051,12 +1058,13 @@ BEGIN
       END IF;
 
       -- Se a data do calendário for diferente de sysdate
-      IF TRUNC(SYSDATE) > rw_crapdat_mensag.dtmvtolt THEN
+      IF TRUNC(vr_glb_dataatual) > rw_crapdat_mensag.dtmvtolt THEN
         -- Não poderá executar
         RETURN false;
       ELSE
         RETURN true;
       END IF;
+
     END;
 
     -- Verificar se o processo esta ainda executando em estado de crise
@@ -1116,7 +1124,7 @@ BEGIN
 
       -- Para estas mensagens nao e necessario aguardar processo
       IF vr_aux_CodMsg IN ('PAG0101','STR0018','STR0019') THEN
-        RETURN 'mqcecred_processa_' || to_char(sysdate,'DDMMRR') || '.log';
+        RETURN 'mqcecred_processa_' || to_char(vr_glb_dataatual,'DDMMRR') || '.log';
       ELSE
         RETURN 'mqcecred_processa_' || to_char(rw_crapdat_mensag.dtmvtolt,'DDMMRR') || '.log';
       END IF;
@@ -1155,8 +1163,8 @@ BEGIN
         -- Acionar rotina de LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - RETORNO JD OK      --> '
                                                     || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                     || 'Numero Controle: ' || RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
@@ -1172,8 +1180,8 @@ BEGIN
           -- Gerar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - ' || RPAD(substr(vr_tipodlog,1,18),18,' ') || ' --> '
                                                       || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                       || 'Evento: ' || RPAD(SUBSTR(VR_aux_CodMsg,1,9),9,' ')
@@ -1184,8 +1192,8 @@ BEGIN
           -- Gerar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - RETORNO SPB OK     --> '
                                                       || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                       || 'Evento: ' || RPAD(SUBSTR(VR_aux_CodMsg,1,9),9,' ')
@@ -1208,14 +1216,14 @@ BEGIN
             -- Gerar log
             BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                       ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                        || to_char(sysdate,'hh24:mi:ss')||' - '
+                                      ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                        || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                         || vr_glb_cdprogra ||' - '||RPAD(SUBSTR(pr_tipodlog,1,18),18,' ')||' --> '
                                                         || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                         || 'Evento: ' || RPAD(SUBSTR(vr_aux_CodMsg,1,9),9,' ')
                                                         || ', Motivo Erro: ' || RPAD(SUBSTR(pr_msgderro,1,90),90,' ')
                                                         || ', Numero Controle: '|| RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
-                                                        || ', Hora: ' || to_char(sysdate,'HH24:MI:SS')
+                                                        || ', Hora: ' || to_char(SYSDATE,'HH24:MI:SS')
                                                         || ', Valor: ' || gene0002.fn_mask(rw_craptvl.vldocrcb,'zzz,zzz,zz9.99')
                                                         || ', Banco Remet.: ' || gene0002.fn_mask(VR_cdbcoctl,'zz9')
                                                         || ', Agencia Remet.: ' || gene0002.fn_mask(vr_cdagectl,'zzz9')
@@ -1232,8 +1240,8 @@ BEGIN
             IF pr_tipodlog = 'ENVIADA NAO OK' THEN
               -- Gravar log TED
               sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
-                                       ,pr_dttransa => TRUNC(SYSDATE)
-                                       ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                       ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                       ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                        ,pr_idorigem => 1
                                        ,pr_cdprogra => vr_glb_cdprogra
                                        ,pr_idsitmsg => 2 /* Enviada Nao Ok */
@@ -1282,8 +1290,8 @@ BEGIN
               CLOSE cr_crapban;
               -- Gerar log da TED
               sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
-                                       ,pr_dttransa => TRUNC(SYSDATE)
-                                       ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                       ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                       ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                        ,pr_idorigem => 1
                                        ,pr_cdprogra => vr_glb_cdprogra
                                        ,pr_idsitmsg => 5 /* Rejeitada Ok */
@@ -1330,14 +1338,14 @@ BEGIN
             -- Gerar log
             BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                       ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                      ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                        || to_char(sysdate,'hh24:mi:ss')||' - '
+                                      ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                        || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                         || vr_glb_cdprogra ||' - '||RPAD(SUBSTR(pr_tipodlog,1,18),18,' ')||' --> '
                                                         || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                         || 'Evento: ' || RPAD(SUBSTR(vr_aux_CodMsg,1,9),9,' ')
                                                         || ', Motivo Erro: ' || RPAD(SUBSTR(pr_msgderro,1,90),90,' ')
                                                         || ', Numero Controle: '|| RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
-                                                        || ', Hora: ' || to_char(sysdate,'HH24:MI:SS')
+                                                        || ', Hora: ' || to_char(SYSDATE,'HH24:MI:SS')
                                                         || ', Valor: ' || gene0002.fn_mask(rw_craplcs.vllanmto,'zzz,zzz,zz9.99')
                                                         || ', Banco Remet.: ' || gene0002.fn_mask(vr_cdbcoctl,'zz9')
                                                         || ', Agencia Remet.: ' || gene0002.fn_mask(vr_cdagectl,'zzz9')
@@ -1354,8 +1362,8 @@ BEGIN
             IF pr_tipodlog = 'ENVIADA NAO OK' THEN
               -- Gravar log TED
               sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
-                                       ,pr_dttransa => TRUNC(SYSDATE)
-                                       ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                       ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                       ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                        ,pr_idorigem => 1
                                        ,pr_cdprogra => vr_glb_cdprogra
                                        ,pr_idsitmsg => 2 /* Enviada Nao Ok */
@@ -1389,8 +1397,8 @@ BEGIN
             ELSE
               -- Gerar log da TED
               sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
-                                       ,pr_dttransa => TRUNC(SYSDATE)
-                                       ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                       ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                       ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                        ,pr_idorigem => 1
                                        ,pr_cdprogra => vr_glb_cdprogra
                                        ,pr_idsitmsg => 5 /* Rejeitada Ok */
@@ -1448,14 +1456,14 @@ BEGIN
           -- Gerar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - RECEBIDA NAO OK    --> '
                                                       || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                       || 'Evento: ' || RPAD(SUBSTR(vr_aux_CodMsg,1,9),9,' ')
                                                       || ', Motivo Erro: ' || RPAD(SUBSTR(pr_msgderro,1,90),90,' ')
                                                       || ', Numero Controle: '|| RPAD(SUBSTR(vr_aux_nrctrole,1,20),20,' ')
-                                                      || ', Hora: ' || to_char(sysdate,'HH24:MI:SS')
+                                                      || ', Hora: ' || to_char(SYSDATE,'HH24:MI:SS')
                                                       || ', Valor: ' || to_char(vr_aux_VlrLanc,'99g999g990d00')
                                                       || ', Banco Remet.: ' || gene0002.fn_mask(vr_aux_BancoDeb,'zz9')
                                                       || ', Agencia Remet.: ' || gene0002.fn_mask(vr_aux_AgDebtd,'zzz9')
@@ -1470,8 +1478,8 @@ BEGIN
                                     ,pr_nmarqlog      => vr_nmarqlog);
           -- Gerar log da TED
           sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
-                                   ,pr_dttransa => TRUNC(SYSDATE)
-                                   ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                   ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                   ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                    ,pr_idorigem => 1
                                    ,pr_cdprogra => vr_glb_cdprogra
                                    ,pr_idsitmsg => 4 /* Enviada Não Ok */
@@ -1506,13 +1514,13 @@ BEGIN
          -- Gerar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - RECEBIDA OK        --> '
                                                       || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                       || 'Evento: ' || RPAD(SUBSTR(vr_aux_CodMsg,1,9),9,' ')
                                                       || ', Numero Controle: '|| RPAD(SUBSTR(vr_aux_nrctrole,1,20),20,' ')
-                                                      || ', Hora: ' || to_char(sysdate,'HH24:MI:SS')
+                                                      || ', Hora: ' || to_char(SYSDATE,'HH24:MI:SS')
                                                       || ', Valor: ' || to_char(vr_aux_VlrLanc,'99g999g990d00')
                                                       || ', Banco Remet.: ' || gene0002.fn_mask(vr_aux_BancoDeb,'zz9')
                                                       || ', Agencia Remet.: ' || gene0002.fn_mask(vr_aux_AgDebtd,'zzz9')
@@ -1527,8 +1535,8 @@ BEGIN
                                     ,pr_nmarqlog      => vr_nmarqlog);
           -- Gerar log da TED
           sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
-                                   ,pr_dttransa => TRUNC(SYSDATE)
-                                   ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                   ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                   ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                    ,pr_idorigem => 1
                                    ,pr_cdprogra => vr_glb_cdprogra
                                    ,pr_idsitmsg => 3 /* Enviada Ok */
@@ -1564,8 +1572,8 @@ BEGIN
         -- Acionar rotina de LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - '
                                                     || SUBSTR(vr_aux_CodMsg,1,18)||' --> '
                                                     || 'Arquivo ' || SUBSTR(vr_aux_nmarqxml,1,40) || '. '
@@ -1575,8 +1583,8 @@ BEGIN
         -- Acionar rotina de LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - '
                                                     || SUBSTR(vr_aux_CodMsg,1,18)||' --> '
                                                     || 'Arquivo ' || SUBSTR(vr_aux_nmarqxml,1,40) || ' '
@@ -1587,8 +1595,8 @@ BEGIN
         -- Erro tratado, gerar em LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - ERRO GERACAO LOG   --> '
                                                     || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                     || 'Numero Controle: ' || RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
@@ -1598,8 +1606,8 @@ BEGIN
         -- Erro nao tratado
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => vr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - ERRO GERACAO LOG   --> '
                                                     || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                     || 'Numero Controle: ' || RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
@@ -1643,14 +1651,14 @@ BEGIN
           -- Gerar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - RECEBIDA NAO OK    --> '
                                                       || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                       || 'Evento: ' || RPAD(SUBSTR(vr_aux_CodMsg,1,9),9,' ')
                                                       || ', Motivo Erro: ' || RPAD(SUBSTR(pr_msgderro,1,90),90,' ')
                                                       || ', Numero Controle: '|| RPAD(SUBSTR(vr_aux_nrctrole,1,20),20,' ')
-                                                      || ', Hora: ' || to_char(sysdate,'HH24:MI:SS')
+                                                      || ', Hora: ' || to_char(SYSDATE,'HH24:MI:SS')
                                                       || ', Valor: ' || to_char(vr_aux_VlrLanc,'99g999g990d00')
                                                       || ', Banco Remet.: ' || gene0002.fn_mask(vr_aux_BancoDeb,'zz9')
                                                       || ', Agencia Remet.: ' || gene0002.fn_mask(vr_aux_AgDebtd,'zzz9')
@@ -1665,8 +1673,8 @@ BEGIN
                                     ,pr_nmarqlog      => vr_nmarqlog);
           -- Gerar log da TED
           sspb0001.pc_grava_log_ted(pr_cdcooper => pr_cdcooper
-                                   ,pr_dttransa => TRUNC(SYSDATE)
-                                   ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                   ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                   ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                    ,pr_idorigem => 1
                                    ,pr_cdprogra => vr_glb_cdprogra
                                    ,pr_idsitmsg => 4 /* Enviada Não Ok */
@@ -1701,13 +1709,13 @@ BEGIN
          -- Gerar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - RECEBIDA OK        --> '
                                                       || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                       || 'Evento: ' || RPAD(SUBSTR(vr_aux_CodMsg,1,9),9,' ')
                                                       || ', Numero Controle: '|| RPAD(SUBSTR(vr_aux_nrctrole,1,20),20,' ')
-                                                      || ', Hora: ' || to_char(sysdate,'HH24:MI:SS')
+                                                      || ', Hora: ' || to_char(SYSDATE,'HH24:MI:SS')
                                                       || ', Valor: ' || to_char(vr_aux_VlrLanc,'99g999g990d00')
                                                       || ', Banco Remet.: ' || gene0002.fn_mask(vr_aux_BancoDeb,'zz9')
                                                       || ', Agencia Remet.: ' || gene0002.fn_mask(vr_aux_AgDebtd,'zzz9')
@@ -1722,8 +1730,8 @@ BEGIN
                                     ,pr_nmarqlog      => vr_nmarqlog);
           -- Gerar log da TED
           sspb0001.pc_grava_log_ted(pr_cdcooper => pr_cdcooper
-                                   ,pr_dttransa => TRUNC(SYSDATE)
-                                   ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                   ,pr_dttransa => TRUNC(vr_glb_dataatual)
+                                   ,pr_hrtransa => TO_CHAR(vr_glb_dataatual,'SSSSS')
                                    ,pr_idorigem => 1
                                    ,pr_cdprogra => vr_glb_cdprogra
                                    ,pr_idsitmsg => 3 /* Enviada Ok */
@@ -1761,8 +1769,8 @@ BEGIN
         -- Erro tratado, gerar em LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - ERRO GERACAO LOG   --> '
                                                     || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                     || 'Numero Controle: ' || RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
@@ -1772,8 +1780,8 @@ BEGIN
         -- Erro nao tratado
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                    || to_char(sysdate,'hh24:mi:ss')||' - '
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                    || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_glb_cdprogra ||' - ERRO GERACAO LOG   --> '
                                                     || 'Arquivo ' || RPAD(SUBSTR(vr_aux_nmarqxml,1,40),40,' ') || '. '
                                                     || 'Numero Controle: ' || RPAD(SUBSTR(vr_aux_NumCtrlIF,1,20),20,' ')
@@ -1867,9 +1875,9 @@ BEGIN
       END IF;
 
       vr_aux_NumCtrlIF := vr_aux_cdtiptrf
-                       || to_char(SYSDATE,'rrmmdd')
+                       || to_char(vr_glb_dataatual,'rrmmdd')
                        || to_char(vr_cdagectl,'fm0000')
-                       || to_char(SYSDATE,'sssss')
+                       || to_char(vr_glb_dataatual,'sssss')
                          /* para evitar duplicidade devido paralelismo */
                        || to_char(SEQ_TEDENVIO.nextval,'fm000')
                        || 'A'; /* origem AYLLOS */
@@ -2007,7 +2015,7 @@ BEGIN
         -- Acionar rotina de LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')
                                                     ||' - '|| vr_glb_cdprogra ||' --> '
                                                     || 'Erro na Execucao Paralela - '
                                                     || 'PID: ' || pr_idparale || ' '
@@ -2036,7 +2044,7 @@ BEGIN
         -- Acionar rotina de LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')
                                                     ||' - '|| vr_glb_cdprogra ||' --> '
                                                     || 'Erro na Execucao Paralela - '
                                                     || 'PID: ' || pr_idparale || ' '
@@ -2083,7 +2091,7 @@ BEGIN
         -- Acionar rotina de LOG
         BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                   ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                  ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                  ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')
                                                     ||' - '|| vr_glb_cdprogra ||' --> '
                                                     || 'Erro na Execucao Paralela - '
                                                     || 'PID: ' || pr_idparale || ' '
@@ -2852,7 +2860,7 @@ BEGIN
       END;
 
 PROCEDURE pc_trata_arquivo_slc0005(pr_node      IN xmldom.DOMNode
-                                  ,pr_dscritic OUT VARCHAR2) IS
+                              ,pr_dscritic OUT VARCHAR2) IS
 
         -- SubItens da SLC0005
         vr_elem_node xmldom.DOMElement;
@@ -2965,7 +2973,7 @@ BEGIN
        -- Acionar rotina de LOG
        BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                  ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                 ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                 ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')
                                                       ||' - '|| vr_glb_cdprogra ||' --> '
                                                       || 'pc_insere_msg_slc0005 --> '||vr_dscritic
                                  ,pr_nmarqlog      => vr_logprogr
@@ -3161,7 +3169,7 @@ BEGIN
                                    -- Acionar rotina de LOG
                                    BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                                              ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                                             ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                                             ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')
                                                                                   ||' - '|| vr_glb_cdprogra ||' --> '
                                                                                   || 'pc_insere_msg_slc0001 --> '||vr_dscritic
                                                              ,pr_nmarqlog      => vr_logprogr
@@ -3329,7 +3337,7 @@ BEGIN
                          -- Acionar rotina de LOG
                          BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                                    ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                                   ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                                   ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')
                                                                        ||' - '|| vr_glb_cdprogra ||' --> '
                                                                        || 'pc_insere_horario_grade --> '||vr_dscritic
                                                    ,pr_nmarqlog      => vr_logprogr
@@ -3561,7 +3569,7 @@ END;
           ELSIF vr_node_name = 'SLC0001' THEN
             -- Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017
             pc_trata_arquivo_slc0001(pr_node        => vr_item_node
-                                    ,pr_dscritic    => vr_dscritic);
+                                ,pr_dscritic    => vr_dscritic);
           ELSIF vr_node_name = 'SLC0005' THEN
             -- Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017
             pc_trata_arquivo_slc0005(pr_node        => vr_item_node
@@ -3632,7 +3640,7 @@ END;
               -- Acionar rotina de LOG
               BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                         ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                        ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
+                                        ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
                                                           || 'Erro na Execucao Paralela - '
                                                           || 'PID: ' || pr_idparale || ' '
                                                           || 'Seq.: ' || to_char(pr_idprogra,'fm99990') ||' '
@@ -3649,7 +3657,7 @@ END;
           ELSE
             -- Montar mensagem de erro para enviar ao LOG
             vr_aux_manter_fisico := TRUE;
-            vr_aux_msgspb_xml    := to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
+            vr_aux_msgspb_xml    := to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '
                                  || 'Alerta da Execucao Paralela - '
                                  || 'PID: ' || pr_idparale || ' '
                                  || 'Seq.: ' || to_char(pr_idprogra,'fm99990') ||' '
@@ -4486,7 +4494,7 @@ END;
       rw_b_crapdat btch0001.cr_crapdat%rowtype;
       rw_b_craplot cr_craplot%ROWTYPE;
       -- Variaveis
-      vr_aux_hrtransa pls_integer := to_char(sysdate,'sssss');
+      vr_aux_hrtransa pls_integer := to_char(vr_glb_dataatual,'sssss');
       vr_aux_dtmvtolt DATE;
       vr_aux_strmigra VARCHAR2(400);
       vr_aux_nmarqimp VARCHAR2(400);
@@ -4554,7 +4562,7 @@ END;
         END IF;
 
         -- Verifica se processo ja finalizou na coop de destino
-        IF trunc(sysdate) > vr_aux_dtmvtolt AND vr_aux_flestcri = 0 THEN
+        IF trunc(vr_glb_dataatual) > vr_aux_dtmvtolt AND vr_aux_flestcri = 0 THEN
           vr_dscritic := 'Processo nao finalizado na Coop migrada - '||rw_craptco.cdcooper;
           RAISE vr_exc_saida;
         END IF;
@@ -4777,7 +4785,7 @@ END;
         -- Gerar registro no arquivo de LOG
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
                                   ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => LPAD(' ',3,' ')||to_char(sysdate,'hh24:mi:ss')
+                                  ,pr_des_log      => LPAD(' ',3,' ')||to_char(SYSDATE,'hh24:mi:ss')
                                                    || to_char(vr_aux_VlrLanc,'9g999g999g999g990d00')
                                                    || to_char(rw_craptco.nrctaant,'99999999999999')
                                                    || to_char(rw_craptco.nrdconta,'99999999999999')
@@ -5228,7 +5236,7 @@ END;
                  ,'1'
                  ,1
                  ,rw_crapdat_mensag.dtmvtolt
-                 ,to_char(sysdate,'sssss')
+                 ,to_char(vr_glb_dataatual,'sssss')
                  ,vr_aux_NumCtrlIF
                  ,NULL
                  ,0
@@ -6095,7 +6103,7 @@ END;
                    ,vr_aux_cdpesqbb
                    ,vr_aux_VlrLanc
                    ,'1'
-                   ,to_char(sysdate,'sssss'));
+                   ,to_char(vr_glb_dataatual,'sssss'));
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
@@ -6187,7 +6195,7 @@ END;
                    ,vr_aux_TpCtDebtd
                    ,vr_aux_AgDebtd
                    ,vr_aux_CtDebtd
-                   ,to_char(sysdate,'sssss')
+                   ,to_char(vr_glb_dataatual,'sssss')
                    ,'1'
                    ,vr_idlancto
                    ,DECODE(vr_aux_TpPessoaDebtd_Remet, 'F', 1, 'J', 2)
@@ -6476,7 +6484,7 @@ END;
                ,rw_craplot.nrseqdig + 1
                ,'CRED TED PORT'
                ,'1'
-               ,to_char(sysdate,'sssss'));
+               ,to_char(vr_glb_dataatual,'sssss'));
             -- Atualizar capa do Lote
             UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
                               ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
@@ -6797,8 +6805,8 @@ END;
           -- Acionar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
                                     ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                    ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - '
-                                                      || to_char(sysdate,'hh24:mi:ss')||' - '
+                                    ,pr_des_log       => to_char(SYSDATE,'dd/mm/yyyy') || ' - '
+                                                      || to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                       || vr_glb_cdprogra ||' - '
                                                       || vr_dscritic
                                     ,pr_nmarqlog      => vr_nmarqlog);
@@ -7104,8 +7112,8 @@ END;
               -- Gerar a critica em LOG
               BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 1 -- Processo normal
-                                        ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                         || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                        ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                         || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                          || ' Erro ao liquidar fatura '
                                                          || ' , Execução paralela - PID: '
                                                          || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
@@ -7125,8 +7133,8 @@ END;
               -- Gerar a critica em LOG
               BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 1 -- Processo normal
-                                        ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                         || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                        ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                         || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                          || ' Erro na execução paralela - PID: '
                                                          || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
                                                          || ' Mensagem: ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml
@@ -7156,8 +7164,8 @@ END;
             -- Gerar a critica em LOG
             BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                       || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                      ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                       || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                        || ' Erro ao creditar Cooperado '
                                                        || ' , Execução paralela - PID: '
                                                        || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
@@ -7206,8 +7214,8 @@ END;
                 -- Gerar a critica em LOG
                 BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                           ,pr_ind_tipo_log => 1 -- Processo normal
-                                          ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                           || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                          ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                           || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                            || ' Erro ao baixar titulo Cooperado Conta '||vr_tab_descontar(vr_idx_descontar).nrdconta
                                                            || ' , Execução paralela - PID: '
                                                            || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
@@ -7382,7 +7390,7 @@ END;
               CLOSE cr_busca_coop;
               
               -- Tratamento incorporacao TRANSULCRED
-              IF to_number(vr_aux_AgCredtd) = 116 AND trunc(sysdate) < to_date('21/01/2017','dd/mm/rrrr') THEN
+              IF to_number(vr_aux_AgCredtd) = 116 AND trunc(vr_glb_dataatual) < to_date('21/01/2017','dd/mm/rrrr') THEN
                 -- Usar agencia Incorporada
                 vr_aux_cdageinc := to_number(vr_aux_AgCredtd);
                 vr_aux_AgCredtd := '0108';
@@ -7472,8 +7480,8 @@ END;
                 -- Gerar em LOG
                 BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                           ,pr_ind_tipo_log => 1 -- Processo normal
-                                          ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                           || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                          ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                           || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                            || ' Erro na execução paralela - PID: '
                                                            || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
                                                            || ' Mensagem: ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml
@@ -7540,8 +7548,8 @@ END;
             -- Gerar em LOG
             BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/rrrr') || ' - '
-                                                       || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
+                                      ,pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr') || ' - '
+                                                       || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra || ' --> '
                                                        || ' Erro na execução paralela - PID: '
                                                        || ' - ' || pr_idparale|| ' Seq.: ' || to_char(pr_idprogra,'fm99990')
                                                        || ' Mensagem: ' || vr_aux_nmdirxml||'/'||vr_aux_nmarqxml
@@ -7748,7 +7756,7 @@ END;
       -- Iniciar LOG de execução
       BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratado
-                                ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
+                                ,pr_des_log      => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
 
       -- Novamente tenta encerrar o JOB
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
@@ -7771,7 +7779,7 @@ END;
       -- Iniciar LOG de execução
       BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratado
-                                ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
+                                ,pr_des_log      => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
 
       -- Novamente tenta encerrar o JOB
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
@@ -7787,7 +7795,7 @@ END;
       -- Iniciar LOG de execução
       BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 3 -- Erro não tratado
-                                ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
+                                ,pr_des_log      => to_char(SYSDATE,'dd/mm/yyyy') || ' - ' || to_char(SYSDATE,'hh24:mi:ss')||' - '|| vr_glb_cdprogra ||' --> '||pr_dscritic);
       -- Efetuar rollback
       ROLLBACK;
       -- Novament tenta encerrar o JOB
