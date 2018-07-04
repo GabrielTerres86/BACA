@@ -43,7 +43,11 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
 
                  27/04/2018 - Removido vetor para armazenar a descrição das situacoes 
-                              da conta. PRJ366 (Lombardi).
+                              da conta. PRJ366 (Lombardi).		   
+                 
+                 05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
+                              pc_carrega_dados_atenda (Claudio CIS Corporate)	 	   
+                 
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -71,7 +75,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 flgbloqt INTEGER,
                 vllimite_saque tbtaa_limite_saque.vllimite_saque%TYPE,
                 pacote_tarifa BOOLEAN,
-                vldevolver NUMBER(32,8));
+                vldevolver NUMBER(32,8),
+                insituacprvd tbprevidencia_conta.insituac%TYPE);
   TYPE typ_tab_valores_conta IS TABLE OF typ_rec_valores_conta
     INDEX BY PLS_INTEGER;
   
@@ -819,7 +824,6 @@ PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> C
                                       ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
                                       ,pr_tab_erro       OUT gene0001.typ_tab_erro);
 
-
 PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
                                          ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
                                          ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
@@ -896,6 +900,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   --
   --               03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
+  --
+  --               05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
+  --                            pc_carrega_dados_atenda (Claudio CIS Corporate)
+
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -6266,6 +6274,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- 
 	--             03/12/2017 - Eliminado cursor da craplcm, não será usado (Jonata - RKAM P364).                 
     -- 
+	--             05/06/2017 - Recuperar informacoes de previdencia (Claudio - CIS Corporate).                 
+    -- 
     -- ..........................................................................*/
     
     ---------------> CURSORES <-----------------
@@ -6300,6 +6310,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND dtcancelamento IS NULL;
     rw_pacotes_tarifas cr_pacotes_tarifas%ROWTYPE;
     
+    --> Buscar informacao previdencia
+    CURSOR cr_tbprevidencia_conta IS
+      SELECT tbprevidencia_conta.insituac 
+        FROM tbprevidencia_conta
+       WHERE tbprevidencia_conta.cdcooper = pr_cdcooper
+         AND tbprevidencia_conta.nrdconta = pr_nrdconta;
+    rw_tbprevidencia_conta cr_tbprevidencia_conta%ROWTYPE; 
     
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
@@ -6359,6 +6376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_vlsldppr     NUMBER   := 0;
     vr_vllimite     NUMBER   := 0;
     vr_qtfolhas     INTEGER  := 0;
+    vr_insituacprvd NUMBER := NULL;
     vr_vllimite_saque NUMBER := 0;
     vr_dssitura     VARCHAR2(100) := NULL;
     vr_dssitnet     VARCHAR2(100) := NULL;
@@ -6806,6 +6824,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- por esse motivo as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate 
     -- e por questao de performace elas nao serao carregadas
     
+    -- Previdencia
+    OPEN cr_tbprevidencia_conta;
+    FETCH cr_tbprevidencia_conta INTO rw_tbprevidencia_conta;
+
+    IF cr_tbprevidencia_conta%FOUND THEN
+      vr_insituacprvd := rw_tbprevidencia_conta.insituac;
+    END IF;
+    CLOSE cr_tbprevidencia_conta;
+    
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
                                   ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
@@ -7079,6 +7106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_valores_conta(vr_idxval).flgbloqt := vr_flgbloqt;
     pr_tab_valores_conta(vr_idxval).vllimite_saque := nvl(vr_vllimite_saque,0);
     pr_tab_valores_conta(vr_idxval).vldevolver := nvl(vr_vldevolver,0);
+    pr_tab_valores_conta(vr_idxval).insituacprvd := vr_insituacprvd;
     
     /* Busca o pacote tarifas */
     OPEN cr_pacotes_tarifas;
@@ -7449,6 +7477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                          ELSE 'no'
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
+                        '<insituacprvd>'|| vr_tab_valores_conta(i).insituacprvd ||'</insituacprvd>'||
                         '</Registro>');                                               
                                                                      
                                                                      
@@ -8787,7 +8816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       ELSIF pr_indtipo_cartao = 1 THEN -- Se foi feito com cartao magnetico
         vr_dstransa := 'Saque com cartao magnetico';
       ELSE -- Se foi feito com cartao Cecred
-        vr_dstransa := 'Saque com cartao CECRED';
+        vr_dstransa := 'Saque com cartao AILOS';
       END IF;
     ELSIF pr_indoperacao = 2 THEN -- Se for DOC
       vr_dstransa := 'DOC';
@@ -12047,7 +12076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             '</br></br>' ||
                             'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
                             'contato com seu Posto de Atendimento ou através do SAC da cooperativa, '||
-                            'pelo 0800 647 2200 ou e-mail sac@cecred.coop.br.';
+                            'pelo 0800 647 2200 ou e-mail sac@ailos.coop.br.';
 
              vr_notif_origem   := 7;
              vr_notif_motivo   := 1;
@@ -12070,7 +12099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             '</br>' ||
                             'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
                             'contato pelo SAC 0800 647 2200 ou através do e-mail '                   ||
-                            'sac@cecred.coop.br, todos os dias (incluindo domingos e feriados), '    ||
+                            'sac@ailos.coop.br, todos os dias (incluindo domingos e feriados), '    ||
                             'das 6h às 22h.';
 
              vr_notif_origem   := 7;
