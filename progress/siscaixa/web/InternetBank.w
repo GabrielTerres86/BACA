@@ -7777,6 +7777,7 @@ PROCEDURE proc_operacao160:
 
     RUN sistema/internet/fontes/InternetBank160.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
                                                    INPUT aux_nrrecben,
                                                    INPUT aux_dtmescom,
                                                   OUTPUT aux_dsmsgerr,

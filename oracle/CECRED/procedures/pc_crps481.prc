@@ -385,7 +385,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_tab_msg_confirma APLI0002.typ_tab_msg_confirma; 
      vr_dtvencto   DATE;
      vr_dsprotoc   crappro.dsprotoc%TYPE;
-     
+
      --Variaveis dos Indices
      vr_index_craptab   VARCHAR2(30);
      vr_index_aplicacao VARCHAR2(30);
@@ -403,7 +403,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_exc_final       EXCEPTION;
      vr_exc_saida       EXCEPTION;
      -- Excluida variavel vr_exc_fimprg pois não é utilizada - Chamado 786752 - 27/10/2017
-     
+
      -- Variaveis para tratar o OTHERS - Chamado 786752 - 27/10/2017
      vr_tpocorrencia        tbgen_prglog_ocorrencia.tpocorrencia%TYPE;
 
@@ -411,7 +411,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      vr_des_xml        CLOB;
      vr_des_xml999     CLOB;
      vr_des_xml_sem    CLOB;
-          
+
      -- variavel para trata cdageass sem informação - Chamado 775817 - 27/10/2017
      vr_cdageass_craprda   craprda.cdageass%TYPE;
 
@@ -1142,7 +1142,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
            
            /*** Testa se aplicacao esta disponivel para saque ***/
            vr_index_craptab:= lpad(rw_craprda.nrdconta,12,'0')||lpad(substr(rw_craprda.nraplica,1,7),8,'0');
-
            IF vr_tab_craptab.EXISTS(vr_index_craptab) THEN
              --Se nao existe aplicacao
              vr_index_aplicacao:= lpad(rw_craprda.cdageass,10,'0')||
@@ -2117,12 +2116,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                -- Calculo da data de vencimento
                rw_craprda.qtdiaapl := rw_craprda.dtvencto - rw_craprda.dtmvtolt;
                vr_dtvencto := rw_craprda.dtvencto + rw_craprda.qtdiaapl;
-               /* Retirado a validação de vencimento que cai no fim de semana pois pode ocorrer
-               vr_dtvencto := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                                         ,pr_dtmvtolt => vr_dtvencto
-                                                         ,pr_tipo => 'P');*/
-                                                         
-
+              
                -- Reaplicação com as mesmas caracteristicas da anterior
                APLI0002.pc_incluir_nova_aplicacao(pr_cdcooper => pr_cdcooper
                                                  ,pr_cdagenci => rw_craprda.cdageass
@@ -2132,7 +2126,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                                  ,pr_idorigem => 1
                                                  ,pr_nrdconta => rw_craprda.nrdconta
                                                  ,pr_idseqttl => 1
-                                                 ,pr_dtmvtolt => rw_craprda.dtvencto
+                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtopr
                                                  ,pr_tpaplica => rw_crapdtc.tpaplica
                                                  ,pr_qtdiaapl => rw_craprda.qtdiaapl
                                                  ,pr_dtresgat => vr_dtvencto

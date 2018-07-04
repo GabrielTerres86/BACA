@@ -8,6 +8,9 @@
  * ALTERAÇÕES   : 27/11/2015 - Ajustando o tamanho da tela para 
  *                             exibir corretamente os campos na tela
  *                             (Andre Santos - SUPERO)
+ *
+ *                28/06/2018 - Inserido controle de mt_rand ao instanciar o cadtar.js.
+ *                            (Alcemir - Mout's) - INC0017668.
  * -------------- 
  */
 
@@ -50,8 +53,9 @@
 	<script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
 	<script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
 	<script type="text/javascript" src="../../scripts/tooltip.js"></script>
+
+   <script type="text/javascript" src="cadtar.js?keyrand=<?php echo mt_rand(); ?>"></script>
    
-   <script type="text/javascript" src="cadtar.js"></script>	
   </head>
 
   <body>

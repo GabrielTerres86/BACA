@@ -8,7 +8,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADFRA IS
                           ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
                           ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                           ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
-                          ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
+                          ,pr_des_erro    OUT VARCHAR2); --> Erros do processo 
 
   PROCEDURE pc_busca_intervalo(pr_cdoperacao   IN tbgen_analise_fraude_interv.cdoperacao%TYPE --> Codigo da operacao
                               ,pr_tpoperacao   IN tbgen_analise_fraude_interv.tpoperacao%TYPE --> Tipo da operacao
@@ -1105,46 +1105,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADFRA IS
 
       END IF;
 
-      IF vr_tab_param.COUNT > 0 THEN
-        IF vr_tab_param(0).flgativo = 1 AND 
-           pr_flgativo = 0 THEN
-           
-          vr_dsoperac := gene0010.fn_desc_dominio(pr_nmmodulo => 'CC', 
-                                                  pr_nmdomini => 'CDOPERAC_ANALISE_FRAUDE', 
-                                                  pr_cddomini => pr_cdoperacao); 
+      BEGIN
+        IF vr_tab_param.COUNT > 0 THEN
+          IF vr_tab_param(0).flgativo = 1 AND 
+             pr_flgativo = 0 THEN
+             
+            vr_dsoperac := gene0010.fn_desc_dominio(pr_nmmodulo => 'CC', 
+                                                    pr_nmdomini => 'CDOPERAC_ANALISE_FRAUDE', 
+                                                    pr_cddomini => pr_cdoperacao); 
           
-          vr_dstpoper := CASE pr_tpoperacao 
-                            WHEN 1 THEN 'ONLINE'
-                            WHEN 2 THEN 'AGENDADA'
-                            ELSE 'OUTRO'
-                          END ; 
+            vr_dstpoper := CASE pr_tpoperacao 
+                              WHEN 1 THEN 'ONLINE'
+                              WHEN 2 THEN 'AGENDADA'
+                              ELSE 'OUTRO'
+                            END ; 
                                 
-          --> Buscar dados do operador
-          rw_crapope := NULL;
-          OPEN cr_crapope(pr_cdcooper => vr_cdoperad,
-                          pr_cdoperad => vr_cdoperad);
-          FETCH cr_crapope INTO rw_crapope;
-          CLOSE cr_crapope;
+            --> Buscar dados do operador
+            rw_crapope := NULL;
+            OPEN cr_crapope(pr_cdcooper => vr_cdcooper,
+                            pr_cdoperad => vr_cdoperad);
+            FETCH cr_crapope INTO rw_crapope;
+            CLOSE cr_crapope;
                          
-          vr_dsdcorpo:= 'Envio de Analise de Fraude da operação de <b>'|| vr_dsoperac || ' - ' ||vr_dstpoper ||
-                       ' </b>Foi Inativada pelo Operador <b>'||vr_cdoperad ||' - '||nvl(rw_crapope.nmoperad,'Nao Cadastrado')||'</b>'||
-                       ' , operações efetuadas a partir dos proximos minutos não serão enviadas para analise'||
-                       ' e serão aprovadas automaticamente.'||
-                       ' <br>Atenciosamente';
+            vr_dsdcorpo:= 'Envio de Analise de Fraude da operação de <b>'|| vr_dsoperac || ' - ' ||vr_dstpoper ||
+                         ' </b>Foi Inativada pelo Operador <b>'||vr_cdoperad ||' - '||nvl(rw_crapope.nmoperad,'Nao Cadastrado')||'</b>'||
+                         ' , operações efetuadas a partir dos proximos minutos não serão enviadas para analise'||
+                         ' e serão aprovadas automaticamente.'||
+                         ' <br>Atenciosamente';
                         
-          gene0003.pc_solicita_email( pr_cdcooper    => vr_cdcooper, 
-                                      pr_cdprogra    => 'CADFRA', 
-                                      pr_des_destino => pr_dsemail_entrega, 
-                                      pr_des_assunto => 'ANTIFRAUDE - Inativação de Envio de Analise', 
-                                      pr_des_corpo   => vr_dsdcorpo, 
-                                      pr_des_anexo   => NULL, 
-                                      pr_flg_enviar  => 'S', 
-                                      pr_des_erro    => vr_dscritic);
-          vr_dscritic := NULL;
+            gene0003.pc_solicita_email( pr_cdcooper    => vr_cdcooper, 
+                                        pr_cdprogra    => 'CADFRA', 
+                                        pr_des_destino => pr_dsemail_entrega, 
+                                        pr_des_assunto => 'ANTIFRAUDE - Inativação de Envio de Analise', 
+                                        pr_des_corpo   => vr_dsdcorpo, 
+                                        pr_des_anexo   => NULL, 
+                                        pr_flg_enviar  => 'S', 
+                                        pr_des_erro    => vr_dscritic);
+            vr_dscritic := NULL;
            
-        END IF;   
-      END IF;
-
+          END IF;   
+        END IF;
+      --> tratativa para nao abortar a rotina  
+      EXCEPTION
+        WHEN OTHERS THEN
+          NULL;
+      END;
 
       pc_item_log(pr_cdcooper   => vr_cdcooper
                  ,pr_cddopcao   => vr_cddopcao

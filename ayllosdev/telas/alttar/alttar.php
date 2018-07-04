@@ -7,6 +7,9 @@
  * --------------
  * ALTERAÇÕES   : 30/10/2017 - Alterado a largura da tela para 800 para comportar os novos campos 
  *							   vlpertar, vlmaxtar, vlmintar e tpcobtar. PRJ M150 (Mateus Z - Mouts)
+ *
+ *                28/06/2018 - Recarregar o js sempre que abrir a tela
+ *                             INC0017641 - Heitor (Mouts)
  * -------------- 
  */
 
@@ -50,7 +53,7 @@
 	<script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
 	<script type="text/javascript" src="../../scripts/tooltip.js"></script>
    
-   <script type="text/javascript" src="alttar.js"></script>	
+   <script type="text/javascript" src="alttar.js?keyrand=<?php echo mt_rand(); ?>"></script>
   </head>
 
   <body>
