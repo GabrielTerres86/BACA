@@ -103,12 +103,12 @@ var ObjRepresent = new Object();
 var sPortaPinpad = '';
 var flagIdprocess = false;
 var dsadmcrdList = {
-    16: "CECRED DEBITO",
-    14: "CECRED PLATINUM",
-    13: "CECRED GOLD",
-    12: "CECRED GOLD",
-    11: "CECRED ESSENCIAL",
-    15: "CECRED EMPRESAS"
+    16: "AILOS DEBITO",
+    14: "AILOS PLATINUM",
+    13: "AILOS GOLD",
+    12: "AILOS CLASSICO",
+    11: "AILOS ESSENCIAL",
+    15: "AILOS EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
 var faprovador;
@@ -264,7 +264,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 				 $("#btnalterarLimite").attr("situacao", "situacao");
 				 
             }
-
+			
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
 				$("#btncanc").removeAttr("disabled");
 				$("#btncanc").css('cursor', 'pointer');
@@ -1899,8 +1899,8 @@ function senhaCoordenador(executaDepois) {
 		$(".campo").blur(function(){
 			if( $(this).attr('id') =='cdopelib'){
 				faprovador = $(this).val();
-}
-
+			}
+			
 		});
 		
 		$(".campo").change(function(){
@@ -4621,12 +4621,12 @@ function validarUpDown() {
 			
             eval(response);
 			if(!error)
-			    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
 			    if (iPiloto == 1) {
-				atualizaUpgradeDowngrade();
+					atualizaUpgradeDowngrade();
 				} else {					
 					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
-        }
+				}
 					
         }
     });
