@@ -336,8 +336,8 @@ function validaOpcaoOrigem(){
 		$('#nrctremp','#frmCab').val('').desabilitaCampo();
 		$('#nrborder','#frmCab').val('').habilitaCampo();
 		$('#nrtitulo','#frmCab').val('').habilitaCampo();
-		$('#nrdocmto','#frmCab').val('').habilitaCampo();
-		$('#nrdocmto','#frmCab').prop('readonly',true);
+		//$('#nrdocmto','#frmCab').val('').habilitaCampo();
+		$('#nrdocmto','#frmCab').val('').desabilitaCampo();
 		
 	} else {
 		$('#nrctremp','#frmCab').val('').habilitaCampo();
