@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 06/06/2013
+   Data    : Janeiro/92.                     Ultima atualizacao: 04/07/2018
 
    Dados referentes ao programa:
 
@@ -91,6 +91,8 @@
                06/06/2013 - Migracao PROGRESS/ORACLE - Incluido chamada de
                             procedure (Andre Santos - SUPERO)
                             
+               04/07/2018 - Projeto Revitalização Sistemas - Rodrigo Andreatta (MOUTs)    
+                            
 ............................................................................*/
 
 { includes/var_batch.i }
@@ -116,8 +118,9 @@ ETIME(TRUE).
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
 RUN STORED-PROCEDURE pc_crps008 aux_handproc = PROC-HANDLE
-   (INPUT glb_cdcooper,                                                  
-    INPUT INT(STRING(glb_flgresta,"1/0")),
+   (INPUT glb_cdcooper,                   
+    INPUT 0,
+    INPUT 0,
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 
