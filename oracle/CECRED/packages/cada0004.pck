@@ -839,7 +839,7 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
                                ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
                                ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
-                               ,pr_idsenlet OUT NUMBER -- ??????????????
+                               ,pr_idsenlet OUT NUMBER -- Indica se existe senha de letras 1 = SIM 0 = NAO
                                ,pr_tpusucar OUT NUMBER  --> Usuário do cartão (Conta de pessoa física devolve o número do titular, conta pessoa jurídica devolve sempre "1" e cartão de operador devolve sempre "9")
                                ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE -->  Em caso de pessoa física é o CPF do titular que está utilizando o cartão, em caso se pessoa jurídica é o CNPJ
                                ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
@@ -12916,7 +12916,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código 
                                ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
                                ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
                                ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
-                               ,pr_idsenlet OUT NUMBER -- ??????????????
+                               ,pr_idsenlet OUT NUMBER -- Indica se existe senha de letras 1 = SIM 0 = NAO
                                ,pr_tpusucar OUT NUMBER  --> Usuário do cartão (Conta de pessoa física devolve o número do titular, conta pessoa jurídica devolve sempre "1" e cartão de operador devolve sempre "9")
                                ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE -->  Em caso de pessoa física é o CPF do titular que está utilizando o cartão, em caso se pessoa jurídica é o CNPJ
                                ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
