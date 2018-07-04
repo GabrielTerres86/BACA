@@ -337,6 +337,7 @@ function validaOpcaoOrigem(){
 		$('#nrborder','#frmCab').val('').habilitaCampo();
 		$('#nrtitulo','#frmCab').val('').habilitaCampo();
 		$('#nrdocmto','#frmCab').val('').habilitaCampo();
+		$('#nrdocmto','#frmCab').prop('readonly',true);
 		
 	} else {
 		$('#nrctremp','#frmCab').val('').habilitaCampo();
