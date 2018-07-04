@@ -732,7 +732,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 29/05/2018
+  --  Data     : Março/2014.                   Ultima atualizacao: 27/06/2018
   --
   -- Dados referentes ao programa:
   --
@@ -838,6 +838,12 @@ create or replace package body cecred.PAGA0002 is
                   29/05/2018 - Alterar sumario para somente somar os nao efetivados 
                                feitos no dia do debito, se ja foi cancelado nao vamos somar 
                                (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
+                               
+                  27/06/2018 - Devido a um bug no app do IOS, foi necessário incluir uma validação
+                               para não permitir que seja enviado uma TED com "Código do identificador"
+                               contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
+                               pela cabine
+                               (Adriano - INC0017772).
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -923,7 +929,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 12/06/2017
+      Data    : Abril/2007.                       Ultima atualizacao: 27/06/2018
 
       Dados referentes ao programa:
 
@@ -1033,6 +1039,12 @@ create or replace package body cecred.PAGA0002 is
                                
                   18/06/2018 - Validar que a agencia do banco creditada contenha apenas 4 digitos.
                                (Wagner da Silva #INC0016785 #TASK0024613)
+                               
+                  27/06/2018 - Devido a um bug no app do IOS, foi necessário incluir uma validação
+                               para não permitir que seja enviado uma TED com "Código do identificador"
+                               contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
+                               pela cabine
+                               (Adriano - INC0017772).
                                
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
@@ -1516,6 +1528,17 @@ create or replace package body cecred.PAGA0002 is
 	  RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.
+
+    /* 
+       O codigo identificador deve conter no maximo 25 caracteres, conforme catálago de mensagens do SPB. NO entanto,
+       quando gerado uma ted via mobile e o cooperado copia e cola uma informação no campo
+       "Código do identificador", decorrente a um bug no app IOS, não está sendo validado o limite máximo, permitindo o envio
+       da TED.   */
+    IF length(pr_dstransf) > 25 THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Codigo identificador deve conter no maximo 25 caracteres.';
+  	  RAISE vr_exc_erro;
+    END IF; 
 
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
