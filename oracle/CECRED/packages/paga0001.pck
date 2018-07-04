@@ -288,6 +288,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --        
   --         28/06/2018 - Remover caracteres especiais ao inserir na tabela craplcm, para o campo dscedent.
   --                      (Alcemir Mout's) - PRB0040107.
+
   
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1243,7 +1244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 27/03/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 04/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1630,6 +1631,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      
 
 	   27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. Inclusão de PRAGMA (Mario Bernat - AMcom)
+
+	   04/07/2018 - Ajustado cursor cr_craprtc nas procedures pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
+	                para poder trazer todos os titulos do dia, para gerar em um unico arquivo de retorno.
+					(Alcemir Mout's) - SCTASK0010677.
 		
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -17588,8 +17593,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         AND   crapret.cdcooper = craprtc.cdcooper
         AND   crapret.nrdconta = craprtc.nrdconta
         AND   crapret.nrcnvcob = craprtc.nrcnvcob
-        AND   crapret.nrretcoo = craprtc.nrremret
-		AND   crapret.dtocorre = craprtc.dtmvtolt;
+		AND   crapret.dtocorre = craprtc.dtmvtolt
+		AND   crapret.nrremret = (SELECT MAX(ret.nrremret)
+                                  FROM crapret ret
+                                  WHERE ret.cdcooper = craprtc.cdcooper
+                                  AND ret.nrdconta = craprtc.nrdconta
+                                  AND ret.nrcnvcob = craprtc.nrcnvcob
+                                  AND ret.dtocorre = craprtc.dtmvtolt
+                                  AND ret.nrretcoo = craprtc.nrremret);
 
       --Selecionar Cadastro Convenio
       CURSOR cr_crapcco (pr_cdcooper IN crapcco.cdcooper%type
@@ -18450,9 +18461,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         AND   crapret.cdcooper = craprtc.cdcooper
         AND   crapret.nrdconta = craprtc.nrdconta
         AND   crapret.nrcnvcob = craprtc.nrcnvcob
-        AND   crapret.nrretcoo = craprtc.nrremret
         AND   crapret.cdocorre <> 27 /* alt de outros dados */
-        AND   crapret.dtocorre = craprtc.dtmvtolt;
+        AND   crapret.dtocorre = craprtc.dtmvtolt
+		AND   crapret.nrremret = (SELECT MAX(ret.nrremret)
+                                   FROM crapret ret
+                                  WHERE ret.cdcooper = craprtc.cdcooper
+                                  AND ret.nrdconta = craprtc.nrdconta
+                                  AND ret.nrcnvcob = craprtc.nrcnvcob
+                                  AND ret.dtocorre = craprtc.dtmvtolt
+                                  AND ret.nrretcoo = craprtc.nrremret);
 
       --Selecionar Controle Cobranca
       CURSOR cr_crapceb (pr_cdcooper IN crapceb.cdcooper%type
