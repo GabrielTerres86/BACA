@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 
 				15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
 
-				22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
+				  22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
 
 				29/06/2018 - Alterada a procedure pc_resgata_aplicacao para utilização do Projeto URA (Everton Mouts)
 
@@ -284,39 +284,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         vr_vlsaldo  := pr_vlbloque;
       ELSE
       -- Fim PJ 416
-      
-      -- Busca os valores de bloqueio
-      EXTR0001.pc_obtem_saldos_anteriores(pr_cdcooper   => pr_cdcooper,
-                                          pr_cdagenci   => 1,
-                                          pr_nrdcaixa   => 1,
-                                          pr_cdopecxa   => '1',
-                                          pr_nmdatela   => 'BLQJUD',
-                                          pr_idorigem   => 1,
-                                          pr_nrdconta   => pr_nrdconta,
-                                          pr_idseqttl   => 1,
-                                          pr_dtmvtolt   => rw_crapdat.dtmvtolt,
-                                          pr_dtmvtoan   => rw_crapdat.dtmvtoan,
-                                          pr_dtrefere   => rw_crapdat.dtmvtoan,
-                                          pr_flgerlog   => FALSE,
-                                          pr_dscritic   => vr_dscritic,
-                                          pr_tab_saldos => vr_tab_saldos,
-                                          pr_tab_erro   => vr_tab_erro);
-      
+            -- Início chamado SCTASK0018256
+            -- Busca o saldo atual
+            cecred.extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper,
+                                               pr_rw_crapdat => rw_crapdat,
+                                               pr_cdagenci => vr_tab_cooperado(1).cdagenci,
+                                               pr_nrdcaixa => 1,
+                                               pr_cdoperad => 1,
+                                               pr_nrdconta => vr_tab_cooperado(1).nrdconta,
+                                               pr_vllimcre => 0,---c1.vllimcre,
+                                               pr_dtrefere => rw_crapdat.dtmvtolt,
+                                               pr_flgcrass => null,
+                                               pr_tipo_busca => 'A',
+                                               pr_des_reto => vr_dscritic,
+                                               pr_tab_sald => vr_tab_saldos,
+                                               pr_tab_erro => vr_tab_erro);
       -- Verifica se ocorreu erro na rotina
       IF vr_tab_erro.exists(vr_tab_erro.first) THEN
         vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
         RAISE vr_exc_saida;
       END IF;
-      
-      vr_dsmodali := 'do deposito a vista';
-      vr_vlsaldo := vr_tab_cooperado(1).vlstotal;
-      
       -- Se existir tabela de saldos anteriores
       IF vr_tab_saldos.exists(0) THEN
-        vr_vlsaldo := vr_vlsaldo - vr_tab_saldos(0).vlsdbloq - 
-                      vr_tab_saldos(0).vlsdblpr - 
-                      vr_tab_saldos(0).vlsdblfp;
+              vr_vlsaldo := vr_tab_saldos(0).vlsddisp;
       END IF;
+            -- Fim chamado SCTASK0018256         
+      
+      vr_dsmodali := 'do deposito a vista';
+      
       END IF; -- PJ 416
     ELSIF pr_cdmodali = 2 THEN -- Aplicacao
       vr_dsmodali := 'da aplicacao';
@@ -504,7 +499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                  pr_nrdocmto OUT VARCHAR2,          -- lista documentos resgatados
                                  pr_dscritic OUT VARCHAR2) IS       -- Retorno de erro
 
-    -- Registro sobre a data do sistema 
+    -- Registro sobre a data do sistema
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     -- Variaveis Pl/Tables
@@ -702,7 +697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       END IF;         
                     
       -- ir para o proximo
-      vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);  
+      vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);                               
       -- Se for assinatura conjunta cadastra transação pendente de resgate                             
       ELSE
         -- cria transação pendente
@@ -736,7 +731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                        ,pr_idastcjt  => pr_idastcjt       --> Indicador de Assinatura Conjunta
                        ,pr_cdcritic => vr_cdcritic        --> Codigo de Critica
                        ,pr_dscritic => vr_dscritic);      --> Descricao de Critica
-     
+                      
         -- Verificar se possui alguma crítica
         IF nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null THEN
           IF vr_dscritic IS NULL THEN 
@@ -761,7 +756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- Efetuar retorno do erro não tratado
       pr_dscritic := 'Erro BLQJ0002.pc_resgata_aplicacao: '||sqlerrm;
 
-  END pc_resgata_aplicacao;                                  
+  END pc_resgata_aplicacao;                                 
 
   -- Efetua o lancamento de resgate
   PROCEDURE pc_efetua_resgate_poupanca(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -1229,12 +1224,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     ROLLBACK;
     
     -- Coloca o registro da solicitacao como processado com Erro
-	IF pr_idatualiza_ordem = 1 THEN
-      pc_atualiza_situacao(pr_idordem => pr_idordem,
-                           pr_instatus => 4, -- Erro
-                           pr_dslog_erro => pr_dsinconsit);
+    IF pr_idatualiza_ordem = 1 THEN
+    pc_atualiza_situacao(pr_idordem => pr_idordem,
+                         pr_instatus => 4, -- Erro
+                         pr_dslog_erro => pr_dsinconsit);
     END IF;
-
+      
     -- Insere na inconsistencia
     gene0005.pc_gera_inconsistencia(pr_cdcooper => pr_cdcooper
                                    ,pr_iddgrupo => 1 -- Inconsistencia Bloqueio Judicial
@@ -1974,7 +1969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           IF (vr_cdmodali = 2 AND vr_tab_cooperado(vr_ind).vlsldapl = 0) OR -- Aplicacao
              (vr_cdmodali = 3 AND vr_tab_cooperado(vr_ind).vlsldppr = 0) THEN -- Poupanca
               continue;
-            END IF;
+          END IF;
 
           -- Fim Pj 416
           -- Atualiza a Sequence da tabela
@@ -1982,36 +1977,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
           -- Se a modalidade for conta corrente, entao deve-se subtrair os depositos bloqueados
           IF vr_cdmodali = 1 THEN
-            -- Busca os valores de bloqueio
-            EXTR0001.pc_obtem_saldos_anteriores(pr_cdcooper   => rw_solicitacao.cdcooper,
-                                                pr_cdagenci   => 1,
-                                                pr_nrdcaixa   => 1,
-                                                pr_cdopecxa   => '1',
-                                                pr_nmdatela   => 'BLQJUD',
-                                                pr_idorigem   => 1,
-                                                pr_nrdconta   => vr_tab_cooperado(vr_ind).nrdconta,
-                                                pr_idseqttl   => 1,
-                                                pr_dtmvtolt   => rw_crapdat.dtmvtolt,
-                                                pr_dtmvtoan   => rw_crapdat.dtmvtoan,
-                                                pr_dtrefere   => rw_crapdat.dtmvtoan,
-                                                pr_flgerlog   => FALSE,
-                                                pr_dscritic   => vr_dscritic,
-                                                pr_tab_saldos => vr_tab_saldos,
-                                                pr_tab_erro   => vr_tab_erro);
-            
+            -- Início chamado SCTASK0018256
+            -- Busca o saldo atual
+            cecred.extr0001.pc_obtem_saldo_dia(pr_cdcooper => rw_solicitacao.cdcooper,
+                                               pr_rw_crapdat => rw_crapdat,
+                                               pr_cdagenci => vr_tab_cooperado(vr_ind).cdagenci,
+                                               pr_nrdcaixa => 1,
+                                               pr_cdoperad => 1,
+                                               pr_nrdconta => vr_tab_cooperado(vr_ind).nrdconta,
+                                               pr_vllimcre => 0,---c1.vllimcre,
+                                               pr_dtrefere => rw_crapdat.dtmvtolt,
+                                               pr_flgcrass => null,
+                                               pr_tipo_busca => 'A',
+                                               pr_des_reto => vr_dscritic,
+                                               pr_tab_sald => vr_tab_saldos,
+                                               pr_tab_erro => vr_tab_erro);
             -- Verifica se ocorreu erro na rotina
             IF vr_tab_erro.exists(vr_tab_erro.first) THEN
               vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
               RAISE vr_exc_saida;
             END IF;
-
             -- Se existir tabela de saldos anteriores
             IF vr_tab_saldos.exists(0) THEN
-              vr_tab_cooperado(vr_ind).vlstotal := vr_tab_cooperado(vr_ind).vlstotal - 
-                            vr_tab_saldos(0).vlsdbloq - 
-                            vr_tab_saldos(0).vlsdblpr - 
-                            vr_tab_saldos(0).vlsdblfp;
+              vr_tab_cooperado(vr_ind).vlstotal := vr_tab_saldos(0).vlsddisp;
             END IF;
+            -- Fim chamado SCTASK0018256   
           END IF; -- Fim da validacao da modalidade 1
 
           -- Insere na tabela de retornos
@@ -2331,7 +2321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- PJ 416 -- Se não foi possível bloquear o valor original para modalidade 1 - Conta Corrente
       -- Grava a tabela de monitoramento
       IF rw_solicitacao.cdmodali = 1 AND rw_solicitacao.vlordem <  vr_vlbloque_ori THEN
-      
+
       -- Buscar o último progress_recid da tabela de lançamento para gravar na tabela de monitoramento
       -- Isto é necessário pois quando a rotina de bloqueio busca o valor do saldo total
       -- ela utiliza além do valor disponível, os valores de créditos e débitos existentes na tabela de lançamento
@@ -2719,7 +2709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              tbblqj_ordem_online a
        WHERE a.instatus  = 5 -- Processada, porem sem TED gerada
          AND b.idordem   = a.idordem;
-
+    
     CURSOR cr_ted_reenvio IS
       SELECT c.rowid,
              a.cdcooper,
@@ -3150,7 +3140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                   ,pr_cdcooper => vr_cdcooper
                                   ,pr_dsinconsit => 'Processamento TED: '||vr_dscritic
                                   ,pr_dsregistro_referencia => vr_dsinconsist
-                  ,pr_idatualiza_ordem => 0);
+								  ,pr_idatualiza_ordem => 0);
       END;
     END LOOP; -- Fim dos loop das TEDs a enviar
     --Fim Bacenjud - SM 1
@@ -3573,8 +3563,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                          ,pr_nrdconta       IN crapass.nrdconta%TYPE    --> Número da conta
                          ,pr_dtmvtolt       IN crapdat.dtmvtolt%TYPE    -- Data 
                          ,pr_progress_recid IN craplcm.progress_recid%TYPE ) IS
-    SELECT lcm.vllanmto
-          ,lcm.progress_recid
+    SELECT sum(lcm.vllanmto) vllanmto
+          ,max(lcm.progress_recid) progress_recid
       FROM craplcm lcm
           ,craphis his
      WHERE lcm.cdcooper = his.cdcooper
@@ -3646,30 +3636,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             TBBLQJ_MONITORA_ORDEM_BLOQ C
       WHERE
             C.VLSALDO = 0;
-    
+
+            
+  -- Busca de lançamentos de bloqueio na data 
+    CURSOR cr_lancamento_blq(pr_cdcooper        IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
+                            ,pr_nrdconta        IN crapass.nrdconta%TYPE    --> Número da conta
+                            ,pr_dtmvtolt        IN crapdat.dtmvtolt%TYPE    -- Data 
+                            ,pr_progress_recid  IN craplcm.progress_recid%TYPE ) IS
+    SELECT sum(lcm.vllanmto) vllanmto
+      FROM craplcm lcm
+     WHERE lcm.cdcooper = pr_cdcooper
+       AND lcm.nrdconta = pr_nrdconta
+       AND lcm.dtmvtolt = pr_dtmvtolt       
+       AND lcm.cdhistor in( 1402,1403) -- históricos de bloqueios
+       and lcm.progress_recid+0 > pr_progress_recid -- Lancamentos do dia que são maiores que o último lançamento utilizado
+  ORDER BY
+           lcm.progress_recid;
             
     -- Registro sobre a data do sistema
     rw_crapdat                btch0001.cr_crapdat%ROWTYPE;
 
     -- VARIÁVEIS
-    vr_cdcooper               crapcop.cdcooper%TYPE; -- Codigo da Cooperativa  
-    vr_idordem                tbblqj_ordem_online.idordem%TYPE; -- Sequencial do processo      
-    vr_dsinconsist            tbgen_inconsist.dsinconsist%TYPE; -- Descricao do registro que esta sendo processado    
-    vr_valor_bloquear         tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; 
-    vr_progress_recid_blq     craplcm.progress_recid%type;
-    vr_texto_email            varchar2(4000);
-    vr_email_juridico         crapprm.dsvlrprm%type:='';
-    vr_hororario_encerramento number;
-    vr_nrcpfcnpj              tbblqj_monitora_ordem_bloq.nrcpfcnpj%TYPE; 
-    vr_dsoficio               tbblqj_monitora_ordem_bloq.dsoficio%TYPE;  
-    vr_saldo                  tbblqj_monitora_ordem_bloq.vlsaldo%TYPE;     
+    vr_cdcooper                crapcop.cdcooper%TYPE; -- Codigo da Cooperativa  
+    vr_idordem                 tbblqj_ordem_online.idordem%TYPE; -- Sequencial do processo      
+    vr_dsinconsist             tbgen_inconsist.dsinconsist%TYPE; -- Descricao do registro que esta sendo processado    
+    vr_valor_bloquear          tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; 
+    vr_progress_recid_blq      craplcm.progress_recid%type;
+    vr_texto_email             varchar2(32767);
+    vr_email_juridico          crapprm.dsvlrprm%type:='';
+    vr_hororario_encerramento  number;
+    vr_nrcpfcnpj               tbblqj_monitora_ordem_bloq.nrcpfcnpj%TYPE; 
+    vr_dsoficio                tbblqj_monitora_ordem_bloq.dsoficio%TYPE;  
+    vr_saldo                   tbblqj_monitora_ordem_bloq.vlsaldo%TYPE;     
+    vr_rw_crapdat              btch0001.cr_crapdat%ROWTYPE;    
+    vr_dsdircop                VARCHAR2(400); 
+    vr_monitoramento_encerrado VARCHAR2(1):='N';
+    -- Handle para arquivo
+    vr_ind_arq                 UTL_FILE.FILE_TYPE;   
+    vr_des_erro                VARCHAR2(4000);    
 
     -- Variaveis de erro
-    vr_cdcritic               PLS_INTEGER; --> codigo retorno de erro
-    vr_dscritic               VARCHAR2(4000); --> descricao do erro
-    vr_exc_saida              EXCEPTION; --> Excecao prevista
+    vr_cdcritic                PLS_INTEGER; --> codigo retorno de erro
+    vr_dscritic                VARCHAR2(4000); --> descricao do erro
+    vr_exc_saida               EXCEPTION; --> Excecao prevista
   BEGIN
-    
+	    
      -- Busca o horário de encerramento
     OPEN CR_HORARIO_ENCERRAMENTO;
     FETCH CR_HORARIO_ENCERRAMENTO INTO RW_HORARIO_ENCERRAMENTO;
@@ -3688,6 +3699,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
    IF to_number(to_char(sysdate, 'HH24MI')) > vr_hororario_encerramento THEN
      -- Busca os dados do monitoramento
      FOR rw_monitoramento IN cr_monitoramento LOOP
+      -- 
+      vr_monitoramento_encerrado:='S';
+      
       -- Atualiza na tabela de bloqueios
       BEGIN
         UPDATE tbblqj_ordem_bloq_desbloq
@@ -3697,7 +3711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
           RAISE vr_exc_saida;
-  END;
+      END;
 
       -- Coloca o registro de solicitacao como processado com sucesso      
       pc_atualiza_situacao(pr_idordem => rw_monitoramento.idordem,
@@ -3713,19 +3727,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           RAISE vr_exc_saida;
       END;       
      END LOOP;
+     -- Salvar antes do envio do e-mail, pois se der algum erro no envio não prejudica o processo
+     COMMIT;
+     
+     IF vr_monitoramento_encerrado = 'S' THEN
+       -- Busca do diretório para gravação
+       vr_dsdircop := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/Coop
+                                           ,pr_cdcooper => 3 -- Vai gravar sempre no diretório da Cecred
+                                           ,pr_nmsubdir => null);
+                                         
+       -- Tenta abrir o arquivo para envio das informações
+       gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdircop    --> Diretório do arquivo
+                               ,pr_nmarquiv => 'monitoramento.txt'    --> Nome do arquivo
+                               ,pr_tipabert => 'W'            --> Modo de abertura (R,W,A)
+                               ,pr_utlfileh => vr_ind_arq     --> Handle do arquivo aberto
+                               ,pr_des_erro => vr_des_erro);
+       IF vr_des_erro IS NOT NULL THEN
+       RAISE vr_exc_saida;
+     END IF;
+       -- Envia e-mail para o jurídico com os lançamentos das contas monitoradas
+       for c1 in conta_monitorada loop
+           -- Busca a data do sistema
+         OPEN btch0001.cr_crapdat(c1.cdcooper);
+         FETCH btch0001.cr_crapdat INTO vr_rw_crapdat;
+         CLOSE btch0001.cr_crapdat;
+        
+         gene0001.pc_escr_linha_arquivo(vr_ind_arq,c1.conta);       
+         for c2 in lancamentos_conta(c1.cdcooper,c1.nrdconta,vr_rw_crapdat.dtmvtolt) loop
+           gene0001.pc_escr_linha_arquivo(vr_ind_arq,'  '||c2.lancamento);                
+         end loop;
+         
+         gene0001.pc_escr_linha_arquivo(vr_ind_arq,' ');              
+       end loop;
+       -- Fecha o arquivo
+       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq);     
+
+       -- Comando para enviar e-mail para o Jurídico
+       GENE0003.pc_solicita_email(pr_cdcooper        => 3 --> Cooperativa conectada
+                                 ,pr_cdprogra        => 'BLQJ0002.PC_MONITORA_BLQ_JUD' --> Programa conectado
+                                 ,pr_des_destino     => vr_email_juridico --> Um ou mais detinatários separados por ';' ou ','
+                                 ,pr_des_assunto     => 'Relatório de lançamentos' --> Assunto do e-mail
+                                 ,pr_des_corpo       => 'Informações das contas monitoradas e seus lançamentos. <br> <br>' --> Corpo (conteudo) do e-mail
+                                 ,pr_des_anexo       => vr_dsdircop||'/monitoramento.txt' --> Um ou mais anexos separados por ';' ou ','
+                                 ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
+                                 ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                 ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                 ,pr_des_erro        => vr_dscritic);          
+     END IF;                            
    ELSE 
-     -- Busca os endereços de e-mail do jurídico para envio se for necessário
-    OPEN CR_EMAIL_JURIDICO;
-    FETCH CR_EMAIL_JURIDICO INTO RW_EMAIL_JURIDICO;
-    IF CR_EMAIL_JURIDICO%NOTFOUND THEN
-      CLOSE CR_EMAIL_JURIDICO;
-      vr_dscritic := 'E-mail do jurídico não cadastrado!';
-      RAISE vr_exc_saida;
-    ELSE
-       vr_email_juridico := RW_EMAIL_JURIDICO.dsvlrprm;
-    END IF;
-    CLOSE CR_EMAIL_JURIDICO;
-    
      -- Busca os dados do monitoramento
      FOR rw_monitoramento IN cr_monitoramento LOOP
        -- Se mudou a cooperativa
@@ -3753,10 +3802,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                           rw_monitoramento.nrdconta,
                                           rw_crapdat.dtmvtolt,
                                           rw_monitoramento.progress_recid_mon) LOOP
+         IF nvl(rw_lancamento.vllanmto,0) > 0 THEN
+           -- Em alguns casos, existem vários ofícios para mesma conta e nesta 
+           -- situação deve-se retirar do crédito o valor que já foi bloqueado 
+           -- nos ofícios anteriores
+           FOR rw_lancamento_blq in cr_lancamento_blq(rw_monitoramento.cdcooper,
+                                                      rw_monitoramento.nrdconta,
+                                                      rw_crapdat.dtmvtolt,
+                                                      rw_lancamento.progress_recid) LOOP
+              rw_lancamento.vllanmto := nvl(rw_lancamento.vllanmto,0) - nvl(rw_lancamento_blq.vllanmto,0);
+           END LOOP;
+         
          -- Se existir lançamento de crédito, efetuar o bloqueio.
-          
          -- Verificar se o valo do lançamento é menor que o saldo que
          -- precisa ser bloqueado, se for, bloquear o valor total do lançamento de crédito
+           IF rw_lancamento.vllanmto > 0 THEN
          IF rw_lancamento.vllanmto < vr_saldo THEN
            vr_valor_bloquear := rw_lancamento.vllanmto;
          ELSE
@@ -3778,8 +3838,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          IF vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
          END IF;        
+           END IF;
          -- Se não ocorreu erro no bloqueio
-        
          -- Se o valor bloqueado for suficiente para atender o bloqueio judicial
          -- Atualizar a tabela de bloqueio e excluir o monitoramento.
          IF rw_lancamento.vllanmto >= vr_saldo THEN       
@@ -3906,6 +3966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          -- Atualizar o progress_recid do cursor para o progress_recid do lançamento de crédito 
          -- que fopi usado para bloqueio
          rw_monitoramento.progress_recid_mon:= rw_lancamento.progress_recid;
+         END IF;
        END LOOP; -- cr_lancamento
        COMMIT;
        END IF; -- Saldo maior que zero
