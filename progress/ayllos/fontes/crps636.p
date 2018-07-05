@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 26/05/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 04/07/2018
     
     Dados referente ao programa:
     
@@ -56,7 +56,7 @@
                               de debitos sicredi e criado novo relatorio
                               crrl674 (Lucas R.)
 							  
-				 29/04/2014 - Ajuste migracao Oracle (Elton).
+				         29/04/2014 - Ajuste migracao Oracle (Elton).
                  
                  21/10/2014 - Ajustado crrl674 e geracao do registro "B"
                               (Lucas R.)
@@ -152,8 +152,9 @@
                  23/10/2017 - Incluir tratamento para os consorcios igual ao do chamado 684123
                               (Lucas Ranghetti #739738)
 
-				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+                 04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1107,13 +1108,22 @@ FOR EACH crapcop NO-LOCK.
             ASSIGN aux_cdrefere = STRING(aux_nrcrcard,"9999999999999999999999") 
                                   + FILL(" ",3).
 
+
+         /* Se empresa RQ (Claro PR/SC) ou 5Y (Claro RS) vamos retornar ao sicredi como Claro Movel (RL) */
+        IF  craplau.cdempres = "RQ" OR
+            craplau.cdempres = "5Y" THEN
+            ASSIGN aux_cdempres = "RL".
+        ELSE
+            ASSIGN aux_cdempres = craplau.cdempres.
+            
         /* formatar codigo da empresa */
         RUN retorna_valor_formatado (INPUT 10, /* max. de digitos na variavel */                                 
                                      INPUT 10, /* quantidade max characteres a completar */ 
                                      INPUT 0,                        
-                                     INPUT craplau.cdempres,         
+                                     INPUT aux_cdempres,         
                                     OUTPUT aux_cdempres).            
-
+        
+        
         /* Registro F referente aos consorcios SICREDI, lista antes de todos */
         ASSIGN aux_dslinreg = 
                     "F" +
