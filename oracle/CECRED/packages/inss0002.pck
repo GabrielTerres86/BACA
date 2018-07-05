@@ -2041,7 +2041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    :            (AMcom)
-    --  Data     :                                    Ultima atualizacao: 04/04/2018
+    --  Data     :                                    Ultima atualizacao: 28/06/2018
     --
     --  Dados referentes ao programa:
     --
@@ -2051,6 +2051,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     --  Alteração  : 04/04/2018 - Inclusao de chamada para analise de fraude e 
     --               repasse do ID da analise para a rotina pc_atualiza_pagamento. 
     --               (PRJ381 - Analise de Fraude, Teobaldo Jamunda - AMcom)
+    --
+	--               28/06/2018 - Remover carateceres especiais ao inserir na craplcm, para o campo dscedent.
+    --       	                 (Alcemir - Mout's) - PRB0040107.
     --
     -- ..........................................................................*/
 
@@ -2521,7 +2524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             ,vr_cdoperad
             ,rw_craplot.nrseqdig + 1
             ,TRIM(rw_crapass.nrdctitg)
-            ,vr_dshistor
+            ,GENE0007.fn_caract_acento(vr_dshistor,1)
             ,vr_dsorigem || ' - PAGAMENTO ON-LINE – GUIA PREVIDENCIA SOCIAL'
             );
       EXCEPTION
