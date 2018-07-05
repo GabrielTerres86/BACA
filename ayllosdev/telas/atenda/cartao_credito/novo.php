@@ -38,7 +38,7 @@
 	$possuiSenha = ($xmlSenhaResult->Dados->senhas->senha->status == "OK");
 	if(!$possuiSenha)
 	{
-		exibirErro('error',utf8ToHtml("Conta sem cartão magnético ativo ou com cartão magnético sem senha cadastrada."),'Alerta - Ayllos',"");
+		exibirErro('error',utf8ToHtml("Conta sem senha cadastrada. Vincule a senha para o cartão magnético ou libere a senha da Internet."),'Alerta - Ayllos',"");
 		return;
 	}
 	
