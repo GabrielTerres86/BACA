@@ -361,13 +361,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
               ,tbcc_grupo_economico_integ  gi
          WHERE gi.cdcooper = rw_cbase.cdcooper
            AND gi.cdcooper = ge.cdcooper
-           AND gi.idgrupo = ge.idgrupo
+           AND gi.idgrupo  = ge.idgrupo
+           AND gi.dtexclusao IS NULL
            AND ge.idgrupo IN (SELECT ge.idgrupo
                                 FROM tbcc_grupo_economico        ge
                                     ,tbcc_grupo_economico_integ  gi
                                WHERE ge.cdcooper = rw_cbase.cdcooper
                                  AND gi.cdcooper = ge.cdcooper
                                  AND gi.idgrupo = ge.idgrupo
+                                 AND gi.dtexclusao IS NULL
                                  AND DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, 'fm00000000000'),
                                             substr(to_char(gi.nrcpfcgc, 'fm00000000000000'),1,8)) = rw_cbase.nrcpfcgc_compara
                               )
@@ -443,15 +445,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          , RISC0004.fn_traduz_risco(ris.inrisco_final) risco_final
          , ris.cdmodali as ris_cdmodali
          , decode (ris.cdmodali
-                 , 0, 'CTA'
-                 , 101, 'CTA'
-                 , 201, 'LIM'
+                 , 999, 'CTA'
+                 , 101,  'CTA'
+                 , 201,  'LIM'
                  , 1901, 'LIM'
-                 , 299, 'EMP'
-                 , 499, 'EMP'
-                 , 301, 'DCH'
-                 , 302, 'DTI'
-                 , 999, 'CTA') tipo_registro
+                 , 299,  'EMP'
+                 , 499,  'EMP'
+                 , 301,  'DCH'
+                 , 302,  'DTI') tipo_registro
              , epr.idquaprc as epr_idquaprc
              , epr.cdlcremp as epr_cdlcremp
              , epr.cdfinemp as epr_cdfinemp
@@ -836,8 +837,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              t.vlrabono,
              t.vljuprej,
              t.vlsdprej,
-           t.vljur60_ctneg,
-             t.vljur60_lcred,
              t.vldivida_original
         FROM tbcc_prejuizo t
        WHERE t.cdcooper = pr_cdcooper
@@ -1002,14 +1001,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         IF cr_crapsld%FOUND THEN 
           CLOSE cr_crapsld;
           vr_iof := rw_crapsld.vliofmes;
-          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes + rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred));          
+          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes));          
         ELSE          
           CLOSE cr_crapsld;     
-          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred));        
-        END IF;
-        
-        IF vr_saldodev < 0 THEN 
-           vr_saldodev := vr_saldodev * -1;   
+          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej));        
         END IF;
         
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1086,8 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlslddev', -- Saldo Devedor
-                               --pr_tag_cont => abs(least(vr_saldodev,0)),
-                               pr_tag_cont => vr_saldodev,
+                               pr_tag_cont => abs(least(vr_saldodev,0)),
                                pr_des_erro => vr_dscritic);  
          
       ELSE
