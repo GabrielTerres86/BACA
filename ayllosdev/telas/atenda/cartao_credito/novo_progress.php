@@ -555,7 +555,7 @@
 							$("#flgdebit").removeProp("readonly");
 							setTimeout(function(){
 								$("#flgdebit").removeAttr("readonly");
-							$("#flgdebit").removeAttr("disabled");
+								$("#flgdebit").removeAttr("disabled");
 								$("#flgdebit").removeProp("disabled");
 								$("#flgdebit").removeProp("readonly");
 							}, 600);
@@ -623,4 +623,5 @@
 	?>
 	
 	contigenciaAtiva = false;
+	justificativaCartao = undefined;
 </script>
