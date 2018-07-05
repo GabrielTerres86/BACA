@@ -44,6 +44,8 @@
  *                07/01/2016 - Remover campo de Libera Credito Pre Aprovado (Anderson).
  *
  *			      15/07/2016 - Incluir ajustes referentes a flag de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
+ *
+ *			      05/07/2018 - Ajustar para gravar corretamente a categoria para PJ (Renato Darosci - Supero)
  */
 var operacao = '';
 var nrdrowid = '';
@@ -480,7 +482,9 @@ function controlaLayout(operacao) {
                 cCdcatego.prop("selectedIndex", -1);
             }
 			*/
-			cCdcatego.prop("selectedIndex", -1);
+            if (inpessoa == 1) {			
+                cCdcatego.prop("selectedIndex", -1);
+            }
 			
         });
 		
