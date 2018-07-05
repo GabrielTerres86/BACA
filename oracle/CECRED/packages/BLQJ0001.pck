@@ -171,6 +171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              Rafael (Mouts) - Chamado 662865
 
 				30/11/2017 - M460 bancenJud - Demetrius\Thiago Rodrigues
+        25/06/2018 - Início Chamado - SCTASK0018254 e SCTASK0018252 - Márcio Mouts
 
   .............................................................................*/
   
@@ -226,7 +227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ass.nmprimtl
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrcpfcgc BETWEEN to_number(pr_nrctadoc||'000000') AND to_number(pr_nrctadoc||'999999');
+         AND ass.nrcpfcgc BETWEEN to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'000000') AND to_number(substr(lpad(pr_nrctadoc,14,'0'),1,8)||'999999');
         
     -- VARIÁVEIS
     vr_nrcpfcgc    crapass.nrcpfcgc%TYPE;
@@ -488,7 +489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
        WHERE ass.cdcooper = pr_cdcooper 
          -- quando o tipo do registro for 1, pesquisa diretamente pela conta
          AND ((ass.nrcpfcgc = pr_nrcpfcgc AND NVL(pr_tpcooperad,0) NOT IN (1,3)) OR
-              (ass.nrcpfcgc BETWEEN to_number(pr_cooperad||'000000') AND to_number(pr_cooperad||'999999') AND NVL(pr_tpcooperad,0) = 3) OR
+              (ass.nrcpfcgc BETWEEN to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'000000') AND to_number(to_number(substr(lpad(pr_cooperad,14,'0'),1,8))||'999999') AND NVL(pr_tpcooperad,0) = 3) OR
               (ass.nrdconta = pr_cooperad AND NVL(pr_tpcooperad,0) = 1))
       UNION    -- Cláusula UNION é excludente de repetições
       SELECT ttl.cdcooper
@@ -1438,6 +1439,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                rw_craplot.nrseqdig := 0;
                
             EXCEPTION 
+              -- Início Chamado - SCTASK0018254
+              WHEN DUP_VAL_ON_INDEX THEN
+                -- As rotinas de bloqueio são executadas via job e em alguns casoso 
+                -- ocorria erro pois dois job entravam no insert da craplot ao mesmo tempo
+                -- este tratamento é para evitar que ocorra o erro e para que a rotina busque as 
+                -- informações do lote para incluir o bloqueio
+                -- Buscar o lote para o lançamento
+                -- Fechar o cursor aberto no insert 
+                CLOSE cr_craplot;
+                OPEN  cr_craplot(pr_cdcooper
+                                ,BTCH0001.rw_crapdat.dtmvtolt
+                                ,6880);
+                FETCH cr_craplot INTO rw_craplot;                
+              -- Fim Chamado - SCTASK0018254                
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir Lote: '||SQLERRM;
                 RAISE vr_exp_erro;
@@ -2137,6 +2152,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             rw_craplot.nrseqdig := 0;
                
           EXCEPTION 
+            -- Início Chamado - SCTASK0018254
+            WHEN DUP_VAL_ON_INDEX THEN
+              -- As rotinas de bloqueio são executadas via job e em alguns casoso 
+              -- ocorria erro pois dois job entravam no insert da craplot ao mesmo tempo
+              -- este tratamento é para evitar que ocorra o erro e para que a rotina busque as 
+              -- informações do lote para incluir o bloqueio
+              -- Buscar o lote para o lançamento
+              -- Fechar o cursor aberto no insert 
+              CLOSE cr_craplot;
+              OPEN  cr_craplot(pr_cdcooper
+                              ,pr_dtmvtolt
+                              ,6880);
+              FETCH cr_craplot INTO rw_craplot;                
+            -- Fim Chamado - SCTASK0018254                
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir Lote: '||SQLERRM;
               RAISE vr_exp_erro;
