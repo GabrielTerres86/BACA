@@ -665,6 +665,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                
   --              14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
   --                           da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
+  --
+  --              04/07/2018 - Projeto Ligeirinho. Ajustes atualização na CRAPLOT #40089 (Mário AMcom)
+
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -2533,7 +2536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                             pr_dtmvtolt => rw_crapdat.dtmvtocd,
                             pr_cdagenci => pr_cod_agencia,
                             pr_cdbccxlt => 100,
-                            pr_nrdolote =>10800 + pr_nro_caixa,
+                            pr_nrdolote => 10800 + pr_nro_caixa,
                             pr_cdoperad => pr_cod_operador,
                             pr_nrdcaixa => pr_nro_caixa,
                             pr_tplotmov => 1,
@@ -2551,23 +2554,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
            paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapcop.cdcooper,
                                        pr_dtmvtolt => rw_crapdat.dtmvtocd,
                                        pr_cdagenci => pr_cod_agencia,
-                                       pr_cdbccxlt => 11,
-                                       pr_nrdolote => vr_nro_lote,
+                                       pr_cdbccxlt => 100,
+                                       pr_nrdolote => 10800 + pr_nro_caixa,
                                        pr_cdoperad => pr_cod_operador,
                                        pr_nrdcaixa => pr_nro_caixa,
-                                       pr_tplotmov => vr_tplotmov,
-                                       pr_cdhistor => vr_cdhistor,
+                                       pr_tplotmov => 1,
+                                       pr_cdhistor => 654,
                                        pr_cdbccxpg => null,
                                        pr_nmrotina => 'CXON0014.PC_GERA_TITULOS_IPTU');
                             
-            rw_craplot.dtmvtolt := rw_crapdat.dtmvtocd;                  
-            rw_craplot.cdagenci := pr_cod_agencia;                   
-            rw_craplot.cdbccxlt := 11;                  
-            rw_craplot.nrdolote := vr_nro_lote;                   
-            rw_craplot.cdoperad := pr_cod_operador;                   
-            rw_craplot.tplotmov := vr_tplotmov;                   
-            rw_craplot.cdhistor := vr_cdhistor;
-            rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm(); 
+            rw_craplot_lcm.dtmvtolt := rw_crapdat.dtmvtocd;                  
+            rw_craplot_lcm.cdagenci := pr_cod_agencia;                   
+            rw_craplot_lcm.cdbccxlt := 100;                  
+            rw_craplot_lcm.nrdolote := 10800 + pr_nro_caixa;                   
+            rw_craplot_lcm.cdoperad := pr_cod_operador;                   
+            rw_craplot_lcm.tplotmov := 1;                   
+            rw_craplot_lcm.cdhistor := 654;
+            rw_craplot_lcm.nrseqdig := PAGA0001.fn_seq_parale_craplcm(); 
           end if;
           --Numero da Conta
           vr_nrdctabb:= pr_contaconve;
@@ -2872,7 +2875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
           deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
           if not paga0001.fn_exec_paralelo then
-          --Atualizar lote da lcm por ultimo, a fim de diminuir tempo de lock
+            --Atualizar lote da lcm por ultimo, a fim de diminuir tempo de lock
             BEGIN
               UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
                                 ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
@@ -4025,7 +4028,7 @@ END pc_gera_titulos_iptu_prog;
           pr_critica_data:= TRUE;
         end if;
 
-      END IF;
+            END IF;
     EXCEPTION
        WHEN vr_exc_saida THEN
          NULL;
@@ -7170,7 +7173,7 @@ END pc_gera_titulos_iptu_prog;
     ELSE
       CLOSE cr_crapcon;     
     END IF;
-    
+  
     --> Bancoob  
     IF rw_crapcon.tparrecd = 2 THEN
     
@@ -9411,7 +9414,7 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       END IF;
-
+      
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
        PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir
        se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
@@ -9481,8 +9484,7 @@ END pc_gera_titulos_iptu_prog;
           ,craplft.tpcptdoc
           ,craplft.dsnomfon
           ,craplft.idanafrd
-          ,craplft.idseqttl
-          )
+          ,craplft.idseqttl)
         VALUES
           (rw_crapcop.cdcooper
           ,pr_nrdconta
@@ -9506,8 +9508,7 @@ END pc_gera_titulos_iptu_prog;
           ,pr_tpcptdoc
           ,pr_dsnomfon
           ,NULLIF(pr_idanafrd,0)            -- idanafrd
-          ,pr_idseqttl                       -- idseqttl
-          )
+          ,pr_idseqttl)                     -- idseqttl
         RETURNING
            craplft.ROWID
           ,craplft.nrseqdig
@@ -9878,14 +9879,14 @@ END pc_gera_titulos_iptu_prog;
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
-
+      
      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
       PAGA0001., que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
       deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
 
       if not PAGA0001.fn_exec_paralelo then
-      -- Apenas atualizar o lote se não for pagamento pela INTERNET
-      -- pagamentos pela Internet, atualizacao do lote será na paga0001.pc_paga_convenio
+         -- Apenas atualizar o lote se não for pagamento pela INTERNET
+         -- pagamentos pela Internet, atualizacao do lote será na paga0001.pc_paga_convenio
         IF pr_cod_agencia <> 90 THEN
 
           /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
