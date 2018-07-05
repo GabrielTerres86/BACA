@@ -22,7 +22,7 @@
 	isPostMethod();
 	
 	// Carrega permiss�es do operador
-	//include("../../includes/carrega_permissoes.php");
+	include("../../includes/carrega_permissoes.php");
 
 	// Monta o xml de requisi��o
 	$xml  = '';
