@@ -1177,6 +1177,46 @@ EXCEPTION
     -- Devolvemos Codigo e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
+    
+    -- Na execução paralela
+    IF nvl(pr_idparale,0) <> 0 THEN
+
+      --Grava data fim para o JOB na tabela de LOG 
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 0);                                     
+        
+      -- Grava LOG de erro com as críticas retornadas                           
+      pc_log_programa(pr_dstiplog      => 'E', 
+                      pr_cdprograma    => vr_cdprogra||'_'||pr_cdagenci,
+                      pr_cdcooper      => pr_cdcooper,
+                      pr_tpexecucao    => vr_tpexecucao,
+                      pr_tpocorrencia  => 3,
+                      pr_cdcriticidade => 1,
+                      pr_cdmensagem    => pr_cdcritic,
+                      pr_dsmensagem    => pr_dscritic,
+                      pr_flgsucesso    => 0,
+                      pr_idprglog      => vr_idlog_ini_par);  
+                        
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);                        
+                                    
+    ELSE
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || vr_dscritic );
+      END IF;
+    END IF;
+    
     -- Efetuar rollback
     ROLLBACK;
 
@@ -1184,6 +1224,31 @@ EXCEPTION
     -- Efetuar retorno do erro nao tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
+    
+    -- Na execução paralela
+    if nvl(pr_idparale,0) <> 0 then 
+      -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+      pc_log_programa(PR_DSTIPLOG           => 'E',
+                      PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_tpocorrencia       => 2,
+                      pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                               'pr_dscritic:'||pr_dscritic,
+                      PR_IDPRGLOG           => vr_idlog_ini_par); 
+      --Grava data fim para o JOB na tabela de LOG 
+      pc_log_programa(pr_dstiplog   => 'F',    
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                      pr_cdcooper   => pr_cdcooper, 
+                      pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 0);  
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
+    end if;
+    
     -- Efetuar rollback
     ROLLBACK;
 END PC_CRPS168;
