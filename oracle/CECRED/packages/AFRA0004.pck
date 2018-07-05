@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
+CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is 
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : AFRA0004
@@ -11,7 +11,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a monitoracao de Analise de Fraude e mensagens.
-                  (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
+                  (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom) 
 
       Alteracoes:  
       
