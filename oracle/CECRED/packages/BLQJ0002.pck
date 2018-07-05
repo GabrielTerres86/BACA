@@ -3627,7 +3627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          AND cp.cdacesso = 'BLQJ_FIM_MONITORAMENTO'             
          AND cp.cdcooper = 0;
     RW_HORARIO_ENCERRAMENTO CR_HORARIO_ENCERRAMENTO%ROWTYPE;    
-    
+   
     -- Busca as ordens no monitoramento que estão com saldo zerado
     CURSOR cr_monitoramento_zerado IS
       SELECT
@@ -3637,6 +3637,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       WHERE
             C.VLSALDO = 0;
 
+    CURSOR conta_monitorada is
+      SELECT
+            'Cooperativa: '||c.nmrescop||
+            ' Conta: '||t2.nrdconta||
+            ' CPF/CNPJ: '||t.nrcpfcnpj||
+            ' Ofício: '||t2.dsoficio||                        
+            ' Valor Monitorado: '||to_char(t2.vl_diferenca_bloqueio,'99,999,990.00')||
+            ' Valor Bloqueado: '||to_char(nvl(t2.vloperacao,0),'99,999,990.00') Conta,
+            c.cdcooper,
+            t2.nrdconta
+      FROM 
+            tbblqj_ordem_online t,
+            tbblqj_ordem_bloq_desbloq t2,
+            crapcop c
+      WHERE 
+            trunc(t.dhrequisicao)           = trunc(sysdate)
+        AND t.tpordem                       = 2 -- Bloqueio
+        AND c.cdcooper                      = t.cdcooper
+        AND t2.idordem                      = t.idordem
+        AND nvl(t2.vl_diferenca_bloqueio,0) <> 0 
+      ORDER BY 
+           t.cdcooper,t.nrcpfcnpj  ;
+     
+    CURSOR lancamentos_conta(pr_cdcooper in crapcop.cdcooper%type,
+                             pr_nrdconta in crapass.nrdconta%type,
+                             pr_dtmvtolt in crapdat.dtmvtolt%type) is
+      SELECT
+           distinct(lpad(ch.cdhistor,4,' ')||' - '||ch.dshistor) lancamento,
+           ch.cdhistor
+      FROM
+            craplcm cl,
+            craphis ch
+      WHERE 
+            ch.cdcooper = cl.cdcooper
+        AND ch.cdhistor = cl.cdhistor
+        AND cl.cdcooper = pr_cdcooper
+        AND cl.nrdconta = pr_nrdconta 
+        AND cl.dtmvtolt = pr_dtmvtolt         
+      ORDER BY 
+            ch.cdhistor;  
             
   -- Busca de lançamentos de bloqueio na data 
     CURSOR cr_lancamento_blq(pr_cdcooper        IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
@@ -3680,6 +3720,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_dscritic                VARCHAR2(4000); --> descricao do erro
     vr_exc_saida               EXCEPTION; --> Excecao prevista
   BEGIN
+     -- Busca os endereços de e-mail do jurídico para envio se for necessário
+    OPEN cr_email_juridico;
+    FETCH cr_email_juridico INTO rw_email_juridico;
+    IF cr_email_juridico%NOTFOUND THEN
+      CLOSE cr_email_juridico;
+      vr_dscritic := 'E-mail do jurídico não cadastrado!';
+      RAISE vr_exc_saida;
+    ELSE
+       vr_email_juridico := rw_email_juridico.dsvlrprm;
+    END IF;
+    CLOSE cr_email_juridico;
 	    
      -- Busca o horário de encerramento
     OPEN CR_HORARIO_ENCERRAMENTO;
@@ -3959,7 +4010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                       ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
                                       ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
                                       ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                                      ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                        ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                       ,pr_des_erro        => vr_dscritic);          
          END IF;
          
