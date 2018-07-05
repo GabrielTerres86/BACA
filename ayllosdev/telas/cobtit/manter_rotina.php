@@ -34,6 +34,10 @@ if (!isset($operacao) || $operacao=='') {
 
 switch ($operacao){
     case "BUSCAR_ASSOCIADO":
+        if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C')) <> '') {
+            exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+        }
+
         $xml = "<Root>";
         $xml .= " <Dados>";
         $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -59,6 +63,9 @@ switch ($operacao){
         echo json_encode($json);
     break;
     case "BUSCAR_BORDEROS":
+        if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'C',false)) <> "") {
+            exibeErro($msgError);       
+        }   
         $xml = "<Root>";
         $xml .= " <Dados>";
         $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -147,6 +154,9 @@ switch ($operacao){
         echo json_encode($json);
     break;
     case "GERAR_BOLETO":
+        if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"G",false)) <> "") {
+            exibeErro($msgError);       
+        }
         $nrtitulo = $_POST["nrtitulo"];
         $titulos = '';
         foreach($nrtitulo as $k=>$v){
@@ -232,6 +242,10 @@ switch ($operacao){
         echo json_encode($json);
     break;
     case "BAIXAR_BOLETO":
+        if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"B",false)) <> "") {
+            exibeErroBaixa($msgError);      
+        }
+
         $dsjustif = (isset($_POST['dsjustif'])) ? utf8_decode($_POST['dsjustif']) : '';
         $dtmvtolt = $glbvars["dtmvtolt"];
         
@@ -267,6 +281,10 @@ switch ($operacao){
         echo json_encode($json);
     break;
     case "ENVIAR_BOLETO":
+        if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X",false)) <> "") {
+            exibeErro($msgError);       
+        }
+
         $dsdemail = (isset($_POST['dsdemail'])) ? $_POST['dsdemail'] : '';
         // 1 - Email ou 2 - SMS
         $tpdenvio = (isset($_POST['tpdenvio'])) ? $_POST['tpdenvio'] : 0;

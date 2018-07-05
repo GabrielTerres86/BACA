@@ -15,6 +15,10 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
 
+if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X",false)) <> "") {
+    exibeErro($msgError);       
+}   
+
 function exibeErro($msgErro) {	
 	echo 'hideMsgAguardo();';
 	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';

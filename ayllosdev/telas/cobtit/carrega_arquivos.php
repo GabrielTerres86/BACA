@@ -28,7 +28,6 @@ $nmarquiv = (isset($_POST['nmarquiv'])) ? $_POST['nmarquiv'] : '';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
     exibirErro('error',$msgError,'Alerta - Ayllos','estadoInicial()',false);
-    exit();
 }
 
 $xml = "<Root>";
