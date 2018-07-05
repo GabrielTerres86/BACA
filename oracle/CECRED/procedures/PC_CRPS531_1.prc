@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 02/07/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -282,6 +282,8 @@ BEGIN
                     variavel global que terá o mesmo horário (HRTRANSA). Evitando erros na
                     impressão do comprovante do extrato na conta do cooperado.
 				           (Wagner - PRB0040144).
+
+			 05/07/2018 - Ajuste para considerar cooperativa ativa (Adriano - PRB0040134).
                      
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -6656,7 +6658,8 @@ END;
         -- enviada pela cooperativa
         IF vr_aux_tagCABInf THEN
           -- Busca cooperativa da destino
-          OPEN cr_busca_coop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4));
+          OPEN cr_busca_coop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4)
+                            ,pr_flgativo => 1);
           FETCH cr_busca_coop
            INTO rw_crapcop_mensag;
           -- Se encontrar
