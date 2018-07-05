@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 04/07/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/07/2018
     
     Dados referente ao programa:
     
@@ -132,7 +132,7 @@
 				                 
                  21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
 
-				 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
+                 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
                               colocando zeros a esquerda (Projeto 338 - Lucas Lunelli)
 
                  13/12/2016 - Ajustes referente a incorporaçao da Transulcred pela Transpocred. 
@@ -155,6 +155,9 @@
                  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
                  04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
+                 
+                 05/07/2018 - Alteracao referente a dtfimsus no envio do registro B, validar 
+                              final de semana (Lucas Ranghetti INC0018634)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -750,7 +753,8 @@ FOR EACH crapcop NO-LOCK.
                                           STRING(MONTH(crapatr.dtinisus),"99")  +
                                           STRING(DAY(crapatr.dtinisus),"99").
         ELSE
-            IF  crapatr.dtfimsus = glb_dtmvtolt THEN
+            IF  crapatr.dtfimsus > glb_dtmvtoan  AND
+                crapatr.dtfimsus <= glb_dtmvtolt THEN
                 /* Quando estiver cancelando a suspensao da autorizacao */
                 ASSIGN aux_dtmvtolt_atr = STRING(YEAR(glb_dtmvtolt),"9999") +
                                           STRING(MONTH(glb_dtmvtolt),"99")  +
