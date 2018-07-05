@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 06/10/2017
+   Data    : 23/03/2011                        Ultima atualizacao: 26/05/2018
     
    Dados referentes ao programa:
 
@@ -280,6 +280,9 @@
                             
                04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi)
                             
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).								
+                                                   
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -4414,7 +4417,7 @@ PROCEDURE impressao-prnf:
         " (SPC,SERASA,CADIN ...) ALEM DO CADASTRO DA CENTRAL DE RISCO DO"  
         "BANCO CENTRAL DO BRASIL E SISTEMA"  
         SKIP
-        " CECRED."            
+        " AILOS."            
         SKIP(1)
         rel_lbconjug            
         crapprp.flgdocje
