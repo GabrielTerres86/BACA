@@ -15,41 +15,41 @@ create or replace package cecred.SICR0002 is
 
      Alteracoes: 12/02/2015 - Tratamento na procedure pc_consulta_convenios_wt para listar a partir de agora
                               tambem os convenios nossos (CECRED) que nao foram debitados no processo
-                              noturno por insuficiencia de fundos. 
+                              noturno por insuficiencia de fundos.
                               (Chamado 229249 - PRJ Melhoria) - (Fabricio)
-                              
-                 27/03/2015 - Ajustado para na gravacao do campo craplcm.cdpesqbb 
+
+                 27/03/2015 - Ajustado para na gravacao do campo craplcm.cdpesqbb
                               (procedure pc_cria_lancamentos_deb), gravar as informacoes
                               da mesma forma que quando gravado pelo pc_crps123.prc e/ou
                               pelo pc_crps509.prc (pos-liberacao). (Fabricio)
-                              
+
                  30/03/2015 - Alterado na leitura da craplau para buscar as datas de
                               pagamentos tambem menores que a data atual, isto
                               para os casos de pagamentos com data no final de
-                              semana. (Ajustes pos-liberacao # PRJ Melhoria) - 
+                              semana. (Ajustes pos-liberacao # PRJ Melhoria) -
                               (Fabricio)
-                              
-                 31/08/2015 - Incluir Hora da transação na inclusão da tabela craplcm 
+
+                 31/08/2015 - Incluir Hora da transação na inclusão da tabela craplcm
                               (Lucas Ranghetti #324864)
-                  
+
                  18/11/2015 - Alterado para que ao criar lancamentos seja atualizado
-                              a dtultdeb da tabela crapatr conforme solicitado no 
+                              a dtultdeb da tabela crapatr conforme solicitado no
                               chamado 322424 (Kelvin).
 
-        				 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-                 
-                 04/07/2016 - Incluir critica "Lancamento ja efetivado pela DEBNET/DEBSIC." para lancamentos 
+                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+
+                 04/07/2016 - Incluir critica "Lancamento ja efetivado pela DEBNET/DEBSIC." para lancamentos
                               ja efetuados (Lucas Ranghetti #474938)
 
                  08/07/2016 - Alteracao na pc_consulta_convenios_wt para buscar apenas
                               débitos de convênios que não foram efetivados no dia.
-                              SD 483180. (Carlos Rafael Tanholi)   
-							  
-					       02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
-							                considerar aqueles com data de pagamento nos finais de semana.
-                              SD 497612 (Carlos Rafael Tanholi) 
-                             
-                 27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)			        
+                              SD 483180. (Carlos Rafael Tanholi)
+
+                 02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
+                              considerar aqueles com data de pagamento nos finais de semana.
+                              SD 497612 (Carlos Rafael Tanholi)
+
+                 27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
   ......................................................................................................... */
 
   -- Efetuar consulta dos debitos
@@ -89,61 +89,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
 
      Alteracoes: 12/02/2015 - Tratamento na procedure pc_consulta_convenios_wt para listar a partir de agora
                               tambem os convenios nossos (CECRED) que nao foram debitados no processo
-                              noturno por insuficiencia de fundos. 
+                              noturno por insuficiencia de fundos.
                               (Chamado 229249 - PRJ Melhoria) - (Fabricio)
-                              
-                 27/03/2015 - Ajustado para na gravacao do campo craplcm.cdpesqbb 
+
+                 27/03/2015 - Ajustado para na gravacao do campo craplcm.cdpesqbb
                               (procedure pc_cria_lancamentos_deb), gravar as informacoes
                               da mesma forma que quando gravado pelo pc_crps123.prc e/ou
                               pelo pc_crps509.prc (pos-liberacao). (Fabricio)
-                              
+
                  30/03/2015 - Alterado na leitura da craplau para buscar as datas de
                               pagamentos tambem menores que a data atual, isto
                               para os casos de pagamentos com data no final de
-                              semana. (Ajustes pos-liberacao # PRJ Melhoria) - 
+                              semana. (Ajustes pos-liberacao # PRJ Melhoria) -
                               (Fabricio)
-                              
-                 31/08/2015 - Incluir Hora da transação na inclusão da tabela craplcm 
+
+                 31/08/2015 - Incluir Hora da transação na inclusão da tabela craplcm
                               (Lucas Ranghetti #324864)
-                  
+
                  18/11/2015 - Alterado para que ao criar lancamentos seja atualizado
-                              a dtultdeb da tabela crapatr conforme solicitado no 
+                              a dtultdeb da tabela crapatr conforme solicitado no
                               chamado 322424 (Kelvin).
 
                  30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-                 
+
                  04/07/2016 - Incluir critica "Lancamento ja efetivado pela DEBNET/DEBSIC." para lancamentos
                               ja efetuados na procedure pc_cria_lancamentos_deb (Lucas Ranghetti #474938)
-                              
+
                  08/07/2016 - Alteracao na pc_consulta_convenios_wt para buscar apenas
                               débitos de convênios que não foram efetivados no dia.
-                              SD 483180. (Carlos Rafael Tanholi)   
-							  
-					       02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
-							                considerar aqueles com data de pagamento nos finais de semana.
-                              SD 497612 (Carlos Rafael Tanholi) 	
-                              
+                              SD 483180. (Carlos Rafael Tanholi)
+
+                 02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
+                              considerar aqueles com data de pagamento nos finais de semana.
+                              SD 497612 (Carlos Rafael Tanholi)
+
                  08/08/2016 - Ajuste pc_consulta_convenios_wt para grava na wt a data do agendamento do pagamento
                               para a correta busca do lançamento ao criar o lançamento de debito. (Odirlei - AMcom)
-                              
-                 06/09/2016 - Incluir tratamento para lock do lote na procedure 
+
+                 06/09/2016 - Incluir tratamento para lock do lote na procedure
                               pc_cria_lancamentos_deb (Lucas Ranghetti #518312)
-                              
-                 20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt na procedure 
+
+                 20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt na procedure
                               pc_cria_lancamentos_deb (Lucas Ranghetti/Fabricio #524588)
-                              
-                 11/10/2016 - Incluir valor do lancamento como parametro na verificacao da 
+
+                 11/10/2016 - Incluir valor do lancamento como parametro na verificacao da
                               craplau (Lucas Ranghetti #537385)
-                              
+
                  27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
-                 
+
                  10/03/2017 - Ajuste na procedure pc_cria_lancamentos_deb na hora do update da
                               craplau utilizar o vllanaut como filtro pois estava retornando
                               mais de um registro (Tiago/Fabricio SD615681).
 
-				 13/04/2017 - Ajuste devido a importação de arquivos de débito automático com o layout FEBRABAN na versão 5
-				              (Jonata - RKAM / M311). 
-                              
+         13/04/2017 - Ajuste devido a importação de arquivos de débito automático com o layout FEBRABAN na versão 5
+                      (Jonata - RKAM / M311).
+
                  18/10/2017 - Ajustar rotina para debitar os consorcios tambem (Lucas Ranghetti #739738)
   ......................................................................................................... */
 
@@ -165,7 +165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
 
   -- nome empresa conveniada
   vr_nmempres crapscn.dsnomcnv%TYPE;
-  
+
   -- codigo convenio / codigo empresa (convenio Sicredi)
   vr_cdempres crapscn.cdempres%TYPE;
 
@@ -173,13 +173,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
   vr_nrdocmto varchar2(25);
   vr_nrseqdig number;
   vr_dtmvtopg DATE;
-  vr_dtmovini craplau.dtmvtopg%TYPE; 
+  vr_dtmovini craplau.dtmvtopg%TYPE;
 
   -- DECLARAÇÃO DE CURSORES
- 
+
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
- 
+
   -- Cursor de lançamentos automáticos
   CURSOR cr_craplau (pr_cdcooper IN crapcop.cdcooper%TYPE,
                      pr_dtmovini IN craplau.dtmvtopg%TYPE,
@@ -201,19 +201,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           ,lau.cdhistor
           ,lau.cdempres
           ,lau.cdagenci
-					,lau.cdcritic
-					,lau.insitlau
+          ,lau.cdcritic
+          ,lau.insitlau
           ,ROWID
           ,lau.progress_recid
     FROM  craplau lau
     WHERE lau.cdcooper  = pr_cdcooper
     AND   lau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
-		AND  ((lau.insitlau  = 1  AND
+    AND  ((lau.insitlau  = 1  AND
            lau.cdcritic  IN (717,964,967,1003)
           )    OR
-		      (lau.insitlau  = 3     AND
+          (lau.insitlau  = 3     AND
           lau.cdcritic  = 967)
-          )			
+          )
     AND   ',' || pr_lshistor || ',' LIKE ('%,' || lau.cdhistor || ',%'); -- Retorna historicos passados na listagem
     rw_craplau cr_craplau%ROWTYPE;
 
@@ -257,10 +257,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
            lot.rowid
       FROM craplot lot
      WHERE lot.cdcooper = pr_cdcooper
-	  	 AND lot.dtmvtolt = pr_dtmvtolt
-		   AND lot.cdagenci = pr_cdagenci
-			 AND lot.cdbccxlt = 100
-			 AND lot.nrdolote = 6651
+       AND lot.dtmvtolt = pr_dtmvtolt
+       AND lot.cdagenci = pr_cdagenci
+       AND lot.cdbccxlt = 100
+       AND lot.nrdolote = 6651
        FOR UPDATE NOWAIT;
   rw_craplot cr_craplot%ROWTYPE;
 
@@ -279,7 +279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
        AND lcm.nrdocmto = pr_nrdocmto  -- NUMERO DO DOCUMENTO
        AND lcm.nrdolote = 6651;         -- NUMERO DO LOTE
   rw_craplcm cr_craplcm%ROWTYPE;
-    
+
   CURSOR cr_crapatr(pr_cdcooper IN crapatr.cdcooper%TYPE,
                     pr_nrdconta IN crapatr.nrdconta%TYPE,
                     pr_cdhistor IN crapatr.cdhistor%TYPE,
@@ -299,7 +299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
        AND atr.nrdconta = pr_nrdconta -- NUMERO DA CONTA
        AND atr.cdhistor = pr_cdhistor -- CODIGO DO HISTORICO
        AND atr.cdrefere IN( pr_cdrefere, pr_nrdocmto); -- COD. REFERENCIA
-  rw_crapatr cr_crapatr%ROWTYPE;     
+  rw_crapatr cr_crapatr%ROWTYPE;
 
   CURSOR cr_crapcns (pr_cdcooper IN crapcop.cdcooper%TYPE,
                      pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -317,10 +317,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                                      pr_cdcritic   OUT PLS_INTEGER,     --> Codigo de Erro
                                      pr_dscritic   OUT VARCHAR2) IS               --> Descricao de Erro
       vr_lshistor VARCHAR2(1000);
-    
+
     PROCEDURE pc_retorna_lista_historicos (pr_cdcooper IN crapcop.cdcooper%TYPE,
                                            pr_lshistor OUT VARCHAR2) IS
-                                           
+
       CURSOR cr_craphis (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT craphis.cdhistor FROM craphis, gnconve WHERE
         craphis.cdhistor = gnconve.cdhisdeb AND
@@ -335,7 +335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     END pc_retorna_lista_historicos;
 
   BEGIN
-    -- Limpa a tabela temporaria de interface       
+    -- Limpa a tabela temporaria de interface
     BEGIN
       DELETE wt_convenios_debitos;
     EXCEPTION
@@ -344,7 +344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
         pr_dscritic := 'Erro ao excluir wt_convenios_debitos: '||SQLERRM;
         RETURN;
     END;
-    
+
     pc_retorna_lista_historicos (pr_cdcooper, vr_lshistor);
 
     -- Data anterior util
@@ -359,15 +359,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     -- Faz a busca dos registros na craplau
     FOR rw_craplau IN cr_craplau(pr_cdcooper => pr_cdcooper,
                                  pr_dtmovini => vr_dtmovini,
-                                 pr_dtmvtopg => pr_dtmvtolt, 
+                                 pr_dtmvtopg => pr_dtmvtolt,
                                  pr_lshistor => vr_lshistor) LOOP
 
       IF rw_craplau.cdhistor = 1019 THEN
-        SELECT crapscn.dsnomcnv INTO vr_nmempres 
+        SELECT crapscn.dsnomcnv INTO vr_nmempres
           FROM crapscn
         WHERE crapscn.cdempres = rw_craplau.cdempres;
         vr_cdempres := rw_craplau.cdempres;
-        
+
       ELSIF rw_craplau.cdhistor IN(1230,1231,1232,1233,1234) THEN
         vr_cdempres := rw_craplau.cdempres;
         CASE rw_craplau.cdhistor
@@ -376,7 +376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           WHEN 1232 THEN vr_nmempres:= 'CONSORCIO - PESADOS';
           WHEN 1233 THEN vr_nmempres:= 'CONSORCIO - IMOVEIS';
           WHEN 1234 THEN vr_nmempres:= 'CONSORCIO - SERVICOS';
-        END CASE;         
+        END CASE;
       ELSE
         SELECT gnconve.nmempres, TO_CHAR(gnconve.cdconven) INTO vr_nmempres, vr_cdempres
           FROM gnconve
@@ -384,7 +384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
       END IF;
 
       -- criar registro na tabela wt_convenios que sera usada no progress
-      BEGIN 
+      BEGIN
         INSERT INTO wt_convenios_debitos
           (cdcooper,
            cdagenci,
@@ -395,8 +395,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
            nrdocmto,
            cdempres,
            nmempres,
-					 insitlau,
-					 cdcritic)
+           insitlau,
+           cdcritic)
          VALUES
            (rw_craplau.cdcooper,
             rw_craplau.cdagenci,
@@ -407,17 +407,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
             rw_craplau.nrdocmto,
             vr_cdempres,
             vr_nmempres,
-						rw_craplau.insitlau,
-						rw_craplau.cdcritic);
+            rw_craplau.insitlau,
+            rw_craplau.cdcritic);
       EXCEPTION
         -- se ocorreu erro gera critica
-        WHEN OTHERS THEN          
+        WHEN OTHERS THEN
           pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao inserir na tabela wt_convenios_debitos: '||SQLERRM;            
+          pr_dscritic := 'Erro ao inserir na tabela wt_convenios_debitos: '||SQLERRM;
           RETURN;
-      END;  
-            
-    END LOOP;    
+      END;
+
+    END LOOP;
   -- COMMIT;
   END pc_consulta_convenios_wt;
 
@@ -430,39 +430,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                                     pr_vllanaut IN craplau.vllanaut%TYPE,     --> Valor lancamento
                                     pr_nrdocmto IN VARCHAR2,                  --> Documento
                                     pr_cdcritic OUT PLS_INTEGER,              --> Codigo de Erro
-                                    pr_dscritic OUT VARCHAR2) IS              --> Descricao de Erro  
+                                    pr_dscritic OUT VARCHAR2) IS              --> Descricao de Erro
   /*---------------------------------------------------------------------------------------------------------------
    Programa : pc_cria_lancamentos_deb
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : 
+   Autor   :
    Data    :                        Ultima atualizacao: 18/10/2017
-  
+
    Dados referentes ao programa:
-  
+
    Frequencia: Sempre que chamado
    Objetivo  : Procedimento para realizar debito do debito automatico pela tela DEBCON
-  
+
    Alteracoes: 12/07/2016 - Incluir criação do protocolo.
                             PRJ320 - Oferta DebAut (Odirlei-AMcom)
-  
+
                27/07/2016 - Desabilitar temporariamente a criação do protocolo devido existir
                             diferença no tamanho do campo de protocolo entre  a tabela crappro e crapaut
                             acarretando erro ao atualizar tabela crapaut.
-                            PRJ320 - Oferta Debaut (Odirlei-AMcom) 
-  
+                            PRJ320 - Oferta Debaut (Odirlei-AMcom)
+
                08/08/2016 - Ajustado para utilizar a data do parametro como data do agendamento do pagamento(craplau.dtmvtopg)
                             e buscar a data do movimento da cooperativa para geração do lote e lcm (Odirlei-AMcom)
-                            
+
                06/09/2016 - Incluir tratamento para lock do lote (Lucas Ranghetti #518312)
-               
+
                20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt (Lucas Ranghetti/Fabricio #524588)
-               
+
                11/10/2016 - Incluir valor do lancamento como parametro na verificacao da craplau (Lucas Ranghetti #537385)
-               
+
                18/10/2017 - Ajustar rotina para debitar os consorcios tambem (Lucas Ranghetti #739738)
-  --------------------------------------------------------------------------------------------------------------------*/ 
-  
+
+               28/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente
+                            PRJ450 - Rangel Decker - AMcom
+  --------------------------------------------------------------------------------------------------------------------*/
+
    ---------->>> CURSORES <<<--------
     --> Selecionar Informacoes Convenios
     CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
@@ -474,10 +477,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
          AND crapcon.cdsegmto = pr_cdsegmto;
-    rw_crapcon cr_crapcon%ROWTYPE;	
-    
+    rw_crapcon cr_crapcon%ROWTYPE;
+
     rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-    
+
     ---------->>> VARIAVEIS <<<--------
     vr_lau_dsorigem  craplau.dsorigem%TYPE;
     vr_lau_cdcoptfn  craplau.cdcoptfn%TYPE;
@@ -487,21 +490,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     vr_lau_nrcpfpre  craplau.nrcpfpre%TYPE;
     vr_lau_nmprepos  craplau.nmprepos%TYPE;
     vr_lau_nrcrcard  craplau.nrcrcard%TYPE;
-    
+
     -- Protocolo
     vr_dsinfor1  crappro.dsinform##1%TYPE;
     vr_dsinfor2  crappro.dsinform##1%TYPE;
     vr_dsinfor3  crappro.dsinform##1%TYPE;
     vr_dsprotoc  crappro.dsprotoc%TYPE;
     vr_nrdolote_sms NUMBER;
-      
+
     -- Autenticação
     vr_dslitera  crapaut.dslitera%TYPE;
     vr_nrautdoc  crapaut.nrsequen%TYPE;
     vr_nrdrecid  ROWID;
-    
-  BEGIN                           
-               
+
+    vr_nmtabela     VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+    vr_incrineg     INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+    vr_tab_retorno lanc0001.typ_reg_retorno;
+
+    vr_fldebita   BOOLEAN DEFAULT TRUE;
+
+
+  BEGIN
+
     --Verificar se o lancamento automatico existe
     OPEN cr_craplau_2 (pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta,
@@ -510,17 +520,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                        pr_nrdocmto => pr_nrdocmto,
                        pr_vllanaut => pr_vllanaut);
     FETCH cr_craplau_2 INTO rw_craplau_2;
-    
+
     IF cr_craplau_2%FOUND THEN
       CLOSE cr_craplau_2;
-      vr_cdcritic:= 0; --  Lancamento ja efetivado pela DEBNET/DEBSIC 
-      vr_dscritic:= 'Lancamento ja efetivado pela DEBNET/DEBSIC/DEBCNS.'; 
+      vr_cdcritic:= 0; --  Lancamento ja efetivado pela DEBNET/DEBSIC
+      vr_dscritic:= 'Lancamento ja efetivado pela DEBNET/DEBSIC/DEBCNS.';
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
     --Fechar Cursor
     CLOSE cr_craplau_2;
-    
+
     -- Verifica se a data esta cadastrada
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -535,7 +545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-                
+
     -- Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 5 seg.
     FOR i IN 1..50 LOOP
       BEGIN
@@ -551,7 +561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           IF cr_craplot%ISOPEN THEN
             CLOSE cr_craplot;
           END IF;
-           
+
           -- setar critica caso for o ultimo
           IF i = 50 THEN
             vr_dscritic:= 'Registro de lote 6651 em uso. Tente novamente.';
@@ -560,7 +570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           sys.dbms_lock.sleep(0.1);
       END;
     END LOOP;
-          
+
     -- se encontrou erro ao buscar lote, abortar programa
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
@@ -634,7 +644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           vr_dscritic := 'Erro ao atualizar a tabela craplot: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
-    END IF;    
+    END IF;
 
     -- BUSCA REGISTRO REFERENTES A LOTES
     OPEN cr_craplcm(pr_cdcooper => pr_cdcooper,
@@ -649,9 +659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     IF cr_craplcm%NOTFOUND THEN
       -- FECHAR O CURSOR
       CLOSE cr_craplcm;
-      
+
       ---> Gerar autenticação do pagamento
-      CXON0000.pc_grava_autenticacao_internet 
+      CXON0000.pc_grava_autenticacao_internet
                         (pr_cooper       => pr_cdcooper
                         ,pr_nrdconta     => pr_nrdconta
                         ,pr_idseqttl     => 1            --Sequencial do titular
@@ -677,16 +687,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                         ,pr_registro     => vr_nrdrecid  --ROWID do registro debito
                         ,pr_cdcritic     => vr_cdcritic  --Código do erro
                         ,pr_dscritic     => vr_dscritic);--Descricao do erro
-          
+
       --Se ocorreu erro
       IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         vr_cdcritic:= 0;
         vr_dscritic:= 'Erro na autenticacao do pagamento: '||vr_dscritic;
         RAISE vr_exc_erro;
-      END IF;  
-      
+      END IF;
+
       BEGIN
-        INSERT INTO craplcm
+
+         -- verifica se pode efetuar o débito.
+        /* identifica se pode debitar na conta do cooperado */
+          vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                    pr_nrdconta =>pr_nrdconta,
+                                                    pr_cdhistor =>pr_cdhistor);
+          IF   vr_fldebita = TRUE THEN
+                   lanc0001.pc_gerar_lancamento_conta(pr_cdcooper  =>pr_cdcooper
+                                                     ,pr_dtmvtolt  =>rw_craplot.dtmvtolt
+                                                     ,pr_cdagenci  =>rw_craplot.cdagenci
+                                                     ,pr_cdbccxlt  =>rw_craplot.cdbccxlt  -- cdbccxlt
+                                                     ,pr_nrdolote  =>rw_craplot.nrdolote  -- nrdolote
+                                                     ,pr_nrdconta => pr_nrdconta
+                                                     ,pr_nrdctabb => pr_nrdconta -- nrdctabb
+                                                     ,pr_nrdocmto => pr_nrdocmto
+                                                     ,pr_cdhistor => pr_cdhistor
+                                                     ,pr_vllanmto => pr_vllanaut
+                                                     ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                                                     ,pr_nrautdoc => vr_nrautdoc
+                                                     ,pr_cdpesqbb => 'Lote ' || TO_CHAR(pr_dtmvtolt, 'dd') || '/' ||
+                                                                   TO_CHAR(pr_dtmvtolt, 'mm') || '-' ||
+                                                                   to_char(gene0002.fn_mask(pr_cdagenci, '999')) || '-' ||
+                                                                   to_char(gene0002.fn_mask(rw_craplot.cdbccxlt, '999')) || '-' ||
+                                                                   to_char(gene0002.fn_mask(rw_craplot.nrdolote, '999999')) || '-' ||
+                                                                   to_char(gene0002.fn_mask(rw_craplot.nrseqdig, '99999'))  || '-' ||
+                                                                   to_char(pr_nrdocmto)
+                                                     ,pr_hrtransa =>  to_char(SYSDATE,'sssss')
+
+                                                   -------------------------------------------------
+                                                   -- Dados do lote (Opcional)
+                                                   -------------------------------------------------
+                                                   , pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
+                                                   , pr_incrineg  => vr_incrineg      -- OUT Indicador de crítica de negócio
+                                                   , pr_cdcritic  => vr_cdcritic      -- OUT
+                                                   , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
+
+                      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+                        -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
+                        IF vr_incrineg = 0 THEN
+                          vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+                          RAISE vr_exc_erro;
+                        END IF;
+
+                      END IF;
+
+
+          /* INSERT INTO craplcm
             (cdcooper,
              dtmvtolt,
              cdagenci,
@@ -706,7 +762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
            rw_craplot.dtmvtolt,
            rw_craplot.cdagenci,  -- cdagenci
            rw_craplot.cdbccxlt,  -- cdbccxlt
-           rw_craplot.nrdolote,  -- nrdolote           
+           rw_craplot.nrdolote,  -- nrdolote
            pr_nrdconta,
            pr_nrdconta, -- nrdctabb
            pr_nrdocmto,
@@ -723,6 +779,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
            to_char(pr_nrdocmto),
            to_char(SYSDATE,'sssss'));
 
+      */
+      END IF;
+
+
+
       -- VERIFICA SE HOUVE PROBLEMA NA INCLUSÃO DO REGISTRO
       EXCEPTION
         WHEN OTHERS THEN
@@ -730,7 +791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           vr_dscritic := 'Erro ao inserir na tabela craplcm: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
-      
+
       -- ATUALIZACAO DE REGISTROS DE LOTES
       BEGIN
         UPDATE craplot
@@ -747,20 +808,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLOT: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
-      
+
       BEGIN
         -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS CONFORME PARAMETROS
         UPDATE craplau
            SET insitlau = 2,
                dtdebito = rw_craplot.dtmvtolt,
-							 cdcritic = 0
+               cdcritic = 0
          WHERE craplau.cdcooper  = pr_cdcooper AND
                craplau.dtmvtopg  = pr_dtmvtolt AND
               (craplau.insitlau  = 1           OR
-							 craplau.insitlau  = 3         ) AND
+               craplau.insitlau  = 3         ) AND
                craplau.nrdconta  = pr_nrdconta AND
                to_char(craplau.nrdocmto) = pr_nrdocmto AND
-               craplau.cdhistor = pr_cdhistor  AND 
+               craplau.cdhistor = pr_cdhistor  AND
                craplau.vllanaut = pr_vllanaut
          RETURNING craplau.dsorigem,
                    craplau.cdcoptfn,
@@ -785,7 +846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           vr_dscritic := 'Erro ao inserir na tabela craplau: '||SQLERRM;
           RAISE vr_exc_erro;
       END;  -- fim do update craplau
-      
+
       IF pr_cdhistor NOT IN (1230,1231,1232,1233,1234) THEN
       -- Atualiza data do último débito da autorização
       OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,
@@ -818,7 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
               RAISE vr_exc_erro;
           END;
         END IF;
-        
+
         /* TEMPORARIAMENTE NÃO SERÁ GERADO PROTOCOLO para os pr_nrdocmto > 15
              DEVIDO EXISTIR DIFERENÇA NO TAMANHO DO CAMPO DE PROTOCOLO ENTRE A TABELA CRAPPRO E CRAPAUT
         */
@@ -830,9 +891,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                           ,pr_cdempcon => rw_crapatr.cdempcon
                           ,pr_cdsegmto => rw_crapatr.cdsegmto);
           --Posicionar no proximo registro
-          FETCH cr_crapcon INTO rw_crapcon;                  
-          CLOSE cr_crapcon; 
-          
+          FETCH cr_crapcon INTO rw_crapcon;
+          CLOSE cr_crapcon;
+
           -- GERAR PROTOCOLO
           -->Campos gravados na crappro para visualizacao na internet
           vr_dsinfor1 := 'Pagamento';
@@ -840,7 +901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           vr_dsinfor3 := 'Convênio: '||rw_crapcon.nmextcon||
                          '#Número Identificador:'||rw_crapatr.cdrefere ||'#'|| rw_crapatr.dshisext;
 
-          --> Se TAA 
+          --> Se TAA
           IF vr_lau_dsorigem = 'TAA' THEN
             vr_dsinfor3:= vr_dsinfor3 ||'#TAA: '||gene0002.fn_mask(vr_lau_cdcoptfn,'9999')||'/'||
                                                   gene0002.fn_mask(vr_lau_cdagetfn,'9999')||'/'||
@@ -873,10 +934,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-                
-          --> Armazena protocolo na autenticacao 
+
+          --> Armazena protocolo na autenticacao
           BEGIN
-            UPDATE crapaut 
+            UPDATE crapaut
                SET crapaut.dsprotoc = vr_dsprotoc
              WHERE crapaut.ROWID = vr_nrdrecid;
           EXCEPTION
@@ -885,16 +946,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
             vr_dscritic:= 'Erro ao atualizar registro da autenticacao. '||sqlerrm;
             --Levantar Excecao
             RAISE vr_exc_erro;
-          END;                
+          END;
           END IF;
         END IF;
       ELSE -- Consorcios
-      
+
          -- Validar se existe conta consorcio
          OPEN cr_crapcns(pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta);
-         FETCH cr_crapcns INTO rw_crapcns;        
-         
+         FETCH cr_crapcns INTO rw_crapcns;
+
          IF cr_crapcns%NOTFOUND THEN
           -- FECHAR O CURSOR
           CLOSE cr_crapcns;
@@ -910,10 +971,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
       -- FECHAR O CURSOR DA CRAPLCM
       CLOSE cr_craplcm;
     END IF; -- fim do notfound craplcm
-    
+
     -- Gravar as informações no banco
     COMMIT;
-  
+
   EXCEPTION
     WHEN vr_exc_erro THEN
        ROLLBACK;
