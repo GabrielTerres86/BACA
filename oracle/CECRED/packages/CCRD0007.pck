@@ -16,16 +16,13 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0007" is
   ---------------------------------------------------------------------------------------------------------------*/
 
   --> Verificar se usa o motor de credito para cartao
-  FUNCTION fn_usa_motor_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE
-                              ,pr_cdagenci IN crawcrd.cdagenci%TYPE) RETURN BOOLEAN;
+  FUNCTION fn_usa_motor_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
 
   --> Verificar se usa o esteira de credito para cartao
-  FUNCTION fn_usa_esteira_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                ,pr_cdagenci IN crawcrd.cdagenci%TYPE) RETURN BOOLEAN;
+  FUNCTION fn_usa_esteira_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
 
   --> Verificar se usa o conexao bancoob via WS para solicitacao e alteracao de limite
-  FUNCTION fn_usa_bancoob_ws(pr_cdcooper IN crapcop.cdcooper%TYPE
-                            ,pr_cdagenci IN crawcrd.cdagenci%TYPE) RETURN BOOLEAN;
+  FUNCTION fn_usa_bancoob_ws(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
 
   --> Carregar parametros para uso na comunicacao com o Bancoob
   PROCEDURE pc_carrega_param_bancoob(pr_cdcooper       IN crapcop.cdcooper%TYPE,  --> Codigo da cooperativa
@@ -278,8 +275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       RETURN NULL;
   END;
 
-  FUNCTION fn_usa_motor_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE
-                              ,pr_cdagenci IN crawcrd.cdagenci%TYPE) RETURN BOOLEAN IS
+  FUNCTION fn_usa_motor_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
     vr_param varchar2(5);
   BEGIN
 
@@ -297,8 +293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       RETURN FALSE;
   END;
 
-  FUNCTION fn_usa_esteira_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                ,pr_cdagenci IN crawcrd.cdagenci%TYPE) RETURN BOOLEAN IS
+  FUNCTION fn_usa_esteira_cartao(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
     vr_param varchar2(5);
   BEGIN
 
@@ -316,8 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       RETURN FALSE;
   END;
 
-  FUNCTION fn_usa_bancoob_ws(pr_cdcooper IN crapcop.cdcooper%TYPE
-                            ,pr_cdagenci IN crawcrd.cdagenci%TYPE) RETURN BOOLEAN IS
+  FUNCTION fn_usa_bancoob_ws(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
     vr_param varchar2(5);
   BEGIN
 
@@ -3039,15 +3033,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           vr_nrcartao := trim(replace(replace(vr_obj_retorno.get('cartao').to_char(),'*','0'),'"',''));
           */
           
-          UPDATE crawcrd
-             SET insitcrd = 2 /* Solicitado */
-             /* , nrcrcard = vr_nrcartao
-               , nrcctitg = vr_conta_cartao */
-               , dtsolici = trunc(SYSDATE)
-           WHERE cdcooper = pr_cdcooper
-             AND nrdconta = pr_nrdconta
-             AND nrctrcrd = pr_nrctrcrd;
-             
+          -- Altera a situação do Cartão para 2 (Solicitado)
+          pc_altera_sit_cartao_bancoob(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctrcrd => pr_nrctrcrd
+                                      ,pr_nrseqcrd => NULL
+                                      ,pr_insitcrd => 2
+                                      ,pr_dscritic => vr_dscritic);
+                                      
+          IF vr_dscritic IS NOT NULL THEN
+            raise vr_exc_erro;
+          END IF;
           /* Vamos atualizar a conta cartao 
           ccrd0003.pc_insere_conta_cartao(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
@@ -3792,7 +3788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
 
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-      pr_des_erro := NVL(vr_des_mensagem,'NOK');
+      pr_des_erro := 'NOK';
 	  
 	  --Atualiza Histórico do Limite de Crédito
       tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
@@ -3818,7 +3814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Não foi possivel realizar a solicitação de alteração do cartão no Bancoob: '||SQLERRM;
-      pr_des_erro := NVL(vr_des_mensagem,'NOK');
+      pr_des_erro := 'NOK';
 
       --Atualiza Histórico do Limite de Crédito
       tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper

@@ -347,6 +347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                      AND lim.nrconta_cartao = atu.nrconta_cartao
                                      AND lim.nrproposta_est = atu.nrproposta_est)
        ORDER BY idatualizacao DESC;
+
     -- Variavel de criticas
     vr_dscritic VARCHAR2(10000);
 
@@ -475,18 +476,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND cdoperad = 'MOTOR'
          AND nrdconta = pr_nrdconta
          AND tpacionamento = 2 --> Apenas Retorno
-         AND cdorigem  = 5     --> Apenas Ayllos Web
+         AND cdorigem IN (5,9) --> Apenas Ayllos Web / Motor
          AND tpproduto = 4     --> Apenas Cartão de Crédito
-         AND nrctrprp IS NULL
          AND dhacionamento = (SELECT MAX(dhacionamento)
                                 FROM tbgen_webservice_aciona
                                WHERE cdcooper = pr_cdcooper
                                  AND cdoperad = 'MOTOR'
                                  AND nrdconta = pr_nrdconta
                                  AND tpacionamento = 2 --> Apenas Retorno
-                                 AND cdorigem  = 5     --> Apenas Ayllos Web
+                                 AND cdorigem IN (5,9) --> Apenas Ayllos Web / Motor
                                  AND tpproduto = 4     --> Apenas Cartão de Crédito
-                                 AND nrctrprp IS NULL
                                  AND trunc(dhacionamento) BETWEEN (trunc(SYSDATE) - 10) and trunc(SYSDATE))
       ORDER BY dhacionamento;
     rw_acionamento cr_acionamento%ROWTYPE;
@@ -644,18 +643,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND cdoperad = 'MOTOR'
          AND nrdconta = pr_nrdconta
          AND tpacionamento = 2 --> Apenas Retorno
-         AND cdorigem  = 5     --> Apenas Ayllos Web
+         AND cdorigem IN (5,9) --> Apenas Ayllos Web / Motor
          AND tpproduto = 4     --> Apenas Cartão de Crédito
-         AND nrctrprp IS NULL
          AND dhacionamento = (SELECT MAX(dhacionamento)
                                 FROM tbgen_webservice_aciona
                                WHERE cdcooper = pr_cdcooper
                                  AND cdoperad = 'MOTOR'
                                  AND nrdconta = pr_nrdconta
                                  AND tpacionamento = 2 --> Apenas Retorno
-                                 AND cdorigem  = 5     --> Apenas Ayllos Web
+                                 AND cdorigem IN (5,9) --> Apenas Ayllos Web / Motor
                                  AND tpproduto = 4     --> Apenas Cartão de Crédito
-                                 AND nrctrprp IS NULL
                                  AND trunc(dhacionamento) BETWEEN (trunc(SYSDATE) - 10) and trunc(SYSDATE))
       ORDER BY dhacionamento;
     rw_acionamento cr_acionamento%ROWTYPE;
@@ -1849,11 +1846,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                              pr_cdoperad => vr_cdoperad,
                              pr_dscritic => vr_dscritic);
     
-    IF pr_idproces = 'S' THEN --Solicitação/Alteração
-      OPEN cr_crawcrd;
-      FETCH cr_crawcrd INTO vr_dsjustif;
-      CLOSE cr_crawcrd;
-      
+    OPEN cr_crawcrd;
+    FETCH cr_crawcrd INTO vr_dsjustif;
+    CLOSE cr_crawcrd;
+	
+	IF pr_idproces = 'S' THEN --Solicitação/Alteração
       -- Atualiza Contrato 
       BEGIN
         UPDATE tbgen_webservice_aciona
@@ -1876,26 +1873,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
           RAISE vr_exc_saida;
       END;
     ELSE
-      --Se informado 
-      -- Atualiza Status 
-      BEGIN
-        UPDATE crawcrd
-           SET insitcrd = 1 --Aprovado
-              ,insitdec = 2 --Aprovado Automaticamente
-              ,dtmvtolt = SYSDATE
-              ,cdopesup = pr_cdopesup
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND nrctrcrd = pr_nrctrcrd;
-                                      
-         COMMIT;
-         
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_contrato_suges_mot: ' || SQLERRM;
-          RAISE vr_exc_saida;
-      END;
+      --Se vai para a esteira então deixa como insitcrd = 1 e insitdec = 1
+      IF NVL(pr_dsjustif,vr_dsjustif) IS NOT NULL THEN
+        --Se informado 
+        -- Atualiza Status
+        BEGIN
+          UPDATE crawcrd
+             SET insitcrd = 1 --Aprovado
+                ,insitdec = 1 --Sem Aprovação
+                ,dtmvtolt = SYSDATE
+                ,cdopesup = pr_cdopesup
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctrcrd = pr_nrctrcrd;
+
+           COMMIT;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_contrato_suges_mot: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      ELSE
+        --Se informado 
+        -- Atualiza Status
+        BEGIN
+          UPDATE crawcrd
+             SET insitcrd = 1 --Aprovado
+                ,insitdec = 2 --Aprovado Automaticamente
+                ,dtmvtolt = SYSDATE
+                ,cdopesup = pr_cdopesup
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctrcrd = pr_nrctrcrd;
+
+           COMMIT;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_contrato_suges_mot: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      END IF;
     END IF;
     
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'atualizacoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);

@@ -1732,6 +1732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           JOIN crawcrd crd
             ON crd.cdcooper = a.cdcooper
            AND crd.nrdconta = a.nrdconta
+           AND crd.nrctrcrd = a.nrctrcrd
            AND crd.nrctrcrd = pr_nrctrcrd
            AND crd.nrcctitg > 0 /* Se a proposta nao tem conta cartao 
                                    ela nao foi pro bancoob, logo nao
@@ -1751,9 +1752,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_vllimite     crawcrd.vllimcrd%TYPE;
     
     BEGIN
-      
       IF pr_tpretest = 'E' THEN --Apenas para retorno da Esteira
-        -- Buscar os dados da proposta de emprestimo
+        -- Buscar os dados da proposta de cartão
         OPEN cr_crawcrd(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_nrctrcrd => pr_nrctrcrd);
@@ -1791,7 +1791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         --> Tratar para nao validar criticas qnt for 99-expirado
         IF pr_insitapr <> 99 THEN
           -- Proposta 2- Aprovado Auto, 3- Aprovado Manual
-          IF rw_crawcrd.insitdec IN (2,3) THEN
+          IF rw_crawcrd.insitcrd = 1 AND rw_crawcrd.insitdec IN (2,3) THEN
             pr_status      := 202;
             pr_cdcritic    := 974;
             pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
@@ -1799,7 +1799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           END IF;
 
           -- 1 – Sem Aprovação
-          IF rw_crawcrd.insitdec <> 1 THEN
+          IF rw_crawcrd.insitcrd = 1 AND rw_crawcrd.insitdec <> 1 THEN
             pr_status      := 202;
             pr_cdcritic    := 971;
             pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
@@ -4204,7 +4204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             ,aci.dsprotocolo dsprotoc
         FROM tbgen_webservice_aciona aci
        WHERE aci.dsprotocolo   = pr_dsprotoc
-         AND aci.tpacionamento = 1; /*Envio*/
+         AND aci.tpacionamento = 1 /*Envio*/
+         AND aci.tpproduto = 4; 
     rw_aciona cr_aciona%ROWTYPE;
 
     -- Buscar o tipo de pessoa que contratou o empréstimo
@@ -4440,7 +4441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                   pr_cdagenci                 => 1,
                                   pr_cdoperad                 => 'MOTOR',
                                   pr_cdorigem                 => pr_cdorigem,
-                                  pr_nrctrprp                 => NULL,
+                                  pr_nrctrprp                 => rw_aciona.nrctrprp,
                                   pr_nrdconta                 => rw_aciona.nrdconta,
                                   pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno
                                   pr_dsoperacao               => 'RETORNO ANALISE AUTOMATICA - '||vr_dssitret,
