@@ -527,6 +527,7 @@
 									selecionaEssencial();
 							else{
 								$("#flgdebit").removeAttr("disabled");
+								$("#flgdebit").removeAttr("readonly");
 								$("#tpdpagto").removeAttr("disabled");
 								$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;'>");
 								
@@ -546,9 +547,22 @@
 							
 					}	
 					function selecionaEssencial(){
+							
+							
+							$("#flgdebit").removeAttr("readonly");
 							$("#flgdebit").removeAttr("disabled");
+							$("#flgdebit").removeProp("disabled");
+							$("#flgdebit").removeProp("readonly");
+							setTimeout(function(){
+								$("#flgdebit").removeAttr("readonly");
+							$("#flgdebit").removeAttr("disabled");
+								$("#flgdebit").removeProp("disabled");
+								$("#flgdebit").removeProp("readonly");
+							}, 600);
+							
+							
 							$("#tpdpagto").removeAttr("disabled");
-							//$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
+							$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
 							
 							$("#dddebito").removeAttr("disabled");
 							var ddDebit = '<? echo strlen($dadosTitular['ddebiess']) > 0 ? $dadosTitular['ddebiess'] : '' ; ?>';
