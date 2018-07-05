@@ -849,8 +849,8 @@ function formataTabela() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '110px';
-	arrayLargura[1] = '62px';
+	arrayLargura[0] = '';
+	arrayLargura[1] = '70px';
 	arrayLargura[2] = '70px';
 	arrayLargura[3] = '61px';
 	arrayLargura[4] = '61px';
@@ -977,6 +977,9 @@ function btnExcluir() {
 }
 
 function excluirRegistro() {
+	var operacao = $("#cddopcao","#frmCab").val();
+	var cdorigem = $("#cdorigem","#frmCab").val();
+	
 	for(x=0;x<arrAssociado.length;x++) {
 		if  ( (arrAssociado[x].cdorigem == glbTabCdorigem) && 
 			  (arrAssociado[x].nrdconta == glbTabNrdconta) && 
@@ -989,7 +992,12 @@ function excluirRegistro() {
 
 	carregaTabela();
 	formataTabela();
-	limparCamposCabecalho();
+	limparCamposCabecalho();	
+	if (operacao == 'I'){
+		if (cdorigem == '4'){
+			$("#thnrctremp").css({'display':'none'});
+		}
+	}
 	
 	return false;
 }
