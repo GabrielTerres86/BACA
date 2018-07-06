@@ -955,7 +955,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        and crapcob.nrcnvcob = craptdb.nrcnvcob
        and crapcob.nrdocmto = craptdb.nrdocmto
        and crapcob.nrdctabb = craptdb.nrdctabb
-	   and crapcob.cdbandoc = craptdb.cdbandoc;
+	     and crapcob.cdbandoc = craptdb.cdbandoc
+       and craptdb.dtlibbdt is not null;
 
   -- Títulos em desconto
   cursor cr_craptdb2 (pr_cdcooper in craptdb.cdcooper%type,

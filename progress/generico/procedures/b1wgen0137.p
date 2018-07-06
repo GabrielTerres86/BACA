@@ -5030,6 +5030,7 @@ PROCEDURE retorna_docs_liberados:
 
                     FOR EACH craptdb WHERE craptdb.cdcooper = crapbdt.cdcooper AND  
                                            craptdb.nrdconta = crapbdt.nrdconta AND 
+										   craptdb.dtlibbdt <> ?               AND
                                            craptdb.nrborder = crapbdt.nrborder NO-LOCK:
                         
                         aux_vltittot = aux_vltittot + craptdb.vltitulo.
