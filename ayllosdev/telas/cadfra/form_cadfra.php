@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 07/02/2017
  * OBJETIVO     : Formulario do cadastro.
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 14/06/2018 - Ajustes Antifraude. PRJ381 - Antifraude(pagamentos)(Odirlei-AMcom)
  * --------------
  */
  

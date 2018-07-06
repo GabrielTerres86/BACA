@@ -23,7 +23,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
 
                    04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
                                 e alteracoes na rotina pc_crias_analise_antifraude             
-                                PRJ381 - Antifraude (Teobaldo J. - AMcom)
+                                PRJ381 - Antifraude (Teobaldo J. - AMcom) 
   ---------------------------------------------------------------------------------------------------------------*/
   
   --- Armazenar os campos alterados
@@ -1420,7 +1420,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel pelo envio de titulo para analise de fraude
       
-      Alteração : 
+      Alteração : 06/07/2018 - Ajustado para buscar cedente da tabela de lancamento(CRAPLCM).
+	                           PRJ381 - Antifraude(Odirlei-AMcom)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
