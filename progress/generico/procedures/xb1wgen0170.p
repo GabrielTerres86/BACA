@@ -12,7 +12,7 @@
    
                01/09/2015 - Adicionado os campos de assessoria e motivo CIN
                             (Douglas - Melhoria 12)
-                            
+   
                04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT)  
    
 .............................................................................*/
@@ -58,6 +58,7 @@ DEF VAR aux_cdassess AS INTE                                           NO-UNDO.
 DEF VAR aux_cdmotcin AS INTE                                           NO-UNDO. 
 DEF VAR aux_nrborder AS INTE                                           NO-UNDO. 
 DEF VAR aux_nrtitulo AS INTE                                           NO-UNDO. 
+DEF VAR aux_nrdocmto AS INTE                                           NO-UNDO. 
 
 
 
@@ -88,6 +89,7 @@ FOR EACH tt-param:
             WHEN "nrctremp" THEN aux_nrctremp = INTE(tt-param.valorCampo).
             WHEN "nrborder" THEN aux_nrborder = INTE(tt-param.valorCampo).
             WHEN "nrtitulo" THEN aux_nrtitulo = INTE(tt-param.valorCampo).
+            WHEN "nrdocmto" THEN aux_nrdocmto = INTE(tt-param.valorCampo).
             WHEN "cdorigem" THEN aux_cdorigem = INTE(tt-param.valorCampo).
             WHEN "flgjudic" THEN aux_flgjudic = LOGICAL(tt-param.valorCampo).
             WHEN "flextjud" THEN aux_flextjud = LOGICAL(tt-param.valorCampo).

@@ -105,6 +105,7 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                   
   PROCEDURE pc_buscar_titulos_bordero (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
                                  ,pr_nrborder       IN craptdb.nrborder%TYPE --> Numero do Bordero
+                                 ,pr_nrdocmto  IN craptdb.nrdocmto%TYPE --> Numero do Documento
                                  ,pr_xmllog        IN VARCHAR2             --> XML com informações de LOG
                                  ,pr_cdcritic     OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic     OUT VARCHAR2             --> Descrição da crítica
@@ -1007,6 +1008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 
   PROCEDURE pc_buscar_titulos_bordero (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
                                  ,pr_nrborder  IN craptdb.nrborder%TYPE --> Numero do Bordero
+                                 ,pr_nrdocmto  IN craptdb.nrdocmto%TYPE --> Numero do Documento
                                  ,pr_xmllog        IN VARCHAR2             --> XML com informações de LOG
                                  ,pr_cdcritic     OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic     OUT VARCHAR2             --> Descrição da crítica
@@ -1044,7 +1046,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
        FROM  craptdb tdb
        WHERE tdb.nrdconta = pr_nrdconta
          AND tdb.cdcooper = vr_cdcooper
-         AND tdb.nrborder = DECODE(pr_nrborder, NULL, tdb.nrborder, pr_nrborder);
+         AND tdb.insitapr <> 2
+         AND tdb.nrborder = DECODE(pr_nrborder, NULL, tdb.nrborder, pr_nrborder)
+         AND tdb.nrdocmto = DECODE(pr_nrdocmto, NULL, tdb.nrdocmto, pr_nrdocmto);
     rw_craptdb cr_craptdb%ROWTYPE;
       
     BEGIN
@@ -1088,13 +1092,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
   
   -- nrctrdsc nrborder nrtitulo
     PROCEDURE pc_buscar_tbdsct_titulo (pr_cdcooper IN crapass.cdcooper%TYPE --> Código da cooperativa
-                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
-                                     ,pr_nrctremp IN crapcyc.nrctremp%TYPE --> Numero do contrato de desconto  
-                                     ,pr_tbdsct_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto
-                                     ,pr_tbdsct_nrborder OUT tbdsct_titulo_cyber.nrborder%TYPE --> Numero do bordero
-                                     ,pr_tbdsct_nrtitulo OUT tbdsct_titulo_cyber.nrtitulo%TYPE --> Numero do titulo
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2) IS            --> Descrição da crítica
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da Conta
+                                      ,pr_nrctremp IN crapcyc.nrctremp%TYPE --> Numero do contrato de desconto  
+                                      ,pr_tbdsct_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto
+                                      ,pr_tbdsct_nrborder OUT tbdsct_titulo_cyber.nrborder%TYPE --> Numero do bordero
+                                      ,pr_tbdsct_nrtitulo OUT tbdsct_titulo_cyber.nrtitulo%TYPE --> Numero do titulo
+                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2) IS            --> Descrição da crítica
                                    
     /*---------------------------------------------------------------------------------------------------------------------
       Programa : pc_buscar_tbdsct_titulo
@@ -1167,7 +1171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     AND    bdt.nrborder = pr_nrborder
     AND    bdt.cdcooper = pr_cdcooper;
     rw_crapbdt cr_crapbdt%ROWTYPE;
-
+    
     CURSOR cr_craptdb IS
     SELECT 1
     FROM   craptdb tdb
@@ -1196,8 +1200,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
           pr_dscritic := 'Borderô '||pr_nrborder||' não encontrado.';
           RAISE vr_exc_erro;
     END   IF;
-    CLOSE cr_crapbdt;
-  
+    CLOSE cr_crapbdt;  
+      
     -- Valida a existência do titulo
     OPEN  cr_craptdb;
     FETCH cr_craptdb INTO rw_craptdb;
@@ -1214,30 +1218,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
     -- Verifica se o registro do titulo já foi inserido na tabela. 
     IF cr_tbdsct_titulo_cyber%NOTFOUND THEN
       
-    /* Buscar a proxima sequencia tbdsct_titulo_cyber.nrctrdsc */
-    pc_sequence_progress(pr_nmtabela => 'TBDSCT_TITULO_CYBER'
-                        ,pr_nmdcampo => 'NRCTRDSC'
-                        ,pr_dsdchave => pr_cdcooper
-                        ,pr_flgdecre => 'N'
-                        ,pr_sequence => vr_nrctrdsc);
+      /* Buscar a proxima sequencia tbdsct_titulo_cyber.nrctrdsc */
+      pc_sequence_progress(pr_nmtabela => 'TBDSCT_TITULO_CYBER'
+                          ,pr_nmdcampo => 'NRCTRDSC'
+                          ,pr_dsdchave => pr_cdcooper
+                          ,pr_flgdecre => 'N'
+                          ,pr_sequence => vr_nrctrdsc);
 
-    BEGIN
-      INSERT INTO tbdsct_titulo_cyber
-             (/*01*/ cdcooper
-             ,/*02*/ nrdconta
-             ,/*03*/ nrborder
-             ,/*04*/ nrtitulo
-             ,/*05*/ nrctrdsc )
-      VALUES (/*01*/ pr_cdcooper
-             ,/*02*/ pr_nrdconta
-             ,/*03*/ pr_nrborder
-             ,/*04*/ pr_nrtitulo
-             ,/*05*/ vr_nrctrdsc );
-    EXCEPTION
-      WHEN OTHERS THEN
-           vr_dscritic := 'Erro ao inserir o titulo cyber do borderô: '||SQLERRM;
-           RAISE vr_exc_erro;
-    END; 
+      BEGIN
+        INSERT INTO tbdsct_titulo_cyber
+               (/*01*/ cdcooper
+               ,/*02*/ nrdconta
+               ,/*03*/ nrborder
+               ,/*04*/ nrtitulo
+               ,/*05*/ nrctrdsc )
+        VALUES (/*01*/ pr_cdcooper
+               ,/*02*/ pr_nrdconta
+               ,/*03*/ pr_nrborder
+               ,/*04*/ pr_nrtitulo
+               ,/*05*/ vr_nrctrdsc );
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir o titulo cyber do borderô: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;          
       
     ELSE -- Caso o registro já exista, retorna o sequencial já existente
       

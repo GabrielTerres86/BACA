@@ -11,7 +11,8 @@
  *				               (Kelvin - SD 233714)
  *
  *                16/09/2015 - Melhorias na tela CADCYB (Douglas - Melhoria 12).
-	 *				  29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *				  29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *
  * --------------
  */
 	require_once("../../includes/config.php");
@@ -19,6 +20,8 @@
 	require_once("../../includes/controla_secao.php");	
 	require_once("../../class/xmlfile.php");
 	isPostMethod();	
+
+
 ?>
 
 <div id="divConsulta" name="divConsulta" >
@@ -29,7 +32,9 @@
 				<tr>
 				<th>Origem</th>
 				<th>Conta</th>
-				<th>Contrato</th>
+				<?=(in_array($cdorigem, array(1,3)) ? '<th>Contrato</th>' : '');?>
+				<?=(in_array($cdorigem, array(4))   ? '<th>Borderô</th>' : '');?>
+				<?=(in_array($cdorigem, array(4))   ? '<th>Titulo</th>' : '');?>
 				<th>Judicial</th>
 				<th>Extra Judicial</th>
 				<th>CIN</th>
@@ -49,6 +54,7 @@
 					$dtenvcbr = getByTagName($r->tags,"dtenvcbr");
 					$nrborder = getByTagName($r->tags,"nrborder");
 					$nrtitulo = getByTagName($r->tags,"nrtitulo");
+					$nrdocmto = getByTagName($r->tags,"nrdocmto");
 					$dtinclus = getByTagName($r->tags,"dtinclus");
 					$cdopeinc = getByTagName($r->tags,"cdopeinc");
 					$dtaltera = getByTagName($r->tags,"dtaltera");
@@ -56,7 +62,7 @@
 					$assessor = getByTagName($r->tags,"nmassess");
 					$motivocin = getByTagName($r->tags,"dsmotcin");
 				?>
-				<tr onClick="mostraDetalhes('<? echo $dsorigem; ?>', '<? echo $nrdconta; ?>', '<? echo $nrctremp; ?>', '<? echo $flgjudic; ?>', '<? echo $flextjud; ?>', '<? echo $flgehvip; ?>', '<? echo $dtenvcbr; ?>', '<? echo $dtinclus; ?>', '<? echo $cdopeinc; ?>', '<? echo $dtaltera; ?>', '<? echo $cdoperad; ?>', '<? echo $assessor; ?>', '<? echo $motivocin; ?>', '<? echo $nrborder; ?>', '<? echo $nrtitulo; ?>'  );" >
+				<tr onClick="mostraDetalhes('<? echo $dsorigem; ?>', '<? echo $nrdconta; ?>', '<? echo $nrctremp; ?>', '<? echo $flgjudic; ?>', '<? echo $flextjud; ?>', '<? echo $flgehvip; ?>', '<? echo $dtenvcbr; ?>', '<? echo $dtinclus; ?>', '<? echo $cdopeinc; ?>', '<? echo $dtaltera; ?>', '<? echo $cdoperad; ?>', '<? echo $assessor; ?>', '<? echo $motivocin; ?>', '<? echo $nrborder; ?>', '<? echo $nrtitulo; ?>', <? echo $nrdocmto; ?>  );" >
 					<td>
 						<span><?php echo $dsorigem;?></span>
 						<?php echo $dsorigem;?>						
@@ -65,10 +71,11 @@
 						<span><?php echo $nrdconta;?></span>
 						<?php echo $nrdconta; ?>
 					</td>
-					<td>
-						<span><?php echo $nrctremp; ?></span>
-						<?php echo $nrctremp; ?>						
-					</td>
+
+					<?=(in_array($cdorigem, array(1,3)) ? '<td><span>'.$nrctremp.'</span>'.$nrctremp.'</td>' : '');?>
+					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrborder.'</span>'.$nrborder.'</td>' : '');?>
+					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrdocmto.'</span>'.$nrdocmto.'</td>' : '');?>
+					
 					<td>
 						<span><?php echo $flgjudic; ?></span>
 						<?php echo $flgjudic; ?>						

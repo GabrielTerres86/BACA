@@ -152,7 +152,12 @@ function formataCabecalho() {
 		validaOpcaoOrigem();
 		return false;
 	});
-	
+
+	$('#nrborder','#frmCab').unbind('blur').bind('blur', function() {
+		$('#nrtitulo','#frmCab').habilitaCampo().focus();
+		return false;
+	});
+
 	$('#nrdconta','#frmCab').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13) {
 			var cddopcao = $("#cddopcao","#frmCab").val();
@@ -167,7 +172,10 @@ function formataCabecalho() {
 						$('#flgjudic','#frmCab').habilitaCheckbox().focus();
 					}
 				}
-			} else {
+			}else if (cdorigem == '4'){
+				$('#nrctremp','#frmCab').desabilitaCampo();			
+				$('#nrborder','#frmCab').habilitaCampo().focus();			
+			}else {
 				$('#nrctremp','#frmCab').habilitaCampo().focus();			
 			}
 			
@@ -321,17 +329,21 @@ function validaOpcaoOrigem(){
 		$('#nrctremp','#frmCab').val('').desabilitaCampo();
 		$('#nrborder','#frmCab').val('').desabilitaCampo();
 		$('#nrtitulo','#frmCab').val('').desabilitaCampo();
+		$('#nrdocmto','#frmCab').val('').desabilitaCampo();
 
 
 	} else if($('#cdorigem','#frmCab').val() == '4'){
 		$('#nrctremp','#frmCab').val('').desabilitaCampo();
 		$('#nrborder','#frmCab').val('').habilitaCampo();
 		$('#nrtitulo','#frmCab').val('').habilitaCampo();
+		//$('#nrdocmto','#frmCab').val('').habilitaCampo();
+		$('#nrdocmto','#frmCab').val('').desabilitaCampo();
 		
 	} else {
 		$('#nrctremp','#frmCab').val('').habilitaCampo();
 		$('#nrborder','#frmCab').val('').desabilitaCampo();
 		$('#nrtitulo','#frmCab').val('').desabilitaCampo();
+		$('#nrdocmto','#frmCab').val('').desabilitaCampo();
 		
 	}	
 }
@@ -531,13 +543,13 @@ function btnContinuar() {
 	var nrctremp = $("#nrctremp","#frmCab").val();
 	var nrborder = $("#nrborder","#frmCab").val();
 	var nrtitulo = $("#nrtitulo","#frmCab").val();
+	var nrdocmto = $("#nrdocmto","#frmCab").val();
 	var operacao = $("#cddopcao","#frmCab").val();
 	var cdorigem = $("#cdorigem","#frmCab").val();
 	var dtenvcbr = $("#dtenvcbr","#frmCab").val();
 	var cdassess = $("#cdassessoria","#frmCab").val();
 	var cdmotcin = $("#cdmotivocin","#frmCab").val();
 	var nrborder = $("#nrborder","#frmCab").val();
-	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	
 	
 	if (cdorigem == "1") {
@@ -608,6 +620,7 @@ function btnContinuar() {
 				nrctremp: nrctremp,
 				nrborder: nrborder,
 				nrtitulo: nrtitulo,
+				nrdocmto: nrdocmto,
 				cdorigem: cdorigem,
 				flgjudic: flgjudic,
 				flextjud: flextjud,
@@ -626,9 +639,20 @@ function btnContinuar() {
 						hideMsgAguardo();
 						eval(response);
 						formataTabela();
-						if (operacao == 'I') {
-							limparCamposCabecalho();
-						} else if (operacao == 'A') {
+						if (operacao == 'I'){
+							if (cdorigem == '4'){
+								$("#thnrctremp").css({'display':'none'});
+
+								$("#tbCadcyb #nrctremp").css({'display':'none'});
+							}else{
+								$("#thnrborder").css({'display':'none'});
+								$("#thnrtitulo").css({'display':'none'});
+
+								$("#tbCadcyb #nrborder").css({'display':'none'});
+								$("#tbCadcyb #nrtitulo").css({'display':'none'});
+							}
+						}
+						else if (operacao == 'A') {
 							// Tratar os botões para alteração
 							$('#btVoltar' ,'#divBotoes').show();
 							$('#btSalvar' ,'#divBotoes').hide();
@@ -788,8 +812,8 @@ function carregaTabela(){
 						'<td id="nrborder"><span>'+arrAssociado[i].nrborder+'</span>'
 							      +arrAssociado[i].nrborder+
 						'</td>'+
-						'<td id="nrtitulo"><span>'+arrAssociado[i].nrtitulo+'</span>'
-							      +arrAssociado[i].nrtitulo+
+						'<td id="nrtitulo"><span>'+arrAssociado[i].nrdocmto+'</span>'
+							      +arrAssociado[i].nrdocmto+
 						'</td>'+
 						'<td><span>'+arrAssociado[i].flgjudic+'</span>'
 							      +arrAssociado[i].flgjudic+
@@ -825,8 +849,8 @@ function formataTabela() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '110px';
-	arrayLargura[1] = '62px';
+	arrayLargura[0] = '';
+	arrayLargura[1] = '70px';
 	arrayLargura[2] = '70px';
 	arrayLargura[3] = '61px';
 	arrayLargura[4] = '61px';
@@ -878,7 +902,7 @@ function formataTabela() {
 	return false;
 }
 
-function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
+function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, nrdocmto, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
 
 	var judicial, extjudic, coopvip, dsorigem; 
 	if (flgjudic == 'false') {
@@ -920,7 +944,7 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, f
 	}
 	
 	if ( flgCria == true ) { 
-		var objAssociado = new associado(dsorigem, nrdconta, nrctremp, nrborder, nrtitulo, judicial, extjudic, coopvip, dtenvcbr, cdassess, cdmotcin);
+		var objAssociado = new associado(dsorigem, nrdconta, nrctremp, nrborder, nrtitulo, nrdocmto, judicial, extjudic, coopvip, dtenvcbr, cdassess, cdmotcin);
 		arrAssociado.push( objAssociado );
 	} else {
 		//showError("error",$msgErro,"Alerta - Ayllos","limparCamposCabecalho();",NaN);
@@ -928,12 +952,13 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, f
 	}
 }
 
-function associado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
+function associado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, nrdocmto, flgjudic, flextjud, flgehvip, dtenvcbr, cdassess, cdmotcin ) {
 	this.cdorigem=cdorigem;
 	this.nrdconta=nrdconta;
 	this.nrctremp=nrctremp;
 	this.nrborder=nrborder;
 	this.nrtitulo=nrtitulo;
+	this.nrdocmto=nrdocmto;
 	this.flgjudic=flgjudic;
 	this.flextjud=flextjud;
 	this.flgehvip=flgehvip;
@@ -952,20 +977,27 @@ function btnExcluir() {
 }
 
 function excluirRegistro() {
+	var operacao = $("#cddopcao","#frmCab").val();
+	var cdorigem = $("#cdorigem","#frmCab").val();
 	
 	for(x=0;x<arrAssociado.length;x++) {
 		if  ( (arrAssociado[x].cdorigem == glbTabCdorigem) && 
 			  (arrAssociado[x].nrdconta == glbTabNrdconta) && 
 			  (arrAssociado[x].nrctremp == glbTabNrctremp) && 
 			  (arrAssociado[x].nrborder == glbTabNrborder) && 
-			  (arrAssociado[x].nrtitulo == glbTabNrtitulo) ) {
+			  (arrAssociado[x].nrdocmto == glbTabNrtitulo) ) {
 			arrAssociado.splice(x,1);
 		}		
 	}
 
 	carregaTabela();
 	formataTabela();
-	limparCamposCabecalho();
+	limparCamposCabecalho();	
+	if (operacao == 'I'){
+		if (cdorigem == '4'){
+			$("#thnrctremp").css({'display':'none'});
+		}
+	}
 	
 	return false;
 }
@@ -976,9 +1008,12 @@ function buscaConsulta(nriniseq, nrregist)  {
 
 	var nrdconta = normalizaNumero( $("#nrdconta","#frmCab").val() );
 	var nrctremp = $("#nrctremp","#frmCab").val();
+	var nrborder = $("#nrborder","#frmCab").val();
+	var nrtitulo = $("#nrtitulo","#frmCab").val();
 	var cdorigem = $("#cdorigem","#frmCab").val();
 	var cdassess = $("#cdassessoria","#frmCab").val();
 	var cdmotcin = $("#cdmotivocin","#frmCab").val();
+	
 	
 	/*
 	if (cdorigem == "1") {
@@ -999,6 +1034,8 @@ function buscaConsulta(nriniseq, nrregist)  {
 		data: { 
 				nrdconta: nrdconta,
 				nrctremp: nrctremp,
+				nrborder: nrborder,
+				nrtitulo: nrtitulo,
 				cdorigem: cdorigem,
 				nriniseq: nriniseq,
 				nrregist: nrregist,
@@ -1032,12 +1069,13 @@ function formataTabelaConsulta() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '135px';
-	arrayLargura[1] = '62px';
-	arrayLargura[2] = '70px';
-	arrayLargura[3] = '61px';
+	//arrayLargura[0] = '135px';
+	arrayLargura[1] = '80px';
+	arrayLargura[2] = '80px';
+	arrayLargura[3] = '80px';
 	arrayLargura[4] = '91px';
 	arrayLargura[5] = '54px';
+	arrayLargura[6] = '54px';
 
 	// AXAO
 	if(mostraColunasDscto == 4){
@@ -1047,8 +1085,8 @@ function formataTabelaConsulta() {
 
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
-	arrayAlinha[1] = 'right';
-	arrayAlinha[2] = 'right';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'center';
@@ -1126,7 +1164,7 @@ function importarCadcyb() {
 	});				
 }
 
-function mostraDetalhes (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo) {
+function mostraDetalhes (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo, nrdocmto) {
 
 	var mensagem = 'Aguarde, consultando dados ...';
 	showMsgAguardo( mensagem );	
@@ -1145,14 +1183,14 @@ function mostraDetalhes (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgeh
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
-			mostraRotina(dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo) ;
+			mostraRotina(dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo, nrdocmto) ;
 		}				
 	});
 	return false;
 
 }
 
-function mostraRotina (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo) {	
+function mostraRotina (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo, nrdocmto) {	
 	
 	$.ajax({		
 		type: 'POST',
@@ -1174,6 +1212,7 @@ function mostraRotina (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvi
 			motivocin: motivocin,
 			nrborder : nrborder,
 			nrtitulo : nrtitulo,
+			nrdocmto : nrdocmto,
 			redirect : 'script_ajax'			
 			}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -1249,16 +1288,18 @@ function mostrarPesquisaMotivoCin(){
 
 // Função para abrir a pesquisa de borderos, usando número do título
 function mostrarPesquisaBorderoPorTitulo(){
+	$('#frmCab #nrdocmto').val('');
 	var normNrconta = normalizaNumero($('#frmCab #nrdconta').val()) > 0 ? normalizaNumero($('#frmCab #nrdconta').val()) : '';
 	var nrBorder    = normalizaNumero($('#frmCab #nrborder').val()) > 0 ? $('#frmCab #nrborder').val() : '';
+
 	if( $('#nrtitulo','#frmCab').prop("disabled") ) {
 		return false;
 	}
 	//Definição dos filtros
 	// |;nrborder;;N;;N;nrborder|;nrtitulo;;N;;N;nrtitulo
-	var filtros	= "Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrborder;;S;"+nrBorder+";S;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Numero Doc;nrdocmto;;N;;N;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto";
+	var filtros	= "Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta|Nr. Bordero;nrborder;;S;"+nrBorder+";S;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Nr. Documento;nrdocmto;;S;;S;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto";
 	//Campos que serão exibidos na tela
-	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Titulo;nrtitulo;20%;center|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center';			
+	var colunas = 'Numero da Conta;nrdconta;0%;center;;N|Bordero;nrborder;20%;center|Titulo;nrtitulo;0%;center;;N|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center';			
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_TITULOS_BORDERO", "Titulos e Bordero","100",filtros,colunas);
 }

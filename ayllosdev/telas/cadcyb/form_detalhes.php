@@ -30,6 +30,7 @@
 
 	$nrborder = $_POST["nrborder"];
 	$nrtitulo = $_POST["nrtitulo"];
+	$nrdocmto = $_POST["nrdocmto"];
 	
 ?>
 
@@ -72,7 +73,7 @@
 	<br />
 
 	<label for="nrtitulo"><? echo utf8ToHtml("Título:") ?></label>
-	<input name="nrtitulo" id="nrtitulo" type="text" value="<? echo $nrtitulo; ?>" />
+	<input name="nrtitulo" id="nrtitulo" type="text" value="<? echo $nrdocmto; ?>" />
 	<br />
 	
 	<label for="dsassess"><? echo utf8ToHtml("Assessoria:") ?></label>
