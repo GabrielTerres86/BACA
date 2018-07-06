@@ -35,13 +35,13 @@ INSERT INTO craptel
      idambtel)
     SELECT 'COBTIT', 
            5, 
-           '@', 
+           '@,C,B,G,X,D,Y', 
            'Cobrança de Títulos', 
            'Cobrança de Títulos', 
            0, 
            1, -- bloqueio da tela 
            ' ', 
-           'ACESSO', 
+           'Acesso,Consultar,Baixa,Gerar Boleto,Enviar Email/SMS,Desconto Prejuizo,Boletagem Massiva', 
            0, 
            cdcooper, -- cooperativa
            1, 
@@ -54,46 +54,7 @@ INSERT INTO craptel
      WHERE cdcooper IN (select cdcooper from crapcop where flgativo=1); 
 
 -- Permissões de consulta para os usuários pré-definidos pela CECRED                       
-INSERT INTO crapace
-    (nmdatela,
-     cddopcao,
-     cdoperad,   
-     nmrotina,   
-     cdcooper,   
-     nrmodulo,   
-     idevento,   
-     idambace)
-    SELECT 'COBTIT', 
-           'C',
-           ope.cdoperad,
-           ' ',
-           cop.cdcooper,
-           1,
-           0,
-           2
-      FROM crapcop cop,
-           crapope ope
-     WHERE cop.cdcooper IN (select cdcooper from crapcop where flgativo=1)
-       AND ope.cdsitope = 1 
-       AND cop.cdcooper = ope.cdcooper
-       AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
-                                         'F0030584',
-                                         'F0030521',
-                                         'F0030066',
-                                         'F0030688',
-                                         'F0030835',
-                                         'F0030513',
-                                         'F0031403',
-                                         'F0030978',
-                                         'F0020517',
-                                         'F0030542',
-                                         'F0031401',
-                                         'F0031089',
-                                         'F0031090',
-                                         'F0031810',
-                                         'F0031809',
-                                         'F0031803');
-
+INSERT INTO crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace) (SELECT 'COBTIT',cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace FROM crapace WHERE nmdatela ='COBEMP');
 -- Insere o registro de cadastro do programa
 INSERT INTO crapprg
     (nmsistem,
