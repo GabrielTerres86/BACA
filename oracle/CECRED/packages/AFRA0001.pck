@@ -23,7 +23,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
 
                    04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
                                 e alteracoes na rotina pc_crias_analise_antifraude             
-                                PRJ381 - Antifraude (Teobaldo J. - AMcom)
+                                PRJ381 - Antifraude (Teobaldo J. - AMcom) 
   ---------------------------------------------------------------------------------------------------------------*/
   
   --- Armazenar os campos alterados
@@ -8211,7 +8211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_exc_erro EXCEPTION;    
     
     vr_hrlimope NUMBER;
-    vr_dhoperac DATE;
+    vr_dhoperac TIMESTAMP;
     vr_fldiauti INTEGER;  --Idenrifica se é dia util
     
   BEGIN
@@ -8273,6 +8273,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         pr_dhlimana := vr_dhoperac + (rw_afrainter.qtdminutos_retencao / 24 / 60);
       pr_qtsegret := rw_afrainter.qtdminutos_retencao * 60;
       
+        --> Caso nao for dia util
+        IF vr_fldiauti = 0 THEN
+          --Calcular a quantidade de segundos do dia da operacao
+          -- ate o dia de limite da analise
+          pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
+                          to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                         ) * 86400;
+        
+        END IF;
+      
       --> Fixo   
       ELSIF rw_afraprm.tpretencao = 2 THEN
         --> Calcular tempo limite
@@ -8282,7 +8292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       --> Limite da operacao    
@@ -8316,7 +8326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         --Calcular a quantidade de segundos do dia da operacao
         -- ate o dia de limite da analise
         pr_qtsegret := (to_date(to_char(pr_dhlimana,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:mi:ss') - 
-                        to_date(to_char(vr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
+                        to_date(to_char(pr_dhoperac,'DD/MM/RRRR HH24:mi:ss'),'DD/MM/RRRR HH24:mi:ss')
                        ) * 86400;
       
       END IF;

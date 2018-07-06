@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
+CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is 
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : AFRA0004
@@ -11,7 +11,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a monitoracao de Analise de Fraude e mensagens.
-                  (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
+                  (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom) 
 
       Alteracoes:  
       
@@ -1794,6 +1794,11 @@ create or replace package body CECRED.AFRA0004 is
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
     vr_cdagenci:= pr_cdagenci;
+    
+    --> Busca dados da cooperativa
+    OPEN  cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    CLOSE cr_crapcop;
     
     IF vr_cdagenci = 90 AND pr_flgagend = 0 THEN /*false*/
     

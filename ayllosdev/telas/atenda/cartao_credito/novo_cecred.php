@@ -67,7 +67,7 @@ $xmlObjNovoCartao = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObjNovoCartao->roottag->tags[0]->name) == "ERRO") {
      exibirErro('error',$xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"voltaDiv(0,1,4)");
-	 //return;
+	 return;
 }
 
 
@@ -822,4 +822,5 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 	}
 	
 	contigenciaAtiva = false;
+	justificativaCartao = undefined;
 </script>

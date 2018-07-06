@@ -654,6 +654,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
           UPDATE tbgen_webservice_aciona
              SET dsprotocolo = pr_dsprotocolo
            WHERE idacionamento = vr_idacionamento;
+		   
+		  COMMIT;
         ELSE
           -- Gerar erro
           vr_dscritic := 'Nao foi possivel retornar Protocolo da Análise Automática de Crédito!';
@@ -4012,7 +4014,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF pr_tpproces = 'I' THEN --Inclusão
       vr_obj_generico.put('tipoProduto','LM');
     ELSE --Alteração
-      IF rw_crawcrd.vllimcrd = 0 THEN
+      OPEN cr_crawcrd (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_nrctrcrd => pr_nrctrcrd);
+      FETCH cr_crawcrd INTO rw_crawcrd;
+      CLOSE cr_crawcrd;
+      
+      --Para limites com 0 deve ir a política de concessão
+      IF nvl(rw_crawcrd.vllimcrd,0) = 0 THEN
         vr_obj_generico.put('tipoProduto','LM');
       ELSE
       vr_obj_generico.put('tipoProduto','MJ');
