@@ -544,6 +544,7 @@ BEGIN
             ,vlsaldodev craptdb.vlsldtit%TYPE
             ,cddlinha crapldc.cddlinha%TYPE
             ,qtdiaatr INTEGER
+            ,qtmesdec INTEGER
             ,dsdlinha crapldc.dsdlinha%TYPE
             ,txmensal crapbdt.txmensal%TYPE
             ,txdiaria crapbdt.txmensal%TYPE);
@@ -910,10 +911,11 @@ BEGIN
           ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
           ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
           ,NVL(pr_dtrefere - tdb.dtvencto,0) as qtdiaatr
+          ,TRUNC(MONTHS_BETWEEN(pr_dtrefere, tdb.dtvencto)) as qtmesdec
           ,ldc.cddlinha
           ,ldc.dsdlinha
           ,bdt.txmensal
-          ,ldc.txdiaria
+          ,(bdt.txmensal/30)/100 as txdiaria
       FROM craptdb tdb
      INNER JOIN crapbdt bdt
         ON tdb.cdcooper = bdt.cdcooper
@@ -2799,6 +2801,7 @@ BEGIN
               vr_tab_craptdb(vr_indice_tdb).nrdconta := rw_craptdb.nrdconta;
               vr_tab_craptdb(vr_indice_tdb).dtvencto := rw_craptdb.dtvencto;
               vr_tab_craptdb(vr_indice_tdb).qtdiaatr := NVL(pr_dtrefere - rw_craptdb.dtvencto,0);
+              vr_tab_craptdb(vr_indice_tdb).qtmesdec := rw_craptdb.qtmesdec;
               vr_tab_craptdb(vr_indice_tdb).nrseqdig := rw_craptdb.nrseqdig;
               vr_tab_craptdb(vr_indice_tdb).cdoperad := rw_craptdb.cdoperad;
               vr_tab_craptdb(vr_indice_tdb).nrdocmto := rw_craptdb.nrdocmto;
@@ -4593,17 +4596,16 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
-                vr_des_xml_gene := vr_des_xml_gene || ' </atraso>';
+                -- Fechar tag atraso enviando pro XML
+                gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
+                                      ,pr_texto_completo => vr_txtauxi_227
+                                      ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
 
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
 
-          -- Fechar tag atraso enviando pro XML
-            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
-                                  ,pr_texto_completo => vr_txtauxi_227
-                                  ,pr_texto_novo     => vr_des_xml_gene);
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4702,17 +4704,15 @@ BEGIN
                   vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
                 END IF;
                 
-                vr_des_xml_gene := vr_des_xml_gene || ' </divida>';
+                -- Finalmente enviar para o XML
+                  gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
+                                         ,pr_texto_completo => vr_txtauxi_354
+                                         ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
                 
               END IF;
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
-
-          -- Finalmente enviar para o XML
-            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
-                                   ,pr_texto_completo => vr_txtauxi_354
-                                   ,pr_texto_novo     => vr_des_xml_gene);
 
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN

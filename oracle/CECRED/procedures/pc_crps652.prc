@@ -2444,6 +2444,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            --Variaveis Locais
            vr_cdorigem crapcyb.cdorigem%type;
            --Variaveis Controle
+           vr_dsfinemp crapfin.dsfinemp%TYPE;
+           vr_cdfinemp crapfin.cdfinemp%TYPE;
+                      
            vr_crapfin BOOLEAN;
            vr_crapsda BOOLEAN;
            vr_craplcr BOOLEAN;
@@ -2593,16 +2596,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
            END IF;
 
+           -- [Projeto 403] Ajuste no código e na descrição da finalidade
+           IF pr_cdorigem = 4 THEN
+             vr_cdfinemp := 0;
+             vr_dsfinemp := 'Borderô de desconto de título';
+           ELSE
+             vr_cdfinemp := pr_rw_crapcyb.cdfinemp;
+             vr_dsfinemp := rw_crapfin.dsfinemp;
+           END IF;
+           
            pc_monta_linha(rpad(nvl(vr_dtdpagto,' '),8,' '),308,pr_idarquivo);
            pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.txmensal*1000000000,'999999999999'),316,pr_idarquivo);
            pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.txdiaria*100*1000000000,'999999999999'),328,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtprepag,3,' '),340,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtmesdec,3,' '),343,pr_idarquivo);
-           pc_monta_linha(rpad(pr_rw_crapcyb.cdfinemp,3,' '),346,pr_idarquivo);
+           pc_monta_linha(rpad(vr_cdfinemp,3,' '),346,pr_idarquivo);
 
            --Tem financiamento
-           IF vr_crapfin THEN
-             pc_monta_linha(rpad(nvl(rw_crapfin.dsfinemp,' '),30,' '),349,pr_idarquivo);
+           IF vr_crapfin OR pr_cdorigem = 4 THEN
+             pc_monta_linha(rpad(nvl(vr_dsfinemp,' '),30,' '),349,pr_idarquivo);
            END IF;
            --Data prejuizo preenchida
            IF pr_rw_crapcyb.dtprejuz IS NOT NULL THEN
