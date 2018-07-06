@@ -23,7 +23,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");	
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R")) <> "") { exibeErro($msgError); }	
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"G")) <> "") { exibeErro($msgError); }	
 	
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrrpp"])) {		
