@@ -168,6 +168,7 @@
 								<th>Situa&ccedil;&atilde;o</th>
 								<th>Decis&atilde;o</th>
 								<th>Saldo Devedor</th>
+								<th>Nr. Ctr. Cyber</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -226,7 +227,7 @@
 								
 								<td><?php 
 									//Caso o titulo não esteja pago ou baixado e a diferença da data de movimento com o de pagamento for negativo, então está vencido
-									if (($t->tags[12]->cdata <> 2 && $t->tags[12]->cdata <> 3) && (diffData($t->tags[3]->cdata,$glbvars["dtmvtolt"]) < 0)){
+									if ($t->tags[15]->cdata == 1){
 										echo "Vencido";
 									}else{
 									switch ($t->tags[12]->cdata){
@@ -249,6 +250,7 @@
 									?>	
 								</td>
 								<td><?php echo number_format(str_replace(",",".",$t->tags[16]->cdata),2,",",".");?></td> 
+								<td><?php echo $t->tags[17]->cdata; ?></td> 
 							</tr>							
 						<?php 
 							}
