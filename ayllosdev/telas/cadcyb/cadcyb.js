@@ -1164,7 +1164,7 @@ function importarCadcyb() {
 	});				
 }
 
-function mostraDetalhes (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo) {
+function mostraDetalhes (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo, nrdocmto) {
 
 	var mensagem = 'Aguarde, consultando dados ...';
 	showMsgAguardo( mensagem );	
@@ -1183,14 +1183,14 @@ function mostraDetalhes (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgeh
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
-			mostraRotina(dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo) ;
+			mostraRotina(dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo, nrdocmto) ;
 		}				
 	});
 	return false;
 
 }
 
-function mostraRotina (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo) {	
+function mostraRotina (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvip, dtenvcbr, dtinclus, cdopeinc, dtaltera, cdoperad, assessor, motivocin, nrborder, nrtitulo, nrdocmto) {	
 	
 	$.ajax({		
 		type: 'POST',
@@ -1212,6 +1212,7 @@ function mostraRotina (dsorigem, nrdconta, nrctremp, flgjudic, flextjud, flgehvi
 			motivocin: motivocin,
 			nrborder : nrborder,
 			nrtitulo : nrtitulo,
+			nrdocmto : nrdocmto,
 			redirect : 'script_ajax'			
 			}, 
 		error: function(objAjax,responseError,objExcept) {

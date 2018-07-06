@@ -33,7 +33,8 @@ DEF TEMP-TABLE tt-crapcyc NO-UNDO
     FIELD cdmotcin AS INTE
     FIELD dsmotcin AS CHAR
     FIELD nrborder AS INTE
-    FIELD nrtitulo AS INTE.
+    FIELD nrtitulo AS INTE
+    FIELD nrdocmto AS INTE.
 
 DEF TEMP-TABLE tt-msg NO-UNDO
     FIELD nrdconta AS INT

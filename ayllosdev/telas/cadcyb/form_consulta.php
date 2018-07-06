@@ -54,6 +54,7 @@
 					$dtenvcbr = getByTagName($r->tags,"dtenvcbr");
 					$nrborder = getByTagName($r->tags,"nrborder");
 					$nrtitulo = getByTagName($r->tags,"nrtitulo");
+					$nrdocmto = getByTagName($r->tags,"nrdocmto");
 					$dtinclus = getByTagName($r->tags,"dtinclus");
 					$cdopeinc = getByTagName($r->tags,"cdopeinc");
 					$dtaltera = getByTagName($r->tags,"dtaltera");
@@ -61,7 +62,7 @@
 					$assessor = getByTagName($r->tags,"nmassess");
 					$motivocin = getByTagName($r->tags,"dsmotcin");
 				?>
-				<tr onClick="mostraDetalhes('<? echo $dsorigem; ?>', '<? echo $nrdconta; ?>', '<? echo $nrctremp; ?>', '<? echo $flgjudic; ?>', '<? echo $flextjud; ?>', '<? echo $flgehvip; ?>', '<? echo $dtenvcbr; ?>', '<? echo $dtinclus; ?>', '<? echo $cdopeinc; ?>', '<? echo $dtaltera; ?>', '<? echo $cdoperad; ?>', '<? echo $assessor; ?>', '<? echo $motivocin; ?>', '<? echo $nrborder; ?>', '<? echo $nrtitulo; ?>'  );" >
+				<tr onClick="mostraDetalhes('<? echo $dsorigem; ?>', '<? echo $nrdconta; ?>', '<? echo $nrctremp; ?>', '<? echo $flgjudic; ?>', '<? echo $flextjud; ?>', '<? echo $flgehvip; ?>', '<? echo $dtenvcbr; ?>', '<? echo $dtinclus; ?>', '<? echo $cdopeinc; ?>', '<? echo $dtaltera; ?>', '<? echo $cdoperad; ?>', '<? echo $assessor; ?>', '<? echo $motivocin; ?>', '<? echo $nrborder; ?>', '<? echo $nrtitulo; ?>', <? echo $nrdocmto; ?>  );" >
 					<td>
 						<span><?php echo $dsorigem;?></span>
 						<?php echo $dsorigem;?>						
@@ -73,7 +74,7 @@
 
 					<?=(in_array($cdorigem, array(1,3)) ? '<td><span>'.$nrctremp.'</span>'.$nrctremp.'</td>' : '');?>
 					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrborder.'</span>'.$nrborder.'</td>' : '');?>
-					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrtitulo.'</span>'.$nrtitulo.'</td>' : '');?>
+					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrdocmto.'</span>'.$nrdocmto.'</td>' : '');?>
 					
 					<td>
 						<span><?php echo $flgjudic; ?></span>
