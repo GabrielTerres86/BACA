@@ -31,6 +31,12 @@ $nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
 if (!isset($operacao) || $operacao=='') {
     exibeErro(htmlentities('Opera&ccedil;&atilde;o n&atilde;o encontrada'));
 }
+function exibeErro($msgError){
+    $json['status'] = 'erro';
+    $json['mensagem'] = utf8_encode($msgError);
+    echo json_encode($json);
+    exit();
+}
 
 switch ($operacao){
     case "BUSCAR_ASSOCIADO":
@@ -155,7 +161,7 @@ switch ($operacao){
     break;
     case "GERAR_BOLETO":
         if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"G",false)) <> "") {
-            exibeErro($msgError);       
+            exibeErro($msgError);
         }
         $nrtitulo = $_POST["nrtitulo"];
         $titulos = '';
