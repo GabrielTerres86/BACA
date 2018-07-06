@@ -101,7 +101,7 @@
                05/10/2011 - Alterado label do campo tel_flgdonet de "Acessar
                             sistema Ayllos intranet" para "Acessar sistema
                             Ayllos WEB", e tambem alterado o HELP
-                            (GATI - Oliver)
+                            (GATI - Oliver)                         
                             
                23/12/2011 - Retirar warnings (Gabriel).
                
@@ -179,6 +179,9 @@
                08/08/2017 - Incluido o campo "Habilitar Acesso CRM". (Reinert - Projeto 339)
                
                24/11/2017 - Melhoria 458, Adicionado campo tel_insaqesp "Libera Saque Especie" - (Antonio R Junior - Mouts)
+			   
+			   05/07/2018 - Ajustado para substituir os caracteres acentuados do nome do operador 
+			                para correcao do chamado PRB0040132 (André Bohn - MoutS)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -877,6 +880,9 @@ DO WHILE TRUE:
                              UNDO, LEAVE Opcao_A.
                          END.
                
+               /* Retirar caracteres especiais do nome do operador */
+               RUN fontes/substitui_caracter.p (INPUT-OUTPUT tel_nmoperad).
+
                ASSIGN crapope.nmoperad = CAPS(tel_nmoperad)
                       crapope.nvoperad = aux_inposniv
                       crapope.flgperac = tel_flgperac
@@ -976,7 +982,7 @@ DO WHILE TRUE:
                     END.
               
                UPDATE tel_vlapvcap WITH FRAME f_operad.
-
+               
                UPDATE tel_flgutcrm WITH FRAME f_operad.
 
                ASSIGN crapope.flgdopgd = tel_flgdopgd
@@ -1003,7 +1009,7 @@ DO WHILE TRUE:
                     RUN gera_log ("Vlr da Alcada de Captacao",
                                    STRING(log_vlapvcap),
                                    STRING(tel_vlapvcap)).
-
+                                   
                IF   log_flgutcrm <> tel_flgutcrm THEN
                     RUN gera_log ("Acesso CRM",
                                    STRING(log_flgutcrm,"Sim/Nao"),
@@ -1409,7 +1415,7 @@ DO WHILE TRUE:
                    END. 
                
                UPDATE tel_vlapvcap WITH FRAME f_operad.
-
+               
                UPDATE tel_flgutcrm WITH FRAME f_operad.
 
                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -1440,6 +1446,9 @@ DO WHILE TRUE:
 
                DO TRANSACTION ON ERROR UNDO, LEAVE:
            
+                  /* Retirar caracteres especiais do nome do operador */
+                  RUN fontes/substitui_caracter.p (INPUT-OUTPUT tel_nmoperad).
+
                   CREATE crapope.
 
                   ASSIGN crapope.cdoperad = tel_cdoperad
