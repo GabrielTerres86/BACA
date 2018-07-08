@@ -44,10 +44,22 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
                                     ,pr_retxml      OUT XMLType               --> Arquivo de retorno do XML
                                     ,pr_dscritic    OUT VARCHAR2              --> Descrição da crítica
                                     );
+                                    
+PROCEDURE pc_finalizar_bordero_dscto_tit(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Nr. da Conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE --> Número do Titular
+                                        ,pr_cdbandoc_lst	IN CLOB		                --> Código do banco
+                                        ,pr_nrdctabb_lst	IN CLOB		                --> Número da conta base no banco
+                                        ,pr_nrcnvcob_lst	IN CLOB		                --> Número do convênio de cobrança
+                                        ,pr_nrdocmto_lst	IN CLOB		                --> Número do documento (boleto)
+                                        ,pr_retxml      OUT CLOB                  --> Arquivo de retorno do XML
+                                        ,pr_dscritic    OUT VARCHAR2              --> Descrição da crítica
+                                        );
 
 PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa
                                  ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Nr. da Conta
                                  ,pr_idseqttl     IN crapttl.idseqttl%TYPE --> Número do Titular
+                                 ,pr_tokenib      IN VARCHAR2              -->Token da Transação
                                  ,pr_cdbandoc_lst IN CLOB                  --> Código do banco
                                  ,pr_nrdctabb_lst IN CLOB                  --> Número da conta base no banco
                                  ,pr_nrcnvcob_lst IN CLOB                  --> Número do convênio de cobrança
@@ -563,6 +575,9 @@ BEGIN
                          '<dtvencto>'||to_char(vr_tab_dados_titulos(vr_index).dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
                          '<vltitulo>'||to_char(vr_tab_dados_titulos(vr_index).vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
                          '<inpreapr>'||CASE WHEN vr_tab_dados_titulos(vr_index).dssituac = 'N' THEN 1 ELSE 0 END||'</inpreapr>'|| 
+                         '<cdbandoc>'||vr_tab_dados_titulos(vr_index).cdbandoc||'</cdbandoc>'||
+                         '<nrdctabb>'||vr_tab_dados_titulos(vr_index).nrdctabb||'</nrdctabb>'||
+                         '<nrdocmto>'||vr_tab_dados_titulos(vr_index).nrdocmto||'</nrdocmto>'||
                        '</titulo>'
                       );
         vr_index := vr_tab_dados_titulos.next(vr_index);
@@ -1392,6 +1407,7 @@ END pc_finalizar_bordero_dscto_tit;
 PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa
                                  ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Nr. da Conta
                                  ,pr_idseqttl     IN crapttl.idseqttl%TYPE --> Número do Titular
+                                 ,pr_tokenib      IN VARCHAR2              --> Token da Transação
                                  ,pr_cdbandoc_lst	IN CLOB		                --> Código do banco
                                  ,pr_nrdctabb_lst	IN CLOB		                --> Número da conta base no banco
                                  ,pr_nrcnvcob_lst	IN CLOB		                --> Número do convênio de cobrança
@@ -1425,6 +1441,16 @@ PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> C
   -- Tratamento de erros
   vr_exc_saida EXCEPTION;
 BEGIN
+  -- efetuar a validação do token informado
+  inet0003.pc_utiliza_autenticacao_ib(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_tokenib  => pr_tokenib
+                                     ,pr_dscritic => vr_dscritic);
+
+  IF trim(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_exc_saida;
+  END IF; 
+
   pc_finalizar_bordero_dscto_tit(pr_cdcooper     => pr_cdcooper
                                 ,pr_nrdconta     => pr_nrdconta
                                 ,pr_idseqttl     => pr_idseqttl

@@ -26,9 +26,6 @@ BEGIN
     -- Codigo do programa
     vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'CRPS735';
 
-    -- Tratamento de erros
-    vr_exc_saida EXCEPTION;
-    
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
     
@@ -138,8 +135,6 @@ BEGIN
     
     vr_dsctajud      crapprm.dsvlrprm%TYPE; -- Armazena as conta que possuem alguma ação judicial
     vr_dtultdia      DATE;                  -- Variavel para armazenar o ultimo dia util do ano
-    vr_dtvencto_util DATE;                  -- Variavel para o proximo dia util dps do vencimento
-    
     vr_tab_saldos EXTR0001.typ_tab_saldos;
 
     -- Variavel dos Indices
@@ -170,7 +165,7 @@ BEGIN
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       vr_cdcritic := 1;
       CLOSE BTCH0001.cr_crapdat;
-      RAISE vr_exc_saida;
+      RAISE vr_exc_erro;
     END IF;
     CLOSE BTCH0001.cr_crapdat;
 
@@ -182,7 +177,7 @@ BEGIN
                              ,pr_cdcritic => vr_cdcritic);
     -- Se possui erro
     IF vr_cdcritic <> 0 THEN
-      RAISE vr_exc_saida;
+      RAISE vr_exc_erro;
     END IF;
     
     -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
@@ -350,7 +345,7 @@ BEGIN
                                ,pr_dscritic => vr_cdcritic);
 
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
     END LOOP;
 
@@ -366,7 +361,7 @@ BEGIN
 
   EXCEPTION
 
-    WHEN vr_exc_saida THEN
+    WHEN vr_exc_erro THEN
       vr_cdcritic := NVL(vr_cdcritic, 0);
       IF vr_cdcritic > 0 THEN
         vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);

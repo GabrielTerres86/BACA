@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 24/11/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 20/05/2018
     
     Dados referentes ao programa:
 
@@ -5075,12 +5075,12 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_vltotbdc AS DECIMAL                                 NO-UNDO.
     DEF VAR aux_flgtbdsc AS LOGICAL                                 NO-UNDO.
 
-    DEF VAR aux_cdbandoc AS CHAR                                    NO-UNDO.
-    DEF VAR aux_nrdctabb AS CHAR                                    NO-UNDO.
-    DEF VAR aux_nrcnvcob AS CHAR                                    NO-UNDO.
-    DEF VAR aux_nrdocmto AS CHAR                                    NO-UNDO.
-    DEF VAR aux_vltotbdt AS DECIMAL                                 NO-UNDO.
-    DEF VAR aux_flgtbdst AS LOGICAL                                 NO-UNDO.
+    DEF VAR aux_cdbandoc     AS CHAR                                NO-UNDO.
+    DEF VAR aux_nrdctabb_bdt AS CHAR                                NO-UNDO.
+    DEF VAR aux_nrcnvcob_bdt AS CHAR                                NO-UNDO.
+    DEF VAR aux_nrdocmto_bdt AS CHAR                                NO-UNDO.
+    DEF VAR aux_vltotbdt     AS DECIMAL                             NO-UNDO.
+    DEF VAR aux_flgtbdst     AS LOGICAL                             NO-UNDO.
 
     DEF VAR h-b1wgen0015 AS HANDLE NO-UNDO.
     DEF VAR h-b1wgen0081 AS HANDLE NO-UNDO.
@@ -11169,46 +11169,47 @@ PROCEDURE aprova_trans_pend:
 
             ELSE IF tt-tbgen_trans_pend.tptransacao = 19 THEN /* Borderô Desconto Título */
                     DO: 
-                        ASSIGN aux_cdbandoc = ""
-                               aux_nrdctabb = ""
-                               aux_nrcnvcob = ""
-                               aux_nrdocmto = "".
+                        ASSIGN aux_cdbandoc     = ""
+                               aux_nrdctabb_bdt = ""
+                               aux_nrcnvcob_bdt = ""
+                               aux_nrdocmto_bdt = "".
                                
                         FOR EACH tt-tbdsct_trans_pend WHERE tt-tbdsct_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK:
-                            IF aux_nrdocmto <> "" THEN
+                            
+                            IF aux_nrdocmto_bdt <> "" THEN
                                DO:
-                                  ASSIGN aux_cdbandoc = aux_cdbandoc + "|"
-                                         aux_nrdctabb = aux_nrdctabb + "|"
-                                         aux_nrcnvcob = aux_nrcnvcob + "|"
-                                         aux_nrdocmto = aux_nrdocmto + "|"
+                                  ASSIGN aux_cdbandoc     = aux_cdbandoc     + "|"
+                                         aux_nrdctabb_bdt = aux_nrdctabb_bdt + "|"
+                                         aux_nrcnvcob_bdt = aux_nrcnvcob_bdt + "|"
+                                         aux_nrdocmto_bdt = aux_nrdocmto_bdt + "|".
                                END.
                               
-                            ASSIGN aux_cdbandoc = aux_cdbandoc + STRING(tt-tbdsct_trans_pend.cdbandoc)
-                                   aux_nrdctabb = aux_nrdctabb + STRING(tt-tbdsct_trans_pend.nrdctabb)
-                                   aux_nrcnvcob = aux_nrcnvcob + STRING(tt-tbdsct_trans_pend.nrcnvcob)
-                                   aux_nrdocmto = aux_nrdocmto + STRING(tt-tbdsct_trans_pend.nrdocmto.
+                            ASSIGN aux_cdbandoc     = aux_cdbandoc     + STRING(tt-tbdsct_trans_pend.cdbandoc)
+                                   aux_nrdctabb_bdt = aux_nrdctabb_bdt + STRING(tt-tbdsct_trans_pend.nrdctabb)
+                                   aux_nrcnvcob_bdt = aux_nrcnvcob_bdt + STRING(tt-tbdsct_trans_pend.nrcnvcob)
+                                   aux_nrdocmto_bdt = aux_nrdocmto_bdt + STRING(tt-tbdsct_trans_pend.nrdocmto).
                         END.
 
                         IF par_indvalid = 1 AND aux_conttran = 1 THEN
                            DO:
                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-                               RUN STORED-PROCEDURE pc_finalizar_bordero_ib aux_handproc = PROC-HANDLE NO-ERROR
+                               /*RUN STORED-PROCEDURE pc_finalizar_bordero_dscto_tit aux_handproc = PROC-HANDLE NO-ERROR
                                                      (INPUT par_cdcooper
                                                      ,INPUT par_nrdconta
                                                      ,INPUT par_idseqttl
                                                      ,INPUT aux_cdbandoc
-                                                     ,INPUT aux_nrdctabb
-                                                     ,INPUT aux_nrcnvcob
-                                                     ,INPUT aux_nrdocmto
+                                                     ,INPUT aux_nrdctabb_bdt
+                                                     ,INPUT aux_nrcnvcob_bdt
+                                                     ,INPUT aux_nrdocmto_bdt
                                                      ,OUTPUT ""
                                                      ,OUTPUT "").
                                 
-                               CLOSE STORED-PROC pc_finalizar_bordero_ib aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                               CLOSE STORED-PROC pc_finalizar_bordero_dscto_tit aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
                              
                                ASSIGN aux_dscritic = ""
-                                      aux_dscritic = pc_finalizar_bordero_ib.pr_dscritic
-                                                     WHEN pc_finalizar_bordero_ib.pr_dscritic <> ?.
+                                      aux_dscritic = pc_finalizar_bordero_dscto_tit.pr_dscritic
+                                                     WHEN pc_finalizar_bordero_dscto_tit.pr_dscritic <> ?.*/
                                 
                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                                 
@@ -11657,6 +11658,7 @@ ELSE IF tt-tbgen_trans_pend.tptransacao = 11 THEN /* Pagamentos DARF/DAS */
           ASSIGN tt-vlrdat.dattrans = tt-tbgen_trans_pend.dtmvtolt.
       
         END.
+      END. 
     ELSE IF tt-tbgen_trans_pend.tptransacao = 19 THEN /* Borderô Desconto Título */
       DO:
           FOR EACH tt-tbdsct_trans_pend WHERE tt-tbdsct_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. 

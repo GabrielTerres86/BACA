@@ -370,6 +370,199 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
   END fn_normaliza_jurosa60;
 
+  PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN crapris.cdcooper%TYPE
+                                ,par_dtrefere IN crapris.dtrefere%TYPE
+                                ,par_totrendap OUT typ_decimal_pfpj
+                                ,par_totjurmra OUT typ_decimal_pfpj
+                                ,par_rendaapropr OUT typ_arr_decimal_pfpj    --> RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
+                                ,par_apropjurmra OUT typ_arr_decimal_pfpj    --> APROPR. JUROS DE MORA DESCONTO DE TITULO
+                                ) IS
+  -- ..........................................................................
+  --
+  --  Programa : pc_calcula_juros_60_tdb
+
+  --  Sistema  : Rotinas para geracao do calculos de juros de desconto de titulo
+  --  Sigla    : RISC
+  --  Autor    : Luis Fernando (GFT)
+  --  Data     : 25/06/2018
+  --
+  -- ......................................................................................................
+
+
+    CURSOR cr_tdb60 IS
+      -- Todos os títulos abertos de um bordero com ao menos um titulo vencido a mais de 60 dias
+      SELECT 
+      --   SUM(x.dtvencto-x.dtvenmin60+1) AS qt_dias_devolver,
+         SUM((x.dtvencto-x.dtvenmin60+1)*txdiaria*vltitulo) AS vljurrec, -- valor de juros de receita a ser apropriado
+         cdcooper,
+      --   nrborder,
+         cdagenci,
+         inpessoa,
+         SUM(vljura60) AS vljurmor                                       -- valor de juros de mora a ser apropriado
+         /*
+         (x.dtvencto-x.dtvenmin60+1) AS qt_dias_devolver,
+         txdiaria,
+         (x.dtvencto-x.dtvenmin60+1)*txdiaria*vltitulo AS vl_devolver,
+         x.*
+         */
+      FROM (
+          SELECT UNIQUE
+            tdb.vljura60,
+            tdb.nrdconta,
+            tdb.nrborder,
+            tdb.dtlibbdt,
+            tdb.dtvencto,
+            (tdb.dtvencto-tdb.dtlibbdt) AS qtd_dias, -- quantidade de dias contabilizados para juros a apropriar
+            tdb.vltitulo,
+            tdv.dtvenmin,
+            (tdv.dtvenmin+60) AS dtvenmin60,
+            tdb.cdcooper,
+            tdb.nrdocmto,
+            tdb.nrcnvcob,
+            tdb.nrdctabb,
+            tdb.cdbandoc,
+            tdb.nrtitulo,
+            ((bdt.txmensal/100)/30) AS txdiaria,
+            ass.cdagenci,
+            ass.inpessoa
+          FROM 
+            craptdb tdb
+            INNER JOIN (SELECT 
+                          cdcooper,nrborder,MIN(dtvencto) AS dtvenmin 
+                        FROM craptdb 
+                        WHERE (dtvencto+60) < par_dtrefere 
+                          AND insittit = 4 
+                          AND cdcooper=par_cdcooper 
+                        GROUP BY cdcooper,nrborder
+                        ) tdv ON tdb.cdcooper=tdv.cdcooper AND tdb.nrborder=tdv.nrborder
+            INNER JOIN crapbdt bdt ON bdt.nrborder=tdb.nrborder AND bdt.cdcooper=tdb.cdcooper AND bdt.flverbor=1 
+            INNER JOIN crapass ass ON bdt.nrdconta=ass.nrdconta AND bdt.cdcooper=ass.cdcooper
+          WHERE 1=1
+            AND tdb.insittit = 4
+            AND tdb.dtvencto >= (tdv.dtvenmin+60)
+            ORDER BY tdb.cdcooper, tdb.nrdconta, tdb.nrtitulo
+        ) x
+        GROUP BY 
+          cdcooper,
+          inpessoa,
+      --   nrborder,
+          cdagenci
+        ORDER BY
+          cdcooper,
+          cdagenci;
+--    rw_tdb60 cr_tdb60%ROWTYPE;
+
+/*
+    CURSOR cr_crapvri_jur(pr_cdcooper IN crapris.cdcooper%TYPE
+                         ,pr_nrdconta IN crapris.nrdconta%TYPE
+                         ,pr_dtrefere IN crapris.dtrefere%TYPE
+                         ,pr_innivris IN crapris.innivris%TYPE
+                         ,pr_cdmodali IN crapris.cdmodali%TYPE
+                         ,pr_nrctremp IN crapris.nrctremp%TYPE
+                         ,pr_nrseqctr IN crapris.nrseqctr%TYPE) IS
+      SELECT /*+ INDEX_DESC(crapvri CRAPVRI##CRAPVRI1) */
+/*             crapvri.innivris
+            ,crapvri.cdvencto
+            ,crapvri.cdcooper
+            ,crapvri.vldivida
+        FROM crapvri
+       WHERE crapvri.cdcooper = pr_cdcooper
+         AND crapvri.dtrefere = pr_dtrefere
+         AND crapvri.nrdconta = pr_nrdconta
+         AND crapvri.innivris = pr_innivris
+         AND crapvri.cdmodali = pr_cdmodali
+         AND crapvri.nrctremp = pr_nrctremp
+         AND crapvri.nrseqctr = pr_nrseqctr
+         AND crapvri.cdvencto >= 230
+         AND crapvri.cdvencto <= 290;
+
+    rw_crapvri_jur cr_crapvri_jur%ROWTYPE;
+    
+    CURSOR cr_lancamento_bordero(pr_cdcooper     IN crapris.cdcooper%TYPE
+                     ,pr_nrdconta     IN crapris.nrdconta%TYPE
+                     ,vr_diascalc    IN INTEGER
+                     ,pr_tel_dtrefere tbdsct_lancamento_bordero.dtmvtolt%TYPE
+                     ,pr_nrborder     IN tbdsct_lancamento_bordero.nrborder%TYPE
+                     ,pr_cdhistor     IN tbdsct_lancamento_bordero.cdhistor%TYPE) IS
+      SELECT SUM(tlb.vllanmto) AS vllanmto
+        FROM tbdsct_lancamento_bordero tlb
+       WHERE tlb.cdcooper = pr_cdcooper
+         AND tlb.nrdconta = pr_nrdconta
+         AND tlb.dtmvtolt >= pr_tel_dtrefere - vr_diascalc
+         AND tlb.dtmvtolt <= pr_tel_dtrefere
+         AND tlb.cdhistor = pr_cdhistor
+         AND tlb.nrborder = pr_nrborder;*/
+
+    CURSOR cr_jur60 IS
+      SELECT ris.inpessoa
+            ,ris.cdagenci
+            ,SUM(ris.vljura60) vljura60
+        FROM crapris ris
+       INNER JOIN crapass ass ON ris.nrdconta = ass.nrdconta AND 
+                                 ris.cdcooper = ass.cdcooper
+       WHERE ris.cdcooper = par_cdcooper
+         AND ris.dtrefere = par_dtrefere
+         AND ris.cdmodali = 301
+         AND ris.inddocto = 1
+         AND ris.vljura60 > 0
+     GROUP BY ris.inpessoa
+             ,ris.cdagenci;
+    
+  BEGIN
+    par_totrendap.valorpf := 0;
+    par_totrendap.valorpj := 0;
+    par_totjurmra.valorpf := 0;
+    par_totjurmra.valorpj := 0;
+    FOR rw_tdb60 IN cr_tdb60 LOOP
+      IF rw_tdb60.inpessoa = 1 THEN -- PF
+        par_totrendap.valorpf := par_totrendap.valorpf + rw_tdb60.vljurrec; 
+        par_totjurmra.valorpf := par_totjurmra.valorpf + rw_tdb60.vljurmor;
+        IF par_rendaapropr.exists(rw_tdb60.cdagenci) THEN
+          par_rendaapropr(rw_tdb60.cdagenci).valorpf := NVL(par_rendaapropr(rw_tdb60.cdagenci).valorpf,0) + rw_tdb60.vljurrec;
+        ELSE
+          par_rendaapropr(rw_tdb60.cdagenci).valorpf := rw_tdb60.vljurrec;
+        END IF;
+        IF par_apropjurmra.exists(rw_tdb60.cdagenci) THEN
+          par_apropjurmra(rw_tdb60.cdagenci).valorpf := NVL(par_apropjurmra(rw_tdb60.cdagenci).valorpf,0) + rw_tdb60.vljurmor;
+        ELSE
+          par_apropjurmra(rw_tdb60.cdagenci).valorpf := rw_tdb60.vljurmor;
+        END IF;
+      ELSE -- PJ
+        par_totrendap.valorpj := par_totrendap.valorpj + rw_tdb60.vljurrec; 
+        par_totjurmra.valorpj := par_totjurmra.valorpj + rw_tdb60.vljurmor;
+        IF par_rendaapropr.exists(rw_tdb60.cdagenci) THEN
+          par_rendaapropr(rw_tdb60.cdagenci).valorpj := NVL(par_rendaapropr(rw_tdb60.cdagenci).valorpj,0) + rw_tdb60.vljurrec;
+        ELSE
+          par_rendaapropr(rw_tdb60.cdagenci).valorpj := rw_tdb60.vljurrec;
+        END IF;
+        IF par_apropjurmra.exists(rw_tdb60.cdagenci) THEN
+          par_apropjurmra(rw_tdb60.cdagenci).valorpj := NVL(par_apropjurmra(rw_tdb60.cdagenci).valorpj,0) + rw_tdb60.vljurmor;
+        ELSE
+          par_apropjurmra(rw_tdb60.cdagenci).valorpj := rw_tdb60.vljurmor;
+        END IF;
+      END IF;
+    END LOOP;
+    
+    FOR rw_jur60 IN cr_jur60 LOOP
+      IF rw_jur60.inpessoa = 1 THEN -- PF
+        par_totjurmra.valorpf := par_totjurmra.valorpf + rw_jur60.vljura60;
+        IF par_apropjurmra.exists(rw_jur60.cdagenci) THEN
+          par_apropjurmra(rw_jur60.cdagenci).valorpf := NVL(par_apropjurmra(rw_jur60.cdagenci).valorpf,0) + rw_jur60.vljura60;
+        ELSE
+          par_apropjurmra(rw_jur60.cdagenci).valorpf := rw_jur60.vljura60;
+        END IF;
+      ELSE -- PJ
+        par_totjurmra.valorpj := par_totjurmra.valorpj + rw_jur60.vljura60;
+        IF par_apropjurmra.exists(rw_jur60.cdagenci) THEN
+          par_apropjurmra(rw_jur60.cdagenci).valorpj := NVL(par_apropjurmra(rw_jur60.cdagenci).valorpj,0) + rw_jur60.vljura60;
+        ELSE
+          par_apropjurmra(rw_jur60.cdagenci).valorpj := rw_jur60.vljura60;
+        END IF;
+      END IF;
+    END LOOP;
+    
+  END pc_calcula_juros_60_tdb;
+  
   PROCEDURE pc_calcula_juros_60k(par_cdcooper IN crapris.cdcooper%TYPE
                                 ,par_dtrefere IN crapris.dtrefere%TYPE
                                 ,par_cdmodali IN crapris.cdmodali%TYPE
@@ -1040,6 +1233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vlag0201_1722_v   typ_arr_decimal_pfpj;
     vr_vlag0299_1613     typ_arr_decimal_pfpj;
     vr_vlag1724          typ_arr_decimal_pfpj;   -- AJUSTE PROVISAO TIT.DESCONTADOS PF/PJ
+    vr_vlag1724_bdt      typ_arr_decimal_pfpj;
 
 
     vr_vlag0101_1611     typ_arr_decimal;
@@ -1079,6 +1273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_rel1722_0101_v    typ_decimal_pfpj;
     vr_rel1613_0299_v    typ_decimal_pfpj;
     vr_rel1724_v         typ_decimal_pfpj;
+    vr_rel1724_bdt       typ_decimal_pfpj;
 
     vr_rel1721_v         NUMBER := 0;
     vr_rel1723_v         NUMBER := 0;
@@ -1104,7 +1299,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_contador1 VARCHAR(43);
     vr_arrchave2 VARCHAR(43);
     vr_flgmicro  BOOLEAN ;
-
+    
+    vr_totrendap     typ_decimal_pfpj;
+    vr_totjurmra     typ_decimal_pfpj;
+    vr_rendaapropr   typ_arr_decimal_pfpj ; --RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
+    vr_apropjurmra   typ_arr_decimal_pfpj ; --APROPR. JUROS DE MORA DESCONTO DE TITULO
+    
     vr_flsoavto          BOOLEAN;
 
     vr_vlprejuz_conta    NUMBER := 0;
@@ -1170,6 +1370,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_nrctaori NUMBER;
     vr_descricao VARCHAR2(200);
     vr_chave2 varchar2(10);
+    
+    vr_flverbor crapbdt.flverbor%TYPE;
 
     -- Escrever linha no arquivo
     PROCEDURE pc_gravar_linha(pr_linha IN VARCHAR2) IS
@@ -1279,6 +1481,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 5563;
 
     -- CONTAS JUROS +60
+    -- vr_tab_risco('A') := 2;
+    -- Adicionado o nivél 2 pois o cursor cr_crapris_60 estava retornando esse nivel (Paulo Penteado GFT)
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('2').nrdconta := 9302;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('2').nrdconta := 3333;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('2').nrdconta := 9302;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('2').nrdconta := 3333;
     -- vr_tab_risco('B') := 3;
     vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('3').nrdconta := 9302;
     vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('3').nrdconta := 3333;
@@ -1331,6 +1539,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_rel1724.valorpj        := 0;
     vr_rel1724_v.valorpf      := 0;
     vr_rel1724_v.valorpj      := 0;
+    vr_rel1724_bdt.valorpf    := 0;
+    vr_rel1724_bdt.valorpj    := 0;
 
     -- Data de referencia
     vr_dtrefere := to_date(pr_dtrefere, 'dd/mm/YY');
@@ -1814,26 +2024,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       --      4 = Desconto de Titulos - cob. sem reg.
       --      5 = Desconto de Titulos - cob. reg
       IF rw_crapris.cdorigem IN (2,4,5) THEN -- Desconto de Titulos - cob. reg
-        -- Se pessoa física
-        IF rw_crapris.inpessoa = 1 THEN
-          vr_rel1724.valorpf   := NVL(vr_rel1724.valorpf,0)   + vr_vlpreatr;
-          vr_rel1724_v.valorpf := NVL(vr_rel1724_v.valorpf,0) + vr_vldivida;
+        vr_flverbor := 0;
+        IF rw_crapris.cdorigem = 5 THEN
+          BEGIN
+            SELECT bdt.flverbor
+            INTO   vr_flverbor
+            FROM   crapbdt bdt
+            WHERE  bdt.nrdconta = rw_crapris.nrdconta
+            AND    bdt.nrborder = rw_crapris.nrctremp
+            AND    bdt.cdcooper = rw_crapris.cdcooper;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_flverbor := 0;
+          END;
+        END IF;
+        
+        IF vr_flverbor = 1 THEN
+          -- Se pessoa física
+          IF rw_crapris.inpessoa = 1 THEN
+            vr_rel1724_bdt.valorpf   := NVL(vr_rel1724_bdt.valorpf,0)   + vr_vlpreatr;
 
-          IF vr_vlag1724.exists(rw_crapris.cdagenci) THEN
-            vr_vlag1724(rw_crapris.cdagenci).valorpf := NVL(vr_vlag1724(rw_crapris.cdagenci).valorpf,0) + vr_vlpreatr;
+            IF vr_vlag1724_bdt.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1724_bdt(rw_crapris.cdagenci).valorpf := NVL(vr_vlag1724_bdt(rw_crapris.cdagenci).valorpf,0) + vr_vlpreatr;
+            ELSE
+              vr_vlag1724_bdt(rw_crapris.cdagenci).valorpf := vr_vlpreatr;
+            END IF;
+
           ELSE
-            vr_vlag1724(rw_crapris.cdagenci).valorpf := vr_vlpreatr;
-          END IF;
+            vr_rel1724_bdt.valorpj   := NVL(vr_rel1724_bdt.valorpj,0)   + vr_vlpreatr;
 
+            IF vr_vlag1724_bdt.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1724_bdt(rw_crapris.cdagenci).valorpj := NVL(vr_vlag1724_bdt(rw_crapris.cdagenci).valorpj,0) + vr_vlpreatr;
+            ELSE
+              vr_vlag1724_bdt(rw_crapris.cdagenci).valorpj := vr_vlpreatr;
+            END IF;
+          END IF;          
         ELSE
+          -- Se pessoa física
+          IF rw_crapris.inpessoa = 1 THEN
+            vr_rel1724.valorpf   := NVL(vr_rel1724.valorpf,0)   + vr_vlpreatr;
+            vr_rel1724_v.valorpf := NVL(vr_rel1724_v.valorpf,0) + vr_vldivida;
 
-          vr_rel1724.valorpj   := NVL(vr_rel1724.valorpj,0)   + vr_vlpreatr;
-          vr_rel1724_v.valorpj := NVL(vr_rel1724_v.valorpj,0) + vr_vldivida;
+            IF vr_vlag1724.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1724(rw_crapris.cdagenci).valorpf := NVL(vr_vlag1724(rw_crapris.cdagenci).valorpf,0) + vr_vlpreatr;
+            ELSE
+              vr_vlag1724(rw_crapris.cdagenci).valorpf := vr_vlpreatr;
+            END IF;
 
-          IF vr_vlag1724.exists(rw_crapris.cdagenci) THEN
-            vr_vlag1724(rw_crapris.cdagenci).valorpj := NVL(vr_vlag1724(rw_crapris.cdagenci).valorpj,0) + vr_vlpreatr;
           ELSE
-            vr_vlag1724(rw_crapris.cdagenci).valorpj := vr_vlpreatr;
+
+            vr_rel1724.valorpj   := NVL(vr_rel1724.valorpj,0)   + vr_vlpreatr;
+            vr_rel1724_v.valorpj := NVL(vr_rel1724_v.valorpj,0) + vr_vldivida;
+
+            IF vr_vlag1724.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1724(rw_crapris.cdagenci).valorpj := NVL(vr_vlag1724(rw_crapris.cdagenci).valorpj,0) + vr_vlpreatr;
+            ELSE
+              vr_vlag1724(rw_crapris.cdagenci).valorpj := vr_vlpreatr;
+            END IF;
+
           END IF;
 
         END IF;
@@ -2066,6 +2314,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     --Cessao credito
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
+
+    /*Calcula valores dos descontos de titulos vencidos*/
+    pc_calcula_juros_60_tdb( par_cdcooper => pr_cdcooper
+                          ,par_dtrefere => vr_dtrefere
+                          ,par_totrendap => vr_totrendap
+                          ,par_totjurmra => vr_totjurmra
+                          ,par_rendaapropr => vr_rendaapropr --> RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
+                          ,par_apropjurmra => vr_apropjurmra     --> APROPR. JUROS DE MORA DESCONTO DE TITULO
+                          );
     
     vr_contador := 1;
     WHILE vr_contador <= 16 LOOP
@@ -2733,6 +2990,250 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         END IF;
       END LOOP;
 
+    END IF;
+    
+    -- [Projeto 403] - Juros remuneratório a apropriar DESCONTO DE TITULO PESSOA FISICA 
+    IF vr_totrendap.valorpf <> 0 THEN
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7152,5590,' ||
+                     TRIM(to_char(vr_totrendap.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) juros remuneratório a apropriar DESCONTO DE TITULO PESSOA FISICA ."';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+      
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5590,7152,' ||
+                     TRIM(to_char(vr_totrendap.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) REVERSAO juros remuneratório a apropriar DESCONTO DE TITULO PESSOA FISICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+    
+    -- [Projeto 403] - Juros remuneratório a apropriar DESCONTO DE TITULO PESSOA JURIDICA
+    IF vr_totrendap.valorpj <> 0 THEN
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7153,5591,' ||
+                     TRIM(to_char(vr_totrendap.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) juros remuneratório a apropriar DESCONTO DE TITULO PESSOA JURIDICA ."';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+      
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5591,7153,' ||
+                     TRIM(to_char(vr_totrendap.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) REVERSAO juros remuneratório a apropriar DESCONTO DE TITULO PESSOA JURIDICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_rendaapropr.exists(vr_contador)
+        AND vr_rendaapropr(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_rendaapropr(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+    
+    -- [Projeto 403] - Juros de mora a apropriar DESCONTO DE TITULO PESSOA FISICA 
+    IF vr_totjurmra.valorpf <> 0 THEN
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7154,5590,' ||
+                     TRIM(to_char(vr_totjurmra.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) juros de mora a apropriar DESCONTO DE TITULO PESSOA FISICA."';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+      
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5590,7154,' ||
+                     TRIM(to_char(vr_totjurmra.valorpf, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) REVERSAO juros de mora a apropriar DESCONTO DE TITULO PESSOA FISICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+    END IF;
+    
+    -- [Projeto 403] - Juros de mora a apropriar DESCONTO DE TITULO PESSOA JURIDICA
+    IF vr_totjurmra.valorpj <> 0 THEN
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7155,5591,' ||
+                     TRIM(to_char(vr_totjurmra.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) juros de mora a apropriar DESCONTO DE TITULO PESSOA JURIDICA."';
+
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+      
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5591,7155,' ||
+                     TRIM(to_char(vr_totjurmra.valorpj, '99999999999990.00')) ||
+                     ',1434,' ||
+                     '"(risco) REVERSAO juros de mora a apropriar DESCONTO DE TITULO PESSOA JURIDICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_apropjurmra.exists(vr_contador)
+        AND vr_apropjurmra(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_apropjurmra(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
     END IF;
 
     -- CESSAO EMPRESTIMO EM ATRASO - PESSOA FISICA
@@ -4503,6 +5004,123 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         AND vr_vlag1724(vr_contador).valorpj <> 0 THEN
           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
                          TRIM(to_char(vr_vlag1724(vr_contador).valorpj,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- Ajuste Provisao CL - Titulos Descontados
+    -- AJUSTE PROVISAO TIT.DESCONTADOS - PESSOA FISICA / PF
+    IF vr_rel1724_bdt.valorpf <> 0 THEN
+
+      vr_vllanmto := vr_rel1724_bdt.valorpf;
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5562,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' || '"(risco) PROVISAO DESCONTO TITULO PESSOA FISICA"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpf,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpf,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5526,8447,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' || '"(risco) REVERSÃO PROVISAO DESCONTO TITULO PESSOA FISICA"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpf,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpf,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+    
+    -- Ajuste Provisao CL - Titulos Descontados
+    -- AJUSTE PROVISAO TIT.DESCONTADOS - PESSOA JURIDICA / PJ
+    IF vr_rel1724_bdt.valorpj <> 0 THEN
+
+      vr_vllanmto := vr_rel1724_bdt.valorpj;
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8448,5527,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' || '"(risco) PROVISAO DESCONTO TITULO PESSOA JURIDICA"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpj,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpj,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5527,8448,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',1434,' || '"(risco) REVERSÃO PROVISAO DESCONTO TITULO PESSOA JURIDICA"';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpj,'99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1724_bdt.exists(vr_contador)
+        AND vr_vlag1724_bdt(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1724_bdt(vr_contador).valorpj,'99999999999990.00'));
           pc_gravar_linha(vr_linhadet);
         END IF;
       END LOOP;
