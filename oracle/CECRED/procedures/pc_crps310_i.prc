@@ -537,6 +537,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,tdb.nrcnvcob
               ,tdb.nrdocmto
               ,cob.indpagto
+              ,tdb.vljura60
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
@@ -559,6 +560,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND (  bdt.insitbdt = 4 OR (bdt.insitbdt = 3 AND bdt.dtlibbdt <= pr_dtrefere) )
            -- Titulos Situação 4-Liberado OU 2-Processado com data igual a de processo
            AND (  tdb.insittit = 4 OR (tdb.insittit = 2 AND tdb.dtdpagto = pr_rw_crapdat.dtmvtolt) )
+           AND ( tdb.insitapr = 1 OR bdt.flverbor = 0 )
          ORDER BY bdt.nrborder
                  ,cob.flgregis
                  ,bdt.progress_recid;
@@ -937,6 +939,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlprjano     crapris.vlprjano%TYPE; --> Valor prejuizo no ano corrente
       vr_vlprjaan     crapris.vlprjaan%TYPE; --> Valor prejuizo no ano anterior
       vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
+      vr_vljura60     crapris.vljura60%TYPE; --> Valor dos Juros em Atraso a mais de 60 dias
       
       vr_dtprxpar     crapris.dtprxpar%TYPE; --> Data da próxima parcela do Fluxo Financeiro
       vr_vlprxpar     crapris.vlprxpar%TYPE; --> Valor da próxima parcela do Fluxo Financeiro
@@ -4417,6 +4420,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_qtdiaatr := 0;
                 vr_qtparcel := 1; -- Para desconto de duplicata sempre gera 1 parcela do Fluxo Financeiro
                 vr_dtvencop := NULL;
+                vr_vljura60 := 0;
                 -- Limpar a temp-table
                 FOR vr_ind IN 1..23 LOOP
                   vr_tab_vlavence(vr_ind) := 0;
@@ -4495,6 +4499,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_vlprxpar := vr_vlprxpar + vr_vlsrisco;
                 END IF;                
                 
+                vr_vljura60 := vr_vljura60 + rw_crapbdt.vljura60;
+
                 IF vr_qtdprazo > 0 THEN
                   -- Copiar o valor do risco para a variavel específica de
                   -- valores a vencer conforme o prazo calculado
@@ -4606,7 +4612,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_dtdrisco => NULL                     
                                   ,pr_qtdriclq => 0                      
                                   ,pr_nrdgrupo => 0                                      
-                                  ,pr_vljura60 => 0                                      
+                                  ,pr_vljura60 => vr_vljura60
                                   ,pr_inindris => vr_risco_rating
                                   ,pr_cdinfadi => ' '                                    
                                   ,pr_nrctrnov => 0                                      

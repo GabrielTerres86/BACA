@@ -843,7 +843,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                 cob.rowid cob_rowid
            FROM crapret ret,
                 crapcob cob,
-                tbepr_cobranca cde,
+                tbrecup_cobranca cde,
                 crapass ass,
                 crapcco cco
           WHERE ret.cdcooper = pr_cdcooper
@@ -3402,6 +3402,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  IF rw_crapcob.incobran IN (3,5) AND 
                     vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
                     
+                   IF dsct0003.fn_cobranca_cobtit(pr_cdcooper => pr_cdcooper
+                                                  ,pr_nrcnvcob => rw_crapcob.nrcnvcob ) THEN
+                      dsct0003.pc_processa_liquidacao_cobtit (pr_cdcooper => pr_cdcooper
+                                                             ,pr_nrdconta => rw_crapcob.nrdconta
+                                                             ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                                                             ,pr_nrctasac => rw_crapcob.nrctasac
+                                                             ,pr_nrdocmto => rw_crapcob.nrdocmto
+                                                             ,pr_vlpagmto => rw_crapcob.vltitulo
+                                                             ,pr_indpagto => rw_crapcob.indpagto
+                                                             ,pr_cdoperad => 0
+                                                             ,pr_cdagenci => 0
+                                                             ,pr_nrdcaixa => 0
+                                                             ,pr_idorigem => 1
+                                                             ,pr_cdcritic => vr_cdcritic
+                                                             ,pr_dscritic => vr_dscritic);
+                                         
+                     IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                       RAISE vr_exc_sair;
+                     END IF; 
+
+                     /* flg para realizar liquidacao apos baixa */
+                     vr_liqaposb:= TRUE; 
+                   ELSE
+                    
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
                    BEGIN
                      INSERT INTO gncptit
@@ -3495,6 +3519,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;
                     
                     RAISE vr_exc_proximo;
+                   
+                   END IF;
                  END IF;                 
 
                  /* aceita titulos em aberto, baixados e ja pagos */

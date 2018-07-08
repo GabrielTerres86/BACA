@@ -694,6 +694,8 @@
                  25/10/2017 -  Ajustes diversos para projeto de DDA Mobile
                                PRJ356.4 - DDA (Ricardo Linhares)
 
+                 26/06/2018 - Adicionado opreação 200 "proc_operacao200" (Paulo Penteado GFT)
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -8525,6 +8527,79 @@ PROCEDURE proc_operacao192:
                         {&out} aux_tgfimprg.
                 END.
 
+END PROCEDURE.
+
+/* Validar Frase e Senha do InternetBank. Gerar token de transações */
+PROCEDURE proc_operacao200:
+
+    
+            /* Se nao for TAA, ou o TOKEN nao tenha sido enviado, continuamos validando a senha informada. */
+            ASSIGN aux_vldfrase = 0
+                   aux_dssenlet = GET-VALUE("dssenlet")   
+                   aux_vldshlet = yes
+                   aux_inaceblq = 1
+                   aux_dsorigip = GET-VALUE("dsorigip")
+                   aux_indlogin = 1.
+
+            IF  aux_vldshlet  THEN
+                DO:
+                    IF  aux_flgcript  THEN /** Utiliza criptografia **/
+                        DO:
+                            RUN sistema/generico/procedures/b1wgencrypt.p PERSISTENT 
+                                SET h-b1wgencrypt (INPUT aux_nrdconta).
+                    
+                            ASSIGN aux_dssenlet = DYNAMIC-FUNCTION("decriptar" IN h-b1wgencrypt,
+                                                                   INPUT aux_dssenlet,
+                                                                   INPUT aux_nrdconta).
+                
+                            DELETE PROCEDURE h-b1wgencrypt.
+                        END.
+                END.
+
+            RUN sistema/internet/fontes/InternetBank2.p (INPUT aux_cdcooper,
+                                                         INPUT aux_nrdconta,
+                                                         INPUT aux_idseqttl,
+                                                         INPUT aux_nrcpfope,
+                                                         INPUT aux_cddsenha,
+                                                         INPUT aux_dssenweb,
+                                                         INPUT aux_dssenlet,
+                                                         INPUT aux_vldshlet,
+                                                         INPUT aux_vldfrase,
+                                                         INPUT aux_inaceblq,
+                                                         INPUT aux_nripuser,
+                                                         INPUT aux_dsorigip,
+                                                         INPUT aux_flmobile,
+                                                         INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
+                                                        OUTPUT aux_dsmsgerr,
+                                                        OUTPUT TABLE xml_operacao).
+            
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                    {&out} aux_dsmsgerr aux_tgfimprg.
+                    
+                    RETURN "NOK".
+                END.
+            ELSE
+            DO:
+                           RUN sistema/internet/fontes/InternetBank200.p (INPUT aux_cdcooper,
+                                                              INPUT aux_nrdconta,
+                                                              INPUT aux_idseqttl,
+                                                              INPUT aux_nrcpfope,                                                            
+                                                                                                             OUTPUT aux_dsmsgerr,
+                                                                                                             OUTPUT TABLE xml_operacao).
+
+                                IF  RETURN-VALUE = "NOK"  THEN
+                                        {&out} aux_dsmsgerr. 
+                                ELSE
+                                        FOR EACH xml_operacao NO-LOCK: 
+
+                                                {&out} xml_operacao.dslinxml.
+                                                
+                                        END.
+    
+                                {&out} aux_tgfimprg.
+                        END.
+                        
 END PROCEDURE.
 
 PROCEDURE proc_operacao204:
