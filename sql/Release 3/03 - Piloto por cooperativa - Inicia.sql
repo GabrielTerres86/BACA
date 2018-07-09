@@ -7,139 +7,133 @@
   ---------------------------------------------------------------------------------------------------------------------*/
 
 DECLARE 
-  pr_cdcooper integer := xxxxxxxxx;
+  TYPE Cooperativas IS TABLE OF integer;
+  coop Cooperativas := Cooperativas(XX,YY,ZZ); -- EX: Cooperativas(1,3,7,11);
+  
+  pr_cdcooper INTEGER;
 
 BEGIN
-  UPDATE crapprm SET dsvlrprm = '1' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcooper = (pr_cdcooper);
+  FOR i IN coop.FIRST .. coop.LAST
+  LOOP
+    pr_cdcooper := coop(i);
+    UPDATE crapprm SET dsvlrprm = '1' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcooper = (pr_cdcooper);
 
-  -- Inclui a nova opção na tela TITCTO
-  UPDATE craptel
-     SET idambtel = 2,
-         cdopptel = 'C,F,L,Q,S,T,B',
-         lsopptel = 'CONSULTA,FECHAMENTO,LOTES,QUEM,SALDO,PESQUISA,BORDERO'
-   WHERE nmdatela = 'TITCTO'
-    AND  cdcooper = (pr_cdcooper);
+    -- Inclui a nova opção na tela TITCTO
+    UPDATE craptel
+       SET idambtel = 2,
+           cdopptel = 'C,F,L,Q,S,T,B',
+           lsopptel = 'CONSULTA,FECHAMENTO,LOTES,QUEM,SALDO,PESQUISA,BORDERO'
+     WHERE nmdatela = 'TITCTO'
+      AND  cdcooper = (pr_cdcooper);
 
-  -- Insere a permissão da nova opção
-  INSERT INTO crapace
-      (nmdatela,
-       cddopcao,
-       cdoperad,   
-       nmrotina,   
-       cdcooper,   
-       nrmodulo,   
-       idevento,   
-       idambace)
-      SELECT acn.nmdatela, 
-             'B', 
-             ope.cdoperad,
-             ' ',
-             acn.cdcooper,
-             acn.nrmodulo,
-             acn.idevento,
-             acn.idambace
-        FROM crapcop cop,
-             crapope ope,
-             crapace acn
-       WHERE cop.flgativo = 1
-         AND cop.cdcooper = (pr_cdcooper)
-         AND ope.cdsitope = 1 
-         AND cop.cdcooper = ope.cdcooper
-         AND acn.cdcooper = ope.cdcooper
-         AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
-         AND acn.cddopcao = 'L'
-         AND acn.nmrotina = ' '
-         AND acn.nmdatela = 'TITCTO'
-         AND acn.idambace = 2;
+    -- Insere a permissão da nova opção
+    INSERT INTO crapace
+        (nmdatela,
+         cddopcao,
+         cdoperad,   
+         nmrotina,   
+         cdcooper,   
+         nrmodulo,   
+         idevento,   
+         idambace)
+        SELECT acn.nmdatela, 
+               'B', 
+               ope.cdoperad,
+               ' ',
+               acn.cdcooper,
+               acn.nrmodulo,
+               acn.idevento,
+               acn.idambace
+          FROM crapcop cop,
+               crapope ope,
+               crapace acn
+         WHERE cop.flgativo = 1
+           AND cop.cdcooper = (pr_cdcooper)
+           AND ope.cdsitope = 1 
+           AND cop.cdcooper = ope.cdcooper
+           AND acn.cdcooper = ope.cdcooper
+           AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+           AND acn.cddopcao = 'L'
+           AND acn.nmrotina = ' '
+           AND acn.nmdatela = 'TITCTO'
+           AND acn.idambace = 2;
 
 
-  /**
-   * Atualiza borderôs antigos com situação liquidao e liberado para a decisão aprovado
-   */
-  UPDATE 
-    crapbdt 
-  SET
-    insitapr = 4
-  WHERE 
-    (crapbdt.insitbdt = 4 OR crapbdt.insitbdt=3)
-    AND cdcooper = pr_cdcooper
-  ;
-  /**
-   * Atualiza borderôs antigos analisado para a situação de em estudo, para que possam ser aproveitados no processo novo
-   */
-  UPDATE 
-    crapbdt
-  SET
-    insitbdt = 1,
-    insitapr = 0,
-    flverbor = 1
-  WHERE
-    insitbdt = 2
-    AND cdcooper = pr_cdcooper;
-  /**
-   * Atualiza borderôs antigos EM ESTUDO para virar borderô novos
-   */
-  UPDATE 
-    crapbdt
-  SET
-    insitapr = 0,
-    flverbor = 1
-  WHERE
-    insitbdt = 1
-    AND cdcooper = pr_cdcooper;
-  /**
-   * Atualiza o sequencial da TDB guardado na BDT de todos os borderôs
-   */
-  UPDATE 
-    crapbdt 
-  SET 
-    crapbdt.nrseqtdb = (SELECT COUNT(1) FROM craptdb WHERE crapbdt.nrborder=craptdb.nrborder AND crapbdt.cdcooper=craptdb.cdcooper AND crapbdt.nrdconta=craptdb.nrdconta)
-  ;
+    /**
+     * Atualiza borderôs antigos com situação liquidao e liberado para a decisão aprovado
+     */
+    UPDATE 
+      crapbdt 
+    SET
+      insitapr = 4
+    WHERE 
+      (crapbdt.insitbdt = 4 OR crapbdt.insitbdt=3)
+      AND cdcooper = pr_cdcooper
+    ;
+    /**
+     * Atualiza borderôs antigos analisado para a situação de em estudo, para que possam ser aproveitados no processo novo
+     */
+    UPDATE 
+      crapbdt
+    SET
+      insitbdt = 1,
+      insitapr = 0,
+      flverbor = 1
+    WHERE
+      insitbdt = 2
+      AND cdcooper = pr_cdcooper;
+    /**
+     * Atualiza borderôs antigos EM ESTUDO para virar borderô novos
+     */
+    UPDATE 
+      crapbdt
+    SET
+      insitapr = 0,
+      flverbor = 1
+    WHERE
+      insitbdt = 1
+      AND cdcooper = pr_cdcooper;
+    /**
+     * Atualiza o sequencial da TDB guardado na BDT de todos os borderôs
+     */
+    UPDATE 
+      crapbdt 
+    SET 
+      crapbdt.nrseqtdb = (SELECT COUNT(1) FROM craptdb WHERE crapbdt.nrborder=craptdb.nrborder AND crapbdt.cdcooper=craptdb.cdcooper AND crapbdt.nrdconta=craptdb.nrdconta)
+    ;
 
-  /**
-   * Arruma o sequencial dos titulos para ficarem com um nrtitulo unico
-   */
-  MERGE
-  INTO    craptdb u
-  USING   (
-  SELECT  rowid AS rid,
-  ROW_NUMBER() OVER (PARTITION BY nrdconta,nrborder,cdcooper ORDER BY nrdconta,nrborder,cdcooper) AS rn
-  FROM    craptdb
-  where cdcooper = pr_cdcooper
-  )
-  ON      (u.rowid = rid)
-  WHEN MATCHED THEN
-  UPDATE
-  SET
-    nrtitulo = rn;
+    /**
+     * Arruma o sequencial dos titulos para ficarem com um nrtitulo unico
+     */
+    MERGE
+    INTO    craptdb u
+    USING   (
+    SELECT  rowid AS rid,
+    ROW_NUMBER() OVER (PARTITION BY nrdconta,nrborder,cdcooper ORDER BY nrdconta,nrborder,cdcooper) AS rn
+    FROM    craptdb
+    where cdcooper = pr_cdcooper
+    )
+    ON      (u.rowid = rid)
+    WHEN MATCHED THEN
+    UPDATE
+    SET
+      nrtitulo = rn;
 
-  /**
-   * Arruma a situação dos títulos de borderôs liquidados e liberados
-   */
-  UPDATE
-    craptdb
-  SET
-    insitapr = 1
-  WHERE
-    dtlibbdt is not null
-    AND cdcooper = pr_cdcooper
-  ;
+    /**
+     * Arruma a situação dos títulos de borderôs liquidados e liberados
+     */
+    UPDATE
+      craptdb
+    SET
+      insitapr = 1
+    WHERE
+      dtlibbdt is not null
+      AND cdcooper = pr_cdcooper
+    ;
 
-  /*Bloqueia a tela LANBDT do ayllos caracter*/
-  UPDATE craptel SET FLGTELBL = 0 WHERE nmdatela = 'LANBDT' AND cdcooper = pr_cdcooper;
-  
-  /* Atualiza o saldo devedor dos títulos de borderôs em aberto que foram liberados no processo antigo*/
-  UPDATE craptdb
-     SET vlsldtit = vltitulo
-   WHERE cdcooper = pr_cdcooper
-     AND dtlibbdt IS NOT NULL
-     AND insittit = 4
-     AND nrborder IN (SELECT nrborder 
-                        FROM crapbdt 
-                       WHERE cdcooper = pr_cdcooper
-                         AND insitbdt = 3
-                         AND dtlibbdt IS NOT NULL
-                         AND flverbor = 0);
-  
-  COMMIT;
+    /*Bloqueia a tela LANBDT do ayllos caracter*/
+    UPDATE craptel SET FLGTELBL = 0 WHERE nmdatela = 'LANBDT' AND cdcooper = pr_cdcooper;
+
+  END LOOP;
+  ROLLBACK;
 END;
