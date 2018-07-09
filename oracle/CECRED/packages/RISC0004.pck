@@ -149,6 +149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   -- Objetivo  : Procedimentos e funções auxiliares para a manipulação de dados de risco
   --
   -- Alterado:
+	--           26/06/2018 - Criada procedure pc_carrega_tabela_riscos para gerar dados brutos do risco. 
+	--                        (Reginaldo - AMcom)
   --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -654,7 +656,7 @@ PROCEDURE pc_busca_grupo_economico(pr_cdcooper     IN NUMBER
     --- >>> CURSORES <<< ---
     CURSOR cr_grupo IS
     SELECT ge.idgrupo
-		     , ge.inrisco_grupo
+         , ge.inrisco_grupo
       FROM tbcc_grupo_economico        ge
           ,tbcc_grupo_economico_integ  gi
      WHERE gi.cdcooper = ge.cdcooper
@@ -713,9 +715,9 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
     FROM crapris ris1
    WHERE ris1.cdcooper = pr_cdcooper
      AND ris1.dtrefere = pr_dtrefere
-		 AND ris1.cdmodali NOT IN (201, 1901)
-	UNION 
-	SELECT ris2.nrdconta
+     AND ris1.cdmodali NOT IN (201, 1901)
+  UNION
+  SELECT ris2.nrdconta
        , ris2.nrctremp
        , ris2.nrcpfcgc
        , ris2.cdmodali
@@ -731,17 +733,17 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
     FROM crapris ris2
    WHERE ris2.cdcooper = pr_cdcooper
      AND ris2.dtrefere = pr_dtrefere
-		 AND ris2.cdmodali = 201
-		 AND NOT EXISTS (
-		    SELECT 1
-				  FROM crapris aux
-				 WHERE aux.cdcooper = ris2.cdcooper 
-				   AND aux.nrdconta = ris2.nrdconta
-					 AND aux.nrctremp = ris2.nrctremp
-					 AND aux.cdmodali = 101
-		 )
-	UNION
-	SELECT ris3.nrdconta
+     AND ris2.cdmodali = 201
+     AND NOT EXISTS (
+        SELECT 1
+          FROM crapris aux
+         WHERE aux.cdcooper = ris2.cdcooper
+           AND aux.nrdconta = ris2.nrdconta
+           AND aux.nrctremp = ris2.nrctremp
+           AND aux.cdmodali = 101
+     )
+  UNION
+  SELECT ris3.nrdconta
        , ris3.nrctremp
        , ris3.nrcpfcgc
        , ris3.cdmodali
@@ -757,15 +759,15 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
     FROM crapris ris3
    WHERE ris3.cdcooper = pr_cdcooper
      AND ris3.dtrefere = pr_dtrefere
-		 AND ris3.cdmodali = 1901
-		 AND NOT EXISTS (
-		    SELECT 1
-				  FROM crapris aux
-				 WHERE aux.cdcooper = ris3.cdcooper 
-				   AND aux.nrdconta = ris3.nrdconta
-					 AND aux.nrctremp = ris3.nrctremp
-					 AND aux.cdmodali IN (101,201)
-		 );
+     AND ris3.cdmodali = 1901
+     AND NOT EXISTS (
+        SELECT 1
+          FROM crapris aux
+         WHERE aux.cdcooper = ris3.cdcooper
+           AND aux.nrdconta = ris3.nrdconta
+           AND aux.nrctremp = ris3.nrctremp
+           AND aux.cdmodali IN (101,201)
+     );
   rw_crapris cr_crapris%ROWTYPE;
 
   -- Identifica o número do contrato de desconto de títulos a partir do número do borderô
@@ -874,8 +876,8 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   vr_inrisco_final    tbrisco_central_ocr.inrisco_final%TYPE;
 
   vr_qtdias_atraso_refin crapepr.qtdias_atraso_refin%TYPE;
-	
-	vr_teste VARCHAR2(9);
+
+  vr_teste VARCHAR2(9);
 BEGIN
   -- Carrega o calendário de datas da cooperativa
   OPEN cr_dat(pr_cdcooper);
@@ -893,15 +895,15 @@ BEGIN
     IN cr_crapris(pr_cdcooper, rw_crapdat.dtmvtoan) LOOP
 
     vr_cdmodali := rw_crapris.cdmodali;
-		vr_inrisco_final := rw_crapris.innivris;
-		
-		IF rw_crapris.cdmodali = 1901 THEN
+    vr_inrisco_final := rw_crapris.innivris;
+
+    IF rw_crapris.cdmodali = 1901 THEN
        -- Evita redundância de registros do limite de crédito (cdmodali = 201 ou cdmodali = 1901)
        vr_cdmodali := 201;
-			 OPEN cr_risco_final(rw_crapris.nrdconta, rw_crapdat.dtmvtoan);
-			 FETCH cr_risco_final INTO vr_inrisco_final;
-			 CLOSE cr_risco_final;
-		END IF;
+       OPEN cr_risco_final(rw_crapris.nrdconta, rw_crapdat.dtmvtoan);
+       FETCH cr_risco_final INTO vr_inrisco_final;
+       CLOSE cr_risco_final;
+    END IF;
 
     IF rw_crapris.cdmodali  = 301 THEN    -- Descontro de títulos
       OPEN cr_crapbdt(rw_crapris.nrctremp);
@@ -1001,7 +1003,7 @@ BEGIN
       , inrisco_rating
       , inrisco_operacao
       , inrisco_refin
-      , qtdias_atraso_refin
+      --, qtdias_atraso_refin
     )
     VALUES (
         pr_cdcooper
@@ -1023,7 +1025,7 @@ BEGIN
       , vr_inrisco_rating
       , vr_inrisco_operacao
       , vr_inrisco_refin
-      , vr_qtdias_atraso_refin
+    --  , vr_qtdias_atraso_refin
     ) RETURNING ROWID INTO vr_rowidocr;
 
     -- Calcula a raíz do CNPJ para uso como chave da tabela de riscos CPF
