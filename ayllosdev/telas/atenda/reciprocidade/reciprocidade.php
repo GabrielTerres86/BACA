@@ -137,11 +137,11 @@ include("../../../includes/carrega_permissoes.php");
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 
-	if ($('<?php echo $labelRot?>').val() == 'SIM') {
+	if ($('<?php echo str_replace("label", "value", $labelRot) ?>').text() == 'SIM') {
 		// Mostra a Aba Principal com lista dos Conv&ecirc;nios
-		<?php echo "acessaOpcaoAba();"; ?>
+		<?php echo "acessaOpcaoContratos();"; ?>
 	}else {
-		<?php echo "acessaOpcaoAba();"; ?>
+		<?php echo "acessaOpcaoDescontos();"; ?>
 	}
 	
 
