@@ -560,6 +560,7 @@ PROCEDURE pc_insere_bordero_web(pr_tpctrlim IN craplim.tpctrlim%TYPE --> Tipo de
 
 PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   --> Cooperativa conectada
                              ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
+                             ,pr_nrborder   IN crapbdt.nrborder%TYPE
                              ,pr_chave              in VARCHAR2                --> Lista de 'nosso numero' a ser pesquisado
                              ,pr_nrinssac           out crapsab.nrinssac%TYPE   --> Inscrição do sacado
                              ,pr_nmdsacad           out crapsab.nmdsacad%TYPE   --> Nome do Sacado
@@ -571,6 +572,7 @@ PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   -
                              );
 
 procedure pc_detalhes_tit_bordero_web (pr_nrdconta    in crapass.nrdconta%type --> conta do associado
+                                      ,pr_nrborder   IN crapbdt.nrborder%TYPE
                                       ,pr_chave    in varchar2              --> lista de 'nosso numero' a ser pesquisado
                                       ,pr_xmllog      in varchar2              --> xml com informações de log
                                        --------> out <--------
@@ -1683,8 +1685,9 @@ BEGIN
 
    --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a
    --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
-   IF  rw_crawlim.vllimite > rw_craplim.vllimite AND
-       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
+   IF  ( ((rw_crawlim.vllimite > rw_craplim.vllimite) AND vr_flcraplim = TRUE ) OR vr_flcraplim = FALSE ) AND
+       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) AND 
+       (rw_crawlim.insitapr <> 1) THEN
        este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctrlim => pr_nrctrlim
@@ -5379,6 +5382,7 @@ END pc_insere_bordero;
 
   PROCEDURE pc_detalhes_tit_bordero(pr_cdcooper       in crapcop.cdcooper%type   --> Cooperativa conectada
                                ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
+                               ,pr_nrborder           in crapbdt.nrborder%type   --> Numero do bordero
                                ,pr_chave              in VARCHAR2                --> Lista de 'nosso numero' a ser pesquisado
                                ,pr_nrinssac           out crapsab.nrinssac%TYPE   --> Inscrição do sacado
                                ,pr_nmdsacad           out crapsab.nmdsacad%TYPE   --> Nome do Sacado
@@ -5801,6 +5805,7 @@ END pc_insere_bordero;
 
 
   procedure pc_detalhes_tit_bordero_web (pr_nrdconta    in crapass.nrdconta%type --> conta do associado
+                                        ,pr_nrborder    in crapbdt.nrborder%TYPE --> numero do bordero
                                         ,pr_chave       in varchar2              --> lista de 'nosso numero' a ser pesquisado
                                         ,pr_xmllog      in varchar2              --> xml com informações de log
                                          --------> out <--------
@@ -5864,6 +5869,7 @@ END pc_insere_bordero;
 
       pc_detalhes_tit_bordero(vr_cdcooper    --> código da cooperativa
                        ,pr_nrdconta          --> número da conta
+                       ,pr_nrborder          --> Numero do bordero
                        ,pr_chave          --> lista de 'nosso numero' a ser pesquisado
                        --------> out <--------
                        ,vr_nrinssac          --> Inscricao do sacado
