@@ -12,6 +12,17 @@ require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
+
+
+if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], '@',false)) <> '') {
+	echo '<script>';
+	echo '$(document).ready(function(){';
+	echo 'showError("error","'.utf8ToHtml($msgError).'","Alerta - Ayllos","","NaN");';
+    echo '});';
+	echo '</script>';
+	exit();
+}
+
 ?>
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" >
