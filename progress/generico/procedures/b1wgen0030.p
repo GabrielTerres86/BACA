@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 24/04/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 26/05/2018
            
     Dados referentes ao programa:
                 
@@ -556,6 +556,9 @@
                           - Inlusao das procedures valida_inclusao_bordero,
                             valida_alteracao_bordero e valida_exclusao_tit_bordero.
                             Projeto 366 (Lombardi).
+
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3635,7 +3638,7 @@ PROCEDURE busca_dados_limite_incluir:
 					DO:
     						CREATE tt-msg-confirma.
 							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
         END.
     
       END.

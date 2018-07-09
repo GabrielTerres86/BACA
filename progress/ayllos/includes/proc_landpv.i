@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001                       Ultima atualizacao: 11/08/2016 
+   Data    : Maio/2001                       Ultima atualizacao: 30/01/2017
 
    Dados referentes ao programa:
 
@@ -87,9 +87,12 @@
                             de emprestimos. (Reinert)
                             
                11/08/2016 - Criar procedure para buscar o saldo disponivel do cooperado
-                            (James)         
+                            (James)
 
-             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
+			   30/01/2017 - Nao permitir efetuar pagamento para o produto Pos-Fixado.
+                            (Jaison/James - PRJ298)	         
+
+               23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
 ........................................................................... */
 
 PROCEDURE mostra_dados:
@@ -795,7 +798,8 @@ PROCEDURE critica_contrato:
                NEXT.
            END.
                  
-      IF   crapepr.tpemprst = 1 THEN
+      IF   crapepr.tpemprst = 1 OR
+	       crapepr.tpemprst = 2 THEN
            DO:
                ASSIGN glb_cdcritic = 946.
                NEXT. 
