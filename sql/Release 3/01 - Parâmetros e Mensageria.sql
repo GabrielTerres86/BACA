@@ -273,5 +273,9 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'TAB096_BUSCAR', 'TELA_TAB096', 'pc_buscar_web', 'pr_cdcooper,pr_tpproduto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_TAB096'));
 
+-- CADCYB
+INSERT INTO crapaca (nrseqaca,nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) 
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PARCYB_BUSCAR_TITULOS_BORDERO','CYBE0003','pc_buscar_titulos_bordero','pr_nrdconta,pr_nrborder,pr_nrdocmto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'PARCYB'))
+
 commit;
 end;
