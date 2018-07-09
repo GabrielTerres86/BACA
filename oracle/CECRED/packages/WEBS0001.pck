@@ -1669,7 +1669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Objetivo  : Atualizar os dados da proposta de Cartão
 
      Observacao: -----
-     Alteracoes: 
+     Alteracoes: 09/07/2018 - Alterada chamada da procedure ccrd0007.pc_alterar_cartao_bancoob passando o parâmetro pr_idseqttl fixo 1. Paulo Silva (Supero).
      ..............................................................................*/
     DECLARE
       --Busca dados da Proposta
@@ -1962,7 +1962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                        ,pr_nrctrcrd => pr_nrctrcrd
                                        ,pr_idorigem => 5
                                        ,pr_vllimite => vr_vllimite
-                                       ,pr_idseqttl => rw_crawcrd.flgprcrd
+                                       ,pr_idseqttl => 1--rw_crawcrd.flgprcrd /*09/07/2018 - Paulo Silva (Supero)*/
                                        ,pr_cdcritic => pr_cdcritic
                                        ,pr_dscritic => pr_dscritic
                                        ,pr_des_erro => pr_des_reto);
