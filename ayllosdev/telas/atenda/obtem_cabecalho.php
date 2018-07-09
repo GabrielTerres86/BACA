@@ -577,6 +577,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen = 0;
 				break;
 			}
+			case "RECIPROCIDADE": {
+				$nomeRotina = "Reciprocidade";
+                $urlRotina = "reciprocidade";
+                $strValue = strtolower(getByTagName($valores, "flgbloqt")) == "yes" ? "SIM" : "NAO";
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
 			case "PAGTO POR ARQUIVO": {
 				$nomeRotina = "Pagto por Arquivo";
                 $urlRotina = "pagamento_titulo_arq";
