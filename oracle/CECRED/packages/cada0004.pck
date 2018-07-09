@@ -835,7 +835,7 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                ,pr_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
                                ,pr_cdagenci OUT crapass.cdagenci%TYPE --> Agencia cooperado
-                               ,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular
+                               /*,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular*/
                                ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
                                ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
                                ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
@@ -12912,7 +12912,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código 
                                ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                ,pr_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
                                ,pr_cdagenci OUT crapass.cdagenci%TYPE --> Agencia cooperado
-                               ,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular
+                               /*,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular*/
                                ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
                                ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
                                ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
@@ -13041,6 +13041,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código 
         -- Variaveis locais      
         vr_nrcpfcgc crapttl.nrcpfcgc%TYPE;
         vr_existe   NUMBER(1) := 0;
+        vr_idseqttl crapttl.idseqttl%TYPE;
         
         -- Variaveis gerais
         vr_contador PLS_INTEGER := 0;
@@ -13076,7 +13077,8 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código 
         CLOSE cr_crapcop;
 
         pr_cdagenci := 0;
-        pr_idseqttl := 0;
+        --pr_idseqttl := 0;
+        vr_idseqttl := 0;
         pr_dtnascto := NULL; 
         pr_idtipcar := 0;
         pr_inpessoa := 0;
@@ -13097,7 +13099,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código 
                                      prc_nrdconta => pr_nrdconta,
                                      prc_nrcartao => pr_nrcartao,
                                      prc_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-          pr_idseqttl := rw_crapcrm.tpusucar;      
+          --pr_idseqttl := rw_crapcrm.tpusucar;      
           FOR rw_crapttl IN cr_crapttl(pr_cdcooper
                                       ,pr_nrdconta
                                       ,rw_crapcrm.tpusucar)LOOP
@@ -13139,48 +13141,49 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código 
                                        prc_nrdconta => pr_nrdconta,
                                        prc_nrcartao => pr_nrcartao) LOOP
             
-          vr_nrcpfcgc := rw_crawcrd.nrcpftit;  
-          FOR rw_crapttl1 IN cr_crapttl1(pr_cdcooper,
-                                         pr_nrdconta,
-                                         rw_crawcrd.nrcpftit)LOOP
-            pr_idseqttl := rw_crapttl1.idseqttl;                  
-            pr_dtnascto := rw_crapttl1.dtnasttl;
-                     
-          END LOOP;
+            vr_nrcpfcgc := rw_crawcrd.nrcpftit;  
+            FOR rw_crapttl1 IN cr_crapttl1(pr_cdcooper,
+                                           pr_nrdconta,
+                                           rw_crawcrd.nrcpftit)LOOP
+              --pr_idseqttl := rw_crapttl1.idseqttl;                  
+              vr_idseqttl := rw_crapttl1.idseqttl;
+              pr_dtnascto := rw_crapttl1.dtnasttl;
+                       
+            END LOOP;
 
-          pr_idtipcar := 2; -- Cartao Credito
-          
-          -- Tipo da conta
-          FOR rw_crapass IN cr_crapass(pr_cdcooper
-                                      ,pr_nrdconta)LOOP
+            pr_idtipcar := 2; -- Cartao Credito
             
-            pr_inpessoa := rw_crapass.inpessoa;
-            
-            IF rw_crapass.inpessoa = 1 THEN
-              pr_nrcpfcgc := vr_nrcpfcgc;
-            ELSE -- se nao o cnpj da conta
-              pr_nrcpfcgc := rw_crapass.nrcpfcgc;
-            END IF;
-          END LOOP;
-          /* Obtem administradora do cartăo para verificar o tipo de conta */
-          FOR rw_crapadc IN cr_crapadc(pr_cdcooper,
-                                       rw_crawcrd.cdadmcrd)LOOP
-            IF rw_crapadc.tpctahab = 1 THEN
-              -- Conta Fisica
-              pr_tpusucar := pr_idseqttl;
-            ELSE
-              -- Conta Juridica
-              pr_tpusucar := 1;
-            END IF;
-          END LOOP;
-          -- Verificar se existe senha de letras seguranca
-          pr_idsenlet := fn_verif_letras_seguranca(pr_cdcooper => pr_cdcooper,
-                                                   pr_nrdconta => pr_nrdconta,
-                                                   pr_idseqttl => pr_tpusucar); 
-          pr_nometitu := rw_crawcrd.nmtitcrd;  -- Nome do titular cartao        
-          pr_dtexpira := rw_crawcrd.dtvalida;  -- Data de expiracao cartao
-          pr_dtcancel := rw_crawcrd.dtcancel;  -- Data de cancelamento
-          vr_existe := 1;
+            -- Tipo da conta
+            FOR rw_crapass IN cr_crapass(pr_cdcooper
+                                        ,pr_nrdconta)LOOP
+              
+              pr_inpessoa := rw_crapass.inpessoa;
+              
+              IF rw_crapass.inpessoa = 1 THEN
+                pr_nrcpfcgc := vr_nrcpfcgc;
+              ELSE -- se nao o cnpj da conta
+                pr_nrcpfcgc := rw_crapass.nrcpfcgc;
+              END IF;
+            END LOOP;
+            /* Obtem administradora do cartăo para verificar o tipo de conta */
+            FOR rw_crapadc IN cr_crapadc(pr_cdcooper,
+                                         rw_crawcrd.cdadmcrd)LOOP
+              IF rw_crapadc.tpctahab = 1 THEN
+                -- Conta Fisica
+                pr_tpusucar := vr_idseqttl;
+              ELSE
+                -- Conta Juridica
+                pr_tpusucar := 1;
+              END IF;
+            END LOOP;
+            -- Verificar se existe senha de letras seguranca
+            pr_idsenlet := fn_verif_letras_seguranca(pr_cdcooper => pr_cdcooper,
+                                                     pr_nrdconta => pr_nrdconta,
+                                                     pr_idseqttl => pr_tpusucar); 
+            pr_nometitu := rw_crawcrd.nmtitcrd;  -- Nome do titular cartao        
+            pr_dtexpira := rw_crawcrd.dtvalida;  -- Data de expiracao cartao
+            pr_dtcancel := rw_crawcrd.dtcancel;  -- Data de cancelamento
+            vr_existe := 1;
 
           END LOOP;
         END IF;
