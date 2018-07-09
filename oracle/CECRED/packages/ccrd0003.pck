@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/05/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 09/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -83,6 +83,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
   --                          (Lucas Ranghetti SCTASK0014662)
+  --
+  --             09/07/2018 - Validar critica 080 apos a criacao da critica no
+  --                          relatorio (Lucas Ranghetti INC0018668)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6756,7 +6759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 30/05/2018
+       Data    : Abril/2014.                     Ultima atualizacao: 09/07/2018
 
        Dados referentes ao programa:
 
@@ -6837,7 +6840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
 
-                           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                   01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
                                 
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
@@ -6903,6 +6906,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    
                    30/05/2018 - Tratamento para Grupo de afinidade zerado 
                                 (Lucas Ranghetti SCTASK0014662)
+                                
+                   09/07/2018 - Validar critica 080 apos a criacao da critica no
+                                relatorio (Lucas Ranghetti INC0018668)
     ............................................................................ */
 
     DECLARE
@@ -9170,11 +9176,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF vr_tpdocmto = '03' THEN                  
-                  /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
-                    continue;
-                  END IF;
                   
                   vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
                   
@@ -9208,6 +9209,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
                         RAISE vr_exc_saida;
                       END;
+
+                    /* nao deve solicitar cartao novamente caso retorne critica 080
+                       (pessoa ja tem cartao nesta conta) */
+                    IF substr(vr_des_text, 211, 3) = '080' THEN
+                      continue;
+                    END IF;
 
                     -- Atualiza o campo cdpesqbb do tipo 1 com as inforamções de tipo 2 
                     atualiza_nmtitcrd(vr_cdcooper,
@@ -9646,12 +9653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 -- Verifica se houve rejeição do Tipo de Registro 2
                 IF vr_codrejei <> '000'  THEN
-                  /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
-                    continue;
-                  END IF;
-                  
+                                   
                   BEGIN                  
                     vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2);
                     INSERT INTO craprej
@@ -9681,6 +9683,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
                       RAISE vr_exc_saida;
                     END;
+
+                   /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
 
                   -- Atualiza o campo cdpesqbb do tipo 1 com as inforamções de tipo 2 
                   atualiza_nmtitcrd(vr_cdcooper,
