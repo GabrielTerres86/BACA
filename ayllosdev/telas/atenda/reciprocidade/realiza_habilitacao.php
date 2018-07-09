@@ -34,7 +34,7 @@
                 17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
 				04/08/2016 - Adicionado campo de forma de envio de 
-						     arquivo de cobrança. (Reinert)
+						     arquivo de cobranï¿½a. (Reinert)
 
 				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
@@ -158,7 +158,7 @@
 		}
 	}
 
-	$metodo = ($executandoProdutos == 'true') ? 'encerraRotina();' : 'acessaOpcaoAba();';	
+	$metodo = ($executandoProdutos == 'true') ? 'encerraRotina();' : 'acessaOpcaoContratos();';	
 
 	if ($dsdmesag != "") {  // Se esta incluindo um novo e convenio CEB tem numeracao mostrar o numero 	
 		echo 'showError("inform",
@@ -167,7 +167,7 @@
 						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.($flgimpri == "1" ? "confirmaImpressao('".$flgregis."','');" : $metodo ).'");';
 	}
 	else
-	if ($flgimpri == 1 || ((int)$flprotes && (int)$flprotes !== $flproalt)) {  // Se tem o PDF a mostrar entao chama função para mostrar PDF do impresso gerado no browser
+	if ($flgimpri == 1 || ((int)$flprotes && (int)$flprotes !== $flproalt)) {  // Se tem o PDF a mostrar entao chama funï¿½ï¿½o para mostrar PDF do impresso gerado no browser
 		echo 'confirmaImpressao("'.$flgregis.'","");';
 	} 
 	else {	

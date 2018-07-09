@@ -92,7 +92,7 @@
 </form>
 
 <div id="divBotoes">
-    <a href="#" class="botao" id="btHabilitaSmsVoltar" onClick="acessaOpcaoAba();">Voltar</a>
+    <a href="#" class="botao" id="btHabilitaSmsVoltar" onClick="acessaOpcaoContratos();">Voltar</a>
     <a href="#" class="botao" id="btHabilitaSmsContinuar" onClick="habilitaSMS.onContinuarClick();">Continuar</a>
 </div>
 <br>

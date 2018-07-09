@@ -92,7 +92,7 @@ foreach ($registros as $r) {
 </fieldset>
 
 <div id="divBotoes">
-    <input type="image" src="<? echo $UrlImagens; ?>botoes/fechar.gif" onClick="acessaOpcaoAba();" id="btnVoltar" />
+    <input type="image" src="<? echo $UrlImagens; ?>botoes/fechar.gif" onClick="acessaOpcaoContratos();" id="btnVoltar" />
 </div>
 
 </div>

@@ -245,7 +245,7 @@ function exibeErroNew($tpdmsg,$msgErro,$dsdacao) {
         
         <div id="divBotoes">                
             <a href="#" class="botao" id="btnAltRemSMS"  style ='padding:3px 3px' onclick="confirmaAltReme(); return false;" > Alterar</a>
-            <a href="#" class="botao" id="btVoltar"      style ='padding:3px 3px' onclick="acessaOpcaoAba(); return false;"  > Voltar </a>
+            <a href="#" class="botao" id="btVoltar"      style ='padding:3px 3px' onclick="acessaOpcaoContratos(); return false;"  > Voltar </a>
         </div>
         
     </fieldset>
@@ -298,7 +298,7 @@ function exibeErroNew($tpdmsg,$msgErro,$dsdacao) {
     <a href="#" class="botao" id="btTrocarPacoteSMS" onclick="exibirHabilitacaoSmsCobranca();" >Trocar Pacote</a>
     <a href="#" class="botao" id="btCancelServSMS"  onclick="confirmaCancelServSMS(); return false;" > Cancelar Servi&ccedil;o</a>
     <a href="#" class="botao" id="btImpCtrSMS"      onclick="imprimirServSMS('IA'); return false;"   > Imprimir Contrato</a>
-	<a href="#" class="botao" id="btVoltar"         onclick="acessaOpcaoAba(); return false;"        > Voltar</a>
+	<a href="#" class="botao" id="btVoltar"         onclick="acessaOpcaoContratos(); return false;"        > Voltar</a>
 </div>
 
 <script type="text/javascript">

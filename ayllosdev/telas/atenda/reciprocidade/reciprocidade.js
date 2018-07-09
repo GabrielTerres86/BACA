@@ -951,7 +951,7 @@ function confirmaImpressao(flgregis, dsdtitul) {
 		flgregis = $("#flgregis","#divConteudoOpcao").val();
 	}
 
-	callafterCobranca += (executandoProdutos) ? 'encerraRotina();' : 'acessaOpcaoAba();';
+	callafterCobranca += (executandoProdutos) ? 'encerraRotina();' : 'acessaOpcaoContratos();';
 
     if ($("#insitceb", "#divConteudoOpcao").val() == '2') {
         aux_mensagem = "Deseja efetuar impress&atilde;o do termo de cancelamento ?"; // Mensagem de confirmacao de impressao;
@@ -1079,7 +1079,7 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
     $("#tpimpres", "#frmTermo").val(tpdtermo_imprimir);//Atribuir o insitest onde 1-ativo e 2-inativo
 
 	var action = $("#frmTermo").attr("action");
-	var callafter = "acessaOpcaoAba();";
+	var callafter = "acessaOpcaoContratos();";
 
 	if (executandoProdutos) {
 		callafterCobranca = 'encerraRotina();';
@@ -1515,7 +1515,7 @@ function acessaAba(id,cddopcao) {
     // Removido esta forma de atribuir pois não funciona com modo de compatibilidade
     //var linkContinuar = 'acessaAba(' + (id + 1) + ',\'' + cddopcao + '\');';
     //var linkContinua2 = 'validaDadosLimites(\'true\',\'\',\'' + cddopcao + '\');';
-    //var linkVoltar  = 'acessaOpcaoAba();';
+    //var linkVoltar  = 'acessaOpcaoContratos();';
     //var linkVoltar2 = 'acessaAba(' + (id - 1) + ',\'' + cddopcao + '\');';
     var linkContinuar = 1;
     var linkVoltar = 1;
@@ -1541,7 +1541,7 @@ function acessaAba(id,cddopcao) {
     }
 
     if (linkVoltar == 1){
-        document.getElementById("btnVoltar").onclick=function(){acessaOpcaoAba();}
+        document.getElementById("btnVoltar").onclick=function(){acessaOpcaoContratos();}
     }else if (linkVoltar == 2){
         document.getElementById("btnVoltar").onclick=function(){acessaAba(id + 1,cddopcao);}
     }
@@ -1990,7 +1990,7 @@ function consultaServicoSMS(opcao){
 
 function confirmaServSMS() {
 
-    showConfirmacao('Deseja ativar servi&ccedil;o de SMS de Cobran&ccedil;a?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaSenhaInternet("habilitarServSMS();", ' + nrdconta + ', 1);', ' acessaOpcaoAba(); return false;', 'sim.gif', 'nao.gif');
+    showConfirmacao('Deseja ativar servi&ccedil;o de SMS de Cobran&ccedil;a?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaSenhaInternet("habilitarServSMS();", ' + nrdconta + ', 1);', ' acessaOpcaoContratos(); return false;', 'sim.gif', 'nao.gif');
 }
 
 function habilitarServSMS(){
@@ -2066,7 +2066,7 @@ function confirmarHabilitacaoSmsCobranca() {
     showConfirmacao('Deseja ativar servi&ccedil;o de SMS de Cobran&ccedil;a?'
                    ,'Confirma&ccedil;&atilde;o - Ayllos'
                    ,'exibirHabilitacaoSmsCobranca();'
-                   ,'acessaOpcaoAba();', 'sim.gif', 'nao.gif');
+                   ,'acessaOpcaoContratos();', 'sim.gif', 'nao.gif');
 }
 
 function exibirHabilitacaoSmsCobranca() {
