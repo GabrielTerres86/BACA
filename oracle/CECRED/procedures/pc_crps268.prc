@@ -50,7 +50,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                             Marcel Kohls (AMcom)
 														
 							 29/06/2018 - Remoção de RAISE que estava gerando interrupção indevida na diária.
-							              Reginaldo (AMcom - P450)
+							              Reginaldo (AMcom - P450) 
+
+               09/07/2018 - Incluido NVL na validação de data do primeiro debito(DTPRIDEB)
+                            pois o campo pode estar nulo na tabela(PRJ450 - Odirlei-AMcom)             
+
 
   ............................................................................... */
 
@@ -530,7 +534,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
           vr_dtdebito := null;
           vr_dtdeb28 := null;
 
-          IF rw_crapseg.dtprideb <> rw_crapdat.dtmvtolt THEN
+          IF nvl(rw_crapseg.dtprideb,to_date('01/01/1500','DD/MM/RRRR')) <> rw_crapdat.dtmvtolt THEN
             -- Se o débito for dias 29, 30 ou 31, debitará sempre no dia 28
             IF to_char(rw_crapseg.dtdebito,'DD') > 28 THEN
               vr_dtdeb28 := '28'||to_char(rw_crapseg.dtdebito, '/MM/YYYY');
