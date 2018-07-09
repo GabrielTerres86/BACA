@@ -455,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 26/03/2018
+   Data     : 27/08/2015                        Ultima atualizacao: 09/07/2018
 
    Dados referentes ao programa:
 
@@ -526,6 +526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             na pc_gps_arrecadar_sicredi.  
                             PRJ381 - Analise de Fraude (Teobaldo Jamunda - AMcom)
 
+               09/07/2018 - Ajustar envio de e-mail para a validação e arrecadacao
+                           do GPS WebService Sicredi (Lucas Ranghetti INC0018243)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -561,9 +563,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                    ,pr_dsassunt IN VARCHAR2) IS
   SELECT COUNT(1) qtdemail
     FROM crapsle e
-   WHERE e.flenviad = 'S'
+   WHERE trunc(e.dtsolici) = pr_dtmvtolt
      AND upper(e.cdprogra) = upper(pr_cdprogra)
-     AND trunc(e.dtsolici) = pr_dtmvtolt
      AND upper(e.dsassunt) = upper(pr_dsassunt);
    rw_crapsle cr_crapsle%ROWTYPE;
 
@@ -1007,7 +1008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                ,dstiparr
                ,nrseqagp
                ,flgativo
-               ,idanafrd)
+               ,idanafrd )
         VALUES (pr_cdcooper
                ,pr_craplot.dtmvtolt
                ,pr_craplot.cdagenci
@@ -1898,13 +1899,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         IF vr_envemail THEN
           -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
           gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
-                                    ,pr_des_destino => 'convenios@cecred.coop.br'
+                                    ,pr_des_destino => 'convenios@ailos.coop.br'
                                     ,pr_des_assunto => 'ERRO - Validacao GPS WebService Sicredi'
                                     ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
                                                      ||' WebService do Sicredi.</br></br>'
                                                      ||'<b>Servico indisponivel!</b>'
                                     ,pr_des_anexo   => vr_msgenvio||';'||vr_msgreceb
-                                    ,pr_flg_enviar  => 'S'
                                     ,pr_des_erro    => vr_critigps);
         END IF;
         
@@ -7805,7 +7805,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       --Se o retorno da tag não for TRUE
       IF XMLDOM.getNodeValue(vr_nodo) IS NULL THEN
-        pr_dscritic := 'Arrecadacao de GPS não efetuada!';
+        
+        vr_envemail:= false;
+        pr_cdcritic:= 0;
+        pr_dscritic := 'Arrecadacao de GPS nao efetuada!';
 
         -- Enviar e-mail para a area de convenios caso ocorra algum erro inesperado com o 
         -- WebService Sicredi
@@ -7837,7 +7840,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                                      ||' WebService do Sicredi.</br></br>'
                                                      ||'<b>Servico indisponivel!</b>'
                                     ,pr_des_anexo   => pr_msgenvio||';'||pr_msgreceb
-                                    ,pr_flg_enviar  => 'S'
                                     ,pr_des_erro    => vr_critigps);
         END IF;
 
