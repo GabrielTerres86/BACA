@@ -1260,8 +1260,15 @@ PROCEDURE consulta-dados-crapcyc:
                                                           NO-LOCK NO-ERROR.
 
                             IF NOT AVAIL tbdsct_titulo_cyber THEN
-                                NEXT. 
-                                   
+                                NEXT.
+                                 
+                            FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper
+                                                 AND craptdb.nrdconta = crapcyc.nrdconta
+                                                 AND craptdb.nrborder = tbdsct_titulo_cyber.nrborder
+                                                 AND craptdb.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+                                                            NO-LOCK NO-ERROR.
+                            IF NOT AVAIL craptdb THEN
+                              NEXT.       
                           END.
                         
                         ASSIGN par_qtregist = par_qtregist + 1
@@ -1323,7 +1330,8 @@ PROCEDURE consulta-dados-crapcyc:
                                tt-crapcyc.nmassess = aux_nmassess
                                tt-crapcyc.dsmotcin = aux_dsmotcin
                                tt-crapcyc.nrborder = tbdsct_titulo_cyber.nrborder
-                               tt-crapcyc.nrtitulo = tbdsct_titulo_cyber.nrtitulo.
+                               tt-crapcyc.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+                               tt-crapcyc.nrdocmto = craptdb.nrdocmto.
                     END.
                 END.
                 
