@@ -136,9 +136,9 @@ function exibeErro($msgErro) {
 <div id="divBotoes">
 	<input type="hidden" id= "dsdmesag"    name="dsdmesag" value="<?php echo $dsdmesag; ?>">    
     
-    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
-	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
-	<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos();return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
+	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos();return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+	<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos();return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
 	<?php //Habilitar botão apenas se possuir cobrança ativa
           // e se o serviço estiver ativo ou com algum tipo de alerta
           // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          

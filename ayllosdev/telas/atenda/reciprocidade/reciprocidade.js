@@ -262,7 +262,7 @@ function realizaExclusao(inapurac) {
 	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/realiza_exclusao.php",
+		url: UrlSite + "telas/atenda/reciprocidade/realiza_exclusao.php",
 		data: {
             inapurac: inapurac,
 		  	nrdconta: nrdconta,
@@ -452,7 +452,7 @@ function chamaTitulares(cddopcao, titulares) {
  	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/titulares.php",
+		url: UrlSite + "telas/atenda/reciprocidade/titulares.php",
 		data: {
             cddopcao: cddopcao,
             titulares: titulares,
@@ -506,7 +506,7 @@ function validaHabilitacao() {
 	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/valida_habilitacao.php",
+		url: UrlSite + "telas/atenda/reciprocidade/valida_habilitacao.php",
 		data: {
 		  	nrdconta: nrdconta,
 			nrconven: nrconven,
@@ -541,7 +541,7 @@ function validaDadosLimites(flgconti, titulares, cddopcao) {
 	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/valida-dados-limites.php",
+		url: UrlSite + "telas/atenda/reciprocidade/valida-dados-limites.php",
 		data: {
 		  	nrdconta: nrdconta,
 			dsorgarq: dsorgarq,
@@ -615,7 +615,7 @@ function cancelaSustaBoletos(fltipo, cddopcao) { // 0 = cancela | 1 = susta
     $.ajax({
         type: "POST",
         dataType: 'html',
-        url: UrlSite + "telas/atenda/cobranca/cancela_susta_boletos.php",
+        url: UrlSite + "telas/atenda/reciprocidade/cancela_susta_boletos.php",
         data: {
             cddopcao: cddopcao,
             cdcooper: cdcooper,
@@ -665,7 +665,7 @@ function imprimeRelatorio() {
     if (confirmaCancelamentoSustacao) {
         var nmprimtl = $('#nmprimtl', '#frmCabAtenda').val(),
             cdagenci = $('#cdagenci', '#frmCabAtenda').val(),
-            action = UrlSite + 'telas/atenda/cobranca/imprimir_relatorio.php';
+            action = UrlSite + 'telas/atenda/reciprocidade/imprimir_relatorio.php';
 
         $("#nrdconta", "#frmRelatorio").val(nrdconta);
         $("#nmprimtl", "#frmRelatorio").val(nmprimtl);
@@ -722,7 +722,7 @@ function validaHabilitacaoSerasa(cddopcao) {
             $.ajax({
                 type: "POST",
                 dataType: 'html',
-                url: UrlSite + "telas/atenda/cobranca/consulta-cnae-boleto.php",
+                url: UrlSite + "telas/atenda/reciprocidade/consulta-cnae-boleto.php",
                 data: {
                     cdclcnae: cdclcnae,
                     consulta: 1,
@@ -756,7 +756,7 @@ function validaHabilitacaoSerasa(cddopcao) {
         $.ajax({
             type: "POST",
             dataType: 'html',
-            url: UrlSite + "telas/atenda/cobranca/consulta-cnae-boleto.php",
+            url: UrlSite + "telas/atenda/reciprocidade/consulta-cnae-boleto.php",
             data: {
                 nrdconta: nrdconta,
                 nrconven: nrconven,
@@ -866,7 +866,7 @@ function realizaHabilitacao() {
 	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/realiza_habilitacao.php",
+		url: UrlSite + "telas/atenda/reciprocidade/realiza_habilitacao.php",
 		data: {
 		  	nrdconta: nrdconta,
 			nrconven: nrconven,
@@ -1763,7 +1763,7 @@ function verificaSenhaCoordenador() {
 function gera_ajuda() {
     showMsgAguardo('Aguarde, gerando ...');
 	// Carrega conteúdo da opção através de ajax
-	var UrlOperacao = UrlSite + "telas/atenda/cobranca/gera_ajuda.php";
+	var UrlOperacao = UrlSite + "telas/atenda/reciprocidade/gera_ajuda.php";
 	$.ajax({
 		type: "POST",
 		dataType: "html",
@@ -1788,7 +1788,7 @@ function geraImpressao(arquivo) {
 
     $('#nmarquiv', '#frmImprimir').val(arquivo);
 
-	var action = UrlSite + 'telas/atenda/cobranca/imprimir_ajuda.php';
+	var action = UrlSite + 'telas/atenda/reciprocidade/imprimir_ajuda.php';
 
 	carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
 }
@@ -1812,7 +1812,7 @@ function ativarConvenio(){
 	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/ativar_convenio.php",
+		url: UrlSite + "telas/atenda/reciprocidade/ativar_convenio.php",
 		data: {
 		  	nrdconta: nrdconta,
 			nrconven: nrconven,
@@ -1850,7 +1850,7 @@ function carregaLogCeb(){
 
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/log_convenio.php",
+		url: UrlSite + "telas/atenda/reciprocidade/log_convenio.php",
 		data: {
             nrcnvceb: nrcnvceb,
             nrconven: nrconven,
@@ -1959,7 +1959,7 @@ function consultaServicoSMS(opcao){
  	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/consulta_servico_sms.php",
+		url: UrlSite + "telas/atenda/reciprocidade/consulta_servico_sms.php",
 		data: {
             nrdconta: nrdconta,
             idseqttl: idseqttl,
@@ -2074,7 +2074,7 @@ function exibirHabilitacaoSmsCobranca() {
  	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/cobranca/habilita_sms.php",
+		url: UrlSite + "telas/atenda/reciprocidade/habilita_sms.php",
 		data: {
             inpessoa: inpessoa,
             redirect: "script_ajax"
@@ -2228,7 +2228,7 @@ function Grid() {
             type: "POST",
             async: false,
             dataType: 'html',
-            url: UrlSite + "telas/atenda/cobranca/grid_pacotes_sms.php",
+            url: UrlSite + "telas/atenda/reciprocidade/grid_pacotes_sms.php",
             data: {
                 inpessoa: inpessoa,
                 pagina: pagina,
@@ -2270,7 +2270,7 @@ function HabilitaSMS() {
             type: "POST",
             async: false,
             dataType: 'html',
-            url: UrlSite + "telas/atenda/cobranca/valida_contrato_sms.php",
+            url: UrlSite + "telas/atenda/reciprocidade/valida_contrato_sms.php",
             data: {
                 nrdconta: nrdconta,
                 idpacote: idpacote,

@@ -283,7 +283,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Continuar</a>
     <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Solicitar aprova&ccedil;&atilde;o</a>
     <a href="#" class="botao" onclick="consulta('A','','','true','','');return false;">Tarifas instru&ccedil;&atilde;o</a>
-	<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
+	<a href="#" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>
 </div>
 
 <script type="text/javascript">
