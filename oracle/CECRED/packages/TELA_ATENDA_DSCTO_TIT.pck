@@ -297,6 +297,8 @@ TYPE typ_tab_borderos IS TABLE OF typ_reg_borderos INDEX BY BINARY_INTEGER;
 --> Função que retorna se o Serviço IBRATAN está em Contigência ou Não.
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
 
+FUNCTION fn_contigencia_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE ) RETURN BOOLEAN;
+
 --> Procedure para validar a analise de limite, não permitir efetuar analise para limites antigos.
 PROCEDURE pc_validar_data_proposta(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                   ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -811,6 +813,29 @@ BEGIN
    end if;
 END fn_contigencia_motor_esteira;
 
+
+FUNCTION fn_contigencia_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                     ) RETURN BOOLEAN IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_contigencia_esteira
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Luis Fernando (GFT)
+    Data     : 10/07/2018
+
+    Objetivo  : Procedure para verificar  a esteira em contingência
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_dscritic varchar2(10000);
+  vr_dsmensag varchar2(10000);
+BEGIN
+   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                         ,pr_flctgest => vr_flctgest
+                                         ,pr_dsmensag => vr_dsmensag
+                                         ,pr_dscritic => vr_dscritic);
+
+   return vr_flctgest;
+END fn_contigencia_esteira;
 
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
 
@@ -4039,7 +4064,7 @@ END pc_obtem_proposta_aciona_web;
                               '<nrcnvcob>' || vr_tab_dados_titulos(vr_index).nrcnvcob || '</nrcnvcob>' ||
                               '<nrdocmto>' || vr_tab_dados_titulos(vr_index).nrdocmto || '</nrdocmto>' ||
                               '<nrinssac>' || vr_tab_dados_titulos(vr_index).nrinssac || '</nrinssac>' ||
-                              '<nmdsacad>' || vr_tab_dados_titulos(vr_index).nmdsacad || '</nmdsacad>' ||
+                              '<nmdsacad>' || htf.escape_sc(vr_tab_dados_titulos(vr_index).nmdsacad) || '</nmdsacad>' ||
                               '<dtvencto>' || to_char(vr_tab_dados_titulos(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                               '<dtmvtolt>' || to_char(vr_tab_dados_titulos(vr_index).dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>' ||
                               '<vltitulo>' || vr_tab_dados_titulos(vr_index).vltitulo || '</vltitulo>' ||
@@ -4058,8 +4083,8 @@ END pc_obtem_proposta_aciona_web;
       END IF;
       
       pc_escreve_xml ('</dados></root>',true);
-      pr_retxml := xmltype.createxml(vr_des_xml);
 
+      pr_retxml := xmltype.createxml(vr_des_xml);
       /* liberando a memória alocada pro clob */
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);
@@ -4572,7 +4597,7 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
                                 '<nrcnvcob>' || vr_tab_dados_titulos(vr_index).nrcnvcob || '</nrcnvcob>' ||
                                 '<nrdocmto>' || vr_tab_dados_titulos(vr_index).nrdocmto || '</nrdocmto>' ||
                                 '<nrinssac>' || vr_tab_dados_titulos(vr_index).nrinssac || '</nrinssac>' ||
-                                '<nmdsacad>' || vr_tab_dados_titulos(vr_index).nmdsacad || '</nmdsacad>' ||
+                                '<nmdsacad>' || htf.escape_sc(vr_tab_dados_titulos(vr_index).nmdsacad) || '</nmdsacad>' ||
                                 '<dtvencto>' || to_char(vr_tab_dados_titulos(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                                 '<dtmvtolt>' || to_char(vr_tab_dados_titulos(vr_index).dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>' ||
                                 '<vltitulo>' || vr_tab_dados_titulos(vr_index).vltitulo || '</vltitulo>' ||
@@ -5876,7 +5901,7 @@ END pc_insere_bordero;
         close cr_crapabt_duppes;
 
         if rw_analise_pagador.inpossui_criticas > 0 THEN
-          IF rw_crapabt_duppes.qtremcrt = 0 THEN
+          IF nvl(rw_crapabt_duppes.qtremcrt,0) = 0 THEN
         -- qtremessa_cartorio -> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
         if rw_analise_pagador.qtremessa_cartorio > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd Remessa em Cartório acima do permitido'; 
@@ -5884,7 +5909,7 @@ END pc_insere_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
           END IF;
-          IF rw_crapabt_duppes.qttitprt = 0 THEN
+          IF nvl(rw_crapabt_duppes.qttitprt,0) = 0 THEN
         -- qttit_protestados -> Crítica: Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt).
         if rw_analise_pagador.qttit_protestados > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Protestados acima do permitido'; 
@@ -5893,7 +5918,7 @@ END pc_insere_bordero;
         end if;
           END IF;
               
-          IF rw_crapabt_duppes.qtnaopag = 0 THEN
+          IF nvl(rw_crapabt_duppes.qtnaopag,0) = 0 THEN
         -- qttit_naopagos -> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
         if rw_analise_pagador.qttit_naopagos > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido';
@@ -5916,7 +5941,7 @@ END pc_insere_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
              
-          IF rw_crapabt_duppes.pcmxctip = 0 THEN
+          IF nvl(rw_crapabt_duppes.pcmxctip,0) = 0 THEN
         -- peconcentr_maxtit -> Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
         if rw_analise_pagador.peconcentr_maxtit > 0.0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Concentração Máxima Permitida de Títulos excedida';
@@ -6052,7 +6077,7 @@ END pc_insere_bordero;
                          
       pc_escreve_xml('<pagador>'||
                          '<nrinssac>'||vr_nrinssac||'</nrinssac>'||
-                         '<nmdsacad>'||vr_nmdsacad||'</nmdsacad>'||
+                         '<nmdsacad>'||htf.escape_sc(vr_nmdsacad)||'</nmdsacad>'||
                     '</pagador>');
       
      -- ler os registros de biro e incluir no xml
@@ -6412,7 +6437,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<vltitulo>' || vr_tab_tit_bordero(vr_index).vltitulo || '</vltitulo>' || --FIELD vltitulo LIKE craptdb.vltitulo
                               '<vlliquid>' || vr_tab_tit_bordero(vr_index).vlliquid || '</vlliquid>' || --FIELD vlliquid LIKE craptdb.vlliquid
                               '<nossonum>' || vr_tab_tit_bordero(vr_index).nossonum || '</nossonum>' || --FIELD nossonum AS CHAR
-                              '<nmsacado>' || vr_tab_tit_bordero(vr_index).nmsacado || '</nmsacado>' || --FIELD nmsacado AS CHAR
+                              '<nmsacado>' || htf.escape_sc(vr_tab_tit_bordero(vr_index).nmsacado) || '</nmsacado>' || --FIELD nmsacado AS CHAR
                               '<insittit>' || vr_tab_tit_bordero(vr_index).insittit || '</insittit>' || --FIELD insittit LIKE craptdb.insittit
                               '<flgregis>' || vr_tab_tit_bordero(vr_index).flgregis || '</flgregis>' || --FIELD flgregis AS LOG  FORMAT "REGISTRADA/SEM REGISTRO"
                               '<insitapr>' || vr_tab_tit_bordero(vr_index).insitapr || '</insitapr>' || --FIELD insitapr LIKE craptdb.insitapr
@@ -6627,7 +6652,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<vltitulo>' || vr_tab_tit_bordero(vr_index).vltitulo || '</vltitulo>' || 
                               '<vlliquid>' || vr_tab_tit_bordero(vr_index).vlliquid || '</vlliquid>' || 
                               '<nossonum>' || vr_tab_tit_bordero(vr_index).nossonum || '</nossonum>' || 
-                              '<nmsacado>' || vr_tab_tit_bordero(vr_index).nmsacado || '</nmsacado>' || 
+                              '<nmsacado>' || htf.escape_sc(vr_tab_tit_bordero(vr_index).nmsacado) || '</nmsacado>' || 
                               '<insittit>' || vr_tab_tit_bordero(vr_index).insittit || '</insittit>' || 
                               '<flgregis>' || vr_tab_tit_bordero(vr_index).flgregis || '</flgregis>' || 
                               '<dssituac>' || vr_tab_tit_bordero(vr_index).dssituac || '</dssituac>' || 
@@ -7962,7 +7987,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<nrcnvcob>' || vr_tab_dados_titulos(vr_index).nrcnvcob || '</nrcnvcob>' ||
                               '<nrdocmto>' || vr_tab_dados_titulos(vr_index).nrdocmto || '</nrdocmto>' ||
                               '<nrinssac>' || vr_tab_dados_titulos(vr_index).nrinssac || '</nrinssac>' ||
-                              '<nmdsacad>' || vr_tab_dados_titulos(vr_index).nmdsacad || '</nmdsacad>' ||
+                              '<nmdsacad>' || htf.escape_sc(vr_tab_dados_titulos(vr_index).nmdsacad) || '</nmdsacad>' ||
                               '<dtvencto>' || to_char(vr_tab_dados_titulos(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                               '<dtmvtolt>' || to_char(vr_tab_dados_titulos(vr_index).dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>' ||
                               '<vltitulo>' || vr_tab_dados_titulos(vr_index).vltitulo || '</vltitulo>' ||
@@ -8082,7 +8107,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                 '<nrcnvcob>' || vr_tab_dados_titulos(vr_index).nrcnvcob || '</nrcnvcob>' ||
                                 '<nrdocmto>' || vr_tab_dados_titulos(vr_index).nrdocmto || '</nrdocmto>' ||
                                 '<nrinssac>' || vr_tab_dados_titulos(vr_index).nrinssac || '</nrinssac>' ||
-                                '<nmdsacad>' || vr_tab_dados_titulos(vr_index).nmdsacad || '</nmdsacad>' ||
+                                '<nmdsacad>' || htf.escape_sc(vr_tab_dados_titulos(vr_index).nmdsacad) || '</nmdsacad>' ||
                                 '<dtvencto>' || to_char(vr_tab_dados_titulos(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
                                 '<dtmvtolt>' || to_char(vr_tab_dados_titulos(vr_index).dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>' ||
                                 '<vltitulo>' || vr_tab_dados_titulos(vr_index).vltitulo || '</vltitulo>' ||
