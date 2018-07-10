@@ -2506,7 +2506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           -- ao final da execução pula para o próximo título da lista. Se não for a nova versão, não entra na rotina abaixo e continua
           -- a efetivar a baixa conforme a versão antiga da funcionalizada do borderô.
           IF rw_crapbdt.flverbor = 1 THEN
-            pr_vlpagmto := pr_tab_titulos(vr_index_titulo).vltitulo;
+            vr_vlpagmto := pr_tab_titulos(vr_index_titulo).vltitulo;
             dsct0003.pc_pagar_titulo(pr_cdcooper => pr_cdcooper
                                     ,pr_cdagenci => vr_cdagenci
                                     ,pr_nrdcaixa => pr_nrdcaixa
@@ -4731,7 +4731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       END;
 
       IF  rw_crapbdt.flverbor = 1 THEN
-          vr_cdhistorresg := vr_cdhistor_resgcta_dscto_tit;
+          vr_cdhistorresg := vr_cdhistordsct_resgcta;
 
           -- Lançar operação de desconto, Valor líquido do título
           dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
@@ -4739,7 +4739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_nrborder => rw_craptdb.nrborder
                                                 ,pr_dtmvtolt => pr_dtmvtolt
                                                 ,pr_cdorigem => 5
-                                                ,pr_cdhistor => vr_cdhistor_resopcr_dscto_tit
+                                                ,pr_cdhistor => vr_cdhistordsct_resopcr
                                                 ,pr_vllanmto => vr_vlliqori
                                                 ,pr_dscritic => vr_dscritic );
           
@@ -4753,7 +4753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                 ,pr_nrborder => rw_craptdb.nrborder
                                                 ,pr_dtmvtolt => pr_dtmvtolt
                                                 ,pr_cdorigem => 5
-                                                ,pr_cdhistor => vr_cdhistor_resbaix_dscto_tit
+                                                ,pr_cdhistor => vr_cdhistordsct_resbaix
                                                 ,pr_vllanmto => rw_craptdb.vltitulo
                                                 ,pr_dscritic => vr_dscritic );
           

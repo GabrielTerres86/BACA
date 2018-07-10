@@ -406,6 +406,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --Tipo de tabela de agendamento index = NRISPBIF, CDBCCXLT
   TYPE typ_tab_tp_contas IS TABLE OF typ_reg_tp_contas INDEX BY PLS_INTEGER;
   
+  TYPE typ_reg_craplot_rowid IS  RECORD (vr_rowid rowid);
+  TYPE typ_tab_tp_cralot_rowid IS TABLE OF typ_reg_craplot_rowid INDEX BY VARCHAR2(300);
+  
   TYPE typ_reg_autorizacao_favorecido IS
   RECORD (
          nmextcop crapcop.nmextcop%type
@@ -434,9 +437,6 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
          ,inpessoa INTEGER
          ,nrcpfcgc crapass.nrcpfcgc%type);
   TYPE typ_tab_autorizacao_favorecido IS TABLE OF typ_reg_autorizacao_favorecido INDEX BY VARCHAR2(100);
-  
-  
-  
   
   --Buscar informacoes de movimentação da internet
   CURSOR cr_crapmvi (pr_cdcooper IN crapmvi.cdcooper%TYPE
@@ -3650,7 +3650,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --   Alteração : 23/06/2015 - Ajuste ao definir variavel de agendameno para rotina de protocolo
     --                            (Odirlei-AMcom)
     --
-  --               28/03/2016 - Adicionados parâmetros para geraçao de LOG
+	--    			     28/03/2016 - Adicionados parâmetros para geraçao de LOG
     --                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
     --
     -- ..........................................................................
@@ -7173,7 +7173,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 			 ,crapscn.cddmoden
          FROM crapscn
      WHERE crapscn.cdempcon = pr_cdempcon 		AND
-           crapscn.cdsegmto = pr_cdsegmto   AND
+		       crapscn.cdsegmto = pr_cdsegmto 	AND
 					 crapscn.dsoparre = 'E'     AND
 					(crapscn.cddmoden = 'A'     OR
 					 crapscn.cddmoden = 'C');
@@ -16322,36 +16322,44 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       IF cr_craptdb%FOUND THEN
         --Fechar Cursor
         CLOSE cr_craptdb;
-        --Verificar se eh feriado
-        vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
-                                                  ,pr_dtmvtolt => rw_craptdb.dtvencto
-                                                  ,pr_tipo     => 'P');
-        --Determinar feriado ou fim de semana
-        vr_feriafds:= vr_dtferiado <> rw_craptdb.dtvencto;
-        /* POSTERGACAO DA DATA */
-        IF rw_craptdb.dtvencto < pr_dtmvtolt AND NOT vr_feriafds THEN
-          --Nao Descontado
-          vr_flgdesct:= FALSE;
-        ELSE
-          --Descontado
-          vr_flgdesct:= TRUE;
-        END IF;
-        --Nao Descontado
-        IF vr_flgdesct THEN
-          /* 1o Dia util apos o vencto */
-          vr_dtprvenc:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
-                                                   ,pr_dtmvtolt => rw_craptdb.dtvencto + 1
-                                                   ,pr_tipo     => 'P');
-          /*
-          Fazer a baixa de desconto de titulo somente se for no 1o. dia util apos o vencimento
-          caso contrario da NEXT.
-          */
-          IF vr_feriafds AND    /* venceu em feriado/fds */
-             rw_craptdb.dtvencto <= pr_dtmvtolt AND pr_dtmvtolt <> vr_dtprvenc  THEN
+        -- Verificar se o título foi incluso na versão antiga da funcionalidade do borderô. Se sim, verifica as
+        -- regras de data do vencimento sendo feriado ou fds. Se foi incluso na nova versão, então não precisa
+        -- passar pelas regras de data.
+        IF rw_craptdb.flverbor = 0 THEN
+          --Verificar se eh feriado
+          vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
+                                                    ,pr_dtmvtolt => rw_craptdb.dtvencto
+                                                    ,pr_tipo     => 'P');
+          --Determinar feriado ou fim de semana
+          vr_feriafds:= vr_dtferiado <> rw_craptdb.dtvencto;
+          /* POSTERGACAO DA DATA */
+          IF rw_craptdb.dtvencto < pr_dtmvtolt AND NOT vr_feriafds THEN
             --Nao Descontado
             vr_flgdesct:= FALSE;
+          ELSE
+            --Descontado
+            vr_flgdesct:= TRUE;
           END IF;
+          --Nao Descontado
+          IF vr_flgdesct THEN
+            /* 1o Dia util apos o vencto */
+            vr_dtprvenc:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
+                                                     ,pr_dtmvtolt => rw_craptdb.dtvencto + 1
+                                                     ,pr_tipo     => 'P');
+            /*
+            Fazer a baixa de desconto de titulo somente se for no 1o. dia util apos o vencimento
+            caso contrario da NEXT.
+            */
+            IF vr_feriafds AND    /* venceu em feriado/fds */
+               rw_craptdb.dtvencto <= pr_dtmvtolt AND pr_dtmvtolt <> vr_dtprvenc  THEN
+              --Nao Descontado
+              vr_flgdesct:= FALSE;
+            END IF;
+          END IF;
+        ELSE
+          vr_flgdesct := TRUE;
         END IF;
+
         --Se tiver descontado
         IF vr_flgdesct THEN
           /* Grava titulos com desconto para efetuar baixa no final do processo */
@@ -23826,8 +23834,6 @@ end;';
     
   END pc_debita_agendto_ted;
 
-
-    
 
 END PAGA0001;
 /

@@ -453,6 +453,11 @@ create or replace package body cecred.TELA_APRDES is
                    tbdsct_analise_pagador tap 
                 WHERE tap.cdcooper=tdb.cdcooper AND tap.nrdconta=tdb.nrdconta AND tap.nrinssac=sab.nrinssac
            ),'A') flgcritdb,
+          (SELECT COUNT(1) 
+            FROM crapabt abt 
+            WHERE abt.nrborder = pr_nrborder AND abt.nrdconta = pr_nrdconta AND abt.cdcooper = pr_cdcooper
+            AND abt.nrcnvcob = tdb.nrcnvcob AND abt.nrdocmto = tdb.nrdocmto AND abt.nrdctabb = tdb.nrdctabb AND abt.cdbandoc = tdb.cdbandoc
+          )abt_critica,
           tdb.nrborder,
           tdb.nrdconta,
           tdb.nrcnvcob,
@@ -533,7 +538,11 @@ create or replace package body cecred.TELA_APRDES is
           pr_tab_dados_titulos(vr_index).dtvencto := rw_craptdb.dtvencto;
           pr_tab_dados_titulos(vr_index).nrliqpag := rw_craptdb.nrliqpag;
           pr_tab_dados_titulos(vr_index).nrconcen := rw_craptdb.nrconcen;
-          pr_tab_dados_titulos(vr_index).flgcritdb:= rw_craptdb.flgcritdb;      
+          IF (rw_craptdb.flgcritdb = 'S' OR rw_craptdb.abt_critica > 0) THEN
+            pr_tab_dados_titulos(vr_index).flgcritdb:= 'S';      
+          ELSE
+            pr_tab_dados_titulos(vr_index).flgcritdb:= 'N';      
+          END IF;     
           pr_tab_dados_titulos(vr_index).nrborder := rw_craptdb.nrborder;
           pr_tab_dados_titulos(vr_index).nrdconta := rw_craptdb.nrdconta;
           pr_tab_dados_titulos(vr_index).nrcnvcob := rw_craptdb.nrcnvcob;
