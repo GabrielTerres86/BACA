@@ -15,7 +15,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Maio/2014                     Ultima atualizacao: 06/03/2018
+     Data    : Maio/2014                     Ultima atualizacao: 10/07/2018
 
      Dados referentes ao programa:
 
@@ -95,7 +95,12 @@ BEGIN
                               
 				 15/06/2018 - Ao buscar os dados do cooperado de todas as agencias pelo cpf/cnpj,
 				              não deve considerar as contas que estão na situação 4. (Renato - Supero)
-                              
+                   
+                 10/07/2018 - Na procedure interna pc_consulta_rendimentos foi colocado
+                              NVL pois os campos da base permitem gravar NULO e quando
+                              isso acontece estava mudando totalmente o comportamento
+                              do programa que acabava liberando pre-aprovado alem
+                              do permitido pelas regras (Tiago/Sachetta #INC0018631)
   ............................................................................ */
 
   DECLARE
@@ -914,7 +919,7 @@ BEGIN
           pr_vlsalari := 0;
         ELSE
           pr_dtnasttl := rw_crapttl.dtnasttl;
-          pr_vlsalari := rw_crapttl.vlsalari;
+          pr_vlsalari := NVL(rw_crapttl.vlsalari,0);
           vr_numdanos := TRUNC((SYSDATE - rw_crapttl.dtnasttl) / 365, 0);
           IF vr_numdanos >= 18 AND vr_numdanos <= 69 THEN
             pr_flgmaior := TRUE;
@@ -922,13 +927,13 @@ BEGIN
             pr_flgmaior := FALSE;
           END IF;
 
-          pr_vltotren := rw_crapttl.vlsalari +
-                         rw_crapttl.vldrendi##1 +
-                         rw_crapttl.vldrendi##2 +
-                         rw_crapttl.vldrendi##3 +
-                         rw_crapttl.vldrendi##4 +
-                         rw_crapttl.vldrendi##5 +
-                         rw_crapttl.vldrendi##6;
+          pr_vltotren := NVL(rw_crapttl.vlsalari,0) +
+                         NVL(rw_crapttl.vldrendi##1,0) +
+                         NVL(rw_crapttl.vldrendi##2,0) +
+                         NVL(rw_crapttl.vldrendi##3,0) +
+                         NVL(rw_crapttl.vldrendi##4,0) +
+                         NVL(rw_crapttl.vldrendi##5,0) +
+                         NVL(rw_crapttl.vldrendi##6,0);
 
           pr_dtadmemp := rw_crapttl.dtadmemp;
           pr_tpcttrab := rw_crapttl.tpcttrab;
