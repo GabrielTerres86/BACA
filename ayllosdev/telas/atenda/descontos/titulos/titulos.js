@@ -55,6 +55,7 @@ var insitlim = 0; // cod situação da proposta
 var insitest = 0; // cod situação da analise
 var insitapr = 0; // cod decisão
 var inctrmnt = 0; // indica se é contrato de manutenção
+var fl_sitbordero = ''; // indica a situacao do bordero selecionado
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
@@ -134,7 +135,7 @@ function carregaBorderosTitulos() {
 }
 
 // Função para seleção do bordero
-function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato) {
+function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato, situacao) {
     var cor = "";
 
     // Formata cor da linha da tabela que lista os borderos de descto titulos
@@ -155,6 +156,7 @@ function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato) {
             // Armazena número do bordero selecionado
             nrbordero = retiraCaracteres(bordero, "0123456789", true);
             nrcontrato = retiraCaracteres(contrato, "0123456789", true);
+            fl_sitbordero = situacao;
             idLinhaB = id;
         }
     }
@@ -3258,11 +3260,26 @@ function mostrarBorderoLiberar() {
 }
 
 function mostrarBorderoRejeitar(contingencia) {
-    if (contingencia){
-        showConfirmacao("An&aacute;lise em conting&ecirc;ncia. Deseja rejeitar?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
-    }else{
-        showConfirmacao("Deseja rejeitar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    //Verifica se o bordero já está em uma situação que não se pode rejeitar
+    switch(fl_sitbordero.toUpperCase()){
+        case 'LIBERADO':
+            showError("error", "N&atilde;o &eacute; poss&iacute;vel rejeitar um border&ocirc; LIBERADO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            break;
+        case 'LIQUIDADO':
+            showError("error", "N&atilde;o &eacute; poss&iacute;vel rejeitar um border&ocirc; LIQUIDADO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            break;
+        case 'REJEITADO':
+            showError("error", "N&atilde;o &eacute; poss&iacute;vel rejeitar um border&ocirc; REJEITADO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            break;
+        default:
+            if (contingencia){
+                showConfirmacao("An&aacute;lise em conting&ecirc;ncia. Deseja rejeitar?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+            }else{
+                showConfirmacao("Deseja rejeitar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+            }
+            break;
     }
+   
     return false;
 }
 
