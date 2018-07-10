@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Fabricio
-       Data    : Agosto/2013                     Ultima atualizacao: 02/06/2016
+       Data    : Agosto/2013                     Ultima atualizacao: 04/07/2018
 
        Dados referentes ao programa:
 
@@ -43,6 +43,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                     
                     02/06/2016 - Ajuste para melhora de desempenho, conforne
                                  solicitado no chamado 463036 (Kelvin)             
+
+                    04/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
+                                 pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
                    
     ............................................................................ */
 
@@ -94,6 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
            AND crappla.cdsitpla = 1                 /*Plano Ativo */
            AND crappla.indpagto = 0                 /*Nao debitou parcela total*/
            AND crappla.vlpenden > 0;
+           
 
       -- Busca os dados dos associados
       CURSOR cr_crapass(pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -166,6 +170,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
       vr_vlpenden      NUMBER(17,2) := 0;         --> Valor pendente por PA
       vr_vlpenden_ger  NUMBER(17,2) := 0;         --> Valor pendente geral
       vr_hrtransa      NUMBER(5)    := 0;         --> Hora da transacao
+      -- PJ450
+      vr_incrineg      INTEGER;
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
 
     BEGIN
 
@@ -274,6 +281,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                        + vr_tab_sald(vr_ind_sald).vllimcre;
         vr_vldebito := 0;
 
+
+        -- PJ450 - Verificar se pode debitar (Regra de Negocio)
+        IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => rw_crappla.nrdconta
+                                       ,pr_cdhistor => 127) THEN
+            vr_dscritic := 'Lançamento de debito não efetuado. Cooperativa: '||pr_cdcooper
+                            || ' - Nr. Conta: ' || rw_crappla.nrdconta 
+                            || ' - Cod. historico: 127' ;
+                            
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, -- Erro tratato
+                                       pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -' || vr_cdprogra || ' --> ' || vr_dscritic);
+                                                                   
+            continue;
+        END IF; 
+    
         /* Se Valor disponivel >= Valor minimo parametrizado para debito */
         IF vr_vlsddisp >= rw_crapcop.vlmidbco AND vr_vlsddisp > 0 THEN
           
@@ -406,6 +429,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
           END;
 
+          -- PJ450 - Insere Lancamento 
+          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
+                                            ,pr_cdagenci => 1
+                                            ,pr_cdbccxlt => 100
+                                            ,pr_nrdolote => 8454
+                                            ,pr_nrdconta => rw_crappla.nrdconta
+                                            ,pr_nrdctabb => rw_crappla.nrdconta
+                                            ,pr_nrdctitg => to_char(rw_crappla.nrdconta,'00000000')
+                                            ,pr_nrdocmto => rw_crappla.nrctrpla
+                                            ,pr_cdpesqbb => vr_cdprogra
+                                            ,pr_hrtransa => vr_hrtransa
+                                            ,pr_cdhistor => 127 -- DB. COTAS 
+                                            ,pr_nrseqdig => rw_craplot.nrseqdig
+                                            ,pr_vllanmto => vr_vldebito
+                                            ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                            ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                            ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                            ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                            ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                            ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                            );
+
+          -- Conforme tipo de erro realiza acao diferenciada
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+              RAISE vr_exc_saida;
+            END If;
+          END IF;
+        /*
           -- Insere os lancamentos de deposito a vista
           BEGIN
             INSERT INTO craplcm
@@ -427,7 +480,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
               (pr_cdcooper,
                1,
                100,
-               127, /*DB. COTAS */
+               127, -- DB. COTAS 
                rw_crapdat.dtmvtolt,
                vr_cdprogra,
                rw_crappla.nrdconta,
@@ -443,7 +496,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
               vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
-
+         */
+         
           /* Quando debitar valor total para plano C/C cria crapavs,
              conforme crps172. No caso de plano FOLHA, este registro eh
              criado pelo crps036 ou crps370 */

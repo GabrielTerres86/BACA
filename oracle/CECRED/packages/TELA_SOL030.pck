@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SOL030 AS
                                        ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                                        ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                        ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
-                                                                      
+
   
 END TELA_SOL030;
 /
@@ -133,7 +133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
   --
   --    Programa: TELA_SOL030
   --    Autor   : lucas Lombardi
-  --    Data    : Marco/2016                   Ultima Atualizacao: 16/06/2017
+  --    Data    : Marco/2016                   Ultima Atualizacao: 04/07/2018
   --
   --    Dados referentes ao programa:
   --
@@ -141,6 +141,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
   --
   --    Alteracoes: 16/06/2017 - Ajustes para inclusão da rotina responsável pelo prazo de desligamento (Jonata  - RKAM P364).                             
   --    
+  --                04/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
+  --                             pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
+
   ---------------------------------------------------------------------------------------------------------------
   
   PROCEDURE pc_gera_log(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -2229,6 +2232,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
     vr_qtacobra INTEGER;
   	vr_fliseope INTEGER;	
 
+    -- PJ450
+    vr_incrineg      INTEGER;
+    vr_tab_retorno   LANC0001.typ_reg_retorno;
+
     BEGIN
       
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -2374,6 +2381,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
           RAISE vr_exc_saida;
       END; 
 
+      -- PJ450 - Insere Lancamento 
+      LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
+                                        ,pr_dtrefere => rw_crapdat.dtmvtolt   
+                                        ,pr_cdagenci => pr_cdagenci
+                                        ,pr_cdbccxlt => 100
+                                        ,pr_nrdolote => vr_nrdolote
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_nrdctabb => pr_nrdconta
+                                        ,pr_nrdctitg => TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
+                                        ,pr_nrdocmto => vr_nrdocmto
+                                        ,pr_cdhistor => 2137 -- CR. COTAS/CAP 
+                                        ,pr_nrseqdig => vr_nrseqdig
+                                        ,pr_vllanmto => pr_vldcotas
+                                        ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                        ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                        ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                        ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                        ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                        ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                        );
+
+      -- Conforme tipo de erro realiza acao diferenciada
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+           vr_dscritic := 'Erro ao inserir lancamento.';
+           cecred.pc_internal_exception(pr_cdcooper);
+           RAISE vr_exc_saida;
+        END If;
+      END IF;
+
+     /*
       BEGIN
          INSERT INTO craplcm(cdcooper
                             ,dtmvtolt
@@ -2408,7 +2447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
           cecred.pc_internal_exception(pr_cdcooper);
           RAISE vr_exc_saida;
       END;
-
+      */
       BEGIN
          
         UPDATE crapcot
