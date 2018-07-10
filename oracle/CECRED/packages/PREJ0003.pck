@@ -1823,7 +1823,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     
     pr_des_erro := 'OK';
     -- Extrai dados do xml
-    /*gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                              pr_cdcooper => vr_cdcooper,
                              pr_nmdatela => vr_nmdatela,
                              pr_nmeacao  => vr_nmeacao,
@@ -1837,7 +1837,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       -- Levanta exceção
       RAISE vr_exc_saida;
-    END IF;*/
+    END IF;
     
     begin
       pr_des_erro := 'OK';
@@ -1890,7 +1890,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                pr_tag_nova => 'vr_desmsg',
                                pr_tag_cont => vr_desmsg,
                                pr_des_erro => vr_dscritic); 
-   /*  
+     
     BEGIN   
       --Grava log
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -1906,7 +1906,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
     END;       
-*/
+
     EXCEPTION
     WHEN vr_exc_saida THEN
 
