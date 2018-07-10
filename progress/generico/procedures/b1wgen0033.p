@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 09/04/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 16/05/2018
            
     Dados referentes ao programa:
                 
@@ -226,8 +226,7 @@
 							 (Adriano - P339).
 
 				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).
+			                 crapass, crapttl, crapjur (Adriano - P339).
 
                 27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
                              (Andrei Vieira - MOUTs)
@@ -244,6 +243,16 @@
                 12/03/2018 - Substituida verificacao cdtipcta = (5, 6, 7, 17, 18) pelo 
                              código da modalidade to tipo de conta igual a "2" ou "3".
                              PRJ366 (Lombardi).
+
+				16/05/2018 - Alteração na procedure "buscar_motivo_can" para inclusão do
+				             novo motivo de cancelamento "Insuf. saldo e/ou Inadimplencia (autom.)"
+							 (Reginaldo/AMcom)
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+                20/06/2018 - Alterar a impressao da proposta f_vida_cecred_3 para 
+                             os planos 14,18,24,34,44,54,64 mudando para cobertura do 
+                             conjuge a indenizacao sera de 50% de Morte (M)
+                             (Lucas Ranghetti #TASK0016716)
 
 ..............................................................................*/
                     
@@ -5306,13 +5315,13 @@ PROCEDURE imprimir_alt_seg_vida:
              crapope.cdoperad = par_cdoperad NO-ERROR.
 
         IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN
-            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA ACIDENTES PESSOAIS CECRED".
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA ACIDENTES PESSOAIS AILOS".
         ELSE IF CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) THEN
-            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA CECRED I".
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA AILOS I".
         ELSE IF CAN-DO("13,17,23,33,43,53,63",STRING(tt-plano-seg.tpplaseg)) THEN
-            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA CECRED II".
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA AILOS II".
         ELSE IF CAN-DO("14,18,24,34,44,54,64",STRING(tt-plano-seg.tpplaseg)) THEN             
-            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA CECRED III".
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA AILOS III".
 
         /********** Primeira via *********/
          
@@ -5377,7 +5386,7 @@ PROCEDURE imprimir_alt_seg_vida:
                                      rel_nmdsegur rel_tracoseg crapope.nmoperad
                       WITH FRAME f_vida_cecred_AP.
 
-                      ASSIGN aux_dsdispge[1] = "SEGURO DE ACIDENTES PESSOAIS CECRED - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE"
+                      ASSIGN aux_dsdispge[1] = "SEGURO DE ACIDENTES PESSOAIS AILOS - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE"
                              aux_dsdispge[2] = "64  (SESSENTA  E  QUATRO)  NOS;  PLANO  2:  MINIMA  DE 14 (QUATORZE) ANOS E MAXIMA DE 49" 
                              aux_dsdispge[3] = "(QUARENTA E NOVE) ANOS; PLANOS 3,4,5, 6 E 7: MINIMA DE 14 (QUATORZE) ANOS E 44 (QUARENTA"
                              aux_dsdispge[4] = "E QUATRO)ANOS.".
@@ -5391,9 +5400,9 @@ PROCEDURE imprimir_alt_seg_vida:
                       WITH FRAME f_vida_cecred_1_e_2.
                      
                       IF  CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) THEN
-                          ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA CECRED I - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64".
+                          ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA AILOS I - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64".
                       ELSE
-                          ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA CECRED II - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64".
+                          ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA AILOS II - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64".
                           
                       ASSIGN aux_dsdispge[2] = "(SESSENTA E QUATRO) ANOS; PLANO 2: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 49 (QUARENTA" 
                              aux_dsdispge[3] = "E NOVE) ANOS; PLANOS 3,4,5, 6 E 7: MINIMA DE 14 (QUATORZE) ANOS E 44 (QUARENTA E QUATRO)"
@@ -5406,7 +5415,7 @@ PROCEDURE imprimir_alt_seg_vida:
                                      rel_nmdsegur rel_tracoseg crapope.nmoperad
                       WITH FRAME f_vida_cecred_3.
                       
-                      ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA CECRED III - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64" 
+                      ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA AILOS III - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64" 
                              aux_dsdispge[2] = "(SESSENTA E QUATRO) ANOS; PLANO 2: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 49 (QUARENTA" 
                              aux_dsdispge[3] = "E NOVE) ANOS; PLANOS 3,4,5, 6 E 7: MINIMA DE 14 (QUATORZE) ANOS E 44 (QUARENTA E QUATRO)"
                              aux_dsdispge[4] = "ANOS.".
@@ -8951,7 +8960,7 @@ PROCEDURE cancelar_seguro:
     DO:
         IF par_tpseguro  = 11 AND
             (par_cdmotcan = 0 OR
-             par_cdmotcan > 9) THEN
+             par_cdmotcan > 12) THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado.".
                 LEAVE valida.
@@ -9191,13 +9200,13 @@ PROCEDURE buscar_motivo_can:
 
     valida:
     DO:
-        IF par_cdmotcan > 11 THEN
+        IF par_cdmotcan > 12 THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado".
                 LEAVE valida.
             END.
 
-        ASSIGN par_qtregist = 9.
+        ASSIGN par_qtregist = 12.
 
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 1
@@ -9242,6 +9251,10 @@ PROCEDURE buscar_motivo_can:
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 11
                tt-mot-can.dsmotcan = "Perdido para a concorrencia".
+
+		CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 12
+               tt-mot-can.dsmotcan = "Insuf. saldo e/ou Inadimplencia (autom.)".			   
 
         IF par_cdmotcan <> 0 THEN DO:
             FOR EACH tt-mot-can WHERE
