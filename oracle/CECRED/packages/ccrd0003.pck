@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 09/07/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 10/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -86,6 +86,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             09/07/2018 - Validar critica 080 apos a criacao da critica no
   --                          relatorio (Lucas Ranghetti INC0018668)
+  --
+  --             10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e 
+  --                          enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -4761,7 +4764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 20/06/2017
+     Data    : Maio/14.                    Ultima atualizacao: 10/07/2017
 
      Dados referentes ao programa:
 
@@ -4840,8 +4843,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 09/01/2015 - Alterado para gerar arquivo TMP fora da pasta envia,
                              e no final mover para a envia SD241651 (Odirlei-AMcom)
                              
-    20/07/2015 - #309876 Tratamento no procedure crps671 para, quando não encontrar o titular da conta (PF) ou o representante 
-                (PJ), não abortar o programa e registrar em log (proc_batch) a conta, cpf e cooperativa (Carlos)
+                20/07/2015 - #309876 Tratamento no procedure crps671 para, quando não encontrar o titular da conta (PF) ou o representante 
+                             (PJ), não abortar o programa e registrar em log (proc_batch) a conta, cpf e cooperativa (Carlos)
                 
                 14/10/2015 - Desenvolvimento do projeto 126. (James)
                 
@@ -4868,6 +4871,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 23/08/2017 - Alterar o envio de alterações para que sejam enviadas as informações de 
                              alteração de limites. (Renato Darosci - Projeto 360)
+                             
+                10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e 
+                             enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -4932,6 +4938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_dsderro    VARCHAR2(4000);
 
       -- Comando completo
       vr_dscomando VARCHAR2(4000);
@@ -5373,10 +5380,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        -- VERIFICAR QUANTOS CARACTERES SERÃO DESTINADOS AO ENDEREÇO SD204641
             IF rw_crapenc.dsender_apbl IS NULL THEN
               --USA OS 50 CARACTERES PARA O ENDEREÇO
-              vr_aux_dsendcom := rpad(substr(rw_crapenc.dsender_compl,1,50),50,' ');
+              vr_aux_dsendcom := rpad(substr(nvl(rw_crapenc.dsender_compl,' '),1,50),50,' ');
             ELSE
               -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad((TRIM(substr(rw_crapenc.dsendere,1,29)) || TRIM(substr(rw_crapenc.nrendere,1,6)||substr(rw_crapenc.dsender_apbl,1,15))),50,' ');
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(rw_crapenc.dsendere,' '),1,29)) || 
+                                           TRIM(substr(nvl(rw_crapenc.nrendere,' '),1,6)||
+                                           substr(nvl(rw_crapenc.dsender_apbl,' '),1,15))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
@@ -5470,20 +5479,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '  '                                    /* Uso Futuro                   */                             ||
                               '1'                                     /* Tp. Endere. - Residencial    */                             ||
                               vr_aux_dsendcom                /* Endereço Completo            */                             ||
-                              rpad(rw_crapenc.cdufende,2,' ' )        /* UF                           */                             ||
-                              rpad(rw_crapenc.nmcidade,40,' ')        /* Cidade                       */                             ||
-                              rpad(rw_crapenc.nmbairro,25,' ')        /* Bairro                       */                             ||
-                              lpad(rw_crapenc.nrcepend,8,'0' )        /* CEP                          */                             ||
+                              rpad(nvl(rw_crapenc.cdufende,' '),2,' ' )        /* UF                           */                             ||
+                              rpad(nvl(rw_crapenc.nmcidade,' '),40,' ')        /* Cidade                       */                             ||
+                              rpad(nvl(rw_crapenc.nmbairro,' '),25,' ')        /* Bairro                       */                             ||
+                              lpad(nvl(rw_crapenc.nrcepend,'0'),8,'0' )        /* CEP                          */                             ||
                               lpad(NVL(vr_dstelres,'0'),9,'0' )       /* Telefone Residencial         */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               '  '                                    /* Uso Futuro                   */                             ||
                               vr_tpcntdeb                             /* Tp. Conta Deb.               */                             ||
                               '756'                                   /* Banco da Conta Debitar       */                             ||
-                              lpad(rw_crapcol.cdagebcb,4,'0' )        /* Agencia da Conta Debitar     */                             ||
-                              lpad(rw_crawcrd.nrdconta,12,'0')        /* Nr. Conta a Debitar          */                             ||
+                              lpad(nvl(rw_crapcol.cdagebcb,'0'),4,'0' )        /* Agencia da Conta Debitar     */                             ||
+                              lpad(nvl(rw_crawcrd.nrdconta,'0'),12,'0')        /* Nr. Conta a Debitar          */                             ||
                               lpad(vr_tpdpagto,3,'0' )                /* Porc. Deb. Autom             */                             ||
-                              lpad(rw_crawcrd.nrdconta,8,'0' )        /* Nr. Conta Socio              */                             ||
+                              lpad(nvl(rw_crawcrd.nrdconta,'0'),8,'0' )        /* Nr. Conta Socio              */                             ||
                               lpad('0',12,'0')                        /* Renda Titular                */                             ||
                               '  '                                    /* Uso Futuro                   */                             ||
                               lpad(nvl(rw_crawcrd.dddebito,0),2,'0')  /* Venc. Validos do Emiss.     */                             ||
@@ -5498,7 +5507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '00'                                    /* Situação da Conta            */                             ||
                               '000'                                   /* Cod. Rejeição                */                             ||
                               lpad('0',8,'0')                         /* Promoção                     */                             ||
-                              lpad(pr_canvenda, 8,' ')                /* Canal de Vendas              */                             ||
+                              lpad(nvl(pr_canvenda,' '), 8,' ')                /* Canal de Vendas              */                             ||
                               lpad(' ',8,' ')                         /* Vendedor                     */                             ||
                               '0'                                     /* Cliente Normal               */                             ||
                               '0'                                     /* Entrega Normal               */                             ||
@@ -6641,8 +6650,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                               || vr_dscritic );
                 END IF;
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception;
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                 vr_dscritic := 'Problema ao montar arquivo de cartoes solicitados - ' || sqlerrm;
+                
+                gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
+                                          ,pr_cdprogra        => vr_cdprogra
+                                          ,pr_des_destino     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL')
+                                          ,pr_des_assunto     => 'ERRO - Arquivo CCB3'
+                                          ,pr_des_anexo       => NULL
+                                          ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
+                                                                 '<br><br>'||'Critica: ' || vr_dscritic
+                                          ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                          ,pr_des_erro        => vr_dsderro);
+                --Se ocorreu erro
+                IF trim(vr_dsderro) IS NOT NULL THEN
+                  vr_dscritic:= vr_dsderro;
+                  --Levantar Excecao
+                  RAISE vr_exc_saida;
+                END IF;
+                
                 RAISE vr_exc_saida;
             END;
 
