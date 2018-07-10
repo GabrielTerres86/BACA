@@ -9916,7 +9916,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_vlrtotal   => pr_vlfatura   -- Valor fatura
                                        ,pr_flgagend   => pr_flgagend   -- Flag agendado /* 1-True, 0-False */ 
                                        ,pr_idorigem   => pr_idorigem   -- Indicador de origem
-                                       ,pr_cdoperacao => 2             -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                       ,pr_cdoperacao => 1             -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
                                        ,pr_idanalis   => NULL          -- ID Analise Fraude
                                        ,pr_lgprowid   => NULL          -- Rowid craplgp
                                        ,pr_cdcritic   => vr_cdcritic   -- Codigo da critica
