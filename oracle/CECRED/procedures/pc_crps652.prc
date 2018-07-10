@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 05/06/2018
+   Data    : AGOSTO/2013                      Ultima atualizacao: 29/06/2018
 
    Dados referentes ao programa:
 
@@ -692,36 +692,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Pagamento de Prejuizo
             AND craphis.cdhistor in (2386)
-         GROUP BY craplcm.cdhistor,craphis.dshistor
+         GROUP BY craplcm.cdhistor,craphis.dshistor;
+         
+       -- [Projeto 403] Busca o valor pago para desconto de títulos  
+       CURSOR cr_valor_pago_dsct_tit (pr_cdcooper  IN crapcyb.cdcooper%type
+                                     ,pr_nrdconta  IN crapcyb.nrdconta%type
+                                     ,pr_nrctremp  IN crapcyb.nrctremp%type
+                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%type) IS
+              -- Busca os lançamentos de históricos marcados na tela PARCYB para desconto de títulos
+              SELECT SUM(lbdt.vllanmto) vllanmto
+                    ,lbdt.cdhistor
+                    ,his.dshistor
+                FROM tbdsct_lancamento_bordero lbdt
+          INNER JOIN craphis his ON his.cdcooper = lbdt.cdcooper AND his.cdhistor = lbdt.cdhistor
+          INNER JOIN tbdsct_titulo_cyber tcy ON tcy.cdcooper = lbdt.cdcooper AND tcy.nrdconta = lbdt.nrdconta AND tcy.nrborder = lbdt.nrborder AND tcy.nrtitulo = lbdt.nrtitulo
+               WHERE tcy.cdcooper  = pr_cdcooper
+                 AND tcy.nrdconta  = pr_nrdconta
+                 AND tcy.nrctrdsc  = pr_nrctremp
+                 AND lbdt.dtmvtolt = pr_dtmvtolt
+                 AND his.indcalem  = 'S' -- a marcação de desconto de títulos e empréstimos é a mesma
+           GROUP BY lbdt.cdhistor,his.dshistor
      UNION
-     -- Desconto de Titulo - MULTA E JUROS DE MORA
         SELECT SUM(tltdb.vllanmto) vllanmto
               ,tltdb.cdhistor
               ,his.dshistor
           FROM tbdsct_lancamento_bordero tltdb
-         INNER JOIN tbdsct_titulo_cyber tcy
-            ON tcy.cdcooper = tltdb.cdcooper
-           AND tcy.nrdconta = tltdb.nrdconta
-           AND tcy.nrborder = tltdb.nrborder
-           AND tcy.nrtitulo = tltdb.nrtitulo
-         INNER JOIN craphis his
-            ON tltdb.cdcooper = his.cdcooper
-           AND tltdb.cdhistor = his.cdhistor
-         WHERE his.cdhistor IN (2682 --PAGTO DE MULTA SOBRE DESCONTO DE TITULO
-                               ,2686 -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO
-                               --,2666 --RENDA A APROPRIAR SOBRE DESCONTO DE TITULO
-                               --,2671 --PAGTO DESCONTO DE TITULO
-                               --,2665 -- LIBERACAO DO CREDITO DESCONTO DE TITULO
-                                )
+         INNER JOIN tbdsct_titulo_cyber tcy ON tcy.cdcooper = tltdb.cdcooper AND tcy.nrdconta = tltdb.nrdconta AND tcy.nrborder = tltdb.nrborder AND tcy.nrtitulo = tltdb.nrtitulo
+         INNER JOIN craphis his ON tltdb.cdcooper = his.cdcooper AND tltdb.cdhistor = his.cdhistor
+              WHERE his.cdhistor IN (2682,2684,2686,2688) -- Multa e Juros
            AND tltdb.cdcooper = pr_cdcooper
            AND tltdb.nrdconta = pr_nrdconta
            AND tcy.nrctrdsc   = pr_nrctremp
            AND tltdb.dtmvtolt = pr_dtmvtolt
-         GROUP BY tltdb.cdhistor,his.dshistor
- ;
+           GROUP BY tltdb.cdhistor,his.dshistor;                                
+                                         
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-
 
        -- 27/01/2017 -- Melhoria 432 - envio informações CYBER
        -- Verifica se é contrato de refinancimamento para envio do campo código transacao CYBER
@@ -1131,6 +1137,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              WHERE crapepr.cdcooper = pr_cdcooper
              AND   crapepr.nrdconta = pr_nrdconta
                AND crapepr.nrctremp = pr_nrctremp
+               AND pr_cdorigem = 3 
              UNION ALL
             -- Avalistas de Titulos de Desconto de Titulos
             SELECT tdb.cdcooper
@@ -1149,7 +1156,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                AND tcy.nrtitulo = tdb.nrtitulo
              WHERE tcy.cdcooper = pr_cdcooper
                AND tcy.nrdconta = pr_nrdconta
-               AND tcy.nrctrdsc = pr_nrctremp;
+               AND tcy.nrctrdsc = pr_nrctremp
+               AND pr_cdorigem = 4;
            rw_crapepr cr_crapepr%ROWTYPE;
 
            /* Verificar se o avalista do contrato eh a cooperativa */
@@ -1226,6 +1234,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              AND   crapavt.tpctrato =  pr_tpctrato
              AND   crapavt.nrdconta =  pr_nrdconta
              AND   crapavt.nrctremp =  pr_nrctremp
+             AND   pr_cdorigem = 3
              AND   crapavt.nrcpfcgc <> pr_nrdocnpj
             UNION ALL
             -- Desconto de Titulo
@@ -1249,6 +1258,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              WHERE crapavt.cdcooper = pr_cdcooper
              AND   crapavt.tpctrato = 3
              AND   crapavt.nrdconta = pr_nrdconta
+             AND   pr_cdorigem = 4
              AND   crapavt.nrctremp = pr_nrctrlim;
            rw_crapavt cr_crapavt%ROWTYPE;
 
@@ -2443,6 +2453,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            --Variaveis Locais
            vr_cdorigem crapcyb.cdorigem%type;
+           
            --Variaveis Controle
            vr_dsfinemp crapfin.dsfinemp%TYPE;
            vr_cdfinemp crapfin.cdfinemp%TYPE;
@@ -5548,7 +5559,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END IF;
              END IF;
              /* Desconto ou Emprestimo */
-             IF rw_crapcyb.cdorigem IN (2,3,4) THEN -- adicionato Desconto de Titulos (4)
+             IF rw_crapcyb.cdorigem IN (2,3) THEN 
                --Buscar valor Pago Emprestimo
                FOR rw_valor_pago_emprestimo IN cr_valor_pago_emprestimo(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
                                                                        ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
@@ -5639,6 +5650,71 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      end if;
 
                END IF;
+               
+             -- [Projeto 403] Adicionando tratamento de baixa e pagamentos para desconto de títulos
+             ELSIF rw_crapcyb.cdorigem = 4 THEN  
+               
+               FOR rw_valor_pago_dsct_tit IN cr_valor_pago_dsct_tit(pr_cdcooper => rw_crapcyb.cdcooper       -- Cooperativa
+                                                                   ,pr_nrdconta => rw_crapcyb.nrdconta       -- Numero Conta
+                                                                   ,pr_nrctremp => rw_crapcyb.nrctremp       -- Contrato Emprestimo
+                                                                   ,pr_dtmvtolt => vr_dtatual) LOOP -- Data Movimento
+
+                 vr_cdtrscyb := 'PA'; --rw_valor_pago_emprestimo.cdhistor;
+                 
+                 vr_idboleto := rw_crapcyb.cdcooper || LPAD(rw_crapcyb.nrdconta,10,0) || LPAD(rw_crapcyb.nrctremp,10,0);
+
+                 IF vr_tab_boleto.exists(vr_idboleto) THEN
+                   -- Pagto. de Boleto
+                   vr_cdtrscyb := 'PB';
+                   -- Boletagem Massiva
+                   IF vr_tab_boleto(vr_idboleto).idarquivo > 0 THEN
+                     vr_cdtrscyb := 'BM';
+                   -- Pagto. por Avalista                             "Pagto. Boleto Prejuizo
+                   ELSIF vr_tab_boleto(vr_idboleto).nrcpfava  <> 0 /*OR vr_tab_boleto(vr_idboleto).tpparcela IN (5,6) */THEN
+                     vr_cdtrscyb := 'PB';
+                   -- Descto. Boleto Prejuizo
+                   /*ELSIF vr_tab_boleto(vr_idboleto).tpparcela = 7 THEN
+                     vr_cdtrscyb := 'DB';*/
+                   END IF;
+                 END IF;
+
+                 --Gerar Carga Pagamentos
+                 pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa
+                                          ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
+                                          ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
+                                          ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
+                                          ,pr_vlrpagto => rw_valor_pago_dsct_tit.vllanmto -- Valor Lancamento
+                                          ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento
+                                          ,pr_cdhistor => vr_cdtrscyb            -- Codigo Historico
+                                          ,pr_dshistor => rw_valor_pago_dsct_tit.dshistor --Descricao Historico
+                                          ,pr_cdcritic => vr_cdcritic            --Codigo Erro
+                                          ,pr_dscritic => vr_dscritic);          --Descricao Erro
+                 --Se ocorreu erro
+                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+                 END IF;
+               END LOOP;
+               
+               -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram
+               -- atualizacao financeira no crps280.i (Foram liquidados)
+               IF rw_crapcyb.dtmvtolt < vr_dtatual AND
+                  rw_crapcyb.flgpreju = 0 AND
+                  rw_crapcyb.dtatufin < vr_dtatual THEN
+
+                      --Gerar carga de Baixa
+                      pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb             --Registro Cyber
+                                          ,pr_dtmvtolt   => vr_dtatual    --Data Movimento
+                                          ,pr_dtmvtlt2   => vr_dtmvtlt2            --Data Movimento formatada
+                                          ,pr_cdcritic   => vr_cdcritic            --Codigo Erro
+                                          ,pr_dscritic   => vr_dscritic);          --Descricao Erro
+                      --Se ocorreu erro
+                      IF vr_cdcritic IS NOT NULL OR
+                         vr_dscritic IS NOT NULL THEN
+                       RAISE vr_exc_saida;
+                     END IF;
+
+               END IF;
+               
              ELSE
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram atualizacao
                -- financeira no crps280.i (Foram liquidados)
