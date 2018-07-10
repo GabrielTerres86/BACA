@@ -203,13 +203,16 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nrdocmto craptdb.nrdocmto%TYPE,
                   dtvencto craptdb.dtvencto%TYPE,
                   dtlibbdt craptdb.dtlibbdt%TYPE,
+                  dtdpagto craptdb.dtdpagto%TYPE,
                   nossonum VARCHAR2(50),
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
+                  vlsldtit craptdb.vlsldtit%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
                   flgregis crapcob.flgregis%TYPE,
                   insittit craptdb.insittit%TYPE,
-                  insitapr craptdb.insitapr%TYPE);
+                  insitapr craptdb.insitapr%TYPE,
+                  nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE);
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -220,7 +223,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nrdocmto crapabt.nrdocmto%TYPE,
                   nrcheque crapcdb.nrcheque%TYPE,
                   tprestri INTEGER,
-                  dsrestri crapabc.dsrestri%TYPE,
+                  dsrestri crapabt.dsrestri%TYPE,
                   nrseqdig crapabt.nrseqdig%TYPE,
                   flaprcoo crapabc.flaprcoo%TYPE,
                   dsdetres crapabc.dsdetres%TYPE);
@@ -3042,16 +3045,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              tdb.nrdocmto,
              tdb.dtvencto,
              tdb.dtlibbdt,
+             tdb.dtdpagto,
              tdb.vltitulo,
              tdb.vlliquid,
+             tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof) as vlsldtit,
              sab.nmdsacad,
              tdb.insittit,
              tdb.insitapr,
-             cob.nrnosnum
+             cob.nrnosnum,
+             ttc.nrctrdsc
         FROM craptdb tdb 
             ,crapcob cob
             ,crapcco cco
             ,crapsab sab
+            ,tbdsct_titulo_cyber ttc
        WHERE tdb.cdcooper = pr_cdcooper
          AND tdb.nrborder = pr_nrborder
          AND tdb.nrdconta = pr_nrdconta
@@ -3068,7 +3075,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          --> Busca os dados do Sacado 
          AND sab.cdcooper(+) = tdb.cdcooper 
          AND sab.nrdconta(+) = tdb.nrdconta 
-         AND sab.nrinssac(+) = tdb.nrinssac;
+         AND sab.nrinssac(+) = tdb.nrinssac
+         --> Busca Contrato Cyber
+         AND ttc.cdcooper(+) = tdb.cdcooper
+         AND ttc.nrborder(+) = tdb.nrborder
+         AND ttc.nrdconta(+) = tdb.nrdconta
+         AND ttc.nrtitulo(+) = tdb.nrtitulo;
                            
                            
     --> Buscar bordero de desconto de titulo
@@ -3129,13 +3141,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_tab_tit_bordero(vr_idxtitul).nrdocmto := rw_craptdb.nrdocmto;
       pr_tab_tit_bordero(vr_idxtitul).dtvencto := rw_craptdb.dtvencto;
       pr_tab_tit_bordero(vr_idxtitul).dtlibbdt := rw_craptdb.dtlibbdt;
+      pr_tab_tit_bordero(vr_idxtitul).dtdpagto := rw_craptdb.dtdpagto;
       pr_tab_tit_bordero(vr_idxtitul).nossonum := vr_nossonum;
       pr_tab_tit_bordero(vr_idxtitul).vltitulo := rw_craptdb.vltitulo;
       pr_tab_tit_bordero(vr_idxtitul).vlliquid := rw_craptdb.vlliquid;
+      pr_tab_tit_bordero(vr_idxtitul).vlsldtit := rw_craptdb.vlsldtit;
       pr_tab_tit_bordero(vr_idxtitul).nmsacado := rw_craptdb.nmdsacad;
       pr_tab_tit_bordero(vr_idxtitul).insittit := rw_craptdb.insittit;
       pr_tab_tit_bordero(vr_idxtitul).insitapr := rw_craptdb.insitapr;
       pr_tab_tit_bordero(vr_idxtitul).flgregis := rw_craptdb.flgregis;
+      pr_tab_tit_bordero(vr_idxtitul).nrctrdsc := rw_craptdb.nrctrdsc;
 
       -->  Buscar restricoes de um determinado bordero ou titulo  
       pc_busca_restricoes ( pr_cdcooper => pr_cdcooper          --> Código da Cooperativa
@@ -7613,6 +7628,32 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     --
     -- [PAGADORES] - Obter dados dos Pagadores a serem analisados
     CURSOR cr_crapsab IS
+    SELECT
+      pag.cdcooper
+      ,pag.nrdconta
+      ,pag.nrinssac
+      ,pag.cdtpinsc
+    FROM 
+      craplim lim 
+      INNER JOIN crapsab pag ON pag.nrdconta = lim.nrdconta AND pag.cdcooper = lim.cdcooper
+      INNER JOIN crapcob cob -- Boletos de Cobrança
+                       ON  cob.incobran = 0     -- Cobrança em aberto
+                       and    cob.nrinssac = pag.nrinssac
+                       and    cob.nrdconta = pag.nrdconta
+                       and    cob.cdcooper = pag.cdcooper
+    WHERE 
+      lim.tpctrlim=3
+      AND lim.insitlim=2 
+      AND lim.cdcooper = pr_cdcooper
+      AND pag.nrdconta is NOT NULL 
+      AND pag.nrinssac = nvl(pr_nrinssac, pag.nrinssac)
+      AND pag.nrdconta = nvl(pr_nrdconta, lim.nrdconta)
+    GROUP BY
+      pag.cdcooper
+      ,pag.nrdconta
+      ,pag.nrinssac
+      ,pag.cdtpinsc;
+      /*
     select pag.cdcooper
           ,pag.nrdconta
           ,pag.nrinssac
@@ -7633,7 +7674,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                    and    cob.nrdconta = pag.nrdconta
                    and    cob.cdcooper = pr_cdcooper)
     AND    pag.nrdconta IS NOT NULL
-    ;
+    ;*/
     rw_crapsab cr_crapsab%rowtype;
    
 
@@ -7792,6 +7833,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
        vr_tab_analise_pagador(1).inpossui_titdesc   := 0;
        
        vr_inpossui_criticas := 0;
+       vr_conjuge := 0;
+       vr_socio := 0;
        
     END;
     
@@ -8073,6 +8116,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              raise vr_exc_erro;
          end if;
 
+         COMMIT;
    end   loop;
    close cr_crapsab;
 
@@ -8083,7 +8127,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
    end if;
    -- Fim validação das regras do Pagador --
 
-   COMMIT;
 
   EXCEPTION
    WHEN vr_exc_erro THEN
