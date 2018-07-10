@@ -101,8 +101,8 @@
 	$nrliquid = $_POST["nrliquid"];
 	$nrpatlvr = $_POST["nrpatlvr"];
 	$nrperger = $_POST["nrperger"];	
-	$vltotsfn = $_POST["vltotsfn"];	
-	$perfatcl = $_POST["perfatcl"];
+	$vltotsfn = $_POST["vltotsfn"]?$_POST["vltotsfn"]:'00,00';
+	$perfatcl = $_POST["perfatcl"]?$_POST["perfatcl"]:'00,00';
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
