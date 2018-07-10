@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 17/06/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 29/06/2018
 
      Dados referentes ao programa:
 
@@ -543,8 +543,13 @@ BEGIN
             ,vlatraso craptdb.vltitulo%TYPE
             ,vlsaldodev craptdb.vlsldtit%TYPE
             ,cddlinha crapldc.cddlinha%TYPE
+            ,qtdiaatr INTEGER
+            ,qtmesdec INTEGER
+            ,qtprepag INTEGER
+            ,vlprepag craptdb.vltitulo%TYPE
             ,dsdlinha crapldc.dsdlinha%TYPE
-            ,txmensal crapbdt.txmensal%TYPE);
+            ,txmensal crapbdt.txmensal%TYPE
+            ,txdiaria crapbdt.txmensal%TYPE);
 
     -- AWAE: Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_craptdb IS
@@ -866,7 +871,7 @@ BEGIN
     CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
                       ,pr_nrdconta IN craptdb.nrdconta%TYPE
                       ,pr_nrctremp IN craptdb.nrborder%TYPE
-                      ,pr_dtinictr IN crapris.dtinictr%TYPE
+                      --,pr_dtinictr IN crapris.dtinictr%TYPE
                       ,pr_dtrefere IN DATE) IS
     SELECT tdb.nrdconta
           ,tdb.dtvencto
@@ -905,13 +910,19 @@ BEGIN
           ,tdb.vlpagiof
           ,tdb.vlpagmta
           ,tdb.vlpagmra
-          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) +
-           (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
-          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) +
-           (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
+          ,NVL(pr_dtrefere - tdb.dtvencto,0) as qtdiaatr
+          ,TRUNC(MONTHS_BETWEEN(pr_dtrefere, tdb.dtvencto)) as qtmesdec
+          ,CASE
+             WHEN tdb.insittit = 4 THEN 0
+             ELSE 1
+           END as qtprepag 
+          ,(tdb.vltitulo - tdb.vlsldtit) + tdb.vlpagmta + tdb.vlpagmra + tdb.vliofcpl AS vlprepag  
           ,ldc.cddlinha
           ,ldc.dsdlinha
           ,bdt.txmensal
+          ,(bdt.txmensal/30)/100 as txdiaria
       FROM craptdb tdb
      INNER JOIN crapbdt bdt
         ON tdb.cdcooper = bdt.cdcooper
@@ -921,17 +932,19 @@ BEGIN
         ON lim.cdcooper = bdt.cdcooper
        AND lim.nrdconta = bdt.nrdconta
        AND lim.nrctrlim = bdt.nrctrlim
+       AND lim.tpctrlim = 3 -- desconto de títulos
      INNER JOIN crapldc ldc
         ON lim.cdcooper = ldc.cdcooper
        AND lim.cddlinha = ldc.cddlinha
-     WHERE tdb.insittit = 4
-       AND tdb.cdcooper = pr_cdcooper
+     WHERE tdb.cdcooper = pr_cdcooper
        AND tdb.nrdconta = pr_nrdconta
        AND tdb.nrborder = pr_nrctremp -- nrctrem da crapris
-       AND tdb.dtlibbdt = pr_dtinictr -- ris.dtinictr
-       AND tdb.insittit = 4
-       AND tdb.dtdpagto IS NULL
-       AND tdb.dtvencto < pr_dtrefere;
+       --AND tdb.dtlibbdt = pr_dtinictr -- ris.dtinictr
+       AND (tdb.insittit = 4 OR ((tdb.insittit = 2 AND tdb.dtdpagto = pr_dtrefere) OR (tdb.insittit = 3 AND tdb.dtdebito = pr_dtrefere)))
+       AND ldc.tpdescto = 3 -- desconto de título
+       --AND tdb.dtdpagto IS NULL
+       AND tdb.dtvencto <= pr_dtrefere
+       AND bdt.flverbor = 1; -- considerar somente os títulos vencidos de borderôs novos
     rw_craptdb cr_craptdb%ROWTYPE;
 
     -- Buscar detalhes do saldo da conta
@@ -2777,8 +2790,8 @@ BEGIN
             FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => rw_crapris.nrdconta
                                         ,pr_nrctremp => rw_crapris.nrctremp
-                                        ,pr_dtinictr => rw_crapris.dtinictr
-                                        ,pr_dtrefere => rw_crapris.dtrefere) LOOP --> ou pr_dtrefere (Verificar o que vai ser mais correto.)
+                                        --,pr_dtinictr => rw_crapris.dtinictr
+                                        ,pr_dtrefere => pr_dtrefere) LOOP --> ou pr_dtrefere (Verificar o que vai ser mais correto.)
 
               -- calculando a chave para tabela da CYBER.
               CYBE0003.pc_inserir_titulo_cyber(pr_cdcooper => rw_craptdb.cdcooper
@@ -2794,6 +2807,10 @@ BEGIN
                                LPAD(rw_craptdb.nrtitulo, 10, '0');
               vr_tab_craptdb(vr_indice_tdb).nrdconta := rw_craptdb.nrdconta;
               vr_tab_craptdb(vr_indice_tdb).dtvencto := rw_craptdb.dtvencto;
+              vr_tab_craptdb(vr_indice_tdb).qtdiaatr := NVL(pr_dtrefere - rw_craptdb.dtvencto,0);
+              vr_tab_craptdb(vr_indice_tdb).qtmesdec := rw_craptdb.qtmesdec;
+              vr_tab_craptdb(vr_indice_tdb).qtprepag := rw_craptdb.qtprepag;
+              vr_tab_craptdb(vr_indice_tdb).vlprepag := rw_craptdb.vlprepag;
               vr_tab_craptdb(vr_indice_tdb).nrseqdig := rw_craptdb.nrseqdig;
               vr_tab_craptdb(vr_indice_tdb).cdoperad := rw_craptdb.cdoperad;
               vr_tab_craptdb(vr_indice_tdb).nrdocmto := rw_craptdb.nrdocmto;
@@ -2834,6 +2851,7 @@ BEGIN
               vr_tab_craptdb(vr_indice_tdb).cddlinha := rw_craptdb.cddlinha;
               vr_tab_craptdb(vr_indice_tdb).dsdlinha := rw_craptdb.dsdlinha;
               vr_tab_craptdb(vr_indice_tdb).txmensal := rw_craptdb.txmensal;
+              vr_tab_craptdb(vr_indice_tdb).txdiaria := rw_craptdb.txdiaria;
             END LOOP;
           END IF; -- FIM DOS TITULOS DE BORDERÔ
 
@@ -4578,7 +4596,7 @@ BEGIN
                                  ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
                                  ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
                                  ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
-                                 || '<cdlcremp/>';
+                                 ||' <cdlcremp/>';
 
                 -- Não enviar nivel em caso de ser AA
                 IF vr_dsnivris <> 'AA' THEN
@@ -4892,13 +4910,13 @@ BEGIN
                                                          ,pr_nrctremp => vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc  -- Numero do contrato
                                                          ,pr_cdorigem => 4                                             -- Origem cyber
                                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
-                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev-- Saldo devedor
-                                                         ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit  -- Valor a regularizar
-                                                         ,pr_qtprepag => 0                                             -- Prestacoes Pagas
+                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Saldo devedor
+                                                         ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlatraso  -- Valor a regularizar
+                                                         ,pr_qtprepag => vr_tab_craptdb(vr_indice_dados_tdb).qtprepag  -- Prestacoes Pagas
                                                          ,pr_txmensal => vr_tab_craptdb(vr_indice_dados_tdb).txmensal  -- Taxa mensal
-                                                         ,pr_txdiaria => 0                                             -- Taxa diaria
-                                                         ,pr_vlprepag => 0                                             -- Vlr. Prest. Pagas
-                                                         ,pr_qtmesdec => 0                                             -- Qtd. meses decorridos
+                                                         ,pr_txdiaria => vr_tab_craptdb(vr_indice_dados_tdb).txdiaria  -- Taxa diaria
+                                                         ,pr_vlprepag => vr_tab_craptdb(vr_indice_dados_tdb).vlprepag  -- Vlr. Prest. Pagas
+                                                         ,pr_qtmesdec => vr_tab_craptdb(vr_indice_dados_tdb).qtmesdec  -- Qtd. meses decorridos
                                                          ,pr_dtdpagto => vr_tab_craptdb(vr_indice_dados_tdb).dtdpagto  -- Data de pagamento
                                                          ,pr_cdlcremp => vr_tab_craptdb(vr_indice_dados_tdb).cddlinha  -- Codigo da linha de credito
                                                          ,pr_cdfinemp => 0                                             -- Codigo da finalidade.
@@ -4915,7 +4933,7 @@ BEGIN
                                                          ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
                                                          ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
                                                          ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
-                                                         ,pr_qtdiaatr => vr_tab_crapris(vr_des_chave_crapris).qtdiaatr -- Dias de atraso
+                                                         ,pr_qtdiaatr => vr_tab_craptdb(vr_indice_dados_tdb).qtdiaatr  -- Dias de atraso
                                                          ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
                                                          ,pr_flgpreju => 0                                             -- Esta em prejuizo.
                                                          ,pr_flgconsg => 0                                             --Indicador de valor consignado.
