@@ -277,5 +277,15 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 INSERT INTO crapaca (nrseqaca,nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) 
    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PARCYB_BUSCAR_TITULOS_BORDERO','CYBE0003','pc_buscar_titulos_bordero','pr_nrdconta,pr_nrborder,pr_nrdocmto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'PARCYB'))
 
+-- PAGAR
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCAR_TIT_BORDERO_VENCIDOS', 'DSCT0003', 'pc_busca_titulos_vencidos_web', 'pr_nrdconta,pr_nrborder', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
+
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CALCULA_POSSUI_SALDO', 'DSCT0003', 'pc_calcula_possui_saldo', 'pr_nrdconta,pr_nrborder,pr_arrtitulo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
+   
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PAGAR_TITULOS_VENCIDOS', 'DSCT0003', 'pc_pagar_titulos_vencidos', 'pr_nrdconta,pr_nrborder,pr_arrtitulo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));   
+
 commit;
 end;
