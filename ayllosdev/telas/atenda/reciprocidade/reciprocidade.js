@@ -263,8 +263,6 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
           $('#divConteudoOpcao').css("display","none");
           $('#divConvenios').html(response);
           $("#divConvenios").css('display', 'block');
-            // $("#divRotina").css('display', 'block');
-            // $("#divRotina").html(response);
           controlaFoco();
     }
   });
@@ -291,7 +289,6 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
       //Valida dois convenios do mesmo tipo ao mesmo tempo.
       foundMesmoTipo = false;
       $.each(checkboxes, function (idx, elm){
-        foundMesmoTipo = false;
         $.each(checkboxes, function (idx2, elm2){
           
           if($(elm).val() != $(elm2).val() && $(elm).data('tipo') == $(elm2).data('tipo')){  
@@ -312,11 +309,6 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
           tipo: $(elm).data('tipo')
         });
       });
-      /*for(var index=0; index < $("#divConvenios input").length ; index++){
-        if($("#divConvenios input")[index].type == "checkbox" && $("#divConvenios input")[index].checked){
-          descontoConvenios.push($("#divConvenios input")[index].value);
-        }
-      }*/
       return sairDescontoConvenio();
 }
 
