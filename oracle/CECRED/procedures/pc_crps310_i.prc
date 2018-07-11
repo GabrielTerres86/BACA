@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 28/05/2018
+     Data    : Maio/2001                       Ultima atualizacao: 15/06/2018
      
      Dados referentes ao programa:
 
@@ -311,6 +311,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  28/05/2018 - P450 - Corrigido data do risco para contratos menores que materialidade (Guilherme/AMcom)
 
                  04/06/2018 - P450 - Atualização Data do Risco (Guilherme/AMcom)
+
+                 26/06/2018 - P450 - Ajuste calculo Juros60 (Rangel/AMcom)
 
   ............................................................................ */
 
@@ -1551,9 +1553,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       --Retorna Juros+60 de conta corrente inadimplente (Rangel Decker AMcom)
      FUNCTION fn_juros60cc (pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
 
-        vr_dtmvtolt     DATE;   --Data apos 60 dias
+        vr_data_60dias_atraso  DATE;     --Data apos 60 dias
         vr_dtmvtolt_aux DATE;  
         vr_dtcorte_prm  DATE;   --Data de corte
+        vr_data_corte_dias_uteis   DATE; --Data de corte para calculoar dias uteis 
 
 
         -- Verifica se a conta esta inadimplente e atrasada 60 ou mais dias
@@ -1569,7 +1572,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
           rw_crapris_ccjuros60 cr_crapris_ccjuros60%ROWTYPE;
 
-          CURSOR cr_craplcm_ccjuros60 (pr_dtcorte IN craplcm.dtmvtolt%TYPE) IS
+          CURSOR cr_craplcm_ccjuros60 (pr_dtcorte IN craplcm.dtmvtolt%TYPE
+                                      ,pr_dt60datr IN crapris.dtinictr%TYPE) IS
+ 
           
            SELECT  nvl(sum(lcm.vllanmto),0) vl_juros60
            FROM craplcm lcm
@@ -1579,7 +1584,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             AND lcm.cdcooper   = pr_cdcooper
             AND lcm.nrdconta   = pr_nrdconta--77135
             AND lcm.dtmvtolt   > pr_dtcorte
-            AND his.indebcre   ='D'
+           AND lcm.dtmvtolt   >= pr_dt60datr -- Data em que completou 60 dias em ADP
             AND his.cdhistor IN(37,38,57);
 
             rw_craplcm_ccjuros60 cr_craplcm_ccjuros60%ROWTYPE;
@@ -1595,14 +1600,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_dtrefere_aux := pr_rw_crapdat.dtmvtoan;
        END IF;
 
-       --Buscar a data de corte
-       vr_dtcorte_prm := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                           ,pr_nmsistem => 'CRED'
-                                                           ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
-                                                           ,'DD/MM/RRRR');
-
-
-
 
        OPEN cr_crapris_ccjuros60(vr_dtrefere_aux);
        FETCH cr_crapris_ccjuros60 INTO rw_crapris_ccjuros60;
@@ -1617,20 +1614,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
        IF cr_crapris_ccjuros60%FOUND   THEN
           CLOSE cr_crapris_ccjuros60;
 
-  /*        --Data de corte menor que data da conta inadimplente
-          IF  rw_crapris_ccjuros60.dtinictr  <  vr_dtcorte_prm THEN
-             -- Dias úteis
-            vr_dtmvtolt := tela_atenda_deposvis.fn_soma_dias_uteis_data(pr_cdcooper => pr_cdcooper,
-                                                                        pr_dtmvtolt => rw_crapris_ccjuros60.dtinictr,
-                                                                        pr_qtddias  => 60); 
-             
+          --Buscar a data de corte
+           vr_dtcorte_prm := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                               ,pr_nmsistem => 'CRED'
+                                                               ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
+                                                               ,'DD/MM/RRRR');
+                                                               
+                                                               
+          vr_data_corte_dias_uteis := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                         ,pr_nmsistem => 'CRED'
+                                                         ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                         ,'DD/MM/RRRR');                                                      
+
+  
+  
+           IF rw_crapris_ccjuros60.dtinictr < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
+              vr_data_60dias_atraso := TELA_ATENDA_DEPOSVIS.fn_soma_dias_uteis_data(pr_cdcooper,rw_crapris_ccjuros60.dtinictr, 60); -- Conta dias úteis
            ELSE
-             --Dias corridos
-             vr_dtmvtolt := rw_crapris_ccjuros60.dtinictr+60;
+              vr_data_60dias_atraso :=  rw_crapris_ccjuros60.dtinictr+ 60; -- Conta dias corridos
           END IF;
-  */        
-         
-          OPEN cr_craplcm_ccjuros60(vr_dtcorte_prm);
+            
+
+          OPEN cr_craplcm_ccjuros60(vr_dtcorte_prm,vr_data_60dias_atraso);
           FETCH cr_craplcm_ccjuros60 INTO rw_craplcm_ccjuros60;
 
           IF cr_craplcm_ccjuros60%NOTFOUND THEN
