@@ -38,6 +38,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PRESTACOES IS
                                
   PROCEDURE pc_consultar_contratos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada    
                                   ,pr_nrdconta IN crapepr.cdcooper%TYPE --> Número da conta
+                                  ,pr_nrctremp IN NUMBER                --> Contrato
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -48,8 +49,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PRESTACOES IS
   PROCEDURE pc_alterar_contratos_liquid(pr_nrdconta   IN NUMBER             --> Número da conta
                                        ,pr_cdcooper   IN NUMBER             --> Cooperativa conectada 
                                        ,pr_nrctremp   IN NUMBER             --> Contrato
-                                       ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                        ,pr_dsliquid   IN VARCHAR2           --> Lista de contratos liquidados
+                                       ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG                                       
                                        ,pr_cdcritic   OUT PLS_INTEGER       --> Código da crítica
                                        ,pr_dscritic   OUT VARCHAR2          --> Descrição da crítica
                                        ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
@@ -346,6 +347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
   --
   PROCEDURE pc_consultar_contratos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada    
                                   ,pr_nrdconta IN crapepr.cdcooper%TYPE --> Número da conta
+                                  ,pr_nrctremp IN NUMBER                --> Contrato
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -388,16 +390,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
                ,e.vlpreemp
                ,e.vlsdeved
                ,e.tpemprst
-               ,w.nrctrliq##1
-               ,w.nrctrliq##2
-               ,w.nrctrliq##3
-               ,w.nrctrliq##4
-               ,w.nrctrliq##5
-               ,w.nrctrliq##6
-               ,w.nrctrliq##7
-               ,w.nrctrliq##8
-               ,w.nrctrliq##9
-               ,w.nrctrliq##10
           from  crawepr w, crapepr e
          where  e.cdcooper = w.cdcooper
            and  e.nrdconta = w.nrdconta
@@ -406,7 +398,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
            and  e.nrdconta = pr_nrdconta
            and  e.dtliquid >= (e.dtmvtolt - 30);
          rw_consulta_contratos cr_consulta_contratos%ROWTYPE;
-
+         
+         
+      cursor cr_consulta_liquidado (pr_nrliquid in crawepr.nrctrliq##1%type)is
+        select  1
+          from  crawepr w
+         where  w.cdcooper = pr_cdcooper
+           and  w.nrdconta = pr_nrdconta 
+           and  w.nrctremp = pr_nrctremp
+           and (w.nrctrliq##1 = pr_nrliquid or
+                w.nrctrliq##2 = pr_nrliquid or
+                w.nrctrliq##3 = pr_nrliquid or
+                w.nrctrliq##4 = pr_nrliquid or
+                w.nrctrliq##5 = pr_nrliquid or
+                w.nrctrliq##6 = pr_nrliquid or
+                w.nrctrliq##7 = pr_nrliquid or
+                w.nrctrliq##8 = pr_nrliquid or
+                w.nrctrliq##9 = pr_nrliquid or
+                w.nrctrliq##10 = pr_nrliquid
+                );
+        rw_consulta_liquidado cr_consulta_liquidado%ROWTYPE;
+        
     BEGIN
 
       pr_des_erro := 'OK';      
@@ -434,109 +446,123 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
       LOOP
         FETCH cr_consulta_contratos
          INTO rw_consulta_contratos; 
-         EXIT WHEN cr_consulta_contratos%notfound;       
-
+         EXIT WHEN cr_consulta_contratos%notfound;
+         
+        -- Insere as tags
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Contratos',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+        
+        
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'cdlcremp',
                                pr_tag_cont => rw_consulta_contratos.cdlcremp,
                                pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'cdfinemp',
                                pr_tag_cont => rw_consulta_contratos.cdfinemp,
                                pr_des_erro => vr_dscritic);
                
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'nrdconta',
                                pr_tag_cont => rw_consulta_contratos.nrdconta,
                                pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'nrctremp',
                                pr_tag_cont => rw_consulta_contratos.nrctremp,
                                pr_des_erro => vr_dscritic);
                              
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'dtmvtolt',
                                pr_tag_cont => to_char(rw_consulta_contratos.dtmvtolt, 'dd/mm/yyyy'),
                                pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'vlemprst',
                                pr_tag_cont => to_char(rw_consulta_contratos.vlemprst,'fm9999g999g990d00'),
                                pr_des_erro => vr_dscritic);
                              
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'qtpreemp',
                                pr_tag_cont => rw_consulta_contratos.qtpreemp,
                                pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'vlpreemp',
                                pr_tag_cont => to_char(rw_consulta_contratos.vlpreemp,'fm9999g999g990d00'),
                                pr_des_erro => vr_dscritic);
                              
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'vlsdeved',
                                pr_tag_cont => to_char(rw_consulta_contratos.vlsdeved,'fm9999g999g990d00'),
                                pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
+                               pr_tag_pai  => 'Contratos',
                                pr_posicao  => vr_auxconta,
                                pr_tag_nova => 'tpemprst',
                                pr_tag_cont => rw_consulta_contratos.tpemprst,
-                               pr_des_erro => vr_dscritic);
+                               pr_des_erro => vr_dscritic);                      
         
-        -- Verifica se o contrato já está vinculado ao contrato liquidado                       
-        if (rw_consulta_contratos.nrctremp in (rw_consulta_contratos.nrctrliq##1
-                                              ,rw_consulta_contratos.nrctrliq##2
-                                              ,rw_consulta_contratos.nrctrliq##3
-                                              ,rw_consulta_contratos.nrctrliq##4
-                                              ,rw_consulta_contratos.nrctrliq##5
-                                              ,rw_consulta_contratos.nrctrliq##6
-                                              ,rw_consulta_contratos.nrctrliq##7
-                                              ,rw_consulta_contratos.nrctrliq##8
-                                              ,rw_consulta_contratos.nrctrliq##9
-                                              ,rw_consulta_contratos.nrctrliq##10)) then 
-                                              
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_auxconta,
-                               pr_tag_nova => 'tpcontvi',
-                               pr_tag_cont => '*',
-                               pr_des_erro => vr_dscritic); 
+        
+        -- verificar na lista de contratos #1 a #10 docontrato do paramnetro
+        -- pr_nrctremp => cursor novo coop/conta/contrato
+        
+        -- lista de retorno pra tela
+        -- rw_consulta_contratos.nrctremp
+        
+        open cr_consulta_liquidado(rw_consulta_contratos.nrctremp);
+        fetch cr_consulta_liquidado
+         into rw_consulta_liquidado;        
+         
+         -- Verifica se o contrato já está vinculado ao contrato liquidado
+         if cr_consulta_liquidado%found then
+           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                  pr_tag_pai  => 'Contratos',
+                                  pr_posicao  => vr_auxconta,
+                                  pr_tag_nova => 'tpcontvi',
+                                  pr_tag_cont => '*',
+                                  pr_des_erro => vr_dscritic);                                       
+          
                                 
         else
           
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'inf',
-                               pr_posicao  => vr_auxconta,
-                               pr_tag_nova => 'tpcontvi',
-                               pr_tag_cont => '',
-                               pr_des_erro => vr_dscritic);
+                                pr_tag_pai  => 'Contratos',
+                                pr_posicao  => vr_auxconta,
+                                pr_tag_nova => 'tpcontvi',
+                                pr_tag_cont => '',
+                                pr_des_erro => vr_dscritic);
           
-        end if;                                     
-  END LOOP;
-  CLOSE cr_consulta_contratos;
+        end if;        
+        close cr_consulta_liquidado;
+        
+        vr_auxconta := vr_auxconta + 1;                                           
+      END LOOP;
+      CLOSE cr_consulta_contratos;
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -571,8 +597,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
   PROCEDURE pc_alterar_contratos_liquid(pr_nrdconta   IN NUMBER             --> Número da conta
                                        ,pr_cdcooper   IN NUMBER             --> Cooperativa conectada 
                                        ,pr_nrctremp   IN NUMBER             --> Contrato
-                                       ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                        ,pr_dsliquid   IN VARCHAR2           --> Lista de contratos liquidados
+                                       ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG                                       
                                        ,pr_cdcritic   OUT PLS_INTEGER       --> Código da crítica
                                        ,pr_dscritic   OUT VARCHAR2          --> Descrição da crítica
                                        ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
@@ -601,6 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
       vr_qtatrib  number(10);
       vr_catrib   number(10);
       vr_cliq     number(10);
+      vr_qtctr    number(10); 
       
       -- Variável para guardar os comandos do SQL dinâmico
       vr_campos   varchar2(4000);
@@ -659,6 +686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
        
        pr_des_erro := 'OK';
       -- Extrai dados do xml
+      
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
                                pr_nmdatela => vr_nmdatela,
@@ -674,9 +702,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
-          
+                
       -- Efetuar split dos contratos passados para facilitar os testes
-      vr_split_pr_dsliquid := gene0002.fn_quebra_string(replace(pr_dsliquid,';',','),',');
+      vr_split_pr_dsliquid := gene0002.fn_quebra_string(replace(rtrim(pr_dsliquid, ','),';',','),',');
        
        if ((vr_qtatrib >= 10) or 
           ((vr_qtatrib + vr_split_pr_dsliquid.count) > 10)) then         
@@ -691,25 +719,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
         -- Verificar a quantidade de contratos passados na String
         -- para então fazer o Update 
        
-        vr_campos := '';
-        vr_catrib := vr_qtatrib + 1; 
-        vr_cliq   := 1;     
+        vr_campos   := '';
+        vr_catrib   := vr_qtatrib + 1; 
+        vr_cliq     := 1;    
         loop
-          vr_campos := vr_campos || ' nrctrliq##' || vr_catrib || ' = ' 
-                    || vr_split_pr_dsliquid(vr_cliq) || ',';
-          vr_catrib := vr_catrib + 1;
+          
+          --Consulta para verificar se o contrato a ser liquidado já está vinculado ao contrato
+          select  count(1)
+            into  vr_qtctr
+            from  crawepr w
+           where  w.cdcooper = pr_cdcooper
+             and  w.nrdconta = pr_nrdconta 
+             and  w.nrctremp = pr_nrctremp
+             and (w.nrctrliq##1 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##2 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##3 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##4 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##5 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##6 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##7 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##8 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##9 = vr_split_pr_dsliquid(vr_cliq) or
+                  w.nrctrliq##10 = vr_split_pr_dsliquid(vr_cliq)
+                  );
+          
+          if (vr_qtctr = 0) then
+            vr_campos := vr_campos || ' nrctrliq##' || (vr_catrib) || ' = ' 
+                      || vr_split_pr_dsliquid(vr_cliq) || ',';
+            vr_catrib := vr_catrib + 1;
+          end if;
+          
+          
           vr_cliq   := vr_cliq + 1;
+          
           exit when ((vr_catrib > 10) or (vr_split_pr_dsliquid.count = vr_cliq - 1));
         end loop;
         
         begin
-          vr_sql := 'UPDATE crawepr ' ||
-                       'SET ' || rtrim(vr_campos, ',') || ' ' ||
-                     'WHERE crawepr.cdcooper = :pr_cdcooper ' ||
-                       'AND crawepr.nrdconta = :pr_nrdconta ' ||
-                       'AND crawepr.nrctremp = :pr_nrctremp ';
+          if (nvl(vr_campos,'0') <> '0') then
+            vr_sql := 'UPDATE crawepr ' ||
+                         'SET ' || rtrim(vr_campos, ',') || ' ' ||
+                       'WHERE crawepr.cdcooper = :pr_cdcooper ' ||
+                         'AND crawepr.nrdconta = :pr_nrdconta ' ||
+                         'AND crawepr.nrctremp = :pr_nrctremp ';
          
-          execute immediate vr_sql using pr_cdcooper, pr_nrdconta, pr_nrctremp;
+            execute immediate vr_sql using pr_cdcooper, pr_nrdconta, pr_nrctremp;
+          end if;
         exception
           when others then
             -- montar mensagem de critica
