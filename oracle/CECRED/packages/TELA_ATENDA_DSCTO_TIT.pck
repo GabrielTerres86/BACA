@@ -1559,7 +1559,8 @@ BEGIN
    --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
    --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
    IF  ( ((rw_crawlim.vllimite > rw_craplim.vllimite) AND vr_flcraplim = TRUE ) OR vr_flcraplim = FALSE ) AND
-       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
+       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) AND 
+       rw_crawlim.insitapr <> 1 /*Aprovado Automaticamente*/ THEN
        este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctrlim => pr_nrctrlim
