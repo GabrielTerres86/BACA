@@ -7211,7 +7211,7 @@ EXCEPTION
                                       ,pr_natjurid             => rw_crapjur.natjurid
                                       ,pr_tpregtrb             => rw_crapjur.tpregtrb
                                       ,pr_dtmvtolt             => rw_crapdat.dtmvtolt
-                                      ,pr_qtdiaiof             => (pr_dtmvtolt - rw_craptdb.dtlibbdt)
+                                      ,pr_qtdiaiof             => (pr_dtmvtolt - rw_craptdb.dtvencto)
                                       ,pr_vloperacao           => rw_craptdb.vlliquid
                                       ,pr_vltotalope           => vr_vltotal_liquido
                                       ,pr_vltaxa_iof_atraso    => NVL(rw_crapbdt.vltaxiof,0)
