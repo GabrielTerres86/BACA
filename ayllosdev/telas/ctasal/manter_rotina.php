@@ -7,6 +7,10 @@
    --------------
    ALTERAÇÕES   : 07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
  						       inclusao, conforme solicitado no chamado 689996. (Kelvin)
+							   
+				  14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
+                               Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
+                               
    -------------- 
  */
 ?> 
@@ -36,6 +40,7 @@
 	$nrdigtrf = (isset($_POST['nrdigtrf']))   ? $_POST['nrdigtrf']   : 0 ; 
 	$nrctatrf = (isset($_POST['nrctatrf']))   ? $_POST['nrctatrf']   : 0 ; 
 	$nrcpfcgc = (isset($_POST['nrcpfcgc']))   ? $_POST['nrcpfcgc']   : 0 ; 
+	$tpctatrf = (isset($_POST['tpctatrf']))   ? $_POST['tpctatrf']   : 0 ; 
 				
 	switch ( $operacao ) {
 		case 'grava'  : $procedure = 'Grava_Dados';  $retornoAposErro= ''; break;
@@ -71,6 +76,7 @@
 	$xml .= '       <nrdigtrf>'.$nrdigtrf.'</nrdigtrf>';		
 	$xml .= '       <nrctatrf>'.$nrctatrf.'</nrctatrf>';		
 	$xml .= '       <nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';		
+	$xml .= '       <tpctatrf>'.$tpctatrf.'</tpctatrf>';		
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
 
