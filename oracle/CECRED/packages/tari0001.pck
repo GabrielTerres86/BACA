@@ -4785,6 +4785,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  :   Realiza os lancamentos das tarifas pendentes 
     --                 de acordo com os parametros passados
+    /*
+	Alteracoes: 10/04/2018 - Alterado para incluir o débito Parcial (Elton Giusti)
+	*/
     -- .......................................................................................
   BEGIN
     DECLARE
@@ -5066,6 +5069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                                  ,pr_cdcritic => vr_cdcritic --Código do erro
                                                  ,pr_dscritic => vr_dscritic); --Descricao do erro
 
+
             -- SE OCORREU ERRO
             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
               --  log lgm 'ERRO LANCAMENTO'
@@ -5119,7 +5123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           -- Debito Parcial, para quando chamado a partir do programa do debitador unico-----------
           ELSIF (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre) > 0 
                AND pr_nmdatela in ('DEBITADOR') THEN			
-		  
+            
             vr_vlpendente := rw_craplat.vltarifa - (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre);
 	      	   --- Tarifa assume saldo disponível
      		    rw_craplat.vltarifa  := (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre);
@@ -5716,7 +5720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         END;
 
         -- Ativar faixas de valores de tarifas que esta iniciando a vigencia
-        BEGIN
+  BEGIN
           FORALL idx IN 1..vr_tab_crapfco.COUNT SAVE EXCEPTIONS
             UPDATE crapfco
             SET crapfco.flgvigen = 1
@@ -5735,7 +5739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       WHEN OTHERS THEN
         vr_dscritic := 'Erro não tratado na rotina pc_atualiza_tarifa_vigente: ' || sqlerrm;
         RAISE vr_exc_saida;
-
+        
     END;
     -- fim das procedures 
   BEGIN
