@@ -331,7 +331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       BEGIN
     
         CASE
-          WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 2 THEN -- Transferencia Realizada
+          WHEN (pr_protocolo.cdtippro = 1 OR pr_protocolo.cdtippro = 4) AND pr_cdtipmod = 2 THEN -- Transferencia Realizada
             vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));      
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'));
           WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 3 THEN -- Transferencia Recebida

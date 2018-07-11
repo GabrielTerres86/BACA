@@ -2346,7 +2346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (1,2,6,9,10,11,12,13,15,20,23,24) THEN
+        IF rw_crappro.cdtippro IN (1,2,4,6,9,10,11,12,13,15,20,23,24) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				  pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
