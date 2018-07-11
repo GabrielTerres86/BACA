@@ -49,6 +49,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                    Envio de mensagens para cooperados que tiveram seguros cancelados por inadimplência.
                             Marcel Kohls (AMcom)
 
+							 29/06/2018 - Remoção de RAISE que estava gerando interrupção indevida na diária.
+							              Reginaldo (AMcom - P450) 
+
+               09/07/2018 - Incluido NVL na validação de data do primeiro debito(DTPRIDEB)
+                            pois o campo pode estar nulo na tabela(PRJ450 - Odirlei-AMcom)             
+
+
   ............................................................................... */
 
   DECLARE
@@ -404,6 +411,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             IF vr_incrineg = 0 THEN -- Erro de sistema/BD
               RAISE vr_exc_saida;
             ELSE
+							-- Limpa variáveis de crítica para não refletir em RAISE posterior
+							vr_cdcritic := NULL;
+   						vr_dscritic := NULL;
+							
               IF (rw_crapseg.tpseguro = 3) THEN
                  vr_dtfimvig := rw_crapdat.dtmvtolt;
                ELSE
@@ -523,7 +534,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
           vr_dtdebito := null;
           vr_dtdeb28 := null;
 
-          IF rw_crapseg.dtprideb <> rw_crapdat.dtmvtolt THEN
+          IF nvl(rw_crapseg.dtprideb,to_date('01/01/1500','DD/MM/RRRR')) <> rw_crapdat.dtmvtolt THEN
             -- Se o débito for dias 29, 30 ou 31, debitará sempre no dia 28
             IF to_char(rw_crapseg.dtdebito,'DD') > 28 THEN
               vr_dtdeb28 := '28'||to_char(rw_crapseg.dtdebito, '/MM/YYYY');
@@ -632,10 +643,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       -- Retornar nome do módulo original, para que tire o action gerado pelo programa chamado acima
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                 ,pr_action => NULL);
-      -- Testar saída de erro
-      IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
 
       -- Chamar rotina para eliminação do restart para evitarmos
       -- reprocessamento das aplicações indevidamente
