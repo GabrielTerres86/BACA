@@ -1946,7 +1946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         END IF;
         --> Verificar se situacao permite continuar
         --A=Apto, I=Inapto, E=Em análise
-        IF VR_INSITIF IN ('A','E') THEN
+        ELSIF VR_INSITIF IN ('A','E') THEN
           --> Gravar o log de adesao ou bloqueio do convenio
           COBR0008.pc_gera_log_ceb 
                           (pr_idorigem  => vr_idorigem,
