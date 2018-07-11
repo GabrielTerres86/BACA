@@ -261,7 +261,7 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'COBTIT_GERA_BOLETO', 'TELA_COBTIT', 'pc_gera_boletagem', 'pr_idarquiv', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCA_PRAZO_VCTO_MAX_COBTIT', 'TELA_COBTIT', 'pc_busca_prazo_vcto_max', 'pr_nrdconta,pr_nrborder', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'BUSCA_PRAZO_VCTO_MAX_COBTIT', 'TELA_COBTIT', 'pc_busca_prazo_vcto_max', null, (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBTIT'));
 
 -- TAB096
 INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)
@@ -286,6 +286,9 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
    
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PAGAR_TITULOS_VENCIDOS', 'DSCT0003', 'pc_pagar_titulos_vencidos', 'pr_nrdconta,pr_nrborder,pr_arrtitulo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));   
+
+/*Critica de bordero antigo para importação*/
+INSERT INTO tbgen_motivo (idmotivo,dsmotivo,cdproduto) VALUES (67,'Borderô cadastrado pelo modelo antigo',31);
 
 commit;
 end;
