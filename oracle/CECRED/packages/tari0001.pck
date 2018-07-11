@@ -1985,6 +1985,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --                o texto "ORA-0000: normal, successful completion" - Marcos(Supero)
     --
     --   26/03/2014 - Retirar tratamento de sequencia na craplat (Gabriel)
+    --
+    --   11/07/2018 - Inclusão de pc_internal_exception nas exceptions others INC0018458 (AJFink)
+    --
   BEGIN
     DECLARE
       --Cursores Locais
@@ -2074,6 +2077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           RETURNING rowid INTO pr_rowid_craplat;
       EXCEPTION
         WHEN Others THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
           vr_cdcritic:= 0;
           vr_dscritic:= 'Erro na gravacao da tarifa! '||sqlerrm;
           --Gerar erro
@@ -2095,6 +2099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
         -- Erro
         pr_cdcritic:= 0;
         pr_dscritic:= 'Erro na rotina TARI0001.pc_cria_lan_auto_tarifa. '||sqlerrm;
@@ -4837,7 +4842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
               
        --Variaveis de Excecao
        vr_exc_erro EXCEPTION;
-       
+
       vr_tab_erro_tar GENE0001.typ_tab_erro;
 
     BEGIN
@@ -5123,7 +5128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           -- Debito Parcial, para quando chamado a partir do programa do debitador unico-----------
           ELSIF (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre) > 0 
                AND pr_nmdatela in ('DEBITADOR') THEN			
-		  
+            
             vr_vlpendente := rw_craplat.vltarifa - (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre);
 	      	   --- Tarifa assume saldo disponível
      		    rw_craplat.vltarifa  := (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre);
@@ -5201,7 +5206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    SET craplat.vltarifa = vr_vlpendente
                  WHERE craplat.rowid    = rw_craplat.rowid;
             
-			     vr_intipoope := 2;	-- lançamento parcial da tarifa			
+			     vr_intipoope := 2;	-- lançamento parcial da tarifa				 
 
            
                   -- gera uma nova tarifa (pendente) com o valor parcial
@@ -5725,7 +5730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         END;
 
         -- Ativar faixas de valores de tarifas que esta iniciando a vigencia
-        BEGIN
+  BEGIN
           FORALL idx IN 1..vr_tab_crapfco.COUNT SAVE EXCEPTIONS
             UPDATE crapfco
             SET crapfco.flgvigen = 1
@@ -5744,7 +5749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       WHEN OTHERS THEN
         vr_dscritic := 'Erro não tratado na rotina pc_atualiza_tarifa_vigente: ' || sqlerrm;
         RAISE vr_exc_saida;
-
+        
     END;
     -- fim das procedures 
   BEGIN
