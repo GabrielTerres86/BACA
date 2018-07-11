@@ -1985,6 +1985,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --                o texto "ORA-0000: normal, successful completion" - Marcos(Supero)
     --
     --   26/03/2014 - Retirar tratamento de sequencia na craplat (Gabriel)
+    --
+    --   11/07/2018 - Inclusão de pc_internal_exception nas exceptions others INC0018458 (AJFink)
+    --
   BEGIN
     DECLARE
       --Cursores Locais
@@ -2074,6 +2077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           RETURNING rowid INTO pr_rowid_craplat;
       EXCEPTION
         WHEN Others THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
           vr_cdcritic:= 0;
           vr_dscritic:= 'Erro na gravacao da tarifa! '||sqlerrm;
           --Gerar erro
@@ -2095,6 +2099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
         -- Erro
         pr_cdcritic:= 0;
         pr_dscritic:= 'Erro na rotina TARI0001.pc_cria_lan_auto_tarifa. '||sqlerrm;
