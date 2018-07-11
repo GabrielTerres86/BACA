@@ -156,7 +156,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                             ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                            ,pr_des_erro OUT VARCHAR2);           --> Erros do processo   
+                            ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
+  PROCEDURE pc_conv_recip_desc(pr_cdcooper IN  crapcco.cdcooper%TYPE                 --> Codigo da Cooperativa
+                            ,pr_nrdconta      IN  crapceb.nrdconta%TYPE                 --> Numero da Conta
+                            ,pr_xmllog        IN  VARCHAR2                              --> XML com informações de LOG
+                            ,pr_cdcritic      OUT PLS_INTEGER                           --> Código da crítica
+                            ,pr_dscritic      OUT VARCHAR2                              --> Descrição da crítica
+                            ,pr_retxml        IN  OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo      OUT VARCHAR2                              --> Nome do campo com erro
+                            ,pr_des_erro      OUT VARCHAR2                              --> Erros do processo
+                            );   
 
 END TELA_ATENDA_COBRAN;
 /
@@ -4193,7 +4203,178 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
 
-  END pc_susta_boletos;      
+  END pc_susta_boletos;     
+  
+            ------------------CONVENIOS DE RECIPROCIDADE PARA DESCONTO ----------------------
+  PROCEDURE pc_conv_recip_desc(pr_cdcooper IN  crapcco.cdcooper%TYPE                 --> Codigo da Cooperativa
+                            ,pr_nrdconta      IN  crapceb.nrdconta%TYPE                 --> Numero da Conta
+                            ,pr_xmllog        IN  VARCHAR2                              --> XML com informações de LOG
+                            ,pr_cdcritic      OUT PLS_INTEGER                           --> Código da crítica
+                            ,pr_dscritic      OUT VARCHAR2                              --> Descrição da crítica
+                            ,pr_retxml        IN  OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo      OUT VARCHAR2                              --> Nome do campo com erro
+                            ,pr_des_erro      OUT VARCHAR2                              --> Erros do processo
+                            ) IS
+    /* .............................................................................
+      Programa: pc_conv_recip_desc
+      Sistema : CECRED
+      Sigla   : COBRAN
+      Autor   : Fabio Stein - Supero
+      Data    : Julho/18.                    Ultima atualizacao: --/--/----
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+    
+      Objetivo  : Retornar lista as opções do domínio enviado
+    
+      Observacao: -----
+    
+      Alteracoes:
+    ..............................................................................*/
+
+    --> Buscar convenios de reciprocidade para desconto
+    CURSOR cr_conv_recip_desc(pr_cdcooper crapcco.cdcooper%TYPE
+                                      ,pr_nrdconta crapceb.nrdconta%TYPE
+                                      ) IS
+          SELECT       conv.cdcooper 
+                      ,conv.nrconven
+                      ,conv.cdhistor
+                      ,(  SELECT ceb.idrecipr 
+                          FROM crapceb ceb 
+                          WHERE conv.cdcooper = ceb.cdcooper 
+                            AND conv.nrconven = ceb.nrconven 
+                            AND ceb.nrdconta = pr_nrdconta)  idrecipr
+                      ,conv.dsorgarq
+                      ,CASE WHEN nrconven IN('101001', '101003') THEN 'Registro'
+                            WHEN nrconven IN('101002', '101004') THEN 'Liquidação'
+                            ELSE '' 
+                       END AS dstarifacao
+
+          FROM        crapcco conv
+          WHERE       1 = 1
+          AND         conv.cdcooper = pr_cdcooper 
+          AND         conv.flgativo = 1
+          AND         conv.FLRECIPR = 1
+          AND         conv.dsorgarq NOT IN ('PROTESTO');
+  	  
+      rw_conv_recip_desc cr_conv_recip_desc%ROWTYPE;
+    
+      -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+      
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+			--
+      gene0002.pc_escreve_xml(vr_des_xml
+			                       ,vr_texto_completo
+														 ,pr_des_dados
+														 ,pr_fecha_xml
+														 );
+			--
+    END;
+		--
+    BEGIN
+
+     --
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    /*gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+														);
+    */                      
+-- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Leitura da PL/Table e geração do arquivo XML
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
+    
+    --> buscar logs ceb
+    FOR rw_conv_recip_desc IN cr_conv_recip_desc(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) LOOP
+      --
+      pc_escreve_xml('<inf>'||
+                        '<cdcooper>' || rw_conv_recip_desc.cdcooper  ||'</cdcooper>' ||
+                        '<nrconven>' || rw_conv_recip_desc.nrconven  ||'</nrconven>' ||
+                        '<cdhistor>' || rw_conv_recip_desc.cdhistor  ||'</cdhistor>' ||
+                        '<idrecipr>' || rw_conv_recip_desc.idrecipr  ||'</idrecipr>' ||
+                        '<dsorgarq>' || rw_conv_recip_desc.dsorgarq  ||'</dsorgarq>' ||
+                        '<dstarifacao>' || rw_conv_recip_desc.dstarifacao  ||'</dstarifacao>' ||
+
+                     '</inf>');
+      --
+    END LOOP;
+    --
+  --
+    pc_escreve_xml('</dados></root>',TRUE);    
+    --
+    pr_retxml := XMLType.createXML(vr_des_xml);
+    --
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      --
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      --
+			ROLLBACK;
+    WHEN OTHERS THEN
+      --
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+      --   
+  END pc_conv_recip_desc;
+	-- PRJ431
 
 END TELA_ATENDA_COBRAN;
 /
