@@ -16,6 +16,11 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   --                          em prejuízo mesmo que elas tenham a data de eliminação (DTELIMIN) preenchida.
   --                          Reginaldo (AMcom)
   --
+  --             11/07/2018 - Alterado cursor cr_crapgrp na pc_calc_endivid_grupo para adequação
+  --                          ao novo modelo de grupo economico.
+  --                          Criada nova procedure pc_calc_envidid_grupo_prog para ser chamada
+  --                          por rotinas progress, única diferença parametro CLOB ao invés de table
+  
   ---------------------------------------------------------------------------------------------------------------
 
   /* PL Table para os grupos economicos */
@@ -139,6 +144,22 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
                                  ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
+
+  /* Procedure responsavel por executar a rotina pc_calc_endivid_grupo, convertendo o campo pr_tab_grupo
+     para table */
+  PROCEDURE pc_calc_endivid_grupo_prog(pr_cdcooper  IN INTEGER                    --> Codigo da cooperativa
+                                 ,pr_cdagenci  IN INTEGER                    --> Codigo da agencia
+                                 ,pr_nrdcaixa  IN INTEGER                    --> Numero do caixa
+                                 ,pr_cdoperad  IN VARCHAR2                   --> Codigo do operador
+                                 ,pr_nmdatela  IN VARCHAR2                   --> Nome da tela
+                                 ,pr_idorigem  IN INTEGER                    --> Identificação de origem
+                                 ,pr_nrdgrupo  IN INTEGER                    --> Número do grupo
+                                 ,pr_tpdecons  IN NUMBER                     --> Tipo de consulta
+                                 ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
+                                 ,pr_vlendivi OUT NUMBER                     --> Valor dívida
+                                 ,PR_XMLGRUPO IN OUT CLOB                   --> XML dos grupos economicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
 
@@ -3034,11 +3055,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
     -- ..........................................................................*/
     
     DECLARE
-      
+
       ---------------> CURSORES <-----------------
       CURSOR cr_crapgrp (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdgrupo IN crapgrp.nrdgrupo%TYPE
                         ,pr_tpdecons IN INTEGER) IS
+
+         select * from (
+         SELECT
+            row_number() OVER(PARTITION BY x.nrcpfcgc ORDER BY x.nrcpfcgc) indice_cpf,
+            row_number() OVER(PARTITION BY x.nrdconta ORDER BY x.nrdconta) indice_conta,
+              x.*
+         FROM (SELECT ass.nrcpfcgc                                                       nrcpfcgc   --grp.nrcpfcgc
+                  ,ass.nrdconta                                                       nrctasoc   --grp.nrctasoc
+                  ,ge.idgrupo                                                         nrdgrupo   --grp.nrdgrupo
+                  ,ass.cdcooper                                                       cdcooper   --grp.cdcooper
+                  ,ge.nrdconta                                                        nrdconta   --grp.nrdconta
+                  ,ass.inpessoa                                                       inpessoa   --grp.inpessoa
+                  ,risc0004.fn_traduz_nivel_risco(pr_dsnivris =>ass.dsnivris)         innivris   --grp.innivris
+                  ,ass.dsnivris                                                       dsdrisco   --grp.dsdrisco
+                  ,risc0004.fn_traduz_risco(ge.inrisco_grupo)                         dsdrisgp   --grp.dsdrisgp
+                  ,1                                                                  idseqttl   --grp.idseqttl   --*2*
+                  ,ass.cdagenci                                                       cdagenci   --grp.cdagenci
+                  ,dat.dtmvtolt                                                       dtmvtolt   --grp.dtmvtolt
+                  ,dat.dtmvtolt                                                       dtrefere   --grp.dtmvtolt
+               FROM crapdat dat,
+                    crapass ass,
+                    tbcc_grupo_economico ge 
+               WHERE ge.cdcooper      = ass.cdcooper
+                 and ge.nrdconta      = ass.nrdconta
+                 and ass.cdcooper     = dat.cdcooper
+                 and ge.cdcooper      = pr_cdcooper
+                 and ge.idgrupo       = pr_nrdgrupo
+               UNION ALL
+               SELECT ass.nrcpfcgc                                                       nrcpfcgc   --grp.nrcpfcgc
+                  ,gei.nrdconta                                                       nrctasoc   --grp.nrctasoc
+                  ,gei.idgrupo                                                        nrdgrupo   --grp.nrdgrupo
+                  ,gei.cdcooper                                                       cdcooper   --grp.cdcooper
+                  ,gei.nrdconta                                                       nrdconta   --grp.nrdconta
+                  ,ass.inpessoa                                                       inpessoa   --grp.inpessoa
+                  ,risc0004.fn_traduz_nivel_risco(pr_dsnivris =>ass.dsnivris)         innivris
+                  ,ass.dsnivris                                                       dsdrisco   --grp.dsdrisco
+                  ,risc0004.fn_traduz_risco(ge.inrisco_grupo)                         dsdrisgp   --grp.dsdrisgp
+                  ,1                                                                  idseqttl   --grp.idseqttl   --*2*
+                  ,ass.cdagenci                                                       cdagenci   --grp.cdagenci
+                  ,dat.dtmvtolt                                                       dtmvtolt   --grp.dtmvtolt
+                  ,dat.dtmvtolt                                                       dtrefere   --grp.dtmvtolt
+               FROM crapdat dat,
+                    crapass ass,
+                    tbcc_grupo_economico_integ gei,
+                    tbcc_grupo_economico ge 
+               WHERE ge.idgrupo       = gei.idgrupo
+                 and gei.cdcooper     = ass.cdcooper
+                 and gei.nrdconta     = ass.nrdconta
+                 and ass.cdcooper     = dat.cdcooper
+                 and gei.cdcooper     = pr_cdcooper
+                 and gei.idgrupo      = pr_nrdgrupo
+               ) x
+             )
+         WHERE DECODE(pr_tpdecons,0, indice_cpf --Se for por CPF, obtém o primeiro registro de cada cpf (ignora os repetidos)
+                                 ,1, indice_conta) = 1 --Se for por Conta, obtém o primeiro registro de cada conta (ignora os repetidos)
+         ORDER BY DECODE(pr_tpdecons,0, nrcpfcgc --Se for por CPF
+                                    ,1, nrctasoc);
+
+/*
+
         SELECT *
           FROM (SELECT grp.nrcpfcgc
                       ,grp.nrctasoc
@@ -3062,7 +3143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                  ,1, indice_conta) = 1 --Se for por Conta, obtém o primeiro registro de cada conta (ignora os repetidos)
         ORDER BY DECODE(pr_tpdecons,0, nrcpfcgc --Se for por CPF
                                    ,1, nrctasoc); --Se for por Conta
-      
+*/      
       -- Informações de data do sistema
       rw_crapdat  btch0001.rw_crapdat%TYPE; 
       
@@ -3077,7 +3158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       vr_opt_vlendivi NUMBER; --> Sumarização do valor do endividamento
       vr_des_erro     VARCHAR2(100);
       vr_index        INTEGER;
-      
+      wtotal          number(10);
     BEGIN
     
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
@@ -3221,6 +3302,132 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       END;
     
   END pc_calc_endivid_grupo; 
+
+  /* Procedure responsavel por executar a rotina pc_calc_endivid_grupo, convertendo o campo pr_tab_grupo
+     para table */
+  PROCEDURE pc_calc_endivid_grupo_prog(pr_cdcooper  IN INTEGER                    --> Codigo da cooperativa
+                                 ,pr_cdagenci  IN INTEGER                    --> Codigo da agencia
+                                 ,pr_nrdcaixa  IN INTEGER                    --> Numero do caixa
+                                 ,pr_cdoperad  IN VARCHAR2                   --> Codigo do operador
+                                 ,pr_nmdatela  IN VARCHAR2                   --> Nome da tela
+                                 ,pr_idorigem  IN INTEGER                    --> Identificação de origem
+                                 ,pr_nrdgrupo  IN INTEGER                    --> Número do grupo
+                                 ,pr_tpdecons  IN NUMBER                     --> Tipo de consulta
+                                 ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
+                                 ,pr_vlendivi OUT NUMBER                     --> Valor dívida
+                                 ,PR_XMLGRUPO IN OUT CLOB                   --> XML dos grupos economicos
+                                 ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2) is                 --> Descricao da critica
+
+     pr_tab_grupo  typ_tab_crapgrp;
+     pr_xmlrequi   xmltype;
+    vr_dstexto     VARCHAR2(32767);
+		vr_string      VARCHAR2(32767);
+     vr_tpdecons   boolean;
+     vr_exc_saida  exception;
+     wtotal        number(10);
+      vr_index        INTEGER;
+  BEGIN
+    -- transforma xml para table oracle
+
+      if pr_tpdecons = 1 then
+         vr_tpdecons := true;
+      else
+         vr_tpdecons := false;
+      end if;
+      pc_calc_endivid_grupo(pr_cdcooper--  IN INTEGER                    --> Codigo da cooperativa
+                           ,pr_cdagenci--  IN INTEGER                    --> Codigo da agencia
+                           ,pr_nrdcaixa--  IN INTEGER                    --> Numero do caixa
+                           ,pr_cdoperad--  IN VARCHAR2                   --> Codigo do operador
+                           ,pr_nmdatela--  IN VARCHAR2                   --> Nome da tela
+                           ,pr_idorigem--  IN INTEGER                    --> Identificação de origem
+                           ,pr_nrdgrupo--  IN INTEGER                    --> Número do grupo
+                           ,vr_tpdecons --IN BOOLEAN --> Tipo de consulta
+                           ,pr_dsdrisco-- OUT VARCHAR2                   --> Descrição do risco
+                           ,pr_vlendivi-- OUT NUMBER                     --> Valor dívida
+                           ,pr_tab_grupo-- IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                           ,pr_cdcritic-- OUT INTEGER                    --> Codigo da critica
+                           ,pr_dscritic-- OUT VARCHAR2);                 --> Descricao da critica
+                        );
+
+   -- transforma table oracle para xml
+
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+      -- Criar documento XML
+      dbms_lob.createtemporary(PR_XMLGRUPO, TRUE);
+      dbms_lob.open(PR_XMLGRUPO, dbms_lob.lob_readwrite);
+  				
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => PR_XMLGRUPO,
+                              pr_texto_completo => vr_dstexto,
+                              pr_texto_novo     => '<dados>');
+  				
+/*       for elem in 1 .. var_table_varchar.count loop
+    dbms_output.put_line(elem || ': ' || var_table_varchar(elem));
+  end loop;
+end;*/
+ 
+      vr_index := pr_tab_grupo.first;
+
+      wtotal := pr_tab_grupo.count;
+
+      WHILE vr_index IS NOT NULL LOOP
+
+         vr_string :=  '<linha>'||
+                    '<cdcooper>' || pr_tab_grupo(vr_index).cdcooper || '</cdcooper>' ||
+                    '<nrdgrupo>' || pr_tab_grupo(vr_index).nrdgrupo || '</nrdgrupo>' ||
+                    '<nrctasoc>' || pr_tab_grupo(vr_index).nrctasoc || '</nrctasoc>' ||
+                    '<nrdconta>' || pr_tab_grupo(vr_index).nrdconta || '</nrdconta>' ||
+                    '<idseqttl>' || pr_tab_grupo(vr_index).idseqttl || '</idseqttl>' ||
+                    '<nrcpfcgc>' || pr_tab_grupo(vr_index).nrcpfcgc || '</nrcpfcgc>' ||
+                    '<dsdrisco>' || pr_tab_grupo(vr_index).dsdrisco || '</dsdrisco>' ||
+                    '<innivris>' || pr_tab_grupo(vr_index).innivris || '</innivris>' ||
+                    '<dsdrisgp>' || pr_tab_grupo(vr_index).dsdrisco || '</dsdrisgp>' ||
+                    '<inpessoa>' || pr_tab_grupo(vr_index).inpessoa || '</inpessoa>' ||
+                    '<cdagenci>' || pr_tab_grupo(vr_index).cdagenci || '</cdagenci>' ||
+                    '<innivrge>' || pr_tab_grupo(vr_index).innivris || '</innivrge>' ||
+                    '<vlendivi>' || pr_tab_grupo(vr_index).vlendivi || '</vlendivi>' ||
+                    '<vlendigp>' || pr_tab_grupo(vr_index).vlendigp || '</vlendigp>' ||
+                    '</linha>';
+
+         -- Escrever no XML
+         gene0002.pc_escreve_xml(pr_xml            => PR_XMLGRUPO,
+                              pr_texto_completo => vr_dstexto,
+                              pr_texto_novo     => vr_string,
+                              pr_fecha_xml      => FALSE);
+
+         vr_index := pr_tab_grupo.next(vr_index);
+      END LOOP;
+  				
+      -- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => PR_XMLGRUPO,
+                              pr_texto_completo => vr_dstexto,
+                              pr_texto_novo     => '</dados>',
+                              pr_fecha_xml      => TRUE);
+
+  EXCEPTION
+      WHEN vr_exc_saida THEN     
+        IF pr_cdcritic <> 0 THEN
+          pr_cdcritic := pr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        END IF;
+
+        --Log - Chamado 883190
+        pc_gera_log(pr_cdcooper      => pr_cdcooper
+                   ,pr_cdprogra      => null
+                   ,pr_dstiplog      => 'E'
+                   ,pr_dscritic      => pr_dscritic
+                   ,pr_cdcriticidade => 1
+                   ,pr_cdmensagem    => pr_cdcritic
+                   ,pr_tpocorrencia  => 2);  --grava 1
+
+        ROLLBACK;
+
+  END pc_calc_endivid_grupo_prog;
+
   
   PROCEDURE pc_forma_grupo(pr_cdcooper    IN PLS_INTEGER                       --> Código da cooperativa
                                     ,pr_cdagenci    IN PLS_INTEGER DEFAULT 0             --> Código da agência
