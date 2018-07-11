@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 24/10/2017
+   Data    : Setembro/2004.                  Ultima atualizacao: 11/07/2018
 
    Dados referentes ao programa:
 
@@ -196,7 +196,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
  
                21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
                             PRJ366 (Lombardi).
- 
+                            
+               11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)
 ............................................................................. */
 
   -- Data do movimento
@@ -783,7 +784,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       -- Em caso positivo, faz os processos para o mesmo
       IF rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999 THEN
         -- Verifica se é uma agencia diferente do registro anterior
-        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant_fc,0) THEN
+        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant_fc,-1) THEN
 
           -- busca o nome da agencia
           OPEN cr_crapage(pr_cdcooper,
@@ -828,7 +829,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       ELSE -- Se nao for formulario contionuo
 
         -- Verifica se é uma agencia diferente do registro anterior
-        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant,0) THEN
+        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant,-1) THEN
 
           -- busca o nome da agencia
           OPEN cr_crapage(pr_cdcooper,
