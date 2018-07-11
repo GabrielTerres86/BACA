@@ -143,7 +143,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_tpdecons  IN BOOLEAN                    --> Tipo de consulta
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
-                                 ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_tab_grupo OUT typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
 
@@ -159,7 +159,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_tpdecons  IN NUMBER                     --> Tipo de consulta
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
-                                 ,PR_XMLGRUPO IN OUT CLOB                   --> XML dos grupos economicos
+                                 ,PR_XMLGRUPO OUT CLOB                   --> XML dos grupos economicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
 
@@ -3030,7 +3030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                  ,pr_tpdecons  IN BOOLEAN                    --> Tipo de consulta
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
-                                 ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_tab_grupo OUT typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2) IS               --> Descricao da critica
   BEGIN
@@ -3315,7 +3315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                  ,pr_tpdecons  IN NUMBER                     --> Tipo de consulta
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
-                                 ,PR_XMLGRUPO IN OUT CLOB                   --> XML dos grupos economicos
+                                 ,PR_XMLGRUPO OUT CLOB                   --> XML dos grupos economicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2) is                 --> Descricao da critica
 
