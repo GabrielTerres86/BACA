@@ -125,7 +125,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	</div>
 </div>
 <div align="center">
-	<a href="#" class="botao" style="float:none; padding: 3px 6px; margin: 15px 0" id="btnConveniosCobranca" onClick="return false;">Conv&ecirc;nios de Cobran&ccedil;a</a>
+	<a href="#" class="botao" style="float:none; padding: 3px 6px; margin: 15px 0" id="btnConveniosCobranca" onClick="descontoConvenio('A','1'); return false;">Conv&ecirc;nios de Cobran&ccedil;a</a>
 </div>
 <table width="100%" class="tabelaDesconto">
 	<tr class="corPar">

@@ -74,6 +74,9 @@ var nrconven_imprimir = 0;
 // Tipo de Impressao do Termo (1 - Adesão / 2 - Cancelamento)
 var tpdtermo_imprimir = 1;
 
+//Lista de Convenios para desconto
+var descontoConvenios = [];
+
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
@@ -236,6 +239,87 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
 	// Se o convenio esta ativo, imprimir termo de adesão, caso contrário o de cancelamento
 	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
  }
+//Abre modal de desconto de convenios.
+ function descontoConvenio() {
+  showMsgAguardo("Aguarde, carregando ...");
+
+    // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
+  $.ajax({
+    dataType: "html",
+    type: "POST",
+    url: UrlSite + "telas/atenda/reciprocidade/desconto_convenio.php",
+    data: {
+            nrcnvceb: 1,
+            nrdconta: nrdconta,
+            //idrecipr: idrecipr,
+            redirect: "script_ajax"
+    },
+        error: function (objAjax, responseError, objExcept) {
+        hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+    },
+      
+        success: function (response) {
+          $('#divConteudoOpcao').css("display","none");
+          $('#divConvenios').html(response);
+          $("#divConvenios").css('display', 'block');
+            // $("#divRotina").css('display', 'block');
+            // $("#divRotina").html(response);
+          controlaFoco();
+    }
+  });
+
+
+    return false;
+ }
+//Sai da moval de desconto_convenios sem salvar.
+ function sairDescontoConvenio() {
+          $("#divConvenios").css("display","none");
+          $("#divConteudoOpcao").css('display', 'block');
+          controlaFoco();
+      
+      return false;
+ }
+//Salva lista de convenios de desconto.
+ function salvarDescontoConvenio() {
+      descontoConvenios = [];
+      var checkboxes = $('#divConvenios input[type="checkbox"]:checked');
+      if(checkboxes.length==0){
+          showError("error", "&#201; necess&#225;rio selecionar pelo menos um conv&#234;nio;.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+          return false;
+      }
+      //Valida dois convenios do mesmo tipo ao mesmo tempo.
+      foundMesmoTipo = false;
+      $.each(checkboxes, function (idx, elm){
+        foundMesmoTipo = false;
+        $.each(checkboxes, function (idx2, elm2){
+          
+          if($(elm).val() != $(elm2).val() && $(elm).data('tipo') == $(elm2).data('tipo')){  
+            foundMesmoTipo = true;
+          }
+        });  
+
+      });
+      if(foundMesmoTipo){
+        showError("error", "N&#227;o &#233; poss&#237;vel selecionar mais de um conv&#234;nios do mesmo tipo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+      }
+
+
+      $.each(checkboxes, function (idx, elm){
+        descontoConvenios.push({
+          convenio: $(elm).val(),
+          tipo: $(elm).data('tipo')
+        });
+      });
+      /*for(var index=0; index < $("#divConvenios input").length ; index++){
+        if($("#divConvenios input")[index].type == "checkbox" && $("#divConvenios input")[index].checked){
+          descontoConvenios.push($("#divConvenios input")[index].value);
+        }
+      }*/
+      return sairDescontoConvenio();
+}
+
 
 // Confirmar a exclusao do convenio CEB
 function confirmaExclusao() {

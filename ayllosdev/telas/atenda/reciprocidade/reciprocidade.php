@@ -117,6 +117,7 @@ include("../../../includes/carrega_permissoes.php");
                                 <div id="divServSMS"></div>
 								<div id="divHabilita_SMS"></div>
 								<div id="divAbaTarifas"></div>
+								<div id="divConvenios"></div>
 							</td>							
 						</tr>
 						
