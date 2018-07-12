@@ -4495,7 +4495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         pc_escreve_xml('<inf>'||
                           '<nmdominio>' || pr_nmdominio                 ||'</nmdominio>' ||
                           '<cddominio>' || vr_tab_dominios(i).cddominio ||'</cddominio>' ||
-                          '<dscodigo>'  || vr_tab_dominios(i).dscodigo  ||'</dscofigo>'  ||
+                          '<dscodigo>'  || vr_tab_dominios(i).dscodigo  ||'</dscodigo>'  ||
                        '</inf>');
         --
       END LOOP;
