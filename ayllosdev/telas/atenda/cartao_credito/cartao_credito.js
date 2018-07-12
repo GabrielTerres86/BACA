@@ -61,6 +61,7 @@
 * 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualiza��o do hist�rico de altera��o de limites (P360)
 * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cart�o deve ser cancelado atrav�s do SIPAGNET. (P364)
 * 044: [01/12/2017] Jonata          (RKAM) : N�o permitir acesso a op��o de incluir quando conta demitida.
+* 045: [10/07/2018] Paulo Silva (SUPERO): Alterada variável protocolo para não receber valor 0. Alterada função reenviaEsteira para inclusão do parâmetro glbadc na chamada do fonte solicitar_cartao_bancoob.
 */
 
 var idAnt = 999; // Vari�vel para o controle de cart�o selecionado
@@ -111,7 +112,7 @@ var dsadmcrdList = {
 var nmEmpresPla = "nome Empresa pl";
 var faprovador;
 var callbacckReturn = undefined;
-var protocolo = 0;
+var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
@@ -6431,6 +6432,7 @@ function reenviaEsteira(nrctrcrd){
         tpacao: 'montagrid',
         nrdconta: nrdconta,
         nrctrcrd: nrctrcrd,
+		glbadc  : glbadc,
         dsgraupr: 5,
         inpessoa: inpessoa,
         bancoob : 2
