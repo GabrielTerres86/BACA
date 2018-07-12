@@ -26,6 +26,9 @@
  *                11/05/2017 - Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
 
  *                17/01/2018 - Inclusão do botão "Alterar Qualificação" ( Diego Simas - AMcom )
+ *	    
+ *			      09/07/2018 - Criado opção para tela de controles (Qualificação da Operação e Contratos Liquidados)	 
+ *							   PJ450 - Diego Simas (AMcom)
  * --------------------------------------------------------------------------------------------------
  */
  
@@ -145,7 +148,7 @@
 		$permissao = in_array('X', $glbvars['opcoesTela']);
 		if($glbvars["cddepart"] == 7 && $permissao == true) {  
 	?>
-			<a href="#" class="botao" id="btAltQualif" onClick="controlaOperacao('CON_QUALIFICA');">Alterar Qualificação</a>
+			<a href="#" class="botao" id="btAltQualif" onClick="controlaOperacao('CONTROLES');">Controles</a>
 	<? 	
 		} 
 	?>

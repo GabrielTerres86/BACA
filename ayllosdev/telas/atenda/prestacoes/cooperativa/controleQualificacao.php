@@ -2,9 +2,9 @@
 
 /*
  * FONTE        : controleQualificacao.php
- * CRIA«√O       : Diego Simas (AMcom)
- * DATA CRIA«√O : 17/01/2018
- * OBJETIVO     : Mostra a tela com par‚metros para controle da QualificaÁ„o da OperaÁ„o
+ * CRIA√á√ÉO      : Diego Simas (AMcom)
+ * DATA CRIA√á√ÉO : 11/07/2018
+ * OBJETIVO     : Mostra a tela com par√¢metros para controle da Qualifica√ß√£o da Opera√ß√£o.
  */	
 	
 	session_start();
@@ -19,7 +19,7 @@
 	$idquapro =  (isset($_POST['idquapro'])) ? $_POST['idquapro'] : 0;
 	$operacao = $_POST['operacao'] == '' ? 0 : $_POST['operacao'];
 
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	if($operacao == "CON_QUALIFICA"){
 		$xml  = "";
 		$xml .= "<Root>";
@@ -62,16 +62,16 @@
 
 			if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
-			}
-
-			echo "<script>";
-			echo "showError('inform','Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o alterada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
-			echo "</script>";
+			}else{
+				echo "<script>";
+				echo "showError('inform','Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o alterada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
+				echo "</script>";
+			}			
 		}				
 	}
 
-		$dsquapro = obtemDescricaoQualificacao($idquapro);
-		$dsquaprc = obtemDescricaoQualificacao($idquaprc);
+		$dsquapro = utf8_decode(obtemDescricaoQualificacao($idquapro));
+		$dsquaprc = utf8_decode(obtemDescricaoQualificacao($idquaprc));
 
 ?>
 
@@ -84,7 +84,7 @@
 							<table width="100%" border="0" cellspacing="0" cellpadding="0">
 								<tr>
 									<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-									<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">QualificaÁ„o - Controle</td>
+									<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Qualifica√ß√£o - Controle</td>
 									<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 									<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 								</tr>
@@ -117,8 +117,8 @@
 													<br/>
 												</fieldset>
 												<div id="divBotoes">
+													<a href="#" class="botao" style="width:65px;" id="btVoltar" onClick="mostraDivControles('CONTROLES');">Voltar</a> 
 													<a href="#" class="botao" style="width:58px;" id="btAlterar" onClick="controlaOperacao('ALT_QUALIFICA');">Alterar</a>
-													<a href="#" class="botao" style="width:65px;" id="btVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>                                                
 												</div>
 											</form>
 										</div>
@@ -137,12 +137,12 @@
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();	
 
-	// Bloqueia conte√∫do que est√° √°tras do div da rotina
+	// Bloqueia conte√É¬∫do que est√É¬° √É¬°tras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
 	// Evento onKeyDown no campo idquaprc	
 	$("#idquaprc", "#frmControleQual").unbind('keydown').bind('keydown', function(e) {			
-		// Se √© a tecla ENTER, 
+		// Se √É¬© a tecla ENTER, 
 		if (( e.keyCode == 13 ) || (e.keyCode == 9)){
 			var vIdQuaPrc = $("#idquaprc", "#frmControleQual").val();
 			$("#dsquaprc", "#frmControleQual").val(obtemDescricaoQualificacao(vIdQuaPrc));
@@ -174,22 +174,22 @@
 		var dsquaprc = "";
 		switch (idQuaOpe) {
 			case '1':
-				var dsquaprc = "OperaÁ„o Normal";
+				var dsquaprc = "Opera√ß√£o Normal";
 				break;
 			case '2':
-				var dsquaprc = "RenovaÁ„o CrÈdito";
+				var dsquaprc = "Renova√ß√£o Cr√©dito";
 				break;
 			case '3':
-				var dsquaprc = "RenegociaÁ„o CrÈdito";
+				var dsquaprc = "Renegocia√ß√£o Cr√©dito";
 				break;
 			case '4':
-				var dsquaprc = "ComposiÁ„o DÌvida";				
+				var dsquaprc = "Composi√ß√£o D√≠vida";				
 				break;
 			case '5':
-				var dsquaprc = "Cess„o de Cart„o";				
+				var dsquaprc = "Cess√£o de Cart√£o";				
 				break;			
 			default:
-				var dsquaprc = "OperaÁ„o Inexistente";				
+				var dsquaprc = "Opera√ß√£o Inexistente";				
 				break;
 		}
 		return dsquaprc;
@@ -198,27 +198,27 @@
 </script>
 
 <?php
-	//FunÁ„o para opÁıes da QualificaÁ„o da OperaÁ„o
+	//Fun√ß√£o para op√ß√µes da Qualifica√ß√£o da Opera√ß√£o
 	function obtemDescricaoQualificacao($idQuaOpe){
 		$dsquaprc = "";
 		switch ($idQuaOpe) {
 			case 1:
-				$dsquaprc = "OperaÁ„o Normal";
+				$dsquaprc = "Opera√ß√£o Normal";
 				break;
 			case 2:
-				$dsquaprc = "RenovaÁ„o CrÈdito";
+				$dsquaprc = "Renova√ß√£o Cr√©dito";
 				break;
 			case 3:
-				$dsquaprc = "RenegociaÁ„o CrÈdito";
+				$dsquaprc = "Renegocia√ß√£o Cr√©dito";
 				break;
 			case 4:
-				$dsquaprc = "ComposiÁ„o DÌvida";				
+				$dsquaprc = "Composi√ß√£o D√≠vida";				
 				break;
 			case 5:
-				$dsquaprc = "Cess„o de Cart„o";				
+				$dsquaprc = "Cess√£o de Cart√£o";				
 				break;
 			default:
-				$dsquaprc = "OperaÁ„o Inexistente";				;
+				$dsquaprc = "Opera√ß√£o Inexistente";				;
 				break;
 		}
 		return $dsquaprc;
