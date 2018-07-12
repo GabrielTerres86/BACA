@@ -90,6 +90,13 @@ $xmlObj = getObjectXML($xmlResult);
 
 $floats = $xmlObj->roottag->tags[0]->tags;
 
+function sortByCddominio($a, $b) {
+    return getByTagName($a->tags,"cddominio") - getByTagName($b->tags,"cddominio");
+}
+
+usort($floats, 'sortByCddominio');
+usort($meses,  'sortByCddominio');
+
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -97,16 +104,18 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 }
 
 ?>
+<input type="hidden" id="imgEditar" value="<?php echo $UrlImagens; ?>icones/ico_editar.png" />
+<input type="hidden" id="imgExcluir" value="<?php echo $UrlImagens; ?>geral/excluir.gif" />
 <div id="divConveniosRegistros">
 	<div class="divRegistros">
-		<table style="table-layout: fixed;">
+		<table id="gridDescontoConvenios" style="table-layout: fixed;">
 			<thead>
 				<tr><th>C&ocirc;nvenio</th>
 					<th>&nbsp;</th>
 				</tr>			
 			</thead>
 			<tbody>
-				<tr>
+				<!--<tr>
 					<td width="60%">XXX002</td>
 					<td width="40%">
 						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onClick="return false;" border="0" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
@@ -119,7 +128,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onClick="return false;" border="0" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
 						<img src="<?php echo $UrlImagens; ?>geral/excluir.gif" onClick="return false;" border="0" title="Excluir Conv&ecirc;nio"/>
 					</td>
-				</tr>
+				</tr>-->
 			</tbody>		
 		</table>
 	</div>
@@ -132,20 +141,21 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
 			<span>Qtd</span>
-			<input name="" id="" class="campo inteiro" value="" />
+			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="" />
 		</td>
 	</tr>
 	<tr class="corImpar">
 		<td>Volume liquida&ccedil;&atilde;o</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="" id="" class="campo valor" value="" />
+			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor" value="" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Floating</td>
 		<td align="right">
-			<select class="campo">
+			<select class="campo" style="width:153px">
+			<option value=""></option>
 			<?php foreach($floats as $floating) {
 				echo '<option value="' . getByTagName($floating->tags,"cddominio") . '">' . getByTagName($floating->tags,"dscodigo") . '</option>';
 			} ?>
@@ -168,7 +178,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	<tr class="corImpar">
 		<td>Data fim do contrato</td>
 		<td align="right">
-			<select class="campo">
+			<select class="campo" style="width:153px" name="dtfimcontrato" id="dtfimcontrato">
+			<option value=""></option>
 			<?php foreach($meses as $mes) {
 				echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
 			} ?>
@@ -178,7 +189,10 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	<tr class="corPar">
 		<td>D&eacute;bito reajuste da tarifa</td>
 		<td align="right">
-			<input name="" id="" class="campo valor" value="" />
+			<select class="campo" id="debito_reajuste_reciproci" style="width:153px;">
+				<option value="1">Sim</option>
+				<option value="0" selected>N&atilde;o</option>
+			</select>
 		</td>
 	</tr>
 	<tr>
@@ -221,48 +235,57 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			<td width="60%">Desconto adicional COO</td>
 			<td align="right" width="40%">
 				<span>R$</span>
-				<input name="" id="" class="campo valor" value="" />
+				<input name="vldesconto_coo_old" id="vldesconto_coo_old" type="hidden" value="" />
+				<input name="vldesconto_coo" id="vldesconto_coo" class="campo valor" value="" />
 			</td>
 		</tr>
 		<tr class="corImpar">
 			<td>Data fim desc. Adicional COO</td>
 			<td align="right">
-				<input name="" id="" class="campo data" value="" />
+				<input name="dtfimadicional_coo_old" id="dtfimadicional_coo_old" type="hidden" value="" />
+				<select name="dtfimadicional_coo" id="dtfimadicional_coo" class="campo" style="width:153px">
+					<option value=""></option>
+					<?php foreach($meses as $mes) {
+						echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
+					} ?>
+				</select>
 			</td>
 		</tr>
 		<tr class="corPar">
 			<td>Desconto adicional CEE</td>
 			<td align="right">
-				<input name="" id="" class="campo valor" value="" />
+				<input name="vldesconto_cee_old" id="vldesconto_cee_old" type="hidden" value="" />
+				<input name="vldesconto_cee" id="vldesconto_cee" class="campo valor" value="" />
 			</td>
 		</tr>
 		<tr class="corImpar">
 			<td>Data fim desc. Adicional CEE</td>
 			<td align="right">
-				<input name="" id="" class="campo data" value="" />
+				<input name="dtfimadicional_cee_old" id="dtfimadicional_cee_old" type="hidden" value="" />
+				<select name="dtfimadicional_cee" id="dtfimadicional_cee" class="campo" style="width:153px">
+					<option value=""></option>
+					<?php foreach($meses as $mes) {
+						echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
+					} ?>
+				</select>
 			</td>
 		</tr>
-	</table>
-</fieldset>
-<fieldset style="border:1px solid #777777; margin:5px 3px 0;padding:3px">
-	<legend align="left">Desconto adicional</legend>
-	<table width="100%" class="tabelaDesconto">
-		<tr>
+		<tr class="corPar">
 			<td width="60%">&nbsp;</td>
 			<td width="40%">&nbsp;</td>
 		</tr>
-		<tr class="corPar">
+		<tr class="corImpar">
 			<td>Tarifa negociada COO</td>
 			<td align="right">
 				<span>R$</span>
-				<input name="" id="" class="campo valor" value="" />
+				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
 			</td>
 		</tr>
-		<tr class="corImpar">
+		<tr class="corPar">
 			<td>Tarifa negociada CEE</td>
-			<td align="right"
+			<td align="right">
 				<span>R$</span>
-				<input name="" id="" class="campo data" value="" />
+				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
 			</td>
 		</tr>
 	</table>
@@ -272,7 +295,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	<table width="100%" class="tabelaDesconto">
 		<tr class="corPar">
 			<td>
-				<textarea class="textarea" style="width: 100%;min-height: 70px;"></textarea>
+				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"></textarea>
 			</td>
 		</tr>
 	</table>
@@ -280,13 +303,122 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 
 <div id="divBotoes" style="margin:5px">
-    <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Continuar</a>
-    <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Solicitar aprova&ccedil;&atilde;o</a>
+    <a href="#" id="btnContinuar" class="botao">Continuar</a>
+    <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
     <a href="#" class="botao" onclick="consulta('A','','','true','','');return false;">Tarifas instru&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>
 </div>
 
 <script type="text/javascript">
+
+var cee = true; // debug
+var cDataFimContrato = $('#dtfimcontrato', '.tabelaDesconto');
+
+validaHabilitacaoCamposBtn();
+
+cDataFimContrato.change(function (){
+	validaHabilitacaoCamposBtn();
+});
+
+$('#vldesconto_cee, #vldesconto_coo, #dtfimadicional_cee, #dtfimadicional_coo').bind('enter input', function (){
+	validaHabilitacaoCamposBtn();
+});
+
+function validaDados() {
+
+	var cVldesconto_cee = $('#vldesconto_cee', '.tabelaDesconto');
+	var cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
+	var cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
+	var cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
+
+	var vDataFimContrato = cDataFimContrato.val();
+	var vVldesconto_cee = cVldesconto_cee.val();
+	var vVldesconto_coo = cVldesconto_coo.val();
+	var vDataFimAdicionalCee = cDataFimAdicionalCee.find('option:selected').text();
+	var vDataFimAdicionalCoo = cDataFimAdicionalCoo.find('option:selected').text();
+
+	// valida se o campo Data fim do contrato está preenchido
+	if (!vDataFimContrato) {
+		showError("error", "Selecione um valor para a Data fim do contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	if ( (cee && vDataFimContrato < vDataFimAdicionalCee) || (coo && vDataFimContrato < vDataFimAdicionalCoo) ) {
+		showError("error", "Data fim do contrato n&atilde;o pode ser menor que a data do desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
+	return true;
+}
+
+function validaHabilitacaoCamposBtn() {
+	var btnContinuar = $('#btnContinuar');
+	var btnAprovacao = $('#btnAprovacao');
+
+	var cVldesconto_cee         = $('#vldesconto_cee', '.tabelaDesconto');
+	var cVldesconto_ceeOld      = $('#vldesconto_cee_old', '.tabelaDesconto');
+	var cVldesconto_coo         = $('#vldesconto_coo', '.tabelaDesconto');
+	var cVldesconto_cooOld      = $('#vldesconto_coo_old', '.tabelaDesconto');
+	var cDataFimAdicionalCee    = $('#dtfimadicional_cee', '.tabelaDesconto');
+	var cDataFimAdicionalCeeOld = $('#dtfimadicional_cee_old', '.tabelaDesconto');
+	var cDataFimAdicionalCoo    = $('#dtfimadicional_coo', '.tabelaDesconto');
+	var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
+
+	var vVldesconto_cee         = cVldesconto_cee.val();
+	var vVldesconto_ceeOld      = cVldesconto_ceeOld.val();
+	var vVldesconto_coo         = cVldesconto_coo.val();
+	var vVldesconto_cooOld      = cVldesconto_cooOld.val();
+	var vDataFimAdicionalCee    = cDataFimAdicionalCee.find('option:selected').text();
+	var vDataFimAdicionalCeeOld = cDataFimAdicionalCeeOld.val();
+	var vDataFimAdicionalCoo    = cDataFimAdicionalCoo.find('option:selected').text();
+	var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
+
+	if (cee){
+		cVldesconto_coo.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
+		cDataFimAdicionalCoo.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
+		cVldesconto_cee.removeClass('campoTelaSemBorda').prop('disabled', false);
+		cDataFimAdicionalCee.removeClass('campoTelaSemBorda').prop('disabled', false);
+	} else {
+		cVldesconto_cee.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
+		cDataFimAdicionalCee.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
+		cVldesconto_coo.removeClass('campoTelaSemBorda').prop('disabled', false);
+		cDataFimAdicionalCoo.removeClass('campoTelaSemBorda').prop('disabled', false);
+	}
+
+	if (	vVldesconto_cee != vVldesconto_ceeOld ||
+			vVldesconto_coo != vVldesconto_cooOld ||
+			vDataFimAdicionalCee != vDataFimAdicionalCeeOld ||
+			vDataFimAdicionalCoo != vDataFimAdicionalCooOld	) {
+
+		btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+		btnContinuar.prop('disabled', true);
+		btnContinuar.attr('onclick', 'return false;');
+
+		btnAprovacao.removeClass('botaoDesativado');
+		btnAprovacao.prop('disabled', false);
+		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
+
+		$('#txtjustificativa', '.tabelaDesconto').removeClass('campoTelaSemBorda');
+		$('#txtjustificativa', '.tabelaDesconto').prop('disabled', false);
+
+	} else {
+		btnContinuar.removeClass('botaoDesativado');
+		btnContinuar.prop('disabled', false);
+		btnContinuar.attr('onclick', 'validaDados();return false;');
+
+		btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
+		btnAprovacao.prop('disabled', true);
+		btnAprovacao.attr('onclick', 'return false;');
+
+		$('#txtjustificativa', '.tabelaDesconto').removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda');
+		$('#txtjustificativa', '.tabelaDesconto').prop('disabled', true);
+	}
+
+}
+
+function solicitarAprovacao() {
+	validaDados();
+}
 
 controlaLayout('divConveniosRegistros');
 

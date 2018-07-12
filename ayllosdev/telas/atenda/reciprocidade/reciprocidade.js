@@ -272,12 +272,44 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
  }
 //Sai da moval de desconto_convenios sem salvar.
  function sairDescontoConvenio() {
-          $("#divConvenios").css("display","none");
-          $("#divConteudoOpcao").css('display', 'block');
-          controlaFoco();
-      
-      return false;
+    // Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando ...");
+
+    // atualiza tabela de convênios
+    $('#gridDescontoConvenios').remove();
+    $('#divConveniosRegistros').html('<div class="divRegistros"></div>');
+
+    var table = $('<table></table>').attr({ id: "gridDescontoConvenios" });
+    var thead = $('<thead></thead>').appendTo(table);
+    var tr = $('<tr></tr>').appendTo(thead);
+    
+    $('<th>Convênio</th>').appendTo(tr);
+    $('<th>&nbsp;</th>').appendTo(tr);
+    
+    for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
+        var tr = $('<tr></tr>').appendTo(table);
+        var nrconven = descontoConvenios[i].convenio;
+
+        $('<td>' + nrconven + '</td>').appendTo(tr);
+        $('<td>' +
+            '<img src="' + $('#imgEditar').val() + '" onClick="editarConvenio(' + nrconven + '); return false;" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>' +
+			'<img src="' + $('#imgExcluir').val() + '" onClick="excluirConvenio(' + nrconven + '); return false;" border="0" title="Excluir Conv&ecirc;nio"/>' +
+        '</td>').appendTo(tr);
+    }
+
+	table.appendTo("#divConveniosRegistros .divRegistros");
+
+    controlaLayout('divConveniosRegistros');
+
+    $("#divConvenios").css("display","none");
+    $("#divConteudoOpcao").css('display', 'block');
+    controlaFoco();
+
+    hideMsgAguardo();
+
+    return false;
  }
+
 //Salva lista de convenios de desconto.
  function salvarDescontoConvenio() {
       descontoConvenios = [];
