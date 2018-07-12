@@ -5945,6 +5945,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_dsjustif := rw_crawcrd.dsjustif;
       vr_dsprotoc := rw_crawcrd.dsprotoc;
       vr_nrctrcrd := pr_nrctrcrd;
+	  IF vr_dsprotoc = '0' THEN
+        vr_dsprotoc := null;
+      END IF;
     END IF;    
     CLOSE cr_limatu;
     
