@@ -113,7 +113,7 @@ var dsadmcrdList = {
 var nmEmpresPla = "nome Empresa pl";
 var faprovador;
 var callbacckReturn = undefined;
-var protocolo = 0;
+var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
@@ -268,7 +268,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
 				$("#btncanc").removeAttr("disabled");
 				$("#btncanc").css('cursor', 'pointer');
-            }
+			}
 
 
             $("#btnextr").prop("disabled", true);
@@ -3779,7 +3779,7 @@ function cancelaContrato(){
 
 // Função para mostrar a opção CancBloq do cartão
 function opcaoCancBloq() {
-
+	
 	
 	if(cdadmcrd >= 11 && cdadmcrd < 17){
 		//todo implementar canclamento cecred
@@ -6423,6 +6423,7 @@ function reenviaEsteira(nrctrcrd){
         tpacao: 'montagrid',
         nrdconta: nrdconta,
         nrctrcrd: nrctrcrd,
+		glbadc  : glbadc,
         dsgraupr: 5,
         inpessoa: inpessoa,
         bancoob : 2
