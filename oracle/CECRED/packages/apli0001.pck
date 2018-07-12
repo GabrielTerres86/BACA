@@ -5385,7 +5385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             Projeto Ligeirinho - Jonatas Jaqmam (AMcom)
                             
                09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
-                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                            
+                            Projeto Ligeirinho - Jonatas Jaqmam (AMcom)  
                             
                23/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
                             Incluido crps147 na lista de programas que nao gravam CRAPTRD             
@@ -5423,7 +5423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
-
+    
     --Variáveis acumulo lote
     vr_vlinfocr         craplot.vlinfocr%type := 0;
     vr_vlcompcr         craplot.vlcompcr%type := 0; 
@@ -5435,7 +5435,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     -- Informações da poupança programada
     cursor cr_craprpp (pr_rowid in varchar2) is
-      select craprpp.vlsdrdpp,
+      select /*+ NOPARALLEL */
+             craprpp.vlsdrdpp,
              craprpp.dtiniper,
              craprpp.dtfimper,
              craprpp.vlabcpmf,
@@ -5619,7 +5620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                        ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy');
         raise vr_exc_erro;
       end if;      
-
+      
       -- Para os programas CRPS147 e 148, foi realizado o upate no próprio crps, visto que teríamos problemas no paralelismo           
       if vr_cdprogra IN('CRPS148','CRPS147') then
         begin
@@ -5635,8 +5636,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
           if vr_des_erro is not null then
             raise vr_exc_erro; 
-    end if;
-
+          end if;
+        
         exception
           when others then
             vr_des_erro := 'Erro ao chamar procedure apli0001.pc_insere_tab_wrk: '||sqlerrm;
@@ -5917,7 +5918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                 vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
                 raise vr_exc_erro;
             end;
-        end if;
+          end if;
         
         end if;
        
@@ -6392,17 +6393,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_vlajuste_db := abs(vr_vlajuste);
           end if;
 
-
-            vr_vlinfocr := vr_vlinfocr + nvl(vr_vlajuste_cr, 0); 
-            vr_vlcompcr := vr_vlcompcr + nvl(vr_vlajuste_cr, 0);  
-            vr_vlinfodb := vr_vlinfodb + nvl(vr_vlajuste_db, 0); 
-            vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
-            vr_qtinfoln := vr_qtinfoln + 1;    
-            vr_qtcompln := vr_qtcompln + 1; 
+          
+          vr_vlinfocr := vr_vlinfocr + nvl(vr_vlajuste_cr, 0); 
+          vr_vlcompcr := vr_vlcompcr + nvl(vr_vlajuste_cr, 0);  
+          vr_vlinfodb := vr_vlinfodb + nvl(vr_vlajuste_db, 0); 
+          vr_vlcompdb := vr_vlcompdb + nvl(vr_vlajuste_db, 0);  
+          vr_qtinfoln := vr_qtinfoln + 1;    
+          vr_qtcompln := vr_qtcompln + 1; 
             
           -- Para lote 8384 utilizar sequence da tabela de lote.
-            vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;            
-            
+          vr_nrseqdig := CRAPLOT_8384_SEQ.NEXTVAL;
+          
           -- Insere histórico de ajuste nos lançamentos da poupança programada
           begin
             insert into craplpp (dtmvtolt,
@@ -6474,8 +6475,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       end if;
 
-    end if;
-
+    end if;    
+    
   exception
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
