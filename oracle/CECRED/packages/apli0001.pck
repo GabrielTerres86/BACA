@@ -5420,7 +5420,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     -- Informações da poupança programada
     cursor cr_craprpp (pr_rowid in varchar2) is
-      select craprpp.vlsdrdpp,
+      select /*+ NOPARALLEL */
+             craprpp.vlsdrdpp,
              craprpp.dtiniper,
              craprpp.dtfimper,
              craprpp.vlabcpmf,
