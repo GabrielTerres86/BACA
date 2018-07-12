@@ -1259,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     FETCH cr_crawcrd INTO rw_crawcrd;
     CLOSE cr_crawcrd;
 
-    IF rw_crawcrd.dtpropos < vr_dtcorte AND rw_crawcrd.nrcrcard IS NOT NULL THEN
+    IF rw_crawcrd.dtpropos < vr_dtcorte AND rw_crawcrd.nrcrcard > 0 THEN
       vr_dssitdec := NULL;
       vr_dssitest := NULL;
     ELSE
