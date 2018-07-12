@@ -238,6 +238,10 @@
                             liberaçao do projeto (Renato - Supero)
                
                16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
+               
+               12/07/2018 - PJ450 - Emininado acesso ao crapgrp e leitura do retorno
+                            da chamada da bo 138 para atribuir dados de grupos economicos
+                            para a variável tt-ge-economico
                             
 ............................................................................. */
 
@@ -1014,7 +1018,16 @@ DO WHILE TRUE:
                              DO:
                                 ASSIGN aux_qtctarel = 0.
 
+                                /* PJ 450 - Renato Cordeiro -AMcom Julho 2018*/
+                                FOR EACH tt-grupo:
+                                   DO:
+                                       CREATE tt-ge-economico.
+                                       ASSIGN tt-ge-economico.nrctasoc = tt-grupo.nrctasoc
+                                              tt-ge-economico.dsdrisgp = tt-grupo.dsdrisgp
+                                              aux_qtctarel = aux_qtctarel + 1.
+                                   END.
                                 /*busca grupo economico*/
+/*
                                 FOR EACH crapgrp WHERE crapgrp.cdcooper = glb_cdcooper AND
                                                        crapgrp.nrdgrupo = aux_nrdgrupo
                                                        NO-LOCK BREAK BY crapgrp.nrctasoc:
@@ -1026,6 +1039,7 @@ DO WHILE TRUE:
                                                   tt-ge-economico.dsdrisgp = crapgrp.dsdrisgp
                                                   aux_qtctarel = aux_qtctarel + 1.
                                        END.
+*/
                                 END.
 
                                 IF TEMP-TABLE tt-ge-economico:HAS-RECORDS THEN
@@ -1256,6 +1270,7 @@ DO WHILE TRUE:
                                        ,INPUT aux_dscatbem       /* Bens em garantia */
                                        ,INPUT crawepr.idfiniof   /* Indicador de financiamento de iof e tarifa */
                                        ,INPUT aux_par_dsctrliq   /* pr_dsctrliq */
+                                       ,INPUT "S"
                                        ,OUTPUT 0                 /* Valor calculado da Parcela */
                                        ,OUTPUT 0                 /* Retorno do valor do IOF */
                                        ,OUTPUT 0                 /* pr_vliofpri Valor calculado do iof principal */
@@ -1359,6 +1374,8 @@ DO WHILE TRUE:
              crabepr.dtinipag = ?
              crabepr.tpdescto = aux_tpdescto
              crabepr.vliofepr = aux_vltotiof
+             crabepr.vlpagiof = aux_vliofpri
+             crabepr.vliofadc = aux_vliofadi
              crabepr.cdcooper = glb_cdcooper.
 
       IF tel_cdlcremp = 100   THEN
