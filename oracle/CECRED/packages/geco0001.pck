@@ -20,6 +20,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
   --                          ao novo modelo de grupo economico.
   --                          Criada nova procedure pc_calc_envidid_grupo_prog para ser chamada
   --                          por rotinas progress, única diferença parametro CLOB ao invés de table
+  --                          Renato (AMcom)
   
   ---------------------------------------------------------------------------------------------------------------
 
@@ -143,7 +144,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_tpdecons  IN BOOLEAN                    --> Tipo de consulta
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
-                                 ,pr_tab_grupo OUT typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
 
@@ -2974,12 +2975,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
     ---------------> CURSORES <----------------- 
     --> buscar grupo economico do cooperado
     CURSOR cr_crapgrp IS
-      SELECT crapgrp.nrdgrupo
-            ,crapgrp.dsdrisgp
-        FROM crapgrp
-       WHERE crapgrp.cdcooper = pr_cdcooper
-         AND crapgrp.nrctasoc = pr_nrdconta;
-    rw_crapgrp cr_crapgrp%ROWTYPE;  
+      SELECT DISTINCT
+          gi.idgrupo nrdgrupo
+         ,risc0004.fn_traduz_risco(innivris => ge.inrisco_grupo) dsdrisgp
+      FROM tbcc_grupo_economico ge
+           ,tbcc_grupo_economico_integ gi
+      WHERE ge.cdcooper = pr_cdcooper
+        AND gi.idgrupo  = ge.idgrupo
+        AND gi.cdcooper = ge.cdcooper
+        AND (ge.nrdconta = pr_nrdconta OR
+             gi.nrdconta = pr_nrdconta);
+            rw_crapgrp cr_crapgrp%ROWTYPE;  
     
     vr_dstextab craptab.dstextab%TYPE;   
     
@@ -3030,7 +3036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                  ,pr_tpdecons  IN BOOLEAN                    --> Tipo de consulta
                                  ,pr_dsdrisco OUT VARCHAR2                   --> Descrição do risco
                                  ,pr_vlendivi OUT NUMBER                     --> Valor dívida
-                                 ,pr_tab_grupo OUT typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
+                                 ,pr_tab_grupo IN OUT NOCOPY typ_tab_crapgrp --> PL Table para armazenar grupos econômicos
                                  ,pr_cdcritic OUT INTEGER                    --> Codigo da critica
                                  ,pr_dscritic OUT VARCHAR2) IS               --> Descricao da critica
   BEGIN
@@ -3111,6 +3117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                  and ass.cdcooper     = dat.cdcooper
                  and gei.cdcooper     = pr_cdcooper
                  and gei.idgrupo      = pr_nrdgrupo
+                 and gei.dtexclusao is null
                ) x
              )
          WHERE DECODE(pr_tpdecons,0, indice_cpf --Se for por CPF, obtém o primeiro registro de cada cpf (ignora os repetidos)

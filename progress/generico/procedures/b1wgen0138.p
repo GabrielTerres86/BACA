@@ -1100,9 +1100,7 @@ PROCEDURE calc_endivid_grupo:
     /*desmontar o XML e jogar na tt-grupo de novo*/
 
     /* Efetuar a leitura do XML*/ 
-
-    /*   MESSAGE "depois rodar oracle=" vr_xml.
-*/
+   
     SET-SIZE(ponteiro_xml) = LENGTH(vr_xml) + 1. 
 
     PUT-STRING(ponteiro_xml,1) = vr_xml. 
@@ -1139,14 +1137,13 @@ PROCEDURE calc_endivid_grupo:
                   IF xField:SUBTYPE <> "ELEMENT" THEN 
                       NEXT. 
 
-
                     xField:GET-CHILD(xText,1) NO-ERROR.
                     ASSIGN tt-grupo.cdcooper = INT(xText:NODE-VALUE)   WHEN xField:NAME = "cdcooper" NO-ERROR.
                     ASSIGN tt-grupo.nrdgrupo = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrdgrupo" NO-ERROR.
                     ASSIGN tt-grupo.nrctasoc = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrctasoc" NO-ERROR.
                     ASSIGN tt-grupo.nrdconta = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrdconta" NO-ERROR.
                     ASSIGN tt-grupo.idseqttl = INT(xText:NODE-VALUE)   WHEN xField:NAME = "idseqttl" NO-ERROR.
-                    ASSIGN tt-grupo.nrcpfcgc = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrcpfcgc" NO-ERROR.
+                    ASSIGN tt-grupo.nrcpfcgc = DECI(xText:NODE-VALUE)   WHEN xField:NAME = "nrcpfcgc" NO-ERROR.
                     ASSIGN tt-grupo.dsdrisco = xText:NODE-VALUE        WHEN xField:NAME = "dsdrisco" NO-ERROR.
                     ASSIGN tt-grupo.innivris = INT(xText:NODE-VALUE)   WHEN xField:NAME = "innivris" NO-ERROR.
                     ASSIGN tt-grupo.dsdrisgp = xText:NODE-VALUE        WHEN xField:NAME = "dsdrisgp" NO-ERROR.
@@ -1169,6 +1166,13 @@ PROCEDURE calc_endivid_grupo:
     DELETE OBJECT xRoot2. 
     DELETE OBJECT xField. 
     DELETE OBJECT xText.
+
+    for each tt-grupo :
+    
+        disp tt-grupo.nrdgrupo tt-grupo.nrdconta.
+    end.
+
+
 
 /*
                                                             
@@ -1952,10 +1956,10 @@ GECO0001.pc_busca_grupo_associado
     RUN STORED-PROCEDURE pc_busca_grupo_associado
        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                            ,INPUT par_nrdconta
-                                           ,OUTPUT vr_flggrupo
-                                           ,OUTPUT par_nrdgrupo
-                                           ,OUTPUT par_gergrupo
-                                           ,OUTPUT par_dsdrisgp).
+                                           ,OUTPUT 0
+                                           ,OUTPUT 0
+                                           ,OUTPUT ""
+                                           ,OUTPUT "").
 
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_busca_grupo_associado
@@ -1965,10 +1969,20 @@ GECO0001.pc_busca_grupo_associado
 
     ASSIGN par_gergrupo = ""
            par_dsdrisgp = ""
+           par_nrdgrupo = 0
            par_gergrupo = pc_busca_grupo_associado.pr_gergrupo
            WHEN pc_busca_grupo_associado.pr_gergrupo <> ?
            par_dsdrisgp = pc_busca_grupo_associado.pr_dsdrisgp
-           WHEN pc_busca_grupo_associado.pr_dsdrisgp <> ?.
+           WHEN pc_busca_grupo_associado.pr_dsdrisgp <> ?
+           par_nrdgrupo = pc_busca_grupo_associado.pr_nrdgrupo
+           WHEN pc_busca_grupo_associado.pr_nrdgrupo <> ?
+           vr_flggrupo  = pc_busca_grupo_associado.pr_flggrupo
+           WHEN pc_busca_grupo_associado.pr_flggrupo <> ?.
+
+  if vr_flggrupo = 0 then
+    return false.
+  else
+    return true.
 
 /*----------------------------------------------------------------------------------------------------------------------------------------*/
 
