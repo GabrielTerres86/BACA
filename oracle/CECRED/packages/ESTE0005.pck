@@ -282,6 +282,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     RETURN to_char(pr_data,'RRRR-MM-DD');
   END fn_Data_ibra;
 
+  --> Funcao para remover acentos e caracteres especiais - copiado do TELA_INTEAS.pck
+  --> Temporario ate que se adeque a forma de gravacao do acentos na justificativa
+  FUNCTION fn_remove_caract_espec(pr_string IN VARCHAR2) RETURN VARCHAR2 IS
+  BEGIN
+    RETURN REGEXP_REPLACE( gene0007.fn_caract_acento(pr_string,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                                 '                  ')
+                          ,'[^a-zA-Z0-9Ç@:._ +,();=-]+',' ');
+  END fn_remove_caract_espec;
+
   PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                         ---- OUT ----
                                         pr_cdcritic OUT NUMBER,                 --> Codigo da critica
@@ -6140,7 +6149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       CLOSE cr_cdadmcrd_uso;
     END IF;
     
-    vr_obj_proposta.put('justificativa',vr_dsjustif);
+    /* A esteira aceita no máximo 235 caracteres */
+    vr_obj_proposta.put('justificativa',substr(fn_remove_caract_espec(vr_dsjustif),1,235));
 
     -- Copiar parâmetro
     vr_nmarquiv := pr_nmarquiv;
