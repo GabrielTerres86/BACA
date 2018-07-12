@@ -6136,11 +6136,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       --> trecho nao convertido pois nao usará QRcode
       vr_dscritic := 'Tipo de impressao invalido.';
       RAISE vr_exc_erro;
-    --> PROPOSTA
---    ELSIF pr_idimpres = 3 THEN
---      --> trecho nao convertido pois nao usará QRcode
---      vr_dscritic := 'Tipo de impressao invalido.';
---      RAISE vr_exc_erro;
     END IF;
     
     --> Buscar dados agencia
@@ -7901,7 +7896,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
 
   BEGIN 
   
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
    -- Verificar se a data existe
    open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
    fetch btch0001.cr_crapdat into rw_crapdat;
@@ -7912,8 +7906,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
    end   if;
    close btch0001.cr_crapdat;
 
---   dbms_output.put_line('cr_crapdat - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
-   
    -- Início da Validação das regras do Pagador --
    vr_flcrapsab := false;
    
@@ -7949,29 +7941,19 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
              raise vr_exc_erro;
          end if;
-                                   
-
-
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
-   open  cr_crapsab;
---   dbms_output.put_line('cr_crapsab - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
-   
+   open  cr_crapsab;   
    loop
          fetch cr_crapsab into rw_crapsab;
-         exit  when cr_crapsab%notfound;
+         exit  when cr_crapsab%NOTFOUND;
          vr_flcrapsab := true;
          IF (rw_crapsab.cdtpinsc=1) THEN
             vr_tab_dados_dsctit := vr_tab_dados_dsctit_fis;
          ELSE
             vr_tab_dados_dsctit := vr_tab_dados_dsctit_jur;
-         END IF;
-
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
+         END IF;      
+                          
          pc_resetar_flag_analise;
---   dbms_output.put_line('pc_resetar_flag_analise - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
  
-
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          --  QTREMESSA_CARTORIO : Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt)
          open  cr_qt_remessa_cartorio;
          fetch cr_qt_remessa_cartorio into rw_qt_remessa_cartorio;
@@ -7981,9 +7963,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              vr_tab_analise_pagador(1).qtremessa_cartorio := rw_qt_remessa_cartorio.qt_tit_remessa;
              vr_inpossui_criticas := 1;
          end if;
---   dbms_output.put_line('cr_qt_remessa_cartorio - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
 
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          --  QTTIT_PROTESTADOS  : Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt)
          open  cr_qt_protestados;
          fetch cr_qt_protestados into rw_qt_protestados;
@@ -7993,9 +7973,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              vr_tab_analise_pagador(1).qttit_protestados := rw_qt_protestados.qt_tit_protestados;
              vr_inpossui_criticas := 1;
          end if;
---   dbms_output.put_line('cr_qt_protestados - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
 
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          --  QTTIT_NAOPAGOS     : Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag)
          open  cr_qt_nao_pagos;
          fetch cr_qt_nao_pagos into rw_qt_nao_pagos;
@@ -8005,11 +7983,9 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              vr_tab_analise_pagador(1).qttit_naopagos := rw_qt_nao_pagos.qt_tit_nao_pagos;
              vr_inpossui_criticas := 1;
          end if;
---   dbms_output.put_line('cr_qt_nao_pagos - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
          --
 
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
-         --> Calculo das porcentagens de Liquidez
+        --> Calculo das porcentagens de Liquidez
          DSCT0003.pc_calcula_liquidez(pr_cdcooper            
                          ,rw_crapsab.nrdconta     
                          ,rw_crapsab.nrinssac     
@@ -8017,7 +7993,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                          ,rw_crapdat.dtmvtolt 
                          ,vr_tab_dados_dsctit(1).cardbtit_c
                          -- OUT --     
-         --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
+                         --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
                          ,pr_pc_cedpag    => vr_vlliquidez 
                          ,pr_qtd_cedpag   => vr_qtliquidez
                           --  CÁLCULO LIQUIDEZ DE CONCENTRACAO --
@@ -8040,9 +8016,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              vr_inpossui_criticas := 1;
          end if;             
 
---   dbms_output.put_line('pc_calcula_liquidez - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
-   
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          --  PECONCENTR_MAXTIT  : Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip)
          open  cr_concentracao_excecao;
          fetch cr_concentracao_excecao into rw_concentracao_excecao;
@@ -8059,9 +8032,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              vr_tab_analise_pagador(1).peconcentr_maxtit := vr_vlconcentracao;
              vr_inpossui_criticas := 1;
          end if;
---   dbms_output.put_line('cr_concentracao_excecao - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
 
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          --  INEMITENTE_CONJSOC : Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar)
          open  cr_conjuge;
          fetch cr_conjuge into rw_conjuge;
@@ -8070,9 +8041,6 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          end if;
          close cr_conjuge;
           
---   dbms_output.put_line('cr_conjuge - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
-   
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          open  cr_socio;
          fetch cr_socio into rw_socio;
          if    cr_socio%found then
@@ -8084,9 +8052,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
              vr_tab_analise_pagador(1).inemitente_conjsoc := 1;
              vr_inpossui_criticas := 1;
          end if;
---   dbms_output.put_line('cr_socio - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
 
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
          --  INPOSSUI_TITDESC   : Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp)
          if vr_tab_dados_dsctit(1).flpdctcp = 1 then 
            open  cr_coop_tit_conta_pag;
@@ -8104,14 +8070,22 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
 
          end if;  
 
---  vr_tempo := to_char(SYSTIMESTAMP,'SSSSSFF3');
+         --  INVALORMAX_CNAE    : Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat)
+         /*if  vr_tab_dados_dsctit(1).vlmxprat = 1 then
+             open  cr_cnae;
+             fetch cr_cnae into rw_cnae;
+             if    cr_cnae%found then
+               vr_tab_analise_pagador(1).invalormax_cnae := 1;
+               vr_inpossui_criticas := 1;
+             end if;
+             close cr_cnae;
+         end if;*/
+         
          pc_inserir_analise(pr_cdcooper => rw_crapsab.cdcooper
                            ,pr_nrdconta => rw_crapsab.nrdconta
                            ,pr_nrinssac => rw_crapsab.nrinssac
                            ,pr_dscritic => vr_dscritic);
 
---   dbms_output.put_line('pc_inserir_analise - ' || (to_char(SYSTIMESTAMP,'SSSSSFF3')-vr_tempo));
-   
          if  trim(vr_dscritic) is not null then
              raise vr_exc_erro;
          end if;
