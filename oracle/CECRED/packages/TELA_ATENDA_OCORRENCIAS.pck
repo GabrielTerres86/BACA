@@ -34,7 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
                                 ,pr_retxml     IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                 ,pr_nmdcampo  OUT VARCHAR2              --Nome do Campo
                                 ,pr_des_erro  OUT VARCHAR2);            --Saida OK/NOK
-                                
+
   /* Verifica Conta Corrente em Prejuízo e lista detalhes */
   PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -258,7 +258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         Sistema : Ayllos
         Sigla   : CECRED
         Autor   : Daniel/AMcom & Reginaldo/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao: 29/03/2018
+        Data    : Janeiro/2018                 Ultima atualizacao: 15/06/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
@@ -266,6 +266,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         Observacao: -----
         Alteracoes:  Ajuste para ler dados da nova tabela de "dados brutos" (tbrisco_central_ocr)
                      Março/2018 - Reginaldo (AMcom)
+
+                     15/06/2018 - P450 - Melhora de Performance (Reginaldo/AMcom)
+
       ..............................................................................*/
 
       ----------->>> VARIAVEIS <<<--------
@@ -304,8 +307,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
            , cb.inrisctl
            , cb.dtrisctl
            , DECODE(cb.inpessoa, 1,
-                     to_char(cb.nrcpfcgc, 'fm00000000000'),
-                     substr(to_char(cb.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
+                     to_char(cb.nrcpfcgc, '00000000000'),
+                     substr(to_char(cb.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
         FROM crapass cb
        WHERE cb.cdcooper = pr_cdcooper
          AND cb.nrdconta = pr_nrdconta;
@@ -320,32 +323,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                , to_char(ass.nrcpfcgc,
                                     DECODE(ass.inpessoa, 1, '00000000000','00000000000000')) nrcpfcgc
                , DECODE(ass.inpessoa, 1,
-                     to_char(ass.nrcpfcgc, 'fm00000000000'),
-                     substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
+                     to_char(ass.nrcpfcgc, '00000000000'),
+                     substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
                , ass.dsnivris
             FROM crapass ass
            WHERE cdcooper = rw_cbase.cdcooper
              AND inpessoa = rw_cbase.inpessoa
         )
-        SELECT c.cdcooper
-                   , c.nrdconta
+      SELECT c.cdcooper
+           , c.nrdconta
                    , c.nrcpfcgc
-                   , c.inpessoa
-                   , c.dsnivris
+           , c.inpessoa
+           , c.dsnivris
                    , DECODE(c.nrdconta, rw_cbase.nrdconta, 0, 1) ordem
         FROM contas c
         WHERE c.nrcpfcgc_compara = rw_cbase.nrcpfcgc_compara
-        ORDER BY ordem;
+       ORDER BY ordem;
       rw_contas_do_titular cr_contas_do_titular%ROWTYPE;
 
-    -- Contas dos grhupos econômicos aos quais o titular da conta base está ligado
+    -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
     -- Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
     CURSOR cr_contas_grupo_economico(rw_cbase IN cr_base%ROWTYPE) IS
     WITH grupos AS (
         SELECT gi.cdcooper
              , gi.nrdconta
              , gi.tppessoa
-             , (SELECT to_char(nrcpfcgc, DECODE(inpessoa, 1, 'fm00000000000','fm00000000000000')) 
+             , (SELECT to_char(nrcpfcgc, DECODE(inpessoa, 1, 'fm00000000000','fm00000000000000'))
                   FROM crapass WHERE cdcooper = gi.cdcooper AND nrdconta = gi.nrdconta) nrcpfcgc
              , DECODE(gi.tppessoa, 1, to_char(gi.nrcpfcgc, 'fm00000000000'),
                                       substr(to_char(gi.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
@@ -353,9 +356,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              ,decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
                                       ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH')  dsdrisgp
              , (SELECT DECODE(ass.inpessoa, 1, to_char(ass.nrcpfcgc, 'fm00000000000'),
-                                              substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8)) 
+                                              substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8))
                   FROM crapass ass
-                 WHERE ass.cdcooper = gi.cdcooper 
+                 WHERE ass.cdcooper = gi.cdcooper
                    AND ass.nrdconta = gi.nrdconta) nrcpfcgc_nrdconta
           FROM tbcc_grupo_economico        ge
               ,tbcc_grupo_economico_integ  gi
@@ -404,10 +407,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
           FROM crapgrp gr
          WHERE gr.cdcooper = rw_cbase.cdcooper
            AND gr.nrdgrupo IN (
-              SELECT aux.nrdgrupo
-                       FROM crapgrp aux
-                      WHERE aux.cdcooper = rw_cbase.cdcooper
-                        AND DECODE(aux.inpessoa, 1,
+               SELECT aux.nrdgrupo
+                 FROM crapgrp aux
+                WHERE aux.cdcooper = rw_cbase.cdcooper
+                  AND DECODE(aux.inpessoa, 1,
                                to_char(aux.nrcpfcgc, '00000000000'),
                                substr(to_char(aux.nrcpfcgc, '00000000000000'), 1, 8)) =
                                rw_cbase.nrcpfcgc_compara
@@ -445,14 +448,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          , RISC0004.fn_traduz_risco(ris.inrisco_final) risco_final
          , ris.cdmodali as ris_cdmodali
          , decode (ris.cdmodali
-                 , 999, 'CTA'
-                 , 101,  'CTA'
-                 , 201,  'LIM'
+                 , 0, 'CTA' -- Apenas para compatibilidade com dados pré-existentes (foi mantido apenas o '999')
+                 , 101, 'CTA'
+                 , 201, 'LIM'
                  , 1901, 'LIM'
-                 , 299,  'EMP'
-                 , 499,  'EMP'
-                 , 301,  'DCH'
-                 , 302,  'DTI') tipo_registro
+                 , 299, 'EMP'
+                 , 499, 'EMP'
+                 , 301, 'DCH'
+                 , 302, 'DTI'
+                 , 999, 'CTA'  ) tipo_registro
              , epr.idquaprc as epr_idquaprc
              , epr.cdlcremp as epr_cdlcremp
              , epr.cdfinemp as epr_cdfinemp
@@ -470,7 +474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
      WHERE ris.cdcooper = pr_cdcooper
        AND ris.nrdconta = pr_nrdconta
        AND ris.dtrefere = pr_dtmvtoan
-     ORDER BY decode(ris.cdmodali, 0, 0, 1);
+     ORDER BY decode(ris.cdmodali, 0, 0, 999, 0, 1);
     rw_tbrisco_central cr_tbrisco_central%ROWTYPE;
 
     -- Calendário da cooperativa selecionada
@@ -559,10 +563,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                  , rw_dat.dtmvtoan) LOOP
 
                 -- trata tipo de registro Refinanciamento (REF)
-                IF rw_tabrisco_central.epr_idquaprc IN (4, 3) 
-                OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
+                IF rw_tabrisco_central.epr_idquaprc IN (4, 3)
+                OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL
                 OR (rw_tabrisco_central.lcr_flgrefin = 1 AND
-                    rw_tabrisco_central.lcr_flgstlcr = 1) 
+                    rw_tabrisco_central.lcr_flgstlcr = 1)
                 OR rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
                      vr_tiporegistro := 'REF';
                 ELSE
@@ -603,16 +607,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                  , rw_dat.dtmvtoan) LOOP
 
                    -- trata tipo de registro Refinanciamento (REF)
-                IF rw_tabrisco_central.epr_idquaprc IN (4, 3) 
-                OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL 
+                IF rw_tabrisco_central.epr_idquaprc IN (4, 3)
+                OR rw_tabrisco_central.dtinicio_atraso_refin IS NOT NULL
                 OR (rw_tabrisco_central.lcr_flgrefin = 1 AND
-                    rw_tabrisco_central.lcr_flgstlcr = 1) 
+                    rw_tabrisco_central.lcr_flgstlcr = 1)
                 OR rw_tabrisco_central.epr_cdfinemp IN (13,23,62,63,66,69) THEN
                      vr_tiporegistro := 'REF';
                 ELSE
                    vr_tiporegistro := rw_tabrisco_central.tipo_registro;
                 END IF;
-                                
+
                 -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
@@ -798,7 +802,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
   END pc_busca_ctr_acordos;
-  
+
   PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -825,12 +829,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     Alterações :
 
     -------------------------------------------------------------------------------------------------------------*/
-    
-    -- CURSORES --    
-    
+
+    -- CURSORES --
+
     --> Consultar se já houve prejuizo nessa conta
     CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT t.dtinclusao,
              t.qtdiaatr,
              t.vlpgprej,
@@ -841,34 +845,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         FROM tbcc_prejuizo t
        WHERE t.cdcooper = pr_cdcooper
          AND t.nrdconta = pr_nrdconta;
-    rw_prejuizo cr_prejuizo%ROWTYPE;    
-    
+    rw_prejuizo cr_prejuizo%ROWTYPE;
+
     --> Consultar crapass
     CURSOR cr_crapass(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT c.inprejuz
         FROM crapass c
        WHERE c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta
          AND c.inprejuz = 1;
-    rw_crapass cr_crapass%ROWTYPE;  
-    
+    rw_crapass cr_crapass%ROWTYPE;
+
     --> Consultar crapsld
     CURSOR cr_crapsld(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT c.vliofmes
         FROM crapsld c
        WHERE c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta;
-    rw_crapsld cr_crapsld%ROWTYPE;  
-    
+    rw_crapsld cr_crapsld%ROWTYPE;
+
     -- Calendário da cooperativa selecionada
     CURSOR cr_dat(pr_cdcooper crapdat.cdcooper%TYPE) IS
       SELECT dat.dtmvtolt
         FROM crapdat dat
        WHERE dat.cdcooper = pr_cdcooper;
     rw_dat cr_dat%ROWTYPE;
-    
+
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000);
@@ -877,7 +881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
     --Tabela de Erros
     vr_tab_erro gene0001.typ_tab_erro;
-    
+
     -- Variaveis de log
     vr_cdcooper crapcop.cdcooper%TYPE;
     vr_cdoperad VARCHAR2(100);
@@ -940,163 +944,163 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                            pr_tag_nova => 'inf',
                            pr_tag_cont => NULL,
                            pr_des_erro => vr_dscritic);
-    
+
     -----> PROCESSAMENTO PRINCIPAL <-----
-    
+
     pr_cdcritic := NULL;
     pr_dscritic := NULL;
     vr_qtdiaatr := 0;
     vr_qtdiapre := 0;
     vr_inprejuz := 'N';
     vr_qttotatr := 0;
-    vr_saldodev := 0; 
-    
+    vr_saldodev := 0;
+
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta);
 
     FETCH cr_crapass INTO rw_crapass;
-    
-    IF cr_crapass%FOUND THEN 
+
+    IF cr_crapass%FOUND THEN
       CLOSE cr_crapass;
-      
+
       vr_inprejuz := 'S';
-       
+
       OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta);
-                       
+
       FETCH cr_prejuizo INTO rw_prejuizo;
-       
-      IF cr_prejuizo%FOUND THEN 
-          
+
+      IF cr_prejuizo%FOUND THEN
+
         CLOSE cr_prejuizo;
-          
+
         -- Faz todo o processamento dos detalhes do prejuízo --
-        -- Diego Simas (AMcom)         
+        -- Diego Simas (AMcom)
         -- Dias em atraso   --
-        -- Dias em prejuízo --  
-          
+        -- Dias em prejuízo --
+
         OPEN cr_dat(pr_cdcooper => pr_cdcooper);
-                        
+
         FETCH cr_dat INTO rw_dat;
-       
-        IF cr_dat%FOUND THEN 
+
+        IF cr_dat%FOUND THEN
           CLOSE cr_dat;
           -- Dias em Atraso   --
-          vr_qtdiaatr := ((rw_dat.dtmvtolt - rw_prejuizo.dtinclusao) + rw_prejuizo.qtdiaatr); 
+          vr_qtdiaatr := ((rw_dat.dtmvtolt - rw_prejuizo.dtinclusao) + rw_prejuizo.qtdiaatr);
           -- Dias em Prejuízo --
-          vr_qtdiapre := (rw_dat.dtmvtolt - rw_prejuizo.dtinclusao);              
+          vr_qtdiapre := (rw_dat.dtmvtolt - rw_prejuizo.dtinclusao);
         ELSE
-          CLOSE cr_dat;             
+          CLOSE cr_dat;
         END IF;
-        
+
         -- Dias Total Atraso
-        vr_qttotatr := vr_qtdiaatr + vr_qtdiapre; 
+        vr_qttotatr := vr_qtdiaatr + vr_qtdiapre;
 
         OPEN cr_crapsld(pr_cdcooper => pr_cdcooper,
-                        pr_nrdconta => pr_nrdconta); 
+                        pr_nrdconta => pr_nrdconta);
         FETCH cr_crapsld INTO rw_crapsld;
-        
+
         vr_iof := 0;
-        
-        IF cr_crapsld%FOUND THEN 
+
+        IF cr_crapsld%FOUND THEN
           CLOSE cr_crapsld;
           vr_iof := rw_crapsld.vliofmes;
-          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes));          
-        ELSE          
-          CLOSE cr_crapsld;     
-          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej));        
+          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + rw_crapsld.vliofmes));
+        ELSE
+          CLOSE cr_crapsld;
+          vr_saldodev := ((rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej));
         END IF;
-        
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'dttransf', -- Transferência
                                pr_tag_cont => to_char(rw_prejuizo.dtinclusao, 'DD/MM/YYYY'),
                                pr_des_erro => vr_dscritic);
-          
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vltrapre', -- Valor Transferido para Prejuízo
                                pr_tag_cont => rw_prejuizo.vldivida_original,
                                pr_des_erro => vr_dscritic);
-                               
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlsdprej', -- Saldo Atual
                                pr_tag_cont => rw_prejuizo.vlsdprej,
-                               pr_des_erro => vr_dscritic);                                                       
-          
+                               pr_des_erro => vr_dscritic);
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'qtdiaatr', -- Dias em atraso
                                pr_tag_cont => vr_qtdiaatr,
                                pr_des_erro => vr_dscritic);
-                                 
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'qtdiapre', -- Dias em prejuízo
                                pr_tag_cont => vr_qtdiapre,
-                               pr_des_erro => vr_dscritic);  
-         
+                               pr_des_erro => vr_dscritic);
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'qtdittat', -- Dias total atraso
                                pr_tag_cont => vr_qttotatr,
-                               pr_des_erro => vr_dscritic);   
-                               
+                               pr_des_erro => vr_dscritic);
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vljuprej', -- Juros Remuneratório
                                pr_tag_cont => rw_prejuizo.vljuprej,
                                pr_des_erro => vr_dscritic);
-                               
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'valoriof', -- IOF
                                pr_tag_cont => vr_iof,
-                               pr_des_erro => vr_dscritic);                                                               
-                               
+                               pr_des_erro => vr_dscritic);
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlpagpre', -- Valor pago prejuízo
                                pr_tag_cont => rw_prejuizo.vlpgprej,
-                               pr_des_erro => vr_dscritic);                    
-                               
+                               pr_des_erro => vr_dscritic);
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlabopre', -- Valor abono prejuízo
                                pr_tag_cont => rw_prejuizo.vlrabono,
-                               pr_des_erro => vr_dscritic);  
-                               
+                               pr_des_erro => vr_dscritic);
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlslddev', -- Saldo Devedor
                                pr_tag_cont => abs(least(vr_saldodev,0)),
-                               pr_des_erro => vr_dscritic);  
-         
+                               pr_des_erro => vr_dscritic);
+
       ELSE
-        CLOSE cr_prejuizo;          
-      END IF;       
+        CLOSE cr_prejuizo;
+      END IF;
     ELSE
-      CLOSE cr_crapass;       
+      CLOSE cr_crapass;
     END IF;
-    
+
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                            pr_tag_pai  => 'inf',
                            pr_posicao  => vr_qtregist,
                            pr_tag_nova => 'inprejuz', -- Indicador de Prejuízo
                            pr_tag_cont => vr_inprejuz,
-                           pr_des_erro => vr_dscritic);  
+                           pr_des_erro => vr_dscritic);
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1122,7 +1126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
-  END pc_consulta_preju_cc; 
+  END pc_consulta_preju_cc;
 
 END TELA_ATENDA_OCORRENCIAS;
 /
