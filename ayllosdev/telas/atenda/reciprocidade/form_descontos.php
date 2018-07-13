@@ -60,6 +60,36 @@ include("../../../includes/carrega_permissoes.php");
 $xml  = "";
 $xml .= "<Root>";
 $xml .= " <Dados>";
+$xml .= "   <idcalculo_reciproci>4062</idcalculo_reciproci>";
+$xml .= "   <cdcooper>1</cdcooper>";
+$xml .= "   <nrdconta></nrdconta>";
+$xml .= " </Dados>";     
+$xml .= "</Root>";
+
+// Executa script para envio do XML
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "CONSULTA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getObjectXML($xmlResult);
+
+$dados = $xmlObj->roottag;
+
+$vr_boletos_liquidados = getByTagName($dados->tags,"vr_boletos_liquidados");
+$vr_volume_liquidacao = getByTagName($dados->tags,"vr_volume_liquidacao");
+$vr_flgdebito_reversao = getByTagName($dados->tags,"vr_flgdebito_reversao");
+$vr_qtdfloat = getByTagName($dados->tags,"vr_qtdfloat");
+
+// var_dump($vr_boletos_liquidados, $vr_volume_liquidacao, $vr_flgdebito_reversao, $vr_qtdfloat);
+
+// Se ocorrer um erro, mostra crítica
+if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	exibeErro(utf8_encode($msgErro));
+}
+
+
+// Monta o xml para a requisicao
+$xml  = "";
+$xml .= "<Root>";
+$xml .= " <Dados>";
 $xml .= "   <nmdominio>TPMESES_RECIPRO</nmdominio>";
 $xml .= " </Dados>";     
 $xml .= "</Root>";
@@ -141,14 +171,14 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
 			<span>Qtd</span>
-			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="" />
+			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="<?php echo $vr_boletos_liquidados; ?>" />
 		</td>
 	</tr>
 	<tr class="corImpar">
 		<td>Volume liquida&ccedil;&atilde;o</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor" value="" />
+			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor" value="<?php echo $vr_volume_liquidacao; ?>" />
 		</td>
 	</tr>
 	<tr class="corPar">
@@ -157,7 +187,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			<select class="campo" style="width:153px">
 			<option value=""></option>
 			<?php foreach($floats as $floating) {
-				echo '<option value="' . getByTagName($floating->tags,"cddominio") . '">' . getByTagName($floating->tags,"dscodigo") . '</option>';
+				echo '<option ' . (($vr_qtdfloat == getByTagName($floating->tags,"cddominio")) ? 'selected' : '') . ' value="' . getByTagName($floating->tags,"cddominio") . '">' . getByTagName($floating->tags,"dscodigo") . '</option>';
 			} ?>
 			</select>
 		</td>
@@ -190,8 +220,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		<td>D&eacute;bito reajuste da tarifa</td>
 		<td align="right">
 			<select class="campo" id="debito_reajuste_reciproci" style="width:153px;">
-				<option value="1">Sim</option>
-				<option value="0" selected>N&atilde;o</option>
+				<option value="1" <?php (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
+				<option value="0" <?php (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>
 			</select>
 		</td>
 	</tr>
@@ -418,6 +448,59 @@ function validaHabilitacaoCamposBtn() {
 
 function solicitarAprovacao() {
 	validaDados();
+}
+
+function editarConvenio(nrconven) {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando ...");
+
+	$.ajax({
+		dataType: "json",
+		type: "POST",
+		url: UrlSite + "telas/atenda/reciprocidade/consulta_convenio.php",
+		data: {
+            nrconven: nrconven,
+			redirect: "script_ajax"
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+		},
+        success: function (response) {
+            hideMsgAguardo();
+			nrconven = response.nrconven;
+			nrcnvceb = response.nrcnvceb;
+			dsorgarq = response.dsorgarq;
+			insitceb = response.insitceb;
+			inarqcbr = response.inarqcbr;
+			cddemail = response.cddemail;
+			dsdemail = response.dsdemail;
+			flgcruni = response.flgcruni;
+			flgcebhm = response.flgcebhm;
+			qtTitulares = response.qtTitulares;
+			titulares = response.titulares;
+			dsdmesag = response.dsdmesag;
+			flgregon = response.flgregon;
+			flgpgdiv = response.flgpgdiv;
+			flcooexp = response.flcooexp;
+			flceeexp = response.flceeexp;
+			flserasa = response.flserasa;
+			qtdfloat = response.qtdfloat;
+			flprotes = response.flprotes;
+			qtlimmip = response.qtlimmip;
+			qtlimaxp = response.qtlimaxp;
+			qtdecprz = response.qtdecprz;
+			idrecipr = response.idrecipr;
+			inenvcob = response.inenvcob;
+			flsercco = response.flsercco;
+			flgregis = response.flgregis;
+			cddbanco = response.cddbanco;
+
+			consulta('A', nrconven, dsorgarq, 'false', flgregis, cddbanco);
+		}
+	});
+
+	return false;
 }
 
 controlaLayout('divConveniosRegistros');

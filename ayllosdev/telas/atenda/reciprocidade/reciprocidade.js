@@ -77,6 +77,9 @@ var tpdtermo_imprimir = 1;
 //Lista de Convenios para desconto
 var descontoConvenios = [];
 
+var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, qtTitulares,
+    vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
+    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco;
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
@@ -151,6 +154,11 @@ function habilitaSetor(setorLogado) {
             controlaFoco();
 		}
 	});
+ }
+
+ function voltarParaDesconto() {
+    $("#divOpcaoConsulta").css('display', 'none');
+    $("#divConteudoOpcao").css('display', 'block');
  }
 
  //Função para controle de navegação
@@ -403,7 +411,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 
 	gFlginclu = flginclu == 'true';
 
-    var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
+    /*var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
     var inarqcbr = $("#inarqcbr", "#divConteudoOpcao").val();
     var cddemail = $("#cddemail", "#divConteudoOpcao").val();
@@ -427,7 +435,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 	var inenvcob = $("#inenvcob", "#divConteudoOpcao").val();
 	var emails;
 
-	var flsercco = $("#flsercco","#divConteudoOpcao").val();
+	var flsercco = $("#flsercco","#divConteudoOpcao").val();*/
 
     // Situacao nao permite alteracao da cobranca
     if (cddopcao == "A" &&
@@ -515,7 +523,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             flserasa: flserasa,
             cddbanco: cddbanco,
 			qtTitulares: qtTitulares,
-            titulares: titulares,
+            titulares: vtitulares,
             emails: emails,
             cddopcao: cddopcao,
 			flsercco: flsercco, /* Indica se Convenio Possui Serasa*/
@@ -1649,7 +1657,7 @@ function acessaAba(id,cddopcao) {
     }
 
     if (linkVoltar == 1){
-        document.getElementById("btnVoltar").onclick=function(){acessaOpcaoContratos();}
+        document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
     }else if (linkVoltar == 2){
         document.getElementById("btnVoltar").onclick=function(){acessaAba(id + 1,cddopcao);}
     }
