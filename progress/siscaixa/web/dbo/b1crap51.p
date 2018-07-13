@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 25/06/2018
+   Data    : Marco/2001                      Ultima atualizacao: 13/07/2018
 
    Dados referentes ao programa:
 
@@ -180,6 +180,9 @@
                             (Fabio Adriano - AMcom)
                             
                25/06/2018 - inc0016988 inclusao de controles de locks (Carlos)
+               
+               13/07/2018 - Correcao na procedure autentica_cheques que estava gerando
+                            10 autenticoes para cada deposito de cheque (Tiago/Fabricio)
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -8457,6 +8460,12 @@ PROCEDURE autentica_cheques:
 
               FIND CURRENT b-crapmdw1 NO-LOCK.
               RELEASE b-crapmdw1.
+              
+              IF  VALID-HANDLE(h-b1crap00) THEN
+                  DELETE PROCEDURE h-b1crap00.
+              
+              RETURN "OK".
+  
             END.
           END. /* fim contador */
           
