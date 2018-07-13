@@ -1114,8 +1114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       --> Efetuar laço para retornar todos os registros disponíveis:
       FOR rw_crapavt IN cr_crapavt(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta 
-                                  ,pr_nrctrlim => pr_nrctrlim
-                                  ,pr_tpctrato => 8
+                                  ,pr_nrctrlim => 0
+                                  ,pr_tpctrato => 6
                                   ,pr_dsproftl => 'SOCIO') LOOP 
     
         -- Setar flag para indicar que há sócio
@@ -1304,8 +1304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     -->Efetuar laço para retornar todos os registros disponíveis de Procuradores:
     FOR rw_crapavt IN cr_crapavt(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta 
-                                ,pr_nrctrlim => pr_nrctrlim
-                                ,pr_tpctrato => 8
+                                ,pr_nrctrlim => 0
+                                ,pr_tpctrato => 6
                                 ,pr_dsproftl => 'PROCURADOR') LOOP
       -- Setar flag para indicar que há sócio
       vr_flprocura := true;
