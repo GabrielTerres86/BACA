@@ -12,7 +12,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jean Michel
-   Data    : Setembro/2014                       Ultima atualizacao: 07/12/2017
+   Data    : Setembro/2014                       Ultima atualizacao: 11/07/2018
   
    Dados referentes ao programa:
   
@@ -26,6 +26,9 @@ BEGIN
                07/12/2017 - Checar a nova forma de bloqueio e aproveitar o processo que ja
                             existe para resgate de conta investimento para reaplicacao.
                             (Jaison/Marcos Martini - PRJ404)
+
+               11/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
+                            pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
 
   .................................................................................... */
 
@@ -285,6 +288,10 @@ BEGIN
     vr_cdagenan crapage.cdagenci%TYPE := 0;
     vr_cdagenci crapage.cdagenci%TYPE := 0;
   
+    -- PJ450
+    vr_incrineg      INTEGER;
+    vr_tab_retorno   LANC0001.typ_reg_retorno;
+
     -- Subrotinas
   
     -- Subrotina para escrever texto na variável clob do xml
@@ -1472,7 +1479,37 @@ BEGIN
             vr_dscritic := 'Erro ao atualizar registro de lote de credito Conta-Corrente. Erro:' || SQLERRM;
             RAISE vr_exc_saida;
         END;
-      
+
+        -- PJ450 - Insere Lancamento 
+        -- Efetua lancamento de crédito em conta-corrente        
+        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_craplot.cdcooper
+                                          ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                                          ,pr_cdagenci => rw_craplot.cdagenci
+                                          ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                          ,pr_nrdolote => rw_craplot.nrdolote
+                                          ,pr_nrdconta => rw_craprac.nrdconta
+                                          ,pr_nrdctabb => rw_craprac.nrdconta
+                                          ,pr_nrdocmto => rw_craprac.nraplica
+                                          ,pr_dtrefere => rw_craplot.dtmvtolt
+                                          ,pr_cdhistor => rw_craprac.cdhsvrcc
+                                          ,pr_nrseqdig => rw_craplot.nrseqdig
+                                          ,pr_vllanmto => vr_vlsldrgt
+                                          ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                          ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                          ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                          ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                          ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                          ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                          );
+
+          -- Conforme tipo de erro realiza acao diferenciada
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+               RAISE vr_exc_saida;
+            END If;
+          END IF;
+
+     /* 
         -- Efetua lancamento de crédito em conta-corrente
         BEGIN
         
@@ -1509,7 +1546,7 @@ BEGIN
             vr_dscritic := 'Erro ao inserir registro de lancamento em conta-corrente. Erro: ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
-      
+     */
       END IF; -- Fim verifica se aplicacao esta bloqueada
     
       vr_tptelefo := ''; -- Inicializa variavel de sequencia de telefone
