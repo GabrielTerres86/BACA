@@ -55,9 +55,9 @@ require_once("../../../class/xmlfile.php");
 // Carrega permissões do operador
 include("../../../includes/carrega_permissoes.php");
 
-$idcalculo_reciproci = (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : '4062'; // 4062 para debug, deve ser alterado para ''
+$idcalculo_reciproci = (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : '';
 $cdcooper            = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
-$nrdconta            = (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : '8753270'; // 8753270 para debug, deve ser alterado para $glbvars['nrdconta']
+$nrdconta            = (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : $glbvars['nrdconta'];
 
 // Monta o xml para a requisicao
 $xml  = "";
@@ -80,6 +80,7 @@ $vr_volume_liquidacao  = getByTagName($dados->tags,"vr_volume_liquidacao");
 $vr_flgdebito_reversao = getByTagName($dados->tags,"vr_flgdebito_reversao");
 $vr_qtdfloat           = getByTagName($dados->tags,"vr_qtdfloat");
 
+$convenios = $dados->tags[4]->tags;
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -136,8 +137,12 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 }
 
 ?>
+<input type="hidden" id="idcalculo_reciproci" value="<?php echo $idcalculo_reciproci ?>" />
 <input type="hidden" id="imgEditar" value="<?php echo $UrlImagens; ?>icones/ico_editar.png" />
 <input type="hidden" id="imgExcluir" value="<?php echo $UrlImagens; ?>geral/excluir.gif" />
+<div align="center">
+	<a href="#" class="botao" style="float:none; padding: 3px 6px; margin: 15px 0" id="btnConveniosCobranca" onClick="descontoConvenio('A','1'); return false;">Conv&ecirc;nios de Cobran&ccedil;a</a>
+</div>
 <div id="divConveniosRegistros">
 	<div class="divRegistros">
 		<table id="gridDescontoConvenios" style="table-layout: fixed;">
@@ -147,28 +152,36 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 				</tr>			
 			</thead>
 			<tbody>
-				<!--<tr>
-					<td width="60%">XXX002</td>
+				<?php
+				$cnv = array();
+				
+				foreach($convenios as $convenio) {
+				$cnv[] = '{"convenio":'.$convenio->tags[0]->cdata.'}';
+				?>
+				<tr>
+					<td width="60%"><?php echo $convenio->tags[0]->cdata ?></td>
 					<td width="40%">
-						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onClick="return false;" border="0" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
-						<img src="<?php echo $UrlImagens; ?>geral/excluir.gif" onClick="return false;" border="0" title="Excluir Conv&ecirc;nio"/>
+						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
+						<img src="<?php echo $UrlImagens; ?>geral/excluir.gif" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;" title="Excluir Conv&ecirc;nio"/>
 					</td>
 				</tr>
-				<tr>
-					<td width="60%">XXX004</td>
-					<td width="40%">
-						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onClick="return false;" border="0" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
-						<img src="<?php echo $UrlImagens; ?>geral/excluir.gif" onClick="return false;" border="0" title="Excluir Conv&ecirc;nio"/>
-					</td>
-				</tr>-->
+				<?php
+				}
+				?>
 			</tbody>		
 		</table>
 	</div>
 </div>
-<div align="center">
-	<a href="#" class="botao" style="float:none; padding: 3px 6px; margin: 15px 0" id="btnConveniosCobranca" onClick="descontoConvenio('A','1'); return false;">Conv&ecirc;nios de Cobran&ccedil;a</a>
-</div>
+<?php if (count($cnv)) { ?>
+<script>
+	descontoConvenios = [<?php echo implode(',', $cnv); ?>];
+</script>
+<?php } ?>
 <table width="100%" class="tabelaDesconto">
+	<tr>
+		<td>&nbsp;</td>
+		<td>&nbsp;</td>
+	</tr>
 	<tr class="corPar">
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">

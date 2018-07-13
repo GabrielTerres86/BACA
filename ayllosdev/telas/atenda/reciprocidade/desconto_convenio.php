@@ -88,7 +88,6 @@ function exibeErro($msgErro) {
       </thead>
       <tbody>
         <?  
-          $idrecipr = 84;
           for ($i = 0; $i < count($convenios); $i++) {
           $convenio = getByTagName($convenios[$i]->tags, 'nrconven');
           $tipo = getByTagName($convenios[$i]->tags, 'dsorgarq');

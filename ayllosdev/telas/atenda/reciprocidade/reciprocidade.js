@@ -249,6 +249,9 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
  }
 //Abre modal de desconto de convenios.
  function descontoConvenio() {
+
+  var idrecipr = $('#idcalculo_reciproci', '#divConteudoOpcao').val();
+
   showMsgAguardo("Aguarde, carregando ...");
 
     // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
@@ -259,7 +262,7 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     data: {
             nrcnvceb: 1,
             nrdconta: nrdconta,
-            //idrecipr: idrecipr,
+            idrecipr: idrecipr,
             redirect: "script_ajax"
     },
         error: function (objAjax, responseError, objExcept) {
