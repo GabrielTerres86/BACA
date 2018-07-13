@@ -231,7 +231,7 @@
 		<input name="nmcidade" id="nmcidade" type="text"  value="<? echo getByTagName($registro,'nmcidade') ?>" />
 
 		<br style="clear:both" />
-				
+		
 	</fieldset>	
 
 	<fieldset>

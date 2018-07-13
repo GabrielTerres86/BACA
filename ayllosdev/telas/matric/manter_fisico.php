@@ -14,7 +14,6 @@
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
- 
  *                17/10/2017 - Ajuste para carregar idade ao validadr dados. PRJ339-CRM (Odirle/AMcom).
  */
 ?> 
@@ -251,7 +250,7 @@
 								
         //CPF Responsabilidade social		
 		if( verificaCpfCnpjBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, 1, $GLOBALS['nrcpfcgc']) == true ){			
-			exibirErro('error','CPF n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema CECRED.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
+			exibirErro('error','CPF n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
 		} 
 			
 		//Situação
