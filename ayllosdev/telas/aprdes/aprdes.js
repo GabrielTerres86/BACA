@@ -113,7 +113,7 @@ function iniciaTela(){
 
 	controlaPesquisas();
 
-	cNrdconta.unbind("change").bind("change",function(){
+	cNrdconta.unbind("focusout").bind("focusout",function(){
         cNrcpfcgc.val('');
         cNmprimtl.val('');
 		if ($(this).val()!=''){
