@@ -239,7 +239,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps389 (pr_cdcooper IN crapcop.cdcooper%T
       vr_tab_retorno   lanc0001.typ_reg_retorno;
       vr_incrineg      NUMBER;
       vr_cdpesqbb      VARCHAR2(200);	
-      vr_fldebita      BOOLEAN;
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
 
@@ -461,15 +460,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps389 (pr_cdcooper IN crapcop.cdcooper%T
         CLOSE cr_craplot; -- Fecha a capa de lote
 
         -- PRJ450 - 10/07/2018 - inicio:
-        vr_fldebita := lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
-                                               ,pr_nrdconta  => rw_crapsdc.nrdconta
-                                               ,pr_cdhistor => 127 );
-        /* se não puder efetuar o lançamento */
-        IF NOT vr_fldebita THEN
-          /*A ação CONTINUE despreza as ações dentro de um loop e segue para o próximo registro, portanto, teremos situações em que ela não poderá ser utilizada */
-          NULL;--continue;
-        END IF;
-											   
         IF rw_crapsdc.tplanmto = 1 THEN
           vr_cdpesqbb := 'SUBSCRICAO DE CAPITAL INICIAL';
         ELSE
@@ -532,7 +522,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps389 (pr_cdcooper IN crapcop.cdcooper%T
               -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
               -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
               -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-              NULL;--CONTINUE;  
+              RETURN;--CONTINUE;  
            END IF;  
         END IF;		  
 		
