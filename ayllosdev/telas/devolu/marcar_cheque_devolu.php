@@ -6,6 +6,7 @@
  * OBJETIVO     : Requisição da tela DEVOLU
  * --------------
  * ALTERAÇÕES   : 09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579) 
+ *				: 12/07/2018 - Passagem de um novo parametro cdalinea (PRB0040153 - Andrey Formigari)
  * --------------
  */
 ?>
@@ -36,6 +37,7 @@
     $cddsitua = (isset($_POST['cddsitua'])) ? $_POST['cddsitua'] : 0  ;
     $nrdrecid = (isset($_POST['nrdrecid'])) ? $_POST['nrdrecid'] : 0  ;
     $vllanmto = (isset($_POST['vllanmto'])) ? $_POST['vllanmto'] : 0  ;
+	$cdalinea = (isset($_POST['cdalinea'])) ? $_POST['cdalinea'] : 0  ;
     $flag = (isset($_POST['flag'])) ? $_POST['flag'] : 0  ;
 		
 	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';
@@ -57,6 +59,7 @@
 	$xml .= '		<cddsitua>'.$cddsitua.'</cddsitua>';
 	$xml .= '		<nrdrecid>'.$nrdrecid.'</nrdrecid>';
 	$xml .= '		<vllanmto>'.$vllanmto.'</vllanmto>';
+	$xml .= '		<cdalinea>'.$cdalinea.'</cdalinea>';
 	$xml .= '		<flag>'.$flag.'</flag>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';

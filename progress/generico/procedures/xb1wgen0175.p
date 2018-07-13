@@ -11,6 +11,7 @@
 
    Alteracoes: 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                             de cheques (Lucas Ranghetti #484923)
+			 : 12/07/2018 - Passagem de um novo parametro cdalinea (PRB0040153 - Andrey Formigari)
    
 ............................................................................ */
 
@@ -244,6 +245,7 @@ PROCEDURE marcar_cheque_devolu:
                              INPUT aux_dtmvtolt,
                              INPUT aux_dsbccxlt,
                              INPUT aux_vllanmto,
+							 INPUT aux_cdalinea,
                              OUTPUT aux_pedsenha,
                              OUTPUT aux_execucao,
                              OUTPUT TABLE tt-erro).
