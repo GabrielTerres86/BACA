@@ -16,6 +16,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
    Alteracoes: 27/06/2018 - P450 - Criação de procedure para consulta de saldos - pc_consulta_sld_cta_prj (Daniel/AMcom)
                27/06/2018 - P450 - Criação de procedure para efetuar lançamentos - pc_gera_lcm_cta_prj (Daniel/AMcom)
                28/06/2018 - P450 - Criação de procedure para liquidar conta em prejuizo - pc_liquida_prejuizo_cc (Rangel/Amcom)
+               13/07/2018 - P450 - Criação rotina para calcular juros de prejuizos - pc_calc_juro_remuneratorio
 ..............................................................................*/
 
  FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
@@ -108,6 +109,17 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                      ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML                                      
                                      ,pr_des_erro   OUT VARCHAR2);        --> Erros do processo
 
+
+  PROCEDURE pc_calc_juro_remuneratorio (pr_cdcooper    IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                                  ,pr_ehmensal    IN BOOLEAN --Indicador Mensal
+                                  ,pr_dtdpagto    IN crapdat.dtmvtolt%TYPE --Data pagamento
+                                  ,pr_idprejuizo  IN NUMBER -- indicador do prejuizo a ser calculado
+                                  ,pr_vljpreju    OUT NUMBER --Valor Juros no Mes
+                                  ,pr_diarefju    OUT INTEGER --Dia Referencia Juros
+                                  ,pr_mesrefju    OUT INTEGER --Mes Referencia Juros
+                                  ,pr_anorefju    OUT INTEGER --Ano Referencia Juros
+                                  ,pr_des_reto    OUT VARCHAR2 --Retorno OK/NOK
+                                  );
 
 end PREJ0003;
 /
@@ -1937,6 +1949,131 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     
   end pc_transf_cc_preju_fraude;
   --
+
+  PROCEDURE pc_calc_juro_remuneratorio (pr_cdcooper    IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                                  ,pr_ehmensal    IN BOOLEAN --Indicador Mensal
+                                  ,pr_dtdpagto    IN crapdat.dtmvtolt%TYPE --Data pagamento
+                                  ,pr_idprejuizo  IN NUMBER -- indicador do prejuizo a ser calculado
+                                  ,pr_vljpreju    OUT NUMBER --Valor Juros no Mes
+                                  ,pr_diarefju    OUT INTEGER --Dia Referencia Juros
+                                  ,pr_mesrefju    OUT INTEGER --Mes Referencia Juros
+                                  ,pr_anorefju    OUT INTEGER --Ano Referencia Juros
+                                  ,pr_des_reto    OUT VARCHAR2 --Retorno OK/NOK
+                                  ) IS 
+
+    /* .............................................................................                                     
+    Programa: pc_calc_juro_remuneratorio
+    Sistema :
+    Sigla   : PREJ
+    Autor   : Renato Cordeiro - AMcom
+    Data    : Julho/2018.                  Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Calcular juros para prejuizos
+
+    Alteracoes:
+*/
+       vr_exc_saida exception;
+
+       cursor cr_tbcc_prejuizo is
+       select a.dtinclusao, a.dtrefjur, a.vlsdprej
+       from tbcc_prejuizo a
+       where a.idprejuizo = pr_idprejuizo;
+
+       rw_tbcc_prejuizo cr_tbcc_prejuizo%rowtype;
+    
+       vr_dstextab craptab.dstextab%TYPE;
+       vr_pctaxpre NUMBER  :=0;
+
+       vr_diarefju  number(2); -- *2* ver tipos de dados dessas 8 variaveis
+       vr_dtdpagto  number(8);
+       vr_mesrefju  number(2);
+       vr_anorefju  number(4);
+       vr_diafinal  number(2);
+       vr_mesfinal  number(2);
+       vr_anofinal  number(4);
+       vr_qtdedias  number(10);
+
+       vr_potencia NUMBER(30, 10);
+       vr_valor    NUMBER;
+
+    BEGIN
+      
+       open cr_tbcc_prejuizo;
+       if cr_tbcc_prejuizo%NOTFOUND then
+          pr_des_reto := 'Prejuizo não existe: '|| pr_idprejuizo;
+          raise vr_exc_saida;
+       else
+          fetch cr_tbcc_prejuizo into rw_tbcc_prejuizo;
+       end if;
+       close cr_tbcc_prejuizo;
+
+       vr_dtdpagto := to_char(pr_dtdpagto,'dd');
+
+       if rw_tbcc_prejuizo.dtrefjur is null then
+          vr_diarefju := to_char(rw_tbcc_prejuizo.dtinclusao,'dd');
+          vr_mesrefju := to_char(rw_tbcc_prejuizo.dtinclusao,'mm');
+          vr_anorefju := to_char(rw_tbcc_prejuizo.dtinclusao,'RRRR');
+       else
+          vr_diarefju := to_char(rw_tbcc_prejuizo.dtrefjur,'dd');
+          vr_mesrefju := to_char(rw_tbcc_prejuizo.dtrefjur,'mm');
+          vr_anorefju := to_char(rw_tbcc_prejuizo.dtrefjur,'RRRR');
+         
+       end if;
+
+       vr_diafinal := to_char(pr_dtdpagto,'dd');
+       vr_mesfinal := to_char(pr_dtdpagto,'mm');
+       vr_anofinal := to_char(pr_dtdpagto,'rrrr');
+
+       empr0001.pc_calc_dias360(pr_ehmensal => pr_ehmensal, 
+                                pr_dtdpagto => vr_dtdpagto,
+                                pr_diarefju => vr_diarefju, 
+                                pr_mesrefju => vr_mesrefju, 
+                                pr_anorefju => vr_anorefju, 
+                                pr_diafinal => vr_diafinal, 
+                                pr_mesfinal => vr_mesfinal, 
+                                pr_anofinal => vr_anofinal,
+                                pr_qtdedias => vr_qtdedias);
+ 
+       -- Buscar dados da TAB
+       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                ,pr_nmsistem => 'CRED'
+                                                ,pr_tptabela => 'USUARI'
+                                                ,pr_cdempres => 11
+                                                ,pr_cdacesso => 'PAREMPREST'
+                                                ,pr_tpregist => 01);
+
+       vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,105,6)),0);
+
+       --Calcular Juros
+       vr_valor    := 1 + (vr_pctaxpre / 100);
+       vr_potencia := POWER(vr_valor, vr_qtdedias);
+
+       --Retornar Juros do Mes
+       pr_vljpreju := rw_tbcc_prejuizo.vlsdprej * (vr_potencia - 1);
+
+       --Se valor for zero ou negativo
+       IF pr_vljpreju <= 0 THEN
+          --zerar Valor
+          pr_vljpreju := 0;
+          --Sair
+          RAISE vr_exc_saida;
+       END IF;
+       
+       pr_diarefju := vr_diarefju;
+       pr_mesrefju := vr_mesrefju;
+       pr_anorefju := vr_anorefju;
+       pr_des_reto := null;
+       
+    exception
+        when vr_exc_saida then
+            ROLLBACK;
+          
+    END pc_calc_juro_remuneratorio;
+
 
 END PREJ0003;
 /
