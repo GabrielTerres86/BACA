@@ -3357,7 +3357,7 @@ function pagarTitulosVencidos(){
                     showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
                 }
                 else if (response == 2){
-                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento com al&ccedil;a?";
+                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento com al&ccedil;ada?";
                     showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
                 }else{
                     //Invoca a funcao
