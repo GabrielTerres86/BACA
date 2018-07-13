@@ -56,7 +56,6 @@ $xmlObjeto = getObjectXML($xmlResult);
 if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
 	exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
 }
-
 $contratos = $xmlObjeto->roottag->tags[0]->tags;
 
 // Montar o xml de Requisicao de verificacao do serviço de SMS
@@ -78,9 +77,9 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
         
 }
 
-$flsitsms   = getByTagName($xmlDados->tags,"flsitsms");
-$dsalerta   = getByTagName($xmlDados->tags,"dsalerta");
-    
+$flsitsms = getByTagName($xmlDados->tags,"flsitsms");
+$dsalerta = getByTagName($xmlDados->tags,"dsalerta");
+$convenio_ativo = 0;
 
 // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 function exibeErro($msgErro) {
@@ -115,8 +114,10 @@ function exibeErro($msgErro) {
 					}
 					$dtcadast = getByTagName($contratos[$i]->tags, 'dtcadast');
 					$idrecipr = getByTagName($contratos[$i]->tags, 'idrecipr');
+					$convenio_ativo = getByTagName($contratos[$i]->tags, "convenio_ativo");
+					$mtdClick = "selecionaConvenio( '".$idrecipr."');";
 				?>
-					<tr id="convenio<?php echo $i; ?>">
+					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
 						<td><? echo $convenios; ?></td>
 						<td><? echo $idrecipr; ?></td>
@@ -134,15 +135,16 @@ function exibeErro($msgErro) {
 </div>
 
 <div id="divBotoes">
-	<input type="hidden" id= "dsdmesag"    name="dsdmesag" value="<?php echo $dsdmesag; ?>">    
+	<input type="hidden" id="dsdmesag" name="dsdmesag" value="<?php echo $dsdmesag; ?>">
+	<input type="hidden" id="idrecipr" name="idrecipr">
     
-    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos();return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
-	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos();return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
-	<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos();return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('I');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
+	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('C');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+	<a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('A');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
 	<?php //Habilitar botão apenas se possuir cobrança ativa
           // e se o serviço estiver ativo ou com algum tipo de alerta
           // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
-          if (1 == 1 && 
+          if ($convenio_ativo == 1 && 
               ($flsitsms == 1 || $dsalerta != "")) { ?>
         		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
 	<?php  } ?>

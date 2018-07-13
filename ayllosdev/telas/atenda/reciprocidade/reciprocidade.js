@@ -120,6 +120,7 @@ function habilitaSetor(setorLogado) {
             $("#divServSMS").css('display', 'none');
             $("#divHabilita_SMS").css('display', 'none');
             $("#divTrocaPacote_SMS").css('display', 'none');
+            $("#tdConteudoTela>table").prop('width', '650');
 
 			$("#divConteudoOpcao").html(response);
             controlaFoco();
@@ -128,10 +129,24 @@ function habilitaSetor(setorLogado) {
  }
 
  // Acessar tela principal da rotina
- function acessaOpcaoDescontos() {
+ function acessaOpcaoDescontos(cddopcao) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando os conv&ecirc;nios ...");
+
+    var idrecipr = 0;
+    if (cddopcao == 'A' || cddopcao == 'C') {
+        idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+        if (idrecipr == '') {
+            hideMsgAguardo();
+            showError("error","Selecione um contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            return;
+        } else if (idrecipr == 0) {
+            hideMsgAguardo();
+            showError("error","O contrato selecionado não possui reciprocidade.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            return;
+        }
+    }
 
 	// Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
 	$.ajax({
@@ -140,6 +155,7 @@ function habilitaSetor(setorLogado) {
 		url: UrlSite + "telas/atenda/reciprocidade/form_descontos.php",
 		data: {
 			nrdconta: nrdconta,
+            idcalculo_reciproci: idrecipr,
 			redirect: "html_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -149,6 +165,7 @@ function habilitaSetor(setorLogado) {
         success: function (response) {
 
             $("#divConteudoOpcao").css('display', 'block');
+            $("#tdConteudoTela>table").prop('width', '350');
 
 			$("#divConteudoOpcao").html(response);
             controlaFoco();
@@ -211,41 +228,8 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob) {
-
-    var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
-
-    $("#nrconven", "#divConteudoOpcao").val(nrconven);
-    $("#dsorgarq", "#divConteudoOpcao").val(dsorgarq);
-    $("#nrcnvceb", "#divConteudoOpcao").val(nrcnvceb);
-    $("#insitceb", "#divConteudoOpcao").val(insitceb);
-    $("#dtcadast", "#divConteudoOpcao").html(dtcadast);
-    $("#cdoperad", "#divConteudoOpcao").html(cdoperad);
-    $("#inarqcbr", "#divConteudoOpcao").val(inarqcbr);
-    $("#cddemail", "#divConteudoOpcao").val(cddemail);
-    $("#dsdemail", "#divConteudoOpcao").val(dsdemail);
-    $("#flgcruni", "#divConteudoOpcao").val(flgcruni);
-    $("#flgcebhm", "#divConteudoOpcao").val(flgcebhm);
-    $("#flgregis", "#divConteudoOpcao").val(flgregis);
-    $("#flgregon", "#divConteudoOpcao").val(flgregon);
-    $("#flgpgdiv", "#divConteudoOpcao").val(flgpgdiv);
-    $("#flcooexp", "#divConteudoOpcao").val(flcooexp);
-    $("#flceeexp", "#divConteudoOpcao").val(flceeexp);
-    $("#flserasa", "#divConteudoOpcao").val(flserasa);
-    $("#cddbanco", "#divConteudoOpcao").val(cddbanco);
-    $("#flsercco", "#divConteudoOpcao").val(flsercco);
-    $("#qtdfloat", "#divConteudoOpcao").val(qtdfloat);
-    $("#flprotes", "#divConteudoOpcao").val(flprotes);
-    $("#qtlimaxp", "#divConteudoOpcao").val(qtlimaxp);
-    $("#qtlimmip", "#divConteudoOpcao").val(qtlimmip);
-    $("#qtdecprz", "#divConteudoOpcao").val(qtdecprz);
+function selecionaConvenio(idrecipr) {
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
-	$("#inenvcob", "#divConteudoOpcao").val(inenvcob);
-
-	// Numero do convenio selecionado
-	nrconven_imprimir = normalizaNumero(nrconven);
-	// Se o convenio esta ativo, imprimir termo de adesão, caso contrário o de cancelamento
-	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
  }
 //Abre modal de desconto de convenios.
  function descontoConvenio() {
@@ -1370,7 +1354,7 @@ function controlaLayout(nomeForm) {
 
 		tabela.zebraTabela(0);
 
-        $('#' + nomeForm).css('width', '640px');
+        $('#' + nomeForm).css('width', '750px');
         divRegistro.css('height', '85px');
 
 		var ordemInicial = new Array();
@@ -2407,4 +2391,40 @@ function HabilitaSMS() {
             }
         });
     }
+}
+
+function validarExclusaoConvenio() {
+    if (!confirm('Confirma a exclus&atilde;o do conv&ecirc;nio ?')) {
+        return false;
+    }
+
+    $.ajax({
+        type: "POST",
+        async: false,
+        dataType: 'html',
+        url: UrlSite + "telas/atenda/reciprocidade/consulta_convenio.php",
+        data: {
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+        },
+        beforeSend: function() {
+            showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+        },
+        success: function(response) {
+            if (response) {
+                excluirConvenio();
+            }
+        }
+    });
+}
+
+function excluirConvenio() {
+    alert('Exclusão...');
+}
+
+function alterarConvenio() {
+    alert('Alterar...');
 }
