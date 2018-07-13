@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Ze Eduardo/Mirtes/Julio
-   Data    : Maio/2005.                         Ultima atualizacao: 08/11/2017
+   Data    : Maio/2005.                         Ultima atualizacao: 13/07/2018
 
    Dados referentes ao programa:
 
@@ -92,6 +92,10 @@
                             
                08/11/2017 - Alterar para gravar a versao do layout de debito dinamicamente no 
                             header do arquivo (Lucas Ranghetti #789879)
+                            
+               13/07/2018 - Remover parte do programa onde buscava registro que iria alimentar
+                            o relatorio antigo, hoje ja nao existe mais relatório.
+                            (Lucas Ranghetti PRB0040176)
 ............................................................................. */
 
 { includes/var_batch.i {1} }
@@ -131,7 +135,6 @@ DEF  VAR  aux_nrseqdig   AS INTEGER                                 NO-UNDO.
 DEF  VAR  aux_nmarqrel   AS CHAR                                    NO-UNDO.
 
 DEF  VAR  tot_vlfatura   AS DECIMAL                                 NO-UNDO.
-DEF  VAR  tot_vltarifa   AS DECIMAL                                 NO-UNDO.
 DEF  VAR  aux_nrsequen   AS CHAR                                    NO-UNDO.
 DEF  VAR  aux_nroentries AS INTE                                    NO-UNDO.
 DEF  VAR  aux_dsdemail   AS CHAR                                    NO-UNDO.
@@ -153,8 +156,6 @@ DEF  VAR  tot_vlorpago    AS DECIMAL                                NO-UNDO.
 DEF  VAR  tot_vltitulo    AS DECIMAL                                NO-UNDO.
 
 DEF  VAR  rel_vllanmto    AS DECIMAL                                NO-UNDO.
-
-DEF  VAR  aux_verifpac    AS INT FORMAT "999"                       NO-UNDO.
 
 DEF  VAR  aux_exisdare    AS LOGICAL                                NO-UNDO. 
 DEF  VAR  aux_exisgnre    AS LOGICAL                                NO-UNDO. 
@@ -229,8 +230,6 @@ DO aux_contatip = 1 TO 3:
                        AND gncvuni.tpdcontr = aux_contatip
                      BREAK BY gncvuni.cdconven 
                            BY gncvuni.cdcooper:
-        
-        ASSIGN aux_verifpac = INT(SUBSTR(gncvuni.dsmovtos, 4, 2)).
         
         IF   FIRST-OF(gncvuni.cdconven) THEN
              DO:
@@ -308,8 +307,6 @@ DO aux_contatip = 1 TO 3:
                              BREAK BY gncvuni.cdconven 
                                    BY SUBSTRING(gncvuni.dsmovtos,150,1)
                                    BY gncvuni.cdcooper:
-                
-                ASSIGN aux_verifpac = INT(SUBSTR(gncvuni.dsmovtos, 4, 2)).
                 
                 IF   FIRST-OF(gncvuni.cdconven) THEN
                      DO:
@@ -420,18 +417,9 @@ PROCEDURE efetua_geracao_arquivos:
             aux_flgfirst = FALSE.
         END.
 
-   IF   aux_verifpac = 90   THEN /* Tarifa do pa 90 - Internet */
-        aux_vltarifa = gnconve.vltrfnet.
-   ELSE                          
-   IF    aux_verifpac = 91  THEN /* Tarifa do pa 91 - TAA */
-         aux_vltarifa = gnconve.vltrftaa.
-   ELSE                            
-        aux_vltarifa = gnconve.vltrfcxa.
-
    ASSIGN aux_nrseqdig = aux_nrseqdig + 1
           rel_vllanmto = DECI(SUBSTR(gncvuni.dsmovtos, 82, 12)) / 100
-          tot_vlfatura = tot_vlfatura + rel_vllanmto
-          tot_vltarifa = tot_vltarifa + aux_vltarifa.
+          tot_vlfatura = tot_vlfatura + rel_vllanmto.          
 
    PUT STREAM str_2 SUBSTR(gncvuni.dsmovtos, 1, 100) FORMAT "x(100)"  
                     aux_nrseqdig FORMAT "99999999"         
@@ -852,18 +840,10 @@ PROCEDURE efetua_geracao_arquivos_debitos:
             aux_flgfirst = FALSE.
         END.
 
-   IF   aux_verifpac = 90   THEN /* Tarifa do pa 90 - Internet */
-        aux_vltarifa = gnconve.vltrfnet.
-   ELSE                          
-   IF    aux_verifpac = 91  THEN /* Tarifa do pa 91 - TAA */
-         aux_vltarifa = gnconve.vltrftaa.
-   ELSE                            
-        aux_vltarifa = gnconve.vltrfdeb.
-
    ASSIGN aux_nrseqdig = aux_nrseqdig + 1
           rel_vllanmto = DECI(SUBSTR(gncvuni.dsmovtos, 53, 15)) / 100
-          tot_vlfatura = tot_vlfatura + rel_vllanmto
-          tot_vltarifa = tot_vltarifa + aux_vltarifa.
+          tot_vlfatura = tot_vlfatura + rel_vllanmto.
+          
           
    PUT STREAM str_2 gncvuni.dsmovtos  FORMAT "x(150)" SKIP.
                     
@@ -918,8 +898,7 @@ PROCEDURE efetua_geracao_arquivos_autorizacao:
 
    ASSIGN aux_nrseqdig = aux_nrseqdig + 1
           rel_vllanmto = DECI(SUBSTR(gncvuni.dsmovtos, 53, 15)) / 100
-          tot_vlfatura = tot_vlfatura + rel_vllanmto
-          tot_vltarifa = tot_vltarifa + aux_vltarifa.
+          tot_vlfatura = tot_vlfatura + rel_vllanmto.          
           
    PUT STREAM str_2 gncvuni.dsmovtos  FORMAT "x(150)" SKIP.
                     
