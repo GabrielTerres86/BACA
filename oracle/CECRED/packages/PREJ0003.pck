@@ -121,6 +121,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                   ,pr_des_reto    OUT VARCHAR2 --Retorno OK/NOK
                                   );
 
+  PROCEDURE pc_calc_juro_prejuizo_mensal (pr_des_reto    OUT VARCHAR2);
+
 end PREJ0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
@@ -1988,7 +1990,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        vr_dstextab craptab.dstextab%TYPE;
        vr_pctaxpre NUMBER  :=0;
 
-       vr_diarefju  number(2); -- *2* ver tipos de dados dessas 8 variaveis
+       vr_diarefju  number(2); 
        vr_dtdpagto  number(8);
        vr_mesrefju  number(2);
        vr_anorefju  number(4);
@@ -1997,7 +1999,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        vr_anofinal  number(4);
        vr_qtdedias  number(10);
 
-       vr_potencia NUMBER(30, 10);
+       vr_potencia NUMBER(38, 10);
        vr_valor    NUMBER;
 
     BEGIN
@@ -2068,11 +2070,54 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        pr_anorefju := vr_anorefju;
        pr_des_reto := null;
        
-    exception
+  exception
         when vr_exc_saida then
             ROLLBACK;
-          
-    END pc_calc_juro_remuneratorio;
+
+  END pc_calc_juro_remuneratorio;
+
+  PROCEDURE pc_calc_juro_prejuizo_mensal (pr_des_reto    OUT VARCHAR2) is
+
+     vr_diarefju  number(2); 
+     vr_mesrefju  number(2);
+     vr_anorefju  number(4);
+     
+     vr_vljuprej  tbcc_prejuizo.vljuprej%type;
+
+  begin
+     pr_des_reto := null;
+  
+     for creg in (select a.rowid linha, a.cdcooper, a.idprejuizo, 
+                         a.dtrefjur, a.dtinclusao, d.dtultdia, a.vlsdprej, a.vljuprej
+                    from crapdat d, tbcc_prejuizo a 
+                   where a.cdcooper = d.cdcooper
+                     and a.dtliquidacao is null) loop
+
+        prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => creg.cdcooper, 
+                                            pr_ehmensal => true, 
+                                            pr_dtdpagto => creg.dtultdia, 
+                                            pr_idprejuizo => creg.idprejuizo, 
+                                            pr_vljpreju => vr_vljuprej,
+                                            pr_diarefju => vr_diarefju, 
+                                            pr_mesrefju => vr_mesrefju, 
+                                            pr_anorefju => vr_anorefju, 
+                                            pr_des_reto => pr_des_reto);
+                                            
+        update tbcc_prejuizo a
+        set a.dtrefjur = creg.dtultdia,
+            a.nrdiarefju = vr_diarefju,
+            a.nrmesrefju = vr_mesrefju,
+            a.nranorefju = vr_anorefju,
+            a.vljuprej = vr_vljuprej
+        where rowid = creg.linha;
+                                            
+     end loop;
+
+  exception
+     when others then
+        pr_des_reto := 'Erro calc. Juro prejuizo mensal: '||SQLERRM;
+  
+  end pc_calc_juro_prejuizo_mensal;
 
 
 END PREJ0003;
