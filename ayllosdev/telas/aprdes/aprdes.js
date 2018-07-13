@@ -113,13 +113,14 @@ function iniciaTela(){
 
 	controlaPesquisas();
 
-	cNrdconta.unbind("change").bind("change",function(){
+	cNrdconta.unbind("focusout").bind("focusout",function(){
         cNrcpfcgc.val('');
         cNmprimtl.val('');
 		if ($(this).val()!=''){
 			buscaAssociadoConta();
 		}
 	});
+
 	cNrcpfcgc.unbind("change").bind("change",function(){
         cNrdconta.val('');
         cNmprimtl.val('');
