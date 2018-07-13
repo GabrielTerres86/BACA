@@ -53,16 +53,19 @@ isPostMethod();
 require_once("../../../class/xmlfile.php");
 
 // Carrega permissões do operador
-include("../../../includes/carrega_permissoes.php");	
+include("../../../includes/carrega_permissoes.php");
 
+$idcalculo_reciproci = (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : '4062'; // 4062 para debug, deve ser alterado para ''
+$cdcooper            = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
+$nrdconta            = (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : '8753270'; // 8753270 para debug, deve ser alterado para $glbvars['nrdconta']
 
 // Monta o xml para a requisicao
 $xml  = "";
 $xml .= "<Root>";
 $xml .= " <Dados>";
-$xml .= "   <idcalculo_reciproci>4062</idcalculo_reciproci>";
-$xml .= "   <cdcooper>1</cdcooper>";
-$xml .= "   <nrdconta></nrdconta>";
+$xml .= "   <idcalculo_reciproci>".$idcalculo_reciproci."</idcalculo_reciproci>";
+$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 $xml .= " </Dados>";     
 $xml .= "</Root>";
 
@@ -73,11 +76,10 @@ $xmlObj = getObjectXML($xmlResult);
 $dados = $xmlObj->roottag;
 
 $vr_boletos_liquidados = getByTagName($dados->tags,"vr_boletos_liquidados");
-$vr_volume_liquidacao = getByTagName($dados->tags,"vr_volume_liquidacao");
+$vr_volume_liquidacao  = getByTagName($dados->tags,"vr_volume_liquidacao");
 $vr_flgdebito_reversao = getByTagName($dados->tags,"vr_flgdebito_reversao");
-$vr_qtdfloat = getByTagName($dados->tags,"vr_qtdfloat");
+$vr_qtdfloat           = getByTagName($dados->tags,"vr_qtdfloat");
 
-// var_dump($vr_boletos_liquidados, $vr_volume_liquidacao, $vr_flgdebito_reversao, $vr_qtdfloat);
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
