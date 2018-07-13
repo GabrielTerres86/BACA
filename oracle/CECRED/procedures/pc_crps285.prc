@@ -72,11 +72,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps285(pr_cdcooper IN crapcop.cdcooper%TY
               12/02/2014 - Retirado "Return" quando havia chamada da b1wgen0153
                            e não devia abortar a execucao do programa (Tiago).
   
-               09/03/2015 - Conversão Progress >> Oracle PL-Sql (Daniel)
+              09/03/2015 - Conversão Progress >> Oracle PL-Sql (Daniel)
   
-               25/08/2015 - Inclusao do parametro pr_cdpesqbb na procedure
-                            tari0001.pc_cria_lan_auto_tarifa, projeto de 
-                            Tarifas-218(Jean Michel)
+              25/08/2015 - Inclusao do parametro pr_cdpesqbb na procedure
+                           tari0001.pc_cria_lan_auto_tarifa, projeto de 
+                           Tarifas-218(Jean Michel)
+                           
+              10/07/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
+                           lancamentos na CRAPLCM (Teobaldo J, AMcom)
+                       
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -239,6 +243,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps285(pr_cdcooper IN crapcop.cdcooper%TY
   vr_lspredep VARCHAR2(3000);
   vr_lschqadm VARCHAR2(3000);
   vr_lista_historico VARCHAR2(4000);
+  
+  --Variaveis de criticas / retorno
+  vr_incrineg       INTEGER;
+  vr_tab_retorno    LANC0001.typ_reg_retorno;
   
 BEGIN
 
@@ -560,6 +568,31 @@ BEGIN
     
     --Fechar Cursor
     CLOSE cr_crapass;
+    
+    
+    -- 10/07/2018 - Verificar se pode debitar (Regra de Negocio)
+    IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => rw_crablcm.nrdconta
+                                   ,pr_cdhistor => rw_crablcm.cdhistor) THEN
+      vr_dscritic := 'Conta nao permite lancamento de debito (regra na LANC0001). Cooperativa: '|| 
+                      pr_cdcooper || ' - Nr. Conta: ' || rw_crablcm.nrdconta || 
+                      ' - Cod. historico: ' || rw_crablcm.cdhistor;
+
+      -- Gera Log
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro Tratado
+                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
+                                                    ' - ' || vr_cdprogra || ' --> '  ||
+                                                    vr_dscritic);
+                                                    
+      -- Efetua Limpeza das variaveis de critica
+      vr_cdcritic := 0;
+      vr_dscritic := NULL;
+
+      -- passa para proximo registro 
+      CONTINUE;
+    END IF; 
+    
   
     -- Tarifa Cheque Administrativo
     IF rw_crablcm.cdhistor LIKE vr_lschqadm THEN
@@ -794,40 +827,35 @@ BEGIN
             CLOSE cr_craplcm;
           END IF;
           
-          
-          BEGIN
-            INSERT INTO craplcm(cdcooper
-                               ,dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,nrseqdig
-                               ,vllanmto)
-                       VALUES  (pr_cdcooper
-                               ,rw_craplot.dtmvtolt
-                               ,rw_craplot.cdagenci
-                               ,rw_craplot.cdbccxlt
-                               ,rw_craplot.nrdolote
-                               ,rw_crablcm.nrdconta
-                               ,rw_crablcm.nrdconta
-                               ,GENE0002.FN_MASK(rw_crablcm.nrdconta, '99999999')
-                               ,vr_nrseqdig
-                               ,89 -- Tarifa de Debito em Conta Corrente manual
-                               ,vr_nrseqdig
-                               ,vr_vldebcta);
+          -- 10/07/2018 - Inserir Lancamento 
+          LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt 
+                                            ,pr_cdagenci => rw_craplot.cdagenci
+                                            ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                                            ,pr_nrdolote => rw_craplot.nrdolote 
+                                            ,pr_nrdconta => rw_crablcm.nrdconta
+                                            ,pr_nrdctabb => rw_crablcm.nrdconta
+                                            ,pr_nrdctitg => gene0002.fn_mask(rw_crablcm.nrdconta,'99999999')
+                                            ,pr_nrdocmto => vr_nrseqdig
+                                            ,pr_cdhistor => 89          -- Tarifa de Debito em Conta Corrente manual
+                                            ,pr_nrseqdig => vr_nrseqdig 
+                                            ,pr_vllanmto => vr_vldebcta
+                                            ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                            ,pr_tplotmov => 0                    -- Tipo Movimento 
+                                            ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
+                                            ,pr_dscritic => vr_dscritic          -- Descricao Erro
+                                            ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
+                                            ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
+                                            );
 
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir na tabela craplcm. ' || SQLERRM;
-              --Sair do programa
+          -- Tratamento para critica. Regra se pode debitar tratada acima
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+              vr_dscritic := 'Erro ao inserir lancamento na craplcm: '||vr_dscritic;
               RAISE vr_exc_saida;
-          END;
-            
+            END If;
+          END IF;
+
           --Atualizar capa do Lote
           BEGIN
             UPDATE craplot SET craplot.vlinfodb = NVL(rw_craplot.vlinfodb,0) + NVL(vr_vldebcta,0)
@@ -911,4 +939,3 @@ EXCEPTION
     ROLLBACK;
 END pc_crps285;
 /
-
