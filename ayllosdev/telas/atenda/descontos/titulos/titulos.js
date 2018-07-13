@@ -57,6 +57,7 @@ var insitlim = 0; // cod situação da proposta
 var insitest = 0; // cod situação da analise
 var insitapr = 0; // cod decisão
 var inctrmnt = 0; // indica se é contrato de manutenção
+var fl_sitbordero = ''; // indica a situacao do bordero selecionado
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
@@ -136,7 +137,7 @@ function carregaBorderosTitulos() {
 }
 
 // Função para seleção do bordero
-function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato) {
+function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato, situacao) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os borderos de descto titulos
@@ -157,6 +158,7 @@ function selecionaBorderoTitulos(id, qtBorderos, bordero, contrato) {
 			// Armazena número do bordero selecionado
             nrbordero = retiraCaracteres(bordero, "0123456789", true);
             nrcontrato = retiraCaracteres(contrato, "0123456789", true);
+            fl_sitbordero = situacao;
 			idLinhaB  = id;		
 		}
 	}
@@ -3310,11 +3312,26 @@ function mostrarBorderoLiberar() {
 }
 
 function mostrarBorderoRejeitar(contingencia) {
+    //Verifica se o bordero já está em uma situação que não se pode rejeitar
+    switch(fl_sitbordero.toUpperCase()){
+        case 'LIBERADO':
+            showError("error", "N&atilde;o &eacute; poss&iacute;vel rejeitar um border&ocirc; LIBERADO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            break;
+        case 'LIQUIDADO':
+            showError("error", "N&atilde;o &eacute; poss&iacute;vel rejeitar um border&ocirc; LIQUIDADO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            break;
+        case 'REJEITADO':
+            showError("error", "N&atilde;o &eacute; poss&iacute;vel rejeitar um border&ocirc; REJEITADO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            break;
+        default:
     if (contingencia){
         showConfirmacao("An&aacute;lise em conting&ecirc;ncia. Deseja rejeitar?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
     }else{
         showConfirmacao("Deseja rejeitar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
     }
+            break;
+    }
+   
     return false;
 }
 
@@ -3392,7 +3409,7 @@ function pagarTitulosVencidos(){
                     showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
                 }
                 else if (response == 2){
-                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento com al&ccedil;a?";
+                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento com al&ccedil;ada?";
                     showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
                 }else{
                     //Invoca a funcao
