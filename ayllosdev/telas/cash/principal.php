@@ -7,11 +7,12 @@
  * --------------
  * ALTERAÇÕES   : 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
  *                             código do departamento ao invés da descrição (Renato Darosci - Supero)
+ *
+ *                03/07/2018 - sctask0014656 agora é possível alterar o nome do TAA na
+ *                             opção A. Registro de alteração do nome no log da tela 
+ *                             (Carlos)
  * -------------- 
  */ 
-?>
-
-<?	
 	session_start();	
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');		
@@ -70,6 +71,8 @@
 	$vlnotcas 	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[17]->tags;
 	$vltotcas 	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[18]->tags;
 	$dsterfin   = $cddopcao == 'I' ? $dsterfin : getByTagName($terminal,'dsterfin');
+	
+  $nmterfin   = getByTagName($terminal,'nmterfin');
 	
 	include('form_cabecalho.php');
 	include('form_cash.php');

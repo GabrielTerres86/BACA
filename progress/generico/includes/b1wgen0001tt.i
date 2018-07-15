@@ -23,7 +23,7 @@
 
    Programa: b1wgen0001tt.i                  
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 10/12/2015
+   Data    : Agosto/2007                      Ultima atualizacao: 30/05/2018
 
    Dados referentes ao programa:
 
@@ -96,6 +96,8 @@
 						    SD 320300 (Kelvin).
                             
                06/11/2015 - Adicionada coluna indebcre na tt-tarifas.
+
+			   30/05/2018 - incluido dscomple na tt-extrato_conta (Alcemir Mout's - Prj. 467).
 ............................................................................. */
 
 DEF TEMP-TABLE tt-valores_conta NO-UNDO
@@ -152,6 +154,7 @@ DEF TEMP-TABLE tt-extrato_conta NO-UNDO
     FIELD dsprotoc LIKE crappro.dsprotoc
     FIELD flgdetal AS INTE
     FIELD idlstdom AS INTE
+	FIELD dscomple AS CHAR FORMAT "x(100)"		
     INDEX tt-extrato_conta1 AS PRIMARY dtmvtolt nrsequen.
 
 DEF TEMP-TABLE tt-dep-identificado NO-UNDO

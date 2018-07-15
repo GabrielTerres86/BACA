@@ -243,7 +243,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   PROCEDURE pc_executar_crps682 (pr_cdcritic OUT PLS_INTEGER     --> Código da crítica
                                 ,pr_dscritic OUT VARCHAR2);      --> Descrição da crítica
                                     
-                           
+  -- Function para buscar os cooperados com crédito pré-aprovado ativo - Utilizada para envio de Notificações/Push
+  FUNCTION fn_sql_contas_com_preaprovado RETURN CLOB;
+  
   END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -4540,8 +4542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     RETURN 'SELECT usu.cdcooper
                   ,usu.nrdconta
                   ,usu.idseqttl
-                  ,''#valorcalculado='' || to_char(val.vlcalpre, ''fm99g999g990d00'') || '','' ||
-                   ''#valorcontratado='' || to_char(val.vlctrpre, ''fm99g999g990d00'') || '','' ||
+                  ,''#valorcalculado='' || to_char(val.vlcalpre, ''fm99g999g990d00'') || '';'' ||
+                   ''#valorcontratado='' || to_char(val.vlctrpre, ''fm99g999g990d00'') || '';'' ||
                    ''#valordisponivel='' || to_char(val.vllimdis, ''fm99g999g990d00'') dsvariaveis
               FROM (SELECT *
                       FROM (SELECT cpa.cdcooper

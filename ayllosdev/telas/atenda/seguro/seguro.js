@@ -55,6 +55,9 @@
 
                   02/04/2018 - Chamada rotina "validaAdesaoProduto" para verificar se tipo de conta permite a contratação
                                do produto. PRJ366 (Lombardi).
+ 
+                  02/07/2018 - Ajuste para não permitir caracteres especiais nos dados do beneficiário do seguro de vida
+                               PRB0040130 (André Bohn - MoutS).
  * */
  
 //**************************************************
@@ -1729,6 +1732,16 @@ function carregaPropriedadesFormPrestVida(){
 	$('.parent').css('margin-left','7px');
 	$(parent).attr('maxlength','20');
 		
+    // Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
+    $(ben+','+parent).bind("keyup", function () {
+	    this.value = removeCaracteresInvalidos(this.value);
+    });
+	
+	// Bloqueia a digitação de caracteres com a tecla Alt + ..
+    $(ben+','+parent).bind("keydown", function (e) {
+	   if (e.altKey) { return false; }
+    });
+	
 	var label = 'label[for="vlpreseg"],label[for="vlcapseg"],'+
 			    'label[for="qtpreseg"],label[for="vlprepag"],'+
 				'label[for="dscobert"],label[for="nmdsegur"]';				

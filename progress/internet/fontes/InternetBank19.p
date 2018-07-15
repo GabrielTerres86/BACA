@@ -130,7 +130,10 @@ IF  par_nrinssac > 0  THEN
                                                "</nrcepsac><complend>" +
                                            TRIM(tt-dados-sacado-blt.complend) +
                                                "</complend><nrinssac>" +
-                                   TRIM(STRING(tt-dados-sacado-blt.nrinssac)) + 
+                                               (IF tt-dados-sacado-blt.cdtpinsc = 1 THEN
+                                                   TRIM(STRING(tt-dados-sacado-blt.nrinssac,"99999999999"))
+                                                ELSE
+                                                   TRIM(STRING(tt-dados-sacado-blt.nrinssac,"99999999999999"))) + 
                                                "</nrinssac><cdtpinsc>" +
                                    TRIM(STRING(tt-dados-sacado-blt.cdtpinsc)) +
                                                "</cdtpinsc><cdsitsac>" +
@@ -214,7 +217,10 @@ ELSE
                 ASSIGN xml_operacao.dslinxml = "<SACADO><nmdsacad>" +
                                                tt-sacados-blt.nmdsacad +
                                                "</nmdsacad><nrinssac>" +
-                                               STRING(tt-sacados-blt.nrinssac) +
+                                               (IF tt-sacados-blt.cdtpinsc = 1 THEN
+                                                   STRING(tt-sacados-blt.nrinssac,"99999999999")
+                                                ELSE
+                                                   STRING(tt-sacados-blt.nrinssac,"99999999999999")) +
                                                "</nrinssac><dsinssac>" +
                                                tt-sacados-blt.dsinssac +
                                                "</dsinssac><nrctasac>" +

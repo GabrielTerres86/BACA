@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 17/09/2012 - Implementação do novo layout (David Kruger).
  *                13/08/2013 - Alteração da sigla PAC para PA (Carlos).
  *                25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
+ *                03/07/2018 - sctask0014656 permitir alterar a descricao do TAA (Carlos)
  * --------------
  */
 ?>
@@ -15,7 +16,11 @@
 		
 	<fieldset>	
 		
-		<legend><? echo utf8ToHtml('Configuração') ?></legend>
+		<legend><? echo utf8ToHtml('Configuração:') ?></legend>
+
+        <label for="dsterfin">Nome:</label>
+        <input name="dsterfin" id="dsterfin" type="text" value="<? echo $dsterfin ?>" />
+        <br />
 		
 		<label for="cdagenci"><? echo utf8ToHtml('PA:') ?></label>	
 		<input name="cdagenci" id="cdagenci" type="text" value="<? echo $cdagenci ?>" />
