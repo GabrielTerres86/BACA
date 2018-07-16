@@ -38,7 +38,6 @@ INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -55,7 +54,6 @@ INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -68,7 +66,6 @@ INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',3,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','2',null);
@@ -81,7 +78,6 @@ INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',4,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','2',null);
@@ -94,7 +90,6 @@ INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -109,7 +104,6 @@ INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_BLQ_EMI_CONSEC','Bloqueio de emissã
 INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -124,7 +118,6 @@ INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -139,7 +132,6 @@ INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -154,7 +146,6 @@ INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_INSTR_LINHA_1','Mensagem de informa
 INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -169,7 +160,6 @@ INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -184,7 +174,6 @@ INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -199,7 +188,6 @@ INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -214,7 +202,6 @@ INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -230,7 +217,6 @@ INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -244,7 +230,6 @@ INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',15,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','2',null);
@@ -258,7 +243,6 @@ INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','4',null);
@@ -273,13 +257,25 @@ INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_INSTR_LINHA_1','Mensagem de inform
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_INSTR_LINHA_2','Mensagem de informação do boleto - linha 2','restricao baixada com pagamento total do atraso',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_INSTR_LINHA_3','Mensagem de informação do boleto - linha 3','este pagamento nao altera as condicoes contratadas',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_INSTR_LINHA_4','Mensagem de informação do boleto - linha 4','restricao baixada com pagamento total do atraso',null);
-INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_NRDCONTA_BNF','Numero da conta do beneficiario de desconto de título','850004',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_PRZ_BX_VENCTO','Prazo de baixa de vencimento do boleto de desconto de título','0',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_PRZ_MAX_VENCTO','Prazo maximo de vencimento do boleto de desconto de título','2',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_QTD_MAX_BOL_EPR','Quantidade maxima de boletos de desconto de título para um contrato','5',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_TXT_SMS','Texto SMS','Prezado(a),linha digitavel do boleto solicitado #LinhaDigitavel#. Duvidas pelo telefone (47) 3231-1700.',null);
 INSERT INTO crapprm VALUES ('CRED',17,'COBTIT_VLR_MIN','Valor minimo do boleto para COBTIT','50,00',null);
+INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970101',null);
+INSERT INTO crapprm VALUES ('CRED',2,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970102',null);
+INSERT INTO crapprm VALUES ('CRED',5,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970104',null);
+INSERT INTO crapprm VALUES ('CRED',6,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970105',null);
+INSERT INTO crapprm VALUES ('CRED',7,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970106',null);
+INSERT INTO crapprm VALUES ('CRED',8,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970107',null);
+INSERT INTO crapprm VALUES ('CRED',9,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970108',null);
+INSERT INTO crapprm VALUES ('CRED',10,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970110',null);
+INSERT INTO crapprm VALUES ('CRED',11,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970109',null);
+INSERT INTO crapprm VALUES ('CRED',12,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970111',null);
+INSERT INTO crapprm VALUES ('CRED',13,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970112',null);
+INSERT INTO crapprm VALUES ('CRED',14,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970113',null);
+INSERT INTO crapprm VALUES ('CRED',16,'COBTIT_NRCONVEN','Numero do convenio de cobranca de desconto de título','970115',null);
 
 -- parâmetro de data do cálculo de juros (REMOVER ESTE PARÂMETRO DA IMPLEMENTAÇÃO!)
 /*
