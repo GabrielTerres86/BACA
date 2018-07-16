@@ -30,6 +30,9 @@
                             correcao do chamado 430305 (Kelvin).
 
                26/03/2017 - Adicionado remocao do caracter "э" e "Э" para corrigir o chamado 869784 (Alcemir - Mouts).
+							
+               05/07/2018 - Adicionado a remocao dos caracteres "дкож" para "AEIO" para
+                            correcao do chamado PRB0040132 (AndrИ Bohn - MoutS).							
 .............................................................................*/
 
 
@@ -39,19 +42,23 @@ ASSIGN par_dsstring = REPLACE(par_dsstring,"а","A")
 	     par_dsstring = REPLACE(par_dsstring,"ю","A")
        par_dsstring = REPLACE(par_dsstring,"б","A")
        par_dsstring = REPLACE(par_dsstring,"ц","A")
+       par_dsstring = REPLACE(par_dsstring,"д","A")
 	   
        par_dsstring = REPLACE(par_dsstring,"и","E")     
 	     par_dsstring = REPLACE(par_dsstring,"х","E")
        par_dsstring = REPLACE(par_dsstring,"й","E")
+       par_dsstring = REPLACE(par_dsstring,"к","E")
 	    
        par_dsstring = REPLACE(par_dsstring,"м","I")
 	     par_dsstring = REPLACE(par_dsstring,"л","I")
 	     par_dsstring = REPLACE(par_dsstring,"н","I")
+	     par_dsstring = REPLACE(par_dsstring,"о","I")
 	   
        par_dsstring = REPLACE(par_dsstring,"с","O")      
 	     par_dsstring = REPLACE(par_dsstring,"р","O")      
        par_dsstring = REPLACE(par_dsstring,"т","O")        
        par_dsstring = REPLACE(par_dsstring,"у","O")
+       par_dsstring = REPLACE(par_dsstring,"ж","O")
           
        par_dsstring = REPLACE(par_dsstring,"з","U")    
 	     par_dsstring = REPLACE(par_dsstring,"ы","U")
