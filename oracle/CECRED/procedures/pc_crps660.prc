@@ -214,6 +214,9 @@ BEGIN
             ,ci.vljura60
             ,decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc) nrcpfcgc
             ,ci.nrdconta
+            ,ci.nrctremp
+            ,ci.cdorigem
+            ,ci.innivris            
             ,ci.inddocto
             ,ci.cdinfadi
             ,ROW_NUMBER () OVER (PARTITION BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)
