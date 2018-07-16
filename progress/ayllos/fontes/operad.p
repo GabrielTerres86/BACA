@@ -179,6 +179,9 @@
                08/08/2017 - Incluido o campo "Habilitar Acesso CRM". (Reinert - Projeto 339)
                
                24/11/2017 - Melhoria 458, Adicionado campo tel_insaqesp "Libera Saque Especie" - (Antonio R Junior - Mouts)
+			   
+			   05/07/2018 - Ajustado para substituir os caracteres acentuados do nome do operador 
+			                para correcao do chamado PRB0040132 (André Bohn - MoutS)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -877,6 +880,9 @@ DO WHILE TRUE:
                              UNDO, LEAVE Opcao_A.
                          END.
                
+               /* Retirar caracteres especiais do nome do operador */
+               RUN fontes/substitui_caracter.p (INPUT-OUTPUT tel_nmoperad).
+
                ASSIGN crapope.nmoperad = CAPS(tel_nmoperad)
                       crapope.nvoperad = aux_inposniv
                       crapope.flgperac = tel_flgperac
@@ -1440,6 +1446,9 @@ DO WHILE TRUE:
 
                DO TRANSACTION ON ERROR UNDO, LEAVE:
            
+                  /* Retirar caracteres especiais do nome do operador */
+                  RUN fontes/substitui_caracter.p (INPUT-OUTPUT tel_nmoperad).
+
                   CREATE crapope.
 
                   ASSIGN crapope.cdoperad = tel_cdoperad
