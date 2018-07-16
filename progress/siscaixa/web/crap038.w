@@ -3,8 +3,10 @@
   Programa: crap038.w
 
 Alteracoes:
+            21/06/2018 - disponibilidade de utilizaçao do Caixa Online mesmo com o
+                         processo batch (noturno) executando (Fabio Adriano - AMcom).
 
-............................................................................. */
+............................................................................. **/
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -415,7 +417,7 @@ PROCEDURE process-web-request :
     IF  get-value("cancela") = "" THEN DO:
         
         RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-        RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+        RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                            INPUT v_pac,
                                            INPUT v_caixa).
         DELETE PROCEDURE h-b1crap00.

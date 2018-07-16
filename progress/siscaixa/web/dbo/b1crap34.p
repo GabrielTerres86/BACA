@@ -12,7 +12,11 @@
                              
                 30/09/2011 - Alterar diretorio spool para
                              /usr/coop/sistema/siscaixa/web/spool (Fernando).
-----------------------------------------------------------------------------*/
+                             
+                25/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                            como data de referencia - Everton Deserto(AMCOM).
+                            
+---------------------------------------------------------------------------- **/
 
 DEF VAR r-registro  AS ROWID.
 DEF VAR p-literal   AS CHAR.
@@ -47,7 +51,7 @@ PROCEDURE gera-arquivo-texto:
     FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
                              NO-LOCK NO-ERROR.
                              
-    ASSIGN da-today   =  crapdat.dtmvtolt.
+    ASSIGN da-today   =  crapdat.dtmvtocd.    /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
     ASSIGN i-dia-hoje =  WEEKDAY(da-today). 
 
     /*----------Gera Arquivo Texto------*/

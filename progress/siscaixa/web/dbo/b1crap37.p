@@ -19,7 +19,11 @@
                              /usr/coop/sistema/siscaixa/web/spool (Fernando).
                              
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
------------------------------------------------------------------------------*/
+                
+                26/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                            como data de referencia - Everton Deserto(AMCOM).
+                            
+----------------------------------------------------------------------------- **/
 {dbo/bo-erro1.i}
 
 DEF VAR i-cod-erro   AS INTEGER.
@@ -54,7 +58,7 @@ DEF TEMP-TABLE tt-lote                                        NO-UNDO
     FIELD vltitulo AS DECIMAL FORMAT "zzzz,zzz,zz9.99"
     FIELD nmoperad AS CHAR    FORMAT "x(10)".
 
-FORM crapdat.dtmvtolt  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
+FORM crapdat.dtmvtocd  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"  /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
      SKIP(1)
      "PA CXA    LOTE"           AT  1
      "   QTD.           VALOR"        
@@ -198,7 +202,7 @@ PROCEDURE Impressao:
             VIEW STREAM str_1 FRAME f_cabrel080_1.
         END.
 
-    DISPLAY STREAM str_1  crapdat.dtmvtolt WITH FRAME f_cab.    
+    DISPLAY STREAM str_1  crapdat.dtmvtocd WITH FRAME f_cab.    /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
     
     /*
     FOR  EACH tt-lote:
@@ -208,13 +212,13 @@ PROCEDURE Impressao:
     EMPTY TEMP-TABLE tt-lote.
    
     FOR EACH craplot WHERE (craplot.cdcooper = crapcop.cdcooper      AND
-                            craplot.dtmvtolt = crapdat.dtmvtolt      AND
+                            craplot.dtmvtolt = crapdat.dtmvtocd      AND  /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplot.cdagenci = p-cod-agencia         AND
                             craplot.cdbccxlt = 11                    AND
                             craplot.tplotmov = 31)                    OR
 
                            (craplot.cdcooper = crapcop.cdcooper      AND
-                            craplot.dtmvtopg = crapdat.dtmvtolt      AND
+                            craplot.dtmvtopg = crapdat.dtmvtocd      AND  /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplot.cdagenci = p-cod-agencia         AND
                             craplot.tplotmov = 31)               NO-LOCK
                            BREAK BY craplot.cdagenci
@@ -263,7 +267,7 @@ PROCEDURE Impressao:
                         PAGE STREAM str_1.
                        
                         DISPLAY STREAM str_1 
-                                crapdat.dtmvtolt WITH FRAME f_cab.
+                                crapdat.dtmvtocd WITH FRAME f_cab.    /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                     END.
             END.
    
@@ -337,7 +341,7 @@ PROCEDURE proc_lista:
     VIEW STREAM str_1 FRAME f_linha.
     
     FOR EACH crapcbb WHERE crapcbb.cdcooper = crapcop.cdcooper  AND
-                           crapcbb.dtmvtolt = crapdat.dtmvtolt  AND
+                           crapcbb.dtmvtolt = crapdat.dtmvtocd  AND /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                            crapcbb.cdagenci = tt-lote.cdagenci  AND
                            crapcbb.cdbccxlt = tt-lote.cdbccxlt  AND
                            crapcbb.nrdolote = tt-lote.nrdolote  AND
@@ -353,7 +357,7 @@ PROCEDURE proc_lista:
 
         IF   LINE-COUNTER(str_1) > 80  THEN DO:
              PAGE STREAM str_1.
-             DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+             DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.  /* 25/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
             
              DISPLAY STREAM str_1  
                      tt-lote.cdagenci 

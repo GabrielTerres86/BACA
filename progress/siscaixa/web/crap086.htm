@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Julho/2011                    Ultima atualizacao: 16/01/2018
+   Data    : Julho/2011                    Ultima atualizacao: 20/06/2018
 
    Dados referentes ao programa: 
                    -Lançamento de cheques (adaptacao da rotina 51 + lanchq)
@@ -27,7 +27,11 @@
                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 			   
 		  	   16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
-   ......................................................................... -->
+			   
+			   20/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+							norturno rodando (Douglas Pagel - AMcom).
+							
+   .......................................................................... -->
 
 <html>
 
@@ -139,7 +143,7 @@ function doFocus(erro){
            v_pac        = GET-VALUE("User_pac")
            v_coop       = get-value("user_coop")
            v_nrautent   = get-value("v_nrautent")
-           v_data       = STRING(crapdat.dtmvtolt,"99/99/9999")
+           v_data       = STRING(crapdat.dtmvtocd,"99/99/9999")
            v_cod        = GET-VALUE("v_cod")
            v_senha      = GET-VALUE("v_senha") 
            l-houve-erro = FALSE NO-ERROR.
@@ -160,7 +164,7 @@ function doFocus(erro){
         DO:
             RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
         
-            RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+            RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                                INPUT v_pac,
                                                INPUT v_caixa).
         

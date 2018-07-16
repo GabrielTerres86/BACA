@@ -15,7 +15,11 @@ Alteracoes: 18/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
                          (Reinert)
 
             13/12/2013 - Adicionado validate na tabela craperr (Tiago).            
-............................................................................. */
+
+            06/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+                         
+............................................................................. **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -447,7 +451,7 @@ PROCEDURE process-web-request :
      {include/assignfields.i}
     
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-     RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+     RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                         INPUT v_pac,
                                         INPUT v_caixa).
      DELETE PROCEDURE h-b1crap00.
@@ -625,7 +629,7 @@ PROCEDURE process-web-request :
  
    FIND LAST crapbcx  NO-LOCK  WHERE
              crapbcx.cdcooper = crapdat.cdcooper   AND
-             crapbcx.dtmvtolt = crapdat.dtmvtolt   AND
+             crapbcx.dtmvtolt = crapdat.dtmvtocd   AND
              crapbcx.cdagenci = INT(v_pac)         AND
              crapbcx.nrdcaixa = INT(v_caixa)       AND     
              crapbcx.cdopecxa = v_operador         AND
@@ -635,7 +639,7 @@ PROCEDURE process-web-request :
           ASSIGN i-nro-lote = 22000 + INT(v_caixa).
           FOR EACH  crapcbb NO-LOCK WHERE
                     crapcbb.cdcooper = crapdat.cdcooper AND
-                    crapcbb.dtmvtolt = crapdat.dtmvtolt AND
+                    crapcbb.dtmvtolt = crapdat.dtmvtocd AND
                     crapcbb.cdagenci = INT(v_pac)       AND
                     crapcbb.cdbccxlt = 11               AND /* FIXO  */
                     crapcbb.nrdolote = i-nro-lote       AND
@@ -645,7 +649,7 @@ PROCEDURE process-web-request :
                   DO:
                       FIND LAST crapaut NO-LOCK WHERE
                                 crapaut.cdcooper = crapdat.cdcooper AND
-                                crapaut.dtmvtolt = crapdat.dtmvtolt AND
+                                crapaut.dtmvtolt = crapdat.dtmvtocd AND
                                 crapaut.cdagenci = INT(v_pac)       AND
                                 crapaut.nrdcaixa = INT(v_caixa)     AND
                                 crapaut.nrsequen = crapcbb.nrautdoc NO-ERROR.

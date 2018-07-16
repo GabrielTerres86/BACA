@@ -3,7 +3,7 @@
 
     b1crap21.p - DOC/TED - Estorno
     
-    Ultima Atualizacao: 03/12/2013
+    Ultima Atualizacao: 14/06/2018
     
     Alteracoes: 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
     
@@ -33,7 +33,10 @@
                              
                 03/12/2013 - Troca do campo nrdconta por nrdctabb nas consultas
                              da craplcm (Tiago).             
------------------------------------------------------------------------------*/
+
+                14/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                              norturno rodando (Douglas Pagel - AMcom).
+----------------------------------------------------------------------------- **/
 
 { dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
@@ -126,7 +129,7 @@ PROCEDURE critica-retorna-valores:
     FIND craptvl WHERE craptvl.cdcooper = crapcop.cdcooper  AND
                        craptvl.tpdoctrf = p-tipo-doc        AND 
                        craptvl.nrdocmto = p-nro-docmto      AND 
-                       craptvl.dtmvtolt = crapdat.dtmvtolt  AND
+                       craptvl.dtmvtolt = crapdat.dtmvtocd  AND
                        craptvl.cdagenci = p-cod-agencia     AND
                        craptvl.cdbccxlt = 11                AND
                        craptvl.nrdolote = i-nro-lote        NO-LOCK NO-ERROR.
@@ -486,7 +489,7 @@ PROCEDURE estorna-doc-ted:
     DO  WHILE TRUE:
         ASSIGN in99 = in99 + 1.
         FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd  AND
                            craplot.cdagenci = p-cod-agencia     AND
                            craplot.cdbccxlt = 11                AND  /* Fixo */
                            craplot.nrdolote = i-nro-lote  
@@ -537,7 +540,7 @@ PROCEDURE estorna-doc-ted:
         FIND craptvl WHERE craptvl.cdcooper = crapcop.cdcooper  AND
                            craptvl.tpdoctrf = p-tipo-doc        AND
                            craptvl.nrdocmto = p-nro-docmto      AND
-                           craptvl.dtmvtolt = crapdat.dtmvtolt  AND 
+                           craptvl.dtmvtolt = crapdat.dtmvtocd  AND 
                            craptvl.cdagenci = p-cod-agencia     AND
                            craptvl.cdbccxlt = 11                AND
                            craptvl.nrdolote = i-nro-lote         
@@ -596,8 +599,8 @@ PROCEDURE estorna-doc-ted:
          DO:
             ASSIGN aux_nmarquiv = "td" +
                    STRING(craptvl.nrdocmto, "9999999")  + 
-                   STRING(DAY(crapdat.dtmvtolt),"99")   + 
-                   STRING(MONTH(crapdat.dtmvtolt),"99") +
+                   STRING(DAY(crapdat.dtmvtocd),"99")   + 
+                   STRING(MONTH(crapdat.dtmvtocd),"99") +
                    STRING(craptvl.cdagenci, "99") +
                    ".rem".
         
@@ -634,7 +637,7 @@ PROCEDURE estorna-doc-ted:
             DO in99 = 1 TO 10:
 
                FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-                                  craplcm.dtmvtolt = crapdat.dtmvtolt AND
+                                  craplcm.dtmvtolt = crapdat.dtmvtocd AND
                                   craplcm.cdagenci = 1                AND
                                   craplcm.cdbccxlt = 100              AND
                                   craplcm.nrdolote = 7999             AND
@@ -669,7 +672,7 @@ PROCEDURE estorna-doc-ted:
 
                            FIND craplot WHERE
                                 craplot.cdcooper = crapcop.cdcooper  AND
-                                craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                                craplot.dtmvtolt = crapdat.dtmvtocd  AND
                                 craplot.cdagenci = 1                 AND
                                 craplot.cdbccxlt = 100  /* Fixo */   AND
                                 craplot.nrdolote = 7999
@@ -742,7 +745,7 @@ PROCEDURE estorna-doc-ted:
             DO in99 = 1 TO 10:
                              
                 FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-                                   craplcm.dtmvtolt = crapdat.dtmvtolt AND
+                                   craplcm.dtmvtolt = crapdat.dtmvtocd AND
                                    craplcm.cdagenci = craptvl.cdagenci AND
                                    craplcm.cdbccxlt = 11               AND
                                    craplcm.nrdolote = i-nro-lote-lcm   AND
@@ -779,7 +782,7 @@ PROCEDURE estorna-doc-ted:
 
                             FIND craplot WHERE 
                                  craplot.cdcooper = crapcop.cdcooper  AND
-                                 craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                                 craplot.dtmvtolt = crapdat.dtmvtocd  AND
                                  craplot.cdagenci = p-cod-agencia     AND
                                  craplot.cdbccxlt = 11   /* Fixo */   AND 
                                  craplot.nrdolote = i-nro-lote-lcm  
@@ -855,7 +858,7 @@ PROCEDURE estorna-doc-ted:
     DO  WHILE TRUE:
        
         FIND crapcme WHERE crapcme.cdcooper = crapcop.cdcooper AND
-                           crapcme.dtmvtolt = crapdat.dtmvtolt AND
+                           crapcme.dtmvtolt = crapdat.dtmvtocd AND
                            crapcme.cdagenci = craptvl.cdagenci AND
                            crapcme.cdbccxlt = 11               AND
                            crapcme.nrdolote = i-nro-lote-lcm   AND
@@ -906,7 +909,7 @@ PROCEDURE estorna-doc-ted:
                                                     INPUT 3, /* Exclusao */
                                                     INPUT ROWID(crapcme),
                                                     INPUT TRUE, /* Envia */
-                                                    INPUT crapdat.dtmvtolt,
+                                                    INPUT crapdat.dtmvtocd,
                                                     INPUT TRUE,
                                                    OUTPUT TABLE tt-erro). 
                 DELETE PROCEDURE h-b1wgen9998.

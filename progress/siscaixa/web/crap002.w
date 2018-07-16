@@ -38,10 +38,10 @@
                03/06/2015 - Tratamento para reload de rotina ao abrir/fechar
                             o BL. Melhoria SD 260475 (Lunelli).
                             
-               20/04/2018 - liberaçao do caixa online mesmo com processo batch noturno executando
-                            Fabio Adriano (AMcom)
+               20/04/2018 - liberaçao do caixa online mesmo com processo batch 
+                            noturno executando Fabio Adriano (AMcom).
                             
-............................................................................ */
+............................................................................ **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -930,8 +930,8 @@ PROCEDURE process-web-request :
               
               /* 20/04/2018 liberaçao do caixa online mesmo com processo batch noturno executando */
               RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
-                                                 INPUT v_pac,
-                                                 INPUT v_caixa).
+                                                  INPUT v_pac,
+                                                  INPUT v_caixa).
     
               IF RETURN-VALUE = "NOK" THEN 
                  DO:
@@ -1343,7 +1343,7 @@ PROCEDURE process-web-request :
      ShowDataMessages().
   END.
  
-END PROCEDURE.
+END PROCEDURE. 
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME

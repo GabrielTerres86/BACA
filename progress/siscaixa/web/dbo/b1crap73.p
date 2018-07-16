@@ -59,7 +59,10 @@
                             
                19/02/2014 - Ajuste leitura craptco (Daniel) 
               
-............................................................................ */
+               14/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                            como data de referencia - Everton Deserto(AMCOM).
+              
+............................................................................ **/
 /*----------------------------------------------------------------------*/
 /*  b1crap73.p   - Estorno Pagto de Cheque                              */
 /*  Hist¢ricos   - 21 ou 26(conta - 978809)                             */
@@ -1060,7 +1063,7 @@ PROCEDURE valida-codigo-cheque-valor:
          END.
     
     FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                       craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplcm.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplcm.cdagenci = p-cod-agencia     AND
                        craplcm.cdbccxlt = 11                AND /* Fixo */
                        craplcm.nrdolote = i-nro-lote        AND
@@ -1089,7 +1092,7 @@ PROCEDURE valida-codigo-cheque-valor:
              DO:
 
                  FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                    craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                    craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                     craplcm.cdagenci = craptco.cdagenci          AND
                                     craplcm.cdbccxlt = 100                       AND /* Fixo */
                                     craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1145,7 +1148,7 @@ PROCEDURE valida-codigo-cheque-valor:
              IF  AVAIL craptco  THEN
              DO:
                  FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                    craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                    craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                     craplcm.cdagenci = craptco.cdagenci          AND
                                     craplcm.cdbccxlt = 100                       AND /* Fixo */
                                     craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1315,7 +1318,7 @@ PROCEDURE valida-estorno-pagto-cheque:
                      flg_exetrunc = TRUE.
               
              FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                                craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                                craplcm.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                 craplcm.cdagenci = p-cod-agencia     AND
                                 craplcm.cdbccxlt = 11                AND /* Fixo */
                                 craplcm.nrdolote = i-nro-lote        AND
@@ -1342,7 +1345,7 @@ PROCEDURE valida-estorno-pagto-cheque:
                      DO:
 
                          FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                            craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                            craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                             craplcm.cdagenci = craptco.cdagenci          AND
                                             craplcm.cdbccxlt = 100                       AND /* Fixo */
                                             craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1399,7 +1402,7 @@ PROCEDURE valida-estorno-pagto-cheque:
                      IF  AVAIL craptco  THEN
                      DO:
                          FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                            craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                            craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                             craplcm.cdagenci = craptco.cdagenci          AND
                                             craplcm.cdbccxlt = 100                       AND /* Fixo */
                                             craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1814,7 +1817,7 @@ PROCEDURE valida-estorno-pagto-cheque:
                                              craplcm.nrdconta = 
                                                      crapfdc.nrdconta   AND
                                              craplcm.dtmvtolt = 
-                                                     crapdat.dtmvtolt   AND
+                                                     crapdat.dtmvtocd   AND   /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                              craplcm.cdhistor = 101     AND
                                              craplcm.nrdocmto = i_cheque
                                              USE-INDEX craplcm2)  THEN 
@@ -1860,7 +1863,7 @@ PROCEDURE valida-estorno-pagto-cheque:
          END.
     
     FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                       craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplcm.dtmvtolt = crapdat.dtmvtocd  AND  /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplcm.cdagenci = p-cod-agencia     AND
                        craplcm.cdbccxlt = 11                AND /* Fixo */
                        craplcm.nrdolote = i-nro-lote        AND
@@ -1887,7 +1890,7 @@ PROCEDURE valida-estorno-pagto-cheque:
              DO:
 
                  FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                    craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                    craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                     craplcm.cdagenci = craptco.cdagenci          AND
                                     craplcm.cdbccxlt = 100                       AND /* Fixo */
                                     craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1943,7 +1946,7 @@ PROCEDURE valida-estorno-pagto-cheque:
              IF  AVAIL craptco  THEN
              DO:
                  FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                    craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                    craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                     craplcm.cdagenci = craptco.cdagenci          AND
                                     craplcm.cdbccxlt = 100                       AND /* Fixo */
                                     craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1996,7 +1999,7 @@ PROCEDURE valida-estorno-pagto-cheque:
      ASSIGN p-valor = craplcm.vllanmto.
 
      FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper     AND
-                        craplot.dtmvtolt = crapdat.dtmvtolt     AND
+                        craplot.dtmvtolt = crapdat.dtmvtocd     AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                         craplot.cdagenci = p-cod-agencia        AND
                         craplot.cdbccxlt = 11                   AND  /* Fixo */
                         craplot.nrdolote = i-nro-lote   
@@ -2020,7 +2023,7 @@ PROCEDURE valida-estorno-pagto-cheque:
              IF  AVAIL craptco  THEN
              DO:
                  FIND craplot WHERE craplot.cdcooper = craptco.cdcooper     AND /* coop nova */
-                                    craplot.dtmvtolt = crapdat.dtmvtolt     AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd     AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                     craplot.cdagenci = craptco.cdagenci     AND
                                     craplot.cdbccxlt = 11                   AND  /* Fixo */
                                     craplot.nrdolote = 205000 + craptco.cdagenci   
@@ -2074,7 +2077,7 @@ PROCEDURE valida-estorno-pagto-cheque:
              IF  AVAIL craptco  THEN
              DO:
                  FIND craplot WHERE craplot.cdcooper = craptco.cdcooper     AND /* coop nova */
-                                    craplot.dtmvtolt = crapdat.dtmvtolt     AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd     AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                     craplot.cdagenci = craptco.cdagenci     AND
                                     craplot.cdbccxlt = 11                   AND  /* Fixo */
                                     craplot.nrdolote = 205000 + craptco.cdagenci   
@@ -2168,7 +2171,7 @@ PROCEDURE estorna-pagto-cheque:
                      flg_exetrunc = TRUE.
 
              FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                                craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                                craplcm.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                 craplcm.cdagenci = p-cod-agencia     AND
                                 craplcm.cdbccxlt = 11                AND /* Fixo */
                                 craplcm.nrdolote = i-nro-lote        AND
@@ -2195,7 +2198,7 @@ PROCEDURE estorna-pagto-cheque:
                      DO:
                          /* O lancamento, neste ponto, obrigatoriamente deve existir */
                          FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                            craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                            craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                             craplcm.cdagenci = craptco.cdagenci          AND
                                             craplcm.cdbccxlt = 100                       AND /* Fixo */
                                             craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -2252,7 +2255,7 @@ PROCEDURE estorna-pagto-cheque:
                      DO:
                          /* O lancamento, neste ponto, obrigatoriamente deve existir */
                          FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                            craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                            craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                             craplcm.cdagenci = craptco.cdagenci          AND
                                             craplcm.cdbccxlt = 100                       AND /* Fixo */
                                             craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -2358,7 +2361,7 @@ PROCEDURE estorna-pagto-cheque:
     DO   WHILE TRUE:
          ASSIGN in99 = in99 + 1.
          FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                            craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                            craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplot.cdagenci = p-cod-agencia     AND
                             craplot.cdbccxlt = 11                AND /* Fixo */
                             craplot.nrdolote = i-nro-lote 
@@ -2405,7 +2408,7 @@ PROCEDURE estorna-pagto-cheque:
                           IF  AVAIL craptco  THEN
                           DO:
                               FIND craplot WHERE craplot.cdcooper = craptco.cdcooper     AND   /* coop nova */
-                                                 craplot.dtmvtolt = crapdat.dtmvtolt     AND
+                                                 craplot.dtmvtolt = crapdat.dtmvtocd     AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                                  craplot.cdagenci = craptco.cdagenci     AND
                                                  craplot.cdbccxlt = 11                   AND  /* Fixo */
                                                  craplot.nrdolote = 205000 + craptco.cdagenci   
@@ -2482,7 +2485,7 @@ PROCEDURE estorna-pagto-cheque:
                           IF  AVAIL craptco  THEN
                           DO:
                               FIND craplot WHERE craplot.cdcooper = craptco.cdcooper     AND  /* coop nova */
-                                                 craplot.dtmvtolt = crapdat.dtmvtolt     AND
+                                                 craplot.dtmvtolt = crapdat.dtmvtocd     AND  /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                                  craplot.cdagenci = craptco.cdagenci     AND
                                                  craplot.cdbccxlt = 11                   AND  /* Fixo */
                                                  craplot.nrdolote = 205000 + craptco.cdagenci   
@@ -2819,7 +2822,7 @@ PROCEDURE estorna-pagto-cheque:
     DO   WHILE TRUE:
          ASSIGN in99 = in99 + 1.
          FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                            craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                            craplcm.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplcm.cdagenci = p-cod-agencia     AND
                             craplcm.cdbccxlt = 11                AND /* Fixo */
                             craplcm.nrdolote = i-nro-lote        AND
@@ -2868,7 +2871,7 @@ PROCEDURE estorna-pagto-cheque:
                          IF  AVAIL craptco  THEN
                          DO:
                              FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                                craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                                craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                                 craplcm.cdagenci = craptco.cdagenci          AND
                                                 craplcm.cdbccxlt = 100                       AND /* Fixo */
                                                 craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -2941,7 +2944,7 @@ PROCEDURE estorna-pagto-cheque:
                          IF  AVAIL craptco  THEN
                          DO:
                              FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                                craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                                craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                                 craplcm.cdagenci = craptco.cdagenci          AND
                                                 craplcm.cdbccxlt = 100                       AND /* Fixo */
                                                 craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -3001,7 +3004,7 @@ PROCEDURE estorna-pagto-cheque:
              ELSE 
                  aux_cdbccxlt = 1.
              RUN dbo/pcrap10.p (INPUT p-cooper,
-                                INPUT crapdat.dtmvtolt,
+                                INPUT crapdat.dtmvtocd,  /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                 INPUT aux_cdbccxlt,
                                 INPUT aux_indevchq,
                                 INPUT aux_nrdconta,
@@ -3058,7 +3061,7 @@ PROCEDURE estorna-pagto-cheque:
     IF  flg_chqmigra  THEN
     DO:
         FIND LAST crabbcx WHERE crabbcx.cdcooper = crapcop.cdcooper  AND
-                                crabbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                                crabbcx.dtmvtolt = crapdat.dtmvtocd  AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                 crabbcx.cdagenci = p-cod-agencia     AND
                                 crabbcx.nrdcaixa = p-nro-caixa       AND
                                 crabbcx.cdopecxa = p-cod-operador    AND
@@ -3080,7 +3083,7 @@ PROCEDURE estorna-pagto-cheque:
              END.
         
         FIND craplcx WHERE craplcx.cdcooper = crapcop.cdcooper AND
-                           craplcx.dtmvtolt = crapdat.dtmvtolt AND
+                           craplcx.dtmvtolt = crapdat.dtmvtocd AND /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                            craplcx.cdagenci = p-cod-agencia    AND
                            craplcx.nrdcaixa = p-nro-caixa      AND
                            craplcx.cdopecxa = p-cod-operador   AND
@@ -3136,7 +3139,7 @@ PROCEDURE estorna-pagto-cheque:
                                  INPUT 3, /* Exclusao */
                                  INPUT ROWID(crapcme),
                                  INPUT TRUE, /* Enviar */
-                                 INPUT crapdat.dtmvtolt,
+                                 INPUT crapdat.dtmvtocd, /* 18/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                  INPUT TRUE,
                                 OUTPUT TABLE tt-erro).
 

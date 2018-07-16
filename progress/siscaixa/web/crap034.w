@@ -8,7 +8,14 @@ Alteracoes: 16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
                          spool (Elton).
             30/09/2011 - Alterar diretorio spool para
                         /usr/coop/sistema/siscaixa/web/spool (Fernando).  
-............................................................................. */
+                        
+            22/06/2018 - Alterado para chamar a procedure valida-transacao2 e assim permitir
+                         operar a rotina, mesmo que o processo noturno esteja em execuçao - Everton Deserto(AMCOM).
+            
+            22/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd como data de referencia - 
+                         Everton Deserto(AMCOM).                        
+                          
+............................................................................. **/
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -413,7 +420,7 @@ PROCEDURE process-web-request :
      IF  get-value("cancela") = "" THEN DO:
 
          RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-         RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+         RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,   /* 22/06/2018 Alterado para a procedure valida-transacao2 - Everton Deserto(AMCOM).*/
                                             INPUT v_pac,
                                             INPUT v_caixa).
          DELETE PROCEDURE h-b1crap00.
@@ -526,7 +533,7 @@ PROCEDURE process-web-request :
      * STEP 2a -
      * Set any values that need to be set, then display them. */
 
-    ASSIGN I-DIA   = WEEKDAY(crapdat.dtmvtolt)
+    ASSIGN I-DIA   = WEEKDAY(crapdat.dtmvtocd)  /* 22/06/2018 Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
            RADIO   = STRING(I-DIA)
            vh_foco = STRING(I-DIA + 6) .
 

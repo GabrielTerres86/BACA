@@ -28,7 +28,12 @@
                 16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                              modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
 
-----------------------------------------------------------------------------*/
+
+
+                30/05/2018 - Utilizaçao do Caixa Online mesmo com o processo 
+                             batch (noturno) executando (Fabio Adriano - AMcom).
+
+---------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
@@ -233,7 +238,7 @@ PROCEDURE valida-cheque-sem-captura:
                                              INPUT  p-cod-agencia,
                                              INPUT  p-nro-caixa,
                                              0,
-                                             INPUT  crapdat.dtmvtolt,
+                                             INPUT  crapdat.dtmvtocd,
                                              INPUT  "b1crap52",
                                              INPUT  2, /*CAIXA*/
                                              OUTPUT TABLE tt-erro).
@@ -275,8 +280,8 @@ PROCEDURE valida-cheque-sem-captura:
     ASSIGN p-nome-titular = crapass.nmprimtl.
     
     /*  Monta a Data de Liberacao  para Depositos da Praca e Fora da Praca */
-    ASSIGN dt-menor-praca  = crapdat.dtmvtolt + 1
-           dt-maior-praca  = crapdat.dtmvtolt + 1.
+    ASSIGN dt-menor-praca  = crapdat.dtmvtocd + 1
+           dt-maior-praca  = crapdat.dtmvtocd + 1.
           
     /* Verificar se 'Data menor' eh Sabado,Domingo ou Feriado */
     DO WHILE TRUE:
@@ -436,7 +441,7 @@ PROCEDURE atualiza-cheque-sem-captura:
     
     ASSIGN p-nro-conta = aux_nrdconta.
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND /* Fixo */
                        craplot.nrdolote = i-nro-lote 
@@ -447,7 +452,7 @@ PROCEDURE atualiza-cheque-sem-captura:
             CREATE craplot.
             ASSIGN 
                craplot.cdcooper = crapcop.cdcooper
-               craplot.dtmvtolt = crapdat.dtmvtolt
+               craplot.dtmvtolt = crapdat.dtmvtocd
                craplot.cdagenci = p-cod-agencia   
                craplot.cdbccxlt = 11              
                craplot.nrdolote = i-nro-lote
@@ -499,7 +504,7 @@ PROCEDURE atualiza-cheque-sem-captura:
 
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt      AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd      AND
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
@@ -520,7 +525,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 END.
 
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                                craplcm.cdagenci = p-cod-agencia     AND
                                craplcm.cdbccxlt = 11                AND
                                craplcm.nrdolote = i-nro-lote        AND
@@ -544,7 +549,7 @@ PROCEDURE atualiza-cheque-sem-captura:
        
             CREATE craplcm.
             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                   craplcm.dtmvtolt = crapdat.dtmvtolt
+                   craplcm.dtmvtolt = crapdat.dtmvtocd
                    craplcm.cdagenci = p-cod-agencia
                    craplcm.cdbccxlt = 11
                    craplcm.nrdolote = i-nro-lote
@@ -565,7 +570,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.dtliblan = p-data-menor-praca
                    crapdpb.cdhistor = 403
                    crapdpb.nrdocmto = INTE(c-docto)
-                   crapdpb.dtmvtolt = crapdat.dtmvtolt
+                   crapdpb.dtmvtolt = crapdat.dtmvtocd
                    crapdpb.cdagenci = p-cod-agencia
                    crapdpb.cdbccxlt = 11
                    crapdpb.nrdolote = i-nro-lote
@@ -585,7 +590,7 @@ PROCEDURE atualiza-cheque-sem-captura:
         
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt      AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd      AND
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
@@ -606,7 +611,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 END.
 
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                                craplcm.cdagenci = p-cod-agencia     AND
                                craplcm.cdbccxlt = 11                AND
                                craplcm.nrdolote = i-nro-lote        AND
@@ -630,7 +635,7 @@ PROCEDURE atualiza-cheque-sem-captura:
 
             CREATE craplcm.
             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                   craplcm.dtmvtolt = crapdat.dtmvtolt
+                   craplcm.dtmvtolt = crapdat.dtmvtocd
                    craplcm.cdagenci = p-cod-agencia
                    craplcm.cdbccxlt = 11
                    craplcm.nrdolote = i-nro-lote
@@ -651,7 +656,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.dtliblan = p-data-maior-praca
                    crapdpb.cdhistor = 403
                    crapdpb.nrdocmto = INTE(c-docto)
-                   crapdpb.dtmvtolt = crapdat.dtmvtolt
+                   crapdpb.dtmvtolt = crapdat.dtmvtocd
                    crapdpb.cdagenci = p-cod-agencia
                    crapdpb.cdbccxlt = 11
                    crapdpb.nrdolote = i-nro-lote
@@ -671,7 +676,7 @@ PROCEDURE atualiza-cheque-sem-captura:
             
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt      AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd      AND
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
@@ -692,7 +697,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 END.
 
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                                craplcm.cdagenci = p-cod-agencia     AND
                                craplcm.cdbccxlt = 11                AND
                                craplcm.nrdolote = i-nro-lote        AND
@@ -716,7 +721,7 @@ PROCEDURE atualiza-cheque-sem-captura:
 
             CREATE craplcm.
             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                   craplcm.dtmvtolt = crapdat.dtmvtolt
+                   craplcm.dtmvtolt = crapdat.dtmvtocd
                    craplcm.cdagenci = p-cod-agencia
                    craplcm.cdbccxlt = 11
                    craplcm.nrdolote = i-nro-lote
@@ -737,7 +742,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.dtliblan = p-data-menor-fpraca
                    crapdpb.cdhistor = 404
                    crapdpb.nrdocmto = INTE(c-docto)
-                   crapdpb.dtmvtolt = crapdat.dtmvtolt
+                   crapdpb.dtmvtolt = crapdat.dtmvtocd
                    crapdpb.cdagenci = p-cod-agencia
                    crapdpb.cdbccxlt = 11
                    crapdpb.nrdolote = i-nro-lote
@@ -757,7 +762,7 @@ PROCEDURE atualiza-cheque-sem-captura:
 
             /*--- Verifica se Lancamento ja Existe ---*/
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper      AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt      AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd      AND
                                craplcm.cdagenci = p-cod-agencia         AND
                                craplcm.cdbccxlt = 11                    AND
                                craplcm.nrdolote = i-nro-lote            AND
@@ -778,7 +783,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 END.
 
             FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                                craplcm.cdagenci = p-cod-agencia     AND
                                craplcm.cdbccxlt = 11                AND
                                craplcm.nrdolote = i-nro-lote        AND
@@ -802,7 +807,7 @@ PROCEDURE atualiza-cheque-sem-captura:
         
             CREATE craplcm.
             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                   craplcm.dtmvtolt = crapdat.dtmvtolt
+                   craplcm.dtmvtolt = crapdat.dtmvtocd
                    craplcm.cdagenci = p-cod-agencia
                    craplcm.cdbccxlt = 11
                    craplcm.nrdolote = i-nro-lote
@@ -823,7 +828,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                    crapdpb.dtliblan = p-data-maior-fpraca
                    crapdpb.cdhistor = 404
                    crapdpb.nrdocmto = INTE(c-docto)
-                   crapdpb.dtmvtolt = crapdat.dtmvtolt
+                   crapdpb.dtmvtolt = crapdat.dtmvtocd
                    crapdpb.cdagenci = p-cod-agencia
                    crapdpb.cdbccxlt = 11
                    crapdpb.nrdolote = i-nro-lote
@@ -871,7 +876,7 @@ PROCEDURE atualiza-cheque-sem-captura:
            TRIM(crapcop.nmrescop) +  " - " + TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
            c-literal[3]  =
-           STRING(crapdat.dtmvtolt,"99/99/99") + " " +
+           STRING(crapdat.dtmvtocd,"99/99/99") + " " +
            STRING(TIME,"HH:MM:SS")     +  " PA  " + 
            STRING(p-cod-agencia,"999") + 
            "  CAIXA: " +

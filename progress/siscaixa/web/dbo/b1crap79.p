@@ -20,7 +20,11 @@ b1crap79.p - Movimentacoes  - Estorno Pagamento Emprestimo           */
 
                 16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                              modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
-----------------------------------------------------------------------------*/
+
+                20/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                             como data de referencia - Everton Deserto(AMCOM).            
+                             
+---------------------------------------------------------------------------- **/
 
 { dbo/bo-erro1.i }
 { sistema/generico/includes/var_internet.i }
@@ -227,7 +231,7 @@ PROCEDURE valida-estorno.
     END.
   
     FIND craplem WHERE craplem.cdcooper = crapcop.cdcooper  AND
-                       craplem.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplem.dtmvtolt = crapdat.dtmvtocd  AND  /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplem.cdagenci = p-cod-agencia     AND
                        craplem.cdbccxlt = 11                AND
                        craplem.nrdolote = i-nro-lote        AND
@@ -250,7 +254,7 @@ PROCEDURE valida-estorno.
     ASSIGN p-valor = craplem.vllanmto.
     
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND   /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote        NO-LOCK NO-ERROR.
@@ -300,7 +304,7 @@ PROCEDURE estorna-pagto.
                              NO-LOCK NO-ERROR.
                
     FIND craplem WHERE craplem.cdcooper = crapcop.cdcooper  AND
-                       craplem.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplem.dtmvtolt = crapdat.dtmvtocd  AND /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplem.cdagenci = p-cod-agencia     AND
                        craplem.cdbccxlt = 11                AND
                        craplem.nrdolote = i-nro-lote        AND
@@ -344,7 +348,7 @@ PROCEDURE estorna-pagto.
 
         FIND craplot WHERE
              craplot.cdcooper = crapcop.cdcooper  AND
-             craplot.dtmvtolt = crapdat.dtmvtolt  AND
+             craplot.dtmvtolt = crapdat.dtmvtocd  AND  /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
              craplot.cdagenci = p-cod-agencia     AND
              craplot.cdbccxlt = 11                AND  /* Fixo */
              craplot.nrdolote = i-nro-lote      
@@ -388,7 +392,7 @@ PROCEDURE estorna-pagto.
         ASSIGN in99 = in99 + 1.
             
         FIND craplem WHERE craplem.cdcooper = crapcop.cdcooper  AND
-                           craplem.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplem.dtmvtolt = crapdat.dtmvtocd  AND   /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                            craplem.cdagenci = p-cod-agencia     AND
                            craplem.cdbccxlt = 11                AND
                            craplem.nrdolote = i-nro-lote        AND
@@ -524,7 +528,7 @@ PROCEDURE estorna-pagto.
                                      INPUT 0,
                                      INPUT 0,
                                      INPUT p-cod-operador,
-                                     INPUT crapdat.dtmvtolt,
+                                     INPUT crapdat.dtmvtocd,  /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                      INPUT crapdat.dtmvtopr,
                                      INPUT crapepr.nrdconta,
                                      INPUT 90, /* Emprestimo */

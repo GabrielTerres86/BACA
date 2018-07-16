@@ -13,7 +13,11 @@
                21/05/2012 - substituição do FIND craptab para os registros 
                             CONTACONVE pela chamada do fontes ver_ctace.p
                             (Lucas R.)            
-...........................................................................*/
+                             
+              20/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                           norturno rodando (Douglas Pagel - AMcom).
+                           
+........................................................................... **/
                              
 {dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
@@ -132,7 +136,7 @@ PROCEDURE valida-autenticacao:
               flg_exetrunc = TRUE.
 
        FIND craplcx WHERE craplcx.cdcooper = crapcop.cdcooper AND
-                          craplcx.dtmvtolt = crapdat.dtmvtolt AND 
+                          craplcx.dtmvtolt = crapdat.dtmvtocd AND 
                           craplcx.cdagenci = p-cod-agencia    AND 
                           craplcx.nrdcaixa = p-nro-caixa      AND 
                           craplcx.nrautdoc = p-nrautent NO-LOCK NO-ERROR.
@@ -151,7 +155,7 @@ PROCEDURE valida-autenticacao:
        END.
 
        FOR EACH crapchd WHERE crapchd.cdcooper = crapcop.cdcooper AND
-                              crapchd.dtmvtolt = crapdat.dtmvtolt AND
+                              crapchd.dtmvtolt = crapdat.dtmvtocd AND
                               crapchd.cdagenci = p-cod-agencia    AND
                               crapchd.cdbccxlt = 11               AND
                               crapchd.nrdolote = i-nro-lote       AND
@@ -174,7 +178,7 @@ PROCEDURE valida-autenticacao:
 
            CREATE tt-lancamentos.
            ASSIGN tt-lancamentos.tpdocmto = 1
-                  tt-lancamentos.dtmvtolt = crapdat.dtmvtolt
+                  tt-lancamentos.dtmvtolt = crapdat.dtmvtocd
                   tt-lancamentos.vllanmto = crapchd.vlcheque
                   l-achou-horario-corte  = YES
                   l-achou = YES.
@@ -196,7 +200,7 @@ PROCEDURE valida-autenticacao:
          END.
 
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper      AND     
-                       craplot.dtmvtolt = crapdat.dtmvtolt      AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd      AND
                        craplot.cdagenci = p-cod-agencia         AND
                        craplot.cdbccxlt = 11                    AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote           
@@ -367,7 +371,7 @@ PROCEDURE estorna-lancamento:
         ASSIGN in99 = in99 + 1.
 
         FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd AND
                            craplot.cdagenci = p-cod-agencia    AND
                            craplot.cdbccxlt = 11               AND  /* Fixo */
                            craplot.nrdolote = i-nro-lote 
@@ -414,7 +418,7 @@ PROCEDURE estorna-lancamento:
     FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper AND
                        crapaut.cdagenci = p-cod-agencia    AND
                        crapaut.nrdcaixa = p-nro-caixa      AND
-                       crapaut.dtmvtolt = crapdat.dtmvtolt AND
+                       crapaut.dtmvtolt = crapdat.dtmvtocd AND
                        crapaut.nrsequen = p-nrautent
                        NO-LOCK NO-ERROR.
                        
@@ -439,7 +443,7 @@ PROCEDURE estorna-lancamento:
         ASSIGN in99 = in99 + 1.
 
         FIND craplcx WHERE craplcx.cdcooper = crapcop.cdcooper AND
-                           craplcx.dtmvtolt = crapdat.dtmvtolt AND 
+                           craplcx.dtmvtolt = crapdat.dtmvtocd AND 
                            craplcx.cdagenci = p-cod-agencia    AND 
                            craplcx.nrdcaixa = p-nro-caixa      AND 
                            craplcx.nrautdoc = p-nrautent 
@@ -484,7 +488,7 @@ PROCEDURE estorna-lancamento:
     END.  /*  DO WHILE */
     
     FOR EACH crapchd WHERE crapchd.cdcooper = crapcop.cdcooper AND
-                           crapchd.dtmvtolt = crapdat.dtmvtolt AND
+                           crapchd.dtmvtolt = crapdat.dtmvtocd AND
                            crapchd.cdagenci = p-cod-agencia    AND
                            crapchd.cdbccxlt = 11               AND
                            crapchd.nrdolote = i-nro-lote       AND
@@ -497,7 +501,7 @@ PROCEDURE estorna-lancamento:
                                                    INPUT p-cod-agencia,
                                                    INPUT p-nro-caixa,
                                                    INPUT p-cod-operador,
-                                                   INPUT crapdat.dtmvtolt,
+                                                   INPUT crapdat.dtmvtocd,
                                                    INPUT 2).  /*Estorno*/
         DELETE PROCEDURE h_b1crap00.
         

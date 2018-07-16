@@ -2,7 +2,7 @@
 
     b1crap81.p - Estorno Correspondente Bancario
     
-    Ultima Atualizacao: 23/05/2012
+    Ultima Atualizacao: 07/06/2018
     
     Alteracoes:
                 02/03/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -34,7 +34,10 @@
                 23/05/2012 - Nova funcao muda_caracter para remocao de caracter
                              alfa no codigo do operador. (David Kruger).
                              
----------------------------------------------------------------------*/
+                07/06/2018 - Alteracao para considerar o campo crapdat.dtmvtocd 
+                            como data referencia - Everton Deserto(AMCOM).
+
+--------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -349,9 +352,9 @@ PROCEDURE retorna-valores-titulo:
              DEC(SUBSTR(STRING(p-titulo5, "99999999999999"),5,10)) / 100.
 
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                        craplot.cdagenci = p-cod-agencia     AND
-                       craplot.cdbccxlt = 11                AND  /* Fixo */
+                       craplot.cdbccxlt = 11                AND /* Fixo */
                        craplot.nrdolote = i-nro-lote 
                        NO-LOCK NO-ERROR.
          
@@ -369,7 +372,7 @@ PROCEDURE retorna-valores-titulo:
         END. 
     
     FIND FIRST crapcbb WHERE crapcbb.cdcooper = crapcop.cdcooper  AND
-                             crapcbb.dtmvtolt = crapdat.dtmvtolt  AND
+                             crapcbb.dtmvtolt = crapdat.dtmvtocd  AND /*07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                              crapcbb.cdagenci = p-cod-agencia     AND
                              crapcbb.cdbccxlt = 11                AND /* FIXO */
                              crapcbb.nrdolote = i-nro-lote        AND
@@ -509,7 +512,7 @@ PROCEDURE retorna-valores-fatura:
     ASSIGN i-nro-lote = 22000 + p-nro-caixa.
 
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote        NO-LOCK NO-ERROR.
@@ -528,7 +531,7 @@ PROCEDURE retorna-valores-fatura:
         END. 
     
     FIND FIRST crapcbb WHERE crapcbb.cdcooper = crapcop.cdcooper  AND
-                             crapcbb.dtmvtolt = crapdat.dtmvtolt  AND
+                             crapcbb.dtmvtolt = crapdat.dtmvtocd  AND /* 07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                              crapcbb.cdagenci = p-cod-agencia     AND
                              crapcbb.cdbccxlt = 11                AND /* FIXO */
                              crapcbb.nrdolote = i-nro-lote        AND
@@ -602,7 +605,7 @@ PROCEDURE estorna-titulos-fatura:
        
         ASSIGN in99 = in99 + 1.
         FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd  AND       /*07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                            craplot.cdagenci = p-cod-agencia     AND
                            craplot.cdbccxlt = 11                AND  /* Fixo */
                            craplot.nrdolote = i-nro-lote 
@@ -650,7 +653,7 @@ PROCEDURE estorna-titulos-fatura:
     DO WHILE TRUE:
 
         FIND FIRST crapcbb WHERE crapcbb.cdcooper = crapcop.cdcooper    AND
-                                 crapcbb.dtmvtolt = crapdat.dtmvtolt    AND
+                                 crapcbb.dtmvtolt = crapdat.dtmvtocd    AND /*07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM) */
                                  crapcbb.cdagenci = craplot.cdagenci    AND
                                  crapcbb.cdbccxlt = craplot.cdbccxlt    AND
                                  crapcbb.nrdolote = craplot.nrdolote    AND
@@ -772,7 +775,7 @@ PROCEDURE gera-estorno-correspondente:
                        NO-LOCK NO-ERROR.
 
     FIND  LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND /* 07/06/2018 - Alteracao para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                              crapbcx.cdagenci = p-cod-agencia       AND
                              crapbcx.nrdcaixa = p-nro-caixa         AND
                              crapbcx.cdopecxa = p-cod-operador      AND

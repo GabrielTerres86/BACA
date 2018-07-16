@@ -29,7 +29,7 @@ DEFINE TEMP-TABLE ab_unmap
 
   Created: 
 
-  Alteraçoes : 14/06/2018 - Utilizaçao do Caixa Online mesmo com o processo noturno executando 
+  Alteraçoes: 14/06/2018 - Utilizaçao do Caixa Online mesmo com o processo noturno executando 
                             (Douglas Pagel - AMcom).
 
 ------------------------------------------------------------------------ **/
@@ -352,7 +352,7 @@ PROCEDURE process-web-request :
  
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                        INPUT v_pac,
                                        INPUT v_caixa).
    

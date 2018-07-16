@@ -23,7 +23,12 @@
                05/03/2014 - Incluso VALIDATE (Daniel)
 			   
 			   23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).          
-..............................................................................*/
+         
+         14/06/2018 - Alterado para chamar a procedure valida-transacao2 e assim permitir
+                      operar a rotina, mesmo que o processo noturno esteja em execuçao 
+                      - Everton Deserto(AMCOM).
+                      
+.............................................................................. **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -445,7 +450,7 @@ PROCEDURE process-web-request :
     
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
     
-    RUN valida-transacao
+    RUN valida-transacao2    /* 14/06/2018 - Alterado para chamar a procedure valida-transacao2 - Everton Deserto(AMCOM).*/      
                          IN h-b1crap00(INPUT v_coop,
                                        INPUT v_pac,
                                        INPUT v_caixa).
@@ -663,7 +668,7 @@ PROCEDURE process-web-request :
      * Open the database or SDO query and and fetch the first record. */ 
     RUN findRecords.
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop, /* 14/06/2018 - Alterado para chamar a procedure valida-transacao2 - Everton Deserto(AMCOM)*/
                                        INPUT v_pac,
                                        INPUT v_caixa).
     DELETE PROCEDURE h-b1crap00.

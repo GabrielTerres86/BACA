@@ -18,7 +18,12 @@ Alteracoes: 20/06/2016 - Incluida validacao da conta para verificar se esta
 			19/06/2018 - Incluido parametros adicionados a rotina oracle.
 			             PRJ381 - Antifraude(Odirlei-AMcom)
 
-..............................................................................*/
+
+
+            08/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+                         
+.............................................................................. **/
 
 {dbo/bo-erro1.i}
 DEFINE VARIABLE i-cod-erro    AS INT                 NO-UNDO.
@@ -314,7 +319,7 @@ PROCEDURE validar-gps:
                 RETURN "NOK".
             END.
 
-            IF  aux_compete1 < (MONTH(crapdat.dtmvtolt) - 1) THEN DO:
+            IF  aux_compete1 < (MONTH(crapdat.dtmvtocd) - 1) THEN DO:
                 ASSIGN i-cod-erro  = 0
                        c-desc-erro = "Agendamento não permitido para competências anteriores. " +
                                      "Para efetivar o pagamento utilize a rotina de Pagamento de GPS!"
@@ -330,7 +335,7 @@ PROCEDURE validar-gps:
                 RETURN "NOK".
             END.
 
-            IF  aux_compete2 <> YEAR(crapdat.dtmvtolt) THEN DO:
+            IF  aux_compete2 <> YEAR(crapdat.dtmvtocd) THEN DO:
                 ASSIGN i-cod-erro  = 0
                        c-desc-erro = "Agendamento não permitido para competências anteriores. " +
                                      "Para efetivar o pagamento utilize a rotina de Pagamento de GPS!"
@@ -450,7 +455,7 @@ PROCEDURE validar-gps:
             RETURN "NOK".
         END.
 
-        IF  INTE(SUBSTR(aux_codbarra,42,2)) < (MONTH(crapdat.dtmvtolt) - 1) THEN DO:
+        IF  INTE(SUBSTR(aux_codbarra,42,2)) < (MONTH(crapdat.dtmvtocd) - 1) THEN DO:
             ASSIGN i-cod-erro  = 0
                    c-desc-erro = "Agendamento não permitido para competências anteriores. " +
                                  "Para efetivar o pagamento utilize a rotina de Pagamento de GPS!"
@@ -466,7 +471,7 @@ PROCEDURE validar-gps:
             RETURN "NOK".
         END.
 
-        IF  INTE(SUBSTR(aux_codbarra,38,4)) <> YEAR(crapdat.dtmvtolt) THEN DO:
+        IF  INTE(SUBSTR(aux_codbarra,38,4)) <> YEAR(crapdat.dtmvtocd) THEN DO:
             ASSIGN i-cod-erro  = 0
                    c-desc-erro = "Agendamento não permitido para competências anteriores. " +
                                  "Para efetivar o pagamento utilize a rotina de Pagamento de GPS!"
@@ -551,7 +556,7 @@ PROCEDURE validar-gps:
         RETURN "NOK".
     END.
     
-    IF  DATE(p-diadebito) = crapdat.dtmvtolt THEN DO:
+    IF  DATE(p-diadebito) = crapdat.dtmvtocd THEN DO:
         ASSIGN i-cod-erro  = 0
                c-desc-erro = "Data do debito deve ser maior que a data atual! Para " +
                              "pagamentos no dia, deve ser utilizado a Rotina 87!".
@@ -568,7 +573,7 @@ PROCEDURE validar-gps:
         RETURN "NOK".
     END.
 
-    IF  DATE(p-diadebito) < crapdat.dtmvtolt THEN DO:
+    IF  DATE(p-diadebito) < crapdat.dtmvtocd THEN DO:
         ASSIGN i-cod-erro  = 0
                c-desc-erro = "Data do debito deve ser maior que a data atual!".
 

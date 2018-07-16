@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 26/05/2018
+    Ultima Atualizacao: 13/06/2018
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -254,7 +254,11 @@
 
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
------------------------------------------------------------------------------*/
+
+                             
+                13/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                             norturno rodando (Douglas Pagel - AMcom).
+----------------------------------------------------------------------------- **/
                              
 {dbo/bo-erro1.i}
 { sistema/generico/includes/b1wgen0015tt.i }
@@ -1412,7 +1416,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
 
     DEF VAR aux_tpsconta AS CHAR                  NO-UNDO.
     DEF VAR aux_des_erro AS CHAR                  NO-UNDO.
-    
+
     DEF VAR aux_qtacobra AS INTE                  NO-UNDO.
     DEF VAR aux_fliseope AS INTE                  NO-UNDO.
     DEF VAR aux_cdcritic AS INTE                  NO-UNDO.
@@ -2109,7 +2113,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                                             ,INPUT p-cod-operador       /* Operador */
                                                             ,INPUT p-cod-agencia        /* PA */ 
                                                             ,INPUT 100                  /* Banco */
-                                                            ,INPUT crapdat.dtmvtolt     /* Data de movimento */
+                                                            ,INPUT crapdat.dtmvtocd     /* Data de movimento */
                                                             ,INPUT "b1crap20"           /* Cód. programa */
                                                             ,INPUT 2                    /* Id. Origem*/
                                                             ,INPUT p-nro-conta-rm       /* Nr. da conta */
@@ -2182,7 +2186,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                     INPUT 7999,            /* nrdolote */        
                                     INPUT i-tipo-lote,     /* tpdolote */         
                                     INPUT p-cod-operador,
-                                    INPUT crapdat.dtmvtolt,
+                                    INPUT crapdat.dtmvtocd,
                                     INPUT crapdat.dtmvtocd,
                                     INPUT p-nro-conta-rm,
                                     INPUT STRING(p-nro-conta-rm,"99999999"),
@@ -3260,7 +3264,7 @@ PROCEDURE verifica-operador-ted:
                                   
             /* Apresenta a crítica */
             IF  i-cod-erro <> 0 OR c-desc-erro <> "" THEN
-                DO:
+            DO:
                     RUN cria-erro (INPUT p-cooper,        
                                    INPUT p-cod-agencia,
                                    INPUT p-nro-caixa,
@@ -3485,7 +3489,7 @@ END.
      RUN verifica_cartao IN h-b1wgen0025(INPUT crapcop.cdcooper,
                                          INPUT 0,
                                          INPUT aux_dscartao, 
-                                         INPUT crapdat.dtmvtolt,
+                                         INPUT crapdat.dtmvtocd,
                                         OUTPUT p-nro-conta,
                                         OUTPUT aux_cdcooper,
                                         OUTPUT p-nrcartao,

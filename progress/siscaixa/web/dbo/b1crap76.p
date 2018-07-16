@@ -18,10 +18,13 @@
                             (Evandro).
                             
                23/12/2011 - Tratar historico 1030 (Gabriel).             
-
+                            
                16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
-                            modalidade do tipo de conta igual a 3. PRJ366 (Lombardi). 
-*/
+                            modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).          
+                            
+               19/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd como 
+                            data de referencia - Everton Deserto(AMCOM).
+**/
                             
 {dbo/bo-erro1.i}
 
@@ -50,7 +53,7 @@ PROCEDURE valida-outros:
     DEF OUTPUT PARAM p-dtliblan        AS DATE NO-UNDO.
       
     DEF VAR aux_dshistor               AS CHAR NO-UNDO.         
-    DEF VAR aux_cdmodali               AS INTE NO-UNDO.
+	DEF VAR aux_cdmodali               AS INTE NO-UNDO.
     DEF VAR aux_des_erro               AS CHAR NO-UNDO.
     DEF VAR aux_dscritic               AS CHAR NO-UNDO.
 
@@ -132,7 +135,7 @@ PROCEDURE valida-outros:
 
             FIND FIRST craplot WHERE
                        craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote        NO-LOCK NO-ERROR .
@@ -152,7 +155,7 @@ PROCEDURE valida-outros:
             
             FIND FIRST craplcm WHERE
                        craplcm.cdcooper = crapcop.cdcooper   AND
-                       craplcm.dtmvtolt = crapdat.dtmvtolt   AND
+                       craplcm.dtmvtolt = crapdat.dtmvtocd   AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplcm.cdagenci = p-cod-agencia      AND
                        craplcm.cdbccxlt = 11                 AND /* Fixo */
                        craplcm.nrdolote = i-nro-lote         AND
@@ -184,7 +187,7 @@ PROCEDURE valida-outros:
             
             FIND FIRST craplot WHERE
                        craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote        NO-LOCK NO-ERROR .
@@ -204,7 +207,7 @@ PROCEDURE valida-outros:
             
             FIND FIRST craplcs WHERE
                        craplcs.cdcooper = crapcop.cdcooper   AND
-                       craplcs.dtmvtolt = crapdat.dtmvtolt   AND
+                       craplcs.dtmvtolt = crapdat.dtmvtocd   AND  /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                        craplcs.nrdconta = p-nro-conta        AND
                        craplcs.nrdocmto = p-nro-docto  USE-INDEX craplcs1
                        NO-LOCK NO-ERROR.
@@ -340,7 +343,6 @@ PROCEDURE valida-outros:
    
      IF   craphis.indebcre  = "C"   AND
           craphis.cdhistor <> 561   THEN DO:
-          
           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
           RUN STORED-PROCEDURE pc_busca_modalidade_tipo
@@ -387,7 +389,7 @@ PROCEDURE valida-outros:
      
          FIND FIRST crapdpb WHERE
                     crapdpb.cdcooper = crapcop.cdcooper  AND 
-                    crapdpb.dtmvtolt = crapdat.dtmvtolt  AND
+                    crapdpb.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                     crapdpb.cdagenci = p-cod-agencia     AND
                     crapdpb.cdbccxlt = 11                AND  /* Fixo */
                     crapdpb.nrdolote = i-nro-lote        AND
@@ -426,7 +428,7 @@ PROCEDURE valida-outros:
                     crapdpb.cdcooper = crapcop.cdcooper  AND
                     crapdpb.nrdconta = craplcm.nrdconta  AND
                     crapdpb.nrdocmto = p-nro-docto       AND
-                    crapdpb.dtliblan > crapdat.dtmvtolt 
+                    crapdpb.dtliblan > crapdat.dtmvtocd   /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                     USE-INDEX crapdpb2 NO-LOCK NO-ERROR.
 
          IF  NOT AVAIL crapdpb THEN DO: 
@@ -587,7 +589,7 @@ PROCEDURE estorna-outros.
        
         FIND FIRST craplot WHERE
                    craplot.cdcooper = crapcop.cdcooper  AND
-                   craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                   craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                    craplot.cdagenci = p-cod-agencia     AND
                    craplot.cdbccxlt = 11                AND  /* Fixo */
                    craplot.nrdolote = i-nro-lote 
@@ -637,7 +639,7 @@ PROCEDURE estorna-outros.
                FIND FIRST
                    craplcm WHERE
                    craplcm.cdcooper = crapcop.cdcooper  AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                   craplcm.dtmvtolt = crapdat.dtmvtocd  AND  /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                    craplcm.cdagenci = p-cod-agencia     AND
                    craplcm.cdbccxlt = 11                AND /* Fixo */
                    craplcm.nrdolote = i-nro-lote        AND
@@ -689,7 +691,7 @@ PROCEDURE estorna-outros.
                FIND FIRST
                    craplcs WHERE
                    craplcs.cdcooper = crapcop.cdcooper  AND
-                   craplcs.dtmvtolt = crapdat.dtmvtolt  AND
+                   craplcs.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                    craplcs.nrdconta = p-nro-conta       AND
                    craplcs.nrdocmto = p-nro-docto  USE-INDEX craplcs1
                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -820,7 +822,7 @@ PROCEDURE estorna-outros.
 
              FIND FIRST crapdpb WHERE
                         crapdpb.cdcooper = crapcop.cdcooper  AND
-                        crapdpb.dtmvtolt = crapdat.dtmvtolt  AND
+                        crapdpb.dtmvtolt = crapdat.dtmvtocd  AND /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                         crapdpb.cdagenci = p-cod-agencia     AND
                         crapdpb.cdbccxlt = 11                AND  /* Fixo */
                         crapdpb.nrdolote = i-nro-lote        AND
@@ -875,7 +877,7 @@ PROCEDURE estorna-outros.
                         crapdpb.cdcooper = crapcop.cdcooper  AND
                         crapdpb.nrdconta = craplcm.nrdconta  AND
                         crapdpb.nrdocmto = p-nro-docto       AND
-                        crapdpb.dtliblan > crapdat.dtmvtolt
+                        crapdpb.dtliblan > crapdat.dtmvtocd     /* 19/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM).*/
                         USE-INDEX crapdpb1 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                         
 

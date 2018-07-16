@@ -1,6 +1,11 @@
 /*---------------------------------------------------------------------------
 Alteracoes: 13/12/2013 - Adicionado validate para tabela craperr (Tiago).
----------------------------------------------------------------------------*/
+
+           19/06/2018 - Alterado para chamar a procedure valida-transacao2 e assim permitir
+                       operar a rotina, mesmo que o processo noturno esteja em execuçao - 
+                       Everton Deserto(AMCOM).
+                            
+--------------------------------------------------------------------------- **/
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
@@ -407,7 +412,7 @@ PROCEDURE process-web-request :
     {include/assignfields.i}
                           
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,  /* 19/06/2018 - Alterado para a procedure valida-transacao2 - Everton Deserto(AMCOM). */
                                        INPUT v_pac,
                                        INPUT v_caixa).
     DELETE PROCEDURE h-b1crap00.

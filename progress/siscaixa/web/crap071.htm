@@ -27,10 +27,18 @@
                
                19/05/2015 - Aumento do campo de Nr.Docmto (Lunelli SD 285059)
    
-               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
-               
+               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).               
+
                27/06/2017 - Retirados tretamentos de documento 3,4 e 5 e descriçao
                             para cheques de outros bancos. PRJ367 - Compe Sessao Unica (Lombardi)
+               
+               15/06/2018 - Alterado para chamar a procedure valida-transacao2 e assim permitir
+                         operar a rotina, mesmo que o processo noturno esteja em execuçao - 
+						 Everton Deserto(AMCOM).
+            
+               15/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd como data de referencia - 
+			                Everton Deserto(AMCOM).  
+               
    ......................................................................... -->
 
 <html>
@@ -134,7 +142,7 @@ function reabilitaForm() {
            v_operador   = GET-VALUE("operador")
            v_pac        = GET-VALUE("User_pac")
            v_coop       = get-value("user_coop")
-           v_data       = STRING(crapdat.dtmvtolt,"99/99/9999")
+           v_data       = STRING(crapdat.dtmvtocd,"99/99/9999") /* 15/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
            v_docto      = GET-VALUE("v_docto").
 
     /* Criada para o JavaScript nao ficar com o código feio */
@@ -149,7 +157,7 @@ function reabilitaForm() {
         DO:
             RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
         
-            RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+            RUN valida-transacao2 IN h-b1crap00(INPUT v_coop, /* 15/06/2018 - Alterado para a procedure valida-transacao-2 - Everton Deserto(AMCOM).*/
                                                INPUT v_pac,
                                                INPUT v_caixa).
         
@@ -474,6 +482,7 @@ function reabilitaForm() {
         </tr>
         <script language="SpeedScript">
             END.
+        
         FOR EACH tt-lancamentos WHERE tt-lancamentos.tpdocmto = 6 NO-LOCK:
             ASSIGN v_foco_conta = FALSE.
         </script>
