@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 21/02/2018
+     Data    : Marco/2005.                     Ultima atualizacao: 11/07/2018
 
      Dados referentes ao programa:
 
@@ -369,6 +369,9 @@ BEGIN
 							  página de "Lançamentos Integrados".
 							  Chamado 792327 (Gabriel / Mouts)
                               
+								11/07/2018 - Incluídos históricos para o relatório CRITICAITG.txt
+                           - Removido histórico 0729TRANSF.CTA. no relatório CRITICAITG.txt
+													 (Reinert)
      ............................................................................. */
 
   DECLARE
@@ -1147,10 +1150,6 @@ BEGIN
         vr_tab_historico('0633SEGURO').nrctades := 4894;
         vr_tab_historico('0633SEGURO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. SEGURO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
-        vr_tab_historico('0729TRANSF.CTA.').nrctaori := 1179;
-        vr_tab_historico('0729TRANSF.CTA.').nrctades := 4894;
-        vr_tab_historico('0729TRANSF.CTA.').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TEC SALÁRIO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
-
         vr_tab_historico('0729TRANSFERENC').nrctaori := 1179;
         vr_tab_historico('0729TRANSFERENC').nrctades := 4894;
         vr_tab_historico('0729TRANSFERENC').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
@@ -1190,6 +1189,50 @@ BEGIN
         vr_tab_historico('0729TRANSF RECE').nrctaori := 1179;
         vr_tab_historico('0729TRANSF RECE').nrctades := 4894;
         vr_tab_historico('0729TRANSF RECE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                                
+
+        vr_tab_historico('0976TED-CRED CO').nrctaori := 1179;
+        vr_tab_historico('0976TED-CRED CO').nrctades := 4894;
+        vr_tab_historico('0976TED-CRED CO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TED CREDITO NAO INTEGRADA AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+        
+        vr_tab_historico('0189PGTO CDC RE').nrctaori := 1773;
+        vr_tab_historico('0189PGTO CDC RE').nrctades := 1179;
+        vr_tab_historico('0189PGTO CDC RE').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. PGTO CDC NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0500REVERSAO DU').nrctaori := 1773;
+        vr_tab_historico('0500REVERSAO DU').nrctades := 1179;
+        vr_tab_historico('0500REVERSAO DU').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. REVERSAO DUPLICADA NAO INTEGRADA AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0632ORDEM BANCA').nrctaori := 1179;
+        vr_tab_historico('0632ORDEM BANCA').nrctades := 4894;
+        vr_tab_historico('0632ORDEM BANCA').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. ORDEM BANCARIA NAO INTEGRADA AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900BRADESCO CR').nrctaori := 1179;
+        vr_tab_historico('0900BRADESCO CR').nrctades := 4894;
+        vr_tab_historico('0900BRADESCO CR').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. BRADESCO CREDITO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0732CIELO CREDI').nrctaori := 1179;
+        vr_tab_historico('0732CIELO CREDI').nrctades := 4894;
+        vr_tab_historico('0732CIELO CREDI').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CIELO CREDITO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900REDECARD DE').nrctaori := 1179;
+        vr_tab_historico('0900REDECARD DE').nrctades := 4894;
+        vr_tab_historico('0900REDECARD DE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDECARD NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0886REMUNER. AC').nrctaori := 1179;
+        vr_tab_historico('0886REMUNER. AC').nrctades := 4894;
+        vr_tab_historico('0886REMUNER. AC').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REMUNERACAO AC NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900REDE VISA D').nrctaori := 1179;
+        vr_tab_historico('0900REDE VISA D').nrctades := 4894;
+        vr_tab_historico('0900REDE VISA D').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDE VISA NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900REDE CREDIT').nrctaori := 1179;
+        vr_tab_historico('0900REDE CREDIT').nrctades := 4894;
+        vr_tab_historico('0900REDE CREDIT').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDE CREDITO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0612CRED PAGSEG').nrctaori := 1179;
+        vr_tab_historico('0612CRED PAGSEG').nrctades := 4894;
+        vr_tab_historico('0612CRED PAGSEG').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CERDITO PAGSEGURO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
         
      END;
 
