@@ -527,7 +527,7 @@ PROCEDURE pc_consulta_lancto_car (pr_cdcooper IN crapcop.cdcooper%TYPE          
                     ,pr_nmarqimp OUT VARCHAR2              --Nome Arquivo Impressao
                     ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
                     ,pr_des_reto OUT VARCHAR2 );
-
+                    
 END EXTR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
@@ -536,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 30/05/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -794,6 +794,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
                      pois haviam casos em que não estavamos entrando na rotina
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
+        
+        21/05/2018 - Alterações relacionadas a SM4 - PRJ364 - Paulo Martins - Mout´s
+        
+        30/05/2018 - Adicionado dscomple xml na pc_gera_impextdpv (Alcemir Mout's - Prj. 467).                     
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -3115,7 +3119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_tab_flgpripa(idx):= FALSE;
           END LOOP;  
         END IF;                             
-        /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */                                   
+        /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */               
         IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049,2566,2567,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476) THEN
           --Proximo registro
           CONTINUE;
@@ -3802,6 +3806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.cdcooper
               ,crapass.cdagenci
               ,crapass.cdtipcta
+              ,crapass.cdsitdct
         FROM crapass crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
@@ -5530,6 +5535,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(1);
+          -- SM4 - Paulo Martins - Mout´s
+          pr_tab_lancamento_futuro(vr_index).cdhistor:= 37;
+          if rw_crapass.cdsitdct  = 7 then
+            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+          else
+            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+          end if;		  
         END IF;
         END IF;
         --Saldo
@@ -5614,6 +5626,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(2);
+          -- SM4 - Paulo Martins - Mout´s
+          pr_tab_lancamento_futuro(vr_index).cdhistor:= 38;
+          if rw_crapass.cdsitdct  = 7 then
+            pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+          else
+            pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+          end if;     		  
           END IF;
         END IF; --crapsld.vlsmnesp <> 0
         --Valor Bloqueado
@@ -5675,6 +5694,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_contadct,'fm999g999g990');
             pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
             pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_tab_resulta(4);
+            -- SM4 - Paulo Martins - Mout´s
+            pr_tab_lancamento_futuro(vr_index).cdhistor:= 2323;
+            if rw_crapass.cdsitdct  = 7 then
+              pr_tab_lancamento_futuro(vr_index).fldebito := 1;
+            else
+              pr_tab_lancamento_futuro(vr_index).fldebito := 0;
+            end if;     			
           END IF;   
         END IF; --rw_crapsld.vliofmes > 0
       END IF;  --cr_crapsld%FOUND 
@@ -7090,6 +7116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              14/05/2018 - Aumentado o tamanho das variáveis de indice para 24 posicoes
   --                           para ordenacao dos extratos, projeto Debitador Unico (Elton-AMcom)
   --
+  --
+  --              30/05/2018 - Adicionado dscomple ao xml (Alcemir Mout's - Prj. 467).                              
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                
         /* Cursores Locais */
@@ -7141,6 +7169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_vlblqjud NUMBER;
         vr_vldiario NUMBER;
         vr_idxcpa   PLS_INTEGER;
+        vr_dsextrat VARCHAR2(100);
         --Variaveis Controle Dados XMl
         vr_flghistor BOOLEAN:= FALSE;
         vr_flgcheque BOOLEAN:= FALSE;
@@ -7472,12 +7501,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               IF nvl(vr_vldiario,0) = 0 THEN
                 vr_vldiario:= NULL;
               END IF;
+              -- valida se o dscomple não esta vazio, caso não, concatena dscomple com dsextrat
+              IF TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple) IS NOT NULL THEN 
+                 vr_dsextrat := SUBSTR(TRIM(vr_tab_extrato_conta(vr_index_extrato).dsextrat) || ' - ' ||
+                                       TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple),1,21);
+              ELSE 
+                 vr_dsextrat := SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21);                                                                       
+              END IF;    
               
+                  
               --Montar texto
               vr_dstexto:= '<lancto>' ||
                  '<dtmvtolt>' || to_char(vr_tab_extrato_conta(vr_index_extrato).dtmvtolt,'DD/MM/YY') || '</dtmvtolt>' ||
                   '<dtliblan>' || SUBSTR(vr_dtliblan,1,5) || '</dtliblan>' ||
-                 '<dsextrat>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21) || '</dsextrat>' ||
+                  '<dsextrat>' || vr_dsextrat || '</dsextrat>' ||
                  '<nrdocmto>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).nrdocmto,1,12) || '</nrdocmto>' ||
                   '<vllanmto>' || to_char(vr_tab_extrato_conta(vr_index_extrato).vllanmto,'fm999999g990d00') || '</vllanmto>' ||
                   '<indebcre>' || vr_tab_extrato_conta(vr_index_extrato).indebcre || '</indebcre>' ||
@@ -14427,14 +14464,24 @@ END pc_consulta_ir_pj_trim;
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
               WHILE vr_index_extrato IS NOT NULL LOOP
-                  --Montar novo indice conforme break-by
+                IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NOT NULL THEN
+                --Montar novo indice conforme break-by
+                  vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
+                                  vr_tab_extrato_epr(vr_index_extrato).nranomes||
+                                  TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'YYYYMMDD hhmiss')|| 
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                ELSE
+                --Montar novo indice conforme break-by
                 vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
                                 vr_tab_extrato_epr(vr_index_extrato).nranomes||
                                 TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
-                 
+                END IF;
+                
                 --Copiar de uma tabela para outra
                 vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);
                 --Proximo Registro Extrato
