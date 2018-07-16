@@ -2607,6 +2607,35 @@ PROCEDURE gera_arquivo_cecred:
                               NEXT.
                      END.
                 ELSE
+                IF   p-cddevolu = 6 AND crapdev.cdalinea = 37 THEN
+                     DO:
+                        IF aux_contador = 0 THEN
+                           DO:
+                              ASSIGN aux_contador = aux_contador + 1.
+
+                              ASSIGN aux_nmarqcri = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                                                    STRING(MONTH(glb_dtmvtolt),'99')   +
+                                                    STRING(DAY(glb_dtmvtolt),'99') + '_CRITICADEVOLU.txt'.
+             
+                              OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
+                             
+                          END.          
+                          
+                          ASSIGN aux_linhaarq = STRING(YEAR(glb_dtmvtolt),"9999") + 
+                                                STRING(MONTH(glb_dtmvtolt),"99")   +
+                                                STRING(DAY(glb_dtmvtolt),"99")     + "," +
+                                                STRING(DAY(glb_dtmvtolt),"99") +
+                                                STRING(MONTH(glb_dtmvtolt),"99")  +
+                                                SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + "," +
+                                                "4958,1773," +
+                                                TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) + "," +
+                                                '"' + "VALOR REF. DEVOLUCAO DO CHEQUE N. " + STRING(crapdev.nrcheque,"9999999") + 
+                                                ", PELA ALINEA 37, PARA REGULARIZACAO DE CRITICA DO RELATORIO 526" + '"'.                            
+                                                
+                          PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
+                     END.
+                ELSE
                 IF   crapdev.indevarq <> 1 THEN
                      NEXT.
 
@@ -2989,7 +3018,7 @@ PROCEDURE gera_arquivo_cecred:
                
                                 OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
                                
-           END.           
+                            END.           
        																									  
                           ASSIGN aux_linhaarq = "20" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + 
                                                 STRING(MONTH(glb_dtmvtolt),"99")   +
@@ -3006,6 +3035,7 @@ PROCEDURE gera_arquivo_cecred:
                                                 " (CONFORME CRITICA NO RELATORIO 219)" + '"'.
                                           
                           PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
                        END.
                    
                NEXT.

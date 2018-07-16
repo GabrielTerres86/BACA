@@ -248,7 +248,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
          AND l.cdhistor IN (440,446,544,545,1024,1069,1160,1161,1024,1069,841,842,1802,1538,
                             1623,1624,1625,1626,1627,1628,1684,527,530,1119,1120,1123,1124,1125,1126,1136,
                             1137,2057,2058,51,135,1917,1919,1148,1810,1837,1838,1028,777,851,1988,1660,1661,
-                            2059,1148,2227,2237,2238,2239,2240,2249,2250,2251,2252,2221)
+                            1148,2227,2237,2238,2239,2240,2249,2250,2251,2252,
+														845,1589,1090,844,846,847,848,1659,1864,2183,2222,2223,1155,843,1725,2461,
+														2462,1788,1811,1835,1836,2647,1687,1806,2221,1588,2657)
          AND l.cdcooper = 3   --Apenas lançamentos realizados na central para a filiada
          AND l.dtmvtolt = pr_dtmvtolt 
          AND c.cdcooper = pr_cdcooper
@@ -322,179 +324,280 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
         vr_tab_historico(1623).nrctaori := 1781;
         vr_tab_historico(1623).nrctades := 1452;
-        vr_tab_historico(1623).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. SUPRIMENTO DE CASH';
+        vr_tab_historico(1623).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. SUPRIMENTO DE CASH';
         
         vr_tab_historico(1624).nrctaori := 1452;
         vr_tab_historico(1624).nrctades := 1781;
-        vr_tab_historico(1624).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECOLHIMENTO DE CASH'; 
+        vr_tab_historico(1624).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. RECOLHIMENTO DE CASH'; 
 
         vr_tab_historico(1625).nrctaori := 1781;
         vr_tab_historico(1625).nrctades := 1452;
-        vr_tab_historico(1625).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. SUPRIMENTO DE NUMERARIOS NOS PA''S''';
+        vr_tab_historico(1625).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. SUPRIMENTO DE NUMERARIOS NOS PA''S''';
         
         vr_tab_historico(1626).nrctaori := 1452;
         vr_tab_historico(1626).nrctades := 1781;
-        vr_tab_historico(1626).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECOLHIMENTO DE NUMERARIOS NOS PA''S''';
+        vr_tab_historico(1626).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. RECOLHIMENTO DE NUMERARIOS NOS PA''S''';
         
         vr_tab_historico(1627).nrctaori := 1781;
         vr_tab_historico(1627).nrctades := 1452;
-        vr_tab_historico(1627).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. AJUSTE DIFERENÇA DE FALTA DE NUMERARIOS';
+        vr_tab_historico(1627).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. AJUSTE DIFERENÇA DE FALTA DE NUMERARIOS';
         
         vr_tab_historico(1628).nrctaori := 1452;
         vr_tab_historico(1628).nrctades := 1781;
-        vr_tab_historico(1628).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. AJUSTE DIFERENÇA DE SOBRA DE NUMERARIOS';
+        vr_tab_historico(1628).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. AJUSTE DIFERENÇA DE SOBRA DE NUMERARIOS';
         
         vr_tab_historico(1684).nrctaori := 1452;
         vr_tab_historico(1684).nrctades := 1781;
-        vr_tab_historico(1684).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECOLHIMENTO COOPERATIVA';
+        vr_tab_historico(1684).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. RECOLHIMENTO COOPERATIVA';
         
         vr_tab_historico(527).nrctaori := 1344;
         vr_tab_historico(527).nrctades := 1452;
-        vr_tab_historico(527).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. APLICACAO RDCPOS CECRED';        
+        vr_tab_historico(527).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. APLICACAO RDCPOS AILOS';        
         
         vr_tab_historico(530).nrctaori := 1452;
         vr_tab_historico(530).nrctades := 1344;
-        vr_tab_historico(530).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RESGATE APLICACAOO RDCPOS CECRED';
+        vr_tab_historico(530).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. RESGATE APLICACAOO RDCPOS AILOS';
         
         vr_tab_historico(1119).nrctaori := 4990;
         vr_tab_historico(1119).nrctades := 1452;
-        vr_tab_historico(1119).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE BENEFICIO INSS (MIGRACAO)';  
+        vr_tab_historico(1119).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE BENEFICIO INSS (MIGRACAO)';  
         
         vr_tab_historico(1120).nrctaori := 1452;
         vr_tab_historico(1120).nrctades := 1839;
-        vr_tab_historico(1120).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REPASSE BENEFICIO INSS (MIGRACAO)';
+        vr_tab_historico(1120).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REPASSE BENEFICIO INSS (MIGRACAO)';
         
         vr_tab_historico(1123).nrctaori := 4990;
         vr_tab_historico(1123).nrctades := 1452;
-        vr_tab_historico(1123).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE LIQUIDACAO DE COBRANCA (MIGRACAO)';                          
+        vr_tab_historico(1123).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE LIQUIDACAO DE COBRANCA (MIGRACAO)';                          
         
         vr_tab_historico(1124).nrctaori := 1452;
         vr_tab_historico(1124).nrctades := 1839;
-        vr_tab_historico(1124).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REPASSE LIQUIDACAO DE COBRANCA (MIGRACAO)';
+        vr_tab_historico(1124).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REPASSE LIQUIDACAO DE COBRANCA (MIGRACAO)';
         
         vr_tab_historico(1125).nrctaori := 4990;
         vr_tab_historico(1125).nrctades := 1452;
-        vr_tab_historico(1125).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE TARIFA LIQUIDACAO DE COBRANCA (MIGRACAO)';                          
+        vr_tab_historico(1125).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE TARIFA LIQUIDACAO DE COBRANCA (MIGRACAO)';                          
         
         vr_tab_historico(1126).nrctaori := 1452;
         vr_tab_historico(1126).nrctades := 1839;
-        vr_tab_historico(1126).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REPASSE TARIFA LIQUIDACAO DE COBRANCA (MIGRACAO)';
+        vr_tab_historico(1126).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REPASSE TARIFA LIQUIDACAO DE COBRANCA (MIGRACAO)';
         
         vr_tab_historico(1136).nrctaori := 4957;
         vr_tab_historico(1136).nrctades := 1452;
-        vr_tab_historico(1136).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. AJUSTE CHEQUES TROCADOS NO CAIXA (MIGRACAO)';
+        vr_tab_historico(1136).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. AJUSTE CHEQUES TROCADOS NO CAIXA (MIGRACAO)';
         
         vr_tab_historico(1137).nrctaori := 1452;
         vr_tab_historico(1137).nrctades := 4957;
-        vr_tab_historico(1137).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. AJUSTE CHEQUES TROCADOS NO CAIXA (MIGRACAO)';
+        vr_tab_historico(1137).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. AJUSTE CHEQUES TROCADOS NO CAIXA (MIGRACAO)';
         
         vr_tab_historico(2057).nrctaori := 1452;
         vr_tab_historico(2057).nrctades := 7499;
-        vr_tab_historico(2057).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REEMBOLSO DE DESPESAS COM DEBITO DE SEGURO RESIDENCIAL - RECEBIDO DE CHUBB DO BRASIL';
+        vr_tab_historico(2057).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REEMBOLSO DE DESPESAS COM DEBITO DE SEGURO RESIDENCIAL - RECEBIDO DE CHUBB DO BRASIL';
 
         vr_tab_historico(2058).nrctaori := 1452;
         vr_tab_historico(2058).nrctades := 7499;
-        vr_tab_historico(2058).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REEMBOLSO DE DESPESAS COM DEBITO DE SEGURO DE VIDA - RECEBIDO DE CHUBB DO BRASIL';
+        vr_tab_historico(2058).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REEMBOLSO DE DESPESAS COM DEBITO DE SEGURO DE VIDA - RECEBIDO DE CHUBB DO BRASIL';
                 
         vr_tab_historico(51).nrctaori := 1452;
         vr_tab_historico(51).nrctades := 1829;
-        vr_tab_historico(51).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECEITA DE CENTRALIZACAO FINANCEIRA CECRED';
+        vr_tab_historico(51).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. RECEITA DE CENTRALIZACAO FINANCEIRA AILOS';
                 
         vr_tab_historico(135).nrctaori := 4940;
         vr_tab_historico(135).nrctades := 1452;
-        vr_tab_historico(135).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. PAGAMENTO DE DESPESAS DIRETAS E INDIRETAS DA CENTRAL';
+        vr_tab_historico(135).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. PAGAMENTO DE DESPESAS DIRETAS E INDIRETAS DA CENTRAL';
                 
         vr_tab_historico(1917).nrctaori := 1767;
         vr_tab_historico(1917).nrctades := 1452;
-        vr_tab_historico(1917).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. ENVIO DE TED PARA EFETIVACAO DE PORTABILIDADE DE CREDITO';
+        vr_tab_historico(1917).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. ENVIO DE TED PARA EFETIVACAO DE PORTABILIDADE DE CREDITO';
                 
         vr_tab_historico(1919).nrctaori := 8278;
         vr_tab_historico(1919).nrctades := 1452;
-        vr_tab_historico(1919).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. RESSARCIMENTO DE CUSTOS DE ORIGINACAO SOBRE OPERACOES DE PORTABILIDADE DE CREDITO';
+        vr_tab_historico(1919).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. RESSARCIMENTO DE CUSTOS DE ORIGINACAO SOBRE OPERACOES DE PORTABILIDADE DE CREDITO';
                 
         vr_tab_historico(1148).nrctaori := 4983;
         vr_tab_historico(1148).nrctades := 1452;
-        vr_tab_historico(1148).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REGULARIZACAO DE REPASSE DE CDC DIGITADO NA COOPERATIVA E REPASSADO POR OUTRA COOPERATIVA FILIADA A CECRED';
+        vr_tab_historico(1148).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REGULARIZACAO DE REPASSE DE CDC DIGITADO NA COOPERATIVA E REPASSADO POR OUTRA COOPERATIVA FILIADA A AILOS';
                 
         vr_tab_historico(1810).nrctaori := 1452;
         vr_tab_historico(1810).nrctades := 7264;
-        vr_tab_historico(1810).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. TIB SICREDI';   
+        vr_tab_historico(1810).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. TIB SICREDI';   
                 
         vr_tab_historico(1837).nrctaori := 8605;
         vr_tab_historico(1837).nrctades := 1452;
-        vr_tab_historico(1837).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. CUSTO SPB SICREDI - INSS CONSIGNADO SICREDI';
+        vr_tab_historico(1837).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CUSTO SPB SICREDI - INSS CONSIGNADO SICREDI';
                 
         vr_tab_historico(1838).nrctaori := 8605;
         vr_tab_historico(1838).nrctades := 1452;
-        vr_tab_historico(1838).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. TARIFA SICREDI';
+        vr_tab_historico(1838).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. TARIFA SICREDI';
                 
         vr_tab_historico(1028).nrctaori := 8371;
         vr_tab_historico(1028).nrctades := 1452;
-        vr_tab_historico(1028).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. CONTRIBUICAO PARA RESERVA PARA RISCOS DE VALORES EM TERMINAIS DE AUTOATENDIMENTO – RRVTA';
+        vr_tab_historico(1028).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CONTRIBUICAO PARA RESERVA PARA RISCOS DE VALORES EM TERMINAIS DE AUTOATENDIMENTO – RRVTA';
                 
         vr_tab_historico(777).nrctaori := 8371;
         vr_tab_historico(777).nrctades := 1452;
-        vr_tab_historico(777).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. CONTRIBUICAO PARA RESERVA PARA RISCOS DE VALORES DOS POSTOS DE ATENDIMENTO – RRV';             
+        vr_tab_historico(777).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CONTRIBUICAO PARA RESERVA PARA RISCOS DE VALORES DOS POSTOS DE ATENDIMENTO – RRV';             
                 
         vr_tab_historico(851).nrctaori := 4453;
         vr_tab_historico(851).nrctades := 1452;
-        vr_tab_historico(851).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE CONTRIBUICAO SINDICAL';             
+        vr_tab_historico(851).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE CONTRIBUICAO SINDICAL';             
                 
         vr_tab_historico(1988).nrctaori := 1452;
         vr_tab_historico(1988).nrctades := 7478;
-        vr_tab_historico(1988).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECEBIMENTO INCENTIVO DE CAMPANHA BANDEIRA MASTERCARD - MASTERCARD PLATINUM'; 
+        vr_tab_historico(1988).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. RECEBIMENTO INCENTIVO DE CAMPANHA BANDEIRA MASTERCARD - MASTERCARD PLATINUM'; 
                 
         vr_tab_historico(1660).nrctaori := 8546;
         vr_tab_historico(1660).nrctades := 1452;
-        vr_tab_historico(1660).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. CONTRIBUICAO AO REFAP';             
+        vr_tab_historico(1660).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CONTRIBUICAO AO REFAP';             
                 
         vr_tab_historico(1661).nrctaori := 8545;
         vr_tab_historico(1661).nrctades := 1452;
-        vr_tab_historico(1661).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. CONTRIBUICAO ADICIONAL AO REFAP CONFORME REGULAMENTO DO SARC';             
-                
-        vr_tab_historico(2059).nrctaori := 1452;
-        vr_tab_historico(2059).nrctades := 8285;
-        vr_tab_historico(2059).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REEMBOLSO RECEBIDO DO SESCOOP PARA PARTE DO CUSTEIO DOS CURSOS/TREINAMENTOS OFERTADOS AOS COLABORADORES';         
-                
+        vr_tab_historico(1661).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CONTRIBUICAO ADICIONAL AO REFAP CONFORME REGULAMENTO DO SARC';             
+                                
         vr_tab_historico(2227).nrctaori := 4340;
         vr_tab_historico(2227).nrctades := 1452;
-        vr_tab_historico(2227).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR TIM';
+        vr_tab_historico(2227).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR TIM';
                 
         vr_tab_historico(2237).nrctaori := 4340;
         vr_tab_historico(2237).nrctades := 1452;
-        vr_tab_historico(2237).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR VIVO';
+        vr_tab_historico(2237).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR VIVO';
                 
         vr_tab_historico(2238).nrctaori := 4340;
         vr_tab_historico(2238).nrctades := 1452;
-        vr_tab_historico(2238).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR OI';
+        vr_tab_historico(2238).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR OI';
                 
         vr_tab_historico(2239).nrctaori := 4340;
         vr_tab_historico(2239).nrctades := 1452;
-        vr_tab_historico(2239).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR CLARO';
+        vr_tab_historico(2239).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR CLARO';
                 
         vr_tab_historico(2240).nrctaori := 4340;
         vr_tab_historico(2240).nrctades := 1452;
-        vr_tab_historico(2240).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR NEXTEL';
+        vr_tab_historico(2240).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR NEXTEL';
                 
         vr_tab_historico(2249).nrctaori := 4340;
         vr_tab_historico(2249).nrctades := 1452;
-        vr_tab_historico(2249).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR EMBRATEL LIVRE';
+        vr_tab_historico(2249).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR EMBRATEL LIVRE';
                 
         vr_tab_historico(2250).nrctaori := 4340;
         vr_tab_historico(2250).nrctades := 1452;
-        vr_tab_historico(2250).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR CTBC';                
+        vr_tab_historico(2250).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR CTBC';                
                 
         vr_tab_historico(2251).nrctaori := 4340;
         vr_tab_historico(2251).nrctades := 1452;
-        vr_tab_historico(2251).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR CERCONTEL';
+        vr_tab_historico(2251).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR CERCONTEL';
                 
         vr_tab_historico(2252).nrctaori := 4340;
         vr_tab_historico(2252).nrctades := 1452;
-        vr_tab_historico(2252).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR TELEFONICA';
-        
-        vr_tab_historico(2221).nrctaori := 8311;
+        vr_tab_historico(2252).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE RECARGA DE CELULAR TELEFONICA';
+        				
+				vr_tab_historico(845).nrctaori := 4453;
+        vr_tab_historico(845).nrctades := 1452;
+        vr_tab_historico(845).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. FGTS S/ FOLHA DE PAGAMENTO DOS COLABORADORES';
+				
+				vr_tab_historico(1589).nrctaori := 4453;
+        vr_tab_historico(1589).nrctades := 1452;
+        vr_tab_historico(1589).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE SERVICO DE SEGURANCA E VIGILANCIA';
+
+				vr_tab_historico(1090).nrctaori := 4957;
+        vr_tab_historico(1090).nrctades := 1452;
+        vr_tab_historico(1090).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. PAGAMENTO PROCAPCRED';
+
+				vr_tab_historico(844).nrctaori := 4453;
+        vr_tab_historico(844).nrctades := 1452;
+        vr_tab_historico(844).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE IR FOLHA';
+
+				vr_tab_historico(846).nrctaori := 4453;
+        vr_tab_historico(846).nrctades := 1452;
+        vr_tab_historico(846).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE INSS';
+
+				vr_tab_historico(847).nrctaori := 4453;
+        vr_tab_historico(847).nrctades := 1452;
+        vr_tab_historico(847).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE IR TERCEIROS';
+
+				vr_tab_historico(848).nrctaori := 4453;
+        vr_tab_historico(848).nrctades := 1452;
+        vr_tab_historico(848).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE PCC';
+
+				vr_tab_historico(1659).nrctaori := 4947;
+        vr_tab_historico(1659).nrctades := 1452;
+        vr_tab_historico(1659).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CONTRIBUICAO ORDINARIA AO FGCOOP';
+
+				vr_tab_historico(1864).nrctaori := 4453;
+        vr_tab_historico(1864).nrctades := 1452;
+        vr_tab_historico(1864).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE GRRF';
+
+				vr_tab_historico(2183).nrctaori := 8265;
+        vr_tab_historico(2183).nrctades := 1452;
+        vr_tab_historico(2183).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. CONTRIBUICAO RRF AILOS';
+				
+				vr_tab_historico(2222).nrctaori := 8503;
+        vr_tab_historico(2222).nrctades := 1452;
+        vr_tab_historico(2222).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. PROCESSAMENTO PAG SPB';
+
+				vr_tab_historico(2223).nrctaori := 8503;
+        vr_tab_historico(2223).nrctades := 1452;
+        vr_tab_historico(2223).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. PROCESSAMENTO STR SPB';
+
+				vr_tab_historico(1155).nrctaori := 1452;
+        vr_tab_historico(1155).nrctades := 1889;
+        vr_tab_historico(1155).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REGULARIZACAO DE REPASSE DE CDC DIGITADO EM OUTRA COOPERATIVA FILIADA A AILOS E REPASSADO PELA COOPERATIVA';
+
+				vr_tab_historico(843).nrctaori := 4453;
+        vr_tab_historico(843).nrctades := 1452;
+        vr_tab_historico(843).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE PIS S/ FOLHA DE PAGAMENTO';
+
+				vr_tab_historico(1725).nrctaori := 8247;
+        vr_tab_historico(1725).nrctades := 1452;
+        vr_tab_historico(1725).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. MENSALIDADE DOS PARTICIPANTES DO PROLIDER';
+
+				vr_tab_historico(2461).nrctaori := 8248;
+        vr_tab_historico(2461).nrctades := 1452;
+        vr_tab_historico(2461).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. MENSALIDADE DO PROGRAMA DE DESENVOLVIMENTO DE EXECUTIVOS - PROEX';
+				
+				vr_tab_historico(2462).nrctaori := 4453;
+        vr_tab_historico(2462).nrctades := 1452;
+        vr_tab_historico(2462).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REPASSE DARE - JURIDICO';
+				
+				vr_tab_historico(1788).nrctaori := 1272;
+        vr_tab_historico(1788).nrctades := 1452;
+        vr_tab_historico(1788).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. TED CONSIGNADO INSS RECEBIDO PELO SICREDI E REPASSADO AS COOP. FILIADAS A AILOS ATRAVES DA CONTA CENTRALIZADORA';
+				
+			  vr_tab_historico(1811).nrctaori := 4896;
+        vr_tab_historico(1811).nrctades := 1452;
+        vr_tab_historico(1811).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. TARIFA TIB DO CONSIGNADO INSS RECEBIDO DO SICREDI E REPASSADO AS COOPERATIVAS FILIADAS';
+				
+				vr_tab_historico(1835).nrctaori := 1452;
+        vr_tab_historico(1835).nrctades := 1776;
+        vr_tab_historico(1835).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. CUSTO SPB CONSIGNADO INSS SICREDI - ENVIADAS - REGULARIZADO NESTA DATA';
+
+				vr_tab_historico(1836).nrctaori := 1452;
+        vr_tab_historico(1836).nrctades := 1776;
+        vr_tab_historico(1836).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. TARIFA RESERVA BANCARIA CONSIGNADO INSS SICREDI - CONVENIADAS - REGULARIZADO NESTA DATA';
+				
+				vr_tab_historico(2647).nrctaori := 4896;
+        vr_tab_historico(2647).nrctades := 1452;
+        vr_tab_historico(2647).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. AJUSTE DE TIB DO CONSIGNADO INSS SICREDI. VALOR REF. DEVOLUCOES DE TED ONDE A RECEITA PERTENCE A CENTRAL';
+				
+				vr_tab_historico(1687).nrctaori := 1452;
+        vr_tab_historico(1687).nrctades := 1877;
+        vr_tab_historico(1687).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REEMBOLSO RECEBIDO DA REFAP';
+				
+				vr_tab_historico(1806).nrctaori := 4225;
+        vr_tab_historico(1806).nrctades := 1452;
+        vr_tab_historico(1806).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. PAGAMENTO DE RECURSOS CAPTADOS JUNTO AO BNDES PARA OPERACOES DE FINAME';
+				
+				vr_tab_historico(2221).nrctaori := 4453;
         vr_tab_historico(2221).nrctades := 1452;
-        vr_tab_historico(2221).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DESPESA COM RESSARCIMENTO DO USO DO SISBACEN';
+        vr_tab_historico(2221).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. DESPESA COM RESSARCIMENTO DO USO DO SISBACEN';
+				
+				vr_tab_historico(1588).nrctaori := 4898;
+        vr_tab_historico(1588).nrctades := 1452;
+        vr_tab_historico(1588).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. DESPESAS COM TRANSPORTE DE VALORES - NFS FATURADAS P/ CENTRAL';
+				
+				vr_tab_historico(2657).nrctaori := 4453;
+        vr_tab_historico(2657).nrctades := 1452;
+        vr_tab_historico(2657).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. DESPESAS COM TRANSPORTE DE VALORES - NFS FATURADAS P/ FILIADAS';
+				
    END;  
     
   BEGIN
@@ -631,7 +734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        ',1452,' ||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||vr_nrctacrt||' BANCOOB"';
+                       '"CENTRALIZACAO FINANCEIRA AILOS DA C/C '||vr_nrctacrt||' BANCOOB"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -644,7 +747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        vr_cdctactb||','||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||vr_nrctacrt||' BANCOOB"';
+                       '"CENTRALIZACAO FINANCEIRA AILOS DA C/C '||vr_nrctacrt||' BANCOOB"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);        
@@ -657,7 +760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '1452,' ||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' SICREDI"';
+                       '"CENTRALIZACAO FINANCEIRA AILOS DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' SICREDI"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -670,7 +773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '1272,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' SICREDI"';
+                       '"CENTRALIZACAO FINANCEIRA AILOS DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' SICREDI"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -683,7 +786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        ',1452,' ||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||vr_nrctacrt||' B. BRASIL"';
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. CENTRALIZACAO FINANCEIRA DA C/C '||vr_nrctacrt||' B. BRASIL"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -696,7 +799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        vr_cdctactb||','||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CREDITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||vr_nrctacrt||' B. BRASIL"';
+                       '"CREDITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. CENTRALIZACAO FINANCEIRA DA C/C '||vr_nrctacrt||' B. BRASIL"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -709,7 +812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '1452,' ||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' BRADESCO"';
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. CENTRALIZACAO FINANCEIRA DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' BRADESCO"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -722,7 +825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '1193,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CREDITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' BRADESCO"';
+                       '"CREDITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. CENTRALIZACAO FINANCEIRA DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' BRADESCO"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -734,7 +837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '4641,1452,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. PAGTO MICROCREDITO BNDES - CONTRATO '||rw_craplcm.nrdocmto||'"';
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. PAGTO MICROCREDITO BNDES - CONTRATO '||rw_craplcm.nrdocmto||'"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -746,7 +849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '4224,1452,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. PAGTO MICROCREDITO BRDE - CONTRATO '||rw_craplcm.nrdocmto||'"';
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. PAGTO MICROCREDITO BRDE - CONTRATO '||rw_craplcm.nrdocmto||'"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -758,7 +861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '4453,1452,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. RECOLHIMENTO DE IRRF S/ CAPTACAO ('||
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. RECOLHIMENTO DE IRRF S/ CAPTACAO ('||
                        vr_tppessoa||') '||rw_craplcm.nrdocmto||' REF '||vr_decendio||' DECENDIO DE '||vr_dtdecendio||'"';
 
         -- Gravar Linha
@@ -771,7 +874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                        '4453,1452,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. RECOLHIMENTO DE IOF S/ OPERACOES DE CREDITO ('||
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' AILOS REF. RECOLHIMENTO DE IOF S/ OPERACOES DE CREDITO ('||
                        vr_tppessoa||') '||' REF '||vr_decendio||' DECENDIO DE '||vr_dtdecendio||'"';
 
         -- Gravar Linha
@@ -795,7 +898,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       END IF;
         
       --Gravar linha gerencial
-      IF rw_craplcm.cdhistor in (2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059,2221, 1802, 1538) THEN
+      IF rw_craplcm.cdhistor in (2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 1802, 1538
+				                        ,2183, 2222, 2223, 1725, 2461, 1806) THEN
          
         vr_linhadet := '999'||','||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));
           
@@ -824,16 +928,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     
       IF rw_craplem.cdfinemp = 1 THEN
         vr_nrctaori := 4226;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' CECRED REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - CEF - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - CEF - CONTRATO '||rw_craplem.nrdocmto ||'"';
       ELSIF rw_craplem.cdfinemp = 2 THEN
         vr_nrctaori := 4623;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' CECRED REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB IMOBILIZADO - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB IMOBILIZADO - CONTRATO '||rw_craplem.nrdocmto ||'"';
       ELSIF rw_craplem.cdfinemp = 3 THEN
         vr_nrctaori := 4624;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' CECRED REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB MAIS CREDITO - CONTRATO '||rw_craplem.nrdocmto ||'"';        
+        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB MAIS CREDITO - CONTRATO '||rw_craplem.nrdocmto ||'"';        
       ELSIF rw_craplem.cdfinemp = 4 THEN
         vr_nrctaori := 4227;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' CECRED REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - BNDES - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - BNDES - CONTRATO '||rw_craplem.nrdocmto ||'"';
       END IF; 
       
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
@@ -969,7 +1073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
              crapcop c 
        WHERE l.nrdconta = c.nrctacmp
          AND l.cdcooper = 3    --Apenas lançamentos da central
-         AND l.cdhistor in (574, 577, 787, 788, 789, 790, 807, 808)
+         AND l.cdhistor in (574, 577, 587, 787, 788, 789, 790, 807, 808, 2270, 2655, 2656)
          AND l.dtmvtolt = pr_dtmvtolt
          AND c.cdcooper = pr_cdcooper
       GROUP BY DECODE(l.cdhistor,788,787,790,789,l.cdhistor),
@@ -991,27 +1095,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         
         vr_tab_historico(787).nrctaori := 1455;
         vr_tab_historico(787).nrctades := 4958;
-        vr_tab_historico(787).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. DEVOLUCAO CHEQUES DE COOPERADOS'; 
+        vr_tab_historico(787).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. DEVOLUCAO CHEQUES DE COOPERADOS'; 
 
         vr_tab_historico(789).nrctaori := 1411;
         vr_tab_historico(789).nrctades := 1455;
-        vr_tab_historico(789).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DEVOLUCAO CHEQUES DE TERCEIROS DEPOSITADOS';
+        vr_tab_historico(789).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. DEVOLUCAO CHEQUES DE TERCEIROS DEPOSITADOS';
         
         vr_tab_historico(807).nrctaori := 1452;
         vr_tab_historico(807).nrctades := 1455;
-        vr_tab_historico(807).dsrefere := 'CENTRALIZACAO FINANCEIRA C/C pr_nrctafmt COMPE CECRED';
+        vr_tab_historico(807).dsrefere := 'CENTRALIZACAO FINANCEIRA C/C pr_nrctafmt COMPE AILOS';
         
         vr_tab_historico(808).nrctaori := 1455;
         vr_tab_historico(808).nrctades := 1452;
-        vr_tab_historico(808).dsrefere := 'CENTRALIZACAO FINANCEIRA C/C pr_nrctafmt COMPE CECRED';
+        vr_tab_historico(808).dsrefere := 'CENTRALIZACAO FINANCEIRA C/C pr_nrctafmt COMPE AILOS';
         
         vr_tab_historico(577).nrctaori := 1455;
         vr_tab_historico(577).nrctades := 1802;
-        vr_tab_historico(577).dsrefere := 'CREDITO C/C pr_nrctafmt REF. RECEITA TARIFAS INTERBANCARIO CECRED - TIB REF. MES MM/YYYY';
+        vr_tab_historico(577).dsrefere := 'CREDITO C/C pr_nrctafmt REF. RECEITA TARIFAS INTERBANCARIO AILOS - TIB REF. MES MM/YYYY';
         
         vr_tab_historico(2270).nrctaori := 4894;
         vr_tab_historico(2270).nrctades := 1455;
-        vr_tab_historico(2270).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DEVOLUCAO REMETIDA DE COBRANCA';    
+        vr_tab_historico(2270).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. DEVOLUCAO REMETIDA DE COBRANCA (CONFORME CRITICAS RELATORIO 574)';    
+				
+        vr_tab_historico(587).nrctaori := 4930;
+        vr_tab_historico(587).nrctades := 1455;
+        vr_tab_historico(587).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE AILOS REF. TARIFAS INTERBANCARIO AILOS - TIB REF. MES MM/YYYY';
+				
+        vr_tab_historico(2655).nrctaori := 4952;
+        vr_tab_historico(2655).nrctades := 1455;
+        vr_tab_historico(2655).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE AILOS REF. ARRECADACAO DO COBAN REALIZADO PELA CREDIFOZ ATRAVES DO PA 192 DA VIACREDI NO DIA ANTERIOR';
+				
+        vr_tab_historico(2656).nrctaori := 1455;
+        vr_tab_historico(2656).nrctades := 1888;
+        vr_tab_historico(2656).dsrefere := 'CREDITO C/C pr_nrctafmt COMPE AILOS REF. ARRECADACAO DO COBAN REALIZADO PELA CREDIFOZ ATRAVES DO PA 192 DA VIACREDI NO DIA ANTERIOR';
+								
    END;  
              
   BEGIN
