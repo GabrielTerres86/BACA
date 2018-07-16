@@ -40,7 +40,7 @@
 	$nrdigtrf = (isset($_POST['nrdigtrf']))   ? $_POST['nrdigtrf']   : 0 ; 
 	$nrctatrf = (isset($_POST['nrctatrf']))   ? $_POST['nrctatrf']   : 0 ; 
 	$nrcpfcgc = (isset($_POST['nrcpfcgc']))   ? $_POST['nrcpfcgc']   : 0 ; 
-	$tpctatrf = (isset($_POST['tpctatrf']))   ? $_POST['tpctatrf']   : 0 ; 
+	$tpctatrf = (isset($_POST['tpctatrf']))   ? $_POST['tpctatrf']   : 1 ; 
 				
 	switch ( $operacao ) {
 		case 'grava'  : $procedure = 'Grava_Dados';  $retornoAposErro= ''; break;
