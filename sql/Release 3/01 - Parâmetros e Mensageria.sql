@@ -537,7 +537,7 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
    VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PAGAR_TITULOS_VENCIDOS', 'DSCT0003', 'pc_pagar_titulos_vencidos', 'pr_nrdconta,pr_nrborder,pr_flavalista,pr_arrtitulo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));   
 
 /*Critica de bordero antigo para importação*/
-INSERT INTO tbgen_motivo (idmotivo,dsmotivo,cdproduto) VALUES (67,'Borderô cadastrado pelo modelo antigo',31);
+INSERT INTO tbgen_motivo (idmotivo,dsmotivo,cdproduto) VALUES (68,'Borderô cadastrado pelo modelo antigo',31);
 
 commit;
 end;
