@@ -25,7 +25,11 @@
                             a escrita será PA (Guilherme Gielow)                                                         
 
                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                            
-............................................................................ */
+               
+               18/06/2018 - Utilizaçao do Caixa Online mesmo com o processo batch (noturno)
+                            executando (Fabio Adriano - AMcom).
+                            
+............................................................................ **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
 &ANALYZE-RESUME
