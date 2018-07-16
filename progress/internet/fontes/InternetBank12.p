@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 30/05/2018
+   Data    : Marco/2007                        Ultima atualizacao: 05/09/2014
 
    Dados referentes ao programa:
 
@@ -28,9 +28,6 @@
                             
                21/04/2018 - Alterar para retornar o campo idlstdom na chamada
                             deste servico (Anderson - P285)
-              
-			   30/05/2018 - Adicionado campo dscomple no xml (Alcemir Mout's - Prj. 467).
-
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -176,9 +173,7 @@ IF  par_flglsext  THEN
                                    STRING(tt-extrato_conta.flgdetal) +                                
                                    "</flgdetal><idlstdom>" +
                                    STRING(tt-extrato_conta.idlstdom) +
-                                   "</idlstdom><dscomple>"+
-								   TRIM(STRING(tt-extrato_conta.dscomple)) +
-								  "</dscomple></DADOS>".
+                                   "</idlstdom></DADOS>".
         
         END. /** Fim do FOR EACH tt-extrato_conta **/
     END.

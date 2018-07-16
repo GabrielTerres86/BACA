@@ -13,8 +13,6 @@
                                código do departamento ao invés da descrição (Renato Darosci - Supero)
 							   
                   25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
-
-                  03/07/2018 - sctask0014656 permitir alterar a descricao do TAA (Carlos)
  */
 ?>
  
@@ -54,7 +52,6 @@
 	$dsdispen = $_POST['dsdispen'];
 	$dssittfn = $_POST['dssittfn'];
 	$flgntcem = (isset($_POST['flgntcem'])) ? $_POST['flgntcem']   : 'no' ;
-  $dsterfin = $_POST['dsterfin'];
 	           
 	// operacao
 	$dtlimite = $_POST['dtlimite'];

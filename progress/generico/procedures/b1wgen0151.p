@@ -230,6 +230,16 @@ PROCEDURE Busca_Dados:
                          LEAVE Busca.
                      END.
              END.
+         
+         FIND crapagb WHERE crapagb.cddbanco = tt-crapccs.cdbantrf AND
+                            crapagb.cdageban = tt-crapccs.cdagetrf NO-LOCK NO-ERROR.
+
+         IF  NOT AVAILABLE crapagb THEN
+             DO:
+                 ASSIGN aux_cdcritic = 15
+                        aux_dscritic = "".
+                 LEAVE Busca.
+             END.
 
          IF  par_idorigem <> 5 THEN
              ASSIGN tt-crapccs.nmresage = " - " + crapage.nmresage
@@ -672,6 +682,19 @@ PROCEDURE Valida_Dados:
                                 LEAVE Valida.
                             END.
                     END.    
+                    
+
+                FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
+                                   crapagb.cdageban = par_cdagetrf
+                                   NO-LOCK NO-ERROR.
+
+                IF  NOT AVAIL crapagb THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 15
+                               aux_dscritic = ""
+                               par_nmdcampo = "cdagetrf".
+                        LEAVE Valida.
+                    END.
 
                 IF  par_cdbantrf = 85 THEN DO:
 
@@ -1144,6 +1167,15 @@ PROCEDURE Gera_Impressao:
                                 aux_dscritic = "".
                      END.
              END.    
+                       
+         FIND crapagb WHERE crapagb.cddbanco = par_cdbantrf AND
+                            crapagb.cdageban = par_cdagetrf NO-LOCK NO-ERROR.
+
+         IF  NOT AVAILABLE crapagb THEN
+             DO:
+                 ASSIGN aux_cdcritic = 15
+                        aux_dscritic = "".
+             END.
 		 
          ASSIGN aux_dsmesref = "JANEIRO,FEVEREIRO,MARCO,ABRIL,MAIO,JUNHO," +
                         "JULHO,AGOSTO,SETEMBRO,OUTUBRO,NOVEMBRO,DEZEMBRO"

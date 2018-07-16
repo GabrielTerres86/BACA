@@ -218,9 +218,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
         RAISE vr_exc_erro;        
       END IF;     
 
-      CLOSE cr_crapdat;
+      CLOSE cr_crapdat;    
+									
+			IF pr_cdtipmod = 5 THEN -- Recarga de Celular
+				
+				rcel0001.pc_carrega_agend_recarga(pr_cdcooper        => pr_cdcooper
+															           ,pr_nrdconta        => pr_nrdconta
+															           ,pr_situacao        => CASE WHEN pr_insitlau = 3 THEN 4
+                                                                     WHEN pr_insitlau = 4 THEN 5
+                                                                     ELSE pr_insitlau
+																																END
+															           ,pr_dtinicial       => pr_dtageini
+															           ,pr_dtfinal         => pr_dtagefim
+															           ,pr_tab_age_recarga => vr_tab_age_recarga
+																				 ,pr_qttotage        => vr_qttotage
+															           ,pr_cdcritic        => vr_cdcritic
+															           ,pr_dscritic        => vr_dscritic);																				 
+				-- Verifica se retornou erro
+				IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+					RAISE vr_exc_erro;
+				END IF;	
 			
-      IF pr_cdtipmod = 1 OR pr_cdtipmod = 2 OR pr_cdtipmod = 0 THEN -- Pagamento, Transferências
+			ELSE -- Pagamento, Transferências
 				
 			  IF pr_cdtipmod = 1 THEN -- Pagamento
                 vr_dstiptra := '2;10;12;13'; -- Pagamento; DARF/DAS/FGTS/DAE
@@ -252,32 +271,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				END IF;
  							
       END IF;
-      
-			IF pr_cdtipmod = 5 THEN -- Recarga de Celular
-				
-				rcel0001.pc_carrega_agend_recarga(pr_cdcooper        => pr_cdcooper
-															           ,pr_nrdconta        => pr_nrdconta
-															           ,pr_situacao        => CASE WHEN pr_insitlau = 3 THEN 4
-                                                                     WHEN pr_insitlau = 4 THEN 5
-                                                                     ELSE pr_insitlau
-																																END
-															           ,pr_dtinicial       => pr_dtageini
-															           ,pr_dtfinal         => pr_dtagefim
-															           ,pr_tab_age_recarga => vr_tab_age_recarga
-																				 ,pr_qttotage        => vr_qttotage
-															           ,pr_cdcritic        => vr_cdcritic
-															           ,pr_dscritic        => vr_dscritic);																				 
-				-- Verifica se retornou erro
-				IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-					RAISE vr_exc_erro;
-				END IF;	
-      END IF;
+			
+      -- Verifica se a quantidade de registro é zero
+      IF nvl(vr_qttotage, 0) = 0 THEN
+        vr_dscritic := 'Agendamento(s) nao encontrado(s).';
+        RAISE vr_exc_erro;
+      END IF;                                    
 
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
 			
-			--dbms_output.put_line(vr_agendm_fltr.count);
-			--dbms_output.put_line(vr_tab_age_recarga.count);
+			dbms_output.put_line(vr_agendm_fltr.count);
+			dbms_output.put_line(vr_tab_age_recarga.count);
        
        -- Criar cabecalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -1199,6 +1204,216 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       
     END pc_detalhe_agendamento_darf;
 
+  -- Das
+  PROCEDURE pc_detalhe_agendamento_das(pr_idlancto  IN craplau.idlancto%TYPE  --> Id do Agendamento
+                                      ,pr_retxml   OUT CLOB                   --> Arquivo de retorno do XML                                        
+                                      ,pr_dsretorn OUT VARCHAR2) IS           --> Retorno de critica (OK ou NOK)
+    BEGIN
+      
+    /* ................................................................................
+
+     Programa: pc_detalhe_agendamento_das
+     Sistema : Internet Banking
+     Sigla   : AGEN0001
+     Autor   : Ricardo Linhares
+     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina para listar detalhe agendamento DAS
+
+     Observacao: -----
+
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfpre e nrcpfope ,Prj. 285 (Jean Michel)
+
+     ..................................................................................*/       
+       
+     DECLARE
+    
+      vr_exc_erro EXCEPTION;
+      vr_xml_temp VARCHAR2(32726) := '';
+			vr_nmoperad VARCHAR2(100) := '';
+      vr_des_erro VARCHAR2(4000);        
+			vr_info_sac COMP0002.typ_reg_info_sac;
+      
+      CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
+         SELECT  cop.cdcooper
+				        ,cop.cdbcoctl
+                ,cop.cdagectl
+				        ,lau.nrdconta
+                ,to_char(lau.dttransa, 'DD/MM/RRRR') AS dttransa
+								,to_char(lau.dtmvtopg, 'DD/MM/RRRR') AS dtmvtopg
+                ,gene0002.fn_converte_time_data(lau.hrtransa,'S') AS hrtransa
+                ,lau.nrdocmto
+                ,lau.insitlau
+                , CASE lau.insitlau
+                       WHEN 1 THEN 'Pendente'
+                       WHEN 2 THEN 'Pendente'
+                       WHEN 3 THEN 'Cancelado'
+                       WHEN 4 THEN 'Nao Efetivado'
+                  END AS dssituac
+                ,to_char(lau.dtdebito, 'DD/MM/RRRR') AS dtdebito
+                ,nvl(lau.nmprepos, '') AS nmprepos 
+                ,lau.nrcpfpre               
+								,lau.nrcpfope
+                ,to_char(lau.dtvencto, 'DD/MM/RRRR') AS dtvencto
+							  ,lau.cdtiptra
+							  ,lau.vllanaut
+							  ,nvl(lau.dslindig, '') AS dslindig
+                ,(CASE WHEN darf.tpcaptura = 1 THEN 'COM CÓDIGO DE BARRAS' ELSE 'SEM CÓDIGO DE BARRAS' END) AS dstipcap
+								,(CASE WHEN darf.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END) AS dstiptra
+                ,darf.dsidentif_pagto AS dsdpagto
+                ,darf.dsnome_fone AS dsnomfon
+                ,darf.tpcaptura
+                ,to_char(darf.dtapuracao, 'DD/MM/RRRR') AS dtapuracao
+                ,darf.nrcpfcgc
+                ,darf.cdtributo
+                ,darf.nrrefere
+                ,darf.vlreceita_bruta
+                ,darf.vlpercentual
+                ,darf.vlprincipal
+                ,darf.vlmulta
+                ,darf.vljuros
+           FROM craplau lau
+      LEFT JOIN tbpagto_agend_darf_das darf
+             ON darf.idlancto = lau.idlancto
+		  LEFT JOIN crapcop cop
+		       ON cop.cdcooper = lau.cdcooper
+          WHERE lau.idlancto = pr_idlancto;
+
+      rw_agendamento cr_agendamento%ROWTYPE;
+    
+      BEGIN
+        vr_nmoperad := '';
+												
+        -- Busca o Lançamento
+        OPEN cr_agendamento(pr_idlancto);
+        FETCH cr_agendamento INTO rw_agendamento;
+        
+        IF cr_agendamento%notfound THEN
+          CLOSE cr_agendamento;
+          vr_des_erro := 'Lancamento nao encontrado';
+          RAISE vr_exc_erro;         
+        END IF;     
+
+        CLOSE cr_agendamento;
+				
+				-- Buscar dados do associado
+				OPEN cr_crapass (pr_cdcooper => rw_agendamento.cdcooper,
+												 pr_nrdconta => rw_agendamento.nrdconta);
+				FETCH cr_crapass INTO rw_crapass;
+
+				IF cr_crapass%NOTFOUND THEN
+					CLOSE cr_crapass;								
+					vr_des_erro := 'Associado nao cadastrado.';								
+					RAISE vr_exc_erro;
+				ELSE
+					CLOSE cr_crapass;
+				END IF;
+								
+        IF rw_agendamento.nrcpfope > 0 THEN 
+					OPEN cr_crapopi(pr_cdcooper => rw_agendamento.cdcooper
+												 ,pr_nrdconta => rw_agendamento.nrdconta
+												 ,pr_nrcpfope => rw_agendamento.nrcpfope);
+
+					FETCH cr_crapopi INTO rw_crapopi;
+
+					IF cr_crapopi%FOUND THEN
+						-- Fecha cursor
+						CLOSE cr_crapopi;
+						vr_nmoperad := nvl(rw_crapopi.nmoperad, '');
+					ELSE
+						-- Fecha cursor
+						CLOSE cr_crapopi;
+					END IF;
+				END IF;
+				
+				vr_info_sac := COMP0002.fn_info_sac(pr_cdcooper => rw_agendamento.cdcooper);
+        
+        dbms_lob.createtemporary(pr_retxml, TRUE);
+        dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+         
+         -- Criar cabecalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<Agendamento>');       
+                               
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
+                                                     '<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
+                      															 '<idlstdom>8</idlstdom>'                                 ||
+                                                     '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
+                                                     '<cdbcoctl>' || rw_agendamento.cdbcoctl || '</cdbcoctl>' ||
+                                                     '<cdagectl>' || rw_agendamento.cdagectl || '</cdagectl>' ||
+                                                     '<nrdconta>' || rw_agendamento.nrdconta || '</nrdconta>' ||
+                                                     '<nmtitula>' || rw_crapass.nmextttl     || '</nmtitula>' ||
+                                                     '<nmprepos>' || rw_agendamento.nmprepos || '</nmprepos>' ||
+                                                     '<nrcpfpre>' || rw_agendamento.nrcpfpre || '</nrcpfpre>' ||
+                                                     '<nmoperad>' || vr_nmoperad             || '</nmoperad>' ||
+                                                     '<nrcpfope>' || rw_agendamento.nrcpfope || '</nrcpfope>' ||																
+                                                     '<dttransa>' || rw_agendamento.dttransa || '</dttransa>' ||
+                                                     '<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
+                                                     '<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||
+                                                     '<dssituac>' || rw_agendamento.dssituac || '</dssituac>' ||
+                                                     '<dstipcap>' || rw_agendamento.dstipcap || '</dstipcap>' ||
+                                                     '<dslinhad>' || rw_agendamento.dslindig || '</dslinhad>' ||																															  
+                                                     '<dsnomfon>' || rw_agendamento.dsnomfon || '</dsnomfon>' ||
+                                                     '<dsdpagto>' || rw_agendamento.dsdpagto || '</dsdpagto>');
+
+        IF rw_agendamento.tpcaptura <> 1 THEN
+           gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => '<dtapurac>' || rw_agendamento.dtapuracao      || '</dtapurac>' ||
+                                                        '<nrcpfcgc>' || rw_agendamento.nrcpfcgc        || '</nrcpfcgc>' ||
+                                                        '<cdtribut>' || rw_agendamento.cdtributo       || '</cdtribut>' ||
+                                                        '<nrrefere>' || rw_agendamento.nrrefere        || '</nrrefere>' ||
+                                                        '<dtvencto>' || rw_agendamento.dtvencto        || '</dtvencto>' ||
+                                                        '<vlrecbru>' || rw_agendamento.vlreceita_bruta || '</vlrecbru>' ||
+                                                        '<vlpercen>' || rw_agendamento.vlpercentual    || '</vlpercen>' ||
+                                                        '<vlprinci>' || rw_agendamento.vlprincipal     || '</vlprinci>' ||
+                                                        '<vlrmulta>' || rw_agendamento.vlmulta         || '</vlrmulta>' ||
+                                                        '<vlrjuros>' || rw_agendamento.vljuros         || '</vlrjuros>');
+
+        END IF;
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||                                
+                                '<infosac>'  ||
+                                    '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                    '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                    '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                    '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                    '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                    '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                '</infosac>');
+       
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</Agendamento>'
+                               ,pr_fecha_xml      => TRUE);
+                               
+      pr_dsretorn := 'OK';                             
+
+      EXCEPTION								
+				WHEN vr_exc_erro THEN  							
+					
+					pr_retxml := '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN
+								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_retxml :=   '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+					pr_dsretorn := 'NOK';                               
+      
+    END;   
+      
+  END pc_detalhe_agendamento_das;
+		
 	-- Pagamento GPS
   PROCEDURE pc_detalhe_age_pagto_gps(pr_idlancto  IN craplau.idlancto%TYPE  --> Id do Agendamento
                                     ,pr_retxml   OUT CLOB                   --> Arquivo de retorno do XML                                        
@@ -2014,7 +2229,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
        WHEN pr_cdtiptra = 10 THEN
          pc_detalhe_agendamento_darf(pr_idlancto => pr_idlancto
                                     ,pr_retxml   => pr_retxml
-                                    ,pr_dsretorn => pr_dsretorn);
+                                    ,pr_dsretorn => pr_dsretorn);                                   
+       WHEN pr_cdtiptra = 11 THEN
+         pc_detalhe_agendamento_das(pr_idlancto => pr_idlancto
+                                   ,pr_retxml   => pr_retxml
+                                   ,pr_dsretorn => pr_dsretorn);  																	 			
 		   WHEN pr_cdtiptra = 12 THEN
          pc_detalhe_agendamento_FGTS(pr_idlancto => pr_idlancto
                                     ,pr_retxml   => pr_retxml

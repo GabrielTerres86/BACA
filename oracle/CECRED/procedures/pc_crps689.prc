@@ -601,49 +601,6 @@ begin
 
         -- Busca arquivos gerados no sistema MATERA
         vr_dsmascar := lpad(rw_crapcop.cdcooper,3,'0') ||'.%.PGT%.TXT';
-        
-        vr_list_arquivos_matera := NULL;
-
-        -- Retorna a lista dos arquivos do diretório de upload do barramento SOA
-        gene0001.pc_lista_arquivos(pr_path     => vr_dsdirsoa
-                                  ,pr_pesq     => vr_dsmascar
-                                  ,pr_listarq  => vr_list_arquivos_matera
-                                  ,pr_des_erro => vr_dscritic);
-
-        -- Testar saida com erro
-        IF vr_dscritic IS NOT NULL THEN
-           -- Gerar exceção
-           vr_cdcritic := 0;
-           RAISE vr_exc_proxcoop;
-        END IF;        
-        
-        IF vr_list_arquivos_matera IS NOT NULL THEN
-           -- Listar os arquivos em um array
-           vr_array_arquivo := gene0002.fn_quebra_string(pr_string  => vr_list_arquivos_matera
-                                                        ,pr_delimit => ',');
-                                                        
-           -- Ordenar pelo nome do arquivo
-           -- Percorrer todos os arquivos selecionados
-           FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP
-             -- Move os arquivo Processado para Pasta Salvar
-             GENE0001.pc_OScommand_Shell('mv ' || vr_dsdirsoa || vr_array_arquivo(ind) || ' ' || vr_dsdireto || '/'
-                                        ,pr_typ_saida => vr_typ_said
-                                        ,pr_des_saida => vr_des_erro);
-               
-             -- Testar erro
-             IF vr_typ_said = 'ERR' THEN
-               -- Define a mensagem de erro
-               vr_dscritic := 'Erro ao mover arquivos recebidos via SOA => '||vr_array_arquivo(ind)||'.'||chr(10)||vr_des_erro;
-               -- Envio centralizado de log de erro
-               PGTA0001.pc_logar_cst_arq_pgto(pr_cdcooper => rw_crapcop.cdcooper
-                                             ,pr_nrdconta => 0
-                                             ,pr_nmarquiv => 'PC_CRPS689'
-                                             ,pr_textolog => vr_dscritic
-                                             ,pr_cdcritic => pr_cdcritic
-                                             ,pr_dscritic => pr_dscritic);
-             END IF;
-           END LOOP;           
-        END IF;         
 
         vr_list_arquivos_matera := NULL;
 

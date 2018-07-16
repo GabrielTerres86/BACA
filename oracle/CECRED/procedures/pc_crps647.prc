@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 04/07/2018
+  Data    : Setembro/2013                        Ultima atualizacao: 01/03/2018
 
   Dados referentes ao programa:
 
@@ -163,8 +163,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            
               01/03/2018 - Incluir tratamento para validar autorizacao somente para novas
                            inclusoes de debitos(Lucas Ranghetti #849505)
-                           
-              04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -254,7 +252,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_dtdialim DATE; -- ultimo dia util do ano
   vr_dtultdia DATE; 
   vr_dtmvtopr DATE; -- para crapndb
-  vr_achouatr boolean;
   
   -- Comandos no OS
   vr_typsaida varchar2(3);
@@ -590,101 +587,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
       
       -- Validar autorizacao somente se for uma inclusao
       IF SUBSTR(vr_dslinharq,158,1) = 0 THEN
-        -- Busca autorização de debito (tratar em bloco para caso invalid number considerar 484)
-        BEGIN 
-          rw_crapatr := null;
-          
-          /* Para o convenio claro RL, vamos considerar os cdempres RQ (Claro PR/SC) e 5Y (Claro RS)
-             Enviamos como RQ ou 5Y e claro nos envia como Claro Movel (RL) */
-          IF vr_cdempres = 'RL' THEN
-            -- Fechar cursor      
-            IF cr_crapatr%ISOPEN THEN                 
-              CLOSE cr_crapatr;
-            END IF;
-            OPEN cr_crapatr(vr_nrdconta
-                           ,vr_cdempres
-                           ,vr_cdrefere);
-            FETCH cr_crapatr
-             INTO rw_crapatr;
-            -- Se não encontrou autorização 
-            IF cr_crapatr%NOTFOUND THEN
-              vr_achouatr:= false;
-                -- Fechar cursor      
-              IF cr_crapatr%ISOPEN THEN                 
-                CLOSE cr_crapatr;
-              END IF;
-              
-              OPEN cr_crapatr(vr_nrdconta
-                             ,'RQ'
-                             ,vr_cdrefere);
-              FETCH cr_crapatr
-               INTO rw_crapatr;
-              -- Se não encontrou autorização 
-              IF cr_crapatr%NOTFOUND THEN
-                  -- Fechar cursor      
-                IF cr_crapatr%ISOPEN THEN                 
-                  CLOSE cr_crapatr;
-                END IF;
-                
-                vr_achouatr:= false;
-                
-                OPEN cr_crapatr(vr_nrdconta
-                               ,'5Y'
-                               ,vr_cdrefere);
-                FETCH cr_crapatr
-                 INTO rw_crapatr;
-                -- Se não encontrou autorização 
-                IF cr_crapatr%NOTFOUND THEN 
-                  vr_achouatr:= false;
-                else
-                  vr_cdempres:= '5Y';
-                  vr_achouatr:= true;
-                END IF; 
-              else
-                vr_cdempres:= 'RQ';
-                vr_achouatr:= true;
-              END IF;                 
-            else
-              vr_achouatr:= true;
-            end if;
-            
-            if NOT vr_achouatr then
-              -- Gerar critica 
-              pr_cdcritic := 484;                  
-            end if; 
-          ELSE
-             -- Fechar cursor      
-             IF cr_crapatr%ISOPEN THEN                 
-               CLOSE cr_crapatr;
-             END IF;
-            
-             OPEN cr_crapatr(vr_nrdconta
-                            ,vr_cdempres
-                            ,vr_cdrefere);
-             FETCH cr_crapatr
-             INTO rw_crapatr;
-             -- Se não encontrou autorização 
-             IF cr_crapatr%NOTFOUND THEN 
-               -- Gerar critica 
-               pr_cdcritic := 484;
-             END IF;
-             -- Fechar cursor       
-             IF cr_crapatr%ISOPEN THEN                 
-               CLOSE cr_crapatr;
-             END IF;
-          END IF;
-
-        EXCEPTION
-          WHEN OTHERS THEN 
-            -- Contrato não encontrado
-            pr_cdcritic := 484;
-        END;  
+      -- Busca autorização de debito (tratar em bloco para caso invalid number considerar 484)
+      BEGIN 
+        rw_crapatr := null;
+        OPEN cr_crapatr(vr_nrdconta
+                       ,vr_cdempres
+                       ,vr_cdrefere);
+        FETCH cr_crapatr
+         INTO rw_crapatr;
+        -- Se não encontrou autorização 
+        IF cr_crapatr%NOTFOUND THEN 
+          -- Gerar critica 
+          pr_cdcritic := 484;
+        END IF;
+        -- Fechar cursor       
+        CLOSE cr_crapatr;
+      EXCEPTION
+        WHEN OTHERS THEN 
+          -- Contrato não encontrado
+          pr_cdcritic := 484;
+      END;  
       END IF;
       -- validar valor zerado, se for zerado vamos criticar com a critica 
       -- 502 - Conta nao emitida.
       IF vr_vllanmto = 0 THEN
         pr_cdcritic := 502;     
-      END IF;
+    END IF;
     END IF;
     -- Se encontrarmos critica, somente gerar NDB no tipo de registro E
     IF pr_cdcritic > 0 AND vr_tpregist = 'E' THEN 
@@ -1041,96 +969,16 @@ BEGIN
               IF substr(vr_dslinharq,158,1) = '0' THEN
                 -- Busca se já existe a nova autorização de debito 
                 rw_crabatr := null;
-                /*******************/
-                /* Para o convenio claro RL, vamos considerar os cdempres RQ (Claro PR/SC) e 5Y (Claro RS)
-                   Enviamos como RQ ou 5Y e claro nos envia como Claro Movel (RL) */
-                IF vr_cdempres = 'RL' THEN
-                  -- Fechar cursor      
-                  IF cr_crapatr%ISOPEN THEN                 
-                    CLOSE cr_crapatr;
-                  END IF;
-                  OPEN cr_crapatr(vr_nrdconta
-                                 ,vr_cdempres
-                                 ,vr_cdrefere
-                                 ,'N');
-                  FETCH cr_crapatr
-                   INTO rw_crabatr;
-                  -- Se não encontrou autorização 
-                  IF cr_crapatr%NOTFOUND THEN
-                    vr_achouatr:= false;
-                      -- Fechar cursor      
-                    IF cr_crapatr%ISOPEN THEN                 
-                      CLOSE cr_crapatr;
-                    END IF;
-                    
-                    OPEN cr_crapatr(vr_nrdconta
-                                   ,'RQ'
-                                   ,vr_cdrefere
-                                   ,'N');
-                    FETCH cr_crapatr
-                     INTO rw_crabatr;
-                    -- Se não encontrou autorização 
-                    IF cr_crapatr%NOTFOUND THEN
-                        -- Fechar cursor      
-                      IF cr_crapatr%ISOPEN THEN                 
-                        CLOSE cr_crapatr;
-                      END IF;
-                      
-                      vr_achouatr:= false;
-                      
-                      OPEN cr_crapatr(vr_nrdconta
-                                     ,'5Y'
-                                     ,vr_cdrefere
-                                     ,'N');
-                      FETCH cr_crapatr
-                       INTO rw_crabatr;
-                      -- Se não encontrou autorização 
-                      IF cr_crapatr%NOTFOUND THEN 
-                         IF cr_crapatr%ISOPEN THEN                 
-                           CLOSE cr_crapatr;
-                         END IF;
-                        vr_achouatr:= false;
-                      ELSE
-                        vr_achouatr:= true;
-                      END IF; 
-                    ELSE
-                      vr_achouatr:= true;
-                    END IF;                 
-                  ELSE
-                    vr_achouatr:= true;
-                  END IF;
-                  
-                  IF cr_crapatr%ISOPEN THEN                 
-                    CLOSE cr_crapatr;
-                  END IF;
-                ELSE
-                   -- Fechar cursor      
-                   IF cr_crapatr%ISOPEN THEN                 
-                     CLOSE cr_crapatr;
-                   END IF;
-                  
-                   OPEN cr_crapatr(vr_nrdconta
-                                  ,vr_cdempres
-                                  ,vr_cdrefere
-                                  ,'N');
-                   FETCH cr_crapatr
-                   INTO rw_crabatr;
-                   -- Se não encontrou autorização 
-                   IF cr_crapatr%NOTFOUND THEN 
-                     -- Gerar critica 
-                     vr_achouatr:= false;
-                   ELSE
-                     vr_achouatr:= true;
-                   END IF;
-                   -- Fechar cursor       
-                   IF cr_crapatr%ISOPEN THEN                 
-                     CLOSE cr_crapatr;
-                   END IF;
-                END IF;
-                /*******************/
-               
+                OPEN cr_crapatr(vr_nrdconta
+                               ,vr_cdempres
+                               ,vr_cdrefere
+                               ,'N');
+                FETCH cr_crapatr
+                 INTO rw_crabatr;
                 -- Se não encontrou autorização 
-                IF not vr_achouatr THEN 
+                IF cr_crapatr%NOTFOUND THEN 
+                  -- Fechar cursor       
+                  CLOSE cr_crapatr;
                   -- Criamos a nova autorização com base na anterior
                   BEGIN 
                     INSERT INTO crapatr (cdcooper
@@ -1159,6 +1007,8 @@ BEGIN
                     raise vr_exc_saida;
                   END;
                 ELSE
+                  -- Fechar cursor       
+                  CLOSE cr_crapatr;
                   -- Apenas reativamos a autorização antiga encontrada 
                   BEGIN 
                     UPDATE crapatr 

@@ -233,7 +233,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 04/07/2018
+     Data    : Abril/2013                       Ultima atualizacao: 29/05/2018
 
      Dados referentes ao programa:
 
@@ -343,8 +343,6 @@ create or replace package body cecred.SICR0001 is
                  29/05/2018 - Alterar sumario_debsic para somente somar os nao efetivados 
                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
                               (bater com informacoes do crrl642) (Lucas Ranghetti INC0016207)
-                              
-                 04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -2903,7 +2901,7 @@ create or replace package body cecred.SICR0001 is
                             ,pr_nrctacns  IN crapass.nrctacns%TYPE        --> Conta consórcio
                             ,pr_vllanaut  IN craplau.vllanaut%TYPE        --> Valor do lancemento
                             ,pr_cdagenci  IN crapass.cdagenci%TYPE        --> Agencia do cooperado PA
-                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
+              ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                             ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
   ---------------------------------------------------------------------------------------------------------------
@@ -2929,8 +2927,6 @@ create or replace package body cecred.SICR0001 is
   --                            é feito na rotina chamadora pc_efetua_debito_autiomatico
   --                          - Tratamento erros others
   --                            (Ana - Envolti - Chamado 788828)
-  --
-  --             04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
   --------------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2938,7 +2934,6 @@ create or replace package body cecred.SICR0001 is
       -- VARIAVEIS
       vr_nrctasic crapcop.nrctasic%TYPE;
       vr_cdagenci crapage.cdagenci%TYPE;
-      vr_cdempres varchar2(10);
       vr_dstexarq VARCHAR2(200) := '';
       -- VARIAVEIS PARA CAULCULO DE DIGITOS A COMPLETAR COM ZEROS OU ESPAÇOS
       vr_resultado VARCHAR2(25);
@@ -3032,12 +3027,6 @@ create or replace package body cecred.SICR0001 is
 
       vr_cdagenci :=  SUBSTR(gene0002.fn_mask(pr_cdagenci,'999'),2,2);
 
-      IF rw_crapscn.cdempres IN('RQ','5Y') THEN
-         vr_cdempres:= 'RL';
-      ELSE
-         vr_cdempres:= rw_crapscn.cdempres;
-      END IF;
-
       vr_dstexarq := 'F' || vr_resultado ||
                          gene0002.fn_mask(vr_nrctasic,'9999') ||
                          gene0002.fn_mask(pr_nrctacns,'999999') ||
@@ -3050,7 +3039,7 @@ create or replace package body cecred.SICR0001 is
                          LPAD(pr_cdseqtel,60, ' ') ||
                          RPAD(' ',16) ||
                          gene0002.fn_mask(vr_cdagenci,'99') ||
-                         RPAD(TRIM(vr_cdempres),10,' ') || '0';
+                         RPAD(TRIM(rw_crapscn.cdempres),10,' ') || '0';
 
         BEGIN
           -- INSERE REGISTRO NA TABELA DE REGISTROS DE DEBITO EM CONTA NAO EFETUADOS

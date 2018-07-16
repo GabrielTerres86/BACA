@@ -13,8 +13,9 @@
                28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                             da chamada é do mobile (Dionathan)
  
-               25/04/2016 - Incluido a passagem de novo parametro na rotina
-                            cancelar-agendamento (Adriano - M117).
+			         25/04/2016 - Incluido a passagem de novo parametro na rotina
+							              cancelar-agendamento
+							              (Adriano - M117).
               
                07/03/2017 - Adicionado parametro par_cdtiptra.
                             Adicionado tratamento para agendamentos de recarga de 
@@ -57,9 +58,7 @@ ASSIGN aux_flgrecar = IF par_cdtiptra = 0 OR par_cdtiptra = 11 OR par_cdtiptra =
 IF par_cdtiptra = 0 AND par_idlancto <> 0 THEN
   DO:
      /* Verificar qual o tipo do agendamento. Se nao existir na craplau eh um agendamento de recarga */
-     FOR FIRST craplau WHERE craplau.cdcooper = par_cdcooper
-                         AND craplau.nrdconta = par_nrdconta
-                         AND craplau.idlancto = par_idlancto NO-LOCK. END.
+     FOR FIRST craplau WHERE craplau.idlancto = par_idlancto NO-LOCK. END.
      
      IF AVAIL craplau THEN
         ASSIGN aux_flgrecar = FALSE.     

@@ -232,7 +232,7 @@ create or replace package body cecred.PCAP0001 is
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Tiago
-    Data    : Setembro/12                            Ultima alteracao: 04/07/2018
+    Data    : Setembro/12                            Ultima alteracao: 19/04/2018
 
     Objetivo  : Procedures referentes ao PROCAP (Programa de capitalização).
 
@@ -253,9 +253,6 @@ create or replace package body cecred.PCAP0001 is
                              descrição (Renato Darosci - Supero)
 
                 19/04/2018 - inc0011932 Ajustes no layout do arquivo enviado ao BRDE
-                             (pc_gerar_arq_enc_brde) (Carlos)
-                             
-                04/07/2018 - inc0018454 Inclusão do regime de bens no tipo de registro 1
                              (pc_gerar_arq_enc_brde) (Carlos)
   ............................................................................ */
 
@@ -1097,9 +1094,8 @@ create or replace package body cecred.PCAP0001 is
     
     vr_coopbrde INTEGER;
     vr_cdestcvl INTEGER;
-    vr_regime   VARCHAR2(2) := '  ';
-
     
+   
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
     -- Variável para armazenar os dados do XML antes de incluir no CLOB
@@ -1549,24 +1545,6 @@ create or replace package body cecred.PCAP0001 is
           ELSIF rw_crapttl.cdestcvl = 7 THEN /*divorciado*/
             vr_cdestcvl := 3;
           END IF;
-
-          /*
-          10 Comunhão Universal de Bens          2
-          11 Comunhão Parcial de Bens            3
-          12 Separação de Bens                   4
-          13 Participação final nos aquestos 
-             (Novo Regime de Bens do Cód. Civil) 11 */
-          IF rw_crapttl.cdestcvl IN (2,8) THEN
-            vr_regime := '10';
-          ELSIF rw_crapttl.cdestcvl IN (3,9,12,13) THEN -- casado parcial ou uniao estavel
-            vr_regime := '11';
-          ELSIF rw_crapttl.cdestcvl = 4 THEN
-            vr_regime := '12';
-          ELSIF rw_crapttl.cdestcvl = 11 THEN
-            vr_regime := '13';
-          ELSE
-            vr_regime := '  ';
-          END IF;
           
           /* se tiver estado civil casado */
           IF rw_crapttl.cdestcvl in (2,3,4,8,9,11,12) THEN
@@ -1966,9 +1944,8 @@ create or replace package body cecred.PCAP0001 is
 
       vr_dsdlinha := vr_dsdlinha ||
                       to_char(vr_cdestcvl, 'fm00')                          || --2 estado civil (conforme tabela BRDE)
-                      TO_CHAR(vr_nrcpfcgc, 'fm00000000000000')              || --14 CPF/CNPJ do beneficiário
-                      vr_regime                                             || --2 regime de bens                      
-                      LPAD(' ',58,' ')                                      || --58 Filler
+                      TO_CHAR(vr_nrcpfcgc, 'fm00000000000000')              || --14 CPF/CNPJ do beneficiário                                            
+                      LPAD(' ',60,' ')                                      || --60 Filler
                       RPAD(vr_tab_brde(vr_idxbrde).dsendere,'35',' ')       || --35 Endereço do beneficiário
                       to_char(vr_tab_brde(vr_idxbrde).nrcepend,'fm00000000')|| --8 CEP
                       TO_CHAR(rw_crapipc.cdmunben,'fm0000000')              || --7 Código do município do cliente

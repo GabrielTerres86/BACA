@@ -5,7 +5,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Evandro.
-   Data    : Marco/2010                      Ultima atualizacao: 25/06/2018
+   Data    : Marco/2010                      Ultima atualizacao: 04/05/2018
 
    Dados referentes ao programa:
 
@@ -53,9 +53,9 @@
                             durante a criação da CRAPLCM (Lucas Lunelli)
 
 			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                            crapass, crapttl, crapjur (Adriano - P339).
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
 
-               25/06/2018 - inc0016988 inclusao de controles de lock (Carlos)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -146,9 +146,7 @@ PROCEDURE busca_envelopes_deposito:
     DEF OUTPUT PARAM TABLE FOR tt-depositos-env.
 
     DEF BUFFER crabcop FOR crapcop.
-    DEF BUFFER b-crapmdw FOR crapmdw.
 
-    DEF VAR aux_contlock AS INTEGER NO-UNDO.
 
     DEFINE VARIABLE aux_nrsequen AS INTEGER     NO-UNDO.
 
@@ -171,7 +169,7 @@ PROCEDURE busca_envelopes_deposito:
     DO:
         FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper AND
                                crapmdw.cdagenci = par_cdagenci     AND
-                               crapmdw.nrdcaixa = par_nrdcaixa NO-LOCK,
+                               crapmdw.nrdcaixa = par_nrdcaixa EXCLUSIVE-LOCK,
            FIRST crapenl WHERE crapenl.cdcoptfn = crapcop.cdcooper AND
                                crapenl.dtmvtolt = crapmdw.dtlibcom AND
                                crapenl.nrseqenv = crapmdw.nrcheque NO-LOCK
@@ -201,58 +199,15 @@ PROCEDURE busca_envelopes_deposito:
                 ASSIGN tt-depositos-env.cdcopdst = crapcop.cdcooper
                        tt-depositos-env.nmcopdst = crapcop.nmrescop.
 
+
+
             IF  crapmdw.nrseqdig = par_nrseqdig  THEN
-            DO:
-              DO aux_contlock = 1 TO 10:
-                FIND b-crapmdw WHERE b-crapmdw.cdcooper = crapmdw.cdcooper AND
-                                     b-crapmdw.cdagenci = crapmdw.cdagenci AND
-                                     b-crapmdw.nrdcaixa = crapmdw.nrdcaixa AND
-                                     b-crapmdw.nrctabdb = crapmdw.nrctabdb AND 
-                                     b-crapmdw.nrcheque = crapmdw.nrcheque 
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                IF NOT AVAILABLE b-crapmdw THEN
-                DO:
-                  IF LOCKED(b-crapmdw) THEN
-                  DO:
-                    ASSIGN i-cod-erro  = 0
-                           c-desc-erro = "Registro de lancamento esta em uso no momento.".
-                    PAUSE 1 NO-MESSAGE.
-                    NEXT.
-                  END.
-
-                  ASSIGN i-cod-erro  = 0
-                         c-desc-erro = "Registro de lancamento nao existe.".
-                  
-                END.
-                ELSE 
-                DO:
-                  ASSIGN b-crapmdw.dsdocmc7 = par_dssituac /* descartado */
-                         b-crapmdw.lsdigctr = par_vldincpt. /* computado */
-                  RELEASE b-crapmdw.                  
-                END.
-
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = "".
-                LEAVE.
-              END. /* fim contador */
-
-              IF  i-cod-erro > 0 OR
-                  c-desc-erro <> "" THEN
-              DO:
-                  RUN cria-erro (INPUT par_nmrescop,
-                                 INPUT par_cdagenci,
-                                 INPUT par_nrdcaixa,
-                                 INPUT i-cod-erro,
-                                 INPUT c-desc-erro,
-                                 INPUT YES).
-                  RETURN "NOK".
-              END.
-
-            END. /* fim IF */
+                ASSIGN crapmdw.dsdocmc7 = par_dssituac /* descartado */
+                       crapmdw.lsdigctr = par_vldincpt. /* computado */
             
             IF  par_tpdeposi = 1  THEN
-               ASSIGN tt-depositos-env.vlcomput = DECI(b-crapmdw.lsdigctr)
-                      tt-depositos-env.dssituac = b-crapmdw.dsdocmc7.
+                ASSIGN tt-depositos-env.vlcomput = DECI(crapmdw.lsdigctr)
+                       tt-depositos-env.dssituac = crapmdw.dsdocmc7.
            ELSE
                ASSIGN tt-depositos-env.vlcomput = crapenl.vlchqcmp 
                       tt-depositos-env.dssituac = IF  crapenl.cdsitenv = 0  THEN
@@ -632,8 +587,6 @@ PROCEDURE autentica_cheques_coop:
     DEFINE VARIABLE p-ult-sequencia AS INTEGER    NO-UNDO.
     DEFINE VARIABLE p-registro      AS RECID      NO-UNDO.
 
-    DEF VAR aux_contlock AS INTEGER NO-UNDO.
-    DEF BUFFER b-crapmdw FOR crapmdw.
 
     RUN elimina-erro (INPUT par_nmrescop,
                       INPUT par_cdagenci,
@@ -654,7 +607,7 @@ PROCEDURE autentica_cheques_coop:
                                crapmdw.cdagenci = par_cdagenci     AND
                                crapmdw.nrdcaixa = par_nrdcaixa     AND
                                crapmdw.inautent = FALSE            AND 
-                               crapmdw.cdhistor = 386 NO-LOCK:
+                               crapmdw.cdhistor = 386 EXCLUSIVE-LOCK:
     
             ASSIGN aux_nrcheque = 
                        INTE(STRING(crapmdw.nrcheque,"zzz,zz9") +                                             
@@ -679,54 +632,16 @@ PROCEDURE autentica_cheques_coop:
                                  OUTPUT p-ult-sequencia,
                                  OUTPUT p-registro).
     
+            ASSIGN crapmdw.nrautdoc = p-ult-sequencia.
+    
             IF RETURN-VALUE = "NOK" THEN
             DO:
                 ASSIGN i-cod-erro  = 0
                        c-desc-erro = "Erro na Autenticacao".
                 LEAVE.
             END.
-            
 
-            DO aux_contlock = 1 TO 10:
-                
-              FIND b-crapmdw WHERE cdcooper = crapmdw.cdcooper AND 
-                                   cdagenci = crapmdw.cdagenci AND 
-                                   nrdcaixa = crapmdw.nrdcaixa AND 
-                                   nrctabdb = crapmdw.nrctabdb AND 
-                                   nrcheque = crapmdw.nrcheque
-              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.  
-              
-              IF NOT AVAILABLE b-crapmdw THEN
-              DO:
-                IF LOCKED(b-crapmdw) THEN
-                DO:
-                  ASSIGN i-cod-erro  = 0
-                         c-desc-erro = "Registro de lancamento de cheque esta em uso no momento.".
-                  PAUSE 1 NO-MESSAGE.
-                  NEXT.
-                END.
-                ELSE
-                DO:
-                  ASSIGN i-cod-erro  = 0
-                         c-desc-erro = "Registro nao existe.".
-                  LEAVE.
-            END.
-              END.
-
-              ASSIGN i-cod-erro  = 0
-                     c-desc-erro = "".
-              LEAVE.
-            END. /* fim contador */
-
-            IF i-cod-erro = 0 AND
-               c-desc-erro = "" THEN
-            DO:
-              ASSIGN b-crapmdw.nrautdoc = p-ult-sequencia.
-              RELEASE b-crapmdw.
         END.
-
-
-        END. /* fim FOR EACH */
 
         DELETE PROCEDURE h-b1crap00.
 
@@ -786,8 +701,6 @@ PROCEDURE deposita_envelope_dinheiro:
     DEF VAR c-nome-titular2         AS CHAR                   NO-UNDO.
     DEF VAR in99                    AS INTE                   NO-UNDO.
     DEF VAR aux_returnvl            AS CHAR INIT "NOK"        NO-UNDO.
-    
-    DEF VAR aux_contlock AS INTEGER NO-UNDO.
     
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -971,28 +884,18 @@ PROCEDURE deposita_envelope_dinheiro:
           END.
        ELSE
           DO: 
-
-            DO aux_contlock = 1 TO 10:
              /** Executa processo normal de Deposito Envelope Dinheiro **/
              FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
                                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
                                       craplot.cdagenci = p-cod-agencia     AND
                                       craplot.cdbccxlt = 11                AND /* Fixo */
                                       craplot.nrdolote = i-nro-lote 
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                                      EXCLUSIVE-LOCK NO-ERROR.
                   
-              IF NOT AVAILABLE craplot THEN
+             IF NOT AVAIL craplot THEN 
                 DO: 
-                IF LOCKED(craplot) THEN
-                DO:
-                  ASSIGN i-cod-erro  = 0
-                         c-desc-erro = "Registro de lote esta em uso no momento.".
-                  PAUSE 1 NO-MESSAGE.
-                  NEXT.
-                END.
-                ELSE
-                DO:
                    CREATE craplot.
+       
                    ASSIGN craplot.cdcooper = crapcop.cdcooper
                           craplot.dtmvtolt = crapdat.dtmvtolt
                           craplot.cdagenci = p-cod-agencia
@@ -1003,24 +906,7 @@ PROCEDURE deposita_envelope_dinheiro:
                           craplot.cdhistor = 0 /* 700 */
                           craplot.nrdcaixa = p-nro-caixa
                           craplot.cdopecxa = p-cod-operador.
-                END.
-              END.
 
-              ASSIGN i-cod-erro  = 0
-                     c-desc-erro = "".
-              LEAVE.
-            END. /* fim contador */
-
-            IF  i-cod-erro > 0 OR
-                c-desc-erro <> "" THEN
-            DO:
-                RUN cria-erro (INPUT p-cooper,     
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa , 
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
                 END.
                       
              ASSIGN i-nro-docto = INT(c-docto-salvo).
@@ -1185,6 +1071,7 @@ PROCEDURE deposita_envelope_dinheiro:
 						   ASSIGN c-nome-titular2 = crapttl.nmextttl.
 
 						 END.
+
 					  END.
 
 		        END.
@@ -1350,8 +1237,6 @@ PROCEDURE descarta_envelope:
     DEFINE INPUT  PARAM par_dtmvtolt    AS DATE             NO-UNDO.
     DEFINE INPUT  PARAM par_nrsequni    AS INT              NO-UNDO.
 
-    DEF VAR aux_contlock AS INTEGER NO-UNDO.
-
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
     IF  NOT AVAILABLE crapcop  THEN
@@ -1361,32 +1246,20 @@ PROCEDURE descarta_envelope:
         END.
     ELSE
         DO:
-
-          DO aux_contlock = 1 TO 10:
             FIND crapenl WHERE crapenl.cdcoptfn = crapcop.cdcooper  AND
                                crapenl.dtmvtolt = par_dtmvtolt      AND
                                crapenl.nrseqenv = par_nrsequni
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             
-            IF  NOT AVAILABLE crapenl THEN DO:
-                IF  LOCKED crapenl  THEN DO:
+            IF  NOT AVAILABLE crapenl   THEN
+                DO:
+                    IF  LOCKED crapenl  THEN
                         ASSIGN i-cod-erro  = 0
                                c-desc-erro = "Registro do Envelope em Uso.".
-                    PAUSE 1 NO-MESSAGE.
-                    NEXT.
-                END.
-                ELSE DO:
+                    ELSE
                     ASSIGN i-cod-erro  = 0
                            c-desc-erro = "Envelope nao encontrado.".
-                    LEAVE.
                 END.
-                END.
-
-            ASSIGN i-cod-erro  = 0
-                   c-desc-erro = "".
-            LEAVE.
-          END. /* fim contador */
-
         END.
 
     IF  i-cod-erro  <> 0   OR
@@ -1426,8 +1299,6 @@ PROCEDURE confere_envelope:
     DEFINE INPUT  PARAM par_vldincmp    AS DEC              NO-UNDO.
     DEFINE INPUT  PARAM par_vlchqcmp    AS DEC              NO-UNDO.
 
-    DEF VAR aux_contlock AS INTEGER NO-UNDO.
-
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
     IF  NOT AVAILABLE crapcop  THEN
@@ -1437,33 +1308,20 @@ PROCEDURE confere_envelope:
         END.
     ELSE
         DO:
-
-          DO aux_contlock = 1 TO 10:
-
             FIND crapenl WHERE crapenl.cdcoptfn = crapcop.cdcooper  AND
                                crapenl.dtmvtolt = par_dtmvtolt      AND
                                crapenl.nrseqenv = par_nrsequni
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             
-            IF  NOT AVAILABLE crapenl THEN DO:
-                IF  LOCKED crapenl  THEN DO:
+            IF  NOT AVAILABLE crapenl   THEN
+                DO:
+                    IF  LOCKED crapenl  THEN
                         ASSIGN i-cod-erro  = 0
                                c-desc-erro = "Registro do Envelope em Uso.".
-                    PAUSE 1 NO-MESSAGE.
-                    NEXT.
-                END.
-                ELSE DO:
+                    ELSE
                     ASSIGN i-cod-erro  = 0
                            c-desc-erro = "Envelope nao encontrado.".
-                    LEAVE.
                 END.
-            END.
-
-            ASSIGN i-cod-erro  = 0
-                   c-desc-erro = "".
-            LEAVE.
-                END.
-                
         END.
 
     IF  i-cod-erro  <> 0   OR
@@ -1498,8 +1356,6 @@ PROCEDURE libera_envelope:
     DEFINE INPUT  PARAM par_nrsequni    AS INT              NO-UNDO.
     DEFINE INPUT  PARAM par_nrautdoc    AS INT              NO-UNDO.
 
-    DEF VAR aux_contlock AS INTEGER NO-UNDO.
-
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
     IF  NOT AVAILABLE crapcop  THEN
@@ -1509,33 +1365,20 @@ PROCEDURE libera_envelope:
         END.
     ELSE
         DO:
-
-          DO aux_contlock = 1 TO 10:
-
             FIND crapenl WHERE crapenl.cdcoptfn = crapcop.cdcooper  AND
                                crapenl.dtmvtolt = par_dtmvtolt      AND
                                crapenl.nrseqenv = par_nrsequni
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             
-            IF  NOT AVAILABLE crapenl THEN DO:
-                IF  LOCKED crapenl  THEN DO:
+            IF  NOT AVAILABLE crapenl   THEN
+                DO:
+                    IF  LOCKED crapenl  THEN
                         ASSIGN i-cod-erro  = 0
                                c-desc-erro = "Registro do Envelope em Uso.".
-                    PAUSE 1 NO-MESSAGE.
-                    NEXT.
-                END.
-                ELSE DO:
+                    ELSE
                     ASSIGN i-cod-erro  = 0
                            c-desc-erro = "Envelope nao encontrado.".
-                    LEAVE.
                 END.
-                END.
-
-            ASSIGN i-cod-erro  = 0
-                   c-desc-erro = "".
-            LEAVE.
-          END. /* contador */
-                
         END.
 
     IF  i-cod-erro  <> 0   OR
@@ -1600,3 +1443,7 @@ END PROCEDURE.
 /* Fim verifica_dia_util */
 
 /* .......................................................................... */
+
+
+
+

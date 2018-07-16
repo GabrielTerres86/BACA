@@ -46,11 +46,10 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                  ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                  ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                  ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
-                                 ,pr_dsprotoc IN VARCHAR2 DEFAULT NULL  --> Lista de protocolos a serem buscados
                                  ,pr_iniconta IN NUMBER                 --> Início da conta
                                  ,pr_nrregist IN NUMBER                 --> Número de registros
                                  ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-                                 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
+								 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
                                  ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
                                  ,pr_dsretorn OUT VARCHAR2 );
 
@@ -331,7 +330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       BEGIN
     
         CASE
-          WHEN (pr_protocolo.cdtippro = 1 OR pr_protocolo.cdtippro = 4) AND pr_cdtipmod = 2 THEN -- Transferencia Realizada
+          WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 2 THEN -- Transferencia Realizada
             vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));      
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'));
           WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 3 THEN -- Transferencia Recebida
@@ -368,7 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             END IF;
             
             vr_dsprotoc := vr_desc;
-            
+
 			*/
             
           WHEN pr_protocolo.cdtippro in(18, 19) THEN -- Agendamento de DARF / DAS
@@ -452,11 +451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                  ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
                                  ,pr_dtinipro IN crappro.dtmvtolt%TYPE  --> Data inicial do protocolo
                                  ,pr_dtfimpro IN crappro.dtmvtolt%TYPE  --> Data final do protocolo
-                                 ,pr_dsprotoc IN VARCHAR2 DEFAULT NULL  --> Lista de protocolos a serem buscados
                                  ,pr_iniconta IN NUMBER                 --> Início da conta
                                  ,pr_nrregist IN NUMBER                 --> Número de registros
                                  ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
-                                 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
+																 ,pr_cdtipmod IN NUMBER                 --> Código do módulo da consulta
                                  ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
                                  ,pr_dsretorn OUT VARCHAR2) IS          --> Retorno de critica (OK ou NOK)
 
@@ -544,7 +542,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       ,pr_nrdconta  => pr_nrdconta
                                       ,pr_dtinipro  => pr_dtinipro
                                       ,pr_dtfimpro  => pr_dtfimpro
-                                      ,pr_dsprotoc  => pr_dsprotoc
                                       ,pr_iniconta  => pr_iniconta - 1 /* Necessário subtrair pois o controle de paginação interno é realizado com posição inicial 0 */
                                       ,pr_nrregist  => pr_nrregist
                                       ,pr_cdtippro  => vr_dstippro 
@@ -1389,7 +1386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_dsdlinha  VARCHAR2(30000); 
       vr_cdorigem  INTEGER; --> Código de origem
 			vr_tparrecd  crapcon.tparrecd%TYPE;
-    
+			
       --> Buscar código da agência da cooperativa cadastrada no bancoob
       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
 				SELECT crapcop.cdagebcb
@@ -1521,15 +1518,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       
         vr_cdbarras := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
         
-        vr_tparrecd := to_number(NVL(TRIM(gene0002.fn_busca_entrada(2, REGEXP_substr(vr_protocolo(vr_ind).dsinform##3, 'Tipo Arrecadao:[^#]+'), ':')),0));
+				IF REGEXP_COUNT(vr_protocolo(vr_ind).dsinform##3, '#') > 1 THEN
+          vr_tparrecd := to_number(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##3, '#')), ':')));
+				ELSE
+					vr_tparrecd := 0;
+				END IF;
         
-        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+				gene0002.pc_escreve_xml(pr_xml            => pr_retxml
 															 ,pr_texto_completo => vr_xml_temp      
 															 ,pr_texto_novo     => '<tparrecd>' || to_char(vr_tparrecd) || '</tparrecd>'); 
-        
+																 				        
         -- Caso for um convenio Bancoob
         IF vr_tparrecd = 2 THEN
-				
+					
 					-- Buscar dados da cooperativa			
 					OPEN cr_crapcop(pr_cdcooper);
 					FETCH cr_crapcop INTO rw_crapcop;
@@ -3941,9 +3942,9 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                   ,pr_cdorigem => pr_cdorigem
                                   ,pr_retxml =>   vr_retxml
                                   ,pr_dsretorn => pr_dsretorn);                                  
-                                           
+                                  
           pr_retxml := vr_retxml.getclobval();                                  
-      
+                                           
         WHEN pr_cdtippro = 24 THEN
           pc_detalhe_compr_pag_fgts(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -4759,7 +4760,7 @@ END pc_comprovantes_recebidos;
       vr_idx VARCHAR2(40);
       vr_split_reg   gene0002.typ_split;
       vr_split_campo gene0002.typ_split;
-            
+
       --> Buscar código da agência da cooperativa cadastrada no bancoob
       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
 				SELECT crapcop.cdagebcb
@@ -4800,7 +4801,7 @@ END pc_comprovantes_recebidos;
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapcop;
-    END IF;
+    END IF;		
 			
     gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta

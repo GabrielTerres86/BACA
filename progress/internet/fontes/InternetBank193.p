@@ -30,7 +30,6 @@ DEF INPUT  PARAM par_cdcooper  LIKE crapcop.cdcooper NO-UNDO.
 DEF INPUT  PARAM par_nrdconta  LIKE crapass.nrdconta NO-UNDO.
 DEF INPUT  PARAM par_dtinipro  AS DATE               NO-UNDO.
 DEF INPUT  PARAM par_dtfimpro  AS DATE               NO-UNDO.
-DEF INPUT  PARAM par_dsprotoc  AS CHAR               NO-UNDO.
 DEF INPUT  PARAM par_iniconta  AS INTEGER            NO-UNDO.
 DEF INPUT  PARAM par_nrregist  AS INTEGER            NO-UNDO.
 DEF INPUT  PARAM par_cdorigem  AS INTEGER            NO-UNDO.
@@ -53,7 +52,6 @@ RUN STORED-PROCEDURE pc_lista_comprovantes
                                        ,INPUT par_nrdconta
                                        ,INPUT par_dtinipro
                                        ,INPUT par_dtfimpro
-									   ,INPUT par_dsprotoc
                                        ,INPUT par_iniconta
                                        ,INPUT par_nrregist
                                        ,INPUT par_cdorigem

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2004.                    Ultima atualizacao: 30/05/2018
+   Data    : Agosto/2004.                    Ultima atualizacao: 05/01/2018
 
    Dados referentes ao programa:
 
@@ -63,10 +63,6 @@
                             
                05/01/2017 - Ajuste para quando enviar extrato CNAB240 por email 
                             fazer ux2dos (Tiago #820277)
-			   
-			   30/05/2018 - Carregar historicos de lancamentos de cartão de debito.
-			                validar estabelecimento para concatenar com aux_dsextrat.
-							(Alcemir Mout's - Prj. 467).
 ..............................................................................*/
 { includes/var_batch.i "NEW" } 
 { includes/var_cnab.i "NEW" }  
@@ -83,12 +79,7 @@ DEF    VAR  aux_dtinicio     AS DATE    FORMAT "99/99/9999"       NO-UNDO.
 DEF    VAR  aux_dtquizna     AS DATE    FORMAT "99/99/9999"       NO-UNDO.
 DEF    VAR  aux_dtlimite     AS DATE                              NO-UNDO.
 DEF    VAR  aux_vlstotal     AS DECIMAL                           NO-UNDO.
-DEF    VAR  aux_dshisdeb     AS CHAR                              NO-UNDO.
-DEF    VAR  aux_dshisest     AS CHAR                              NO-UNDO.
-DEF    VAR  aux_dscomple     AS CHAR                              NO-UNDO.
-DEF    VAR  aux_lendshis     AS INT                               NO-UNDO.
-DEF    VAR  aux_nrnsucap     AS DECI                              NO-UNDO.
-DEF    VAR  aux_nrnsuori     AS DECI                              NO-UNDO.
+
 /*Saldo bloqueado mais de 24h*/
 DEF    VAR  aux_vlmais24     AS DECIMAL                           NO-UNDO.
 
@@ -274,37 +265,6 @@ FOR EACH crapcex WHERE
            cratarq.insldini = IF   aux_vlstotal < 0  THEN  "D" 
                               ELSE "C".
     /* fim registro 1 */
-
-
-   //CARREGA HISTORICOS DE CARTÃO DEBITO 
-   FIND crapprm WHERE
-				 crapprm.nmsistem = "CRED"   AND
-                 crapprm.cdcooper = 0        AND
-                 crapprm.cdacesso = "HIST_CARTAO_DEBITO"		 
-				 NO-LOCK NO-ERROR.
-    
-    IF  AVAILABLE crapprm   THEN
-	   DO:
-          aux_lendshis = LENGTH(crapprm.dsvlrprm) - 2.		  
-	      aux_dshisdeb = REPLACE(SUBSTRING(crapprm.dsvlrprm,2,aux_lendshis),";",",").		
-	   END.
-    ELSE
-       aux_dshisdeb = "".
-    
-	//CARREGA HISTORICOS DE ESTORNO CARTÃO DEBITO
-    FIND crapprm WHERE
-	         crapprm.nmsistem = "CRED"  AND
-                 crapprm.cdcooper = 0   AND
-                 crapprm.cdacesso = "HIST_EST_CARTAO_DEBITO"		 
-				 NO-LOCK NO-ERROR.
-    
-    IF  AVAILABLE crapprm   THEN
-	   DO:
-            aux_lendshis = LENGTH(crapprm.dsvlrprm) - 2.		  
-            aux_dshisest = REPLACE(SUBSTRING(crapprm.dsvlrprm,2,aux_lendshis),";",",").		
-	   END.
-    ELSE
-       aux_dshisest = "".
     
     FOR EACH craplcm WHERE craplcm.cdcooper  = glb_cdcooper       AND
                            craplcm.nrdconta  = crapsld.nrdconta   AND
@@ -439,63 +399,6 @@ FOR EACH crapcex WHERE
                  glb_cdcritic = 0.
                  LEAVE.
              END.
-        
-
-		// SO ENTRA AQUI SE O HISTORICO FOR OS DO PARAMENTRO 
-		// ESTORNO DE COMPRA CARTÃO DEBITO OU COMPRA CARTÃO DEBITO
-
-		IF CAN-DO(aux_dshisdeb,STRING(craplcm.cdhistor)) OR
-		   CAN-DO(aux_dshisest,STRING(craplcm.cdhistor)) THEN
-		DO:
-		    		
-			FIND crapdcb where crapdcb.cdcooper = craplcm.cdcooper 
-						 AND crapdcb.nrdconta   = craplcm.nrdconta 
-						 AND crapdcb.nrcrcard   = craplcm.cdpesqbb 
-						 AND crapdcb.dtdtrans   = craplcm.dtrefere 
-						 AND crapdcb.vldtrans   = craplcm.vllanmto 
-						 AND crapdcb.cdhistor   = craplcm.cdhistor 
-						 AND crapdcb.tpmensag   = SUBSTRING(STRING(craplcm.nrdocmto, "99999999999999999999"), 1, 4)  
-						 AND crapdcb.nrnsucap   = INT(SUBSTRING(STRING(craplcm.nrdocmto, "99999999999999999999"), 5, 6))
-						 NO-LOCK NO-ERROR. 
-			
-			if AVAILABLE crapdcb then
-			DO:
-								
-				aux_nrnsucap = crapdcb.nrnsucap.
-				aux_nrnsuori = crapdcb.nrnsuori.
-				
-				
-				//SE FOR NULO OU EM BRANCO É ESTORNO, ENTÃO BUSCAR ESTABELECIMENTO PELA ORIGEM
-				IF crapdcb.dsdtrans = ? OR
-				   TRIM(crapdcb.dsdtrans) = "" THEN
-				DO:
-				
-					FIND FIRST crapdcb where crapdcb.cdcooper = craplcm.cdcooper 
-						 AND crapdcb.nrdconta   = craplcm.nrdconta 
-						 AND crapdcb.nrcrcard   = craplcm.cdpesqbb 
-						 AND crapdcb.dtdtrans   = craplcm.dtrefere 
-						 AND crapdcb.vldtrans   = craplcm.vllanmto 
-						 AND crapdcb.cdhistor   <> craplcm.cdhistor 
-						 AND crapdcb.tpmensag   <> SUBSTRING(STRING(craplcm.nrdocmto, "99999999999999999999"), 1, 4)  
-						 AND crapdcb.nrnsuori   = aux_nrnsuori						 
-						 NO-LOCK NO-ERROR. 	
-						 
-					IF AVAILABLE crapdcb then	 										  
-					   aux_dscomple = crapdcb.dsdtrans.					
-					ELSE
-					   aux_dscomple = "". 
-				END.
-				ELSE
-					aux_dscomple = crapdcb.dsdtrans.
-			END.
-			ELSE
-				aux_dscomple = "".
-		
-			IF aux_dscomple <> ? OR TRIM(aux_dscomple) <> "" THEN
-			   aux_dsextrat = aux_dsextrat + " - " + aux_dscomple.
-			
-		END.
-
 
         CREATE cratarq. 
         ASSIGN cratarq.cdbccxlt = 997 

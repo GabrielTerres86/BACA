@@ -3016,7 +3016,6 @@ PROCEDURE seleciona-sacados:
                tt-sacados-blt.dsflgend = aux_errodcep
                tt-sacados-blt.dsflgprc = aux_errodpnp
                tt-sacados-blt.nrinssac = crapsab.nrinssac
-               tt-sacados-blt.cdtpinsc = crapsab.cdtpinsc
                tt-sacados-blt.dsinssac = aux_dsinssac
                tt-sacados-blt.nrctasac = crapsab.nrctasac
                tt-sacados-blt.dsctasac = TRIM(STRING(crapsab.nrctasac,

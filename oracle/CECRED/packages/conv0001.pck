@@ -392,7 +392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 04/07/2018
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 16/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -495,8 +495,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             31/01/2018 - Ajustar para buscar critica do arquivo baseado no pr_codcriti
   --                          (Lucas Ranghetti #840602)
-  --
-  --             04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1722,7 +1720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 04/07/2018
+  --  Data     : Agosto/98.                  Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1845,8 +1843,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             31/01/2018 - Ajustar para buscar critica do arquivo baseado no pr_codcriti
   --                          (Lucas Ranghetti #840602)
-  --
-  --             04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1870,7 +1866,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       vr_cdseqtel VARCHAR2(60);
       vr_cdrefere VARCHAR2(25);
       vr_qtdigito INTEGER;      
-      vr_cdempres varchar2(10);
 
       -- VARIAVEIS PARA CAULCULO DE DIGITOS A COMPLETAR COM ZEROS OU ESPAÇOS
       vr_resultado VARCHAR2(25);
@@ -2124,12 +2119,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
 
           vr_cdagenci :=  SUBSTR(gene0002.fn_mask(pr_cdagenci,'999'),2,2);
 
-          IF rw_crapscn.cdempres IN('RQ','5Y') THEN
-            vr_cdempres:= 'RL';
-          ELSE
-            vr_cdempres:= rw_crapscn.cdempres;
-          END IF;
-
           vr_dstexarq := 'F' || vr_resultado ||
                          gene0002.fn_mask(pr_cdagesic,'9999') ||
                          gene0002.fn_mask(pr_nrctacns,'999999') ||
@@ -2139,8 +2128,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
                          gene0002.fn_mask(to_char(pr_vllanaut*100),'999999999999999') ||
                          vr_auxcdcri || vr_cdseqtel ||
                          RPAD(' ',16) || gene0002.fn_mask(vr_cdagenci,'99') ||
-                         TRIM(vr_cdempres) ||
-                         RPAD(' ',10 - length(TRIM(vr_cdempres))) || '0';
+                         TRIM(rw_crapscn.cdempres) ||
+                         RPAD(' ',10 - length(TRIM(rw_crapscn.cdempres))) || '0';
                          
         ELSIF rw_tbconv_det_agendamento.cdlayout = 5 THEN
           

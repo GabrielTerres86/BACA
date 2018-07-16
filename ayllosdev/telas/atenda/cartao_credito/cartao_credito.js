@@ -103,17 +103,17 @@ var ObjRepresent = new Object();
 var sPortaPinpad = '';
 var flagIdprocess = false;
 var dsadmcrdList = {
-    16: "AILOS DEBITO",
-    14: "AILOS PLATINUM",
-    13: "AILOS GOLD",
-    12: "AILOS CLASSICO",
-    11: "AILOS ESSENCIAL",
-    15: "AILOS EMPRESAS"
+    16: "CECRED DEBITO",
+    14: "CECRED PLATINUM",
+    13: "CECRED GOLD",
+    12: "CECRED GOLD",
+    11: "CECRED ESSENCIAL",
+    15: "CECRED EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
 var faprovador;
 var callbacckReturn = undefined;
-var protocolo;
+var protocolo = 0;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
@@ -268,7 +268,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
 				$("#btncanc").removeAttr("disabled");
 				$("#btncanc").css('cursor', 'pointer');
-			}
+            }
 
 
             $("#btnextr").prop("disabled", true);
@@ -3779,7 +3779,7 @@ function cancelaContrato(){
 
 // Função para mostrar a opção CancBloq do cartão
 function opcaoCancBloq() {
-	
+
 	
 	if(cdadmcrd >= 11 && cdadmcrd < 17){
 		//todo implementar canclamento cecred
@@ -6423,7 +6423,6 @@ function reenviaEsteira(nrctrcrd){
         tpacao: 'montagrid',
         nrdconta: nrdconta,
         nrctrcrd: nrctrcrd,
-		glbadc  : glbadc,
         dsgraupr: 5,
         inpessoa: inpessoa,
         bancoob : 2

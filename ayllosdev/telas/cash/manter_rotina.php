@@ -15,8 +15,6 @@
  *                             código do departamento ao invés da descrição (Renato Darosci - Supero)
  *
  *                25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
- *
- *                03/07/2018 - sctask0014656 permitir alterar a descricao do TAA (Carlos)
  * -------------- 
  */	
     session_start();
@@ -73,8 +71,6 @@
 	$dshorario      = (isset($_POST['dshorario']))     ? $_POST['dshorario']     : '' ;
 	
 	$flgntcem       = (isset($_POST['flgntcem']))      ? $_POST['flgntcem']   : 'no' ;
-
-  $nmterfin     = (isset($_POST['nmterfin']))    ? $_POST['nmterfin']    : '' ;
 
 	switch( $operacao ) {
 		case 'bloquear'	       : $procedure = 'Opcao_Transacao';  $cddoptrs = 'B'; break;

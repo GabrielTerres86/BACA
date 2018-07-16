@@ -46,8 +46,6 @@
  *			      15/07/2016 - Incluir ajustes referentes a flag de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
  *
  *                13/04/2018 - Alterado funcao voltarRotina para voltar para FATCA/CRS - PRJ 414(Mateus Z - Mouts)
- *
- *                05/07/2018 - Ajustar para gravar corretamente a categoria para PJ (Renato Darosci - Supero)
  */
 var operacao = '';
 var nrdrowid = '';
@@ -485,10 +483,7 @@ function controlaLayout(operacao) {
                 cCdcatego.prop("selectedIndex", -1);
             }
 			*/
-			// Se pessoa física, deve limpar o campo, para obrigar que seja informado
-			if (inpessoa == 1) {
 			cCdcatego.prop("selectedIndex", -1);
-			}
 			
         });
 			

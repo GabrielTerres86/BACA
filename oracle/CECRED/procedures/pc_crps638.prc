@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 18/06/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 12/03/2018
 
     Dados referente ao programa:
 
@@ -124,12 +124,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                               diferença no relatório contábil mensal (crrl635).
                               (Wagner/Sustentação #TASK0012676)
 
-				 12/06/2018 - Ajuste no index dos relatórios (Andrey Formigari - Mouts) #PRB0040084.
-
-                 18/06/2018 - Adicionado valor da fatura no index pois  haviam convenios que estavam se repetindo 
-                              fazendo com que se perdesse valores. Isso por que os relatórios 635 e 636 estavam 
-                              com valores totais diferentes e deveriam ser iguais. (SCTASK0014061 - Kelvin).           
-
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -156,11 +150,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   -- Definicao do tipo de tabela que armazena registros do tipo acima detalhado
   TYPE tt_tab_rel63X IS
     TABLE OF tt_rel63X
-      INDEX BY VARCHAR2(55); -- Nome EMpresa(35) + Canal(15)
+      INDEX BY VARCHAR2(50); -- Nome EMpresa(35) + Canal(15)
   -- Mesmo tipo acima, porém precisamos dos registros ordenados por quantiodade de faturas desc 
   TYPE tt_tab_rel63X_qtdade IS
     TABLE OF tt_rel63X
-      INDEX BY VARCHAR2(100); -- Id(Debaut ou não - 1) + Quantidade Faturas Empresa (18) + Nome EMpresa(35) + Quantidade Faturas do Canal (18) + Canal(15)
+      INDEX BY VARCHAR2(87); -- Id(Debaut ou não - 1) + Quantidade Faturas Empresa (18) + Nome EMpresa(35) + Quantidade Faturas do Canal (18) + Canal(15)
   -- Tipo para armazenar os totais por empresa
   TYPE tt_tot_empresa IS
     TABLE OF NUMBER
@@ -170,8 +164,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tab_rel635        tt_tab_rel63X;
   vr_tab_rel636        tt_tab_rel63X;
   vr_tab_rel636_qtdade tt_tab_rel63X_qtdade;
-  vr_ind_rel63X varchar(55);
-  vr_ind_rel636_qtdade varchar(100);
+  vr_ind_rel63X varchar(50);
+  vr_ind_rel636_qtdade varchar(87);
   vr_tab_tot_empresa   tt_tot_empresa; 
   
   -- Vetor para armazenar valores por agencia para o arquivo contabil 
@@ -509,7 +503,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
     vr_aux_cdagenci NUMBER;
   BEGIN 
     -- Montar indice para gravação na(s) PLTABLE(s)
-    vr_ind_rel63X := RPAD(pr_nmconven, 35, ' ') || RPAD(pr_dsmeiarr, 15, ' ') || RPAD(pr_cdempres, 5, ' ');
+    vr_ind_rel63X := RPAD(pr_nmconven,35,' ')||RPAD(pr_dsmeiarr,15,' ');
     
     -- 634 emite somente o dial atual 
     IF rw_crapdat.dtmvtolt = pr_dtmvtolt THEN 
@@ -1837,7 +1831,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                                  || to_char(vr_tab_tot_empresa(vr_tab_rel636(vr_ind_rel63X).cdempres)*100,'fm000000000000000000')
                                  || RPAD(vr_tab_rel636(vr_ind_rel63X).nmconven,35,' ')
                                  || to_char(vr_tab_rel636(vr_ind_rel63X).qtfatura*100,'fm000000000000000000')
-                                 || RPAD(vr_tab_rel636(vr_ind_rel63X).dsmeiarr,15,' ') || to_char(vr_tab_rel636(vr_ind_rel63X).vltotfat,'fm0000000000000');
+                                 || RPAD(vr_tab_rel636(vr_ind_rel63X).dsmeiarr,15,' ');
             -- Enfim, criar o registro na tabela nova com base no registro antigo 
             vr_tab_rel636_qtdade(vr_ind_rel636_qtdade) := vr_tab_rel636(vr_ind_rel63X);
             -- Buscar o proximo registro

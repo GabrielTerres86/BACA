@@ -742,9 +742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     
         Observacao: -----
     
-        Alteracoes: 29/06/2018 - Quando o produto for 41 - Resgate de aplicação, não 
-                                 deve ser validada a situação da conta, conforme SM 
-                                 aprovada em 29/06/2018.  (Renato Darosci - Supero)
+        Alteracoes:
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -790,17 +788,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       
       CLOSE cr_situacao;
       
-      -- Quando o produto for 41 - Resgate de aplicação, não deve ser validada
-      -- a situação da conta, conforme SM aprovada em 29/06/2018. 
-      IF pr_cdprodut <> 41 THEN
-      
-        IF vr_inconprd = 1 OR
-          (vr_inconprd = 2 AND pr_cdprodut <> 6) THEN -- Cobrança Bancária
-          pr_possuipr := 'N';
-          vr_dscritic := 'Situacao de Conta nao permite adesao ao produto.';
-          RAISE vr_exc_saida;
-        END IF;
-        
+      IF vr_inconprd = 1 OR
+        (vr_inconprd = 2 AND pr_cdprodut <> 6) THEN -- Cobrança Bancária
+        pr_possuipr := 'N';
+        vr_dscritic := 'Situacao de Conta nao permite adesao ao produto.';
+        RAISE vr_exc_saida;
       END IF;
       
       IF vr_inimpcre = 1 AND 

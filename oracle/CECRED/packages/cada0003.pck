@@ -2566,7 +2566,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_idseqttl INTEGER;
       vr_tpdocmto INTEGER;
 
-
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
       vr_nrdconta crapass.nrdconta%TYPE;
@@ -10453,9 +10452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 				 18/11/2017 - Retirado lancamento com histórico 2137 (Jonata - RKAM P364).               
          
 				 07/12/2017 - Gerar log da data de demissão e motivo (Jonata - RKAM P364).               
-
-				 03/07/2018 - Gravar histórico de alteração da situação da conta 
-                              para 4 - Encerrada (Renato Darosci - Supero)
+                  
     ..............................................................................*/ 
   
     --Cursor para encontrar dados do cooperado                                     
@@ -11365,31 +11362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_nmdcampo => 'cdsitdct'
                              ,pr_dsdadant => trim(to_char(rw_crapass.cdsitdct,'999999'))
                              ,pr_dsdadatu => trim(to_char(vr_cdsitdct,'999999')) );
-    																  
-    /***** Início - Renato Darosci - 03/07/2018 *****/
-    -- Limpar a variável de erro
-    vr_dscritic := NULL;
-    
-    -- Gerar o log de alteração da situação de conta, também para o BI
-    CADA0006.pc_grava_dados_hist(pr_nmtabela => 'CRAPASS'
-                                ,pr_nmdcampo => 'CDSITDCT'
-                                ,pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_cdtipcta => 0
-                                ,pr_cdsituac => 0
-                                ,pr_cdprodut => 0
-                                ,pr_tpoperac => 2 -- Alteração
-                                ,pr_dsvalant => rw_crapass.cdsitdct
-                                ,pr_dsvalnov => vr_cdsitdct
-                                ,pr_cdoperad => pr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
-    
-    -- Verifica se houve erro 
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-    /***** Fim - Renato Darosci - 03/07/2018 *****/
-                        
+                             
     -- Gerar log do DTDEMISS
     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'dtdemiss'
