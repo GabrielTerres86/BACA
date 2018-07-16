@@ -16,6 +16,8 @@
  * 006: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 007: [24/01/2018] Alteração para exibição do campo DSNIVORI como risco de inclusão (Reginaldo - AMcom)
  * 008: [08/06/2018] P410 - Incluido campo de financiar IOF (Marcos-Envolti)
+ * 009: [12/07/2018] Refazer a alteracao da chamada da operacao C_DADOS_AVAL para C_GAROPC, pois a mesma
+ *                   foi sobrescrita. (Renato Darosci - Supero)
  */	
  ?>
 
@@ -167,6 +169,6 @@
 <div id="divBotoes">
 	<? if (($operacao == 'C_NOVA_PROP') || ($operacao == 'C_NOVA_PROP_V') ) { ?>
 		<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"   onClick="controlaOperacao('TC'); return false;" />
-		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_DADOS_AVAL'); return false;" />
+		<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaOperacao('C_GAROPC'); return false;" />
 	<? } ?>
 </div>
