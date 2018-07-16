@@ -13,6 +13,7 @@
  * 004: [20/04/2016] Heitor            (RKAM) Limitado o campo NRENDERE em 5 posicoes, chamado 435477 
  * 005: [15/09/2017] Kelvin			   (CECRED) Alterações referente a melhoria 339.
  * 006: [27/09/2017] Kelvin 		   (CECRED) Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
+ * 007: [06/07/2018] André Bohn		   (MoutS) Ajustado para remover os caracteres especiais no campo de complemento (PRB0040114).
  */
 
 var nomeForm = 'frmEndereco'; // Nome do Formulário 
@@ -347,6 +348,15 @@ function controlaLayout(operacao) {
 	cCid.addClass('alphanum').css('width','300px').attr('maxlength','25');
 	cOri.css('width','87px');
 	
+	// Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
+    cCom.bind("keyup", function () {
+	    this.value = removeAcentos(removeCaracteresInvalidos(this.value));
+    });
+	// Bloqueia a digitação de caracteres com a tecla Alt + ..
+    cCom.bind("keydown", function (e) {
+	   if (e.altKey) { return false; }
+    });
+
 	if ( $.browser.msie ) {
 		cNum.addClass('numerocasa').css('width','44px').attr('maxlength','6');
 
