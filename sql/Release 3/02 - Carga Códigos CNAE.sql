@@ -1368,7 +1368,10 @@ SELECT  9001902 CDCNAE, 'Producao musical' DSCNAE, '1' FLSERASA FROM DUAL UNION
 SELECT  9001903 CDCNAE, 'Producao de espetaculos de danca' DSCNAE, '1' FLSERASA FROM DUAL UNION 
 SELECT  9001904 CDCNAE, 'Producao de espetaculos circenses, de marionetes e similares' DSCNAE, '1' FLSERASA FROM DUAL UNION 
 SELECT  9001905 CDCNAE, 'Producao de espetaculos de rodeios, vaquejadas e similares' DSCNAE, '1' FLSERASA FROM DUAL UNION 
-SELECT  9001906 CDCNAE, 'Atividades de sonorizacao e de iluminacao' DSCNAE, '1' FLSERASA FROM DUAL;
+SELECT  9001906 CDCNAE, 'Atividades de sonorizacao e de iluminacao' DSCNAE, '1' FLSERASA FROM DUAL UNION
+SELECT  5231103 CDCNAE, 'Gestão de terminais aquaviários'DSCNAE, '1' FLSERASA FROM DUAL UNION
+SELECT  6438799 CDCNAE, 'Outras instituições de intermediação não-monetária' DSCNAE, '1' FLSERASA FROM DUAL UNION
+SELECT  74102099  CDCNAE, 'Atividades de design não especificadas anteriormente' DSCNAE, '1' FLSERASA FROM DUAL;
 
 -- Variavel para contagem de registros CNAE
 v_count number := 0;
@@ -1408,7 +1411,3 @@ EXCEPTION
 
         raise_application_error(-20001,'Erro na carga do cnae: '||sqlerrm);
 END;
-
-
-             
-    
