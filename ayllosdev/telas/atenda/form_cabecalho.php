@@ -8,8 +8,8 @@
    Objetivo  : Cabeçalho da tela inicial da ATENDA
 			   
    Alterações: 26/09/2013 - Inclusão de link p/ consulta de cartão assinatura (Jean Michel
-			         12/07/2016 - Adicionado classe FirstInput no primeiro campo input, necessario
-						                para dar foco ao retornar uma consulta de tela - (Evandro - RKAM)
+	           12/07/2016 - Adicionado classe FirstInput no primeiro campo input, necessario
+						    para dar foco ao retornar uma consulta de tela - (Evandro - RKAM)
                27/07/2016 - Corrigi o uso da variavel $glbvars. SD 479874 (Carlos R.)
 			   22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
 			   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
