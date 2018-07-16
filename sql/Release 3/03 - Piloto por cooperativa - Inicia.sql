@@ -8,7 +8,7 @@
 
 DECLARE 
   TYPE Cooperativas IS TABLE OF integer;
-  coop Cooperativas := Cooperativas(XX,YY,ZZ); -- EX: Cooperativas(1,3,7,11);
+  coop Cooperativas := Cooperativas(14); -- EX: Cooperativas(1,3,7,11);
   
   pr_cdcooper INTEGER;
 
@@ -135,5 +135,5 @@ BEGIN
     UPDATE craptel SET FLGTELBL = 0 WHERE nmdatela = 'LANBDT' AND cdcooper = pr_cdcooper;
 
   END LOOP;
-  ROLLBACK;
+  COMMIT;
 END;
