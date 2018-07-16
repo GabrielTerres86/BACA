@@ -62,16 +62,16 @@ CREATE TABLE cecred.tbrecip_param_workflow
 
 -- Add comments to the table 
 comment on table cecred.tbrecip_param_workflow
-              is 'Configuração das alçadas de aprovação dos convênios de cobrança.';
+              is 'Configuracao das alcadas de aprovacao dos convênios de cobranca.';
 -- Add comments to the columns 
 comment on column cecred.tbrecip_param_workflow.cdcooper
-              is 'Código que identifica a Cooperativa.';
+              is 'Codigo que identifica a Cooperativa.';
 comment on column cecred.tbrecip_param_workflow.cdalcada_aprovacao
-              is 'Código das alçadas de aprovação.';
+              is 'Codigo das alcadas de aprovacao.';
 comment on column cecred.tbrecip_param_workflow.flregra_aprovacao
-              is 'Flag de regras de aprovação (0=Não/1=Sim).';
+              is 'Flag de regras de aprovacao (0=Nao/1=Sim).';
 comment on column cecred.tbrecip_param_workflow.flcadastra_aprovador
-              is 'Flag para permitir o cadastro de mais de um aprovador por alçada (0=Não/1=Sim).';
+              is 'Flag para permitir o cadastro de mais de um aprovador por alcada (0=Nao/1=Sim).';
 
 -- Create/Recreate primary, unique and foreign key constraints 
 alter table cecred.tbrecip_param_workflow
@@ -87,15 +87,15 @@ CREATE TABLE cecred.tbrecip_param_aprovador
 
 -- Add comments to the table 
 comment on table cecred.tbrecip_param_aprovador
-              is 'Configuração dos aprovadores por alçadas de aprovação dos convênios de cobrança.';
+              is 'Configuracao dos aprovadores por alcadas de aprovacao dos convenios de cobranca.';
 
 -- Add comments to the columns 
 comment on column cecred.tbrecip_param_aprovador.cdcooper
-              is 'Código que identifica a Cooperativa.';
+              is 'Codigo que identifica a Cooperativa.';
 comment on column cecred.tbrecip_param_aprovador.cdalcada_aprovacao
-              is 'Código das alçadas de aprovação.';
+              is 'Codigo das alcadas de aprovacao.';
 comment on column cecred.tbrecip_param_aprovador.cdaprovador
-              is 'Código do usuário do aprovador.';
+              is 'Codigo do usuario do aprovador.';
 
 -- Create/Recreate primary, unique and foreign key constraints 
 alter table cecred.tbrecip_param_aprovador
@@ -118,21 +118,21 @@ CREATE TABLE cecred.tbrecip_aprovador_calculo
 
 -- Add comments to the table 
 comment on table cecred.tbrecip_aprovador_calculo
-              is 'Aprovações por cooperativa, alçada e cálculo de reciprocidade.';
+              is 'Aprovacoes por cooperativa, alcada e calculo de reciprocidade.';
 
 -- Add comments to the columns 
 comment on column cecred.tbrecip_aprovador_calculo.cdcooper
-              is 'Código que identifica a Cooperativa.';
+              is 'Codigo que identifica a Cooperativa.';
 comment on column cecred.tbrecip_aprovador_calculo.cdalcada_aprovacao
-              is 'Código das alçadas de aprovação.';
+              is 'Codigo das alcadas de aprovacao.';
 comment on column cecred.tbrecip_aprovador_calculo.idcalculo_reciproci
-              is 'ID único do cálculo de reciprocidade atrelado a contratação.';
+              is 'ID unico do calculo de reciprocidade atrelado a contratacao.';
 comment on column cecred.tbrecip_aprovador_calculo.cdaprovador
-              is 'Código do usuário do aprovador.';
+              is 'Codigo do usuario do aprovador.';
 comment on column cecred.tbrecip_aprovador_calculo.idstatus
-              is 'Status da avaliação do aprovador (A=Aprovado, R=Rejeitado).';
+              is 'Status da avaliacao do aprovador (A=Aprovado, R=Rejeitado).';
 comment on column cecred.tbrecip_aprovador_calculo.dtalteracao_status
-              is 'Data da avaliação do aprovador.';
+              is 'Data da avaliacao do aprovador.';
 
 -- Create/Recreate primary, unique and foreign key constraints 
 alter table cecred.tbrecip_aprovador_calculo
@@ -163,23 +163,23 @@ ALTER TABLE tbrecip_calculo
 
 -- Add comments to the columns 
 comment on column cecred.tbrecip_calculo.idfim_contrato
-  is 'Identificador da quantidade de meses para o fim de vigência do contrato';
+  is 'Identificador da quantidade de meses para o fim de vigencia do contrato';
 comment on column cecred.tbrecip_calculo.vldesconto_adicional_coo
   is 'Valor de desconto adicional COO';
 comment on column cecred.tbrecip_calculo.idfim_desc_adicional_coo
-  is 'Identificador da quantidade de meses para o fim de vigência do desconto adicional COO';
+  is 'Identificador da quantidade de meses para o fim de vigencia do desconto adicional COO';
 comment on column cecred.tbrecip_calculo.vldesconto_adicional_cee
   is 'Valor de desconto adicional CEE';
 comment on column cecred.tbrecip_calculo.idfim_desc_adicional_cee
-  is 'Identificador da quantidade de meses para o fim de vigência do desconto adicional CEE';
+  is 'Identificador da quantidade de meses para o fim de vigencia do desconto adicional CEE';
 comment on column cecred.tbrecip_calculo.dtinicio_vigencia_contrato
-  is 'Data de início de vigência do contrato.';
+  is 'Data de inicio de vigencia do contrato.';
 comment on column cecred.tbrecip_calculo.dtfim_vigencia_contrato
-  is 'Data do fim da vigência do contrato.';
+  is 'Data do fim da vigencia do contrato.';
 
--- -------------------------------------------------------
--- Alteração da tabela de parametrização da reciprocidade
--- -------------------------------------------------------
+-- ---------------------------------------------------------
+-- Alteração das tabelas de parametrização da reciprocidade
+-- ---------------------------------------------------------
 
 -- Create table
 CREATE TABLE cecred.tbrecip_vinculacao_parame
@@ -187,24 +187,24 @@ CREATE TABLE cecred.tbrecip_vinculacao_parame
   idparame_reciproci       NUMBER(10)   NOT NULL
  ,idvinculacao_reciproci   NUMBER(2)    NOT NULL
  ,tpindicador              VARCHAR2(1)  NOT NULL
- ,vlpercentual_vinculacao  NUMBER(10,2)
+ ,vlpercentual_vinculacao  NUMBER(5,2)
  ,flgativo                 NUMBER(1)    DEFAULT 1 NOT NULL
 };
 
 -- Add comments to the table 
 comment on table cecred.tbrecip_vinculacao_parame
-              is 'Parametrização dos graus de vinculação.';
+              is 'Parametrizacao dos graus de vinculacao.';
 -- Add comments to the columns 
 comment on column cecred.tbrecip_vinculacao_parame.idparame_reciproci
-              is 'ID único da parametrização de cálculo.';
+              is 'ID unico da parametrizacao de calculo.';
 comment on column cecred.tbrecip_vinculacao_parame.idvinculacao_reciproci
-              is 'ID do grau de vinculação.';
+              is 'ID do grau de vinculacao.';
 comment on column cecred.tbrecip_vinculacao_parame.tpindicador
-              is 'Tipo do Indicador de Reciprocidade (A=Adesão/Q=Quantidade/M=Moeda).';
+              is 'Tipo do Indicador de Reciprocidade (A=Adesao/Q=Quantidade/M=Moeda).';
 comment on column cecred.tbrecip_vinculacao_parame.vlpercentual_vinculacao
-              is 'Percentual do grau de vinculação.';
+              is 'Percentual do grau de vinculacao.';
 comment on column cecred.tbrecip_vinculacao_parame.flgativo
-              is 'Flag de ativação ou não da vinculação.';
+              is 'Flag de ativacao ou nao da vinculacao.';
 
 -- Create/Recreate primary, unique and foreign key constraints 
 alter table cecred.tbrecip_vinculacao_parame
@@ -218,16 +218,34 @@ alter table cecred.tbrecip_vinculacao_parame
 ALTER TABLE tbrecip_parame_calculo
         ADD(vlcusto_cee      NUMBER(18,2)
 				   ,vlcusto_coo      NUMBER(18,2)
-					 ,vlpeso_boleto    NUMBER(10,2)
-					 ,vlpeso_adicional NUMBER(10,2)
+					 ,vlpeso_boleto    NUMBER(5,2)
+					 ,vlpeso_adicional NUMBER(5,2)
 				   );
 
 -- Add comments to the columns 
 comment on column cecred.tbrecip_parame_calculo.vlcusto_cee
-  is 'Valor de custo quando o Cooperado emite e expede.';
+               is 'Valor de custo quando o Cooperado emite e expede.';
 comment on column cecred.tbrecip_parame_calculo.vlcusto_coo
-  is 'Valor de custo quando a Cooperativa emite e expede.';
+               is 'Valor de custo quando a Cooperativa emite e expede.';
 comment on column cecred.tbrecip_parame_calculo.vlpeso_boleto
-  is 'Percentual de peso do boleto no cálculo de reciprocidade.';
+               is 'Percentual de peso do boleto no calculo de reciprocidade.';
 comment on column cecred.tbrecip_parame_calculo.vlpeso_adicional
-  is 'Percentual de peso do adicional no cálculo de reciprocidade.';
+               is 'Percentual de peso do adicional no calculo de reciprocidade.';
+
+-- Alter table
+ALTER TABLE tbrecip_parame_indica_calculo
+        ADD(vlpercentual_peso  NUMBER(5,2)
+				   );
+
+-- Add comments to the columns 
+comment on column cecred.tbrecip_parame_indica_calculo.vlpercentual_peso
+               is 'Peso do indicador no calculo de reciprocidade.';
+
+-- Alter table
+ALTER TABLE tbrecip_parame_indica_coop
+        ADD(vlpercentual_peso  NUMBER(5,2)
+				   );
+
+-- Add comments to the columns 
+comment on column cecred.tbrecip_parame_indica_coop.vlpercentual_peso
+               is 'Parametrizacao do peso do indicador no calculo de reciprocidade.';
