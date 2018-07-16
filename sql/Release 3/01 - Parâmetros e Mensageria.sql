@@ -525,7 +525,7 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 
 -- CADCYB
 INSERT INTO crapaca (nrseqaca,nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr) 
-   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PARCYB_BUSCAR_TITULOS_BORDERO','CYBE0003','pc_buscar_titulos_bordero','pr_nrdconta,pr_nrborder,pr_nrdocmto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'PARCYB'))
+   VALUES (SEQACA_NRSEQACA.NEXTVAL, 'PARCYB_BUSCAR_TITULOS_BORDERO','CYBE0003','pc_buscar_titulos_bordero','pr_nrdconta,pr_nrborder,pr_nrdocmto', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'PARCYB'));
 
 -- PAGAR
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
