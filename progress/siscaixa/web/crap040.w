@@ -29,7 +29,10 @@ DEFINE TEMP-TABLE ab_unmap
 
   Created: 
 
-------------------------------------------------------------------------*/
+  Alteraçoes : 14/06/2018 - Utilizaçao do Caixa Online mesmo com o processo noturno executando 
+                            (Douglas Pagel - AMcom).
+
+------------------------------------------------------------------------ **/
 /*           This .W file was created with AppBuilder.                  */
 /*----------------------------------------------------------------------*/
 
