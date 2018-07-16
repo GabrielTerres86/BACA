@@ -781,6 +781,8 @@
 		      16/06/2018 - Alterado para verificar o campo nrplnovo na crapbpr, caso tenha valor neste campo,
 			               deve ser pego este campo, caso contrario pegar do campo nrdplaca.
 						   (Alcemir Mout's) - (PRB0040101).
+               
+          12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).     
 
  ..............................................................................*/
 
@@ -7918,6 +7920,8 @@ PROCEDURE altera-valor-proposta:
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dscatbem AS CHAR                           NO-UNDO.
+    /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
+    DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM par_flmudfai AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -8401,6 +8405,12 @@ PROCEDURE altera-valor-proposta:
                aux_vlpreemp     = crawepr.vlpreemp
                crawepr.vlemprst = par_vlemprst
                crawepr.vlpreemp = par_vlpreemp.
+               
+        /* PRJ 438 - Gravar data pagto recebida via parametro quando for opcao de Somente valor proposta */
+        IF par_dsdopcao = "SVP" THEN  
+        DO:
+            ASSIGN crawepr.dtdpagto = par_dtdpagto.
+        END.       
 
         IF  crawepr.tpemprst = 1   THEN
             DO:
@@ -8427,7 +8437,10 @@ PROCEDURE altera-valor-proposta:
                      INPUT crawepr.vlemprst,
                      INPUT crawepr.qtpreemp,
                      INPUT crawepr.dtlibera,
-                     INPUT crawepr.dtdpagto,
+                     /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
+                     INPUT (IF par_dsdopcao = "SVP" THEN 
+                               crawepr.dtdpagto
+                            ELSE par_dtdpagto),
                      INPUT crawepr.idfiniof,
                      OUTPUT TABLE tt-erro).
 
@@ -8510,7 +8523,10 @@ PROCEDURE altera-valor-proposta:
                                                          INPUT crawepr.vlemprst,
                                                          INPUT crawepr.qtpreemp,
                                                          INPUT crawepr.dtcarenc,
-                                                         INPUT crawepr.dtdpagto,
+                                                         /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
+                                                         INPUT (IF par_dsdopcao = "SVP" THEN 
+                                                                   crawepr.dtdpagto
+                                                                ELSE par_dtdpagto),
                                                          INPUT aux_qtdias_carencia,
                                                         OUTPUT 0,   /* pr_vlpreemp */
                                                         OUTPUT 0,   /* pr_txdiaria */
@@ -8590,7 +8606,10 @@ PROCEDURE altera-valor-proposta:
                              INPUT crawepr.vlemprst, 
                              INPUT crawepr.vlpreemp,
                              INPUT crawepr.qtpreemp, 
-                             INPUT crawepr.dtdpagto, 
+                             /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
+                             INPUT (IF par_dsdopcao = "SVP" THEN 
+                                       crawepr.dtdpagto
+                                    ELSE par_dtdpagto),
                              INPUT crawepr.cdfinemp, 
                              INPUT par_dscatbem,
                              INPUT par_idfiniof,

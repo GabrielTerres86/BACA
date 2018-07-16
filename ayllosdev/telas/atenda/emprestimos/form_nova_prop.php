@@ -24,6 +24,7 @@
  * 013: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 014: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
  * 015: [31/01/2017] Troca de posicao da Linha de Credito e Finalidade. Criacao dos campos Carencia e Data da primeira Carencia. (Jaison/James - PRJ298)
+ * 016: [13/07/2018] Alterada a função chamada ao clicar no botão Concluir. (Mateus Z / Mouts - PRJ438)
  */
  ?> 
 
@@ -287,7 +288,8 @@
 		<a href="#" class="botao" id="btSalvar" onClick="buscaLiquidacoes('A_GAROPC'); return false;">Continuar</a>	
 	<? }else if ( $operacao == 'A_VALOR' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('AT'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaDadosAlterarSomenteValorProposta(); return false;">Concluir</a>	
+		<!-- PRJ 438 Trocada a função chamada no botão concluir de validaDadosAlterarSomenteValorProposta para processaPerdaAprovacao -->
+		<a href="#" class="botao" id="btSalvar" onClick="processaPerdaAprovacao(); return false;">Concluir</a>	
 	<? } else if ( $operacao == 'A_FINALIZA' || $operacao == 'I_CONTRATO' || $operacao == 'I_FINALIZA'  ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('DEMONSTRATIVO_EMPRESTIMO'); return false;">Continuar</a>

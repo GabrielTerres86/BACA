@@ -143,7 +143,9 @@
 																
               22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
                            PRJ366 (Lombardi)
-
+                           
+              12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).
+              
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -1897,6 +1899,8 @@ PROCEDURE altera-valor-proposta:
                               INPUT aux_dtlibera,
                               INPUT aux_idfiniof,
                               INPUT aux_dscatbem,
+                              /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
+                              INPUT aux_dtdpagto,
                              OUTPUT aux_flmudfai,
                              OUTPUT TABLE tt-erro,
                              OUTPUT TABLE tt-msg-confirma).

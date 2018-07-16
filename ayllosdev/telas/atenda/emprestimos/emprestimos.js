@@ -133,6 +133,10 @@
 * 106: [13/04/2018] Adicionadas funcoes validaValorAdesaoProdutoEmp e senhaCoordenador para validar valor do produto pelo tipo de conta. PRJ366 (Lombardi)
 * 107: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
 * 108: [23/05/2018] Adicionado campo idquapro na validacao de dados gerais e validaValorAdesaoProdutoEmp. Verificacao da GAROPC. PRJ366 (Lombardi)
+* 109: [06/07/2018] Desabilitado o campo Data pagto na opção "Alterar toda a proposta"
+*                   e habilitado na "Valor da proposta e data de vencimento". (Mateus Z / Mouts - PRJ 438)
+* 110: [13/07/2018] Criada função processaPerdaAprovacao para verificar se haverá perda de aprovacao ao fazer alteração 
+*                   na opção "Valor da proposta de data e vencimento" (Mateus Z / Mouts - PRJ 438)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2238,11 +2242,15 @@ function controlaLayout(operacao) {
 
             cDebitar.unbind('change').bind('change', function() {
 
-                if ($(this).val() == 'yes') {
-                    cDtPgmento.desabilitaCampo();
-                } else {
-                    cDtPgmento.habilitaCampo();
-                }
+                // PRJ 438 - Adicionado IF para não entrar quando for a opção "Alterar toda a proposta", para assim manter 
+            	// o campo Data pagto desabilitado.
+            	if(operacao != 'A_NOVA_PROP') {
+            		if ($(this).val() == 'yes') {
+                    	cDtPgmento.desabilitaCampo();
+	                } else {
+	                    cDtPgmento.habilitaCampo();
+	                }
+            	}
 
                 if ($(this).val() == 'yes') {
                     cDtPgmento.val(dtdpagt2);
@@ -2256,6 +2264,8 @@ function controlaLayout(operacao) {
         } else if (operacao == 'A_VALOR') {
             cTodos.desabilitaCampo();
             cVlEmpr.habilitaCampo();
+			// PRJ 438 - Habilitar o campo Data pagto na opção "Valor de proposta e data de vencimento"
+            cDtPgmento.habilitaCampo();
         } else if (operacao == 'A_NUMERO') {
             cTodos.desabilitaCampo();
         }
@@ -2325,6 +2335,11 @@ function controlaLayout(operacao) {
                 });
 
             }
+        }
+		
+		// PRJ 438 - Desabilitar o campo Data pagto na opção "Alterar toda a proposta"
+        if (operacao == 'A_NOVA_PROP') {
+            cDtPgmento.desabilitaCampo();
         }
 
         //Controle de ordem de digitação
@@ -5114,7 +5129,8 @@ function validaDadosGerais() {
     var idfiniof = $('#idfiniof', '#frmNovaProp').val();
     var idquapro = $('#idquapro', '#frmNovaProp').val();
 
-    var tpaltera = (operacao == 'A_VALOR') ? '2' : '1';
+    // PRJ 438 - Alterado para passar sempre tpaltera = 1, com o objetivo de sempre chamar a proc valida-dados-proposta-completa
+    var tpaltera = '1';
 
     var cdempres = arrayAssociado['cdempres'];
     var cdageass = arrayAssociado['cdagenci'];
@@ -9888,4 +9904,35 @@ function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
 
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+}
+
+// PRJ 438 - função para verificar se irá perder a aprovacao, caso sim, exibir mensagem avisando
+function processaPerdaAprovacao(){
+
+	showMsgAguardo("Aguarde, verificando perda de aprova&ccedil;&atilde;o...");
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos/processa_perda_aprovacao.php', 
+		data: {
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			idseqttl: idseqttl,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});
+
 }
