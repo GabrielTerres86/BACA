@@ -30,7 +30,6 @@ DELETE FROM craprdr WHERE nmprogra = 'TITCTO';
 
 INSERT INTO crapprm (SELECT 'CRED',cdcooper,'FL_VIRADA_BORDERO','Guarda se uma cooperativa está trabalhando com os borderos novos ou velhos','0',NULL FROM crapcop where flgativo = 1);
 INSERT INTO crapprm (SELECT 'CRED',cdcooper,'PERCENTUAL_MULTA_DSCT','Percentual de multa sobre atraso de títulos descontados vencidos','2',NULL FROM crapcop where flgativo = 1);
-INSERT INTO crapprm (SELECT 'CRED',cdcooper,'COBTIT_BLQ_RESG_CC','Bloqueio de resgate de debitos c/c (crps735)','N',NULL FROM crapcop where flgativo = 1);
 
 -- Parâmetros Tela COBTIT
 INSERT INTO crapprm VALUES ('CRED',1,'COBTIT_BLQ_EMI_CONSEC','Bloqueio de emissão consecutiva de boleto de desconto de título','30;5',null);
