@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Junho/2018                       Ultima atualizacao: 12/06/2018
+       Data    : Junho/2018                       Ultima atualizacao: 04/07/2018
 
        Dados referentes ao programa:
 
@@ -349,6 +349,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
 				   18/06/2018 - Ajustes no procedimento de paralelismo para ganho de performance. - Mario Bernat (Amcom).                                              
 
+				   04/07/2018 - P450 - Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos 
+				                (cdorigem = 3) estejam em Prejuízo (innivris = 10) - Daniel(AMcom)                                  
+
 .............................................................................................................................*/
 
     DECLARE
@@ -566,8 +569,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
       -- Cursor para busca dos dados financeiros de PJ
       CURSOR cr_crapjfn(pr_nrdconta crapttl.nrdconta%TYPE) IS
-        SELECT vlrftbru##1 + vlrftbru##2 + vlrftbru##3 + vlrftbru##4  + vlrftbru##5  + vlrftbru##6 +
-               vlrftbru##7 + vlrftbru##8 + vlrftbru##9 + vlrftbru##10 + vlrftbru##11 + vlrftbru##12 vlrftbru
+        SELECT NVL(vlrftbru##1,0) + 
+		       NVL(vlrftbru##2,0) + 
+			   NVL(vlrftbru##3,0) + 
+			   NVL(vlrftbru##4,0) + 
+			   NVL(vlrftbru##5,0) + 
+			   NVL(vlrftbru##6,0) +
+               NVL(vlrftbru##7,0) + 
+			   NVL(vlrftbru##8,0) + 
+			   NVL(vlrftbru##9,0) + 
+			   NVL(vlrftbru##10,0) + 
+			   NVL(vlrftbru##11,0) + 
+			   NVL(vlrftbru##12,0) vlrftbru
           FROM crapjfn
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta;
@@ -5267,8 +5280,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   FETCH cr_crapttl INTO rw_crapttl;
                   IF cr_crapttl%FOUND THEN
                     -- Somar salário + aplicações
-                    vr_vlrrendi := rw_crapttl.vlsalari + rw_crapttl.vldrendi##1 + rw_crapttl.vldrendi##2 + rw_crapttl.vldrendi##3 +
-                                rw_crapttl.vldrendi##4 + rw_crapttl.vldrendi##5 + rw_crapttl.vldrendi##6;
+                    vr_vlrrendi := NVL(rw_crapttl.vlsalari,0)    + 
+								   NVL(rw_crapttl.vldrendi##1,0) + 
+					               NVL(rw_crapttl.vldrendi##2,0) + 
+								   NVL(rw_crapttl.vldrendi##3,0) +
+                                   NVL(rw_crapttl.vldrendi##4,0) + 
+								   NVL(rw_crapttl.vldrendi##5,0) + 
+								   NVL(rw_crapttl.vldrendi##6,0);
                   END IF;
                   CLOSE cr_crapttl; -- Fecha o cursor de titulares
                   -- Busca o porte do cliente
@@ -6032,6 +6050,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 -- Acumular
                 vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);          
 
+              -- ***
+              -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
+              -- estejam em Prejuízo (innivris = 10)
+              IF vr_tab_individ(vr_idx_individ).cdorigem = 3 AND vr_tab_individ(vr_idx_individ).innivris = 10 THEN
+                vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                                        ,pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
+                                                                        ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp)),0);
+              END IF;
+
               -- Enviar vencimento
               vr_texto := ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
                                                           || '="' || replace(to_char(vr_vldivnor,'fm99999999990D00'),',','.') 
@@ -6381,8 +6408,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   FETCH cr_crapttl INTO rw_crapttl;
                   IF cr_crapttl%FOUND THEN -- Se encontrou registro
                     -- Somar salário + aplicações
-                    vr_vlrrendi := rw_crapttl.vlsalari + rw_crapttl.vldrendi##1 + rw_crapttl.vldrendi##2 + rw_crapttl.vldrendi##3 +
-                                  rw_crapttl.vldrendi##4 + rw_crapttl.vldrendi##5 + rw_crapttl.vldrendi##6;
+                    vr_vlrrendi := NVL(rw_crapttl.vlsalari,0)    + 
+								   NVL(rw_crapttl.vldrendi##1,0) + 
+					               NVL(rw_crapttl.vldrendi##2,0) + 
+								   NVL(rw_crapttl.vldrendi##3,0) +
+                                   NVL(rw_crapttl.vldrendi##4,0) + 
+								   NVL(rw_crapttl.vldrendi##5,0) + 
+								   NVL(rw_crapttl.vldrendi##6,0);
+					
                   END IF;
                   CLOSE cr_crapttl; -- Fecha o cursor de titulares da conta
                   -- Classifica o porte do cliente
@@ -6724,6 +6757,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
                     If vr_tpexecucao = 2 Then
                        vr_seq_relato := vr_seq_relato + 1;
+
+                  -- ***
+                  -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
+                  -- estejam em Prejuízo (innivris = 10)
+                  IF vr_tab_agreg(vr_indice_agreg).cdorigem = 3 AND vr_tab_agreg(vr_indice_agreg).innivris = 10 THEN
+                     vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                                                 ,pr_nrdconta => vr_tab_agreg(vr_indice_agreg).nrdconta
+                                                                                 ,pr_nrctremp => vr_tab_agreg(vr_indice_agreg).nrctremp)),0);
+                  END IF;
+
                   -- Populado variável de trabalho para utilização na WRK
                   vr_texto := ' v' || vr_tab_venc_agreg(vr_indice_venc_agreg).cdvencto 
                                    ||'="' || replace(to_char(vr_vldivnor, 'fm999999990D00'),',','.') 

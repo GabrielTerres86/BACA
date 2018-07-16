@@ -11,7 +11,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 16/05/2017
+     Data    : Outubro/9999                     Ultima atualizacao: 04/07/2017
 
      Dados referentes ao programa:
 
@@ -71,7 +71,11 @@ BEGIN
                               PRJ342 - Incorporação Transulcred (Odirlei-AMcom)                          
                               
                  16/05/2017 - P408 - Considerar riscos com inddocto = 5 - Garantias Prestadas
-                              (Andrei-Mouts)                                                                
+                              (Andrei-Mouts)
+
+                 04/07/2018 - P450 - Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos 
+				              (cdorigem = 3) estejam em Prejuízo (innivris = 10) - Daniel(AMcom)
+
                               
   ............................................................................ */
 
@@ -214,6 +218,9 @@ BEGIN
             ,ci.vljura60
             ,decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc) nrcpfcgc
             ,ci.nrdconta
+            ,ci.nrctremp
+            ,ci.cdorigem
+            ,ci.innivris            
             ,ci.inddocto
             ,ci.cdinfadi
             ,ROW_NUMBER () OVER (PARTITION BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)
@@ -1156,6 +1163,17 @@ BEGIN
       IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
         vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
       END IF;
+
+      -- ***
+      -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
+      -- estejam em Prejuízo (innivris = 10)
+      IF rw_crapris.cdorigem = 3 AND rw_crapris.innivris = 10 THEN
+        vr_vldivida := vr_vldivida - (PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                                ,pr_nrdconta => rw_crapris.nrdconta
+                                                                ,pr_nrctremp => rw_crapris.nrctremp));
+      END IF;   
+
+
       -- Adicionar este rowid a pltable
       vr_tab_rowid(vr_tab_rowid.count()+1) := rw_crapris.rowid;        
       -- Para o ultimo registro (Já acumulou todos os contratos do CPF)
