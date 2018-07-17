@@ -7644,6 +7644,8 @@ PROCEDURE grava-proposta-completa:
                                    INPUT par_dtlibera,
                                    INPUT par_idfiniof,
                                    INPUT par_dscatbem,
+                                   /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
+                                   INPUT par_dtdpagto,
                                    OUTPUT par_flmudfai,
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-msg-confirma).
@@ -8439,8 +8441,8 @@ PROCEDURE altera-valor-proposta:
                      INPUT crawepr.dtlibera,
                      /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
                      INPUT (IF par_dsdopcao = "SVP" THEN 
-                               crawepr.dtdpagto
-                            ELSE par_dtdpagto),
+                               par_dtdpagto
+                            ELSE crawepr.dtdpagto),
                      INPUT crawepr.idfiniof,
                      OUTPUT TABLE tt-erro).
 
@@ -8525,8 +8527,8 @@ PROCEDURE altera-valor-proposta:
                                                          INPUT crawepr.dtcarenc,
                                                          /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
                                                          INPUT (IF par_dsdopcao = "SVP" THEN 
-                                                                   crawepr.dtdpagto
-                                                                ELSE par_dtdpagto),
+                                                                   par_dtdpagto
+                                                                ELSE crawepr.dtdpagto),
                                                          INPUT aux_qtdias_carencia,
                                                         OUTPUT 0,   /* pr_vlpreemp */
                                                         OUTPUT 0,   /* pr_txdiaria */
@@ -8608,8 +8610,8 @@ PROCEDURE altera-valor-proposta:
                              INPUT crawepr.qtpreemp, 
                              /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
                              INPUT (IF par_dsdopcao = "SVP" THEN 
-                                       crawepr.dtdpagto
-                                    ELSE par_dtdpagto),
+                                       par_dtdpagto
+                                    ELSE crawepr.dtdpagto),
                              INPUT crawepr.cdfinemp, 
                              INPUT par_dscatbem,
                              INPUT par_idfiniof,
