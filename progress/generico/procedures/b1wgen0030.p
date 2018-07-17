@@ -551,13 +551,16 @@
                             Adicionado a procedure busca_dados_proposta_manuten. (Paulo Penteado GFT)
                
                25/04/2018 - Correções na busca_parametros_dsctit para buscar as regras de registrados (Luis Fernando GFT)
-               
+				
                17/04/2017 - Chamada para rotina pc_valida_adesao_produto.
                           - Inlusao das procedures valida_inclusao_bordero,
                             valida_alteracao_bordero e valida_exclusao_tit_bordero.
                             Projeto 366 (Lombardi).
 
-			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+               09/05/2018 - Adicionado na busca_dados_limite_altera validação para não permitir a alteração de uma proposta criada antes da nova implantação do
+                            Limite de Desconto de Título (Paulo Penteado GFT)
+			   
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
 
@@ -4937,7 +4940,7 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_vltotsfn AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_perfatcl AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrctrmnt AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.    
+    DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_nrctrlim AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -6108,7 +6111,7 @@ PROCEDURE efetua_alteracao_limite:
                old_dsobser1     = crapprp.dsobserv[1]
                crapprp.dsobserv[1] = CAPS(par_dsobserv)
                crapprp.dsobserv[2] = ""
-			   crapprp.dsobserv[3] = "".
+               crapprp.dsobserv[3] = "".
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
@@ -6898,7 +6901,7 @@ PROCEDURE efetua_exclusao_limite:
 
                 ASSIGN aux_flgderro = TRUE.                
                 UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO.
-           END.
+            END.
 
         DELETE craplim.
         DELETE crapprp.
@@ -19429,16 +19432,16 @@ PROCEDURE realizar_manutencao_contrato:
           ASSIGN aux_cdcritic  = INT(pc_efetivar_proposta.pr_cdcritic) WHEN pc_efetivar_proposta.pr_cdcritic <> ?
                  aux_dscritic  = pc_efetivar_proposta.pr_dscritic WHEN pc_efetivar_proposta.pr_dscritic <> ?.
           
-          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-             DO:
-               RUN gera_erro (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrdcaixa,
-                              INPUT 1,
-                              INPUT aux_cdcritic,
-                              INPUT-OUTPUT aux_dscritic).
-               RETURN "NOK".
-           END.
+          IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+              DO:
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+                  RETURN "NOK".
+              END.
            
       END.
    RETURN "OK".       

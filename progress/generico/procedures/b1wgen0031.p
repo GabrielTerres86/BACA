@@ -26,7 +26,7 @@
 
     Programa: b1wgen0031.p
     Autor   : Guilherme/David
-    Data    : Julho/2008                     Ultima Atualizacao: 09/09/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 30/11/2017
            
     Dados referentes ao programa:
                 
@@ -194,8 +194,8 @@
                 22/09/2016 - Alterado rotina obtem-mensagens-alerta 
                              para buscar o qtd dias de renovacao da tabela craprli
 								  			     PRJ300 - Desconto de cheque (Odirlei-AMcom)             
-				
-				30/01/2017 - Exibir mensagem quando Cooperado/Fiador atrasar emprestimo Pos-Fixado.
+
+                30/01/2017 - Exibir mensagem quando Cooperado/Fiador atrasar emprestimo Pos-Fixado.
                              (Jaison/James - PRJ298)
 
 							

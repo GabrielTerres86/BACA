@@ -46,7 +46,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0084a.p
     Autor   : Gabriel
-    Data    : Setembro/2011               ultima Atualizacao: 27/11/2015
+    Data    : Setembro/2011               ultima Atualizacao: 10/05/2018
      
     Dados referentes ao programa:
    
@@ -172,7 +172,7 @@
 
                 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
 
-				23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
+                23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
 
 ............................................................................. */
 

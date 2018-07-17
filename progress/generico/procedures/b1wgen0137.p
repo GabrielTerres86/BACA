@@ -318,8 +318,8 @@
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
                              
-                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
-                     
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).  
+                
                      
                 21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
                              na opção todos (Carlos).
@@ -332,8 +332,9 @@
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
 
-				06/07/2018 - Projeto 403 - Ajustes dos códigos legados (Lucas - GFT)
-		
+                11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
+                     
+				
 
 
 .............................................................................*/

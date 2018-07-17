@@ -87,12 +87,13 @@
                             de emprestimos. (Reinert)
                             
                11/08/2016 - Criar procedure para buscar o saldo disponivel do cooperado
-                            (James)
+                            (James)         
 
-			   30/01/2017 - Nao permitir efetuar pagamento para o produto Pos-Fixado.
-                            (Jaison/James - PRJ298)	         
+               30/01/2017 - Nao permitir efetuar pagamento para o produto Pos-Fixado.
+                            (Jaison/James - PRJ298)
 
                23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
+
 ........................................................................... */
 
 PROCEDURE mostra_dados:
