@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                                              ,pr_cdagenci  IN crapage.cdagenci%TYPE Default 0 --> Codigo Agencia 
                                              ,pr_idparale  IN crappar.idparale%TYPE Default 0 --> Indicador de processoparalelo
                                              ,pr_flgresta  IN PLS_INTEGER             --> Flag padrão para utilização de restart
@@ -284,11 +284,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
 
-			        26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+              26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
                                  da data de vencimento e quantidade de dias atraso.
                                  SD488220 (Odirlei-AMcom)
 
-					24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+          24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                                  ( Renato Darosci - Supero )
                                  
                     03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
@@ -300,10 +300,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     06/01/2017 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
                                  PRJ342 - Incorporação Transulcred (Odirlei-AMcom)
                                  
-					24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
-					             informar a baixa do gravames (Daniel - Chamado: 615103) 
+          24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
+                       informar a baixa do gravames (Daniel - Chamado: 615103) 
 
-				    08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
+            08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
 
                     13/04/2016 - Ajustes PRJ343 - Cessao de Credito (Odirlei-AMcom)
 
@@ -318,14 +318,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  
                     23/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
-					21/11/2017 - Criada procedure pc_garantia_cobertura_opera. 
+          21/11/2017 - Criada procedure pc_garantia_cobertura_opera. 
                                  Projeto 404 -  Automatização da Garantia de Aplicação nas Operações de Crédito (Lombardi)
 
                     27/12/2017 - Ajustado para enviar a qtd de dias de atraso calculado na 
                                  central de risco para os contratos em prejuizo, devido a auditoria do Bacen.
                                  (Odirlei-AMcom/Oscar) 
-																 
-								    09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
+                                 
+                    09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
                                  erro reportado pelos plantonistas (Jean Michel)
 
                     24/01/2018 - Inclusão de consistência do novo campo para identificação da qualificação da operação(crapepr.idquaprc)
@@ -339,18 +339,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                    17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
                                 ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
                                 CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
-								
-				   09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
-				   
+                
+           09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
+           
                    10/05/2018 - Ajuste na proc pc_garantia_cobertura_opera para nao enviar atricuto Ident 
                                 da tag Gar quando tipo for "0104" ou "0105". PRJ366 (Lombardi)
-				   
+           
                     07/06/2018 - P450 - Considerar contrato Limite/ADP na Qtde Contratos(qtctrliq) (Guilherme/AMcom)
 
-				   18/06/2018 - Ajustes no procedimento de paralelismo para ganho de performance. - Mario Bernat (Amcom). 
-				   
-				   04/07/2018 - P450 - Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos 
-				                (cdorigem = 3) estejam em Prejuízo (innivris = 10) - Daniel(AMcom)                                  
+           18/06/2018 - Ajustes no procedimento de paralelismo para ganho de performance. - Mario Bernat (Amcom). 
+           
+           04/07/2018 - P450 - Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos 
+                        (cdorigem = 3) estejam em Prejuízo (innivris = 10) - Daniel(AMcom)
+
+          17/07/2018 - Alterado as regras das faixas de classificação do porte para PF e PJ - Heckmann (AMcom)
 
 .............................................................................................................................*/
 
@@ -570,17 +572,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- Cursor para busca dos dados financeiros de PJ
       CURSOR cr_crapjfn(pr_nrdconta crapttl.nrdconta%TYPE) IS
         SELECT NVL(vlrftbru##1,0) + 
-		       NVL(vlrftbru##2,0) + 
-			   NVL(vlrftbru##3,0) + 
-			   NVL(vlrftbru##4,0) + 
-			   NVL(vlrftbru##5,0) + 
-			   NVL(vlrftbru##6,0) +
+           NVL(vlrftbru##2,0) + 
+         NVL(vlrftbru##3,0) + 
+         NVL(vlrftbru##4,0) + 
+         NVL(vlrftbru##5,0) + 
+         NVL(vlrftbru##6,0) +
                NVL(vlrftbru##7,0) + 
-			   NVL(vlrftbru##8,0) + 
-			   NVL(vlrftbru##9,0) + 
-			   NVL(vlrftbru##10,0) + 
-			   NVL(vlrftbru##11,0) + 
-			   NVL(vlrftbru##12,0) vlrftbru
+         NVL(vlrftbru##8,0) + 
+         NVL(vlrftbru##9,0) + 
+         NVL(vlrftbru##10,0) + 
+         NVL(vlrftbru##11,0) + 
+         NVL(vlrftbru##12,0) vlrftbru
           FROM crapjfn
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta;
@@ -1113,7 +1115,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               cdsubmod craplcr.cdsubmod%TYPE,
               txjurfix craplcr.txjurfix%TYPE,
               dsorgrec craplcr.dsorgrec%TYPE,
-              cdusolcr craplcr.cdusolcr%TYPE);	
+              cdusolcr craplcr.cdusolcr%TYPE);  
       TYPE typ_tab_craplcr IS
         TABLE OF typ_reg_craplcr
           INDEX BY PLS_INTEGER; -- Codigo da Linha
@@ -1246,7 +1248,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       vr_nmarqsai_tot    VARCHAR2(1000) := NULL;
       
       --------------------------- SUBROTINAS INTERNAS --------------------------
-	    
+      
        -- Controla Controla log
        PROCEDURE pc_controla_log_batch(pr_idtiplog     IN NUMBER       -- Tipo de Log
                                       ,pr_dscritic     IN VARCHAR2) IS -- Descrição do Log
@@ -1272,7 +1274,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
        END pc_controla_log_batch;
        
-	    
+      
       -- Retorno do código de localidade cfme UF
       FUNCTION fn_localiza_uf(pr_sig_UF IN VARCHAR2) RETURN NUMBER IS
       BEGIN
@@ -1443,8 +1445,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 vr_dsorgrec_out := '0202';
               END IF;
             END IF;
-		      ELSE --se for BNDES - SD 426476
-            vr_dsorgrec_out := '0203'; 			
+          ELSE --se for BNDES - SD 426476
+            vr_dsorgrec_out := '0203';       
           END IF;
         -- Para Contratos de Garantias Prestadas
         ELSIF pr_cdorigem = 7 THEN
@@ -1980,7 +1982,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 END IF;    
                 
                 -- Encontrar a faixa de valor conforme tabela
-                --   Anexo 14: Faixa de valor da operação - FaixaVlr	
+                --   Anexo 14: Faixa de valor da operação - FaixaVlr  
                 --   Domínio   Descrição
                 --         1   Acima de 0 a R$ 99,99
                 --         2   R$ 100,00 a R$ 499,99
@@ -3167,7 +3169,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              IF vr_tpemprst = 2 THEN
              -- Enviar dados da garantia operação
                 gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                	                     ,pr_texto_completo => vr_xml_3040_temp
+                                       ,pr_texto_completo => vr_xml_3040_temp
                                        ,pr_texto_novo     => '<Gar' 
                                                           || ' Tp="0105"' 
                                                           || ' VlrOrig="' || replace(to_char(vr_vlroriginal,'fm99999999999990D00'),',','.') || '"');
@@ -3284,7 +3286,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      ** 24/10/2016
                      *********************************************************************************/
 
-                   	 vr_texto := '            <Inf Tp="0401" Ident="2" />';
+                      vr_texto := '            <Inf Tp="0401" Ident="2" />';
                      If vr_tpexecucao = 2 Then
                         vr_seq_relato := vr_seq_relato + 1;
                         -- Procedimento para gravar wrk, para posteriormente descarregar xml
@@ -3305,7 +3307,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                         end if;
                      
                      else
-                     	 -- Informação do Empréstimo
+                        -- Informação do Empréstimo
                        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                               ,pr_texto_completo => vr_xml_3040_temp
                                               ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
@@ -3707,7 +3709,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                        ,pr_texto_completo => vr_xml_3040_temp
                                          ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' 
-								                                            || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
+                                                            || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
                 end if;
               end if;
             end if;
@@ -4651,10 +4653,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       BEGIN  
         
         --> 03/11/2016 - Renato Darosci - Alterado para considerar faixa "sem rendimento" até 0.01 - SD 549969
-      
-        IF pr_vlrrendi <= 0.01 THEN
+        --> 17/07/2018 - Heckmann (AMcom) - Alterado as regras das faixas 0, 1 e 2 - Product Backlog Item 9028:3040 - Porte Indisponível
+    
+        IF pr_vlrrendi >= 0.01 AND pr_vlrrendi <= 1 THEN
+          RETURN 0;
+        ELSIF pr_vlrrendi = 0 THEN
           RETURN 1;
-        ELSIF pr_vlrrendi > 0.01 AND pr_vlrrendi <= vr_vlsalmin THEN
+        ELSIF pr_vlrrendi > 1 AND pr_vlrrendi <= vr_vlsalmin THEN
           RETURN 2;
         ELSIF pr_vlrrendi > vr_vlsalmin AND pr_vlrrendi <= (vr_vlsalmin * 2) THEN
           RETURN 3;
@@ -4675,8 +4680,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       
       -- Classifica o porte do PJ
       FUNCTION fn_classifi_porte_pj(pr_fatanual IN NUMBER) RETURN pls_integer IS
-      BEGIN  
-        IF pr_fatanual <= 360000 THEN
+      BEGIN 
+    --> 17/07/2018 - Heckmann (AMcom) - Alterado as regras das faixas 0 e 1 - Product Backlog Item 9028:3040 - Porte Indisponível 
+        IF pr_fatanual >= 0 AND pr_fatanual <= 0.01 then
+          RETURN 0;
+        ELSIF pr_fatanual > 0.01 AND pr_fatanual <= 360000 THEN
           RETURN 1;
         ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
           RETURN 2;
@@ -4699,7 +4707,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                        ,pr_totalcli      IN INTEGER                    -- Total de Cliente
                                        ,pr_nom_direto    IN VARCHAR2                   -- Diretorio da cooperativa
                                        ,pr_nom_dirmic    IN VARCHAR2                   -- Diretorio micros da cooperativa
-                                       ,pr_numparte      IN OUT INTEGER           	   -- Numero da parte do arquivo
+                                       ,pr_numparte      IN OUT INTEGER                -- Numero da parte do arquivo
                                        ,pr_xml_3040      IN OUT NOCOPY CLOB            -- XML do arquivo 3040
                                        ,pr_xml_3040_temp IN OUT VARCHAR2               -- XML do arquivo 3040
                                        ,pr_cdcritic      OUT crapcri.cdcritic%TYPE     -- Codigo da critica
@@ -5281,12 +5289,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   IF cr_crapttl%FOUND THEN
                     -- Somar salário + aplicações
                     vr_vlrrendi := NVL(rw_crapttl.vlsalari,0)    + 
-								   NVL(rw_crapttl.vldrendi##1,0) + 
-					               NVL(rw_crapttl.vldrendi##2,0) + 
-								   NVL(rw_crapttl.vldrendi##3,0) +
+                   NVL(rw_crapttl.vldrendi##1,0) + 
+                         NVL(rw_crapttl.vldrendi##2,0) + 
+                   NVL(rw_crapttl.vldrendi##3,0) +
                                    NVL(rw_crapttl.vldrendi##4,0) + 
-								   NVL(rw_crapttl.vldrendi##5,0) + 
-								   NVL(rw_crapttl.vldrendi##6,0);
+                   NVL(rw_crapttl.vldrendi##5,0) + 
+                   NVL(rw_crapttl.vldrendi##6,0);
                   END IF;
                   CLOSE cr_crapttl; -- Fecha o cursor de titulares
                   -- Busca o porte do cliente
@@ -5803,7 +5811,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                             vr_caracesp := vr_caracesp || ';17';
                           END IF;
                       
-                        END IF;  															
+                        END IF;                                
                       END IF;
                     
                     END IF;
@@ -6409,13 +6417,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   IF cr_crapttl%FOUND THEN -- Se encontrou registro
                     -- Somar salário + aplicações
                     vr_vlrrendi := NVL(rw_crapttl.vlsalari,0)    + 
-								   NVL(rw_crapttl.vldrendi##1,0) + 
-					               NVL(rw_crapttl.vldrendi##2,0) + 
-								   NVL(rw_crapttl.vldrendi##3,0) +
+                   NVL(rw_crapttl.vldrendi##1,0) + 
+                         NVL(rw_crapttl.vldrendi##2,0) + 
+                   NVL(rw_crapttl.vldrendi##3,0) +
                                    NVL(rw_crapttl.vldrendi##4,0) + 
-								   NVL(rw_crapttl.vldrendi##5,0) + 
-								   NVL(rw_crapttl.vldrendi##6,0);
-					
+                   NVL(rw_crapttl.vldrendi##5,0) + 
+                   NVL(rw_crapttl.vldrendi##6,0);
+          
                   END IF;
                   CLOSE cr_crapttl; -- Fecha o cursor de titulares da conta
                   -- Classifica o porte do cliente
@@ -7808,5 +7816,5 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        -- Efetuar rollback
        ROLLBACK;
     END;
-  END pc_crps573;
+  END pc_crps573_heckmann;
 /
