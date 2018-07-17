@@ -38,6 +38,8 @@
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. (Jaison/James)
 
+               28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+               
 			   11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))               
 
 			   12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
@@ -151,7 +153,7 @@ DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgemail AS LOGI                                           NO-UNDO.
-
+DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0030tt.i }
     
@@ -272,7 +274,7 @@ PROCEDURE valores_entrada:
 
             WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
             WHEN "flgemail" THEN aux_flgemail = LOGICAL(tt-param.valorCampo).
-
+            WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
 
         END CASE.
         
@@ -793,6 +795,7 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
                                        INPUT aux_nrctrmnt,
+                                       INPUT aux_idcobope, 
                                       OUTPUT aux_nrctrlim, 
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
@@ -1062,6 +1065,7 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_nrperger,
                                         INPUT aux_vltotsfn,
                                         INPUT aux_perfatcl,
+                                        INPUT aux_idcobope,
                                        OUTPUT TABLE tt-erro).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
