@@ -2730,6 +2730,10 @@ PROCEDURE valida_nova_proposta:
                                                cratcrd.cdadmcrd <= 80          AND
                                                cratcrd.cdadmcrd >= 10 NO-LOCK:
 
+	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ AND 
+                                 cratcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+                                 NEXT.
+
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
                                                cratadc.cdadmcrd = cratcrd.cdadmcrd NO-LOCK NO-ERROR NO-WAIT.
 
