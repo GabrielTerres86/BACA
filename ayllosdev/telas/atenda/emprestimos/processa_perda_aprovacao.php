@@ -41,7 +41,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$xmlResult = mensageria($xml, "EMPR0012", "PROCESSA_PERDA_APROVACAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "EMPR0015", "PROCESSA_PERDA_APROVACAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 
 	$xmlObj = getObjectXML($xmlResult);
 
