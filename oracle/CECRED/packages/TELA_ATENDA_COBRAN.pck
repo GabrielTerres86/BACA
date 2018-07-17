@@ -1943,7 +1943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
           END IF;
-        END IF;
+       -- END IF;
         --> Verificar se situacao permite continuar
         --A=Apto, I=Inapto, E=Em análise
         ELSIF VR_INSITIF IN ('A','E') THEN
