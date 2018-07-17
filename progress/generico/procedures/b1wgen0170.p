@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Agosto/2013                         Ultima atualizacao: 13/03/2018
+   Data    : Agosto/2013                         Ultima atualizacao: 04/06/2018
 
    Dados referentes ao programa:
 
@@ -39,27 +39,29 @@
                
                17/09/2015 - Alterado o bloqueio de senhas para nao bloquear a
                             senha de LETRAS (Douglas - Chamado 324848)
-							
-			   06/11/2015 - Adicionado log na rotina de importacao conforme solicitado
-						    no chamado 342859. (Kelvin)
-			   
-			   04/02/2016 - Chamado 376144, Atualizar data de manutencao cadastral
-			                ao alterar dados na CADCYB (Heitor - RKAM)
+                            
+               06/11/2015 - Adicionado log na rotina de importacao conforme solicitado
+                            no chamado 342859. (Kelvin)
+               
+               04/02/2016 - Chamado 376144, Atualizar data de manutencao cadastral
+                            ao alterar dados na CADCYB (Heitor - RKAM)
 
-			   13/10/2016 - 533466-Cyber, Atualizar data de manutencao cadastral
-			                ao inserir dados na CADCYB (Gil Furtado - Mouts)
+               13/10/2016 - 533466-Cyber, Atualizar data de manutencao cadastral
+                            ao inserir dados na CADCYB (Gil Furtado - Mouts)
 
-			   13/03/2018 - 806202- Não possibilitar mudança/inserção de CDMOTCIN 2 e 7
-			                se operador não for do depto.Jurídico (Everton Souza - Mouts)
+               13/03/2018 - 806202- nao possibilitar mudança/inserção de CDMOTCIN 2 e 7
+                            se operador nao for do depto.Jurídico (Everton Souza - Mouts)
+
+               04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT)    
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0170tt.i }
 { sistema/generico/includes/b1wgen0168tt.i }
-{ sistema/generico/includes/var_oracle.i }
 
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i  }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -88,10 +90,15 @@ PROCEDURE valida-cadcyb:
     DEF INPUT PARAM par_nrctremp AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdorigem AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cddopcao AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_nrborder AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrtitulo AS INTE                               NO-UNDO.
 
     DEF OUTPUT PARAM par_flgmsger AS LOG INIT FALSE                    NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-crapcyc.
     DEF OUTPUT PARAM TABLE FOR tt-erro.   
+
+    DEF VAR aux_nrborder AS INTE                                       NO-UNDO.
+    DEF VAR aux_nrtitulo AS INTE                                       NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     
@@ -111,7 +118,7 @@ PROCEDURE valida-cadcyb:
             IF  NOT AVAIL(crapass) THEN
                 DO: 
                     ASSIGN aux_cdcritic = 0
-	        			   aux_dscritic = "Conta inexistente!".
+                           aux_dscritic = "Conta inexistente!".
             
                     RUN gera_erro (INPUT par_cdcooper,        
                                    INPUT par_cdagenci,
@@ -122,10 +129,13 @@ PROCEDURE valida-cadcyb:
                     RETURN "NOK".
                 END.
 
+           
             CREATE tt-crapcyc.
             ASSIGN tt-crapcyc.cdcooper = par_cdcooper
                    tt-crapcyc.nrdconta = par_nrdconta
-                   tt-crapcyc.nrctremp = par_nrctremp.
+                   tt-crapcyc.nrctremp = par_nrctremp
+                   tt-crapcyc.nrborder = par_nrborder
+                   tt-crapcyc.nrtitulo = par_nrtitulo.
 
             IF  par_cddopcao <> "E" THEN
                 DO:
@@ -164,6 +174,100 @@ PROCEDURE valida-cadcyb:
                                      RETURN "NOK".
                                  END. 
                         END.
+                END.
+                /* Verifica se titulo e bordero existem somente para  cdorigem = 4 */
+                IF  par_cdorigem = 4 THEN
+                    DO:
+                        /* verifica a existencia do bordero */       
+                        FIND FIRST crapbdt WHERE 
+                                    crapbdt.cdcooper = par_cdcooper AND
+                                    crapbdt.nrdconta = par_nrdconta AND 
+                                    crapbdt.nrborder = par_nrborder
+                                    NO-LOCK NO-ERROR NO-WAIT.
+                        
+                         IF  NOT AVAIL crapbdt THEN
+                             DO:
+                                 ASSIGN aux_cdcritic = 0
+                                        aux_dscritic = "Bordero nao encontrado!".
+                                
+                                 RUN gera_erro (INPUT par_cdcooper,
+                                                INPUT par_cdagenci,
+                                                INPUT par_nrdcaixa,
+                                                INPUT 1,  /** Sequencia **/
+                                                INPUT aux_cdcritic,
+                                                INPUT-OUTPUT aux_dscritic).
+                        
+                                 RUN proc_gerar_log (INPUT par_cdcooper,
+                                                     INPUT par_cdoperad,
+                                                     INPUT aux_dscritic,
+                                                     INPUT aux_dsorigem,
+                                                     INPUT aux_dstransa,
+                                                     INPUT FALSE,
+                                                     INPUT par_idseqttl,
+                                                     INPUT par_nmdatela,
+                                                     INPUT par_nrdconta,
+                                                    OUTPUT aux_nrdrowid).
+                                 
+                                 RETURN "NOK".
+                             END.
+                             
+                        /* Verifica a existencia do titulo */
+                        FIND FIRST craptdb WHERE 
+                                    craptdb.cdcooper = par_cdcooper AND
+                                    craptdb.nrdconta = par_nrdconta AND 
+                                    craptdb.nrborder = par_nrborder AND
+                                    craptdb.nrtitulo = par_nrtitulo
+                                    NO-LOCK NO-ERROR NO-WAIT.
+                        
+                         IF  NOT AVAIL craptdb THEN
+                             DO:
+                                 ASSIGN aux_cdcritic = 0
+                                        aux_dscritic = "Titulo nao encontrado!".
+                                
+                                 RUN gera_erro (INPUT par_cdcooper,
+                                                INPUT par_cdagenci,
+                                                INPUT par_nrdcaixa,
+                                                INPUT 1,  /** Sequencia **/
+                                                INPUT aux_cdcritic,
+                                                INPUT-OUTPUT aux_dscritic).
+                        
+                                 RUN proc_gerar_log (INPUT par_cdcooper,
+                                                     INPUT par_cdoperad,
+                                                     INPUT aux_dscritic,
+                                                     INPUT aux_dsorigem,
+                                                     INPUT aux_dstransa,
+                                                     INPUT FALSE,
+                                                     INPUT par_idseqttl,
+                                                     INPUT par_nmdatela,
+                                                     INPUT par_nrdconta,
+                                                    OUTPUT aux_nrdrowid).
+                                 
+                                 RETURN "NOK".
+                             END.
+                         IF par_nrborder > 0 AND par_cddopcao <> "I" THEN
+                            DO:
+                                FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = par_cdcooper AND
+                                                               tbdsct_titulo_cyber.nrdconta = par_nrdconta AND
+                                                               tbdsct_titulo_cyber.nrtitulo = par_nrtitulo AND
+                                                               tbdsct_titulo_cyber.nrborder = par_nrborder
+                                                               NO-LOCK NO-ERROR.
+                                 IF NOT AVAIL(tbdsct_titulo_cyber) THEN
+                                    DO: 
+                                        ASSIGN aux_cdcritic = 0
+                                               aux_dscritic = "Bordero inexistente!".
+                                
+                                        RUN gera_erro (INPUT par_cdcooper,        
+                                                       INPUT par_cdagenci,
+                                                       INPUT 1, /* nrdcaixa  */
+                                                       INPUT 1, /* sequencia */
+                                                       INPUT aux_cdcritic,        
+                                                       INPUT-OUTPUT aux_dscritic).
+                                        RETURN "NOK".
+                                    END.                          
+                                ASSIGN tt-crapcyc.nrctremp = tbdsct_titulo_cyber.nrctrdsc
+                                       par_nrctremp        = tbdsct_titulo_cyber.nrctrdsc.
+                            END.
+                        
                 END.
         END.
 
@@ -245,6 +349,8 @@ PROCEDURE grava-dados-crapcyc:
     DEF INPUT PARAM par_idseqttl AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_lsdconta AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsnrctrc AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_lsnrbord AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_lsnrtitu AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsorigem AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsjudici AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_lsextjud AS CHAR                               NO-UNDO.
@@ -263,6 +369,8 @@ PROCEDURE grava-dados-crapcyc:
     DEF VAR par_cdorigem AS CHAR                                       NO-UNDO.
     DEF VAR par_nrdconta AS INTE                                       NO-UNDO.
     DEF VAR par_nrctremp AS INTE                                       NO-UNDO.
+    DEF VAR par_nrborder AS INTE                                       NO-UNDO.
+    DEF VAR par_nrtitulo AS INTE                                       NO-UNDO.
     DEF VAR par_flgjudic AS CHAR                                       NO-UNDO.
     DEF VAR par_flextjud AS CHAR                                       NO-UNDO.
     DEF VAR par_flgehvip AS CHAR                                       NO-UNDO.
@@ -272,6 +380,7 @@ PROCEDURE grava-dados-crapcyc:
     DEF VAR aux_dtenvcbr AS DATE                                       NO-UNDO.
     DEF VAR aux_cdassess AS INTE                                       NO-UNDO.
     DEF VAR aux_cdmotcin AS INTE                                       NO-UNDO.
+    DEF VAR aux_nrctrdsc AS INTE                                       NO-UNDO.
 
     DEF VAR aux_conta    AS  INTE                                      NO-UNDO.
     DEF VAR aux_contaok  AS  INTE                                      NO-UNDO.
@@ -287,12 +396,17 @@ PROCEDURE grava-dados-crapcyc:
            aux_contanok = 0.
 
     DO  aux_conta = 1 TO NUM-ENTRIES(par_lsnrctrc,';'):
-    
         /* Conta/dv */
         par_nrdconta = INTE(ENTRY(aux_conta,par_lsdconta,';')).
 
         /* Contrato  */
         par_nrctremp = INTE(ENTRY(aux_conta,par_lsnrctrc,';')).    
+        
+        /* Bordero  */
+        par_nrborder = INTE(ENTRY(aux_conta,par_lsnrbord,';')).    
+        
+        /* Titulo  */
+        par_nrtitulo = INTE(ENTRY(aux_conta,par_lsnrtitu,';')).    
         
         /* Origem,Conta ou Contrato */
         par_cdorigem = ENTRY(aux_conta,par_lsorigem,';').                
@@ -306,6 +420,15 @@ PROCEDURE grava-dados-crapcyc:
         /* Flag Vip */
         par_flgehvip = ENTRY(aux_conta,par_lsgehvip,';').
         
+        /* data de envio para cobrança */
+        aux_dtenvcbr = DATE(ENTRY(aux_conta,par_lsdtenvc,';')).
+        
+        /* assessoria */
+        aux_cdassess = INTE(ENTRY(aux_conta,par_lsassess,';')).
+        
+        /* motivo CIN */
+        aux_cdmotcin = INTE(ENTRY(aux_conta,par_lsmotcin,';')).
+
         IF  par_flgjudic MATCHES "*Nao*" THEN
             ASSIGN aux_flgjudic = FALSE.
         ELSE
@@ -321,9 +444,47 @@ PROCEDURE grava-dados-crapcyc:
         ELSE
             ASSIGN aux_flgehvip = TRUE.
         
-         /* 1 - Conta, 3 - Contrato */
+         /* 1 - Conta, 3 - Contrato, 4 - Desconto de Titulos */
         IF  par_cdorigem MATCHES "*Conta*" THEN
-            ASSIGN aux_cdorigem = 1.
+          DO:
+            ASSIGN par_nrctremp = INTE(par_nrdconta)
+                   aux_cdorigem = 1.
+          END.
+        ELSE
+        IF  par_cdorigem MATCHES "*Titulo*" THEN
+          DO:
+                ASSIGN aux_cdorigem = 4.
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_inserir_titulo_cyber
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_nrdconta
+                                                    ,INPUT par_nrborder
+                                                    ,INPUT par_nrtitulo
+                                                    ,OUTPUT 0 
+                                                    ,OUTPUT "").
+
+            CLOSE STORED-PROC pc_inserir_titulo_cyber
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_dscritic  = pc_inserir_titulo_cyber.pr_dscritic WHEN pc_inserir_titulo_cyber.pr_dscritic <> ?.
+
+            IF aux_dscritic <> "" THEN
+             DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,
+                              INPUT 0,
+                              INPUT-OUTPUT aux_dscritic).
+               RETURN "NOK".
+            END. 
+
+            /* Substitui o numero do contrato de emprestimo com o sequencial especifico do desconto de titulos */
+            ASSIGN par_nrctremp = INT(pc_inserir_titulo_cyber.pr_nrctrdsc).
+          END.
         ELSE
             ASSIGN aux_cdorigem = 3.
 
@@ -347,7 +508,7 @@ PROCEDURE grava-dados-crapcyc:
                                       AND crapope.cdoperad = par_cdoperad
                                       NO-LOCK NO-ERROR.
                  IF AVAIL crapope THEN
-				   DO:
+                   DO:
                    IF (crapope.cddepart <> 13) and (aux_cdmotcin = 2 or aux_cdmotcin = 7) then
                      DO:
                          ASSIGN aux_cdcritic = 0
@@ -360,7 +521,7 @@ PROCEDURE grava-dados-crapcyc:
                                        INPUT aux_cdcritic,        
                                        INPUT-OUTPUT aux_dscritic).                                            
                         RETURN "NOK".
-                     END.	
+                     END.   
                    END. 
 
                  /* INICIO - Atualizar os dados da tabela crapcyb (CYBER) */
@@ -469,6 +630,8 @@ PROCEDURE grava-dados-crapcyc:
                               STRING(crapcyc.nrdconta,"zzzz,zzz,z") +
                               " com contrato: "                     +
                               STRING(crapcyc.nrctremp,"zz,zzz,zz9")  +
+                              " do tipo: "                     +
+                              par_cdorigem  +
                               " ja cadastrados. <br> ". 
                     END.
                 ELSE
@@ -478,6 +641,8 @@ PROCEDURE grava-dados-crapcyc:
                                STRING(crapcyc.nrdconta,"zzzz,zzz,z") +
                                " com contrato: "                     +
                                STRING(crapcyc.nrctremp,"zz,zzz,zz9")  + 
+                               " do tipo: "                     +
+                               par_cdorigem  +
                                " ja cadastrados. <br> ".
                           
                     END.
@@ -509,7 +674,7 @@ PROCEDURE grava-dados-crapcyc:
         DO: 
             ASSIGN aux_dscritic = tt-msg.dscritic                         +
                                   STRING(aux_contaok,"zzz,zzz,zz9")       +
-                                  " Contas/Contratos foram incluidos com" +
+                                  " Contas/Contratos/Titulos foram incluidos com" +
                                   " sucesso.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -567,12 +732,12 @@ PROCEDURE altera-dados-crapcyc:
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF  NOT AVAIL crapcyc THEN
-			DO:
-			   IF  LOCKED crapcyc THEN
-			   	   DO:
-			   	      IF  aux_contador = 10 THEN
+            DO:
+               IF  LOCKED crapcyc THEN
+                   DO:
+                      IF  aux_contador = 10 THEN
                           DO:
-    		   	      	     ASSIGN aux_cdcritic = 77.
+                             ASSIGN aux_cdcritic = 77.
                    
                              RUN gera_erro (INPUT par_cdcooper,        
                                             INPUT par_cdagenci,
@@ -594,16 +759,16 @@ PROCEDURE altera-dados-crapcyc:
 
                              RETURN "NOK".
                           END.
-			   	      ELSE
+                      ELSE
                           DO:
                              PAUSE 1 NO-MESSAGE.
-			   	      	     NEXT.
+                             NEXT.
                           END.
-			   	   END.
-			   ELSE
-    		   	   DO:
+                   END.
+               ELSE
+                   DO:
                       ASSIGN aux_cdcritic = 0
-			                 aux_dscritic = "Tentativa de alterar registro " +
+                             aux_dscritic = "Tentativa de alterar registro " +
                                             "inexistente!".
 
                       RUN gera_erro (INPUT par_cdcooper,        
@@ -625,9 +790,9 @@ PROCEDURE altera-dados-crapcyc:
                                          OUTPUT aux_nrdrowid).
 
                       RETURN "NOK".
-    		   	   END.
-			END.
-		ELSE
+                   END.
+            END.
+        ELSE
             DO:
               FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
                                    AND crapope.cdoperad = par_cdoperad
@@ -646,11 +811,11 @@ PROCEDURE altera-dados-crapcyc:
                                    INPUT aux_cdcritic,        
                                    INPUT-OUTPUT aux_dscritic).                                            
                         RETURN "NOK".
-                     END.	
+                     END.   
                    IF (crapope.cddepart <> 13) and (par_cdmotcin = 2 or par_cdmotcin = 7) and (crapcyc.cdmotcin <> par_cdmotcin) then
                      DO:
                         ASSIGN aux_cdcritic = 0
-			                   aux_dscritic = "Somente operadores do departamento juridico " +
+                               aux_dscritic = "Somente operadores do departamento juridico " +
                                               "podem alterar para MOTIVO CIN 2 e 7 !".
                         RUN gera_erro (INPUT par_cdcooper,        
                                    INPUT par_cdagenci,
@@ -658,11 +823,11 @@ PROCEDURE altera-dados-crapcyc:
                                    INPUT 1, /* sequencia */
                                    INPUT aux_cdcritic,        
                                    INPUT-OUTPUT aux_dscritic).                                            
-						RETURN "NOK".
-                    END.									
+                        RETURN "NOK".
+                    END.                                    
                 END.   
 
-			   ASSIGN crapcyc.flgjudic = par_flgjudic
+               ASSIGN crapcyc.flgjudic = par_flgjudic
                       crapcyc.flextjud = par_flextjud
                       crapcyc.flgehvip = par_flgehvip
                       crapcyc.cdoperad = par_cdoperad
@@ -728,6 +893,8 @@ PROCEDURE excluir-dados-crapcyc:
     DEF INPUT PARAM par_nmdatela AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_idorigem AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrborder AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrtitulo AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nrctremp AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdorigem AS INTE                               NO-UNDO.
     
@@ -752,13 +919,24 @@ PROCEDURE excluir-dados-crapcyc:
                            crapcyc.nrdconta = par_nrdconta    
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
+        /* Caso seja bordero */                          
+    /*     IF par_nrborder > 0 AND par_cdorigem = 4 THEN
+            DO:
+                FIND tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = par_cdcooper AND
+                                               tbdsct_titulo_cyber.nrctrdsc = par_nrctremp AND
+                                               tbdsct_titulo_cyber.nrborder = par_nrborder AND
+                                               tbdsct_titulo_cyber.nrtitulo = par_nrtitulo AND
+                                               tbdsct_titulo_cyber.nrdconta = par_nrdconta    
+                                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            END. */
+        
         IF  NOT AVAIL crapcyc THEN
-			DO:
-			   IF  LOCKED crapcyc THEN
-			   	   DO:
-			   	      IF  aux_contador = 10 THEN
+            DO:
+               IF  LOCKED crapcyc THEN
+                   DO:
+                      IF  aux_contador = 10 THEN
                           DO:
-    		   	      	     ASSIGN aux_cdcritic = 77.
+                             ASSIGN aux_cdcritic = 77.
                    
                              RUN gera_erro (INPUT par_cdcooper,        
                                             INPUT par_cdagenci,
@@ -780,16 +958,16 @@ PROCEDURE excluir-dados-crapcyc:
 
                              RETURN "NOK".
                           END.
-			   	      ELSE
+                      ELSE
                           DO:
                              PAUSE 1 NO-MESSAGE.
-			   	      	     NEXT.
+                             NEXT.
                           END.
-			   	   END.
-			   ELSE
-    		   	   DO:
+                   END.
+               ELSE
+                   DO:
                       ASSIGN aux_cdcritic = 0
-			                 aux_dscritic = "Tentativa de excluir registro " +
+                             aux_dscritic = "Tentativa de excluir registro " +
                                             "inexistente!".
 
                       RUN gera_erro (INPUT par_cdcooper,        
@@ -811,36 +989,41 @@ PROCEDURE excluir-dados-crapcyc:
                                          OUTPUT aux_nrdrowid).
 
                       RETURN "NOK".
-    		   	   END.
-			END.
-		ELSE
+                   END.
+            END.
+        ELSE
             DO:
 
-			  FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+              FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
                                    AND crapope.cdoperad = par_cdoperad
                                    NO-LOCK NO-ERROR.
 
               IF AVAIL crapope THEN
-			  DO:
+              DO:
                 IF (crapope.cddepart <> 13) and (crapcyc.cdmotcin = 2 or crapcyc.cdmotcin = 7) then
                 DO:
-				  ASSIGN aux_cdcritic = 0
-			             aux_dscritic = "Somente operadores do departamento juridico " +
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Somente operadores do departamento juridico " +
                                         "podem excluir registros com MOTIVO CIN 2 ou 7 !".
                 
-				  RUN gera_erro (INPUT par_cdcooper,        
+                  RUN gera_erro (INPUT par_cdcooper,        
                                  INPUT par_cdagenci,
                                  INPUT 1, /* nrdcaixa  */
                                  INPUT 1, /* sequencia */
                                  INPUT aux_cdcritic,        
                                  INPUT-OUTPUT aux_dscritic).                                            
 
-			      RETURN "NOK".
-   		        END.	
+                  RETURN "NOK".
+                END.    
               END.  
 
-			   DELETE crapcyc.
+               DELETE crapcyc.
                ASSIGN aux_flgerlog = TRUE.
+
+              /*  IF par_nrborder > 0 AND par_cdorigem = 4 THEN
+                DO:
+                    DELETE tbdsct_titulo_cyber.
+                END. */
                LEAVE.
             END.
     END.
@@ -879,6 +1062,8 @@ PROCEDURE consulta-dados-crapcyc:
     DEF INPUT PARAM par_nriniseq AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdassess AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdmotcin AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrborder AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrtitulo AS INTE                               NO-UNDO.
 
     DEF OUTPUT PARAM par_qtregist AS INTE                              NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-crapcyc.
@@ -899,6 +1084,11 @@ PROCEDURE consulta-dados-crapcyc:
     DEF VAR aux_nmassess AS CHAR                                       NO-UNDO.
     DEF VAR aux_dsmotcin AS CHAR                                       NO-UNDO.
 
+    DEF VAR aux_nrborder AS INTE                                       NO-UNDO.
+    DEF VAR aux_nrtitulo AS INTE                                       NO-UNDO.
+    DEF VAR aux_nrctrdsc AS INTE                                       NO-UNDO.
+    DEF VAR aux_nrdocmto AS INTE                                       NO-UNDO.
+ 
     ASSIGN aux_nrregist = par_nrregist.
 
     IF  par_nrdconta > 0 THEN
@@ -925,6 +1115,40 @@ PROCEDURE consulta-dados-crapcyc:
                                                crapcyc.cdmotcin >= 0)
                                      NO-LOCK:
                     
+                        IF  crapcyc.cdorigem = 1 THEN
+                            ASSIGN aux_dsorigem = "Conta".
+                        ELSE
+                        IF  crapcyc.cdorigem = 3 THEN
+                            ASSIGN aux_dsorigem = "Emprestimo".
+                        ELSE
+                          DO:
+                            ASSIGN aux_dsorigem = "Desconto de Titulo"
+                                   aux_nrctrdsc = crapcyc.nrctremp.
+
+                            FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = par_cdcooper
+                                                             AND tbdsct_titulo_cyber.nrdconta = par_nrdconta
+                                                             AND tbdsct_titulo_cyber.nrctrdsc = aux_nrctrdsc
+                                                             AND (IF par_nrborder > 0 THEN
+                                                                     tbdsct_titulo_cyber.nrborder = par_nrborder
+                                                                                                  ELSE
+                                                                                                     tbdsct_titulo_cyber.nrborder > 0)
+                                                                                             AND (IF par_nrtitulo > 0 THEN 
+                                                                                                     tbdsct_titulo_cyber.nrtitulo = par_nrtitulo
+                                                                                                  ELSE
+                                                                                                     tbdsct_titulo_cyber.nrtitulo > 0)
+                                                          NO-LOCK NO-ERROR.
+
+                            IF NOT AVAIL tbdsct_titulo_cyber THEN
+                              NEXT.
+
+                            FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper
+                                                 AND craptdb.nrdconta = par_nrdconta
+                                                 AND craptdb.nrborder = tbdsct_titulo_cyber.nrborder
+                                                 AND craptdb.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+                                                            NO-LOCK NO-ERROR.
+                            IF NOT AVAIL craptdb THEN
+                              NEXT.
+                          END.
                         ASSIGN par_qtregist = par_qtregist + 1
                                aux_nmoperad = ""
                                aux_nmopeinc = ""
@@ -934,11 +1158,6 @@ PROCEDURE consulta-dados-crapcyc:
                         IF  (par_qtregist < par_nriniseq) OR
                             (par_qtregist > (par_nriniseq + par_nrregist)) THEN
                             NEXT.
-
-                        IF  crapcyc.cdorigem = 1 THEN
-                            ASSIGN aux_dsorigem = "Conta".
-                        ELSE
-                            ASSIGN aux_dsorigem = "Emprestimo".
 
                         FIND FIRST crapope WHERE crapope.cdcooper = crapcyc.cdcooper
                                              AND crapope.cdoperad = crapcyc.cdoperad
@@ -986,7 +1205,11 @@ PROCEDURE consulta-dados-crapcyc:
                                tt-crapcyc.cdopeinc = aux_nmopeinc
                                tt-crapcyc.dtaltera = crapcyc.dtaltera
                                tt-crapcyc.nmassess = aux_nmassess
-                               tt-crapcyc.dsmotcin = aux_dsmotcin.
+                               tt-crapcyc.dsmotcin = aux_dsmotcin
+                               tt-crapcyc.nrborder = tbdsct_titulo_cyber.nrborder
+                               tt-crapcyc.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+                               tt-crapcyc.nrdocmto = craptdb.nrdocmto.
+
                     END.                   
                 END.
 
@@ -1013,6 +1236,41 @@ PROCEDURE consulta-dados-crapcyc:
                                                crapcyc.cdmotcin >= 0)
                                      NO-LOCK:
 
+                        IF  crapcyc.cdorigem = 1 THEN
+                            ASSIGN aux_dsorigem = "Conta".
+                        ELSE
+                        IF  crapcyc.cdorigem = 3 THEN
+                            ASSIGN aux_dsorigem = "Emprestimo".
+                        ELSE
+                          DO:
+                            ASSIGN aux_dsorigem = "Desconto de Titulo".
+                                   aux_nrctrdsc = crapcyc.nrctremp.
+
+                            FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = par_cdcooper
+                                                             AND tbdsct_titulo_cyber.nrdconta = crapcyc.nrdconta
+                                                             AND tbdsct_titulo_cyber.nrctrdsc = aux_nrctrdsc
+                                                             AND (IF par_nrborder > 0 THEN
+                                                                     tbdsct_titulo_cyber.nrborder = par_nrborder
+                                                                  ELSE
+                                                                     tbdsct_titulo_cyber.nrborder > 0)
+                                                             AND (IF par_nrtitulo > 0 THEN 
+                                                                     tbdsct_titulo_cyber.nrtitulo = par_nrtitulo
+                                                                  ELSE
+                                                                     tbdsct_titulo_cyber.nrtitulo > 0)
+                                                          NO-LOCK NO-ERROR.
+
+                            IF NOT AVAIL tbdsct_titulo_cyber THEN
+                                NEXT. 
+                                   
+                            FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper
+                                                 AND craptdb.nrdconta = crapcyc.nrdconta
+                                                 AND craptdb.nrborder = tbdsct_titulo_cyber.nrborder
+                                                 AND craptdb.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+                                                            NO-LOCK NO-ERROR.
+                            IF NOT AVAIL craptdb THEN
+                              NEXT.       
+                          END.
+                        
                         ASSIGN par_qtregist = par_qtregist + 1
                                aux_nmoperad = ""
                                aux_nmopeinc = ""
@@ -1024,11 +1282,6 @@ PROCEDURE consulta-dados-crapcyc:
                             (par_qtregist > (par_nriniseq + par_nrregist)) THEN
                             NEXT.
                     
-                        IF  crapcyc.cdorigem = 1 THEN
-                            ASSIGN aux_dsorigem = "Conta".
-                        ELSE
-                            ASSIGN aux_dsorigem = "Emprestimo".
-                        
                         FIND FIRST crapope WHERE crapope.cdcooper = crapcyc.cdcooper
                                              AND crapope.cdoperad = crapcyc.cdoperad
                                            NO-LOCK NO-ERROR.
@@ -1075,7 +1328,10 @@ PROCEDURE consulta-dados-crapcyc:
                                tt-crapcyc.cdopeinc = aux_nmopeinc
                                tt-crapcyc.dtaltera = crapcyc.dtaltera
                                tt-crapcyc.nmassess = aux_nmassess
-                               tt-crapcyc.dsmotcin = aux_dsmotcin.
+                               tt-crapcyc.dsmotcin = aux_dsmotcin
+                               tt-crapcyc.nrborder = tbdsct_titulo_cyber.nrborder
+                               tt-crapcyc.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+                               tt-crapcyc.nrdocmto = craptdb.nrdocmto.
                     END.
                 END.
                 
@@ -1108,8 +1364,12 @@ PROCEDURE importa-dados-crapcyc:
     DEF var aux_flgehvip AS LOG                                           NO-UNDO.
     DEF VAR aux_nrdconta AS INTE                                          NO-UNDO.
     DEF VAR aux_nrctremp AS INTE                                          NO-UNDO.
+    DEF VAR aux_nrborder AS INTE                                          NO-UNDO.
+    DEF VAR aux_nrtitulo AS INTE                                          NO-UNDO.
+    DEF VAR aux_nrdocmto AS INTE                                          NO-UNDO.
     DEF VAR aux_cdorigem AS INTE                                          NO-UNDO.
     DEF VAR aux_cdcooper AS INTE                                          NO-UNDO.
+    DEF VAR aux_counttdb AS INTE                                          NO-UNDO.
     DEF VAR aux_flgerro  AS LOG                                           NO-UNDO.
     DEF VAR aux_linhaarq AS CHAR                                          NO-UNDO.
     DEF VAR aux_nmarquiv AS CHAR                                          NO-UNDO.
@@ -1172,7 +1432,7 @@ PROCEDURE importa-dados-crapcyc:
            IMPORT STREAM str_1 UNFORMATTED aux_linhaarq. 
 
            /* formato da linha do arquivo: 
-           No Coop, Nome Coop.,	Origem,	No Conta, No Contrato,	Judicial, Extrajudicial,	CIN, Data Cobrança Assessoria, Codigo assessoria, Codigo Motivo CIN */
+           No Coop, Nome Coop., Origem, No Conta, No Contrato,  Judicial, Extrajudicial,    CIN, Data Cobrança Assessoria, Codigo assessoria, Codigo Motivo CIN */
            ASSIGN aux_cdcooper = INTE( ENTRY(1, aux_linhaarq, ";") )
                   aux_cdorigem = INTE( ENTRY(3, aux_linhaarq, ";") )
                   aux_nrdconta = INTE( ENTRY(4, aux_linhaarq, ";") )
@@ -1182,7 +1442,10 @@ PROCEDURE importa-dados-crapcyc:
                   aux_flgehvip = IF ENTRY(8, aux_linhaarq, ";") = "S" THEN TRUE ELSE FALSE 
                   aux_dtenvcbr = DATE( ENTRY(9, aux_linhaarq, ";") )
                   aux_cdassess = INTE( ENTRY(10, aux_linhaarq, ";") )
-                  aux_cdmotcin = INTE( ENTRY(11, aux_linhaarq, ";") ) NO-ERROR.
+                  aux_cdmotcin = INTE( ENTRY(11, aux_linhaarq, ";") ) 
+                  aux_nrborder = IF INTE( ENTRY(12, aux_linhaarq, ";") ) > 0 THEN INTE( ENTRY(12, aux_linhaarq, ";") ) ELSE 0
+                  aux_nrdocmto = IF INTE( ENTRY(13, aux_linhaarq, ";") ) > 0 THEN INTE( ENTRY(13, aux_linhaarq, ";") ) ELSE 0
+                NO-ERROR.
 
            IF ERROR-STATUS:ERROR THEN DO:
                PUT STREAM str_2 UNFORMATTED "Erro na estrutura da linha: " +
@@ -1199,6 +1462,8 @@ PROCEDURE importa-dados-crapcyc:
            ASSIGN aux_registro = " Origem:   "   + STRING(aux_cdorigem, "9")            +
                                  " Conta:    "   + STRING(aux_nrdconta, "zzzz,zzz,9")   +
                                  " Contrato: "   + STRING(aux_nrctremp, "zz,zzz,zz9")   +
+                                 " Bordero:  "   + STRING(aux_nrborder, "zzzz9")   +
+                                 " Titulo:   "   + STRING(aux_nrdocmto, "9")   +
                                  " Judicial: "   + IF aux_flgjudic THEN "S" ELSE "N"    +
                                  " Extrajud: "   + IF aux_flextjud THEN "S" ELSE "N"    +
                                  " CIN:      "   + IF aux_flgehvip THEN "S" ELSE "N"    +
@@ -1214,7 +1479,8 @@ PROCEDURE importa-dados-crapcyc:
            END.
 
            IF aux_cdorigem <> 1 AND
-              aux_cdorigem <> 3  THEN DO:
+              aux_cdorigem <> 3 AND 
+              aux_cdorigem <> 4 THEN DO:
                 PUT STREAM str_2 UNFORMATTED "Origem informada invalida: " +
                                               aux_registro SKIP.
                 ASSIGN aux_flgerro = TRUE.
@@ -1250,7 +1516,101 @@ PROCEDURE importa-dados-crapcyc:
                           NEXT.
                        END.
                END.
+            ELSE
+                IF aux_cdorigem = 4 THEN
+                    DO:
+                        /* Verifica se o bordero e o titulo foram preenchidos */
+                        IF aux_nrborder = 0 OR aux_nrdocmto = 0 THEN
+                            DO:
+                                 PUT STREAM str_2 UNFORMATTED "Bordero e Titulo deve ser preenchido. - " +
+                                                                                        aux_registro SKIP.
+                                   ASSIGN aux_flgerro = TRUE.
+                                   NEXT.
+                            END.
+                        /* verifica a existencia do bordero */       
+                        FIND FIRST crapbdt WHERE 
+                                    crapbdt.cdcooper = aux_cdcooper AND
+                                    crapbdt.nrdconta = aux_nrdconta AND 
+                                    crapbdt.nrborder = aux_nrborder
+                                    NO-LOCK NO-ERROR NO-WAIT.
 
+                         IF  NOT AVAIL crapbdt THEN
+                             DO:
+                                PUT STREAM str_2 UNFORMATTED "Bordero nao encontrado. - " +
+                                                                                    aux_registro SKIP.
+                                ASSIGN aux_flgerro = TRUE.
+                                NEXT.
+                             END.
+                             
+                        /* Zera o contador de resultados da TDB */    
+                        ASSIGN aux_counttdb = 0.
+
+                        /* Verifica a existencia do titulo */
+                        FOR EACH craptdb WHERE 
+                                  craptdb.cdcooper = aux_cdcooper AND
+                                  craptdb.nrdconta = aux_nrdconta AND 
+                                  craptdb.nrborder = aux_nrborder AND
+                                  craptdb.nrdocmto = aux_nrdocmto
+                                NO-LOCK:
+                            ASSIGN aux_counttdb = aux_counttdb + 1.
+                        END.
+
+                        IF  NOT AVAIL craptdb THEN
+                            DO:
+                              PUT STREAM str_2 UNFORMATTED "Titulo nao encontrado. - " +
+                                                                                  aux_registro SKIP.
+                              ASSIGN aux_flgerro = TRUE.
+                              NEXT.
+                            END.
+                            
+                        /* Caso tenha mais de um resultado, coloca crítica e não importa */
+                        IF aux_counttdb > 1 THEN
+                          DO:
+                            PUT STREAM str_2 UNFORMATTED "Mais de um titulo encontrado, fazer importacao manual. - " +
+                                                                                    aux_registro SKIP.
+                            ASSIGN aux_flgerro = TRUE.
+                            NEXT.
+                          END.
+                        ELSE  
+                          ASSIGN aux_nrtitulo = craptdb.nrtitulo.
+
+                        /* Verifica se já está inserido na tabela de titulos da Cyber */
+                        FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = aux_cdcooper AND
+                                                             tbdsct_titulo_cyber.nrdconta = aux_nrdconta AND
+                                                             tbdsct_titulo_cyber.nrtitulo = aux_nrtitulo AND
+                                                             tbdsct_titulo_cyber.nrborder = aux_nrborder AND
+                                                             tbdsct_titulo_cyber.nrctrdsc = aux_nrctremp
+                                                        NO-LOCK NO-ERROR.
+                        /* Caso nao exista, insere um novo e atribui o valor de contrato */                                                        
+                        IF NOT AVAIL(tbdsct_titulo_cyber) THEN
+                            DO:
+                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                                RUN STORED-PROCEDURE pc_inserir_titulo_cyber
+                                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT aux_cdcooper
+                                                                        ,INPUT aux_nrdconta
+                                                                        ,INPUT aux_nrborder
+                                                                        ,INPUT aux_nrtitulo
+                                                                        ,OUTPUT 0 
+                                                                        ,OUTPUT "").
+
+                                CLOSE STORED-PROC pc_inserir_titulo_cyber
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                                ASSIGN aux_dscritic  = pc_inserir_titulo_cyber.pr_dscritic WHEN pc_inserir_titulo_cyber.pr_dscritic <> ?.
+                                IF aux_dscritic <> "" THEN
+                                    DO:
+                                        PUT STREAM str_2 UNFORMATTED aux_dscritic + " - " +
+                                                                                            aux_registro SKIP.
+                                        ASSIGN aux_flgerro = TRUE.
+                                        NEXT.
+                                    END.
+                                /* Substitui o numero do contrato de emprestimo com o sequencial especifico do desconto de titulos */
+                                ASSIGN aux_nrctremp = INT(pc_inserir_titulo_cyber.pr_nrctrdsc).
+                            END.
+                    END.
            FOR FIRST crapcyc FIELD(flgjudic flgehvip flextjud 
                                    dtenvcbr cdassess cdmotcin)
                WHERE crapcyc.cdcooper = aux_cdcooper 

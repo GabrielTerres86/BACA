@@ -45,6 +45,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --
   --             19/04/2018 - Ajustado para so descontar do campo Valores Pagos, historicos novos de abono. Os historicos antigos nao devem descontar.
   --                          Heitor (Mouts) - Prj 324
+
+  --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   ---------------------------------------------------------------------------------------------------------------
   -- CURSOR para buscar o saldo que será no Extrato PP.
   -- Usado também an rotina PREJ0001
@@ -14839,10 +14841,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               AND cob.incobran = 0
               AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN 
                   (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                     FROM tbepr_cobranca cde
+                     FROM tbrecup_cobranca cde
                     WHERE cde.cdcooper = pr_cdcooper
                       AND cde.nrdconta = pr_nrdconta
-                      AND cde.nrctremp = pr_nrctremp);
+                      AND cde.nrctremp = pr_nrctremp
+                      AND cde.tpproduto = 0);
       rw_cde cr_cde%ROWTYPE;
             
       -- Cursor para verificar se existe algum boleto pago pendente de processamento
@@ -14859,10 +14862,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              AND cob.dtdpagto = pr_dtmvtolt
              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN 
                  (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                    FROM tbepr_cobranca cde
+                    FROM tbrecup_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
                      AND cde.nrdconta = pr_nrdconta
-                     AND cde.nrctremp = pr_nrctremp)
+                     AND cde.nrctremp = pr_nrctremp
+                     AND cde.tpproduto = 0)
              AND ret.cdcooper = cob.cdcooper
              AND ret.nrdconta = cob.nrdconta
              AND ret.nrcnvcob = cob.nrcnvcob
@@ -14917,7 +14921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- inicializar rows de cursores
           rw_cde := NULL;
           rw_ret := NULL;
-           
+          
           /* 2º se permitir, verificar se possui boletos em aberto */
           OPEN cr_cde( pr_cdcooper => pr_cdcooper
                       ,pr_nrdconta => pr_nrdconta

@@ -35,7 +35,7 @@
 
 	setVarSession("opcoesTela",$opcoesTela);
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"U")) <> "") {
 		exibeErro($msgError);		
 	}	
 	
@@ -58,6 +58,21 @@
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
 	}	
 	
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONTINGENCIA_IBRATAN", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		exit;
+	}
+	$flctgmot = $root->dados->flctgmot;
+
 	// Monta o xml de requisição
 	$xmlGetDados = "";
 	$xmlGetDados .= "<Root>";
@@ -136,4 +151,6 @@
 <script type="text/javascript">
 	var operacao = '<? echo $cddopcao ?>';
 	habilitaAvalista(true, operacao);
+	/*Motor em contingencia*/
+	var flctgmot = <?=$flctgmot?$flctgmot:0?>;
 </script>

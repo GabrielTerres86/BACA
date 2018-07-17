@@ -35,10 +35,14 @@ BEGIN
               13/12/2017 - Melhorar performance da rotina filtrando corretamente
                            os acordos, conforme chamado 807093. (Kelvin).
 
+              23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+
   ............................................................................. */
   DECLARE
 
+
     /*Cursores Locais */
+
     -- Selecionar os dados da Cooperativa
     CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
       SELECT crapcop.cdcooper
@@ -126,10 +130,11 @@ BEGIN
          AND cob.incobran = 0
          AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                      (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                        FROM tbepr_cobranca cde
+                        FROM tbrecup_cobranca cde
                        WHERE cde.cdcooper = pr_cdcooper
                          AND cde.nrdconta = pr_nrdconta
-                         AND cde.nrctremp = pr_nrctremp);
+                         AND cde.nrctremp = pr_nrctremp
+                         AND cde.tpproduto = 0);
     rw_cde cr_cde%ROWTYPE;
 
     -- Cursor para verificar se existe algum boleto pago pendente de processamento
@@ -144,10 +149,11 @@ BEGIN
          AND cob.dtdpagto = pr_dtmvtolt
          AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                    (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                      FROM tbepr_cobranca cde
+                      FROM tbrecup_cobranca cde
                      WHERE cde.cdcooper = pr_cdcooper
                        AND cde.nrdconta = pr_nrdconta
-                       AND cde.nrctremp = pr_nrctremp)
+                       AND cde.nrctremp = pr_nrctremp
+                       AND cde.tpproduto = 0)
          AND ret.cdcooper = cob.cdcooper
          AND ret.nrdconta = cob.nrdconta
          AND ret.nrcnvcob = cob.nrcnvcob
@@ -179,6 +185,7 @@ BEGIN
     vr_tab_crawepr      EMPR0001.typ_tab_crawepr;
     --Tabela de Memoria de Mensagens Confirmadas
     vr_tab_msg_confirma EMPR0001.typ_tab_msg_confirma;
+
     --Tabela de Memoria de Erros
     vr_tab_erro         GENE0001.typ_tab_erro;
     -- Tabela de Memoria de Pagamentos de Parcela 
@@ -325,11 +332,9 @@ BEGIN
     IF cr_crapcop%NOTFOUND THEN
       -- Fechar o cursor pois havera raise
       CLOSE cr_crapcop;
-    
       -- Montar mensagem de critica
       vr_cdcritic:= 651;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      
       RAISE vr_exc_saida;
     ELSE
       -- Apenas fechar o cursor
@@ -343,7 +348,6 @@ BEGIN
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       -- Fechar o cursor pois havera raise
       CLOSE BTCH0001.cr_crapdat;
-      
       -- Montar mensagem de critica
       vr_cdcritic:= 1;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);

@@ -30,6 +30,7 @@
 
 				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
+				 26/04/2018 - Ajuste no botão de voltar, uso da função generica (Leonardo Oliveira - GFT).
 	************************************************************************/
 	
 	session_start();
@@ -45,7 +46,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	setVarSession("nmrotina","DSC TITS - LIMITE");
+	setVarSession("nmrotina","DSC TITS - CONTRATO");
 
 	// Carrega permissões do operador
 	include("../../../../includes/carrega_permissoes.php");	
@@ -235,18 +236,18 @@
 </div>
 
 <script type="text/javascript">
-dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-// Muda o título da tela
-$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
 
 	formataLayout('divContratos');
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
 
-// Bloqueia conteúdo que está átras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
 	
 	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
 	if (executandoProdutos == true) {

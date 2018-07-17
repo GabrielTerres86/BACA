@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 
     Programa: INET0002                         
     Autor   : Jorge Hamaguchi / Jean Deschamps
-    Data    : Novembro/2015                      Ultima Atualizacao: 27/06/2018
+    Data    : Novembro/2015                      Ultima Atualizacao: 02/09/2016
 
     Dados referentes ao programa:
 
@@ -13,8 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
     Alteracoes: 24/11/2015 - Inclusao da procedure pc_inicia_senha_ass_conj para o
                              PRJ. Assinatura Conjunta (Jean Michel).
 
-			          25/04/2016 - Remocao de caracteres invalidos no nome da agencia 
-							               conforme solicitado no chamado 429584 (Kelvin)
+			    25/04/2016 - Remocao de caracteres invalidos no nome da agencia 
+							 conforme solicitado no chamado 429584 (Kelvin)
     
 						    24/03/2016 - Adicionados parâmetros para geraçao de LOG na 'PC_CRIA_TRANS_PEND_TRANSF'
                             (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
@@ -29,8 +29,6 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 
         				11/01/2018 - PJ 454 - SM 1 - Inclusão da procedure de pendência de resgate de cheques 
                              em custódia(Márcio Mouts)
-
-                27/06/2018 - Ajustes de exception em comandos DML e procedures. (Jean Michel)
                 
 ..............................................................................*/
 
@@ -114,7 +112,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
   --Tipo de Registro para cheques em custódia pendentes de resgate 
   TYPE typ_reg_resgate_cst IS
     RECORD (idcustod crapcst.idcustod%type);
-         
+
   --Tipo de tabela de memoria para cheques em custódia pendentes de resgate 
   TYPE typ_tab_resgate_cst IS TABLE OF typ_reg_resgate_cst INDEX BY PLS_INTEGER;
 -- Fim SM 454 - 1
@@ -793,9 +791,9 @@ PROCEDURE pc_corrigi_limite_preposto(pr_cdcooper IN VARCHAR2
                                      ,pr_dscritic OUT VARCHAR2
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);    
-                                                                                              
-PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
+                                     ,pr_des_erro OUT VARCHAR2);
+                                     
+  PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
                                     ,pr_nrdconta IN VARCHAR2 
                                     ,pr_xmllog   IN  VARCHAR2
                                     ,pr_cdcritic OUT PLS_INTEGER                       
@@ -865,6 +863,25 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                                        ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 														 		       ,pr_dscritic OUT VARCHAR2);         --> Descrição da crítica                                       
                                  
+  PROCEDURE pc_cria_trans_pend_dscto_tit(pr_cdcooper          IN tbdsct_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                        ,pr_nrdconta          IN tbdsct_trans_pend.nrdconta%TYPE --> Numero da Conta
+                                        ,pr_idseqttl          IN crapttl.idseqttl%TYPE           --> Número do Titular
+                                        ,pr_nrcpfrep          IN crapopi.nrcpfope%TYPE           --> Numero do cpf do representante legal
+                                        ,pr_cdagenci          IN crapage.cdagenci%TYPE           --> Codigo do PA
+                                        ,pr_nrdcaixa          IN craplot.nrdcaixa%TYPE           --> Numero do Caixa
+                                        ,pr_cdoperad          IN crapope.cdoperad%TYPE           --> Codigo do Operados
+                                        ,pr_nmdatela          IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                        ,pr_idorigem          IN INTEGER                         --> Origem da solicitacao
+                                        ,pr_nrcpfope          IN crapopi.nrcpfope%TYPE           --> Numero do cpf do operador juridico
+                                        ,pr_cdcoptfn          IN tbgen_trans_pend.cdcoptfn%TYPE  --> Cooperativa do Terminal
+                                        ,pr_cdagetfn          IN tbgen_trans_pend.cdagetfn%TYPE  --> Agencia do Terminal
+                                        ,pr_nrterfin          IN tbgen_trans_pend.nrterfin%TYPE  --> Numero do Terminal Financeiro
+                                        ,pr_dtmvtolt          IN DATE                            --> Data do movimento     
+                                        ,pr_idastcjt          IN crapass.idastcjt%TYPE           --> Indicador de Assinatura Conjunta
+                                        ,pr_tab_dados_titulos IN tela_atenda_dscto_tit.typ_tab_dados_titulos --> Titulos para desconto
+                                        ,pr_cdcritic         OUT crapcri.cdcritic%TYPE           --> Codigo de Critica
+                                        ,pr_dscritic         OUT crapcri.dscritic%TYPE);         --> Descricao de Critica
+
 END INET0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
@@ -875,7 +892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 27/06/2018
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 03/11/2017
   --
   -- Dados referentes ao programa:
   --
@@ -912,9 +929,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	--
 	--             03/11/2017 - Ajuste para tratar agendamentos de recarga de celular duplicados. (Reinert)	
   --
-  --      			 11/01/2018 - PJ 454 - SM 1 - Inclusão da procedure de pendência de resgate de cheques (Márcio Mouts)
+  --      				11/01/2018 - PJ 454 - SM 1 - Inclusão da procedure de pendência de resgate de cheques (Márcio Mouts)	
   --
-  --      			 27/06/2018 - Ajustes de exception em comandos DML e procedures. (Jean Michel)
+  --             18/05/2018 - Adicionado o procedimento pc_cria_trans_pend_dscto_tit (Paulo Penteado (GFT))
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -1072,8 +1089,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         IF cr_crapavt%NOTFOUND THEN
             --Fechar Cursor
             CLOSE cr_crapavt;
-            vr_cdcritic:= 1124;
-            vr_dscritic:= GENE0001.fn_busca_critica(vr_cdcritic);
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Registro do Representante nao encontrado.';
             --Levantar Excecao
             RAISE vr_exc_erro;
         END IF;
@@ -1091,8 +1108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             IF cr_crapass%NOTFOUND THEN
                 --Fechar Cursor
                 CLOSE cr_crapass;
-                vr_cdcritic:= 9;
-                vr_dscritic:= GENE0001.fn_busca_critica(vr_cdcritic);
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Registro do cooperado nao encontrado.2';
                 --Levantar Excecao
                 RAISE vr_exc_erro;
             END IF;
@@ -1114,7 +1131,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 CLOSE cr_crappod;
                 --Verifica validade da atividade do representante
                 IF vr_dtvalida < SYSDATE THEN
-                   vr_cdcritic := 0;
                    vr_dscritic := 'Operacao indisponivel. A vigencia da procuracao ou atividade de socio esta vencida.';
                    RAISE vr_exc_erro;
                 END IF;
@@ -1128,14 +1144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
     EXCEPTION
        WHEN vr_exc_erro THEN
-         
-         pr_cdcritic:= NVL(vr_cdcritic,0);
-
-         IF NVL(pr_cdcritic,0) > 0 THEN
-           pr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic); 
-         ELSE  
-           pr_dscritic:= vr_dscritic;
-         END IF;
+         pr_cdcritic:= vr_cdcritic;
+         pr_dscritic:= vr_dscritic;
        WHEN OTHERS THEN
          pr_cdcritic:= 0;
          pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
@@ -1265,12 +1275,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
    EXCEPTION
     WHEN vr_exc_saida THEN
-
-      pr_cdcritic := NVL(vr_cdcritic,0);
-
-      IF NVL(pr_cdcritic,0) > 0 THEN    
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic);
+      IF NVL(vr_cdcritic,0) > 0 THEN    
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
       ELSE
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       END IF;
     WHEN OTHERS THEN
@@ -1446,17 +1455,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	
 	 EXCEPTION
 		WHEN vr_exc_saida THEN
-
-      pr_cdcritic := NVL(vr_cdcritic,0);
-
-			IF NVL(pr_cdcritic,0) > 0 THEN
-   	    pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-			ELSE
-			  pr_dscritic := vr_dscritic;
+      
+      pr_cdcritic := vr_cdcritic;
+			IF vr_cdcritic <> 0 THEN
+			   pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+			ELSE	
+			   pr_dscritic := vr_dscritic;
 		  END IF;
-
 		WHEN OTHERS THEN
-      pr_cdcritic := 0;
       pr_dscritic := 'Erro geral em PC_VERIFICA_VALIDADE_PROCURAC. Erro: ' || SQLERRM;
    END;
 	END pc_verifica_validade_procurac;
@@ -1570,7 +1576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       IF pr_flgerlog = 1 THEN
         -- Buscar a origem
-        vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_cdorigem);
+        vr_dsorigem:= gene0001.vr_vet_des_origens(pr_cdorigem);
         -- Buscar Transacao
         vr_dstransa:= 'Excluir transacoes de operadores de conta.';
       END IF;
@@ -1584,8 +1590,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       IF cr_crapass%NOTFOUND THEN
           --Fechar Cursor
           CLOSE cr_crapass;
-          vr_cdcritic:= 9;
-          vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Registro do cooperado nao encontrado.';
           --Levantar Excecao
           RAISE vr_exc_erro;
       ELSE
@@ -1603,8 +1609,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          IF cr_crapsnh%NOTFOUND THEN
              --Fechar Cursor
              CLOSE cr_crapsnh;
-             vr_cdcritic:= 1125;
-             vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+             vr_cdcritic:= 0;
+             vr_dscritic:= 'Registro de senha nao encontrado.';
              --Levantar Excecao
              RAISE vr_exc_erro;
          ELSE
@@ -1671,8 +1677,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               IF cr_crapass%NOTFOUND THEN
                   --Fechar Cursor
                   CLOSE cr_crapass;
-                  vr_cdcritic:= 9;
-                  vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Registro do cooperado nao encontrado.';
                   --Levantar Excecao
                   RAISE vr_exc_erro;
               ELSE 
@@ -1705,7 +1711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 UPDATE tbrecarga_operacao
                    SET insit_operacao = 4 /* cancelada transação pendente */ 
                  WHERE idoperacao =  rw_tbrecarga_trans_pend.idoperacao;
-              ELSE
+         ELSE
                 CLOSE cr_tbrecarga_trans_pend;
               END IF;
             END IF;
@@ -1728,7 +1734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               
               IF cr_tbgen_trans_pend%FOUND THEN
                 CLOSE cr_tbgen_trans_pend;
-                GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper
+                gene0001.pc_gera_log( pr_cdcooper => pr_cdcooper
                                      ,pr_cdoperad => pr_cdoperad 
                                      ,pr_dscritic => ''         
                                      ,pr_dsorigem => vr_dsorigem
@@ -1741,18 +1747,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                      ,pr_nrdconta => pr_nrdconta
                                      ,pr_nrdrowid => vr_nrdrowid);
                                
-                GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                           pr_nmdcampo => 'Codigo da Transacao Pendente', 
                                           pr_dsdadant => '', 
                                           pr_dsdadatu => TO_CHAR( rw_tbgen_trans_pend.cdtransacao_pendente));
                 
                 IF vr_idastcjt = 0 THEN
-                  GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                             pr_nmdcampo => 'Nome do Preposto', 
                                             pr_dsdadant => '', 
                                             pr_dsdadatu => vr_nmprimtl);
                                             
-                  GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                             pr_nmdcampo => 'CPF do Preposto', 
                                             pr_dsdadant => '', 
                                             pr_dsdadatu => TO_CHAR( vr_nrcpfcgc));
@@ -1767,20 +1773,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
     EXCEPTION
        WHEN vr_exc_erro THEN
-
-         pr_cdcritic:= NVL(vr_cdcritic,0);
-
-         IF NVL(pr_cdcritic,0) > 0 THEN
-           pr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-         ELSE
-           pr_dscritic:= vr_dscritic;
-         END IF;
-            
-         ROLLBACK;
+            pr_cdcritic:= vr_cdcritic;
+            pr_dscritic:= vr_dscritic;
+		        ROLLBACK;
        WHEN OTHERS THEN
-         pr_cdcritic:= 0;
-         pr_dscritic:= 'Erro na rotina INET0002.pc_exclui_trans_pend. '||SQLERRM;
-		     ROLLBACK;
+            pr_cdcritic:= 0;
+            pr_dscritic:= 'Erro na rotina INET0002.pc_exclui_trans_pend. '||SQLERRM;
+		        ROLLBACK;
     END;
   END pc_exclui_trans_pend;
 
@@ -1871,8 +1870,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
        --Fechar Cursor
        CLOSE cr_crapcop;   
        
-       vr_cdcritic:= 794;
-       vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Cooperativa nao encontrada.';
        --Levantar Excecao
        RAISE vr_exc_saida;
     END IF;
@@ -1890,8 +1889,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
        --Fechar Cursor
        CLOSE cr_crapass;   
        
-       vr_cdcritic:= 9;
-       vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Cooperado nao encontrada.';
        --Levantar Excecao
        RAISE vr_exc_saida;
     END IF;
@@ -1968,7 +1967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            RAISE vr_exc_saida;
         END IF;
 
-		    vr_dsdmensg_notif := vr_dsdmensg;
+		vr_dsdmensg_notif := vr_dsdmensg;
         vr_dsdmensg := 'Atenção, ' || pr_tab_crapavt(vr_ind).nmdavali || '!<br><br>Informamos que a seguinte transação está pendente de aprovação:<br><br>' || vr_dsdmensg;
 
         --Sequencial do titular
@@ -1980,8 +1979,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            --Fechar Cursor
            CLOSE cr_crapsnh;   
            
-           vr_cdcritic:= 1125;
-           vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+           vr_cdcritic:= 0;
+           vr_dscritic:= 'Registro de senha nao encontrado.';
            --Levantar Excecao
            RAISE vr_exc_saida;
         END IF;
@@ -2023,20 +2022,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
      
    EXCEPTION
      WHEN vr_exc_saida THEN
+       pr_cdcritic := vr_cdcritic;
 
-       pr_cdcritic := NVL(vr_cdcritic,0);
-
-       IF NVL(pr_cdcritic,0) > 0 THEN         
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+       IF vr_cdcritic <> 0 THEN
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
        ELSE      
-         pr_dscritic := vr_dscritic;
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
        END IF;
          
        ROLLBACK;
      WHEN OTHERS THEN
        pr_dscritic := 'Erro no procedimento INET0002.pc_cria_aprova_transpend: ' || SQLERRM;      
-       ROLLBACK;
-   END pc_cria_aprova_transpend;
+   END pc_cria_aprova_transpend; 
 
   -- Procedimentos para criaco de mensagens referente a Assinatura Conjunta
   PROCEDURE pc_cria_msgs_trans (pr_cdcooper  IN crapcop.cdcooper%TYPE                      -- Codigo Cooperativa
@@ -2302,6 +2300,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          GROUP BY dscc.cdtransacao_pendente;
       rw_tbcst_trans_pend_det cr_tbcst_trans_pend_det%ROWTYPE;
 -- Fim SM 454.1      
+      
+      --Tipo Transacao 19 (Borderô Desconto de Titulo)
+      CURSOR cr_tbdsct_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+        SELECT SUM(dsct.vltitulo) vltotbdt
+              ,COUNT(1) qttitulo
+          FROM tbdsct_trans_pend dsct
+         WHERE dsct.cdtransacao_pendente = pr_cddoitem
+         GROUP BY dsct.cdtransacao_pendente;
+      rw_tbdsct_trans_pend cr_tbdsct_trans_pend%ROWTYPE;   
 
       --Variaveis Locais
       vr_idastcjt crapass.idastcjt%TYPE;
@@ -2343,8 +2350,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          --Fechar Cursor
          CLOSE cr_crapass;   
          
-         vr_cdcritic:= 9;
-         vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         vr_cdcritic:= 0;
+         vr_dscritic:= 'Registro do cooperado nao encontrado.';
          --Levantar Excecao
          RAISE vr_exc_erro;
       END IF;
@@ -2357,8 +2364,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   
       IF cr_tbgen_trans_pend%NOTFOUND THEN
           CLOSE cr_tbgen_trans_pend;
-          vr_cdcritic:= 1121;
-          vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Registro de transacao pendente nao encontrado.';
           --Levantar Excecao
           RAISE vr_exc_erro;      
       ELSE
@@ -2392,8 +2399,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   --Fechar Cursor
                   CLOSE cr_crapcop;   
                   
-                  vr_cdcritic:= 1079;
-                  vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Registro da cooperativa destino nao encontrado.';
                   --Levantar Excecao
                   RAISE vr_exc_erro;
                ELSE
@@ -2407,8 +2414,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                IF cr_crapass %NOTFOUND THEN
                   --Fechar Cursor
                   CLOSE cr_crapass;
-                  vr_cdcritic:= 1081;
-                  vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Conta destino nao encontrado.';
                   --Levantar Excecao
                   RAISE vr_exc_erro;
                ELSE
@@ -2664,9 +2671,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																												 ,pr_cdcritic => vr_cdcritic
 																												 ,pr_dscritic => vr_dscritic
 																												 ,pr_tab_agen_det => vr_tab_agen_det);
-
-												IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-													RAISE vr_exc_erro;
+												IF NVL(vr_cdcritic,0) <> 0 OR
+													 vr_dscritic IS NOT NULL THEN
+													 RAISE vr_exc_erro;
 												END IF;			
 
 												vr_nrindice := vr_tab_agen_det.FIRST;                        
@@ -2720,8 +2727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                            --Fechar Cursor
                            CLOSE cr_crapcon;
 
-													 vr_cdcritic:= 558;
-													 vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+													 vr_cdcritic:= 0;
+													 vr_dscritic:= 'Registro Empresa conveniada nao encontrado.';
 													 --Levantar Excecao
 													 RAISE vr_exc_erro;
 												END IF;
@@ -2767,8 +2774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 							 IF cr_tbfolha_trans_pend%NOTFOUND THEN
                   --Fechar Cursor
                   CLOSE cr_tbfolha_trans_pend;
-									vr_cdcritic:= 1122;
-									vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => 1122);
+									vr_cdcritic:= 0;
+									vr_dscritic:= 'Registro de Folha Pagamento pendente nao encontrado.';
 									--Levantar Excecao
 									RAISE vr_exc_erro;
                ELSE
@@ -2808,8 +2815,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 							 IF cr_tbpagto_darf_das_trans_pend%NOTFOUND THEN
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;      
-									vr_cdcritic:= 1123;
-									vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+									vr_cdcritic:= 0;
+									vr_dscritic:= 'Registro de Pagamento de DARF/DAS pendente nao encontrado.';
 									--Levantar Excecao
 									RAISE vr_exc_erro;
                ELSE
@@ -2832,7 +2839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 						 --Fechar Cursor
                   CLOSE cr_tbdscc_trans_pend;      
 						 vr_cdcritic:= 0;
-				     vr_dscritic:= 'Registro de Desconto de Cheque pendente nao encontrado.';
+				  vr_dscritic:= 'Registro de Desconto de Cheque pendente nao encontrado.';
 						 --Levantar Excecao
 						 RAISE vr_exc_erro;
 				  ELSE
@@ -2904,7 +2911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         '<b>' || TO_CHAR(rw_tbtrib_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>' || ' no valor de <b>R$ ' ||
                         TO_CHAR(rw_tbtrib_trans_pend.vlpagamento,'fm999g999g990d00') || '</b>.<br>';
              
-			  WHEN pr_tptransa = 16 THEN -- SMS cobrança          
+        WHEN pr_tptransa = 16 THEN -- SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Adesão ao serviço de SMS de Cobrança';
         WHEN pr_tptransa = 17 THEN -- Cancelamento SMS cobrança          
           pr_dsdmensg := pr_dsdmensg || 'Cancelamento de serviço de SMS de Cobrança';  
@@ -2913,22 +2920,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          OPEN cr_tbcst_trans_pend_det (pr_cddoitem => pr_cdtranpe);
  			   FETCH cr_tbcst_trans_pend_det INTO rw_tbcst_trans_pend_det;
 			   IF cr_tbcst_trans_pend_det%NOTFOUND THEN
-            --Fechar Cursor
+					 --Fechar Cursor
            CLOSE cr_tbcst_trans_pend_det;      
-            vr_cdcritic:= 0;
-				    vr_dscritic:= 'Registro de Resgate de Cheque em Custódia pendente nao encontrado.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          ELSE
-            --Fechar Cursor
+					 vr_cdcritic:= 0;
+				   vr_dscritic:= 'Registro de Resgate de Cheque em Custódia pendente nao encontrado.';
+				   --Levantar Excecao
+					RAISE vr_exc_erro;
+				  ELSE
+						 --Fechar Cursor
 				  CLOSE cr_tbcst_trans_pend_det;
-          END IF;
-          pr_dsdmensg := pr_dsdmensg || 
+				  END IF;
+					pr_dsdmensg := pr_dsdmensg ||
 			  				  '<b>Borderô de resgate de cheque em custódia</b> no valor total de <b>R$ ' ||
                               TO_CHAR(rw_tbcst_trans_pend_det.vltotchq,'fm999g999g990d00') || 
                               '</b> com <b>' || rw_tbcst_trans_pend_det.qtcheque || '</b> cheques.<br>';			
-             
--- Fim SM 454.1    
+      
+-- Fim SM 454.1       
+
+
+					WHEN pr_tptransa = 19 THEN -- Bordero Desconto de Titulo
+          OPEN  cr_tbdsct_trans_pend(pr_cddoitem => pr_cdtranpe);
+							   FETCH cr_tbdsct_trans_pend INTO rw_tbdsct_trans_pend;
+			       IF    cr_tbdsct_trans_pend%NOTFOUND THEN
+                CLOSE cr_tbdsct_trans_pend;      
+						          vr_cdcritic := 0;
+				            vr_dscritic := 'Registro de Borderô de Desconto de Título pendente nao encontrado.';
+						          RAISE vr_exc_erro;
+				      ELSE
+			             CLOSE cr_tbdsct_trans_pend;
+				      END   IF;
+
+					     pr_dsdmensg := pr_dsdmensg || '<b>Borderô de desconto de título</b> no valor total de <b>R$ ' ||
+                              TO_CHAR(rw_tbdsct_trans_pend.vltotbdt,'fm999g999g990d00') || 
+                              '</b> com <b>' || rw_tbdsct_trans_pend.qttitulo || '</b> títulos.<br>';
         ELSE
           vr_dscritic := 'Tipo de transação invalida.';
           RAISE vr_exc_erro;
@@ -2936,15 +2960,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 			      
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        IF vr_cdcritic <> 0 THEN
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         ELSE	
-          pr_dscritic := vr_dscritic;
-        END IF;        
+         pr_cdcritic := 0;
+         pr_dscritic := vr_dscritic;
+        END IF;	
+        
       WHEN OTHERS THEN
         pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina INET0002.pc_cria_msgs_trans. '||SQLERRM;        
+        pr_dscritic:= 'Erro na rotina INET0002.pc_cria_msgs_trans. '||SQLERRM;
+        
     END;
   END pc_cria_msgs_trans;
 
@@ -2997,7 +3024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	  vr_tptransa NUMBER(2);
     vr_cddoitem tbgen_trans_pend.cdtransacao_pendente%TYPE;
     vr_dsdmensg VARCHAR2(32000) := ' ';
-	  vr_dsdmensg_notif VARCHAR2(32000) := ' ';
+	vr_dsdmensg_notif VARCHAR2(32000) := ' ';
     vr_ncctarep crapavt.nrdctato%TYPE;
     vr_auxnumbe NUMBER;
     vr_msgretor VARCHAR2(1000);
@@ -3108,7 +3135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       IF pr_flgerlog = 1 THEN
          -- Buscar a origem
-         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_cdorigem);
+         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_cdorigem);
          -- Buscar Transacao
          vr_dstransa:= 'Reprovar transacoes pendentes de operadores de conta.';
       END IF;
@@ -3121,8 +3148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       IF cr_crapcop%NOTFOUND THEN    
           --Fechar Cursor
           CLOSE cr_crapcop;
-          vr_cdcritic := 794;
-          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Cooperativa nao encontrada.';
           --Levantar Excecao
           RAISE vr_exc_erro;
       END IF;
@@ -3140,8 +3167,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       IF cr_crapass%NOTFOUND THEN    
         --Fechar Cursor
         CLOSE cr_crapass;
-          vr_cdcritic := 9;
-          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Registro do cooperado nao encontrado.';
           --Levantar Excecao
           RAISE vr_exc_erro;
       END IF;
@@ -3245,7 +3272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    pr_cdoperad => pr_cdoperad, 
                                                    pr_cddoitem => vr_cddoitem, 
                                                    pr_dtmvtopg => sysdate, 
-                                                   pr_dsorigem => GENE0001.vr_vet_des_origens(pr_cdorigem), 
+                                                   pr_dsorigem => gene0001.vr_vet_des_origens(pr_cdorigem), 
                                                    pr_msgretor => vr_msgretor, 
                                                    pr_cdcritic => pr_cdcritic, 
                                                    pr_dscritic => pr_dscritic);
@@ -3270,27 +3297,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             EXCEPTION
                WHEN OTHERS THEN
                     pr_cdcritic:= 0;
-                    pr_dscritic:= 'Erro na rotina INET0002.pc_reprova_trans_pend(01): ' || SQLERRM;
+                    pr_dscritic:= 'update tbgen_trans_pend rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
                     --Levantar Excecao
                     RAISE vr_exc_erro;
             END;
             -- Se for preposto
 			      IF pr_nrcpfope = 0 THEN
-              BEGIN
-                 --Atualiza registro de aprovacao do responsavel legal 
-                 UPDATE tbgen_aprova_trans_pend
-                 SET    tbgen_aprova_trans_pend.idsituacao_aprov = 3 -- Reprovada
-                       ,tbgen_aprova_trans_pend.dtalteracao_situacao = TRUNC(SYSDATE)
-                       ,tbgen_aprova_trans_pend.hralteracao_situacao = gene0002.fn_busca_time
-                 WHERE  tbgen_aprova_trans_pend.cdtransacao_pendente = vr_cddoitem
-                 AND    tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = vr_nrcpfcgc;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  pr_cdcritic:= 0;
-                  pr_dscritic:= 'Erro na rotina INET0002.pc_reprova_trans_pend(02): ' || SQLERRM;
-                  --Levantar Excecao
-                  RAISE vr_exc_erro;
-              END;
+            BEGIN
+               --Atualiza registro de aprovacao do responsavel legal 
+               UPDATE tbgen_aprova_trans_pend
+               SET    tbgen_aprova_trans_pend.idsituacao_aprov = 3 -- Reprovada
+                     ,tbgen_aprova_trans_pend.dtalteracao_situacao = TRUNC(SYSDATE)
+                     ,tbgen_aprova_trans_pend.hralteracao_situacao = gene0002.fn_busca_time
+               WHERE  tbgen_aprova_trans_pend.cdtransacao_pendente = vr_cddoitem
+               AND    tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = vr_nrcpfcgc;
+            EXCEPTION
+               WHEN OTHERS THEN
+                    pr_cdcritic:= 0;
+                      pr_dscritic:= 'update 02 Erro na rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
+                    --Levantar Excecao
+                    RAISE vr_exc_erro;
+            END;
 			      END IF;
             --
             IF rw_tbgen_trans_pend.tptransacao = 13 THEN
@@ -3308,10 +3335,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                    WHERE idoperacao =  rw_tbrecarga_trans_pend.idoperacao;
                  EXCEPTION
                    WHEN OTHERS THEN
-                     pr_cdcritic:= 0;
-                     pr_dscritic:= 'Erro na rotina INET0002.pc_reprova_trans_pend(03): ' || SQLERRM;
-                     --Levantar Excecao
-                     RAISE vr_exc_erro;
+                        pr_cdcritic:= 0;
+                        pr_dscritic:= 'Update 03 Erro na rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
+                        --Levantar Excecao
+                        RAISE vr_exc_erro;
                  END;
               ELSE 
                 CLOSE cr_tbrecarga_trans_pend;
@@ -3349,8 +3376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                    IF cr_crapass%NOTFOUND THEN
                       --Fechar Cursor
                       CLOSE cr_crapass;
-                       vr_cdcritic:= 9;
-                       vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                       vr_cdcritic:= 0;
+                       vr_dscritic:= 'Registro do cooperado nao encontrado.';
                        --Levantar Excecao
                        RAISE vr_exc_erro;
                    END IF; 
@@ -3428,7 +3455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 			      --Geracao de log 
 			      IF  pr_flgerlog = 1 THEN
           
-				        GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper
+				        gene0001.pc_gera_log( pr_cdcooper => pr_cdcooper
                                      ,pr_cdoperad => pr_cdoperad 
                                      ,pr_dscritic => ''         
                                      ,pr_dsorigem => vr_dsorigem
@@ -3441,22 +3468,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                      ,pr_nrdconta => pr_nrdconta
 				     		 	                   ,pr_nrdrowid => vr_nrdrowid);
 							 
-				        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+				        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                           pr_nmdcampo => 'Codigo da Transacao Pendente', 
                                           pr_dsdadant => '', 
                                           pr_dsdadatu => TO_CHAR( rw_tbgen_trans_pend.cdtransacao_pendente));
 			  
-			          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+			          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                           pr_nmdcampo => 'Nome do Representante', 
                                           pr_dsdadant => '', 
                                           pr_dsdadatu => vr_nmprimtl);
 							  IF pr_nrcpfope = 0 THEN
-			          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+			          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                           pr_nmdcampo => 'CPF do Representante', 
                                           pr_dsdadant => '', 
                                           pr_dsdadatu => TO_CHAR( vr_nrcpfcgc));
                 ELSE
-			            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+			            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                             pr_nmdcampo => 'CPF do Operador', 
                                             pr_dsdadant => '', 
                                             pr_dsdadatu => TO_CHAR(pr_nrcpfope));                 
@@ -3474,21 +3501,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       COMMIT;
       
   EXCEPTION
-    WHEN vr_exc_erro THEN
-      pr_cdcritic := NVL(vr_cdcritic,0); 
-           
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic);
-      ELSE
-        pr_dscritic:= vr_dscritic;
-      END IF;
-         
-      ROLLBACK;
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Others Erro na rotina INET0002.pc_reprova_trans_pend: ' || SQLERRM;
-      ROLLBACK;
-    END;
+      WHEN vr_exc_erro THEN
+		       IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+			        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+		       END IF;
+           pr_cdcritic:= vr_cdcritic;
+           pr_dscritic:= vr_dscritic;
+		       ROLLBACK;
+      WHEN OTHERS THEN
+           pr_cdcritic:= 0;
+           pr_dscritic:= 'Others Erro na rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
+		       ROLLBACK;
+  END;
            
   END pc_reprova_trans_pend;
   
@@ -3589,9 +3613,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   FETCH cr_crapass INTO rw_crapass;
 
   IF cr_crapass%NOTFOUND THEN
-    CLOSE cr_crapass;
     vr_cdcritic := 9;
-    RAISE vr_exec_saida;
+    CLOSE cr_crapass;
   ELSE
     CLOSE cr_crapass;
   END IF;
@@ -3644,9 +3667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         -- Verifica registro de procurador
         IF cr_crapavt%NOTFOUND THEN
           -- Fecha Cursor
-          vr_dscritic := 'Procurador não encontrado.';
           CLOSE cr_crapavt;
-          RAISE vr_exec_saida;
         ELSE
           -- Fecha Cursor
           CLOSE cr_crapavt;
@@ -3666,11 +3687,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-            
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) <> 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -3681,7 +3701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro geral na procedure pc_valid_repre_legal_trans. Erro: '|| SQLERRM; 
       ROLLBACK; 
-    END;    
+  END;    
   END pc_valid_repre_legal_trans;
 
   -- Procedure de criacao de transacao de pagamentos
@@ -3739,10 +3759,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_exec_saida EXCEPTION;
       vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
       vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
-      -- log verlog
-      vr_nrdrowid ROWID;
-      vr_dstransa VARCHAR2(100);
-      vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
 
     BEGIN
     
@@ -3807,8 +3827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbpagto_trans_pend: ' || SQLERRM;
-        RAISE vr_exec_saida;
+        vr_dscritic := 'Erro ao incluir registro tbpagto_trans_pend. Erro: ' || SQLERRM;
     END;
 
     pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -3846,11 +3865,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
     --
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Lancamento'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_vllanmto);
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'CPF do Preposto'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_nrcpfrep);
@@ -3860,12 +3879,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
         
       ROLLBACK;
@@ -3874,7 +3893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_pagto. Erro: '|| SQLERRM; 
       ROLLBACK; 
-    END;
+  END;
   END pc_cria_trans_pend_pagto;
 
   -- Procedure de criacao de transacao de TED
@@ -3940,7 +3959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);     
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);     
     
   BEGIN
 
@@ -3982,7 +4001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                            ,pr_cdtranpe => vr_cdtranpe
                                            ,pr_dscritic => vr_dscritic);
                                        
-        IF TRIM(vr_dscritic) IS NOT NULL THEN
+        IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exec_saida;
         END IF;
 
@@ -4027,8 +4046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao incluir registro tbspb_trans_pend: ' || SQLERRM;
-            RAISE vr_exec_saida;
+            vr_dscritic := 'Erro ao incluir registro tbspb_trans_pend. Erro: ' || SQLERRM;
         END;
 
         pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -4047,8 +4065,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
 
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exec_saida;
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+           RAISE vr_exec_saida;
         END IF;
       END LOOP;
 
@@ -4074,7 +4092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                            ,pr_cdtranpe => vr_cdtranpe
                                            ,pr_dscritic => vr_dscritic);
                                            
-        IF TRIM(vr_dscritic) IS NOT NULL THEN
+        IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exec_saida;
         END IF;
 
@@ -4119,8 +4137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao incluir registro tbspb_trans_pend: ' || SQLERRM;
-            RAISE vr_exec_saida;
+            vr_dscritic := 'Erro ao incluir registro tbspb_trans_pend. Erro: ' || SQLERRM;
         END;
 
         pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -4139,8 +4156,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
 
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exec_saida;
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+           RAISE vr_exec_saida;
         END IF;
     
     END IF;      
@@ -4160,12 +4177,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
     --
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor do Lancamento'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_vllanmto);
                               
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'CPF do Preposto'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_nrcpfrep);                                  
@@ -4174,19 +4191,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
         
       ROLLBACK;
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_ted: ' || SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_ted. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_ted;
 
@@ -4248,7 +4265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
         
   BEGIN
    
@@ -4290,7 +4307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                            ,pr_cdtranpe => vr_cdtranpe
                                            ,pr_dscritic => vr_dscritic);
                                        
-        IF TRIM(vr_dscritic) IS NOT NULL THEN
+        IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exec_saida;
         END IF;
 
@@ -4323,8 +4340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao incluir registro tbtransf_trans_pend: ' || SQLERRM;
-            RAISE vr_exec_saida;
+            vr_dscritic := 'Erro ao incluir registro tbtransf_trans_pend. Erro: ' || SQLERRM;
         END;
 
         pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -4343,8 +4359,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exec_saida;
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+           RAISE vr_exec_saida;
         END IF;
 
       END LOOP;
@@ -4370,7 +4386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                          ,pr_cdtranpe => vr_cdtranpe
                                          ,pr_dscritic => vr_dscritic);
                                        
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
+      IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exec_saida;
       END IF;
 
@@ -4403,8 +4419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao incluir registro tbtransf_trans_pend: ' || SQLERRM;
-          RAISE vr_exec_saida;
+          vr_dscritic := 'Erro ao incluir registro tbtransf_trans_pend. Erro: ' || SQLERRM;
       END;
       
       pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -4423,8 +4438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-      IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exec_saida;
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exec_saida;
       END IF;
 
     END IF;
@@ -4445,12 +4460,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
     --
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor do Lancamento'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_vllanmto);
                              
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'CPF do Preposto'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_nrcpfrep);                             
@@ -4458,10 +4473,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -4470,7 +4485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_transf: ' || SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_transf. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_transf;
 
@@ -4530,7 +4545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exec_saida;
     END IF;
 
@@ -4565,8 +4580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbepr_trans_pend: ' || SQLERRM;
-        RAISE vr_exec_saida;
+        vr_dscritic := 'Erro ao incluir registro tbepr_trans_pend. Erro: ' || SQLERRM;
     END;
     
     pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -4585,7 +4599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
        RAISE vr_exec_saida;
     END IF;
 
@@ -4593,10 +4607,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -4605,7 +4619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_credito: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_credito. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_credito;
   -- Início Projeto 454 - SM 1 
@@ -4728,7 +4742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe    => vr_cdtranpe
                                        ,pr_dscritic    => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
     
@@ -4749,8 +4763,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbcst_trans_pend: ' || SQLERRM;
-        RAISE vr_exc_erro;
+        vr_dscritic := 'Erro ao incluir registro tbcst_trans_pend. Erro: ' || SQLERRM;
     END;
     
     -- Criando um Array com todos os cheques que vieram como parametro
@@ -4784,17 +4797,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         CLOSE cr_crapcst;
         
         BEGIN
-          INSERT INTO
-            tbcst_trans_pend_det(cdtransacao_pendente
-                             ,idcustodia)
-                       VALUES(vr_cdtranpe          
-                             ,rw_crapcst.idcustod);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao incluir registro tbcst_trans_pend_det: ' || SQLERRM;
-            RAISE vr_exc_erro;
-        END;
+        INSERT INTO
+          tbcst_trans_pend_det(cdtransacao_pendente
+                           ,idcustodia)
+                     VALUES(vr_cdtranpe          
+                           ,rw_crapcst.idcustod);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao incluir registro tbcst_trans_pend_det. Erro: ' || SQLERRM;
+      END;
         
     END LOOP;       
         
@@ -4814,18 +4826,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;
     END IF;
     
     COMMIT;
 
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -4834,7 +4846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_resgate_cst: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_resgate_cst. Erro: '|| SQLERRM; 
       ROLLBACK;  
   END pc_cria_trans_pend_resgate_cst;
   
@@ -4885,8 +4897,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          and ca.nrdconta = pr_nrdconta;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
-        vr_cdcritic := 9;
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        vr_cdcritic := 0;
+        vr_dscritic := 'Registro do cooperado nao encontrado.';
         RAISE vr_exec_saida;        
       WHEN OTHERS THEN
           vr_cdcritic := 0;
@@ -4896,10 +4908,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -4972,7 +4984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exec_saida;
     END IF;
 
@@ -5013,8 +5025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbcapt_trans_pend: ' || SQLERRM;
-        RAISE vr_exec_saida;
+        vr_dscritic := 'Erro ao incluir registro tbcapt_trans_pend. Erro: ' || SQLERRM;
     END;
     
     pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -5033,27 +5044,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exec_saida;
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exec_saida;
     END IF;
 
     COMMIT;
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
         
       ROLLBACK;
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_aplica: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_aplica. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_aplica;
 
@@ -5113,7 +5124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exec_saida;
     END IF;
 
@@ -5149,7 +5160,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       WHEN OTHERS THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Erro ao incluir registro tbconv_trans_pend. Erro: ' || SQLERRM;
-        RAISE vr_exec_saida;
     END;
    
     pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -5168,27 +5178,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exec_saida;
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exec_saida;
     END IF;
 
     COMMIT;
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
         
       ROLLBACK;
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_deb_aut: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_deb_aut. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_deb_aut;
 
@@ -5242,7 +5252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
     
   BEGIN
     --
@@ -5299,7 +5309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
+      IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exec_saida;
       END IF;
 
@@ -5333,8 +5343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao incluir registro tbfolha_trans_pend: ' || SQLERRM;
-          RAISE vr_exec_saida;
+          vr_dscritic := 'Erro ao incluir registro tbfolha_trans_pend. Erro: ' || SQLERRM;
       END;  
       
       pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -5353,21 +5362,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
 
-      IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
          RAISE vr_exec_saida;
       END IF;
       -- Item LOG VERLOG
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                ,pr_nmdcampo => 'ROWID'
                                ,pr_dsdadant => ''
                                ,pr_dsdadatu => vr_rowid);   
       
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                ,pr_nmdcampo => 'Valor da Transacao'
                                ,pr_dsdadant => ''
                                ,pr_dsdadatu => rw_pfp_cfp.vllctpag);
  
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                ,pr_nmdcampo => 'CPF do Preposto'
                                ,pr_dsdadant => ''
                                ,pr_dsdadatu => pr_nrcpfrep);   
@@ -5378,10 +5387,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -5390,11 +5399,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_folha: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_folha. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_folha;
 
-  PROCEDURE pc_cria_trans_pend_pacote_tar (pr_cdagenci  IN crapage.cdagenci%TYPE                      --> Codigo do PA
+   PROCEDURE pc_cria_trans_pend_pacote_tar (pr_cdagenci  IN crapage.cdagenci%TYPE                      --> Codigo do PA
 																					,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                      --> Numero do Caixa
 																					,pr_cdoperad  IN crapope.cdoperad%TYPE                      --> Codigo do Operados
 																					,pr_nmdatela  IN craptel.nmdatela%TYPE                      --> Nome da Tela
@@ -5444,7 +5453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exec_saida;
     END IF;
 
@@ -5467,8 +5476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbtarif_pacote_trans_pend: ' || SQLERRM;
-        RAISE vr_exec_saida;
+        vr_dscritic := 'Erro ao incluir registro tbtarif_pacote_trans_pend. Erro: ' || SQLERRM;
     END;
    
     pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -5487,27 +5495,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exec_saida;
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exec_saida;
     END IF;
 
     COMMIT;
 		
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
         
       ROLLBACK;
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_pacote_tar: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_pacote_tar. Erro: '|| SQLERRM; 
       ROLLBACK; 		
 	END pc_cria_trans_pend_pacote_tar;
 
@@ -5617,8 +5625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao incluir registro tbdscc_trans_pend: ' || SQLERRM;
-          RAISE vr_exec_saida;
+          vr_dscritic := 'Erro ao incluir registro tbdscc_trans_pend. Erro: ' || SQLERRM;
       END;
       
 		END LOOP;
@@ -5639,18 +5646,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
 
-      IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exec_saida;
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+         RAISE vr_exec_saida;
       END IF;
     
     COMMIT;
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -5659,7 +5666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_descto: '|| SQLERRM; 
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_descto. Erro: '|| SQLERRM; 
       ROLLBACK; 
   END pc_cria_trans_pend_descto;
 
@@ -5724,7 +5731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_dscritic crapcri.dscritic%TYPE; -- Retorno de Erro
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
-    vr_tab_erro GENE0001.typ_tab_erro;          --Tabela Erro
+    vr_tab_erro gene0001.typ_tab_erro;          --Tabela Erro
    
   BEGIN
       
@@ -5737,8 +5744,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
        --Fechar Cursor
        CLOSE cr_crapcop;   
        
-       vr_cdcritic:= 794;
-       vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Cooperativa nao encontrada.';
        --Levantar Excecao
        RAISE vr_exc_saida;
     END IF;
@@ -5765,7 +5772,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
 
@@ -5838,7 +5846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         ,pr_nrterfin)RETURNING cdtransacao_pendente INTO pr_cdtranpe;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao inserir registro TBGEN_TRANS_PEND: ' || SQLERRM;
+        vr_dscritic := 'Erro ao inserir registro TBGEN_TRANS_PEND. Erro: ' || SQLERRM;
         RAISE vr_exc_saida;
     END;
 
@@ -5846,9 +5854,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           
   EXCEPTION
     WHEN vr_exc_saida THEN
-
-      IF NVL(vr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => NVL(vr_cdcritic,0));
+      
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
       END IF;
@@ -5856,7 +5864,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       ROLLBACK;
     WHEN OTHERS THEN
       pr_dscritic := 'Erro no procedimento INET0002.pc_cria_transacao_operador: ' || SQLERRM;      
-  END pc_cria_transacao_operador;  
+  END pc_cria_transacao_operador;
+  
   
   PROCEDURE pc_horario_trans_pend( pr_cdcooper  IN crapsnh.cdcooper%TYPE
                                   ,pr_cdagenci  IN crapass.cdagenci%TYPE
@@ -5988,7 +5997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
     -- Se ocorreu erro
-    IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
       --levantar Excecao
       RAISE vr_exc_erro;
     ELSE                 
@@ -6040,18 +6049,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     END IF;
   EXCEPTION
-    WHEN vr_exc_erro THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
-      
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-      ELSE	
-        pr_dscritic := vr_dscritic;
-      END IF;
-
+      WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
       -- Erro
-      pr_cdcritic := 0;
       pr_dscritic:= 'Erro na rotina INET002.pc_horario_trans_pend. '||sqlerrm; 
   END pc_horario_trans_pend;                                
 
@@ -6114,18 +6116,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
      
    EXCEPTION
      WHEN vr_exc_saida THEN
-
-       pr_cdcritic := NVL(vr_cdcritic,0);
-      
-       IF NVL(pr_cdcritic,0) > 0 THEN
-         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-       ELSE	
-         pr_dscritic := vr_dscritic;
+       IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       ELSE      
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
        END IF;
          
        ROLLBACK;
      WHEN OTHERS THEN
-       pr_cdcritic := 0;
        pr_dscritic := 'Erro no procedimento INET0002.pc_obtem_rowid_folha: ' || SQLERRM;      
    END pc_obtem_rowid_folha; 
          
@@ -6137,7 +6137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE --> Data Movimentacao
                                 ,pr_cdorigem IN  INTEGER               --> Id de origem
                                 ,pr_cdtransa IN  tbgen_trans_pend.cdtransacao_pendente%TYPE DEFAULT 0 --> Código da transação pendente
-                                ,pr_insittra IN  INTEGER               --> Id de situacao da transacao                                
+                                ,pr_insittra IN  INTEGER               --> Id de situacao da transacao
                                 ,pr_dtiniper IN  DATE                  --> Data Inicio
                                 ,pr_dtfimper IN  DATE                  --> Data final
                                 ,pr_nrregist IN  INTEGER               --> Numero da qtd de registros da pagina
@@ -6311,7 +6311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                          WHERE darf.cdtransacao_pendente = gtp.cdtransacao_pendente) ord9   
                       ,(SELECT 1
                           FROM tbdscc_trans_pend dscc
-                         WHERE dscc.cdtransacao_pendente = gtp.cdtransacao_pendente) ord10   
+                         WHERE dscc.cdtransacao_pendente = gtp.cdtransacao_pendente) ord10
                          -- Início SM 454.1
                       ,(SELECT 1
                           FROM tbcst_trans_pend dcst
@@ -6659,7 +6659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          WHERE opi.cdcooper = prc_cdcooper
            AND opi.nrdconta = prc_nrdconta
            AND opi.nrcpfope = prc_nrcpfope
-          ;       
+          ;   
           
           --Início SM 454.1
       --Tipo Transacao 18 (Resgate de Cheque em Custódia)
@@ -6694,8 +6694,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
        WHERE cdtransacao_pendente = pr_cddoitem
          and c.idcustod           = d.idcustodia      
        ;
-      
---Fim SM 454.1    
+
+--Fim SM 454.1            
+           
+      --Tipo Transacao 19 (Borderô Desconto de Titulo)
+      CURSOR cr_tbdsct_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      SELECT x.*
+      FROM ( SELECT SUM(d.vltitulo) vltotbdt
+                   ,count(1) qttitulo
+                   ,g.dtmvtolt
+             FROM   tbdsct_trans_pend d
+                   ,tbgen_trans_pend g
+             WHERE  d.cdtransacao_pendente = pr_cddoitem
+             AND    g.cdtransacao_pendente = d.cdtransacao_pendente
+             AND    ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND g.dtmvtolt BETWEEN  pr_dtiniper AND pr_dtfimper) OR
+                     (pr_dtiniper IS NULL AND pr_dtfimper IS NULL))
+             GROUP BY g.dtmvtolt) x
+      WHERE  x.qttitulo > 0;
+      rw_tbdsct_trans_pend cr_tbdsct_trans_pend%ROWTYPE; 
       
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -6754,8 +6770,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_vllimtrf crapsnh.vllimtrf%type;
       vr_vllimted crapsnh.vllimted%type;
       vr_vllimvrb crapsnh.vllimvrb%type;
-	    vr_stsnrcal BOOLEAN;
-	    vr_inpessoa INTEGER;
+	  vr_stsnrcal BOOLEAN;
+	  vr_inpessoa INTEGER;
       
       --Pagamento
       vr_cdcopdes VARCHAR2(100);
@@ -6873,6 +6889,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_nridentificador  tbpagto_tributos_trans_pend.nridentificador%TYPE;
       vr_nrseqgrde        tbpagto_tributos_trans_pend.nrseqgrde%TYPE;            
       vr_nrdocdae         tbpagto_tributos_trans_pend.nridentificador%TYPE;
+      
+      -- Bordero Desconto de titulo
+      vr_vltotbdt VARCHAR2(100);
+      vr_qttitulo INTEGER := 0;
+
       --Variavel de indice
       vr_ind NUMBER := 0;
       
@@ -6903,15 +6924,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       FETCH cr_crapass INTO rw_crapass;
       --Se nao encontrou 
       IF cr_crapass%NOTFOUND THEN
-        --Fechar Cursor
-        CLOSE cr_crapass;
-        vr_cdcritic := 9;
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        --Levantar Excecao
-        RAISE vr_exc_erro;
+          --Fechar Cursor
+          CLOSE cr_crapass;
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Registro do cooperado nao encontrado.';
+          --Levantar Excecao
+          RAISE vr_exc_erro;
       ELSE
-        --Fechar Cursor
-        CLOSE cr_crapass;  
+          --Fechar Cursor
+          CLOSE cr_crapass;  
       END IF;
       
       vr_idastcjt := rw_crapass.idastcjt;
@@ -6927,15 +6948,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         FETCH cr_crapsnh INTO vr_nrcpfcgc;
         --Se nao encontrou 
         IF cr_crapsnh%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_crapsnh;
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Registro de senha nao encontrado.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
+            --Fechar Cursor
+            CLOSE cr_crapsnh;
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Registro de senha nao encontrado.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
         ELSE
-          --Fechar Cursor
-          CLOSE cr_crapsnh;
+            --Fechar Cursor
+            CLOSE cr_crapsnh;
         END IF;
         
         --Consulta do nome do Preposto
@@ -6946,15 +6967,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              ,vr_nmprimtl;
         --Se nao encontrou 
         IF cr_crapavt%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_crapavt;
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Necessario habilitar um preposto.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
+            --Fechar Cursor
+            CLOSE cr_crapavt;
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Necessario habilitar um preposto.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
         ELSE                             
-          --Fechar Cursor
-          CLOSE cr_crapavt;      
+            --Fechar Cursor
+            CLOSE cr_crapavt;      
         END IF;
       ELSE --Se conta exige assinatura multipla
         IF pr_nrcpfope = 0 THEN
@@ -6965,15 +6986,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           FETCH cr_crapsnh INTO vr_nrcpfcgc;
           --Se nao encontrou 
           IF cr_crapsnh%NOTFOUND THEN
-            --Fechar Cursor
-            CLOSE cr_crapsnh;
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Registro de senha nao encontrado.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;
+              --Fechar Cursor
+              CLOSE cr_crapsnh;
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Registro de senha nao encontrado.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
           ELSE
-            --Fechar Cursor
-            CLOSE cr_crapsnh;
+              --Fechar Cursor
+              CLOSE cr_crapsnh;
           END IF;
         ELSE
            --Consulta primeiro registro de senha ativo
@@ -7035,12 +7056,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_tab_limite_pend => vr_tab_limite_pend --Tabelas de retorno de horarios limite
                                        ,pr_cdcritic => vr_cdcritic    --Código do erro
                                        ,pr_dscritic => vr_dscritic);  --Descricao do erro
-            
+
         --Se ocorreu erro
         IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           --levantar Excecao
           RAISE vr_exc_erro;
-        END IF;
+            END IF;
 
         --Montar Tag Xml de Horarios
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
@@ -7098,18 +7119,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
               END IF;
               -- buscar limites preposto
               INET0001.pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
-                                                   ,pr_nrdconta     => pr_nrdconta   --Numero da conta
+                                 ,pr_nrdconta     => pr_nrdconta   --Numero da conta
                                                    ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
                                                    ,pr_nrcpfope	    => NVL(va_nrcpfcgc,pr_nrcpfope)  --Numero do CPF
                                                    ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
-                                                   ,pr_dsorigem     => GENE0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                                   ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
                                                    ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                                    ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
                                                    ,pr_dscritic     => vr_dscritic); --Descricao do erro;
-              --Se ocorreu erro
-              IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                RAISE vr_exc_erro; -- Levantar Excecao
-              END IF;
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+          RAISE vr_exc_erro;
+              END IF;        
                              
             ELSE -- Se for operador
               -- Buscar limites operador do sistema
@@ -7118,14 +7140,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
                                                    ,pr_nrcpfope	    => pr_nrcpfope  --Numero do CPF
                                                    ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
-                                                   ,pr_dsorigem     => GENE0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                                   ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
                                                    ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                                    ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
                                                    ,pr_dscritic     => vr_dscritic); --Descricao do erro;
 
               --Se ocorreu erro
-              IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                RAISE vr_exc_erro; -- Levantar Excecao
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
               END IF;        
             END IF;
           -- Comentado pois fará a busca de limites da conta mais abaixo independente se possui assinatura conjunta
@@ -7138,7 +7161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                     ,pr_flglimdp     => FALSE         --Indicador limite deposito
                                     ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
                                     ,pr_flgctrag     => FALSE  --Indicador validacoes
-                                    ,pr_dsorigem     => GENE0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                    ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
                                     ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
                                     ,pr_dscritic     => vr_dscritic); --Descricao do erro;
@@ -7163,15 +7186,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                  ,pr_flglimdp     => FALSE         --Indicador limite deposito
                                  ,pr_dtmvtopg     => pr_dtmvtolt   --Data do proximo pagamento
                                  ,pr_flgctrag     => FALSE         --Indicador validacoes
-                                 ,pr_dsorigem     => GENE0001.vr_vet_des_origens(pr_cdorigem)
+                                 ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)
                                  ,pr_tab_internet => vr_tab_internet_conta --Tabelas de retorno de limites
                                  ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
                                  ,pr_dscritic     => vr_dscritic); --Descricao do erro 
 
         --Se ocorreu erro
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro; -- Levantar Excecao
-        END IF;
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+           --Levantar Excecao
+           RAISE vr_exc_erro;
+        END IF;                                                                   
         
         --Montar Tag Xml de Limites
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
@@ -7227,7 +7251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_dscritic => vr_dscritic);  --Descricao do erro
                                      
         --Se ocorreu erro
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           --levantar Excecao
           RAISE vr_exc_erro;
         END IF;
@@ -7259,7 +7283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '</convenios>');   
       END IF;                          
-                             
+      
       -- Se for pesquisa geral ou específica para determinada transação
       IF (pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND pr_nrregist > 0) OR (NVL(pr_cdtransa,0) > 0) THEN      
         --Montar Tag Xml das transacoes pendentes
@@ -7291,7 +7315,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
 
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        IF NVL(vr_cdcritic,0) > 0 OR 
+          vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
 
@@ -7341,7 +7366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            vr_cdtranpe := rw_tbgen_trans_pend.cdtransacao_pendente;
            vr_dttranpe := TO_CHAR(rw_tbgen_trans_pend.dtregistro_transacao,'DD/MM/RRRR');
            vr_hrtranpe := TO_CHAR(to_date(rw_tbgen_trans_pend.hrregistro_transacao,'sssss'),'hh24:mi:ss');
-           vr_dsoritra := GENE0001.vr_vet_des_origens(rw_tbgen_trans_pend.idorigem_transacao);
+           vr_dsoritra := gene0001.vr_vet_des_origens(rw_tbgen_trans_pend.idorigem_transacao);
            vr_dtmvttra := TO_CHAR(rw_tbgen_trans_pend.dtmvtolt,'DD/MM/RRRR');
            vr_idsittra := rw_tbgen_trans_pend.idsituacao_transacao;
            vr_dssittra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 1 THEN 'Pendente'
@@ -7375,6 +7400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   CLOSE cr_crapopi;
                   vr_nmagenda := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbgen_trans_pend.nrcpf_operador
                                                           ,pr_inpessoa => 1) || ' - ' || vr_nmagenda;                
+
               END IF;
            ELSE -- Consultar Representante
               vr_ind := vr_tab_crapavt.FIRST;
@@ -7510,42 +7536,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                        CONTINUE;
                     END IF;
                  END IF;
-                         
-                   --Valor a somar
-                   vr_vlasomar := rw_tbpagto_trans_pend.vlpagamento;
-                         
-                   --Variaveis do resumo
-                   vr_dsvltran := TO_CHAR(rw_tbpagto_trans_pend.vlpagamento,'fm999g999g990d00'); -- Valor
-                   vr_dsdtefet := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
-                   vr_dsdescri := rw_tbpagto_trans_pend.dscedente; -- Descricao
-                   vr_dstptran := CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 
-                                         'Pagamento de Convênio' 
-                                       WHEN rw_tbpagto_trans_pend.tppagamento = 2 THEN
-                                         'Pagamento de Boletos Diversos'
-                                       ELSE 
-                                          'Pagamento de GPS' END; -- Tipo de Transacao
-                   vr_dsagenda := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'NÃO' ELSE 'SIM' END; -- Agendamento
-                         
-                   --Variaveis especificas
-                   vr_nmcednte := rw_tbpagto_trans_pend.dscedente;
-                   vr_nrcodbar := rw_tbpagto_trans_pend.dscodigo_barras;
-                   vr_dslindig := rw_tbpagto_trans_pend.dslinha_digitavel;
-                   vr_dtvencto := TO_CHAR(rw_tbpagto_trans_pend.dtvencimento,'DD/MM/RRRR');
-                   vr_vldocmto := TO_CHAR(rw_tbpagto_trans_pend.vldocumento,'fm999g999g990d00');
-                   vr_dtdebito := TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR');
-                   vr_identdda := CASE WHEN rw_tbpagto_trans_pend.idtitulo_dda = 0 THEN 'NÃO' ELSE 'SIM' END;
-                         
-              WHEN vr_tptranpe = 4 THEN --TED
-                         
-                   OPEN cr_tbspb_trans_pend(pr_cddoitem => vr_cdtranpe);
-                   FETCH cr_tbspb_trans_pend INTO rw_tbspb_trans_pend;
-                   IF cr_tbspb_trans_pend%NOTFOUND THEN
-                      --Fechar Cursor
-                      CLOSE cr_tbspb_trans_pend;
-                      CONTINUE;
-                   ELSE
-                      --Fechar Cursor
-                      CLOSE cr_tbspb_trans_pend;
+                 
+                 --Valor a somar
+                 vr_vlasomar := rw_tbpagto_trans_pend.vlpagamento;
+                 
+                 --Variaveis do resumo
+                 vr_dsvltran := TO_CHAR(rw_tbpagto_trans_pend.vlpagamento,'fm999g999g990d00'); -- Valor
+                 vr_dsdtefet := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
+                 vr_dsdescri := rw_tbpagto_trans_pend.dscedente; -- Descricao
+                 vr_dstptran := CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 
+                                       'Pagamento de Convênio' 
+                                     WHEN rw_tbpagto_trans_pend.tppagamento = 2 THEN
+                                       'Pagamento de Boletos Diversos'
+                                     ELSE 
+                                        'Pagamento de GPS' END; -- Tipo de Transacao
+                 vr_dsagenda := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'NÃO' ELSE 'SIM' END; -- Agendamento
+                 
+                 --Variaveis especificas
+                 vr_nmcednte := rw_tbpagto_trans_pend.dscedente;
+                 vr_nrcodbar := rw_tbpagto_trans_pend.dscodigo_barras;
+                 vr_dslindig := rw_tbpagto_trans_pend.dslinha_digitavel;
+                 vr_dtvencto := TO_CHAR(rw_tbpagto_trans_pend.dtvencimento,'DD/MM/RRRR');
+                 vr_vldocmto := TO_CHAR(rw_tbpagto_trans_pend.vldocumento,'fm999g999g990d00');
+                 vr_dtdebito := TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR');
+                 vr_identdda := CASE WHEN rw_tbpagto_trans_pend.idtitulo_dda = 0 THEN 'NÃO' ELSE 'SIM' END;
+                 
+            WHEN vr_tptranpe = 4 THEN --TED
+                 
+                 OPEN cr_tbspb_trans_pend(pr_cddoitem => vr_cdtranpe);
+                 FETCH cr_tbspb_trans_pend INTO rw_tbspb_trans_pend;
+                 IF cr_tbspb_trans_pend%NOTFOUND THEN
+                    --Fechar Cursor
+                    CLOSE cr_tbspb_trans_pend;
+                    CONTINUE;
+                 ELSE
+                    --Fechar Cursor
+                    CLOSE cr_tbspb_trans_pend;
 
                     --Controle de paginação
                     vr_qttotpen := vr_qttotpen + 1;
@@ -7554,7 +7580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                        CONTINUE;
                     END IF;
                  END IF;
-                       
+                 
                  --Cadastro de Transferencias pela Internet
                  OPEN cr_crapcti( pr_cdcooper => rw_tbspb_trans_pend.cdcooper,
                                   pr_nrdconta => rw_tbspb_trans_pend.nrdconta,
@@ -7925,7 +7951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              
                              EXIT;
                           END LOOP;  
-                                
+                          
                           IF pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
                             CONTINUE;                                                               
                           END IF;   
@@ -7970,7 +7996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     
                     --Valor a somar
                     vr_vlasomar := 0;
-                          
+                    
                     vr_dsvltran := '0,00'; -- Valor
                     vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
                     vr_dsdescri := 'DEBITO AUTOMATICO - ' || vr_nmrescon;-- Descricao
@@ -8228,7 +8254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     CONTINUE;
                   END IF;	
                END IF;
-                 
+               
                --Valor a somar  
                vr_vlasomar := rw_tbtrib_pend.vlpagamento;
                --Variaveis do resumo                   
@@ -8302,8 +8328,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 vr_dstptran := 'Cancelamento do Serviço SMS de Cobrança'; -- Tipo de Transacao
                 vr_dsdescri := 'Cancelamento SMS de Cobrança - '||rw_sms_trans_pend.dspacote; -- Descricao
               END IF;
-              vr_dsagenda := 'NÃO'; -- Agendamento  
-
+              vr_dsagenda := 'NÃO'; -- Agendamento
+              
               -- Início SM 454.1
       WHEN vr_tptranpe = 18 THEN --Resgate de cheque em Custódia
       							
@@ -8326,7 +8352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 END IF;
               END IF;
                     
-              vr_dsagenda := 'NÃO'; -- Agendamento  
+       vr_dsagenda := 'NÃO'; -- Agendamento
              vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
        vr_dsdescri := 'Bordero de Resgate de Cheques em Custódia';
                vr_dstptran := 'Bordero de Resgate de Cheques em Custódia';
@@ -8335,7 +8361,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                vr_dtdebito := to_char(rw_tbcst_trans_pend_det.dtmvtolt,'DD/MM/RRRR');
        vr_qtcheque := rw_tbcst_trans_pend_det.qtcheque;
        vr_vlasomar := rw_tbcst_trans_pend_det.vltotchq;   
---Fim SM 454.1  
+--Fim SM 454.1               
+            
+			WHEN vr_tptranpe = 19 THEN --Bordero Desconto de titulo
+			     OPEN  cr_tbdsct_trans_pend(vr_cdtranpe);
+			     FETCH cr_tbdsct_trans_pend INTO rw_tbdsct_trans_pend;
+			     IF    cr_tbdsct_trans_pend%NOTFOUND THEN
+				          CLOSE cr_tbdsct_trans_pend;
+              CONTINUE;
+        ELSE
+				          CLOSE cr_tbdsct_trans_pend;
+              --Controle de paginação
+              vr_qttotpen := vr_qttotpen + 1;
+              IF  ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
+                   CONTINUE;
+              END IF;
+        END   IF;
+
+			     vr_dsagenda := 'NÃO'; -- Agendamento
+						  vr_dsdtefet := 'Nesta Data'; -- Data Efetivacao
+			     vr_dsdescri := 'Bordero de Desconto de Titulos';
+							 vr_dstptran := 'Bordero de Desconto de Titulos';
+							 vr_dsvltran := to_char(rw_tbdsct_trans_pend.vltotbdt,'fm999g999g990d00');
+			     vr_vltotbdt := to_char(rw_tbdsct_trans_pend.vltotbdt,'fm999g999g990d00');
+							 vr_dtdebito := to_char(rw_tbdsct_trans_pend.dtmvtolt,'DD/MM/RRRR');
+			     vr_qttitulo := rw_tbdsct_trans_pend.qttitulo;
+			     vr_vlasomar := rw_tbdsct_trans_pend.vltotbdt;
 
             ELSE
                 vr_dscritic := 'Tipo de transação não encontrado.';
@@ -8367,7 +8419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                    || '   <data_debito>' || CASE WHEN UPPER(vr_dsdtefet) = 'NESTA DATA' THEN TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') WHEN UPPER(vr_dsdtefet) = 'MES ATUAL' THEN TO_CHAR(TRUNC(pr_dtmvtolt,'MM'),'DD/MM/RRRR') ELSE vr_dsdtefet END || '</data_debito>'
                                                    || '   <data_sistema>' || TO_CHAR(pr_dtmvtolt,'DD/MM/RRRR') || '</data_sistema>'
                                                    || '</dados_resumo>');
-
+         
          --Detalhes da Transacao
          vr_xml_auxi := '<dados_detalhe>';
          
@@ -8651,7 +8703,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             '<dados_campo><label>Valor Total                </label><valor>'   || vr_vlrtotal            ||'</valor></dados_campo>' ||
                             '<dados_campo><label>Débito Em                  </label><valor>'   || vr_dtdebito            ||'</valor></dados_campo>' ||
                             '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_dsagenda            ||'</valor></dados_campo>';
-         
                             
          ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
             vr_xml_auxi := vr_xml_auxi            
@@ -8664,6 +8715,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Valor Total</label><valor>'          ||vr_vltotchq||'</valor></dados_campo>'
             || '<dados_campo><label>Quantidade de Cheques</label><valor>'||vr_qtcheque||'</valor></dados_campo>';
 -- Fim SM 454.1
+ 
+         ELSIF vr_tptranpe = 19 THEN -- Bordero Desconto de titulo
+            vr_xml_auxi := vr_xml_auxi
+            || '<dados_campo><label>Valor Total</label><valor>'          ||vr_vltotbdt||'</valor></dados_campo>'
+            || '<dados_campo><label>Quantidade de Titulos</label><valor>'||vr_qttitulo||'</valor></dados_campo>';
          END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
@@ -8751,17 +8807,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                  
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
-      
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE	
-          pr_dscritic := vr_dscritic;
-        END IF;
-
         ROLLBACK;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
       WHEN OTHERS THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em Consulta de Transacoes Pendentes INET0002.pc_busca_trans_pend: ' || SQLERRM;
         ROLLBACK;
     END;
@@ -8835,7 +8887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
 
     -- Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -8927,7 +8979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbpagto_darf_das_trans_pend: ' || SQLERRM;
+        vr_dscritic := 'Erro ao incluir registro tbpagto_darf_das_trans_pend. Erro: ' || SQLERRM;
         RAISE vr_exc_erro;
     END;
 
@@ -8947,7 +8999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
@@ -8966,12 +9018,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
     --
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'VLRTOTAL'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_vlrtotal);
                              
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'NRCPFREP'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_nrcpfrep);                             
@@ -8979,13 +9031,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
-      
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE	
-          pr_dscritic := vr_dscritic;
-        END IF;
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
         ROLLBACK;
     WHEN OTHERS THEN
       -- Erro
@@ -9050,7 +9097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
     
     BEGIN
     
@@ -9074,7 +9121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exec_saida;
     END IF;
 
@@ -9113,8 +9160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbpagto_trans_pend: ' || SQLERRM;
-        RAISE vr_exec_saida;
+        vr_dscritic := 'Erro ao incluir registro tbpagto_trans_pend. Erro: ' || SQLERRM;
     END;
 
     pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
@@ -9133,8 +9179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exec_saida;
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exec_saida;
     END IF;
     --
     vr_nrdrowid := NULL;
@@ -9152,7 +9198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
     --
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'gpscdtransacao_pendente'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => vr_cdtranpe);    
@@ -9161,12 +9207,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
         
       ROLLBACK;
@@ -9299,16 +9345,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 		EXCEPTION
 			WHEN vr_exc_saida THEN
 				
-        pr_cdcritic := NVL(vr_cdcritic,0);
-      
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE	
-          pr_dscritic := vr_dscritic;
-        END IF;
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+			  -- Alimenta parametros com as críticas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
         
       WHEN OTHERS THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro nao tratado na INET0002.pc_busca_darf_das: ' || SQLERRM;
 		END;
 	END pc_busca_darf_das;
@@ -9374,7 +9420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_tab_darf_das => vr_tab_darf_das); --> Tabela com os dados de DARF/DAS
 																					
 			-- Se retornou alguma critica
-			IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 				RAISE vr_exc_saida;
 			END IF;
 			
@@ -9432,16 +9478,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 		EXCEPTION
 			WHEN vr_exc_saida THEN
 
-        pr_cdcritic := NVL(vr_cdcritic,0);
-      
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE	
-          pr_dscritic := vr_dscritic;
-        END IF;
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
 
       WHEN OTHERS THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro nao tratado na busca de aplicacoes INET0002.pc_busca_darf_das_car: ' || SQLERRM;
 
     END;
@@ -9526,7 +9571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
@@ -9569,18 +9614,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
        RAISE vr_exc_erro;
     END IF;
   
   EXCEPTION  
     WHEN vr_exc_erro THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_cdcritic := vr_cdcritic;
       
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE	
-        pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic;
       END IF;
 
     WHEN OTHERS THEN
@@ -9738,7 +9783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
     IF pr_flgerlog = 1 THEN
       -- Buscar a origem
-      vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
+      vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
       -- Buscar Transacao
       vr_dstransa:= 'Obter titulares/operadores para acesso a conta.';
     END IF;
@@ -9935,7 +9980,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
 
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
 
@@ -10032,17 +10078,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   EXCEPTION
     WHEN vr_exc_erro THEN
         
-      pr_cdcritic := NVL(vr_cdcritic,0);
-      
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-      ELSE	
-        pr_dscritic := vr_dscritic;
-      END IF;
+      pr_cdcritic := vr_cdcritic;
+			IF nvl(vr_cdcritic,0) <> 0 AND 
+         TRIM(vr_dscritic) IS NULL THEN
+			   pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+			ELSE	
+			   pr_dscritic := vr_dscritic;
+		  END IF;
       
       --> Gerar log 
       IF pr_flgerlog = 1 THEN
-        GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper
+        gene0001.pc_gera_log( pr_cdcooper => pr_cdcooper
                              ,pr_cdoperad => pr_cdoperad 
                              ,pr_dscritic => pr_dscritic
                              ,pr_dsorigem => vr_dsorigem
@@ -10063,7 +10109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     
       --> Gerar log 
       IF pr_flgerlog = 1 THEN
-        GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper
+        gene0001.pc_gera_log( pr_cdcooper => pr_cdcooper
                              ,pr_cdoperad => pr_cdoperad 
                              ,pr_dscritic => pr_dscritic
                              ,pr_dsorigem => vr_dsorigem
@@ -10173,7 +10219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                              ,pr_dscritic      => vr_dscritic);    --> Descricao do erro                                   
                                                           
     -- Se retornou erro
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;  
     
@@ -10211,16 +10258,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                                 
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
-      
-      IF NVL(pr_cdcritic,0) > 0 THEN
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-      ELSE	
-        pr_dscritic := vr_dscritic;
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       END IF;
 
-      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
 
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -10376,7 +10419,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																		,pr_cdtranpe => vr_cdtranpe
 																		,pr_dscritic => vr_dscritic);
                                     
-          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          IF vr_dscritic IS NOT NULL THEN
+            vr_cdcritic := 0;
             RAISE vr_exc_erro;
           END IF;
           
@@ -10401,7 +10445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																	,pr_cdcritic => vr_cdcritic
 																	,pr_dscritic => vr_dscritic);
                                     
-          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
           
@@ -10451,7 +10495,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																	 ,pr_cdtranpe => vr_cdtranpe
 																	 ,pr_dscritic => vr_dscritic);
                                     
-          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          IF vr_dscritic IS NOT NULL THEN
+            vr_cdcritic := 0;
             RAISE vr_exc_erro;
           END IF;
           
@@ -10476,18 +10521,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 																 ,pr_cdcritic => vr_cdcritic
 																 ,pr_dscritic => vr_dscritic);
                                     
-          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
-			    END IF;
+			END IF;
           
 			END IF;
 			
 		EXCEPTION
 			WHEN vr_exc_erro THEN
-	      pr_cdcritic := NVL(vr_cdcritic,0);
+	      pr_dscritic := vr_dscritic;  
 			
-				IF NVL(pr_cdcritic,0) <> 0 THEN
-					 pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+				IF vr_cdcritic <> 0 THEN
+					 pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
 				ELSE	
 					 pr_dscritic := vr_dscritic;
 				END IF;
@@ -10501,7 +10546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 		END;		
 	END pc_cria_trans_pend_recarga;
 
-  PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2 
+PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2 
                                     ,pr_nrdconta IN VARCHAR2 
                                     ,pr_nrcpf    IN VARCHAR2 
                                     ,pr_xmllog   IN  VARCHAR2
@@ -10624,6 +10669,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');    
     --
   END pc_busca_limite_preposto;                                       
+
 
   PROCEDURE pc_valida_limite_preposto(pr_cdcooper           IN VARCHAR2
                                      ,pr_nrdconta           IN VARCHAR2 
@@ -10893,6 +10939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                 opi.vllimvrb > vr_vllimvrb OR 
                 opi.vllimflp > vr_vllimflp);     
 
+           
+     
   BEGIN
     --
     --vr_alerta := 'OKww'||'/'||pr_cdcooper||'/'||pr_nrdconta||'/'||pr_nrcpf||'/'||pr_idseqttl||'/'||pr_cdoperad||'/'||pr_vllimtrf||'/'||
@@ -10956,10 +11004,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           raise vr_exc_erro;
       END;
       --
-      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => NULL
-                          ,pr_dsorigem => GENE0001.vr_vet_des_origens(1) --> Origem enviada
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
                           ,pr_dstransa => 'Inserir Limite de Preposto.'
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
@@ -10969,27 +11017,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           ,pr_nrdconta => vr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid); 
                           
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Transferencia'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => vr_vllimtrf);
                                
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Boleto'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => vr_vllimpgo); 
                              
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de TED'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => vr_vllimted); 
                              
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de VR Boleto'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => vr_vllimvrb); 
                              
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Folha PGTO'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => vr_vllimflp);                             
@@ -11037,14 +11085,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       EXCEPTION
         WHEN OTHERS THEN
           pr_cdcritic := 0;
-          vr_alerta := 'Erro pc_altera_limite_preposto update TBCC_LIMITE_PREPOSTO: ' || sqlerrm;          
+          vr_alerta := 'Erro pc_altera_limite_preposto update TBCC_LIMITE_PREPOSTO. '||sqlerrm;          
           raise vr_exc_erro;
       END;
       --
-      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => NULL
-                          ,pr_dsorigem => GENE0001.vr_vet_des_origens(1) --> Origem enviada
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
                           ,pr_dstransa => 'Altera Limite de Preposto.'
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
@@ -11054,27 +11102,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           ,pr_nrdconta => vr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
                           
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Transferencia'
                              ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_transf
                              ,pr_dsdadatu => vr_vllimtrf);
                                
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Boleto'
                              ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_pagto
                              ,pr_dsdadatu => vr_vllimpgo); 
                              
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de TED'
                              ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_ted
                              ,pr_dsdadatu => vr_vllimted); 
                              
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de VR Boleto'
                              ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_vrboleto
                              ,pr_dsdadatu => vr_vllimvrb); 
                              
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Valor de Folha PGTO'
                              ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_folha
                              ,pr_dsdadatu => vr_vllimflp);
@@ -11125,7 +11173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         EXCEPTION  
           WHEN OTHERS THEN
             pr_cdcritic := 0;
-            vr_alerta := 'Erro pc_altera_limite_preposto - update crapopi: ' || SQLERRM;          
+            vr_alerta := 'Erro pc_altera_limite_preposto - update crapopi.';          
             raise vr_exc_erro;
         END; 
         --
@@ -11252,7 +11300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_des_erro := 'Erro geral em pc_busca_preposto_master: ' || SQLERRM;
-        pr_dscritic := pr_des_erro;
+        pr_dscritic := 'Erro geral em pc_busca_preposto_master: ' || SQLERRM;
     END;
   END pc_busca_preposto_master;
 
@@ -11305,7 +11353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    --vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    --vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
 
 
     -- Variaveis de critica
@@ -11358,7 +11406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_des_erro := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;
-        pr_dscritic := pr_des_erro;          
+        pr_dscritic := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;          
       END;
       CLOSE cr_tbcc_limite_preposto;
     ELSE
@@ -11378,13 +11426,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
        WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_des_erro := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;
-        pr_dscritic := pr_des_erro;
+        pr_dscritic := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;
       END;
       
-      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => 0
                           ,pr_dscritic => NULL
-                          ,pr_dsorigem => GENE0001.vr_vet_des_origens(1) --> Origem enviada
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
                           ,pr_dstransa => 'Altera Preposto Master'
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
@@ -11394,7 +11442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
                           
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'Preposto Master'
                              ,pr_dsdadant => nvl(rw_tbcc_limite_preposto.flgmaster,0)
                              ,pr_dsdadatu => vr_flgmaster);      
@@ -11592,7 +11640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    --vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    --vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
     
     vr_update number(1);
     vr_alterou BOOLEAN;
@@ -11688,15 +11736,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic := 0;
-            vr_alerta := 'Erro pc_corrigi_limite_preposto update TBCC_LIMITE_PREPOSTO:' || SQLERRM;
+            vr_alerta := 'Erro pc_corrigi_limite_preposto update TBCC_LIMITE_PREPOSTO. '||sqlerrm;          
             raise vr_exc_erro;
         END;
         --
         BEGIN   
-          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                             ,pr_cdoperad => pr_cdoperad
                             ,pr_dscritic => vr_alerta
-                            ,pr_dsorigem => GENE0001.vr_vet_des_origens(1) --> Origem enviada
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
                             ,pr_dstransa => 'Corrige Limite de Preposto.'
                             ,pr_dttransa => trunc(sysdate)
                             ,pr_flgtrans => 1
@@ -11706,39 +11754,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                             ,pr_nrdconta => vr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
                             
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                    ,pr_nmdcampo => 'Valor de Transferencia'
                                    ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_transf
                                    ,pr_dsdadatu => vr_nvlimtrf);
                                          
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de Boleto'
                                   ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_pagto
                                   ,pr_dsdadatu => vr_nvlimpgo); 
                                        
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de TED'
                                   ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_ted
                                   ,pr_dsdadatu => vr_nvlimted); 
                                       
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de VR Boleto'
                                   ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_vrboleto
                                   ,pr_dsdadatu => vr_nvlimvrb); 
                                       
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de Folha PGTO'
                                   ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_folha
                                   ,pr_dsdadatu => vr_nvlimflp);
                                       
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'CPF do Preposto'
                                   ,pr_dsdadant => rw_tbcc_limite_preposto.nrcpf
                                   ,pr_dsdadatu => vr_nvlimflp);                        
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic := 0;
-            vr_alerta := 'Erro ao gerar LOG. ' || SQLERRM;
+            vr_alerta := 'Erro ao gerar LOG. '||sqlerrm;          
             raise vr_exc_erro;
         END;  
       END IF;
@@ -11790,15 +11838,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic := 0;
-            vr_alerta := 'Erro pc_corrigi_limite_preposto update crapopi: ' || SQLERRM;
+            vr_alerta := 'Erro pc_corrigi_limite_preposto update crapopi '||sqlerrm;          
             raise vr_exc_erro;
         END;
         --
         BEGIN   
-          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                               ,pr_cdoperad => pr_cdoperad
                               ,pr_dscritic => vr_alerta
-                              ,pr_dsorigem => GENE0001.vr_vet_des_origens(1) --> Origem enviada
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
                               ,pr_dstransa => 'Corrige Limite de Operador.'
                               ,pr_dttransa => trunc(sysdate)
                               ,pr_flgtrans => 1
@@ -11808,39 +11856,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                               ,pr_nrdconta => vr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
                             
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                    ,pr_nmdcampo => 'Valor de Transferencia'
                                    ,pr_dsdadant => rw_crapopi.vllimtrf
                                    ,pr_dsdadatu => vr_nvlimtrf);
                                          
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de Boleto'
                                   ,pr_dsdadant => rw_crapopi.vllbolet
                                   ,pr_dsdadatu => vr_nvlimpgo); 
                                        
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de TED'
                                   ,pr_dsdadant => rw_crapopi.vllimted
                                   ,pr_dsdadatu => vr_nvlimted); 
                                       
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de VR Boleto'
                                   ,pr_dsdadant => rw_crapopi.vllimvrb
                                   ,pr_dsdadatu => vr_nvlimvrb); 
                                       
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'Valor de Folha PGTO'
                                   ,pr_dsdadant => rw_crapopi.vllimflp
                                   ,pr_dsdadatu => vr_nvlimflp);
                                       
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                   ,pr_nmdcampo => 'CPF do Operador'
                                   ,pr_dsdadant => rw_crapopi.nrcpfope
                                   ,pr_dsdadatu => vr_nvlimflp);                        
         EXCEPTION
           WHEN OTHERS THEN
             pr_cdcritic := 0;
-            vr_alerta := 'Erro ao gerar LOG operador: ' || SQLERRM;
+            vr_alerta := 'Erro ao gerar LOG operador. '||sqlerrm;          
             raise vr_exc_erro;
         END;  
       END IF;
@@ -11906,35 +11954,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                         
   END pc_corrigi_limite_preposto;
   
-PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
-                                  ,pr_nrdconta IN VARCHAR2 
-                                  ,pr_xmllog   IN  VARCHAR2
-                                  ,pr_cdcritic OUT PLS_INTEGER                       
-                                  ,pr_dscritic OUT VARCHAR2
-                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                  ,pr_des_erro OUT VARCHAR2) IS
-  ---------------------------------------------------------------------------------------------------------------
-  --
+  PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
     --  Programa : pc_busca_resp_assinatura
     --  Sistema  : Procedure buscar os responsaveis por assinatura
-  --  Sigla    : CRED
+    --  Sigla    : CRED
     --  Autor    : Mateus Zimmermann (Mouts)
     --  Data     : Janeiro/2018.                   Ultima atualizacao:
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
     -- Objetivo  : Buscar os responsaveis por assinatura
-  --
-  -- Alteração : 
-  --
-  ---------------------------------------------------------------------------------------------------------------   
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                                                           
     BEGIN
-		DECLARE
-
-      -- Variaveis de XML 
-      vr_xml_temp VARCHAR2(32767);
+    DECLARE
+        
+      -- Variaveis de XML
+      vr_xml_temp VARCHAR2(32767); 
       -- Cursores
       CURSOR cr_resp_assinatura IS
         SELECT crapass.nmprimtl
@@ -11952,7 +12000,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
          AND crapass.cdcooper = crapavt.cdcooper
          AND crapass.nrdconta = crappod.nrctapro;
       rw_resp_assinatura cr_resp_assinatura%ROWTYPE;
- 
+
       -- Variaveis locais
       vr_contador INTEGER := 0;
     
@@ -11962,9 +12010,9 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
       
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Responsaveis',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
-																					
+
     FOR rw_resp_assinatura IN cr_resp_assinatura LOOP
-			
+
         gene0007.pc_insere_tag(pr_xml => pr_retxml,
                                pr_tag_pai => 'Responsaveis',
                                pr_posicao => 0,
@@ -11983,16 +12031,16 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                                pr_tag_nova => 'nrcpfcgc', 
                                pr_tag_cont => rw_resp_assinatura.nrcpfcgc, 
                                pr_des_erro => vr_dscritic);
-			
+
         vr_contador := vr_contador + 1;	
         
-        END LOOP;
-
-		EXCEPTION
+    END LOOP;  
+    
+    EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_des_erro := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
-        pr_dscritic := pr_des_erro;
+        pr_dscritic := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
     END;
   END pc_busca_resp_assinatura;
 
@@ -12059,7 +12107,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
 
     -- Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -12090,7 +12138,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                                        ,pr_cdtranpe => vr_cdtranpe
                                        ,pr_dscritic => vr_dscritic);
                                          
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
@@ -12143,7 +12191,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao incluir registro tbpagto_tributos_trans_pend: ' || SQLERRM;
+        vr_dscritic := 'Erro ao incluir registro tbpagto_tributos_trans_pend. Erro: ' || SQLERRM;
         RAISE vr_exc_erro;
     END;
 
@@ -12167,7 +12215,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
 
-    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
@@ -12193,12 +12241,12 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
     --
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'VLRTOTAL'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_vlrtotal);
                              
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                              ,pr_nmdcampo => 'NRCPFREP'
                              ,pr_dsdadant => ''
                              ,pr_dsdadatu => pr_nrcpfrep);                             
@@ -12206,14 +12254,8 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
 
   EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_cdcritic:= NVL(vr_cdcritic,0);
-
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE
-          pr_dscritic:= vr_dscritic;
-        END IF;
-
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
         ROLLBACK;
     WHEN OTHERS THEN
       -- Erro
@@ -12332,16 +12374,16 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
 		EXCEPTION
 			WHEN vr_exc_saida THEN
 				
-        pr_cdcritic:= NVL(vr_cdcritic,0);
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
 
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE
-          pr_dscritic:= vr_dscritic;
-        END IF;
+			  -- Alimenta parametros com as críticas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
         
       WHEN OTHERS THEN
-        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro nao tratado na INET0002.pc_ret_trans_pend_trib: ' || SQLERRM;
 		END;
 	END pc_ret_trans_pend_trib;
@@ -12407,7 +12449,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
                                       ,pr_tab_tributos => vr_tab_tributos); --> Tabela com os dados
 																					
 			-- Se retornou alguma critica
-			IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+			IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 				RAISE vr_exc_saida;
 			END IF;
 			
@@ -12484,13 +12526,12 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
 		EXCEPTION
 			WHEN vr_exc_saida THEN
 
-        pr_cdcritic:= NVL(vr_cdcritic,0);
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
 
-        IF NVL(pr_cdcritic,0) > 0 THEN
-          pr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-        ELSE
-          pr_dscritic:= vr_dscritic;
-        END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
@@ -12498,6 +12539,151 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
 
     END;
   END pc_ret_trans_pend_trib_car;
+  
+  PROCEDURE pc_cria_trans_pend_dscto_tit(pr_cdcooper          IN tbdsct_trans_pend.cdcooper%TYPE --> Codigo da cooperativa
+                                        ,pr_nrdconta          IN tbdsct_trans_pend.nrdconta%TYPE --> Numero da Conta
+                                        ,pr_idseqttl          IN crapttl.idseqttl%TYPE           --> Número do Titular
+                                        ,pr_nrcpfrep          IN crapopi.nrcpfope%TYPE           --> Numero do cpf do representante legal
+                                        ,pr_cdagenci          IN crapage.cdagenci%TYPE           --> Codigo do PA
+                                        ,pr_nrdcaixa          IN craplot.nrdcaixa%TYPE           --> Numero do Caixa
+                                        ,pr_cdoperad          IN crapope.cdoperad%TYPE           --> Codigo do Operados
+                                        ,pr_nmdatela          IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                        ,pr_idorigem          IN INTEGER                         --> Origem da solicitacao
+                                        ,pr_nrcpfope          IN crapopi.nrcpfope%TYPE           --> Numero do cpf do operador juridico
+                                        ,pr_cdcoptfn          IN tbgen_trans_pend.cdcoptfn%TYPE  --> Cooperativa do Terminal
+                                        ,pr_cdagetfn          IN tbgen_trans_pend.cdagetfn%TYPE  --> Agencia do Terminal
+                                        ,pr_nrterfin          IN tbgen_trans_pend.nrterfin%TYPE  --> Numero do Terminal Financeiro
+                                        ,pr_dtmvtolt          IN DATE                            --> Data do movimento     
+                                        ,pr_idastcjt          IN crapass.idastcjt%TYPE           --> Indicador de Assinatura Conjunta
+                                        ,pr_tab_dados_titulos IN tela_atenda_dscto_tit.typ_tab_dados_titulos --> Titulos para desconto
+                                        ,pr_cdcritic         OUT crapcri.cdcritic%TYPE           --> Codigo de Critica
+                                        ,pr_dscritic         OUT crapcri.dscritic%TYPE           --> Descricao de Critica
+                                        ) IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_cria_trans_pend_dscto_tit
+    Sistema  : Internet Banking IB
+    Sigla    : DSCT0004
+    Autor    : Paulo Penteado (GFT)
+    Data     : Maio/2018
+
+    Objetivo  : Procedimentos de criacao de transacao de bordero de desconto de titulos
+
+    Alteração : 18/05/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_cdtranpe     tbgen_trans_pend.cdtransacao_pendente%TYPE;
+  vr_dtmvtopg     DATE;
+  vr_tab_lsdatagd gene0002.typ_split;
+  vr_idagenda     INTEGER := 0;
+  vr_tab_crapavt  CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+
+  -- Variável de críticas
+  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_dscritic VARCHAR2(10000);
+
+  -- Tratamento de erros
+  vr_exec_saida EXCEPTION;
+    
+  BEGIN
+    pc_cria_transacao_operador(pr_cdagenci    => pr_cdagenci
+                              ,pr_nrdcaixa    => pr_nrdcaixa
+                              ,pr_cdoperad    => pr_cdoperad
+                              ,pr_nmdatela    => pr_nmdatela
+                              ,pr_idorigem    => pr_idorigem
+                              ,pr_idseqttl    => pr_idseqttl
+                              ,pr_cdcooper    => pr_cdcooper
+                              ,pr_nrdconta    => pr_nrdconta
+                              ,pr_nrcpfope    => pr_nrcpfope
+                              ,pr_nrcpfrep    => pr_nrcpfrep
+                              ,pr_cdcoptfn    => pr_cdcoptfn
+                              ,pr_cdagetfn    => pr_cdagetfn
+                              ,pr_nrterfin    => pr_nrterfin
+                              ,pr_dtmvtolt    => pr_dtmvtolt
+                              ,pr_cdtiptra    => 19 -- bordero desconto cheque
+                              ,pr_idastcjt    => pr_idastcjt
+                              ,pr_tab_crapavt => vr_tab_crapavt
+                              ,pr_cdtranpe    => vr_cdtranpe
+                              ,pr_dscritic    => vr_dscritic);
+                                         
+    IF  vr_dscritic IS NOT NULL THEN
+        RAISE vr_exec_saida;
+    END IF;
+
+    FOR idx IN pr_tab_dados_titulos.first..pr_tab_dados_titulos.last LOOP
+        BEGIN
+          INSERT INTO tbdsct_trans_pend
+                 (cdtransacao_pendente
+                 ,cdcooper
+                 ,nrdconta
+                 ,cdbandoc
+                 ,nrdctabb
+                 ,nrcnvcob
+                 ,nrdocmto
+                 ,dtmvtolt
+                 ,vltitulo
+                 ,dtvencto
+                 ,idseqttl
+                 ,nrnosnum
+                 ,nrinssac
+                 ,nmdsacad)
+          VALUES (vr_cdtranpe
+                 ,pr_cdcooper
+                 ,pr_nrdconta
+                 ,pr_tab_dados_titulos(idx).cdbandoc
+                 ,pr_tab_dados_titulos(idx).nrdctabb
+                 ,pr_tab_dados_titulos(idx).nrcnvcob
+                 ,pr_tab_dados_titulos(idx).nrdocmto
+                 ,pr_tab_dados_titulos(idx).dtmvtolt
+                 ,pr_tab_dados_titulos(idx).vltitulo
+                 ,pr_tab_dados_titulos(idx).dtvencto
+                 ,pr_idseqttl
+                 ,pr_tab_dados_titulos(idx).nrnosnum
+                 ,pr_tab_dados_titulos(idx).nrinssac
+                 ,pr_tab_dados_titulos(idx).nmdsacad);
+        EXCEPTION
+          WHEN OTHERS THEN
+               vr_cdcritic := 0;
+               vr_dscritic := 'Erro ao incluir registro tbdsct_trans_pend. Erro: ' || SQLERRM;
+        END;
+  		END LOOP;
+
+    pc_cria_aprova_transpend(pr_cdagenci    => pr_cdagenci
+                            ,pr_nrdcaixa    => pr_nrdcaixa
+                            ,pr_cdoperad    => pr_cdoperad
+                            ,pr_nmdatela    => pr_nmdatela
+                            ,pr_idorigem    => pr_idorigem
+                            ,pr_idseqttl    => pr_idseqttl
+                            ,pr_cdcooper    => pr_cdcooper
+                            ,pr_nrdconta    => pr_nrdconta
+                            ,pr_nrcpfrep    => pr_nrcpfrep
+                            ,pr_dtmvtolt    => pr_dtmvtolt
+                            ,pr_cdtiptra    => 19 -- bordero desconto cheque
+                            ,pr_tab_crapavt => vr_tab_crapavt
+                            ,pr_cdtranpe    => vr_cdtranpe
+                            ,pr_cdcritic    => vr_cdcritic
+                            ,pr_dscritic    => vr_dscritic);
+
+    IF  NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exec_saida;
+    END IF;
+    
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exec_saida THEN
+         pr_cdcritic := vr_cdcritic;
+         IF  vr_cdcritic <> 0 THEN
+             pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         ELSE	
+             pr_dscritic := vr_dscritic;
+         END IF;
+         ROLLBACK;
+
+    WHEN OTHERS THEN
+         pr_cdcritic := 0;
+         pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_dscto_tit. Erro: '|| SQLERRM; 
+         ROLLBACK; 
+  END pc_cria_trans_pend_dscto_tit;
 
 END INET0002;
 /

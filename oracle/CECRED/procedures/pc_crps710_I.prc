@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lombardi
-    Data    : Setembro/2016                      Ultima Atualizacao: 25/05/2017
+    Data    : Setembro/2016                      Ultima Atualizacao: 06/06/2018
     Dados referente ao programa:
 
     Frequencia: Diario.
@@ -18,7 +18,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                              PRJ300-Desconto de Cheque (Odirlei-AMcom)  	  
 
                 25/05/2017 - Retirado processo de bloqueio de inclusao de bordero
-                             conforme solicitado area de negocio Gilmar (Daniel)  
+                             conforme solicitado area de negocio Gilmar (Daniel)   
+
+                06/06/2018 - Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
        
     ............................................................................ */
 
@@ -946,8 +948,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           
           -- Verifica se o cooperado possui algum emprestimo em atraso no CYBER
           OPEN cr_crapcyb(pr_cdcooper => rw_craplim_crapass.cdcooper
-                         ,pr_nrdconta => rw_craplim_crapass.nrdconta
-                         ,pr_cdorigem => '2,3'
+                         ,pr_nrdconta => rw_craplim_crapass.nrdconta 
+                         --Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
+                         ,pr_cdorigem => '2,3,4'
                          ,pr_qtdiaatr => rw_craprli.qtdiaatr);
           FETCH cr_crapcyb INTO rw_crapcyb;
           IF cr_crapcyb%FOUND THEN

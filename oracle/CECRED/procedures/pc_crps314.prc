@@ -389,7 +389,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
          and crapbdt.nrdconta = crapass.nrdconta
          and craptdb.cdcooper = crapbdt.cdcooper
          and craptdb.nrdconta = crapbdt.nrdconta
-         and craptdb.nrborder = crapbdt.nrborder;
+         and craptdb.nrborder = crapbdt.nrborder
+         and craptdb.dtlibbdt is not null;
     --
   BEGIN
     -- Incluimos os descontos de cheque

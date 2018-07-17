@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 20/02/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 29/06/2018
 
      Dados referentes ao programa:
 
@@ -365,6 +365,11 @@ BEGIN
 
                  01/03/2018 - Alterado a Data do Risco e Quantidade de Dias Risco para considerar a diária
                               nos relatórios 354 e 227. (Diego Simas - AMcom)
+
+                 07/06/2018 - Alteracao das rotinas de gravacao do 227 e 354 para enviar dados
+                              dos titulos de bordero, e para gerar as entradas nas tabelas do CYBER
+                              (Andrew Albuquerque - GFT)
+                 17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
   ............................................................................. */
 
   DECLARE
@@ -419,6 +424,12 @@ BEGIN
     vr_indice_dados_epr varchar2(1000);
     vr_indice_crapris   varchar2(1000);
     vr_ds_xml           tbgen_batch_relatorio_wrk.dscritic%type;
+
+    --(AWAE) Titulos de Borderos: pl/tables de Titulos
+    vr_indice_dados_tdb varchar2(200);
+    vr_indice_tdb       varchar2(200);
+    vr_nrctrdsc_tdb     crapcyb.nrctremp%TYPE;
+
     ds_character_separador constant varchar2(1) := '#';
     --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
     vr_idcontrole tbgen_batch_controle.idcontrole%TYPE;
@@ -488,6 +499,65 @@ BEGIN
     -- Vetor auxiliar para guardar uma posição a mais
       vr_tab_contab_cessao    typ_tab_contab;
 
+    -- AWAE: Registro para as informações de borderô e título de borderô
+    --       das tabelas crapbdt e craptdb. Pode ser que não necessitemos de todos estes campos
+    TYPE typ_reg_craptdb IS RECORD (
+             nrdconta craptdb.nrdconta%TYPE
+            ,dtvencto craptdb.dtvencto%TYPE
+            ,nrseqdig craptdb.nrseqdig%TYPE
+            ,cdoperad craptdb.cdoperad%TYPE
+            ,nrdocmto craptdb.nrdocmto%TYPE
+            ,nrctrlim craptdb.nrctrlim%TYPE
+            ,nrborder craptdb.nrborder%TYPE
+            ,vlliquid craptdb.vlliquid%TYPE
+            ,dtlibbdt craptdb.dtlibbdt%TYPE
+            ,cdcooper craptdb.cdcooper%TYPE
+            ,cdbandoc craptdb.cdbandoc%TYPE
+            ,nrdctabb craptdb.nrdctabb%TYPE
+            ,nrcnvcob craptdb.nrcnvcob%TYPE
+            ,cdoperes craptdb.cdoperes%TYPE
+            ,dtresgat craptdb.dtresgat%TYPE
+            ,vlliqres craptdb.vlliqres%TYPE
+            ,vltitulo craptdb.vltitulo%TYPE
+            ,insittit craptdb.insittit%TYPE
+            ,nrinssac craptdb.nrinssac%TYPE
+            ,dtdpagto craptdb.dtdpagto%TYPE
+            ,dtdebito craptdb.dtdebito%TYPE
+            ,dtrefatu craptdb.dtrefatu%TYPE
+            ,insitapr craptdb.insitapr%TYPE
+            ,cdoriapr craptdb.cdoriapr%TYPE
+            ,flgenvmc craptdb.flgenvmc%TYPE
+            ,insitmch craptdb.insitmch%TYPE
+            ,vlsldtit craptdb.vlsldtit%TYPE
+            ,nrtitulo craptdb.nrtitulo%TYPE
+            ,vliofprc craptdb.vliofprc%TYPE
+            ,vliofadc craptdb.vliofadc%TYPE
+            ,vliofcpl craptdb.vliofcpl%TYPE
+            ,vlmtatit craptdb.vlmtatit%TYPE
+            ,vlmratit craptdb.vlmratit%TYPE
+            ,vljura60 craptdb.vljura60%TYPE
+            ,vlpagiof craptdb.vlpagiof%TYPE
+            ,vlpagmta craptdb.vlpagmta%TYPE
+            ,vlpagmra craptdb.vlpagmra%TYPE
+            ,nrctrdsc crapcyb.nrctremp%TYPE
+            ,vlatraso craptdb.vltitulo%TYPE
+            ,vlsaldodev craptdb.vlsldtit%TYPE
+            ,cddlinha crapldc.cddlinha%TYPE
+            ,qtdiaatr INTEGER
+            ,qtmesdec INTEGER
+            ,qtprepag INTEGER
+            ,vlprepag craptdb.vltitulo%TYPE
+            ,dsdlinha crapldc.dsdlinha%TYPE
+            ,txmensal crapbdt.txmensal%TYPE
+            ,txdiaria crapbdt.txmensal%TYPE);
+
+    -- AWAE: Definição de um tipo de tabela com o registro acima
+      TYPE typ_tab_craptdb IS
+        TABLE OF typ_reg_craptdb
+          INDEX BY VARCHAR2(150);
+
+    -- AWAE: Variaveis para armazenar informações de Titulos do Borderô
+    vr_tab_craptdb typ_tab_craptdb;
 
     -- Registro para as informações copiadas da tabela crapris (Antigo w-crapris)
       TYPE typ_reg_crapris IS
@@ -578,7 +648,7 @@ BEGIN
     vr_vet_contabi typ_reg_contabi;
 
     -- Estrutra de PL Table para tabela CRAPTCO
-      TYPE typ_tab_craptco 
+      TYPE typ_tab_craptco
         IS TABLE OF crapass.nrdconta%TYPE
           INDEX BY PLS_INTEGER;
 
@@ -629,7 +699,7 @@ BEGIN
     -- Vetor para armazenar a totalização por nível de risco de microcrédito
     vr_tab_miccred_nivris typ_tab_miccred_nivris;
 
-      
+
     -- Definição de registro para totalização por nível de risco de FINAME
       TYPE typ_reg_finame_nivris IS
         RECORD(vlslddev NUMBER);  -- Valor acumulado saldo devedor
@@ -797,6 +867,86 @@ BEGIN
          AND ebn.nrdconta = pr_nrdconta
          AND ebn.nrctremp = pr_nrctremp;
 
+    -- AWAE: Buscar dados dos Títulos de Borderô Vencidos.
+    CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
+                      ,pr_nrdconta IN craptdb.nrdconta%TYPE
+                      ,pr_nrctremp IN craptdb.nrborder%TYPE
+                      --,pr_dtinictr IN crapris.dtinictr%TYPE
+                      ,pr_dtrefere IN DATE) IS
+    SELECT tdb.nrdconta
+          ,tdb.dtvencto
+          ,tdb.nrseqdig
+          ,tdb.cdoperad
+          ,tdb.nrdocmto
+          ,tdb.nrctrlim
+          ,tdb.nrborder
+          ,tdb.vlliquid
+          ,tdb.dtlibbdt
+          ,tdb.cdcooper
+          ,tdb.cdbandoc
+          ,tdb.nrdctabb
+          ,tdb.nrcnvcob
+          ,tdb.cdoperes
+          ,tdb.dtresgat
+          ,tdb.vlliqres
+          ,tdb.vltitulo
+          ,tdb.insittit
+          ,tdb.nrinssac
+          ,tdb.dtdpagto
+          ,tdb.dtdebito
+          ,tdb.dtrefatu
+          ,tdb.insitapr
+          ,tdb.cdoriapr
+          ,tdb.flgenvmc
+          ,tdb.insitmch
+          ,tdb.vlsldtit
+          ,tdb.nrtitulo
+          ,tdb.vliofprc
+          ,tdb.vliofadc
+          ,tdb.vliofcpl
+          ,tdb.vlmtatit
+          ,tdb.vlmratit
+          ,tdb.vljura60
+          ,tdb.vlpagiof
+          ,tdb.vlpagmta
+          ,tdb.vlpagmra
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlatraso
+          ,(tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof)) as vlsaldodev
+          ,NVL(pr_dtrefere - tdb.dtvencto,0) as qtdiaatr
+          ,TRUNC(MONTHS_BETWEEN(pr_dtrefere, tdb.dtvencto)) as qtmesdec
+          ,CASE
+             WHEN tdb.insittit = 4 THEN 0
+             ELSE 1
+           END as qtprepag 
+          ,(tdb.vltitulo - tdb.vlsldtit) + tdb.vlpagmta + tdb.vlpagmra + tdb.vliofcpl AS vlprepag  
+          ,ldc.cddlinha
+          ,ldc.dsdlinha
+          ,bdt.txmensal
+          ,(bdt.txmensal/30)/100 as txdiaria
+      FROM craptdb tdb
+     INNER JOIN crapbdt bdt
+        ON tdb.cdcooper = bdt.cdcooper
+       AND tdb.nrdconta = bdt.nrdconta
+       AND tdb.nrborder = bdt.nrborder
+     INNER JOIN craplim lim
+        ON lim.cdcooper = bdt.cdcooper
+       AND lim.nrdconta = bdt.nrdconta
+       AND lim.nrctrlim = bdt.nrctrlim
+       AND lim.tpctrlim = 3 -- desconto de títulos
+     INNER JOIN crapldc ldc
+        ON lim.cdcooper = ldc.cdcooper
+       AND lim.cddlinha = ldc.cddlinha
+     WHERE tdb.cdcooper = pr_cdcooper
+       AND tdb.nrdconta = pr_nrdconta
+       AND tdb.nrborder = pr_nrctremp -- nrctrem da crapris
+       --AND tdb.dtlibbdt = pr_dtinictr -- ris.dtinictr
+       AND (tdb.insittit = 4 OR ((tdb.insittit = 2 AND tdb.dtdpagto = pr_dtrefere) OR (tdb.insittit = 3 AND tdb.dtdebito = pr_dtrefere)))
+       AND ldc.tpdescto = 3 -- desconto de título
+       --AND tdb.dtdpagto IS NULL
+       AND tdb.dtvencto <= pr_dtrefere
+       AND bdt.flverbor = 1; -- considerar somente os títulos vencidos de borderôs novos
+    rw_craptdb cr_craptdb%ROWTYPE;
+
     -- Buscar detalhes do saldo da conta
     CURSOR cr_crapsld(pr_nrdconta IN crapsld.nrdconta%TYPE) IS
       SELECT sld.qtdriclq
@@ -834,9 +984,9 @@ BEGIN
     CURSOR cr_crapvri(pr_dtrefere IN crapris.dtrefere%TYPE) IS
       SELECT nrdconta
             ,innivris
-            ,cdmodali        
-            ,nrctremp        
-            ,nrseqctr        
+            ,cdmodali
+            ,nrctremp
+            ,nrseqctr
             ,SUM(DECODE(greatest(cdvencto,110),cdvencto,DECODE(LEAST(cdvencto,290),cdvencto, vldivida,0),0)) vldivida
             ,SUM(DECODE(greatest(cdvencto,205),cdvencto,DECODE(LEAST(cdvencto,290),cdvencto, vldivida,0),0)) vltotatr
             ,COUNT(DISTINCT DECODE(greatest(cdvencto,205),cdvencto,DECODE(LEAST(cdvencto,290),cdvencto, 1,NULL),NULL)) qtpreatr
@@ -849,7 +999,7 @@ BEGIN
     TYPE typ_crapvri IS TABLE OF cr_crapvri%ROWTYPE                            index by PLS_INTEGER;
     vr_tab_crapvri typ_crapvri;
 
-    
+
     --Type para armazenar as os associados
     type typ_reg_crapvri is record (vldivida crapvri.vldivida%TYPE,
       vltotatr crapvri.vldivida%TYPE,
@@ -951,14 +1101,14 @@ BEGIN
               ,craplcr.txmensal
               ,craplcr.txdiaria
               ,craplcr.cdusolcr
-              ,craplcr.dsorgrec              
+              ,craplcr.dsorgrec
         FROM craplcr
        WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
     rw_craplcr cr_craplcr%ROWTYPE;
 
       CURSOR cr_craplem(pr_nrdconta IN craplem.nrdconta%TYPE
-                       ,pr_nrctremp IN craplem.nrctremp%TYPE) IS 
+                       ,pr_nrctremp IN craplem.nrctremp%TYPE) IS
         SELECT lem.cdhistor
               ,NVL(SUM(lem.vllanmto),0) vllanmto
         FROM craplem lem
@@ -970,7 +1120,7 @@ BEGIN
        GROUP BY lem.cdhistor;
 
       CURSOR cr_craplim(pr_nrdconta IN craplim.nrdconta%TYPE
-                       ,pr_nrctremp IN craplim.nrctrlim%TYPE) IS 
+                       ,pr_nrctremp IN craplim.nrctrlim%TYPE) IS
       SELECT count(*) existe_contrato_finame
         FROM craplim lim
        WHERE lim.cdcooper = pr_cdcooper
@@ -1180,7 +1330,7 @@ BEGIN
 
     --controle de arquivo
       vr_dtmvtolt_yymmdd    VARCHAR2(6);
-      vr_nom_diretorio      VARCHAR2(200); 
+      vr_nom_diretorio      VARCHAR2(200);
       vr_nom_dir_copia      VARCHAR2(200);
 
     -- P307 Calculo de Compensação de Microcrédito
@@ -1212,10 +1362,10 @@ BEGIN
 
     -- Retorna linha gerencial arquivo Radar ou Matera
       FUNCTION fn_set_gerencial(pr_cdagenci in number
-                               ,pr_vlagenci in number)  
+                               ,pr_vlagenci in number)
       RETURN VARCHAR2 IS
     BEGIN
-         RETURN lpad(pr_cdagenci,3,0)||',' 
+         RETURN lpad(pr_cdagenci,3,0)||','
               ||TRIM(TO_CHAR(pr_vlagenci,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
     END fn_set_gerencial;
 
@@ -1262,16 +1412,16 @@ BEGIN
                       ||'  <idgrumic>'||pr_idgrumic||'</idgrumic>'
                       ||'  <dsorgrec>'||pr_ds_microcredito||'</dsorgrec>'
                       ||'  <vlreprec>'||to_char(pr_vlreprec,'fm999g999g999g990d00')||'</vlreprec>'
-                      ||'  <vlempatr>'||to_char(pr_vlempatr,'fm999g999g999g990d00')||'</vlempatr>'                       
+                      ||'  <vlempatr>'||to_char(pr_vlempatr,'fm999g999g999g990d00')||'</vlempatr>'
                       ||'  <vlrepfis>'||to_char(pr_vlreprec_pf,'fm999g999g999g990d00')||'</vlrepfis>'
                       ||'  <vlrepjur>'||to_char(pr_vlreprec_pj,'fm999g999g999g990d00')||'</vlrepjur>'
-                      ||'  <vlaci59d>'||to_char(pr_vlaci59d,'fm999g999g999g990d00')||'</vlaci59d>'                      
+                      ||'  <vlaci59d>'||to_char(pr_vlaci59d,'fm999g999g999g990d00')||'</vlaci59d>'
                       ||'  <vlate59d>'||to_char(pr_vlate59d,'fm999g999g999g990d00')||'</vlate59d>'
                       ||'</microcredito>';
 
     END pc_cria_node_miccre;
 
-      
+
     -- Inicializa Pl-Table
     PROCEDURE pc_inicializa_pltable IS
     BEGIN
@@ -1309,14 +1459,14 @@ BEGIN
       vr_txt_compmicro VARCHAR2(500);
          vr_nmarquiv   VARCHAR2(200);
          vr_dscritic   VARCHAR2(4000);
-         vr_input_file UTL_FILE.file_type;  
+         vr_input_file UTL_FILE.file_type;
          vr_typ_said         VARCHAR2(4);
 
     BEGIN
 
-        IF  (nvl(vr_tot_vltttlcr_dim,0) + 
-                   nvl(vr_tot_vltttlcr_dim_outros,0) +       
-                   nvl(vr_totatraso59_dim,0) + 
+        IF  (nvl(vr_tot_vltttlcr_dim,0) +
+                   nvl(vr_tot_vltttlcr_dim_outros,0) +
+                   nvl(vr_totatraso59_dim,0) +
                    nvl(vr_totatraso59_dim_outros,0)) > 0 THEN
 
         -- Nome do arquivo a ser gerado
@@ -1345,7 +1495,7 @@ BEGIN
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
-                              
+
         -- 2ª linha
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtolt
@@ -1395,7 +1545,7 @@ BEGIN
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
-                            
+
         -- 2ª linha
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtolt
@@ -1408,7 +1558,7 @@ BEGIN
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
-                                         
+
         -- 3ª linha
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtopr
@@ -1421,7 +1571,7 @@ BEGIN
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
-                            
+
         -- 4ª linha
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtopr
@@ -1463,8 +1613,8 @@ BEGIN
 
          vr_nmarqfin   VARCHAR2(200);
          vr_dscritic   VARCHAR2(4000);
-         vr_input_file UTL_FILE.file_type;  
-         vr_setlinha         VARCHAR2(400);                  --> Linhas do arquivo        
+         vr_input_file UTL_FILE.file_type;
+         vr_setlinha         VARCHAR2(400);                  --> Linhas do arquivo
          vr_typ_said         VARCHAR2(4);
          vr_chave_nivris     VARCHAR2(10);
       --
@@ -1558,7 +1708,7 @@ BEGIN
         IF vr_tab_finame_nivris(vr_chave_nivris).vlslddev > 0 THEN
 
                IF vr_chave_nivris IN ('A','AA') THEN
-                  vr_destino := 3321;  --provisão 
+                  vr_destino := 3321;  --provisão
                   vr_origem  := 3321;  --reversão
           ELSIF vr_chave_nivris = 'B' THEN
             vr_destino := 3332; --provisão
@@ -1636,7 +1786,7 @@ BEGIN
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-           pr_dscritic := 'Erro geral na procedure pc_gera_arq_miccred: '||SQLERRM;       
+           pr_dscritic := 'Erro geral na procedure pc_gera_arq_miccred: '||SQLERRM;
     END pc_gera_arq_finame;
 
     PROCEDURE pc_gera_arq_miccred(pr_dscritic OUT VARCHAR2) IS
@@ -1646,7 +1796,7 @@ BEGIN
       vr_chave_finalidade VARCHAR2(50);
       vr_chave_nivris     VARCHAR2(10);
          vr_input_file       UTL_FILE.file_type;             --> Handle Utl File
-         vr_setlinha         VARCHAR2(400);                  --> Linhas do arquivo        
+         vr_setlinha         VARCHAR2(400);                  --> Linhas do arquivo
       vr_typ_said         VARCHAR2(4);
       --
          vr_destino          NUMBER;
@@ -1684,13 +1834,13 @@ BEGIN
                   vr_origem := 1437;
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO MICROCREDITO CEF"';
           ELSIF vr_chave_finalidade = 2 THEN
-                  vr_origem := 1780;  
+                  vr_origem := 1780;
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_origem := 5505;  
+                  vr_origem := 5505;
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
-                  vr_origem := 1440;  
+                  vr_origem := 1440;
             vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO MICROCREDITO BNDES"';
           END IF;
 
@@ -1708,7 +1858,7 @@ BEGIN
                IF vr_chave_finalidade IN (1,4) THEN
                   vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
           ELSE
-                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);  
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
           END IF;
 
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1723,16 +1873,16 @@ BEGIN
                   vr_destino := 7302;
             vr_descricao := '"AJUSTE CONTABIL REF. JUROS MICROCREDITO CEF"';
           ELSIF vr_chave_finalidade = 2 THEN
-                  vr_origem := 1780;  
-                  vr_destino := 7112;                  
+                  vr_origem := 1780;
+                  vr_destino := 7112;
             vr_descricao := '"AJUSTE CONTABIL - JUROS CCB IMOBILIZADO REFAP (INVESTIMENTOS)"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_origem := 5505;  
-                  vr_destino := 7011;                  
+                  vr_origem := 5505;
+                  vr_destino := 7011;
             vr_descricao := '"AJUSTE CONTABIL - JUROS CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
-                  vr_origem := 1440;  
-                  vr_destino := 7306;                  
+                  vr_origem := 1440;
+                  vr_destino := 7306;
             vr_descricao := '"AJUSTE CONTABIL REF. JUROS MICROCREDITO BNDES"';
           END IF;
 
@@ -1771,7 +1921,7 @@ BEGIN
                IF vr_chave_finalidade IN (1,4) THEN
                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
           ELSE
-                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec); 
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
           END IF;
 
           --Escreve duas vezes a linha gerencial
@@ -1794,13 +1944,13 @@ BEGIN
             --para provisão
             vr_destino := 1702;
             --para reversao
-                  vr_origem  := 1702;  
+                  vr_origem  := 1702;
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 4 THEN
             --para provisão
             vr_destino := 1441;
             --para reversao
-                  vr_origem  := 1441;  
+                  vr_origem  := 1441;
             vr_descricao := '"AJUSTE CONTABIL - PROVISAO BNDES"';
           END IF;
 
@@ -1819,7 +1969,7 @@ BEGIN
                IF vr_chave_finalidade IN (1,4) THEN
                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
           ELSE
-                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);                 
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
           END IF;
 
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1840,7 +1990,7 @@ BEGIN
                IF vr_chave_finalidade IN (1,4) THEN
                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
           ELSE
-                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper); 
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
           END IF;
 
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1876,7 +2026,7 @@ BEGIN
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-               IF vr_chave_finalidade IN (1,4) THEN            
+               IF vr_chave_finalidade IN (1,4) THEN
                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91);
           ELSE
                  vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91);
@@ -1893,13 +2043,13 @@ BEGIN
                   vr_destino := 1437;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL MICROCREDITO CEF"';
           ELSIF vr_chave_finalidade = 2 THEN
-                  vr_destino := 1780;  
+                  vr_destino := 1780;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL CCB IMOBILIZADO REFAP"';
           ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;  
+                  vr_destino := 5505;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL CCB MAIS CREDITO"';
           ELSIF vr_chave_finalidade = 4 THEN
-                  vr_destino := 1440;  
+                  vr_destino := 1440;
             vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL MICROCREDITO BNDES"';
           END IF;
 
@@ -1956,10 +2106,10 @@ BEGIN
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-               IF vr_chave_finalidade IN (1,4) THEN            
+               IF vr_chave_finalidade IN (1,4) THEN
                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441);
           ELSE
-                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441);   
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441);
           END IF;
 
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1979,7 +2129,7 @@ BEGIN
         IF vr_tab_miccred_nivris(vr_chave_nivris).vlslddev > 0 THEN
 
               IF vr_chave_nivris IN ('A','AA') THEN
-                 vr_destino := 3321;  --provisão 
+                 vr_destino := 3321;  --provisão
                  vr_origem  := 3321;  --reversão
           ELSIF vr_chave_nivris = 'B' THEN
             vr_destino := 3332; --provisão
@@ -2057,7 +2207,7 @@ BEGIN
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-           pr_dscritic := 'Erro geral na procedure pc_gera_arq_miccred: '||SQLERRM; 
+           pr_dscritic := 'Erro geral na procedure pc_gera_arq_miccred: '||SQLERRM;
     END pc_gera_arq_miccred;
 
 
@@ -2250,10 +2400,10 @@ BEGIN
 
                 IF rw_crapris.qtdiaatr > 0 THEN
                   vr_qtatraso := TRUNC(rw_crapris.qtdiaatr / 30, 0) + 1;
-									vr_qtdiaatr := rw_crapris.qtdiaatr; -- paralelismo.
+                  vr_qtdiaatr := rw_crapris.qtdiaatr; -- paralelismo.
                 ELSE
                   vr_qtatraso := 0;
-									vr_qtdiaatr := 0; -- paralelismo.
+                  vr_qtdiaatr := 0; -- paralelismo.
                 END IF;
 
                 /* BNDES - Enquanto nao tivermos campo no arquivo de
@@ -2633,6 +2783,78 @@ BEGIN
           vr_tab_crapris(vr_des_chave_crapris).tpemprst := vr_tpemprst;
           vr_tab_crapris(vr_des_chave_crapris).fleprces := nvl(vr_fleprces, 0);
 
+          -- AWAE: Como Risco de Borderô hoje é tratado aqui, vou verificar aqui
+          --       caso não fique OK, passar como ELSE do IF Maior.
+          IF rw_crapris.cdorigem in (4,5) THEN -- Títulos C/Registro e S/Registro
+            -- aqui vai ser aberto o cursor para os títulos e populado a vr_tab_craptdb.
+            FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => rw_crapris.nrdconta
+                                        ,pr_nrctremp => rw_crapris.nrctremp
+                                        --,pr_dtinictr => rw_crapris.dtinictr
+                                        ,pr_dtrefere => pr_dtrefere) LOOP --> ou pr_dtrefere (Verificar o que vai ser mais correto.)
+
+              -- calculando a chave para tabela da CYBER.
+              CYBE0003.pc_inserir_titulo_cyber(pr_cdcooper => rw_craptdb.cdcooper
+                                              ,pr_nrdconta => rw_craptdb.nrdconta
+                                              ,pr_nrborder => rw_craptdb.nrborder
+                                              ,pr_nrtitulo => rw_craptdb.nrtitulo
+                                              ,pr_nrctrdsc => vr_nrctrdsc_tdb
+                                              ,pr_dscritic => pr_dscritic);
+
+              -- criando o indice da tabela temporaria
+              vr_indice_tdb := LPAD(rw_craptdb.nrdconta, 10, '0') ||
+                               LPAD(rw_craptdb.nrborder, 10, '0') ||
+                               LPAD(rw_craptdb.nrtitulo, 10, '0');
+              vr_tab_craptdb(vr_indice_tdb).nrdconta := rw_craptdb.nrdconta;
+              vr_tab_craptdb(vr_indice_tdb).dtvencto := rw_craptdb.dtvencto;
+              vr_tab_craptdb(vr_indice_tdb).qtdiaatr := NVL(pr_dtrefere - rw_craptdb.dtvencto,0);
+              vr_tab_craptdb(vr_indice_tdb).qtmesdec := rw_craptdb.qtmesdec;
+              vr_tab_craptdb(vr_indice_tdb).qtprepag := rw_craptdb.qtprepag;
+              vr_tab_craptdb(vr_indice_tdb).vlprepag := rw_craptdb.vlprepag;
+              vr_tab_craptdb(vr_indice_tdb).nrseqdig := rw_craptdb.nrseqdig;
+              vr_tab_craptdb(vr_indice_tdb).cdoperad := rw_craptdb.cdoperad;
+              vr_tab_craptdb(vr_indice_tdb).nrdocmto := rw_craptdb.nrdocmto;
+              vr_tab_craptdb(vr_indice_tdb).nrctrlim := rw_craptdb.nrctrlim;
+              vr_tab_craptdb(vr_indice_tdb).nrborder := rw_craptdb.nrborder;
+              vr_tab_craptdb(vr_indice_tdb).vlliquid := rw_craptdb.vlliquid;
+              vr_tab_craptdb(vr_indice_tdb).dtlibbdt := rw_craptdb.dtlibbdt;
+              vr_tab_craptdb(vr_indice_tdb).cdcooper := rw_craptdb.cdcooper;
+              vr_tab_craptdb(vr_indice_tdb).cdbandoc := rw_craptdb.cdbandoc;
+              vr_tab_craptdb(vr_indice_tdb).nrdctabb := rw_craptdb.nrdctabb;
+              vr_tab_craptdb(vr_indice_tdb).nrcnvcob := rw_craptdb.nrcnvcob;
+              vr_tab_craptdb(vr_indice_tdb).cdoperes := rw_craptdb.cdoperes;
+              vr_tab_craptdb(vr_indice_tdb).dtresgat := rw_craptdb.dtresgat;
+              vr_tab_craptdb(vr_indice_tdb).vlliqres := rw_craptdb.vlliqres;
+              vr_tab_craptdb(vr_indice_tdb).vltitulo := rw_craptdb.vltitulo;
+              vr_tab_craptdb(vr_indice_tdb).insittit := rw_craptdb.insittit;
+              vr_tab_craptdb(vr_indice_tdb).nrinssac := rw_craptdb.nrinssac;
+              vr_tab_craptdb(vr_indice_tdb).dtdpagto := rw_craptdb.dtdpagto;
+              vr_tab_craptdb(vr_indice_tdb).dtdebito := rw_craptdb.dtdebito;
+              vr_tab_craptdb(vr_indice_tdb).dtrefatu := rw_craptdb.dtrefatu;
+              vr_tab_craptdb(vr_indice_tdb).insitapr := rw_craptdb.insitapr;
+              vr_tab_craptdb(vr_indice_tdb).cdoriapr := rw_craptdb.cdoriapr;
+              vr_tab_craptdb(vr_indice_tdb).flgenvmc := rw_craptdb.flgenvmc;
+              vr_tab_craptdb(vr_indice_tdb).insitmch := rw_craptdb.insitmch;
+              vr_tab_craptdb(vr_indice_tdb).vlsldtit := rw_craptdb.vlsldtit;
+              vr_tab_craptdb(vr_indice_tdb).nrtitulo := rw_craptdb.nrtitulo;
+              vr_tab_craptdb(vr_indice_tdb).vliofprc := rw_craptdb.vliofprc;
+              vr_tab_craptdb(vr_indice_tdb).vliofadc := rw_craptdb.vliofadc;
+              vr_tab_craptdb(vr_indice_tdb).vliofcpl := rw_craptdb.vliofcpl;
+              vr_tab_craptdb(vr_indice_tdb).vlmtatit := rw_craptdb.vlmtatit;
+              vr_tab_craptdb(vr_indice_tdb).vlmratit := rw_craptdb.vlmratit;
+              vr_tab_craptdb(vr_indice_tdb).vljura60 := rw_craptdb.vljura60;
+              vr_tab_craptdb(vr_indice_tdb).vlpagiof := rw_craptdb.vlpagiof;
+              vr_tab_craptdb(vr_indice_tdb).vlpagmta := rw_craptdb.vlpagmta;
+              vr_tab_craptdb(vr_indice_tdb).nrctrdsc := vr_nrctrdsc_tdb;
+              vr_tab_craptdb(vr_indice_tdb).vlatraso := rw_craptdb.vlatraso;
+              vr_tab_craptdb(vr_indice_tdb).vlsaldodev := rw_craptdb.vlsaldodev;
+              vr_tab_craptdb(vr_indice_tdb).cddlinha := rw_craptdb.cddlinha;
+              vr_tab_craptdb(vr_indice_tdb).dsdlinha := rw_craptdb.dsdlinha;
+              vr_tab_craptdb(vr_indice_tdb).txmensal := rw_craptdb.txmensal;
+              vr_tab_craptdb(vr_indice_tdb).txdiaria := rw_craptdb.txdiaria;
+            END LOOP;
+          END IF; -- FIM DOS TITULOS DE BORDERÔ
+
         EXCEPTION
           WHEN vr_exc_ignorar THEN
             -- Exceção criada apenas para desviar o fluxo
@@ -2920,6 +3142,186 @@ BEGIN
       END;
     END pc_grava_tab_men_crapris;
 
+    --awae: rotina para tabela wrk de Titulos de Borderô
+    PROCEDURE pc_grava_tab_wrk_dados_tdb(pr_des_erro out varchar2) IS
+      -- VR_TAB_CRAPTDB
+    BEGIN
+      vr_indice_dados_tdb := vr_tab_craptdb.first;
+      while vr_indice_dados_tdb is not null loop
+        vr_ds_xml := ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrdconta || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtvencto || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrseqdig || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cdoperad || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrdocmto || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrctrlim || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrborder || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlliquid || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cdcooper || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cdbandoc || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrdctabb || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrcnvcob || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cdoperes || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtresgat || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlliqres || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vltitulo || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).insittit || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrinssac || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtdpagto || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtdebito || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dtrefatu || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).insitapr || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cdoriapr || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).flgenvmc || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).insitmch || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrtitulo || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vliofprc || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vliofadc || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vliofcpl || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlmtatit || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlmratit || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vljura60 || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlpagiof || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlpagmta || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlatraso || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).cddlinha || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).dsdlinha || ds_character_separador ||
+                      vr_tab_craptdb(vr_indice_dados_tdb).txmensal || ds_character_separador;
+
+        pc_popular_tbgen_batch_rel_wrk(pr_cdcooper     => pr_cdcooper,
+                                       pr_nmtabmemoria => 'VR_TAB_CRAPTDB',
+                                       pr_dtmvtolt     => pr_rw_crapdat.dtmvtolt,
+                                       pr_cdagenci     => vr_tab_dados_epr(vr_indice_dados_tdb).cdagenci,
+                                       pr_vlindice     => vr_indice_dados_tdb,
+                                       pr_dscritic     => vr_ds_xml,
+                                       pr_des_erro     => vr_dscritic);
+        vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
+      end loop; -- VR_TAB_CRAPTDB
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_des_erro := 'Erro PC_GRAVA_TAB_WRK_DADOS_TDB: ' || sqlerrm;
+        dbms_output.put_line('erro :' || sqlerrm);
+
+    END pc_grava_tab_wrk_dados_tdb;
+
+    --awae: rotina para tabela mem de Titulos de Borderô
+    PROCEDURE pc_grava_tab_men_dados_tdb(pr_cdcooper in tbgen_batch_relatorio_wrk.cdcooper%type,
+                                         pr_dtmvtolt in tbgen_batch_relatorio_wrk.dtmvtolt%type,
+                                         pr_des_erro out varchar2) IS
+      cursor cr_dados_tdb is
+        select substr(tab.dsxml, instr(tab.dsxml, '#', 1, 1) + 1, instr(tab.dsxml, '#', 1, 2) - instr(tab.dsxml, '#', 1, 1) - 1) nrdconta,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 2) + 1, instr(tab.dsxml, '#', 1, 3) - instr(tab.dsxml, '#', 1, 2) - 1) dtvencto,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 3) + 1, instr(tab.dsxml, '#', 1, 4) - instr(tab.dsxml, '#', 1, 3) - 1) nrseqdig,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 4) + 1, instr(tab.dsxml, '#', 1, 5) - instr(tab.dsxml, '#', 1, 4) - 1) cdoperad,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 5) + 1, instr(tab.dsxml, '#', 1, 6) - instr(tab.dsxml, '#', 1, 5) - 1) nrdocmto,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 6) + 1, instr(tab.dsxml, '#', 1, 7) - instr(tab.dsxml, '#', 1, 6) - 1) nrctrlim,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 7) + 1, instr(tab.dsxml, '#', 1, 8) - instr(tab.dsxml, '#', 1, 7) - 1) nrborder,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 8) + 1, instr(tab.dsxml, '#', 1, 9) - instr(tab.dsxml, '#', 1, 8) - 1) vlliquid,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 9) + 1, instr(tab.dsxml, '#', 1, 10) - instr(tab.dsxml, '#', 1, 9) - 1) dtlibbdt,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 10) + 1, instr(tab.dsxml, '#', 1, 11) - instr(tab.dsxml, '#', 1, 10) - 1) cdcooper,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 11) + 1, instr(tab.dsxml, '#', 1, 12) - instr(tab.dsxml, '#', 1, 11) - 1) cdbandoc,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 12) + 1, instr(tab.dsxml, '#', 1, 13) - instr(tab.dsxml, '#', 1, 12) - 1) nrdctabb,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 13) + 1, instr(tab.dsxml, '#', 1, 14) - instr(tab.dsxml, '#', 1, 13) - 1) nrcnvcob,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 14) + 1, instr(tab.dsxml, '#', 1, 15) - instr(tab.dsxml, '#', 1, 14) - 1) cdoperes,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 15) + 1, instr(tab.dsxml, '#', 1, 16) - instr(tab.dsxml, '#', 1, 15) - 1) dtresgat,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 16) + 1, instr(tab.dsxml, '#', 1, 17) - instr(tab.dsxml, '#', 1, 16) - 1) vlliqres,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 17) + 1, instr(tab.dsxml, '#', 1, 18) - instr(tab.dsxml, '#', 1, 17) - 1) vltitulo,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 18) + 1, instr(tab.dsxml, '#', 1, 19) - instr(tab.dsxml, '#', 1, 18) - 1) insittit,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 19) + 1, instr(tab.dsxml, '#', 1, 20) - instr(tab.dsxml, '#', 1, 19) - 1) nrinssac,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 20) + 1, instr(tab.dsxml, '#', 1, 21) - instr(tab.dsxml, '#', 1, 20) - 1) dtdpagto,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 21) + 1, instr(tab.dsxml, '#', 1, 22) - instr(tab.dsxml, '#', 1, 21) - 1) dtdebito,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 22) + 1, instr(tab.dsxml, '#', 1, 23) - instr(tab.dsxml, '#', 1, 22) - 1) dtrefatu,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 23) + 1, instr(tab.dsxml, '#', 1, 24) - instr(tab.dsxml, '#', 1, 23) - 1) insitapr,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 24) + 1, instr(tab.dsxml, '#', 1, 25) - instr(tab.dsxml, '#', 1, 24) - 1) cdoriapr,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 25) + 1, instr(tab.dsxml, '#', 1, 26) - instr(tab.dsxml, '#', 1, 25) - 1) flgenvmc,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 26) + 1, instr(tab.dsxml, '#', 1, 27) - instr(tab.dsxml, '#', 1, 26) - 1) insitmch,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 27) + 1, instr(tab.dsxml, '#', 1, 28) - instr(tab.dsxml, '#', 1, 27) - 1) vlsldtit,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 28) + 1, instr(tab.dsxml, '#', 1, 29) - instr(tab.dsxml, '#', 1, 28) - 1) nrtitulo,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 29) + 1, instr(tab.dsxml, '#', 1, 30) - instr(tab.dsxml, '#', 1, 29) - 1) vliofprc,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 30) + 1, instr(tab.dsxml, '#', 1, 31) - instr(tab.dsxml, '#', 1, 30) - 1) vliofadc,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 31) + 1, instr(tab.dsxml, '#', 1, 32) - instr(tab.dsxml, '#', 1, 31) - 1) vliofcpl,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 32) + 1, instr(tab.dsxml, '#', 1, 33) - instr(tab.dsxml, '#', 1, 32) - 1) vlmtatit,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 33) + 1, instr(tab.dsxml, '#', 1, 34) - instr(tab.dsxml, '#', 1, 33) - 1) vlmratit,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 34) + 1, instr(tab.dsxml, '#', 1, 35) - instr(tab.dsxml, '#', 1, 34) - 1) vljura60,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 35) + 1, instr(tab.dsxml, '#', 1, 36) - instr(tab.dsxml, '#', 1, 35) - 1) vlpagiof,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 36) + 1, instr(tab.dsxml, '#', 1, 37) - instr(tab.dsxml, '#', 1, 36) - 1) vlpagmta,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 37) + 1, instr(tab.dsxml, '#', 1, 38) - instr(tab.dsxml, '#', 1, 37) - 1) vlpagmra,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 38) + 1, instr(tab.dsxml, '#', 1, 39) - instr(tab.dsxml, '#', 1, 38) - 1) nrctrdsc,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 39) + 1, instr(tab.dsxml, '#', 1, 40) - instr(tab.dsxml, '#', 1, 39) - 1) vlatraso,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 40) + 1, instr(tab.dsxml, '#', 1, 41) - instr(tab.dsxml, '#', 1, 40) - 1) vlsaldodev,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 41) + 1, instr(tab.dsxml, '#', 1, 42) - instr(tab.dsxml, '#', 1, 41) - 1) cddlinha,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 42) + 1, instr(tab.dsxml, '#', 1, 43) - instr(tab.dsxml, '#', 1, 42) - 1) dsdlinha,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 43) + 1, instr(tab.dsxml, '#', 1, 44) - instr(tab.dsxml, '#', 1, 43) - 1) txmensal,
+               tab.dschave vr_indice
+          from (select wrk.dscritic dsxml,
+                       wrk.dschave
+                  from tbgen_batch_relatorio_wrk wrk
+                 where wrk.cdcooper = pr_cdcooper
+                   and wrk.cdprograma = pr_cdprogra
+                   and wrk.dsrelatorio = 'VR_TAB_CRAPTDB'
+                   and wrk.dtmvtolt = pr_dtmvtolt
+                   and wrk.cdagenci = 99999
+                   and wrk.nrdconta = 9999999999) tab;
+
+    BEGIN
+      BEGIN
+        FOR r_dados_tdb IN cr_dados_tdb LOOP
+          --Criar registro na vr_tab_craptdb
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrdconta := r_dados_tdb.nrdconta;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtvencto := r_dados_tdb.dtvencto;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrseqdig := r_dados_tdb.nrseqdig;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cdoperad := r_dados_tdb.cdoperad;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrdocmto := r_dados_tdb.nrdocmto;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrctrlim := r_dados_tdb.nrctrlim;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrborder := r_dados_tdb.nrborder;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlliquid := r_dados_tdb.vlliquid;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtlibbdt := r_dados_tdb.dtlibbdt;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cdcooper := r_dados_tdb.cdcooper;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cdbandoc := r_dados_tdb.cdbandoc;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrdctabb := r_dados_tdb.nrdctabb;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrcnvcob := r_dados_tdb.nrcnvcob;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cdoperes := r_dados_tdb.cdoperes;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtresgat := r_dados_tdb.dtresgat;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlliqres := r_dados_tdb.vlliqres;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vltitulo := r_dados_tdb.vltitulo;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).insittit := r_dados_tdb.insittit;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrinssac := r_dados_tdb.nrinssac;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtdpagto := r_dados_tdb.dtdpagto;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtdebito := r_dados_tdb.dtdebito;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dtrefatu := r_dados_tdb.dtrefatu;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).insitapr := r_dados_tdb.insitapr;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cdoriapr := r_dados_tdb.cdoriapr;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).flgenvmc := r_dados_tdb.flgenvmc;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).insitmch := r_dados_tdb.insitmch;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlsldtit := r_dados_tdb.vlsldtit;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).nrtitulo := r_dados_tdb.nrtitulo;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vliofprc := r_dados_tdb.vliofprc;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vliofadc := r_dados_tdb.vliofadc;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vliofcpl := r_dados_tdb.vliofcpl;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlmtatit := r_dados_tdb.vlmtatit;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlmratit := r_dados_tdb.vlmratit;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vljura60 := r_dados_tdb.vljura60;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagiof := r_dados_tdb.vlpagiof;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmta := r_dados_tdb.vlpagmta;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlpagmra := r_dados_tdb.nrctrdsc;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlatraso := r_dados_tdb.vlatraso;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).vlsaldodev := r_dados_tdb.vlsaldodev;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).cddlinha := r_dados_tdb.cddlinha;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).dsdlinha := r_dados_tdb.dsdlinha;
+          vr_tab_craptdb(r_dados_tdb.vr_indice).txmensal := r_dados_tdb.txmensal;
+        END LOOP;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_des_erro := 'Erro pc_grava_tab_men_dados_tdb: ' || sqlerrm;
+
+      END;
+    END pc_grava_tab_men_dados_tdb;
+
     ---------------------------------------
     -- Inicio Bloco Principal pc_crps280_I
     ---------------------------------------
@@ -3196,7 +3598,7 @@ BEGIN
 						  pr_dsmensagem   => 'crapvri Fim AGENCIA: [' || pr_cdagenci || '] - INPROCES: ' || pr_rw_crapdat.inproces,
 											PR_IDPRGLOG     => vr_idlog_ini_ger);
       END IF; --pr_idparale = 0.
-									
+
     -- Ligeirinho - inicio:
     vr_cdprogra := 'CRPS280_I';
     -- Validações iniciais do programa
@@ -3237,7 +3639,7 @@ BEGIN
       if vr_qterro = 0 then
         pc_clear_memoria(pr_CDAGENCI => 0);
       end if;
-			
+
       vr_tpexecucao := 1;
 
       --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
@@ -3361,6 +3763,13 @@ BEGIN
           RAISE vr_exc_saida;
         END IF;
 
+        -- AWAE: Para Titulos de Borderô
+        pc_grava_tab_wrk_dados_tdb(vr_dscritic);
+        --Se retornou erro
+        IF vr_dscritic IS NOT NULL THEN
+          --Levantar Exceção
+          RAISE vr_exc_saida;
+        END IF;
       end if;
 
       --Grava data fim para o JOB na tabela de LOG
@@ -3401,6 +3810,16 @@ BEGIN
       pc_grava_tab_men_crapris(pr_cdcooper => pr_cdcooper,
                                pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
                                pr_des_erro => vr_dscritic);
+      --Se retornou erro
+      IF vr_dscritic IS NOT NULL THEN
+        --Levantar Exceção
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- AWAE: Para Titulos de Borderô
+      pc_grava_tab_men_dados_tdb(pr_cdcooper => pr_cdcooper,
+                                 pr_dtmvtolt => pr_rw_crapdat.dtmvtolt,
+                                 pr_des_erro => vr_dscritic);
       --Se retornou erro
       IF vr_dscritic IS NOT NULL THEN
         --Levantar Exceção
@@ -3648,7 +4067,7 @@ BEGIN
           -- Para origens de empréstimo
           IF vr_tab_crapris(vr_des_chave_crapris).cdorigem = 3 THEN
 
-               
+
             -- Re-criando o indice da tabela temporaria
                vr_indice := LPAD(vr_tab_crapris(vr_des_chave_crapris).nrdconta,10,'0')
                          || LPAD(vr_tab_crapris(vr_des_chave_crapris).nrctremp,10,'0');
@@ -3665,7 +4084,7 @@ BEGIN
                   vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d := 0;
 
                   -- Verificar o grupo conforme os tipos de MicroCrédito
-                        IF vr_tab_dados_epr(vr_indice).dsorgrec LIKE '%BRDE%' 
+                        IF vr_tab_dados_epr(vr_indice).dsorgrec LIKE '%BRDE%'
                         OR vr_tab_dados_epr(vr_indice).dsorgrec LIKE '%BNDES%' THEN
                     -- BNDEs
                     vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).idgrumic := 2;
@@ -3677,17 +4096,17 @@ BEGIN
 
                 -- Armazenaremos a operação atual conforme o tipo de pessoa da mesma
                 IF vr_tab_crapris(vr_des_chave_crapris).inpessoa = 1 THEN
-                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis 
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis + vr_vldivida;
                 ELSE
-                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur 
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur + vr_vldivida;
                 END IF;
 
                 -- Se o atraso for até 59 dias
                 IF vr_tab_crapris(vr_des_chave_crapris).qtdiaatr <= 59 THEN
                   -- Acumular no período até 59
-                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d 
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d + vr_vldivida;
 
                   IF vr_tab_dados_epr(vr_indice).dsorgrec = 'MICROCREDITO DIM' THEN
@@ -3698,7 +4117,7 @@ BEGIN
 
                 ELSE
                   -- Acumular no restante
-                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d 
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d + vr_vldivida;
 
                   IF vr_tab_dados_epr(vr_indice).dsorgrec = 'MICROCREDITO DIM' THEN
@@ -3734,8 +4153,8 @@ BEGIN
 
               END IF;
 
-               
-               
+
+
               -- Para modalidade 299 -
             ELSIF vr_tab_crapris(vr_des_chave_crapris).cdmodali = 299 THEN
 
@@ -3895,7 +4314,7 @@ BEGIN
           -- ANTES => IF vr_qtpreatr <= 0 AND vr_percentu <> 0.5 AND
           --
           -- Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
-            IF vr_qtpreatr <= 0 AND vr_tab_crapris(vr_des_chave_crapris).innivris <> 2 AND 
+            IF vr_qtpreatr <= 0 AND vr_tab_crapris(vr_des_chave_crapris).innivris <> 2 AND
                vr_vldivida > 0  AND vr_dsorigem = 'E' THEN -- So emprestimo
 
             vr_dsnivris := '';
@@ -4138,11 +4557,64 @@ BEGIN
           ELSE
             vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
           END IF;
-
+											 
           -- Fechar tag atraso enviando pro XML
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
                                   ,pr_texto_completo => vr_txtauxi_227
                                   ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+
+          -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
+          IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
+            -- inicializando o valor
+            vr_vlpreapg := 0;
+            vr_indice_dados_tdb := vr_tab_craptdb.first;
+            WHILE vr_indice_dados_tdb IS NOT NULL LOOP
+              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
+              THEN
+                -- Enviar registro para o XML 1 - para cada um dos títulos.
+                vr_des_xml_gene := '<atraso>'
+                                 ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
+                                 ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
+                                 ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
+                                 ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
+                                 ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'zzzzzzz9'))||'</nrctremp>'
+                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,'fm999g999g990d00')||'</vldivida>'
+                                 ||' <vljura60>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,'fm999g999g990d00')||'</vljura60>'
+                                 ||' <vlpreemp>'||to_char(nvl(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,0),'fm999g990d00')||'</vlpreemp>'
+                                 ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
+                                 ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
+                                 ||' <vltotatr>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlatraso,'fm999g999g990d00')||'</vltotatr>'
+                                 ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
+                                 ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
+                                 ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
+                                 ||' <pertenge>'||vr_pertenge||'</pertenge>'
+                                 ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
+                                 ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
+                                 ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
+                                 ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
+                                 ||' <cdlcremp/>';
+
+                -- Não enviar nivel em caso de ser AA
+                IF vr_dsnivris <> 'AA' THEN
+                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris>'||vr_dsnivris||'</dsnivris>';
+                ELSE
+                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
+                END IF;
+                
+          -- Fechar tag atraso enviando pro XML
+            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
+                                  ,pr_texto_completo => vr_txtauxi_227
+                                      ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
+
+              END IF;
+              vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
+            END LOOP;
+          END IF; -- fim de titulo do borderô detalhado
+
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4198,6 +4670,58 @@ BEGIN
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
                                    ,pr_texto_completo => vr_txtauxi_354
                                    ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
+                                   
+          -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
+          IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
+            -- inicializando o valor
+            vr_vlpreapg := 0;
+            vr_indice_dados_tdb := vr_tab_craptdb.first;
+            WHILE vr_indice_dados_tdb IS NOT NULL LOOP
+              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
+              THEN
+                -- Enviar registro para o XML 2 - para cada um dos títulos.
+                vr_des_xml_gene :='<divida>'
+                                 ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
+                                 ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
+                                 ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
+                                 ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
+                                 ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'zzzzzzz9'))||'</nrctremp>'
+                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,'fm999g999g990d00')||'</vldivida>'
+                                 ||' <vljura60>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,'fm999g999g990d00')||'</vljura60>'
+                                 ||' <vlpreemp>'||to_char(nvl(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,0),'fm999g990d00')||'</vlpreemp>'
+                                 ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
+                                 ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
+                                 ||' <vltotatr>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlatraso,'fm999g999g990d00')||'</vltotatr>'
+                                 ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
+                                 ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
+                                 ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
+                                 ||' <pertenge>'||vr_pertenge||'</pertenge>'
+                                 ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
+                                 ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
+                                 ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
+                                 ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
+                                 || '<cdlcremp/>';
+
+                -- Não enviar nivel em caso de ser AA
+                IF vr_dsnivris <> 'AA' THEN
+                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris>'||vr_dsnivris||'</dsnivris>';
+                ELSE
+                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
+                END IF;
+                
+                -- Finalmente enviar para o XML
+                  gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
+                                         ,pr_texto_completo => vr_txtauxi_354
+                                         ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
+                
+              END IF;
+              vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
+            END LOOP;
+          END IF; -- fim de titulo do borderô detalhado
 
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
@@ -4220,7 +4744,7 @@ BEGIN
                 -- Copiar o valor do atraso
                 vr_vlpreapg := vr_tab_dados_epr(vr_indice).vlpapgat;
 
-                     IF ((pr_cdcooper = 1) AND  /* 1 - Viacredi */  
+                     IF ((pr_cdcooper = 1) AND  /* 1 - Viacredi */
                    (vr_tab_dados_epr(vr_indice).cdlcremp = 800 OR
                     vr_tab_dados_epr(vr_indice).cdlcremp = 900 OR
                     vr_tab_dados_epr(vr_indice).cdlcremp = 907 OR
@@ -4314,7 +4838,7 @@ BEGIN
               END IF; -- IF vr_indice IS NOT NULL THEN
 
             -- Origem de conta corrente e Adiant. a Depositante
-               ELSIF vr_dsorigem = 'C' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 0101  THEN  
+               ELSIF vr_dsorigem = 'C' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 0101  THEN
 
               -- Grupo economico
                   IF vr_pertenge = '*'  THEN
@@ -4365,6 +4889,65 @@ BEGIN
                   RAISE vr_exc_erro;
                 END IF;
               END IF;
+
+            --AWAE: Enviar os títulos de Desconto para a tabela da CYBER.
+            ELSIF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
+              -- inicializando o valor
+              vr_vlpreapg := 0;
+              vr_indice_dados_tdb := vr_tab_craptdb.first;
+              WHILE vr_indice_dados_tdb IS NOT NULL LOOP
+                IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+                    vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
+                    vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
+                    vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND 
+                    vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5)) THEN
+
+                  -- Somente atualiza os dados para o Cyber caso nao esteja rodando na Cecred
+                  IF pr_cdcooper <> 3 THEN
+                    -- Atualiza dados do emprestimo para o CYBER
+                    cybe0001.pc_atualiza_dados_financeiro(pr_cdcooper => pr_cdcooper                                   -- Codigo da Cooperativa
+                                                         ,pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta -- Numero da conta
+                                                         ,pr_nrctremp => vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc  -- Numero do contrato
+                                                         ,pr_cdorigem => 4                                             -- Origem cyber
+                                                         ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt                        -- Identifica a data de criacao do reg. de cobranca na CYBER.
+                                                         ,pr_vlsdeved => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Saldo devedor
+                                                         ,pr_vlpreapg => vr_tab_craptdb(vr_indice_dados_tdb).vlatraso  -- Valor a regularizar
+                                                         ,pr_qtprepag => vr_tab_craptdb(vr_indice_dados_tdb).qtprepag  -- Prestacoes Pagas
+                                                         ,pr_txmensal => vr_tab_craptdb(vr_indice_dados_tdb).txmensal  -- Taxa mensal
+                                                         ,pr_txdiaria => vr_tab_craptdb(vr_indice_dados_tdb).txdiaria  -- Taxa diaria
+                                                         ,pr_vlprepag => vr_tab_craptdb(vr_indice_dados_tdb).vlprepag  -- Vlr. Prest. Pagas
+                                                         ,pr_qtmesdec => vr_tab_craptdb(vr_indice_dados_tdb).qtmesdec  -- Qtd. meses decorridos
+                                                         ,pr_dtdpagto => vr_tab_craptdb(vr_indice_dados_tdb).dtdpagto  -- Data de pagamento
+                                                         ,pr_cdlcremp => vr_tab_craptdb(vr_indice_dados_tdb).cddlinha  -- Codigo da linha de credito
+                                                         ,pr_cdfinemp => 0                                             -- Codigo da finalidade.
+                                                         ,pr_dtefetiv => vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt  -- Data da efetivacao do emprestimo.
+                                                         ,pr_vlemprst => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Valor emprestado.
+                                                         ,pr_qtpreemp => 1                                             -- Quantidade de prestacoes.
+                                                         ,pr_flgfolha => 0                                             -- O pagamento e por Folha
+                                                         ,pr_vljura60 => vr_tab_craptdb(vr_indice_dados_tdb).vljura60  -- Juros 60 dias --,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias (CRAPRIS)
+                                                         ,pr_vlpreemp => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Valor da prestacao
+                                                         ,pr_qtpreatr => 1                                             -- Qtd. Prestacoes
+                                                         ,pr_vldespes => vr_tab_craptdb(vr_indice_dados_tdb).vlatraso  -- Valor despesas
+                                                         ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
+                                                         ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
+                                                         ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior
+                                                         ,pr_dtdrisan => vr_dtdrisco                                   -- Data risco anterior
+                                                         ,pr_qtdiaris => vr_qtdiaris                                   -- Quantidade dias risco
+                                                         ,pr_qtdiaatr => vr_tab_craptdb(vr_indice_dados_tdb).qtdiaatr  -- Dias de atraso
+                                                         ,pr_flgrpeco => vr_flgrpeco                                   -- Grupo Economico
+                                                         ,pr_flgpreju => 0                                             -- Esta em prejuizo.
+                                                         ,pr_flgconsg => 0                                             --Indicador de valor consignado.
+                                                         ,pr_flgresid => 0                                             -- Flag de residuo
+                                                         ,pr_nrborder => vr_tab_craptdb(vr_indice_dados_tdb).nrborder  --> Numero do bordero do titulo em atraso no cyber
+                                                         ,pr_nrtitulo => vr_tab_craptdb(vr_indice_dados_tdb).nrtitulo  --> Numero do titulo em atraso no cyber
+                                                         ,pr_dscritic => pr_dscritic);
+                    IF pr_dscritic IS NOT NULL  THEN
+                      RAISE vr_exc_erro;
+                    END IF;
+                  END IF;
+                END IF;
+                vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
+              END LOOP;
             END IF;
 
             -- Enviar a linha arquivo arquivo 354.txt
@@ -4392,6 +4975,48 @@ BEGIN
                                                    ||LPAD(to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm99999999'),10,' ') || vr_dssepcol_354
                                                    ||LPAD(to_char(NVL(vr_vlpreapg,0),'fm999G999G999G990D00'),18,' ')
                                                    ||chr(10));
+
+            -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
+            IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
+              -- inicializando o valor
+              vr_vlpreapg := 0;
+              vr_indice_dados_tdb := vr_tab_craptdb.first;
+              WHILE vr_indice_dados_tdb IS NOT NULL LOOP
+              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
+                   vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
+                   vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
+                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
+                THEN
+                  gene0002.pc_escreve_xml(pr_xml => vr_clob_354
+                                          ,pr_texto_completo => vr_txtarqui_354
+                                          ,pr_texto_novo =>RPAD(vr_tab_crapris(vr_des_chave_crapris).nrdconta,8,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,50,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_tab_crapris(vr_des_chave_crapris).tpemprst,4,' ')||vr_dssepcol_354
+                                                         ||vr_dsorigem||vr_dssepcol_354
+                                                         ||LPAD(to_char(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'fm99999999'),8,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_cdlcremp_354,8,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,8,' ')||vr_dssepcol_354
+                                                         ||RPAD(NVL(to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60),' '),8,' ')||vr_dssepcol_354
+                                                         ||RPAD(NVL(to_char(vr_tab_craptdb(vr_indice_dados_tdb).vltitulo),' '),8,' ')||vr_dssepcol_354
+                                                         ||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'999990d00')||vr_dssepcol_354
+                                                         ||RPAD(vr_tab_craptdb(vr_indice_dados_tdb).vlatraso,8,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_vlpreatr,8,' ')||vr_dssepcol_354
+                                                         ||LPAD(to_char(vr_percentu,'fm990d00'),6,' ')||vr_dssepcol_354
+                                                         ||LPAD(vr_tab_crapris(vr_des_chave_crapris).cdagenci,3,' ')||vr_dssepcol_354
+                                                         ||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'999990d00')||vr_dssepcol_354
+                                                         ||RPAD(vr_dsnivris,8,' ')||vr_dssepcol_354
+                                                         ||RPAD(vr_nivrisco,8,' ')||vr_dssepcol_354
+                                                         ||to_char(vr_dtdrisco,'dd/mm/rr')||vr_dssepcol_354
+                                                         ||RPAD(vr_qtdiaris,8,' ')||vr_dssepcol_354
+                                                         ||LPAD(to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm99999999'),10,' ') || vr_dssepcol_354
+                                                         ||LPAD(to_char(NVL(vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit,0),'fm999G999G999G990D00'),18,' ')
+                                                         ||chr(10));
+                END IF;
+                vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
+              END LOOP;
+            END IF; -- fim de titulo do borderô detalhado
+
           END IF;
         END IF;
 
@@ -4570,7 +5195,7 @@ BEGIN
             END IF;
 
             --Apenas contratos liberados no mês
-               IF vr_tab_crapris(vr_des_chave_crapris).dtinictr BETWEEN TRUNC(pr_rw_crapdat.dtmvtolt,'mm') 
+               IF vr_tab_crapris(vr_des_chave_crapris).dtinictr BETWEEN TRUNC(pr_rw_crapdat.dtmvtolt,'mm')
                                                                  AND pr_rw_crapdat.dtmvtolt THEN
               vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr + vr_tab_dados_epr(vr_indice).vlemprst;
             END IF;
@@ -4915,7 +5540,7 @@ BEGIN
                                 ,pr_vlreprec_pf      => vr_tab_microcredito(vr_chave_microcredito).vlpesfis
                                 ,pr_vlreprec_pj      => vr_tab_microcredito(vr_chave_microcredito).vlpesjur
                                 ,pr_vlate59d         => vr_tab_microcredito(vr_chave_microcredito).vlate59d
-                                ,pr_vlaci59d      	  => vr_tab_microcredito(vr_chave_microcredito).vlaci59d);     
+                                ,pr_vlaci59d          => vr_tab_microcredito(vr_chave_microcredito).vlaci59d);
 
           END IF;
           vr_chave_microcredito := vr_tab_microcredito.next(vr_chave_microcredito);
@@ -5082,7 +5707,7 @@ BEGIN
         RAISE vr_exc_erro;
       END IF;
 
-      
+
       -- Solicitar a geração do relatório crrl227
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
                                  ,pr_cdprogra  => pr_cdprogra                          --> Programa chamador
@@ -5162,7 +5787,7 @@ BEGIN
             gene0002.pc_escreve_xml(pr_xml            => vr_clob_354
                                    ,pr_texto_completo => vr_txtarqui_354
                                    ,pr_texto_novo     => ''
-                                   ,pr_fecha_xml      => TRUE); 
+                                   ,pr_fecha_xml      => TRUE);
           -- Finalmente submete o arquivo pra geração
             gene0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper                            --> Cooperativa conectada
                                                ,pr_cdprogra  => pr_cdprogra                            --> Programa chamador
@@ -5263,103 +5888,103 @@ BEGIN
          pr_dscritic := 'Erro na rotina PC_CRPS280_I. Detalhes: '||pr_dscritic;
       WHEN vr_exc_fimprg THEN
 
-			-- Se foi retornado apenas código
-			if vr_cdcritic > 0 and vr_dscritic is null then
-				-- Buscar a descrição
-				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-			end if;
+      -- Se foi retornado apenas código
+      if vr_cdcritic > 0 and vr_dscritic is null then
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      end if;
 
-			-- Se foi gerada critica para envio ao log
-			if vr_cdcritic > 0 or vr_dscritic is not null then
-				-- Envio centralizado de log de erro
-				btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-																	 pr_ind_tipo_log => 2, -- Erro tratato
-																	 pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-																									 || vr_cdprogra || ' --> '
-																									 || vr_dscritic );
-			end if;
+      -- Se foi gerada critica para envio ao log
+      if vr_cdcritic > 0 or vr_dscritic is not null then
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                   pr_ind_tipo_log => 2, -- Erro tratato
+                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || vr_dscritic );
+      end if;
 
-			-- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-			btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-															 ,pr_cdprogra => vr_cdprogra
-															 ,pr_infimsol => pr_infimsol
-															 ,pr_stprogra => pr_stprogra);
+      -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_infimsol => pr_infimsol
+                               ,pr_stprogra => pr_stprogra);
 
-			--Grava data fim para o JOB na tabela de LOG - Ligeirinho
-			pc_log_programa(pr_dstiplog   => 'F',
-											pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
-											pr_cdcooper   => pr_cdcooper,
-											pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-											pr_idprglog   => vr_idlog_ini_par,
-											pr_flgsucesso => 1);
-											
-			if nvl(pr_idparale,0) <> 0 then
-				-- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
-				pc_log_programa(PR_DSTIPLOG           => 'E',
-												PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
-												pr_cdcooper           => pr_cdcooper,
-												pr_tpexecucao         => vr_tpexecucao,    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-												pr_tpocorrencia       => 3,
-												pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
-																								 'pr_dscritic:'||pr_dscritic,
-												PR_IDPRGLOG           => vr_idlog_ini_par);
+      --Grava data fim para o JOB na tabela de LOG - Ligeirinho
+      pc_log_programa(pr_dstiplog   => 'F',
+                      pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
+                      pr_cdcooper   => pr_cdcooper,
+                      pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                      pr_idprglog   => vr_idlog_ini_par,
+                      pr_flgsucesso => 1);
 
-				--Grava data fim para o JOB na tabela de LOG
-				pc_log_programa(pr_dstiplog   => 'F',
-												pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
-												pr_cdcooper   => pr_cdcooper,
-												pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-												pr_idprglog   => vr_idlog_ini_par,
-												pr_flgsucesso => 0);
+      if nvl(pr_idparale,0) <> 0 then
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 3,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
 
-				-- Encerrar o job do processamento paralelo dessa agência
-				gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-																		,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-																		,pr_des_erro => vr_dscritic);
-			end if;
+        --Grava data fim para o JOB na tabela de LOG
+        pc_log_programa(pr_dstiplog   => 'F',
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper   => pr_cdcooper,
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);
 
-			-- Efetuar commit pois gravaremos o que foi processo até então
-			commit;
-										 
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if;
+
+      -- Efetuar commit pois gravaremos o que foi processo até então
+      commit;
+
     WHEN vr_exc_saida THEN
 
-			-- Se foi retornado apenas código
-			if vr_cdcritic > 0 and vr_dscritic is null then
-				-- Buscar a descrição
-				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-			end if;
+      -- Se foi retornado apenas código
+      if vr_cdcritic > 0 and vr_dscritic is null then
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      end if;
 
-			-- Devolvemos código e critica encontradas
-			pr_cdcritic := nvl(vr_cdcritic,0);
-			pr_dscritic := vr_dscritic;
-			
-			if nvl(pr_idparale,0) <> 0 then
-				-- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
-				pc_log_programa(PR_DSTIPLOG           => 'E',
-												PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
-												pr_cdcooper           => pr_cdcooper,
-												pr_tpexecucao         => vr_tpexecucao,    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-												pr_tpocorrencia       => 3,
-							pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)|| 'pr_dscritic:'||pr_dscritic,
-												PR_IDPRGLOG           => vr_idlog_ini_par);
+      -- Devolvemos código e critica encontradas
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
 
-				--Grava data fim para o JOB na tabela de LOG
-				pc_log_programa(pr_dstiplog   => 'F',
-												pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
-												pr_cdcooper   => pr_cdcooper,
-												pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-												pr_idprglog   => vr_idlog_ini_par,
-												pr_flgsucesso => 0);
+      if nvl(pr_idparale,0) <> 0 then
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 3,
+              pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)|| 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);
 
-				-- Encerrar o job do processamento paralelo dessa agência
-				gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-																		,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-																		,pr_des_erro => vr_dscritic);
-			end if;
-			
-			-- Efetuar rollback
-			rollback;										 
-	 WHEN OTHERS THEN
+        --Grava data fim para o JOB na tabela de LOG
+        pc_log_programa(pr_dstiplog   => 'F',
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper   => pr_cdcooper,
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);
+
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if;
+
+      -- Efetuar rollback
+      rollback;
+   WHEN OTHERS THEN
       -- Retornar o erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := vr_dscritic ||'.Erro não tratado na rotina PC_CRPS280_I. Detalhes: ' ||SQLERRM;

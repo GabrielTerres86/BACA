@@ -15,7 +15,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Maio/2014                     Ultima atualizacao: 06/03/2018
+     Data    : Maio/2014                     Ultima atualizacao: 06/06/2018
 
      Dados referentes ao programa:
 
@@ -84,8 +84,8 @@ BEGIN
                  13/12/2017 - Projeto Ligeirinho - Tratar paralelismo para ganho de performance - Mauro            
 
                  06/03/2017 - Incluso procedimento para execução a partir da LANPRE. Cursor CRAPDAT precisou
-                              ficar no mesmo Loop da leitura das Cooperativas - CRAPCOP - Mauro     
-
+                              ficar no mesmo Loop da leitura das Cooperativas - CRAPCOP - Mauro 
+							      
                  20/03/2018 - Alterados cursores para retornar apenas contas com tipos de conta que 
                               tenham o produto "25 – CREDITO PRE-APROVADO". PRJ366 (Lombardi).
 
@@ -95,7 +95,8 @@ BEGIN
 
 				 15/06/2018 - Ao buscar os dados do cooperado de todas as agencias pelo cpf/cnpj,
 				              não deve considerar as contas que estão na situação 4. (Renato - Supero)
-                              
+
+				 06/06/2018 - Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
   ............................................................................ */
 
   DECLARE

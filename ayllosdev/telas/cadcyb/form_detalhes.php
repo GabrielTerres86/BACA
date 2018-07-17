@@ -28,6 +28,10 @@
 	$assessor = $_POST["assessor"];
 	$motivocin = $_POST["motivocin"];
 	
+	$nrborder = $_POST["nrborder"];
+	$nrtitulo = $_POST["nrtitulo"];
+	$nrdocmto = $_POST["nrdocmto"];
+	
 ?>
 
 <form id="frmDetalhes" name="frmDetalhes" class="formulario" onSubmit="return false;">
@@ -59,8 +63,17 @@
 	<input name="flgehvip" id="flgehvip" type="text" value="<? echo $flgehvip; ?>" />
 	<br />
 	
+	
 	<label for="dsmotcin"><? echo utf8ToHtml("Motivo CIN:") ?></label>
 	<input name="dsmotcin" id="dsmotcin" type="text" value="<? echo $motivocin; ?>" />
+	<br />
+
+	<label for="nrborder"><? echo utf8ToHtml("Borderô:") ?></label>
+	<input name="nrborder" id="nrborder" type="text" value="<? echo $nrborder; ?>" />
+	<br />
+
+	<label for="nrtitulo"><? echo utf8ToHtml("Título:") ?></label>
+	<input name="nrtitulo" id="nrtitulo" type="text" value="<? echo $nrdocmto; ?>" />
 	<br />
 	
 	<label for="dsassess"><? echo utf8ToHtml("Assessoria:") ?></label>

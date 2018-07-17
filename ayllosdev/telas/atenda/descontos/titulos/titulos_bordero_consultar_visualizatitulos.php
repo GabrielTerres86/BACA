@@ -15,6 +15,10 @@
 				 		      substituir nomenclaturas Cedente por Beneficiário e  
 							  Sacado por Pagador. Chamado 229313 (Jean Reddiga - RKAM)
 							  
+				 02/04/2018 - Padronização da tabela, retirada das restrições e adição do saldo devedor (Leonardo Oliveira -GFT)
+							  
+				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
+				 19/05/2018 - Insert do campo de Decisão (Vitor Shimada Assanuma - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -45,6 +49,33 @@
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+
+	if($flgverbor){
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "BUSCAR_TIT_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	}
+	else{
 	// Verifica se o número do bordero é um inteiro válido
 	if (!validaInteiro($nrborder)) {
 		exibeErro("N&uacute;mero do border&ocirc; inv&aacute;lida.");
@@ -66,9 +97,11 @@
 		
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetTits);
+	}
 	
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjTits = getObjectXML($xmlResult);
+	
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjTits->roottag->tags[0]->name) == "ERRO") {
@@ -76,28 +109,30 @@
 	} 
 	
 	$titulos      = $xmlObjTits->roottag->tags[0]->tags;
-	$restricoes   = $xmlObjTits->roottag->tags[1]->tags;
 	
 	//TOTAL
 	$qtTitulos    = count($titulos);
-	$qtRestricoes = count($restricoes);
 	$vlrtotal = 0;
 	$vltotliq = 0;
 	$vlmedtit = 0;
 	
 	//TOTAL REGISTRADA
 	$qtTitulos_cr = 0;
-	$qtRestricoes_cr = 0;
 	$vlrtotal_cr = 0;
 	$vltotliq_cr = 0;
 	$vlmedtit_cr = 0;
-		
+	if(!$flgverbor){
+		$restricoes   = $xmlObjTits->roottag->tags[1]->tags;
+		$qtRestricoes = count($restricoes);
+		$qtRestricoes_cr = 0;
 	//TOTAL SEM REGISTRO
 	$qtTitulos_sr = 0;
 	$qtRestricoes_sr = 0;
 	$vlrtotal_sr = 0;
 	$vltotliq_sr = 0;
 	$vlmedtit_sr = 0;
+	}
+
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -109,7 +144,177 @@
 	}
 	
 ?>
-<div id="divTitulos" style="overflow-y: scroll; overflow-x: scroll; height: 350px; width: 600px;"  ="alert('teste');">
+
+
+<?if($flgverbor){?>
+	<div id="divTitulosBorderos">
+
+		<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
+
+		<fieldset>
+			<legend>Tipo de Cobran&ccedil;a: REGISTRADA</legend>
+				
+			<div id="divcr" class="divRegistros" >
+					<table  class="tituloRegistros">
+						<thead>
+							<tr>
+								<th>Vencto</th>
+								<th>Nosso n&uacute;mero</th>
+								<th>Valor</th>
+								<th>Valor L&iacute;quido</th>
+								<th>Prz</th>
+								<th>Pagador</th>
+								<th>CPF/CNPJ</th>
+								<th>Situa&ccedil;&atilde;o</th>
+								<th>Decis&atilde;o</th>
+								<th>Saldo Devedor</th>
+								<th>Nr. Ctr. Cyber</th>
+							</tr>
+						</thead>
+						<tbody>
+						<?php
+								$vlrtotal_cr = 0;
+								$vltotliq_cr = 0;
+										
+								for ($i = 0; $i < $qtTitulos; $i++) {
+									$t = $titulos[$i];
+									if ($t->tags[13]->cdata == "no"){
+										continue;
+									}
+									
+									$vlrtotal += doubleval(str_replace(",",".",$t->tags[8]->cdata));
+									$vltotliq += doubleval(str_replace(",",".",$t->tags[9]->cdata));
+									
+									$vlrtotal_cr += doubleval(str_replace(",",".",$t->tags[8]->cdata));
+									$vltotliq_cr += doubleval(str_replace(",",".",$t->tags[9]->cdata));
+									$qtTitulos_cr += 1;
+									
+									$mtdClick = "selecionarTituloDeBordero('"
+										.($i + 1)."','"
+										.$qtBorderos."','"
+										.getByTagName($t->tags,'nossonum')."');";
+							?>
+							<tr 
+								id="trTitBordero<?echo $i + 1; ?>" 
+								onFocus="<? echo $mtdClick; ?>"
+								onClick="<? echo $mtdClick; ?>"
+								>
+								<td>
+								<input type='hidden' name='selecionados' value='<? echo $t->tags[0]->cdata; ?>;<? echo $t->tags[7]->cdata; ?>;<? echo $t->tags[6]->cdata; ?>;<? echo $t->tags[2]->cdata; ?>'/>
+									<?php echo $t->tags[3]->cdata;?>
+								</td> 
+								<td><?php echo $t->tags[10]->cdata; ?></td> 
+								<td><?php echo number_format(str_replace(",",".",$t->tags[8]->cdata),2,",",".");?></td> 
+								<td><?php echo number_format(str_replace(",",".",$t->tags[9]->cdata),2,",","."); ?></td> 
+								<td><?php 
+										if (trim($t->tags[4]->cdata) != ""){ 
+											echo diffData($t->tags[3]->cdata,$t->tags[4]->cdata); 
+											
+										}else{
+											echo diffData($t->tags[3]->cdata,$glbvars["dtmvtolt"]);
+											
+										}
+								?></td>
+								<td><?php echo $t->tags[11]->cdata;
+								?></td> 
+								<td><?php 
+									if (strlen($t->tags[5]->cdata) > 11){ 
+										echo formataNumericos('99.999.999/9999-99',$t->tags[5]->cdata,'./-');
+									}else{ 
+										echo formataNumericos('999.999.999-99',$t->tags[5]->cdata,'.-');
+									} 
+								?></td>
+								
+								<td><?php 
+									//Caso o titulo não esteja pago ou baixado e a diferença da data de movimento com o de pagamento for negativo, então está vencido
+									if ($t->tags[15]->cdata == 1){
+										echo "Vencido";
+									}else{
+									switch ($t->tags[12]->cdata){
+										case 0: echo "Pendente";break; 
+										case 1: echo "Resgatado";break; 
+										case 2: echo "Pago";break; 
+										case 3: echo "Pago ap&oacute;s Vencimento";break; 
+										case 4: echo "Liberado";break; 
+										default: "------";break; }
+									}
+								?></td>
+								<td>
+									<?php 
+										switch ($t->tags[14]->cdata){ 
+											case 0: echo "Aguardando An&aacute;lise";break;
+											case 1: echo "Aprovado";break;
+											case 2: echo "N&atilde;o Aprovado";break;
+											default: "------";break;
+										}
+									?>	
+								</td>
+								<td><?php echo number_format(str_replace(",",".",$t->tags[16]->cdata),2,",",".");?></td> 
+								<td><?php echo $t->tags[17]->cdata; ?></td> 
+							</tr>							
+						<?php 
+							}
+						?>
+						</tbody>
+					</table>	
+				</div>
+		</fieldset>
+	</div>
+
+	<?php
+		$vlmedtit_cr = doubleval($vlrtotal_cr / $qtTitulos_cr);
+	?>
+	<table width="95%" border="0" cellpadding="1" cellspacing="2" style="margin: 10px 0 0 0">
+			<tbody>
+			<tr>
+					<td width="140" align="center" class="txtNormal">TOTAL(REGIST) ==></td>
+					<td width="65"  align="center"   class="txtNormal"><?php if($qtTitulos_cr <= 1){ echo $qtTitulos_cr." T&Iacute;TULO";}else{ echo $qtTitulos_cr." T&Iacute;TULOS";};?></td>
+					<td width="65"  align="center"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vlrtotal_cr),2,",","."); ?></td>
+					<td width="80"  align="right"  class="txtNormal"><?php echo number_format(str_replace(",",".",$vltotliq_cr),2,",","."); ?></td>
+					<td 			align="right"  class="txtNormal"></td>
+					<td width="100" align="right"  class="txtNormal">VAL. M&Eacute;DIO: <?php echo number_format(str_replace(",",".",$vlmedtit_cr),2,",","."); ?></td>			
+				</tr>
+			</tbody>
+	</table>
+
+
+	<div id="divBotoes">
+		<a
+		href="#"
+		class="botao" 
+		name="btnvoltar"
+		id="btnvoltar"
+		onClick="voltaDiv(4,3,4,'CONSULTA DE BORDER&Ocirc;');return false;" >
+			Voltar
+		</a>
+
+		<a
+		href="#"
+		class="botao" 
+		name="btnvoltar"
+		id="btnvoltar"
+		onClick="visualizarTituloDeBordero();return false;" >
+			Ver detalhes
+		</a>
+
+	</div>
+
+	<script type="text/javascript">
+		dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao3");
+
+		// Muda o título da tela
+		$("#tdTitRotina").html("CONSULTA DE T&Iacute;TULOS DO BORDER&Ocirc;");
+		formataLayout('divTitulosBorderos');
+		    
+		// Esconde mensagem de aguardo
+		hideMsgAguardo();
+
+		// Bloqueia conteúdo que está átras do div da rotina
+		blockBackground(parseInt($("#divRotina").css("z-index")));
+	</script>
+<?}
+else{?>
+	<div id="divTitulos" style="overflow-y: scroll; overflow-x: scroll; height: 350px; width: 600px;"  >
 	<div id="divcr" style="display:block;">
 		<table width="860px" border="0" cellpadding="1" cellspacing="2">
 			<br/>
@@ -335,21 +540,22 @@
 		?>
 		</table>
 	</div>	
-</div>
+	</div>
 
-<div id="divBotoes">
+	<div id="divBotoes">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(4,3,4,'CONSULTA DE BORDER&Ocirc;');return false;" />
-</div>
+	</div>
 
-<script type="text/javascript">
-dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao3");
+	<script type="text/javascript">
+	dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao3");
 
-// Muda o título da tela
-$("#tdTitRotina").html("CONSULTA DE T&Iacute;TULOS DO BORDER&Ocirc;");
+	// Muda o título da tela
+	$("#tdTitRotina").html("CONSULTA DE T&Iacute;TULOS DO BORDER&Ocirc;");
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
 
-// Bloqueia conteúdo que está átras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
-</script>
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
+	</script>
+<?}

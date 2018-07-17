@@ -67,7 +67,7 @@
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_cecred_dsctit (Oscar).
                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_dsctit_cr (Oscar).
                
-			   07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)               
+               07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)
 
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
                

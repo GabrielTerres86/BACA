@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-12-22T17:11:21 -->
+<!-- 2018-06-08T10:10:08 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Bordero"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -235,33 +235,11 @@ $F{tpctrlim} == "3"]]></printWhenExpression>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//totais/total")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl519_bordero_totais.jasper"]]></subreportExpression>
 			</subreport>
-			<subreport>
-				<reportElement positionType="Float" x="40" y="32" width="549" height="8" isRemoveLineWhenBlank="true" uuid="132cf0e1-b6ea-45c2-9245-222a753f778c">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{dsopecoo} != ""]]></printWhenExpression>
-				</reportElement>
-				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//restricoes_coord/restricao")]]></dataSourceExpression>
-				<subreportExpression><![CDATA["crrl519_bordero_restri_coordenador.jasper"]]></subreportExpression>
-			</subreport>
-			<subreport>
-				<reportElement positionType="Float" x="40" y="48" width="549" height="8" isRemoveLineWhenBlank="true" uuid="b934efd0-ae70-488d-b61e-993d560df2f4">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{tpctrlim} == "3"]]></printWhenExpression>
-				</reportElement>
-				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//sacnaopago/sacado")]]></dataSourceExpression>
-				<subreportExpression><![CDATA["crrl519_bordero_sacado_npago.jasper"]]></subreportExpression>
-			</subreport>
 		</band>
 		<band height="160">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="40" y="8" width="354" height="8" uuid="8155010d-4a20-4df8-90e2-f2d6511dfe76">
+				<reportElement positionType="Float" x="40" y="20" width="354" height="8" uuid="8155010d-4a20-4df8-90e2-f2d6511dfe76">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -399,6 +377,17 @@ $F{tpctrlim} == "3"]]></printWhenExpression>
 					</graphicElement>
 				</line>
 			</frame>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="40" y="3" width="354" height="8" uuid="a8fe7fef-535a-46cc-912c-934e8a2566a8">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Borderô sujeito a análise de crédito e alteração de valor!"]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
 </jasperReport>

@@ -41,6 +41,8 @@
 
 				 10/10/2016 - Remover verificacao de digitalizaco para o botao de 
 							  consultar imagem (Lucas Ranghetti #510032)
+
+				07/06/2018 - Inclusão da regra para mostrar a taxa diária dependendo se for bordero novo ou antigo
 	************************************************************************/
 	
 	session_start();
@@ -114,6 +116,21 @@
 	
 	$bordero  = $xmlObjBordero->roottag->tags[0]->tags[0]->tags;
 	
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -168,7 +185,11 @@
 	<br />
 	
 	<label for="txdiaria"><? echo utf8ToHtml('Taxa Diária:') ?></label>
+	<?php if ($flgverbor == 1){ ?>
+		<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[3]->cdata)/30,7,",","."). " %"; ?>" />
+	<?php }else{ ?>
 	<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
+	<?php } ?>
 	
 	<label for="dsopelib"><? echo utf8ToHtml('') ?></label>
 	<input type="text" name="dsopelib" id="dsopelib" value="<?php echo $bordero[11]->cdata; ?>" />
@@ -207,6 +228,8 @@ hideMsgAguardo();
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
+flgverbor = <?=$flgverbor?>
+
 <?php if ($cddopcao == "N") { ?>
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
@@ -222,7 +245,12 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
+			if(flgverbor){
+				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
+			}
+			else{
 			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			}
 <?php } elseif ($cddopcao == "E") { ?>
 			showConfirmacao("Deseja excluir o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>

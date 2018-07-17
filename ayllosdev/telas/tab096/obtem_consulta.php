@@ -7,7 +7,7 @@
 	  Objetivo  : Carrega os dados da tela TAB096.              
 	                                                                 
 	  Alterações: 07/03/2017 - Busca do campo descprej. (P210.2 - Jaison/Daniel)
-				  
+				  20/06/2018 - Adicionado tipo de produto desconto de título - Luis Fernando (GFT)
 	***********************************************************************/
 
 	session_start();
@@ -23,6 +23,7 @@
 		
 	$cdcoopex = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0  ;	
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : 0  ;	
+	$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : 0;
 		
 	
 	// Classe para leitura do xml de retorno
@@ -33,10 +34,11 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";	
 	$xml .= "   <cdcooper>".$cdcoopex."</cdcooper>";	
+	$xml .= "   <tpproduto>".$tpproduto."</tpproduto>";	
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 		
-	$xmlResult = mensageria($xml, "EMPR0007", "BUSCA_COBEMP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "TELA_TAB096", "TAB096_BUSCAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);					
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {

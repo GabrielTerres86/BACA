@@ -1114,8 +1114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       --> Efetuar laço para retornar todos os registros disponíveis:
       FOR rw_crapavt IN cr_crapavt(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta 
-                                  ,pr_nrctrlim => pr_nrctrlim
-                                  ,pr_tpctrato => 8
+                                  ,pr_nrctrlim => 0
+                                  ,pr_tpctrato => 6
                                   ,pr_dsproftl => 'SOCIO') LOOP 
     
         -- Setar flag para indicar que há sócio
@@ -1304,8 +1304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     -->Efetuar laço para retornar todos os registros disponíveis de Procuradores:
     FOR rw_crapavt IN cr_crapavt(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta 
-                                ,pr_nrctrlim => pr_nrctrlim
-                                ,pr_tpctrato => 8
+                                ,pr_nrctrlim => 0
+                                ,pr_tpctrato => 6
                                 ,pr_dsproftl => 'PROCURADOR') LOOP
       -- Setar flag para indicar que há sócio
       vr_flprocura := true;
@@ -1645,7 +1645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
      --vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);      
 
      vr_obj_proposta.put('tipoProduto'           ,rw_crawlim.tpproduto);
-     
+
      IF  rw_crawlim.tpctrato > 0 THEN
          vr_obj_proposta.put('tipoGarantiaCodigo'   , rw_crawlim.tpctrato );
          vr_obj_proposta.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );

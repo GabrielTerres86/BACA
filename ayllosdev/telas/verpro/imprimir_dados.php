@@ -112,6 +112,7 @@
 	$hrrecarga    = $_POST['hrrecarga'];
 	$dtdebito     = $_POST['dtdebito'];
 	$nsuopera     = $_POST['nsuopera'];
+	$qttitbor     = $_POST['qttitbor'];
 	
 	$dsiduser 	= session_id();	
 
@@ -219,6 +220,7 @@
 	$xml .= '		<hrrecarga>'.$hrrecarga.'</hrrecarga>';	
 	$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';	
 	$xml .= '		<nsuopera>'.$nsuopera.'</nsuopera>';	
+	$xml .= '		<qttitbor>'.$qttitbor.'</qttitbor>';	
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 	

@@ -297,17 +297,17 @@
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
 
-	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
-				             Melhoria 310 (Tiago/Thiago).
+	              25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				                     Melhoria 310 (Tiago/Thiago).
 
-			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
-				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
+			          11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				                     para Lic. Soc.Ambientais M310(Tiago/Thiago).
                 
                 09/06/2017 - Ajuste na rotina retorna_docs_liberados para nao gerar pendencia 
                              para borderos efetuados no IB e com valor menor ou igual a 5 mil.
                              PRJ300 - Desconto de Cheques (Lombardi/Daniel)
                      
-			    11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
                      
                 31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
@@ -317,9 +317,9 @@
                      
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
-                     
-                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).    
-                     
+                             
+                11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).  
+                
                      
                 21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
                              na opção todos (Carlos).
@@ -332,6 +332,8 @@
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
 
+                11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
+                     
 				
 
 
@@ -796,7 +798,7 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
-        END.
+                END. 
         END.
     ELSE
     IF  par_tipopcao = 3 THEN /* MATRICULA */
@@ -1433,7 +1435,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                     WHEN 51 THEN
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
-                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/ 
+                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
                     WHEN 58 THEN
                         ASSIGN aux_conttabs = 58. /*TERMO DE ALTERACAO DE TITULARIDADE*/
                     WHEN 59 THEN
@@ -1544,7 +1546,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                            tt-documento-digitalizado.nrcpfcgc = crapdoc.nrcpfcgc
                                          USE-INDEX tt-documento-digitalizado5 
                                          NO-LOCK: END.
-
+                      
                       END.
 
 
@@ -3339,7 +3341,7 @@ PROCEDURE efetua_batimento_ged_termos:
     DO  aux_data = par_datainic TO par_datafina:
 
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                           crapdoc.dtmvtolt = aux_data     AND
+                               crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
                            crapdoc.flgdigit = FALSE        AND
                            crapdoc.tpbxapen = 0
@@ -3406,7 +3408,7 @@ PROCEDURE efetua_batimento_ged_termos:
                        b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
                        b-crapdoc.dtbxapen = TODAY 
                        b-crapdoc.cdopebxa = "1".
-                       
+
             NEXT.
 
         END.
@@ -3444,7 +3446,7 @@ PROCEDURE efetua_batimento_ged_termos:
     END.
     /* fim tipo de documento 37 */
 
-    /* TIPO DE DOCUMENTO: 55 Termo Declaracao Simples Nacional */
+	/* TIPO DE DOCUMENTO: 55 Termo Declaracao Simples Nacional */
     ASSIGN aux_tpdocmto = 0
            aux_conttabs = 55.
     /* Buscar valor parametrizado p/ digitalizacao de declaracao pep */
@@ -3454,7 +3456,7 @@ PROCEDURE efetua_batimento_ged_termos:
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
     DO  aux_data = par_datainic TO par_datafina:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                           crapdoc.dtmvtolt = aux_data     AND
+                               crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
                            crapdoc.flgdigit = FALSE        AND
                            crapdoc.tpbxapen = 0
@@ -3521,7 +3523,7 @@ PROCEDURE efetua_batimento_ged_termos:
     END. /* fim for each crapdoc */
     END.
     /* fim tipo de documento 55 */
-	  /* TIPO DE DOCUMENTO: 56 Declaracao Pessoa Juridica Cooperativa */
+	/* TIPO DE DOCUMENTO: 56 Declaracao Pessoa Juridica Cooperativa */
     ASSIGN aux_tpdocmto = 0
            aux_conttabs = 56.
     /* Buscar valor parametrizado p/ digitalizacao de declaracao PJ Cooperativa */
@@ -3531,7 +3533,7 @@ PROCEDURE efetua_batimento_ged_termos:
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
     DO  aux_data = par_datainic TO par_datafina:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                           crapdoc.dtmvtolt = aux_data     AND
+                               crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
                            crapdoc.flgdigit = FALSE        AND
                            crapdoc.tpbxapen = 0
@@ -3735,7 +3737,7 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH tt-tarif-contas-pacote FIELDS(nrdconta dtadesao cdoperador_adesao)
                              WHERE tt-tarif-contas-pacote.dtcancel  = ?            
                                AND tt-tarif-contas-pacote.dtadesao = aux_data NO-LOCK:
-
+        
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
                    crapass.cdcooper = par_cdcooper AND
@@ -3746,7 +3748,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
-            
+        
         /* Verifica se o contrato foi digitalizado */
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper  = par_cdcooper AND
@@ -3777,7 +3779,7 @@ PROCEDURE efetua_batimento_ged_termos:
             NEXT.
           END.
         ELSE DO:
-
+            
             FIND FIRST tt-documentos-termo
                  WHERE tt-documentos-termo.cdcooper = par_cdcooper
                    AND tt-documentos-termo.cdagenci = crapass.cdagenci
@@ -3802,8 +3804,8 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopeade
                        tt-documentos-termo.idseqite = aux_conttabs. /* Adesao */
             END.
-            END.
         END.
+    END.
     END.
     /* fim tipo de documento 39 */
     
@@ -3823,7 +3825,7 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH tt-tarif-contas-pacote FIELDS(cdcooper nrdconta dtcancelamento cdoperador_cancela)
                              WHERE tt-tarif-contas-pacote.dtcancel  <> ?           
                                AND tt-tarif-contas-pacote.dtcancel = aux_data NO-LOCK:
-
+        
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
                    crapass.cdcooper = par_cdcooper AND
@@ -3834,7 +3836,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
-
+        
         /* Verifica se o contrato foi digitalizado */
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper  = par_cdcooper AND
@@ -3888,10 +3890,10 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopecan
                        tt-documentos-termo.idseqite = aux_conttabs. /* Cancelamento */
             END.
-            END.
         END.
+    END.
     /* fim tipo de documento 38 */
-    
+        
     END. /* do aux_data */
     
     
@@ -5104,6 +5106,7 @@ PROCEDURE retorna_docs_liberados:
 
                     FOR EACH craptdb WHERE craptdb.cdcooper = crapbdt.cdcooper AND  
                                            craptdb.nrdconta = crapbdt.nrdconta AND 
+										   craptdb.dtlibbdt <> ?               AND
                                            craptdb.nrborder = crapbdt.nrborder NO-LOCK:
                         
                         aux_vltittot = aux_vltittot + craptdb.vltitulo.

@@ -21,6 +21,8 @@
 	// Recebe a operação que está sendo realizada
 	$lsdconta = $_POST["strNrdconta"]; 
 	$lscontra = $_POST["strNrctremp"]; 
+	$lsborder = $_POST["strNrborder"]; 
+	$lstitulo = $_POST["strNrtitulo"]; 
 	$lsorigem = $_POST["strCdorigem"]; 
 	$lsjudici = $_POST["strFlgjudic"];
 	$lsextjud = $_POST["strFlextjud"];
@@ -50,6 +52,8 @@
     $xml .= "       <idseqttl>1</idseqttl>";		
 	$xml .= "       <lsdconta>".$lsdconta."</lsdconta>";
 	$xml .= "       <lscontra>".$lscontra."</lscontra>";
+	$xml .= "       <lsborder>".$lsborder."</lsborder>";
+	$xml .= "       <lstitulo>".$lstitulo."</lstitulo>";
 	$xml .= "       <lsorigem>".$lsorigem."</lsorigem>";
 	$xml .= "       <lsjudici>".$lsjudici."</lsjudici>";
 	$xml .= "       <lsextjud>".$lsextjud."</lsextjud>";

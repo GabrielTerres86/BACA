@@ -49,6 +49,8 @@
 
 			 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
   
+			 28/04/2018 - Inclusão de novas colunas na grid de borderô (Alex Sandro  - GFT)
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -73,6 +75,8 @@ arrayAlinhaInclusaoBordero[4] = 'right';
 arrayAlinhaInclusaoBordero[5] = 'center';
 arrayAlinhaInclusaoBordero[6] = 'center';
 				
+var flgverbor = 0;
+
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -350,7 +354,6 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-		$('#'+nomeForm).css('width','785px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -359,14 +362,19 @@ function formataLayout(nomeForm){
 		
 		var ordemInicial = new Array();
 				
+		if(flgverbor){
+			$('#'+nomeForm).css('width','945px');
 		var arrayLargura = new Array();
 		arrayLargura[0] = '60px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '60px';
-		arrayLargura[4] = '80px';
-		arrayLargura[5] = '120px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
 		arrayLargura[6] = '80px';
+			arrayLargura[7] = '120px';
+			arrayLargura[8] = '';
+			arrayLargura[9] = '65px';
 		
 				
 		var arrayAlinha = new Array();
@@ -378,6 +386,27 @@ function formataLayout(nomeForm){
 		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'right';
 		arrayAlinha[7] = 'center';
+			arrayAlinha[8] = 'center';
+			arrayAlinha[9] = 'center';
+		}
+		else{
+			$('#'+nomeForm).css('width','745px');
+			var arrayLargura = new Array();
+			arrayLargura[0] = '80px';
+			arrayLargura[1] = '80px';
+			arrayLargura[2] = '80px';
+			arrayLargura[3] = '70px';
+			arrayLargura[4] = '140px';
+			arrayLargura[5] = '';
+					
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'center';
+			arrayAlinha[1] = 'right';
+			arrayAlinha[2] = 'right';
+			arrayAlinha[3] = 'right';
+			arrayAlinha[4] = 'right';
+			arrayAlinha[5] = 'center';
+		}
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -388,7 +417,47 @@ function formataLayout(nomeForm){
 		});
 		
 		ajustarCentralizacao();
+	}else if ( nomeForm == 'divBorderoTitulosPagar' ){
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+		var ordemInicial = new Array();
+		var arrayLargura = new Array();
 
+		$('#'+nomeForm).css('width','910');
+
+		arrayLargura[0] = '70px';
+		arrayLargura[1] = '50px';
+		arrayLargura[2] = '90px';
+		arrayLargura[3] = '90px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '80px';
+		arrayLargura[7] = '70px';
+		arrayLargura[8] = '70px';
+		arrayLargura[9] = '70px';
+		
+				
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
+		
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+		
+		ajustarCentralizacao();
 	}else if ( nomeForm == 'divIncluirBordero' ){
 		$('#'+nomeForm).css('width','940px');
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
@@ -513,7 +582,7 @@ function formataLayout(nomeForm){
 		layoutPadrao();
 		ajustarCentralizacao();
 	
-	}else if( nomeForm == 'frmBordero' ){
+	}else if ( nomeForm == 'frmBordero' ){
 	
 		var Ldspesqui = $('label[for="dspesqui"]','#'+nomeForm);
 		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
@@ -670,7 +739,7 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 
-	}else if( nomeForm == 'divLimites' ){
+	}else if ( nomeForm == 'divLimites' ){
 				
 		$('#'+nomeForm).css('width','800px');
 	
@@ -854,7 +923,7 @@ function formataLayout(nomeForm){
 			}
 		});
 		
-	}else if( nomeForm == 'frmTitulos' ){
+	}else if ( nomeForm == 'frmTitulos' ){
 	
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Ldtinivig = $('label[for="dtinivig"]','#'+nomeForm);
@@ -1094,7 +1163,7 @@ function formataLayout(nomeForm){
 		tabelaSel.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();	
 	
-	}else if( nomeForm == 'frmChequesCustodiaNovo'){		
+	}else if ( nomeForm == 'frmChequesCustodiaNovo'){		
 		// Ajustar tamnaho do form
 		$('#'+nomeForm).css('width','820px');
 		
@@ -1130,7 +1199,7 @@ function formataLayout(nomeForm){
 			if (e.keyCode == 9 || e.keyCode == 13 ) {
 				cDtdcaptu.focus();
 	return false;
-}
+		}
 		});
 		cDtdcaptu.unbind('keydown').bind('keydown', function(e) {
 			// Se é a tecla TAB ou ENTER, 
@@ -1213,7 +1282,7 @@ function formataLayout(nomeForm){
 		tabelaChq.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();	
 	
-	}else if(nomeForm == 'frmBorderosAnalise'){
+	}else if ( nomeForm == 'frmBorderosAnalise'){
 		$('#'+nomeForm).css('width','1100px');
 		
 		var flgcheckd = 0;
@@ -1295,7 +1364,7 @@ function formataLayout(nomeForm){
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();			
 	
-	}else if(nomeForm == 'frmBorderoResgate'){
+	}else if ( nomeForm == 'frmBorderoResgate'){
 		$('#'+nomeForm).css('width','820px');
 		
 		var rNrborder = $('label[for="nrborder"]','#'+nomeForm);
@@ -1388,7 +1457,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divTitulosBorderos' ){
 
-		$('#'+nomeForm).css('width','950px');
+		$('#'+nomeForm).css('width','1110px');
 
 		var divcr = $('#divcr','#'+nomeForm);		
 		var tabela      = $('table', divcr );
@@ -1399,26 +1468,30 @@ function formataLayout(nomeForm){
 				
 
 		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';//Vencto
-		arrayLargura[1] = '150px';//130 Nosso Número
-		arrayLargura[2] = '80px';//Valor
+		arrayLargura[0] = '75px';//Vencto
+		arrayLargura[1] = '138px';//130 Nosso Número
+		arrayLargura[2] = '63px';//Valor
 		arrayLargura[3] = '80px';//Valor Líquido
 		arrayLargura[4] = '30px';//Prz
-		arrayLargura[5] = '250px';//Pagador
-		arrayLargura[6] = '110px';// CPF/CNPJ
+		arrayLargura[5] = '';//Pagador
+		arrayLargura[6] = '108px';// CPF/CNPJ
 		arrayLargura[7] = '80px';//130 //Situação 50 30
-		arrayLargura[8] = '80px';//Saldo Devedor
+		arrayLargura[8] = '70px';//130 //Decisao 50 30
+		arrayLargura[9] = '80px';//Saldo Devedor
+		arrayLargura[10] = '80px';//Nr Ctr Cyber
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';// Vencto
 		arrayAlinha[1] = 'center';//Nosso número
 		arrayAlinha[2] = 'right';//Valor
 		arrayAlinha[3] = 'right';//Valor Lóquido
-		arrayAlinha[4] = 'right';//Prz
+		arrayAlinha[4] = 'center';//Prz
 		arrayAlinha[5] = 'left';//Pagador
 		arrayAlinha[6] = 'right';// CPF/CNPJ
 		arrayAlinha[7] = 'center';//Situação
-		arrayAlinha[8] = 'right';//Saldo Devedor
+		arrayAlinha[8] = 'center';//Decisao
+		arrayAlinha[9] = 'right';//Saldo Devedor
+		arrayAlinha[10] = 'center';//Saldo Devedor
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		

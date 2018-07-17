@@ -933,7 +933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       CLOSE cr_crapcco_empr;
     
     END IF; 
-                                                   
+    
     IF pr_dsorgarq = 'DESCONTO DE TITULO'THEN
       
       OPEN cr_crapcco_empr(pr_cdcooper => pr_cdcooper

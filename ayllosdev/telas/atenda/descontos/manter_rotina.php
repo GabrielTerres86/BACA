@@ -85,6 +85,9 @@
 	$cddlinha = (isset($_POST['cddlinha'])) ? $_POST['cddlinha'] : 0  ;
 	$form 	  = (isset($_POST['frmOpcao'])) ? $_POST['frmOpcao'] : '' ;
 	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : '' ;
+	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : '1' ;
+	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : '50' ;
+
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : 'CONTRATO' ;
 
 	$inctrmnt = (isset($_POST['inctrmnt'])) ? $_POST['inctrmnt'] : 0;
@@ -295,6 +298,8 @@
 	    $xml .= "	<nrnosnum>".$nrnosnum."</nrnosnum>";
 	    $xml .= "	<nrctrlim>".$nrctrlim."</nrctrlim>";
 	    $xml .= "	<nrborder>".$nrborder."</nrborder>";
+	    $xml .= "	<nriniseq>".$nriniseq."</nriniseq>";
+	    $xml .= "	<nrregist>".$nrregist."</nrregist>";
 		$xml .= "	<insitlim>2</insitlim>";
 		$xml .= "	<tpctrlim>3</tpctrlim>";
 	    $xml .= " </Dados>";
@@ -312,7 +317,7 @@
 			exit;
 		}
     	$dados = $root->dados;
-    	// var_dump($dados);die();
+    	
         $qtregist = $dados->getAttribute('QTREGIST');
     	if($qtregist>0){
 	    	$html = "<table class='tituloRegistros'>";
@@ -323,7 +328,7 @@
 									<th>Pagador</th>
 									<th>Vencimento</th>
 									<th>Valor</th>
-									<th>Situa&ccedil;&atilde;o</th>
+									<th>Cr&iacute;ticas</th>
 									<th>Selecionar</th>
 								</tr>
 							</thead>
@@ -341,19 +346,65 @@
 	    		$html .=	"<td><span>".converteFloat($t->vltitulo)."</span>".formataMoeda($t->vltitulo)."</td>";
 	    		$sit = $t->dssituac;
 	    		if ($sit=="N") {
-		    		$html .=	"<td><img src='../../imagens/icones/sit_ok.png'/></td>";
+		    		$html .=	"<td>N&atilde;o</td>";
 	    		}
 	    		elseif ($sit=="S") {
-		    		$html .=	"<td><img src='../../imagens/icones/sit_er.png'/></td>";
+		    		$html .=	"<td>Sim</td>";
 	    		}
 	    		else{
-		    		$html .=	"<td></td>";
+		    		$html .=	"<td class='titulo-nao-analisado'>N&atilde;o Analisado</td>";
 	    		}
 	    		$html .=	"<td class='botaoSelecionar' onclick='incluiTituloBordero(this);'><button type='button' class='botao'>Incluir</button></td>";
 	    		$html .= "</tr>";
 	    	}
 	    	$html .= "</tbody>
 	    			</table>";
+
+	    	//Rodape paginação
+	    	$html .= "<div id='divPesquisaRodape' class='divPesquisaRodape'>
+						<table>	
+							<tr>
+								<td>";
+			//Cria o botão de voltar								
+			if ($nriniseq > 1) { 
+			 	$html .= "         <a class='paginacaoAnt'><<< Anterior</a>";
+			} else {
+				$html .=           "&nbsp;";
+			}
+			$html .=            "</td>
+			      			 	 <td>";
+			//De - Até      			 	 
+			if (isset($nriniseq)) { 
+				if (($nriniseq + $nrregist) > $qtregist){
+					$qtnumregist = $qtregist;
+				}else{
+					$qtnumregist .= ($nriniseq + $nrregist - 1);
+				}
+				$html .=          "Exibindo ".$nriniseq." at&eacute ".$qtnumregist." de ".$qtregist;
+			}
+			$html .=           "</td>
+								<td>";
+
+			//Cria o botão de Avançar									
+			if ($qtregist > ($nriniseq + $nrregist - 1)) {
+				$html .= "<a class='paginacaoProx'>Pr&oacute;ximo >>></a>";
+			}else{
+				$html .=           "&nbsp;";
+			}
+			$html .=            "</td>
+						    </tr>
+						</table>
+					</div>";
+
+			//Javascript da paginação		
+	        $html .= "<script>";
+	        $html .= "$('a.paginacaoAnt').unbind('click').bind('click', function() {
+						buscarTitulosBorderoPaginacao(".($nriniseq - $nrregist).",".$nrregist.");
+					  });";
+			$html .= "$('a.paginacaoProx').unbind('click').bind('click', function() {
+						buscarTitulosBorderoPaginacao(".($nriniseq + $nrregist).",".$nrregist.");
+					  });";
+			$html .= "</script>";
 	    	echo $html;
 	    }
 	    else{
@@ -393,9 +444,13 @@
 		}
 
     	$dados = $xmlObj->roottag->tags[0];
+    	$nrborder = $dados->tags[1]->cdata;
+    	$flrestricao = $dados->tags[2]->cdata;
+    	$arrInsert['msg'] = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->cdata);
+    	$arrInsert['nrborder'] = $nrborder;
+    	$arrInsert['flrestricao'] = $flrestricao;
 
-			
-	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+		echo json_encode($arrInsert);
 			
 	}else if ($operacao == 'REALIZAR_MANUTENCAO_LIMITE'){
 
@@ -514,9 +569,10 @@
 		}
 
     	$dados = $xmlObj->roottag->tags[0];
+    	$arrAlterar['msg'] = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->cdata);
 
-			
-	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+		echo json_encode($arrAlterar);	
+	    //echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
 			
 	}else if ($operacao =='BUSCAR_TITULOS_RESGATE'){
 
@@ -655,7 +711,7 @@
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
 				$html .= '    bloqueiaFundo(divRotina);';
-				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","");';
+				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
 				$html .= '</script>';
 			}
 			$html .=  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
@@ -725,6 +781,63 @@
 	    //$html .= '<input type="hidden" name="qtregist" id="qtregist" value="'.$qtregist.'" />';
 
 	    echo $html;
+	}else if($operacao == 'CALCULAR_SALDO_TITULOS_VENCIDOS'){
+		$nrdconta     = $_POST['nrdconta'];
+		$nrborder    = $_POST['nrborder'];
+		$arr_nrdocmto = implode(',', $_POST['arr_nrdocmto']);
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<arrtitulo>".$arr_nrdocmto."</arrtitulo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CALCULA_POSSUI_SALDO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$dados = $root->dados;
+
+		//Pega o saldo de retorno
+		foreach($dados->find("inf") as $t){
+			$possui_saldo = $t->possui_saldo;
+		}
+		
+		//Se possuir saldo positivo o retorno é 1 senão 0
+		echo $possui_saldo;
+
+	}else if($operacao == 'PAGAR_TITULOS_VENCIDOS'){
+		$nrdconta     = $_POST['nrdconta'];
+		$nrborder     = $_POST['nrborder'];
+		$fl_avalista  = $_POST['fl_avalista'];
+		$arr_nrdocmto = implode(',', $_POST['arr_nrdocmto']);
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<flavalista>".$fl_avalista."</flavalista>";
+		$xml .= "		<arrtitulo>".$arr_nrdocmto."</arrtitulo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "PAGAR_TITULOS_VENCIDOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+
+		//OK caso retorne com sucesso
+		echo $root->dsmensag;
 	}
 
 	// Função para exibir erros na tela através de javascript

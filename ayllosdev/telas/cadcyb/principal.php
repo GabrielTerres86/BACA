@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 01/10/2013 - Alterado para setar focus no cCdorigem (Lucas R.)
  *                12/09/2014 - Ajuste na verificação de permissão por tipo de operação (Jaison)
  *                31/08/2015 - Ajustado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12)
+ *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * -------------- 
  */
 
@@ -22,6 +23,9 @@
 	$operacao = (isset($_POST["operacao"])) ? $_POST["operacao"] : ""; 
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0 ; 
 	$nrctremp = (isset($_POST["nrctremp"])) ? $_POST["nrctremp"] : 0 ; 
+	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0 ; 
+	$nrtitulo = (isset($_POST["nrtitulo"])) ? $_POST["nrtitulo"] : 0 ; 
+	$nrdocmto = (isset($_POST["nrdocmto"])) ? $_POST["nrdocmto"] : 0 ; 
 	$cdorigem = (isset($_POST["cdorigem"])) ? $_POST["cdorigem"] : 0 ; 
 	$flgjudic = $_POST["flgjudic"];
 	$flextjud = $_POST["flextjud"];
@@ -53,6 +57,8 @@
 	$xmlContrato .= "		<nrctremp>".$nrctremp."</nrctremp>";
 	$xmlContrato .= "		<cdorigem>".$cdorigem."</cdorigem>";
 	$xmlContrato .= "		<cddopcao>".$operacao."</cddopcao>";
+	$xmlContrato .= "		<nrborder>".$nrborder."</nrborder>";
+	$xmlContrato .= "		<nrtitulo>".$nrtitulo."</nrtitulo>";
 	$xmlContrato .= "	</Dados>";
 	$xmlContrato .= "</Root>";
 
@@ -66,12 +72,15 @@
 		} else {
 			exibirErro("error",$msgErro,"Alerta - Ayllos","estadoInicial();",false);
 		}
-	}
+	} else {
 	
 	if ($operacao == "I") {
 		echo "criaObjetoAssociado('" . $cdorigem 
                               ."', '". $nrdconta 
                               ."', '". $nrctremp 
+	                              ."', '". $nrborder 
+	                              ."', '". $nrtitulo 
+	                              ."', '". $nrdocmto 
                               ."', '". $flgjudic 
                               ."', '". $flextjud 
                               ."', '". $flgehvip 
@@ -80,7 +89,7 @@
                               ."', '".  $cdmotcin ."');";
 		echo "carregaTabela();";
 		echo "formataTabela();";
-		echo "zebradoLinhaTabela($('#tbCadcyb > tbody > tr'));";
+			//echo "zebradoLinhaTabela($('#tbCadcyb > tbody > tr'));";
 	}
 
 	if ($operacao == "A" || $operacao == "E" ) {
@@ -93,6 +102,9 @@
 		$nmassess = $xmlObjetoContrato->roottag->tags[0]->attributes["NMASSESS"];
 		$cdmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["CDMOTCIN"];
 		$dsmotcin = $xmlObjetoContrato->roottag->tags[0]->attributes["DSMOTCIN"];
+			$nrborder = $xmlObjetoContrato->roottag->tags[0]->attributes["NRBORDER"];
+			$nrtitulo = $xmlObjetoContrato->roottag->tags[0]->attributes["NRTITULO"];
+			$nrctremp = $xmlObjetoContrato->roottag->tags[0]->attributes["NRCTREMP"];
 		
 		if ($judicial == "SIM") {
 			echo "$('#flgjudic','#frmCab').prop('checked',true);";			
@@ -121,12 +133,16 @@
 			echo "$('#cdmotivocin','#frmCab').val('".$cdmotcin."');";
 			echo "$('#dsmotivocin','#frmCab').val('".$dsmotcin."');";
 		}
+			if($cdorigem == 4){
+				echo "$('#nrctremp','#frmCab').val('".$nrctremp."');";
+			}
 
 		if ($operacao == "E") {
 			if ($flgmsger == "yes") {
 				echo "showConfirmacao('Contrato j&aacute; enviado para cobran&ccedil;a, confirma exslusão do registro?','Confirma&ccedil;&atilde;o - Ayllos','excluirCrapcyc(\'".$flgmsger."\');','','sim.gif','nao.gif');";
 			}else{
 				echo "$('#btExclusao','#divBotoes').focus();";
+				}
 			}
 		}
 	}

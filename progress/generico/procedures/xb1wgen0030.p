@@ -40,9 +40,9 @@
 
                28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
                
-               11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+			   11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))               
 
-               12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
+			   12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
 
                24/04/2018 - Adicionado a procedure busca_dados_proposta_manuten (Paulo Penteado GFT)
 ............................................................................ */
@@ -794,12 +794,12 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
-									   INPUT aux_nrctrmnt,
+                                       INPUT aux_nrctrmnt,
                                        INPUT aux_idcobope, 
-									  OUTPUT aux_nrctrlim,
+                                      OUTPUT aux_nrctrlim, 
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
-                                    
+
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
             FIND FIRST tt-erro NO-LOCK NO-ERROR.

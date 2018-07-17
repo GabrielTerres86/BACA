@@ -138,7 +138,7 @@
 
 
 			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontos: ') ?></label>
-			<input name="cddlinha" id="cddlinha" type="text" value="0"/>
+			<input name="cddlinha" id="cddlinha" type="text" value="0" class="campo"/>
 			<a>
 				<img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif">
 			</a>
