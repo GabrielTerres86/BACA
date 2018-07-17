@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Everton (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao:  07/08/2017
+  Data    : Abril/2017.                    Ultima atualizacao:  06/04/2018
 
   Dados referentes ao programa:
 
@@ -34,8 +34,12 @@ BEGIN
               07/11/2017 - Ajuste realizado para gravacao do arquivo referente ao relatorio 135 por agencia.
                            Everton (Mouts) - Chamado 773664
 
-              23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+              07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
 
+              06/04/2018 - Remover o resgate de aplicação pois a funcionalidade não deve ser aplicada para
+                           empréstimos TR (Renato - Supero).
+
+              23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
     ............................................................................. */
 
   DECLARE
@@ -322,7 +326,6 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic          -- Retorno de codigo de critica
                                                ,pr_dscritic => vr_dscritic);        -- Retorno de descricao de critica
 
-               
              ELSE
                vr_inliquid := 0;
              END IF;

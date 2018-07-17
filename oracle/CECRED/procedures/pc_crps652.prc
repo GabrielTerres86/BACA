@@ -158,8 +158,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                26/07/2016 - Correção não estava trazendo o nome da acessoria de cobrança
                             na manutenção cadastral. (Oscar)
                27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
-                      Nao deve remover o @ devido ao campo de email.
-              Heitor (RKAM) - Chamado 521909
+			                Nao deve remover o @ devido ao campo de email.
+							Heitor (RKAM) - Chamado 521909
 
                20/09/2016 - Inclusao do arquivo de acordo de pagamentos,
                             Prj. 302 (Jean Michel)
@@ -170,11 +170,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
                             das cooperativas ativas campo "flgativo". (Oscar)
 
-
-         30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
-                      Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
-              Gil (Mouts)
-
+			   
+			   30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
+			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
+							Gil (Mouts)
+              
                05/01/2017 - Ajuste para força o uso do indice 2 da tabela craplcm problemas
                            de performance  Oracle usa o indice 1. (Oscar)
 
@@ -190,16 +190,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             para que ele possa ser chamado por JOB fora do processo
                             noturno (Tiago/Rodrigo SD588601).
 
-         26/04/2017 - Prj 432 - Melhorias envio Cyber - adequação da geração do arquivo de baixas / pagamentos,
-                                                        não está atualizando corretamente se o contrato for VIP (Jean/Mout´S)
-               28/04/2017 - Ajuste nas regras para enviar as baixas dos contratos. (James)
+			   26/04/2017 - Prj 432 - Melhorias envio Cyber - adequação da geração do arquivo de baixas / pagamentos,
+			                                                  não está atualizando corretamente se o contrato for VIP (Jean/Mout´S)
+               28/04/2017 - Ajuste nas regras para enviar as baixas dos contratos. (James)             
 
                28/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                      crapass, crapttl, crapjur
+			                crapass, crapttl, crapjur 
 
 
-     02/05/2017 - Prj 432 - retirar regra de não enviar baixa se contrato VIP, está gerando conflitos no Cyber
-                            e esta regra será revista na melhoria 302. (Jean / Mout´s)
+		 02/05/2017 - Prj 432 - retirar regra de não enviar baixa se contrato VIP, está gerando conflitos no Cyber 
+		                        e esta regra será revista na melhoria 302. (Jean / Mout´s)
 
                16/05/2017 - Inclusão de identificação das origens de pagamento "Boletagem Massiva", "Pagto. por avalista",
                             "Pagto. Boleto Prejuízo", "Descto. Boleto Prejuízo" e "Pagto. de Boleto".
@@ -216,10 +216,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             cobertura da operação vinculada a operação de crédito. Projeto 404 (Lombardi)
 
                09/01/2018 - #826598 Concatenação da crítica no parâmetro de retorno do crps (Carlos)
-
-         01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
+			   
+			   01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
                             feitos na CRAPLEM e parametrizados na tela PARCYB.
-              Zerar o saldo devedor de registros que tenha sido efetuado acordo.
+							Zerar o saldo devedor de registros que tenha sido efetuado acordo.
                             Heitor (Mouts) - Chamado 798744
 
                27/02/2018 - Enviar registros da LCM somente para TR, alguns historicos especificos e que conseguimos filtrar
@@ -227,9 +227,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             Ajustes no envio de pagamentos de conta corrente.
                             Heitor (Mouts)
 
-         26/04/2018 - Enviar registro da LCM do historico 2386 - Recuperacao de prejuizo, pois na tabela CRAPLEM ele se divide
+			   26/04/2018 - Enviar registro da LCM do historico 2386 - Recuperacao de prejuizo, pois na tabela CRAPLEM ele se divide
                             entre alguns historicos que nao devem ser enviados.
-              Heitor (Mouts) - Prj 324.
+                            Heitor (Mouts) - Prj 324.
 
                05/06/2018 - Inclusão de Descont de Titulos (Borderô de Titulos) (Andrew Albuquerque(GFT))
 
@@ -370,8 +370,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapass.inrisctl
              ,crapass.idastcjt
        FROM crapass crapass
-       WHERE crapass.cdcooper = pr_cdcooper
-         ;
+       WHERE crapass.cdcooper = pr_cdcooper;
      rw_crapass cr_crapass%ROWTYPE;
 
      CURSOR cr_gnetcvl (pr_cdcooper IN crapass.cdcooper%type
@@ -675,7 +674,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             --Multa e juros de mora
             AND craphis.cdhistor in (2084,2085,2087,2088,2090,2091,2093,2094)
          GROUP BY craplcm.cdhistor,craphis.dshistor
-     UNION
+		 UNION
          SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */
                SUM(craplcm.vllanmto) vllanmto
                ,craplcm.cdhistor
@@ -2453,7 +2452,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            --Variaveis Locais
            vr_cdorigem crapcyb.cdorigem%type;
-           
            --Variaveis Controle
            vr_dsfinemp crapfin.dsfinemp%TYPE;
            vr_cdfinemp crapfin.cdfinemp%TYPE;
@@ -3362,7 +3360,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_nmrmativ gnrativ.nmrmativ%TYPE;
            -- Posição Inicial Auxiliar
            vr_posicini_aux INTEGER;
-            --Habilitação de menor
+           --Habilitação de menor
            vr_inhabmen crapttl.inhabmen%TYPE;
          BEGIN
            --Limpar parametros erro

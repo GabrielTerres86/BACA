@@ -47,6 +47,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
 																		,pr_dtmvtolt VARCHAR2                 --Data de movimento                       
 																		,pr_flgregis IN crapcco.flgregis%TYPE --Cobrança registrada
 																		,pr_flprotes IN crapcco.flprotes%TYPE --Usar opção protesto
+																		,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma protesto
 																		,pr_flserasa IN crapcco.flserasa%TYPE --Pode negativar no Serasa. (0=Nao, 1=Sim)
 																		,pr_qtdfloat IN crapcco.qtdfloat%TYPE --Permitir uso de float de
 																		,pr_qtfltate IN crapcco.qtfltate%TYPE --Permitir uso de float até
@@ -113,6 +114,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
+						,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma protesto                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                         ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                         ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -168,6 +170,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
+						,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma protesto                    
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                         ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                         ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -437,6 +440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                   ,pr_dtmvtolt VARCHAR2                 --Data de movimento                       
                                   ,pr_flgregis IN crapcco.flgregis%TYPE --Cobrança registrada
 																	,pr_flprotes IN crapcco.flprotes%TYPE --Usar opção protesto
+																	,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma a ser protestado
 																	,pr_flserasa IN crapcco.flserasa%TYPE --Pode negativar no Serasa. (0=Nao, 1=Sim)
 																	,pr_qtdfloat IN crapcco.qtdfloat%TYPE --Permitir uso de float de
 																	,pr_qtfltate IN crapcco.qtfltate%TYPE --Permitir uso de float até
@@ -995,6 +999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 																		 ,pr_dtmvtolt VARCHAR2                 --Data de movimento                       
 																		 ,pr_flgregis IN crapcco.flgregis%TYPE --Cobrança registrada
 																		 ,pr_flprotes IN crapcco.flprotes%TYPE --Usar opção protesto
+																		 ,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma protesto
 																		 ,pr_flserasa IN crapcco.flserasa%TYPE --Pode negativar no Serasa. (0=Nao, 1=Sim)
 																		 ,pr_qtdfloat IN crapcco.qtdfloat%TYPE --Permitir uso de float de
 																		 ,pr_qtfltate IN crapcco.qtfltate%TYPE --Permitir uso de float até
@@ -1090,6 +1095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 																		 ,pr_dtmvtolt => pr_dtmvtolt --Data de movimento
 																		 ,pr_flgregis => pr_flgregis --Cobrança registrada
 																		 ,pr_flprotes => pr_flprotes --Usar opção protesto
+																		 ,pr_insrvprt => pr_insrvprt --Forma de protesto
 																		 ,pr_flserasa => pr_flserasa --Pode negativar no Serasa. (0=Nao, 1=Sim)
 																		 ,pr_qtdfloat => pr_qtdfloat --Permitir uso de float de
 																		 ,pr_qtfltate => pr_qtfltate --Permitir uso de float até
@@ -1192,6 +1198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
           ,crapcco.flgativo
           ,crapcco.flgregis
 					,crapcco.flprotes
+					,crapcco.insrvprt
 					,crapcco.qtdfloat
 					,crapcco.flserasa
 					,crapcco.qtfltate
@@ -1406,6 +1413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                                  '  <qtdfloat>' || rw_crapcco.qtdfloat||'</qtdfloat>'||                                                                                           
                                                  '  <flserasa>' || rw_crapcco.flserasa||'</flserasa>'||
  																								 '  <flprotes>' || rw_crapcco.flprotes||'</flprotes>' ||
+																								 '  <insrvprt>' || rw_crapcco.insrvprt||'</insrvprt>' ||
 																								 '  <qtfltate>' || rw_crapcco.qtfltate||'</qtfltate>' ||
 																								 '  <qtdecini>' || rw_crapcco.qtdecini||'</qtdecini>' ||
 																								 '  <qtdecate>' || rw_crapcco.qtdecate||'</qtdecate>' ||
@@ -1492,6 +1500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
+						,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma protesto                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                         ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                         ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -1544,6 +1553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
           ,cco.dsorgarq
           ,cco.flginter
 					,cco.flprotes
+					,cco.insrvprt
 					,cco.flserasa
 					,cco.qtdfloat
 					,cco.qtfltate
@@ -1643,6 +1653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                      ,pr_dtmvtolt => pr_dtmvtolt --Data de movimento
                                      ,pr_flgregis => pr_flgregis --Cobrança registrada
 									                   ,pr_flprotes => pr_flprotes --Usar opção protesto
+                                     ,pr_insrvprt => pr_insrvprt --Forma protesto
                                      ,pr_flserasa => pr_flserasa --Pode negativar no Serasa. (0=Nao, 1=Sim)
                                      ,pr_qtdfloat => pr_qtdfloat --Permitir uso de float de
                                      ,pr_qtfltate => pr_qtfltate --Permitir uso de float até
@@ -1737,6 +1748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,crapcco.flgregis = pr_flgregis
                         ,crapcco.flginter = decode(pr_dsorgarq,'INTERNET',1,'PROTESTO',1,'IMPRESSO PELO SOFTWARE',1,0)                                        
 												,crapcco.flprotes = pr_flprotes
+												,crapcco.insrvprt = pr_insrvprt
 												,crapcco.flserasa = pr_flserasa
 												,crapcco.qtdfloat = pr_qtdfloat
 												,crapcco.qtfltate = pr_qtfltate
@@ -1773,6 +1785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                        ,crapcco.flgregis
                        ,crapcco.flginter
 											 ,crapcco.flprotes
+                       ,crapcco.insrvprt
                        ,crapcco.flserasa
                        ,crapcco.qtdfloat
                        ,crapcco.qtfltate
@@ -1808,6 +1821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                       ,rw_crapcco_new.flgregis
                       ,rw_crapcco_new.flginter
 											,rw_crapcco_new.flprotes
+                      ,rw_crapcco_new.insrvprt
                       ,rw_crapcco_new.flserasa
                       ,rw_crapcco_new.qtdfloat
                       ,rw_crapcco_new.qtfltate
@@ -2109,6 +2123,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                    ,pr_dsdcampo => 'Utiliza protesto'
                    ,pr_vlrcampo => (CASE rw_crapcco.flprotes WHEN 1 THEN 'SIM' ELSE 'NAO' END)
                    ,pr_vlcampo2 => (CASE rw_crapcco_new.flprotes WHEN 1 THEN 'SIM' ELSE 'NAO' END));
+    END IF;
+		
+	IF rw_crapcco.insrvprt <> rw_crapcco_new.insrvprt THEN
+       pc_gera_log (pr_cdoperad => vr_cdoperad
+                   ,pr_tipdolog => 2                   
+                   ,pr_nrconven => pr_nrconven
+                   ,pr_dsdcampo => 'Forma do protesto'
+                   ,pr_vlrcampo => rw_crapcco.insrvprt
+                   ,pr_vlcampo2 => rw_crapcco_new.insrvprt);
     END IF;
 		
     IF rw_crapcco.qtdfloat <> rw_crapcco_new.qtdfloat THEN
@@ -2484,6 +2507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
+						,pr_insrvprt IN crapcco.insrvprt%TYPE --Forma protesto                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                         ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                         ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -2615,6 +2639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                      ,pr_dtmvtolt => pr_dtmvtolt --Data de movimento
                                      ,pr_flgregis => pr_flgregis --Cobrança registrada
  									                   ,pr_flprotes => pr_flprotes --Usar opção protesto
+                                     ,pr_insrvprt => pr_insrvprt --Forma protesto
                                      ,pr_flserasa => pr_flserasa --Pode negativar no Serasa. (0=Nao, 1=Sim)
                                      ,pr_qtdfloat => pr_qtdfloat --Permitir uso de float de
                                      ,pr_qtfltate => pr_qtfltate --Permitir uso de float até
@@ -2668,6 +2693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                          ,crapcco.flgregis
                          ,crapcco.flginter
 	 											 ,crapcco.flprotes
+												 ,crapcco.insrvprt
 												 ,crapcco.flserasa
 												 ,crapcco.qtdfloat
 												 ,crapcco.qtfltate
@@ -2703,6 +2729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_flgregis
                         ,decode(pr_dsorgarq,'INTERNET',1,'PROTESTO',1,'IMPRESSO PELO SOFTWARE',1,0) 
 												,pr_flprotes
+                        ,pr_insrvprt
                         ,pr_flserasa
                         ,pr_qtdfloat
                         ,pr_qtfltate

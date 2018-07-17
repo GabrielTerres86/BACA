@@ -3246,8 +3246,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          AND tdb.dtvencto > pr_dtmvtolt - (pr_nrmespsq * 30);
     rw_craptdb cr_craptdb%ROWTYPE;
     
-    
-
     ----------->>> TEMPTABLE <<<--------   
     --> Controlar sacado ja verificado
     TYPE typ_tab_nrinssac IS TABLE OF NUMBER
@@ -5465,7 +5463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       IF nvl(vr_cdcritic,0) > 0 OR
          TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro; 
+         RAISE vr_exc_erro; 
       END IF;
          
     ELSIF pr_idimpres = 4 THEN
@@ -6730,7 +6728,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                 
                         vr_index_rating_hist := vr_tab_rating_hist.next(vr_index_rating_hist);
                     end loop;	
-                    
     
       pc_escreve_xml('</Proposta>');
       

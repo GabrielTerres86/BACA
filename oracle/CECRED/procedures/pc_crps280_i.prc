@@ -356,9 +356,9 @@ BEGIN
                               caso a cooperativa conectada seja uma singular. (Chamado 831629) - (Fabricio)
 
 
-                 19/01/2017 - Regra (IF pr_cdprogra = 'CRPS280' THEN) comentada para o projeto Contratação de Crédito
-                          Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
-                (Daniel Junior - AMcom)
+                 19/01/2017 - Regra (IF pr_cdprogra = 'CRPS280' THEN) comentada para o projeto Contratação de Crédito 
+		                      Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+							  (Daniel Junior - AMcom)
 
 
                  20/02/2018 - Paralelismo - Projeto Ligeirinho (Fabiano B. Dias - AMcom)
@@ -2396,7 +2396,7 @@ BEGIN
               IF cr_crapebn%FOUND THEN
                 CLOSE cr_crapebn;
                 vr_cdlcremp := 'BNDES';
-        vr_tpemprst := NULL; -- paralelismo.
+				vr_tpemprst := NULL; -- paralelismo.
 
                 IF rw_crapris.qtdiaatr > 0 THEN
                   vr_qtatraso := TRUNC(rw_crapris.qtdiaatr / 30, 0) + 1;
@@ -3355,248 +3355,248 @@ BEGIN
         INTO pr_rw_crapdat;
       CLOSE btch0001.cr_crapdat;
     END IF;
+		
+      IF pr_idparale = 0 THEN	  
 
-      IF pr_idparale = 0 THEN
+			-- Leitura das descricoes de risco A,B,C etc e percentuais
+		  FOR rw_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
+									  ,pr_nmsistem => 'CRED'
+									  ,pr_tptabela => 'GENERI'
+									  ,pr_cdempres => 00
+									  ,pr_cdacesso => 'PROVISAOCL'
+									  ,pr_tpregist => 0) LOOP
+				-- Para cada registro, buscar o contador atual na posição 12
+			 vr_contador := SUBSTR(rw_craptab.dstextab,12,2);
+				-- Adicionar na tabela as informações de descrição e percentuais
+			 vr_tab_risco(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
+			 vr_tab_risco(vr_contador).percentu := SUBSTR(rw_craptab.dstextab,1,6);
+			 vr_tab_risco_aux(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
+			 vr_tab_risco_aux(vr_contador).percentu := SUBSTR(rw_craptab.dstextab,1,6);
+			END LOOP;
 
-      -- Leitura das descricoes de risco A,B,C etc e percentuais
-      FOR rw_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
-                    ,pr_nmsistem => 'CRED'
-                    ,pr_tptabela => 'GENERI'
-                    ,pr_cdempres => 00
-                    ,pr_cdacesso => 'PROVISAOCL'
-                    ,pr_tpregist => 0) LOOP
-        -- Para cada registro, buscar o contador atual na posição 12
-       vr_contador := SUBSTR(rw_craptab.dstextab,12,2);
-        -- Adicionar na tabela as informações de descrição e percentuais
-       vr_tab_risco(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
-       vr_tab_risco(vr_contador).percentu := SUBSTR(rw_craptab.dstextab,1,6);
-       vr_tab_risco_aux(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
-       vr_tab_risco_aux(vr_contador).percentu := SUBSTR(rw_craptab.dstextab,1,6);
-      END LOOP;
+			-- Alimentar variavel para nao ser preciso criar registro na PROVISAOCL
+		  vr_tab_risco(10).dsdrisco     := 'HH';
+		  vr_tab_risco(10).percentu     := 0;
+			vr_tab_risco_aux(10).dsdrisco := 'H';
+			vr_tab_risco_aux(10).percentu := 0;
 
-      -- Alimentar variavel para nao ser preciso criar registro na PROVISAOCL
-      vr_tab_risco(10).dsdrisco     := 'HH';
-      vr_tab_risco(10).percentu     := 0;
-      vr_tab_risco_aux(10).dsdrisco := 'H';
-      vr_tab_risco_aux(10).percentu := 0;
+			-- Buscar o primeiro registro com tpregist >= 0
+		  OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+						 ,pr_nmsistem => 'CRED'
+						 ,pr_tptabela => 'GENERI'
+						 ,pr_cdempres => 00
+						 ,pr_cdacesso => 'PROVISAOCL'
+						 ,pr_tpregist => 0);
+			FETCH cr_craptab
+				INTO rw_craptab;
+			-- Se não encontrar
+			IF cr_craptab%NOTFOUND THEN
+				-- Utilizar percentual = 100
+				vr_percbase := 100;
+			ELSE
+				-- Utilizar o percentual encontrado
+			 vr_percbase := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+			END IF;
+			CLOSE cr_craptab;
 
-      -- Buscar o primeiro registro com tpregist >= 0
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
-             ,pr_nmsistem => 'CRED'
-             ,pr_tptabela => 'GENERI'
-             ,pr_cdempres => 00
-             ,pr_cdacesso => 'PROVISAOCL'
-             ,pr_tpregist => 0);
-      FETCH cr_craptab
-        INTO rw_craptab;
-      -- Se não encontrar
-      IF cr_craptab%NOTFOUND THEN
-        -- Utilizar percentual = 100
-        vr_percbase := 100;
-      ELSE
-        -- Utilizar o percentual encontrado
-       vr_percbase := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
-      END IF;
-      CLOSE cr_craptab;
+			-- Leitura do indicador de uso da tabela de taxa de juros
+			rw_craptab := NULL;
+		  OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+						 ,pr_nmsistem => 'CRED'
+						 ,pr_tptabela => 'USUARI'
+						 ,pr_cdempres => 11
+						 ,pr_cdacesso => 'TAXATABELA'
+						 ,pr_tpregist => 0);
+			FETCH cr_craptab
+				INTO rw_craptab;
+			-- Se encontrar
+			IF cr_craptab%FOUND THEN
+				-- Se a primeira posição do campo
+				-- dstextab for diferente de zero
+			 IF SUBSTR(rw_craptab.dstextab,1,1) != '0' THEN
+					-- É porque existe tabela parametrizada
+					vr_inusatab := TRUE;
+				ELSE
+					-- Não existe
+					vr_inusatab := FALSE;
+				END IF;
+			ELSE
+				-- Não existe
+				vr_inusatab := FALSE;
+			END IF;
+			CLOSE cr_craptab;
 
-      -- Leitura do indicador de uso da tabela de taxa de juros
-      rw_craptab := NULL;
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
-             ,pr_nmsistem => 'CRED'
-             ,pr_tptabela => 'USUARI'
-             ,pr_cdempres => 11
-             ,pr_cdacesso => 'TAXATABELA'
-             ,pr_tpregist => 0);
-      FETCH cr_craptab
-        INTO rw_craptab;
-      -- Se encontrar
-      IF cr_craptab%FOUND THEN
-        -- Se a primeira posição do campo
-        -- dstextab for diferente de zero
-       IF SUBSTR(rw_craptab.dstextab,1,1) != '0' THEN
-          -- É porque existe tabela parametrizada
-          vr_inusatab := TRUE;
-        ELSE
-          -- Não existe
-          vr_inusatab := FALSE;
-        END IF;
-      ELSE
-        -- Não existe
-        vr_inusatab := FALSE;
-      END IF;
-      CLOSE cr_craptab;
+			-- Carregar os dados gravados na TAB030
+		  tabe0001.pc_busca_tab030(pr_cdcooper => pr_cdcooper     --> Coop
+								  ,pr_cdagenci => 0               --> Código da agência
+								  ,pr_nrdcaixa => 0               --> Número do caixa
+								  ,pr_cdoperad => 0               --> Código do Operador
+								  ,pr_vllimite => vr_vlarrast     --> Limite
+								  ,pr_vlsalmin => vr_vlsalmin     --> Salário mínimo
+								  ,pr_diasatrs => vr_diasatrs     --> Dias de atraso
+								  ,pr_atrsinad => vr_atrsinad     --> Dias de atraso para inadimplência
+								  ,pr_des_reto => vr_des_reto     --> Indicador de saída com erro (OK/NOK)
+								  ,pr_tab_erro => vr_tab_erro);   --> Tabela com erros) IS
 
-      -- Carregar os dados gravados na TAB030
-      tabe0001.pc_busca_tab030(pr_cdcooper => pr_cdcooper     --> Coop
-                  ,pr_cdagenci => 0               --> Código da agência
-                  ,pr_nrdcaixa => 0               --> Número do caixa
-                  ,pr_cdoperad => 0               --> Código do Operador
-                  ,pr_vllimite => vr_vlarrast     --> Limite
-                  ,pr_vlsalmin => vr_vlsalmin     --> Salário mínimo
-                  ,pr_diasatrs => vr_diasatrs     --> Dias de atraso
-                  ,pr_atrsinad => vr_atrsinad     --> Dias de atraso para inadimplência
-                  ,pr_des_reto => vr_des_reto     --> Indicador de saída com erro (OK/NOK)
-                  ,pr_tab_erro => vr_tab_erro);   --> Tabela com erros) IS
+			-- Se retornar erro
+			IF vr_des_reto = 'NOK' THEN
+				-- Se veio erro na tabela
+				IF vr_tab_erro.COUNT > 0 then
+					-- Montar erro
+					pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+					pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+				ELSE
+					-- Por algum motivo retornou erro mais a tabela veio vazia
+					pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada tabe0001.pc_busca_tab030';
+				END IF;
+				-- Sair com erro
+				RAISE vr_exc_erro;
+			END IF;
 
-      -- Se retornar erro
-      IF vr_des_reto = 'NOK' THEN
-        -- Se veio erro na tabela
-        IF vr_tab_erro.COUNT > 0 then
-          -- Montar erro
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          -- Por algum motivo retornou erro mais a tabela veio vazia
-          pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada tabe0001.pc_busca_tab030';
-        END IF;
-        -- Sair com erro
-        RAISE vr_exc_erro;
-      END IF;
+			-- Carrega as tabelas de contas transferidas da Viacredi e do AltoVale e SCRCred
+			IF pr_cdcooper = 1 THEN
 
-      -- Carrega as tabelas de contas transferidas da Viacredi e do AltoVale e SCRCred
-      IF pr_cdcooper = 1 THEN
+				-- Vindas da Acredicoop
+				IF pr_dtrefere <= TO_DATE('31/12/2013', 'DD/MM/RRRR') THEN
+					FOR regs IN cr_craptco_acredi_via LOOP
+						vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
+					END LOOP;
+				END IF;
 
-        -- Vindas da Acredicoop
-        IF pr_dtrefere <= TO_DATE('31/12/2013', 'DD/MM/RRRR') THEN
-          FOR regs IN cr_craptco_acredi_via LOOP
-            vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
-          END LOOP;
-        END IF;
+				-- Incorporação da Concredi
+				IF pr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
+					FOR regs IN cr_craptco_concredi_via LOOP
+						vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
+					END LOOP;
+				END IF;
 
-        -- Incorporação da Concredi
-        IF pr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
-          FOR regs IN cr_craptco_concredi_via LOOP
-            vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
-          END LOOP;
-        END IF;
+				-- Migração Via >> Altovale
+		  ELSIF pr_cdcooper = 16 AND pr_dtrefere <= TO_DATE('31/12/2012', 'DD/MM/RRRR') THEN
+				-- Vindas da Via
+				FOR regs IN cr_craptco_via_alto LOOP
+					vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
+				END LOOP;
+				-- Incorporação da Credimil >> SCR
+		  ELSIF pr_cdcooper = 13 AND pr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
+				-- Vindas da Credimil
+				FOR regs IN cr_craptco_credimilsul_scrcred LOOP
+					vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
+				END LOOP;
+			END IF;
 
-        -- Migração Via >> Altovale
-      ELSIF pr_cdcooper = 16 AND pr_dtrefere <= TO_DATE('31/12/2012', 'DD/MM/RRRR') THEN
-        -- Vindas da Via
-        FOR regs IN cr_craptco_via_alto LOOP
-          vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
-        END LOOP;
-        -- Incorporação da Credimil >> SCR
-      ELSIF pr_cdcooper = 13 AND pr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
-        -- Vindas da Credimil
-        FOR regs IN cr_craptco_credimilsul_scrcred LOOP
-          vr_tab_craptco(regs.nrdconta) := regs.nrdconta;
-        END LOOP;
-      END IF;
+			-- Busca do diretório base da cooperativa para a geração de relatórios
+		  vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
+																						,pr_cdcooper => pr_cdcooper);
 
-      -- Busca do diretório base da cooperativa para a geração de relatórios
-      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
-                                            ,pr_cdcooper => pr_cdcooper);
+			-- Busca agora o diretório base da cooperativa para a geração de arquivos
+			-- Obs: será utilizado apenas para o 354.txt
+		  vr_nmdireto_354 := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
+																							,pr_cdcooper => pr_cdcooper
+																							,pr_nmsubdir => '/arq');
 
-      -- Busca agora o diretório base da cooperativa para a geração de arquivos
-      -- Obs: será utilizado apenas para o 354.txt
-      vr_nmdireto_354 := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
-                                              ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => '/arq');
+			-- Desde que o programa chamador não seja o 184
+			IF pr_cdprogra <> 'CRPS184' THEN
+				-- Atribuir o nome ao arquivo
+				vr_nmarquiv_354 := 'crrl354.txt';
+				-- Criar o CLOB para envio dos dados do txt
+				dbms_lob.createtemporary(vr_clob_354, TRUE, dbms_lob.CALL);
+				dbms_lob.open(vr_clob_354, dbms_lob.lob_readwrite);
+				-- Envio do header
+			 gene0002.pc_escreve_xml(pr_xml => vr_clob_354
+									,pr_texto_completo => vr_txtarqui_354
+									,pr_texto_novo =>'CONTA/DV'||vr_dssepcol_354
+												   ||'TITULAR'||vr_dssepcol_354
+												   ||'TIPO'||vr_dssepcol_354
+												   ||'ORG'||vr_dssepcol_354
+												   ||'CONTRATO'||vr_dssepcol_354
+												   ||'LC'||vr_dssepcol_354
+												   ||'SALDO DEVEDOR'||vr_dssepcol_354
+												   ||'JUR.ATRASO+60'||vr_dssepcol_354
+												   ||'PARCELA'||vr_dssepcol_354
+												   ||'QT.PARC.'||vr_dssepcol_354
+												   ||'TOT.ATRASO'||vr_dssepcol_354
+												   ||'DESPESA'||vr_dssepcol_354
+												   ||'%'||vr_dssepcol_354
+												   ||'PA'||vr_dssepcol_354
+												   ||'MESES/DIAS ATR.'||vr_dssepcol_354
+												   ||'RISCO ATU.'||vr_dssepcol_354
+												   ||'RISCO ANT.'||vr_dssepcol_354
+												   ||'DATA RISCO ANT'||vr_dssepcol_354
+												   ||'DIAS RIS'||vr_dssepcol_354
+												   ||'DIAS ATR'||vr_dssepcol_354
+												   ||'TOT.ATRASO ATENDA'
+																									||chr(10));
+			END IF;
 
-      -- Desde que o programa chamador não seja o 184
-      IF pr_cdprogra <> 'CRPS184' THEN
-        -- Atribuir o nome ao arquivo
-        vr_nmarquiv_354 := 'crrl354.txt';
-        -- Criar o CLOB para envio dos dados do txt
-        dbms_lob.createtemporary(vr_clob_354, TRUE, dbms_lob.CALL);
-        dbms_lob.open(vr_clob_354, dbms_lob.lob_readwrite);
-        -- Envio do header
-       gene0002.pc_escreve_xml(pr_xml => vr_clob_354
-                  ,pr_texto_completo => vr_txtarqui_354
-                  ,pr_texto_novo =>'CONTA/DV'||vr_dssepcol_354
-                           ||'TITULAR'||vr_dssepcol_354
-                           ||'TIPO'||vr_dssepcol_354
-                           ||'ORG'||vr_dssepcol_354
-                           ||'CONTRATO'||vr_dssepcol_354
-                           ||'LC'||vr_dssepcol_354
-                           ||'SALDO DEVEDOR'||vr_dssepcol_354
-                           ||'JUR.ATRASO+60'||vr_dssepcol_354
-                           ||'PARCELA'||vr_dssepcol_354
-                           ||'QT.PARC.'||vr_dssepcol_354
-                           ||'TOT.ATRASO'||vr_dssepcol_354
-                           ||'DESPESA'||vr_dssepcol_354
-                           ||'%'||vr_dssepcol_354
-                           ||'PA'||vr_dssepcol_354
-                           ||'MESES/DIAS ATR.'||vr_dssepcol_354
-                           ||'RISCO ATU.'||vr_dssepcol_354
-                           ||'RISCO ANT.'||vr_dssepcol_354
-                           ||'DATA RISCO ANT'||vr_dssepcol_354
-                           ||'DIAS RIS'||vr_dssepcol_354
-                           ||'DIAS ATR'||vr_dssepcol_354
-                           ||'TOT.ATRASO ATENDA'
-                                                  ||chr(10));
-      END IF;
+			-- Inicializar os registros no totalizador de riscos geral
+		  FOR vr_contador IN vr_tab_risco.FIRST..vr_tab_risco.LAST LOOP
+				-- Acumular totalizadores por risco geral
+				vr_tab_totrisger(vr_contador).qtdabase := 0;
+				vr_tab_totrisger(vr_contador).vljura60 := 0;
+				vr_tab_totrisger(vr_contador).vljrpf60 := 0;
+				vr_tab_totrisger(vr_contador).vljrpj60 := 0;
+				vr_tab_totrisger(vr_contador).vlprovis := 0;
+				vr_tab_totrisger(vr_contador).vldabase := 0;
+			END LOOP;
 
-      -- Inicializar os registros no totalizador de riscos geral
-      FOR vr_contador IN vr_tab_risco.FIRST..vr_tab_risco.LAST LOOP
-        -- Acumular totalizadores por risco geral
-        vr_tab_totrisger(vr_contador).qtdabase := 0;
-        vr_tab_totrisger(vr_contador).vljura60 := 0;
-        vr_tab_totrisger(vr_contador).vljrpf60 := 0;
-        vr_tab_totrisger(vr_contador).vljrpj60 := 0;
-        vr_tab_totrisger(vr_contador).vlprovis := 0;
-        vr_tab_totrisger(vr_contador).vldabase := 0;
-      END LOOP;
+			-- Obter taxa mensal da craptab
+		  vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+												   ,pr_nmsistem => 'CRED'
+												   ,pr_tptabela => 'USUARI'
+												   ,pr_cdempres => 11
+												   ,pr_cdacesso => 'JUROSNEGAT'
+												   ,pr_tpregist => 1);
 
-      -- Obter taxa mensal da craptab
-      vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                           ,pr_nmsistem => 'CRED'
-                           ,pr_tptabela => 'USUARI'
-                           ,pr_cdempres => 11
-                           ,pr_cdacesso => 'JUROSNEGAT'
-                           ,pr_tpregist => 1);
+		  IF vr_dstextab IS NOT NULL  THEN
+			 vr_txmensal := to_number ( substr(vr_dstextab,1,10) );
+			END IF;
 
-      IF vr_dstextab IS NOT NULL  THEN
-       vr_txmensal := to_number ( substr(vr_dstextab,1,10) );
-      END IF;
+			-- Inicializar totalizadores -de provisão e dívida os valores calculados
+			pr_vltotdiv := 0;
+			pr_vltotprv := 0;
 
-      -- Inicializar totalizadores -de provisão e dívida os valores calculados
-      pr_vltotdiv := 0;
-      pr_vltotprv := 0;
+			 pc_log_programa(PR_DSTIPLOG     => 'O',
+											PR_CDPROGRAMA   => pr_cdprogra || '_' || pr_cdagenci || '$',
+											pr_cdcooper     => pr_cdcooper,
+											pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+											pr_tpocorrencia => 4,
+						  pr_dsmensagem   => 'crapvri Início AGENCIA: [' ||pr_cdagenci || '] - INPROCES: ' || pr_rw_crapdat.inproces,
+											PR_IDPRGLOG     => vr_idlog_ini_ger);
 
-       pc_log_programa(PR_DSTIPLOG     => 'O',
-                      PR_CDPROGRAMA   => pr_cdprogra || '_' || pr_cdagenci || '$',
-                      pr_cdcooper     => pr_cdcooper,
-                      pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia => 4,
-              pr_dsmensagem   => 'crapvri Início AGENCIA: [' ||pr_cdagenci || '] - INPROCES: ' || pr_rw_crapdat.inproces,
-                      PR_IDPRGLOG     => vr_idlog_ini_ger);
+				-- carrega a PLTABLE da CRAPVRI baseado na data de referencia do CRPS
+				OPEN cr_crapvri(pr_dtrefere);
 
-        -- carrega a PLTABLE da CRAPVRI baseado na data de referencia do CRPS
-        OPEN cr_crapvri(pr_dtrefere);
+				LOOP
+			FETCH cr_crapvri BULK COLLECT INTO vr_tab_crapvri LIMIT 100000; -- carrega de 100 em 100 mil registros
 
-        LOOP
-      FETCH cr_crapvri BULK COLLECT INTO vr_tab_crapvri LIMIT 100000; -- carrega de 100 em 100 mil registros
+					EXIT WHEN vr_tab_crapvri.COUNT = 0;
 
-          EXIT WHEN vr_tab_crapvri.COUNT = 0;
+					IF vr_tab_crapvri.COUNT > 0 THEN
+						-- percorre a PLTABLE refazendo o indice com a composicao dos campos
+			  FOR idx IN vr_tab_crapvri.FIRST..vr_tab_crapvri.LAST LOOP
+							-- monta o indice
+				vr_chave_index := vr_tab_crapvri(idx).nrdconta || vr_tab_crapvri(idx).innivris || vr_tab_crapvri(idx).cdmodali || vr_tab_crapvri(idx).nrctremp || vr_tab_crapvri(idx).nrseqctr;
+							-- alimenta a nova PLTABLE apenas com os campos necessarios
+							vr_tab_crapvri_index(vr_chave_index).vldivida := vr_tab_crapvri(idx).vldivida;
+							vr_tab_crapvri_index(vr_chave_index).vltotatr := vr_tab_crapvri(idx).vltotatr;
+							vr_tab_crapvri_index(vr_chave_index).qtpreatr := vr_tab_crapvri(idx).qtpreatr;
+							vr_tab_crapvri_index(vr_chave_index).vlprejuz := vr_tab_crapvri(idx).vlprejuz;
 
-          IF vr_tab_crapvri.COUNT > 0 THEN
-            -- percorre a PLTABLE refazendo o indice com a composicao dos campos
-        FOR idx IN vr_tab_crapvri.FIRST..vr_tab_crapvri.LAST LOOP
-              -- monta o indice
-        vr_chave_index := vr_tab_crapvri(idx).nrdconta || vr_tab_crapvri(idx).innivris || vr_tab_crapvri(idx).cdmodali || vr_tab_crapvri(idx).nrctremp || vr_tab_crapvri(idx).nrseqctr;
-              -- alimenta a nova PLTABLE apenas com os campos necessarios
-              vr_tab_crapvri_index(vr_chave_index).vldivida := vr_tab_crapvri(idx).vldivida;
-              vr_tab_crapvri_index(vr_chave_index).vltotatr := vr_tab_crapvri(idx).vltotatr;
-              vr_tab_crapvri_index(vr_chave_index).qtpreatr := vr_tab_crapvri(idx).qtpreatr;
-              vr_tab_crapvri_index(vr_chave_index).vlprejuz := vr_tab_crapvri(idx).vlprejuz;
+						END LOOP;
+					END IF;
 
-            END LOOP;
-          END IF;
+					vr_tab_crapvri.DELETE;
 
-          vr_tab_crapvri.DELETE;
+				END LOOP;
+				CLOSE cr_crapvri;
 
-        END LOOP;
-        CLOSE cr_crapvri;
-
-        pc_log_programa(PR_DSTIPLOG     => 'O',
-                      PR_CDPROGRAMA   => pr_cdprogra || '_' || pr_cdagenci || '$',
-                      pr_cdcooper     => pr_cdcooper,
-                      pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                      pr_tpocorrencia => 4,
-              pr_dsmensagem   => 'crapvri Fim AGENCIA: [' || pr_cdagenci || '] - INPROCES: ' || pr_rw_crapdat.inproces,
-                      PR_IDPRGLOG     => vr_idlog_ini_ger);
+				pc_log_programa(PR_DSTIPLOG     => 'O',
+											PR_CDPROGRAMA   => pr_cdprogra || '_' || pr_cdagenci || '$',
+											pr_cdcooper     => pr_cdcooper,
+											pr_tpexecucao   => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+											pr_tpocorrencia => 4,
+						  pr_dsmensagem   => 'crapvri Fim AGENCIA: [' || pr_cdagenci || '] - INPROCES: ' || pr_rw_crapdat.inproces,
+											PR_IDPRGLOG     => vr_idlog_ini_ger);
       END IF; --pr_idparale = 0.
 
     -- Ligeirinho - inicio:
@@ -4304,10 +4304,10 @@ BEGIN
         END IF;
 
         -- Somente em caso de chamada pelo crps280
-
-     --IF pr_cdprogra = 'CRPS280' THEN
-     -- Regra (IF) comentada para o projeto Contratação de Crédito
-     -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+         
+		 --IF pr_cdprogra = 'CRPS280' THEN
+		 -- Regra (IF) comentada para o projeto Contratação de Crédito 
+		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
 
           -- Renato Darosci - 30/08/2016 - ao invés de utilizar o percentual de 0.5 na
           -- condição, vamos verificar o nível de risco "A".
@@ -4404,8 +4404,8 @@ BEGIN
             END IF; --> Nivel <> A
           END IF; --> Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
          --END IF; --> Somente para crps280
-     -- Regra (END IF) comentada para o projeto Contratação de Crédito
-     -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+		 -- Regra (END IF) comentada para o projeto Contratação de Crédito 
+		 -- Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
 
 
         -- Alimentar varíaveis para detalhamento dos riscos atual e anterior
