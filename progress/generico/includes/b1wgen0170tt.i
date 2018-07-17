@@ -12,6 +12,9 @@
 
                01/09/2015 - Adicionado os campos de assessoria e motivo CIN
                             (Douglas - Melhoria 12)
+
+         09/07/2018 - Projeto 403 - Adicionando tratamento para desconto de títulos (Lucas - GFT)
+  
 .............................................................................*/
 
 DEF TEMP-TABLE tt-crapcyc NO-UNDO
