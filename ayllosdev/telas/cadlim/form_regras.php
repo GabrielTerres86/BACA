@@ -6,7 +6,11 @@
  * OBJETIVO     : Formulario de Regras.
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *
  *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento) (Diego Simas - AMcom)
+ *
+ *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,2,3,4,5,7,8,9". 
+ *                             Projeto 366. (Lombardi)
  * --------------
  */	
 ?>
@@ -84,7 +88,7 @@
 				<td>
 					<label for="dssitdop">Situa&ccedil;&atilde;o da Conta:</label>
 					<?
-					$arrsitua = array('1','2','3','4','5','6','8','9');
+					$arrsitua = array('1','2','3','4','5','7','8','9');
 					foreach ($arrsitua as $flgsitua) {
 						echo '<label for="sit' . $flgsitua . '">' . $flgsitua . '</label>';
 						echo '<input type="checkbox" name="dssitdop" id="sit' . $flgsitua . '" value="' . $flgsitua . '"/>';

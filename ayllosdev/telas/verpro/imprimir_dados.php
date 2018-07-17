@@ -144,6 +144,7 @@
 	$campospc = 'dslinha1' . '|' . 'dslinha2' . '|' . 'dslinha3';
 	$dadosprc = $dslinha1 . ';' . $dslinha2 . ';' . $dslinha3;
 	
+	
 	// Monta o xml de requisição
 	$xml  = '';
 	$xml .= '<Root>';

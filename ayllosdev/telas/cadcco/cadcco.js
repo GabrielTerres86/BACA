@@ -23,7 +23,7 @@ var motivo = new Object();
 var cFlgativo, cDsorgarq, cNrdctabb, cCddbanco, cNmextbcc, cCdbccxlt, cCdagenci, cNrdolote, cCdhistor, cFlserasa,
     cFlgregis, cNmarquiv, cFlcopcob, cTamannro, cNmdireto, cNrbloque, cFlgcnvcc, cCdcartei, cNrvarcar, cNrlotblq,
     cDtmvtolt, cCdoperad, cFlprotes, cFlserasa, cQtdfloat, cQtfltate, cQtdecini, cQtdecate, cFldctman, cPerdctmx,
-    cFlgapvco, cFlrecipr, cCdagedbb;
+    cFlgapvco, cFlrecipr, cCdagedbb, cInsrvprt;
 
 
 
@@ -48,6 +48,24 @@ function estadoInicial() {
 
     layoutPadrao();
 
+}
+
+function onChangeProtesto() {
+    var flprotes = document.getElementById("flprotes");
+    if(flprotes.value == 1){
+        $('#insrvprt_2').attr('selected', 'selected');
+    
+        $('#insrvprt_0').attr('disabled', true);
+        $('#insrvprt_1').attr('disabled', false);
+        $('#insrvprt_2').attr('disabled', false);
+            
+    } else {
+        $('#insrvprt_0').attr('selected', 'selected');
+    
+        $('#insrvprt_0').attr('disabled', false);
+        $('#insrvprt_1').attr('disabled', true);
+        $('#insrvprt_2').attr('disabled', true);
+    }   
 }
 
 function formataCabecalho() {
@@ -485,6 +503,7 @@ function incluirConvenio() {
     var flgativo = $('#flgativo', '#frmCadcco').val();
     var flgregis = $('#flgregis', '#frmCadcco').val();	
 	var flprotes = $('#flprotes', '#frmCadcco').val();
+    var insrvprt = $('#insrvprt', '#frmCadcco').val();
 	var flserasa = $('#flserasa', '#frmCadcco').val();
 	var qtdfloat = $('#qtdfloat', '#frmCadcco').val();
 	var qtfltate = $('#qtfltate', '#frmCadcco').val();
@@ -528,6 +547,7 @@ function incluirConvenio() {
             flgativo: flgativo,
             flgregis: flgregis,
 			flprotes: flprotes,
+            insrvprt: insrvprt,
 			flserasa: flserasa,
 			qtdfloat: qtdfloat,
 			qtfltate: qtfltate,
@@ -582,6 +602,7 @@ function alterarConvenio() {
     var flgativo = $('#flgativo', '#frmCadcco').val();
     var flgregis = $('#flgregis', '#frmCadcco').val();
 	var flprotes = $('#flprotes', '#frmCadcco').val();
+    var insrvprt = $('#insrvprt', '#frmCadcco').val();
 	var flserasa = $('#flserasa', '#frmCadcco').val();
 	var qtdfloat = $('#qtdfloat', '#frmCadcco').val();
 	var qtfltate = $('#qtfltate', '#frmCadcco').val();
@@ -626,6 +647,7 @@ function alterarConvenio() {
             flgativo: flgativo,
             flgregis: flgregis,
 			flprotes: flprotes,
+            insrvprt: insrvprt,
 			flserasa: flserasa,
 			qtdfloat: qtdfloat,
 			qtfltate: qtfltate,
@@ -958,6 +980,7 @@ function formataInformacoes() {
 	var rNrlotblq = $('label[for="nrlotblq"]', '#frmCadcco');
 	var rDtmvtolt = $('label[for="dtmvtolt"]', '#frmCadcco');
 	var rFlprotes = $('label[for="flprotes"]', '#frmCadcco');
+    var rInsrvprt = $('label[for="insrvprt"]', '#frmCadcco');
 	var rFlserasa = $('label[for="flserasa"]', '#frmCadcco');
 	var rQtdfloat = $('label[for="qtdfloat"]', '#frmCadcco');
 	var rQtfltate = $('label[for="qtfltate"]', '#frmCadcco');
@@ -991,7 +1014,8 @@ function formataInformacoes() {
     rDtmvtolt.addClass('rotulo').css('width', '170px');
     rCdoperad.addClass('rotulo-linha').css('width', '70px');
 	rFlprotes.addClass('rotulo').css('width', '170px');
-	rFlserasa.addClass('rotulo-linha').css('width', '220px');
+    rInsrvprt.css('width', '179px');
+    rFlserasa.addClass('rotulo-linha').css('width', '158px');
 	rQtdfloat.addClass('rotulo').css('width', '170px');
 	rQtfltate.addClass('rotulo-linha').css('width', '25px');
 	rQtdecini.addClass('rotulo').css('width', '170px');
@@ -1028,6 +1052,7 @@ function formataInformacoes() {
     cDtmvtolt = $('#dtmvtolt', '#frmCadcco');
     cCdoperad = $('#cdoperad', '#frmCadcco');
 	cFlprotes = $('#flprotes', '#frmCadcco');
+    cInsrvprt = $('#insrvprt', '#frmCadcco');
 	cFlserasa = $('#flserasa', '#frmCadcco');
 	cQtdfloat = $('#qtdfloat', '#frmCadcco');
 	cQtfltate = $('#qtfltate', '#frmCadcco');
@@ -1059,6 +1084,7 @@ function formataInformacoes() {
     cNrvarcar.css('width', '30px').addClass('inteiro').attr('maxlength', '3').setMask("INTEGER", "zz9", ".", "");
     cNrlotblq.css('width', '76px').addClass('inteiro').attr('maxlength', '7').setMask("INTEGER", "zzz.zz9", ".", "");
 	cFlprotes.css('width', '60px');
+    cInsrvprt.css('width', '120px');
 	cFlserasa.css('width', '60px');
 	cQtdfloat.css('width', '40px');
 	cQtfltate.css('width', '40px');
@@ -1072,6 +1098,17 @@ function formataInformacoes() {
     cCdoperad.css('width', '260px').desabilitaCampo();       
     cCdagedbb.css('width', '60px').addClass('inteiro').attr('maxlength','10').setMask("INTEGER", "zzzzz-9", ".", "");
       
+    var flprotes = document.getElementById("flprotes");
+    if(flprotes.value == 1){
+        $('#insrvprt_0').attr('disabled', true);
+        $('#insrvprt_1').attr('disabled', false);
+        $('#insrvprt_2').attr('disabled', false);
+                
+    } else {
+        $('#insrvprt_0').attr('disabled', false);
+        $('#insrvprt_1').attr('disabled', true);
+        $('#insrvprt_2').attr('disabled', true);
+    }
 
     cFlgativo.unbind('keypress').bind('keypress', function (e) {
 
@@ -1830,6 +1867,7 @@ function validarDados(){
     var flgativo = $('#flgativo', '#frmCadcco').val();
     var flgregis = $('#flgregis', '#frmCadcco').val();
 	var flprotes = $('#flprotes', '#frmCadcco').val();
+    var insrvprt = $('#insrvprt', '#frmCadcco').val();
 	var flserasa = $('#flserasa', '#frmCadcco').val();
 	var qtdfloat = $('#qtdfloat', '#frmCadcco').val();
 	var qtfltate = $('#qtfltate', '#frmCadcco').val();
@@ -1872,6 +1910,7 @@ function validarDados(){
             flgativo: flgativo,
             flgregis: flgregis,
 			flprotes: flprotes,
+            insrvprt: insrvprt,
 			flserasa: flserasa,
 			qtdfloat: qtdfloat,
 			qtfltate: qtfltate,

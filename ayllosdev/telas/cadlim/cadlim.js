@@ -12,6 +12,8 @@
  *                27/04/2018 - Campos para identificar e data de cancelamento por inadimplencia
  *                             Marcel (AMcom)
  *
+ *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,2,3,4,5,7,8,9". 
+ *                             Projeto 366. (Lombardi)
  * --------------
  */
 
@@ -162,7 +164,7 @@ function formataRegra(){
 		var rQtdiatin = $('label[for="qtdiatin"]');
 		// Situacao da Conta		
 		var rDssitdop = $('label[for="dssitdop"]');		
-		var rDssitopt = $('label[for="sit1"], label[for="sit2"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit6"], label[for="sit8"], label[for="sit9"]');
+		var rDssitopt = $('label[for="sit1"], label[for="sit2"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit7"], label[for="sit8"], label[for="sit9"]');
 		// Risco da Conta		
 		var rDsriscop = $('label[for="dsriscop"]');
 		var rDsrisopt = $('label[for="risA"], label[for="risB"], label[for="risC"], label[for="risD"], label[for="risE"], label[for="risF"], label[for="risG"], label[for="risH"]');
@@ -376,12 +378,12 @@ function formataRegra(){
 			if ( divError.css('display') == 'block' ) { return false; }
 
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
-				$('#sit6','#frmRegra').focus();
+				$('#sit7','#frmRegra').focus();
 				return false;
 			}	
 		});
 		
-		$('#sit6','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		$('#sit7','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 
 			if ( divError.css('display') == 'block' ) { return false; }
 

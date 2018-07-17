@@ -33,6 +33,8 @@
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
+	<input type="hidden" id="idcobert" value="<?php echo $dados[30]->cdata; ?>" />
+
 	<div id="divDscTit_Limite">
 	
 		<fieldset>
@@ -182,13 +184,9 @@
 <div id="divBotoesAval">						
 		
 	<input type="image" id="btnVoltarAvalistas" name="btnVoltarAvalistas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
-	
-
 	<? if ($cddopcao <> "C") { ?>
 		   <input type="image" id="btnCancelarLimite" name="btnCancelarLimite" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" />
 	<? } ?>
-	
-
 	<input type="image" id="btnConcluirLimite" name="btnConcluirLimite" src="<? echo $UrlImagens; ?>botoes/concluir.gif" />
 			
 </div>	

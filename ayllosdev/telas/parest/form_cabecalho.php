@@ -51,6 +51,7 @@ function exibeErroNew($msgErro) {
 	<select id="tpprodut" name="tpprodut">
 		<option value="0"><? echo utf8ToHtml('Empréstimo e Financiamento') ?></option>
 		<option value="1"><? echo utf8ToHtml('Desconto de Títulos') ?></option>
+	        <option value="4"> <?php echo utf8ToHtml('Cartão')?> </option>
 	</select>
 	
 	<label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>

@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 
  * --------------
+ * 20/06/2018 - Adicionado tipo de produto desconto de título - Luis Fernando (GFT)
  */ 
 ?>
 
@@ -18,7 +19,6 @@
 		<option value="A"> A - Alterar Par&acirc;metros Cobran&ccedil;a</option>
 	</select>
 	
-
 	<label for="cdcooper">Cooperativa:</label>
 	<select name="cdcooper" id="cdcooper" >
 	</select>

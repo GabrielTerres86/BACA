@@ -27,6 +27,8 @@
                   12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
                   			   restrição no report de borderô de desct. de tít
 
+                  28/05/2018 - Incluso impressoa Proposta (GFT)   
+
 	************************************************************************/ 
 
 	session_cache_limiter("private");

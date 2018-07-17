@@ -15,6 +15,7 @@
  * 008: 05/07/2016 - Odirlei (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
  * 009: 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
  * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
+ * 011: 26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  * --------------
  */
 
@@ -87,6 +88,12 @@ function estadoInicial() {
     $('#divBotoes').css({'display': 'block'});
 
     cNrdconta.focus();
+
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+		btnOK.click();
+    }
 
 }
 
