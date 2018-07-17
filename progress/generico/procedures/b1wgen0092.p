@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 11/06/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 27/06/2018
     
    Dados referentes ao programa:
    
@@ -236,6 +236,8 @@
                            aceitos para debito automatico da PROCEDURE 
                            busca_convenios_codbarras. (Reinert)
                            
+              27/06/2018 - Tratamento para aguas de schoroeder e aguas de guaramirim na procedure 
+                           busca_autorizacoes_cadastradas (Lucas Ranghetti #INC0017908)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2619,6 +2621,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
     DEF VAR aux_cdempcon         AS INTE  NO-UNDO.
     DEF VAR aux_cdsegmto         AS INTE  NO-UNDO.
     DEF VAR aux_dssegmto AS CHAR EXTENT 8 NO-UNDO.
+    DEF VAR aux_cdhistor         AS INTE  NO-UNDO.   
     
     ASSIGN aux_dssegmto[1] = "Prefeituras"
            aux_dssegmto[2] = "Saneamento"
@@ -2659,6 +2662,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
             END.
         ELSE
             DO:
+               
                 FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor AND
                                          gnconve.flgativo = TRUE             NO-LOCK NO-ERROR.
                                          
@@ -2669,8 +2673,15 @@ PROCEDURE busca_autorizacoes_cadastradas:
                            aux_inaltera = TRUE WHEN gnconve.cdhisdeb <> 0 AND 
                                                     TRIM(gnconve.nmarqatu) <> "".
                                                     
+                 IF gnconve.cdconven = 87  THEN
+                    aux_cdhistor = 2143. /* Convenio de Aguas de Schroeder */
+                 ELSE IF  gnconve.cdconven = 108 THEN
+                    aux_cdhistor = 2283. /* Convenio de arrecadacao do aguas de guaramirim */
+                 ELSE
+                    aux_cdhistor = gnconve.cdhiscxa.
+                     
                 FIND FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                                         crapcon.cdhistor = gnconve.cdhiscxa NO-LOCK NO-ERROR.
+                                         crapcon.cdhistor = aux_cdhistor NO-LOCK NO-ERROR.
                                          
                 IF  NOT AVAIL crapcon THEN
                     NEXT.

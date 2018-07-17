@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0123.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Novembro/2011                     Ultima atualizacao: 25/07/2017
+    Data    : Novembro/2011                     Ultima atualizacao: 03/07/2018
 
     Objetivo  : Tranformacao BO tela CASH
 
@@ -73,7 +73,9 @@
                25/07/2017 - #712156 Melhoria 274, criação da rotina verifica_notas_cem,
                             operacao 75, para verificar se o TAA utiliza notas de cem;
                             Inclusão do par flgntcem na rotina Grava_Dados e campo 
-							flgntcem na temp-table das opções A e C (Carlos)
+                            flgntcem na temp-table das opções A e C (Carlos)
+                            
+               03/07/2018 - sctask0014656 permitir alterar a descricao do TAA (Carlos)
 
 ............................................................................*/
 
@@ -422,7 +424,7 @@ PROCEDURE Busca_Dados:
 
                     CREATE tt-terminal.
                     ASSIGN tt-terminal.nmterfin = craptfn.nmterfin
-                           tt-terminal.dsterfin = " - " + craptfn.nmterfin
+                           tt-terminal.dsterfin = craptfn.nmterfin
                            tt-terminal.dstempor = STRING(craptfn.nrtempor) + 
                                                                  " SEGUNDOS"
                            tt-terminal.nrtempor = craptfn.nrtempor
@@ -2762,6 +2764,21 @@ PROCEDURE Grava_Dados:
                             STRING(par_cdagencx).
                     END.
 
+                    /* Logar alteracao de nome do TAA */
+                    IF  craptfn.nmterfin <> par_dsterfin  THEN
+                    DO:
+                        IF aux_dslogtel <> "" THEN
+                            ASSIGN aux_dslogtel = aux_dslogtel + "'\r\n'".
+                        ASSIGN aux_dslogtel = aux_dslogtel + 
+                            STRING(TODAY,"99/99/9999") + " - "   +
+                            STRING(TIME,"HH:MM:SS") + " - "      +
+                            "TAA: " + STRING(par_nrterfin) + " " +
+                            craptfn.nmterfin + " - " + "Operador " + 
+                            par_cdoperad + "-" + par_nmoperad    +
+                            " efetuou alteracao da descricao do TAA. De: " +
+                            craptfn.nmterfin + " para: " + par_dsterfin.
+                    END.
+
                     /* Logar alteracao de uso de nota de cem */
                     IF  craptfn.flgntcem <> par_flgntcem  THEN
                     DO:
@@ -2777,7 +2794,7 @@ PROCEDURE Grava_Dados:
                             STRING(craptfn.flgntcem,'Sim/Nao') + " para: " + 
                             STRING(par_flgntcem,'Sim/Nao').
                     END.
-                    
+
                     IF aux_dslogtel <> "" THEN
                         UNIX SILENT VALUE("echo " +
                         aux_dslogtel              +
@@ -2792,7 +2809,8 @@ PROCEDURE Grava_Dados:
                            craptfn.nrdendip = TRIM(par_nrdendip)
                            craptfn.cdsitfin = par_cdsitfin
                            craptfn.cdagenci = par_cdagencx
-                           craptfn.flgntcem = par_flgntcem.
+                           craptfn.flgntcem = par_flgntcem
+                           craptfn.nmterfin = STRING(CAPS(par_dsterfin),"x(25)").
                     
                     
                 END. /* par_cddopcao = A */

@@ -1163,7 +1163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                  ,pr_cdhistor   IN crapatr.cdhistor%TYPE
                                  ,pr_idlote_sms IN OUT tbgen_sms_controle.idlote_sms%TYPE
                                  ,pr_dscritic   OUT VARCHAR2) IS
-  /* .............................................................................
+  /* ...........................................................................................................
 
       Programa: pc_processa_retorno_sms
       Sistema : CECRED
@@ -1189,12 +1189,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                            - Os erros desviavam pra essa exception mas a mesma não existia no programa, 
                            - sendo assim, caía em others e parava a execução
                            - Agora, com a exception tratada: 
-                             - Os logs são feitos dentro das rotinas chamadas ou na ocorrncia deste programa
+                             - Os logs são feitos dentro das rotinas chamadas ou na ocorrência deste programa
                              - Ex.: cdcritic = 1;
                              - Criada a exception apenas para sair do programa e não cair em others
                            - Inclusão parâmetros no log
                           (Ana - Envolti - Chamado PRB0040049)
- 	 .............................................................................*/																								
+              19/06/2018 - Será mantida a chamada da rotina TARI0001.pc_carrega_dados_tar_vigente, pois 
+                           em conversa com Ranghetti e Lucas, não cobra tarifa por sms, é um pacote que 
+                           o cooperado tem de sms. Sendo assim, deve apenas incluir nvl no insert do campo vltarifa 
+                           na tabela tbconv_motivo_msg para .
+                           Cogitou-se substituir a chamada pela TARI0001.pc_carrega_dados_tarifa_cobr - cancelado.
+                           (Ana - Envolti - PRB0040057)
+ 	 ...........................................................................................................*/																								
     
     vr_idsms tbgen_sms_controle.idsms%TYPE;
     
@@ -1248,13 +1254,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
 
-    vr_dsparame := ' - pr_cdcooper :'||pr_cdcooper  ||
-                   ', pr_nrdconta  :'||pr_nrdconta  ||
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper  ||
+                   ', pr_nrdconta:'  ||pr_nrdconta  ||
                    ', pr_dsmensagem:'||pr_dsmensagem||
-                   ', pr_vlfatura  :'||pr_vlfatura  ||
-                   ', pr_idmotivo  :'||pr_idmotivo  ||
-                   ', pr_cdrefere  :'||pr_cdrefere  ||
-                   ', pr_cdhistor  :'||pr_cdhistor  ||
+                   ', pr_vlfatura:'  ||pr_vlfatura  ||
+                   ', pr_idmotivo:'  ||pr_idmotivo  ||
+                   ', pr_cdrefere:'  ||pr_cdrefere  ||
+                   ', pr_cdhistor:'  ||pr_cdhistor  ||
                    ', pr_idlote_sms:'||pr_idlote_sms;
   
     OPEN cr_debaut;
@@ -1271,7 +1277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     IF rw_debaut.nrtelefo IS NULL THEN
       RETURN;
     END IF;
-    
+
     -- Se ainda não criou lote
     IF pr_idlote_sms IS NULL THEN
       --Grava tbgen_sms_lote
@@ -1314,7 +1320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
     
     IF rw_debaut.flgcobra_tarifa = 1 THEN
-      -- Busca valor da tarifa
+      -- Busca valor da tarifa - utilizar essa rotina quando, por exemplo, o cooperado, pede para ser
+      -- avisado que está sem limite para pagar um debito automático
       TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => rw_debaut.cdcooper  --Codigo Cooperativa
                                             ,pr_cdtarifa  => rw_debaut.cdtarifa  --Codigo Tarifa
                                             ,pr_vllanmto  => 0            --Valor Lancamento
@@ -1328,7 +1335,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                             ,pr_cdcritic  => vr_cdcritic  --Codigo Critica
                                             ,pr_dscritic  => vr_dscritic  --Descricao Critica
                                             ,pr_tab_erro  => vr_tab_erro); --Tabela erros
-
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Se possui erro no vetor
@@ -1343,7 +1349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic||'. '||vr_dsparame,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
@@ -1408,27 +1414,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       
       --Chamado 788828 - 29/11/2017
       --Bloco estava após o end if
-    --Se ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-      --Se possui erro no vetor
-      IF vr_tab_erro.Count > 0 THEN
-          vr_cdcritic:= vr_tab_erro(1).cdcritic;
-        pr_dscritic:= vr_tab_erro(1).dscritic;
-      ELSE
-          vr_cdcritic := 1058; --Nao foi possivel carregar a tarifa
-          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||SQLERRM||'. '||vr_dsparame;
-      END IF;
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Se possui erro no vetor
+        IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic:= vr_tab_erro(1).cdcritic;
+          pr_dscritic:= vr_tab_erro(1).dscritic;
+        ELSE
+            vr_cdcritic := 1058; --Nao foi possivel carregar a tarifa
+            pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||SQLERRM||'. '||vr_dsparame;
+        END IF;
 
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
-      --Levantar Excecao
-      RAISE vr_exc_saida;
-    END IF;
+          --Levantar Excecao
+        RAISE vr_exc_saida;
+      END IF;
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
       
@@ -1455,7 +1461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         ,SYSDATE
         ,pr_idmotivo
         ,pr_vlfatura
-        ,vr_vltarifa
+        ,NVL(vr_vltarifa,0)  --PRB0040057 - 21/06/2018
         ,vr_idsms
         ,pr_cdhistor
         ,pr_idlote_sms);
@@ -1475,7 +1481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
+                    pr_dscritic      => pr_dscritic||'. pr_dsmensagem:'||pr_dsmensagem,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
@@ -1496,7 +1502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
       vr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_escreve_sms_debaut. '||SQLERRM||'. '||vr_dsparame;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_escreve_sms_debaut. '||SQLERRM||'.'||vr_dsparame;
 
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,

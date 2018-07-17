@@ -230,6 +230,34 @@ BEGIN
     vr_tab_ljdass typ_tab_ljdass;
     vr_id_interno PLS_INTEGER;
     
+    -- Tipo de memória para armazenar dados dos boletos de cheque
+    TYPE typ_reg_CRAPCDB IS RECORD(qtdregis NUMBER
+                                  ,vlliquid NUMBER);
+    TYPE typ_tab_CRAPCDB IS TABLE OF typ_reg_CRAPCDB INDEX BY PLS_INTEGER;                           
+    vr_tab_CRAPCDB typ_tab_CRAPCDB;
+    
+    -- Tipo de memória para armazenar dados dos custodia de cheque
+    TYPE typ_reg_crapcst IS RECORD(qtdregis NUMBER
+                                  ,vlcheque NUMBER);
+    TYPE typ_tab_crapcst IS TABLE OF typ_reg_crapcst INDEX BY PLS_INTEGER;                           
+    vr_tab_crapcst typ_tab_crapcst;    
+    
+    -- Tabela de memória para armazenar dados das Cotas
+    TYPE typ_reg_crapcot IS RECORD(vlcotant NUMBER
+                                  ,vlcapmes NUMBER);
+    TYPE typ_tab_crapcot IS TABLE OF typ_reg_crapcot INDEX BY PLS_INTEGER;                           
+    vr_tab_crapcot typ_tab_crapcot; 
+    
+    -- Tabela de memória para armazenar dados de Saldo
+    TYPE typ_reg_crapsld IS RECORD(vlsmstre NUMBER);
+    TYPE typ_tab_crapsld IS TABLE OF typ_reg_crapsld INDEX BY PLS_INTEGER;                           
+    vr_tab_crapsld typ_tab_crapsld; 
+    
+    -- Tabela de memória para armazenar plano de capital
+    TYPE typ_reg_crappla IS RECORD(vlprepla NUMBER);
+    TYPE typ_tab_crappla IS TABLE OF typ_reg_crappla INDEX BY PLS_INTEGER;                           
+    vr_tab_crappla typ_tab_crappla;
+    
     -- Tipos de memória para armazenar conta e subregistros da crapepr 
     TYPE typ_reg_crapepr IS RECORD(dtmvtolt crapepr.dtmvtolt%TYPE
                                   ,vlemprst crapepr.vlemprst%TYPE
@@ -304,8 +332,7 @@ BEGIN
     cursor cr_crapljd (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapass.cdagenci%type) is
-      select /*+ index (crap CRAPLJD##CRAPLJD1)*/
-             crap.nrdconta,
+      SELECT crap.nrdconta,
              998 cdhistor,
              crap.vlrestit
         from crapljd crap
@@ -319,8 +346,7 @@ BEGIN
     -- Busca informações referentes a empréstimos
     cursor cr_crapepr (pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapass.cdagenci%type) is
-      select /*+ index (CRAPEPR CRAPEPR##CRAPEPR2)*/
-             crapepr.nrdconta,
+      SELECT crapepr.nrdconta,
              crapepr.dtmvtolt,
              crapepr.vlemprst,
              crapepr.inprejuz,
@@ -355,9 +381,10 @@ BEGIN
 
   -- Busca o saldo médio mensal do associado
   cursor cr_crapsld (pr_cdcooper in crapcop.cdcooper%type,
-                     pr_nrdconta in crapass.nrdconta%type,
+                       pr_cdagenci in crapass.cdagenci%type,
                      pr_insldmes in number) is
-    select decode(pr_insldmes,
+      select crapsld.nrdconta
+            ,decode(pr_insldmes,
                   1, crapsld.vlsmstre##1,
                   2, crapsld.vlsmstre##2,
                   3, crapsld.vlsmstre##3,
@@ -366,15 +393,18 @@ BEGIN
                   6, crapsld.vlsmstre##6,
                   0) vlsmstre
       from crapsld
-     where crapsld.cdcooper = pr_cdcooper
-       and crapsld.nrdconta = pr_nrdconta;
-  rw_crapsld      cr_crapsld%rowtype;
+            ,crapass 
+       where crapsld.cdcooper = crapass.cdcooper
+         AND crapsld.nrdconta = crapass.nrdconta
+         AND crapsld.cdcooper = pr_cdcooper
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
 
   -- Busca o valor capital do mês (cotas e recursos)
   cursor cr_crapcot (pr_cdcooper in crapcop.cdcooper%type,
-                     pr_nrdconta in crapass.nrdconta%type,
+                      pr_cdagenci in crapass.cdagenci%type,
                      pr_mes in number) is
-    select vlcotant,
+      select crapcot.nrdconta,
+             crapcot.vlcotant,
            decode(pr_mes,
                   1, crapcot.vlcapmes##1,
                   2, crapcot.vlcapmes##2,
@@ -390,22 +420,25 @@ BEGIN
                   12, crapcot.vlcapmes##12,
                   0) vlcapmes
       from crapcot
-     where crapcot.cdcooper = pr_cdcooper
-       and crapcot.nrdconta = pr_nrdconta;
-  rw_crapcot      cr_crapcot%rowtype;
+            ,crapass 
+       where crapcot.cdcooper = crapass.cdcooper
+         AND crapcot.nrdconta = crapass.nrdconta
+         AND crapcot.cdcooper = pr_cdcooper
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
 
   -- Busca o valor da prestação do plano de capitalização
   cursor cr_crappla (pr_cdcooper in crapcop.cdcooper%type,
-                     pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crappla CRAPPLA##CRAPPLA3)*/
-           crappla.vlprepla
+                       pr_cdagenci in crapass.cdagenci%type) is
+      SELECT crappla.nrdconta
+            ,crappla.vlprepla
       from crappla
-     where crappla.cdcooper = pr_cdcooper
-       and crappla.nrdconta = pr_nrdconta
+            ,crapass 
+       where crappla.cdcooper = crapass.cdcooper
+         AND crappla.nrdconta = crapass.nrdconta
+         AND crappla.cdcooper = pr_cdcooper
        and crappla.cdsitpla = 1
        and crappla.tpdplano = 1
-       and rownum = 1;
-  rw_crappla     cr_crappla%rowtype;
+         AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci);
 
   -- Cursores para buscar os valores a serem registrados
   --
@@ -413,8 +446,7 @@ BEGIN
   cursor cr_craplcm (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap craplcm##craplcm4)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplcm crap
@@ -426,8 +458,7 @@ BEGIN
   cursor cr_craplem (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLEM##CRAPLEM2)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplem crap
@@ -439,8 +470,7 @@ BEGIN
   cursor cr_craplct (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLCT##CRAPLCT2)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplct crap
@@ -452,8 +482,7 @@ BEGIN
   cursor cr_craplap (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLAP##CRAPLAP2)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplap crap
@@ -465,8 +494,7 @@ BEGIN
   CURSOR cr_craplac (pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                       ,pr_cdcooper IN crapcop.cdcooper%TYPE,
                        pr_nrdconta in crapass.nrdconta%type) IS
-      SELECT /*+ index (crap CRAPLAC##CRAPLAC4)*/
-             lac.nrdconta
+      SELECT lac.nrdconta
 		      ,lac.cdhistor
 					,lac.vllanmto
 			FROM craplac lac
@@ -478,8 +506,7 @@ BEGIN
   cursor cr_craplau (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLAU##CRAPLAU6)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanaut
       from craplau crap
@@ -491,8 +518,7 @@ BEGIN
   cursor cr_craplcb (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLCB##CRAPLCB2)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplcb crap
@@ -504,8 +530,7 @@ BEGIN
   cursor cr_craplci (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLCI##CRAPLCI2)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplci crap
@@ -517,8 +542,7 @@ BEGIN
   cursor cr_craplpp (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLPP##CRAPLPP2)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from craplpp crap
@@ -530,8 +554,7 @@ BEGIN
   cursor cr_crapltr (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPLTR##CRAPLTR4)*/
-           crap.nrdconta,
+      SELECT crap.nrdconta,
            crap.cdhistor,
            crap.vllanmto
       from crapltr crap
@@ -540,32 +563,37 @@ BEGIN
        and crap.cdhistor not in (316, 375, 376, 377, 767, 918, 920)
          and crap.nrdconta = pr_nrdconta;
 
-  -- Custódia de cheques
+    -- Todas Custódias de cheques
   cursor cr_crapcst (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
-                       pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPCST##CRAPCST4)*/
-           crap.nrdconta,
-           997 cdhistor,
-           crap.vlcheque
+                      pr_cdagenci in crapass.cdagenci%type) is
+      SELECT crap.nrdconta
+            ,COUNT(1) qtdregis
+            ,SUM(crap.vlcheque) vlcheque
       from crapcst crap
-     where crap.dtmvtolt = pr_dtmvtolt
-         and crap.cdcooper = pr_cdcooper
-         and crap.nrdconta = pr_nrdconta;
+            ,crapass ass
+       where crap.cdcooper = pr_cdcooper
+         AND crap.dtmvtolt = pr_dtmvtolt 
+         AND crap.cdcooper = ass.cdcooper
+         AND crap.nrdconta = ass.nrdconta
+         AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
+        GROUP BY crap.nrdconta;
 
-  -- Borderô de desconto de cheques
+    -- Todos Borderôs de desconto de cheques
   cursor cr_crapcdb (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
-                       pr_nrdconta in crapass.nrdconta%type) is
-      select /*+ index (crap CRAPCDB##CRAPCDB4)*/
-           crap.nrdconta,
-           996 cdhistor,
-           crap.vlliquid
+                      pr_cdagenci in crapass.cdagenci%type) is
+      SELECT crap.nrdconta
+            ,COUNT(1) qtdregis
+            ,SUM(crap.vlliquid) vlliquid
       from crapcdb crap
-     where crap.dtmvtolt = pr_dtmvtolt
-         and crap.cdcooper = pr_cdcooper
-         and crap.nrdconta = pr_nrdconta;
-
+            ,crapass ass
+       WHERE crap.cdcooper = pr_cdcooper
+         AND crap.dtmvtolt = pr_dtmvtolt 
+         AND crap.cdcooper = ass.cdcooper
+         AND crap.nrdconta = ass.nrdconta
+         AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
+        GROUP BY crap.nrdconta;
 
   -- Borderô de descontos de títulos
   cursor cr_crapbdt (pr_dtmvtolt in crapdat.dtmvtolt%type,
@@ -589,8 +617,7 @@ BEGIN
   cursor cr_crapaut (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapage.cdagenci%type) is
-      select /*+ index (crap CRAPAUT##CRAPAUT2)*/
-           crap.cdagenci,
+      SELECT crap.cdagenci,
            995 cdhistor,
            crap.vldocmto
       from crapaut crap
@@ -602,8 +629,7 @@ BEGIN
   cursor cr_craplcx (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapage.cdagenci%type) is
-      select /*+ index (crap CRAPLCX##CRAPLCX2)*/
-           crap.cdagenci,
+      SELECT crap.cdagenci,
            crap.cdhistor,
            crap.vldocmto
       from craplcx crap
@@ -615,8 +641,7 @@ BEGIN
   cursor cr_craplft (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapage.cdagenci%type) is
-      select /*+ index (crap CRAPLFT##CRAPLFT1)*/
-           crap.cdagenci,
+      SELECT crap.cdagenci,
            crap.cdhistor,
            (crap.vllanmto + nvl(crap.vlrmulta, 0) + nvl(crap.vlrjuros, 0)) vllanmto
       from craplft crap
@@ -628,8 +653,7 @@ BEGIN
   cursor cr_craptit (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapage.cdagenci%type) is
-      select /*+ index (crap CRAPTIT##CRAPTIT1)*/
-           crap.cdagenci,
+      SELECT crap.cdagenci,
            994 cdhistor,
            crap.vldpagto
       from craptit crap
@@ -641,8 +665,7 @@ BEGIN
   cursor cr_crapcbb (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_cdagenci in crapage.cdagenci%type) is
-      select /*+ index (crap CRAPCBB##CRAPCBB1)*/
-           crap.cdagenci,
+      SELECT crap.cdagenci,
            750 cdhistor,
            crap.valorpag
       from crapcbb crap
@@ -1080,13 +1103,56 @@ begin
       ---------------- Inicia o processamento, gerando os registros na conta ----------------
 
       -- Carregar titulares
-      FOR vr_crapttl IN cr_crapttl(pr_cdcooper,pr_cdagenci) LOOP
-        vr_tab_crapttl(lpad(vr_crapttl.nrdconta, 10, '0')).cdempres := vr_crapttl.cdempres;
+      FOR rw_crapttl IN cr_crapttl(pr_cdcooper,pr_cdagenci) LOOP
+        vr_tab_crapttl(lpad(rw_crapttl.nrdconta, 10, '0')).cdempres := rw_crapttl.cdempres;
       END LOOP;
 
       -- Carregar Pessoas Juridicas
-      FOR vr_crapjur IN cr_crapjur(pr_cdcooper,pr_cdagenci) LOOP
-        vr_tab_crapjur(lpad(vr_crapjur.nrdconta, 10, '0')).cdempres := vr_crapjur.cdempres;
+      FOR rw_crapjur IN cr_crapjur(pr_cdcooper,pr_cdagenci) LOOP
+        vr_tab_crapjur(lpad(rw_crapjur.nrdconta, 10, '0')).cdempres := rw_crapjur.cdempres;
+      END LOOP;
+      
+      -- Carregar borderos de desconto de titulos
+      FOR rw_crapcdb in cr_crapcdb(rw_crapdat.dtmvtolt,
+                                   pr_cdcooper,
+                                   pr_cdagenci) LOOP 
+        -- Criar registro na pltable
+        vr_tab_crapcdb(rw_crapcdb.nrdconta).qtdregis := rw_crapcdb.qtdregis;
+        vr_tab_crapcdb(rw_crapcdb.nrdconta).vlliquid := rw_crapcdb.vlliquid;
+      END LOOP;
+      
+      -- Carregar custodia de cheques
+      FOR rw_crapcst in cr_crapcst(rw_crapdat.dtmvtolt,
+                                   pr_cdcooper,
+                                   pr_cdagenci) LOOP 
+        -- Criar registro na pltable
+        vr_tab_crapcst(rw_crapcst.nrdconta).qtdregis := rw_crapcst.qtdregis;
+        vr_tab_crapcst(rw_crapcst.nrdconta).vlcheque := rw_crapcst.vlcheque;
+      END LOOP;
+      
+      -- Carregar dados das Cotas
+      FOR rw_crapcot in cr_crapcot(pr_cdcooper,
+                                   pr_cdagenci,
+                                   to_number(to_char(rw_crapdat.dtmvtolt, 'mm'))) LOOP 
+        -- Criar registro na pltable
+        vr_tab_crapcot(rw_crapcot.nrdconta).vlcotant := rw_crapcot.vlcotant;
+        vr_tab_crapcot(rw_crapcot.nrdconta).vlcapmes := rw_crapcot.vlcapmes;
+      END LOOP;
+      
+      -- Somente na mensal
+      IF vr_flgmensa THEN
+        FOR rw_crapsld IN cr_crapsld(pr_cdcooper,
+                                     pr_cdagenci, 
+                                     vr_insldmes) LOOP  
+          -- Criar registro na pltable
+          vr_tab_crapsld(rw_crapsld.nrdconta).vlsmstre := rw_crapsld.vlsmstre;
+        END LOOP;
+      END IF;
+      
+      -- Carregar dados de plano de capital
+      FOR rw_crappla IN cr_crappla (pr_cdcooper,
+                                    pr_cdagenci) LOOP
+        vr_tab_crappla(rw_crappla.nrdconta).vlprepla := rw_crappla.vlprepla;
       END LOOP;
       
       -- Carregar juros de desconto de cheques
@@ -1283,24 +1349,25 @@ begin
           --------- Processa as tabelas sem campo cdhistor. O campo cdhistor está fixo no cursor -------------
 
   -- Custódia de cheques
-  for rw_gera_registro_conta in cr_crapcst (rw_crapdat.dtmvtolt,
-                                                    pr_cdcooper,
-                                                    rw_crapass(idx).nrdconta) loop
+          IF vr_tab_crapcst.exists(rw_crapass(idx).nrdconta) THEN
             pc_gera_registro_conta (rw_crapass(idx).cdagenci,
                                     vr_cdempres,
-                            rw_gera_registro_conta.cdhistor,
-                            rw_gera_registro_conta.vlcheque);
-  end loop;
+                                    997,
+                                    vr_tab_crapcst(rw_crapass(idx).nrdconta).vlcheque,
+                                    vr_tab_crapcst(rw_crapass(idx).nrdconta).qtdregis);
+          END IF;
 
   -- Borderô de desconto de cheques
-  for rw_gera_registro_conta in cr_crapcdb (rw_crapdat.dtmvtolt,
-                                                    pr_cdcooper,
-                                                    rw_crapass(idx).nrdconta) loop
+          IF vr_tab_crapcdb.exists(rw_crapass(idx).nrdconta) THEN
             pc_gera_registro_conta (rw_crapass(idx).cdagenci,
                                     vr_cdempres,
-                            rw_gera_registro_conta.cdhistor,
-                            rw_gera_registro_conta.vlliquid);
-  end loop;
+                                    93,
+                                    vr_tab_crapcdb(rw_crapass(idx).nrdconta).vlliquid,
+                                    vr_tab_crapcdb(rw_crapass(idx).nrdconta).qtdregis);
+          end IF;
+          
+          -- Cotas
+          
 
           -- Bordero de desconto de títulos
           for rw_gera_registro_conta in cr_crapbdt (rw_crapdat.dtmvtolt,
@@ -1334,21 +1401,15 @@ begin
           ----------------------- Mensal --------------------------------
   if vr_flgmensa then
       -- Verifica se possui informação do saldo médio mensal
-      open cr_crapsld (pr_cdcooper,
-                             rw_crapass(idx).nrdconta,
-                       vr_insldmes);
-        fetch cr_crapsld into rw_crapsld;
-        if cr_crapsld%notfound then
-          close cr_crapsld;
+            IF NOT vr_tab_crapsld.exists(rw_crapass(idx).nrdconta) THEN
           vr_cdcritic := 10;
                 vr_dscritic := gene0001.fn_busca_critica(10)||' - Conta: '||rw_crapass(idx).nrdconta;
           -- tratando a exceção
           raise vr_exc_saida;
         end if;
-      close cr_crapsld;
       -- Acumula os valores nas tabelas de PAC e empresa
-      vr_tab_pac(vr_indice_pac).vr_vlsmpmes := vr_tab_pac(vr_indice_pac).vr_vlsmpmes + rw_crapsld.vlsmstre;
-      vr_tab_emp(vr_indice_emp).vr_vlsmpmes := vr_tab_emp(vr_indice_emp).vr_vlsmpmes + rw_crapsld.vlsmstre;
+            vr_tab_pac(vr_indice_pac).vr_vlsmpmes := vr_tab_pac(vr_indice_pac).vr_vlsmpmes + vr_tab_crapsld(rw_crapass(idx).nrdconta).vlsmstre;
+            vr_tab_emp(vr_indice_emp).vr_vlsmpmes := vr_tab_emp(vr_indice_emp).vr_vlsmpmes + vr_tab_crapsld(rw_crapass(idx).nrdconta).vlsmstre;
       --
             if rw_crapass(idx).dtdemiss is null then
               if rw_crapass(idx).inmatric = 1 then
@@ -1357,7 +1418,7 @@ begin
         end if;
               if vr_tab_tipcta(rw_crapass(idx).inpessoa)(rw_crapass(idx).cdtipcta).cdmodali not in (2, 3) then
                 if rw_crapass(idx).cdsitdct = 6 then
-            if rw_crapsld.vlsmstre >= vr_vlsldmed then
+                  if vr_tab_crapsld(rw_crapass(idx).nrdconta).vlsmstre >= vr_vlsldmed then
               vr_tab_pac(vr_indice_pac).vr_qtctacor := vr_tab_pac(vr_indice_pac).vr_qtctacor + 1;
               vr_tab_emp(vr_indice_emp).vr_qtctacor := vr_tab_emp(vr_indice_emp).vr_qtctacor + 1;
             end if;
@@ -1367,38 +1428,31 @@ begin
           end if;
         end if;
       end if;
+            
       -- Verifica se possui informações de cotas e recursos
-      open cr_crapcot (pr_cdcooper,
-                             rw_crapass(idx).nrdconta,
-                       to_number(to_char(rw_crapdat.dtmvtolt, 'mm')));
-        fetch cr_crapcot into rw_crapcot;
-        if cr_crapcot%notfound then
-          close cr_crapcot;
+            IF NOT vr_tab_crapcot.exists(rw_crapass(idx).nrdconta) THEN 
           vr_cdcritic := 169;
                 vr_dscritic := gene0001.fn_busca_critica(169)||' - Conta: '||rw_crapass(idx).nrdconta;
           -- tratando a exceção
           raise vr_exc_saida;
         end if;
-      close cr_crapcot;
+            
             -- Acumula os valores de cotas e recursos gravados na coluna de valores do ano anterior
       if vr_flganual then
-        vr_tab_pac(vr_indice_pac).vr_vlcaptal := vr_tab_pac(vr_indice_pac).vr_vlcaptal + rw_crapcot.vlcotant;
-        vr_tab_emp(vr_indice_emp).vr_vlcaptal := vr_tab_emp(vr_indice_emp).vr_vlcaptal + rw_crapcot.vlcotant;
+              vr_tab_pac(vr_indice_pac).vr_vlcaptal := vr_tab_pac(vr_indice_pac).vr_vlcaptal + vr_tab_crapcot(rw_crapass(idx).nrdconta).vlcotant;
+              vr_tab_emp(vr_indice_emp).vr_vlcaptal := vr_tab_emp(vr_indice_emp).vr_vlcaptal + vr_tab_crapcot(rw_crapass(idx).nrdconta).vlcotant;
       else
-        vr_tab_pac(vr_indice_pac).vr_vlcaptal := vr_tab_pac(vr_indice_pac).vr_vlcaptal + rw_crapcot.vlcapmes;
-        vr_tab_emp(vr_indice_emp).vr_vlcaptal := vr_tab_emp(vr_indice_emp).vr_vlcaptal + rw_crapcot.vlcapmes;
+              vr_tab_pac(vr_indice_pac).vr_vlcaptal := vr_tab_pac(vr_indice_pac).vr_vlcaptal + vr_tab_crapcot(rw_crapass(idx).nrdconta).vlcapmes;
+              vr_tab_emp(vr_indice_emp).vr_vlcaptal := vr_tab_emp(vr_indice_emp).vr_vlcaptal + vr_tab_crapcot(rw_crapass(idx).nrdconta).vlcapmes;
       end if;
+            
       -- Acumula o valor da prestação do plano de capitalização
-      open cr_crappla (pr_cdcooper,
-                             rw_crapass(idx).nrdconta);
-        fetch cr_crappla into rw_crappla;
-        if cr_crappla%found then
+            IF vr_tab_crappla.exists(rw_crapass(idx).nrdconta) THEN
           vr_tab_pac(vr_indice_pac).vr_qtplanos := vr_tab_pac(vr_indice_pac).vr_qtplanos + 1;
           vr_tab_emp(vr_indice_emp).vr_qtplanos := vr_tab_emp(vr_indice_emp).vr_qtplanos + 1;
-          vr_tab_pac(vr_indice_pac).vr_vlplanos := vr_tab_pac(vr_indice_pac).vr_vlplanos + rw_crappla.vlprepla;
-          vr_tab_emp(vr_indice_emp).vr_vlplanos := vr_tab_emp(vr_indice_emp).vr_vlplanos + rw_crappla.vlprepla;
+              vr_tab_pac(vr_indice_pac).vr_vlplanos := vr_tab_pac(vr_indice_pac).vr_vlplanos + vr_tab_crappla(rw_crapass(idx).nrdconta).vlprepla;
+              vr_tab_emp(vr_indice_emp).vr_vlplanos := vr_tab_emp(vr_indice_emp).vr_vlplanos + vr_tab_crappla(rw_crapass(idx).nrdconta).vlprepla;
         end if;
-      close cr_crappla;
             
       -- Loop para acumular valores de empréstimos
       vr_flghaepr := false;
@@ -2234,6 +2288,7 @@ exception
       -- buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
     end if;
+      
     -- se foi gerada critica para envio ao log
     if vr_cdcritic > 0 or vr_dscritic is not null then
       -- envio centralizado de log de erro
@@ -2260,12 +2315,75 @@ exception
     -- devolvemos código e critica encontradas
     pr_cdcritic := nvl(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
+      
+      -- Na execução paralela
+      IF nvl(pr_idparale,0) <> 0 THEN
+
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);                                     
+        
+        -- Grava LOG de erro com as críticas retornadas                           
+        pc_log_programa(pr_dstiplog      => 'E', 
+                        pr_cdprograma    => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper      => pr_cdcooper,
+                        pr_tpexecucao    => vr_tpexecucao,
+                        pr_tpocorrencia  => 3,
+                        pr_cdcriticidade => 1,
+                        pr_cdmensagem    => pr_cdcritic,
+                        pr_dsmensagem    => pr_dscritic,
+                        pr_flgsucesso    => 0,
+                        pr_idprglog      => vr_idlog_ini_par);  
+                        
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);                        
+                                    
+      ELSE
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || vr_dscritic );
+        END IF;
+      END IF;
     -- efetuar rollback
     rollback;
   when others then
     -- efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
+      
+      -- Na execução paralela
+      if nvl(pr_idparale,0) <> 0 then 
+        -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+        pc_log_programa(PR_DSTIPLOG           => 'E',
+                        PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 2,
+                        pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                 'pr_dscritic:'||pr_dscritic,
+                        PR_IDPRGLOG           => vr_idlog_ini_par); 
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par,
+                        pr_flgsucesso => 0);  
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+      end if; 
     -- efetuar rollback
     rollback;
   END;

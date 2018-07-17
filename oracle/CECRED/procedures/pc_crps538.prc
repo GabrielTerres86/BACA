@@ -422,6 +422,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             
                27/04/2018 - ao chamar DSCT0001 informar a agencia do PA do Associado referente ao paralelismo (AMcom-Mario).
                            
+               11/07/2018 - Incluir log de verificação da quantidade de tarifas a serem lançadas.
+                            Ajuste no cursor cr_lcm_consolidada com to_number do cdhistor.
+                            Alteração na ordem de commit e encerra_paralelo. INC0018458 (AJFink)
+
    .............................................................................*/
 
      DECLARE
@@ -1158,10 +1162,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                ,tpparcel    cdocorre
                ,vltitulo    vllancto
                ,dscritic    cdpesqbb
-               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),01,10)   cdhistor
-               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),11,15)   qtdregis
-               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),26,15)   cdfvlcop
-               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),41,1000) tplancto
+               ,to_number(substr(dbms_lob.substr( dsxml, 4000, 1 ),01,10)) cdhistor --INC0018458
+               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),11,15)            qtdregis
+               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),26,15)            cdfvlcop
+               ,substr(dbms_lob.substr( dsxml, 4000, 1 ),41,1000)          tplancto
                ,dschave
           from TBGEN_BATCH_RELATORIO_WRK
          WHERE cdcooper = pr_cdcooper
@@ -2333,6 +2337,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              pr_tab_lcm_consolidada(vr_index_cratlcm).nrdocmto := rw_lcm_consolidada.nrdocmto;
 
            END LOOP;
+
          EXCEPTION
            WHEN OTHERS THEN
              -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
@@ -2355,6 +2360,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          vr_exc_proximo EXCEPTION;
          vr_exc_sair    EXCEPTION;
        BEGIN
+
+         pc_controla_log_batch(1, 'Quantidade de tarifas - '||nvl(vr_tab_lcm_consolidada.count,0)||' - '||to_char(current_timestamp,'hh24:mi:ss.ff')); --INC0018458
+
          --Inicializar variaveis erro
          pr_cdcritic:= NULL;
          pr_dscritic:= NULL;
@@ -7272,11 +7280,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                               ,pr_dscritic   => pr_dscritic);  
          end if;  
 
-         -- Encerrar o job do processamento paralelo dessa agência
-         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                     ,pr_des_erro => vr_dscritic);  
-
          -- Incluido controle de Log fim programa - Chamado 714566 - 11/08/2017 
          pc_controla_log_batch(1, '16 Fim crps538 - '||pr_cdagenci);
 
@@ -7284,6 +7287,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          COMMIT;
          --Finaliza sessão aberta com SQL SERVER
          npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_1');
+
+         -- Encerrar o job do processamento paralelo dessa agência
+         --INC0018458
+         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                     ,pr_des_erro => vr_dscritic);  
 
        end if;  -- Fim Paralelismo 6
 
@@ -7482,6 +7491,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          pr_dscritic := sqlerrm;
          
          ROLLBACK;
+         --Finaliza sessão aberta com SQL SERVER
+         npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_6');
+
          -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
          if rw_crapdat.inproces > 2
          and pr_cdagenci > 0
@@ -7514,10 +7526,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                        ,pr_des_erro => vr_dscritic);  
 
          END IF;
-         
-
-         --Finaliza sessão aberta com SQL SERVER
-         npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_6');
      END;
    END PC_CRPS538;
 /

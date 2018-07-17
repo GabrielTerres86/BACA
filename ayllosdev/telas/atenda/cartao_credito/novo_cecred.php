@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Marco/2018
  * OBJETIVO     : Mostrar opção de Novos Cartões da rotina de Cartões de Crédito da tela ATENDA obtidas na consulta Bancoob
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 11/07/2018 - Paulo Silva (Supero): Alterado campo Justificativa para limitar em 235 caracteres.
  * --------------
  *
  *
@@ -531,7 +531,7 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
                     ."<select  class='campo fieldclickable' id='listType' disabled style='margin-left: 00px;'> "
                     .$optionList."</select>"
                     ." </p><br><br>"
-                    ."<p><label for='justificativa' style='width: 70px;margin-right: 5px;'>Justificativa:</label><textarea class='' placeholder='' id=\"justificativa\" rows=\"5\" cols=\"50\" style=\"resize: none; border: 1px solid #777;\" disabled></textarea>"
+                    ."<p><label for='justificativa' style='width: 70px;margin-right: 5px;'>Justificativa:</label><textarea maxlength='235' class='' placeholder='' id=\"justificativa\" rows=\"5\" cols=\"50\" style=\"resize: none; border: 1px solid #777;\" disabled></textarea>"
                     ." </p><p><label for='valorLimite'style='width: 70px;margin-right: 5px;'>Limite:</label><input id='valorLimite' name='valorLimite' class='campo' disabled style='    margin-left: 0px;'>"
                     ."</fieldset></div></div></div></td> </tr>";
 

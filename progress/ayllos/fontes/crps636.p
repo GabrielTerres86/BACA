@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 26/05/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/07/2018
     
     Dados referente ao programa:
     
@@ -56,7 +56,7 @@
                               de debitos sicredi e criado novo relatorio
                               crrl674 (Lucas R.)
 							  
-				 29/04/2014 - Ajuste migracao Oracle (Elton).
+				         29/04/2014 - Ajuste migracao Oracle (Elton).
                  
                  21/10/2014 - Ajustado crrl674 e geracao do registro "B"
                               (Lucas R.)
@@ -132,7 +132,7 @@
 				                 
                  21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
 
-				 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
+                 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
                               colocando zeros a esquerda (Projeto 338 - Lucas Lunelli)
 
                  13/12/2016 - Ajustes referente a incorporaçao da Transulcred pela Transpocred. 
@@ -152,8 +152,12 @@
                  23/10/2017 - Incluir tratamento para os consorcios igual ao do chamado 684123
                               (Lucas Ranghetti #739738)
 
-				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+                 04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
+                 
+                 05/07/2018 - Alteracao referente a dtfimsus no envio do registro B, validar 
+                              final de semana (Lucas Ranghetti INC0018634)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -749,7 +753,8 @@ FOR EACH crapcop NO-LOCK.
                                           STRING(MONTH(crapatr.dtinisus),"99")  +
                                           STRING(DAY(crapatr.dtinisus),"99").
         ELSE
-            IF  crapatr.dtfimsus = glb_dtmvtolt THEN
+            IF  crapatr.dtfimsus > glb_dtmvtoan  AND
+                crapatr.dtfimsus <= glb_dtmvtolt THEN
                 /* Quando estiver cancelando a suspensao da autorizacao */
                 ASSIGN aux_dtmvtolt_atr = STRING(YEAR(glb_dtmvtolt),"9999") +
                                           STRING(MONTH(glb_dtmvtolt),"99")  +
@@ -1107,13 +1112,22 @@ FOR EACH crapcop NO-LOCK.
             ASSIGN aux_cdrefere = STRING(aux_nrcrcard,"9999999999999999999999") 
                                   + FILL(" ",3).
 
+
+         /* Se empresa RQ (Claro PR/SC) ou 5Y (Claro RS) vamos retornar ao sicredi como Claro Movel (RL) */
+        IF  craplau.cdempres = "RQ" OR
+            craplau.cdempres = "5Y" THEN
+            ASSIGN aux_cdempres = "RL".
+        ELSE
+            ASSIGN aux_cdempres = craplau.cdempres.
+            
         /* formatar codigo da empresa */
         RUN retorna_valor_formatado (INPUT 10, /* max. de digitos na variavel */                                 
                                      INPUT 10, /* quantidade max characteres a completar */ 
                                      INPUT 0,                        
-                                     INPUT craplau.cdempres,         
+                                     INPUT aux_cdempres,         
                                     OUTPUT aux_cdempres).            
-
+        
+        
         /* Registro F referente aos consorcios SICREDI, lista antes de todos */
         ASSIGN aux_dslinreg = 
                     "F" +

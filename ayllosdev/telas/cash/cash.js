@@ -18,6 +18,7 @@
  * 22/04/2015 - Jaison/Elton(CECRED): Ajustado o cabecalho da tabela de listagem de depositos
  * 27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
  * 25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
+ * 03/07/2018 - sctask0014656 permitir alterar a descricao do TAA (Carlos)
  * --------------
  */
 
@@ -158,7 +159,7 @@ function manterRotina( operacao ) {
 	var flgntcem = ($('#flgntcem', '#frmConfiguracao').is(':checked')) ? 'yes' : 'no';
 	
 	var flsistaa = cddopcao == 'B' ? $('#flsistaa', '#frmSistemaTAA').val() : $('#flsistaa', '#'+frmDados).val();
-	var dsterfin = cddopcao == 'I' ? cDsterfin.val() : $('#dsterfin', '#'+frmDados).val();
+	var dsterfin = cddopcao == 'I' ? cDsterfin.val() : $('#dsterfin', '#frmConfiguracao').val();
 	var qttotalp = $('#qttotalP', '#'+frmDados).val();
 	var tprecolh = $('#tprecolh', '#frmOpcaoL').val();
 
@@ -400,6 +401,7 @@ function controlaLayout( operacao ) {
 		}else{
 			cNrterfin.habilitaCampo();
 			cNrterfin.focus();
+      cDsterfin.focus();            
 		}
 	} else if ( (cddopcao == 'C' || cddopcao == 'L') && operacao == 'BD' ) {
 	    $('#divBotoes2:eq(0)').remove();
@@ -772,6 +774,7 @@ function formataConfiguracao() {
 	var legend = $('legend', '#frmConfiguracao');
 
 	// label
+  rDsterfin = $('label[for="dsterfin"]', '#frmConfiguracao');
 	rCdagenci = $('label[for="cdagenci"]', '#frmConfiguracao');
 	rDsfabtfn = $('label[for="dsfabtfn"]', '#frmConfiguracao');
 	rDsmodelo = $('label[for="dsmodelo"]', '#frmConfiguracao');
@@ -789,6 +792,7 @@ function formataConfiguracao() {
 	rDssaqnot = $('label[for="dssaqnot"]', '#frmConfiguracao');
 	rFlgntcem = $('label[for="flgntcem"]', '#frmConfiguracao');
 
+  rDsterfin.addClass('rotulo').css({'width':'135px'});
 	rCdagenci.addClass('rotulo').css({'width':'135px'});
 	rDsfabtfn.addClass('rotulo').css({'width':'135px'});	
 	rDsmodelo.addClass('rotulo').css({'width':'135px'});	
@@ -807,6 +811,7 @@ function formataConfiguracao() {
 	rFlgntcem.addClass('rotulo').css({'width':'135px'});
 	
 	// campos
+  cDsterfin = $('#dsterfin', '#frmConfiguracao');
 	cCdagenci = $('#cdagenci', '#frmConfiguracao');
 	cDsfabtfn = $('#dsfabtfn', '#frmConfiguracao');
 	cDsmodelo = $('#dsmodelo', '#frmConfiguracao');
@@ -824,6 +829,7 @@ function formataConfiguracao() {
 	cDssaqnot = $('#dssaqnot', '#frmConfiguracao');
 	cFlgntcem = $('#flgntcem', '#frmConfiguracao');
 
+  cDsterfin.css({'width':'200px'}).attr('maxlength','25');
 	cCdagenci.addClass('inteiro').css({'width':'100px'}).attr('maxlength','3');
 	cDsfabtfn.css({'width':'200px'}).attr('maxlength','25');
 	cDsmodelo.css({'width':'200px'}).attr('maxlength','25');
@@ -859,6 +865,8 @@ function formataConfiguracao() {
 	
 	} else if ( cddopcao == 'A' ) {
 		legend.html('Alterar Dados do Terminal');
+        
+    cDsterfin.habilitaCampo();
 		cCdagenci.habilitaCampo();
 		cDsfabtfn.habilitaCampo();
 		cDsmodelo.habilitaCampo();
@@ -867,7 +875,8 @@ function formataConfiguracao() {
 		cNrdendip.habilitaCampo();
 		cCdsitfin.habilitaCampo();
 		cFlgntcem.habilitaCampo();
-		cCdagenci.focus();		
+
+    cDsterfin.focus();
 	
 	} else if ( cddopcao == 'I' ) {
 		legend.html('Incluir Terminal');
@@ -882,8 +891,17 @@ function formataConfiguracao() {
 		cCdsitfin.remove();
 		cDssittfn.remove();
 		cCdagenci.focus();
-
+    rDsterfin.remove();
+    cDsterfin.remove();
 	}
+
+	cDsterfin.unbind('keypress').bind('keypress', function(e) {
+	    // Se é a tecla ENTER, 
+		if ( e.keyCode == 13 ) {
+		    cCdagenci.focus();            
+			return false;
+	}
+	});	
 
 	cCdagenci.unbind('keypress').bind('keypress', function(e) {
 	    // Se é a tecla ENTER, 
@@ -1879,6 +1897,8 @@ function buscaOpcao( operacao ) {
 	
 	var flgntcem = $('#flgntcem', '#'+frmDados).val();
 	
+  var dsterfin = $('#dsterfin', '#'+frmDados).val();
+	
 	switch( operacao ) {
 		case 'monitorar': mensagem = 'Aguarde, analisando log...'; 	break;
 		default			: mensagem = 'Aguarde, buscando ...'; 		break;
@@ -1918,6 +1938,7 @@ function buscaOpcao( operacao ) {
 			mmtramax: mmtramax,
 			nmdireto: nmdireto,
 			flgntcem: flgntcem,
+      dsterfin: dsterfin,            
 			redirect: 'script_ajax'			
 			}, 
 		error: function(objAjax,responseError,objExcept) {

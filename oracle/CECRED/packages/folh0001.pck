@@ -8503,7 +8503,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                       ,pr_nrdconta
                      ,pr_nrcpfcgc);
       FETCH cr_crapass INTO rw_crapass;
-      CLOSE cr_crapass;
+      
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;        
+        pr_dsalerta := 'Associado não cadastrado';  
+        RETURN;     
+      END IF;
+      
+      CLOSE cr_crapass;      
 
       -- Guarda o nome encontrado
       pr_nmprimtl := rw_crapass.nmprimtl;
@@ -8558,6 +8565,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                       ,pr_nrdconta
                       ,NULL);
       FETCH cr_crapccs INTO rw_crapccs;
+      
+      IF cr_crapccs%NOTFOUND THEN
+        CLOSE cr_crapccs;        
+        pr_dsalerta := 'Conta não cadastrada!';
+        RETURN;        
+      END IF;
+      
       CLOSE cr_crapccs;
 
       -- Retornamos o nome

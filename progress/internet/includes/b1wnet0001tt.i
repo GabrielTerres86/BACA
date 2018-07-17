@@ -103,7 +103,8 @@ DEF TEMP-TABLE tt-sacados-blt NO-UNDO
     FIELD nmsacado LIKE crapsab.nmdsacad
     FIELD cdsitsac LIKE crapsab.cdsitsac
     FIELD dssitsac AS CHAR
-    FIELD dsdemail AS CHAR.
+    FIELD dsdemail AS CHAR
+    FIELD cdtpinsc LIKE crapsab.cdtpinsc.
     
 DEF TEMP-TABLE tt-gera-blt NO-UNDO                 
     FIELD nrdocmto LIKE crapcob.nrdocmto

@@ -1259,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     FETCH cr_crawcrd INTO rw_crawcrd;
     CLOSE cr_crawcrd;
 
-    IF rw_crawcrd.dtpropos < vr_dtcorte AND rw_crawcrd.nrcrcard IS NOT NULL THEN
+    IF rw_crawcrd.dtpropos < vr_dtcorte AND rw_crawcrd.nrcrcard > 0 THEN
       vr_dssitdec := NULL;
       vr_dssitest := NULL;
     ELSE
@@ -1846,10 +1846,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                              pr_cdoperad => vr_cdoperad,
                              pr_dscritic => vr_dscritic);
     
-      OPEN cr_crawcrd;
-      FETCH cr_crawcrd INTO vr_dsjustif;
-      CLOSE cr_crawcrd;
-      
+    OPEN cr_crawcrd;
+    FETCH cr_crawcrd INTO vr_dsjustif;
+    CLOSE cr_crawcrd;
+	
 	IF pr_idproces = 'S' THEN --Solicitação/Alteração
       -- Atualiza Contrato 
       BEGIN
@@ -1875,11 +1875,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     ELSE
       --Se vai para a esteira então deixa como insitcrd = 1 e insitdec = 1
       IF NVL(pr_dsjustif,vr_dsjustif) IS NOT NULL THEN
-      --Se informado 
-      -- Atualiza Status 
-      BEGIN
-        UPDATE crawcrd
-           SET insitcrd = 1 --Aprovado
+        --Se informado 
+        -- Atualiza Status
+        BEGIN
+          UPDATE crawcrd
+             SET insitcrd = 1 --Aprovado
                 ,insitdec = 1 --Sem Aprovação
                 ,dtmvtolt = SYSDATE
                 ,cdopesup = pr_cdopesup
@@ -1901,22 +1901,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         BEGIN
           UPDATE crawcrd
              SET insitcrd = 1 --Aprovado
-              ,insitdec = 2 --Aprovado Automaticamente
-              ,dtmvtolt = SYSDATE
-              ,cdopesup = pr_cdopesup
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND nrctrcrd = pr_nrctrcrd;
-                                      
-         COMMIT;
-         
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_contrato_suges_mot: ' || SQLERRM;
-          RAISE vr_exc_saida;
-      END;
-    END IF;
+                ,insitdec = 2 --Aprovado Automaticamente
+                ,dtmvtolt = SYSDATE
+                ,cdopesup = pr_cdopesup
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctrcrd = pr_nrctrcrd;
+
+           COMMIT;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_contrato_suges_mot: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      END IF;
     END IF;
     
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'atualizacoes', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);

@@ -2287,7 +2287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_paga_tributos
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: 02/01/2018
+     Data    : Julho/2016.                    Ultima atualizacao: 28/06/2018
 
      Objetivo  : Procedure para efetivação de pagamento de DARF/DAS
 
@@ -2300,6 +2300,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                  12/04/2018 - Alterada chamada do processo de monitoracao para 
                               AFRA0004.pc_monitora_tributos
                               (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
+
+			     28/06/2018 - Remover carateceres especiais ao inserir na craplcm, para o campo dscedent.
+				              (Alcemir - Mout's) - PRB0040107.
     ..............................................................................*/
     CURSOR cr_crappod(pr_cdcooper crapass.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE)IS
@@ -2976,7 +2979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
             ,rw_crapaut.cdhistor
             ,rw_crapaut.vldocmto
             ,rw_crapaut.nrsequen
-            ,vr_dsidepag
+            ,GENE0007.fn_caract_acento(vr_dsidepag,1)
             ,0 -- cdcoptfn
             ,0 -- cdagetfn
             ,0 -- nrterfin
