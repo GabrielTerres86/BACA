@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 12/06/2018
+    Data     : Novembro/2015.                   Ultima atualizacao: 06/07/2018
   
    Dados referentes ao programa:
   
@@ -561,6 +561,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              
                 12/06/2018 - Ajuste para remover caratere especiais do campo dsdinstr que é usado para gravar 
                              na crapcob campo dsinform : Alcemir - Mout's (PRB0040060) .      
+							 
+		        06/07/2018 - Incluido validação da UF do arquivo de cobrança : Alcemir - Mout's (SCTASK0014853).
+				     
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -617,6 +620,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
      AND dne.idoricad = pr_idoricad;
   rw_crapdne cr_crapdne%ROWTYPE;
 */  
+
+  -- cursor para buscar as UFs 
+  CURSOR cr_caduf (pr_cduf tbcadast_uf.cduf%TYPE) IS
+   SELECT u.cduf FROM tbcadast_uf u
+    WHERE u.cduf <> 'EX'
+     AND  UPPER(u.cduf) = UPPER(pr_cduf);
+  rw_caduf cr_caduf%ROWTYPE; 
 
   --> Busca informacoes do Controle de Remessa/Retorno de Titulos do Cooperado
   CURSOR cr_craprtc (pr_cdcooper craprtc.cdcooper%TYPE,
@@ -6005,6 +6015,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 	*/
 
+	--validar UF que esta no arquivo.
+
+	OPEN cr_caduf(pr_rec_cobranca.cdufsaca);
+    
+    FETCH cr_caduf INTO rw_caduf;
+        
+    IF cr_caduf%NOTFOUND THEN      
+	  
+      CLOSE cr_caduf;
+      vr_rej_cdmotivo := '51';
+      RAISE vr_exc_reje;
+      
+    END IF;
+        
+    CLOSE cr_caduf;
+
+
     -- 17.3Q Valida Tipo de Inscricao Avalista
     pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
     IF pr_rec_cobranca.cdtpinav <> 0 AND  -- Vazio
@@ -8950,6 +8977,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
 	*/
+  
+	-- Validar UF que esta no arquivo.
+	OPEN cr_caduf(pr_rec_cobranca.cdufsaca);
+    
+    FETCH cr_caduf INTO rw_caduf;
+        
+    IF cr_caduf%NOTFOUND THEN      
+      
+      CLOSE cr_caduf;
+      vr_rej_cdmotivo := '51';
+      RAISE vr_exc_reje;
+      
+    END IF;
+        
+    CLOSE cr_caduf;
   
     -- 47.7 Mensagem ou Sacador/Avalista 
     IF pr_tab_linhas('INDMENSA').texto = 'A' THEN

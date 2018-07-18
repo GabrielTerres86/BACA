@@ -2868,7 +2868,7 @@
 																							 ,pr_vltarifa            => 0                                                          -- Valor da tarifa -- REVISAR
 																							 ,pr_cdhistor            => 972                                                        -- Codigo do historico -- REVISAR
 																							 ,pr_cdocorre            => 23                                                         -- Codigo Ocorrencia -- REVISAR
-																							 ,pr_dsmotivo            => NULL                                                       -- Descricao Motivo -- REVISAR
+																							 ,pr_dsmotivo            => '00'                                                       -- Descricao Motivo -- REVISAR
 																							 ,pr_crapdat             => rw_crapdat                                                 -- Data movimento
 																							 ,pr_cdoperad            => '1'                                                          -- Codigo Operador -- Revisar
 																							 ,pr_ret_nrremret        => vr_nrretcoo                                                -- Numero Remessa Retorno Cooperado

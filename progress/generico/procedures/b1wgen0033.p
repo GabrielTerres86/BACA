@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 16/05/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 20/06/2018
            
     Dados referentes ao programa:
                 
@@ -334,7 +334,7 @@ DEF VAR aux_premitot    AS DECIMAL                                    NO-UNDO.
 DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
-DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			      NO-UNDO.
+DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			  NO-UNDO.
 DEF VAR aux_nmresseg    LIKE crapcsg.nmresseg FORMAT "x(30)"          NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -819,7 +819,7 @@ FORM
     'registro na SUSEP, nome completo, CNPJ ou CPF."'
     SKIP(2)
 	"Telefones Uteis" 
-    SKIP
+	SKIP
 	"Assistencia 24 Horas: 0800 725 2064"
 	
 	SKIP
@@ -871,7 +871,7 @@ FORM
     SKIP
     "PRESENTE SEGURO.\033\110"
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_5.
-
+	
 FORM
     SKIP(3)
     "Observacoes Gerais"
@@ -1163,7 +1163,7 @@ FORM "\033\105"
      rel_ddvencto               LABEL "           Dia do debito"  FORMAT "99"
      SKIP(1)
      aux_dscobert[1]            LABEL "Cobertura"      
-     SKIP(1) 
+     SKIP(1)
      tt-plano-seg.vlplaseg   LABEL "Valor do premio mensal" FORMAT "zzz,zz9.99"
      " IOF: 0,38%"
      aux_vlmorada            LABEL "Valor da cobertura"      AT 50
@@ -1254,7 +1254,7 @@ FORM   tt-seguros.tpplaseg  AT 1    COLUMN-LABEL "Plano"
        tt-seguros.dtmvtolt  AT 70   COLUMN-LABEL "Movto"
        WITH DOWN WIDTH 80 NO-BOX FRAME f_lista.
 
-       
+
 FORM 
     "DECLARACAO PESSOAL DE SAUDE" AT 30
     SKIP(2)
@@ -1588,9 +1588,9 @@ FORM SKIP(1)
      SKIP
      "   SANIDADE MENTAL DO SEGURADO."
      SKIP(1)
-     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 100% (CEM POR CENTO) DO CAPITAL MAXIMO" 
+     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 50% (CINQUENTA POR CENTO) DO CAPITAL" 
      SKIP
-     "   DO SEGURADO PRINCIPAL INDEPENDENTEMENTE DA SANIDADE MENTAL DO SEGURADO."
+     "   MAXIMO DO SEGURADO PRINCIPAL INDEPENDENTEMENTE DA SANIDADE MENTAL DO SEGURADO."
      SKIP(1)
      "6. OS FILHOS MENORES E/OU ENTEADOS CONSIDERADOS DEPENDENTES DO SEGURADO PRINCIPAL, "
      SKIP
@@ -4522,7 +4522,7 @@ PROCEDURE imprimir_proposta_seguro:
         
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-
+		
 		/* Propostas com inicio de vigencia maior ou igual a 20/06/2016 */
         IF  rel_dtinivig > 06/20/2017 THEN 
 			DO:
@@ -4589,7 +4589,7 @@ PROCEDURE imprimir_proposta_seguro:
 					 WITH FRAME f_autori_casa_4_3.
 
 				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-
+				
 				DISP STREAM str_1 
 					 rel_nrdconta2
 					 WITH FRAME f_autori_casa_5_1_1.
@@ -4734,7 +4734,7 @@ PROCEDURE imprimir_proposta_seguro:
         
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-
+        
 		/* Propostas com inicio de vigencia maior ou igual a 20/06/2017 */
         IF  rel_dtinivig > 06/20/2017 THEN 
 			DO:
@@ -4801,12 +4801,12 @@ PROCEDURE imprimir_proposta_seguro:
 					 WITH FRAME f_autori_casa_4_3.
 
 				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-
+				
 				DISP STREAM str_1 
 					 rel_nrdconta2
 					 WITH FRAME f_autori_casa_5_1_1.
 			END.
-
+       
         DISP STREAM str_1
             rel_nrctrseg 
             tt-prop-seguros.tpplaseg
@@ -5337,16 +5337,16 @@ PROCEDURE imprimir_alt_seg_vida:
         tt-prop-seguros.dtinivig    tt-prop-seguros.tpplaseg
         tt-plano-seg.vlplaseg       aux_vlmorada                 rel_ddvencto
                            aux_dscobert[1]                            
-                           tt-seguros.nmbenvid[1] tt-seguros.dsgraupr[1] tt-seguros.txpartic[1]
-                                                              WHEN tt-seguros.txpartic[1] > 0
-                           tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2]
-                                                              WHEN tt-seguros.txpartic[2] > 0
-                           tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3]
-                                                              WHEN tt-seguros.txpartic[3] > 0
-                           tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4]
-                                                              WHEN tt-seguros.txpartic[4] > 0
-                           tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]
-                                                              WHEN tt-seguros.txpartic[5] > 0
+        tt-seguros.nmbenvid[1] tt-seguros.dsgraupr[1] tt-seguros.txpartic[1]
+                                           WHEN tt-seguros.txpartic[1] > 0
+        tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2]
+                                           WHEN tt-seguros.txpartic[2] > 0
+        tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3]
+                                           WHEN tt-seguros.txpartic[3] > 0
+        tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4]
+                                           WHEN tt-seguros.txpartic[4] > 0
+        tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]
+                                           WHEN tt-seguros.txpartic[5] > 0
                            aux_idadelmt aux_idadelm2 rel_dsmvtolt 
                            rel_nmprimtl rel_nrdconta[2] 
                            rel_nmdsegur rel_tracoseg crapope.nmoperad
@@ -5382,8 +5382,8 @@ PROCEDURE imprimir_alt_seg_vida:
 
               IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN
                   DO:
-                      DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
-                                     rel_nmdsegur rel_tracoseg crapope.nmoperad
+            DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                           rel_nmdsegur rel_tracoseg crapope.nmoperad
                       WITH FRAME f_vida_cecred_AP.
 
                       ASSIGN aux_dsdispge[1] = "SEGURO DE ACIDENTES PESSOAIS AILOS - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE"
@@ -5424,8 +5424,8 @@ PROCEDURE imprimir_alt_seg_vida:
                /* Imprimir DPS somente com valor acima de 60.000,00 */   
               IF aux_vlmorada > 60000 THEN
                  DO:
-                    PAGE STREAM str_1.
-                    
+        PAGE STREAM str_1.
+
                     VIEW STREAM str_1 FRAME f_config.
                                         
             DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
@@ -5510,7 +5510,7 @@ PROCEDURE imprimir_alt_seg_vida:
 
                 IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN 
                     DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
-                                   rel_nmdsegur rel_tracoseg crapope.nmoperad
+                    rel_nmdsegur   rel_tracoseg   crapope.nmoperad
                     WITH FRAME f_vida_cecred_AP.
                 ELSE
                 IF  CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) OR 
@@ -5527,8 +5527,8 @@ PROCEDURE imprimir_alt_seg_vida:
                 /* Imprimir DPS somente com valor acima de 60.000,00 */   
                 IF aux_vlmorada > 60000 THEN
                    DO:
-                      PAGE STREAM str_1.
-                      
+                PAGE STREAM str_1.
+
                       VIEW STREAM str_1 FRAME f_config.                      
 
                       DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
@@ -5547,8 +5547,8 @@ PROCEDURE imprimir_alt_seg_vida:
                                      aux_dsdispge[2] 
                                      aux_dsdispge[3] 
                                      aux_dsdispge[4]
-                                     rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
-                                     rel_nmdsegur rel_tracoseg crapope.nmoperad
+                    rel_dsmvtolt   rel_nmprimtl   rel_nrdconta[2]
+                    rel_nmdsegur   rel_tracoseg   crapope.nmoperad 
                                      WITH FRAME f_disposicoes_gerais.
 
             END.
@@ -5974,7 +5974,7 @@ PROCEDURE buscar_associados:
 
               ASSIGN tt-associado.nrcpfstl = crapttl.nrcpfcgc.
 
-	        END.
+        END.
 
 			FOR FIRST craptfc FIELDS(nrdddtfc nrtelefo)
 		        WHERE craptfc.cdcooper = par_cdcooper AND

@@ -2431,7 +2431,7 @@ create or replace package body cecred.cobr0011 IS
 																				,pr_tplancto => 'T'              --Tipo Lancamento  /* tplancto = "C" Cartorio */
 																				,pr_vltarifa => 0                --Valor Tarifa
 																				,pr_cdhistor => 0                --Codigo Historico
-																				,pr_cdmotivo => NULL             --Codigo motivo
+																				,pr_cdmotivo => pr_dsmotivo             --Codigo motivo
 																				,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
 																				,pr_cdcritic => vr_cdcritic      --Codigo Critica
 																				,pr_dscritic => vr_dscritic);    --Descricao Critica
