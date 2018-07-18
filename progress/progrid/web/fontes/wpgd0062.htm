@@ -5,6 +5,8 @@
 		 		        cópia da tela WPGD0023, Prj. 322 (Andrei)..
           
            01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+		   
+		   18/07/2018 - Ajuste realizado para que o sequencial NRSEQDIG nunca seja inserido zerado. (INC0017391 - Kelvin)
                              
 -------------------------------------------------------------------------------------->
 <html>
@@ -659,39 +661,39 @@
 						DO:
 					
                         /* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-                        ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
-                               aux_contnrseq = 0.
-                        agenda:
-                        DO WHILE TRUE:
-                          IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                            DO:
-                              ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                              IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                                DO:
-                                  ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                                  leave agenda.
-                                END.
-                              ELSE
-                                LEAVE agenda.
-                              
-                            END.
-                          ELSE
-                            DO:
-                              IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
-                                  DO:
-                                    ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
-                                           aux_erro = NO.
-                                    RUN RodaJavaScript("alert('" + aux_msgderro + "')").
-                                    RETURN "NOK".
-                                  END.
-                              ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                                LEAVE agenda.      
-                            END.												
-                            
-                          ASSIGN aux_contnrseq = aux_contnrseq + 1.
-                          
-                        END.
-                        /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+						Contador: DO aux_contnrseq = 1 TO 5:
+
+							ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+							
+							IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+								DO:
+									IF  aux_contnrseq = 5 THEN
+										DO:
+											ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+												   aux_erro = NO.
+										   
+											RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+											RETURN "NOK".
+										END.
+									ELSE 
+									   DO:
+										   PAUSE 1 NO-MESSAGE.				   
+									   END.
+								END.
+							ELSE
+								LEAVE Contador.
+
+						END.
+						
+						IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+							DO:
+								ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+									   aux_erro = NO.
+							   
+								RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+								RETURN "NOK".
+							END.														
+						/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         
                         CREATE crapadp.
                         ASSIGN crapadp.nrseqdig  = aux_nrseqdig
@@ -864,41 +866,40 @@
                              and crapsde.cdevento = crapedp.cdevento
                              and crapsde.cdagenci = crapagp.cdagenci NO-LOCK:
 						
-						/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-            ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
-                   aux_contnrseq = 0.
-            agenda:
-            DO WHILE TRUE:
-              IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                DO:
-                  ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                  IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                    DO:
-                      ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                      leave agenda.
-                    END.
-                  ELSE
-                    LEAVE agenda.
-                  
-                END.
-              ELSE
-                DO:
-                  IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
-                      DO:
-                        ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
-                               aux_erro = NO.
-                        RUN RodaJavaScript("alert('" + aux_msgderro + "')").
-                        RETURN "NOK".
-                      END.
-                  ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                    LEAVE agenda.      
-                END.
-              
-                
-              ASSIGN aux_contnrseq = aux_contnrseq + 1.
-              
-            END.
-            /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+			/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+			Contador: DO aux_contnrseq = 1 TO 5:
+
+				ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+				
+				IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+					DO:
+						IF  aux_contnrseq = 5 THEN
+							DO:
+								ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+									   aux_erro = NO.
+							   
+								RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+								RETURN "NOK".
+							END.
+						ELSE 
+						   DO:
+							   PAUSE 1 NO-MESSAGE.				   
+						   END.
+					END.
+				ELSE
+					LEAVE Contador.
+
+			END.
+			
+			IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+				DO:
+					ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+						   aux_erro = NO.
+				   
+					RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+					RETURN "NOK".
+				END.														
+			/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
 						
             CREATE crapadp.
             ASSIGN crapadp.nrseqdig = aux_nrseqdig
