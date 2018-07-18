@@ -5015,7 +5015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao: 07/02/2018
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 05/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -5025,6 +5025,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Alteração : 07/02/2018 - Alterado a prioridade de atualizacao das pessoas no cursor
     --                           cr_pessoa_atlz para olhar a CRAPJUR primeiro (Tiago/Andrino #843413) 
     --
+                    05/07/2018 - Para solucionar o problema do incidente INC0018017 foi necessário
+                                 a priorizar a atualização das pessoas no cursor para olhar a CRAPJFN
+                                 primeiro (Kelvin/Adrino).
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5041,7 +5044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
               )
        ORDER BY trunc(atl.dhatualiza,'MI'),
                 --> Ordenacao priorizando as tabelas ass e ttl
-                decode(atl.nmtabela,'CRAPJUR',0,'CRAPASS',1,'CRAPTTL',2,3); 
+                decode(atl.nmtabela,'CRAPJFN',0,'CRAPJUR',1,'CRAPASS',2,'CRAPTTL',3,4); 
 
     --> dados do conjuge
     CURSOR cr_crapcje( pr_cdcooper crapcje.cdcooper%TYPE,

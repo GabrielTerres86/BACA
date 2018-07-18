@@ -1,15 +1,11 @@
 <? 
 /*!
- * FONTE        : busca_nome_pessoa.php
- * CRIAÇÃO      : Mateus Zimmermann (Mouts)
+ * FONTE        : busca_informacoes_empresa.php
+ * CRIAÇÃO      : Kelvin Ott
  * DATA CRIAÇÃO : 05/12/2017
- * OBJETIVO     : Rotina para buscar o nome da pessoa a partir do campo CPF/CNPJ.
+ * OBJETIVO     : Rotina para buscar informacoes da empresa de acordo com o codigo.
  *
- * ALTERACOES   :  12/12/2017 - Ajustado rotina para exibir apenas os primeiros 40 caracts
- *                              pois tamanho da tabela apenas permite.
- *                              PRJ339 - CRM(Odirlei-AMcom)
- *				: 05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
- *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
+ * ALTERACOES   : 
  */
 ?>
  
@@ -21,13 +17,14 @@
 	require_once("../../../class/xmlfile.php");
 	isPostMethod();		
 	
-    $nrcpfemp = $_POST['nrcpfemp'] == '' ?  0  : $_POST['nrcpfemp'];
+    $cdempres = $_POST['cdempres'] == '' ?  0  : $_POST['cdempres'];
 
 	// Monta o xml de requisição
 	$xml  = "";
 	$xml .= "<Root>";	
     $xml .= "	<Dados>";
-	$xml .= "		<nrcpfcgc>".$nrcpfemp."</nrcpfcgc>";	
+	$xml .= "		<cdempres>".$cdempres."</cdempres>";	
+	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
     $xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
 	$xml .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";	
@@ -38,7 +35,7 @@
 	$xml .= "</Root>";
 		
 	// Executa script para envio do XML
-    $xmlResult = mensageria($xml, "CADA0008", "BUSCA_NOME_PESSOA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");     
+    $xmlResult = mensageria($xml, "CADA0008", "BUSCA_INFO_EMPRESA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");     
     
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjeto = getObjectXML($xmlResult);	
@@ -49,12 +46,19 @@
 
 	$nmpessoa = getByTagName($result,'nmpessoa');
 	$idaltera = getByTagName($result,'idaltera');
+	$nrdocnpj = getByTagName($result,'nrdocnpj');
     
     $nmpessoa = substr($nmpessoa,0,40);
 	
-	if($idaltera == 1){
-		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);$('#nmextemp').focus()";
-	}else{
-		echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
+	if(!isset($operacao)){
+		
+		if($idaltera == 1){			
+			echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
+			echo "$('#nrcpfemp').val('".$nrdocnpj."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
+		}else{
+			
+			echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
+			echo "$('#nrcpfemp').val('".$nrdocnpj."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
+		}
 	}
 ?>	
