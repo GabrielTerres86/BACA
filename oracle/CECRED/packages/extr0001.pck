@@ -3102,6 +3102,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                     30/05/2018 - validar estabelecimento, e incluir na pl_table (Alcemir Mout's Prj 467).
                     
                     11/06/2018 - Ajustar o SQL que busca apenas o ESTABELECIMENTO sem a cidade (Douglas - Prj 467)
+
+                    13/07/2018 - Ajustar SQL que busca o nome do estabelecimento para retirar os caracteres
+                                 que "quebram" o XML (PRJ 467 - Douglas Quisinski)
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3265,7 +3268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        SELECT lcm.dtmvtolt AS dtmvtolt_lcm, 
         lcm.dtrefere AS dtrefere_lcm, 
         to_char(lcm.nrdocmto),       
-        TRIM(SUBSTR(dcb.dsdtrans,1,23)) ESTABELECIMENTO, 
+        TRIM(GENE0007.fn_caract_acento(pr_texto    => SUBSTR(dcb.dsdtrans,1,23)
+                                      ,pr_insubsti => 1)) ESTABELECIMENTO, 
         dcb.*
        FROM craplcm lcm, crapdcb dcb
        WHERE dcb.cdcooper = lcm.cdcooper -- Cooperativa
@@ -3292,7 +3296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         SELECT lcm.dtmvtolt AS dtmvtolt_lcm,
          lcm.dtrefere AS dtrefere_lcm,
          to_char(lcm.nrdocmto),
-         TRIM(SUBSTR(dcb.dsdtrans,1,23)) ESTABELECIMENTO,
+         TRIM(GENE0007.fn_caract_acento(pr_texto    => SUBSTR(dcb.dsdtrans,1,23)
+                                       ,pr_insubsti => 1)) ESTABELECIMENTO, 
          dcb.*
         FROM craplcm lcm, crapdcb dcb
         WHERE dcb.cdcooper = lcm.cdcooper -- Cooperativa
