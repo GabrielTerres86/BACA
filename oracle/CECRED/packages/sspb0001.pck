@@ -82,6 +82,9 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                 23/04/2018 - Inclusao da conta de pagamento para PAG0137 e STR0037
                              (Andrino - Mouts / RITM0011281)
 
+			    10/07/2018 - Inclusao de logs e ajuste na validação de problemas para que erros nao passem
+							 despercebidos. (INC0018421 - Kelvin)
+
 ..............................................................................*/
 
   --criação TempTable
@@ -4476,7 +4479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            vr_vlinfodb2 := vr_vlinfodb2 + rw_crapccs.vllanmto;
 
            IF rw_crapccs.nrridlfp > 0 THEN
-              IF vr_cdcritic IS NULL THEN
+              IF vr_cdcritic IS NULL AND vr_dscritic IS NULL THEN
                   BEGIN
                     UPDATE craplfp
                        SET idsitlct = 'C'  --Creditado
@@ -4510,7 +4513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
               END IF;
 
            ELSE
-               IF vr_cdcritic IS NOT NULL THEN
+               IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                   -- Executa a exceção
                   RAISE vr_exc_erro;
                END IF;
@@ -4795,7 +4798,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
       ROLLBACK;
-    WHEN OTHERS THEN
+    WHEN OTHERS THEN      
+      CECRED.pc_internal_exception;
+      
       -- Erro
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro não tratado. '|| SQLERRM;
