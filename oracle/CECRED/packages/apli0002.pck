@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 23/08/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 18/07/2018
 
    Dados referentes ao programa:
 
@@ -121,10 +121,13 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 							   
                  07/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				 23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
-							  pelo AD. (PRJ339 - Reinert)
+				         23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
+							                pelo AD. (PRJ339 - Reinert)
                  
                  18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+
+                 18/07/2018 - Ajuste na procedure pc_cad_resgate_aplica para não permitir o resgate de aplicações enquanto
+                             o processo batch estiver rodando (Jean Michel)
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -1201,7 +1204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 05/12/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 18/07/2018
 
    Dados referentes ao programa:
 
@@ -1396,8 +1399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              a disponivel (Lucas Ranghetti #492125)        
                              
                 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+     			                   crapass, crapttl, crapjur (Adriano - P339).
                              
                 09/05/2017 - Implementei o tratamento de erro na pc_efetua_resgate_online para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)                             
@@ -1405,14 +1407,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 16/05/2017 - Validacao na data de vencimento de agendamentos de aplicacoes calculando a 
                              mesma caso necessario na pc_incluir_novo_agendmto SD 670255. (Carlos Rafael Tanholi)
 
-			    14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).
+			          14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).
 
-			    19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
+			          19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
 
-				21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
+				        21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
 
                 30/11/2017 - Incluido update na crapsli quando dinheiro para aplicacao nova vem da conta investimento. 
-							 (M460 BACENJUD - Thiago Rodrigues).
+							               (M460 BACENJUD - Thiago Rodrigues).
                
                 30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) M460 BacenJud(Thiago Rodrigues)
 
@@ -1422,6 +1424,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
                              com debito em Conta Investimento.
                              Heitor (Mouts) - Chamado 821010.
+
+                18/07/2018 - Ajuste na procedure pc_cad_resgate_aplica para não permitir o resgate de aplicações enquanto
+                             o processo batch estiver rodando (Jean Michel)
+
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -18953,7 +18959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                  Antigo: sistema/generico/procedures/b1wgen0081.p > cadastrar-resgate-aplicacao
    Sigla   : APLI
    Autor   : Renato Darosci.
-   Data    : Agosto/2014                          Ultima atualizacao: 05/12/2017
+   Data    : Agosto/2014                          Ultima atualizacao: 18/07/2018
 
    Dados referentes ao programa:
 
@@ -18977,7 +18983,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
                              
                 05/12/2017 - Alterei a gravacao do lote pois a tabela CRAPLOT estava ficando alocada
-                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)             
+                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi) 
+
+                18/07/2018 - Ajuste para não permitir o resgate de aplicações enquanto
+                             o processo batch estiver rodando (Jean Michel)
+
   .......................................................................................*/
   PROCEDURE pc_cad_resgate_aplica(pr_cdcooper    IN NUMBER
                                  ,pr_cdagenci    IN NUMBER
@@ -19106,7 +19116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     vr_exc_saida       EXCEPTION;
     vr_exc_desvio      EXCEPTION;
     vr_exc_erro        EXCEPTION;
-    
+
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
   
   BEGIN
     
@@ -19125,6 +19136,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     /** nessa procedure.                                                 **/
     /**********************************************************************/
     
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        
+      -- Fechar o cursor pois haverá raise
+      CLOSE BTCH0001.cr_crapdat;
+        
+      -- Montar mensagem de critica
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        
+      -- Levantar excecao
+      RAISE vr_exc_erro;
+        
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+        
+      IF rw_crapdat.inproces > 1 THEN
+        
+        vr_cdcritic := 972;
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+        -- Levantar excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_cdcritic := 0;
     vr_dscritic := NULL;
