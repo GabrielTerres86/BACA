@@ -29,6 +29,9 @@
  * 019: [08/01/2018] Evandro G.(Mout's)  : Ajuste para carregar nome do titular do cadastro unificado e 
                                            não permitir alterar caso possua cadastro completo.(P339)
  * 020:[26/02/2018] Odirlei(AMcom)       : Permitir alterar nome do talao do segundo titular (Andrino-mouts)
+ * 021: [10/04/2018] Kelvin 			 : Adicionado validacao ao sair do campo tipo nacionalidade para que caso		
+										   seja selecionado estrangeiro desabiilite o campo U.F da naturalidade e 
+										   fixe o valor "EX" conforme funciona na tela matric. (INC001315 - Kelvin)
                                 
  
  */
@@ -399,6 +402,9 @@ function liberaOperacao() {
             camposGrupo3.habilitaCampo(); 
 		}
 
+		if ($("#tpnacion").val() != 1) 
+            $("#cdufnatu").val("EX").desabilitaCampo();
+                
 	// INCLUSÃO
 	} else if ( operacao == 'CI') {
 
@@ -936,6 +942,24 @@ function controlaPesquisas() {
 	/*-------------------------------------*/
 	/*   CONTROLE DAS BUSCA DESCRIÇÕES     */
 	/*-------------------------------------*/
+
+	$('#tpnacion','#'+nomeForm).unbind('blur').bind('blur',function() {
+		 if ($(this).val() == 1) { // Se for brasileiro/a
+            $("#cdufnatu").val("").habilitaCampo();
+            $("#cdnacion").val("42");
+			$("#dsnacion").val("BRASILEIRA");            
+            $("#dsnatura").focus();
+        }
+        else {
+            $("#cdufnatu").val("EX").desabilitaCampo();
+            if ($("#dsnacion").val() == "BRASILEIRA") {
+                $("#cdnacion").val("");
+                $("#dsnacion").val("");
+            }
+			$("#cdnacion").focus();            
+        }
+		return false;
+	});
 
 	// Tipo Nacionalidade
 	$('#tpnacion','#'+nomeForm).unbind('change').bind('change',function() {
