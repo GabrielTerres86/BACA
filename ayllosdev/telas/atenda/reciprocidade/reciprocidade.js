@@ -131,6 +131,8 @@ function habilitaSetor(setorLogado) {
  // Acessar tela principal da rotina
  function acessaOpcaoDescontos(cddopcao) {
 
+     $('#cddopcao', '#divConteudoOpcao').val(cddopcao);
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando os conv&ecirc;nios ...");
 
@@ -168,7 +170,13 @@ function habilitaSetor(setorLogado) {
             $("#tdConteudoTela>table").prop('width', '350');
 
 			$("#divConteudoOpcao").html(response);
+
             controlaFoco();
+
+            if (cddopcao == 'C') {
+                $('input, select', '.tabelaDesconto').desabilitaCampo();
+                $('#btnConveniosCobranca, #gridDescontoConvenios img:last-child, #btnContinuar, #btnAprovacao').remove();
+            }
 		}
 	});
  }
@@ -284,8 +292,9 @@ function selecionaConvenio(idrecipr) {
     for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
         var tr = $('<tr></tr>').appendTo(table);
         var nrconven = descontoConvenios[i].convenio;
+        var tipo = descontoConvenios[i].tipo;
 
-        $('<td>' + nrconven + '</td>').appendTo(tr);
+        $('<td>' + nrconven + ' - ' + tipo + '</td>').appendTo(tr);
         $('<td>' +
             '<img src="' + $('#imgEditar').val() + '" onClick="editarConvenio(' + nrconven + '); return false;" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>' +
 			'<img src="' + $('#imgExcluir').val() + '" onClick="excluirConvenio(' + nrconven + '); return false;" border="0" title="Excluir Conv&ecirc;nio"/>' +
@@ -905,7 +914,7 @@ function realizaHabilitacao(idrecipr, cddopcao) {
     var flproalt = $("#flproalt", "#divConteudoOpcao").val();
     var flposbol = $("#flposbol", "#divConteudoOpcao").val();
     var cddbanco = $("#cddbanco", "#divOpcaoConsulta").val();
-    var qtdfloat = $("#qtdfloat", "#divOpcaoConsulta").val();
+    var qtdfloat = $('#qtdfloat', '#divConteudoOpcao').val();
     var qtdecprz = $("#qtdecprz", "#divOpcaoConsulta").val();
     var qtlimmip = $("#qtlimmip", "#divOpcaoConsulta").val();
     var insrvprt = $("#insrvprt", "#divOpcaoConsulta").val();
@@ -979,8 +988,8 @@ function realizaHabilitacao(idrecipr, cddopcao) {
 			flgregis: flgregis,
             flgregon: flgregon,
             flgpgdiv: flgpgdiv,
-			flcooexp: 1, // debug
-			flceeexp: flceeexp,
+			flcooexp: 1,        // debug será setado após "criação" da tela de paramêtros
+			flceeexp: flceeexp, // debug será setado após "criação" da tela de paramêtros
 			flserasa: flserasa,
 			flseralt: flseralt,
 			flposbol: flposbol,

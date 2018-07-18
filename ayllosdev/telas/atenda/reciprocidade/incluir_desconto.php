@@ -36,7 +36,7 @@ $volume_liquidacao  = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_l
 $qtdfloat           = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : null );
 $vlaplicacoes       = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : null );
 $dtfimcontrato      = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
-$flgdebito_reversao = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : null );
+$flgdebito_reversao = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
 
 if (count($convenios)) {
     $strConven = array();

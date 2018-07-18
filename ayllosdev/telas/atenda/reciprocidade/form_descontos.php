@@ -140,6 +140,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 ?>
 <input type="hidden" id="idcalculo_reciproci" value="<?php echo $idcalculo_reciproci ?>" />
+<input type="hidden" id="cddopcao" value="C" />
 <input type="hidden" id="imgEditar" value="<?php echo $UrlImagens; ?>icones/ico_editar.png" />
 <input type="hidden" id="imgExcluir" value="<?php echo $UrlImagens; ?>geral/excluir.gif" />
 <div align="center">
@@ -158,10 +159,10 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 				$cnv = array();
 				
 				foreach($convenios as $convenio) {
-				$cnv[] = '{"convenio":'.$convenio->tags[0]->cdata.'}';
+				$cnv[] = '{"convenio":'.$convenio->tags[0]->cdata.', "tipo":"'.$convenio->tags[1]->cdata.'"}';
 				?>
 				<tr>
-					<td width="60%"><?php echo $convenio->tags[0]->cdata ?></td>
+					<td width="60%"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
 					<td width="40%">
 						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
 						<img src="<?php echo $UrlImagens; ?>geral/excluir.gif" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;" title="Excluir Conv&ecirc;nio"/>
@@ -237,8 +238,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		<td>D&eacute;bito reajuste da tarifa</td>
 		<td align="right">
 			<select class="campo" id="debito_reajuste_reciproci" name="debito_reajuste_reciproci" style="width:153px;">
-				<option value="1" <?php (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
-				<option value="0" <?php (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>
+				<option value="1" <?php echo (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
+				<option value="0" <?php echo (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>
 			</select>
 		</td>
 	</tr>
@@ -372,7 +373,7 @@ $('#vldesconto_cee, #vldesconto_coo, #dtfimadicional_cee, #dtfimadicional_coo').
 });
 
 function validaDados() {
-
+	var idcalculo_reciproci = $('#idcalculo_reciproci', '#divConteudoOpcao').val();
 	var cVldesconto_cee = $('#vldesconto_cee', '.tabelaDesconto');
 	var cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
 	var cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
@@ -398,20 +399,27 @@ function validaDados() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, salvando registro...");
 
+	if (idcalculo_reciproci) {
+		var url = UrlSite + "telas/atenda/reciprocidade/alterar_desconto.php"
+	} else {
+		var url = UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php";
+	}
+
 	$.ajax({
 		dataType: "html",
 		type: "POST",
-		url: UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php",
+		url: url,
 		data: {
-			nrdconta:           parseInt($('#nrdconta', '#frmCabAtenda').val().replace(/\W/g, '')),
-			convenios:          JSON.stringify(descontoConvenios),
-			boletos_liquidados: $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
-			volume_liquidacao:  $('#valvolume_liquidacao', '.tabelaDesconto').val(),
-			qtdfloat:           $('#qtdfloat', '.tabelaDesconto').val(),
-			vlaplicacoes:       $('#vlaplicacoes', '.tabelaDesconto').val(),
-			dtfimcontrato:      vDataFimContrato,
-			flgdebito_reversao: $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
-			redirect:           "script_ajax"
+			idcalculo_reciproci: idcalculo_reciproci,
+			nrdconta:            parseInt($('#nrdconta', '#frmCabAtenda').val().replace(/\W/g, '')),
+			convenios:           JSON.stringify(descontoConvenios),
+			boletos_liquidados:  $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
+			volume_liquidacao:   $('#valvolume_liquidacao', '.tabelaDesconto').val(),
+			qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
+			vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
+			dtfimcontrato:       vDataFimContrato,
+			flgdebito_reversao:  $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
+			redirect:            "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
@@ -541,7 +549,9 @@ function editarConvenio(nrconven) {
 			flgregis = response.flgregis;
 			cddbanco = response.cddbanco;
 
-			consulta('A', nrconven, dsorgarq, 'false', flgregis, cddbanco);
+			var cddopcao = $('#cddopcao', '#divConteudoOpcao').val();
+
+			consulta(cddopcao, nrconven, dsorgarq, 'false', flgregis, cddbanco);
 		}
 	});
 
