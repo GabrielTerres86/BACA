@@ -2475,7 +2475,8 @@ PROCEDURE obtem-propostas-emprestimo:
 					WHEN 1 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Aut.".
 					WHEN 2 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Man.".
 					WHEN 3 THEN ASSIGN tt-proposta-epr.dssitest = "Analise Finalizada".
-					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitest = "Expirado".
+					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitest = "Expirado"
+          WHEN 5 THEN ASSIGN tt-proposta-epr.dssitest = "Expirada por decurso de prazo".
 					OTHERWISE tt-proposta-epr.dssitest = "-".
 				END CASE.
 
