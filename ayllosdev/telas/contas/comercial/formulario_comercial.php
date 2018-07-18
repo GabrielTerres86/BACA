@@ -15,9 +15,12 @@
 								caracteres especiais que geravam erro no retorno do Ajax. 
 								SD 535228. (Carlos Rafael Tanholi).
  *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
+ *                 09/10/2017 - Tratamento para remover caracteres especiais do campo Justificativa (Andrey - Mouts) - Chamado 749679 PRB0040072
  *   			   11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  *                 05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
  *                             (Mateus Z - Mouts) 
+ *                 05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
+ *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -60,10 +63,10 @@
 		<br />
 		
 		<label for="nrcpfemp">C.N.P.J.:</label>
-		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa(); $('#nmextemp', '#frmDadosComercial').focus();" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
+		<input name="nrcpfemp" id="nrcpfemp" type="text"  value="<?php if ($operacao == 'CAE') { echo $nrdocnpj; } else {echo getByTagName($comercial,'nrcpfemp');} ?>" />
 		
 		<label for="nmextemp">Nome Empresa:</label>
-		<input name="nmextemp" id="nmextemp" type="text" value="<?php echo getByTagName($comercial,'nmextemp') ?>" />		
+		<input name="nmextemp" id="nmextemp" disabled type="text" value="<?php if ($operacao == 'CAE') { echo $nmpessoa;} else {echo getByTagName($comercial,'nmextemp');} ?>" />		
 		<br />
 		 				
 		<label for="dsproftl"><?php echo utf8ToHtml('Cargo:') ?></label>
@@ -162,7 +165,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
+    $('#dsjusren','#frmJustificativa').val( '<?php echo removeCaracteresInvalidos(getByTagName($comercial,'dsjusren')); ?>' );
 	</script>	
 	<br style="class:both" />	
 		

@@ -241,6 +241,23 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
                                     ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro  OUT VARCHAR2);           --> Erros do processo
+                                    
+  PROCEDURE pc_busca_inf_emp_xml(pr_cdempres IN crapemp.cdempres%TYPE,
+                                 pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                 pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
+                                 pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
+                                 pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
+                                 pr_retxml   IN OUT NOCOPY XMLType,     --> Arquivo de retorno do XML
+                                 pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
+                                 pr_des_erro OUT VARCHAR2);   
+
+  PROCEDURE pc_busca_inf_emp(pr_cdcooper IN crapemp.cdcooper%TYPE,
+                             pr_cdempres IN crapemp.cdempres%TYPE,    
+                             pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
+                             pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
+                             pr_nrdocnpj OUT crapemp.nrdocnpj%TYPE,
+                             pr_dscritic OUT VARCHAR2);                                     
+                              
                                       
 END CADA0008;
 /
@@ -1647,7 +1664,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA: '||SQLERRM;
   END pc_busca_nome_pessoa;
   
-  
   -- Rotina para buscar o nome da pessoa e indicador se o nome pode ser alterado ou nao
   PROCEDURE pc_busca_nome_pessoa_xml(pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE,
                                      pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
@@ -1700,6 +1716,165 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       CECRED.pc_internal_exception();
       pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA_XML: '||SQLERRM;
   END pc_busca_nome_pessoa_xml;
+  
+  -- Rotina para buscar informacoes da empresa 
+  PROCEDURE pc_busca_inf_emp(pr_cdcooper IN crapemp.cdcooper%TYPE,
+                             pr_cdempres IN crapemp.cdempres%TYPE,    
+                             pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
+                             pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
+                             pr_nrdocnpj OUT crapemp.nrdocnpj%TYPE,
+                             pr_dscritic OUT VARCHAR2) IS
+                             
+    /* ..........................................................................
+    --
+    --  Programa : pc_busca_inf_emp_xml
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Kelvin Ott
+    --  Data     : Julho/2018.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para buscar informacoes da empresa 
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    
+    -- Cursor sobre o cadastro de pessoa
+    CURSOR cr_crapemp (pr_cdcooper IN crapemp.cdcooper%TYPE,
+                       pr_cdempres IN crapemp.cdempres%TYPE) IS
+      SELECT emp.nrdocnpj
+        FROM crapemp emp
+       WHERE emp.cdcooper = pr_cdcooper
+         AND emp.cdempres = pr_cdempres;
+      
+    rw_crapemp cr_crapemp%ROWTYPE;
+  
+    --Variaveis
+    vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
+    vr_idaltera PLS_INTEGER;
+    
+    -- Controle de erro
+    vr_dscritic VARCHAR2(1000);
+    vr_exc_saida     EXCEPTION;
+    
+  BEGIN
+    -- Busca os dados da empresa
+    OPEN cr_crapemp(pr_cdcooper
+                   ,pr_cdempres);
+      FETCH cr_crapemp 
+        INTO rw_crapemp;
+    CLOSE cr_crapemp;
+    
+    
+    --Significa que é alguma empresa especial ou empresas diversas
+    IF rw_crapemp.nrdocnpj = 0 THEN
+      pr_nmpessoa := '';
+      pr_idaltera := 1; --Permite alterar
+    
+    ELSE
+      -- Busca o nome da empresa
+      CADA0008.pc_busca_nome_pessoa(pr_nrcpfcgc => rw_crapemp.nrdocnpj,
+                                    pr_nmpessoa => vr_nmpessoa,
+                                    pr_idaltera => vr_idaltera,
+                                    pr_dscritic => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF; 
+     
+     pr_nmpessoa := vr_nmpessoa;
+     pr_idaltera := vr_idaltera;
+    
+    END IF;
+   
+    pr_nrdocnpj := rw_crapemp.nrdocnpj;    
+    
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception();
+      pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA: '||SQLERRM;
+  END pc_busca_inf_emp;
+  
+  -- Rotina para buscar informacoes da empresa 
+  PROCEDURE pc_busca_inf_emp_xml(pr_cdempres IN crapemp.cdempres%TYPE,
+                                 pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                 pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
+                                 pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
+                                 pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
+                                 pr_retxml   IN OUT NOCOPY XMLType,     --> Arquivo de retorno do XML
+                                 pr_nmdcampo OUT VARCHAR2,              --> Nome do campo com erro
+                                 pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
+
+    /* ..........................................................................
+    --
+    --  Programa : pc_busca_inf_emp_xml
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Kelvin Ott
+    --  Data     : Julho/2018.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para buscar informacoes da empresa 
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    
+    --Variaveis
+    vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
+    vr_idaltera PLS_INTEGER;
+    vr_nrdocnpj crapemp.nrdocnpj%TYPE;
+    
+    -- Controle de erro
+    vr_dscritic VARCHAR2(1000);
+    vr_exc_saida     EXCEPTION;
+    
+    --Variaveis de LOG
+    vr_cdoperad      VARCHAR2(100);
+    vr_cdcooper      NUMBER;
+    vr_nmdatela      VARCHAR2(100);
+    vr_nmeacao       VARCHAR2(100);
+    vr_cdagenci      VARCHAR2(100);
+    vr_nrdcaixa      VARCHAR2(100);
+    vr_idorigem      VARCHAR2(100);
+
+  BEGIN   
+    -- Busca informacoes da empresa
+    CADA0008.pc_busca_inf_emp(pr_cdcooper => pr_cdcooper,
+                              pr_cdempres => pr_cdempres,
+                              pr_nmpessoa => vr_nmpessoa,
+                              pr_nrdocnpj => vr_nrdocnpj,
+                              pr_idaltera => vr_idaltera,
+                              pr_dscritic => vr_dscritic);
+                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;  
+
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    
+    -- Preenche os dados
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmpessoa', pr_tag_cont => vr_nmpessoa, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'idaltera', pr_tag_cont => vr_idaltera, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nrdocnpj', pr_tag_cont => vr_nrdocnpj, pr_des_erro => vr_dscritic);
+                                  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      CECRED.pc_internal_exception();
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception();
+      pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_INF_EMP_XML: '||SQLERRM;
+  END pc_busca_inf_emp_xml;
   
   
   -- Rotina para realizar a chamada da CADA0012.pc_valida_acesso_operador                           

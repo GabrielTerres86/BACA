@@ -297,6 +297,19 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0010 is
   PROCEDURE pc_cadast_aprov_saque_cotas( pr_tbcotas_saque_controle IN OUT tbcotas_saque_controle%ROWTYPE -- Registros de cotas aprovadas saque
                                         ,pr_cdcritic         OUT INTEGER                        -- Codigo de erro
                                         ,pr_dscritic         OUT VARCHAR2);
+                                        
+  PROCEDURE pc_revalida_nome_cad_unc(pr_nrcpfcgc  IN tbcadast_pessoa.nrcpfcgc%TYPE --Numero do CPF/CNPJ
+                                    ,pr_nmpessoa  IN tbcadast_pessoa.nmpessoa%TYPE --Nome da pessoa entrada 
+                                    ,pr_nmpesout OUT tbcadast_pessoa.nmpessoa%TYPE --Nome da pessoa saida
+                                    ,pr_cdcritic OUT INTEGER                       -- Codigo de erro
+                                    ,pr_dscritic OUT VARCHAR2); 
+                                    
+  PROCEDURE pc_revalida_cnpj_cad_unc(pr_cdcooper  IN crapcop.cdcooper%TYPE         --Cooperativa
+                                    ,pr_cdempres  IN crapemp.cdempres%TYPE         --Codigo da empresa
+                                    ,pr_nrdocnpj  IN tbcadast_pessoa.nrcpfcgc%TYPE --CNPJ
+                                    ,pr_nrcnpjot OUT tbcadast_pessoa.nrcpfcgc%TYPE --CNPJ saida
+                                    ,pr_cdcritic OUT INTEGER                       -- Codigo de erro
+                                    ,pr_dscritic OUT VARCHAR2);                                                                          
 
 END CADA0010;
 /
@@ -3852,6 +3865,128 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'CADA0010-Erro não tratado na pc_cadast_aprov_saque_cotas: ' ||SQLERRM;
   END pc_cadast_aprov_saque_cotas;
+  
+  -- Rotina para Cadastrar de pessoa de referencia
+  PROCEDURE pc_revalida_nome_cad_unc(pr_nrcpfcgc  IN tbcadast_pessoa.nrcpfcgc%TYPE --Numero do CPF/CNPJ
+                                    ,pr_nmpessoa  IN tbcadast_pessoa.nmpessoa%TYPE --Nome da pessoa entrada 
+                                    ,pr_nmpesout OUT tbcadast_pessoa.nmpessoa%TYPE --Nome da pessoa saida
+                                    ,pr_cdcritic OUT INTEGER                       -- Codigo de erro
+                                    ,pr_dscritic OUT VARCHAR2) IS                  -- Retorno de Erro
+
+   /* ..........................................................................
+    --
+    --  Programa : pc_revalida_nome_cad_unc
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Kelvin Ott
+    --  Data     : Junho/2018.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que for chamado
+    -- Objetivo  : Rotina para devolver o nome da pessoa de acordo com o tipo da conta
+    --             vinculada ao cadastro unificado (INC0018113).
+    --
+    -- Alteração :
+    -- ..........................................................................*/
+    CURSOR cr_tbcadast_pessoa(pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
+      SELECT cap.nmpessoa
+            ,cap.tpcadastro
+        FROM tbcadast_pessoa cap
+       WHERE cap.nrcpfcgc = pr_nrcpfcgc;      
+      rw_tbcadast_pessoa cr_tbcadast_pessoa%ROWTYPE;
+  
+    -- Tratamento de erros
+	  vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+		vr_exc_erro EXCEPTION;
+    
+  BEGIN
+    OPEN cr_tbcadast_pessoa(pr_nrcpfcgc);
+      FETCH cr_tbcadast_pessoa     
+        INTO rw_tbcadast_pessoa;
+        
+        IF cr_tbcadast_pessoa%NOTFOUND THEN
+          rw_tbcadast_pessoa.tpcadastro := 0;        
+        END IF;
+        
+    CLOSE cr_tbcadast_pessoa;
+    
+    /*4 = Completo 
+      3 = Intermediario*/
+    IF NVL(rw_tbcadast_pessoa.tpcadastro,0) IN (3,4) THEN
+      pr_nmpesout := rw_tbcadast_pessoa.nmpessoa;
+    ELSE
+      pr_nmpesout := pr_nmpessoa;
+    END IF;
+    
+	EXCEPTION      
+    WHEN OTHERS THEN      
+      CECRED.pc_internal_exception;            
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_revalida_nome_cad_unc: ' ||SQLERRM;
+  END pc_revalida_nome_cad_unc;
+
+  -- Rotina para Cadastrar de pessoa de referencia
+  PROCEDURE pc_revalida_cnpj_cad_unc(pr_cdcooper  IN crapcop.cdcooper%TYPE         --Cooperativa
+                                    ,pr_cdempres  IN crapemp.cdempres%TYPE         --Codigo da empresa
+                                    ,pr_nrdocnpj  IN tbcadast_pessoa.nrcpfcgc%TYPE --CNPJ
+                                    ,pr_nrcnpjot OUT tbcadast_pessoa.nrcpfcgc%TYPE --CNPJ saida
+                                    ,pr_cdcritic OUT INTEGER                       -- Codigo de erro
+                                    ,pr_dscritic OUT VARCHAR2) IS                  -- Retorno de Erro
+
+   /* ..........................................................................
+    --
+    --  Programa : pc_revalida_cnpj_cad_unc
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Kelvin Ott
+    --  Data     : Junho/2018.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que for chamado
+    -- Objetivo  : Rotina para devolver o cnpj da pessoa de acordo com o codigo da empresa (INC0018113).
+    --
+    -- Alteração :
+    -- ..........................................................................*/
+    CURSOR cr_crapemp(pr_cdcooper crapemp.cdcooper%TYPE
+                     ,pr_cdempres crapemp.cdempres%TYPE) IS
+      SELECT emp.nrdocnpj
+        FROM crapemp emp
+       WHERE emp.cdcooper = pr_cdcooper
+         AND emp.cdempres = pr_cdempres;         
+      rw_crapemp cr_crapemp%ROWTYPE;
+  
+    -- Tratamento de erros
+	  vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;
+		vr_exc_erro EXCEPTION;
+    
+  BEGIN
+    OPEN cr_crapemp(pr_cdcooper
+                   ,pr_cdempres);
+      FETCH cr_crapemp     
+        INTO rw_crapemp;
+                
+        IF cr_crapemp%NOTFOUND THEN
+          rw_crapemp.nrdocnpj := 0;        
+        END IF;
+        
+    CLOSE cr_crapemp;
+    
+    IF NVL(rw_crapemp.nrdocnpj,0) <> 0 THEN
+      pr_nrcnpjot := rw_crapemp.nrdocnpj;
+    ELSE
+      pr_nrcnpjot := pr_nrdocnpj;
+    END IF;
+    
+	EXCEPTION      
+    WHEN OTHERS THEN      
+      CECRED.pc_internal_exception;            
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_revalida_cnpj_cad_unc: ' ||SQLERRM;
+  END pc_revalida_cnpj_cad_unc;
 
 END CADA0010;
 /
