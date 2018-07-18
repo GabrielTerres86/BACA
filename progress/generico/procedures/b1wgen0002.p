@@ -8322,9 +8322,8 @@ PROCEDURE altera-valor-proposta:
               /** M438 - Nova regra  para determinar perda de aprovaçao com a 
                          alteraçao de valor da proposta
               **/
-              IF crawepr.vlempori <> ?  AND
-                 crawepr.vlpreori <> ?  AND 
-                 crawepr.dsratori <> ?  THEN
+              IF (crawepr.vlempori <> ? OR crawepr.vlempori <> 0) AND
+                 (crawepr.vlpreori <> ? OR crawepr.vlpreori <> 0) THEN
               DO:
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                 RUN STORED-PROCEDURE pc_processa_perda_aprov
@@ -8542,20 +8541,22 @@ PROCEDURE altera-valor-proposta:
             DELETE PROCEDURE h-b1wgen0043.
             
         IF  RETURN-VALUE = "NOK"  THEN
-          UNDO Grava_valor, LEAVE Grava_valor.
+          ASSIGN aux_dsratori = "".
+          /*UNDO Grava_valor, LEAVE Grava_valor.*/
+          
          
         ASSIGN aux_dsratori = "".
         FIND FIRST tt-impressao-risco NO-LOCK NO-ERROR.
         IF  AVAIL tt-impressao-risco THEN
             aux_dsratori = tt-impressao-risco.dsdrisco.
         
-        IF crawepr.vlempori = ? THEN
-          ASSIGN crawepr.vlempori = crawepr.vlemprst.
+        IF (crawepr.vlempori = ? OR crawepr.vlempori = 0) THEN
+          ASSIGN crawepr.vlempori = par_vlemprst.
           
-        IF crawepr.vlpreori = ? THEN
-          ASSIGN crawepr.vlpreori = crawepr.vlpreemp.
+        IF (crawepr.vlpreori = ? OR crawepr.vlpreori = 0) THEN
+          ASSIGN crawepr.vlpreori = crawepr.qtpreemp.
           
-        IF crawepr.dsratori = ? THEN       
+        IF (crawepr.dsratori = ? OR crawepr.dsratori = "") AND aux_dsratori <> "" THEN
           ASSIGN crawepr.dsratori = aux_dsratori.
                 
       END. /*IF par_dsdopcao = "TP" THEN*/
