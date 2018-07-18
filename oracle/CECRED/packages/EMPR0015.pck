@@ -320,45 +320,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               vr_rating:= vr_tab_impress_risco_cl(vr_ind).dsdrisco;
               -- Vai para o proximo registro
               vr_ind := vr_tab_impress_risco_cl.next(vr_ind);
-            END LOOP;    
-            IF vr_rating > c1.dsratori THEN
-              pr_idpeapro :=1;
-              -- Se a ação for de processo de perda de aprovação 
-              IF pr_tipoacao = 'P' THEN              
+            END LOOP; 
+            -- Se não existir o rating original, não deverá validar a regra
+            -- Porém, deverá validar se agora encontrou se sim, o sistema
+            -- irá gravar no original este.   
+            IF TRIM(c1.dsratori) IS NOT NULL OR 
+               c1.dsratori <> ' ' THEN
+              IF vr_rating > c1.dsratori THEN
+                pr_idpeapro :=1;
+                -- Se a ação for de processo de perda de aprovação 
+                IF pr_tipoacao = 'P' THEN              
+                  BEGIN
+                    UPDATE
+                         crawepr c
+                       SET
+                          c.insitapr = 0,
+                          c.cdopeapr = null,
+                          c.dtaprova = null,
+                          c.hraprova = 0,
+                          c.insitest = 0          
+                     WHERE
+                          c.rowid = c1.rowid;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
+                      --Sair do programa
+                      RAISE vr_exc_erro;
+                  END;  
+                  GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdoperad => pr_cdoperad
+                                      ,pr_dscritic => ''
+                                      ,pr_dsorigem => pr_dsorigem
+                                      ,pr_dstransa => 'A proposta :'||pr_nrctremp
+                                                   ||' Perdeu a aprovação por Alteração do Rating para pior. Rating original:'  ||c1.dsratori
+                                                   ||' Rating atual : '||vr_rating
+                                      ,pr_dttransa => TRUNC(SYSDATE)
+                                      ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
+                                                       ELSE 0 
+                                                       END )
+                                      ,pr_hrtransa => gene0002.fn_busca_time
+                                      ,pr_idseqttl => pr_idseqttl
+                                      ,pr_nmdatela => pr_nmdatela
+                                      ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);              
+                END IF;                
+              END IF;
+            ELSE 
+              -- Se no momento da inclusão não havia rating e agora 
+              IF vr_rating IS NOT NULL OR
+                 vr_rating <> ' ' THEN
                 BEGIN
-                  UPDATE
-                       crawepr c
-                     SET
-                        c.insitapr = 0,
-                        c.cdopeapr = null,
-                        c.dtaprova = null,
-                        c.hraprova = 0,
-                        c.insitest = 0          
-                   WHERE
-                        c.rowid = c1.rowid;
+                  UPDATE crawepr c
+                     SET c.dsratori = vr_rating
+                   WHERE c.rowid = c1.rowid;
                 EXCEPTION
                   WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
+                    vr_dscritic := 'Erro ao atualizar tabela crawepr rating. ' || SQLERRM;
                     --Sair do programa
                     RAISE vr_exc_erro;
-                END;  
-                GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_dscritic => ''
-                                    ,pr_dsorigem => pr_dsorigem
-                                    ,pr_dstransa => 'A proposta :'||pr_nrctremp
-                                                 ||' Perdeu a aprovação por Alteração do Rating para pior. Rating original:'  ||c1.dsratori
-                                                 ||' Rating atual : '||vr_rating
-                                    ,pr_dttransa => TRUNC(SYSDATE)
-                                    ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
-                                                     ELSE 0 
-                                                     END )
-                                    ,pr_hrtransa => gene0002.fn_busca_time
-                                    ,pr_idseqttl => pr_idseqttl
-                                    ,pr_nmdatela => pr_nmdatela
-                                    ,pr_nrdconta => pr_nrdconta
-                                   ,pr_nrdrowid => vr_nrdrowid);              
-              END IF;                
+                END;
+              END IF;
             END IF;
           END IF; 
         END IF;  
@@ -880,22 +901,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                                        ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
                                        ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                        ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
-      /* .............................................................................
+     /* .............................................................................
 
-         Programa: pc_processa_titulo_expirada
-         Sistema : Crédito - Cooperativa de Credito
-         Sigla   : CRED
-         Autor   : Rafael Muniz Monteiro
-         Data    : julho/2018                         Ultima atualizacao: 
+       Programa: pc_processa_titulo_expirada
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael Muniz Monteiro
+       Data    : julho/2018                         Ultima atualizacao: 
 
-         Dados referentes ao programa:
+       Dados referentes ao programa:
 
-         Frequencia: Sempre que for chamado.
+       Frequencia: Sempre que for chamado.
 
-         Objetivo  : Procedure para procesar as regras de expiração da proposta limite desconto título
+       Objetivo  : Procedure para procesar as regras de expiração da proposta limite desconto título
 
-         Alteracoes: 
-      ............................................................................. */
+       Alteracoes: 
+    ............................................................................. */
     --    
     CURSOR cr_crapcop (prc_cdcooper IN crapcop.cdcooper%TYPE) IS 
       SELECT cop.cdcooper
@@ -951,13 +972,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     vr_cdcooper    crapcop.cdcooper%TYPE;
     vr_nrdconta    crapass.nrdconta%TYPE;
     vr_nrctremp    crawepr.nrctremp%TYPE;
-    vr_existe_aval NUMBER(1):= 0;
-    vr_existe_apli NUMBER(1):= 0;
-    vr_qtdpaava    NUMBER(5):= 0;
-    vr_qtdpaapl    NUMBER(5):= 0;
-    vr_qtdpasem    NUMBER(5):= 0;
-    vr_dtcalcul    DATE;
+    vr_qtdpaava    NUMBER := 0;
+    vr_qtdpaapl    NUMBER := 0;
+    vr_qtdpasem    NUMBER := 0;
+    vr_qtdiatab    NUMBER := 0;
     vr_dstextab    craptab.dstextab%TYPE;
+    vr_qtdiaute    NUMBER(5):= 0; -- Guarda a quantidade de dias úteis entre a data de aprovação e a data atual
+    vr_controle    NUMBER;
     --
     rw_crapdat     btch0001.cr_crapdat%rowtype;  
     --
@@ -990,6 +1011,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;    
+      
+      vr_qtdpaava := 0;
+      vr_qtdpaapl := 0;
+      vr_qtdpasem := 0;
+      
       -- Ler a TAB089 para identificar os dias de expiração para cada garantia.
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -999,48 +1025,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                                                ,pr_tpregist => 01);
       vr_qtdpaava := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,109,3)),0);  
       vr_qtdpaapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,113,3)),0);  
-      vr_qtdpasem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,117,3)),0);  
+      vr_qtdpasem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,117,3)),0);      
       --
       -- Propostas de Limite Desconto Titulo
       FOR rw_crawlim IN cr_crawlim(rw_crapcop.cdcooper,
                                    vr_nrdconta,
                                    vr_nrctremp) LOOP
-        -- Buscar se existe avalista
-        vr_existe_aval := 0;
+
+        vr_controle := 0;
+        vr_qtdiatab := 0;
+        -- Buscar se existe avalista      
         FOR rr_avalista IN cr_avalista (rw_crapcop.cdcooper,
                                         rw_crawlim.nrdconta,
                                         rw_crawlim.nrctrlim) LOOP
-          vr_existe_aval := 1; -- Existe avalista
+          vr_qtdiatab := vr_qtdpaava;
+          vr_controle := 1;
         END LOOP; 
-        --
-        vr_existe_apli := 0;
+        -- Buscar aplicação
         FOR rw_aplicacao IN cr_aplicacao(rw_crapcop.cdcooper,
                                          rw_crawlim.nrdconta,
                                          rw_crawlim.nrctrlim) LOOP
-          vr_existe_apli := 1; -- Existe aplicação
-        END LOOP;
-      
-        IF vr_existe_aval = 1 AND vr_existe_apli = 1 THEN -- Proposta possui garantias de avalista e aplicação
-          IF vr_qtdpaava > vr_qtdpaapl THEN -- Quantidade TAB089 de avalista maior que de aplicação
-            vr_dtcalcul := rw_crawlim.dtaprova + vr_qtdpaava; -- Avalista Maior, soma Avalista
-          ELSE
-            vr_dtcalcul := rw_crawlim.dtaprova + vr_qtdpaapl; -- Aplicação maior, soma aplicação
+          IF vr_qtdpaapl > vr_qtdiatab THEN
+            vr_qtdiatab := vr_qtdpaapl;
           END IF;
-        ELSIF vr_existe_aval = 1  AND vr_existe_apli = 0 THEN -- Proposta possui somente garantia de avalista
-          vr_dtcalcul := rw_crawlim.dtaprova + vr_qtdpaava; -- Somar comente com quantidade de dias avalista
-        ELSIF vr_existe_aval = 0  AND vr_existe_apli = 1 THEN -- Proposta possui somente garantia de aplicação
-          vr_dtcalcul := rw_crawlim.dtaprova + vr_qtdpaapl; -- Somar somente com quantidade de dias Aplicação
-        ELSE -- Sem garantias
-          vr_dtcalcul := rw_crawlim.dtaprova + vr_qtdpasem; -- Somar somente com quantidade de Sem Garantia
+          vr_controle := 1;
+        END LOOP;
+        
+        IF vr_controle = 0 THEN
+          vr_qtdiatab := vr_qtdpasem;
         END IF;
+      
+        -- Verificar a quantidade de dias úteis entre a data de aprovação da proposta e a data atual
+        vr_qtdiaute:= GENE0005.fn_calc_qtd_dias_uteis(rw_crapcop.cdcooper,
+                                                      rw_crawlim.dtaprova,
+                                                      rw_crapdat.dtmvtolt);      
         --
         -- Data calculada conforme regras de garantia e tab089 maior que data atual sistema, recebe expiração
-        IF vr_dtcalcul > rw_crapdat.dtmvtolt THEN
+        IF vr_qtdiaute > vr_qtdiatab THEN
           BEGIN
             -- Realizar a expiração do contrato   
             UPDATE crawlim lim
-               SET 
-                   lim.insitlim = 7 --> 7 --> Expirada por decurso de prazo
+               SET lim.insitlim = 7 --> 7 --> Expirada por decurso de prazo
                   ,lim.insitest = 0 --> 0 --> NAO ENVIADO
                   ,lim.insitapr = 0 --> 0 --> NAO ANALISADO
                   ,lim.cdopeapr = null
@@ -1071,8 +1096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     WHEN OTHERS THEN
       pr_dserro:= 'NOK';
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na procedure EMPR0015.pc_processa_perda_aprovacao: ' || SQLERRM;
-
+      pr_dscritic := 'Erro na procedure EMPR0012.pc_processa_perda_aprovacao: ' || SQLERRM;
     
   END pc_processa_titulo_expirada;
 
