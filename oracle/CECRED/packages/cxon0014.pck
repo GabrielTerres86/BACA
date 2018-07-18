@@ -1731,7 +1731,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --             06/10/2015 - Inclusao do nrsnosnum na criacao da crapcob SD339759 (Odirlei-AMcom)
   --     
   --             01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
-  ---------------------------------------------------------------------------------------------------------------
+  --
+  --             18/07/2018 - Inclusão de pc_internal_exception nas exceptions others da procedure pc_paga_titulo
+  --                          (André Bohn Mout's) - PRB0040172
+---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
       --Cursores Locais
@@ -2708,8 +2711,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
               rw_craplcm.nrseqdig;
           EXCEPTION
             WHEN Others THEN
+              declare
+                vr_dscomplemento varchar2(4000) := null;
+              begin
+                vr_dscomplemento := rw_craplot_lcm.cdagenci                -- cdagenci
+                                    ||'-'||rw_craplot_lcm.cdbccxlt         -- cdbccxlt
+                                    ||'-'||rw_crapcop.cdcooper             -- cdcooper
+                                    ||'-'||rw_craplot_lcm.cdhistor         -- cdhistor
+                                    ||'-'||rw_craplot_lcm.cdoperad         -- cdoperad
+                                    ||'-'||TRIM(pr_convenio)               -- cdpesqbb
+                                    ||'-'||rw_craplot_lcm.dtmvtolt         -- dtmvtolt
+                                    ||'-'||rw_craplot_lcm.dtmvtolt         -- dtrefere
+                                    ||'-'||GENE0002.fn_busca_time          -- hrtransa
+                                    ||'-'||nvl(pr_ult_sequencia,0)         -- nrautdoc
+                                    ||'-'||pr_nrdconta_cob                 -- nrdconta
+                                    ||'-'||vr_nrdctabb                     -- nrdctabb
+                                    ||'-'||rw_crapass.nrdctitg             -- nrdctitg
+                                    ||'-'||pr_bloqueto                     -- nrdocmto
+                                    ||'-'||rw_craplot_lcm.nrdolote         -- nrdolote
+                                    ||'-'||Nvl(rw_craplot_lcm.nrseqdig,0)  -- nrseqdig
+                                    ||'-'||pr_valor_informado              -- vllanmto
+                                    ||'-'||pr_cdcoptfn                     -- cdcoptfn
+                                    ||'-'||pr_cdagetfn                     -- cdagetfn
+                                    ||'-'||pr_nrterfin;                    -- nrterfin
+                CECRED.pc_internal_exception (pr_cdcooper => rw_crapcop.cdcooper, pr_compleme => vr_dscomplemento);
+              end;
               vr_cdcritic:= 0;
-              vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
+              vr_dscritic:= 'CXON0014 - Erro ao inserir na tabela craplcm. '||sqlerrm;
               --Levantar Excecao
               RAISE vr_exc_erro;
           END;
