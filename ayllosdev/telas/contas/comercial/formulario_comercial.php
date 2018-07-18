@@ -15,6 +15,7 @@
 								caracteres especiais que geravam erro no retorno do Ajax. 
 								SD 535228. (Carlos Rafael Tanholi).
  *                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)  
+ *                 09/10/2017 - Tratamento para remover caracteres especiais do campo Justificativa (Andrey - Mouts) - Chamado 749679 PRB0040072
  *   			   11/10/2017 - Removendo campo caixa postal (PRJ339 - Kelvin).	
  *                 05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
  *                             (Mateus Z - Mouts) 
@@ -60,7 +61,7 @@
 		<br />
 		
 		<label for="nrcpfemp">C.N.P.J.:</label>
-		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa(); $('#nmextemp', '#frmDadosComercial').focus();" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
+		<input name="nrcpfemp" id="nrcpfemp" type="text" onfocusout="buscaNomePessoa()" value="<?php echo getByTagName($comercial,'nrcpfemp') ?>" />
 		
 		<label for="nmextemp">Nome Empresa:</label>
 		<input name="nmextemp" id="nmextemp" type="text" value="<?php echo getByTagName($comercial,'nmextemp') ?>" />		
@@ -162,7 +163,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
+    $('#dsjusren','#frmJustificativa').val( '<?php echo removeCaracteresInvalidos(getByTagName($comercial,'dsjusren')); ?>' );
 	</script>	
 	<br style="class:both" />	
 		
