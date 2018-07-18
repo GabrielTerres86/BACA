@@ -604,6 +604,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,tdb.nrcnvcob
               ,tdb.nrdocmto
               ,cob.indpagto
+              ,tdb.vljura60
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
@@ -626,6 +627,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND (  bdt.insitbdt = 4 OR (bdt.insitbdt = 3 AND bdt.dtlibbdt <= pr_dtrefere) )
            -- Titulos Situação 4-Liberado OU 2-Processado com data igual a de processo
            AND (  tdb.insittit = 4 OR (tdb.insittit = 2 AND tdb.dtdpagto = pr_rw_crapdat.dtmvtolt) )
+           AND ( tdb.insitapr = 1 OR bdt.flverbor = 0 )
          ORDER BY bdt.nrborder
                  ,cob.flgregis
                  ,bdt.progress_recid;
@@ -789,7 +791,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                
       rw_crapris_9_100 cr_crapris_9_100%ROWTYPE;
      
-                                                 
+                     
       -------- Tipos e registros genéricos ------------
 
       -- Vetor para armazenar os dados de riscos, dessa forma temos o valor
@@ -1065,6 +1067,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlprjano     crapris.vlprjano%TYPE; --> Valor prejuizo no ano corrente
       vr_vlprjaan     crapris.vlprjaan%TYPE; --> Valor prejuizo no ano anterior
       vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
+      vr_vljura60     crapris.vljura60%TYPE; --> Valor dos Juros em Atraso a mais de 60 dias
       
       vr_dtprxpar     crapris.dtprxpar%TYPE; --> Data da próxima parcela do Fluxo Financeiro
       vr_vlprxpar     crapris.vlprxpar%TYPE; --> Valor da próxima parcela do Fluxo Financeiro
@@ -1551,7 +1554,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       END;
 
       --Retorna Juros+60 de conta corrente inadimplente (Rangel Decker AMcom)
-     FUNCTION fn_juros60cc (pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
+     FUNCTION fn_juros60cc (pr_nrdconta IN crapris.nrdconta%TYPE,
+                            pr_qtfiaatr IN crapris.qtdiaatr%TYPE) RETURN NUMBER IS
 
         vr_data_60dias_atraso  DATE;     --Data apos 60 dias
         vr_dtmvtolt_aux DATE;  
@@ -1568,6 +1572,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           AND ris.dtrefere    = pr_dtrefere
           AND ris.vldivida  > 0
           AND ris.cdmodali  =101
+          AND ris.inddocto  = 1
+          AND ris.cdorigem  = 1
           AND ris.qtdiaatr  >=60;
 
           rw_crapris_ccjuros60 cr_crapris_ccjuros60%ROWTYPE;
@@ -1591,7 +1597,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
 
       BEGIN
-       --Verificar data
+      IF pr_qtfiaatr >= 60 THEN 
+        BEGIN
+                 --Verificar data
        IF to_char(pr_rw_crapdat.dtmvtoan, 'MM') <> to_char(pr_rw_crapdat.dtmvtolt, 'MM') THEN
           -- Utilizar o final do mês como data
           vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
@@ -1654,6 +1662,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         WHEN OTHERS THEN BEGIN
          RETURN 0;
         END; 
+
+        END;
+      ELSE
+        RETURN 0;  
+                
+      END IF;
       END;
       
 
@@ -2203,10 +2217,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         --> Caso NAO esteja em prejuizo
         IF pr_rw_crapepr.inprejuz = 0 THEN
         
-        -- Calcular número de dias com base nos (meses decorridos - qtde parcelas calculas) * 30
-        vr_dias := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
-        -- Efetuar o mesmo calculo para a variavel que será utilizada no insert posterior
-        vr_qtdiaatr := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
+          -- Calcular número de dias com base nos (meses decorridos - qtde parcelas calculas) * 30
+          vr_dias := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
+          -- Efetuar o mesmo calculo para a variavel que será utilizada no insert posterior
+          vr_qtdiaatr := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
           
         --> Caso esteja em prejuizo
         ELSIF pr_rw_crapepr.inprejuz = 1 THEN
@@ -5400,7 +5414,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               vr_dtrisclq := nvl(vr_tab_crapsld(rw_crapass.nrdconta).dtrisclq,pr_rw_crapdat.dtmvtolt);
               -- Verificar qual nivel de risco o AD se encontra
               CASE
-          -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
+			    -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
                 WHEN vr_qtdiaatr < 15 THEN 
                   vr_risco_aux := 2;
                 WHEN vr_qtdiaatr <= 30 THEN
@@ -5477,7 +5491,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_dtdrisco => NULL                     
                                 ,pr_qtdriclq => ABS(vr_qtdiaatr) --> valor absoluto                      
                                 ,pr_nrdgrupo => 0                                      
-                                ,pr_vljura60 => fn_juros60cc(rw_crapass.nrdconta)-- Rangel Decker AMcom 0                                      
+                                ,pr_vljura60 => fn_juros60cc(rw_crapass.nrdconta,nvl(vr_qtdiaatr,0))-- Rangel Decker AMcom 0                                      
                                 ,pr_inindris => vr_risco_aux
                                 ,pr_cdinfadi => ' '                                    
                                 ,pr_nrctrnov => 0                                      
@@ -5806,6 +5820,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_qtdiaatr := 0;
                 vr_qtparcel := 1; -- Para desconto de duplicata sempre gera 1 parcela do Fluxo Financeiro
                 vr_dtvencop := NULL;
+                vr_vljura60 := 0;
                 -- Limpar a temp-table
                 FOR vr_ind IN 1..23 LOOP
                   vr_tab_vlavence(vr_ind) := 0;
@@ -5884,6 +5899,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_vlprxpar := vr_vlprxpar + vr_vlsrisco;
                 END IF;                
                 
+                vr_vljura60 := vr_vljura60 + rw_crapbdt.vljura60;
+
                 IF vr_qtdprazo > 0 THEN
                   -- Copiar o valor do risco para a variavel específica de
                   -- valores a vencer conforme o prazo calculado
@@ -5995,7 +6012,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_dtdrisco => NULL                     
                                   ,pr_qtdriclq => 0                      
                                   ,pr_nrdgrupo => 0                                      
-                                  ,pr_vljura60 => 0                                      
+                                  ,pr_vljura60 => vr_vljura60
                                   ,pr_inindris => vr_risco_rating
                                   ,pr_cdinfadi => ' '                                    
                                   ,pr_nrctrnov => 0                                      
@@ -6359,7 +6376,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_tab_crapvri(vr_tab_crapvri.count + 1) := vr_tab_crapvri_temp(vr_index_crapvri_temp);              
                 vr_index_crapvri_temp := vr_tab_crapvri_temp.next(vr_index_crapvri_temp);
               END LOOP;
-                            
+              
               
               -- Atualizar crapvri
               BEGIN
