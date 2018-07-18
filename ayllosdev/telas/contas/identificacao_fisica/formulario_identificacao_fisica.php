@@ -27,6 +27,7 @@
  * 015: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
  *										    CH, RE, PP E CT. (PRJ339 - Reinert)
  * 016: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
+ * 017: [18/07/2018] Andrey Formigari	  : Novo campo Nome Social (#SCTASK0017525 - Mouts)
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -65,6 +66,10 @@
 		
 		<label for="nmextttl">Titular:</label>
 		<input name="nmextttl" id="nmextttl" type="text" value="<? echo getByTagName($IdentFisica,'nmextttl') ?>" />
+		<br />
+		
+		<label for="nmsocial">Nome Social:</label>
+		<input name="nmsocial" id="nmsocial" type="text" value="<? echo getByTagName($IdentFisica,'nmsocial') ?>" />
 		<br />				
 		
 		<label for="cdsitcpf"><? echo utf8ToHtml('Situação:') ?></label>

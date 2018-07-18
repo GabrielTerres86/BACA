@@ -1286,7 +1286,8 @@ PROCEDURE Atualiza_Campos:
                tt-dados-fis.cdnvlcgo = brapttl.cdnvlcgo
                tt-dados-fis.cdturnos = brapttl.cdturnos
                tt-dados-fis.dtadmemp = brapttl.dtadmemp
-               tt-dados-fis.vlsalari = brapttl.vlsalari             
+               tt-dados-fis.vlsalari = brapttl.vlsalari
+			   tt-dados-fis.nmsocial = brapttl.nmsocial
                tt-dados-fis.qtfoltal = par_qtfoltal NO-ERROR.
 
         IF  tt-dados-fis.cdsexotl = 0 THEN
@@ -1377,6 +1378,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_cdturnos LIKE crapttl.cdturnos             NO-UNDO.
     DEF  INPUT PARAM par_dtadmemp LIKE crapttl.dtadmemp             NO-UNDO.
     DEF  INPUT PARAM par_vlsalari LIKE crapttl.vlsalari             NO-UNDO.
+	DEF  INPUT PARAM par_nmsocial LIKE crapttl.nmsocial             NO-UNDO.
     DEF  INPUT PARAM TABLE FOR tt-resp.
 
     DEF OUTPUT PARAM par_msgalert AS CHAR                           NO-UNDO.
@@ -1991,6 +1993,7 @@ PROCEDURE Grava_Dados:
                crapttl.dtadmemp = par_dtadmemp
                crapttl.vlsalari = par_vlsalari
                crapttl.inpessoa = par_inpessoa
+			   crapttl.nmsocial = par_nmsocial
                crapttl.flgimpri = TRUE WHEN par_cddopcao = "I"
                NO-ERROR.
         

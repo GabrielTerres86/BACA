@@ -3,16 +3,17 @@
  /************************************************************************
    Fonte: form_cabecalho.php
    Autor: Rogerius Militão - DB1
-   Data : 29/06/2011                 Última Alteração: 22/02/2018
+   Data : 29/06/2011                 Última Alteração: 16/07/2018
 
    Objetivo  : Cabeçalho da tela inicial da ATENDA
 			   
    Alterações: 26/09/2013 - Inclusão de link p/ consulta de cartão assinatura (Jean Michel
-	           12/07/2016 - Adicionado classe FirstInput no primeiro campo input, necessario
-						    para dar foco ao retornar uma consulta de tela - (Evandro - RKAM)
+	             12/07/2016 - Adicionado classe FirstInput no primeiro campo input, necessario
+						                para dar foco ao retornar uma consulta de tela - (Evandro - RKAM)
                27/07/2016 - Corrigi o uso da variavel $glbvars. SD 479874 (Carlos R.)
-			   22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
-			   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
+			         22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
+			         26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
+               16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 	
   ************************************************************************************/
 ?>
@@ -60,6 +61,9 @@
   <label for="nmprimtl">Nome/Raz&atilde;o Social:</label>
   <input name="nmprimtl" type="text" id="nmprimtl" />
 	<br />
+  <label for="nmsocial">Nome Social:</label>
+  <input name="nmsocial" type="text" id="nmsocial" />
+  <br />
   <label for="dsnatopc">Ocupa&ccedil;&atilde;o:</label>
   <input name="dsnatopc" type="text" id="dsnatopc" />
   <label for="nrramfon">Telefone:</label>

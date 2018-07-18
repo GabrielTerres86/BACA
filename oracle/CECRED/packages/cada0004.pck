@@ -46,7 +46,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               da conta. PRJ366 (Lombardi).		   
                  
                  05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
-                              pc_carrega_dados_atenda (Claudio CIS Corporate)	 	   
+                              pc_carrega_dados_atenda (Claudio CIS Corporate)
+							  
+				 16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)  	 	   
                  
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -231,7 +233,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                dssititg  VARCHAR2(100),
                qttitula  integer,
                cdclcnae  crapass.cdclcnae%TYPE,
-               cdsitdct  crapass.cdsitdct%TYPE);
+               cdsitdct  crapass.cdsitdct%TYPE,
+			   nmsocial  crapass.nmsocial%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
@@ -6019,7 +6022,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              
     --              20/09/2017 - Ajuste nos parametros da procedure fn_dstipcta
     --                           PRJ366 (Lombardi)
-    --              
+	--
+    --				16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+	--              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6048,7 +6053,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                WHEN 2 THEN 'Ativa'
                WHEN 3 THEN 'Inativa'
                ELSE decode(TRIM(crapass.nrdctitg),NULL,NULL,'Em Proc') 
-             END  dsdctitg 
+             END  dsdctitg,
+			 (SELECT ttl.nmsocial 
+                FROM crapttl ttl 
+               WHERE ttl.cdcooper = pr_cdcooper 
+                 AND ttl.nrdconta = pr_nrdconta
+                 AND ttl.idseqttl = 1) AS nmsocial
         FROM crapass 
        WHERE crapass.cdcooper = pr_cdcooper  
          AND ((nvl(pr_nrdconta,0) <> 0     AND crapass.nrdconta = pr_nrdconta) OR
@@ -6173,6 +6183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).inpessoa := rw_crapass.inpessoa;
     pr_tab_cabec(vr_idxcab).qttitula := vr_qttitula;
     pr_tab_cabec(vr_idxcab).dssititg := rw_crapass.dsdctitg;
+	pr_tab_cabec(vr_idxcab).nmsocial := rw_crapass.nmsocial;
     
     pr_des_reto := 'OK';
     
@@ -7265,7 +7276,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                   
 	               23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
   				                "Desligamento por determinação do BACEN" 
-							   ( Jonata - RKAM P364).	
+							   ( Jonata - RKAM P364).
+
+				   16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)  
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -7410,7 +7423,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<dssititg>'|| vr_tab_cabec(i).dssititg      ||'</dssititg>'||
                         '<qttitula>'|| vr_tab_cabec(i).qttitula      ||'</qttitula>'||
                         '<cdclcnae>'|| vr_tab_cabec(i).cdclcnae      ||'</cdclcnae>'||                        
-                        '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||                        
+                        '<cdsitdct>'|| vr_tab_cabec(i).cdsitdct      ||'</cdsitdct>'||
+						'<nmsocial>'|| vr_tab_cabec(i).nmsocial      ||'</nmsocial>'||                        
                         '</Registro>');
       
       END LOOP;
