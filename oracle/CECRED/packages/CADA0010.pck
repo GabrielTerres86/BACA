@@ -302,6 +302,15 @@ END CADA0010;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
 
+  --> Verificar pessoa
+  CURSOR cr_pessoa (pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    SELECT pes.idpessoa,
+           pes.tppessoa
+      FROM tbcadast_pessoa pes
+     WHERE pes.nrcpfcgc = pr_nrcpfcgc;
+  rw_pessoa cr_pessoa%ROWTYPE;
+
+
   -- Rotina para cadastro de pessoa fisica
   PROCEDURE pc_cadast_pessoa_fisica(pr_pessoa_fisica IN OUT vwcadast_pessoa_fisica%ROWTYPE -- Registro de pessoa fisica
                                    ,pr_cdcritic OUT INTEGER                  -- Codigo de erro
@@ -310,6 +319,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
 	  vr_cdcritic crapcri.cdcritic%TYPE;
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
+
+    rw_pessoa cr_pessoa%ROWTYPE;
 
   BEGIN
     -- Insere a tabela principal de pessoa
@@ -350,6 +361,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
          pr_pessoa_fisica.dtrevisao_cadastral) RETURNING idpessoa INTO pr_pessoa_fisica.idpessoa;
     EXCEPTION
       WHEN dup_val_on_index THEN
+
+        IF pr_pessoa_fisica.idpessoa IS NULL THEN
+          --> Verificar pessoa
+          rw_pessoa := NULL;
+          OPEN cr_pessoa (pr_nrcpfcgc => pr_pessoa_fisica.nrcpf);
+          FETCH cr_pessoa INTO rw_pessoa;
+          IF cr_pessoa%NOTFOUND THEN
+            CLOSE cr_pessoa;
+            vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA: Pessoa nao encontrada.';
+            RAISE vr_exc_erro;
+          ELSE
+            CLOSE cr_pessoa;
+            pr_pessoa_fisica.idpessoa := rw_pessoa.idpessoa;
+          END IF;
+        END IF;
+
         -- Atualiza o registro
         BEGIN
           UPDATE tbcadast_pessoa
@@ -565,6 +592,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
 		vr_dscritic crapcri.dscritic%TYPE;
 		vr_exc_erro EXCEPTION;
 
+    rw_pessoa cr_pessoa%ROWTYPE;
+
+
+
   BEGIN
 
     -- Insere a tabela principal de pessoa
@@ -605,6 +636,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
          pr_pessoa_juridica.dtrevisao_cadastral) RETURNING idpessoa INTO pr_pessoa_juridica.idpessoa;
     EXCEPTION
       WHEN dup_val_on_index THEN
+
+        IF pr_pessoa_juridica.idpessoa IS NULL THEN
+          --> Verificar pessoa
+          rw_pessoa := NULL;
+          OPEN cr_pessoa (pr_nrcpfcgc => pr_pessoa_juridica.nrcnpj);
+          FETCH cr_pessoa INTO rw_pessoa;
+          IF cr_pessoa%NOTFOUND THEN
+            CLOSE cr_pessoa;
+            vr_dscritic := 'Erro ao atualizar TBCADAST_PESSOA: Pessoa nao encontrada.';
+            RAISE vr_exc_erro;
+          ELSE
+            CLOSE cr_pessoa;
+            pr_pessoa_juridica.idpessoa := rw_pessoa.idpessoa;
+          END IF;
+        END IF;
+
         -- Atualiza o registro
         BEGIN
           UPDATE tbcadast_pessoa
@@ -3784,6 +3831,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
           pr_tbcotas_saque_controle.cdoperad_aprov
           );
     EXCEPTION
+      WHEN DUP_VAL_ON_INDEX THEN
+        vr_dscritic := 'Erro de chave primária. Para esta Cooperativa/Conta já existe um aprovação cadastrada nesta data.';
+        RAISE vr_exc_erro;
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao inserir TBCOTAS_SAQUE_CONTROLE: '||SQLERRM;
         RAISE vr_exc_erro;
@@ -3800,7 +3850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       -- Montar descrição de erro não tratado
-      pr_dscritic := 'Erro não tratado na pc_cadast_aprov_saque_cotas: ' ||SQLERRM;
+      pr_dscritic := 'CADA0010-Erro não tratado na pc_cadast_aprov_saque_cotas: ' ||SQLERRM;
   END pc_cadast_aprov_saque_cotas;   
 
 END CADA0010;
