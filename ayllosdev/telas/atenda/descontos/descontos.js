@@ -1457,7 +1457,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divTitulosBorderos' ){
 
-		$('#'+nomeForm).css('width','1110px');
+		$('#'+nomeForm).css('width','1200px');
 
 		var divcr = $('#divcr','#'+nomeForm);		
 		var tabela      = $('table', divcr );
@@ -1470,13 +1470,13 @@ function formataLayout(nomeForm){
 		var arrayLargura = new Array();
 		arrayLargura[0] = '75px';//Vencto
 		arrayLargura[1] = '138px';//130 Nosso Número
-		arrayLargura[2] = '63px';//Valor
+		arrayLargura[2] = '80px';//Valor
 		arrayLargura[3] = '80px';//Valor Líquido
-		arrayLargura[4] = '30px';//Prz
+		arrayLargura[4] = '35px';//Prz
 		arrayLargura[5] = '';//Pagador
-		arrayLargura[6] = '108px';// CPF/CNPJ
-		arrayLargura[7] = '80px';//130 //Situação 50 30
-		arrayLargura[8] = '70px';//130 //Decisao 50 30
+		arrayLargura[6] = '130px';// CPF/CNPJ
+		arrayLargura[7] = '130px';//130 //Situação 50 30
+		arrayLargura[8] = '80px';//130 //Decisao 50 30
 		arrayLargura[9] = '80px';//Saldo Devedor
 		arrayLargura[10] = '80px';//Nr Ctr Cyber
 				
