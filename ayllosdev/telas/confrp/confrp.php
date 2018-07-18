@@ -50,16 +50,16 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 	$xmlObjBuscaConf = getObjectXML($xmlResult);
 	
   $registros = $xmlObjBuscaConf->roottag->tags[0]->tags;
+	//print_r($xmlObjBuscaConf);
 
-  $perdesmax = $xmlObjBuscaConf->roottag->tags[1]->cdata;
-  $qtdregist = $xmlObjBuscaConf->roottag->tags[2]->cdata;
+  $qtdregist = $xmlObjBuscaConf->roottag->tags[1]->cdata;
   
-	$vinculacoes = $xmlObjBuscaConf->roottag->tags[3]->tags;
-	//print_r($vinculacoes);
-	$vlcustocee = $xmlObjBuscaConf->roottag->tags[4]->cdata;
-  $vlcustocoo = $xmlObjBuscaConf->roottag->tags[5]->cdata;
-  $vlpesoboleto = $xmlObjBuscaConf->roottag->tags[6]->cdata;
-	$vlpesoadicional = $xmlObjBuscaConf->roottag->tags[7]->cdata;			
+	$vinculacoes = $xmlObjBuscaConf->roottag->tags[2]->tags;
+	$qtdvinculacoes = count($vinculacoes);
+	$vlcustocee = $xmlObjBuscaConf->roottag->tags[3]->cdata;
+  $vlcustocoo = $xmlObjBuscaConf->roottag->tags[4]->cdata;
+  $vlpesoboleto = $xmlObjBuscaConf->roottag->tags[5]->cdata;
+	$vlpesoadicional = $xmlObjBuscaConf->roottag->tags[6]->cdata;			
   
 ?>
 <script type="text/javascript" src="../../telas/confrp/confrp.js"></script>
@@ -70,6 +70,7 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 <input type="hidden" id="hd_cp_desmensagem" value="<?echo $cp_desmensagem;?>">
 <input type="hidden" id="hd_executafuncao" value="<?echo $executafuncao;?>">
 <input type="hidden" id="hd_divanterior" value="<?echo $divanterior;?>">
+<input type="hidden" id="hd_qtdvinculacoes" value="<?echo $qtdvinculacoes;?>">
 
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
@@ -116,18 +117,20 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 										<tr>
 									  </thead>
 									  <tbody>
-									  <?
-										$i = 0;
+									  <? $i = 0;
 										foreach($registros as $registro) {
 										  $tpindicador = getByTagName($registro->tags,'tpindicador');
 										  ?> 
 										  <tr>
-											<td><input id="ativo<?echo $i?>" <?if ((getByTagName($registro->tags,'flgativo') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13"></td>
+											<td>
+												<input id="ativo<?echo $i?>" <?if ((getByTagName($registro->tags,'flgativo') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13">
+												<input type="hidden" id="idindicador<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idindicador')?>">
+											</td>
 											<td class="campo" ><input type="text" id="nmindicador<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'nmindicador')?>"></td>
 											<td class="campo" ><input type="text" id="tpindicador<?echo $i?>" readonly size="10" value="<? echo $tpindicador?>"></td>
 											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlminimo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlminimo')?>"></td>
 											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlmaximo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlmaximo')?>"></td>
-											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlmaximo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlmaximo')?>"></td>
+											<td class="campo" ><input type="text" id="peso<?echo $i?>" class="per" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'peso')?>"></td>
 										  </tr>
 									   <? $i++;
 										}?>
@@ -135,15 +138,18 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 									</table>
 									<table style="margin-top:10px;">
 									  <tbody>
-									  <?
+									  <? $i = 0;
 										foreach($vinculacoes as $registro) {
-										  $tpindicador = getByTagName($registro->tags,'v_tpindicador');
+										  $tpvinculacao = getByTagName($registro->tags,'tpvinculacao');
 										  ?> 
 										  <tr>
-											<td><input id="ativo<?echo $i?>" <?if ((getByTagName($registro->tags,'v_flgativo') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13"></td>
-											<td class="campo" ><input type="text" id="nmvinculacao<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'v_nmvinculacao')?>"></td>
-											<td class="campo" ><input type="text" id="tpindicador<?echo $i?>" readonly size="10" value="<? echo $tpindicador?>"></td>
-											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlpercentual<?echo $i?>" style="text-align:right" size="12" <?if ($tpindicador == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'v_vlpercentual')?>">%</td>
+											<td>
+												<input id="ativa<?echo $i?>" <?if ((getByTagName($registro->tags,'flgativa') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13">
+												<input type="hidden" id="idvinculacao<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idvinculacao')?>">
+											</td>
+											<td class="campo" ><input type="text" id="nmvinculacao<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'nmvinculacao')?>"></td>
+											<td class="campo" ><input type="text" id="tpvinculacao<?echo $i?>" readonly size="10" value="<? echo $tpvinculacao?>"></td>
+											<td class="campo" ><input type="text" class="<?if($tpvinculacao == 'Quantidade'){?>qtd<?} if($tpvinculacao == 'Moeda'){?>moeda<?}?>" id="vlpercentual<?echo $i?>" style="text-align:right" size="12" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual')?>">%</td>
 										  </tr>
 									   <? $i++;
 										}?>
@@ -152,19 +158,19 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 									<table style="margin: 10px 0px 0px 10px;">
 									  <tr>
 											<td>Valor de Custo CEE:</td>
-											<td class="campo"><input class="per" id="perdesmax" type="text" size="5" value="<? echo $vlcustocee; ?>"></td>
+											<td class="campo"><input class="per" id="vlcustocee" type="text" size="5" value="<? echo $vlcustocee; ?>"></td>
 										</tr>
 										<tr>
 											<td>Valor de Custo COO:</td>
-											<td class="campo"><input class="per" id="perdesmax" type="text" size="5" value="<? echo $vlcustocoo; ?>"></td>
+											<td class="campo"><input class="per" id="vlcustocoo" type="text" size="5" value="<? echo $vlcustocoo; ?>"></td>
 										</tr>
 										<tr>
 											<td>Peso Boleto:</td>
-											<td class="campo"><input class="per" id="perdesmax" type="text" size="5" value="<? echo $vlpesoboleto; ?>">%</td>
+											<td class="campo"><input class="per" id="vlpesoboleto" type="text" size="5" value="<? echo $vlpesoboleto; ?>">%</td>
 										</tr>
 										<tr>
 											<td>Peso Adicional:</td>
-											<td class="campo"><input class="per" id="perdesmax" type="text" size="5" value="<? echo $vlpesoadicional; ?>">%</td>
+											<td class="campo"><input class="per" id="vlpesoadicional" type="text" size="5" value="<? echo $vlpesoadicional; ?>">%</td>
 									  </tr>
 									</table>
 									<table style="margin: 0 auto;">
