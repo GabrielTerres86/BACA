@@ -891,10 +891,8 @@ function setFlgBoleto(cddopcao, flposbol) {
 }
 
 // Efetuar a inclusao do convenio
-function realizaHabilitacao() {
+function realizaHabilitacao(idrecipr, cddopcao) {
 
-    var cddopcao = $("#cddopcao", "#divOpcaoConsulta").val();
-    var nrconven = $("#nrconven", "#divOpcaoConsulta").val();
     var insitceb = $("#insitceb", "#divOpcaoConsulta").val();
     var inarqcbr = $("#inarqcbr", "#divOpcaoConsulta").val();
     var cddemail = $("#dsdemail", "#divOpcaoConsulta").val();
@@ -912,7 +910,6 @@ function realizaHabilitacao() {
     var qtlimmip = $("#qtlimmip", "#divOpcaoConsulta").val();
     var insrvprt = $("#insrvprt", "#divOpcaoConsulta").val();
     var qtlimaxp = $("#qtlimaxp", "#divOpcaoConsulta").val();
-    var idrecipr = $("#idrecipr", "#divOpcaoConsulta").val();
 	var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
     var idreciprold = $("#idreciprold", "#divOpcaoConsulta").val();
 
@@ -963,7 +960,7 @@ function realizaHabilitacao() {
     });
 
 	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, Incluindo a habilita&ccedil;&atilde;o do conv&ecirc;nio ...");
+	showMsgAguardo("Aguarde, Incluindo a habilita&ccedil;&atilde;o dos conv&ecirc;nios ...");
 
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({
@@ -972,7 +969,7 @@ function realizaHabilitacao() {
 		url: UrlSite + "telas/atenda/reciprocidade/realiza_habilitacao.php",
 		data: {
 		  	nrdconta: nrdconta,
-			nrconven: nrconven,
+			convenios: JSON.stringify(descontoConvenios),
             insitceb: insitceb,
 			inarqcbr: inarqcbr,
 			cddemail: cddemail,
@@ -982,7 +979,7 @@ function realizaHabilitacao() {
 			flgregis: flgregis,
             flgregon: flgregon,
             flgpgdiv: flgpgdiv,
-			flcooexp: flcooexp,
+			flcooexp: 1, // debug
 			flceeexp: flceeexp,
 			flserasa: flserasa,
 			flseralt: flseralt,

@@ -56,10 +56,19 @@
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 	}
-		
+
+	$convenios = ( (!empty($_POST['convenios'])) ? json_decode($_POST['convenios']) : '' );
+
+	if (count($convenios)) {
+		$strConven = array();
+		foreach($convenios as $convenio) {
+			$strConven[] = $convenio->convenio;
+		}
+		$convenios = $strConven;
+	}
+
 	$nrdconta = $_POST["nrdconta"];
-	$nrconven = $_POST["nrconven"];
-    $insitceb = $_POST["insitceb"];
+	$insitceb = 1;
 	$inarqcbr = $_POST["inarqcbr"];
 	$cddemail = $_POST["cddemail"];
 	$flgcruni = $_POST["flgcruni"];
@@ -87,62 +96,46 @@
     $perdesconto = $_POST["perdesconto"];
 	$executandoProdutos = $_POST['executandoProdutos'];
 
-	$xmlHabilitaConvenio  = "";
-	$xmlHabilitaConvenio .= "<Root>";
-	$xmlHabilitaConvenio .= " <Dados>";
-	$xmlHabilitaConvenio .= "	<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlHabilitaConvenio .= "   <nrconven>".$nrconven."</nrconven>";
-	$xmlHabilitaConvenio .= "   <insitceb>".$insitceb."</insitceb>";
-	$xmlHabilitaConvenio .= "   <inarqcbr>".$inarqcbr."</inarqcbr>";
-	$xmlHabilitaConvenio .= "   <cddemail>".$cddemail."</cddemail>";
-	$xmlHabilitaConvenio .= "   <flgcruni>".($flgcruni == "yes" ? 1 : 0)."</flgcruni>";
-	$xmlHabilitaConvenio .= "   <flgcebhm>".($flgcebhm == "yes" ? 1 : 0)."</flgcebhm>";
-	$xmlHabilitaConvenio .= "   <dsdregis>".$dsdregis."</dsdregis>";
-	$xmlHabilitaConvenio .= "   <idseqttl>1</idseqttl>";
-	$xmlHabilitaConvenio .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xmlHabilitaConvenio .= "   <flgregon>".$flgregon."</flgregon>";
-	$xmlHabilitaConvenio .= "   <flgpgdiv>".$flgpgdiv."</flgpgdiv>";
-	$xmlHabilitaConvenio .= "   <flcooexp>".$flcooexp."</flcooexp>";
-	$xmlHabilitaConvenio .= "   <flceeexp>".$flceeexp."</flceeexp>";
-    $xmlHabilitaConvenio .= "   <flserasa>".$flserasa."</flserasa>";
-	$xmlHabilitaConvenio .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
-	$xmlHabilitaConvenio .= "   <flprotes>".$flprotes."</flprotes>";
-	$xmlHabilitaConvenio .= "   <insrvprt>".$insrvprt."</insrvprt>";
-	$xmlHabilitaConvenio .= "   <qtlimaxp>".$qtlimaxp."</qtlimaxp>";
-	$xmlHabilitaConvenio .= "   <qtlimmip>".$qtlimmip."</qtlimmip>";
-    $xmlHabilitaConvenio .= "   <qtdecprz>".$qtdecprz."</qtdecprz>";
-    $xmlHabilitaConvenio .= "   <idrecipr>".$idrecipr."</idrecipr>";
-    $xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
-    $xmlHabilitaConvenio .= "   <perdesconto>".$perdesconto."</perdesconto>";
-    $xmlHabilitaConvenio .= "   <inenvcob>".$inenvcob."</inenvcob>";	
-	$xmlHabilitaConvenio .= " </Dados>";
-	$xmlHabilitaConvenio .= "</Root>";
+	foreach($convenios as $convenio) {
+		$xmlHabilitaConvenio  = "";
+		$xmlHabilitaConvenio .= "<Root>";
+		$xmlHabilitaConvenio .= " <Dados>";
+		$xmlHabilitaConvenio .= "	<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlHabilitaConvenio .= "   <nrconven>".$convenio."</nrconven>";
+		$xmlHabilitaConvenio .= "   <insitceb>".$insitceb."</insitceb>";
+		$xmlHabilitaConvenio .= "   <inarqcbr>".$inarqcbr."</inarqcbr>";
+		$xmlHabilitaConvenio .= "   <cddemail>".$cddemail."</cddemail>";
+		$xmlHabilitaConvenio .= "   <flgcruni>".($flgcruni == "yes" ? 1 : 0)."</flgcruni>";
+		$xmlHabilitaConvenio .= "   <flgcebhm>".($flgcebhm == "yes" ? 1 : 0)."</flgcebhm>";
+		$xmlHabilitaConvenio .= "   <dsdregis>".$dsdregis."</dsdregis>";
+		$xmlHabilitaConvenio .= "   <idseqttl>1</idseqttl>";
+		$xmlHabilitaConvenio .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xmlHabilitaConvenio .= "   <flgregon>".$flgregon."</flgregon>";
+		$xmlHabilitaConvenio .= "   <flgpgdiv>".$flgpgdiv."</flgpgdiv>";
+		$xmlHabilitaConvenio .= "   <flcooexp>".$flcooexp."</flcooexp>";
+		$xmlHabilitaConvenio .= "   <flceeexp>".$flceeexp."</flceeexp>";
+		$xmlHabilitaConvenio .= "   <flserasa>".$flserasa."</flserasa>";
+		$xmlHabilitaConvenio .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
+		$xmlHabilitaConvenio .= "   <flprotes>".$flprotes."</flprotes>";
+		$xmlHabilitaConvenio .= "   <insrvprt>".$insrvprt."</insrvprt>";
+		$xmlHabilitaConvenio .= "   <qtlimaxp>".$qtlimaxp."</qtlimaxp>";
+		$xmlHabilitaConvenio .= "   <qtlimmip>".$qtlimmip."</qtlimmip>";
+		$xmlHabilitaConvenio .= "   <qtdecprz>".$qtdecprz."</qtdecprz>";
+		$xmlHabilitaConvenio .= "   <idrecipr>".$idrecipr."</idrecipr>";
+		$xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
+		$xmlHabilitaConvenio .= "   <perdesconto>".$perdesconto."</perdesconto>";
+		$xmlHabilitaConvenio .= "   <inenvcob>".$inenvcob."</inenvcob>";	
+		$xmlHabilitaConvenio .= " </Dados>";
+		$xmlHabilitaConvenio .= "</Root>";
 
-	$xmlResult = mensageria($xmlHabilitaConvenio, "TELA_ATENDA_COBRAN", "HABILITA_CONVENIO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObjCarregaDados = getObjectXML($xmlResult);
+		$xmlResult = mensageria($xmlHabilitaConvenio, "TELA_ATENDA_COBRAN", "HABILITA_CONVENIO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjCarregaDados = getObjectXML($xmlResult);
 
-	if (strtoupper($xmlObjCarregaDados->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',utf8_encode($xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-	} 
-
-	// Se foi alterado a flag de Serasa
-	if ($flseralt == 1) {
-		$flposbol = $_POST["flposbol"];
-
-		// Montar o xml de Requisicao
-		$xmlCarregaDados  = "";
-		$xmlCarregaDados .= "<Root>";
-		$xmlCarregaDados .= " <Dados>";
-		$xmlCarregaDados .= "   <flserasa>".$flserasa."</flserasa>";
-		$xmlCarregaDados .= "   <flposbol>".$flposbol."</flposbol>";
-		$xmlCarregaDados .= "   <nrdconta>".$nrdconta."</nrdconta>";
-		$xmlCarregaDados .= "   <nrconven>".$nrconven."</nrconven>";
-		$xmlCarregaDados .= " </Dados>";
-		$xmlCarregaDados .= "</Root>";
-
-		$xmlResult = mensageria($xmlCarregaDados, "SSPC0002", 'ALTERA_NEGATIVACAO', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObj = getObjectXML($xmlResult);
-	} 
+		if (strtoupper($xmlObjCarregaDados->roottag->tags[0]->name) == 'ERRO') {
+			exibirErro('error',utf8_encode($xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exit;
+		} 
+	}
 
 	echo 'hideMsgAguardo();';
 

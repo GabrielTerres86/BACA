@@ -79,8 +79,10 @@ $vr_boletos_liquidados = getByTagName($dados->tags,"vr_boletos_liquidados");
 $vr_volume_liquidacao  = getByTagName($dados->tags,"vr_volume_liquidacao");
 $vr_flgdebito_reversao = getByTagName($dados->tags,"vr_flgdebito_reversao");
 $vr_qtdfloat           = getByTagName($dados->tags,"vr_qtdfloat");
+$vr_dtfimcontrato      = getByTagName($dados->tags,"vr_dtfimcontrato");
+$vr_aplicacoes         = getByTagName($dados->tags,"vr_aplicacoes");
 
-$convenios = $dados->tags[4]->tags;
+$convenios = $dados->tags[6]->tags;
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -186,23 +188,23 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
 			<span>Qtd</span>
-			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="<?php echo $vr_boletos_liquidados; ?>" />
+			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">
 		<td>Volume liquida&ccedil;&atilde;o</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor" value="<?php echo $vr_volume_liquidacao; ?>" />
+			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor" value="<?php echo $vr_volume_liquidacao; ?>" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Floating</td>
 		<td align="right">
-			<select class="campo" style="width:153px">
+			<select class="campo" style="width:153px" id="qtdfloat" name="qtdfloat">
 			<option value=""></option>
-			<?php foreach($floats as $floating) {
-				echo '<option ' . (($vr_qtdfloat == getByTagName($floating->tags,"cddominio")) ? 'selected' : '') . ' value="' . getByTagName($floating->tags,"cddominio") . '">' . getByTagName($floating->tags,"dscodigo") . '</option>';
+			<?php foreach($floats as $float) {
+				echo '<option ' . (($vr_qtdfloat == getByTagName($float->tags,"dscodigo")) ? 'selected' : '') . ' value="' . getByTagName($float->tags,"cddominio") . '">' . getByTagName($float->tags,"dscodigo") . '</option>';
 			} ?>
 			</select>
 		</td>
@@ -210,14 +212,14 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	<tr class="corImpar">
 		<td>Vincula&ccedil;&atilde;o</td>
 		<td align="right">
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Aplica&ccedil;&otilde;es</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="" id="" class="campo inteiro" value="" />
+			<input class="campo valor" value="<?php echo $vr_aplicacoes; ?>" id="vlaplicacoes" name="vlaplicacoes" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">
@@ -226,7 +228,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			<select class="campo" style="width:153px" name="dtfimcontrato" id="dtfimcontrato">
 			<option value=""></option>
 			<?php foreach($meses as $mes) {
-				echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
+				echo '<option ' . (($vr_dtfimcontrato == getByTagName($mes->tags,"cddominio")) ? 'selected' : '') . ' value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
 			} ?>
 			</select>
 		</td>
@@ -234,7 +236,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	<tr class="corPar">
 		<td>D&eacute;bito reajuste da tarifa</td>
 		<td align="right">
-			<select class="campo" id="debito_reajuste_reciproci" style="width:153px;">
+			<select class="campo" id="debito_reajuste_reciproci" name="debito_reajuste_reciproci" style="width:153px;">
 				<option value="1" <?php (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
 				<option value="0" <?php (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>
 			</select>
@@ -248,28 +250,28 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		<td>Desconto concedido COO</td>
 		<td align="right">
 			<span>%</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Desconto concedido CEE</td>
 		<td align="right">
 			<span>%</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">
 		<td>Tarifa reciprocidade COO</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Tarifa reciprocidade CEE</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 </table>
@@ -281,14 +283,14 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			<td align="right" width="40%">
 				<span>R$</span>
 				<input name="vldesconto_coo_old" id="vldesconto_coo_old" type="hidden" value="" />
-				<input name="vldesconto_coo" id="vldesconto_coo" class="campo valor" value="" />
+				<input name="vldesconto_coo" id="vldesconto_coo" class="campo campoTelaSemBorda valor" disabled value="" style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corImpar">
 			<td>Data fim desc. Adicional COO</td>
 			<td align="right">
 				<input name="dtfimadicional_coo_old" id="dtfimadicional_coo_old" type="hidden" value="" />
-				<select name="dtfimadicional_coo" id="dtfimadicional_coo" class="campo" style="width:153px">
+				<select name="dtfimadicional_coo" id="dtfimadicional_coo" class="campo campoTelaSemBorda" disabled style="width:153px">
 					<option value=""></option>
 					<?php foreach($meses as $mes) {
 						echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
@@ -300,14 +302,14 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			<td>Desconto adicional CEE</td>
 			<td align="right">
 				<input name="vldesconto_cee_old" id="vldesconto_cee_old" type="hidden" value="" />
-				<input name="vldesconto_cee" id="vldesconto_cee" class="campo valor" value="" />
+				<input name="vldesconto_cee" id="vldesconto_cee" class="campo campoTelaSemBorda valor" disabled value="" style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corImpar">
 			<td>Data fim desc. Adicional CEE</td>
 			<td align="right">
 				<input name="dtfimadicional_cee_old" id="dtfimadicional_cee_old" type="hidden" value="" />
-				<select name="dtfimadicional_cee" id="dtfimadicional_cee" class="campo" style="width:153px">
+				<select name="dtfimadicional_cee" id="dtfimadicional_cee" class="campo campoTelaSemBorda" disabled style="width:153px">
 					<option value=""></option>
 					<?php foreach($meses as $mes) {
 						echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
@@ -323,14 +325,14 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			<td>Tarifa negociada COO</td>
 			<td align="right">
 				<span>R$</span>
-				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corPar">
 			<td>Tarifa negociada CEE</td>
 			<td align="right">
 				<span>R$</span>
-				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" />
+				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 			</td>
 		</tr>
 	</table>
@@ -355,8 +357,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 </div>
 
 <script type="text/javascript">
-
-var cee = true; // debug
+var cee = false; // debug
+var coo = false; // debug
 var cDataFimContrato = $('#dtfimcontrato', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn();
@@ -393,10 +395,38 @@ function validaDados() {
 		return false;
 	}
 
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, salvando registro...");
+
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php",
+		data: {
+			nrdconta:           parseInt($('#nrdconta', '#frmCabAtenda').val().replace(/\W/g, '')),
+			convenios:          JSON.stringify(descontoConvenios),
+			boletos_liquidados: $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
+			volume_liquidacao:  $('#valvolume_liquidacao', '.tabelaDesconto').val(),
+			qtdfloat:           $('#qtdfloat', '.tabelaDesconto').val(),
+			vlaplicacoes:       $('#vlaplicacoes', '.tabelaDesconto').val(),
+			dtfimcontrato:      vDataFimContrato,
+			flgdebito_reversao: $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
+			redirect:           "script_ajax"
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+		},
+        success: function (response) {
+            hideMsgAguardo();
+			eval(response);
+		}
+	});
+
 	return true;
 }
 
-function validaHabilitacaoCamposBtn() {
+function validaHabilitacaoCamposBtn(cddopcao) {
 	var btnContinuar = $('#btnContinuar');
 	var btnAprovacao = $('#btnAprovacao');
 
@@ -418,16 +448,16 @@ function validaHabilitacaoCamposBtn() {
 	var vDataFimAdicionalCoo    = cDataFimAdicionalCoo.find('option:selected').text();
 	var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
 
-	if (cee){
-		cVldesconto_coo.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
-		cDataFimAdicionalCoo.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
-		cVldesconto_cee.removeClass('campoTelaSemBorda').prop('disabled', false);
-		cDataFimAdicionalCee.removeClass('campoTelaSemBorda').prop('disabled', false);
-	} else {
-		cVldesconto_cee.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
-		cDataFimAdicionalCee.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda').prop('disabled', true);
-		cVldesconto_coo.removeClass('campoTelaSemBorda').prop('disabled', false);
-		cDataFimAdicionalCoo.removeClass('campoTelaSemBorda').prop('disabled', false);
+	if (cee) {
+		cVldesconto_coo.desabilitaCampo();
+		cDataFimAdicionalCoo.desabilitaCampo();
+		cVldesconto_cee.habilitaCampo();
+		cDataFimAdicionalCee.habilitaCampo();
+	} else if (coo) {
+		cVldesconto_cee.desabilitaCampo();
+		cDataFimAdicionalCee.desabilitaCampo();
+		cVldesconto_coo.habilitaCampo();
+		cDataFimAdicionalCoo.habilitaCampo();
 	}
 
 	if (	vVldesconto_cee != vVldesconto_ceeOld ||
