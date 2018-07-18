@@ -1463,14 +1463,14 @@ PROCEDURE importa-dados-crapcyc:
                                  " Conta:    "   + STRING(aux_nrdconta, "zzzz,zzz,9")   +
                                  " Contrato: "   + STRING(aux_nrctremp, "zz,zzz,zz9")   +
                                  " Bordero:  "   + STRING(aux_nrborder, "zzzz9")   +
-                                 " Titulo:   "   + STRING(aux_nrdocmto, "9")   +
+                                 " Titulo:   "   + STRING(aux_nrdocmto, "zz9")   +
                                  " Judicial: "   + IF aux_flgjudic THEN "S" ELSE "N"    +
                                  " Extrajud: "   + IF aux_flextjud THEN "S" ELSE "N"    +
                                  " CIN:      "   + IF aux_flgehvip THEN "S" ELSE "N"    +
                                  " Data Assessoria Cobranca: " + STRING(aux_dtenvcbr, "99/99/9999") + 
                                  " Assessoria: " + STRING(aux_cdassess, "zzzz9")        +
                                  " Motivo Cin: " + STRING(aux_cdmotcin, "zz9").
-    
+     
            IF aux_cdcooper <> par_cdcooper THEN DO:
                 PUT STREAM str_2 UNFORMATTED "Registro nao pertence a cooperativa processada. - " +
                                               aux_registro SKIP.
@@ -1552,10 +1552,12 @@ PROCEDURE importa-dados-crapcyc:
                                   craptdb.nrborder = aux_nrborder AND
                                   craptdb.nrdocmto = aux_nrdocmto
                                 NO-LOCK:
+                            /* Coloca o valor do nrtitulo */
+                            ASSIGN aux_nrtitulo = craptdb.nrtitulo.
                             ASSIGN aux_counttdb = aux_counttdb + 1.
                         END.
 
-                        IF  NOT AVAIL craptdb THEN
+                        IF aux_counttdb = 0 THEN
                             DO:
                               PUT STREAM str_2 UNFORMATTED "Titulo nao encontrado. - " +
                                                                                   aux_registro SKIP.
@@ -1572,7 +1574,6 @@ PROCEDURE importa-dados-crapcyc:
                             NEXT.
                           END.
                         ELSE  
-                          ASSIGN aux_nrtitulo = craptdb.nrtitulo.
 
                         /* Verifica se já está inserido na tabela de titulos da Cyber */
                         FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = aux_cdcooper AND
