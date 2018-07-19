@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 29/01/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 18/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -45,6 +45,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --             29/01/2018 - #770327 Criada a rotina pc_lista_demons_apli para a impressão do demonstrativo de
   --                          aplicação com filtro de datas (Carlos)
   --
+	--             04/06/2018 - Alterações referente a SM404.
+	--
+  --             18/07/2018 - Ajuste na procedure pc_solicita_resgate para não permitir o resgate de aplicações enquanto
+  --                          o processo batch estiver rodando (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -895,7 +899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Julho/14.                    Ultima atualizacao: 22/07/2014
+     Data    : Julho/14.                    Ultima atualizacao:
 
      Dados referentes ao programa:
 
@@ -905,7 +909,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes:
+
     ..............................................................................*/
     DECLARE
 
@@ -6137,7 +6142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 				 WHERE cpc.cdprodut = pr_cdprodut
            AND cpc.cddindex = ind.cddindex;         
 			rw_crapcpc cr_crapcpc%ROWTYPE;
-			
+	
 			-- Seleciona registro de resgate disponível
 			CURSOR cr_craprga_disp(pr_cdcooper craprga.cdcooper%TYPE
 														,pr_nrdconta craprga.nrdconta%TYPE
@@ -8407,7 +8412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Setembro/14.                    Ultima atualizacao: 11/09/2014
+     Data    : Setembro/14.                    Ultima atualizacao: 18/07/2018
 
      Dados referentes ao programa:
 
@@ -8417,7 +8422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/07/2018 - Ajuste para não permitir o resgate de aplicações enquanto
+                              o processo batch estiver rodando (Jean Michel)
     ..............................................................................*/												
 		DECLARE
 
@@ -8485,6 +8491,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       ELSE
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
+
+        IF rw_crapdat.inproces > 1 THEN
+        
+          vr_cdcritic := 972;
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+          -- Levantar excecao
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
       
       -- Valida resgate de aplicacao
@@ -13627,7 +13642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Novembro/14.                    Ultima atualizacao: --/--/----
+     Data    : Novembro/14.                    Ultima atualizacao: 04/06/2018
 
      Dados referentes ao programa:
 
@@ -13637,7 +13652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 04/06/2018 - Ajuste para atender a SM404
     ..............................................................................*/												
 		DECLARE
 
@@ -13758,7 +13773,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     
         END IF;
 
-        IF vr_tab_saldo_rdca(vr_ind).cddresga = 'SIM' THEN
+        IF vr_tab_saldo_rdca(vr_ind).cddresga = 'SIM'
+					AND vr_tab_saldo_rdca(vr_ind).dssitapl <> 'BLOQUEADA' -- SM404
+			  THEN
           vr_vlsldtot := vr_vlsldtot - vr_tab_saldo_rdca(vr_ind).sldresga;
         END IF;
 
@@ -13776,12 +13793,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                            ,pr_vlbloque_poupa => vr_vlbloque_poupa
                                            ,pr_vlbloque_ambos => vr_vlbloque_ambos
                                            ,pr_dscritic => vr_dscritic);
-                                         
+                                   
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;                                 
       
       pr_vlsldtot := vr_vlsldtot - vr_vlbloque_aplica;
+                                   
+			-- SM404
+			IF nvl(pr_vlsldtot, 0) < 0 THEN
+				--
+				pr_vlsldtot := 0;
+				--
+			END IF;
+				
                                    
       -- Verifica se deve haver gravacao de log
       IF pr_flgerlog = 1 THEN
@@ -15396,11 +15421,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_nrdocmto craplcm.nrdocmto%TYPE;
       vr_des_reto VARCHAR2(3);
       vr_nrdrowid ROWID;
+      vr_vlresgat NUMBER;
 
     BEGIN
       -- Inicializa
       vr_cdcritic := 0;
       vr_dscritic := NULL;
+      vr_vlresgat := 0;
 
       -- Se possuir registros
       IF NVL(pr_tab_resgate.COUNT,0) > 0 THEN
@@ -15411,8 +15438,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
             IF pr_tab_resgate(ind_registro).tpresgat = 1 THEN
               vr_tpresgat := 'P';
+              vr_vlresgat := pr_tab_resgate(ind_registro).vllanmto;
             ELSE
               vr_tpresgat := 'T';
+              vr_vlresgat := 0;
             END IF;
 
             -- Efetua o resgate da aplicacao
@@ -15429,7 +15458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                           ,pr_dtmvtolt => pr_dtmvtolt
                                           ,pr_dtmvtopr => pr_dtmvtopr
                                           ,pr_inproces => pr_inproces
-                                          ,pr_vlresgat => pr_tab_resgate(ind_registro).vllanmto
+                                          ,pr_vlresgat => vr_vlresgat
                                           ,pr_dtresgat => pr_dtresgat
                                           ,pr_flmensag => pr_flmensag
                                           ,pr_tpresgat => vr_tpresgat
@@ -15439,6 +15468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                           ,pr_des_reto => vr_des_reto
                                           ,pr_tbmsconf => pr_tab_msg_confirma
                                           ,pr_tab_erro => pr_tab_erro);
+                                          
             -- Se ocorreu erro
             IF vr_des_reto = 'NOK' THEN
 
@@ -15475,7 +15505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                ,pr_nraplica => pr_tab_resgate(ind_registro).saldo_rdca.nraplica
                                ,pr_cdprodut => pr_tab_resgate(ind_registro).saldo_rdca.cdprodut
                                ,pr_dtresgat => pr_dtresgat
-                               ,pr_vlresgat => pr_tab_resgate(ind_registro).vllanmto
+                               ,pr_vlresgat => vr_vlresgat
                                ,pr_idtiprgt => pr_tab_resgate(ind_registro).tpresgat
                                ,pr_idrgtcti => pr_flgctain
                                ,pr_idgerlog => pr_flgerlog
