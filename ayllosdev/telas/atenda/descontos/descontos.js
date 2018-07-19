@@ -1457,7 +1457,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divTitulosBorderos' ){
 
-		$('#'+nomeForm).css('width','1200px');
+		$('#'+nomeForm).css('width','1250px');
 
 		var divcr = $('#divcr','#'+nomeForm);		
 		var tabela      = $('table', divcr );
@@ -1476,7 +1476,7 @@ function formataLayout(nomeForm){
 		arrayLargura[5] = '';//Pagador
 		arrayLargura[6] = '130px';// CPF/CNPJ
 		arrayLargura[7] = '130px';//130 //Situação 50 30
-		arrayLargura[8] = '80px';//130 //Decisao 50 30
+		arrayLargura[8] = '130px';//130 //Decisao 50 30
 		arrayLargura[9] = '80px';//Saldo Devedor
 		arrayLargura[10] = '80px';//Nr Ctr Cyber
 				
