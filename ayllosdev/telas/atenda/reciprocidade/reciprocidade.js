@@ -79,7 +79,7 @@ var descontoConvenios = [];
 
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
-    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco;
+    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails;
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
