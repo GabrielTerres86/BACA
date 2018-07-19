@@ -52,9 +52,10 @@ $xml .= "</Root>";
 
 $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_CONTRATOS_ATENDA_AUG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObjeto = getObjectXML($xmlResult);
+//print_r($xmlObjeto);
 
 if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
-	exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
+	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
 }
 $contratos = $xmlObjeto->roottag->tags[0]->tags;
 
@@ -114,7 +115,11 @@ function exibeErro($msgErro) {
 					}
 					$dtcadast = getByTagName($contratos[$i]->tags, 'dtcadast');
 					$idrecipr = getByTagName($contratos[$i]->tags, 'idrecipr');
-					$convenio_ativo = getByTagName($contratos[$i]->tags, "convenio_ativo");
+					$insitceb = getByTagName($contratos[$i]->tags, 'insitceb');
+					// Verificar se existe algum convenio ativo(insitceb == 1)
+					if ($insitceb == 1 && $convenio_ativo == 0 ){
+						$convenio_ativo = $insitceb;
+					}
 					$mtdClick = "selecionaConvenio( '".$idrecipr."');";
 				?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
