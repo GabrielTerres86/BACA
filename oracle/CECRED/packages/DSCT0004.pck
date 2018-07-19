@@ -387,6 +387,7 @@ PROCEDURE pc_obtem_borderos_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE           -
                             , 5, 'REJEITADO'
                                , 'PROBLEMA') dssitbdt
         ,COUNT(1) over() qtregist
+        ,bdt.dtlibbdt
   FROM   crapbdt bdt
   WHERE  bdt.insitbdt = decode(pr_insitbdt, 0, bdt.insitbdt, pr_insitbdt)
   AND    bdt.dtmvtolt BETWEEN pr_dtmvtini AND pr_dtmvtfin
@@ -395,6 +396,12 @@ PROCEDURE pc_obtem_borderos_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE           -
   rw_crapbdt_cons cr_crapbdt%ROWTYPE;
   
 BEGIN
+  pc_busca_crapdat(pr_cdcooper => pr_cdcooper
+                  ,pr_dscritic => vr_dscritic );
+  IF  vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+  END IF;
+
   OPEN  cr_crapass;
   FETCH cr_crapass INTO rw_crapass;
   IF    cr_crapass%NOTFOUND THEN
@@ -444,6 +451,7 @@ BEGIN
                                     '<vltitapr>'||to_char(rw_crapbdt_cons.vltitapr,'FM999G999G999G990D00')||'</vltitapr>'||
                                     '<insitbdt>'||rw_crapbdt_cons.insitbdt||'</insitbdt>'||
                                     '<dssitbdt>'||rw_crapbdt_cons.dssitbdt||'</dssitbdt>'||
+                                    '<dtlibbdt>'||rw_crapbdt_cons.dtlibbdt||'</dtlibbdt>'||
                                   '</bordero>';
         END   LOOP;
         CLOSE cr_crapbdt;
@@ -451,7 +459,8 @@ BEGIN
         pc_escreve_xml('<Dados qtregist="'||nvl(rw_crapbdt_cons.qtregist,0)||'" >');
         pc_escreve_xml('<vlmxassi>'||to_char(vr_tab_dados_dsctit(1).vlmxassi,'FM999G999G999G990D00')||'</vlmxassi>'||
                        '<flglimit>1</flglimit>'||
-                       '<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>');
+                       '<nrctrlim>'||rw_craplim.nrctrlim||'</nrctrlim>'||
+                       '<inproces>'||rw_crapdat.inproces||'</inproces>');
         pc_escreve_xml('<borderos>');
         pc_escreve_xml(vr_det_xml);
         pc_escreve_xml('</borderos></Dados></Root>', TRUE);
@@ -460,7 +469,8 @@ BEGIN
         pc_escreve_xml('<Dados qtregist="0" >');
         pc_escreve_xml('<vlmxassi></vlmxassi>'||
                        '<flglimit>2</flglimit>'||
-                       '<nrctrlim></nrctrlim>');
+                       '<nrctrlim></nrctrlim>'||
+                       '<inproces>'||rw_crapdat.inproces||'</inproces>');
         pc_escreve_xml('<borderos></borderos></Dados></Root>', TRUE);
   END   IF;
    
