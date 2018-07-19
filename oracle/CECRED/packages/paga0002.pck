@@ -871,6 +871,11 @@ create or replace package body cecred.PAGA0002 is
                                contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
                                pela cabine
                                (Adriano - INC0017772).
+                               
+                  19/07/2018 - Validar que a agencia do banco creditada não seja zero (0),
+                               evitando erro no processamento da mensagem pela cabine.
+                               (Wagner - Sustentação - INC0019220).
+                               
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1552,9 +1557,25 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_cdageban) > 4 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Agencia deve ser informada sem o digito verificador (Limite de 4 digitos).';
-	  RAISE vr_exc_erro;
+	    RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.
+
+    -- Tipo da conta:
+    --   1 - Conta Corrente;
+    --   2 - Poupança;
+    --   3 - Conta de pagamento.
+    -- Validar que a agencia do banco creditada não seja zero (0),
+    -- evitando erro no processamento da mensagem pela cabine.
+    -- Início da validação.
+    IF pr_intipcta <> 3 THEN
+      IF pr_cdageban = 0 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Agencia invalida.';
+        RAISE vr_exc_erro;
+      END IF;          
+    END IF;  
+    -- Fim da validação.	
 
     /* 
        O codigo identificador deve conter no maximo 25 caracteres, conforme catálago de mensagens do SPB. NO entanto,
