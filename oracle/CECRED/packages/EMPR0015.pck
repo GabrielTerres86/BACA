@@ -1065,7 +1065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           BEGIN
             -- Realizar a expiração do contrato   
             UPDATE crawlim lim
-               SET lim.insitlim = 7 --> 7 --> Expirada por decurso de prazo
+               SET lim.insitlim = 8 --> 8 --> Expirada por decurso de prazo
                   ,lim.insitest = 0 --> 0 --> NAO ENVIADO
                   ,lim.insitapr = 0 --> 0 --> NAO ANALISADO
                   ,lim.cdopeapr = null
