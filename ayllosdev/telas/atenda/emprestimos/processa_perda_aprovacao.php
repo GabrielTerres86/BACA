@@ -22,6 +22,8 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
+	$vlemprst = (isset($_POST['vlemprst'])) ? $_POST['vlemprst'] : '';
+	$vlpreemp = (isset($_POST['vlpreemp'])) ? $_POST['vlpreemp'] : '';
 	$tipoacao = 'C';
 	$tpctrato = 90;
 	$flgcalcu = 1;
@@ -33,6 +35,8 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrctremp>".$nrctremp."</nrctremp>";
 	$xml .= "   <tipoacao>".$tipoacao."</tipoacao>";
+	$xml .= "   <vlemprst>".$vlemprst."</vlemprst>";
+	$xml .= "   <vlpreemp>".$vlpreemp."</vlpreemp>";
 	$xml .= "   <tpctrato>".$tpctrato."</tpctrato>";
 	$xml .= "   <flgcalcu>".$flgcalcu."</flgcalcu>";
 	$xml .= "   <idseqttl>".$idseqttl."</idseqttl>";
@@ -59,11 +63,9 @@
 
 	// idpeapro irá retornar 0 quando nao haverá perda de aprovacao e 1 para quando terá perda de aprovacao
 	if ($idpeapro == 0) {
-		echo 'validaDadosAlterarSomenteValorProposta();';
-		echo 'flgPerdaAprovacao = 0;';
+		echo "showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', 'undoValor();bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');";
 	} else {
-		echo "showConfirmacao('Com a altera&ccedil;&atilde;o a situa&ccedil;&atilde;o da proposta ser&aacute; modificada! Confirma altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaDadosAlterarSomenteValorProposta();', '', 'sim.gif', 'nao.gif');";
-		echo 'flgPerdaAprovacao = 1;';
+		echo "showConfirmacao('Com a altera&ccedil;&atilde;o a situa&ccedil;&atilde;o da proposta ser&aacute; modificada! Confirma altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', '', 'sim.gif', 'nao.gif');";
 	}
 
 ?>

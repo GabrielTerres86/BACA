@@ -352,9 +352,6 @@ var booPrimeiroBen = false; //809763
 var vlemprst_antigo = 0;
 var dsctrliq_antigo = '';
 
-// PRJ 438
-var flgPerdaAprovacao = 0;
-
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -610,12 +607,8 @@ function controlaOperacao(operacao) {
             if (dsmesage != '') {
                 showError('inform', dsmesage, 'Alerta - Ayllos', 'dsmesage="";controlaOperacao("F_VALOR");');
             } else {
-                // PRJ 438 - Se a flgPerdaAprovacao for 1, entao nao é necessario pedir aprovacao novamente, pois ja passou pela aprovacao da "perda de aprovacao"
-            	if (flgPerdaAprovacao == 1) {
-            		manterRotina('F_VALOR');
-            	} else {
-            		showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', 'undoValor();bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
-            	}
+                // PRJ 438 - Trocado a chamada de manterRotina('F_VALOR') para processaPerdaAprovacao, para verificar a perda de aprovacao
+            	processaPerdaAprovacao();
             }
             return false;
             break;
@@ -9917,7 +9910,11 @@ function senhaCoordenador(executaDepois) {
 // PRJ 438 - função para verificar se irá perder a aprovacao, caso sim, exibir mensagem avisando
 function processaPerdaAprovacao(){
 
-	showMsgAguardo("Aguarde, verificando perda de aprova&ccedil;&atilde;o...");
+	var vlemprst = $('#vlemprst', '#frmNovaProp').val();
+	var vlpreemp = $('#vlpreemp', '#frmNovaProp').val();
+
+	vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, '.', '');
+	vlpreemp = number_format(parseFloat(vlpreemp.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, '.', '');
 
 	$.ajax({
 		type: 'POST',
@@ -9927,6 +9924,8 @@ function processaPerdaAprovacao(){
 			nrdconta: nrdconta,
 			nrctremp: nrctremp,
 			idseqttl: idseqttl,
+			vlemprst: vlemprst,
+			vlpreemp: vlpreemp,
 			redirect: 'script_ajax'
 		}, 
 		error: function (objAjax, responseError, objExcept) {
