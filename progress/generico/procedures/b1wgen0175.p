@@ -114,9 +114,9 @@
    13/05/2018 - Efetuado correcao para que alineas 20,21,28 possam ser usadas
                 apenas se a contra ordem for permanente (Jonata - MOUTS - SCTASK0011337).
 
-   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
-   12/07/2018 - Validação de algumas alineas apos as 13:00 (PRB0040153 - Andrey Formigari)
+
+   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 
 ............................................................................. */
@@ -7286,7 +7286,6 @@ PROCEDURE marcar_cheque_devolu:
     DEF INPUT PARAM par_dtmvtolt AS DATE                               NO-UNDO.
     DEF INPUT PARAM par_dsbccxlt AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_vllanmto AS DECI                               NO-UNDO.
-	DEF INPUT PARAM par_cdalinea AS INTE                               NO-UNDO.
 
     DEF OUTPUT PARAM ret_pedsenha AS LOGICAL                           NO-UNDO.
     DEF OUTPUT PARAM ret_execucao AS LOGICAL                           NO-UNDO.
@@ -7301,33 +7300,6 @@ PROCEDURE marcar_cheque_devolu:
     IF  par_dsbccxlt = "AILOS" THEN DO:
         
         DO WHILE TRUE:
-				
-				/* Validação de alineas até as 13:00 */
-				IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
-					DO:
-					
-						RUN verifica_hora_execucao(INPUT par_cdcooper,
-												   INPUT par_dtmvtolt,
-												   INPUT 4,
-												   OUTPUT ret_execucao,
-												   OUTPUT TABLE tt-erro).
-												   
-						IF  ret_execucao THEN DO:
-							ASSIGN ret_pedsenha  = TRUE
-								   aux_cdcritic = 0
-								   aux_dscritic = "Hora limite para desmarcar cheques " +
-												  "foi ultrapassada!".
-						   
-							RUN gera_erro (INPUT par_cdcooper,
-										   INPUT 0,
-										   INPUT 0,
-										   INPUT 1,
-										   INPUT aux_cdcritic,
-										   INPUT-OUTPUT aux_dscritic).
-							
-							RETURN "OK".
-						END.
-					END.
         
                 /* Validar ultimo horario para devolucao */
                 RUN verifica_hora_execucao(INPUT par_cdcooper,

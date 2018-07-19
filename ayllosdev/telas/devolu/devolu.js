@@ -15,8 +15,6 @@
  *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * 
  *			  	  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
- *
- *                12/07/2018 - Passado novo paramentro cdalinea na chamada marcar_cheque_devolu (PRB0040153 - Andrey Formigari)
  */
 
 // Definição de algumas variáveis globais
@@ -665,8 +663,7 @@ function marcar_cheque_devolu() {
                     cdagechq : cdagechq,
                     cddsitua : cddsitua,
                     nrdrecid : nrdrecid,
-                    vllanmto: vllanmto,
-                    cdalinea: alinea,
+                    vllanmto : vllanmto,
                     flag     : flag,
                     redirect: 'script_ajax'
                 },
