@@ -1,0 +1,82 @@
+<?php
+
+/*************************************************************************
+	Fonte: incluir_desconto.php
+	Autor: André Clemer - Supero			Ultima atualizacao: --/--/----
+	Data : Julho/2018
+	
+	Objetivo: Ativar desconto.
+	
+	Alteracoes: 
+
+*************************************************************************/
+
+session_start();
+
+// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es
+require_once("../../../includes/config.php");
+require_once("../../../includes/funcoes.php");		
+require_once("../../../includes/controla_secao.php");
+
+// Verifica se tela foi chamada pelo m&eacute;todo POST
+isPostMethod();	
+
+// Classe para leitura do xml de retorno
+require_once("../../../class/xmlfile.php");	
+
+if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X")) <> "") {
+	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+}
+
+$idcalculo_reciproci = ( (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : 0 );
+$cdcooper            = ( (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'] );
+$nrdconta            = ( (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : $glbvars['nrdconta'] );
+$convenios           = ( (!empty($_POST['convenios'])) ? json_decode($_POST['convenios']) : '' );
+$boletos_liquidados  = ( (!empty($_POST['boletos_liquidados'])) ? $_POST['boletos_liquidados'] : null );
+$volume_liquidacao   = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_liquidacao'] : null );
+$qtdfloat            = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : null );
+$vlaplicacoes        = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : null );
+$dtfimcontrato       = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
+$flgdebito_reversao  = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
+
+if (count($convenios)) {
+    $strConven = array();
+    foreach($convenios as $convenio) {
+        $strConven[] = $convenio->convenio;
+    }
+    $convenios = implode(',', $strConven);
+}
+
+// Montar o xml de Requisicao
+$xml  = "";
+$xml .= "<Root>";
+$xml .= " <Dados>";	
+$xml .= "   <idcalculo_reciproci>".$idcalculo_reciproci."</idcalculo_reciproci>";
+$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= "   <ls_convenios>".$convenios."</ls_convenios>";
+$xml .= "   <boletos_liquidados>".converteFloat($boletos_liquidados)."</boletos_liquidados>";
+$xml .= "   <volume_liquidacao>".converteFloat($volume_liquidacao)."</volume_liquidacao>";
+$xml .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
+$xml .= "   <vlaplicacoes>".converteFloat($vlaplicacoes)."</vlaplicacoes>";
+$xml .= "   <dtfimcontrato>".$dtfimcontrato."</dtfimcontrato>";
+$xml .= "   <flgdebito_reversao>".$flgdebito_reversao."</flgdebito_reversao>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "ALTERA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObject = getObjectXML($xmlResult);
+
+$xmlDados = $xmlObject->roottag;
+
+$idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");
+
+if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+    $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
+    exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+    
+}else{
+    exibirErro('inform','Descontos atualizados com sucesso.','Alerta - Ayllos','acessaOpcaoContratos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+}
+
+echo 'hideMsgAguardo();';
