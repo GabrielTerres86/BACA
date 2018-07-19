@@ -60,8 +60,10 @@
 	// idpeapro irá retornar 0 quando nao haverá perda de aprovacao e 1 para quando terá perda de aprovacao
 	if ($idpeapro == 0) {
 		echo 'validaDadosAlterarSomenteValorProposta();';
+		echo 'flgPerdaAprovacao = 0;';
 	} else {
-		echo "showConfirmacao('Com a altera&ccedil;&atilde;o a proposta perder&aacute; a aprova&ccedil;&atilde;o! Confirma altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaDadosAlterarSomenteValorProposta();', '', 'sim.gif', 'nao.gif');";
+		echo "showConfirmacao('Com a altera&ccedil;&atilde;o a situa&ccedil;&atilde;o da proposta ser&aacute; modificada! Confirma altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaDadosAlterarSomenteValorProposta();', '', 'sim.gif', 'nao.gif');";
+		echo 'flgPerdaAprovacao = 1;';
 	}
 
 ?>

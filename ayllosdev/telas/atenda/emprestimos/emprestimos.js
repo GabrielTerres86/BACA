@@ -352,6 +352,9 @@ var booPrimeiroBen = false; //809763
 var vlemprst_antigo = 0;
 var dsctrliq_antigo = '';
 
+// PRJ 438
+var flgPerdaAprovacao = 0;
+
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -607,7 +610,12 @@ function controlaOperacao(operacao) {
             if (dsmesage != '') {
                 showError('inform', dsmesage, 'Alerta - Ayllos', 'dsmesage="";controlaOperacao("F_VALOR");');
             } else {
-                showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', 'undoValor();bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+                // PRJ 438 - Se a flgPerdaAprovacao for 1, entao nao é necessario pedir aprovacao novamente, pois ja passou pela aprovacao da "perda de aprovacao"
+            	if (flgPerdaAprovacao == 1) {
+            		manterRotina('F_VALOR');
+            	} else {
+            		showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', 'undoValor();bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+            	}
             }
             return false;
             break;
