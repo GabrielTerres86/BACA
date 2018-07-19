@@ -8555,7 +8555,7 @@ PROCEDURE altera-valor-proposta:
           ASSIGN crawepr.vlempori = par_vlemprst.
           
         IF (crawepr.vlpreori = ? OR crawepr.vlpreori = 0) THEN
-          ASSIGN crawepr.vlpreori = crawepr.qtpreemp.
+          ASSIGN crawepr.vlpreori = par_vlpreemp.
           
         IF (crawepr.dsratori = ? OR crawepr.dsratori = "") AND aux_dsratori <> "" THEN
           ASSIGN crawepr.dsratori = aux_dsratori.
