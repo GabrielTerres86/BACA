@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 04/06/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 18/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -47,6 +47,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
 	--             04/06/2018 - Alterações referente a SM404.
 	--
+  --             18/07/2018 - Ajuste na procedure pc_solicita_resgate para não permitir o resgate de aplicações enquanto
+  --                          o processo batch estiver rodando (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -8409,7 +8411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Setembro/14.                    Ultima atualizacao: 11/09/2014
+     Data    : Setembro/14.                    Ultima atualizacao: 18/07/2018
 
      Dados referentes ao programa:
 
@@ -8419,7 +8421,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Observacao: -----
 
-     Alteracoes: 
+     Alteracoes: 18/07/2018 - Ajuste para não permitir o resgate de aplicações enquanto
+                              o processo batch estiver rodando (Jean Michel)
     ..............................................................................*/												
 		DECLARE
 
@@ -8487,6 +8490,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       ELSE
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
+
+        IF rw_crapdat.inproces > 1 THEN
+        
+          vr_cdcritic := 972;
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+          -- Levantar excecao
+          RAISE vr_exc_saida;
+      END IF;
       END IF;
       
       -- Valida resgate de aplicacao
