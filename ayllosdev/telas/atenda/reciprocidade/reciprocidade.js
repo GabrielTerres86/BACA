@@ -131,8 +131,6 @@ function habilitaSetor(setorLogado) {
  // Acessar tela principal da rotina
  function acessaOpcaoDescontos(cddopcao) {
 
-     $('#cddopcao', '#divConteudoOpcao').val(cddopcao);
-
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando os conv&ecirc;nios ...");
 
@@ -170,6 +168,8 @@ function habilitaSetor(setorLogado) {
             $("#tdConteudoTela>table").prop('width', '350');
 
 			$("#divConteudoOpcao").html(response);
+
+            $('#cddopcao', '#divConteudoOpcao').val(cddopcao);
 
             controlaFoco();
 
