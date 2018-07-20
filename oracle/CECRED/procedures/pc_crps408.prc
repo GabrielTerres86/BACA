@@ -191,6 +191,12 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                24/10/2017 - Buscar idorgexp apenas para PF.
                             PRJ339-CRM  (Odirlei-AMcom)
  
+               30/04/2018 - Buscar descricao de situacao pela procedure pc_descricao_situacao_conta.
+                            Permite talonario pela procedure pc_ind_impede_talonario. PRJ366 (Lombardi).
+ 
+               21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
+                            PRJ366 (Lombardi).
+ 
 ............................................................................. */
 
   -- Data do movimento
@@ -280,6 +286,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
   vr_qtfoltal_20     NUMBER := 0;
 
   vr_possuipr   VARCHAR2(1);
+  vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
   
   -- Procedimento para inserir texto no CLOB do arquivo XML
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
@@ -321,7 +328,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Cursor para leitura de requisicoes de talonarios
     CURSOR cr_crapreq(pr_cdcooper     IN crapreq.cdcooper%TYPE,
                       pr_cdbanchq     IN crapcop.cdbcoctl%TYPE,
-                      pr_tprequis     in crapreq.tprequis%TYPE) IS
+                      pr_tprequis     IN crapreq.tprequis%TYPE,
+                      pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) IS
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
              crapreq.nrdconta,
@@ -340,7 +348,9 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                    , t.tpconta
                 FROM tbcc_produtos_coop t
                WHERE t.cdcooper  = pr_cdcooper
-                       AND t.cdproduto = 38) -- Folhas de Cheque 
+                       AND t.cdproduto = 38
+                       AND (dtvigencia >= pr_dtmvtolt
+                        OR  dtvigencia IS NULL)) -- Folhas de Cheque 
          AND crapreq.insitreq IN (1,4,5)
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
@@ -481,6 +491,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     vr_dstipreq        VARCHAR2(02);
     vr_dssitdct        VARCHAR2(50);
     vr_dscritic        VARCHAR2(200);
+    vr_des_erro        VARCHAR2(200);
     vr_auxiliar        NUMBER(15);
     vr_auxiliar2       NUMBER(15);
     vr_cddigage        NUMBER(01);
@@ -511,6 +522,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     vr_dscpfcgc        VARCHAR2(05);
     vr_dsarqdad        VARCHAR2(2000);
     vr_numtalon        crapass.flchqitg%TYPE;
+    vr_dssituacao      tbcc_situacao_conta.dssituacao%TYPE;
 
     -- Variaveis para geracao do arquivo texto via utl_file
     vr_nmarqped        VARCHAR2(50);
@@ -644,7 +656,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Verifica se ha requisicoes a serem atendidas
     FOR rw_crapreq IN cr_crapreq(pr_cdcooper,
                                  pr_cdbanchq,
-                                 pr_tprequis) LOOP
+                                 pr_tprequis,
+                                 vr_dtmvtolt) LOOP
 
       -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
       -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
@@ -693,8 +706,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       FETCH cr_crapass INTO rw_crapass;
       CLOSE cr_crapass;
 
-      vr_cdcritic := 0;
-
       /*   CHEQUE ESPECIAL  */
       CADA0006.pc_permite_produto_tipo (pr_cdprodut => 38
                                        ,pr_cdtipcta => rw_crapass.cdtipcta
@@ -707,6 +718,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+      
+      vr_cdcritic := 0;
       
       IF vr_possuipr = 'N' THEN
         vr_cdcritic := 65;-- 065 - Tipo de conta nao permite req.
@@ -733,7 +746,17 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       */
       -- Se não houver rejeição no associado
       IF nvl(vr_cdcritic,0) = 0 THEN
-        IF rw_crapass.cdsitdct <> 1 THEN -- Se a situação da conta for diferente de ativo
+        
+        CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => rw_crapass.nrdconta
+                                ,pr_inimpede_talionario => vr_inimpede_talionario
+                                ,pr_des_erro => vr_des_erro
+                                ,pr_dscritic => vr_dscritic);
+        IF vr_des_erro = 'NOK' THEN
+          RAISE vr_exc_saida;
+        END IF;
+                
+        IF vr_inimpede_talionario = 1 THEN -- Se nao houver impedimento para retirada de talionarios
           vr_cdcritic := 18; --018 - Situacao da conta errada.
         ELSIF rw_crapass.cdsitdtl IN (5,6,7,8) THEN --5=NORMAL C/PREJ., 6=NORMAL BLQ.PREJ, 7=DEMITIDO C/PREJ, 8=DEM. BLOQ.PREJ.
           vr_cdcritic := 695; --695 - ATENCAO! Houve prejuizo nessa conta
@@ -1328,23 +1351,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         END IF;
         CLOSE cr_tpconta;
 
-        -- Busca a situacao da conta
-        IF rw_crapass.cdsitdct = 1   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'NORMAL';
-        ELSIF rw_crapass.cdsitdct = 2   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'ENC.P/ASSOCIADO';
-        ELSIF rw_crapass.cdsitdct = 3   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'ENC. PELA COOP';
-        ELSIF rw_crapass.cdsitdct = 4   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'ENC.P/DEMISSAO';
-        ELSIF rw_crapass.cdsitdct = 5   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'NAO APROVADA';
-        ELSIF rw_crapass.cdsitdct = 6   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'NORMAL S/TALAO';
-        ELSIF rw_crapass.cdsitdct = 9   THEN
-          vr_dssitdct := rw_crapass.cdsitdct||'-'||'ENC.P/O MOTIVO';
-        ELSE
+        cada0006.pc_descricao_situacao_conta(pr_cdsituacao => rw_crapass.cdsitdct
+                                            ,pr_dssituacao => vr_dssituacao
+                                            ,pr_des_erro   => vr_des_erro
+                                            ,pr_dscritic   => vr_dscritic);
+        IF vr_des_erro = 'NOK' THEN
           vr_dssitdct := '';
+        ELSE
+          vr_dssitdct := rw_crapass.cdsitdct||'-'||vr_dssituacao;
         END IF;
 
         vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
