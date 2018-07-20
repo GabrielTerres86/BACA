@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 19/07/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 20/07/2018
 
       Dados referentes ao programa:
 
@@ -18,6 +18,9 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
 
 				  19/07/2018 - Ajuste no aval cruzado para o valor da proposta enviada 
 							   compor o comprometimento do avalista 
+							   PJ 450 - Diego Simas - AMcom
+
+                  20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
 							   PJ 450 - Diego Simas - AMcom
 
   ---------------------------------------------------------------------------------------------------------------*/
@@ -1110,7 +1113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 19/07/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 20/07/2018
       
         Dados referentes ao programa:
       
@@ -1130,6 +1133,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
 					19/07/2018 - Alterado para o campo totalPrestacoesAvalista conter a soma do valor da prestação da proposta
 								 PJ 450 - Diego Simas - AMcom
+					
+					20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
+							   PJ 450 - Diego Simas - AMcom
+
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -3561,7 +3568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('quantParcelPagas', vr_tot_qtpclpag);
       vr_obj_generic2.put('quantParcelPagasAtraso', vr_tot_qtpclatr);
       vr_obj_generic2.put('quantParcelAtraso', vr_qtpclven);
-      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_maior_nratrmai);
+      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_nratrmai);
        
       -- Data de Vigência Procuração
       IF pr_dtvigpro IS NOT NULL THEN 

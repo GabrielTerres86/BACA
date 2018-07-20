@@ -5,13 +5,16 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
       Sistema  : Rotinas de Cartões de Crédito/Débito que utilizam comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Paulo Roberto da Silva - Supero
-      Data     : Fevereiro/2018.                   Ultima atualizacao: 19/02/2018
+      Data     : Fevereiro/2018.                   Ultima atualizacao: 20/07/2018
 
       Dados referentes ao programa:
 
       Objetivo  : Para solicitações e alterações de limites de credito de cartões utilizar a comunicação com O Motor e a Esteira de Crédito da IBRATAN.
 
       Alteracoes:
+
+				  20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
+							   PJ 450 - Diego Simas - AMcom	
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -702,7 +705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Paulo Silva - Supero
-        Data     : Fevereiro/2018.                    Ultima atualizacao: 23/02/2018
+        Data     : Fevereiro/2018.                    Ultima atualizacao: 20/07/2018
 
         Dados referentes ao programa:
 
@@ -711,6 +714,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                     e das operações da conta parametrizada.
 
         Alteração :
+					20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
+			        PJ 450 - Diego Simas - AMcom		
+
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -2642,7 +2648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       -- Enviar informações do atraso e parcelas calculadas para o JSON
       vr_obj_generic2.put('valorAtrasoEmprest',este0001.fn_decimal_ibra(vr_vltotatr));
       vr_obj_generic2.put('quantDiasMaiorAtrasoEmprest', vr_nratrmai);
-      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_maior_nratrmai);
+      vr_obj_generic2.put('quantDiasAtrasoEmprest', vr_nratrmai);
       vr_obj_generic2.put('quantParcelAtraso', vr_qtpclven);
       vr_obj_generic2.put('quantParcelPagas', vr_tot_qtpclpag);
       vr_obj_generic2.put('quantParcelPagasAtraso', vr_tot_qtpclatr);
