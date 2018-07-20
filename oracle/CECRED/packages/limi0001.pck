@@ -2587,7 +2587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : Jean Michel
-     Data    : Fevereiro/2018                    Ultima atualizacao:
+     Data    : Fevereiro/2018                    Ultima atualizacao: 20/07/2018
 
      Dados referentes ao programa:
 
@@ -2595,7 +2595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Objetivo  : Rotina para geração do contrato de limite de credito(Nova versão), Prj. 404
 
-     Alteracoes: 
+     Alteracoes: 20/07/2018 - Ajuste realizado para nao repassar null para o jaspersoft. (INC0019244 - Kelvin)
      
     ..............................................................................*/
     
@@ -2999,7 +2999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         pc_escreve_xml('<avalista'|| vr_contaval ||'>'||
                          '<nmdavali>'|| pr_tab_avais_ctr(idx).nmdavali ||'</nmdavali>'||
                          '<cpfavali>'|| pr_tab_avais_ctr(idx).cpfavali ||'</cpfavali>'||
-                         '<dsendava>'|| pr_tab_avais_ctr(idx).dsendava ||'</dsendava>'|| 
+                         '<dsendava>'|| nvl(trim(pr_tab_avais_ctr(idx).dsendava), ' ') ||'</dsendava>'|| 
                          '<nrctaava>'|| trim(gene0002.fn_mask_conta(nvl(pr_tab_avais_ctr(idx).nrdconta,0))) ||'</nrctaava>'|| 												 
 						 '<nrcpfcjg>'|| pr_tab_avais_ctr(idx).nrcpfcjg ||'</nrcpfcjg>'|| 
 						 '<nmconjug>'|| pr_tab_avais_ctr(idx).nmconjug ||'</nmconjug>'|| 
