@@ -7478,7 +7478,7 @@ PROCEDURE desfaz_entrega_cartao:
                           craptlc.dddebito = 0         
                           NO-LOCK NO-ERROR.
                           
-            IF   NOT AVAILABLE craptlc   THEN
+            IF AVAILABLE craptlc   THEN
                 DO:
                   aux_achou = 1.
                 END.
@@ -8216,7 +8216,7 @@ PROCEDURE carrega_dados_limcred_cartao:
                       craptlc.cdlimcrd = crawcrd.cdlimcrd   AND
                       craptlc.dddebito = 0                  NO-LOCK NO-ERROR.
 
-        IF   NOT AVAILABLE craptlc   THEN
+        IF AVAILABLE craptlc   THEN
           DO:
             aux_achou = 1.
           END.
@@ -8535,7 +8535,7 @@ PROCEDURE valida_dados_limcred_cartao:
                            
          ASSIGN aux_vllimant = craptlc.vllimcrd.                  
 
-         IF   NOT AVAILABLE craptlc   THEN
+         IF AVAILABLE craptlc   THEN
             DO:
               aux_achou = 1.
             END.
@@ -8584,6 +8584,7 @@ PROCEDURE valida_dados_limcred_cartao:
           END.
           
     /**ASSIGN aux_vllimant = craptlc.vllimcrd.    */      
+	ASSIGN aux_achou = 0.
 
     IF f_verifica_adm(crawcrd.cdadmcrd) <> 2 THEN
       DO:
@@ -8594,7 +8595,7 @@ PROCEDURE valida_dados_limcred_cartao:
                              craptlc.vllimcrd = par_vllimcrd     
                              NO-LOCK NO-ERROR.
                              
-        IF   NOT AVAILABLE craptlc   THEN
+        IF AVAILABLE craptlc   THEN
           DO:
             aux_achou = 1.
           END.
@@ -17169,7 +17170,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                                    craptlc.dddebito = 0  
                                    NO-LOCK NO-ERROR.
                                      
-                    IF  NOT AVAILABLE craptlc   THEN
+                    IF AVAILABLE craptlc   THEN
                       DO:
                         aux_achou = 1.
                       END.
@@ -21044,7 +21045,7 @@ PROCEDURE altera_limite_cartao_pj:
                                  craptlc.cdlimcrd = crawcrd.cdlimcrd
                                  NO-LOCK NO-ERROR.
 
-        IF   NOT AVAILABLE craptlc   THEN
+        IF AVAILABLE craptlc   THEN
           DO:
             aux_achou = 1.
           END.
@@ -21313,7 +21314,7 @@ PROCEDURE altera_dtvcto_cartao_pj:
                                  craptlc.cdlimcrd = crawcrd.cdlimcrd
                                  NO-LOCK NO-ERROR.
 
-        IF   NOT AVAILABLE craptlc   THEN
+        IF AVAILABLE craptlc   THEN
           DO:
           aux_achou = 1.
           END.
