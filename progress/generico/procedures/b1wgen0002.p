@@ -783,7 +783,8 @@
 						   (Alcemir Mout's) - (PRB0040101).
                
           12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).     
-
+              
+          19/07/2018 - Chamar nova rotina para validar perda de aprovaçao quando alterado valor ou valor da prestaçao ou Rating (PRJ 438 - Rafael - Mouts).
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -8332,6 +8333,8 @@ PROCEDURE altera-valor-proposta:
                                                      INPUT par_nrdconta, /*Numero da conta*/
                                                      INPUT par_nrctremp, /*Numero do contrato de emprestimo*/
                                                      INPUT "P",  /* C - Consulta ou P - Processo de perda */
+                                                     INPUT par_vlemprst,
+                                                     INPUT par_vlpreemp,                                                     
                                                      INPUT par_cdagenci, /*Codigo Agencia*/
                                                      INPUT par_nrdcaixa, /*Numero Caixa*/
                                                      INPUT par_cdoperad, /*Codigo Operador*/
