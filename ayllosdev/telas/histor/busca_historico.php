@@ -13,7 +13,11 @@
  *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
  *                
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
- *                             Diego Simas - AMcom  
+ *                             PJ 450 - Diego Simas - AMcom  
+ *	              
+ *                20/07/2018 - Incluído novo campo "Debita após transferência da conta para prejuízo" (indebprj)
+ *                             PJ 450 - Diego Simas - AMcom  
+ *
  * -------------- 
  */
 ?>
@@ -105,9 +109,9 @@
 	echo "$('#nrctatrc','#frmHistorico').val('" . getByTagName($historico,'nrctatrc') . "');";
 	echo "$('#nrctatrd','#frmHistorico').val('" . getByTagName($historico,'nrctatrd') . "');";
 	if($cddopcao == 'A'){
-		echo "$('#inestocc','#frmHistorico').val('" . getByTagName($historico,'inestocc') . "');";		
-	}	
-	
+		echo "$('#inestocc','#frmHistorico').val('" . getByTagName($historico,'inestocc') . "');";	
+		echo "$('#indebprj','#frmHistorico').val('" . getByTagName($historico,'indebprj') . "');";		
+	}		
 	
 	// LABEL - Tarifas
 	$vltarayl = number_format(str_replace(',','.',getByTagName($historico,'vltarayl')),2,',','.');

@@ -15,6 +15,10 @@
 	*                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
 	*							  "Debita após o estouro de conta corrente (60 dias)".
 	*							  Diego Simas (AMcom) - Prj 450
+	*
+	*			     18/07/2018 - Alterado para esconder o campo referente ao débito após o estouro de conta  
+    * 		   				   	  Criado novo campo "indebprj", indicador de débito após transferência da CC para Prejuízo
+    * 							  PJ 450 - Diego Simas - AMcom	
 	*							  			
 	* --------------
 	*/ 
@@ -260,10 +264,19 @@
 						<input id="nrctatrd" name="nrctatrd" type="text"/>
 					</td>
 				</tr>
-				<tr class='estouraConta'>
+				<tr class='estouraConta'> 
 					<td colspan="2">
 						<label for="inestocc">Debita ap&oacute;s o estouro de conta corrente (60 dias) :</label>
 						<select id="inestocc" name="inestocc">
+							<option value="0">0 - N&atilde;o</option>
+							<option value="1">1 - Sim</option>
+						</select>
+					</td>
+				</tr>
+				<tr> 
+					<td colspan="2">
+						<label for="indebprj"><?php echo utf8_decode('Debita após transferência da conta para prejuízo:'); ?></label>
+						<select id="indebprj" name="indebprj">
 							<option value="0">0 - N&atilde;o</option>
 							<option value="1">1 - Sim</option>
 						</select>

@@ -9,14 +9,17 @@
      Alteracoes: 10/03/2016 - Homologacao e ajustes da conversao da tela 
                               HISTOR para WEB (Douglas - Chamado 412552)
 
-		         06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
-				              da descrição do departamento como parametro e 
-							  passar o o código (Renato Darosci)
+		             06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+				                      da descrição do departamento como parametro e 
+							                passar o o código (Renato Darosci)
 
                  05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
                  
                  12/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
                               Diego Simas - AMcom
+                              
+                 18/07/2018 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
+  							  PJ 450 - Diego Simas - AMcom
                               
 ............................................................................*/
 
@@ -71,6 +74,7 @@ DEF VAR aux_tplotmov AS INTE                                         NO-UNDO.
 DEF VAR aux_tpctbcxa AS INTE                                         NO-UNDO.
 DEF VAR aux_ingercre AS INTE                                         NO-UNDO.
 DEF VAR aux_inestocc AS INTE                                         NO-UNDO.
+DEF VAR aux_indebprj AS INTE                                         NO-UNDO.
 DEF VAR aux_ingerdeb AS INTE                                         NO-UNDO.
 DEF VAR aux_flgsenha AS INTE                                         NO-UNDO.
 DEF VAR aux_dsextrat AS CHAR                                         NO-UNDO.
@@ -144,6 +148,7 @@ PROCEDURE valores_entrada:
              WHEN "tpctbcxa" THEN aux_tpctbcxa = INTE(tt-param.valorCampo).
              WHEN "ingercre" THEN aux_ingercre = INTE(tt-param.valorCampo).
              WHEN "inestocc" THEN aux_inestocc = INTE(tt-param.valorCampo).
+             WHEN "indebprj" THEN aux_indebprj = INTE(tt-param.valorCampo).
              WHEN "ingerdeb" THEN aux_ingerdeb = INTE(tt-param.valorCampo).
              WHEN "flgsenha" THEN aux_flgsenha = INTE(tt-param.valorCampo).
              WHEN "dsextrat" THEN aux_dsextrat = tt-param.valorCampo.
@@ -369,6 +374,7 @@ PROCEDURE Grava_Dados:
                      
                      INPUT aux_ingercre, 
                      INPUT aux_inestocc,       
+                     INPUT aux_indebprj,
                      INPUT aux_ingerdeb,     
                      
                      INPUT aux_cdgrphis,

@@ -8,7 +8,7 @@
     Alteracoes: 11/03/2016 - Homologacao e ajustes da conversao da tela 
                              HISTOR para WEB (Douglas - Chamado 412552)
         
-		        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
                 06/02/2017 - #552068 Inclusao da descricao extensa do historico
@@ -18,6 +18,9 @@
                 
                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
                              Diego Simas - AMcom  
+                             
+                18/07/2018 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
+                             PJ 450 - Diego Simas - AMcom
         
 ............................................................................*/
 
@@ -306,7 +309,7 @@ PROCEDURE Busca_Consulta PRIVATE:
                            AND ((craphis.tplotmov = par_tpltmvpq    AND
                                  par_tpltmvpq <> 0) OR par_tpltmvpq = 0)
                            AND  (craphis.dshistor MATCHES "*" + TRIM(par_dshistor) + "*" OR
-						         craphis.dsexthst MATCHES "*" + TRIM(par_dshistor) + "*" )
+                                                         craphis.dsexthst MATCHES "*" + TRIM(par_dshistor) + "*" )
                            AND ((craphis.cdgrphis = par_cdgrphis    AND
                                  par_cdgrphis <> 0) OR par_cdgrphis = 0)
                          NO-LOCK
@@ -327,7 +330,7 @@ PROCEDURE Busca_Consulta PRIVATE:
             CREATE tt-histor.
             ASSIGN tt-histor.cdhistor = craphis.cdhistor
                    tt-histor.dshistor = craphis.dshistor
-				   tt-histor.dsexthst = craphis.dsexthst
+                                   tt-histor.dsexthst = craphis.dsexthst
                    tt-histor.indebcre = craphis.indebcre
                    tt-histor.tplotmov = craphis.tplotmov
                    tt-histor.txcpmfcc = par_txcpmfcc
@@ -584,6 +587,7 @@ PROCEDURE Busca_Historico:
                                     1
                                 ELSE
                                     0
+           tt-histor.indebprj = craphis.indebprj
            tt-histor.ingerdeb = craphis.ingerdeb   
            tt-histor.dsextrat = craphis.dsextrat
            tt-histor.flgsenha = IF craphis.flgsenha THEN
@@ -829,6 +833,7 @@ PROCEDURE Grava_Dados:
     
     DEF  INPUT PARAM par_ingercre AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inestocc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_indebprj AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_ingerdeb AS INTE                           NO-UNDO.
     
     DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
@@ -857,6 +862,7 @@ PROCEDURE Grava_Dados:
     DEF  VAR aux_flgsenha AS LOGI                                   NO-UNDO.
     DEF  VAR aux_inestocc AS LOGI                                   NO-UNDO. 
     DEF  VAR aux_flggphis AS CHAR                                   NO-UNDO.
+    
     DEF  VAR aux_des_erro AS CHAR                                   NO-UNDO.
 
     ASSIGN aux_dscritic = ""
@@ -1108,7 +1114,7 @@ PROCEDURE Grava_Dados:
             ASSIGN aux_inestocc = TRUE.
         ELSE
             ASSIGN aux_inestocc = NO.
-
+            
         /*  Campos sem validacao:
                 - nmestrut
                 - inclasse
@@ -1243,6 +1249,7 @@ PROCEDURE Grava_Dados:
                                        INPUT par_nrctadeb,
                                        INPUT par_ingercre,
                                        INPUT aux_inestocc,
+                                       INPUT par_indebprj,
                                        INPUT par_ingerdeb,
                                        INPUT par_nrctatrc,
                                        INPUT par_nrctatrd,
@@ -1291,6 +1298,7 @@ PROCEDURE Grava_Dados:
                            craphis.txdoipmf  =  0 
                            craphis.ingercre  =  par_ingercre
                            craphis.inestoura_conta  =  aux_inestocc
+                           craphis.indebprj  =  par_indebprj 
                            craphis.ingerdeb  =  par_ingerdeb
                            craphis.cdprodut  =  par_cdprodut
                            craphis.cdagrupa  =  par_cdagrupa
@@ -1537,6 +1545,7 @@ PROCEDURE Replica_Dados:
                                INPUT craphis.nrctadeb,
                                INPUT craphis.ingercre,
                                INPUT craphis.inestoura_conta,
+                               INPUT craphis.indebprj,
                                INPUT craphis.ingerdeb,
                                INPUT craphis.nrctatrc,
                                INPUT craphis.nrctatrd,
@@ -2010,6 +2019,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM par_nrctadeb AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_ingercre AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_inestocc AS LOGI                            NO-UNDO.
+    DEF INPUT PARAM par_indebprj AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_ingerdeb AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrc AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrd AS INTE                            NO-UNDO.
@@ -2263,6 +2273,21 @@ PROCEDURE gera_item_log:
                                         "Sim" 
                                     ELSE
                                         "Nao" )).
+                                       
+    IF par_indebprj <> b-craphis.indebprj THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Debita apos transferencia da conta para prejuizo",
+                      INPUT ( IF b-craphis.indebprj = 1 THEN
+                                        "Sim" 
+                                    ELSE
+                                        "Nao" ),
+                      INPUT ( IF par_indebprj = 1 THEN
+                                        "Sim" 
+                                    ELSE
+                                        "Nao" )).                                    
        
     IF par_ingerdeb <> b-craphis.ingerdeb THEN
         RUN gera_log (INPUT par_cdcooper,

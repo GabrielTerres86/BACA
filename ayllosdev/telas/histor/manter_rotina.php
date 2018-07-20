@@ -8,6 +8,10 @@
  * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
  *                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                              Diego Simas - AMcom
+ *				   18/07/2018 - Alterado para esconder o campo referente ao débito após o estouro de conta  
+ * 							    Criado novo campo "indebprj", indicador de débito após transferência da CC para Prejuízo
+ * 							    PJ 450 - Diego Simas - AMcom		
+ * 
  * -------------- 
  */
 ?> 
@@ -41,6 +45,7 @@
 	$indebcta = (isset($_POST['indebcta'])) ? $_POST['indebcta'] : 0;
 	$indoipmf = (isset($_POST['indoipmf'])) ? $_POST['indoipmf'] : 0;
 	$inestocc = (isset($_POST['inestocc'])) ? $_POST['inestocc'] : 0;
+	$indebprj = (isset($_POST['indebprj'])) ? $_POST['indebprj'] : 0;
 
 	$inhistor = (isset($_POST['inhistor'])) ? $_POST['inhistor'] : 0;
 	$indebcre = (isset($_POST['indebcre'])) ? $_POST['indebcre'] : '';
@@ -139,6 +144,9 @@
 		exibirErro('error','Estourar a Conta Corrente inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inestocc','frmHistorico');",false);
 	}
 	
+	if ($indebprj != 0 && $indebprj != 1) {
+		exibirErro('error','Debita ap&oacute;s transfer&ecirc;ncia da conta para preju&iacute;zo.','Alerta - Ayllos',"focaCampoErro('indebprj','frmHistorico');",false);
+	}
     if ($ingerdeb != 1 && $ingerdeb != 2 && $ingerdeb != 3) {
 		exibirErro('error','Gerencial a d&eacute;bito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingerdeb','frmHistorico');",false);
 	}
@@ -208,6 +216,7 @@
 
 	$xml .= '       <ingercre>'.$ingercre.'</ingercre>';
 	$xml .= '       <inestocc>'.$inestocc.'</inestocc>';
+	$xml .= '       <indebprj>'.$indebprj.'</indebprj>';
 	$xml .= '       <ingerdeb>'.$ingerdeb.'</ingerdeb>';
 	
 	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';

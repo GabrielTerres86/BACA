@@ -18,6 +18,10 @@
  *                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
  *     					       "Debita após o estouro de conta corrente (60 dias)".
  *							   Diego Simas (AMcom) - Prj 450 
+ *               
+ *                18/07/2018 - Alterado para esconder o campo referente ao débito após o estouro de conta  
+ * 							   Criado novo campo "indebprj", indicador de débito após transferência da CC para Prejuízo
+ * 							   PJ 450 - Diego Simas - AMcom			
  *
  * --------------
  */
@@ -25,9 +29,11 @@
 // Definir a quantidade de registros que devem ser carregados nas consultas 
 var nrregist = 50; 
 var aux_inestocc = 0;
+var aux_indebprj = 0;
 	
 $(document).ready(function () {
 	aux_inestocc = $('#inestocc', '#frmHistorico').val();
+	aux_indebprj = $('#indebprj', '#frmHistorico').val();
 	estadoInicial();	
 	return false;
 });
@@ -53,6 +59,7 @@ function estadoInicial() {
     $('#frmTabHistoricos').css({ 'display': 'none' });
     $('#frmHistorico').css({ 'display': 'none' });
     $('#divHistoricos', '#frmTabHistoricos').html('');
+	$("tr.estouraConta").hide();
 	
 	// esconder os botoes da tela
     $('#divBotoes').css({ 'display': 'none' });
@@ -199,6 +206,7 @@ function formataCadastroHistorico() {
     $('label[for="nrctatrc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
     $('label[for="nrctatrd"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
     $('label[for="inestocc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '520px' });
+	$('label[for="indebprj"]', '#frmHistorico').addClass('rotulo').css({ 'width': '520px' });
 	
 	// CAMPOS - Dados Contabeis
     $('#cdhstctb', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
@@ -211,6 +219,7 @@ function formataCadastroHistorico() {
     $('#nrctatrc', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '4').setMask('INTEGER', 'zzzz', '', '');
     $('#nrctatrd', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '4').setMask('INTEGER', 'zzzz', '', '');
     $('#inestocc', '#frmHistorico').css({ 'width': '80px' });
+	$('#indebprj', '#frmHistorico').css({ 'width': '80px' });
 
 	
 	// LABEL - Tarifas
@@ -427,6 +436,7 @@ function liberaCadastro() {
     $('#tpctbcxa', '#frmHistorico').val("0");
     $('#tpctbccu', '#frmHistorico').val("0");
 	$('#inestocc', '#frmHistorico').val("0");
+	$('#indebprj', '#frmHistorico').val("0");
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
     $('#flgsenha', '#frmHistorico').val("1");	
@@ -732,6 +742,9 @@ function controlaCamposCadastroHistorico() {
 		}
     });	
 	
+	/* 
+	INÍCIO - COMENTADO PARA USO POSTERIOR - DIEGO SIMAS - AMcom
+
 	//Define ação para ENTER e TAB no campo conta tarifa credito
     $("#nrctatrc", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
@@ -739,10 +752,31 @@ function controlaCamposCadastroHistorico() {
 			$("#inestocc", "#frmHistorico").focus();
 			return false;
 		}
-    });	
+    });			
 
 	//Define ação para ENTER e TAB no campo estourar a conta corrente
 	$("#inestocc", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			// Setar foco no proximo campo
+			$("#nrctatrd", "#frmHistorico").focus();
+			return false;
+		}
+	});
+
+	FIM - COMENTADO PARA USO POSTERIOR - DIEGO SIMAS - AMcom 
+	*/
+
+	//Define ação para ENTER e TAB no campo conta tarifa credito
+	$("#nrctatrc", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			// Setar foco no proximo campo
+			$("#indebprj", "#frmHistorico").focus();
+			return false;
+		}
+	});		
+
+	//Define ação para ENTER e TAB no campo debita prejuízo
+	$("#indebprj", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Setar foco no proximo campo
 			$("#nrctatrd", "#frmHistorico").focus();
@@ -909,6 +943,31 @@ function controlaCamposCadastroHistorico() {
 		}		
 	});	
 
+	//Chama tela para pedir senha de coordenador quando o histórico for flegado sim
+	//para debitar após transferência da conta para prejuízo (Diego Simas - AMcom)
+	$("#indebprj", "#frmHistorico").unbind('change').bind('change', function () {
+		var indebprj = $(this).val();
+		var opcao = $("#cddopcao", "#frmCab").val();
+		//só pedir senha caso haja alteração no inesstocc (Indicador para Estourar Conta)
+		if (opcao == "A") {
+			if (indebprj == 0) {
+				$('#indebprj', '#frmHistorico').val(1);
+			} else {
+				$('#indebprj', '#frmHistorico').val(0);
+			}
+			bloqueiaFundo(divRotina);
+			pedeSenhaCoordenador(2, 'voltaTelaSenha(' + indebprj + ');', '');
+			return false;
+		} else {
+			if (aux_indebprj != indebprj) {
+				$('#indebprj', '#frmHistorico').val(0);
+				bloqueiaFundo(divRotina);
+				pedeSenhaCoordenador(2, 'voltaTelaSenha(1);', '');
+				return false;
+			}
+		}
+	});	
+
 	$("#indutblq", "#frmHistorico").unbind('change').bind('change', function () {
 
     	indutblq = $("#indutblq", "#frmHistorico").val();
@@ -926,6 +985,7 @@ function controlaCamposCadastroHistorico() {
  */
 function voltaTelaSenha(valor) {
 	$('#inestocc', '#frmHistorico').val(valor);
+	$('#indebprj', '#frmHistorico').val(valor);
 	$("#divUsoGenerico").css("visibility", "hidden");
 	$("#divUsoGenerico").html("");
 	unblockBackground();				
@@ -1530,6 +1590,7 @@ function manterRotina() {
     var indebcta = $('#indebcta', '#frmHistorico').val();
     var indoipmf = $('#indoipmf', '#frmHistorico').val();
 	var inestocc = $('#inestocc', '#frmHistorico').val();
+	var indebprj = $('#indebprj', '#frmHistorico').val();
 
     var inhistor = $('#inhistor', '#frmHistorico').val();
     var indebcre = $('#indebcre', '#frmHistorico').val();
@@ -1586,6 +1647,7 @@ function manterRotina() {
 				  indebcta : indebcta,
 				  indoipmf : indoipmf,
 				  inestocc : inestocc,
+				  indebprj : indebprj,
 				  inhistor : inhistor,
 				  indebcre : indebcre,
 				  nmestrut : nmestrut,
