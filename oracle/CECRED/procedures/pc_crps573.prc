@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                                              ,pr_cdagenci  IN crapage.cdagenci%TYPE Default 0 --> Codigo Agencia 
                                              ,pr_idparale  IN crappar.idparale%TYPE Default 0 --> Indicador de processoparalelo
                                              ,pr_flgresta  IN PLS_INTEGER             --> Flag padrão para utilização de restart
@@ -353,6 +353,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
                         (cdorigem = 3) estejam em Prejuízo (innivris = 10) - Daniel(AMcom)
 
           17/07/2018 - Alterado as regras das faixas de classificação do porte para PF e PJ - Heckmann (AMcom)
+          
+          18/07/2018 - Alterado para adicionar a Tag '<Inf Tp="1998" />' quando:
+                     Utilizacao de aplicacao propria para cobertura da garantia da operacao (1-Sim)
+                     Ou
+                     Utilizacao de poupanca programada propria para cobertura (1-Sim) - Heckmann (AMcom)
+
+          20/07/2018 - Busca taxa mensal do contrato do empréstimo (Tag taxeft)
+                    Renato Cordeiro - AMcom
 
 .............................................................................................................................*/
 
@@ -470,6 +478,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
                NVL(wpr.nrliquid,0)     qtctrliq -- Se houver qq contrato, teremos a soma + 0          
               ,wpr.idquapro
               ,epr.idquaprc
+              ,epr.txmensal
           from crapepr epr
               ,crawepr wpr
               ,crapass ass
@@ -1069,7 +1078,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
              ,tpemprst crapepr.tpemprst%TYPE
              ,cddindex crawepr.cddindex%TYPE
              ,idquapro NUMBER
-             ,idquaprc NUMBER);
+             ,idquaprc NUMBER
+             ,txmensal crapepr.txmensal%TYPE);
       TYPE typ_tab_crapepr IS
         TABLE OF typ_reg_crapepr
           INDEX BY VARCHAR2(30);
@@ -2611,8 +2621,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
           ELSE
             vr_txeanual := 0;
           END IF; 
-        -- 0299 - Emprest / 0499 - Financ  com origem 3
-        ELSIF pr_cdmodali IN(0299,0499) AND pr_cdorigem = 3 THEN
+
+        -- 0299 - Emprest -- Renato Cordeiro, dois ELSIF abaixo
+        ELSIF pr_cdmodali = 0299 AND pr_cdorigem = 3 THEN
+            -- busca sobre o cadastro de emprestimos
+            vr_ind_epr := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
+            -- Buscaremos a taxa de juros da linha de crédito
+            IF vr_tab_craplcr.exists(vr_tab_crapepr(vr_ind_epr).cdlcremp) THEN
+              -- Usar taxa da linha
+              vr_txeanual := ROUND((POWER(1 + (vr_tab_crapepr(vr_ind_epr).txmensal /100),12) - 1) * 100,2);
+            ELSE
+              -- Não há taxa
+              vr_txeanual := 0;
+            END IF;
+        -- 0499 - Financ  com origem 3
+        ELSIF pr_cdmodali = 0499 AND pr_cdorigem = 3 THEN
           -- Busca sobre o cadastro de emprestimo do bndes
           IF pr_dsinfaux = 'BNDES' THEN         
             vr_ind_ebn := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
@@ -3109,6 +3132,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
         vr_inpessoa      NUMBER := 0;
         vr_stsnrcal      BOOLEAN := FALSE;
         vr_idcobertura   NUMBER := 0;
+		    vr_inaplicacao_propria	NUMBER := 0; 
+		    vr_inpoupanca_propria 	NUMBER := 0;
         vr_dscritic      crapcri.dscritic%TYPE;
         vr_exc_saida     EXCEPTION;
 
@@ -3116,7 +3141,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
                             ,pr_nrdconta   IN tbgar_cobertura_operacao.nrdconta%TYPE
                             ,pr_tpcontrato IN tbgar_cobertura_operacao.tpcontrato%TYPE
                             ,pr_nrcontrato IN tbgar_cobertura_operacao.nrcontrato%TYPE) IS
-          SELECT nvl(idcobertura, 0) idcobertura
+          SELECT nvl(idcobertura, 0) idcobertura,
+				         nvl(inaplicacao_propria, 0) inaplicacao_propria,
+				         nvl(inpoupanca_propria, 0) inpoupanca_propria
             FROM tbgar_cobertura_operacao
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
@@ -3141,7 +3168,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
                           ,pr_nrdconta   => vr_tab_individ(vr_idx_individ).nrdconta
                           ,pr_tpcontrato => vr_tpcontrato
                           ,pr_nrcontrato => vr_tab_individ(vr_idx_individ).nrctremp);
-         FETCH cr_cobertura INTO vr_idcobertura;
+         FETCH cr_cobertura 
+          INTO vr_idcobertura,
+			         vr_inaplicacao_propria,
+               vr_inpoupanca_propria;
          
          IF nvl(vr_idcobertura,0) > 0 THEN
            bloq0001.pc_bloqueio_garantia_atualizad(pr_idcobert            => vr_idcobertura
@@ -3201,6 +3231,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                     ,pr_texto_completo => vr_xml_3040_temp
                                     ,pr_texto_novo     => ' />');
+                                    
+             IF vr_inaplicacao_propria = 1 or vr_inpoupanca_propria = 1 THEN
+			 
+			          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                      ,pr_texto_completo => vr_xml_3040_temp
+                                      ,pr_texto_novo     => '<Inf Tp="1998" />');
+			 
+			       END IF;
              
            END IF;
          END IF;
@@ -5025,6 +5063,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
         vr_tab_crapepr(vr_ind_epr).nrctaav1 := rw_crapepr.nrctaav1;
         vr_tab_crapepr(vr_ind_epr).nrctaav2 := rw_crapepr.nrctaav2;
         vr_tab_crapepr(vr_ind_epr).qtpreemp := rw_crapepr.qtpreemp;
+        vr_tab_crapepr(vr_ind_epr).txmensal := rw_crapepr.txmensal;
         vr_tab_crapepr(vr_ind_epr).dtdpagto := rw_crapepr.dtdpagto; -- epr.dtdpagto
         vr_tab_crapepr(vr_ind_epr).dtdpripg := rw_crapepr.dtdpripg; -- wpr.dtdpagto
         vr_tab_crapepr(vr_ind_epr).qtctrliq := rw_crapepr.qtctrliq; -- Testes de existência de liquidação
@@ -7798,7 +7837,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
                            pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
                                                     'pr_dscritic:'||pr_dscritic,
                            PR_IDPRGLOG           => vr_idlog_ini_par);   
-     
+
           --Grava data fim para o JOB na tabela de LOG 
           pc_log_programa(pr_dstiplog   => 'F',    
                           pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -7816,5 +7855,5 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_heckmann(pr_cdcooper  IN crapcop.c
        -- Efetuar rollback
        ROLLBACK;
     END;
-  END pc_crps573_heckmann;
+  END pc_crps573;
 /
