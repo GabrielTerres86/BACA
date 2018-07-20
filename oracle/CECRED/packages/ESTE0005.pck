@@ -5718,7 +5718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest <> 4           -- Expiradas
+         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas 5 - Expiradas por decurso de prazo - PJ 438 - Márcio(Mouts)
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
                            WHERE w.cdcooper = p.cdcooper

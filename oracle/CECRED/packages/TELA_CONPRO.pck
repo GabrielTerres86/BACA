@@ -568,7 +568,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 														 ,1,'Env. p/@Analise@Autom.'
 														 ,2,'Env. p/@Analise@Manual'
 														 ,3,'Analise@Finalizada'
-														 ,4,'Expirado','') situacao_ayllos
+														 ,4,'Expirado'
+														 ,5,'Expirado Dec. Prazo' -- PJ 438 - Márcio (Mouts)                            
+                             ,'') situacao_ayllos
                        -- Parecer esteira
                       ,
                        DECODE(epr.insitapr,

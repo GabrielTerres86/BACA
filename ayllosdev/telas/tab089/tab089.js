@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções da tela TAB089
  * ---------------
  * ALTERAÇÕES
+ * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  * ---------------
  */
 
@@ -115,10 +116,15 @@ function formataCampos() {
     cQtdpaaut = $('#qtdpaaut', '#frmTab089');    
     cQtdpaava = $('#qtdpaava', '#frmTab089');    
     cQtdpaapl = $('#qtdpaapl', '#frmTab089');    
-    cQtdpasem = $('#qtdpasem', '#frmTab089');    
+    cQtdpasem = $('#qtdpasem', '#frmTab089');   
+    cQtdpameq = $('#qtdpameq', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtdibaut = $('#qtdibaut', '#frmTab089'); 
     cQtdibapl = $('#qtdibapl', '#frmTab089'); 
     cQtdibsem = $('#qtdibsem', '#frmTab089'); 
+    cQtditava = $('#qtditava', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cQtditapl = $('#qtditapl', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cQtditsem = $('#qtditsem', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+	
     cVlempres = $('#vlempres', '#frmTab089'); 
     cVlmaxest = $('#vlmaxest', '#frmTab089'); 
     cVltolemp = $('#vltolemp', '#frmTab089'); 
@@ -133,9 +139,14 @@ function formataCampos() {
     cQtdpaava.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdpaapl.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdpasem.css('width', '40px').setMask('INTEGER','zzz','','');
+	cQtdpameq.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
     cQtdibaut.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdibapl.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
+	cQtditava.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
+	cQtditapl.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
+	cQtditsem.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
+	
     //Máscara para porcentagem
     cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
     cPcaltpar.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
@@ -253,11 +264,19 @@ function controlaFoco() {
 
     $('#qtdpasem', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdpameq', '#frmTab089').focus(); // PJ438 - Márcio (Mouts)
+            return false;
+        }
+    });
+// Início PJ438 - Márcio (Mouts)
+    $('#qtdpameq', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtdibaut', '#frmTab089').focus();
             return false;
         }
     });
-
+// Fím PJ438 - Márcio (Mouts)
+	
     $('#qtdibaut', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 
@@ -272,6 +291,28 @@ function controlaFoco() {
             return false;
         }
     });
+// Início PJ438 - Márcio (Mouts)
+    $('#qtdibsem', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtditava', '#frmTab089').focus();
+            return false;
+        }
+    });
+    $('#qtditava', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtditapl', '#frmTab089').focus();
+            return false;
+        }
+    })
+    $('#qtditapl', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtditsem', '#frmTab089').focus();
+            return false;
+        }
+    })	
+// Fím PJ438 - Márcio (Mouts)	
+	
+	
 }
 
 function controlaOperacao() {
@@ -307,9 +348,13 @@ function manterRotina(cddopcao) {
     var cQtdpaava = normalizaNumero($('#qtdpaava', '#frmTab089').val());
     var cQtdpaapl = normalizaNumero($('#qtdpaapl', '#frmTab089').val());
     var cQtdpasem = normalizaNumero($('#qtdpasem', '#frmTab089').val());
+	var cQtdpameq = normalizaNumero($('#qtdpameq', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cQtdibaut = normalizaNumero($('#qtdibaut', '#frmTab089').val());
     var cQtdibapl = normalizaNumero($('#qtdibapl', '#frmTab089').val());
     var cQtdibsem = normalizaNumero($('#qtdibsem', '#frmTab089').val());
+	var cQtditava = normalizaNumero($('#qtditava', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+	var cQtditapl = normalizaNumero($('#qtditapl', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+    var cQtditsem = normalizaNumero($('#qtditsem', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cVlempres = normalizaNumero($('#vlempres', '#frmTab089').val());
     var cVlmaxest = normalizaNumero($('#vlmaxest', '#frmTab089').val());
     var cVltolemp = normalizaNumero($('#vltolemp', '#frmTab089').val());
@@ -333,9 +378,13 @@ function manterRotina(cddopcao) {
             qtdpaava : cQtdpaava,
             qtdpaapl : cQtdpaapl,
             qtdpasem : cQtdpasem,
+			qtdpameq : cQtdpameq, //PJ438 - Márcio (Mouts)
             qtdibaut : cQtdibaut,
             qtdibapl : cQtdibapl,
             qtdibsem : cQtdibsem,
+			qtditava : cQtditava, //PJ438 - Márcio (Mouts)
+			qtditapl : cQtditapl, //PJ438 - Márcio (Mouts)
+			qtditsem : cQtditsem, //PJ438 - Márcio (Mouts)			
             vlempres : cVlempres,
             vlmaxest : cVlmaxest,
             vltolemp : cVltolemp,

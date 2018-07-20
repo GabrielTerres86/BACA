@@ -1478,7 +1478,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest <> 4           -- Expiradas
+         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas - 5 - Expirada por decurso de prazo -- PJ 438 - Márcio (Mouts)
          AND w.nrctremp <> pr_nrctremp -- desconsiderar a proposta que esta sendo enviada no momento
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
@@ -2301,7 +2301,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
           pr_dsmensag := '<b>Avaliação Manual</b>';
         END IF;
       ELSIF rw_crawepr.insitest = 4 THEN
-        pr_dsmensag := '<b>Expirada</b> apos '||vr_qtsegund||' segundos de espera.';        
+        pr_dsmensag := '<b>Expirada</b> apos '||vr_qtsegund||' segundos de espera.';   
+      ELSIF rw_crawepr.insitest = 5 THEN -- PJ 438 - Márcio (Mouts)
+        pr_dsmensag := '<b>Expirada por decurso de prazo</b>';   -- PJ 438 - Márcio (Mouts)
       ELSE 
         pr_dsmensag := '<b>Finalizada</b> com situação indefinida!';
       END IF;

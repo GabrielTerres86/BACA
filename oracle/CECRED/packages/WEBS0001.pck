@@ -874,6 +874,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         RAISE vr_exc_saida;
       END IF;
       
+      -- Início PJ 438 - Márcio (Mouts)
+      -- Proposta Expirada por decurso de prazo
+      IF rw_crawepr.insitest = 5 THEN
+        pr_status      := 202;
+        pr_cdcritic    := 975;
+        pr_msg_detalhe := 'Parecer nao foi atualizado, proposta exipirou por decurso de prazo.';
+        RAISE vr_exc_saida;
+      END IF;
+      -- Fim PJ 438 - Márcio (Mouts)
+      
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrctremp => pr_nrctremp);
