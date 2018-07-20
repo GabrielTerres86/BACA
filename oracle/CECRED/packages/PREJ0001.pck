@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+   Data    : Maio/2017                      Ultima atualizacao: 04/07/2017
 
    Dados referentes ao programa:
 
@@ -402,13 +402,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
          AND ROWNUM        = 1
       ORDER BY ris.dtrefere DESC;
     rw_juro60 cr_juro60%ROWTYPE;
+		
+		CURSOR cr_juros60_pagos(pr_cdcooper crapris.cdcooper%TYPE
+                     ,pr_nrdconta crapris.nrdconta%TYPE
+                     ,pr_nrctremp crapris.nrctremp%TYPE) IS
+		select sum(case
+             when h.cdhistor in (2473) then
+              h.vllanmto
+             else
+              0
+           end) - sum(case
+                        when h.cdhistor in (2474) then
+                         h.vllanmto
+                        else
+                         0
+                      end) vllanmto
+			from craplem h
+		 where h.cdhistor in (2473, 2474)
+			 and cdcooper = pr_cdcooper
+			 and nrdconta = pr_nrdconta
+			 and nrctremp = pr_nrctremp;
+		rw_juros60_pagos cr_juros60_pagos%ROWTYPE;															
+		
     BEGIN
      OPEN cr_juro60(pr_cdcooper, pr_nrdconta, pr_nrctremp);
    FETCH cr_juro60
     INTO rw_juro60;
    CLOSE cr_juro60;
+	 
    IF NVL(rw_juro60.vljura60,0) > 0 THEN
-    RETURN(rw_juro60.vljura60);
+		OPEN cr_juros60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+		FETCH cr_juros60_pagos INTO rw_juros60_pagos;
+		CLOSE cr_juros60_pagos;
+    RETURN(rw_juro60.vljura60 - nvl(rw_juros60_pagos.vllanmto, 0));
   ELSE
     RETURN(0);  -- Garante retorno zero se não houver valor
   END IF;
