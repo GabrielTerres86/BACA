@@ -320,10 +320,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                           pr_cdcooper => pr_cdcooper,
                                           pr_cdacesso => 'BANCOOB_WS_CAD_CONTING');
     IF (trim(vr_param) = '1')THEN
-      RETURN FALSE;
+    RETURN TRUE;
     END IF;
 
-    RETURN TRUE;
+    RETURN FALSE;
   EXCEPTION
     WHEN OTHERS THEN
       RETURN FALSE;
@@ -2553,6 +2553,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     GENE0001.pc_informa_acesso(pr_module => vr_cdprogra
                               ,pr_action => vr_nmeacao);
 
+    --Verifica se está em contingência
+    IF fn_usa_bancoob_ws(pr_cdcooper => vr_cdcooper) THEN
+      vr_dscritic := 'Bancoob está em contingência.';
+      RAISE vr_exc_erro;
+    END IF;
+    
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop (pr_cdcooper => vr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -3044,6 +3050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_erro;
           END IF;
+
           /* Vamos atualizar a conta cartao 
           ccrd0003.pc_insere_conta_cartao(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
@@ -3061,6 +3068,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
             END IF;
             RAISE vr_exc_erro;
         END;
+      ELSIF pr_intipret = 'I' THEN
+        -- Se receber crítica volta para o status de Aprovado para ajustar ou Cancelar a proposta
+        -- Altera a situação do Cartão para 1 (Aprovado)
+        pc_altera_sit_cartao_bancoob(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctrcrd => pr_nrctrcrd
+                                    ,pr_nrseqcrd => NULL
+                                    ,pr_insitcrd => 1
+                                    ,pr_dscritic => vr_dscritic);
+                                   
+        IF vr_dscritic IS NOT NULL THEN
+          raise vr_exc_erro;
+        END IF;
       
       END IF;
       
@@ -3145,6 +3165,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     vr_dsmensag VARCHAR2(4000);
   BEGIN
 
+    --Verifica se está em contingência
+    IF fn_usa_bancoob_ws(pr_cdcooper => pr_cdcooper) THEN
+      vr_dscritic := 'Bancoob está em contingência.';
+      RAISE vr_exc_erro;
+    END IF;
+    
     -- Extrai dados do xml
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                              pr_cdcooper => vr_cdcooper,
@@ -4463,6 +4489,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     -- Incluir nome do modulo logado
     gene0001.pc_informa_acesso(pr_module => vr_cdprogra
                               ,pr_action => vr_nmeacao);
+  
+    --Verifica se está em contingência
+    IF fn_usa_bancoob_ws(pr_cdcooper => vr_cdcooper) THEN
+      vr_dscritic := 'Bancoob está em contingência.';
+      RAISE vr_exc_erro;
+    END IF;
   
     --Chama alteração de limite do cartão Bancoob
     pc_alterar_cartao_bancoob(pr_cdcooper => vr_cdcooper
