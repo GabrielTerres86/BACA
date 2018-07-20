@@ -149,6 +149,11 @@ BEGIN
     -- Parametro de bloqueio de resgate de valores em c/c
     vr_blqresg_cc       VARCHAR2(1);
     
+    
+    -- Retorno da #TAB052
+    vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
+    vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
+    
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
 
@@ -198,8 +203,7 @@ BEGIN
     -- ref ao pagto de boletos emitidos pela COBTIT
     vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                pr_cdcooper => pr_cdcooper,
-                                               pr_cdacesso => 'COBTIT_BLQ_RESG_CC');
-    
+                                               pr_cdacesso => 'COBTIT_BLQ_RESG_CC');         
     -- Loop principal dos títulos vencidos
     FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
@@ -214,8 +218,27 @@ BEGIN
         vr_cdcritic := 9; --Associado n cadastrado: --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_erro;
+      END IF;            
+      CLOSE cr_crapass;                                                                    
+      
+      -- Busca os parametros na TAB05                                     
+      DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                          ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                          ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                          ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                          ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                          ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                          ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                          ,pr_inpessoa          => rw_crapass.inpessoa
+                                          ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                          ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                          ,pr_cdcritic          => vr_cdcritic
+                                          ,pr_dscritic          => vr_dscritic);     
+                                          
+      -- Caso a data de vencimento + carência seja maior que a data de movimentação, pula
+      IF ((rw_craptdb.dtvencto + vr_tab_dados_dsctit(1).cardbtit_c) >  rw_crapdat.dtmvtolt) THEN
+        CONTINUE;
       END IF;
-      CLOSE cr_crapass;
       
       -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || rw_craptdb.nrdconta || ',') > 0 THEN
