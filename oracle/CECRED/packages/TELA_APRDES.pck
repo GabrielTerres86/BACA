@@ -1196,9 +1196,7 @@ create or replace package body cecred.TELA_APRDES is
            vr_msgfinal := ' não Aprovado.';
          END IF;
        ELSE 
-         IF (vr_insitbdt=6) THEN
-           vr_msgfinal := ' analisado com sucesso. Processou seguiu para esteria de crédito';
-         END IF;
+           vr_msgfinal := ' analisado com sucesso. Processo seguiu para esteria de crédito';
        END IF;
      END IF;
      pc_escreve_xml ('Bordero'||vr_msgfinal);
