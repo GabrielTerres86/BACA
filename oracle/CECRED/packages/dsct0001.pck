@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   --  Programa:  DSCT0001                       Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Alisson
-  --  Data    : Julho/2013                     Ultima Atualizacao: 16/02/2018
+  --  Data    : Julho/2013                     Ultima Atualizacao: 19/07/2018
   --
   --  Dados referentes ao programa:
   --
@@ -283,6 +283,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             de juros do titulo antigamente escrita da rotina pc_efetua_baixa_titulo. Com isso, essa rtoina 
                             pode ser utilizada na dsct0003 para abatimento de juros das operações de crédito.
                             (Paulo Penteado (GFT)) 
+                            
+               19/07/2018 - Alterado as procedures pc_efetua_baixa_tit_car e pc_efetua_baixa_titulopara: Para os borderôs inclusos 
+                            no sistema antes da nova versão de funcionalidade do bordero, quando houver o pagamento da operação de 
+                            desconto, ou seja, do título vencido, através do débito em conta corrente deverá ser atualizada a coluna 
+                            “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
     
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -546,7 +551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
      Sigla   : CRED
 
      Autor   : Desconhecido
-     Data    : --/--/----                        Ultima atualizacao: 15/02/2018
+     Data    : --/--/----                        Ultima atualizacao: 19/07/2018
 
      Dados referentes ao programa:
 
@@ -561,8 +566,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              - Incluindo codigo e eliminando descrições fixas
                              - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
                              - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
-                            (Belli - Envolti - Chamado 851591)      
-     
+                            (Belli - Envolti - Chamado 851591)   
+
+                19/07/2018 - Para os borderôs inclusos no sistema antes da nova versão de funcionalidade do bordero, quando houver 
+                             o pagamento da operação de desconto, ou seja, do título vencido, através do débito em conta corrente 
+                             deverá ser atualizada a coluna “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
   ..................................................................................*/ 
   BEGIN
     DECLARE
@@ -1529,7 +1537,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         BEGIN
           UPDATE craptdb
              SET craptdb.insittit = 3, /* Baixado s/ pagto */
-                 craptdb.dtdebito = pr_dtmvtolt
+                 craptdb.dtdebito = pr_dtmvtolt,
+                 craptdb.vlsldtit = 0
            WHERE craptdb.ROWID = rw_craptdb.ROWID;
         EXCEPTION
           WHEN OTHERS THEN
@@ -2183,7 +2192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 15/02/2018
+    --  Data     : Julho/2013.                   Ultima atualizacao: 19/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -2218,6 +2227,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                              baixa de título DSCT0003.pc_pagar_titulo
     --                           Adicionado a rotina de abatimento de juros na procedure pc_abatimento_juros_titulo
     --                           (Paulo Penteado (GFT))      
+    --
+    --              19/07/2018 - Para os borderôs inclusos no sistema antes da nova versão de funcionalidade do bordero, quando houver 
+    --                           o pagamento da operação de desconto, ou seja, do título vencido, através do débito em conta corrente 
+    --                           deverá ser atualizada a coluna “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
     --
     -- .........................................................................
 
@@ -3343,9 +3356,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
             --Atualizar situacao titulo
             BEGIN
-              UPDATE craptdb SET craptdb.insittit = 2
-                                ,craptdb.dtdpagto = vr_dtmvtolt
-              WHERE craptdb.ROWID = rw_craptdb.ROWID
+              UPDATE craptdb 
+                 SET craptdb.insittit = 2
+                    ,craptdb.dtdpagto = vr_dtmvtolt
+                    ,craptdb.vlsldtit = 0
+               WHERE craptdb.ROWID = rw_craptdb.ROWID
               RETURNING craptdb.dtdpagto INTO rw_craptdb.dtdpagto;
             EXCEPTION
               WHEN OTHERS THEN
@@ -3560,8 +3575,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
             --Atualizar situacao titulo
             BEGIN
-              UPDATE craptdb SET craptdb.insittit = 3 /* Baixado s/ pagto */
-              WHERE craptdb.ROWID = rw_craptdb.ROWID;
+              UPDATE craptdb 
+                 SET craptdb.insittit = 3 /* Baixado s/ pagto */
+                    ,craptdb.vlsldtit = 0
+               WHERE craptdb.ROWID = rw_craptdb.ROWID;
             EXCEPTION
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
@@ -6342,7 +6359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       AND   crapbdt.nrborder = pr_nrborder;
     rw_crapbdt cr_crapbdt%ROWTYPE;
     
-    CURSOR cr_craptdb (pr_insittit IN craptdb.insittit%type) IS
+    CURSOR cr_craptdb IS
       SELECT craptdb.dtvencto
             ,craptdb.vltitulo
             ,craptdb.nrdconta
@@ -6365,8 +6382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       AND   craptdb.nrdctabb = pr_nrdctabb
       AND   craptdb.nrcnvcob = pr_nrcnvcob
       AND   craptdb.nrdconta = pr_nrdconta
-      AND   craptdb.nrdocmto = pr_nrdocmto
-      AND   craptdb.insittit = pr_insittit;
+      AND   craptdb.nrdocmto = pr_nrdocmto;
     rw_craptdb cr_craptdb%ROWTYPE;
       
     --Selecionar lancamento juros desconto titulo
@@ -6398,7 +6414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     END   IF;
     CLOSE cr_crapbdt;
     
-    OPEN  cr_craptdb(pr_insittit => 4);
+    OPEN  cr_craptdb;
     FETCH cr_craptdb INTO rw_craptdb;
     IF    cr_craptdb%NOTFOUND THEN
           CLOSE cr_craptdb;
