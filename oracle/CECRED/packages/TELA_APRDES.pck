@@ -983,6 +983,8 @@ create or replace package body cecred.TELA_APRDES is
     Data     : Abril/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Conclui o processo da mesa de checagem, atualiza o bordero e os titulos
+    Alterações:
+     - 21/07/2018 - Vitor Shimada Assanuma: Close do cursor de data e alteração do cursor de verificação de crítica
   ---------------------------------------------------------------------------------------------------------------------*/
                              
     /* tratamento de erro */
@@ -1028,16 +1030,11 @@ create or replace package body cecred.TELA_APRDES is
      SELECT 
        count(1) as totcrit
      FROM 
-       craptdb tdb
-       INNER JOIN crapabt abt
-             ON abt.nrborder = tdb.nrborder
-             AND abt.cdcooper = tdb.cdcooper
-             AND abt.nrdconta = tdb.nrdconta
-             AND abt.nrdocmto = tdb.nrdocmto
-     WHERE tdb.cdcooper = vr_cdcooper
-         AND tdb.nrdconta = pr_nrdconta
-         AND tdb.nrborder = pr_nrborder
-         AND (abt.nrseqdig <> 59);
+       crapabt abt
+     WHERE abt.cdcooper = vr_cdcooper
+         AND abt.nrdconta = pr_nrdconta
+         AND abt.nrborder = pr_nrborder
+         AND (abt.nrseqdig <> 9);
      rw_craptdb_restri cr_craptdb_restri%ROWTYPE;
                                 
    CURSOR cr_crapbdt IS
@@ -1126,6 +1123,7 @@ create or replace package body cecred.TELA_APRDES is
        /*Atualizar o bordero*/    
        open  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
        fetch btch0001.cr_crapdat into rw_crapdat;
+       CLOSE btch0001.cr_crapdat;
        /*Analisa pra onde manda o bordero*/
        OPEN cr_craptdb_restri;
        FETCH cr_craptdb_restri INTO rw_craptdb_restri;
