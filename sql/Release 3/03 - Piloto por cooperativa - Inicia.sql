@@ -216,6 +216,19 @@ BEGIN
       UPDATE crapprg c SET cdrelato##1=(SELECT cdrelato##1 FROM crapprg WHERE cdprogra = 'COBEMP' AND cdcooper = 3) WHERE cdprogra='COBTIT' AND cdcooper = 3;
     END IF;
 
+    /* Atualiza o saldo devedor dos títulos de borderôs em aberto que foram liberados no processo antigo*/
+    UPDATE craptdb
+       SET vlsldtit = vltitulo
+     WHERE cdcooper = pr_cdcooper
+       AND dtlibbdt IS NOT NULL
+       AND insittit = 4
+       AND nrborder IN (SELECT nrborder 
+                          FROM crapbdt 
+                         WHERE cdcooper = pr_cdcooper
+                           AND insitbdt = 3
+                           AND dtlibbdt IS NOT NULL
+                           AND flverbor = 0);
+
   END LOOP;
   COMMIT;
 END;
