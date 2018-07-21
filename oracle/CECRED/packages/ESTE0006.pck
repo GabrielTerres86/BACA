@@ -1291,7 +1291,8 @@ END pc_incluir_bordero_esteira;
           ,bdt.hrtransa as hrinclus
           ,ldc.cddlinha cdlcremp
           ,ldc.dsdlinha dslcremp
-          ,ldc.tpctrato -- Tipo do contrato de Limite Desconto (0-Generico/ 1-Aplicacao)
+          ,decode(ldc.tpctrato, 1, 4, 0) tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
+          ,decode(ldc.tpctrato, 1, 'APLICACAO FINANCEIRA', 'SEM GARANTIA') dsctrato 
           ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
           ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que nao aceita nulo 
           ,bdt.cdoperad
@@ -1342,7 +1343,8 @@ END pc_incluir_bordero_esteira;
           ,tdb.vlliqres -- valor liquido resgate
           ,tdb.insittit -- situação do título
           ,tdb.insitapr -- situação da aprovação do título. 4-Aprovado	5-Reprovado
-          ,DECODE(tdb.insitapr,4,'Aprovado',5,'Reprovado',' ') as dessitapr
+          ,tdb.nrtitulo -- Numero unico do título no bordero
+          ,DECODE(tdb.insitapr,1,'APROVADO',2,'REPROVADO',NULL) as dessitapr
           ,sum(tdb.vltitulo) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder) as vl_border_brt -- Total valor bruto do borderô
           ,sum(tdb.vlliquid) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder) as vl_border_lqd -- Total valor liquido do borderô
           ,SUM(DECODE(cob.flgregis,1,tdb.vltitulo,0)) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder) as vl_border_brt_cr -- Total valor bruto borderô Cobrança Com Registro
@@ -1380,7 +1382,7 @@ END pc_incluir_bordero_esteira;
           ,abt.nrdocmto
           ,abt.dsrestri
           ,abt.dsdetres
-          ,abt.nrdconta || abt.nrborder || abt.nrdocmto || abt.nrseqdig as cdchavecri
+          ,abt.nrseqdig as cdchavecri
       FROM crapabt abt
      WHERE abt.cdcooper = pr_cdcooper
        AND abt.nrdconta = pr_nrdconta
@@ -1687,10 +1689,20 @@ END pc_incluir_bordero_esteira;
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nrborder => pr_nrborder) loop
          -- Popular o Objeto de Lista JSON com os dados do Título.
-         vr_obj_titulos.put('idTitulo'       , rw_craptdb.cdchavetbd);
-         vr_obj_titulos.put('valorTitulo'    , rw_craptdb.vltitulo);
-         vr_obj_titulos.put('dataVencimento' , TO_CHAR(rw_craptdb.dtvencto,'DD/MM/RRRR') );
-         vr_obj_titulos.put('nomePagador'    , rw_craptdb.nmdsacad);
+         vr_obj_titulos.put('idTitulo'       , rw_craptdb.nrtitulo);
+         vr_obj_titulos.put('convenio'       , rw_craptdb.nrcnvcob);
+         vr_obj_titulos.put('numero'         , rw_craptdb.nrdocmto);
+         vr_obj_titulos.put('nome'           , rw_crapass.nmprimtl); -- do cedente
+         if  rw_crapass.inpessoa = 1 then
+           vr_obj_titulos.put('documento'      , lpad(rw_crapass.nrcpfcgc,11,'0')); -- do cedente
+         ELSE
+           vr_obj_titulos.put('documento'      , lpad(rw_crapass.nrcpfcgc,14,'0')); -- do cedente
+         END IF;
+         vr_obj_titulos.put('vencimento'     , TO_CHAR(rw_craptdb.dtvencto,'rrrr-mm-dd') );
+	       vr_obj_titulos.put('valor'          , rw_craptdb.vltitulo);
+         IF (rw_craptdb.dessitapr IS NOT NULL) THEN
+            vr_obj_titulos.put('situacao'       , rw_craptdb.dessitapr);
+         END IF;
 
          if  rw_craptdb.cdtpinsc = 1 then
              vr_obj_bordero.put('cPCCNPJpagador' , lpad(rw_craptdb.nrinssac,11,'0'));
@@ -1698,23 +1710,19 @@ END pc_incluir_bordero_esteira;
              vr_obj_bordero.put('cPCCNPJpagador' , lpad(rw_craptdb.nrinssac,14,'0'));
          end if;
          
-         vr_obj_titulos.put('situacaoTitulo' , rw_craptdb.dessitapr);
-         vr_obj_titulos.put('convenio'       , rw_craptdb.nrcnvcob);
-         vr_obj_titulos.put('numeroDocumento', rw_craptdb.nrdocmto);
                            
          rw_crapabt := null;
-         
          -- Popular o Objeto de Lista JSON com os dados de críticas dos títulos.         
          for rw_crapabt IN cr_crapabt(pr_cdcooper => rw_craptdb.cdcooper
                                      ,pr_nrdconta => rw_craptdb.nrdconta
                                      ,pr_nrborder => rw_craptdb.nrborder
                                      ,pr_nrdocmto => rw_craptdb.nrdocmto) loop
                                      
-           vr_obj_crit_tit.put('idCritica', rw_crapabt.cdchavecri);
-           vr_obj_crit_tit.put('texto', rw_crapabt.dsrestri);
+           vr_obj_crit_tit.put('codigo', rw_crapabt.cdchavecri);
+           vr_obj_crit_tit.put('descricao', rw_crapabt.dsrestri);
            vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
          end loop;
-         vr_obj_titulos.put('critica',vr_lst_crit_tit.to_json_value());
+         vr_obj_titulos.put('criticas',vr_lst_crit_tit.to_json_value());
          vr_lst_titulos.append(vr_obj_titulos.to_json_value());
          
          -- limpar os objetos jason para próxima iteração
@@ -1730,7 +1738,7 @@ END pc_incluir_bordero_esteira;
      vr_obj_titulos := json();
      vr_lst_titulos := json_list();
      
-/*     vr_obj_bordero.put('parcelaQuantidade'  , 1);
+     vr_obj_bordero.put('parcelaQuantidade'  , 1);/*
      vr_obj_bordero.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra(rw_crawlim.dtvencto));
      vr_obj_bordero.put('parcelaValor'       , rw_crawlim.vllimite);*/
      
@@ -1740,7 +1748,7 @@ END pc_incluir_bordero_esteira;
                            'DD/MM/RRRR HH24:MI:SS');
      vr_obj_bordero.put('dataHora'           , este0001.fn_datatempo_ibra(vr_data_aux));
 
-     vr_obj_bordero.put('produtoCreditoSegmentoCodigo'    , 7); 
+     vr_obj_bordero.put('produtoCreditoSegmentoCodigo'    , 6);
      vr_obj_bordero.put('produtoCreditoSegmentoDescricao' , 'Desconto de Título – Borderô');
 
      vr_obj_bordero.put('linhaCreditoCodigo'    ,rw_crapbdt.cdlcremp);
@@ -1750,17 +1758,10 @@ END pc_incluir_bordero_esteira;
 
      vr_obj_bordero.put('tipoProduto'           ,rw_crapbdt.tpproduto);
      
-     vr_obj_bordero.put('tipoGarantiaCodigo'    ,rw_crapbdt.tpctrato );
-
-     --> Buscar desciçao do tipo de garantia
-     
-     vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'GENERI'
-                                               ,pr_cdempres => 0
-                                               ,pr_cdacesso => 'CTRATOEMPR'
-                                               ,pr_tpregist => rw_crapbdt.tpctrato);
-     vr_obj_bordero.put('tipoGarantiaDescricao'    ,trim(vr_dstpgara) );
+     IF rw_crapbdt.tpctrato > 0 THEN
+       vr_obj_bordero.put('tipoGarantiaCodigo'   , rw_crapbdt.tpctrato );
+       vr_obj_bordero.put('tipoGarantiaDescricao', rw_crapbdt.dsctrato );
+     END IF; 
 
      --    Buscar dados do operador
      open  cr_crapope;
@@ -1837,7 +1838,7 @@ END pc_incluir_bordero_esteira;
 
          -- Na Esteira de Crédito o valor total do endividamento utilizado no fluxo de aprovação será composto por: 
          --   Valor do Endividamento da conta + valor do Borderô que está sendo inclusa + o valor de Borderôs aprovados e não efetivados.
-         vr_obj_bordero.put('endividamentoContaValor'     ,vr_vlutiliz + vl_aprov_nefet);
+         vr_obj_bordero.put('endividamentoContaValor'     ,(nvl(vr_vlutiliz,0) + nvl(vl_aprov_nefet,0)));
          
          vr_obj_bordero.put('propostasPendentesValor'     ,vr_vlprapne );
          vr_obj_bordero.put('limiteCooperadoValor'        ,nvl(vr_vllimdis,0) );
@@ -1868,7 +1869,7 @@ END pc_incluir_bordero_esteira;
                                               pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                               pr_dtmvtopr => rw_crapdat.dtmvtopr,
                                               pr_inproces => rw_crapdat.inproces,
-                                              pr_idimpres => 2,
+                                              pr_idimpres => 7,--desc de titulo
                                               pr_nrborder => pr_nrborder,
                                               pr_dsiduser => vr_dsiduser,
                                               pr_flgemail => 0,
@@ -1902,7 +1903,7 @@ END pc_incluir_bordero_esteira;
              end if;
      
              -- Gerar objeto json para a imagem
-             vr_obj_imagem.put('codigo'      , 'BORDERO_PDF');
+             vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
              vr_obj_imagem.put('conteudo'    ,vr_json_valor);
              vr_obj_imagem.put('emissaoData' , este0001.fn_data_ibra(sysdate));
              vr_obj_imagem.put('validadeData', '');
