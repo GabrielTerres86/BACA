@@ -918,11 +918,11 @@ BEGIN
              WHEN tdb.insittit = 4 THEN 0
              ELSE 1
            END as qtprepag 
-          ,(tdb.vltitulo - tdb.vlsldtit) + tdb.vlpagmta + tdb.vlpagmra + tdb.vliofcpl AS vlprepag  
+          ,(tdb.vltitulo - tdb.vlsldtit) + tdb.vlpagmta + tdb.vlpagmra + tdb.vlpagiof AS vlprepag  
           ,ldc.cddlinha
           ,ldc.dsdlinha
           ,bdt.txmensal
-          ,(bdt.txmensal/30)/100 as txdiaria
+          ,ROUND(bdt.txmensal/30,7) as txdiaria
       FROM craptdb tdb
      INNER JOIN crapbdt bdt
         ON tdb.cdcooper = bdt.cdcooper
@@ -940,10 +940,9 @@ BEGIN
        AND tdb.nrdconta = pr_nrdconta
        AND tdb.nrborder = pr_nrctremp -- nrctrem da crapris
        --AND tdb.dtlibbdt = pr_dtinictr -- ris.dtinictr
-       AND (tdb.insittit = 4 OR ((tdb.insittit = 2 AND tdb.dtdpagto = pr_dtrefere) OR (tdb.insittit = 3 AND tdb.dtdebito = pr_dtrefere)))
-       AND ldc.tpdescto = 3 -- desconto de título
-       --AND tdb.dtdpagto IS NULL
+       AND tdb.insittit = 4 -- títulos em aberto 
        AND tdb.dtvencto <= pr_dtrefere
+       AND ldc.tpdescto = 3 -- desconto de título
        AND bdt.flverbor = 1; -- considerar somente os títulos vencidos de borderôs novos
     rw_craptdb cr_craptdb%ROWTYPE;
 
