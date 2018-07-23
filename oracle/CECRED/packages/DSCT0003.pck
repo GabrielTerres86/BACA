@@ -8079,6 +8079,7 @@ EXCEPTION
       Objetivo  : Procedure para laçamento de crédito de desconto de Título.
 
       Alteracoes: 16/04/2018 - Criação (Andrew Albuquerque (GFT))
+                  23/07/2018 - Inserção de loop para inserir na LCM
     ----------------------------------------------------------------------------------------------------------*/
     vr_nrdolote craplot.nrdolote%TYPE;
     vr_rowid    ROWID;
@@ -8122,6 +8123,7 @@ EXCEPTION
        AND lot.nrdolote = pr_nrdolote
     FOR UPDATE;
     rw_craplot cr_craplot%ROWTYPE;
+    vr_flg_criou_lot BOOLEAN;
   BEGIN
     --vr_nrdolote := 17000 + pr_cdpactra;
     vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
@@ -8184,7 +8186,7 @@ EXCEPTION
                          ,/*09*/ rw_craplot.nrseqdig
                          ,/*10*/ rw_craplot.rowid;
               EXCEPTION
-                WHEN OTHERS THEN
+                WHEN OTHERS THEN                 
                      CLOSE cr_craplot;
                      vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
                      RAISE vr_exc_erro;
@@ -8213,74 +8215,88 @@ EXCEPTION
         rw_craplot.nrdolote := vr_nrdolote;                   
         rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm;
     END IF;
-           
-    BEGIN
-      -- Gero o Insert na tabela de Lancamentos em depositos a vista
-      INSERT INTO craplcm
-             (/*01*/ dtmvtolt
-             ,/*02*/ cdagenci
-             ,/*03*/ cdbccxlt
-             ,/*04*/ nrdolote
-             ,/*05*/ nrdconta
-             ,/*06*/ nrdocmto
-             ,/*07*/ vllanmto
-             ,/*08*/ cdhistor
-             ,/*09*/ nrseqdig
-             ,/*10*/ nrdctabb
-             ,/*11*/ nrautdoc 
-             ,/*12*/ cdcooper
-             ,/*13*/ cdpesqbb)
-      VALUES (/*01*/ rw_craplot.dtmvtolt
-             ,/*02*/ rw_craplot.cdagenci
-             ,/*03*/ rw_craplot.cdbccxlt
-             ,/*04*/ rw_craplot.nrdolote
-             ,/*05*/ pr_nrdconta
-             ,/*06*/ pr_nrdocmto
-             ,/*07*/ pr_vllanmto 
-             ,/*08*/ pr_cdhistor
-             ,/*09*/ rw_craplot.nrseqdig
-             ,/*10*/ pr_nrdconta
-             ,/*11*/ 0
-             ,/*12*/ pr_cdcooper
-             ,/*13*/ 'Desconto de Título do Borderô ' || pr_nrborder)
-      RETURNING /*01*/ craplcm.ROWID
-               ,/*02*/ craplcm.cdhistor
-               ,/*03*/ craplcm.cdcooper
-               ,/*04*/ craplcm.dtmvtolt
-               ,/*05*/ craplcm.hrtransa
-               ,/*06*/ craplcm.nrdconta
-               ,/*07*/ craplcm.nrdocmto
-               ,/*08*/ craplcm.vllanmto
-      INTO      /*01*/ vr_rowid
-               ,/*02*/ rw_craplcm.cdhistor
-               ,/*03*/ rw_craplcm.cdcooper
-               ,/*04*/ rw_craplcm.dtmvtolt
-               ,/*05*/ rw_craplcm.hrtransa
-               ,/*06*/ rw_craplcm.nrdconta
-               ,/*07*/ rw_craplcm.nrdocmto
-               ,/*08*/ rw_craplcm.vllanmto;
-    EXCEPTION
-      WHEN OTHERS THEN
-           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
-           vr_cdcritic := 1034;
-           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'craplcm:' ||
-                           '  dtmvtolt:'   || pr_dtmvtolt  ||
-                           ', cdagenci:'  || '1'      || 
-                           ', cdbccxlt:'  || '100'    || 
-                           ', nrdolote:'  || rw_craplot.nrdolote ||
-                           ', nrdconta:'  || pr_nrdconta  ||
-                           ', nrdocmto:'  || rw_craplcm.nrdocmto   || 
-                           ', vllanmto:'  || rw_craplcm.vllanmto  ||
-                           ', cdhistor:'  || vr_cdhistordsct_pgtomultacc ||
-                           ', nrseqdig:'  || rw_craplot.nrseqdig   ||
-                           ', nrdctabb:'  || pr_nrdconta  ||
-                           ', nrautdoc:'  || '0'          ||
-                           ', cdcooper:'  || pr_cdcooper  ||
-                           ', cdpesqbb:'  || rw_craplcm.nrdocmto  || 
-                           '. ' ||sqlerrm; 
-           RAISE vr_exc_erro;
-    END;
+    
+    /*Insere um lote novo*/
+    vr_flg_criou_lot:=false;
+    WHILE NOT vr_flg_criou_lot LOOP     
+      BEGIN
+        -- Gero o Insert na tabela de Lancamentos em depositos a vista
+        INSERT INTO craplcm
+               (/*01*/ dtmvtolt
+               ,/*02*/ cdagenci
+               ,/*03*/ cdbccxlt
+               ,/*04*/ nrdolote
+               ,/*05*/ nrdconta
+               ,/*06*/ nrdocmto
+               ,/*07*/ vllanmto
+               ,/*08*/ cdhistor
+               ,/*09*/ nrseqdig
+               ,/*10*/ nrdctabb
+               ,/*11*/ nrautdoc 
+               ,/*12*/ cdcooper
+               ,/*13*/ cdpesqbb)
+        VALUES (/*01*/ rw_craplot.dtmvtolt
+               ,/*02*/ rw_craplot.cdagenci
+               ,/*03*/ rw_craplot.cdbccxlt
+               ,/*04*/ rw_craplot.nrdolote
+               ,/*05*/ pr_nrdconta
+               ,/*06*/ pr_nrdocmto
+               ,/*07*/ pr_vllanmto 
+               ,/*08*/ pr_cdhistor
+               ,/*09*/ vr_nrdolote
+               ,/*10*/ pr_nrdconta
+               ,/*11*/ 0
+               ,/*12*/ pr_cdcooper
+               ,/*13*/ 'Desconto de Título do Borderô ' || pr_nrborder)
+        RETURNING /*01*/ craplcm.ROWID
+                 ,/*02*/ craplcm.cdhistor
+                 ,/*03*/ craplcm.cdcooper
+                 ,/*04*/ craplcm.dtmvtolt
+                 ,/*05*/ craplcm.hrtransa
+                 ,/*06*/ craplcm.nrdconta
+                 ,/*07*/ craplcm.nrdocmto
+                 ,/*08*/ craplcm.vllanmto
+        INTO      /*01*/ vr_rowid
+                 ,/*02*/ rw_craplcm.cdhistor
+                 ,/*03*/ rw_craplcm.cdcooper
+                 ,/*04*/ rw_craplcm.dtmvtolt
+                 ,/*05*/ rw_craplcm.hrtransa
+                 ,/*06*/ rw_craplcm.nrdconta
+                 ,/*07*/ rw_craplcm.nrdocmto
+                 ,/*08*/ rw_craplcm.vllanmto;
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+             -- Pega o proximo numero de lote e tenta inserir novamente.
+             vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
+                                       ,pr_nmdcampo => 'NRDOLOTE'
+                                       ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
+                                                    || pr_dtmvtolt || ';'
+                                                    || TO_CHAR(pr_cdagenci)|| ';'
+                                                    || '100');      
+             CONTINUE;
+        WHEN OTHERS THEN
+             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+             vr_cdcritic := 1034;
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             'craplcm:' ||
+                             '  dtmvtolt:'   || pr_dtmvtolt  ||
+                             ', cdagenci:'  || '1'      || 
+                             ', cdbccxlt:'  || '100'    || 
+                             ', nrdolote:'  || rw_craplot.nrdolote ||
+                             ', nrdconta:'  || pr_nrdconta  ||
+                             ', nrdocmto:'  || rw_craplcm.nrdocmto   || 
+                             ', vllanmto:'  || rw_craplcm.vllanmto  ||
+                             ', cdhistor:'  || vr_cdhistordsct_pgtomultacc ||
+                             ', nrseqdig:'  || rw_craplot.nrseqdig   ||
+                             ', nrdctabb:'  || pr_nrdconta  ||
+                             ', nrautdoc:'  || '0'          ||
+                             ', cdcooper:'  || pr_cdcooper  ||
+                             ', cdpesqbb:'  || rw_craplcm.nrdocmto  || 
+                             '. ' ||sqlerrm; 
+             RAISE vr_exc_erro;
+      END;
+      vr_flg_criou_lot := TRUE;
+    END LOOP;
 
     /*[PROJETO LIGEIRINHO]*/
     IF  NOT paga0001.fn_exec_paralelo THEN
