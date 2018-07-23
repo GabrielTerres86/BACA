@@ -4562,59 +4562,6 @@ BEGIN
                                   ,pr_texto_completo => vr_txtauxi_227
                                   ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
 
-          /*                        
-          -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
-          IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
-            -- inicializando o valor
-            vr_vlpreapg := 0;
-            vr_indice_dados_tdb := vr_tab_craptdb.first;
-            WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
-                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
-              THEN
-                -- Enviar registro para o XML 1 - para cada um dos títulos.
-                vr_des_xml_gene := '<atraso>'
-                                 ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
-                                 ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
-                                 ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
-                                 ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
-                                 ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'zzzzzzz9'))||'</nrctremp>'
-                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,'fm999g999g990d00')||'</vldivida>'
-                                 ||' <vljura60>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,'fm999g999g990d00')||'</vljura60>'
-                                 ||' <vlpreemp>'||to_char(nvl(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,0),'fm999g990d00')||'</vlpreemp>'
-                                 ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
-                                 ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
-                                 ||' <vltotatr>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlatraso,'fm999g999g990d00')||'</vltotatr>'
-                                 ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
-                                 ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
-                                 ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
-                                 ||' <pertenge>'||vr_pertenge||'</pertenge>'
-                                 ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
-                                 ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
-                                 ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
-                                 ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
-                                 ||' <cdlcremp/>';
-
-                -- Não enviar nivel em caso de ser AA
-                IF vr_dsnivris <> 'AA' THEN
-                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris>'||vr_dsnivris||'</dsnivris>';
-                ELSE
-                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
-                END IF;
-                
-          -- Fechar tag atraso enviando pro XML
-            gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
-                                  ,pr_texto_completo => vr_txtauxi_227
-                                      ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
-
-              END IF;
-              vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
-            END LOOP;
-          END IF; -- fim de titulo do borderô detalhado
-          */
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4671,58 +4618,6 @@ BEGIN
                                    ,pr_texto_completo => vr_txtauxi_354
                                    ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
                                    
-          -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
-          IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
-            -- inicializando o valor
-            vr_vlpreapg := 0;
-            vr_indice_dados_tdb := vr_tab_craptdb.first;
-            WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
-                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
-              THEN
-                -- Enviar registro para o XML 2 - para cada um dos títulos.
-                vr_des_xml_gene :='<divida>'
-                                 ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
-                                 ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
-                                 ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
-                                 ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
-                                 ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'zzzzzzz9'))||'</nrctremp>'
-                                 ||' <vldivida>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,'fm999g999g990d00')||'</vldivida>'
-                                 ||' <vljura60>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,'fm999g999g990d00')||'</vljura60>'
-                                 ||' <vlpreemp>'||to_char(nvl(vr_tab_craptdb(vr_indice_dados_tdb).vljura60,0),'fm999g990d00')||'</vlpreemp>'
-                                 ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
-                                 ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
-                                 ||' <vltotatr>'||to_char(vr_tab_craptdb(vr_indice_dados_tdb).vlatraso,'fm999g999g990d00')||'</vltotatr>'
-                                 ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
-                                 ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
-                                 ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
-                                 ||' <pertenge>'||vr_pertenge||'</pertenge>'
-                                 ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
-                                 ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
-                                 ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
-                                 ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>'
-                                 || '<cdlcremp/>';
-
-                -- Não enviar nivel em caso de ser AA
-                IF vr_dsnivris <> 'AA' THEN
-                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris>'||vr_dsnivris||'</dsnivris>';
-                ELSE
-                  vr_des_xml_gene := vr_des_xml_gene || ' <dsnivris/>';
-                END IF;
-                
-                -- Finalmente enviar para o XML
-                  gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
-                                         ,pr_texto_completo => vr_txtauxi_354
-                                         ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
-                
-              END IF;
-              vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
-            END LOOP;
-          END IF; -- fim de titulo do borderô detalhado
-
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
             -- Limpar linha de Crédito
@@ -4975,47 +4870,6 @@ BEGIN
                                                    ||LPAD(to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm99999999'),10,' ') || vr_dssepcol_354
                                                    ||LPAD(to_char(NVL(vr_vlpreapg,0),'fm999G999G999G990D00'),18,' ')
                                                    ||chr(10));
-
-            -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
-            IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
-              -- inicializando o valor
-              vr_vlpreapg := 0;
-              vr_indice_dados_tdb := vr_tab_craptdb.first;
-              WHILE vr_indice_dados_tdb IS NOT NULL LOOP
-              IF (vr_tab_craptdb(vr_indice_dados_tdb).cdcooper = pr_cdcooper AND
-                   vr_tab_craptdb(vr_indice_dados_tdb).nrdconta = vr_tab_crapris(vr_des_chave_crapris).nrdconta AND
-                   vr_tab_craptdb(vr_indice_dados_tdb).nrborder = vr_tab_crapris(vr_des_chave_crapris).nrctremp AND
-                 vr_tab_craptdb(vr_indice_dados_tdb).dtlibbdt = vr_tab_crapris(vr_des_chave_crapris).dtinictr AND
-                 vr_tab_crapris(vr_des_chave_crapris).cdorigem IN (4,5))
-                THEN
-                  gene0002.pc_escreve_xml(pr_xml => vr_clob_354
-                                          ,pr_texto_completo => vr_txtarqui_354
-                                          ,pr_texto_novo =>RPAD(vr_tab_crapris(vr_des_chave_crapris).nrdconta,8,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,50,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_tab_crapris(vr_des_chave_crapris).tpemprst,4,' ')||vr_dssepcol_354
-                                                         ||vr_dsorigem||vr_dssepcol_354
-                                                         ||LPAD(to_char(vr_tab_craptdb(vr_indice_dados_tdb).nrctrdsc,'fm99999999'),8,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_cdlcremp_354,8,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_tab_craptdb(vr_indice_dados_tdb).vlsaldodev,8,' ')||vr_dssepcol_354
-                                                         ||RPAD(NVL(to_char(vr_tab_craptdb(vr_indice_dados_tdb).vljura60),' '),8,' ')||vr_dssepcol_354
-                                                         ||RPAD(NVL(to_char(vr_tab_craptdb(vr_indice_dados_tdb).vltitulo),' '),8,' ')||vr_dssepcol_354
-                                                         ||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'999990d00')||vr_dssepcol_354
-                                                         ||RPAD(vr_tab_craptdb(vr_indice_dados_tdb).vlatraso,8,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_vlpreatr,8,' ')||vr_dssepcol_354
-                                                         ||LPAD(to_char(vr_percentu,'fm990d00'),6,' ')||vr_dssepcol_354
-                                                         ||LPAD(vr_tab_crapris(vr_des_chave_crapris).cdagenci,3,' ')||vr_dssepcol_354
-                                                         ||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'999990d00')||vr_dssepcol_354
-                                                         ||RPAD(vr_dsnivris,8,' ')||vr_dssepcol_354
-                                                         ||RPAD(vr_nivrisco,8,' ')||vr_dssepcol_354
-                                                         ||to_char(vr_dtdrisco,'dd/mm/rr')||vr_dssepcol_354
-                                                         ||RPAD(vr_qtdiaris,8,' ')||vr_dssepcol_354
-                                                         ||LPAD(to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm99999999'),10,' ') || vr_dssepcol_354
-                                                         ||LPAD(to_char(NVL(vr_tab_craptdb(vr_indice_dados_tdb).vlsldtit,0),'fm999G999G999G990D00'),18,' ')
-                                                         ||chr(10));
-                END IF;
-                vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
-              END LOOP;
-            END IF; -- fim de titulo do borderô detalhado
 
           END IF;
         END IF;
