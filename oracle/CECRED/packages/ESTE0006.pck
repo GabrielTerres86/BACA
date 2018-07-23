@@ -1869,7 +1869,7 @@ END pc_incluir_bordero_esteira;
                                               pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                               pr_dtmvtopr => rw_crapdat.dtmvtopr,
                                               pr_inproces => rw_crapdat.inproces,
-                                              pr_idimpres => 7,--desc de titulo
+                                              pr_idimpres => 3, --Gerar impressao da proposta do limite de desconto de titulo
                                               pr_nrborder => pr_nrborder,
                                               pr_dsiduser => vr_dsiduser,
                                               pr_flgemail => 0,
