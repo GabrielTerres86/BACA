@@ -228,7 +228,104 @@ BEGIN
                            AND insitbdt = 3
                            AND dtlibbdt IS NOT NULL
                            AND flverbor = 0);
+    
+    
+    -- Script de carga da TAB052 por cooperativa
+    UPDATE craptab  
+    SET    dstextab = 
+           -- operacional 
+              SUBSTR(dstextab, 1, 239)
+           || ';'|| to_char(10000,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor Máximo Dispensa Assinatura 
+           || ';'|| to_char(1,      'FM0') -- Verificar relacionamento emitente (conjuge/ sócio)
+           || ';'|| to_char(1,      'FM0') -- Verificar Prejuízo do Emitente
+           || ';'|| to_char(1,      'FM0') -- Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador
+           || ';'|| to_char(80,      'FM000')  -- Mínimo de Liquidez do Cedente x Pagador (Qtd. de Titulos)                                           
+           || ';'|| to_char(80,      'FM000')  -- Mínimo de Liquidez do Cedente x Pagador (Valor dos Titulos)                                         
+           || ';'|| to_char(90,      'FM000')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos)                                          
+           || ';'|| to_char(90,      'FM000')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos)                                         
+           || ';'|| to_char(6,      'FM0000')  --  Período em meses para realizar o cálculo da liquidez
+           || ';'|| to_char(1,      'FM0') -- -- Valor máximo permitido por ramo de atividade                               
+           || ';'|| SUBSTR(dstextab, 283, 6) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           || ';'|| to_char(20,   'FM0000') -- Quantidade máxima de dias para envio para esteira
+           || ';'|| to_char(60,       'FM0000') -- Dias para expirar borderô
+           || ';'|| to_char(100,      'FM0000') -- Quantidade máxima de títulos por borderô IB
+           || ';'|| to_char(300,      'FM0000') -- Quantidade máxima de títulos por borderô Ayllos
+           -- ailos
+           || ';'|| to_char(15000,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor Máximo Dispensa Assinatura 
+           || ';'|| to_char(1,      'FM0') -- Verificar relacionamento emitente (conjuge/ sócio)
+           || ';'|| to_char(1,      'FM0') -- Verificar Prejuízo do Emitente
+           || ';'|| to_char(1,      'FM0') -- Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador
+           || ';'|| to_char(100,      'FM000' , 'NLS_NUMERIC_CHARACTERS='',.''')   -- Mínimo de Liquidez do Cedente x Pagador (Qtd. de Titulos)                                           
+           || ';'|| to_char(100,      'FM000', 'NLS_NUMERIC_CHARACTERS='',.''')  -- Mínimo de Liquidez do Cedente x Pagador (Valor dos Titulos)                                         
+           || ';'|| to_char(100,      'FM000')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos)                                          
+           || ';'|| to_char(100,      'FM000', 'NLS_NUMERIC_CHARACTERS='',.''')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos)                                         
+           || ';'|| to_char(12,      'FM0000')  --  Período em meses para realizar o cálculo da liquidez
+           || ';'|| to_char(1,      'FM0') -- -- Valor máximo permitido por ramo de atividade                               
+           || ';'|| SUBSTR(dstextab, 352, 6) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           || ';'|| to_char(30,   'FM0000') -- Quantidade máxima de dias para envio para esteira
+           || ';'|| to_char(60,       'FM0000') -- Dias para expirar borderô
+           || ';'|| to_char(200,      'FM0000') -- Quantidade máxima de títulos por borderô IB
+           || ';'|| to_char(500,      'FM0000') -- Quantidade máxima de títulos por borderô Ayllos
+           -- demais campos operacional
+           || ';'|| to_char(5,      'FM0000') -- Qtd. Mínima de titulos descontados para cálculo de liquidez
+           || ';'|| to_char(100,    'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor mínimo para cáculo da liquidez
+           || ';'|| SUBSTR(dstextab, 397, 4) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           -- demais campos ailos
+           || ';'|| to_char(10,      'FM0000') -- Qtd. Mínima de titulos descontados para cálculo de liquidez
+           || ';'|| to_char(300,    'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor mínimo para cáculo da liquidez
+           || ';'|| SUBSTR(dstextab, 420, 4) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           
+    WHERE cdacesso IN ('LIMDESCTITCRPF') 
+    AND   cdcooper = pr_cdcooper;
 
+    -- PJ
+    UPDATE craptab  
+    SET    dstextab = 
+           -- operacional 
+              SUBSTR(dstextab, 1, 239)
+           || ';'|| to_char(20000,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor Máximo Dispensa Assinatura 
+           || ';'|| to_char(1,      'FM0') -- Verificar relacionamento emitente (conjuge/ sócio)
+           || ';'|| to_char(1,      'FM0') -- Verificar Prejuízo do Emitente
+           || ';'|| to_char(1,      'FM0') -- Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador
+           || ';'|| to_char(70,      'FM000')  -- Mínimo de Liquidez do Cedente x Pagador (Qtd. de Titulos)                                           
+           || ';'|| to_char(70,      'FM000')  -- Mínimo de Liquidez do Cedente x Pagador (Valor dos Titulos)                                         
+           || ';'|| to_char(80,      'FM000')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos)                                          
+           || ';'|| to_char(80,      'FM000')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos)                                         
+           || ';'|| to_char(6,      'FM0000')  --  Período em meses para realizar o cálculo da liquidez
+           || ';'|| to_char(1,      'FM0') -- -- Valor máximo permitido por ramo de atividade                               
+           || ';'|| SUBSTR(dstextab, 283, 6) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           || ';'|| to_char(20,   'FM0000') -- Quantidade máxima de dias para envio para esteira
+           || ';'|| to_char(60,       'FM0000') -- Dias para expirar borderô
+           || ';'|| to_char(100,      'FM0000') -- Quantidade máxima de títulos por borderô IB
+           || ';'|| to_char(300,      'FM0000') -- Quantidade máxima de títulos por borderô Ayllos
+           -- ailos
+           || ';'|| to_char(30000,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor Máximo Dispensa Assinatura 
+           || ';'|| to_char(1,      'FM0') -- Verificar relacionamento emitente (conjuge/ sócio)
+           || ';'|| to_char(1,      'FM0') -- Verificar Prejuízo do Emitente
+           || ';'|| to_char(1,      'FM0') -- Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador
+           || ';'|| to_char(100,      'FM000' , 'NLS_NUMERIC_CHARACTERS='',.''')   -- Mínimo de Liquidez do Cedente x Pagador (Qtd. de Titulos)                                           
+           || ';'|| to_char(100,      'FM000', 'NLS_NUMERIC_CHARACTERS='',.''')  -- Mínimo de Liquidez do Cedente x Pagador (Valor dos Titulos)                                         
+           || ';'|| to_char(100,      'FM000')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos)                                          
+           || ';'|| to_char(100,      'FM000', 'NLS_NUMERIC_CHARACTERS='',.''')  -- Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos)                                         
+           || ';'|| to_char(12,      'FM0000')  --  Período em meses para realizar o cálculo da liquidez
+           || ';'|| to_char(1,      'FM0') -- -- Valor máximo permitido por ramo de atividade                               
+           || ';'|| SUBSTR(dstextab, 352, 6) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           || ';'|| to_char(30,   'FM0000') -- Quantidade máxima de dias para envio para esteira
+           || ';'|| to_char(60,       'FM0000') -- Dias para expirar borderô
+           || ';'|| to_char(200,      'FM0000') -- Quantidade máxima de títulos por borderô IB
+           || ';'|| to_char(500,      'FM0000') -- Quantidade máxima de títulos por borderô Ayllos
+           -- demais campos operacional
+           || ';'|| to_char(5,      'FM0000') -- Qtd. Mínima de titulos descontados para cálculo de liquidez
+           || ';'|| to_char(100,    'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor mínimo para cáculo da liquidez
+           || ';'|| SUBSTR(dstextab, 397, 4) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           -- demais campos ailos
+           || ';'|| to_char(10,      'FM0000') -- Qtd. Mínima de titulos descontados para cálculo de liquidez
+           || ';'|| to_char(300,    'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') -- Valor mínimo para cáculo da liquidez
+           || ';'|| SUBSTR(dstextab, 420, 4) -- Concentração máxima de títulos por pagador (manter) e Consulta de CPF/CNPJ do pagador (manter)                          
+           
+    WHERE cdacesso IN ('LIMDESCTITCRPJ') 
+    AND   cdcooper = pr_cdcooper;
+    
   END LOOP;
   COMMIT;
 END;
