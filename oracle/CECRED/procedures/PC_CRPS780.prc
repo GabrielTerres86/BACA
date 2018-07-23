@@ -62,13 +62,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
          AND epr.cdcooper = ris.cdcooper
          AND epr.nrdconta = ris.nrdconta
          AND epr.nrctremp = ris.nrctremp
+         AND epr.tpemprst IN (0,1)
          AND epr.inprejuz = 0
          AND epr.inliquid = 0
          AND ris.innivris IN (9,10) -- risco H
          AND ris.cdorigem = 3 -- emprestimos
          AND ris.inddocto = 1
          AND (TRUNC(dat.dtmvtolt) - TRUNC(ris.dtdrisco)) > 179
-         AND ris.qtdiaatr > 179
+         --AND ris.qtdiaatr > 179
+         AND DECODE(epr.tpemprst,1,PREJ0002.fn_dias_atraso_emp(epr.cdcooper,
+                                                   epr.nrdconta,
+                                                   epr.nrctremp),ris.qtdiaatr) > 179
          AND ris.dttrfprj IS NOT NULL
          AND ris.dttrfprj <= dat.dtmvtolt -- data atual
          AND ris.dtrefere = dat.dtmvtoan -- dia de ontem

@@ -95,6 +95,10 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0002 AS
                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                       ,pr_des_erro OUT VARCHAR2);  
+                                      
+    FUNCTION fn_dias_atraso_emp(pr_cdcooper IN crapepr.cdcooper%TYPE,
+                                pr_nrdconta IN crapepr.nrdconta%TYPE,
+                                pr_nrctremp IN crapepr.nrctremp%TYPE) RETURN NUMBER;                                         
 end PREJ0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
@@ -2051,6 +2055,158 @@ END pc_pagamento_prejuizo_web;
     END;
 
   END pc_valores_contrato_web;
+
+FUNCTION fn_dias_atraso_emp(pr_cdcooper IN crapepr.cdcooper%TYPE,
+                            pr_nrdconta IN crapepr.nrdconta%TYPE,
+                            pr_nrctremp IN crapepr.nrctremp%TYPE) RETURN NUMBER IS
+  /* .............................................................................
+
+   Programa: fn_dias_atraso_emp
+   Sistema : Rotinas referentes aos dias de atraso de contratos
+   Sigla   : Prej
+   Autor   : Rafael Muniz Monteiro
+   Data    : Julho/2018.                    Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+
+   Objetivo  : Buscar os dias de atraso de acordo com o tipo
+
+   Observacao: -----
+   Alteracoes:
+   ..............................................................................*/                        
+  CURSOR cr_crapepr (prc_cdcooper crapepr.cdcooper%TYPE,
+                     prc_nrdconta crapepr.nrdconta%TYPE,
+                     prc_nrctremp crapepr.nrctremp%TYPE)IS
+    SELECT epr.qtmesdec,
+           epr.tpemprst,
+           epr.dtdpagto,
+           epr.qtlcalat,
+           epr.qtprecal,
+           epr.cdagenci
+      FROM crapepr epr
+     WHERE epr.cdcooper = prc_cdcooper
+       AND epr.nrdconta = prc_nrdconta
+       AND epr.nrctremp = prc_nrctremp;
+  rw_crapepr cr_crapepr%rowtype;       
+
+  CURSOR cr_crappep (prc_cdcooper crappep.cdcooper%TYPE,
+                     prc_nrdconta crappep.nrdconta%TYPE,
+                     prc_nrctremp crappep.nrctremp%TYPE,
+                     prc_dtmvtoan crapdat.dtmvtoan%TYPE,
+                     prc_cdagenci crapass.cdagenci%TYPE)IS 
+/*    SELECT pep.nrdconta
+          ,pep.nrctremp
+          ,MIN(pep.dtvencto) dtvencto
+      FROM crappep pep
+          ,crapass ass
+     WHERE pep.cdcooper = prc_cdcooper
+       AND (pep.inliquid = 0 OR pep.inprejuz = 1)
+       AND pep.nrdconta  = prc_nrdconta
+       AND pep.nrctremp  = prc_nrctremp
+       AND pep.dtvencto <= prc_dtmvtoan
+       AND ass.cdcooper = pep.cdcooper
+       AND ass.nrdconta = pep.nrdconta
+       AND ass.cdagenci = decode(prc_cdagenci,0,ass.cdagenci,prc_cdagenci)
+     GROUP BY pep.nrdconta
+             ,pep.nrctremp;  */                   
+    SELECT MIN(pep.dtvencto) dtvencto
+      FROM crappep pep
+     WHERE pep.cdcooper = prc_cdcooper
+       AND pep.nrdconta = prc_nrdconta
+       AND pep.nrctremp = prc_nrctremp
+       AND pep.inliquid = 0
+       AND pep.dtvencto <= prc_dtmvtoan;   
+       
+  CURSOR cr_cessao_carga (prc_cdcooper crappep.cdcooper%TYPE,
+                          prc_nrdconta crappep.nrdconta%TYPE,
+                          prc_nrctremp crappep.nrctremp%TYPE)IS
+    SELECT ces.dtvencto
+      FROM tbcrd_cessao_credito ces
+      JOIN crapepr epr
+        ON epr.cdcooper = ces.cdcooper
+       AND epr.nrdconta = ces.nrdconta
+       AND epr.nrctremp = ces.nrctremp
+     WHERE ces.cdcooper = prc_cdcooper
+       AND ces.nrdconta = prc_nrdconta
+       AND ces.nrctremp = prc_nrctremp
+       AND epr.inliquid = 0 ;
+
+  FunctionResult      NUMBER := 0;
+  vr_qtmesdec         NUMBER := 0; --> Meses corridos do empréstimo
+  vr_qtprecal_retor   NUMBER := 0; --> Quantidade % de parcelas calculadas
+  vr_idxpep           VARCHAR2(50);
+  vr_dtvencto         crappep.dtvencto%TYPE;
+  
+BEGIN
+  
+  OPEN btch0001.cr_crapdat(pr_cdcooper);
+  FETCH btch0001.cr_crapdat  INTO rw_crapdat;
+  CLOSE btch0001.cr_crapdat;
+  
+  OPEN cr_crapepr(pr_cdcooper,
+                  pr_nrdconta,
+                  pr_nrctremp);
+  FETCH cr_crapepr INTO rw_crapepr;
+  CLOSE cr_crapepr;  
+  
+  -- TR
+  IF rw_crapepr.tpemprst = 0 THEN
+    
+    vr_qtmesdec := rw_crapepr.qtmesdec;
+    
+    IF rw_crapepr.dtdpagto IS NOT NULL THEN
+      -- Se o pagamento for no mes corrente e posterior ao dia atual
+      -- OU
+      -- Se o pagamento for posterior a data atual e estivermos no processamento semanal
+      IF (trunc(rw_crapepr.dtdpagto,'mm') = trunc(rw_crapdat.dtmvtolt,'mm') AND to_char(rw_crapepr.dtdpagto,'dd') > to_char(rw_crapdat.dtmvtolt,'dd'))
+      OR (trunc(rw_crapdat.dtmvtolt,'mm') = trunc(rw_crapdat.dtmvtopr,'mm') AND rw_crapepr.dtdpagto > rw_crapdat.dtmvtolt) THEN
+        -- Decrementar a quantidade de meses decorridos
+        vr_qtmesdec := vr_qtmesdec - 1;
+      END IF;
+    END IF;
+    -- Se o mês corrente é o mesmo do próximo dia util
+    IF trunc(rw_crapdat.dtmvtolt,'mm') = trunc(rw_crapdat.dtmvtopr,'mm') THEN
+      /* Saldo calculado pelo crps616.p e crps665.p */
+      vr_qtprecal_retor := nvl(rw_crapepr.qtlcalat,0) + nvl(rw_crapepr.qtprecal,0);
+    ELSE
+      -- Utilizar informações da tabela mesmo
+      vr_qtprecal_retor := rw_crapepr.qtprecal;
+    END IF;    
+    --
+    FunctionResult := ((vr_qtmesdec - vr_qtprecal_retor) * 30);
+    
+  ELSIF rw_crapepr.tpemprst = 1 THEN -- PP
+    
+    FOR rw_crappep IN cr_crappep(pr_cdcooper,
+                                 pr_nrdconta,
+                                 pr_nrctremp,
+                                 rw_crapdat.dtmvtoan,
+                                 rw_crapepr.cdagenci) LOOP
+                                 
+      vr_dtvencto := rw_crappep.dtvencto;
+    END LOOP;
+    FOR rw_cessao_carga IN cr_cessao_carga(pr_cdcooper,
+                               pr_nrdconta,
+                               pr_nrctremp) LOOP
+       vr_dtvencto  := rw_cessao_carga.dtvencto;                      
+    END LOOP;
+
+    IF vr_dtvencto IS NOT NULL THEN
+      -- Calcular a quantidade de dias em atraso
+      FunctionResult := rw_crapdat.dtmvtolt - vr_dtvencto;
+    ELSE
+      -- Sem atraso e risco A
+      FunctionResult := 0;
+    END IF;    
+    
+  END IF;    
+      
+  RETURN(FunctionResult);
+  
+END fn_dias_atraso_emp; 
+ 
   
 END PREJ0002;
 /
