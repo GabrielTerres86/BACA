@@ -34,7 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --             01/09/2017 - Imprimir conta quando o avalista for cooperado
   --                          Heitor (Mouts) - Chamado 735958
   --
-  ---------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
 
   -- Verifica da TAB016 se o interveniente esta habilitado
   FUNCTION fn_verifica_interv(pr_cdagenci IN crapass.cdagenci%TYPE
@@ -259,6 +259,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --						 (Adriano - P339).
   --
   --              12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
+  --
+  --              23/07/2018 - Alterado para verificar o campo nrplnovo, ufplnovo, nrrenovo na crapbpr, 
+  --                           caso tenha valor nestes campos, deve ser pego este campo, caso contrario
+  --                           pegar dos campos nrdplaca, ufdplaca, nrrenava, respectivamente.
+  --                           (André Mout's) - (INC0019097).
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -917,7 +922,7 @@ BEGIN
               crapbpr.dsbemfin,
               crapbpr.vlmerbem,
               crapbpr.dscatbem,
-              'Renavan: '||crapbpr.nrrenava nrrenava,
+              'Renavan: '|| case when nvl(crapbpr.nrrenovo, 0) <> 0 then crapbpr.nrrenovo else crapbpr.nrrenava end nrrenava,
               decode(crapbpr.dscatbem,'TERRENO','Endereco: ' ||crapbpr.dscorbem,
                                       'CASA','Endereco: ' ||crapbpr.dscorbem,
                                       'APARTAMENTO','Endereco: ' ||crapbpr.dscorbem,
@@ -925,8 +930,8 @@ BEGIN
                                       'EQUIPAMENTO','Chassi/N Série: '||crapbpr.dschassi,
                                                     'Chassi: '||crapbpr.dschassi) dschassi,
               crapbpr.tpchassi,
-              crapbpr.ufdplaca,
-              'Placa: '||crapbpr.nrdplaca nrdplaca,
+              case when nvl(crapbpr.ufplnovo, ' ') <> ' ' then crapbpr.ufplnovo else crapbpr.ufdplaca end ufdplaca,
+              'Placa: '|| case when nvl(crapbpr.nrplnovo, ' ') <> ' ' then crapbpr.nrplnovo else crapbpr.nrdplaca end nrdplaca,
               crapbpr.uflicenc,
               'Ano: '||crapbpr.nranobem||' Modelo: '||crapbpr.nrmodbem dsanomod,
               'Cor: '||crapbpr.dscorbem dscorbem,
