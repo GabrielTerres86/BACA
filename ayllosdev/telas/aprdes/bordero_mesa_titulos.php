@@ -155,7 +155,7 @@
 																<tbody>
 																	<? foreach($dados->find("inf") AS $t) {?>
 																		<tr onclick="selecionaTitulo('<?= $t->cdbandoc; ?>;<?= $t->nrdctabb; ?>;<?= $t->nrcnvcob; ?>;<?= $t->nrdocmto; ?>');">
-																			<td>><?php if ($t->flgenvmc->cdata == 1){ ?>
+																			<td><?php if ($t->flgenvmc->cdata == 1){ ?>
 							    												<input type='hidden' name='titulos[]' value='<?= $t->cdbandoc; ?>;<?= $t->nrdctabb; ?>;<?= $t->nrcnvcob; ?>;<?= $t->nrdocmto; ?>'/>
 							    												<?php } ?>
 																				<? echo $t->nmdsacad; ?>
@@ -190,6 +190,7 @@
 													</fieldset>
 												</div>
 											</form>
+											<?include('criticas_bordero.php');?>
 											<div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 												<input type="button" class="botao" value="Voltar"  onClick="encerraRotina();return false; " />
 												<input type="button" class="botao" value="Visualizar Detalhes" onClick="visualizarDetalhes();return false;"/>
@@ -208,7 +209,6 @@
 		</tr>
 	</table>
 </div>
-
 <script type="text/javascript">
 	// Muda o título da tela
 	$("#tdTitRotina").html("ANALISAR BORDER&OCIRC;");

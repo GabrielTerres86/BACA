@@ -272,6 +272,7 @@ function analisarTitulo(){
                     ajustarCentralizacao();
                     return false;
                 } catch (error) {
+                    console.log(error);
                     hideMsgAguardo();
                     showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'cNrdconta.focus();');
                 }
@@ -645,4 +646,10 @@ function ajustarCentralizacao() {
     $('#divRotina').css({ 'width': x + 'px' });
     $('#divRotina').centralizaRotinaH();
     return false;
+}
+
+function formataTabelaCriticas(div){
+    var tabela = div.find("table");
+    div.zebraTabela();
+    tabela.css("text-align","center");
 }

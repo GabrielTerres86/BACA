@@ -49,7 +49,12 @@
 
     // FAZER O INSERT CRAPRDR e CRAPACA
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_DETALHE_TITULO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);
+    
+    $xmlObj = getClassXML($xmlResult);
+    $root = $xmlObj->roottag;
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+	}
 
 	$dados = $xmlObj->roottag->tags[0];
 	$pagador = $dados->tags[0];
@@ -147,23 +152,23 @@
 			</fieldset>
 		</div>
 
-
+		<? if(count($criticas->tags)>0) { ?>
 		<div id="divCritica" class="formulario">
 			<fieldset>
 				<legend>Cr&iacute;ticas</legend>
-				<div class="divRegistrosTitulosSelecionados divRegistros">
-					<table class="tituloRegistros">
+				<div id="divCriticasBordero">
+					<table class="tituloRegistros divRegistros">
 						<thead>
 							<tr>
-								<th>Cr&iacute;tica</th>
-								<th>Valor</th>
+								<th width="50%">Cr&iacute;tica</th>
+								<th width="50%">Valor</th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach($criticas->tags AS $c) {?>
 								<tr>
-									<td><?php echo getByTagName($c->tags,'dsc'); ?></td>
-									<td><?php echo getByTagName($c->tags,'vlr');?></td>
+									<td style="border-right:1px dotted #999;"><?php echo getByTagName($c->tags,'dsc'); ?></td>
+									<td style="border-right:1px dotted #999;"><?php echo getByTagName($c->tags,'vlr');?></td>
 								</tr>
 							<?} // Fim do foreach ?>	
 						</tbody>
@@ -171,6 +176,7 @@
 				</div><!-- divRegistrosTitulosSelecionados -->
 			</fieldset>
 		</div><!-- divCritica -->
+		<? } ?>
 
 	</form>
 </div><!-- divDetalheBordero -->
@@ -186,7 +192,7 @@
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDERO - DETALHES");
 
 	formataLayout('divDetalheBordero');
-
+	formataTabelaCriticas($("#divCriticasBordero"));
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 

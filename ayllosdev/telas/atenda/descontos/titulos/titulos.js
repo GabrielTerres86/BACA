@@ -3421,3 +3421,9 @@ function pagarTitulosVencidos(){
     }
     return false;
 }
+
+function formataTabelaCriticas(div){
+    var tabela = div.find("table");
+    div.zebraTabela();
+    tabela.css("text-align","center");
+}

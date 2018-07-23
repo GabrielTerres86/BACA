@@ -60,6 +60,7 @@
 	if ($root->erro){
 		exibeErro(htmlentities($root->erro->registro->dscritic));
 	}
+
 	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";
     $xml .= " <Dados>";
@@ -72,15 +73,24 @@
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_TITULOS_RESUMO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getClassXML($xmlResult);
     $root = $xmlObj->roottag;
-	$dados = $root->dados;
-    $qtTitulos = $dados->getAttribute('QTREGIST');
-
     // Se ocorrer um erro, mostra mensagem
 	if ($root->erro){
 		exibeErro(htmlentities($root->erro->registro->dscritic));
 		exit;
 	}
 
+	$dados = $root->dados;
+    $qtTitulos = $dados->getAttribute('QTREGIST');
+    $bordero = $dados->findFirst("bordero");
+    $cedente = $dados->findFirst("cedente");
+    // var_dump($cedente);
+    if($bordero){
+		$criticasBordero = $bordero->find("critica");
+	}
+    if($cedente){
+		$criticasCedente = $cedente->find("critica");
+	}
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -114,7 +124,7 @@
 						</thead>
 						<tbody>
 							<?
-						    	foreach($dados->find("inf") AS $t){ ?>
+						    	foreach($dados->find("titulos") AS $t){ ?>
 						    		<tr id="titulo_<? echo $t->nrnosnum;?>" onclick="selecionaTituloResumo('<? echo $t->nrnosnum;?>');">
 						    			<td>
 						    				<input type='hidden' name='selecionados' value='<? echo $t->cdbandoc; ?>;<? echo $t->nrdctabb; ?>;<? echo $t->nrcnvcob; ?>;<? echo $t->nrdocmto; ?>'/><? echo $t->nrcnvcob ;?>
@@ -158,8 +168,7 @@
 		</div>
 	</form>
 </div>
-
-
+<?include('criticas_bordero.php');?>
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	<!-- Tabela de resumo dos titulos -->
 	<table class="tit-bord-resumo-valores">
@@ -212,7 +221,5 @@
     	//Atualiza na tabela da pagina anterior
     	$(this).html(novo_valor);
     })
-
-
 
 </script>
