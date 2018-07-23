@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 22/02/2017
+  --  Data    : Abril/2006                     Ultima Atualizacao: 28/06/2018
   --
   --  Dados referentes ao programa:
   --
@@ -285,6 +285,11 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
 	--
   --        10/05/2017 - Fixar na pc_valores_a_creditar os códigos de histórico 2277 e 2278, para os prejuizos 
   --                     Projeto 210_2 (Lombardi).
+  --        
+  --         28/06/2018 - Remover caracteres especiais ao inserir na tabela craplcm, para o campo dscedent.
+  --                      (Alcemir Mout's) - PRB0040107.
+  
+  
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -1239,7 +1244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 27/03/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 04/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1626,6 +1631,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      
 
 	   27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. Inclusão de PRAGMA (Mario Bernat - AMcom)
+		
+	   04/07/2018 - Ajustado cursor cr_craprtc nas procedures pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
+	                para poder trazer todos os titulos do dia, para gerar em um unico arquivo de retorno.
+					(Alcemir Mout's) - SCTASK0010677.
 		
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -8286,12 +8295,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,rw_crapaut.cdhistor
               ,rw_crapaut.vldocmto
               ,rw_crapaut.nrsequen
-              ,(CASE -- se não for informado cedente, utilizar o nome no convenio
+              ,GENE0007.fn_caract_acento((CASE -- se não for informado cedente, utilizar o nome no convenio
                   WHEN pr_dscedent IS NULL      OR
                        pr_dscedent = rw_crapcon.nmextcon THEN
                     rw_crapcon.nmrescon
                   ELSE pr_dscedent
-                END)
+                END),1)
               ,pr_cdcoptfn
               ,pr_cdagetfn
               ,pr_nrterfin
@@ -9804,7 +9813,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,rw_crapaut.cdhistor
               ,rw_crapaut.vldocmto
               ,rw_crapaut.nrsequen
-              ,Upper(pr_dscedent)
+              ,Upper(GENE0007.fn_caract_acento(pr_dscedent,1))
               ,pr_cdcoptfn
               ,pr_cdagetfn
               ,pr_nrterfin
@@ -9907,7 +9916,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_vlrtotal   => pr_vlfatura   -- Valor fatura
                                        ,pr_flgagend   => pr_flgagend   -- Flag agendado /* 1-True, 0-False */ 
                                        ,pr_idorigem   => pr_idorigem   -- Indicador de origem
-                                       ,pr_cdoperacao => 2             -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                       ,pr_cdoperacao => 1             -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
                                        ,pr_idanalis   => NULL          -- ID Analise Fraude
                                        ,pr_lgprowid   => NULL          -- Rowid craplgp
                                        ,pr_cdcritic   => vr_cdcritic   -- Codigo da critica
@@ -16662,33 +16671,33 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               -- Caso houver erro, envia email
               IF vr_tab_erro.count > 0 THEN
                 FOR i IN 1..vr_tab_erro.last LOOP
-                  BEGIN
-                    INSERT INTO crapcol
-                      (crapcol.cdcooper
-                      ,crapcol.nrdconta
-                      ,crapcol.nrdocmto
-                      ,crapcol.nrcnvcob
-                      ,crapcol.dslogtit
-                      ,crapcol.cdoperad
-                      ,crapcol.dtaltera
-                      ,crapcol.hrtransa)
-                    VALUES
-                      (pr_cdcooper
-                      ,pr_tab_lcm_consolidada(vr_index).nrdconta
-                      ,0
-                      ,pr_tab_lcm_consolidada(vr_index).nrconven
+                BEGIN
+                  INSERT INTO crapcol
+                    (crapcol.cdcooper
+                    ,crapcol.nrdconta
+                    ,crapcol.nrdocmto
+                    ,crapcol.nrcnvcob
+                    ,crapcol.dslogtit
+                    ,crapcol.cdoperad
+                    ,crapcol.dtaltera
+                    ,crapcol.hrtransa)
+                  VALUES
+                    (pr_cdcooper
+                    ,pr_tab_lcm_consolidada(vr_index).nrdconta
+                    ,0
+                    ,pr_tab_lcm_consolidada(vr_index).nrconven
                       ,TRIM(SUBSTR(TRIM(vr_tab_erro(i).dscritic),1,350))
-                      ,'TARIFA'
-                      ,SYSDATE
-                      ,GENE0002.fn_busca_time);
-                  EXCEPTION
-                    WHEN OTHERS THEN
+                    ,'TARIFA'
+                    ,SYSDATE
+                    ,GENE0002.fn_busca_time);
+                EXCEPTION
+                  WHEN OTHERS THEN
                       cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
-                      vr_cdcritic:= 0;
-                      vr_dscritic:= 'Erro ao inserir na tabela crapcol. '||sqlerrm;
-                      --Levantar Excecao
-                      RAISE vr_exc_erro;
-                  END;
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= 'Erro ao inserir na tabela crapcol. '||sqlerrm;
+                    --Levantar Excecao
+                    RAISE vr_exc_erro;
+                END;
                 END LOOP;
               END IF;
 
@@ -17629,8 +17638,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         AND   crapret.cdcooper = craprtc.cdcooper
         AND   crapret.nrdconta = craprtc.nrdconta
         AND   crapret.nrcnvcob = craprtc.nrcnvcob
-        AND   crapret.nrretcoo = craprtc.nrremret
-		AND   crapret.dtocorre = craprtc.dtmvtolt;
+		AND   crapret.dtocorre = craprtc.dtmvtolt
+		AND   crapret.nrremret = (SELECT MAX(ret.nrremret)
+                                  FROM crapret ret
+                                  WHERE ret.cdcooper = craprtc.cdcooper
+                                  AND ret.nrdconta = craprtc.nrdconta
+                                  AND ret.nrcnvcob = craprtc.nrcnvcob
+                                  AND ret.dtocorre = craprtc.dtmvtolt
+                                  AND ret.nrretcoo = craprtc.nrremret);
 
       --Selecionar Cadastro Convenio
       CURSOR cr_crapcco (pr_cdcooper IN crapcco.cdcooper%type
@@ -18491,9 +18506,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         AND   crapret.cdcooper = craprtc.cdcooper
         AND   crapret.nrdconta = craprtc.nrdconta
         AND   crapret.nrcnvcob = craprtc.nrcnvcob
-        AND   crapret.nrretcoo = craprtc.nrremret
         AND   crapret.cdocorre <> 27 /* alt de outros dados */
-        AND   crapret.dtocorre = craprtc.dtmvtolt;
+        AND   crapret.dtocorre = craprtc.dtmvtolt
+		AND   crapret.nrremret = (SELECT MAX(ret.nrremret)
+                                   FROM crapret ret
+                                  WHERE ret.cdcooper = craprtc.cdcooper
+                                  AND ret.nrdconta = craprtc.nrdconta
+                                  AND ret.nrcnvcob = craprtc.nrcnvcob
+                                  AND ret.dtocorre = craprtc.dtmvtolt
+                                  AND ret.nrretcoo = craprtc.nrremret);
 
       --Selecionar Controle Cobranca
       CURSOR cr_crapceb (pr_cdcooper IN crapceb.cdcooper%type
