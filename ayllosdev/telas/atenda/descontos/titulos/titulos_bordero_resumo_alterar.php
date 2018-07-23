@@ -128,7 +128,7 @@
 						</thead>
 						<tbody>
 							<?
-						    	foreach($dados->find("inf") AS $t){ ?>
+						    	foreach($dados->find("titulos") AS $t){ ?>
 						    		<tr id="titulo_<? echo $t->nrnosnum;?>" onclick="selecionaTituloResumo('<? echo $t->nrnosnum;?>');">
 						    			<td>
 						    				<input type='hidden' name='selecionados' value='<? echo $t->cdbandoc; ?>;<? echo $t->nrdctabb; ?>;<? echo $t->nrcnvcob; ?>;<? echo $t->nrdocmto; ?>'/><? echo $t->nrcnvcob ;?>
@@ -173,7 +173,7 @@
 	</form>
 </div>
 
-
+<?include('criticas_bordero.php');?>
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	<!-- Tabela de resumo dos titulos -->
 	<table class="tit-bord-resumo-valores">

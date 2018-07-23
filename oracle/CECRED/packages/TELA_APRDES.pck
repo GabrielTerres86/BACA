@@ -662,6 +662,35 @@ create or replace package body cecred.TELA_APRDES is
           /* buscar proximo */
           vr_index := vr_tab_dados_titulos.next(vr_index);
       end loop;
+      
+      OPEN dsct0003.cr_abt(pr_cdcooper=>vr_cdcooper,pr_nrborder=>pr_nrborder,pr_tpcritica=>4);
+      pc_escreve_xml('<cedente>');
+      LOOP
+        FETCH dsct0003.cr_abt into dsct0003.rw_abt;
+             EXIT WHEN dsct0003.cr_abt%NOTFOUND;
+             pc_escreve_xml('<critica>'||
+                              '<dsc>' || dsct0003.rw_abt.dscritica || '</dsc>'||
+                              '<vlr>' || dsct0003.rw_abt.dsdetres || '</vlr>'||
+                           '</critica>');    
+          
+      END LOOP;
+      pc_escreve_xml('</cedente>');
+      CLOSE dsct0003.cr_abt;
+      
+      OPEN dsct0003.cr_abt(pr_cdcooper=>vr_cdcooper,pr_nrborder=>pr_nrborder,pr_tpcritica=>2);
+      pc_escreve_xml('<bordero>');
+      LOOP
+        FETCH dsct0003.cr_abt into dsct0003.rw_abt;
+             EXIT WHEN dsct0003.cr_abt%NOTFOUND;
+             pc_escreve_xml('<critica>'||
+                              '<dsc>' || dsct0003.rw_abt.dscritica || '</dsc>'||
+                              '<vlr>' || dsct0003.rw_abt.dsdetres || '</vlr>'||
+                           '</critica>');    
+          
+      END LOOP;
+      pc_escreve_xml('</bordero>');
+      CLOSE dsct0003.cr_abt;
+      
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
 
@@ -1134,7 +1163,7 @@ create or replace package body cecred.TELA_APRDES is
        /*Criticas diferentes do CNAE, envia para a esteira*/
        ELSE
          /*!Verifica contingencia*/
-         vr_em_contingencia_ibratan := tela_atenda_dscto_tit.fn_em_contingencia_ibratan(pr_cdcooper => vr_cdcooper);
+         vr_em_contingencia_ibratan := tela_atenda_dscto_tit.fn_contigencia_esteira(pr_cdcooper => vr_cdcooper);
          IF (vr_em_contingencia_ibratan) THEN --em Contingência Aprova
            vr_insitbdt := 1; -- Volta para em estudo
            vr_insitapr := 0; -- Volta para aguardando análise
