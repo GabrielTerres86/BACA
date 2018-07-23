@@ -36,6 +36,7 @@ try {
     return;
 }
 
+if (verificaPendencia($nrctrcrd, $nrdconta,$glbvars)){ exibirErro('error', utf8ToHtml("Proposta de alteração de limite pendente na esteira"),'Alerta - Ayllos',$funcaoAposErro); return;};
 if (contaDoOperador($nrdconta, $glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar alteração de limite para cartão de crédito da conta do Operador."),'Alerta - Ayllos',$funcaoAposErro);
 if(is_null($opcao)){
   $titular = is_titular_card($nrctrcrd, $nrdconta,$glbvars,$limiteatual,$limitetitular);
@@ -156,6 +157,22 @@ function is_titular_card($nrctrcrd, $nrdconta,$glbvars, &$limiteatual,&$limiteti
 
 }
 
+function verificaPendencia($nrctrcrd, $nrdconta,$glbvars){
+	$logXML  = "<Root>";
+	$logXML .= " <Dados>";
+	$logXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$logXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+	$logXML .= " </Dados>";
+	$logXML .= "</Root>";
+	$admresult = mensageria($logXML, "ATENDA_CRD", "VALIDA_ALT_PEND_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
+	$procXML = simplexml_load_string($admresult);
+	
+	
+	if((isset($procXML->Dados->inf->proposta)) && (strlen($procXML->Dados->inf->proposta) > 0) )
+		return true;
+	else
+		return false;
+}
 
 function strToNm($nrStr){
     return str_replace(",",".",str_replace(".","",$nrStr));

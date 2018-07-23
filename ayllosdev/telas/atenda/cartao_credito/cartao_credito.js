@@ -1626,6 +1626,9 @@ function atualizaCampoLimiteProposto(aOpcao) {
 
 function alteraFuncaoDebito() {
     var objSelectAdmCrd = document.frmNovoCartao.dsadmcrd;
+	if(objSelectAdmCrd == undefined || objSelectAdmCrd.options == undefined){
+		return;
+	}else{
     var dadosAdministradora = objSelectAdmCrd.options[objSelectAdmCrd.options.selectedIndex].value;
     var aLimiteProposto = dadosAdministradora.split(';');
 
@@ -1636,6 +1639,9 @@ function alteraFuncaoDebito() {
         $("#flgdebit", "#frmNovoCartao").habilitaCampo();
         $("#flgdebit", "#frmNovoCartao").prop('checked', true);
     }
+}
+
+
 }
 
 function verificaEfetuaGravacao() {
@@ -1830,7 +1836,7 @@ function validarNovoCartao() {
 				
 		// Este procedimento deve ser executado somente na tela nova
 		if (!bTelaAntiga){
-			// FIX Amasonas
+			
 			cdadmcrd = $("#cdadmcrd").val();
 			if (!cdadmcrd) {
 				var crdAux = $('#dsadmcrd').children().attr("value").split(";");
@@ -1890,6 +1896,7 @@ function validarNovoCartao() {
 	  
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+	
 	setTimeout(function(){
 		$( "#btnSenhaCoordenador" ).mouseover(function() {
 		  faprovador = $("#cdopelib").val();
@@ -1910,6 +1917,8 @@ function senhaCoordenador(executaDepois) {
 		});
 		
 	},160);
+	
+
 }
 
 /*!
@@ -5888,7 +5897,7 @@ function enviaSolicitacao() {
 function validarSenha(nrctrcrd) {
 	
 	console.log('PAssou valida senha');
-	// fix S 
+	
     idacionamento = $("#idacionamento","#frmNovoCartao").val();
     log4console("5608 - protocolo : "+protocolo);
     atualizaContrato(nrctrcrd,protocolo,"S", function(){

@@ -180,7 +180,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 									<?if((($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Enviada Analise Manual") && $sitdec==strtolower("Sem Aprovacao") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov.")) && $sitest==strtolower("Enviada Analise Manual") && $sitdec==strtolower("Sem Aprovacao") ) ||
-										 ($sitcrd==strtolower("Em Estudo") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Refazer") ) ||
+										 ($sitcrd==strtolower("Estudo") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Refazer") ) ||
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Sem Aprovacao") && $sitdec==strtolower("Enviada Analise Manual") ) ){ ?> 
 									<a 
 										href="#" 

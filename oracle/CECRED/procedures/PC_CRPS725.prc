@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
      Objetivo  : Realizar a importacao das cargas de limites de cartao de credito 
                  calculados pelos SAS, para atualizacao no Ayllos e Bancoob.
 
-     Alteracoes: 
+     Alteracoes: 18/07/2018 - Paulo Silva (Supero) - Remoção do cursor cr_craptlc.
 
   ............................................................................ */
   
@@ -96,18 +96,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
      ORDER BY vllimcrd DESC
             , cdadmcrd DESC;
   rw_crawcrd   cr_crawcrd%ROWTYPE;
-  
-  -- Cursor para verificar se o limite para atualização está habilitado para o tipo do cartão. (OUTROS)
-  CURSOR cr_craptlc(pr_cdcooper   craptlc.cdcooper%TYPE 
-                   ,pr_cdadmcrd   craptlc.cdadmcrd%TYPE 
-                   ,pr_vllimatu   craptlc.vllimcrd%TYPE ) IS
-    SELECT 1 AS existe
-      FROM craptlc tlc
-     WHERE tlc.cdcooper = pr_cdcooper
-       AND tlc.cdadmcrd = pr_cdadmcrd
-       AND tlc.vllimcrd = pr_vllimatu
-       AND tlc.insittab = 0;
-  rw_craptlc   cr_craptlc%ROWTYPE;
   
    -- Cursor para verificar se o limite para atualização está habilitado para o tipo do cartão. (CECRED)
   CURSOR cr_craptlc_cecred( pr_cdcooper   craptlc.cdcooper%TYPE
@@ -328,20 +316,6 @@ BEGIN
         ------------------------------------------------
         
         -- Validar se o limite para atualização está habilitado para o tipo do cartão. 
-        OPEN  cr_craptlc(rw_majoracao.cdcooper    -- pr_cdcooper
-                        ,rw_crawcrd.cdadmcrd      -- pr_cdadmcrd
-                        ,rw_majoracao.vllimite);  -- pr_vllimatu
-        FETCH cr_craptlc INTO rw_craptlc;
-        -- Verificar se existe registro 
-        IF cr_craptlc%NOTFOUND THEN
-          -- Fechar o cursor 
-          CLOSE cr_craptlc;
-          
-        END IF;
-
-        -- Fechar o cursor
-        CLOSE cr_craptlc;
-        
         OPEN  cr_craptlc_cecred(rw_majoracao.cdcooper    -- pr_cdcooper
                               ,rw_crawcrd.cdadmcrd      -- pr_cdadmcrd
                               ,rw_majoracao.vllimite);  -- pr_vllimatu
@@ -351,17 +325,12 @@ BEGIN
           -- Fechar o cursor
           CLOSE cr_craptlc_cecred;
 
-        END IF;
-
-        -- Fechar o cursor
-        CLOSE cr_craptlc_cecred;
-        
-        IF rw_craptlc.existe IS NULL AND rw_craptlc_cecred.existe IS NULL THEN
           vr_dscritic := 'Valor do limite solicitado não existe para o tipo de cartão '||rw_crawcrd.cdadmcrd||' na tela LIMCRD!';
           RAISE vr_expmajoracao;
         END IF;
         
-        ------------------------------------------------
+        -- Fechar o cursor
+        CLOSE cr_craptlc_cecred;
         
         -- Verificar se a diferença de alteração de limite ultrapassa o valor parametrizado
         IF (rw_majoracao.vllimite - rw_crawcrd.vllimcrd) > vr_vlmaxaumento THEN
