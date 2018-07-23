@@ -1749,7 +1749,7 @@ END pc_incluir_bordero_esteira;
      vr_obj_bordero.put('dataHora'           , este0001.fn_datatempo_ibra(vr_data_aux));
 
      vr_obj_bordero.put('produtoCreditoSegmentoCodigo'    , 6);
-     vr_obj_bordero.put('produtoCreditoSegmentoDescricao' , 'Desconto de Título – Borderô');
+     vr_obj_bordero.put('produtoCreditoSegmentoDescricao' , 'Desconto de Titulo Bordero');
 
      vr_obj_bordero.put('linhaCreditoCodigo'    ,rw_crapbdt.cdlcremp);
      vr_obj_bordero.put('linhaCreditoDescricao' ,rw_crapbdt.dslcremp);
