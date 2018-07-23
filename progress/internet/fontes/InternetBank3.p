@@ -324,7 +324,10 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "</nrcpfcgc><dsendere>" +
                                        tt-dados-blt.dsendere +
                                        "</dsendere><nrendere>" +
-                                       STRING(tt-dados-blt.nrendere) +
+                                       (IF tt-dados-blt.nrendere <> ? THEN
+                                           STRING(tt-dados-blt.nrendere) 
+                                        ELSE
+                                           "") +
                                        "</nrendere><nmbairro>" +
                                        tt-dados-blt.nmbairro +
                                        "</nmbairro><nmcidade>" +

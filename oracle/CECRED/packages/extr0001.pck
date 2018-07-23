@@ -373,6 +373,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                          
   /* Procedure para tratar registro do extrato de conta corrente */
   PROCEDURE pc_gera_registro_extrato(pr_cdcooper     IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
+                                    ,pr_idorigem     IN NUMBER                   --> Origem da consulta
                                     ,pr_rowid        IN ROWID                    --> Registro buscado da craplcm
                                     ,pr_flgident     IN BOOLEAN                  --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     IN VARCHAR2                 --> Extrato ou Depósito
@@ -3047,6 +3048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
   /* Procedure para tratar registro do extrato de conta corrente */
   PROCEDURE pc_gera_registro_extrato(pr_cdcooper     IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
+                                    ,pr_idorigem     IN NUMBER                   --> Origem da consulta
                                     ,pr_rowid        IN ROWID                    --> Registro buscado da craplcm
                                     ,pr_flgident     IN BOOLEAN                  --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     IN VARCHAR2                 --> Extrato ou Depósito
@@ -3412,14 +3414,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           -- Se já foi liberado
           IF rw_crapdpb.inlibera = 1 THEN
             -- Guardar a data
-            vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
+            IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
+              vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
+            ELSE
+              vr_dslibera := to_char(rw_crapdpb.dtliblan,'dd/mm/RRRR');
+            END IF;
           ELSE
             -- INdicar que há estorno
-            vr_dslibera := '(Estorno)';
+            IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
+              vr_dslibera := '(Estorno)';
+            END IF;
           END IF;
         ELSE
           -- Usar descrição padrão
-          vr_dslibera := '(**/**)';
+          IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
+            vr_dslibera := '(**/**)';
+          END IF;
         END IF;
         -- Fechar o cursor
         CLOSE cr_crapdpb;
@@ -3583,6 +3593,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_extr(vr_ind_tab).dsextrat := vr_dsextrat;
         pr_tab_extr(vr_ind_tab).dshistor := vr_dshistor;
         pr_tab_extr(vr_ind_tab).cdcoptfn := vr_cdcoptfn;
+        pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
+        pr_tab_extr(vr_ind_tab).flgdetal := 0;               
+        
+        IF TRIM(vr_dslibera) IS NOT NULL OR TRIM(vr_dsidenti) IS NOT NULL THEN
+          pr_tab_extr(vr_ind_tab).flgdetal := 1;
+        END IF;
                 
         -- caso historico existir no que esta no parametro, então adiciona o complemento 
         -- (Estabelecimento) na pl_table         
@@ -3703,9 +3719,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             pr_tab_extr(vr_ind_tab).flgdetal := 0;
           END IF;
           CLOSE cr_crappro;
-        ELSE
-          pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
-          pr_tab_extr(vr_ind_tab).flgdetal := 0;               
         END IF;
         
         IF rw_craplcm.cdhistor IN (519,555,578,799,958) THEN -- TED Recebida e Realizada
@@ -4099,8 +4112,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                           ,pr_cdhistor_ign => 289) LOOP  --> Código do histórico a ignorar
         -- Chama rotina que gera-registro-extrato na temp-table
         pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
+                                ,pr_idorigem     => pr_idorigem   --> Origem da consulta
                                 ,pr_rowid        => rw_craplcm_ign.rowid --> Registro buscado da craplcm
-                                ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
+                                ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
                                 ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                 ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                 ,pr_lshiscon     => vr_lshiscon   --> Lista de históricos de convênios para pagamento
@@ -4206,8 +4220,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                 ) THEN
             -- Chama rotina que gera-registro-extrato na temp-table
             pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
+                                    ,pr_idorigem     => pr_idorigem   --> Origem da consulta
                                     ,pr_rowid        => rw_craplcm_olt.rowid --> Registro buscado da craplcm
-                                    ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
+                                    ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                     ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                     ,pr_lshiscon     => vr_lshiscon   --> Lista de históricos de convênios para pagamento
@@ -4285,7 +4300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                          || gene0002.fn_mask(rw_crapenl.cdagetfn,'9999') || '/'
                                          || gene0002.fn_mask(rw_crapenl.nrterfin,'9999');
         vr_tab_extr(vr_ind_tab).nrdocmto := gene0002.fn_mask(rw_crapenl.nrseqenv,'zzzzzzz.zz9');
-        vr_tab_extr(vr_ind_tab).dtliblan := '(**/**)';
+        vr_tab_extr(vr_ind_tab).dtliblan := CASE WHEN pr_idorigem NOT IN (3,4) THEN '(**/**)' ELSE '' END;
         vr_tab_extr(vr_ind_tab).indebcre := 'C';
         vr_tab_extr(vr_ind_tab).inhistor := 3;
         vr_tab_extr(vr_ind_tab).cdhistor := 698;
@@ -6620,6 +6635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
           -- Chama rotina que gera-registro-extrato na temp-table
           EXTR0001.pc_gera_registro_extrato (pr_cdcooper   => pr_cdcooper      --> Cooperativa conectada
+		                                    ,pr_idorigem   => pr_idorigem
                                             ,pr_rowid      => rw_craplcm.rowid --> Registro buscado da craplcm
                                             ,pr_flgident   => TRUE             --> Se deve ou não usar o craplcm.dsidenti
                                             ,pr_nmdtable   => 'D'              --> Depósito Identificado
