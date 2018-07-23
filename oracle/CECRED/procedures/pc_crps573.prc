@@ -359,9 +359,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      Ou
                      Utilizacao de poupanca programada propria para cobertura (1-Sim) - Heckmann (AMcom)
 
-          20/07/2018 - Busca taxa mensal do contrato do empréstimo (Tag taxeft)
-                    Renato Cordeiro - AMcom
-
+          23/07/2018 - Inclusão de Exception na inserção da tabela tbhist_ativo_probl (Fernando Ornelas AMcom)
 .............................................................................................................................*/
 
     DECLARE
@@ -4029,6 +4027,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                              ,vr_idtipo_envio);
         --
           EXCEPTION
+            WHEN DUP_VAL_ON_INDEX THEN
+              NULL;
             WHEN OTHERS THEN
               pr_cdcritic := 0;
               pr_dscritic := 'Erro INSERT HISTORICO ATIVO PROBLEMATICO: '||SQLERRM;
@@ -6100,11 +6100,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               -- ***
               -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
               -- estejam em Prejuízo (innivris = 10)
-              IF vr_tab_individ(vr_idx_individ).cdorigem = 3 AND vr_tab_individ(vr_idx_individ).innivris = 10 THEN
+             /* IF vr_tab_individ(vr_idx_individ).cdorigem = 3 AND vr_tab_individ(vr_idx_individ).innivris = 10 THEN
                 vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
                                                                         ,pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
                                                                         ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp)),0);
-              END IF;
+              END IF; */
 
               -- Enviar vencimento
               vr_texto := ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
@@ -6808,11 +6808,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   -- ***
                   -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
                   -- estejam em Prejuízo (innivris = 10)
-                  IF vr_tab_agreg(vr_indice_agreg).cdorigem = 3 AND vr_tab_agreg(vr_indice_agreg).innivris = 10 THEN
+                 /* IF vr_tab_agreg(vr_indice_agreg).cdorigem = 3 AND vr_tab_agreg(vr_indice_agreg).innivris = 10 THEN
                      vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
                                                                                  ,pr_nrdconta => vr_tab_agreg(vr_indice_agreg).nrdconta
                                                                                  ,pr_nrctremp => vr_tab_agreg(vr_indice_agreg).nrctremp)),0);
-                  END IF;
+                  END IF; */
 
                   -- Populado variável de trabalho para utilização na WRK
                   vr_texto := ' v' || vr_tab_venc_agreg(vr_indice_venc_agreg).cdvencto 
