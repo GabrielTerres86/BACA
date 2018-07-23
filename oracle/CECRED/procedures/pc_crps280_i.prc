@@ -892,7 +892,7 @@ BEGIN
           ,tdb.vltitulo
           ,tdb.insittit
           ,tdb.nrinssac
-          ,tdb.dtdpagto
+          ,COALESCE(tdb.dtdpagto,tdb.dtdebito) as dtdpagto
           ,tdb.dtdebito
           ,tdb.dtrefatu
           ,tdb.insitapr
@@ -4562,6 +4562,7 @@ BEGIN
                                   ,pr_texto_completo => vr_txtauxi_227
                                   ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
 
+          /*                        
           -- AWAE: Se for uma linha de risco do Borderô de Titulos, detalha por título de desconto também
           IF vr_dsorigem = 'D' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 301  THEN
             -- inicializando o valor
@@ -4613,7 +4614,7 @@ BEGIN
               vr_indice_dados_tdb := vr_tab_craptdb.next(vr_indice_dados_tdb);
             END LOOP;
           END IF; -- fim de titulo do borderô detalhado
-
+          */
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4926,7 +4927,7 @@ BEGIN
                                                          ,pr_vljura60 => vr_tab_craptdb(vr_indice_dados_tdb).vljura60  -- Juros 60 dias --,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias (CRAPRIS)
                                                          ,pr_vlpreemp => vr_tab_craptdb(vr_indice_dados_tdb).vltitulo  -- Valor da prestacao
                                                          ,pr_qtpreatr => 1                                             -- Qtd. Prestacoes
-                                                         ,pr_vldespes => vr_tab_craptdb(vr_indice_dados_tdb).vlatraso  -- Valor despesas
+                                                         ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
                                                          ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
                                                          ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
                                                          ,pr_nivrisan => vr_nivrisco                                   -- Risco anterior

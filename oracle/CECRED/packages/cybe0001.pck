@@ -806,7 +806,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
           vr_dtatufin := pr_dtmvtolt;
         END IF;
 
-        IF pr_cdorigem IN (2,3) THEN
+        -- [Projeto 403] Incluso tratamento para desconto de títulos
+        IF pr_cdorigem IN (2,3,4) THEN
           vr_dtdpagto := pr_dtdpagto;
         ELSE
           vr_dtdpagto := rw_crapcyb.dtdpagto;
