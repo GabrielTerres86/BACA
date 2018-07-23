@@ -185,6 +185,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
 
      PROCEDURE pc_controla_exe_job(pr_cdcritic OUT NUMBER,
                                    pr_dscritic OUT VARCHAR2);
+                                   
+                              
                                      
                                                               
 end PREJ0001;
