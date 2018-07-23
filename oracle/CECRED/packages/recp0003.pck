@@ -59,6 +59,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 			     06/04/2018 - Alteração do cursor "cr_crapcyb" para considerar somente contratos marcados
 							  com INDPAGAR = 'S' e considerar o contrato LC100 que não está na CRAPCYB.
 															(Reginaldo - AMcom)
+                              
+                 23/07/2018 - Quando é feito um acordo de cobrança pelo CYBER, o acordo é fechado com um valor específico. 
+                              Ao longo do pagamento deste acordo, podem incidir novos valores na conta, 
+                              como taxas de atraso ou juros de mora, por exemplo.
+                              Quando o acordo é quitado, é feita uma verificação se o valor pago no acordo não foi 
+                              suficiente para pagar todo o saldo devedor da conta. Neste caso, é feito um lançamento 
+                              de abono (abatimento), para liquidar este saldo residual.
+                              Para este abono/abatimento, atualmente, é feito um lançamento com o histórico 2181.
+                              Alterado para que no momento de fazer o lançamento do abono, 
+                              verificar se a conta está em prejuízo. 
+                              Se estiver, ao invés de lançar com o histórico 2181, vamos usar o histórico 2723.
+                             (Renato Cordeiro - AMcom)
+                          
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -601,6 +614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       vr_nracordo NUMBER;
       vr_dtquitac DATE;
 
+      vr_cdhistor craplcm.cdhistor%type;
+
       -- Consulta contratos em acordo
       CURSOR cr_crapcyb(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
 			  WITH acordo_contrato AS (
@@ -637,6 +652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
               ,ass.vllimcre
               ,ass.cdcooper
               ,ass.nrdconta
+              ,ass.inprejuz
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -1313,7 +1329,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    /* Se ainda houver saldo devedor nas operações vinculadas ao acordo, 
                       o sistema Ayllos deverá efetuar o abatimento do saldo devedor das operações
                       vinculadas ao acordo cujo ainda existem saldo(s) devedor(es), de forma automatica.
-                      Para este procedimento, utilizar o histórico: 2181 */
+                      Para este procedimento, utilizar o histórico: 2181 
+                      Para contas em prejuizo usar historico 2723 */
+                 
+                   -- Renato Cordeiro
+                   if rw_crapass.inprejuz = 1 then
+                      vr_cdhistor := 2723;
+                   else
+                      vr_cdhistor := 2181;
+                   end if;
                  
                    EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper                          --> Cooperativa conectada
                                                  ,pr_dtmvtolt => vr_tab_crapdat(rw_crapass.cdcooper).dtmvtolt --> Movimento atual
@@ -1323,7 +1347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                  ,pr_cdpactra => rw_crapass.cdagenci                          --> P.A. da transação
                                                  ,pr_nrdolote => 650001                                       --> Numero do Lote
                                                  ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
-                                                 ,pr_cdhistor => 2181                                         --> Codigo historico
+                                                 ,pr_cdhistor => vr_cdhistor                                  --> Codigo historico
                                                  ,pr_vllanmto => vr_vllancam - rw_nracordo.vlbloqueado        --> Valor do credito
                                                  ,pr_nrparepr => 0                                            --> Número do Acordo
                                                  ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
