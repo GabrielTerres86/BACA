@@ -722,6 +722,33 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                  ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
                                  ,pr_dscritic              OUT VARCHAR2);                       --> Descrição da crítica
                                                                        
+  PROCEDURE pc_obtem_horarios_pagamentos (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
+                                         ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
+                                         ,pr_cdcanal     IN NUMBER   -- Codigo de origem
+                                         ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
+                                         ,pr_dscritic   OUT VARCHAR2 -- retorna critica
+                                         ,pr_xml_ret     OUT CLOB    -- Retorno XML
+                                        );
+                                        
+  --> Retornar tipo de pagamento do codigo de barras
+  PROCEDURE pc_identifica_tppagamento ( pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
+                                       ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
+                                       ,pr_cdcanal     IN NUMBER   -- Codigo de origem
+                                       ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
+                                       ,pr_cdbarras    IN VARCHAR2 -- Código de barras da guia
+                                       ,pr_tpdpagto   OUT INTEGER  -- Retorna tipo de Pagamento (Dominio TPPAGAMENTO)
+                                       ,pr_tab_limite OUT inet0001.typ_tab_limite -- Retorna temptabel com os limites
+                                       ,pr_dscritic   OUT VARCHAR2 -- retorna critica
+                                      );
+
+  --> Retornar tipo de pagamento do codigo de barras - Versao de comunicacao
+  PROCEDURE pc_identif_tppagamento_car (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
+                                       ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
+                                       ,pr_cdcanal     IN NUMBER   -- Codigo de origem
+                                       ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
+                                       ,pr_cdbarras    IN VARCHAR2 -- Código de barras da guia
+                                       ,pr_xml_ret     OUT CLOB);  -- Retorno XML
+                                        
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
@@ -1044,7 +1071,7 @@ create or replace package body cecred.PAGA0002 is
                                
                   18/06/2018 - Validar que a agencia do banco creditada contenha apenas 4 digitos.
                                (Wagner da Silva #INC0016785 #TASK0024613)
-
+                               
                   27/06/2018 - Devido a um bug no app do IOS, foi necessário incluir uma validação
                                para não permitir que seja enviado uma TED com "Código do identificador"
                                contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
@@ -1530,7 +1557,7 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_cdageban) > 4 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Agencia deve ser informada sem o digito verificador (Limite de 4 digitos).';
-	    RAISE vr_exc_erro;
+	  RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.	
 
@@ -1548,7 +1575,7 @@ create or replace package body cecred.PAGA0002 is
         RAISE vr_exc_erro;
       END IF;          
     END IF;  
-    -- Fim da validação.	
+    -- Fim da validação.
 
     /* 
        O codigo identificador deve conter no maximo 25 caracteres, conforme catálago de mensagens do SPB. NO entanto,
@@ -10576,6 +10603,763 @@ create or replace package body cecred.PAGA0002 is
       COMMIT;
   END pc_apura_lcm_his_emprestimo;
   
+  
+  PROCEDURE pc_obtem_horarios_pagamentos (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
+                                         ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
+                                         ,pr_cdcanal     IN NUMBER   -- Codigo de origem
+                                         ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
+                                         ,pr_dscritic   OUT VARCHAR2 -- retorna critica
+                                         ,pr_xml_ret     OUT CLOB    -- Retorno XML
+                                        ) IS
+  /* ..........................................................................
+
+      Programa : pc_obtem_horarios_pagamentos
+      Sistema : Internet - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Pablão
+      Data    : Maio/2018                        Ultima atualizacao:
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado (On-Line)
+      Objetivo  : Retornar uma lista com as informações de horários limite para cada tipo de pagamento
+
+      Alteracoes: 
+
+      .................................................................................*/
+      ------>  CURSOR   <-----
+      --> Busca dos dados do associado
+      CURSOR cr_crapass(pr_cdcooper IN craptab.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT crapass.cdcooper
+              ,crapass.nrdconta
+              ,crapass.nmprimtl
+              ,crapass.inpessoa
+          FROM crapass
+         WHERE crapass.cdcooper = pr_cdcooper
+         AND   crapass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+      
+      -- Buscar os dados que serão retornados para a tela
+      CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
+        SELECT cop.cdcrdins
+             , cop.hrinigps nrinigps
+             , cop.hrfimgps nrfimgps      
+             , to_char(to_date(cop.hrinigps,'sssss'),'HH24:MI') hrinigps
+             , to_char(to_date(cop.hrfimgps,'sssss'),'HH24:MI') hrfimgps
+          FROM crapcop  cop
+         WHERE cop.cdcooper = pr_cdcooper;
+
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      ------> VARIAVEIS <-----
+      --Variaveis Locais
+      vr_flsgproc   INTEGER;
+      
+      vr_tab_limite_boleto_convenio inet0001.typ_tab_limite;
+      vr_tab_limite_darf_das inet0001.typ_tab_limite;
+      vr_tab_limite_fgts inet0001.typ_tab_limite;
+      vr_tab_limite_dae inet0001.typ_tab_limite;
+      vr_tab_limite_gps inet0001.typ_tab_limite;
+      vr_inpessoa  INTEGER;
+      vr_hratual   INTEGER;
+      vr_idesthor  INTEGER;
+      vr_datdodia  DATE;
+      vr_iddiauti  INTEGER;
+      
+      -- Variaveis de XML
+      vr_xml_tmp VARCHAR2(32767);
+      
+      --Variaveis de Exceção
+      vr_exc_erro  EXCEPTION;
+      vr_dscritic  VARCHAR2(2000);
+      vr_cdcritic  NUMBER;
+      
+      FUNCTION fn_gera_tag_xml_horarios(pr_tpdpagto IN NUMBER -- Código do tipo de pagamento
+                                       ,pr_tab_limite IN inet0001.typ_tab_limite -- Temptable com os limites
+                                        ) RETURN VARCHAR2 IS
+                                         
+        vr_tag_xml VARCHAR2(32767);
+        vr_dstpdpagto VARCHAR2(100);
+                                         
+      BEGIN
+        
+        vr_dstpdpagto := CASE pr_tpdpagto
+                         WHEN 1 THEN 'Pagamento de Boleto'
+                         WHEN 2 THEN 'Pagamento de Convênio'
+                         WHEN 7 THEN 'Pagamento de DARF '
+                         WHEN 8 THEN 'Pagamento de DAS'
+                         WHEN 9 THEN 'Pagamento de GPS'
+                         WHEN 10 THEN 'Pagamento de FGTS'
+                         WHEN 11 THEN 'Pagamento de DAE'
+                          END;
+      
+        -- Montar XML com registros de carencia
+        vr_tag_xml := '<documento>'
+                   ||   '<tppagamento>'||pr_tpdpagto                         ||'</tppagamento>'
+                   ||   '<dstppagamento>'||vr_dstpdpagto                     ||'</dstppagamento>'
+                   ||   '<hrinipag>'   ||pr_tab_limite(1).hrinipag           ||'</hrinipag>'
+                   ||   '<hrfimpag>'   ||pr_tab_limite(1).hrfimpag           ||'</hrfimpag>'
+                   ||   '<hrcancel>'   ||pr_tab_limite(1).hrcancel           ||'</hrcancel>'
+                   ||   '<nrhorini>'   ||to_char(pr_tab_limite(1).nrhorini)  ||'</nrhorini>'
+                   ||   '<nrhorfim>'   ||to_char(pr_tab_limite(1).nrhorfim)  ||'</nrhorfim>'
+                   ||   '<nrhrcanc>'   ||to_char(pr_tab_limite(1).nrhrcanc)  ||'</nrhrcanc>'
+                   ||   '<idesthor>'   ||to_char(pr_tab_limite(1).idesthor)  ||'</idesthor>'
+                   ||   '<iddiauti>'   ||to_char(pr_tab_limite(1).iddiauti)  ||'</iddiauti>'
+                   ||   '<flsgproc>'   || vr_flsgproc                        ||'</flsgproc>'
+                   ||   '<qtmesagd>'   ||to_char(pr_tab_limite(1).qtmesagd)  ||'</qtmesagd>'
+                   ||   '<idtpdpag>'   ||to_char(pr_tab_limite(1).idtpdpag)  ||'</idtpdpag>'
+                   || '</documento>';
+                   
+        RETURN vr_tag_xml;
+      END;
+  
+  BEGIN    
+    
+    --Verificar se o associado existe
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+
+      CLOSE cr_crapass;
+      vr_cdcritic:= 9;
+      RAISE vr_exc_erro;
+    ELSE
+      --Determinar tipo pessoa para busca limite
+      IF rw_crapass.inpessoa > 1 THEN
+        vr_inpessoa:= 2;
+      ELSE
+        vr_inpessoa:= rw_crapass.inpessoa;
+      END IF;
+
+    END IF;
+    
+    --Pagamento de Boleto/Convênio
+    BEGIN
+      --> Verifica o horario inicial e final para a operacao 
+      INET0001.pc_horario_operacao ( pr_cdcooper   => pr_cdcooper  -- Codigo Cooperativa
+                                    ,pr_cdagenci   => pr_cdagenci  -- Agencia do Associado
+                                    ,pr_tpoperac   => 2 -- Pagamento de Boleto/Convenio
+                                    ,pr_inpessoa   => vr_inpessoa  -- Tipo de Pessoa
+                                    ,pr_idagenda   => 0            -- Tipo de agendamento
+                                    ,pr_cdtiptra   => 0            -- Tipo de transferencia
+                                    ,pr_tab_limite => vr_tab_limite_boleto_convenio-- Tabelas de retorno de horarios limite
+
+                                    ,pr_cdcritic   => vr_cdcritic  -- Codigo do erro
+                                    ,pr_dscritic   => vr_dscritic);-- Descricao do erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END;
+    
+    --Pagamento de DARF/DAS
+    BEGIN
+      --> Verifica o horario inicial e final para a operacao 
+      INET0001.pc_horario_operacao ( pr_cdcooper   => pr_cdcooper  -- Codigo Cooperativa
+                                    ,pr_cdagenci   => pr_cdagenci  -- Agencia do Associado
+                                    ,pr_tpoperac   => 10 -- Pagamento de DARF/ DAS
+                                    ,pr_inpessoa   => vr_inpessoa  -- Tipo de Pessoa
+                                    ,pr_idagenda   => 0            -- Tipo de agendamento
+                                    ,pr_cdtiptra   => 0            -- Tipo de transferencia
+                                    ,pr_tab_limite => vr_tab_limite_darf_das-- Tabelas de retorno de horarios limite
+
+                                    ,pr_cdcritic   => vr_cdcritic  -- Codigo do erro
+                                    ,pr_dscritic   => vr_dscritic);-- Descricao do erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END;
+    
+    --Pagamento de FGTS
+    BEGIN
+      --> Verifica o horario inicial e final para a operacao 
+      INET0001.pc_horario_operacao ( pr_cdcooper   => pr_cdcooper  -- Codigo Cooperativa
+                                    ,pr_cdagenci   => pr_cdagenci  -- Agencia do Associado
+                                    ,pr_tpoperac   => 12 -- Pagamento de FGTS
+                                    ,pr_inpessoa   => vr_inpessoa  -- Tipo de Pessoa
+                                    ,pr_idagenda   => 0            -- Tipo de agendamento
+                                    ,pr_cdtiptra   => 0            -- Tipo de transferencia
+                                    ,pr_tab_limite => vr_tab_limite_fgts-- Tabelas de retorno de horarios limite
+
+                                    ,pr_cdcritic   => vr_cdcritic  -- Codigo do erro
+                                    ,pr_dscritic   => vr_dscritic);-- Descricao do erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END;
+    
+    --Pagamento de DAE
+    BEGIN
+      --> Verifica o horario inicial e final para a operacao 
+      INET0001.pc_horario_operacao ( pr_cdcooper   => pr_cdcooper  -- Codigo Cooperativa
+                                    ,pr_cdagenci   => pr_cdagenci  -- Agencia do Associado
+                                    ,pr_tpoperac   => 13 -- Pagamento de DAE
+                                    ,pr_inpessoa   => vr_inpessoa  -- Tipo de Pessoa
+                                    ,pr_idagenda   => 0            -- Tipo de agendamento
+                                    ,pr_cdtiptra   => 0            -- Tipo de transferencia
+                                    ,pr_tab_limite => vr_tab_limite_dae-- Tabelas de retorno de horarios limite
+
+                                    ,pr_cdcritic   => vr_cdcritic  -- Codigo do erro
+                                    ,pr_dscritic   => vr_dscritic);-- Descricao do erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END;
+    
+    --Pagamento de GPS
+    BEGIN
+      -- Buscar os dados que serão retornados para a tela
+      OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      CLOSE cr_crapcop;
+      
+      --Determinar a hora atual
+      vr_hratual:= GENE0002.fn_busca_time;
+        
+      --Verificar se estourou o limite
+      IF vr_hratual < rw_crapcop.nrinigps OR vr_hratual > rw_crapcop.nrfimgps THEN
+        vr_idesthor:= 1; --Estourou limite
+      ELSE
+        vr_idesthor:= 2; --Dentro do Horario limite
+      END IF;
+      
+      --> Horario diferenciado para finais de semana e feriados
+      vr_datdodia:= PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);
+      
+      --Se for feriado ou final semana
+      IF Trunc(vr_datdodia) <> Trunc(SYSDATE) THEN
+        --Nao eh dia util
+        vr_iddiauti:= 2;
+      ELSE
+        vr_iddiauti:= 1;
+      END IF;
+      
+      vr_tab_limite_gps(1).hrinipag:= GENE0002.fn_converte_time_data(rw_crapcop.nrinigps);
+      vr_tab_limite_gps(1).hrfimpag:= GENE0002.fn_converte_time_data(rw_crapcop.nrfimgps);
+      vr_tab_limite_gps(1).nrhorini:= rw_crapcop.nrinigps;
+      vr_tab_limite_gps(1).nrhorfim:= rw_crapcop.nrfimgps;
+      vr_tab_limite_gps(1).idesthor:= vr_idesthor;
+      vr_tab_limite_gps(1).iddiauti:= vr_iddiauti;
+      vr_tab_limite_gps(1).flsgproc:= FALSE;
+      vr_tab_limite_gps(1).qtmesagd:= 0;
+      vr_tab_limite_gps(1).idtpdpag:= 0;
+    END;
+    
+    --|||||||||||||||| GERA O XML ||||||||||||||||||
+    
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_ret, TRUE);
+    dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);
+    
+    -- Abrir a tag
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => '<documentos>');
+    
+    --Pagamento de Boleto
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(1,  vr_tab_limite_boleto_convenio));
+    
+    --Pagamento de Convênio
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(2,  vr_tab_limite_boleto_convenio));
+    
+    --Pagamento de DARF
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(7,  vr_tab_limite_darf_das));
+    
+    --Pagamento de DAS
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(8,  vr_tab_limite_darf_das));
+    
+    --Pagamento de GPS
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(9,  vr_tab_limite_gps));
+    
+    --Pagamento de FGTS
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(10,  vr_tab_limite_fgts));
+    
+    --Pagamento de DAE
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => fn_gera_tag_xml_horarios(11,  vr_tab_limite_dae));
+    
+    -- Fechar a tag
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => '</documentos>'
+                           ,pr_fecha_xml      => TRUE);
+  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+    
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+    
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Nao foi possivel verificar cod. barras: '||SQLERRM;        
+      
+  END pc_obtem_horarios_pagamentos;
+
+  --> Retornar tipo de pagamento do codigo de barras
+  PROCEDURE pc_identifica_tppagamento ( pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
+                                       ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
+                                       ,pr_cdcanal     IN NUMBER   -- Codigo de origem
+                                       ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
+                                       ,pr_cdbarras    IN VARCHAR2 -- Código de barras da guia
+                                       ,pr_tpdpagto   OUT INTEGER  -- Retorna tipo de Pagamento (Dominio TPPAGAMENTO)
+                                       ,pr_tab_limite OUT inet0001.typ_tab_limite -- Retorna temptabel com os limites
+                                       ,pr_dscritic   OUT VARCHAR2 -- retorna critica
+                                      ) IS
+  /* ..........................................................................
+
+      Programa : pc_identifica_tppagamento
+      Sistema : Internet - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Odirlei Busana - AMcom
+      Data    : Abril/2018                        Ultima atualizacao: 18/04/2018
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado (On-Line)
+      Objetivo  : Retornar tipo de pagamento do codigo de barras
+
+      Alteracoes: 
+
+    .................................................................................*/
+    -----> CURSOR <-----
+    --Selecionar Informacoes Convenios
+    CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
+                      ,pr_cdempcon IN crapcon.cdempcon%type
+                      ,pr_cdsegmto IN crapcon.cdsegmto%type) IS
+      SELECT crapcon.flginter
+            ,crapcon.nmextcon
+            ,crapcon.flgcnvsi
+            ,crapcon.cdhistor
+            ,crapcon.nmrescon
+            ,crapcon.cdsegmto
+            ,crapcon.cdempcon
+      FROM crapcon
+      WHERE crapcon.cdcooper = pr_cdcooper
+      AND   crapcon.cdempcon = pr_cdempcon
+      AND   crapcon.cdsegmto = pr_cdsegmto;
+    rw_crapcon cr_crapcon%ROWTYPE;
+        
+    --> Busca dos dados do associado
+    CURSOR cr_crapass(pr_cdcooper IN craptab.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT crapass.cdcooper
+            ,crapass.nrdconta
+            ,crapass.nmprimtl
+            ,crapass.inpessoa
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper
+       AND   crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    -- Buscar os dados que serão retornados para a tela
+    CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
+      SELECT cop.cdcrdins
+           , cop.hrinigps nrinigps
+           , cop.hrfimgps nrfimgps      
+           , to_char(to_date(cop.hrinigps,'sssss'),'HH24:MI') hrinigps
+           , to_char(to_date(cop.hrfimgps,'sssss'),'HH24:MI') hrfimgps
+        FROM crapcop  cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+    
+    
+    --Variaveis Locais
+    vr_idprodut  INTEGER;
+    vr_cdempcon  crapcon.cdempcon%TYPE; -- Código do convênio
+    vr_cdsegmto  crapcon.cdsegmto%TYPE; -- Código do segmento
+    vr_tpguibar  INTEGER;               -- tp guia do codbarras
+    vr_dstpguia  VARCHAR2(100);
+    vr_vldecalc  VARCHAR2(100);
+    vr_retorno   BOOLEAN;
+    vr_digito    INTEGER;
+    vr_inpessoa  INTEGER;
+    vr_tpoperac  INTEGER;
+    vr_hratual   INTEGER;
+    vr_idesthor  INTEGER;
+    vr_datdodia  DATE;
+    vr_iddiauti  INTEGER;
+    vr_index_limite PLS_INTEGER;
+      
+    
+    vr_exc_erro  EXCEPTION;
+    vr_dscritic  VARCHAR2(2000);
+    vr_cdcritic  NUMBER;
+  
+  BEGIN
+  
+    /*** TIPOS DE PAGAMENTO ***
+         1 - Título 
+         2 - Convenio
+         7 - Imposto-DARF
+         8 - Imposto-DAS
+         9 - Imposto-GPS
+        10 - Imposto-FGTS
+        11 - Imposto-DAE     
+    ***************************/
+  
+  
+    IF LENGTH(pr_cdbarras) <> 44  THEN
+      vr_dscritic := 'Código de Barras inválido ou incompleto!';
+      RAISE vr_exc_erro;
+    END IF;
+  
+    -- Extrair tipo do codigo de barras
+    vr_idprodut := SUBSTR(pr_cdbarras,  1, 1);
+    
+    pr_tpdpagto := 0;
+    
+    --> se for diferente de conveios
+    IF vr_idprodut <> 8 THEN
+      pr_tpdpagto := 1; --> Titulo    
+      
+    ELSE
+      
+      -- Extrair campos do codigo de barras para avaliação
+      vr_cdsegmto := SUBSTR(pr_cdbarras,  2, 1);
+      vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
+    
+      --> Se for diferente de tributos
+      IF vr_cdsegmto <> 5 THEN
+        pr_tpdpagto := 2; --> Convenio      
+      ELSE
+        --> Identificar o tipo de pagamento pelo numero do convenio
+        CASE
+          WHEN vr_cdempcon IN (64, 153, 154, 385) THEN
+            pr_tpdpagto := 7;  --> GUIA DARF
+          WHEN vr_cdempcon IN (328) THEN
+            pr_tpdpagto := 8;  --> GUIA DAS
+          WHEN vr_cdempcon = 270 THEN
+            pr_tpdpagto := 9;  --> Guia GPS
+          WHEN vr_cdempcon IN (0178,0179,0180,0181,0239,0240,0451) THEN
+            pr_tpdpagto := 10; --> GUIA FGTS
+          WHEN vr_cdempcon IN (0432) THEN
+            pr_tpdpagto := 11; --> GUIAS DAE
+          ELSE
+            pr_tpdpagto := 2;  --> Convenios
+        END CASE;  
+      
+      END IF;
+      
+      IF pr_tpdpagto <> 9 THEN -- Se não for GPS
+        --> Verificar convenio 
+        OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
+                        ,pr_cdempcon => vr_cdempcon
+                        ,pr_cdsegmto => vr_cdsegmto);
+        FETCH cr_crapcon INTO rw_crapcon;
+        IF cr_crapcon%NOTFOUND THEN
+        
+          CLOSE cr_crapcon;
+          vr_dscritic:= 'Empresa nao Conveniada '||vr_cdsegmto ||'/'||vr_cdempcon;
+          RAISE vr_exc_erro;
+        ELSE      
+          CLOSE cr_crapcon;
+          
+          --> Internet/Mobile
+          IF pr_cdcanal IN (3,10)   AND 
+             rw_crapcon.flginter = 0 THEN --false
+            vr_dscritic:= 'Convenio nao habilitado para internet.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;        
+        END IF;
+      END IF;
+    
+    END IF;
+    
+    IF pr_tpdpagto = 0 THEN
+      vr_dscritic := 'Tipo de pagamento não permitido.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --> Se for titulo
+    IF pr_tpdpagto = 1 THEN
+      --> Calculo do Digito Verificador  - Titulo
+      vr_vldecalc := pr_cdbarras;
+      CXON0000.pc_calc_digito_titulo (pr_valor   => vr_vldecalc  --> Valor Calculado
+                                     ,pr_retorno => vr_retorno); --> Retorno digito correto
+      --Se retornou erro
+      IF NOT vr_retorno THEN
+        vr_cdcritic := 8;
+        RAISE vr_exc_erro;
+      END IF;
+    
+    ELSE
+    
+      --Calcular Digito Codigo Barras
+      vr_vldecalc := pr_cdbarras;
+
+      IF SUBSTR(pr_cdbarras,3,1) IN ('6','7') THEN
+        --->> Calculo digito verificador pelo modulo 10 
+        CXON0000.pc_calc_digito_iptu_samae (pr_valor    => vr_vldecalc   --> Valor Calculado
+                                           ,pr_nrdigito => vr_digito     --> Digito Verificador
+                                           ,pr_retorno  => vr_retorno);  --> Retorno digito correto
+      ELSE
+        --->> Verificacao do digito no modulo 11 
+        CXON0000.pc_calc_digito_titulo_mod11 (pr_valor      => vr_vldecalc  --> Valor Calculado
+                                             ,pr_nro_digito => vr_digito    --> Digito verificador
+                                             ,pr_retorno    => vr_retorno); --> Retorno digito correto
+      END IF;
+
+      --Se ocorreu erro na validacao
+      IF NOT vr_retorno THEN
+        vr_cdcritic := 8;
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    
+    
+    --Verificar se o associado existe
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+
+      CLOSE cr_crapass;
+      vr_cdcritic:= 9;
+      RAISE vr_exc_erro;
+    ELSE
+      --Determinar tipo pessoa para busca limite
+      IF rw_crapass.inpessoa > 1 THEN
+        vr_inpessoa:= 2;
+      ELSE
+        vr_inpessoa:= rw_crapass.inpessoa;
+      END IF;
+
+    END IF;
+    
+    -- Caso for GPS
+    IF pr_tpdpagto = 9 THEN
+      
+      -- Buscar os dados que serão retornados para a tela
+      OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      CLOSE cr_crapcop;
+      
+      --Determinar a hora atual
+      vr_hratual:= GENE0002.fn_busca_time;
+        
+      --Verificar se estourou o limite
+      IF vr_hratual < rw_crapcop.nrinigps OR vr_hratual > rw_crapcop.nrfimgps THEN
+        vr_idesthor:= 1; --Estourou limite
+      ELSE
+        vr_idesthor:= 2; --Dentro do Horario limite
+      END IF;
+      
+      --> Horario diferenciado para finais de semana e feriados
+      vr_datdodia:= PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);
+      
+      --Se for feriado ou final semana
+      IF Trunc(vr_datdodia) <> Trunc(SYSDATE) THEN
+        --Nao eh dia util
+        vr_iddiauti:= 2;
+      ELSE
+        vr_iddiauti:= 1;
+      END IF;
+      
+      vr_index_limite:= pr_tab_limite.Count+1;
+      pr_tab_limite(vr_index_limite).hrinipag:= GENE0002.fn_converte_time_data(rw_crapcop.nrinigps);
+      pr_tab_limite(vr_index_limite).hrfimpag:= GENE0002.fn_converte_time_data(rw_crapcop.nrfimgps);
+      pr_tab_limite(vr_index_limite).nrhorini:= rw_crapcop.nrinigps;
+      pr_tab_limite(vr_index_limite).nrhorfim:= rw_crapcop.nrfimgps;
+      pr_tab_limite(vr_index_limite).idesthor:= vr_idesthor;
+      pr_tab_limite(vr_index_limite).iddiauti:= vr_iddiauti;
+      pr_tab_limite(vr_index_limite).flsgproc:= FALSE;
+      pr_tab_limite(vr_index_limite).qtmesagd:= 0;
+      pr_tab_limite(vr_index_limite).idtpdpag:= 0;
+      
+    ELSE
+    
+      /*  Tipo de Operacao (0=todos)
+          1 - Transferencia intracooperativa  
+          2 - Pagamento 
+          3 - Cobranca 
+          4 - TED 
+          5 - Transferencia intercooperativa 
+         10 - DARF/DAS 
+         12 - FGTS
+         13 - DAE */
+         
+      CASE pr_tpdpagto
+        WHEN  1 THEN vr_tpoperac :=  2; -- Título 
+        WHEN  2 THEN vr_tpoperac :=  2; -- Convenio
+        WHEN  7 THEN vr_tpoperac := 10; -- Imposto-DARF
+        WHEN  8 THEN vr_tpoperac := 10; -- Imposto-DAS
+        WHEN  9 THEN vr_tpoperac :=  0; -- Imposto-GPS
+        WHEN 10 THEN vr_tpoperac := 12; -- Imposto-FGTS
+        WHEN 11 THEN vr_tpoperac := 13; -- Imposto-DAE   
+        ELSE vr_tpoperac := 0;      
+      END CASE; 
+            
+      IF vr_tpoperac <> 0 THEN
+        --> Verifica o horario inicial e final para a operacao 
+        INET0001.pc_horario_operacao ( pr_cdcooper   => pr_cdcooper  -- Codigo Cooperativa
+                                      ,pr_cdagenci   => pr_cdagenci  -- Agencia do Associado
+                                      ,pr_tpoperac   => vr_tpoperac  -- Tipo de Operacao (0=todos)
+                                      ,pr_inpessoa   => vr_inpessoa  -- Tipo de Pessoa
+                                      ,pr_idagenda   => 0            -- Tipo de agendamento
+                                      ,pr_cdtiptra   => 0            -- Tipo de transferencia
+                                      ,pr_tab_limite => pr_tab_limite-- Tabelas de retorno de horarios limite
+                                      ,pr_cdcritic   => vr_cdcritic  -- Codigo do erro
+                                      ,pr_dscritic   => vr_dscritic);-- Descricao do erro
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+      ELSE
+        vr_dscritic := 'Nao foi possivel identificar tempos de limite da opercao.';
+        RAISE vr_exc_erro;
+      END IF;
+    END IF; --> Fim IF pr_tpdpagto = 9 
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+    
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+    
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Nao foi possivel verificar cod. barras: '||SQLERRM;        
+      
+  END pc_identifica_tppagamento;
+
+  --> Retornar tipo de pagamento do codigo de barras - Versao de comunicacao
+  PROCEDURE pc_identif_tppagamento_car (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
+                                       ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
+                                       ,pr_cdcanal     IN NUMBER   -- Codigo de origem
+                                       ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
+                                       ,pr_cdbarras    IN VARCHAR2 -- Código de barras da guia
+                                       ,pr_xml_ret     OUT CLOB    -- Retorno XML
+                                      ) IS
+  /* ..........................................................................
+
+      Programa : pc_identif_tppagamento_car
+      Sistema : Internet - Cooperativa de Credito
+      Sigla   : CRED
+      Autor   : Odirlei Busana - AMcom
+      Data    : Abril/2018                        Ultima atualizacao: 18/04/2018
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado (On-Line)
+      Objetivo  : Retornar tipo de pagamento do codigo de barras  - Versao de comunicacao
+
+      Alteracoes: 
+
+    .................................................................................*/
+    ------>  CURSOR   <-----
+    
+    ------> VARIAVEIS <-----
+    --Variaveis Locais
+    vr_tab_limite inet0001.typ_tab_limite;
+    vr_tpdpagto   INTEGER;
+    vr_flsgproc   INTEGER;
+      
+    -- Variaveis de XML
+    vr_xml_tmp VARCHAR2(32767);
+    
+    vr_exc_erro  EXCEPTION;
+    vr_dscritic  VARCHAR2(2000);
+    vr_cdcritic  NUMBER;
+  
+  BEGIN
+  
+    /*** TIPOS DE PAGAMENTO ***
+         1 - Título 
+         2 - Convenio
+         7 - Imposto-DARF
+         8 - Imposto-DAS
+         9 - Imposto-GPS
+        10 - Imposto-FGTS
+        11 - Imposto-DAE     
+    ***************************/
+    
+    --> Retornar tipo de pagamento do codigo de barras
+    pc_identifica_tppagamento ( pr_cdcooper    => pr_cdcooper     -- Codigo da cooperativa
+                               ,pr_cdagenci    => pr_cdagenci     -- Codigo de agencia                                       
+                               ,pr_cdcanal     => pr_cdcanal      -- Codigo de origem
+                               ,pr_nrdconta    => pr_nrdconta     -- Numero da conta do cooperado
+                               ,pr_cdbarras    => pr_cdbarras     -- Código de barras da guia
+                               ,pr_tpdpagto    => vr_tpdpagto     -- Retorna tipo de Pagamento (Dominio TPPAGAMENTO)
+                               ,pr_tab_limite  => vr_tab_limite   -- Retorna temptabel com os limites
+                               ,pr_dscritic    => vr_dscritic  ); -- retorna critica
+    
+  
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_ret, TRUE);
+    dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);
+      
+    -- Montar XML com registros de carencia        
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret 
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => '<documento>' 
+                                              ||   '<tppagamento>'||vr_tpdpagto                                   ||'</tppagamento>'
+                                              ||   '<hrinipag>'   ||vr_tab_limite(vr_tab_limite.FIRST).hrinipag           ||'</hrinipag>'
+                                              ||   '<hrfimpag>'   ||vr_tab_limite(vr_tab_limite.FIRST).hrfimpag           ||'</hrfimpag>'
+                                              ||   '<nrhorini>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).nrhorini)  ||'</nrhorini>'
+                                              ||   '<nrhorfim>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).nrhorfim)  ||'</nrhorfim>'
+                                              ||   '<idesthor>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).idesthor)  ||'</idesthor>'
+                                              ||   '<iddiauti>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).iddiauti)  ||'</iddiauti>'
+                                              ||   '<flsgproc>'   || vr_flsgproc                                  ||'</flsgproc>'
+                                              ||   '<qtmesagd>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).qtmesagd)  ||'</qtmesagd>'
+                                              ||   '<idtpdpag>'   ||to_char(vr_tab_limite(vr_tab_limite.FIRST).idtpdpag)  ||'</idtpdpag>'
+                                              || '</documento>'
+                           ,pr_fecha_xml      => TRUE);
+  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+    
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+    
+      pr_xml_ret := '<dsmsgerr>' || vr_dscritic || '</dsmsgerr>';
+    WHEN OTHERS THEN
+      vr_dscritic := 'Nao foi possivel verificar cod. barras: '||SQLERRM;        
+      pr_xml_ret := '<dsmsgerr>' || vr_dscritic || '</dsmsgerr>';
+      
+  END pc_identif_tppagamento_car;
 
 END PAGA0002;
 /
