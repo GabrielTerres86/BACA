@@ -38,10 +38,7 @@ $vlaplicacoes       = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'
 $dtfimcontrato      = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
 $flgdebito_reversao = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
 
-//print_r($convenios);exit;
-
 $arrConvenios = array();
-$auxConvenios = array();
 if (count($convenios)) {
     foreach($convenios as $convenio) {
         $auxConvenios = array();
@@ -68,26 +65,18 @@ $xml .= "   <flgdebito_reversao>".$flgdebito_reversao."</flgdebito_reversao>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
+
 $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "INCLUI_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
-
 $xmlDados = $xmlObject->roottag;
-
-$idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");//$xmlObject->roottag->tags[0]->cdata;
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
     exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
-    exibirErro('inform', 'Desconto incluido com sucesso.','Alerta - Ayllos','acessaOpcaoContratos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
-    // atualizar status para ativo
-    //echo 'realizaHabilitacao('.$idcalculo_reciproci.',"I");';
+    $idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");
     
-	// $xmlDados = $xmlObject->roottag->tags[0];
-    // $dsdmesag = getByTagName($xmlDados->tags,"DSDMESAG");
-	// $flgimpri = getByTagName($xmlDados->tags,"FLGIMPRI");
+    exibirErro('inform','Descontos inclu&iacute;dos com sucesso.','Alerta - Ayllos','acessaOpcaoContratos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }
-
-//echo 'hideMsgAguardo();';

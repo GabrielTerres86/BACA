@@ -39,12 +39,15 @@ $vlaplicacoes        = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes
 $dtfimcontrato       = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
 $flgdebito_reversao  = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
 
+$arrConvenios = array();
 if (count($convenios)) {
-    $strConven = array();
     foreach($convenios as $convenio) {
-        $strConven[] = $convenio->convenio;
+        $auxConvenios = array();
+        foreach($convenio as $k => $v) {
+            $auxConvenios[] = $v;
+        }
+        $arrConvenios[] = implode(",", $auxConvenios);
     }
-    $convenios = implode(',', $strConven);
 }
 
 // Montar o xml de Requisicao
@@ -54,7 +57,7 @@ $xml .= " <Dados>";
 $xml .= "   <idcalculo_reciproci>".$idcalculo_reciproci."</idcalculo_reciproci>";
 $xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
 $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-$xml .= "   <ls_convenios>".$convenios."</ls_convenios>";
+$xml .= "   <ls_convenios>".implode(";", $arrConvenios)."</ls_convenios>";
 $xml .= "   <boletos_liquidados>".converteFloat($boletos_liquidados)."</boletos_liquidados>";
 $xml .= "   <volume_liquidacao>".converteFloat($volume_liquidacao)."</volume_liquidacao>";
 $xml .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
@@ -69,14 +72,17 @@ $xmlObject = getObjectXML($xmlResult);
 
 $xmlDados = $xmlObject->roottag;
 
-$idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
-    $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
+    $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    if ($msgErro == "") {
+        $msgErro = $xmlObj->roottag->tags[0]->cdata;
+    }
+
     exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
+    $idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");
+
     exibirErro('inform','Descontos atualizados com sucesso.','Alerta - Ayllos','acessaOpcaoContratos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }
-
-echo 'hideMsgAguardo();';

@@ -159,7 +159,10 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 				$cnv = array();
 				
 				foreach($convenios as $convenio) {
-				$cnv[] = '{"convenio":'.$convenio->tags[0]->cdata.', "tipo":"'.$convenio->tags[1]->cdata.'"}';
+					foreach($convenio->tags as $key => $value) {
+						$cnv[strtolower($value->name)] = $value->cdata;
+					}
+					$aux[] = $cnv;
 				?>
 				<tr>
 					<td width="60%"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
@@ -177,7 +180,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 </div>
 <?php if (count($cnv)) { ?>
 <script>
-	descontoConvenios = [<?php echo implode(',', $cnv); ?>];
+	descontoConvenios = <?php echo json_encode($aux); ?>;
 </script>
 <?php } ?>
 <table width="100%" class="tabelaDesconto">
