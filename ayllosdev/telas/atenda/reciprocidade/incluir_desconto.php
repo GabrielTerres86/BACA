@@ -38,12 +38,18 @@ $vlaplicacoes       = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'
 $dtfimcontrato      = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
 $flgdebito_reversao = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
 
+//print_r($convenios);exit;
+
+$arrConvenios = array();
+$auxConvenios = array();
 if (count($convenios)) {
-    $strConven = array();
     foreach($convenios as $convenio) {
-        $strConven[] = $convenio->convenio;
+        $auxConvenios = array();
+        foreach($convenio as $k => $v) {
+            $auxConvenios[] = $v;
+        }
+        $arrConvenios[] = implode(",", $auxConvenios);
     }
-    $convenios = implode(',', $strConven);
 }
 
 // Montar o xml de Requisicao
@@ -52,7 +58,7 @@ $xml .= "<Root>";
 $xml .= " <Dados>";	
 $xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
 $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-$xml .= "   <ls_convenios>".$convenios."</ls_convenios>";
+$xml .= "   <ls_convenios>".implode(";", $arrConvenios)."</ls_convenios>";
 $xml .= "   <boletos_liquidados>".converteFloat($boletos_liquidados)."</boletos_liquidados>";
 $xml .= "   <volume_liquidacao>".converteFloat($volume_liquidacao)."</volume_liquidacao>";
 $xml .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
@@ -74,10 +80,9 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
-    
-    echo 'hideMsgAguardo();';
+    exibirErro('inform', 'Desconto incluido com sucesso.','Alerta - Ayllos','acessaOpcaoContratos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     // atualizar status para ativo
-    echo 'realizaHabilitacao('.$idcalculo_reciproci.',"I");';
+    //echo 'realizaHabilitacao('.$idcalculo_reciproci.',"I");';
     
 	// $xmlDados = $xmlObject->roottag->tags[0];
     // $dsdmesag = getByTagName($xmlDados->tags,"DSDMESAG");
@@ -85,4 +90,4 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     
 }
 
-echo 'hideMsgAguardo();';
+//echo 'hideMsgAguardo();';
