@@ -43,8 +43,10 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 						25/10/2017 - Inclusão de filtro de programa, Prj. 322 (Jean Michel).		
     
             01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-    				 
-												 
+
+
+			18/07/2018 - Ajuste realizado para que o sequencial NRSEQDIG nunca seja inserido zerado. (INC0017391 - Kelvin)
+
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -432,7 +434,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 			RUN PermissaoDeAcesso(INPUT 'wpgd0019', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
 				
 			RUN RodaJavaScript("aguarde();").
-			
+
       /* Marcar primeiro evento selecionado  */
       IF REQUEST_METHOD = "GET" THEN
         DO: 
@@ -491,10 +493,10 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                      
       IF AVAIL crapagp THEN 
         ASSIGN aux_dstextab = STRING(crapagp.idstagen).
-      
+
       IF GET-VALUE("mudaevento") = "sim" THEN /* Verificando se o POST foi feito somente para trocar de evento ou de cooperativa */
         LEAVE bloco.
-	 
+
       /* Verificando se o POST foi feito para gerar nova agenda */
       IF GET-VALUE("gera") = "sim" THEN
         DO: 
@@ -678,38 +680,36 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 										IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
 											DO:
 												/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-												ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
-															 aux_contnrseq = 0.
-												agenda:
-												DO WHILE TRUE:
-													IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-														DO:
+												Contador: DO aux_contnrseq = 1 TO 5:
+
 															ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
 															IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
 																DO:
-																	ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-																	leave agenda.
-																END.
-															ELSE
-																LEAVE agenda.
+															IF  aux_contnrseq = 5 THEN
+																DO:
+																	ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+																		   aux_erro = NO.
 															
+																	RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+																	RETURN "NOK".
 														END.
 													ELSE
 														DO:
-															IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
-																	DO:
-																		ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
-																					 aux_erro = NO.
-																		RUN RodaJavaScript("alert('" + aux_msgderro + "')").
-																		RETURN "NOK".
+																   PAUSE 1 NO-MESSAGE.				   
 																	END.
-															ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-																LEAVE agenda.      
 														END.
+													ELSE
+														LEAVE Contador.
 													
-														
-													ASSIGN aux_contnrseq = aux_contnrseq + 1.
+														END.
+
+												IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+													DO:
+														ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+															   aux_erro = NO.
 													
+														RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+														RETURN "NOK".
 												END.
 												/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
 												
@@ -875,39 +875,39 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                              and crapsde.cdevento = crapedp.cdevento
                              and crapsde.cdagenci = crapagp.cdagenci NO-LOCK:
 						 
+						
+            
 						/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-            ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
-                   aux_contnrseq = 0.
-            agenda:
-            DO WHILE TRUE:
-              IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                DO:
+			Contador: DO aux_contnrseq = 1 TO 5:
+
                   ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
                   IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                     DO:
-                      ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                      leave agenda.
-                    END.
-                  ELSE
-                    LEAVE agenda.
+						IF  aux_contnrseq = 5 THEN
+							DO:
+								ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+									   aux_erro = NO.
                   
+								RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+								RETURN "NOK".
                 END.
               ELSE
                 DO:
-                  IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
-                      DO:
-                        ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
-                               aux_erro = NO.
-                        RUN RodaJavaScript("alert('" + aux_msgderro + "')").
-                        RETURN "NOK".
+							   PAUSE 1 NO-MESSAGE.				   
                       END.
-                  ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                    LEAVE agenda.      
                 END.
+				ELSE
+					LEAVE Contador.
               
-                
-              ASSIGN aux_contnrseq = aux_contnrseq + 1.
+                END.
+
+			IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+				DO:
+					ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
+						   aux_erro = NO.
               
+					RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+					RETURN "NOK".
             END.
             /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
 						
@@ -933,7 +933,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 		
       END PROCEDURE.
       
-      PROCEDURE CriaCratedp:
+      PROCEDURE CriaCratedp:        
         FOR EACH crapedp WHERE crapedp.idevento = gnpapgd.idevento
                            AND crapedp.cdcooper = gnpapgd.cdcooper
                            AND crapedp.dtanoage = gnpapgd.dtanonov
@@ -945,17 +945,17 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           
           IF crapedp.tpevento = 2  THEN /* integracao */
             ASSIGN cratedp.tpevento = 999
-                   cratedp.flgordem = YES.
+                   cratedp.flgordem = YES.          
         END.
       END PROCEDURE.
       
       PROCEDURE CriaEventosTemp:
         /* guarda os eventos de integracao */
         DEF VAR aux_cdeveint AS CHAR             NO-UNDO.
-
+        
         FOR EACH cratedp WHERE cratedp.tpevento = 999 NO-LOCK:
           aux_cdeveint = aux_cdeveint + STRING(cratedp.cdevento) + ",".
-        END.
+        END. 
 
 
         FOR EACH crapadp WHERE crapadp.idevento = gnpapgd.idevento
@@ -989,14 +989,14 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           /* Total de Eventos + Integracoes */
           ASSIGN aux_qttotger = aux_qttotger + 1.
 
-          IF CAN-DO(aux_cdeveint,STRING(crapadp.cdevento)) THEN
+          IF CAN-DO(aux_cdeveint,STRING(crapadp.cdevento)) THEN 
             /* Total de Integracoes */
             ASSIGN aux_qttotint = aux_qttotint + 1.
 
         END. /* FOR EACH */
 
         /* Total de Eventos */
-        ASSIGN aux_qttoteve = aux_qttotger - aux_qttotint.
+        ASSIGN aux_qttoteve = aux_qttotger - aux_qttotint. 
 
       END PROCEDURE.
 
@@ -1028,7 +1028,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       END PROCEDURE.
 
       /* left: 37px; top: 3px; */
-    </script>
+    </script>   
   </head>
   <body style="margin-left: 3px; " onload="mudaEvento(document.form.aux_cdcooper.value);" >
    <script type="text/javascript" src="/cecred/jsbiblio/wz_dragdrop.js"></script></head>
@@ -1148,21 +1148,21 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                           </select>
                         </td>
                         <td height="23" align="left" valign="middle" class="NomeCampo">
-													&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eventos:
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eventos:
                           <select name="aux_selevento" class="Campo" id="aux_selevento" onchange="buscaEvento()">
-														<option value="0">-- SELECIONE --</option>
+                            <option value="0">-- SELECIONE --</option>
                             <script language="SpeedScript">
                               RUN RodaJavaScript("aguarde()").
-															RUN CriaCratedp.
-                              RUN CriaEventosTemp.
+                              RUN CriaCratedp. 
+                                RUN CriaEventosTemp.
                               RUN RodaJavaScript("hideMsgAguardo()").
                               FOR EACH cratedp WHERE cratedp.idevento = gnpapgd.idevento
                                                  AND cratedp.cdcooper = gnpapgd.cdcooper
                                                  AND cratedp.dtanoage = gnpapgd.dtanonov 
                                                  AND cratedp.tpevento <> 10
                                                  AND cratedp.tpevento <> 11
-																								 AND (cratedp.nrseqpgm = aux_nrseqpgm
-																									OR aux_nrseqpgm = 0) NO-LOCK
+                                                 AND (cratedp.nrseqpgm = aux_nrseqpgm
+                                                       OR aux_nrseqpgm = 0) NO-LOCK
                                                   BY cratedp.flgordem
                                                   BY cratedp.nmevento:
                                 IF cratedp.tpevento <> 2 THEN
@@ -1177,43 +1177,43 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                       NEXT.
                                   END.
                                   
-                              IF aux_selevento = cratedp.cdevento THEN
-                                assign aux_selected = "SELECTED".																					      
-                              ELSE
-                                assign aux_selected = "".																				          
+                                IF aux_selevento = cratedp.cdevento THEN
+                                  assign aux_selected = "SELECTED".																					      
+                                ELSE
+                                  assign aux_selected = "".
                             </script>
                             <option value="`cratedp.cdevento`" `aux_selected`>`CAPS(cratedp.nmevento)`</option>
                             <script language="SpeedScript">						
-                              END.             
-                            </script>               							              
-                          </select> 
+                              END.
+                            </script>
+                          </select>
                         </td>
                         <td height="23" align="left" valign="middle" colspan="2" class="NomeCampo">Ano Base:
                           <input type="text" name="aux_dtanoage" size="4" class="Campo" onChange="aguarde(); document.form.submit();" value="`aux_dtanoage`">						 
 						  
                         </td>
                       </tr>
-											<tr>
-												<td height="23" align="left" valign="middle" colspan="2" class="NomeCampo">
+                    <tr>
+                        <td height="23" align="left" valign="middle" colspan="2" class="NomeCampo">
 													
-													&nbsp;&nbsp;&nbsp;&nbsp;Programa:
+                            &nbsp;&nbsp;&nbsp;&nbsp;Programa:
                           <select name="aux_nrseqpgm" class="Campo" id="aux_nrseqpgm" onchange="buscaEvento()">
-														<option value="0">-- TODOS --</option>
-														<script language="SpeedScript">
-															FOR EACH crappgm WHERE crappgm.idsitpgm = 1  NO-LOCK BY crappgm.nmprogra:
-																
-																IF aux_nrseqpgm = crappgm.nrseqpgm THEN
-																	assign aux_selected = "SELECTED".																					      
-																ELSE
-																	assign aux_selected = "".	
-														</script>   
-														<option value="`crappgm.nrseqpgm`" `aux_selected`>`CAPS(crappgm.nmprogra)`</option>
-														<script language="SpeedScript">
-															END.
-														</script>
-													</select>
-												</td>	
-											</tr>
+                                <option value="0">-- TODOS --</option>
+                                <script language="SpeedScript">
+                                    FOR EACH crappgm WHERE crappgm.idsitpgm = 1  NO-LOCK BY crappgm.nmprogra:
+                                        
+                                        IF aux_nrseqpgm = crappgm.nrseqpgm THEN
+                                            assign aux_selected = "SELECTED".																					      
+                                        ELSE
+                                            assign aux_selected = "".	
+                                </script>   
+                                <option value="`crappgm.nrseqpgm`" `aux_selected`>`CAPS(crappgm.nmprogra)`</option>
+                                <script language="SpeedScript">
+                                    END.
+                                </script>
+                            </select>
+                        </td>	
+                    </tr>
                     </table>
                   </fieldset>
       
@@ -1279,9 +1279,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
               <tr>
                 <td align="left" valign="top" bgcolor="#FFFFFF" >              
                   <table class="dataTable" id="selecao" cellpadding="0" cellspacing="0" border="0"> 
-                    <script language="SpeedScript">    
-											IF aux_selevento <> 0 THEN
-												DO:
+                    <script language="SpeedScript">
+                      IF aux_selevento <> 0 THEN
+                      DO:
                       FOR EACH cratedp WHERE cratedp.idevento  = gnpapgd.idevento
                                          AND cratedp.cdcooper  = gnpapgd.cdcooper
                                          AND cratedp.dtanoage  = gnpapgd.dtanonov
@@ -1320,8 +1320,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                     <tr class="dataTableRow`aux_zebra`">
                       <td rowspan="`aux_maxlin`" id="ev`cratedp.cdevento`" nowrap class="LinhaTabelaSelect`aux_zebra`" width="120px"><font size="1">`CAPS(cratedp.nmevento)`</font><br><a href="#."onclick='novaLinha(document.form.ultimadiv.value,`aux_posicaovetor`,"`cratedp.cdevento`",document.form.ultimalinha.value,"`aux_zebra`");'>nova linha</a></td>       
                         <script language="SpeedScript">
-                          aux_linha = 0.
-                          DO WHILE aux_linha < aux_maxlin.
+                        aux_linha = 0.
+                        DO WHILE aux_linha < aux_maxlin.
                             ASSIGN aux_contador = aux_contador + 1
                                    aux_linha    = aux_linha + 1
 																	 aux_mescont = aux_mesini.
@@ -1343,7 +1343,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                                      AND tt-evento.nrmeseve = aux_mescont NO-ERROR.
                               
                               IF AVAIL tt-evento THEN
-                                DO:
+                                DO:                               
                                   ASSIGN aux_cdagenci = tt-evento.cdagenci.
                                   
 																	FIND FIRST crapage WHERE crapage.cdcooper = gnpapgd.cdcooper
@@ -1413,32 +1413,32 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                           <div STYLE="width:'55px'; BACKGROUND-COLOR:'`aux_corfundo`'; cursor:default" class="infparcela`aux_zebra`" id="nome`aux_contador`" idstagen="`aux_dstextab`" idinseve="`aux_idinseve`" registro="`aux_ttrowid`" mes="`STRING(aux_mescont)`" nowrap ondblclick="EdEvento(this.registro,this.mes,`aux_dstextab`)" title="`LC(TRIM(STRING(aux_nmresage19)))`">`LC(TRIM(STRING(aux_nmresage19,"x(8)")))`</div>
                         </td>
                         <script language="SpeedScript">                                                        
-                            ASSIGN aux_contador = aux_contador + 1
-                                   aux_mescont = aux_mescont + 1.
-                          END. /* do meses */
+                              ASSIGN aux_contador = aux_contador + 1
+                                     aux_mescont = aux_mescont + 1.
+                            END. /* do meses */
                         </script>            
                       </tr>
-                    <script language="SpeedScript">                                                        
+                    <script language="SpeedScript">
                         END. 
-                          
+
                         ASSIGN i-poseventos = ((i-poseventos + aux_maxlin)).
                         
                         IF c-poseventos <> "" THEN
-													ASSIGN c-poseventos = c-poseventos + ",".
-													
-												ASSIGN c-poseventos = c-poseventos + STRING(i-poseventos)
-															 aux_posicaovetor = aux_posicaovetor + 1.	
-                        
+                        ASSIGN c-poseventos = c-poseventos + ",".
+
+                        ASSIGN c-poseventos = c-poseventos + STRING(i-poseventos)
+                               aux_posicaovetor = aux_posicaovetor + 1.
+
                         LEAVE.
                       END. /*fim cratedp */
                       END. /* FIM IF*/
-                      IF aux_evts = "" THEN
-                        ASSIGN aux_evts = '"novo"'.
-                      ELSE
-                        ASSIGN aux_evts = aux_evts + ',"novo"'.
+                    IF aux_evts = "" THEN
+                      ASSIGN aux_evts = '"novo"'.
+                    ELSE
+                      ASSIGN aux_evts = aux_evts + ',"novo"'.
 
-                      RUN RodaJavaScript("SET_DHTML(CURSOR_HAND," + aux_evts + ");").         
-                      RUN RodaJavaScript("hideMsgAguardo()").
+                    RUN RodaJavaScript("SET_DHTML(CURSOR_HAND," + aux_evts + ");").         
+                    RUN RodaJavaScript("hideMsgAguardo()").
                     </script>        
                   </table>          
                 </td>
@@ -1471,7 +1471,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       <input type="hidden" name="envia" value="">
       <input type="hidden" name="auxdstextab" value="`aux_dstextab`">
     </form>
-    
+
     <script language="JavaScript">
       var tdev='';tdp='';tdx=0;tdy=0;tdbg='';tdrw='';tde=0;tdm=0;
       // evento chamado ao clicar na div para arrastar 
