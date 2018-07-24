@@ -1,10 +1,11 @@
 <!-------------------------------------------------------------------------------------
 
-  Alterações: 25/07/2017 - Criaçao da Tela para Eventos Assembleares, fonte cópia da
-                           tela WPGD0019, Prj. 322 (Jean Michel).
-                         
-              01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
+  Criação: 25/09/2017 - Criaçao da Tela para utilização pela OQS FILIADA  
+                        Somente Eventos do tipo 13 - Pré-Assembleia Empresa
+		 		        cópia da tela WPGD0023, Prj. 322 (Andrei)..
+          
+           01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                             
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -402,7 +403,7 @@
       DEFINE VARIABLE aux_cdoperad AS CHARACTER.
       DEFINE VARIABLE aux_nrseqdig LIKE crapadp.nrseqdig.
 			
-      RUN PermissaoDeAcesso(INPUT 'wpgd0023', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
+      RUN PermissaoDeAcesso(INPUT 'wpgd0062', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
 			
 			RUN RodaJavaScript("aguarde();").
       /* Marcar primeiro evento selecionado  */
@@ -418,6 +419,7 @@
       IF REQUEST_METHOD = "POST" THEN 
 	    bloco:  
         DO: 
+          
           ASSIGN aux_cdcooper = INT(GET-VALUE("aux_cdcooper"))
                  aux_cdcopope = INT(GET-VALUE("aux_cdcopope"))
                  aux_cdoperad = GET-VALUE("aux_cdoperad")
@@ -516,7 +518,6 @@
 		  END.
 		ELSE
 			DO:
-				
          /* Verificando se o POST foi feito para enviar nova agenda */
 		IF GET-VALUE("envia") = "sim" THEN
           DO:
@@ -584,7 +585,7 @@
                   IF VALID-HANDLE (h-b1wgen0011) THEN
                     DO:
                       RUN solicita_email_oracle IN h-b1wgen0011(INPUT  INTEGER(gnpapgd.cdcooper)             	  /* par_cdcooper        */
-                                                               ,INPUT  "wpgd0023"                                 /* par_cdprogra        */
+                                                               ,INPUT  "wpgd0062"                                 /* par_cdprogra        */
                                                                ,INPUT  aux_dsdemail                               /* par_des_destino     */
                                                                ,INPUT  "PROGRID - AGENDA LIBERADA" 				  /* par_des_assunto     */
                                                                ,INPUT  aux_dsconteu                               /* par_des_corpo       */
@@ -650,18 +651,17 @@
                                crapadp.cdagenci = INT(ENTRY(aux_i,aux_pac))    
                                crapadp.nrmeseve = INT(ENTRY(aux_i,aux_mes)).
                       END.
-                  END.  /* IF AVAIL crapadp THEN */
+                  END.  
                 ELSE /* caso registro nao exista */
                   DO:
 					
-										/*IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
-											DO:JMD LIB*/
+					IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
+						DO:
 					
                         /* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
                                aux_contnrseq = 0.
-                        
-												agendaNrseqdig:
+                        agenda:
                         DO WHILE TRUE:
                           IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                             DO:
@@ -669,10 +669,10 @@
                               IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
                                 DO:
                                   ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                                  leave agendaNrseqdig.
+                                  leave agenda.
                                 END.
                               ELSE
-                                LEAVE agendaNrseqdig.
+                                LEAVE agenda.
                               
                             END.
                           ELSE
@@ -685,12 +685,12 @@
                                     RETURN "NOK".
                                   END.
                               ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                                LEAVE agendaNrseqdig.      
+                                LEAVE agenda.      
                             END.												
                             
                           ASSIGN aux_contnrseq = aux_contnrseq + 1.
                           
-                        END. /* agendaNrseqdig: */
+                        END.
                         /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
                         
                         CREATE crapadp.
@@ -780,7 +780,6 @@
                           END. /* crapagp.idstagen > 4 */
 						ELSE
 							DO:
-														
 								FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
 																	 AND crapagp.cdcooper = gnpapgd.cdcooper
 																	 AND crapagp.dtanoage = gnpapgd.dtanonov
@@ -803,7 +802,7 @@
 									END. /* AVAILABLE crapagp */
 							END. /* ELSE  crapagp.idstagen */
                         VALIDATE crapadp.
-									/*END. JMD LIB*/ /* INT(ENTRY(aux_i,aux_pac)) <> 0*/
+					 END. /* INT(ENTRY(aux_i,aux_pac)) <> 0*/
                   END. /* /* caso registro nao exista */ */
 			END. /* REPEAT */
 		  END. /* ELSE */
@@ -927,7 +926,8 @@
       
         FOR EACH crapedp WHERE crapedp.idevento = gnpapgd.idevento
                            AND crapedp.cdcooper = gnpapgd.cdcooper
-                           AND crapedp.dtanoage = gnpapgd.dtanonov NO-LOCK by crapedp.tpevento :
+                           AND crapedp.dtanoage = gnpapgd.dtanonov 
+						   AND crapedp.tpevento = 13 /* ANDREI */ NO-LOCK by crapedp.tpevento :
 
           CREATE cratedp.
           BUFFER-COPY crapedp TO cratedp.
@@ -1036,8 +1036,8 @@
               <tr> 
                 <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
                 <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
-                <td height="20" class="linkGuia">Composição das Agendas</td>
-                <td width="80" class="linkGuia" align="right">wpgd0023</td>
+                <td height="20" class="linkGuia">Composição OQS Filiada</td>
+                <td width="80" class="linkGuia" align="right">wpgd0062</td>
                 <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
               </tr>
             </table>
@@ -1157,8 +1157,7 @@
                               FOR EACH cratedp WHERE cratedp.idevento = gnpapgd.idevento
                                                  AND cratedp.cdcooper = gnpapgd.cdcooper
                                                  AND cratedp.dtanoage = gnpapgd.dtanonov 
-                                                 AND cratedp.tpevento <> 10
-                                                 AND cratedp.tpevento <> 11 NO-LOCK
+                                                 AND cratedp.tpevento = 13 NO-LOCK
                                                   BY cratedp.flgordem
                                                   BY cratedp.nmevento:
                                 IF cratedp.tpevento <> 2 AND cratedp.tpevento <> 10 THEN
@@ -1721,7 +1720,7 @@
         if (rowid=='') {
           alert("Evento não salvo.");
         }else{ 
-          VarURL = document.form.aux_dsendurl.value  + '/wpgd0023a.htm?LinkRowid=' + rowid + '&mes=' + mes +'&aux_dtanoage=' + document.form.aux_dtanoage.value + '&aux_cdevento=' + document.form.aux_selevento.value + '&aux_cdcopope=' + document.form.aux_cdcopope.value + '&aux_cdoperad=' + document.form.aux_cdoperad.value + '&aux_cdcooper=' + document.form.aux_cdcooper.value + '&aux_idstagen=' + idstagen;
+          VarURL = document.form.aux_dsendurl.value  + '/wpgd0062a.htm?LinkRowid=' + rowid + '&mes=' + mes +'&aux_dtanoage=' + document.form.aux_dtanoage.value + '&aux_cdevento=' + document.form.aux_selevento.value + '&aux_cdcopope=' + document.form.aux_cdcopope.value + '&aux_cdoperad=' + document.form.aux_cdoperad.value + '&aux_cdcooper=' + document.form.aux_cdcooper.value + '&aux_idstagen=' + idstagen;
           window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=yes,menubar=no,scrollbars=yes,resizable=yes,width=615,height=440,top=10,left=10');
         } 
       }
@@ -1758,7 +1757,7 @@
         }   
       }    
 
-      NomeDoProgramaPrincipal  = '/wpgd0023.w';
+      NomeDoProgramaPrincipal  = '/wpgd0062.w';
       NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
       document.form.action = NomeDoProgramaPrincipal;
       
