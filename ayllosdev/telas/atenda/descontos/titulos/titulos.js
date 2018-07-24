@@ -47,7 +47,7 @@
  */
 
  // variaveis propostas
-var nrctrlim = 0; // limite
+var nrctrlim = $("#nrctrlim").val() != '' ? normalizaNumero($("#nrctrlim").val()) : 0; // limite
 var vllimite = 0; // valor do limite
 var nrctrmnt = 0; // contrato
 var dssitlim = ''; // desc situação da proposta

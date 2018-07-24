@@ -663,11 +663,11 @@ create or replace package body cecred.TELA_APRDES is
           vr_index := vr_tab_dados_titulos.next(vr_index);
       end loop;
       
-      OPEN dsct0003.cr_abt(pr_cdcooper=>vr_cdcooper,pr_nrborder=>pr_nrborder,pr_tpcritica=>4);
+      OPEN dsct0003.cr_crapabt(pr_cdcooper=>vr_cdcooper,pr_nrborder=>pr_nrborder,pr_tpcritica=>4);
       pc_escreve_xml('<cedente>');
       LOOP
-        FETCH dsct0003.cr_abt into dsct0003.rw_abt;
-             EXIT WHEN dsct0003.cr_abt%NOTFOUND;
+        FETCH dsct0003.cr_crapabt into dsct0003.rw_abt;
+             EXIT WHEN dsct0003.cr_crapabt%NOTFOUND;
              pc_escreve_xml('<critica>'||
                               '<dsc>' || dsct0003.rw_abt.dscritica || '</dsc>'||
                               '<vlr>' || dsct0003.rw_abt.dsdetres || '</vlr>'||
@@ -675,13 +675,13 @@ create or replace package body cecred.TELA_APRDES is
           
       END LOOP;
       pc_escreve_xml('</cedente>');
-      CLOSE dsct0003.cr_abt;
+      CLOSE dsct0003.cr_crapabt;
       
-      OPEN dsct0003.cr_abt(pr_cdcooper=>vr_cdcooper,pr_nrborder=>pr_nrborder,pr_tpcritica=>2);
+      OPEN dsct0003.cr_crapabt(pr_cdcooper=>vr_cdcooper,pr_nrborder=>pr_nrborder,pr_tpcritica=>2);
       pc_escreve_xml('<bordero>');
       LOOP
-        FETCH dsct0003.cr_abt into dsct0003.rw_abt;
-             EXIT WHEN dsct0003.cr_abt%NOTFOUND;
+        FETCH dsct0003.cr_crapabt into dsct0003.rw_abt;
+             EXIT WHEN dsct0003.cr_crapabt%NOTFOUND;
              pc_escreve_xml('<critica>'||
                               '<dsc>' || dsct0003.rw_abt.dscritica || '</dsc>'||
                               '<vlr>' || dsct0003.rw_abt.dsdetres || '</vlr>'||
@@ -689,7 +689,7 @@ create or replace package body cecred.TELA_APRDES is
           
       END LOOP;
       pc_escreve_xml('</bordero>');
-      CLOSE dsct0003.cr_abt;
+      CLOSE dsct0003.cr_crapabt;
       
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
@@ -1180,6 +1180,9 @@ create or replace package body cecred.TELA_APRDES is
                                ,pr_dscritic => vr_dscritic
                                ,pr_des_erro => vr_des_erro
                                ); 
+           IF (vr_cdcritic<>0 OR vr_dscritic IS NOT NULL) THEN 
+             raise vr_exc_erro;
+           END IF;
          END IF;
        END IF;
      ELSE /*Nenhum titulo aprovado muda a decisao para nao aprovado*/
