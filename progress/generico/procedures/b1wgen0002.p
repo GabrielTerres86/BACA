@@ -8324,8 +8324,8 @@ PROCEDURE altera-valor-proposta:
               /** M438 - Nova regra  para determinar perda de aprovaçao com a 
                          alteraçao de valor da proposta
               **/
-              IF (crawepr.vlempori <> ? OR crawepr.vlempori <> 0) AND
-                 (crawepr.vlpreori <> ? OR crawepr.vlpreori <> 0) THEN
+              IF crawepr.vlempori > 0 AND
+                 crawepr.vlpreori > 0 THEN
               DO:
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                 RUN STORED-PROCEDURE pc_processa_perda_aprov
