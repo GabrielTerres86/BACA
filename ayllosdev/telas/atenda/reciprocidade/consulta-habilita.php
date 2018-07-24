@@ -65,6 +65,7 @@ require_once("../../../class/xmlfile.php");
 
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
+$flgregis    = trim($_POST["flgregis"]);
 $nrcnvceb    = $_POST["nrcnvceb"];
 $nrconven    = $_POST["nrconven"];
 $dsorgarq    = trim($_POST["dsorgarq"]);
@@ -72,8 +73,6 @@ $insitceb    = trim($_POST["insitceb"]);
 $inarqcbr    = $_POST["inarqcbr"];
 $cddemail    = $_POST["cddemail"];
 $dsdemail    = trim($_POST["dsdemail"]);
-$flgcruni    = trim($_POST["flgcruni"]);
-$flgregis    = trim($_POST["flgregis"]);
 $flgregon    = trim($_POST["flgregon"]);
 $flgpgdiv    = trim($_POST["flgpgdiv"]);
 $flcooexp    = trim($_POST["flcooexp"]);
@@ -159,19 +158,20 @@ $cco_qtdecini = getByTagName($xmlDados->tags,"QTDECINI");
 $cco_qtdecate = getByTagName($xmlDados->tags,"QTDECATE");
 $cco_flrecipr = getByTagName($xmlDados->tags,"FLRECIPR");
 $cco_fldctman = getByTagName($xmlDados->tags,"FLDCTMAN");
-$cco_flgregis = getByTagName($xmlDados->tags,"FLGREGIS");
 $cco_perdctmx = getByTagName($xmlDados->tags,"PERDCTMX");
 $cco_flgapvco = getByTagName($xmlDados->tags,"FLGAPVCO");
 $cco_idprmrec = getByTagName($xmlDados->tags,"IDPRMREC");
 $cco_dcmaxrec = getByTagName($xmlDados->tags,"PERDESCONTO_MAXIMO_RECIPRO");
 $cco_qtlimmip = getByTagName($xmlDados->tags,"QTLIMITEMIN_TOLERANCIA");
 $cco_qtlimaxp = getByTagName($xmlDados->tags,"QTLIMITEMAX_TOLERANCIA");
+$cco_flgregis = getByTagName($xmlDados->tags,"FLGREGIS");
 	
 $insrvprt = $cco_insrvprt;
 	
 if ($cddopcao == "I") {
     $qtdecprz = $cco_qtdecini;
-    $flgregis = $cco_flgregis == 1 ? 'SIM' : 'NAO';
+    // Conforme solicitado no projeto 431 o campo passa a ser padrão SIM
+    $flgregis = 'SIM';
 }
 
 if ($cco_flprotes == 1 && $cco_insrvprt == 1 && ($qtlimmip == 0 || $qtlimaxp == 0)){
@@ -222,6 +222,8 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
     <input type="hidden" name="glb_desmensagem"            id="glb_desmensagem" />
     <input type="hidden" name="glb_perdesconto"            id="glb_perdesconto" />
     <input type="hidden" name="glb_idreciproci"            id="glb_idreciproci" />
+    <input type="hidden" name= "flgregis"                  id="flgregis"                   value="<?php echo $flgregis; ?>" />		
+
 	<fieldset>
 		<legend><? echo utf8ToHtml($dstitulo) ?></legend>
 		
@@ -272,10 +274,6 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     ?>
                     <br />
                             
-                    <label for="flgregis"><? echo utf8ToHtml('Registrada:') ?></label>
-                    <input name= "flgregis" id="flgregis" class="campoTelaSemBorda" readonly value = " <?php echo $flgregis; ?>" />		
-                    <br />	
-
                     <?php
                         if ($cco_cddbanco == 85) {
                             ?>
@@ -311,7 +309,6 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                             </select>
                             <label style="margin-left:10px;">dias</label>
                             <br />
-                            
                             <div id="divOpcaoSerasaProtesto">
                                 <label for="flserasa"><? echo utf8ToHtml('Negativação via Serasa:') ?></label>
                                 <input name="flserasa" id="flserasa" type="checkbox" class="checkbox" readonly <?php if ($flserasa == "SIM" ) { ?> checked <?php } ?> />
@@ -385,12 +382,6 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                         } ?>
                     </select>		
                     <br />
-                    
-                    <label for="flgcruni"><? echo utf8ToHtml('Utiliza Crédito Unificado:') ?></label>
-                    <select name="flgcruni" id="flgcruni" class="<?php echo $campo; ?>">
-                        <option id="flgcruni" value="yes" <? if ($flgcruni == "SIM") { ?> selected <? } ?> >   SIM </option>
-                        <option id="flgcruni" value="no"  <? if ($flgcruni == "NAO") { ?> selected <? } ?> >  N&Atilde;O </option>
-                    </select>
                     
                     <div id="divCnvHomol" style="display:<?php echo $dsorgarq == 'IMPRESSO PELO SOFTWARE' ? 'block' : 'none'; ?>;">
                         <script>
@@ -700,12 +691,10 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $("#insitceb","#divOpcaoConsulta").prop("disabled",true);
         $("#inarqcbr","#divOpcaoConsulta").prop("disabled",true);
         $("#dsdemail","#divOpcaoConsulta").prop("disabled",true);
-        $("#flgregis","#divOpcaoConsulta").prop("disabled",true);
         $("#flgregon","#divOpcaoConsulta").prop("disabled",true);
         $("#flgpgdiv","#divOpcaoConsulta").prop("disabled",true);
         $("#flcooexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flceeexp","#divOpcaoConsulta").prop("disabled",true);
-        $("#flgcruni","#divOpcaoConsulta").prop("disabled",true);
         $("#flgcebhm","#divOpcaoConsulta").prop("disabled",true);
         $("#cddbanco","#divOpcaoConsulta").prop("disabled",true);
         $("#flserasa","#divOpcaoConsulta").prop("disabled",true);

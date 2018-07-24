@@ -77,7 +77,7 @@ var tpdtermo_imprimir = 1;
 //Lista de Convenios para desconto
 var descontoConvenios = [];
 
-var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, qtTitulares,
+var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
     flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails;
 
@@ -275,8 +275,6 @@ function selecionaConvenio(idrecipr) {
  }
 //Sai da moval de desconto_convenios sem salvar.
  function sairDescontoConvenio() {
-    // Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando ...");
 
     // atualiza tabela de convênios
     $('#gridDescontoConvenios').remove();
@@ -306,26 +304,25 @@ function selecionaConvenio(idrecipr) {
     controlaLayout('divConveniosRegistros');
 
     $("#divConvenios").css("display","none");
+    $("#divOpcaoConsulta").css("display","none");
     $("#divConteudoOpcao").css('display', 'block');
     controlaFoco();
-
-    hideMsgAguardo();
 
     return false;
  }
 
 //Salva lista de convenios de desconto.
  function salvarDescontoConvenio() {
-      descontoConvenios = [];
-      var checkboxes = $('#divConvenios input[type="checkbox"]:checked');
+      var checkboxes = $('#divConvenios input[type="checkbox"]');
+
       if(checkboxes.length==0){
           showError("error", "&#201; necess&#225;rio selecionar pelo menos um conv&#234;nio;.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
           return false;
       }
       //Valida dois convenios do mesmo tipo ao mesmo tempo.
       foundMesmoTipo = false;
-      $.each(checkboxes, function (idx, elm){
-        $.each(checkboxes, function (idx2, elm2){
+      $.each(checkboxes.find(':checked'), function (idx, elm){
+        $.each(checkboxes.find(':checked'), function (idx2, elm2){
           
           if($(elm).val() != $(elm2).val() && $(elm).data('tipo') == $(elm2).data('tipo')){  
             foundMesmoTipo = true;
@@ -340,12 +337,33 @@ function selecionaConvenio(idrecipr) {
 
 
       $.each(checkboxes, function (idx, elm){
-        descontoConvenios.push({
-          convenio: $(elm).val(),
-          tipo: $(elm).data('tipo')
-        });
+          var $el = $(elm);
+          if ($el.is(':checked')) {
+            if (retornaIndice(descontoConvenios, 'convenio', $el.val()) == null) {
+                descontoConvenios.push({
+                    convenio: $el.val(),
+                    tipo: $el.data('tipo')
+                });
+            }
+          } else {
+            var index = retornaIndice(descontoConvenios, 'convenio', $el.val());
+            if (index != null) {
+                descontoConvenios.splice(index, 1);
+            }
+          }
       });
-      return sairDescontoConvenio();
+
+      sairDescontoConvenio();
+}
+
+function retornaIndice(lista, chave, valor) {
+    var index = null;
+    $.map(lista, function(a, i) {
+        if (a[chave] == valor) {
+            index = i;
+        }
+    });
+    return index;
 }
 
 
@@ -474,7 +492,6 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 		inarqcbr = 0;
 		cddemail = 0;
 		dsdemail = "";
-		flgcruni = "SIM";
 		flgcebhm = "NAO";
         flprotes = "NAO";
         qtlimmip = "";
@@ -495,6 +512,26 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando ...");
 
+    var index = retornaIndice(descontoConvenios, 'convenio', nrconven);
+    if (index != null) {
+        var item = descontoConvenios[index];
+        dsdemail = item.dsdemail;
+        flceeexp = item.flceeexp;
+        flcooexp = item.flcooexp;
+        flgcebhm = item.flgcebhm;
+        flgpgdiv = item.flgpgdiv;
+        flgregon = item.flgregon;
+        flprotes = item.flprotes;
+        flserasa = item.flserasa;
+        inarqcbr = item.inarqcbr;
+        inenvcob = item.inenvcob;
+        insitceb = item.insitceb;
+        qtdecprz = item.qtdecprz;
+        qtdfloat = item.qtdfloat;
+        qtlimaxp = item.qtlimaxp;
+        qtlimmip = item.qtlimmip;
+    }
+
     // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
  	$.ajax({
 		dataType: "html",
@@ -509,7 +546,6 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             inarqcbr: inarqcbr,
             cddemail: cddemail,
             dsdemail: dsdemail,
-            flgcruni: flgcruni,
             flgcebhm: flgcebhm,
             flgregis: flgregis,
             flgregon: flgregon,
@@ -905,7 +941,6 @@ function realizaHabilitacao(idrecipr, cddopcao) {
     var insitceb = $("#insitceb", "#divOpcaoConsulta").val();
     var inarqcbr = $("#inarqcbr", "#divOpcaoConsulta").val();
     var cddemail = $("#dsdemail", "#divOpcaoConsulta").val();
-    var flgcruni = $("#flgcruni", "#divOpcaoConsulta").val();
     var flgcebhm = $("#flgcebhm", "#divOpcaoConsulta").val();
     var flgregis = $("#flgregis", "#divOpcaoConsulta").val();
     var flserasa = $("#flserasa", "#divOpcaoConsulta").val();
@@ -982,7 +1017,6 @@ function realizaHabilitacao(idrecipr, cddopcao) {
             insitceb: insitceb,
 			inarqcbr: inarqcbr,
 			cddemail: cddemail,
-			flgcruni: flgcruni,
 			flgcebhm: flgcebhm,
 			dsdregis: dsdregis,
 			flgregis: flgregis,
@@ -1239,7 +1273,6 @@ function controlaLayout(nomeForm) {
         var Lflserasa = $('label[for="flserasa"]', '#' + nomeForm);
         var Linarqcbr = $('label[for="inarqcbr"]', '#' + nomeForm);
         var Ldsdemail = $('label[for="dsdemail"]', '#' + nomeForm);
-        var Lflgcruni = $('label[for="flgcruni"]', '#' + nomeForm);
         var Lflgcebhm = $('label[for="flgcebhm"]', '#' + nomeForm);
         var Lqtdfloat = $('label[for="qtdfloat"]', '#' + nomeForm);
         var Lflprotes = $('label[for="flprotes"]', '#' + nomeForm);
@@ -1253,7 +1286,6 @@ function controlaLayout(nomeForm) {
         var Cflgregis = $('#flgregis', '#' + nomeForm);
         var Cinarqcbr = $('#inarqcbr', '#' + nomeForm);
         var Cdsdemail = $('#dsdemail', '#' + nomeForm);
-        var Cflgcruni = $('#flgcruni', '#' + nomeForm);
         var Cflgcebhm = $('#flgcebhm', '#' + nomeForm);
         var Ccddopcao = $('#cddopcao', '#' + nomeForm);
         var Cqtdfloat = $('#qtdfloat', '#' + nomeForm);
@@ -1274,7 +1306,6 @@ function controlaLayout(nomeForm) {
         Lflserasa.addClass('rotulo').css('width', '210px');
         Linarqcbr.addClass('rotulo').css('width', '210px');
         Ldsdemail.addClass('rotulo').css('width', '210px');
-        Lflgcruni.addClass('rotulo').css('width', '210px');
         Lflgcebhm.addClass('rotulo').css('width', '210px');
         Lqtdfloat.addClass('rotulo').css('width', '210px');
         Lflprotes.addClass('rotulo').css('width', '210px');
@@ -1287,7 +1318,6 @@ function controlaLayout(nomeForm) {
         Cflgregis.css({ 'width': '50px' });
         Cinarqcbr.css({ 'width': '155px' });
         Cdsdemail.css({ 'width': '200px' });
-        Cflgcruni.css({ 'width': '50px' });
         Cflgcebhm.css({ 'width': '50px' });
         Cqtdfloat.css({ 'width': '70px' });
         Cqtdecprz.css({ 'width': '50px' }).attr('maxlength', '5').setMask("INTEGER", "zzzzz", ".", "");
@@ -1594,23 +1624,6 @@ function acessaAba(id,cddopcao) {
     // Converte para inteiro
     id = parseInt(id);
 
-    var flcooexp = ($("#flcooexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
-    var flceeexp = ($("#flceeexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
-	var qtlimmip_val = $("#qtlimmip", "#frmConsulta").val();
-    var qtlimaxp_val = $("#qtlimaxp", "#frmConsulta").val();
-
-    // Se NAO foi selecionado nem Cooperado e nem Cooperativa expede
-    if (id == 1) {
-        if (flcooexp == 0 && flceeexp == 0) {
-        showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
-        return false;
-        }
-        if (parseInt(qtlimaxp_val) < parseInt(qtlimmip_val)) {
-            showError("error", "Data maxima de Intervalo de Protesto nao pode ser menor que data minima.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
-            return false;
-        }
-    }
-
     // Esconde as abas
     $('.clsAbas','#frmConsulta').hide();
 
@@ -1644,9 +1657,9 @@ function acessaAba(id,cddopcao) {
     }
 
     if (linkContinuar == 1){
-        document.getElementById("btnContinuar").onclick=function(){acessaAba(id + 1,cddopcao);}
+        $("#btnContinuar", "#divOpcaoConsulta").click(function(){atualizarConvenios(cddopcao);});
     }else if (linkContinuar == 2){
-        document.getElementById("btnContinuar").onclick=function(){validaDadosLimites('true','',cddopcao);}
+        $("#btnContinuar", "#divOpcaoConsulta").click(function(){validaDadosLimites('true','',cddopcao);});
     }
 
     if (linkVoltar == 1){
@@ -1659,6 +1672,107 @@ function acessaAba(id,cddopcao) {
     //$("#btnContinuar").attr("onclick",linkContinuar);
     //$("#btnVoltar").attr("onClick",linkVoltar);
     return false;
+}
+
+
+function atualizarConvenios(cddopcao) {
+    var flcooexp = ($("#flcooexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
+    var flceeexp = ($("#flceeexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
+	var qtlimmip_val = $("#qtlimmip", "#frmConsulta").val();
+    var qtlimaxp_val = $("#qtlimaxp", "#frmConsulta").val();
+
+    if (flcooexp == 0 && flceeexp == 0) {
+        showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+        return false;
+    }
+    if (parseInt(qtlimaxp_val) < parseInt(qtlimmip_val)) {
+        showError("error", "Data maxima de Intervalo de Protesto nao pode ser menor que data minima.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+        return false;
+    }
+
+    var nrconven = normalizaNumero($("#nrconven", "#divOpcaoConsulta").val());
+    var dsorgarq = $("#dsorgarq", "#divOpcaoConsulta").val();
+    var insitceb = $("#insitceb", "#divOpcaoConsulta").val();
+    var flgregon = $("#flgregon", "#divOpcaoConsulta").val();
+    var flgpgdiv = $("#flgpgdiv", "#divOpcaoConsulta").val();
+    var flcooexp = $("#flcooexp", "#divOpcaoConsulta").val();
+    var flceeexp = $("#flceeexp", "#divOpcaoConsulta").val();
+    var qtdfloat = $("#qtdfloat", "#divOpcaoConsulta").val();
+    var flserasa = $("#flserasa", "#divOpcaoConsulta").val();
+    var flprotes = $("#flprotes", "#divOpcaoConsulta").val();
+    var insrvprt = $("#insrvprt", "#divOpcaoConsulta").val();
+    var qtlimmip = $("#qtlimmip", "#divOpcaoConsulta").val();
+    var qtlimaxp = $("#qtlimaxp", "#divOpcaoConsulta").val();
+    var qtdecprz = $("#qtdecprz", "#divOpcaoConsulta").val();
+    var inarqcbr = $("#inarqcbr", "#divOpcaoConsulta").val();
+    var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
+    var dsdemail = $("#dsdemail", "#divOpcaoConsulta").val();
+    var divCnvHomol = $("#divCnvHomol", "#divOpcaoConsulta").val();
+    var flgcebhm = $("#flgcebhm", "#divOpcaoConsulta").val();
+
+    var index = null;
+
+    index = retornaIndice(descontoConvenios, 'convenio', nrconven);
+
+    if (index == null) 
+        return false;
+
+
+
+    if ($("#flgregon", "#divOpcaoConsulta").prop("checked") == true) {
+		var flgregon = 1;
+    } else {
+		var flgregon = 0;
+	}
+    if ($("#flgpgdiv", "#divOpcaoConsulta").prop("checked") == true) {
+		var flgpgdiv = 1;
+    } else {
+		var flgpgdiv = 0;
+	}
+    if ($("#flcooexp", "#divOpcaoConsulta").prop("checked") == true) {
+		var flcooexp = 1;
+    } else {
+		var flcooexp = 0;
+	}
+    if ($("#flceeexp", "#divOpcaoConsulta").prop("checked") == true) {
+		var flceeexp = 1;
+    } else {
+		var flceeexp = 0;
+	}
+    if ($("#flserasa", "#divOpcaoConsulta").prop("checked") == true) {
+	    var flserasa = 1;
+    } else {
+	    var flserasa = 0;
+	}
+    if ($("#flprotes", "#divOpcaoConsulta").prop("checked") == true) {
+	    var flprotes = 1;
+    } else {
+	    var flprotes = 0;
+	}
+
+    var convenio = {
+        convenio: nrconven,
+        tipo: dsorgarq,
+        insitceb: insitceb,
+        flgregon: flgregon,
+        flgpgdiv: flgpgdiv,
+        flcooexp: flcooexp,
+        flceeexp: flceeexp,
+        qtdfloat: qtdfloat,
+        flserasa: flserasa,
+        flprotes: flprotes,
+        insrvprt: insrvprt,
+        qtlimmip: qtlimmip,
+        qtlimaxp: qtlimaxp,
+        qtdecprz: qtdecprz,
+        inarqcbr: inarqcbr,
+        inenvcob: inenvcob,
+        dsdemail: dsdemail,
+        divCnvHomol: divCnvHomol,
+        flgcebhm: flgcebhm
+    };
+    descontoConvenios[index] = convenio;
+    sairDescontoConvenio();
 }
 
 // Funcao para ocultar/exibir as categorias
