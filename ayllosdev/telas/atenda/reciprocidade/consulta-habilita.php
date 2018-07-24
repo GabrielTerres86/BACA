@@ -63,6 +63,17 @@ isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");	
 
+function retornaFlag($flag) {
+    $flag = trim($flag);
+    if ((int)$flag === 1) {
+        return 'SIM';
+    } elseif ((int)$flag === 0) {
+        return 'NAO';
+    } else {
+        return $flag;
+    }
+}
+
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $flgregis    = trim($_POST["flgregis"]);
@@ -73,11 +84,11 @@ $insitceb    = trim($_POST["insitceb"]);
 $inarqcbr    = $_POST["inarqcbr"];
 $cddemail    = $_POST["cddemail"];
 $dsdemail    = trim($_POST["dsdemail"]);
-$flgregon    = trim($_POST["flgregon"]);
-$flgpgdiv    = trim($_POST["flgpgdiv"]);
-$flcooexp    = trim($_POST["flcooexp"]);
-$flceeexp    = trim($_POST["flceeexp"]);
-$flserasa    = trim($_POST["flserasa"]);
+$flgregon    = retornaFlag($_POST["flgregon"]);
+$flgpgdiv    = retornaFlag($_POST["flgpgdiv"]);
+$flcooexp    = retornaFlag($_POST["flcooexp"]);
+$flceeexp    = retornaFlag($_POST["flceeexp"]);
+$flserasa    = retornaFlag($_POST["flserasa"]);
 $cddbanco	 = trim($_POST["cddbanco"]);
 $flgcebhm    = trim($_POST["flgcebhm"]);
 $cddopcao    = trim($_POST["cddopcao"]);
@@ -87,7 +98,7 @@ $qtTitulares = $_POST["qtTitulares"];
 $emails_titular = $_POST["emails"];
 $flsercco    = $_POST["flsercco"];
 $qtdfloat    = trim($_POST["qtdfloat"]);
-$flprotes    = trim($_POST["flprotes"]);
+$flprotes    = retornaFlag($_POST["flprotes"]);
 $qtlimaxp    = trim($_POST["qtlimaxp"]);
 $qtlimmip    = trim($_POST["qtlimmip"]);
 $flproaut    = trim($_POST["flproaut"]);
@@ -291,23 +302,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                             
                             <label for="flceeexp"><? echo utf8ToHtml('Cooperativa Emite e Expede:') ?></label>		
                             <input name="flceeexp" id="flceeexp" type="checkbox" class="checkbox" readonly <?php if ($flceeexp == "SIM" ) { ?> checked <?php } ?> />		
-                            <br />	
-                            
-                            <label for="qtdfloat"><? echo utf8ToHtml('Float a aplicar:') ?></label>
-                            <select name="qtdfloat" id="qtdfloat" class="<?php echo $campo; ?>">
-                              <?php
-                                  if ($qtdfloat != "" && $qtdfloat < $cco_qtdfloat) {
-                                      echo '<option value="'.$qtdfloat.'" selected>'.$qtdfloat.'</option>';
-                                  }                                  
-                                  for ($i = $cco_qtdfloat; $i <= $cco_qtfltate; $i++) {
-                                      echo '<option value="'.$i.'" '.($qtdfloat == $i ? 'selected' : '').'>'.$i.'</option>';
-                                  }
-                                  if ($qtdfloat != "" && $qtdfloat > $cco_qtfltate) {
-                                      echo '<option value="'.$qtdfloat.'" selected>'.$qtdfloat.'</option>';
-                                  }
-                              ?>
-                            </select>
-                            <label style="margin-left:10px;">dias</label>
+
                             <br />
                             <div id="divOpcaoSerasaProtesto">
                                 <label for="flserasa"><? echo utf8ToHtml('Negativação via Serasa:') ?></label>

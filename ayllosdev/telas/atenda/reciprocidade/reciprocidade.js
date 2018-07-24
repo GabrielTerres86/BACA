@@ -527,7 +527,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
         inenvcob = item.inenvcob;
         insitceb = item.insitceb;
         qtdecprz = item.qtdecprz;
-        qtdfloat = item.qtdfloat;
+        qtdfloat = "";
         qtlimaxp = item.qtlimaxp;
         qtlimmip = item.qtlimmip;
     }
@@ -1758,7 +1758,7 @@ function atualizarConvenios(cddopcao) {
         flgpgdiv: flgpgdiv,
         flcooexp: flcooexp,
         flceeexp: flceeexp,
-        qtdfloat: qtdfloat,
+        qtdfloat: "",
         flserasa: flserasa,
         flprotes: flprotes,
         insrvprt: insrvprt,
