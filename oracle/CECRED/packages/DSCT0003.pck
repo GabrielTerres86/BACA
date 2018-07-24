@@ -145,7 +145,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
     WHERE cdcritica = pr_cdcritica;
   rw_tbdsct_criticas cr_tbdsct_criticas%ROWTYPE;
   
-  CURSOR cr_abt (pr_cdcooper IN crapabt.cdcooper%TYPE,
+  CURSOR cr_crapabt (pr_cdcooper IN crapabt.cdcooper%TYPE,
                  pr_nrborder IN crapabt.nrborder%TYPE,
                  pr_tpcritica IN tbdsct_criticas.tpcritica%TYPE DEFAULT NULL,
                  pr_nrdconta IN crapabt.nrdconta%TYPE DEFAULT NULL,
@@ -169,7 +169,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
       AND nvl(abt.nrdctabb,0) = nvl(pr_nrdctabb,nvl(abt.nrdctabb,0))
       AND nvl(abt.nrdocmto,0) = nvl(pr_nrdocmto,nvl(abt.nrdocmto,0))
   ;
-  rw_abt cr_abt%ROWTYPE;
+  rw_abt cr_crapabt%ROWTYPE;
 
   FUNCTION fn_ds_critica(pr_cdcritica IN tbdsct_criticas.cdcritica%TYPE) RETURN VARCHAR2;
 
@@ -3500,7 +3500,6 @@ END pc_inserir_lancamento_bordero;
     DECLARE
       -- Auxiliares para geração de erro.
       vr_contador PLS_INTEGER;
-      vr_flgtrans BOOLEAN;
 
       -- Informações de data do sistema
       rw_crapdat     btch0001.rw_crapdat%TYPE; --> Tipo de registro de datas
@@ -3515,36 +3514,10 @@ END pc_inserir_lancamento_bordero;
       vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
       vr_dscritic varchar2(1000);        --> Desc. Erro
 
-      -- Variáveis Para Validação com Valor do Titulo x TAB052
-      vr_vltotbdt_cr craptdb.vltitulo%TYPE DEFAULT 0;
-      vr_vltotbdt_sr craptdb.vltitulo%TYPE DEFAULT 0;
-      vr_vltotsac_cr craptdb.vltitulo%TYPE DEFAULT 0;
-      vr_vltotsac_sr craptdb.vltitulo%TYPE DEFAULT 0;
-      vr_vlcontit    craptdb.vltitulo%TYPE DEFAULT 0;
-
-      vr_qttitdsc_cr PLS_INTEGER DEFAULT 0; --Analisado
-      vr_naopagos_cr PLS_INTEGER DEFAULT 0; --Liberado
-      vr_qttitdsc_sr PLS_INTEGER DEFAULT 0; --Analisado
-      vr_naopagos_sr PLS_INTEGER DEFAULT 0; --Liberado
-
-      vr_pcnaopag_cr craptdb.vltitulo%TYPE DEFAULT 0;
-
-      -- Auxiliares para Quantidade de Tìtulos Não Pagos por Pagador
-      vr_qtnaopag_cr PLS_INTEGER DEFAULT 0;
-      vr_qtnaopag_sr PLS_INTEGER DEFAULT 0;
-
-
-      vr_cntqttit PLS_INTEGER DEFAULT 0;
-      vr_qtprotes_cr PLS_INTEGER DEFAULT 0;
 
       vr_tab_dados_dsctit_cr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
       vr_tab_dados_dsctit_sr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Sem Registro
       vr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052 para CECRED
-
-      -- Variáveis auxiliares para as Restrições de Borderô
-      vr_nrseqdig crapabt.nrseqdig%TYPE;
-      vr_dsrestri crapabt.dsrestri%TYPE;
-      vr_dsdetres crapabt.dsdetres%TYPE;
 
       -- Descrição da origem da chamada
       vr_dsorigem VARCHAR2(10);
@@ -3606,7 +3579,6 @@ END pc_inserir_lancamento_bordero;
       -- iniciando variáveis
       vr_cdcritic := 0;
       vr_dscritic := '';
-      vr_flgtrans := TRUE;
 
       --Limpar tabelas
       pr_tab_erro.DELETE;
@@ -3650,7 +3622,6 @@ END pc_inserir_lancamento_bordero;
          vr_cdcritic := 9;
          vr_dscritic := '';
          vr_contador := vr_contador + 1;
-         vr_flgtrans := FALSE;
 
          --Gerar Erro
          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -4964,81 +4935,92 @@ END pc_inserir_lancamento_bordero;
     
     -- Registros para armazenar dados do lancamento gerado
     rw_craplcm craplcm%ROWTYPE;    
-    
+    vr_flg_criou_lot BOOLEAN;
     BEGIN
-      
-      --vr_nrdolote := 17000 + pr_cdpactra;
-      vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
-                                ,pr_nmdcampo => 'NRDOLOTE'
-                                ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
-                                             || pr_dtmvtolt || ';'
-                                             || TO_CHAR(pr_cdagenci)|| ';'
-                                             || '100');
-      --Buscar o lote
-      OPEN cr_craplot(pr_cdcooper => pr_cdcooper
-                     ,pr_dtmvtolt => pr_dtmvtolt
-                     ,pr_cdagenci => 1
-                     ,pr_cdbccxlt => 100
-                     ,pr_nrdolote => vr_nrdolote);
+      vr_flg_criou_lot:=false;
+      /*Insere um lote novo*/
+      WHILE NOT vr_flg_criou_lot LOOP
+        BEGIN
+        --vr_nrdolote := 17000 + pr_cdpactra;
+        vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
+                                  ,pr_nmdcampo => 'NRDOLOTE'
+                                  ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
+                                               || pr_dtmvtolt || ';'
+                                               || TO_CHAR(pr_cdagenci)|| ';'
+                                               || '100');
+        --Buscar o lote
+        OPEN cr_craplot(pr_cdcooper => pr_cdcooper
+                       ,pr_dtmvtolt => pr_dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 100
+                       ,pr_nrdolote => vr_nrdolote);
 
-      FETCH cr_craplot INTO rw_craplot;
+        FETCH cr_craplot INTO rw_craplot;
 
-      -- Gerar erro caso não encontre
-      IF cr_craplot%NOTFOUND THEN
-         -- Fechar cursor pois teremos raise
-         CLOSE cr_craplot;
+        -- Gerar erro caso não encontre
+        IF cr_craplot%NOTFOUND THEN
+           -- Fechar cursor pois teremos raise
+           CLOSE cr_craplot;
+           BEGIN
+             INSERT INTO craplot
+                        (cdcooper
+                        ,dtmvtolt
+                        ,cdagenci
+                        ,cdbccxlt
+                        ,nrdolote
+                        ,tplotmov
+                        ,cdoperad
+                        ,cdhistor)
+                 VALUES(pr_cdcooper
+                        ,pr_dtmvtolt
+                        ,1
+                        ,100
+                        ,vr_nrdolote
+                        ,1
+                        ,pr_cdoperad
+                        ,vr_cdhistordsct_credito)
+              RETURNING dtmvtolt
+                        ,cdagenci
+                        ,cdbccxlt
+                        ,nrdolote
+                        ,vlinfocr
+                        ,vlcompcr
+                        ,qtinfoln
+                        ,qtcompln
+                        ,nrseqdig
+                        ,ROWID
+                   INTO rw_craplot.dtmvtolt
+                        ,rw_craplot.cdagenci
+                        ,rw_craplot.cdbccxlt
+                        ,rw_craplot.nrdolote
+                        ,rw_craplot.vlinfocr
+                        ,rw_craplot.vlcompcr
+                        ,rw_craplot.qtinfoln
+                        ,rw_craplot.qtcompln
+                        ,rw_craplot.nrseqdig
+                        ,rw_craplot.rowid;
+           EXCEPTION
+             WHEN OTHERS THEN
+               -- Monta critica
+               vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
+               -- Gera exceção
+               RAISE vr_exc_erro;
 
-         BEGIN
-           INSERT INTO craplot
-                      (cdcooper
-                      ,dtmvtolt
-                      ,cdagenci
-                      ,cdbccxlt
-                      ,nrdolote
-                      ,tplotmov
-                      ,cdoperad
-                      ,cdhistor)
-               VALUES(pr_cdcooper
-                      ,pr_dtmvtolt
-                      ,1
-                      ,100
-                      ,vr_nrdolote
-                      ,1
-                      ,pr_cdoperad
-                      ,vr_cdhistordsct_credito)
-            RETURNING dtmvtolt
-                      ,cdagenci
-                      ,cdbccxlt
-                      ,nrdolote
-                      ,vlinfocr
-                      ,vlcompcr
-                      ,qtinfoln
-                      ,qtcompln
-                      ,nrseqdig
-                      ,ROWID
-                 INTO rw_craplot.dtmvtolt
-                      ,rw_craplot.cdagenci
-                      ,rw_craplot.cdbccxlt
-                      ,rw_craplot.nrdolote
-                      ,rw_craplot.vlinfocr
-                      ,rw_craplot.vlcompcr
-                      ,rw_craplot.qtinfoln
-                      ,rw_craplot.qtcompln
-                      ,rw_craplot.nrseqdig
-                      ,rw_craplot.rowid;
-         EXCEPTION
-           WHEN OTHERS THEN
-             -- Monta critica
-             vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
-             -- Gera exceção
-             RAISE vr_exc_erro;
-
-         END;
-      ELSE
-         -- Apenas fechar o cursor
-         CLOSE cr_craplot;
-      END IF;
-           
+           END;
+        ELSE
+           -- Apenas fechar o cursor
+           CLOSE cr_craplot;
+        END IF;
+        EXCEPTION
+          WHEN DUP_VAL_ON_INDEX THEN
+            CONTINUE;
+          WHEN OTHERS THEN
+            pr_dscritic := 'Erro ao inserir novo lote ' || SQLERRM;
+            -- Levanta exceção
+            RAISE vr_exc_erro;
+        END;
+        vr_flg_criou_lot := TRUE;
+      END LOOP;
       BEGIN
         -- Gero o Insert na tabela de Lancamentos em depositos a vista
         INSERT INTO craplcm
@@ -5423,7 +5405,6 @@ END pc_inserir_lancamento_bordero;
     vr_possuicnae  INTEGER;
     vr_enviadomesa INTEGER;
     vr_flsnhcoo BOOLEAN;
-    vr_des_reto VARCHAR2(3) DEFAULT 'OK';
     
     BEGIN
       pr_nmdcampo := NULL;
@@ -5703,15 +5684,6 @@ END pc_inserir_lancamento_bordero;
          where  crapass.cdcooper = pr_cdcooper
          and    crapass.nrdconta = pr_nrdconta;
        rw_crapass cr_crapass%rowtype;
-
-       -- Analise do Pagador
-       CURSOR cr_analise_pagador (pr_nrinssac IN crapcob.nrinssac%TYPE) is
-         SELECT *
-         FROM   tbdsct_analise_pagador
-         WHERE  cdcooper = pr_cdcooper
-         AND    nrdconta = pr_nrdconta
-         AND    nrinssac = pr_nrinssac
-       ;rw_analise_pagador cr_analise_pagador%rowtype;
     
        -- Retorno da #TAB052
        vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
@@ -5724,15 +5696,8 @@ END pc_inserir_lancamento_bordero;
        vr_qtd_conc   NUMBER;
        vr_liqgeral   NUMBER;
        vr_qtd_geral  NUMBER;
-       
-       -- Retorno do CNAE
-       vr_possuicnae BOOLEAN;
-       
-       vr_possuicriticacnae INTEGER;
-       possui_critica INTEGER;
-       
+                     
        vr_tab_criticas typ_tab_critica;
-       vr_tot_titulos  NUMBER := 0;
        vr_index PLS_INTEGER;
        BEGIN
        -- Leitura do calendário da cooperativa
@@ -5764,7 +5729,7 @@ END pc_inserir_lancamento_bordero;
        LOOP
          FETCH cr_craptdb INTO rw_craptdb;
          EXIT WHEN cr_craptdb%NOTFOUND;
-         
+         vr_tab_criticas.delete;
          -- Busca na COB o Inssac do pagador daquele titulo
          OPEN cr_crapcob (rw_craptdb.nrdocmto,   -- Conta
                           rw_craptdb.nrcnvcob,   -- Convenio
@@ -5787,7 +5752,7 @@ END pc_inserir_lancamento_bordero;
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_erro;
           END IF;
-                                          
+          /*                                
           pc_calcula_restricao_titulo(pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_cdbandoc => rw_craptdb.cdbandoc
@@ -5800,7 +5765,7 @@ END pc_inserir_lancamento_bordero;
                           
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_erro;
-          END IF;
+          END IF;*/
           IF (vr_tab_criticas.count > 0) THEN
             vr_index := vr_tab_criticas.first;
             WHILE vr_index IS NOT NULL LOOP  
@@ -8125,6 +8090,7 @@ EXCEPTION
     rw_craplot cr_craplot%ROWTYPE;
     vr_flg_criou_lot BOOLEAN;
   BEGIN
+    
     --vr_nrdolote := 17000 + pr_cdpactra;
     vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
                               ,pr_nmdcampo => 'NRDOLOTE'

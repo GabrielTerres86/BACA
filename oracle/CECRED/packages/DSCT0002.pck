@@ -8133,6 +8133,19 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     ;
     rw_crapsab cr_crapsab%ROWTYPE;
     
+    -- Cursor para verificar se ainda mantem as criticas
+    CURSOR cr_analise_pagador IS
+      SELECT 
+        *
+      FROM
+        tbdsct_analise_pagador
+      WHERE
+        cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta
+        AND nrinssac = pr_nrinssac
+    ;
+    rw_analise_pagador tbdsct_analise_pagador%ROWTYPE;
+      
     vr_concentracao_maxima NUMBER := 0;
     vr_inpossui_criticas   NUMBER := 0;
     -- Critica
@@ -8242,13 +8255,32 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
            vr_inpossui_criticas := 1;
        end if;
        
+       OPEN cr_analise_pagador;
+       FETCH cr_analise_pagador INTO rw_analise_pagador;
+       IF (cr_analise_pagador%NOTFOUND) THEN
+         vr_dscritic := 'Erro ao carregar críticas de pagador';
+         RAISE vr_exc_erro;
+       END IF;
+       
+       vr_inpossui_criticas := CASE WHEN (nvl(rw_analise_pagador.qtremessa_cartorio,0) 
+                                            + nvl(rw_analise_pagador.qttit_protestados,0) 
+                                            + nvl(rw_analise_pagador.qttit_naopagos,0) 
+                                            + nvl(rw_analise_pagador.pemin_liquidez_qt,0) 
+                                            + nvl(rw_analise_pagador.pemin_liquidez_vl,0) 
+                                            + nvl(rw_analise_pagador.peconcentr_maxtit,0) 
+                                            + nvl(rw_analise_pagador.inemitente_conjsoc,0) 
+                                            + nvl(rw_analise_pagador.inpossui_titdesc,0) 
+                                            + nvl(rw_analise_pagador.invalormax_cnae,0) 
+                                            + vr_inpossui_criticas
+                                          ) > 0 THEN 1 ELSE 0 END;
+       
        UPDATE tbdsct_analise_pagador
            SET dtanalise          = SYSDATE
               ,hranalise          = to_char(SYSDATE,'sssss')
               ,pemin_liquidez_qt  = vr_cri_liquidez_qt
               ,pemin_liquidez_vl  = vr_cri_liquidez_vl
               ,peconcentr_maxtit  = vr_cri_concentr_maxtit
-              ,inpossui_criticas  = decode(vr_inpossui_criticas,1,1,inpossui_criticas)
+              ,inpossui_criticas  = vr_inpossui_criticas
               ,perc_liquidez_qt = pr_qtd_cedpag
               ,perc_liquidez_vl = pr_pc_cedpag
               ,perc_concentracao= pr_pc_conc
