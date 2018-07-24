@@ -8367,8 +8367,8 @@ PROCEDURE altera-valor-proposta:
                   WHEN pc_processa_perda_aprov.pr_dscritic <> ?.
                       
                /*Se ocorreu erro*/
-              IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-                LEAVE.          
+              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                UNDO Grava_valor, LEAVE Grava_valor.
               
               /*Se houve a perda de aprovacao*/
               IF aux_idpeapro = 1 THEN
@@ -8560,7 +8560,8 @@ PROCEDURE altera-valor-proposta:
         IF (crawepr.vlpreori = ? OR crawepr.vlpreori = 0) THEN
           ASSIGN crawepr.vlpreori = par_vlpreemp.
           
-        IF (crawepr.dsratori = ? OR crawepr.dsratori = "") AND aux_dsratori <> "" THEN
+        IF (crawepr.dsratori = ? OR crawepr.dsratori = " ") AND 
+           (aux_dsratori <> "" OR aux_dsratori <> ?) THEN
           ASSIGN crawepr.dsratori = aux_dsratori.
                 
       END. /*IF par_dsdopcao = "TP" THEN*/
