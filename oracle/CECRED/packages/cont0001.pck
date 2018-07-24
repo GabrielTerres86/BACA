@@ -13,6 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED.CONT0001 is
   -- Frequencia: Diário
   -- Objetivo  : Rotinas para geração de arquivos contábeis para o Radar/Matera de
   --             lançamentos centralizados
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_gera_arq_centralizacao(pr_cdcooper IN NUMBER

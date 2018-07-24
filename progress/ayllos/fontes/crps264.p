@@ -246,6 +246,7 @@
 																					   
               16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
                            conforme tarefa SCTASK0010890. (Reinert)
+
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
