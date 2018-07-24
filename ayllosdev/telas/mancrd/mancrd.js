@@ -6,6 +6,8 @@
   --------------
   ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
  
+                 23/07/2018 - Deixar o campo nmempres sempre habilitado. Projeto 345(Lombardi).
+ 
   --------------
  */
 var frmCab   		= 'frmCab';
@@ -296,13 +298,15 @@ function formataDetalheCartao(){
 	cNmempresDet.css({'width': '400px'}).addClass('campo');
 	
 	layoutPadrao();
-	
+	/*
 	if ($("#frmDetalheCartao #inpessoa").val() == 1 ||
 	    $("#frmDetalheCartao #nrcrcard").val() != '0000.0000.0000.0000') {
 		cNmempresDet.desabilitaCampo();
 	}else{
 		cNmempresDet.habilitaCampo();
 	}
+	*/
+	cNmempresDet.habilitaCampo();
 	
 	//Desabilita campos
 	cNrdcontaDet.desabilitaCampo();
