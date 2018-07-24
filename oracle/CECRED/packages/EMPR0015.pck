@@ -199,8 +199,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                     c.dtaprova = null,
                     c.hraprova = 0,
                     c.insitest = 0          
-               WHERE
-                    c.rowid = c1.rowid;
+               WHERE c.cdcooper = pr_cdcooper
+                 AND c.nrdconta = pr_nrdconta
+                 AND c.nrctremp = pr_nrctremp;
+                    /*c.rowid LIKE c1.rowid;*/
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
@@ -249,8 +251,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                       c.dtaprova = null,
                       c.hraprova = 0,
                       c.insitest = 0          
-                 WHERE
-                      c.rowid = c1.rowid;
+                 WHERE c.cdcooper = pr_cdcooper
+                   AND c.nrdconta = pr_nrdconta
+                   AND c.nrctremp = pr_nrctremp;
+                      /*c.rowid LIKE c1.rowid;*/
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
@@ -343,8 +347,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                         c.dtaprova = null,
                         c.hraprova = 0,
                         c.insitest = 0          
-                   WHERE
-                        c.rowid = c1.rowid;
+                   WHERE c.cdcooper = pr_cdcooper
+                     AND c.nrdconta = pr_nrdconta
+                     AND c.nrctremp = pr_nrctremp;
+                       /* c.rowid LIKE c1.rowid;*/
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
@@ -376,7 +382,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                 BEGIN
                   UPDATE crawepr c
                      SET c.dsratori = vr_rating
-                   WHERE c.rowid = c1.rowid;
+                   WHERE c.cdcooper = pr_cdcooper
+                     AND c.nrdconta = pr_nrdconta
+                     AND c.nrctremp = pr_nrctremp;
+                     /*c.rowid = c1.rowid;*/
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao atualizar tabela crawepr rating. ' || SQLERRM;
@@ -876,7 +885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                       c.hraprova = 0,
                       c.insitest = 5    -- Situação da proposta - Nova situação "5 - expirada por decurso de prazo"       
                  WHERE
-                      c.rowid = rw_crawepr.rowid;
+                      c.rowid LIKE rw_crawepr.rowid;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
@@ -1082,7 +1091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                   ,lim.cdopeapr = null
                   ,lim.dtaprova = null
                   ,lim.hraprova = 0 
-             WHERE lim.rowid = rw_crawlim.rowid;
+             WHERE lim.rowid LIKE rw_crawlim.rowid;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar tabela crawlim - Expiração. ' || SQLERRM;
