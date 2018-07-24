@@ -4510,7 +4510,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                  -- se o boleto de emprestimo ja foi pago ou baixado, será devolvido no crrl574
                  IF rw_crapcob.incobran IN (3,5) AND 
-                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
+                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO','DESCONTO DE TITULO') THEN
                     
                    IF dsct0003.fn_cobranca_cobtit(pr_cdcooper => pr_cdcooper
                                                   ,pr_nrcnvcob => rw_crapcob.nrcnvcob ) THEN
