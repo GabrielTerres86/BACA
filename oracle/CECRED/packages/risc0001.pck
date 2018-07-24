@@ -723,6 +723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       AND lcm.nrdconta  = pr_nrdconta
       AND lcm.dtmvtolt   > pr_datacorte
       AND lcm.dtmvtolt   >=pr_dt60datr -- Data em que completou 60 dias em ADP
+	  AND TO_CHAR(lcm.dtmvtolt,'MM/YYYY') =TO_CHAR(par_dtrefere,'MM/YYYY') -- Mês corrente
       AND his.indebcre ='D'
       AND his.cdhistor in(38,37,57);
 
