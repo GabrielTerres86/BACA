@@ -6,6 +6,7 @@
    OBJETIVO     : Tela de exibicao detalhamento de cartoes
    --------------
    ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+   				  24/07/2018 - Adicionado situacao ESTUDO no select de Situacao (Mateus Z / Mouts - PRB0040198)
  */		
  
 session_start();
@@ -65,7 +66,8 @@ $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 		<label for="nmempres">Emp. do Plastico:</label>
 		<input type="text" id="nmempres" name="nmempres" value="<?php echo $nmempres; ?> " maxlength="40"/>
 		<label for="insitcrd">Situacao:</label>	
-		<select name="" id="insitcrd" class="campo">										
+		<select name="" id="insitcrd" class="campo">
+			<option value='0' <? if($insitcrd == 0){echo " selected";} ?>>ESTUDO</option>										
 			<option value='1' <? if($insitcrd == 1){echo " selected";} ?>>APROVADO</option>
 			<option value='2' <? if($insitcrd == 2){echo " selected";} ?>>SOLICITADO</option>
 			<option value='3' <? if($insitcrd == 3){echo " selected";} ?>>LIBERADO</option>
