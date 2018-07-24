@@ -416,6 +416,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                               ,pr_nrdrowid => vr_nrdrowid);          
         END IF;
       END LOOP;
+      IF pr_tipoacao = 'P' THEN
+        COMMIT;
+      END IF;
       -- Se chegou até o final sem erro retorna OK
       pr_dserro := 'OK';
     EXCEPTION
