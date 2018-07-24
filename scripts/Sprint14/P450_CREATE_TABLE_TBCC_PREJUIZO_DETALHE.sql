@@ -3,12 +3,12 @@ create table CECRED.TBCC_PREJUIZO_DETALHE
 (
   idlancto           NUMBER(10) not null,
   dtmvtolt           DATE,
-  nrdconta           NUMBER(10) default 0,
-  cdhistor           NUMBER(5) default 0,
-  vllanmto           NUMBER(25,2) default 0,
+  nrdconta           NUMBER(10) default 0 not null,
+  cdhistor           NUMBER(5) default 0 not null,
+  vllanmto           NUMBER(25,2) default 0 not null,
   dthrtran           DATE,
-  cdoperad           VARCHAR2(10) default ' ',
-  cdcooper           NUMBER(10) default 0
+  cdoperad           VARCHAR2(10) default ' ' not null,
+  cdcooper           NUMBER(10) default 0 not null
 );
 -- Add comments to the table 
 comment on table CECRED.TBCC_PREJUIZO_DETALHE
