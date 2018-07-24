@@ -876,6 +876,10 @@ create or replace package body cecred.PAGA0002 is
                                evitando erro no processamento da mensagem pela cabine.
                                (Wagner - Sustentação - INC0019220).
                                
+                  24/07/2018 - Validar que o numero da conta creditada não tenha mais do que 13 digitos,
+                               evitando erro no processamento da mensagem pela cabine.
+                               (André Bohn - Mout'S - INC0019287).
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1561,6 +1565,16 @@ create or replace package body cecred.PAGA0002 is
     END IF;          
     -- Fim da validação.	
 
+    -- Validar que a conta creditada contenha no máximo 13 digitos,
+    -- evitando erro no processamento da mensagem pela cabine.
+    -- Início da validação.
+    IF length(pr_nrctatrf) > 13 THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Informe o numero da conta creditada com ate 13 caracteres.';
+	  RAISE vr_exc_erro;
+    END IF;          
+    -- Fim da validação.
+    
     -- Tipo da conta:
     --   1 - Conta Corrente;
     --   2 - Poupança;
