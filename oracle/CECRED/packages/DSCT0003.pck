@@ -7810,8 +7810,8 @@ EXCEPTION
       
       vr_vlpagmto := vr_vlpagmto - vr_vlpagtit;
       
-      -- 0 Conta-Corrente ou 3 - Tela PAGAR
-      IF pr_cdorigpg IN (0,3) THEN
+      -- 0-Conta-Corrente  2-COBTIT  3-Tela PAGAR
+      IF pr_cdorigpg IN (0,2,3) THEN
         -- Debita o valor do título se o pagamento vier da conta corrente
         pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
                          ,pr_cdagenci => 1
