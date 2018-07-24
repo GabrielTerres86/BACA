@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 19/02/2018
+   Data    : 02/05/2013                         Ultima atualizacao: 23/07/2018
   
    Dados referentes ao programa:
 
@@ -24,23 +24,26 @@
                15/08/2017 - Incluir dividor por 100 ao buscar o percentual de 
                             garantia aux_vlpergar 116,5 (Lucas Ranghetti #734912)
                             
-                           12/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-                                         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-                                                         (Adriano - P339).                            
+               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+                            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+                            (Adriano - P339).                            
 
                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                             PRJ339 - CRM (Odirlei-AMcom)          
-                                                        
-                           01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
 
-                           28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-                                                        CH, RE, PP E CT. (PRJ339 - Reinert)
+               01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
 
-                           30/10/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 778394)
+               28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+                            CH, RE, PP E CT. (PRJ339 - Reinert)
 
-                           19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
-         
-         07/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
+               30/10/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 778394)
+
+               19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
+
+               07/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
+
+               23/07/2018 - PRJ450 - Gravar indexador do contrato (Guilherme/AMcom)
+
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0200tt.i }
@@ -596,6 +599,7 @@ PROCEDURE atualiza-operacoes:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_nrctrbnd AS DECI NO-UNDO.
+    DEF VAR aux_cdindxdr AS DECI NO-UNDO.
     DEF VAR aux_dtfimctr AS DATE NO-UNDO.
     DEF VAR aux_dtinictr AS DATE NO-UNDO.
     DEF VAR aux_vlropepr AS DECI NO-UNDO.
@@ -1375,6 +1379,7 @@ PROCEDURE atualiza-central-risco:
     DEF VAR aux_idseqbem AS INTE NO-UNDO.
     DEF VAR aux_nmarqdes AS CHAR NO-UNDO.
     DEF VAR aux_nrsequen AS INTE NO-UNDO.
+    DEF VAR aux_cdindxdr AS INTE NO-UNDO.
 
     ASSIGN aux_nmarqdes = "/usr/coop/cecred/salvar/"
            aux_nrsequen = 0.
@@ -1446,8 +1451,9 @@ PROCEDURE atualiza-central-risco:
 
             IF SUBSTR(aux_setlinha, 1, 2) = "02" THEN
             DO:
-                ASSIGN aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha, 7, 14))
+                ASSIGN aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha,  7, 14))
                        aux_nrctrbnd = INTE(SUBSTR(aux_setlinha, 43, 10))
+                       aux_cdindxdr = INTE(SUBSTR(aux_setlinha,100,  2))
                        aux_txefeanu = DECI(STRING(
                                            SUBSTR(aux_setlinha, 771, 11),
                                            "9999,9999999"))
@@ -1482,7 +1488,8 @@ PROCEDURE atualiza-central-risco:
                                    EXCLUSIVE-LOCK NO-ERROR.
 
                 IF AVAIL crapebn THEN
-                    ASSIGN crapebn.txefeanu = aux_txefeanu.
+                    ASSIGN crapebn.txefeanu = aux_txefeanu
+                           crapebn.cdindxdr = aux_cdindxdr.
 
 
             END.
