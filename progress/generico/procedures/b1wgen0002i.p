@@ -279,10 +279,10 @@
                06/10/2017 - SD770151 - Correção de informações na proposta de empréstimo convertida (Marcos-Supero)                            
                             
                04/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi)
-                            
 
-			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).								
-               
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                            
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -1007,8 +1007,8 @@ PROCEDURE gera-impressao-empr:
     DEF VAR  par_vltotpre AS DECI                                   NO-UNDO.
     DEF VAR  aux_flimpcet AS LOG                                    NO-UNDO.
 
-    DEF VAR aux_nmdoarqv AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dtlibera AS DATE                                    NO-UNDO.
+    DEF VAR  aux_nmdoarqv AS CHAR                                   NO-UNDO.
+    DEF VAR  aux_dtlibera AS DATE                                   NO-UNDO.
     DEF VAR  aux_dssrvarq AS CHAR                                   NO-UNDO.
     DEF VAR  aux_dsdirarq AS CHAR                                   NO-UNDO.
 
@@ -1577,7 +1577,7 @@ PROCEDURE gera-impressao-empr:
                                 
                                 LEAVE Gera.
                             END.                           
-                        END.            
+                        END.
                     
                     END.
 
@@ -1637,7 +1637,7 @@ PROCEDURE gera-impressao-empr:
                             UNIX SILENT VALUE ("rm " + aux_nmarquiv + "* 2>/dev/null").
                     END.
                 ELSE
-				  IF par_idorigem = 9  THEN
+                IF  par_idorigem = 9  THEN
 				    DO:
 					  UNIX SILENT VALUE ("rm " + aux_nmarqimp + " 2>/dev/null").
 				    END.
@@ -1652,7 +1652,7 @@ PROCEDURE gera-impressao-empr:
                    par_flgentrv = aux_flgentra.
         ELSE
             DO:
-		 IF par_idorigem = 9 THEN
+                IF  par_idorigem = 9 THEN
 		   ASSIGN par_nmarqpdf = aux_nmarqpdf.
 		 ELSE
                     ASSIGN par_nmarqpdf = ENTRY(NUM-ENTRIES(aux_nmarqpdf,"/"),aux_nmarqpdf,"/").
@@ -5080,16 +5080,16 @@ PROCEDURE impressao-prnf:
                    aux_par_vlutiliz = 0.
           
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-            
+          
             RUN STORED-PROCEDURE pc_descricao_situacao_conta
             aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
                                                 OUTPUT "",               /* pr_dssituacao */
                                                 OUTPUT "",               /* pr_des_erro   */
                                                 OUTPUT "").              /* pr_dscritic   */
-            
+          
             CLOSE STORED-PROC pc_descricao_situacao_conta
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-            
+
             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
             
             ASSIGN aux_dssitcta = ""
@@ -8230,7 +8230,7 @@ PROCEDURE busca_operacoes:
     CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
     IF ponteiro_xml <> ? THEN
-              DO:
+                    DO:
             xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
             xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
@@ -8264,8 +8264,8 @@ PROCEDURE busca_operacoes:
                     ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
                     ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
 
-                     END.
-   
+                    END.
+
                     END.
 
             SET-SIZE(ponteiro_xml) = 0. 
@@ -8355,14 +8355,14 @@ PROCEDURE gera_co_responsavel:
 
 
     IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-           DO:           
+                     DO:
          RUN gera_erro (INPUT par_cdcooper,
-                                             INPUT par_cdagenci, 
-                                             INPUT par_nrdcaixa, 
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
                         INPUT 1, /*sequencia*/
                         INPUT aux_cdcritic,
                         INPUT-OUTPUT aux_dscritic). 
-                    RETURN "NOK".
+          RETURN "NOK".
                      END.
                 
      ASSIGN par_vldscchq = pc_gera_co_responsavel_prog.pr_vldscchq
@@ -8501,11 +8501,11 @@ PROCEDURE gera_co_responsavel:
 
                         END.
 
-                END.
+           END. 
 
             SET-SIZE(ponteiro_xml) = 0. 
 
-           END. 
+   END.  
 
     /*Elimina os objetos criados*/
     DELETE OBJECT xDoc. 
@@ -9042,7 +9042,7 @@ PROCEDURE valida_impressao:
 
     END.
             END.
-    END.
+        END.    
 
     IF  aux_returnvl = "NOK" THEN
         RUN proc_gerar_log (INPUT par_cdcooper,
