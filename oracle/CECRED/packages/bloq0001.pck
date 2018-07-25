@@ -3640,6 +3640,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           END IF; -- vr_tab_resgates.COUNT() > 0
 
         END IF; -- vr_inresgat = 1 AND vr_insituacao = 1 AND vr_qtdias_atraso <= pr_qtdiaatr
+        
+        IF (vr_tpcontrato = 90) THEN
+          -- Consulta o saldo atualizado para desbloqueio da cobertura parcial ou completa
+          BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert => pr_idcobope
+                                                 ,pr_vlroriginal => vr_vlroriginal
+                                                 ,pr_vlratualizado => vr_vlratualiza
+                                                 ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
+                                                 ,pr_dscritic => vr_dscritic);
+            
+          -- Se o valor de desbloqueio for maior ou igual ao valor atualizado, efetua o desblqueio total
+          IF pr_vlresgat >= vr_vlratualiza THEN                                
+             BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura => pr_idcobope
+                                                  ,pr_inbloq_desbloq => 'D'
+                                                  ,pr_cdoperador     => '1'
+                                                  ,pr_cdcoordenador_desbloq => '1'
+                                                  ,pr_vldesbloq      => vr_vlratualiza
+                                                  ,pr_flgerar_log    => 'S'
+                                                  ,pr_dscritic       => vr_dscritic);
+        
+          END IF;     
+       
+       END IF; 
 
       END IF; -- NVL(pr_idcobope,0) > 0
       
