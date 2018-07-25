@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 27/11/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -536,6 +536,8 @@
 
                04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
                             PRJ366 (Lombardi).
+                
+			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
 ..............................................................................*/
 
@@ -2260,7 +2262,7 @@ PROCEDURE valida_nova_proposta:
     IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN  /* 2-CARTOES */
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "Administradora de cartoes CECRED VISA " +
+                   aux_dscritic = "Administradora de cartoes AILOS VISA " +
                                    "bloqueada.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -8103,7 +8105,7 @@ PROCEDURE carrega_dados_limcred_cartao:
     IF  crawcrd.cdadmcrd = 3 AND crapope.cddepart <> 2 THEN   /* 2-CARTOES */ 
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Administradora de cartoes CECRED VISA bloqueada".
+                   aux_dscritic = "Administradora de cartoes AILOS VISA bloqueada".
         
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -9398,7 +9400,7 @@ PROCEDURE carrega_dados_dtvencimento_cartao:
     IF   crawcrd.cdadmcrd = 3  THEN /* CECRED VISA */ 
          DO:
              ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Administradora de cartoes CECRED VISA " +
+                    aux_dscritic = "Administradora de cartoes AILOS VISA " +
                                    "bloqueada.".
                                    
              RUN gera_erro (INPUT par_cdcooper,
@@ -10036,7 +10038,7 @@ PROCEDURE carrega_dados_solicitacao2via_cartao:
          crapope.cddepart <> 2 THEN /* CECRED VISA */ 
          DO:
              ASSIGN aux_cdcritic = 0
-                    aux_dscritic = "Administradora de cartoes CECRED VISA " +
+                    aux_dscritic = "Administradora de cartoes AILOS VISA " +
                                    "bloqueada.".
 
              RUN gera_erro (INPUT par_cdcooper,
@@ -15534,7 +15536,7 @@ PROCEDURE carrega_dados_proposta:
          aux_dsadicio = crapadc.nmresadm.
 
     IF   crapadc.cdadmcrd = 3   THEN
-         ASSIGN aux_dsdestin = "CECRED" 
+         ASSIGN aux_dsdestin = "AILOS" 
                 aux_dscontat = "ADMINISTRATIVO/FINANCEIRO".
     ELSE
          ASSIGN aux_dsdestin = crapadc.nmresadm
@@ -17161,14 +17163,14 @@ PROCEDURE contrato_cecred_bdn_visa:
     
     IF   crapass.inpessoa = 1   THEN
          IF   crawcrd.cdadmcrd = 3   THEN
-              ASSIGN aux_nmcartao = "CECRED/VISA"
+              ASSIGN aux_nmcartao = "AILOS/VISA"
                      aux_dsvincul = "COOPERATIVA FILIADA.".
          ELSE
               ASSIGN aux_nmcartao = "BRADESCO/VISA"
                      aux_dsvincul = "PORTADOR.".
     
     ELSE
-         ASSIGN aux_nmcartao = "CECRED/VISA"
+         ASSIGN aux_nmcartao = "AILOS/VISA"
                 aux_dsvincul = "COOPERATIVA FILIADA.". /* PJ */
 
     IF   crapass.inpessoa = 1   THEN
@@ -21454,9 +21456,9 @@ PROCEDURE gera_impressao_entrega_cartao_bancoob:
     ASSIGN aux_returnvl = "NOK".
 
     FORM SKIP
-         "PROTOCOLO DE ENTREGA DO CARTAO CECRED" AT 23
+         "PROTOCOLO DE ENTREGA DO CARTAO AILOS" AT 23
          SKIP(2)
-         "1 - Protocolo de Entrega do cartao CECRED"
+         "1 - Protocolo de Entrega do cartao AILOS"
          SKIP(1)
          "Declaro que recebi nesta data o cartao listado abaixo, "
          "identificado pelos digitos:"

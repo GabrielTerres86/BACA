@@ -113,7 +113,7 @@ var dsadmcrdList = {
 var nmEmpresPla = "nome Empresa pl";
 var faprovador;
 var callbacckReturn = undefined;
-var protocolo = 0;
+var protocolo;
 var glbadc = 'n';
 var justificativaCartao;
 var contigenciaAtiva = false;
@@ -264,7 +264,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 				 $("#btnalterarLimite").attr("situacao", "situacao");
 				 
             }
-			
+
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
 				$("#btncanc").removeAttr("disabled");
 				$("#btncanc").css('cursor', 'pointer');
@@ -1899,8 +1899,8 @@ function senhaCoordenador(executaDepois) {
 		$(".campo").blur(function(){
 			if( $(this).attr('id') =='cdopelib'){
 				faprovador = $(this).val();
-			}
-			
+}
+
 		});
 		
 		$(".campo").change(function(){
@@ -3779,7 +3779,7 @@ function cancelaContrato(){
 
 // Função para mostrar a opção CancBloq do cartão
 function opcaoCancBloq() {
-	
+
 	
 	if(cdadmcrd >= 11 && cdadmcrd < 17){
 		//todo implementar canclamento cecred
@@ -4621,12 +4621,12 @@ function validarUpDown() {
 			
             eval(response);
 			if(!error)
-				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+			    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
 			    if (iPiloto == 1) {
-					atualizaUpgradeDowngrade();
+				atualizaUpgradeDowngrade();
 				} else {					
 					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
-				}
+        }
 					
         }
     });
@@ -6423,6 +6423,7 @@ function reenviaEsteira(nrctrcrd){
         tpacao: 'montagrid',
         nrdconta: nrdconta,
         nrctrcrd: nrctrcrd,
+		glbadc  : glbadc,
         dsgraupr: 5,
         inpessoa: inpessoa,
         bancoob : 2

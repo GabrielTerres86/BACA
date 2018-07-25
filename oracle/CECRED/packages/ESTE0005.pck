@@ -282,6 +282,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     RETURN to_char(pr_data,'RRRR-MM-DD');
   END fn_Data_ibra;
 
+  --> Funcao para remover acentos e caracteres especiais - copiado do TELA_INTEAS.pck
+  --> Temporario ate que se adeque a forma de gravacao do acentos na justificativa
+  FUNCTION fn_remove_caract_espec(pr_string IN VARCHAR2) RETURN VARCHAR2 IS
+  BEGIN
+    RETURN REGEXP_REPLACE( gene0007.fn_caract_acento(pr_string,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                                 '                  ')
+                          ,'[^a-zA-Z0-9Ç@:._ +,();=-]+',' ');
+  END fn_remove_caract_espec;
+
   PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
                                         ---- OUT ----
                                         pr_cdcritic OUT NUMBER,                 --> Codigo da critica
@@ -1520,6 +1529,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
            AND dtinclus >= add_months(TRUNC(SYSDATE),-pr_dtinclus);
       rw_crapspc cr_crapspc%ROWTYPE;
 
+	  CURSOR cr_valorlimite(pr_cdcooper crapcop.cdcooper%TYPE,
+                            pr_nrdconta crapass.nrdconta%TYPE) IS
+       SELECT SUM(limite)
+         FROM
+         (SELECT crd.nrcctitg, 
+                 /* Caso a conta cartao tenha mais limite, considera o maior 
+                    mas seria uma inconsistencia na base. */
+                 MAX(crd.vllimcrd) as limite
+            FROM crawcrd crd
+           WHERE crd.cdcooper = pr_cdcooper
+             AND crd.nrdconta = pr_nrdconta
+             AND crd.cdadmcrd between 10 and 80 /* BANCOOB */
+             AND crd.insitcrd in (2,3,4) /* 2-solic. 3-liberado, 4-em uso */
+        GROUP BY crd.nrcctitg
+
+        UNION ALL 
+
+          SELECT 0, 
+                 tlc.vllimcrd as limite
+            FROM crawcrd crd
+            JOIN craptlc tlc
+              ON tlc.cdcooper = crd.cdcooper
+             AND tlc.cdadmcrd = crd.cdadmcrd
+             AND tlc.tpcartao = crd.tpcartao
+             AND tlc.cdlimcrd = crd.cdlimcrd
+             AND tlc.dddebito = 0         
+           WHERE crd.cdcooper = pr_cdcooper
+             AND crd.nrdconta = pr_nrdconta
+             AND NOT crd.cdadmcrd between 10 and 80 /* NAO BANCOOB */
+             AND crd.insitcrd IN (4,7) /* Em uso */
+        );
+
     BEGIN
       --Verificar se a data existe
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -2279,6 +2320,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
             vr_flgativo := 1;
           END IF;
         END LOOP;
+      END IF;
+
+	  --> O total do limite do cartao retornado pela cada004.pc_lista_cartao nao nos atende.
+      OPEN cr_valorlimite(pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => pr_nrdconta);
+      FETCH cr_valorlimite INTO vr_vltotccr;
+      IF cr_valorlimite%NOTFOUND THEN
+        vr_vltotccr := 0;
       END IF;
 
       -- Enviar flag de encontro e valor de Limite de Crédito
@@ -5896,6 +5945,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_dsjustif := rw_crawcrd.dsjustif;
       vr_dsprotoc := rw_crawcrd.dsprotoc;
       vr_nrctrcrd := pr_nrctrcrd;
+	  IF vr_dsprotoc = '0' THEN
+        vr_dsprotoc := null;
+      END IF;
     END IF;    
     CLOSE cr_limatu;
     
@@ -6099,7 +6151,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       CLOSE cr_cdadmcrd_uso;
     END IF;
     
-    vr_obj_proposta.put('justificativa',vr_dsjustif);
+    /* A esteira aceita no máximo 235 caracteres */
+    vr_obj_proposta.put('justificativa',substr(fn_remove_caract_espec(vr_dsjustif),1,235));
 
     -- Copiar parâmetro
     vr_nmarquiv := pr_nmarquiv;
