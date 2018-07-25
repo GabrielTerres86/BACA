@@ -8327,12 +8327,14 @@ PROCEDURE altera-valor-proposta:
               IF crawepr.vlempori > 0 AND
                  crawepr.vlpreori > 0 THEN
               DO:
+              
+              ASSIGN aux_idpeapro = 0.
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                 RUN STORED-PROCEDURE pc_processa_perda_aprov
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /*Codigo da Cooperativa*/
                                                      INPUT par_nrdconta, /*Numero da conta*/
                                                      INPUT par_nrctremp, /*Numero do contrato de emprestimo*/
-                                                     INPUT "P",  /* C - Consulta ou P - Processo de perda */
+                                                     INPUT "S",  /* C - Consulta ou P - Processo de perda */
                                                      INPUT par_vlemprst,
                                                      INPUT par_vlpreemp,                                                     
                                                      INPUT par_cdagenci, /*Codigo Agencia*/
@@ -8340,7 +8342,7 @@ PROCEDURE altera-valor-proposta:
                                                      INPUT par_cdoperad, /*Codigo Operador*/
                                                      INPUT 90, /*Tipo Contrato Rating*/
                                                      INPUT 0,   /*pr_flgcriar Indicado se deve criar o rating*/
-                                                       INPUT 1, /*pr_flgcalcu Indicador de calculo*/
+                                                     INPUT 1, /*pr_flgcalcu Indicador de calculo*/
                                                      INPUT par_idseqttl, /*Sequencial do Titular*/
                                                      INPUT par_idorigem, /*Identificador Origem*/
                                                      INPUT par_nmdatela, /*Nome da tela*/
@@ -8380,7 +8382,14 @@ PROCEDURE altera-valor-proposta:
                 DO:
                   ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                 END.
-                
+                /*Realizar perda*/
+                ASSIGN crawepr.insitapr = 0
+                       crawepr.cdopeapr = ""
+                       crawepr.dtaprova = ?
+                       crawepr.hraprova = 0
+                       crawepr.insitest = 0
+                       crawepr.cdopealt = par_cdoperad.
+                       
                 CREATE tt-msg-confirma.
                 ASSIGN tt-msg-confirma.inconfir = 1
                        tt-msg-confirma.dsmensag =
@@ -8402,9 +8411,9 @@ PROCEDURE altera-valor-proposta:
                       ASSIGN crawepr.insitapr = 0
                              crawepr.cdopeapr = ""
                              crawepr.dtaprova = ?
-                                                  crawepr.hraprova = 0
-                         crawepr.insitest = 0
-                         crawepr.cdopealt = par_cdoperad.
+                             crawepr.hraprova = 0
+                             crawepr.insitest = 0
+                             crawepr.cdopealt = par_cdoperad.
                    
                   /*Salvar operador da alteraçao*/
                   ASSIGN crawepr.cdopealt = par_cdoperad.

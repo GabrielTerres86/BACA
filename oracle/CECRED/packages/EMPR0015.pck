@@ -186,8 +186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         vr_vltolemp := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,60,12)),0);     
         --Aproveitar a leitura da tab089 e puscar o percentual de tolerância da prestação também
         vr_pcaltpar := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,53,6)),0);        
-        IF vr_diferenca_valor >  vr_vltolemp THEN -- Perde a aprovação
-          pr_idpeapro :=1;
+        IF vr_diferenca_valor >  vr_vltolemp AND c1.vlempori > 0 THEN -- Perde a aprovação
+          pr_idpeapro := 1;
           -- Se a ação for de processo de perda de aprovação 
           IF pr_tipoacao = 'P' THEN
             BEGIN
@@ -238,8 +238,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
              vr_diferenca_parcela:= ((nvl(pr_vlpreemp,0)/nvl(c1.vlpreori,0))-1)*100;
           END IF;
           
-          IF vr_diferenca_parcela > vr_pcaltpar THEN -- Perde a aprovação
-            pr_idpeapro :=1;            
+          IF vr_diferenca_parcela > vr_pcaltpar AND c1.vlpreori > 0 THEN -- Perde a aprovação
+            pr_idpeapro := 1;            
             -- Se a ação for de processo de perda de aprovação 
             IF pr_tipoacao = 'P' THEN
               BEGIN
@@ -334,47 +334,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             -- irá gravar no original este.   
             IF TRIM(c1.dsratori) IS NOT NULL OR 
                c1.dsratori <> ' ' THEN
-            IF vr_rating > c1.dsratori THEN
-              pr_idpeapro :=1;
-              -- Se a ação for de processo de perda de aprovação 
-              IF pr_tipoacao = 'P' THEN              
-                BEGIN
-                  UPDATE
-                       crawepr c
-                     SET
-                        c.insitapr = 0,
-                        c.cdopeapr = null,
-                        c.dtaprova = null,
-                        c.hraprova = 0,
-                        c.insitest = 0          
-                   WHERE c.cdcooper = pr_cdcooper
-                     AND c.nrdconta = pr_nrdconta
-                     AND c.nrctremp = pr_nrctremp;
-                       /* c.rowid LIKE c1.rowid;*/
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
-                    --Sair do programa
-                    RAISE vr_exc_erro;
-                END;  
-                GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_dscritic => ''
-                                    ,pr_dsorigem => pr_dsorigem
-                                    ,pr_dstransa => 'A proposta :'||pr_nrctremp
-                                                 ||' Perdeu a aprovação por Alteração do Rating para pior. Rating original:'  ||c1.dsratori
-                                                 ||' Rating atual : '||vr_rating
-                                    ,pr_dttransa => TRUNC(SYSDATE)
-                                    ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
-                                                     ELSE 0 
-                                                     END )
-                                    ,pr_hrtransa => gene0002.fn_busca_time
-                                    ,pr_idseqttl => pr_idseqttl
-                                    ,pr_nmdatela => pr_nmdatela
-                                    ,pr_nrdconta => pr_nrdconta
-                                   ,pr_nrdrowid => vr_nrdrowid);              
-              END IF;                
-            END IF;
+              IF vr_rating > c1.dsratori THEN
+                pr_idpeapro :=1;
+                -- Se a ação for de processo de perda de aprovação 
+                IF pr_tipoacao = 'P' THEN              
+                  BEGIN
+                    UPDATE
+                         crawepr c
+                       SET
+                          c.insitapr = 0,
+                          c.cdopeapr = null,
+                          c.dtaprova = null,
+                          c.hraprova = 0,
+                          c.insitest = 0          
+                     WHERE c.cdcooper = pr_cdcooper
+                       AND c.nrdconta = pr_nrdconta
+                       AND c.nrctremp = pr_nrctremp;
+                         /* c.rowid LIKE c1.rowid;*/
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
+                      --Sair do programa
+                      RAISE vr_exc_erro;
+                  END;  
+                  GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdoperad => pr_cdoperad
+                                      ,pr_dscritic => ''
+                                      ,pr_dsorigem => pr_dsorigem
+                                      ,pr_dstransa => 'A proposta :'||pr_nrctremp
+                                                   ||' Perdeu a aprovação por Alteração do Rating para pior. Rating original:'  ||c1.dsratori
+                                                   ||' Rating atual : '||vr_rating
+                                      ,pr_dttransa => TRUNC(SYSDATE)
+                                      ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
+                                                       ELSE 0 
+                                                       END )
+                                      ,pr_hrtransa => gene0002.fn_busca_time
+                                      ,pr_idseqttl => pr_idseqttl
+                                      ,pr_nmdatela => pr_nmdatela
+                                      ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);              
+                END IF;                
+              END IF;
             ELSE 
               -- Se no momento da inclusão não havia rating e agora 
               IF vr_rating IS NOT NULL OR
