@@ -190,7 +190,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           pr_idpeapro := 1;
           -- Gerar log
           IF pr_tipoacao = 'S' THEN
-              -- Gerar log ao cooperado (b1wgen0014 - gera_log);
               GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_dscritic => ''
@@ -209,22 +208,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
 
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Valor original do Emp',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => c1.vlempori);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Valor atual',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => pr_vlemprst);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Diferença',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => vr_diferenca_parcela);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Tolerância',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => vr_vltolemp);
           END IF;          
         ELSE -- 2ª Regra: Valor de Parcela 
@@ -241,7 +240,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             pr_idpeapro := 1;            
             -- Gerar Log
             IF pr_tipoacao = 'S' THEN
-              -- Gerar log ao cooperado (b1wgen0014 - gera_log);
               GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_dscritic => ''
@@ -260,22 +258,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
 
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Valor original da parcela',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => c1.vlpreori);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Valor atual',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => pr_vlpreemp);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => '% da Diferença',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => vr_diferenca_parcela);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => '% de Tolerância',
-                                        pr_dsdadant => NULL,
+                                        pr_dsdadant => 'ND',
                                         pr_dsdadatu => vr_pcaltpar);
             END IF;
             
@@ -334,10 +332,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             IF TRIM(c1.dsratori) IS NOT NULL OR 
                c1.dsratori <> ' ' THEN
               IF vr_rating > c1.dsratori THEN
-                pr_idpeapro :=1;
+                pr_idpeapro := 1;
                 -- gerar Log 
                 IF pr_tipoacao = 'S' THEN
-                  -- Gerar log ao cooperado (b1wgen0014 - gera_log);
                   GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                       ,pr_cdoperad => pr_cdoperad
                                       ,pr_dscritic => ''
@@ -356,12 +353,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
 
                   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                             pr_nmdcampo => 'Rating original',
-                                            pr_dsdadant => NULL,
-                                            pr_dsdadatu => c1.vlpreori);
+                                            pr_dsdadant => 'ND',
+                                            pr_dsdadatu => c1.dsratori);
                                             
                   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                             pr_nmdcampo => 'Rating atual',
-                                            pr_dsdadant => NULL,
+                                            pr_dsdadant => 'ND',
                                             pr_dsdadatu => vr_rating);
                 END IF;                
                 
@@ -389,23 +386,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           END IF; 
         END IF;  
         -- Se não é consulta e chegou ao final do processo sem perder a aprovação, grava um log
-        IF pr_idpeapro = 0 and pr_tipoacao = 'P' THEN
+        IF pr_idpeapro = 0 and pr_tipoacao = 'S' THEN
           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => pr_cdoperad
                               ,pr_dscritic => ''
                               ,pr_dsorigem => pr_dsorigem
                               ,pr_dstransa => 'A proposta :'||pr_nrctremp
-                                           ||' Foi validad pela rotina EMPR0015.PC_PROCESSA_PERDA_APROVACAO e teve a sua aprovação mantida.'
-                                           ||' Valor original do empréstimo:'||c1.vlempori
-                                           ||' Valor atual:'                 ||pr_vlemprst
-                                           ||' Diferença:'                   ||vr_diferenca_valor
-                                           ||' Tolerância:'                  ||vr_vltolemp                                           
-                                           ||' Valor original da parcela:'   ||c1.vlpreori
-                                           ||' Valor atual:'                 ||pr_vlpreemp
-                                           ||' % da Diferença:'              ||vr_diferenca_parcela
-                                           ||' % de Tolerância:'             ||vr_pcaltpar                                           
-                                           ||' Rating original:'             ||c1.dsratori
-                                           ||' Rating atual:'                ||vr_rating
+                                            ||' teve a sua aprovação mantida.'
                               ,pr_dttransa => TRUNC(SYSDATE)
                               ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
                                                ELSE 0 
@@ -414,12 +401,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                               ,pr_idseqttl => pr_idseqttl
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);          
+                              ,pr_nrdrowid => vr_nrdrowid);
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Valor original do empréstimo',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => c1.vlempori);
+                                            
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Valor Atual do empréstimo',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => pr_vlemprst);  
+                                         
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Diferença',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_diferenca_valor);
+                                            
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Tolerância',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_vltolemp);
+                                            
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Valor original da parcela',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => c1.vlpreori);
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Valor atual da parcela',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => pr_vlpreemp);
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => '% da Diferença',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_diferenca_parcela);
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => '% de Tolerância',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_pcaltpar);
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Rating original',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => c1.dsratori);
+
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                    pr_nmdcampo => 'Rating atual',
+                                    pr_dsdadant => 'ND',
+                                    pr_dsdadatu => vr_rating);
+
         END IF;
       END LOOP;
-      IF pr_tipoacao = 'P' THEN
-        COMMIT;
-      END IF;
       -- Se chegou até o final sem erro retorna OK
       pr_dserro := 'OK';
     EXCEPTION
