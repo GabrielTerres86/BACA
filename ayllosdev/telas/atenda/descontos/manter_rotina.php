@@ -555,7 +555,7 @@
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	    $xml .= "   <chave>".$selecionados."</chave>";
 	    $xml .= "   <nrborder>".$nrborder."</nrborder>";
-	    $xml .= "	<dtmvtolt>20/07/2018</dtmvtolt>";
+	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
