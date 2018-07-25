@@ -122,9 +122,9 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                  pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
                                  pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
                                  pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                               pr_dsmetodo                 IN varchar2 /*tbgen_webservice_aciona.dsmetodo%TYPE*/ DEFAULT NULL,
-                               pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
-                               pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                                 pr_dsmetodo                 IN varchar2 /*tbgen_webservice_aciona.dsmetodo%TYPE*/ DEFAULT NULL,
+                                 pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
+                                 pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
                                  pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2);
 
@@ -276,8 +276,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
       Alteracoes: 03/05/2017 - Alterações referentes ao Projeto 337. (Reinert)
                   01/03/2018 - Substituir utilização da tabela tbepr_acionamento pela tbgen_webservice_aciona
-          02/04/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
-                               motor de credito e enviar para esteira - Diego Simas (AMcom)                
+				  02/04/2018 - Incluir novo campo liquidOpCredAtraso no retorno do
+                               motor de credito e enviar para esteira - Diego Simas (AMcom)
+				  25/07/2018 - Correção para a contagem de dias em atraso
+							   Fluxo Atraso (quantidadeDiasAtraso)
+							   PJ 450 - Diego Simas (AMcom)		
 
   ---------------------------------------------------------------------------------------------------------------*/
   --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
@@ -306,7 +309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                        ,pr_nrdconta IN NUMBER
                                        ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE IS
 
-      CURSOR cr_tbepr_acionamento IS
+      CURSOR cr_tbgen_webservice_aciona IS
         SELECT aci.dsprotocolo dsprotocolo
           FROM tbgen_webservice_aciona aci
          WHERE aci.cdcooper = pr_cdcooper
@@ -315,11 +318,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
            AND aci.tpacionamento = 2 /* Retorno */
            AND aci.dsprotocolo IS NOT NULL
          ORDER BY aci.dhacionamento DESC;
-       rw_tbepr_acionamento cr_tbepr_acionamento%ROWTYPE;
+       rw_tbgen_webservice_aciona cr_tbgen_webservice_aciona%ROWTYPE;
     BEGIN
-      OPEN cr_tbepr_acionamento;
-      FETCH cr_tbepr_acionamento INTO rw_tbepr_acionamento;
-      RETURN rw_tbepr_acionamento.dsprotocolo;
+      OPEN cr_tbgen_webservice_aciona;
+      FETCH cr_tbgen_webservice_aciona INTO rw_tbgen_webservice_aciona;
+      RETURN rw_tbgen_webservice_aciona.dsprotocolo;
     END fn_protocolo_analise_auto;
 
     --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
@@ -861,8 +864,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                        ,pr_dscritic      => pr_dscritic );
 
     IF vr_dscritic  IS NOT NULL THEN
-    RAISE vr_exc_erro;
-    END IF;
+        RAISE vr_exc_erro;
+      END IF;
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -980,7 +983,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
                                pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
                                pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
-                               pr_dscritic                OUT VARCHAR2) IS
+                                 pr_dscritic                OUT VARCHAR2) IS
 
   /* ..........................................................................
 
@@ -1043,7 +1046,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     COMMIT;
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
+    pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
       ROLLBACK;
   END pc_grava_acionamento;
 
@@ -1359,7 +1362,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 02/04/2018
+      Data     : Março/2016.                   Ultima atualizacao: 25/07/2018
 
       Dados referentes ao programa:
 
@@ -1386,7 +1389,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 
                   02/04/2018 - Incluir novo campo liquidOpCredAtraso na esteira
                                Diego Simas (AMcom)
-                             
+
+				  25/07/2018 - Correção para a contagem de dias em atraso
+							   Fluxo Atraso (quantidadeDiasAtraso)
+							   PJ 450 - Diego Simas (AMcom)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -1442,7 +1449,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                WHEN 2 THEN 'POS'
              END tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
-             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc             
+             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
         FROM crawepr epr,
              craplcr lcr,
              crapfin fin,
@@ -1541,10 +1548,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         AND nrdconta = pr_nrdconta;
     rw_crapjfn cr_crapjfn%ROWTYPE;
 
-  -- Buscar quantos dias de atraso houve no contrato
-    CURSOR cr_crapris(pr_cdcooper IN crapepr.cdcooper%TYPE
-                     ,pr_nrdconta IN crapris.nrdconta%TYPE                
-                     ,pr_nrctremp IN crapepr.nrctremp%TYPE
+    -- Buscar quantos dias de atraso houve no contrato
+    CURSOR cr_crapris(pr_nrctremp IN crapepr.nrctremp%TYPE
                      ,pr_dtultdma IN crapdat.dtultdma%TYPE) IS
       SELECT MAX(ris.qtdiaatr) qtdiaatr
         FROM crapris ris
@@ -1554,8 +1559,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND ris.dtrefere >= pr_dtultdma
          AND ris.cdmodali in(299,499)
          AND ris.inddocto = 1;
-    vr_qtdiatra NUMBER;
-    
+    vr_qtddiatr NUMBER;
+
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
@@ -1583,12 +1588,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_vllimdis     NUMBER;
     vr_nmarquiv     varchar2(1000);
     vr_dsiduser     varchar2(100);
-    vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%TYPE;
-    vr_dsdirarq  VARCHAR2(1000);
-    vr_dscomando VARCHAR2(1000);
-  vr_ind_opeatr   BOOLEAN;
-  vr_qthisemp    crapprm.dsvlrprm%TYPE;
-  vr_qtddiatr    NUMBER(10);
+    vr_dsprotoc     tbgen_webservice_aciona.dsprotocolo%TYPE;
+    vr_dsdirarq     VARCHAR2(1000);
+    vr_dscomando    VARCHAR2(1000);
+    vr_ind_opeatr   BOOLEAN;
+    vr_qthisemp     crapprm.dsvlrprm%TYPE;
 
   BEGIN
 
@@ -1830,7 +1834,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       IF gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') IS NOT NULL THEN
 
         vr_obj_proposta.put('ambienteTemp','true');
-        vr_obj_proposta.put('urlRetornoTemp', gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_MOTOR_DEVOLUC') );
+        vr_obj_proposta.put('urlRetornoTemp', gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') );
 
       END IF;
 
@@ -1993,21 +1997,22 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 
     -- Buscar parâmetro da quantidade de meses para encontro do histórico de empréstimos
     vr_qthisemp := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EMPREST');
-
-     OPEN cr_crapris(pr_cdcooper, pr_nrdconta, null, add_months(rw_crapdat.dtmvtolt,-vr_qthisemp));
+   
+    -- Busca maior atraso dentre os emprestimos do cooperado        
+    OPEN cr_crapris(null, add_months(rw_crapdat.dtmvtolt,-vr_qthisemp));
     FETCH cr_crapris
      INTO vr_qtddiatr;
-    CLOSE cr_crapris;
-    
+    CLOSE cr_crapris; 
+
     -- Enviar flag política de crédito
     IF rw_crawepr.inliquid_operac_atraso = 0 THEN
       vr_ind_opeatr := false;
     ELSE
       vr_ind_opeatr := true;
     END IF;
+    
     vr_obj_proposta.put('operacaoCreditoNaoLiquidada',vr_ind_opeatr);
-
-    vr_obj_proposta.put('quantidadeDiasAtraso',vr_qtddiatr); 
+    vr_obj_proposta.put('quantidadeDiasAtraso',vr_qtddiatr);
 
     -- BUscar faturamento se pessoa Juridica
     IF rw_crapass.inpessoa = 2 THEN
@@ -5099,9 +5104,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
               END IF;
 
               -- Indicador de operação de crédito em atraso
-              IF vr_obj_indicadores.exist('liquidOpCredAtraso') THEN          
+              IF vr_obj_indicadores.exist('liquidOpCredAtraso') THEN
                 vr_inopeatr := ltrim(rtrim(vr_obj_indicadores.get('liquidOpCredAtraso').to_char(),'"'),'"');
-              END IF;              
+              END IF;
 
               -- Patrimônio Pessoal Livre --
               IF vr_obj_indicadores.exist('patrimonioPessoalLivre') THEN
