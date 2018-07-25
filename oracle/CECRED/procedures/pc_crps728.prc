@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Odirlei Busana - AMcom
-    Data    : fevereiro/2018                  Ultima Atualizacao : 08/02/2018
+    Data    : fevereiro/2018                  Ultima Atualizacao : 25/07/2018
 
     Dados referente ao programa:
 
@@ -15,6 +15,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
 
     Alteracoes : 05/06/2018 - Ajustes para mover arquivo pdf independente da sua data de geração.
                               PRJ406 - FGTS(Odirlei - AMcom)
+															
+								 25/07/2018 - Alterado busca dos nomes de arquivos de retorno para CECRED
+								              devido a mudança de marca ainda não tratada no parceiro Bancoob.
+															(Reinert)
   ..............................................................................*/
 
   --------------------- ESTRUTURAS PARA OS RELATÓRIOS ---------------------
@@ -234,9 +238,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
         
       BEGIN
         -->>>>> Caso alterado nome do arquivo de retorno, necessario alterar package tela_tab057 <<<<--
-        vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%'||rw_crapcop_central.nmrescop||'%';
-        vr_nmarqpdf := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||'%'||rw_crapcop_central.nmrescop||'%';
-        
+--        vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%'||rw_crapcop_central.nmrescop||'%';
+--        vr_nmarqpdf := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||'%'||rw_crapcop_central.nmrescop||'%';
+  
+-- Fixado CECRED para buscar o arquivo de retorno devido a mudança de marca ainda não estar tratada no parceiro Bancoob
+        vr_nmarquiv := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||to_char(vr_dtproces,'RRRRMMDD')||'%CECRED%';
+        vr_nmarqpdf := to_char(rw_crapcop.cdagebcb,'fm0000')||'-RT%'||'%CECRED%';
+      
         --> Buscar arquivos 
         gene0001.pc_lista_arquivos(pr_path     => vr_dsdircon||'/recebe', 
                                    pr_pesq     => vr_nmarquiv||'.RET', 
