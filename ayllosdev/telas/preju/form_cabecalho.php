@@ -23,6 +23,7 @@
 				<select id="cddopcao" name="cddopcao" style="width: 477px;">
                     <option value='C'>E - Estorno da transferência a preju&iacute;zo</option>
 					<option value='P'>P - For&ccedil;ar envio empr&eacute;stimo para preju&iacute;zo</option>	
+					<option value='F'>F - For&ccedil;ar envio de conta corrente para preju&iacute;zo</option>	
                     <option value='I'>I - Importar arquivo: for&ccedil;ar envio para preju&iacute;zo</option>					
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>

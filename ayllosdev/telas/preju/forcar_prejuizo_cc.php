@@ -6,6 +6,8 @@
  * OBJETIVO     : Rotina para forçar transferencia de conta corrente para prejuizo
  * --------------
  * ALTERAÇÕES   : 03/01/2017: Confirmação de estorno. Andrey Formigari - Mouts
+ *                25/07/2018: Adaptação para uso da nova rotina de transferência para prejuízo. 
+                              Reginaldo - AMcom - P450
  * -------------- 
  */
     session_start();
@@ -33,12 +35,13 @@
 	// se não confirmou o estorno, então abre tela para confirmar.
 	if ($okConfirm != 1){
 		echo 'hideMsgAguardo();';
-		echo "showConfirmacao('Confirma estorno da transferência a prejuízo?','Confirma&ccedil;&atilde;o - Ayllos','carregaPrejuizoCC(\'$nrdconta\', 1);','estadoInicial();','sim.gif','nao.gif');";
+		echo "showConfirmacao('Confirma transferência da conta corrente para prejuízo?','Confirma&ccedil;&atilde;o - Ayllos','carregaPrejuizoCC(\'$nrdconta\', 1);','estadoInicial();','sim.gif','nao.gif');";
 		exit();
 	}else{
 		// se confirmar
 		// Monta o xml de requisição
-		$xml  = "";
+		// ******************* ADEQUAR PARA CHAMDA DA PROCEDURE DESENVOLVIDA PELO ANDERSON ******************
+		/*$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Cabecalho>";
 		$xml .= "		<Bo>b1wgen0199.p</Bo>";
@@ -59,11 +62,25 @@
 		$xml .= "		<cdfinemp>".$cdfinemp."</cdfinemp>";
 		$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
 		$xml .= "	</Dados>";
-		$xml .= "</Root>";
+		$xml .= "</Root>"; 
 		
 		$xmlResult = getDataXML($xml,false);
 		$xmlObj = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
-		$xmlObj = simplexml_load_string($xmlResult);
+		$xmlObj = simplexml_load_string($xmlResult); */
+
+		// Monta o xml de requisição
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
+		$xml .= "	<nrdconta>" . $nrdconta . "</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "PREJ0003", "TRANSF_PREJUIZO_CC", 
+			$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
+			$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");    
+
+		$xmlObjeto = getObjectXML($xmlResult);
 	
 		$error = $xmlObj->Erro->Registro->erro;
 		if ($error == "yes"){
