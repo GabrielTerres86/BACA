@@ -399,44 +399,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
       ORDER BY ris.dtrefere DESC;
     rw_juro60 cr_juro60%ROWTYPE;
 		
-		CURSOR cr_juros60_pagos(pr_cdcooper crapris.cdcooper%TYPE
-                     ,pr_nrdconta crapris.nrdconta%TYPE
-                     ,pr_nrctremp crapris.nrctremp%TYPE) IS
-		select sum(case
-             when h.cdhistor in (2473) then
-              h.vllanmto
-             else
-              0
-           end) - sum(case
-                        when h.cdhistor in (2474) then
-                         h.vllanmto
-                        else
-                         0
-                      end) vllanmto
-			from craplem h
-		 where h.cdhistor in (2473, 2474)
-			 and cdcooper = pr_cdcooper
-			 and nrdconta = pr_nrdconta
-			 and nrctremp = pr_nrctremp;
-		rw_juros60_pagos cr_juros60_pagos%ROWTYPE;															
+		CURSOR cr_juro60_pagos (pr_cdcooper crapris.cdcooper%TYPE
+                           ,pr_nrdconta crapris.nrdconta%TYPE
+                           ,pr_nrctremp crapris.nrctremp%TYPE) IS
+		SELECT sum(CASE WHEN h.cdhistor = 2473 THEN h.vllanmto
+               ELSE 0 END) 
+         - sum(CASE WHEN h.cdhistor = 2474 THEN h.vllanmto
+               ELSE 0 END) vllanmto
+			FROM craplem h
+		 WHERE h.cdhistor IN(2473, 2474)
+			 AND cdcooper = pr_cdcooper
+			 AND nrdconta = pr_nrdconta
+			 AND nrctremp = pr_nrctremp;
+		rw_juro60_pagos cr_juro60_pagos%ROWTYPE;															
+    
+    -- Verifica se existe lançamento para os históricos específicos
+    CURSOR cr_juro60_lem (pr_cdcooper crapris.cdcooper%TYPE
+                         ,pr_nrdconta crapris.nrdconta%TYPE
+                         ,pr_nrctremp crapris.nrctremp%TYPE) IS
+      SELECT 1 id_lem
+        FROM craplem h
+       WHERE h.cdcooper = pr_cdcooper
+		  	 AND h.nrdconta = pr_nrdconta
+			   AND h.nrctremp = pr_nrctremp
+         AND h.cdhistor IN(2402, 2406, 2382, 2397)         
+         AND rownum     = 1;
+    rw_juro60_lem cr_juro60_lem%ROWTYPE;     
 		
-    BEGIN
-     OPEN cr_juro60(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+  BEGIN
+    -- Abre cursor cr_juro60_lem
+    OPEN cr_juro60_lem(pr_cdcooper, pr_nrdconta, pr_nrctremp); 
+   FETCH cr_juro60_lem
+    INTO rw_juro60_lem;
+   CLOSE cr_juro60_lem;
+   
+    -- Se existem lançamentos para os históricos específicos
+    IF NVL(rw_juro60_lem.id_lem,0) = 1 THEN        
+      -- Abre cursor cr_juro60
+      OPEN cr_juro60(pr_cdcooper, pr_nrdconta, pr_nrctremp);
      FETCH cr_juro60
-       INTO rw_juro60;
-     CLOSE cr_juro60;
-	 
-   IF NVL(rw_juro60.vljura60,0) > 0 THEN
-		OPEN cr_juros60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp);
-		FETCH cr_juros60_pagos INTO rw_juros60_pagos;
-		CLOSE cr_juros60_pagos;
-    RETURN(rw_juro60.vljura60 - nvl(rw_juros60_pagos.vllanmto, 0));
-  ELSE
-    RETURN(0);  -- Garante retorno zero se não houver valor
-  END IF;
-  --
-  END fn_juros60_emprej;
-  
+      INTO rw_juro60;
+     CLOSE cr_juro60;     
+      --
+      -- Verifica se encontrou juros60
+      IF NVL(rw_juro60.vljura60,0) > 0 THEN
+        -- Abre cursor cr_juro60_pagos
+        OPEN cr_juro60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp); 
+       FETCH cr_juro60_pagos  
+        INTO rw_juro60_pagos;
+       CLOSE cr_juro60_pagos; 
+        --
+        RETURN(rw_juro60.vljura60 - nvl(rw_juro60_pagos.vllanmto, 0));
+      ELSE
+        RETURN(0);  -- Garante retorno zero se não houver valor      
+      END IF;
+    ELSE
+      RETURN(0);  -- Garante retorno zero se não houver valor
+    END IF;
+    --
+  END fn_juros60_emprej;  
   
    PROCEDURE pc_grava_prm_trp(pr_dsvlrprm1 IN VARCHAR2  -- Data de inicio da vigência
                              ,pr_dsvlrprm2 IN VARCHAR2  -- produto
