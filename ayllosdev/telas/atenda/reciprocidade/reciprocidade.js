@@ -236,8 +236,13 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idrecipr) {
+function selecionaConvenio(idrecipr, insitceb) {
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
+    if (insitceb == '2') {
+        $("#btnAlterarConvenio").hide();
+    } else {
+        $("#btnAlterarConvenio").show();
+    }
  }
 //Abre modal de desconto de convenios.
  function descontoConvenio() {
@@ -1396,20 +1401,23 @@ function controlaLayout(nomeForm) {
 		var ordemInicial = new Array();
 
 		var arrayLargura = new Array();
-		arrayLargura[0] = '65px';
-		arrayLargura[1] = '220px';
-		arrayLargura[2] = '60px';
-		arrayLargura[3] = '57px';
-		arrayLargura[4] = '100px';
+		arrayLargura[0] = '104px';
+		arrayLargura[1] = '104px';
+		arrayLargura[2] = '104px';
+		arrayLargura[3] = '104px';
+		arrayLargura[4] = '104px';
+        arrayLargura[5] = '104px';
+        arrayLargura[6] = '104px';
 
 
 		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'right';
+		arrayAlinha[0] = 'left';
 		arrayAlinha[1] = 'left';
-		arrayAlinha[2] = 'left';
-		arrayAlinha[3] = 'right';
-		arrayAlinha[4] = 'left';
-		arrayAlinha[5] = 'left';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+        arrayAlinha[6] = 'center';
 
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 
