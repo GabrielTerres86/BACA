@@ -165,7 +165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       vr_tab_crapras          RATI0001.typ_tab_crapras;
 
     BEGIN
-      pr_idpeapro :=0;
+      pr_idpeapro := 0;
       --1ª Regra: Valor Emprestado
       --O Ayllos deverá pegar o valor da proposta alterada e subtrair do valor da proposta original aprovada,
       --essa subtração irá gerar uma diferença, o valor dessa diferença deverá ser verificado com o valor 
@@ -188,46 +188,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         vr_pcaltpar := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,53,6)),0);        
         IF vr_diferenca_valor >  vr_vltolemp AND c1.vlempori > 0 THEN -- Perde a aprovação
           pr_idpeapro := 1;
-          -- Se a ação for de processo de perda de aprovação 
-          IF pr_tipoacao = 'P' THEN
-            BEGIN
-              UPDATE
-                   crawepr c
-                 SET
-                    c.insitapr = 0,
-                    c.cdopeapr = null,
-                    c.dtaprova = null,
-                    c.hraprova = 0,
-                    c.insitest = 0          
-               WHERE c.cdcooper = pr_cdcooper
-                 AND c.nrdconta = pr_nrdconta
-                 AND c.nrctremp = pr_nrctremp;
-                    /*c.rowid LIKE c1.rowid;*/
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
-                --Sair do programa
-                RAISE vr_exc_erro;
-            END;
-            GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                                ,pr_cdoperad => pr_cdoperad
-                                ,pr_dscritic => ''
-                                ,pr_dsorigem => pr_dsorigem
-                                ,pr_dstransa => 'A proposta :'||pr_nrctremp
-                                             ||' Perdeu a aprovação por Tolerância por valor de empréstimo. Valor original do empréstimo:'  ||c1.vlempori
-                                             ||' Valor atual:'||pr_vlemprst
-                                             ||' Diferença:'  ||vr_diferenca_valor
-                                             ||' Tolerância:' ||vr_vltolemp
-                                ,pr_dttransa => TRUNC(SYSDATE)
-                                ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
-                                                 ELSE 0 
-                                                 END )
-                                ,pr_hrtransa => gene0002.fn_busca_time
-                                ,pr_idseqttl => pr_idseqttl
-                                ,pr_nmdatela => pr_nmdatela
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_nrdrowid => vr_nrdrowid);              
-          END IF;
+          -- Gerar log
+          IF pr_tipoacao = 'S' THEN
+              -- Gerar log ao cooperado (b1wgen0014 - gera_log);
+              GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdoperad => pr_cdoperad
+                                  ,pr_dscritic => ''
+                                  ,pr_dsorigem => pr_dsorigem
+                                  ,pr_dstransa => 'A proposta :'||pr_nrctremp
+                                                ||' Perdeu a aprovação por Tolerância por valor de empréstimo'
+                                  ,pr_dttransa => TRUNC(SYSDATE)
+                                  ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
+                                                   ELSE 0 
+                                                   END )
+                                  ,pr_hrtransa => gene0002.fn_busca_time
+                                  ,pr_idseqttl => pr_idseqttl
+                                  ,pr_nmdatela => pr_nmdatela
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nrdrowid => vr_nrdrowid);
+
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => 'Valor original do Emp',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => c1.vlempori);
+                                        
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => 'Valor atual',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => pr_vlemprst);
+                                        
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => 'Diferença',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => vr_diferenca_parcela);
+                                        
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => 'Tolerância',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => vr_vltolemp);
+          END IF;          
         ELSE -- 2ª Regra: Valor de Parcela 
           vr_dstextab:= '';
           --O Ayllos deverá verificar o valor da prestação contratada na proposta original aprovada 
@@ -240,36 +239,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           
           IF vr_diferenca_parcela > vr_pcaltpar AND c1.vlpreori > 0 THEN -- Perde a aprovação
             pr_idpeapro := 1;            
-            -- Se a ação for de processo de perda de aprovação 
-            IF pr_tipoacao = 'P' THEN
-              BEGIN
-                UPDATE
-                     crawepr c
-                   SET
-                      c.insitapr = 0,
-                      c.cdopeapr = null,
-                      c.dtaprova = null,
-                      c.hraprova = 0,
-                      c.insitest = 0          
-                 WHERE c.cdcooper = pr_cdcooper
-                   AND c.nrdconta = pr_nrdconta
-                   AND c.nrctremp = pr_nrctremp;
-                      /*c.rowid LIKE c1.rowid;*/
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
-                  --Sair do programa
-                  RAISE vr_exc_erro;
-              END;
+            -- Gerar Log
+            IF pr_tipoacao = 'S' THEN
+              -- Gerar log ao cooperado (b1wgen0014 - gera_log);
               GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_dscritic => ''
                                   ,pr_dsorigem => pr_dsorigem
                                   ,pr_dstransa => 'A proposta :'||pr_nrctremp
-                                               ||' Perdeu a aprovação por Alteração de parcela. Valor original da parcela:'  ||c1.vlpreori
-                                               ||' Valor atual:'    ||pr_vlpreemp
-                                               ||' % da Diferença:' ||vr_diferenca_parcela
-                                               ||' % de Tolerância:'||vr_pcaltpar
+                                                ||' Perdeu a aprovação por Alteração de parcela.'
                                   ,pr_dttransa => TRUNC(SYSDATE)
                                   ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
                                                    ELSE 0 
@@ -278,8 +256,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                                   ,pr_idseqttl => pr_idseqttl
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_nrdconta => pr_nrdconta
-                                 ,pr_nrdrowid => vr_nrdrowid);              
+                                  ,pr_nrdrowid => vr_nrdrowid);
+
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => 'Valor original da parcela',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => c1.vlpreori);
+                                        
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => 'Valor atual',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => pr_vlpreemp);
+                                        
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => '% da Diferença',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => vr_diferenca_parcela);
+                                        
+              GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                        pr_nmdcampo => '% de Tolerância',
+                                        pr_dsdadant => NULL,
+                                        pr_dsdadatu => vr_pcaltpar);
             END IF;
+            
           ELSE -- 3ª Regra: Rating
             --O Ayllos deverá verificar se com a alteração do valor da proposta, houve alteração no rating
             --(para pior), gerado da proposta original aprovada para a proposta alterada
@@ -336,34 +335,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                c1.dsratori <> ' ' THEN
               IF vr_rating > c1.dsratori THEN
                 pr_idpeapro :=1;
-                -- Se a ação for de processo de perda de aprovação 
-                IF pr_tipoacao = 'P' THEN              
-                  BEGIN
-                    UPDATE
-                         crawepr c
-                       SET
-                          c.insitapr = 0,
-                          c.cdopeapr = null,
-                          c.dtaprova = null,
-                          c.hraprova = 0,
-                          c.insitest = 0          
-                     WHERE c.cdcooper = pr_cdcooper
-                       AND c.nrdconta = pr_nrdconta
-                       AND c.nrctremp = pr_nrctremp;
-                         /* c.rowid LIKE c1.rowid;*/
-                  EXCEPTION
-                    WHEN OTHERS THEN
-                      vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
-                      --Sair do programa
-                      RAISE vr_exc_erro;
-                  END;  
+                -- gerar Log 
+                IF pr_tipoacao = 'S' THEN
+                  -- Gerar log ao cooperado (b1wgen0014 - gera_log);
                   GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                       ,pr_cdoperad => pr_cdoperad
                                       ,pr_dscritic => ''
                                       ,pr_dsorigem => pr_dsorigem
                                       ,pr_dstransa => 'A proposta :'||pr_nrctremp
-                                                   ||' Perdeu a aprovação por Alteração do Rating para pior. Rating original:'  ||c1.dsratori
-                                                   ||' Rating atual : '||vr_rating
+                                                    ||' Perdeu a aprovação por Alteração do Rating para pior.'
                                       ,pr_dttransa => TRUNC(SYSDATE)
                                       ,pr_flgtrans => (CASE WHEN vr_dscritic IS NULL THEN 1
                                                        ELSE 0 
@@ -372,8 +352,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                                       ,pr_idseqttl => pr_idseqttl
                                       ,pr_nmdatela => pr_nmdatela
                                       ,pr_nrdconta => pr_nrdconta
-                                     ,pr_nrdrowid => vr_nrdrowid);              
+                                      ,pr_nrdrowid => vr_nrdrowid);
+
+                  GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                            pr_nmdcampo => 'Rating original',
+                                            pr_dsdadant => NULL,
+                                            pr_dsdadatu => c1.vlpreori);
+                                            
+                  GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                            pr_nmdcampo => 'Rating atual',
+                                            pr_dsdadant => NULL,
+                                            pr_dsdadatu => vr_rating);
                 END IF;                
+                
+                               
               END IF;
             ELSE 
               -- Se no momento da inclusão não havia rating e agora 
@@ -392,7 +384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                     --Sair do programa
                     RAISE vr_exc_erro;
                 END;
-          END IF; 
+              END IF; 
             END IF;
           END IF; 
         END IF;  
