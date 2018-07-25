@@ -9,18 +9,22 @@
 	//***                                                                  ***//	 
 	//*** Alterações: 27/10/2010 - Ajuste nas mensagens de notificacao re- ***//
 	//***                          tornadas após a validação (David).      ***//
-	//***															       ***//
+	//***															       															 ***//
 	//***             01/12/2010 - Alterado a chamada da BO b1wgen0004.p   ***//
 	//***                          para a BO b1wgen0081.p (Adriano).       ***//
-	//***																   ***//
-	//***			  04/12/2014 - Incluido resgate de novos produtos de   ***//
-	//***						   captação. (Jean Michel)				   ***//
-	//***																   ***//	
-    /*         		  17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM) */
-    //***																   ***//
-	//***			  10/05/2018 - Permitir resgate de aplicações          ***//
-	//***						   bloqueadas (SM404)				   	   ***//
+	//***																   																 ***//
+	//***			        04/12/2014 - Incluido resgate de novos produtos de   ***//
+	//***						   						 captação. (Jean Michel)							   ***//
+	//***																   																 ***//	
+  //***         		  17/06/2016 - M181 - Alterar o CDAGENCI para        ***//
+  //***                  				 passar o CDPACTRA (Rafael Maciel - RKAM)***//
+  //***																   																 ***//
+	//***			  			10/05/2018 - Permitir resgate de aplicações          ***//
+	//***						   						 bloqueadas (SM404)				   	   				 ***//
+	//***																   																 ***//
+	//***			  			25/07/2018 - Ajuste emergencial para resgate de      ***//
+  //***											  	 aplicações (Jean Michel)	               ***//
+	//***						   						 			   	   				                     ***//
 	//************************************************************************//
 	
 	session_start();
@@ -107,7 +111,8 @@
 		$xmlResgate .= "	</Cabecalho>";
 		$xmlResgate .= "	<Dados>";
 		$xmlResgate .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlResgate .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+		/*$xmlResgate .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";*/
+		$xmlResgate .= "		<cdagenci>90</cdagenci>";
 		$xmlResgate .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 		$xmlResgate .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 		$xmlResgate .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
