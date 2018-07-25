@@ -114,8 +114,14 @@ function exibeErro($msgErro) {
 						$convenios = str_replace(';', '<br>', $convenios);
 					}
 					$dtcadast = getByTagName($contratos[$i]->tags, 'dtcadast');
-					$idrecipr = getByTagName($contratos[$i]->tags, 'idrecipr');
+					$idrecipr = getByTagName($contratos[$i]->tags, 'idrecipr');					
+					$dtultaprov = getByTagName($contratos[$i]->tags, 'dtultaprov');
 					$insitceb = getByTagName($contratos[$i]->tags, 'insitceb');
+					$dtinivig = getByTagName($contratos[$i]->tags, 'dtinivig');
+					$dtfimvig = getByTagName($contratos[$i]->tags, 'dtfimvig');
+					$status = getByTagName($contratos[$i]->tags, 'status');
+					$dtfimdesc = getByTagName($contratos[$i]->tags, 'dtfimdesc');
+
 					// Verificar se existe algum convenio ativo(insitceb == 1)
 					if ($insitceb == 1 && $convenio_ativo == 0 ){
 						$convenio_ativo = $insitceb;
@@ -125,12 +131,12 @@ function exibeErro($msgErro) {
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
 						<td><? echo $convenios; ?></td>
-						<td><? echo $idrecipr; ?></td>
+						<td><? echo $status; ?></td>
 						<td><? echo $dtcadast; ?></td>
-						<td><? echo $dtcadast; ?></td>
-						<td><? echo $dtcadast; ?></td>
-						<td><? echo $dtcadast; ?></td>
-						<td><? echo $dtcadast; ?></td>
+						<td><? echo !empty($dtultaprov) ? $dtultaprov : '-'; ?></td>
+						<td><? echo !empty($dtinivig) ? $dtinivig : '-'; ?></td>
+						<td><? echo !empty($dtfimdesc) ? $dtfimdesc : '-'; ?></td>
+						<td><? echo !empty($dtfimvig) ? $dtfimvig : '-'; ?></td>
 						
 				    </tr>
 				<?} // Fim do for ?>

@@ -105,8 +105,8 @@ function confirmar(qtdregis, idparame_reciproci, dslogcfg, cp_idparame_reciproci
         ls_configrp += $('#ativo' + i).is(':checked') + ',';
         ls_configrp += converteNumero($('#idindicador' + i).val()) + ',';
         ls_configrp += $('#tpindicador' + i).val()[0] + ',';
-        ls_configrp += converteNumero($('#vlminimo' + i).val()) + ',';
-        ls_configrp += converteNumero($('#vlmaximo' + i).val()) + ',';
+        ls_configrp += converteMoedaFloat($('#vlminimo' + i).val()) + ',';
+        ls_configrp += converteMoedaFloat($('#vlmaximo' + i).val()) + ',';
         ls_configrp += converteNumero($('#peso' + i).val()) + ';';
     }
 
