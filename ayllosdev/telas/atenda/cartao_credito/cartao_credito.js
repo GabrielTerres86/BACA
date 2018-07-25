@@ -264,7 +264,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 				 $("#btnalterarLimite").attr("situacao", "situacao");
 				 
             }
-
+			
 			if((cdadmcrd > 10 && cdadmcrd < 17) && situacao == "APROV."){
 				$("#btncanc").removeAttr("disabled");
 				$("#btncanc").css('cursor', 'pointer');
@@ -1626,6 +1626,9 @@ function atualizaCampoLimiteProposto(aOpcao) {
 
 function alteraFuncaoDebito() {
     var objSelectAdmCrd = document.frmNovoCartao.dsadmcrd;
+	if(objSelectAdmCrd == undefined || objSelectAdmCrd.options == undefined){
+		return;
+	}else{
     var dadosAdministradora = objSelectAdmCrd.options[objSelectAdmCrd.options.selectedIndex].value;
     var aLimiteProposto = dadosAdministradora.split(';');
 
@@ -1636,6 +1639,9 @@ function alteraFuncaoDebito() {
         $("#flgdebit", "#frmNovoCartao").habilitaCampo();
         $("#flgdebit", "#frmNovoCartao").prop('checked', true);
     }
+}
+
+
 }
 
 function verificaEfetuaGravacao() {
@@ -1830,7 +1836,7 @@ function validarNovoCartao() {
 				
 		// Este procedimento deve ser executado somente na tela nova
 		if (!bTelaAntiga){
-			// FIX Amasonas
+			
 			cdadmcrd = $("#cdadmcrd").val();
 			if (!cdadmcrd) {
 				var crdAux = $('#dsadmcrd').children().attr("value").split(";");
@@ -1890,6 +1896,7 @@ function validarNovoCartao() {
 	  
 function senhaCoordenador(executaDepois) {
 	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+	
 	setTimeout(function(){
 		$( "#btnSenhaCoordenador" ).mouseover(function() {
 		  faprovador = $("#cdopelib").val();
@@ -1899,8 +1906,8 @@ function senhaCoordenador(executaDepois) {
 		$(".campo").blur(function(){
 			if( $(this).attr('id') =='cdopelib'){
 				faprovador = $(this).val();
-}
-
+			}
+			
 		});
 		
 		$(".campo").change(function(){
@@ -1910,6 +1917,8 @@ function senhaCoordenador(executaDepois) {
 		});
 		
 	},160);
+	
+
 }
 
 /*!
@@ -3779,7 +3788,7 @@ function cancelaContrato(){
 
 // Função para mostrar a opção CancBloq do cartão
 function opcaoCancBloq() {
-
+	
 	
 	if(cdadmcrd >= 11 && cdadmcrd < 17){
 		//todo implementar canclamento cecred
@@ -4621,12 +4630,12 @@ function validarUpDown() {
 			
             eval(response);
 			if(!error)
-			    //CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
+				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
 			    if (iPiloto == 1) {
-				atualizaUpgradeDowngrade();
+					atualizaUpgradeDowngrade();
 				} else {					
 					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
-        }
+				}
 					
         }
     });
@@ -5888,7 +5897,7 @@ function enviaSolicitacao() {
 function validarSenha(nrctrcrd) {
 	
 	console.log('PAssou valida senha');
-	// fix S 
+	
     idacionamento = $("#idacionamento","#frmNovoCartao").val();
     log4console("5608 - protocolo : "+protocolo);
     atualizaContrato(nrctrcrd,protocolo,"S", function(){

@@ -254,6 +254,26 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
+  --> Rotina responsavel por verificar se existe Aleração de Limite Pendente de Aprovação na Esteira
+  PROCEDURE pc_valida_alt_pend_esteira(pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                      ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                      ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                      ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                      ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                      ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                      ,pr_des_erro  OUT VARCHAR2);
+                                      
+  --> Rotina responsavel por Cancelar a Proposta do Cartão
+  PROCEDURE pc_cancela_proposta_crd(pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                   ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                   ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);
+
 END TELA_ATENDA_CARTAOCREDITO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
@@ -2287,6 +2307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+      
 	ELSE
       -- Atualizar
       BEGIN
@@ -3838,6 +3859,266 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       ROLLBACK;
 
   END pc_verifica_cartoes;
+
+  --> Rotina responsavel por verificar se existe Aleração de Limite Pendente de Aprovação na Esteira
+  PROCEDURE pc_valida_alt_pend_esteira(pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                      ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                      ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                      ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                      ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                      ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                      ,pr_des_erro  OUT VARCHAR2) IS
+
+    /* ..........................................................................
+
+      Programa : pc_valida_alt_pend_esteira
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Paulo Silva (Supero)
+      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por verificar se existe Aleração de Limite Pendente de Aprovação na Esteira
+      Alteração :
+
+    ..........................................................................*/
+
+    -----------> CURSORES  <-----------
+    CURSOR cr_crawcrd (pr_cdcooper crawcrd.cdcooper%TYPE) IS
+      SELECT *
+        FROM tbcrd_limite_atualiza lim
+       WHERE lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.nrctrcrd = pr_nrctrcrd
+         AND lim.tpsituacao = 6 --Em Análise
+         AND lim.insitdec = 1   --Sem Aprovação
+         AND lim.idatualizacao = (SELECT MAX(atu.idatualizacao)
+                                    FROM tbcrd_limite_atualiza atu
+                                   WHERE atu.cdcooper = lim.cdcooper
+                                     AND atu.nrdconta = lim.nrdconta
+                                     AND atu.nrctrcrd = lim.nrctrcrd
+                                     AND atu.nrproposta_est = lim.nrproposta_est);
+    rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+  BEGIN
+
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+    
+    OPEN cr_crawcrd (vr_cdcooper);
+    FETCH cr_crawcrd INTO rw_crawcrd;
+    CLOSE cr_crawcrd;
+
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Dados',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'inf',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'inf',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'proposta',
+                           pr_tag_cont => rw_crawcrd.nrproposta_est,
+                           pr_des_erro => vr_dscritic);
+
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel validar a existência de proposta pendente de aprovacao na esteira: '||SQLERRM;
+      pr_des_erro := 'NOK';
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_valida_alt_pend_esteira;
+  
+  --> Rotina responsavel por Cancelar a Proposta do Cartão
+  PROCEDURE pc_cancela_proposta_crd(pr_nrdconta  IN crawcrd.nrdconta%TYPE
+                                   ,pr_nrctrcrd  IN crawcrd.nrctrcrd%TYPE
+                                   ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS
+
+    /* ..........................................................................
+
+      Programa : pc_cancela_proposta_crd
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Paulo Silva (Supero)
+      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina responsavel por Cancelar a Proposta do Cartão
+      Alteração : Adicao de controle para apagar o campo de flgprcrd caso cancele
+                  a proposta, pois como nao foi para o Bancoob, o proximo cartao
+                  que devera ser setado como primeiro cartao (Anderson 25/07/18)
+
+    ..........................................................................*/
+
+    -----------> VARIAVEIS <-----------
+    -- Tratamento de erros
+    vr_cdcritic NUMBER := 0;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+  BEGIN
+
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+    
+    gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                               pr_action => vr_nmeacao);
+    
+    BEGIN
+      UPDATE crawcrd
+         SET insitcrd = 6 --Cancelado
+            ,flgprcrd = 0 --Nao eh mais o primeiro cartao
+       WHERE cdcooper = vr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrctrcrd = pr_nrctrcrd;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao cancelar proposta. Erro: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Dados',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'inf',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'inf',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'mensagem',
+                           pr_tag_cont => 'Cancelamento realizado com sucesso',
+                           pr_des_erro => vr_dscritic);
+
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+
+      --> Buscar critica
+      IF nvl(vr_cdcritic,0) > 0 AND
+        TRIM(vr_dscritic) IS NULL THEN
+        -- Busca descricao
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel a proposta: '||SQLERRM;
+      pr_des_erro := 'NOK';
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_cancela_proposta_crd;
 
 END TELA_ATENDA_CARTAOCREDITO;
 /

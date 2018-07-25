@@ -5,14 +5,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps732 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Maio/2018                    Ultima atualizacao:
+   Data    : Maio/2018                    Ultima atualizacao: 25/07/2018
 
    Dados referentes ao programa:
 
    Frequencia: Diario.
    Objetivo: Busca todas as propostas de alteração de limite de cartão que estão expiradas e efetua o cancelamento.
 
-   Alteracoes:
+   Alteração : Adicao de controle para apagar o campo de flgprcrd caso cancele
+               a proposta, pois como nao foi para o Bancoob, o proximo cartao
+               que devera ser setado como primeiro cartao (Anderson 25/07/18)
 
   ............................................................................. */
 
@@ -82,6 +84,7 @@ BEGIN
     BEGIN
       UPDATE crawcrd
       SET  insitcrd = 6--Cancelado.
+          ,flgprcrd = 0 --Nao eh mais o primeiro cartao
       WHERE 1=1
       AND   insitcrd = 0
       AND   cdcooper = rcooper.cdcooper
