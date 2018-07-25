@@ -16,7 +16,7 @@ declare
 		  ,ass.rowid 
       from crapass ass
      WHERE ass.cdcooper       = pr_cdcooper
-       --AND ass.nrcpfcnpj_base = 0
+       AND ass.nrcpfcnpj_base = 0
        ; -- apenas os que ainda nao foram processados
   --Variáveis de trabalho
   w_contador  number(10) := 0;
