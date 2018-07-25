@@ -8,6 +8,8 @@
  
                  23/07/2018 - Deixar o campo nmempres sempre habilitado. Projeto 345(Lombardi).
  
+				 25/07/2018 - Adicionado campo insitdec na tela. Projeto 345(Lombardi).
+ 
   --------------
  */
 var frmCab   		= 'frmCab';
@@ -173,7 +175,7 @@ function formataGridContrato() {
     return false;
 }
 
-function mostraDetalhamento(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, nmtitcrd, listadm, insitcrd, dtsol2vi, flgprcrd, nrctrcrd, inpessoa, nmempres, flgdebit) {
+function mostraDetalhamento(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, nmtitcrd, listadm, insitcrd, dtsol2vi, flgprcrd, nrctrcrd, inpessoa, nmempres, flgdebit, insitdec) {
 	
 	showMsgAguardo('Aguarde, buscando detalhamento do cartao...');
 
@@ -193,7 +195,7 @@ function mostraDetalhamento(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nr
 			$('#divRotina').css({'height': '400px'});						
 			$('#divRotina').html(response);				
             exibeRotina($('#divRotina'));			
-			buscaDetalheCartao(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, nmtitcrd, listadm, insitcrd, dtsol2vi, flgprcrd, nrctrcrd, inpessoa, nmempres, flgdebit);
+			buscaDetalheCartao(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, nmtitcrd, listadm, insitcrd, dtsol2vi, flgprcrd, nrctrcrd, inpessoa, nmempres, flgdebit, insitdec);
 		}				
 	});
 	
@@ -202,7 +204,7 @@ function mostraDetalhamento(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nr
 }
 
 
-function buscaDetalheCartao(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, nmtitcrd, listadm, insitcrd, dtsol2vi, flgprcrd, nrctrcrd, inpessoa, nmempres, flgdebit){
+function buscaDetalheCartao(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, nmtitcrd, listadm, insitcrd, dtsol2vi, flgprcrd, nrctrcrd, inpessoa, nmempres, flgdebit, insitdec){
 	
 	// Executa script através de ajax
 	$.ajax({		
@@ -221,6 +223,7 @@ function buscaDetalheCartao(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nr
 			  ,insitcrd : insitcrd
 			  ,dtsol2vi : dtsol2vi			  
 			  ,flgprcrd : flgprcrd
+			  ,insitdec : insitdec
 			  ,flgdebit : flgdebit
 			  ,nrctrcrd : nrctrcrd
 			  ,inpessoa : inpessoa
@@ -243,9 +246,9 @@ function buscaDetalheCartao(nrdconta, nmprimtl, nrcrcard, nrcctitg, cdadmcrd, nr
 
 function formataDetalheCartao(){
 	
-	var rNrdcontaDet, rNmprimtlDet, rNrcrcardDet, rNmtitcrdDet, rNrcctitgDet, rDsadmcrdDet, rNrcpftitDet, rFlgdebitDet, rInsitcrdDet, rFlgprcrdDet, rNmempresDet;
+	var rNrdcontaDet, rNmprimtlDet, rNrcrcardDet, rNmtitcrdDet, rNrcctitgDet, rDsadmcrdDet, rNrcpftitDet, rFlgdebitDet, rInsitcrdDet, rFlgprcrdDet, rNmempresDet, rInsitdecDet;
 	
-	var rNrdcontaDet, cNmprimtlDet, cNrcrcardDet, cNmtitcrdDet, cNrcctitgDet, cDsadmcrdDet, cNrcpftitDet, cFlgdebitDet,cInsitcrdDet, cFlgprcrdDet, cNmempresDet;
+	var rNrdcontaDet, cNmprimtlDet, cNrcrcardDet, cNmtitcrdDet, cNrcctitgDet, cDsadmcrdDet, cNrcpftitDet, cFlgdebitDet, cInsitcrdDet, cFlgprcrdDet, cNmempresDet, cInsitdecDet;
 	
 	highlightObjFocus($('#frmDetalheCartao'));
 	
@@ -262,6 +265,7 @@ function formataDetalheCartao(){
 	rFlgdebitDet = $('label[for="flgdebit"]', '#frmDetalheCartao');
 	rFlgprcrdDet = $('label[for="flgprcrd"]', '#frmDetalheCartao');
 	rNmempresDet = $('label[for="nmempres"]', '#frmDetalheCartao');
+	rInsitdecDet = $('label[for="insitdec"]', '#frmDetalheCartao');
 	
 	rNrdcontaDet.css({'width': '68px'}).addClass('rotulo');	
 	rNrcrcardDet.css({'width': '69px'}).addClass('rotulo');	
@@ -272,6 +276,7 @@ function formataDetalheCartao(){
 	rInsitcrdDet.css({'width': '106px'}).addClass('rotulo');
 	rFlgdebitDet.css({'width': '108px'}).addClass('rotulo-linha');
 	rFlgprcrdDet.css({'width': '75px'}).addClass('rotulo-linha');
+	rInsitdecDet.css({'width': '106px'}).addClass('rotulo');
 	rNmempresDet.css({'width': '106px'}).addClass('rotulo');
 	
 	// input
@@ -285,6 +290,7 @@ function formataDetalheCartao(){
 	cInsitcrdDet = $('#insitcrd', '#frmDetalheCartao');
 	cFlgdebitDet = $('#flgdebit', '#frmDetalheCartao');
 	cFlgprcrdDet = $('#flgprcrd', '#frmDetalheCartao');
+	cInsitdecDet = $('#insitdec', '#frmDetalheCartao');
 	cNmempresDet = $('#nmempres', '#frmDetalheCartao');
 	
 	cNrdcontaDet.css({'width': '75px'}).addClass('conta pesquisa');
@@ -295,6 +301,7 @@ function formataDetalheCartao(){
     cNrcpftitDet.css({'width': '169px'}).addClass('cpf campo');
 	cNmtitcrdDet.css({'width': '400px'}).addClass('campo');
 	cInsitcrdDet.css({'width': '177px'}).addClass('inteiro campo');	
+	cInsitdecDet.css({'width': '177px'}).addClass('inteiro campo');	
 	cNmempresDet.css({'width': '400px'}).addClass('campo');
 	
 	layoutPadrao();
@@ -343,11 +350,12 @@ function confirmaAtualizaCartao(){
 																												 + $("#nrctrcrd").val() + ',\''
 																												 + $("#nmempres").val() + '\',\''
 																												 + aux_flgprcrd + '\','
-																												 + $("#insitcrd").val() + ');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
+																												 + $("#insitcrd").val() + ','
+																												 + $("#insitdec").val() + ');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
 	
 }
 
-function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdebit, nmtitcrd, nrctrcrd, nmempres, flgprcrd, insitcrd){
+function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdebit, nmtitcrd, nrctrcrd, nmempres, flgprcrd, insitcrd, insitdec){
 	
 	showMsgAguardo('Aguarde, atualizando detalhes do cartao...');
 	
@@ -365,6 +373,7 @@ function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdeb
 			,flgdebit : flgdebit
 			,nmtitcrd : nmtitcrd
 			,insitcrd : insitcrd
+			,insitdec : insitdec
 			,flgprcrd : flgprcrd
 			,nrctrcrd : nrctrcrd
 			,nmempres : nmempres

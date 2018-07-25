@@ -6,6 +6,8 @@
   OBJETIVO     : Rotina para controlar as operações da tela MANCRD
   --------------
   ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+				 
+				 25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
   -------------- 
  */
 ?> 
@@ -30,6 +32,7 @@ $insitcrd = (isset($_POST['insitcrd'])) ? $_POST['insitcrd'] : 0;
 $flgprcrd = (isset($_POST['flgprcrd'])) ? $_POST['flgprcrd'] : 0;
 $nrctrcrd = (isset($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0;
 $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
+$insitdec = (isset($_POST['insitdec'])) ? $_POST['insitdec'] : 0;
 
 if($nrcctitg == ""){
 	exibirErro('error', 'Campo Conta Cartao e de preenchimento obrigatorio!', 'Alerta - Ayllos', "bloqueiaFundo(divRotina);$('#nrcctitg','#frmDetalheCartao').focus();", false);   
@@ -71,6 +74,7 @@ $xml .= "   <nrcpftit>" . $nrcpftit . "</nrcpftit>";
 $xml .= "   <flgdebit>" . $flgdebit . "</flgdebit>";
 $xml .= "   <nmtitcrd>" . $nmtitcrd . "</nmtitcrd>";
 $xml .= "   <insitcrd>" . $insitcrd . "</insitcrd>";
+$xml .= "   <insitdec>" . $insitdec . "</insitdec>";
 $xml .= "   <flgprcrd>" . $flgprcrd . "</flgprcrd>";
 $xml .= "   <nrctrcrd>" . $nrctrcrd . "</nrctrcrd>";
 $xml .= "   <nmempres>" . $nmempres . "</nmempres>";
