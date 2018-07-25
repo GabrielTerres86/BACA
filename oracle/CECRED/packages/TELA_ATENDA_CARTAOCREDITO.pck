@@ -4015,7 +4015,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por Cancelar a Proposta do Cartão
-      Alteração :
+      Alteração : Adicao de controle para apagar o campo de flgprcrd caso cancele
+                  a proposta, pois como nao foi para o Bancoob, o proximo cartao
+                  que devera ser setado como primeiro cartao (Anderson 25/07/18)
 
     ..........................................................................*/
 
@@ -4060,6 +4062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     BEGIN
       UPDATE crawcrd
          SET insitcrd = 6 --Cancelado
+            ,flgprcrd = 0 --Nao eh mais o primeiro cartao
        WHERE cdcooper = vr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrctrcrd = pr_nrctrcrd;
