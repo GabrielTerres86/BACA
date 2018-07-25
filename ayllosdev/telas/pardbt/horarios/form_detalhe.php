@@ -16,19 +16,18 @@ require_once('../../../includes/funcoes.php');
 require_once('../../../includes/controla_secao.php');
 require_once('../../../class/xmlfile.php');
 
-//----------------------------------------------------------------------------------------------------------------------------------	
-// Controle de Erros
-//----------------------------------------------------------------------------------------------------------------------------------
-if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
-    $msgErro	= "Acesso n&atilde;o permitido.";
-    exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
-}
 
  $cddopcao = $_POST['cddopcao'];
  $idhora_processamento = $_POST['idhora_processamento'];
  $dhprocessamento = $_POST['dhprocessamento'];
  $hh = '00';
  $mm = '00';
+
+ $msgError = validaPermissao($glbvars["nmdatela"],$glbvars['nmrotina'],$cddopcao, false);
+
+if ($msgError != '') {
+    exibirErro('error', utf8ToHtml('Acesso não permitido.'), 'Alerta - Ayllos', 'estadoInicial()', false);
+}	
 
  if (!empty($dhprocessamento)) {
      $partesHorario = explode(':', $dhprocessamento);
