@@ -36,9 +36,11 @@
 				             caixa corretamente pois imprimia como aberto
 							 (Tiago/Elton SD584098)
                
-        08/12/2017 - Melhoria 458, auste fechamento-boletim-caixa.
-                    Antonio R. Jr (mouts)
-------------------------------------------------------------------------------*/
+                08/12/2017 - Melhoria 458, auste fechamento-boletim-caixa. Antonio R. Jr (mouts)
+                
+                14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).                    
+                     
+------------------------------------------------------------------------------ **/
 {dbo/bo-erro1.i}
 
 DEF VAR i-cod-erro      AS INTEGER.
@@ -75,7 +77,7 @@ PROCEDURE retorna-dados-fechamento:
                              NO-LOCK NO-ERROR.
 
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd     AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto*/
                             crapbcx.cdagenci = p-cod-agencia        AND
                             crapbcx.nrdcaixa = p-nro-caixa          AND
                             crapbcx.cdopecxa = p-cod-operador       AND
@@ -101,7 +103,7 @@ PROCEDURE retorna-dados-fechamento:
                            crapaut.cdagenci = p-cod-agencia     AND
                            crapaut.nrdcaixa = p-nro-caixa       AND 
                            crapaut.cdopecxa = p-cod-operador    AND
-                           crapaut.dtmvtolt = crapdat.dtmvtolt  NO-LOCK:
+                           crapaut.dtmvtolt = crapdat.dtmvtocd  NO-LOCK:  /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto*/
                            
         ASSIGN i-autenticacoes = i-autenticacoes + 1.
     END.
@@ -143,7 +145,7 @@ PROCEDURE fechamento-boletim-caixa:
                              NO-LOCK NO-ERROR.
                                         
     FIND  LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND /*14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto*/
                              crapbcx.cdagenci = p-cod-agencia       AND
                              crapbcx.nrdcaixa = p-nro-caixa         AND
                              crapbcx.cdopecxa = p-cod-operador      AND
@@ -168,7 +170,7 @@ PROCEDURE fechamento-boletim-caixa:
     RUN dbo/b2crap13.p PERSISTENT SET h-b2crap13. 
 
     FOR EACH craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd  AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                            craplot.cdagenci = p-cod-agencia     AND
                           (craplot.cdbccxlt = 11                OR
                            craplot.cdbccxlt = 30                OR
@@ -205,7 +207,7 @@ PROCEDURE fechamento-boletim-caixa:
         ASSIGN aux_vlctrmve = DEC(craptab.dstextab).
 
     FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND
-                           craplcm.dtmvtolt  = crapdat.dtmvtolt     AND
+                           craplcm.dtmvtolt  = crapdat.dtmvtocd     AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                            craplcm.cdagenci  = p-cod-agencia        AND
                            craplcm.cdbccxlt  = 11                   AND
                            craplcm.nrdolote  = 11000 + p-nro-caixa  AND
@@ -262,7 +264,7 @@ PROCEDURE fechamento-boletim-caixa:
     ASSIGN aux_vllimite = pc_consultar_parmon_pld_car.pr_vlmonitoracao_pagamento.
     
     For each craplft where craplft.cdcooper = crapcop.cdcooper AND
-                           Craplft.dtmvtolt = crapdat.dtmvtolt and
+                           Craplft.dtmvtolt = crapdat.dtmvtocd AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                            Craplft.cdagenci = p-cod-agencia and
                            Craplft.nrdolote = 15000 + p-nro-caixa and
                            Craplft.tppagmto = 1 and
@@ -293,7 +295,7 @@ PROCEDURE fechamento-boletim-caixa:
     END.
     
     For each craptit where craptit.cdcooper = crapcop.cdcooper AND
-                           Craptit.dtmvtolt = crapdat.dtmvtolt and
+                           Craptit.dtmvtolt = crapdat.dtmvtocd AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                            Craptit.cdagenci = p-cod-agencia and
                            Craptit.nrdolote = 16000 + p-nro-caixa and
                            Craptit.tppagmto = 1 and
@@ -326,7 +328,7 @@ PROCEDURE fechamento-boletim-caixa:
 
     /***********  Deposito entre cooperativas  ******************/
     FOR EACH craplcx WHERE  craplcx.cdcooper = crapcop.cdcooper AND
-                            craplcx.dtmvtolt = crapdat.dtmvtolt AND
+                            craplcx.dtmvtolt = crapdat.dtmvtocd AND /*14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                             craplcx.cdagenci = p-cod-agencia    AND
                             craplcx.nrdcaixa = p-nro-caixa      AND
                             craplcx.cdopecxa = p-cod-operador   AND
@@ -369,7 +371,7 @@ PROCEDURE fechamento-boletim-caixa:
              IF NOT CAN-FIND(FIRST crapikx 
                              WHERE crapikx.cdcooper = crapcop.cdcooper AND
                                    crapikx.cdagenci = p-cod-agencia    AND
-                                   crapikx.dtindisp = crapdat.dtmvtolt AND
+                                   crapikx.dtindisp = crapdat.dtmvtocd AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                                    crapikx.flindisp = TRUE
                                    NO-LOCK) THEN
              DO:
@@ -378,7 +380,7 @@ PROCEDURE fechamento-boletim-caixa:
                  DO:
                      FIND FIRST crapchd WHERE     
                                 crapchd.cdcooper  = crapcop.cdcooper      AND
-                                crapchd.dtmvtolt  = crapdat.dtmvtolt      AND
+                                crapchd.dtmvtolt  = crapdat.dtmvtocd      AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                                 crapchd.cdagenci  = p-cod-agencia         AND
                               ((crapchd.cdbccxlt  = 11                    AND
                                 crapchd.nrdolote  = 11000 + p-nro-caixa)   OR
@@ -420,19 +422,19 @@ PROCEDURE fechamento-boletim-caixa:
          END.
     
     FOR EACH craptvl WHERE (craptvl.cdcooper = crapcop.cdcooper     AND
-                            craptvl.dtmvtolt = crapdat.dtmvtolt     AND
+                            craptvl.dtmvtolt = crapdat.dtmvtocd     AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                             craptvl.cdagenci = p-cod-agencia        AND
                             craptvl.cdbccxlt = 11                   AND
           /* TED - SPB */   craptvl.nrdolote = 23000 + p-nro-caixa  AND
                             craptvl.flgespec = TRUE                    ) OR
                            (craptvl.cdcooper = crapcop.cdcooper     AND
-                            craptvl.dtmvtolt = crapdat.dtmvtolt     AND
+                            craptvl.dtmvtolt = crapdat.dtmvtocd     AND /*14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                             craptvl.cdagenci = p-cod-agencia        AND
                             craptvl.cdbccxlt = 11                   AND
            /* TED - BB */   craptvl.nrdolote = 21000 + p-nro-caixa  AND
                             craptvl.flgespec = TRUE                    ) OR
                            (craptvl.cdcooper = crapcop.cdcooper     AND
-                            craptvl.dtmvtolt = crapdat.dtmvtolt     AND
+                            craptvl.dtmvtolt = crapdat.dtmvtocd     AND /*14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                             craptvl.cdagenci = p-cod-agencia        AND
                             craptvl.cdbccxlt = 11                   AND
                 /* DOC */   craptvl.nrdolote = 20000 + p-nro-caixa  AND
@@ -485,7 +487,7 @@ PROCEDURE fechamento-boletim-caixa:
                                       INPUT p-nro-caixa,
                                       INPUT 2,
                                       INPUT "CRAP012",
-                                      INPUT crapdat.dtmvtolt,       
+                                      INPUT crapdat.dtmvtocd, /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/      
                                       INPUT STRING(RANDOM(1,10000)),
                                       INPUT YES, /* tipconsu */
                                       INPUT RECID(crapbcx),
@@ -594,7 +596,7 @@ PROCEDURE atualiza-fechamento:
                              NO-LOCK NO-ERROR.
 
     FIND  LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND /*14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                              crapbcx.cdagenci = p-cod-agencia       AND
                              crapbcx.nrdcaixa = p-nro-caixa         AND
                              crapbcx.cdopecxa = p-cod-operador      AND
@@ -633,7 +635,7 @@ PROCEDURE atualiza-fechamento:
                                       INPUT p-nro-caixa,
                                       INPUT 2,
                                       INPUT "CRAP012",
-                                      INPUT crapdat.dtmvtolt,       
+                                      INPUT crapdat.dtmvtocd, /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/      
                                       INPUT STRING(RANDOM(1,10000)),
                                       INPUT NO, /* tipconsu */
                                       INPUT aux_bcxrecid,

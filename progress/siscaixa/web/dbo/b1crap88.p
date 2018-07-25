@@ -3,7 +3,7 @@
    Programa: siscaixa/web/dbo/b1crap88.p
    Sistema : Caixa On-Line
    Autor   : Andre Santos - Supero
-   Data    : Junho/2014                      Ultima atualizacao:
+   Data    : Junho/2014                      Ultima atualizacao:08/06/2018
 
    Dados referentes ao programa:
 
@@ -20,7 +20,10 @@
                                                    pc_verifica_crapchd_coop
                             do pacote CXON0088. (Andre Santos - SUPERO)
 
------------------------------------------------------------------------------*/
+               08/06/2018 - Alteracao do campo crapdat.dtmvtolt para 
+                            crapdat.dtmvtocd - Everton Deserto(AMCOM).
+
+----------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -254,7 +257,7 @@ PROCEDURE verifica-crapchd:
         ASSIGN in99 = in99 + 1.
     
         FIND crablot WHERE crablot.cdcooper = aux_cdcooper /* crapcop.cdcooper */
-                       AND crablot.dtmvtolt = crapdat.dtmvtolt
+                       AND crablot.dtmvtolt = crapdat.dtmvtocd  /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                        AND crablot.cdagenci = aux_cdagenci /* p-cod-agencia    */
                        AND crablot.cdbccxlt = aux_cdbccxlt /* 11               */
                        AND crablot.nrdolote = i-nro-lote
@@ -470,7 +473,7 @@ PROCEDURE verifica-crapchd:
                                                        INPUT p-cod-agencia,
                                                        INPUT p-nro-caixa,
                                                        INPUT p-cod-operador,
-                                                       INPUT crapdat.dtmvtolt,
+                                                       INPUT crapdat.dtmvtocd,  /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                                        INPUT 2).  /*Estorno*/
             DELETE PROCEDURE h_b1crap00.
         END.
@@ -508,7 +511,7 @@ PROCEDURE verifica-crapchd-coop:
         ASSIGN in99 = in99 + 1.
 
         FIND crablot WHERE crablot.cdcooper = aux_cdcooper /* crapcop.cdcooper */
-                       AND crablot.dtmvtolt = crapdat.dtmvtolt
+                       AND crablot.dtmvtolt = crapdat.dtmvtocd /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                        AND crablot.cdagenci = aux_cdagenci /* p-cod-agencia    */
                        AND crablot.cdbccxlt = aux_cdbccxlt /* 11               */
                        AND crablot.nrdolote = i-nro-lote
@@ -837,7 +840,7 @@ PROCEDURE verifica-crapchd-coop:
                     IF  AVAIL craptco  THEN DO:
 
                         FIND crablcm WHERE crablcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                           crablcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                           crablcm.dtmvtolt = crapdat.dtmvtocd          AND /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                            crablcm.cdagenci = craptco.cdagenci          AND
                                            crablcm.cdbccxlt = 100                       AND /* Fixo */
                                            crablcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -853,7 +856,7 @@ PROCEDURE verifica-crapchd-coop:
                             /* Este lancamento soh existe quando o deposito eh feito na coop origem da migracao */
                             /* Remover lancamento extra caixa de conta sobreposta */
                             FIND LAST crabbcx WHERE crabbcx.cdcooper = crapcop.cdcooper  AND
-                                                    crabbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                                                    crabbcx.dtmvtolt = crapdat.dtmvtocd  AND /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                                     crabbcx.cdagenci = p-cod-agencia     AND
                                                     crabbcx.nrdcaixa = p-nro-caixa       AND
                                                     crabbcx.cdopecxa = p-cod-operador    AND
@@ -867,7 +870,7 @@ PROCEDURE verifica-crapchd-coop:
                                  END.
 
                             FIND craplcx WHERE craplcx.cdcooper = crapcop.cdcooper AND
-                                               craplcx.dtmvtolt = crapdat.dtmvtolt AND
+                                               craplcx.dtmvtolt = crapdat.dtmvtocd AND /*08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                                craplcx.cdagenci = p-cod-agencia    AND
                                                craplcx.nrdcaixa = p-nro-caixa      AND
                                                craplcx.cdopecxa = p-cod-operador   AND
@@ -921,7 +924,7 @@ PROCEDURE verifica-crapchd-coop:
 
                     IF  AVAIL craptco  THEN DO:
                         FIND crablcm WHERE crablcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                           crablcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                           crablcm.dtmvtolt = crapdat.dtmvtocd          AND /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                            crablcm.cdagenci = craptco.cdagenci          AND
                                            crablcm.cdbccxlt = 100                       AND /* Fixo */
                                            crablcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -937,7 +940,7 @@ PROCEDURE verifica-crapchd-coop:
                             /* Este lancamento soh existe quando o deposito eh feito na coop origem da migracao */
                             /* Remover lancamento extra caixa de conta sobreposta */
                             FIND LAST crabbcx WHERE crabbcx.cdcooper = crapcop.cdcooper  AND
-                                                    crabbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                                                    crabbcx.dtmvtolt = crapdat.dtmvtocd  AND /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                                     crabbcx.cdagenci = p-cod-agencia     AND
                                                     crabbcx.nrdcaixa = p-nro-caixa       AND
                                                     crabbcx.cdopecxa = p-cod-operador    AND
@@ -951,7 +954,7 @@ PROCEDURE verifica-crapchd-coop:
                                  END.
 
                             FIND craplcx WHERE craplcx.cdcooper = crapcop.cdcooper AND
-                                               craplcx.dtmvtolt = crapdat.dtmvtolt AND
+                                               craplcx.dtmvtolt = crapdat.dtmvtocd AND /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                                craplcx.cdagenci = p-cod-agencia    AND
                                                craplcx.nrdcaixa = p-nro-caixa      AND
                                                craplcx.cdopecxa = p-cod-operador   AND
@@ -1003,7 +1006,7 @@ PROCEDURE verifica-crapchd-coop:
                                                       INPUT p-cod-agencia,
                                                       INPUT p-nro-caixa,
                                                       INPUT p-cod-operador,
-                                                      INPUT crapdat.dtmvtolt,
+                                                      INPUT crapdat.dtmvtocd, /* 08/06/2018 - Alterado para considerar o dtmvtocd - Everton Deserto(AMCOM)*/
                                                       INPUT 2).  /*Estorno*/
             DELETE PROCEDURE h_b1crap00.
         END.

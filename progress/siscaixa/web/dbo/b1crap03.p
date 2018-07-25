@@ -34,7 +34,11 @@
                11/05/2018 - Chamada da rotina pc_consulta_extrato_car para 
                             listar e ordenar os extratos por ordem cronológica 
                             (Elton-AMcom) [Projeto Debitador].                            
-............................................................................ */
+
+               18/06/2018 - Utilizaçao do Caixa Online mesmo com o processo batch 
+                            (noturno) executando (Fabio Adriano - AMcom).
+
+............................................................................ **/
 
 /*---------------------------------------------------------------*/
 /*  b1crap03.p - Consulta Extrato                                */
@@ -84,8 +88,14 @@ PROCEDURE consulta-extrato.
     FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
                              NO-LOCK NO-ERROR.
    
+    IF  MONTH(crapdat.dtmvtocd) = 1 THEN
+        ASSIGN dt-inipesq = DATE(12,1,YEAR(crapdat.dtmvtocd) - 1).
+    ELSE
+        ASSIGN dt-inipesq = DATE(MONTH(crapdat.dtmvtocd )- 1,1,
+                                 YEAR(crapdat.dtmvtocd)).
+  
     IF  p-data = ? THEN
-        ASSIGN p-data = (crapdat.dtmvtolt - DAY(crapdat.dtmvtolt)) + 1.
+        ASSIGN p-data = (crapdat.dtmvtocd - DAY(crapdat.dtmvtocd)) + 1.
 
     FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper  AND
                        craptab.nmsistem = "CRED"            AND

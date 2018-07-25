@@ -2,7 +2,7 @@
    
     b1crap77.p - Estornos - Depositos Cheques Liberados                  
      
-    Ultima Atualizacao: 21/05/2012
+    Ultima Atualizacao: 19/06/2018
      
      Alteracoes:
                 02/03/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -22,8 +22,12 @@
                             (Lucas R.)            
 
                  16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
-                              modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
--------------------------------------------------------------------------*/
+                              modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).   
+                            
+                 19/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                              norturno rodando (Douglas Pagel - AMcom).
+
+------------------------------------------------------------------------- **/
 
 { dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
@@ -65,7 +69,7 @@ PROCEDURE valida-cheque-com-captura:
     DEF OUTPUT PARAM p-poupanca       AS LOG.
 
     DEF VAR aux_flgci                 AS LOG INIT NO.
-    DEF VAR aux_cdmodali              AS INTE NO-UNDO.
+	DEF VAR aux_cdmodali              AS INTE NO-UNDO.
     DEF VAR aux_des_erro              AS CHAR NO-UNDO.
     DEF VAR aux_dscritic              AS CHAR NO-UNDO.
     
@@ -202,7 +206,7 @@ PROCEDURE valida-cheque-com-captura:
     ASSIGN c-docto = STRING(p-nrdocto) + "1".
     
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                              craplcm.cdagenci = p-cod-agencia     AND
                              craplcm.cdbccxlt = 11                AND /* Fixo */
                              craplcm.nrdolote = i-nro-lote        AND
@@ -222,7 +226,7 @@ PROCEDURE valida-cheque-com-captura:
         DO:
            FIND FIRST craplcm WHERE 
                       craplcm.cdcooper = crapcop.cdcooper   AND
-                      craplcm.dtmvtolt = crapdat.dtmvtolt   AND
+                      craplcm.dtmvtolt = crapdat.dtmvtocd   AND
                       craplcm.cdagenci = p-cod-agencia      AND
                       craplcm.cdbccxlt = 11                 AND /* Fixo */
                       craplcm.nrdolote = i-nro-lote         AND
@@ -241,7 +245,7 @@ PROCEDURE valida-cheque-com-captura:
          DO:
            FIND FIRST craplci WHERE 
                       craplci.cdcooper = crapcop.cdcooper   AND
-                      craplci.dtmvtolt = crapdat.dtmvtolt   AND
+                      craplci.dtmvtolt = crapdat.dtmvtocd   AND
                       craplci.cdagenci = p-cod-agencia      AND
                       craplci.cdbccxlt = 11                 AND /* Fixo */
                       craplci.nrdolote = i-nro-lote         AND
@@ -267,7 +271,7 @@ PROCEDURE valida-cheque-com-captura:
     END.
 
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote        NO-LOCK NO-ERROR.
@@ -304,7 +308,7 @@ PROCEDURE valida-cheque-com-captura:
                        flg_exetrunc = TRUE.
               
                 FOR EACH crapchd WHERE crapchd.cdcooper = crapcop.cdcooper   AND
-                                       crapchd.dtmvtolt = crapdat.dtmvtolt   AND
+                                       crapchd.dtmvtolt = crapdat.dtmvtocd   AND
                                        crapchd.cdagenci = p-cod-agencia      AND
                                        crapchd.cdbccxlt = 11                 AND
                                        crapchd.nrdolote = i-nro-lote         AND
@@ -435,7 +439,7 @@ PROCEDURE estorna-cheque-com-captura:
                 DO: 
                     FIND craplcm WHERE 
                                  craplcm.cdcooper = crapcop.cdcooper    AND
-                                 craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                                 craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                                  craplcm.cdagenci = p-cod-agencia       AND
                                  craplcm.cdbccxlt = 11                  AND /* Fixo */
                                  craplcm.nrdolote = i-nro-lote          AND
@@ -450,7 +454,7 @@ PROCEDURE estorna-cheque-com-captura:
                 DO:
                     FIND craplci WHERE
                                  craplci.cdcooper = crapcop.cdcooper    AND
-                                 craplci.dtmvtolt = crapdat.dtmvtolt    AND
+                                 craplci.dtmvtolt = crapdat.dtmvtocd    AND
                                  craplci.cdagenci = p-cod-agencia       AND
                                  craplci.cdbccxlt = 11                  AND /* Fixo */
                                  craplci.nrdolote = i-nro-lote          AND
@@ -558,7 +562,7 @@ PROCEDURE estorna-cheque-com-captura:
 
         ASSIGN in99 = in99 + 1.
         FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd  AND
                            craplot.cdagenci = p-cod-agencia     AND
                            craplot.cdbccxlt = 11                AND  /* Fixo */
                            craplot.nrdolote = i-nro-lote 
@@ -610,7 +614,7 @@ PROCEDURE estorna-cheque-com-captura:
                 ASSIGN in99 = in99 + 1.
                 FIND craplcm WHERE 
                      craplcm.cdcooper = crapcop.cdcooper    AND
-                     craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                     craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                      craplcm.cdagenci = p-cod-agencia       AND
                      craplcm.cdbccxlt = 11                  AND /* Fixo */
                      craplcm.nrdolote = i-nro-lote          AND
@@ -683,7 +687,7 @@ PROCEDURE estorna-cheque-com-captura:
                                  INPUT 3, /* Exclusao */             
                                  INPUT ROWID(crapcme),  
                                  INPUT TRUE, /* Enviar */
-                                 INPUT crapdat.dtmvtolt,             
+                                 INPUT crapdat.dtmvtocd,             
                                  INPUT TRUE,                         
                                 OUTPUT TABLE tt-erro).               
 
@@ -734,7 +738,7 @@ PROCEDURE estorna-cheque-com-captura:
 
             FIND craplci WHERE
                  craplci.cdcooper = crapcop.cdcooper    AND
-                 craplci.dtmvtolt = crapdat.dtmvtolt    AND
+                 craplci.dtmvtolt = crapdat.dtmvtocd    AND
                  craplci.cdagenci = p-cod-agencia       AND
                  craplci.cdbccxlt = 11                  AND /* Fixo */
                  craplci.nrdolote = i-nro-lote          AND
@@ -798,7 +802,7 @@ PROCEDURE estorna-cheque-com-captura:
                                                    INPUT p-cod-agencia,
                                                    INPUT p-nro-caixa,
                                                    INPUT p-cod-operador,
-                                                   INPUT crapdat.dtmvtolt,
+                                                   INPUT crapdat.dtmvtocd,
                                                    INPUT 2).  /*Estorno*/
                 DELETE PROCEDURE h_b1crap00.
 
@@ -807,8 +811,8 @@ PROCEDURE estorna-cheque-com-captura:
             /*----- Atualizar Saldo Conta Investimento */
             FIND crapsli WHERE crapsli.cdcooper  = crapcop.cdcooper         AND
                                crapsli.nrdconta  = craplci.nrdconta         AND
-                         MONTH(crapsli.dtrefere) = MONTH(crapdat.dtmvtolt)  AND
-                          YEAR(crapsli.dtrefere) = YEAR(crapdat.dtmvtolt)  
+                         MONTH(crapsli.dtrefere) = MONTH(crapdat.dtmvtocd)  AND
+                          YEAR(crapsli.dtrefere) = YEAR(crapdat.dtmvtocd)  
                                EXCLUSIVE-LOCK NO-ERROR.
                  
             IF  AVAIL crapsli THEN   
@@ -838,7 +842,7 @@ PROCEDURE estorna-cheque-com-captura:
                 ASSIGN in99 = in99 + 1.
                 FIND craplcm WHERE 
                      craplcm.cdcooper = crapcop.cdcooper    AND
-                     craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                     craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                      craplcm.cdagenci = p-cod-agencia       AND
                      craplcm.cdbccxlt = 11                  AND /* Fixo */
                      craplcm.nrdolote = i-nro-lote          AND
@@ -899,7 +903,7 @@ PROCEDURE estorna-cheque-com-captura:
                                                    INPUT p-cod-agencia,
                                                    INPUT p-nro-caixa,
                                                    INPUT p-cod-operador,
-                                                   INPUT crapdat.dtmvtolt,
+                                                   INPUT crapdat.dtmvtocd,
                                                    INPUT 2).  /*Estorno*/
                     DELETE PROCEDURE h_b1crap00.
 

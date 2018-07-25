@@ -11,9 +11,10 @@
    Frequencia: Diario (Caixa Online).
    Objetivo  : Atendimendo  - Cadastro de Número para Notificaçao por SMS DEBAUT [PROJ320]
 
-   Alteracoes: 
+   Alteracoes: 08/06/2018  - Alterado para considerar a procedure valida-transacao2 e assim 
+                             poder operar mesmo com o processo noturno em execucao - Everton Deserto(AMCOM).
    
-............................................................................ */
+............................................................................ **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -539,7 +540,7 @@ PROCEDURE process-web-request :
 
         RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
-        RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+        RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,   /* 08/06/2018 - Alterado para a procedure valida-transacao2 - Everton Deserto(AMCOM)*/
                                            INPUT int(v_pac), 
                                            INPUT int(v_caixa)).
         DELETE PROCEDURE h-b1crap00.

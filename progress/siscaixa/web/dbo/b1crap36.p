@@ -14,7 +14,7 @@
                              
                 23/05/2011 - Alterada a leitura da tabela craptab para a 
                              tabela crapope (Isara - RKAM).
-                             
+                              
                 28/09/2011 - Incluido crapcop.dsdircop na geracao do relatorio em
                              tela (Elton).
                              
@@ -28,7 +28,11 @@
 
                 06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
                              (Guilherme/SUPERO)
------------------------------------------------------------------------------*/
+
+                26/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                             como data de referencia - Everton Deserto(AMCOM).
+               
+----------------------------------------------------------------------------- **/
 {dbo/bo-erro1.i}
 
 DEF  VAR i-cod-erro  AS INTEGER.
@@ -60,7 +64,7 @@ DEF TEMP-TABLE tt-lote                                        NO-UNDO
     FIELD vltitulo AS DECIMAL FORMAT "zzzz,zzz,zz9.99"
     FIELD nmoperad AS CHAR    FORMAT "x(10)".
 
-FORM crapdat.dtmvtolt  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
+FORM crapdat.dtmvtocd  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"  /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOm).*/
      SKIP(1)
      "PA  CXA    LOTE"           AT  1
      "   QTD.           VALOR"        
@@ -215,7 +219,7 @@ PROCEDURE Impressao:
     IF  p-impressao = YES  THEN 
         VIEW STREAM str_1 FRAME f_cabrel080_1.
 
-    DISPLAY STREAM str_1  crapdat.dtmvtolt WITH FRAME f_cab.
+    DISPLAY STREAM str_1  crapdat.dtmvtocd WITH FRAME f_cab.  /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
     
     /*
     FOR  EACH tt-lote:
@@ -225,13 +229,13 @@ PROCEDURE Impressao:
     EMPTY TEMP-TABLE tt-lote.
    
     FOR EACH craplot WHERE (craplot.cdcooper = crapcop.cdcooper      AND
-                            craplot.dtmvtolt = crapdat.dtmvtolt      AND
+                            craplot.dtmvtolt = crapdat.dtmvtocd      AND    /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplot.cdagenci = p-cod-agencia         AND
                             craplot.cdbccxlt = 11                    AND
                             craplot.tplotmov = 30)                    OR
 
                            (craplot.cdcooper = crapcop.cdcooper      AND
-                            craplot.dtmvtopg = crapdat.dtmvtolt      AND
+                            craplot.dtmvtopg = crapdat.dtmvtocd      AND  /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                             craplot.cdagenci = p-cod-agencia         AND
                             craplot.tplotmov = 30)               NO-LOCK
                            BREAK BY craplot.cdagenci
@@ -278,7 +282,7 @@ PROCEDURE Impressao:
                         PAGE STREAM str_1.
                        
                         DISPLAY STREAM str_1 
-                                crapdat.dtmvtolt WITH FRAME f_cab.
+                                crapdat.dtmvtocd WITH FRAME f_cab.    /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                     END.
             END.
    
@@ -345,8 +349,8 @@ PROCEDURE proc_lista:
     VIEW STREAM str_1 FRAME f_linha.
     
     FOR EACH craplgp WHERE craplgp.cdcooper = crapcop.cdcooper  AND
-                           craplgp.dtmvtolt = crapdat.dtmvtolt  AND
-                           craplgp.cdagenci = tt-lote.cdagenci  AND
+                           craplgp.dtmvtolt = crapdat.dtmvtocd  AND /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
+                           craplgp.cdagenci = tt-lote.cdagenci  AND 
                            craplgp.cdbccxlt = tt-lote.cdbccxlt  AND
                            craplgp.nrdolote = tt-lote.nrdolote
                        AND craplgp.flgativo = YES               NO-LOCK
@@ -373,7 +377,7 @@ PROCEDURE proc_lista:
 
         IF   LINE-COUNTER(str_1) > 80  THEN DO:
              PAGE STREAM str_1.
-             DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+             DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.    /* 26/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
             
              DISPLAY STREAM str_1  
                      tt-lote.cdagenci 

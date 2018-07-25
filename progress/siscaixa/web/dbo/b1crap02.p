@@ -83,7 +83,7 @@
              
                17/07/2017 - Ajustes para nao buscar IDORGEXP para pessoa jur.
                             PRJ339 - CRM (Odirlei-AMcom)  
-             
+                            
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)                      
              
@@ -96,7 +96,7 @@
 							 na abertura do caixa online mesmo quando o processo 
 							 batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
              
-........................................................................... */
+............................................................................ **/
 
 /*---------------------------------------------------------------*/
 /*  b1crap02.p - Consulta Conta                                  */
@@ -198,7 +198,7 @@ PROCEDURE consulta-conta:
     
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
     DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
-    DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
+	DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
     DEF VAR aux_dssitdct   AS CHAR                          NO-UNDO.
     DEF VAR aux_des_erro   AS CHAR                          NO-UNDO.
     DEF VAR aux_dscritic   AS CHAR                          NO-UNDO.
@@ -287,7 +287,7 @@ PROCEDURE consulta-conta:
                  ASSIGN tt-conta.nome-seg-tit = crapttl.nmextttl.
 		    END.
 
-        END.
+        END. 
     ELSE
         DO:
             FIND crapjur WHERE crapjur.cdcooper = crapcop.cdcooper  AND
@@ -332,10 +332,10 @@ PROCEDURE consulta-conta:
                                       OUTPUT "",               /* Descriçao do Tipo de conta */
                                       OUTPUT "",               /* Flag Erro */
                                       OUTPUT "").              /* Descriçao da crítica */
-
+            
             CLOSE STORED-PROC pc_descricao_tipo_conta
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-            
+
             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
             ASSIGN aux_dstipcta = ""
@@ -507,7 +507,7 @@ PROCEDURE consulta-conta:
                           ELSE 
                               1.
 
-    FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND
+    FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND     
                            craplcm.nrdconta  = crapsld.nrdconta     AND
                            craplcm.dtmvtolt  = crapdat.dtmvtocd     AND
                            craplcm.cdhistor <> 289                  
@@ -708,7 +708,7 @@ PROCEDURE impressao-saldo:
     DEF INPUT  PARAM p-tipo-impressao    AS INT                       NO-UNDO.
     DEF OUTPUT PARAM p-literal-autentica AS CHAR                      NO-UNDO.
                  
-    DEF VAR aux_dscritic                 AS CHAR                      NO-UNDO.
+	DEF VAR aux_dscritic                 AS CHAR                      NO-UNDO.
                  
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
  
@@ -758,7 +758,7 @@ PROCEDURE impressao-saldo:
             IF  RETURN-VALUE <> "OK" THEN
                 RETURN "NOK".
             
-            /*** Busca Saldo Bloqueado Garantia ***/
+			/*** Busca Saldo Bloqueado Garantia ***/
             IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
                 RUN sistema/generico/procedures/b1wgen0112.p 
                     PERSISTENT SET h-b1wgen0112.
@@ -771,7 +771,7 @@ PROCEDURE impressao-saldo:
                                       OUTPUT aux_dscritic).
                 
             IF  VALID-HANDLE(h-b1wgen0112) THEN
-                DELETE PROCEDURE h-b1wgen0112.  
+                DELETE PROCEDURE h-b1wgen0112.
                 
         END.    
     ELSE

@@ -14,7 +14,10 @@ Alteracoes: 02/03/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
                             CONTACONVE pela chamada do fontes ver_ctace.p
                             (Lucas R.)
             
-...........................................................................*/
+            19/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom).
+
+........................................................................... **/
 
 {dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
@@ -104,7 +107,7 @@ PROCEDURE valida-cheque-avulso.
 
     FIND craplcm WHERE
          craplcm.cdcooper = crapcop.cdcooper  AND
-         craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+         craplcm.dtmvtolt = crapdat.dtmvtocd  AND
          craplcm.cdagenci = p-cod-agencia     AND
          craplcm.cdbccxlt = 11                AND /* Fixo */
          craplcm.nrdolote = i-nro-lote        AND
@@ -128,7 +131,7 @@ PROCEDURE valida-cheque-avulso.
 
         FIND craplot WHERE
              craplot.cdcooper = crapcop.cdcooper  AND
-             craplot.dtmvtolt = crapdat.dtmvtolt  AND
+             craplot.dtmvtolt = crapdat.dtmvtocd  AND
              craplot.cdagenci = p-cod-agencia     AND
              craplot.cdbccxlt = 11                AND  /* Fixo */
              craplot.nrdolote = i-nro-lote        NO-LOCK NO-ERROR .
@@ -182,7 +185,7 @@ PROCEDURE estorna-cheque-avulso.
         ASSIGN in99 = in99 + 1.
 
         FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd  AND
                            craplot.cdagenci = p-cod-agencia     AND
                            craplot.cdbccxlt = 11                AND  /* Fixo */
                            craplot.nrdolote = i-nro-lote       
@@ -230,7 +233,7 @@ PROCEDURE estorna-cheque-avulso.
         ASSIGN in99 = in99 + 1.
        
         FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                           craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                            craplcm.cdagenci = p-cod-agencia     AND
                            craplcm.cdbccxlt = 11                AND /* Fixo */
                            craplcm.nrdolote = i-nro-lote        AND
@@ -302,7 +305,7 @@ PROCEDURE estorna-cheque-avulso.
                        INPUT 3, /* Exclusao */
                        INPUT ROWID(crapcme),
                        INPUT TRUE, /* Enviar */
-                       INPUT crapdat.dtmvtolt,
+                       INPUT crapdat.dtmvtocd,
                        INPUT TRUE,
                       OUTPUT TABLE tt-erro).
             

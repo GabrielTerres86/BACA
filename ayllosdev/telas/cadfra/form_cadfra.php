@@ -1,12 +1,12 @@
 <?php
 /*!
  * FONTE        : form_cadfra.php
- * CRIA√á√ÉO      : Jaison
- * DATA CRIA√á√ÉO : 07/02/2017
+ * CRIA«√O      : Jaison
+ * DATA CRIA«√O : 07/02/2017
  * OBJETIVO     : Formulario do cadastro.
  * --------------
- * ALTERA√á√ïES   : 
- * -------------- 
+ * ALTERA«’ES   : 14/06/2018 - Ajustes Antifraude. PRJ381 - Antifraude(pagamentos)(Odirlei-AMcom)
+ * --------------
  */
  
  $dominios = buscaDominios('CC', 'TPRETENCAO_ANALISE_FRAUDE');
@@ -15,12 +15,12 @@
 <form id="frmCadfra" name="frmCadfra" class="formulario">
 <input type="hidden" id="strhoraminutos">
 	<fieldset style="padding-top: 5px;">
-        <label for="cdoperacao">Opera√ß√£o:</label>
+        <label for="cdoperacao">OperaÁ„o:</label>
         <input type="text" id="cdoperacao" name="cdoperacao" />
         <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-        <label for="dsoperacao">Descri√ß√£o:</label>
+        <label for="dsoperacao">DescriÁ„o:</label>
         <input type="text" id="dsoperacao" name="dsoperacao" />
-        <label for="tpoperacao">Tipo da opera√ß√£o:</label>
+        <label for="tpoperacao">Tipo da operaÁ„o:</label>
         <select id="tpoperacao" name="insitage">
             <option value="1">Online</option>
             <option value="2">Agendada</option>
@@ -34,7 +34,7 @@
                     <table border="0" cellspacing="0" cellpadding="0">
                         <tr>
                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq0"></td>
-                            <td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="acessaOpcaoAba(0);return false;">Reten√ß√£o</a></td>
+                            <td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="acessaOpcaoAba(0);return false;">RetenÁ„o</a></td>
                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
                             <td width="1"></td>
 
@@ -56,14 +56,14 @@
                     <div id="divAba0" class="clsAbas">
                         <br clear="all" />
                         <input type="hidden" id="flgativo_ori" name="flgativo_ori">
-                        <label for="flgativo">Envio an√°lise:</label>
+                        <label for="flgativo">Envio an·lise:</label>
                         <select id="flgativo" name="flgativo">
                             <option value="0">Inativo</option>
                             <option value="1">Ativo</option>
                         </select>
                         
                         <br clear="all" />                        
-                        <label for="tpretencao">Tipo de reten√ß√£o:</label>
+                        <label for="tpretencao">Tipo de retenÁ„o:</label>
                         <select id="tpretencao" name="tpretencao">
                             <?	
                             foreach($dominios as $dominio) {
@@ -77,7 +77,7 @@
                         <br clear="all" />
                         <div id="divTipo1" style="padding-top: 5px;">
                             <div id="addInterv">
-                                <label for="hrretencao2">Aguardar an√°lise por</label>
+                                <label for="hrretencao2">Aguardar an·lise por</label>
                                 <select id="qtdminutos_retencao" name="qtdminutos_retencao">
                                     <option value="05">05</option>
                                     <option value="10">10</option>
@@ -90,7 +90,7 @@
                                 </select>
                                 <label for="hrretencao3">minutos das</label>
                                 <input type="text" id="hrinicio" name="hrinicio" />
-                                <label for="hrretencao4">at√© as</label>
+                                <label for="hrretencao4">atÈ as</label>
                                 <input type="text" id="hrfim" name="hrfim" />
                                 <img onclick="confirmaInclusao();" src="<?php echo $UrlImagens; ?>geral/servico_ativo.gif" style="width:18px; height:18px; margin:3px 15px 3px 8px; float:left; cursor: hand;" />
                                 <label for="rotulo_inf">Utilizar formato 24 horas.</label>
@@ -101,7 +101,7 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>In√≠cio</th>
+                                            <th>InÌcio</th>
                                             <th>Fim</th>
                                             <th>Minutos</th>
                                             <th>Excluir</th>
@@ -113,7 +113,7 @@
                         </div>
 
                         <div id="divTipo2" style="padding-top: 5px;">
-                            <label for="hrretencao">Aguardar an√°lise at√© as:</label>
+                            <label for="hrretencao">Aguardar an·lise atÈ as:</label>
                             <input type="text" id="hrretencao" name="hrretencao" />
                             <label for="rotulo_inf">Utilizar formato 24 horas.</label>
                             <br clear="all" />
@@ -121,7 +121,7 @@
                         </div>
                         
                         <div id="divTipo3" style="padding-top: 5px;">
-                            <label for="hrretencao5">Aguardar an√°lise por mais:</label>
+                            <label for="hrretencao5">Aguardar an·lise por mais:</label>
                             <input type="text" id="hrretencao5" name="hrretencao5" />
                             <label for="hrretencao6">minutos</label>
                             <br clear="all" />
@@ -132,18 +132,18 @@
 
                     <div id="divAba1" class="clsAbas">
                         <br clear="all" />
-                        <label for="flgemail_entrega">Enviar e-mail quando ocorrer falha na entrega para an√°lise?</label>
+                        <label for="flgemail_entrega">Enviar e-mail quando ocorrer falha na entrega para an·lise?</label>
                         <input name="flgemail_entrega" id="flgYes" type="radio" class="radio" value="1" style="margin-left:10px;" />
                         <label for="flgYes" class="radio">Sim</label>
                         <input name="flgemail_entrega" id="flgNo" type="radio" class="radio" value="0" />
-                        <label for="flgNo" class="radio">N√£o</label>
-                        <label for="dsemail_entrega">Endere√ßo:</label>
+                        <label for="flgNo" class="radio">N„o</label>
+                        <label for="dsemail_entrega">EndereÁo:</label>
                         <input type="text" id="dsemail_entrega" name="dsemail_entrega" />
                         <label for="dsemail_entrega"></label>
-                        <label for="rotulo_eml">Para mais de um e-mail utilizar ponto e v√≠rgula (;) como separador.</label>
+                        <label for="rotulo_eml">Para mais de um e-mail utilizar ponto e vÌrgula (;) como separador.</label>
                         <label for="dsassunto_entrega">Assunto:</label>
                         <input type="text" id="dsassunto_entrega" name="dsassunto_entrega" />
-                        <label for="dscorpo_entrega">Conte√∫do:</label>
+                        <label for="dscorpo_entrega">Conte˙do:</label>
                         <textarea name="dscorpo_entrega" id="dscorpo_entrega"></textarea>
                         <br clear="all" />
                         <br clear="all" />
@@ -151,18 +151,18 @@
 
                     <div id="divAba2" class="clsAbas">
                         <br clear="all" />
-                        <label for="flgemail_retorno">Enviar e-mail quando ocorrer falha no retorno da an√°lise?</label>
+                        <label for="flgemail_retorno">Enviar e-mail quando ocorrer falha no retorno da an·lise?</label>
                         <input name="flgemail_retorno" id="flgYesRet" type="radio" class="radio" value="1" style="margin-left:10px;" />
                         <label for="flgYesRet" class="radio">Sim</label>
                         <input name="flgemail_retorno" id="flgNoRet" type="radio" class="radio" value="0" />
-                        <label for="flgNoRet" class="radio">N√£o</label>
-                        <label for="dsemail_retorno">Endere√ßo:</label>
+                        <label for="flgNoRet" class="radio">N„o</label>
+                        <label for="dsemail_retorno">EndereÁo:</label>
                         <input type="text" id="dsemail_retorno" name="dsemail_retorno" />
                         <label for="dsemail_retorno"></label>
-                        <label for="rotulo_eml">Para mais de um e-mail utilizar ponto e v√≠rgula (;) como separador.</label>
+                        <label for="rotulo_eml">Para mais de um e-mail utilizar ponto e vÌrgula (;) como separador.</label>
                         <label for="dsassunto_retorno">Assunto:</label>
                         <input type="text" id="dsassunto_retorno" name="dsassunto_retorno" />
-                        <label for="dscorpo_retorno">Conte√∫do:</label>
+                        <label for="dscorpo_retorno">Conte˙do:</label>
                         <textarea name="dscorpo_retorno" id="dscorpo_retorno"></textarea>
                         <br clear="all" />
                         <br clear="all" />

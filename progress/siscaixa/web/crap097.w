@@ -3,14 +3,16 @@
 Programa: siscaixa/web/crap014.w
 Autor   : Kelvin
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 
+Sigla   : CRED                               Ultima atualizacao:12/06/2018 
    
 Dados referentes ao programa:
 
 Objetivo  : Autenticar o atendimento.
 
-Alteracoes: 
-................................................................................*/
+Alteracoes: 12/06/2018 - Alteracao do campo crapdat.dtmvtolt para o crapdat.dtmvtocd 
+                         Everton Deserto(AMCOM).
+                         
+................................................................................ **/
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
@@ -75,7 +77,7 @@ DEFINE VARIABLE h-b1crap00 AS HANDLE     NO-UNDO.
  ***********************************************************************/
 DEFINE VARIABLE glb_cdcooper LIKE crapcop.cdcooper              NO-UNDO.
 DEFINE VARIABLE glb_nmrescop LIKE crapcop.nmrescop              NO-UNDO.
-DEFINE VARIABLE glb_dtmvtolt LIKE crapdat.dtmvtolt              NO-UNDO.
+DEFINE VARIABLE glb_dtmvtolt LIKE crapdat.dtmvtocd              NO-UNDO.
 DEFINE VARIABLE glb_dtmvtopr LIKE crapdat.dtmvtopr              NO-UNDO.
 DEFINE VARIABLE glb_dtmvtoan LIKE crapdat.dtmvtoan              NO-UNDO.
 DEFINE VARIABLE glb_cdagenci LIKE crapass.cdagenci              NO-UNDO.
@@ -330,7 +332,7 @@ PROCEDURE process-web-request :
   
   ASSIGN glb_cdcooper = crapcop.cdcooper
          glb_nmrescop = crapcop.nmrescop
-         glb_dtmvtolt = crapdat.dtmvtolt
+         glb_dtmvtolt = crapdat.dtmvtocd /*12/06/2018 - Alteracao para o campo dtmvtocd - Everton Deserto(AMCOM)*/
          glb_dtmvtopr = crapdat.dtmvtopr
          glb_dtmvtoan = crapdat.dtmvtoan
          glb_cdagenci = INTE(get-value("user_pac"))

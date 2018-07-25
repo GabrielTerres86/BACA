@@ -6,7 +6,11 @@
             16/02/2005 - Nao permitir estorno para tipo de lote <> 1(Mirtes) 
             
             23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
---------------------------------------------------------------------------*/
+
+            21/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+                         
+-------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -46,7 +50,7 @@ PROCEDURE estorno-associacao:
         END.
 
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND
                        craplot.nrdolote = p-nro-lote        NO-LOCK NO-ERROR.
@@ -92,7 +96,7 @@ PROCEDURE estorno-associacao:
         END.
    
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
                             crapbcx.cdagenci = p-cod-agencia        AND
                             crapbcx.nrdcaixa = p-nro-caixa          AND
                             crapbcx.cdopecxa = p-cod-operador  
@@ -127,7 +131,7 @@ PROCEDURE estorno-associacao:
     /* Atualizacao */
      
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND
                        craplot.nrdolote = p-nro-lote 

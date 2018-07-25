@@ -28,6 +28,11 @@
                16/04/2013 - Adicionado verificacao de sangria de caixa no
                          REQUEST-METHOD = GET. (Fabricio)
                          
+               25/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom).
+                            
+
+                         
                06/06/2018 - Melhorias relacionadas aos locks de tabela 
                             crapmdw, crapmrw (Tiago INC0015047)          
 ............................................................................ */
@@ -97,12 +102,12 @@ CREATE WIDGET-POOL.
 
 DEFINE VARIABLE h-b1crap00 AS HANDLE     NO-UNDO.
 DEFINE VARIABLE h-b1crap57 AS HANDLE     NO-UNDO.
-DEFINE VARIABLE h-b1crap52  AS HANDLE    NO-UNDO.
+DEFINE VARIABLE h-b1crap52  AS HANDLE     NO-UNDO.
 
 DEF VAR p-cod-erro         AS INTE       NO-UNDO.
 DEF VAR c-desc-erro        AS CHAR       NO-UNDO.
-DEF VAR p-poupanca         AS LOG        NO-UNDO.
-DEF VAR p-conta-atualiza   AS INTE       NO-UNDO.
+DEF VAR p-poupanca         AS LOG NO-UNDO.
+DEF VAR p-conta-atualiza   AS INTE NO-UNDO.
 DEF VAR c-nome             AS CHAR.
 DEF VAR c-poup             AS CHAR.
 DEFINE VARIABLE l_achou_crapmdw AS LOGICAL    NO-UNDO.
@@ -488,7 +493,7 @@ PROCEDURE process-web-request :
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
     RUN dbo/b1crap57.p PERSISTENT SET h-b1crap57.
 
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                        INPUT v_pac,
                                        INPUT v_caixa).
 
@@ -550,7 +555,7 @@ PROCEDURE process-web-request :
                              END.
                      END.
                  ELSE 
-                     DELETE crapmdw.
+                 DELETE crapmdw.
                      
                  LEAVE.
                  
@@ -569,7 +574,7 @@ PROCEDURE process-web-request :
                                  INPUT YES).
                 
                   {include/i-erro.i}
-                END.
+             END.
 
              RUN elimina-erro (INPUT crapcop.nmrescop,
                                INPUT INT(v_pac),
@@ -604,9 +609,9 @@ PROCEDURE process-web-request :
                                  c-desc-erro = "Resumo de cheque nao encontrado. " +
                                                "Tente novamente.".                             
                              END.                            
-                    END.
+             END.
                 ELSE  
-                    DELETE crapmrw.
+                 DELETE crapmrw.
                     
                 LEAVE.
                  
@@ -625,7 +630,7 @@ PROCEDURE process-web-request :
                                  INPUT YES).
                 
                   {include/i-erro.i}
-                END.
+             END.
                     
           END.
           ELSE DO:

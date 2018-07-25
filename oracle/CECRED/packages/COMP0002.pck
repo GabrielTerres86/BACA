@@ -739,11 +739,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																                                
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                      || '</dttransa>' ||
                                   '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')      || '</hrautent>' ||
-                                  '<vldocmto>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')  || '</vldocmto>' ||
-                                  '<nrctadst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),2,10))      	  || '</nrctadst>' ||
-                                  '<nmtitdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),15))           || '</nmtitdst>' ||
-                                  '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),1,4)) || '</cdagedst>' ||
-                                  '<nmcopdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),8))   || '</nmcopdst>' ||
+                                  '<vldocmto>' ||to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
+                                  '<nrctadst>' || TRIM(gene0002.fn_busca_entrada(1,gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),' - '))    || '</nrctadst>' ||
+                                  '<nmtitdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'),' - '),3)) || '</nmtitdst>' ||
+                                  '<cdagedst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),1,4))       || '</cdagedst>' ||
+                                  '<nmcopdst>' || TRIM(SUBSTR(gene0002.fn_busca_entrada(3, vr_protocolo(vr_ind).dsinform##2,'#'),8))         || '</nmcopdst>' ||
                                   '<dttransf>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                      || '</dttransf>' ||
                                   '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                             || '</dsprotoc>' ||
                                   '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                             || '</nrseqaut>' ||

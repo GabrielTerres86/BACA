@@ -116,7 +116,8 @@
               13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)
                              
-
+			  05/07/2018 - Ajuste realizado para validar a atualização da unificação cadastral
+						   na camada do progress (INC0018113).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -592,7 +593,7 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 27.
                LEAVE Valida.
             END.
-		
+
 					   
         /* funcao */
         IF  par_dsproftl = "" THEN
@@ -878,6 +879,9 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_flgtroca AS LOG                                     NO-UNDO.
     DEF VAR aux_flgpagto AS LOG                                     NO-UNDO.
     DEF VAR aux_rowidenc AS ROWID                                   NO-UNDO.
+	DEF VAR aux_nmpesout AS CHAR                                    NO-UNDO.
+	DEF VAR aux_nrcnpjot AS DECI                                    NO-UNDO.
+	
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0021 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
@@ -1039,7 +1043,7 @@ PROCEDURE Grava_Dados:
                 DELETE crapenc.
               END.
               
-              LEAVE ContadorEnc.
+                LEAVE ContadorEnc.
             END.
         END.
         
@@ -1092,18 +1096,69 @@ PROCEDURE Grava_Dados:
                 IF  VALID-HANDLE(h-b1wgen0137) THEN
                   DELETE OBJECT h-b1wgen0137.
 
-        END.
+            END. 
 
         IF aux_cdcritic <> 0 THEN
             UNDO Grava, LEAVE Grava.
         
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+		
+		RUN STORED-PROCEDURE pc_revalida_nome_cad_unc
+			aux_handproc = PROC-HANDLE NO-ERROR
+									(INPUT par_nrcpfemp,
+									 INPUT par_nmextemp,
+									 OUTPUT "",
+									 OUTPUT 0,           /* Código da crítica */
+									 OUTPUT "").         /* Descrição da crítica */
+		
+		CLOSE STORED-PROC pc_revalida_nome_cad_unc
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+	
+		{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+		
+		ASSIGN aux_cdcritic = 0
+			   aux_dscritic = ""
+			   aux_nmpesout = ""
+			   aux_cdcritic = pc_revalida_nome_cad_unc.pr_cdcritic WHEN pc_revalida_nome_cad_unc.pr_cdcritic <> ?
+			   aux_dscritic = pc_revalida_nome_cad_unc.pr_dscritic WHEN pc_revalida_nome_cad_unc.pr_dscritic <> ?
+			   aux_nmpesout = pc_revalida_nome_cad_unc.pr_nmpesout WHEN pc_revalida_nome_cad_unc.pr_nmpesout <> ?.
+	    
+		IF aux_cdcritic <> 0 THEN
+            UNDO Grava, LEAVE Grava.           
+		
+		{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+		
+		RUN STORED-PROCEDURE pc_revalida_cnpj_cad_unc
+			aux_handproc = PROC-HANDLE NO-ERROR
+									(INPUT DECIMAL(par_cdcooper),
+									 INPUT DECIMAL(par_cdempres),
+									 INPUT DECIMAL(par_nrcpfemp),
+									 OUTPUT 0,
+									 OUTPUT 0,           /* Código da crítica */
+									 OUTPUT "").         /* Descrição da crítica */
+		
+		CLOSE STORED-PROC pc_revalida_cnpj_cad_unc
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+	
+		{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+		
+		ASSIGN aux_cdcritic = 0
+			   aux_dscritic = ""
+			   aux_nrcnpjot = 0
+			   aux_cdcritic = pc_revalida_cnpj_cad_unc.pr_cdcritic WHEN pc_revalida_cnpj_cad_unc.pr_cdcritic <> ?
+			   aux_dscritic = pc_revalida_cnpj_cad_unc.pr_dscritic WHEN pc_revalida_cnpj_cad_unc.pr_dscritic <> ?
+			   aux_nrcnpjot = pc_revalida_cnpj_cad_unc.pr_nrcnpjot WHEN pc_revalida_cnpj_cad_unc.pr_nrcnpjot <> ?.
+		
+		IF aux_cdcritic <> 0 THEN
+            UNDO Grava, LEAVE Grava.   
+		
         ASSIGN 
             aux_cdempres        = crapttl.cdempres
             crapttl.cdnatopc    = par_cdnatopc
             crapttl.cdocpttl    = par_cdocpttl
             crapttl.tpcttrab    = par_tpcttrab
-            crapttl.nmextemp    = CAPS(par_nmextemp)
-            crapttl.nrcpfemp    = par_nrcpfemp
+            crapttl.nmextemp    = CAPS(SUBSTR(aux_nmpesout,1,40))
+            crapttl.nrcpfemp    = aux_nrcnpjot
             crapttl.dsproftl    = CAPS(par_dsproftl)
             crapttl.cdnvlcgo    = par_cdnvlcgo
             crapttl.dtadmemp    = par_dtadmemp

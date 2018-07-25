@@ -5,7 +5,11 @@
 Alteracoes: 18/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
 
             13/12/2013 - Adicionado validate para tabela craperr (Tiago).
-............................................................................. */
+
+            15/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+
+............................................................................. **/
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -530,7 +534,7 @@ PROCEDURE process-web-request :
             dt-maior-praca  = ?
             dt-menor-fpraca = ?
             dt-maior-fpraca = ?
-            dt-menor-fpraca = crapdat.dtmvtolt.
+            dt-menor-fpraca = crapdat.dtmvtocd.
 
      DO  aux_contador = 1 TO 4:
          ASSIGN dt-menor-fpraca = dt-menor-fpraca + 1.
@@ -578,7 +582,7 @@ PROCEDURE process-web-request :
 
    RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
-   RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+   RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                       INPUT v_pac,
                                       INPUT v_caixa).
 
@@ -806,7 +810,7 @@ PROCEDURE process-web-request :
             dt-maior-praca  = ?
             dt-menor-fpraca = ?
             dt-maior-fpraca = ?
-            dt-menor-fpraca = crapdat.dtmvtolt.
+            dt-menor-fpraca = crapdat.dtmvtocd.
 
      DO  aux_contador = 1 TO 4:
          ASSIGN dt-menor-fpraca = dt-menor-fpraca + 1.

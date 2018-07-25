@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/08/2017
+   Data    : Marco/2001                      Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -27,7 +27,10 @@
 			   23/08/2017 - Alterado para validar as informacoes do operador 
 							pelo AD. (PRJ339 - Reinert)
 
-............................................................................ */
+               12/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom).
+
+............................................................................ **/
 
 /*------------------------------------------------------------*/
 /*  b1crap10.p -  Estorno Boletim Caixa                       */
@@ -59,7 +62,7 @@ PROCEDURE valida-estorno-boletim:
                              NO-LOCK NO-ERROR.
 
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND 
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
                             crapbcx.cdagenci = p-cod-agencia        AND
                             crapbcx.nrdcaixa = p-nro-caixa          AND
                             crapbcx.cdopecxa = p-cod-operador       AND
@@ -245,7 +248,7 @@ PROCEDURE valida-existencia-boletim:
                              NO-LOCK NO-ERROR.
 
     FIND FIRST craplcx WHERE craplcx.cdcooper = crapcop.cdcooper    AND
-                             craplcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             craplcx.dtmvtolt = crapdat.dtmvtocd    AND
                              craplcx.cdagenci = p-cod-agencia       AND
                              craplcx.nrdcaixa = p-nro-caixa         AND
                              craplcx.cdhistor = p-cod-histor        AND
@@ -324,7 +327,7 @@ PROCEDURE estorna-boletim:
        
         ASSIGN in99 = in99 + 1.
         FIND FIRST craplcx WHERE craplcx.cdcooper = crapcop.cdcooper    AND
-                                 craplcx.dtmvtolt = crapdat.dtmvtolt    AND
+                                 craplcx.dtmvtolt = crapdat.dtmvtocd    AND
                                  craplcx.cdagenci = p-cod-agencia       AND
                                  craplcx.nrdcaixa = p-nro-caixa         AND
                                  craplcx.cdopecxa = p-cod-operador      AND

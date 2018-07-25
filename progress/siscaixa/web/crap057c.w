@@ -28,6 +28,12 @@
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)  
                             
+               25/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom).
+                            
+
+
+                            
                06/06/2018 - Melhorias relacionadas aos locks de tabela 
                             crapmdw, crapmrw (Tiago INC0015047)
 ............................................................................ */
@@ -515,7 +521,7 @@ PROCEDURE process-web-request :
          dt-maior-praca  = ?
          dt-menor-fpraca = ?
          dt-maior-fpraca = ?
-         dt-menor-fpraca = crapdat.dtmvtolt.
+         dt-menor-fpraca = crapdat.dtmvtocd.
 
   DO  aux_contador = 1 TO 4:
       ASSIGN dt-menor-fpraca = dt-menor-fpraca + 1.
@@ -767,7 +773,7 @@ PROCEDURE process-web-request :
                        RUN elimina-erro (INPUT crapcop.nmrescop,
                                          INPUT INT(v_pac),
                                          INPUT INT(v_caixa)).
-                       
+
                        FOR EACH crabmdw NO-LOCK
                            WHERE crabmdw.cdcooper   = crapcop.cdcooper  
                              AND crabmdw.cdagenci   = INT(v_pac)
@@ -800,7 +806,7 @@ PROCEDURE process-web-request :
                                        END.
                                END.
                            ELSE 
-                               DELETE crapmdw.
+                           DELETE crapmdw.
                                
                            LEAVE.
                            
@@ -819,7 +825,7 @@ PROCEDURE process-web-request :
                                            INPUT YES).
                           
                             {include/i-erro.i}
-                          END.
+                       END.
 
                        RUN elimina-erro (INPUT crapcop.nmrescop,
                                          INPUT INT(v_pac),
@@ -854,9 +860,9 @@ PROCEDURE process-web-request :
                                            c-desc-erro = "Resumo de cheque nao encontrado. " +
                                                          "Tente novamente.".                             
                                        END.                            
-                              END.
+                       END.
                           ELSE  
-                              DELETE crapmrw.
+                           DELETE crapmrw.
                               
                           LEAVE.
                            
@@ -875,8 +881,8 @@ PROCEDURE process-web-request :
                                            INPUT YES).
                           
                             {include/i-erro.i}
-                          END.
-                       
+                       END.
+    
     
                        IF   VALID-HANDLE(h-b1crap57)   THEN
                             DELETE PROCEDURE h-b1crap57.

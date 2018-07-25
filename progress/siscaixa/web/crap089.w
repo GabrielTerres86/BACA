@@ -2,7 +2,7 @@
 
 Programa: siscaixa/web/crap089.w
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 20/06/2016
+Sigla   : CRED                               Ultima atualizacao: 08/06/2018
    
 Dados referentes ao programa:
 
@@ -12,8 +12,10 @@ Alteracoes: 20/06/2016 - Incluida validacao da conta para verificar se esta
                          possui INTERNET ativa, caso contrario, nao segue
 						 (Guilherme/SUPERO)
 
+            08/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                          norturno rodando (Douglas Pagel - AMcom).
 
-..............................................................................*/
+.............................................................................. **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -491,22 +493,22 @@ PROCEDURE carregaPeriodo:
                              NO-LOCK NO-ERROR.
 
     ASSIGN aux_periodo = " ,0"
-           aux_mes = INTE(MONTH(crapdat.dtmvtolt)).
+           aux_mes = INTE(MONTH(crapdat.dtmvtocd)).
 
     IF  aux_mes = 1 THEN DO: /* Se for JANEIRO */
         DO  aux_data = aux_mes TO 13:
             ASSIGN aux_periodo = aux_periodo +
                                  (IF aux_periodo = '' THEN '' ELSE ',') +
-                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtolt),"9999") + ',' +
-                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtolt),"9999").
+                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtocd),"9999") + ',' +
+                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtocd),"9999").
         END.
     END.
     ELSE DO: /* Para os demais meses */
         DO  aux_data = (aux_mes - 1) TO 13:
             ASSIGN aux_periodo = aux_periodo +
                                  (IF aux_periodo = '' THEN '' ELSE ',') +
-                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtolt),"9999") + ',' +
-                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtolt),"9999").
+                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtocd),"9999") + ',' +
+                                 STRING(aux_data,"99")  + "/" + STRING(YEAR(crapdat.dtmvtocd),"9999").
         END.
     END.
 
@@ -836,7 +838,7 @@ PROCEDURE process-web-request :
               IF  NOT VALID-HANDLE(h_b1crap00) THEN
                   RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
         
-              RUN valida-transacao IN h_b1crap00(INPUT v_coop,
+              RUN valida-transacao2 IN h_b1crap00(INPUT v_coop,
                                                  INPUT v_pac,
                                                  INPUT v_caixa).
         

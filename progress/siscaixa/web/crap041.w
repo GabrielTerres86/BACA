@@ -20,7 +20,11 @@
                 11/06/2015 - Inclusão da validação de Boletim Fechado 
                             (Lunelli - SD. 295367)
                              
-..............................................................................*/
+                06/06/2018 - Alterado para procedure valida-transacao2 para permitir 
+                             operar mesmo com o processo noturno em execucao - 
+                             Everton Deserto(AMCOM).
+
+.............................................................................. **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -576,7 +580,7 @@ PROCEDURE process-web-request :
      {include/assignfields.i} 
 
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop, /* 06/06/2018 - Alterado para procedure valida-transacao2 - Everton Deserto(AMCOM) */
                                        INPUT v_pac,
                                        INPUT v_caixa).
     DELETE PROCEDURE h-b1crap00.
@@ -825,7 +829,7 @@ PROCEDURE process-web-request :
   ELSE DO:
 
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop, /* 06/06/2018 - Alterado para procedure valida-transacao2 - Everton Deserto(AMCOM) */
                                        INPUT v_pac,
                                        INPUT v_caixa).
     DELETE PROCEDURE h-b1crap00.
@@ -903,8 +907,8 @@ PROCEDURE process-web-request :
         {&out} '<script>var conf = confirm("ATENCAO, este pagamento nao pode ser estornado, deseja continuar?");</script>'.
         {&out} '<script>((!conf) ? $("#hdnVerifEstorno").val(0) : $("#hdnVerifEstorno").val(1))</script>'.
         {&out} '<script>((!conf) ? window.location = "crap041.html" : document.forms[0].submit())</script>'.
-      END.
-    
+  END. 
+  
     IF vr_cdcriticValorAcima = 1 THEN
        DO:
          {&out} '<script>$("#hdnValorAcima").val(1);</script>'.

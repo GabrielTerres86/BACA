@@ -16,7 +16,10 @@
                             procedure (Julio)
                             
                22/02/2006 - Unificacao dos bancos - SQLWorks - Eder             
-............................................................................ */
+               
+               18/06/2018 - Utilizaçao do Caixa Online mesmo com o processo batch 
+                            (noturno) executando (Fabio Adriano - AMcom).
+............................................................................ **/
 
 /*---------------------------------------------------------------*/
 /*  b1crap04.p - Entrega Cartao                                  */
@@ -52,7 +55,7 @@ PROCEDURE consulta-cartao.
                           crapcrm.cdsitcar < 3                  NO-LOCK:
 
        IF   crapcrm.cdsitcar = 2                    AND
-            crapcrm.dtvalcar < crapdat.dtmvtolt     THEN 
+            crapcrm.dtvalcar < crapdat.dtmvtocd     THEN 
             NEXT.
 
        CREATE tt-cartao.

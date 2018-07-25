@@ -27,7 +27,14 @@
                             
                30/09/2009 - Adaptacoes projeto IF CECRED (Guilherme).
 
-............................................................................ */
+               20/06/2018 - Alterado para chamar a procedure valida-transacao2 e assim permitir
+                            operar a rotina, mesmo que o processo noturno esteja em execuçao 
+                            - Everton Deserto(AMCOM).
+                            
+               20/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd como data de referencia 
+                            - Everton Deserto(AMCOM).
+
+............................................................................ **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -478,7 +485,7 @@ PROCEDURE process-web-request :
                vh_foco   = "7".
      END.
      ELSE DO:
-         RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+         RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,   /* 20/06/2018 - Alterado para a procedure valida-transacao2 - Everton Deserto(AMCOM).*/
                                             INPUT int(v_pac),
                                             INPUT int(v_caixa)).
     
@@ -631,7 +638,7 @@ PROCEDURE process-web-request :
 
                           FIND crapreq WHERE 
                                crapreq.cdcooper = crapcop.cdcooper       AND
-                               crapreq.dtmvtolt = crapdat.dtmvtolt       AND
+                               crapreq.dtmvtolt = crapdat.dtmvtocd       AND  /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                crapreq.cdagelot = INT(v_pac)             AND
                                crapreq.tprequis = aux_tprequis           AND
                                crapreq.nrdolote = 19000 + INT(v_caixa)   AND
@@ -674,7 +681,7 @@ PROCEDURE process-web-request :
                  ELSE
                       FIND crapreq WHERE 
                                crapreq.cdcooper = crapcop.cdcooper       AND
-                               crapreq.dtmvtolt = crapdat.dtmvtolt       AND
+                               crapreq.dtmvtolt = crapdat.dtmvtocd       AND  /* 20/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                crapreq.cdagelot = INT(v_pac)             AND
                                crapreq.tprequis = aux_tprequis           AND
                                crapreq.nrdolote = 19000 + INT(v_caixa)   AND

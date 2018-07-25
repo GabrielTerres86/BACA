@@ -4,7 +4,10 @@
 
 Alteracoes: 18/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
 
-............................................................................. */
+            06/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+
+............................................................................. **/
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -387,7 +390,7 @@ PROCEDURE process-web-request :
  
      FIND LAST crapbcx  EXCLUSIVE-LOCK WHERE 
                crapbcx.cdcooper = crapdat.cdcooper     AND
-               crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+               crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
                crapbcx.cdagenci = INT(v_pac)           AND
                crapbcx.nrdcaixa = INT(v_caixa)         AND
                crapbcx.cdopecxa = v_operador           AND
@@ -448,7 +451,7 @@ PROCEDURE process-web-request :
         
    FIND LAST crapbcx  EXCLUSIVE-LOCK WHERE 
               crapbcx.cdcooper = crapdat.cdcooper    AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
               crapbcx.cdagenci = INT(v_pac)          AND
               crapbcx.nrdcaixa = INT(v_caixa)        AND 
               crapbcx.cdopecxa = v_operador          AND

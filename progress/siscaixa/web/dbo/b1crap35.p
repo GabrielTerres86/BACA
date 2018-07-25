@@ -2,7 +2,7 @@
 
     b1crap35.p - Controle Titulos/Faturas Coban
     
-    Ultima Atualizacao: 05/08/2014
+    Ultima Atualizacao: 25/06/2018
     
     Alteracoes: 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
     
@@ -21,7 +21,11 @@
                              /usr/coop/sistema/siscaixa/web/spool (Fernando).
                              
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
------------------------------------------------------------------------------*/
+
+                25/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                             norturno rodando (Douglas Pagel - AMcom).
+                             
+----------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -54,7 +58,7 @@ DEF TEMP-TABLE tt-lote                                        NO-UNDO
     FIELD vltitulo AS DECIMAL FORMAT "zzzz,zzz,zz9.99"
     FIELD nmoperad AS CHAR    FORMAT "x(10)".
 
-FORM crapdat.dtmvtolt  AT 1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
+FORM crapdat.dtmvtocd  AT 1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
      SKIP(1)
      "PA  CXA    LOTE" AT 1
      "   QTD.           VALOR"        
@@ -206,17 +210,17 @@ PROCEDURE Impressao:
             VIEW STREAM str_1 FRAME f_cabrel080_1.
         END.
 
-    DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.    
+    DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.    
 
     EMPTY TEMP-TABLE tt-lote.
    
     FOR EACH craplot WHERE (craplot.cdcooper = crapcop.cdcooper      AND
-                            craplot.dtmvtolt = crapdat.dtmvtolt      AND                            
+                            craplot.dtmvtolt = crapdat.dtmvtocd      AND                            
                             craplot.cdagenci = p-cod-agencia         AND
                             craplot.cdbccxlt = 11                    AND
                             craplot.tplotmov = 28)                   OR                    
                            (craplot.cdcooper = crapcop.cdcooper      AND
-                            craplot.dtmvtopg = crapdat.dtmvtolt      AND
+                            craplot.dtmvtopg = crapdat.dtmvtocd      AND
                             craplot.cdagenci = p-cod-agencia         AND
                             craplot.tplotmov = 28)               
                             NO-LOCK BREAK BY craplot.cdagenci
@@ -254,7 +258,7 @@ PROCEDURE Impressao:
                     DO:
                         PAGE STREAM str_1.
                                
-                        DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+                        DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.
                     END.
             END.
    
@@ -312,7 +316,7 @@ PROCEDURE proc_lista:
            aux_vlfatura = 0.
     
     FOR EACH crapcbb WHERE crapcbb.cdcooper = crapcop.cdcooper  AND
-                           crapcbb.dtmvtolt = crapdat.dtmvtolt  AND                           
+                           crapcbb.dtmvtolt = crapdat.dtmvtocd  AND                           
                            crapcbb.cdagenci = tt-lote.cdagenci  AND
                            crapcbb.cdbccxlt = tt-lote.cdbccxlt  AND
                            crapcbb.nrdolote = tt-lote.nrdolote  AND
@@ -334,7 +338,7 @@ PROCEDURE proc_lista:
            aux_vlfatura = 0.
     
     FOR EACH crapcbb WHERE crapcbb.cdcooper = crapcop.cdcooper  AND
-                           crapcbb.dtmvtolt = crapdat.dtmvtolt  AND                           
+                           crapcbb.dtmvtolt = crapdat.dtmvtocd  AND                           
                            crapcbb.cdagenci = tt-lote.cdagenci  AND
                            crapcbb.cdbccxlt = tt-lote.cdbccxlt  AND
                            crapcbb.nrdolote = tt-lote.nrdolote  AND
@@ -377,7 +381,7 @@ PROCEDURE proc_lista_detalhado:
         DO:
             PAGE STREAM str_1.
                  
-            DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+            DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.
                 
             DISPLAY STREAM str_1 tt-lote.cdagenci 
                                  tt-lote.cdbccxlt  

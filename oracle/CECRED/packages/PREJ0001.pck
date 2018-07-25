@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+   Data    : Maio/2017                      Ultima atualizacao: 04/07/2017
 
    Dados referentes ao programa:
 
@@ -14,7 +14,9 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
    Objetivo  : Centralizar os procedimentos e funcoes referente aos processos de 
                transferência para prejuízo
 
-   Alteracoes:
+   Alteracoes: 04/07/2018 - P450 - Adicionada Função para retornar Juros+60 
+                            "Data Anterior" para Empréstimos/ financiamentos em prejuízo
+                            Daniel(AMcom)
 
 ..............................................................................*/
 
@@ -36,7 +38,12 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
                                           pr_qtdiaatr IN crapris.qtdiaatr%TYPE, 
                                           pr_dtdrisco IN crapris.dtdrisco%TYPE
                                           ) RETURN DATE;                              
-   
+	-- ***
+    -- Função para retornar Juros+60 "Data Anterior" para Empréstimos/ financiamentos em prejuízo
+    FUNCTION fn_juros60_emprej(pr_cdcooper IN  crapris.cdcooper%TYPE  --> Código da cooperativa
+                              ,pr_nrdconta IN  crapris.nrdconta%TYPE  --> Número da conta
+                              ,pr_nrctremp IN  crapris.nrctremp%TYPE) --> Número do contrato
+                              RETURN NUMBER;
    
     /* Realiza a gravação dos parametros da transferencia para prejuizo informados na tela PARTRP */
     PROCEDURE pc_grava_prm_trp(pr_dsvlrprm1   IN VARCHAR2   --> Data de inicio da vigência
@@ -196,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+   Data    : Maio/2017                      Ultima atualizacao: 11/06/2018
 
    Dados referentes ao programa:
 
@@ -204,7 +211,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Objetivo  : Centralizar os procedimentos e funcoes referente aos processos de 
                transferência para prejuízo
 
-   Alteracoes:
+   Alteracoes: 
+
+   11/06/2018 - INC0014258 Na rotina pc_controla_exe_job, não registrar as validações
+                de execução do job como erro, para que o plantão não seja acionado (Carlos)
 
 ..............................................................................*/
 
@@ -367,6 +377,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
         RETURN(vr_dttrfprj);
         
       END fn_regra_dtprevisao_prejuizo;  
+  --
+  -- ***
+  -- Função para retornar Juros+60 "Data Anterior" para Empréstimos/ financiamentos em prejuízo
+  FUNCTION fn_juros60_emprej(pr_cdcooper IN  crapris.cdcooper%TYPE
+                            ,pr_nrdconta IN  crapris.nrdconta%TYPE
+                            ,pr_nrctremp IN  crapris.nrctremp%TYPE) RETURN NUMBER IS
+    -- Cursor Juros+60 --
+    CURSOR cr_juro60 (pr_cdcooper crapris.cdcooper%TYPE
+                     ,pr_nrdconta crapris.nrdconta%TYPE
+                     ,pr_nrctremp crapris.nrctremp%TYPE) IS
+     SELECT nvl(ris.vljura60,0) vljura60
+        FROM crapris ris
+       WHERE ris.cdcooper  = pr_cdcooper
+         AND ris.nrdconta  = pr_nrdconta
+         AND ris.nrctremp  = decode((SELECT epr.cdlcremp
+                                       FROM crapepr epr
+                                      WHERE epr.cdcooper = pr_cdcooper
+                                        AND epr.nrdconta = pr_nrdconta
+                                        AND epr.nrctremp = pr_nrctremp)
+                                    , 100, ris.nrdconta, pr_nrctremp)
+         AND ris.innivris  = 9
+         AND ris.dtrefere <= (SELECT dtultdma FROM crapdat WHERE cdcooper = pr_cdcooper)
+         AND ROWNUM        = 1
+      ORDER BY ris.dtrefere DESC;
+    rw_juro60 cr_juro60%ROWTYPE;
+		
+		CURSOR cr_juros60_pagos(pr_cdcooper crapris.cdcooper%TYPE
+                     ,pr_nrdconta crapris.nrdconta%TYPE
+                     ,pr_nrctremp crapris.nrctremp%TYPE) IS
+		select sum(case
+             when h.cdhistor in (2473) then
+              h.vllanmto
+             else
+              0
+           end) - sum(case
+                        when h.cdhistor in (2474) then
+                         h.vllanmto
+                        else
+                         0
+                      end) vllanmto
+			from craplem h
+		 where h.cdhistor in (2473, 2474)
+			 and cdcooper = pr_cdcooper
+			 and nrdconta = pr_nrdconta
+			 and nrctremp = pr_nrctremp;
+		rw_juros60_pagos cr_juros60_pagos%ROWTYPE;															
+		
+    BEGIN
+     OPEN cr_juro60(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+   FETCH cr_juro60
+    INTO rw_juro60;
+   CLOSE cr_juro60;
+	 
+   IF NVL(rw_juro60.vljura60,0) > 0 THEN
+		OPEN cr_juros60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+		FETCH cr_juros60_pagos INTO rw_juros60_pagos;
+		CLOSE cr_juros60_pagos;
+    RETURN(rw_juro60.vljura60 - nvl(rw_juros60_pagos.vllanmto, 0));
+  ELSE
+    RETURN(0);  -- Garante retorno zero se não houver valor
+  END IF;
+  --
+  END fn_juros60_emprej;
+
   --
    PROCEDURE pc_grava_prm_trp(pr_dsvlrprm1 IN VARCHAR2  -- Data de inicio da vigência
                              ,pr_dsvlrprm2 IN VARCHAR2  -- produto
@@ -6846,12 +6920,14 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
         END IF;
         
       ELSE
-        -- Não retornar o erro - Chamado 831545 - 16/01/2018
-        IF vr_dserro NOT LIKE '%Processo noturno nao finalizado para cooperativa%' THEN
-          vr_cdcritic := 0;
-          vr_dscritic := vr_dserro;
-          RAISE vr_exc_erro;  
-        END IF;
+        cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                               ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+                               ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                               ,pr_tpocorrencia  => 4             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                               ,pr_cdcriticidade => 0             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               ,pr_dsmensagem    => vr_dserro    --> dscritic
+                               ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
       END IF;
       --
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
@@ -6880,9 +6956,6 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
                             pr_dstiplog => 'E',
                             pr_dscritic => vr_dscritic);
-                            
-      cecred.pc_internal_exception(pr_cdcooper => nvl(vr_cdcooper,3),
-                                   pr_compleme => vr_dscritic);                            
 
       ROLLBACK;
         

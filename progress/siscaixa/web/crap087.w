@@ -11,8 +11,10 @@ Objetivo  : Entrada de Arrecadacoes GPS - Faturas.
 Alteracoes: 27/08/2014 - Ajustes referente a homologacao com o SICREDI
                         (Adriano).
 
+            07/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                          norturno rodando (Douglas Pagel - AMcom).
 
-..............................................................................*/
+.............................................................................. **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -847,7 +849,7 @@ PROCEDURE process-web-request :
               IF  NOT VALID-HANDLE(h_b1crap00) THEN
                   RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
         
-              RUN valida-transacao IN h_b1crap00(INPUT v_coop,
+              RUN valida-transacao2 IN h_b1crap00(INPUT v_coop,
                                                  INPUT v_pac,
                                                  INPUT v_caixa).
         

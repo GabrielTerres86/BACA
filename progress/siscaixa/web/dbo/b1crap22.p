@@ -1,4 +1,4 @@
-/******************************************************************************
+/********************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-----------------------------------+---------------------------------------+
@@ -110,7 +110,9 @@
 
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576) 
------------------------------------------------------------------------------*/
+
+               25/05/2018 - Alteraçao para utilizar o campo dtmvtocd como referencia de data atual - Everton Deserto(AMCom).
+----------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -355,7 +357,7 @@ PROCEDURE realiza-deposito:
        
        /* Validar para criar o lancamento ao fim da procedure */
        FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
-                               crapbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                               crapbcx.dtmvtolt = crapdat.dtmvtocd  AND  /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                                crapbcx.cdagenci = p-cod-agencia     AND
                                crapbcx.nrdcaixa = p-nro-caixa       AND
                                crapbcx.cdopecxa = p-cod-operador    AND
@@ -376,7 +378,7 @@ PROCEDURE realiza-deposito:
        
        /*--- Associa novo docmt(time) caso dois depositos seguidos ---*/
        FIND LAST craplcm WHERE craplcm.cdcooper = crabcop.cdcooper AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd AND  /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                                craplcm.cdagenci = 1                AND
                                craplcm.cdbccxlt = 100              AND
                                craplcm.nrdolote = p-nro-lote       AND
@@ -448,7 +450,7 @@ PROCEDURE realiza-deposito:
        CREATE craplcx.
        
        ASSIGN craplcx.cdcooper = crapcop.cdcooper
-              craplcx.dtmvtolt = crapdat.dtmvtolt
+              craplcx.dtmvtolt = crapdat.dtmvtocd   /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
               craplcx.cdagenci = p-cod-agencia
               craplcx.nrdcaixa = p-nro-caixa
               craplcx.cdopecxa = p-cod-operador
@@ -467,7 +469,7 @@ PROCEDURE realiza-deposito:
        
        /*** Informacao da cooperativa de destino ***/
        FIND craplot WHERE craplot.cdcooper = crabcop.cdcooper  AND
-                          craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                          craplot.dtmvtolt = crapdat.dtmvtocd  AND  /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                           craplot.cdagenci = 1                 AND
                           craplot.cdbccxlt = 100               AND /* Fixo */
                           craplot.nrdolote = p-nro-lote        AND
@@ -479,7 +481,7 @@ PROCEDURE realiza-deposito:
               CREATE craplot.
        
               ASSIGN craplot.cdcooper = crabcop.cdcooper
-                     craplot.dtmvtolt = crapdat.dtmvtolt
+                     craplot.dtmvtolt = crapdat.dtmvtocd    /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                      craplot.cdagenci = 1   
                      craplot.cdbccxlt = 100
                      craplot.nrdolote = p-nro-lote
@@ -488,7 +490,7 @@ PROCEDURE realiza-deposito:
        
        /*--- Verifica se Lancamento ja Existe na coop. destino ---*/
        FIND craplcm WHERE craplcm.cdcooper = crabcop.cdcooper     AND
-                          craplcm.dtmvtolt = crapdat.dtmvtolt     AND
+                          craplcm.dtmvtolt = crapdat.dtmvtocd     AND /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                           craplcm.cdagenci = 1                    AND
                           craplcm.cdbccxlt = 100                  AND
                           craplcm.nrdolote = p-nro-lote           AND
@@ -507,7 +509,7 @@ PROCEDURE realiza-deposito:
        CREATE  craplcm.
        
        ASSIGN  craplcm.cdcooper = crabcop.cdcooper  /** Coop. Destino **/
-               craplcm.dtmvtolt = crapdat.dtmvtolt
+               craplcm.dtmvtolt = crapdat.dtmvtocd  /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                craplcm.cdagenci = 1
                craplcm.cdbccxlt = 100
                craplcm.dsidenti = p-identifica 
@@ -588,7 +590,7 @@ PROCEDURE realiza-deposito:
               c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                               TRIM(crapcop.nmextcop)
               c-literal[2]  = " "
-              c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
+              c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " +   /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
                               STRING(TIME,"HH:MM:SS") +  " PAC " +
                               STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                               STRING(p-nro-caixa,"Z99") + "/" +
@@ -826,7 +828,7 @@ PROCEDURE realiza-deposito-cheque:
 		    IF AVAIL(crapdat) THEN
 			DO:
 				FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
-							   AND crapaut.dtmvtolt = crapdat.dtmvtolt
+							   AND crapaut.dtmvtolt = crapdat.dtmvtocd /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
 							   AND crapaut.cdagenci = p-cod-agencia
 							   AND crapaut.nrdcaixa = p-nro-caixa
 							   AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
@@ -951,7 +953,7 @@ PROCEDURE realiza-deposito-cheque-migrado:
 		    IF AVAIL(crapdat) THEN
 			DO:
 				FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
-							   AND crapaut.dtmvtolt = crapdat.dtmvtolt
+							   AND crapaut.dtmvtolt = crapdat.dtmvtocd  /* 25/05/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCom) */
 							   AND crapaut.cdagenci = p-cod-agencia
 							   AND crapaut.nrdcaixa = p-nro-caixa
 							   AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
@@ -1076,7 +1078,7 @@ PROCEDURE realiza-deposito-cheque-migrado-host:
 		    IF AVAIL(crapdat) THEN
 			DO:
 				FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
-							   AND crapaut.dtmvtolt = crapdat.dtmvtolt
+							   AND crapaut.dtmvtolt = crapdat.dtmvtocd
 							   AND crapaut.cdagenci = p-cod-agencia
 							   AND crapaut.nrdcaixa = p-nro-caixa
 							   AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.

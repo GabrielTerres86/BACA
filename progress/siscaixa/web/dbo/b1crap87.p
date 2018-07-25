@@ -15,7 +15,10 @@ Alteracoes: 12/09/2017 - Ajustes melhoria 397 - Rafael (Mouts)
                          valor do pagamento for superior ao limite cadastrado 
                          na CADCOP / CADPAC
                          (Diogo - MoutS)
-..............................................................................*/
+                         
+            06/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+.............................................................................. **/
 
 {dbo/bo-erro1.i}
 
@@ -118,7 +121,7 @@ PROCEDURE validar-gps:
         END.
 
     
-        IF  DATE(p-vencimento) < crapdat.dtmvtolt THEN DO:
+        IF  DATE(p-vencimento) < crapdat.dtmvtocd THEN DO:
             ASSIGN i-cod-erro  = 0
                    c-desc-erro = "Guia vencida nao pode ser paga!"
                    p-focoCampo = "19".
@@ -457,7 +460,7 @@ PROCEDURE valida-cdbarras-lindigit.
 
     IF  p-controle = 1 THEN DO:
 
-        IF  INTE(SUBSTR(aux_codbarra,42,2)) < INTE(MONTH(crapdat.dtmvtolt) - 1) THEN DO:
+        IF  INTE(SUBSTR(aux_codbarra,42,2)) < INTE(MONTH(crapdat.dtmvtocd) - 1) THEN DO:
             ASSIGN i-cod-erro  = 0
                    c-desc-erro = "Agendamento não permitido para competências anteriores. " +
                                  "Para efetivar o pagamento utilize a rotina de Pagamento de GPS!".
@@ -472,7 +475,7 @@ PROCEDURE valida-cdbarras-lindigit.
             RETURN "NOK".
         END.
     
-        IF  INTE(SUBSTR(aux_codbarra,38,4)) <> INTE(YEAR(crapdat.dtmvtolt)) THEN DO:
+        IF  INTE(SUBSTR(aux_codbarra,38,4)) <> INTE(YEAR(crapdat.dtmvtocd)) THEN DO:
             ASSIGN i-cod-erro  = 0
                    c-desc-erro = "Agendamento não permitido para competências anteriores. " +
                                  "Para efetivar o pagamento utilize a rotina de Pagamento de GPS!".

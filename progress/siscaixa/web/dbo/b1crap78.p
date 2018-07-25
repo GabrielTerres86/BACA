@@ -26,7 +26,10 @@
                              
                 19/02/2014 - Ajuste leitura craptco (Daniel).
     
-----------------------------------------------------------------------  */
+                19/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                             como data de referencia - Everton Deserto(AMCOM).
+                                                                        
+---------------------------------------------------------------------- **/
                                                                         
 {dbo/bo-erro1.i}
 
@@ -344,7 +347,7 @@ PROCEDURE valida-codigo-cheque-valor.
             ASSIGN flg_ctamigra = TRUE.
 
             FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND
-                               craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                               craplcm.dtmvtolt = crapdat.dtmvtocd          AND /* 19/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                                craplcm.cdagenci = craptco.cdagenci          AND
                                craplcm.cdbccxlt = 100                       AND /* Fixo */
                                craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -495,7 +498,7 @@ PROCEDURE valida-codigo-cheque-valor.
     DO:
         FIND  craplcm WHERE
               craplcm.cdcooper = crapcop.cdcooper  AND
-              craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+              craplcm.dtmvtolt = crapdat.dtmvtocd  AND    /* 19/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
               craplcm.cdagenci = p-cod-agencia     AND
               craplcm.cdbccxlt = 11                AND /* Fixo */
               craplcm.nrdolote = i-nro-lote        AND
@@ -552,7 +555,7 @@ PROCEDURE critica-autenticacao.
     FIND FIRST crapaut WHERE crapaut.cdcooper = crapcop.cdcooper AND
                              crapaut.cdagenci = p-cod-agencia    AND 
                              crapaut.nrdcaixa = p-nro-caixa      AND 
-                             crapaut.dtmvtolt = crapdat.dtmvtolt AND 
+                             crapaut.dtmvtolt = crapdat.dtmvtocd AND  /* 19/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                              crapaut.nrsequen = p-sequencia  
                              NO-LOCK NO-ERROR.
    

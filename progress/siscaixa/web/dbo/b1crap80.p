@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 28/03/2018
+   Data    : Marco/2001                      Ultima atualizacao: 06/06/2018
 
    Dados referentes ao programa:
 
@@ -59,17 +59,20 @@
 
 			  01/08/2016 - Adicionado novo campo de arrecadacao GPS
                             conforme solicitado no chamado 460485. (Kelvin)
-
+                           
               03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
                              valor do pagamento for superior ao limite cadastrado 
                              na CADCOP / CADPAC
                             (Diogo - MoutS)
-                           
+
               28/03/2018 - Ajuste para permitir arrecadar 
                            convenio Bancoob (tparrecd = 2).
                            PRJ406 - FGTS(Odirlei-AMcom)
+                           
+               06/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom).
 
-   ......................................................................... */
+   ......................................................................... **/
 
 /*--------------------------------------------------------------------------*/
 /*  b1crap80.p   - Correspondente Bancario                                  */
@@ -472,7 +475,7 @@ PROCEDURE retorna-valores-fatura.
         
     FIND FIRST crapcbb NO-LOCK WHERE
                crapcbb.cdcooper = crapcop.cdcooper AND
-               crapcbb.dtmvtolt = crapdat.dtmvtolt AND
+               crapcbb.dtmvtolt = crapdat.dtmvtocd AND
                crapcbb.cdagenci = p-cod-agencia    AND
                crapcbb.cdbccxlt = 11               AND /* FIXO  */
                crapcbb.nrdolote = i-nro-lote       AND
@@ -704,7 +707,7 @@ PROCEDURE retorna-valores-titulo.
                 dt-dtvencto  = 10/07/1997 + de-campo.
                 */
         RUN calcula_data_vencimento
-                    (INPUT  crapdat.dtmvtolt,
+                    (INPUT  crapdat.dtmvtocd,
                      INPUT  INT(de-campo),
                      OUTPUT dt-dtvencto,
                      OUTPUT i-cod-erro,
@@ -759,7 +762,7 @@ PROCEDURE retorna-valores-titulo.
         
     FIND FIRST crapcbb NO-LOCK WHERE
                crapcbb.cdcooper = crapcop.cdcooper AND
-               crapcbb.dtmvtolt = crapdat.dtmvtolt AND
+               crapcbb.dtmvtolt = crapdat.dtmvtocd AND
                crapcbb.cdagenci = p-cod-agencia    AND
                crapcbb.cdbccxlt = 11               AND /* FIXO  */
                crapcbb.nrdolote = i-nro-lote       AND
@@ -816,14 +819,14 @@ PROCEDURE gera-titulos-faturas.
 
     FIND craplot  WHERE
          craplot.cdcooper = crapcop.cdcooper AND
-         craplot.dtmvtolt = crapdat.dtmvtolt AND
+         craplot.dtmvtolt = crapdat.dtmvtocd AND
          craplot.cdagenci = p-cod-agencia    AND
          craplot.cdbccxlt = 11               AND  /* Fixo */
          craplot.nrdolote = i-nro-lote no-error.
     IF  NOT AVAIL craplot THEN do:
         CREATE  craplot.
         ASSIGN craplot.cdcooper = crapcop.cdcooper
-               craplot.dtmvtolt = crapdat.dtmvtolt
+               craplot.dtmvtolt = crapdat.dtmvtocd
                craplot.cdagenci = p-cod-agencia   
                craplot.cdbccxlt = 11              
                craplot.nrdolote = i-nro-lote
@@ -921,7 +924,7 @@ PROCEDURE gera-arquivo-correspondente.
         
     FIND FIRST crapcbb NO-LOCK WHERE
                crapcbb.cdcooper = crapcop.cdcooper AND
-               crapcbb.dtmvtolt = crapdat.dtmvtolt AND
+               crapcbb.dtmvtolt = crapdat.dtmvtocd AND
                crapcbb.cdagenci = p-cod-agencia    AND
                crapcbb.cdbccxlt = 11               AND /* FIXO  */
                crapcbb.nrdolote = i-nro-lote       AND
@@ -1098,7 +1101,7 @@ PROCEDURE gera-arquivo-correspondente.
         ASSIGN in99 = in99 + 1.
         FIND LAST crapbcx  EXCLUSIVE-LOCK WHERE 
               crapbcx.cdcooper = crapcop.cdcooper AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd AND
               crapbcx.cdagenci = p-cod-agencia    AND
               crapbcx.nrdcaixa = p-nro-caixa      AND
               crapbcx.cdopecxa = p-cod-operador   AND
@@ -1399,7 +1402,7 @@ PROCEDURE gera-retorno-autenticacao.
 
     FIND LAST crapbcx  WHERE 
               crapbcx.cdcooper = crapcop.cdcooper AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd AND
               crapbcx.cdagenci = p-cod-agencia    AND
               crapbcx.nrdcaixa = p-nro-caixa      AND
               crapbcx.cdopecxa = p-cod-operador   AND
@@ -1466,7 +1469,7 @@ PROCEDURE gera-retorno-autenticacao.
          crapaut.cdcooper = crapcop.cdcooper AND
          crapaut.cdagenci = p-cod-agencia    AND
          crapaut.nrdcaixa = p-nro-caixa      AND
-         crapaut.dtmvtolt = crapdat.dtmvtolt AND
+         crapaut.dtmvtolt = crapdat.dtmvtocd AND
          crapaut.nrsequen = p-sequencia NO-ERROR.
     ASSIGN crapaut.dslitera = p-literal.
     
@@ -1512,7 +1515,7 @@ PROCEDURE executa-pendencias.
         ASSIGN in99 = in99 + 1.
         FIND LAST crapbcx  EXCLUSIVE-LOCK WHERE 
               crapbcx.cdcooper = crapcop.cdcooper AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd AND
               crapbcx.cdagenci = p-cod-agencia    AND
               crapbcx.nrdcaixa = p-nro-caixa      AND
               crapbcx.cdopecxa = p-cod-operador   AND
@@ -1677,7 +1680,7 @@ PROCEDURE executa-pendencias-fechamento.
         ASSIGN in99 = in99 + 1.
         FIND LAST crapbcx  EXCLUSIVE-LOCK WHERE 
               crapbcx.cdcooper = crapcop.cdcooper AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd  AND
               crapbcx.cdagenci = p-cod-agencia    AND
               crapbcx.nrdcaixa = p-nro-caixa      AND
               crapbcx.cdopecxa = p-cod-operador   AND
@@ -1848,7 +1851,7 @@ PROCEDURE executa-canc-correspondente.
     
     FIND LAST crapbcx  WHERE 
               crapbcx.cdcooper = crapcop.cdcooper AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd AND
               crapbcx.cdagenci = p-cod-agencia    AND
               crapbcx.nrdcaixa = p-nro-caixa      AND
               crapbcx.cdopecxa = p-cod-operador   AND
@@ -1914,7 +1917,7 @@ PROCEDURE executa-canc-correspondente.
 
     FIND LAST crapcbb WHERE  
               crapcbb.cdcooper = crapcop.cdcooper AND
-              crapcbb.dtmvtolt = crapdat.dtmvtolt AND
+              crapcbb.dtmvtolt = crapdat.dtmvtocd AND
               crapcbb.cdagenci = p-cod-agencia    AND
               crapcbb.nrdcaixa = p-nro-caixa      AND
               crapcbb.cdopecxa = p-cod-operador   AND
@@ -1966,7 +1969,7 @@ PROCEDURE executa-retransmissao.
 
     FIND LAST crapcbb WHERE  
               crapcbb.cdcooper = crapcop.cdcooper AND
-              crapcbb.dtmvtolt = crapdat.dtmvtolt AND
+              crapcbb.dtmvtolt = crapdat.dtmvtocd AND
               crapcbb.cdagenci = p-cod-agencia    AND
               crapcbb.nrdcaixa = p-nro-caixa      AND
               crapcbb.cdopecxa = p-cod-operador   AND
@@ -1992,7 +1995,7 @@ PROCEDURE executa-retransmissao.
         
     FIND LAST crapbcx  WHERE 
               crapbcx.cdcooper = crapcop.cdcooper AND
-              crapbcx.dtmvtolt = crapdat.dtmvtolt AND
+              crapbcx.dtmvtolt = crapdat.dtmvtocd AND
               crapbcx.cdagenci = p-cod-agencia    AND
               crapbcx.nrdcaixa = p-nro-caixa      AND
               crapbcx.cdopecxa = p-cod-operador   AND
@@ -2311,7 +2314,7 @@ END FUNCTION.
 
 PROCEDURE calcula_data_vencimento:
 
-    DEF INPUT  PARAM p-dtmvtolt         LIKE crapdat.dtmvtolt           NO-UNDO.
+    DEF INPUT  PARAM p-dtmvtolt         LIKE crapdat.dtmvtocd           NO-UNDO.
     DEF INPUT  PARAM p-de-campo         AS INTE                         NO-UNDO.
     DEF OUTPUT PARAM p-dtvencto         AS DATE                         NO-UNDO.
     DEF OUTPUT PARAM p-cod-erro         AS INTE                         NO-UNDO.           

@@ -17,7 +17,8 @@ Alteracoes: 27/03/2009 - Acerto para o uso do zoom, na chamada da tela crap002
             
             12/06/2018 - Utilizaçao do caixa online mesmo com processo notirno executando
 			             (Fabio Adriano - AMcom).
-............................................................................. */
+                         
+............................................................................. **/
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12

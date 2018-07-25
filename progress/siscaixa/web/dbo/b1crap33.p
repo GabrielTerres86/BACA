@@ -25,10 +25,14 @@
                 09/12/2013 - Alterado estrutura de leitura da tabela craplot (Daniel).     
                 
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).        
-                
+
                 03/07/2017 - Remover separaçao de cheques Superiores e Inferiores na geraçao 
-                             do relatório Resumido. PRJ367 - Compe Sessao Unica (Lombardi)
-------------------------------------------------------------------------------*/
+                             do relatório Resumido. PRJ367 - Compe Sessao Unica (Lombardi)       
+                
+                22/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                             como data de referencia - Everton Deserto(AMCOM).
+                             
+------------------------------------------------------------------------------ **/
 {dbo/bo-erro1.i}
 
 DEF VAR i-cod-erro   AS INTEGER.
@@ -74,7 +78,7 @@ DEF VAR i-nrlote2    LIKE craplot.nrdolote                      NO-UNDO.
 DEF VAR i-nrlote3    LIKE craplot.nrdolote                      NO-UNDO.
 DEF VAR i-nrlote4    LIKE craplot.nrdolote                      NO-UNDO.
 
-FORM crapdat.dtmvtolt  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
+FORM crapdat.dtmvtocd  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"  /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
      SKIP
      "PA   QTD. CHEQUES"         AT  1
      "VALOR " AT 33       
@@ -115,7 +119,7 @@ FORM SKIP(1)
      res_qtchqcop AT 24 NO-LABEL
      res_vlchqcop AT 34 NO-LABEL   */
      "** CARTA REMESSA **" AT 25
-     SKIP(1)
+     SKIP(1)                           
      tot_qtcheque AT  8 LABEL "TOTAL DIGITADO"
      tot_vlcheque AT 34 NO-LABEL
      SKIP(1)
@@ -227,7 +231,7 @@ PROCEDURE Impressao:
        
             VIEW STREAM str_1 FRAME f_cabrel080_1.
  
-            DISPLAY STREAM str_1  crapdat.dtmvtolt WITH FRAME f_cab.
+            DISPLAY STREAM str_1  crapdat.dtmvtocd WITH FRAME f_cab.      /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
             
             /*
             FOR EACH tt-cheque:
@@ -243,35 +247,35 @@ PROCEDURE Impressao:
                    i-nrlote4 = 30000 + p-nro-lote.
         
             FOR EACH craplot WHERE (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtolt AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                                     craplot.cdagenci = p-cod-agencia    AND
                                     craplot.cdbccxlt = 11               AND
                                     craplot.nrdolote = i-nrlote1        AND
                                     craplot.nrdcaixa = p-nro-lote) OR
                                     
                                    (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtolt AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                                     craplot.cdagenci = p-cod-agencia    AND
                                     craplot.cdbccxlt = 11               AND
                                     craplot.nrdolote = i-nrlote2        AND
                                     craplot.nrdcaixa = p-nro-lote) OR
                                     
                                    (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtolt AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                                     craplot.cdagenci = p-cod-agencia    AND
                                     craplot.cdbccxlt = 11               AND
                                     craplot.nrdolote = i-nrlote3        AND
                                     craplot.nrdcaixa = p-nro-lote) OR
                                     
                                    (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtolt AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                                     craplot.cdagenci = p-cod-agencia    AND
                                     craplot.cdbccxlt = 11               AND
                                     craplot.nrdolote = i-nrlote4        AND
                                     craplot.nrdcaixa = p-nro-lote) OR
                                     
                                    (craplot.cdcooper = crapcop.cdcooper AND
-                                    craplot.dtmvtolt = crapdat.dtmvtolt AND
+                                    craplot.dtmvtolt = crapdat.dtmvtocd AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                                     craplot.cdagenci = p-cod-agencia    AND
                                     craplot.cdbccxlt = 500              AND
                                     craplot.nrdcaixa = p-nro-lote) NO-LOCK,
@@ -315,8 +319,8 @@ PROCEDURE Impressao:
                                    tt-cheque.vlchdrec = aux_vlchdrec
                                    tt-cheque.nmarquiv = 
                                         STRING(crapcop.cdagebcb,"9999")      +
-                                        STRING(DAY(crapdat.dtmvtolt),"99")   +
-                                        STRING(MONTH(crapdat.dtmvtolt),"99") +
+                                        STRING(DAY(crapdat.dtmvtocd),"99")   +    /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
+                                        STRING(MONTH(crapdat.dtmvtocd),"99") +    /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                                         STRING(crapchd.cdagenci,"999")       +
                                         STRING(crapchd.tpdmovto,"9")         +
                                         STRING(aux_exarquiv,"x(04)").
@@ -338,7 +342,7 @@ PROCEDURE Impressao:
                         DO:
                             PAGE STREAM str_1. 
                             DISPLAY STREAM str_1 
-                                    crapdat.dtmvtolt WITH FRAME f_cab.
+                                    crapdat.dtmvtocd WITH FRAME f_cab.    /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                         END.
                 END.
    
@@ -351,7 +355,7 @@ PROCEDURE Impressao:
                     WITH FRAME f_lotes.
 
             DISPLAY STREAM str_1
-                    STRING(crapdat.dtmvtolt,"99/99/9999") + "-" +
+                    STRING(crapdat.dtmvtocd,"99/99/9999") + "-" +   /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                     STRING(p-cod-agencia,"999")           + "-" +
                     STRING(tt-cheque.cdbccxlt,"999")        + "-" +
                     STRING(p-nro-lote,"999999")  @ tt-cheque.nmarquiv
@@ -364,7 +368,7 @@ PROCEDURE Impressao:
 
             RUN proc_lista.
             PAGE STREAM str_1.
-            DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+            DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.   /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                              
             IF  NOT LAST-OF(tt-cheque.cdagenci)  THEN NEXT.   
                
@@ -378,7 +382,7 @@ PROCEDURE Impressao:
             IF  LINE-COUNTER(str_1) > 80  THEN 
                 DO:
                     PAGE STREAM str_1.
-                    DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+                    DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab. /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                 END.
           
            ASSIGN pac_qtchdrec = 0 
@@ -404,16 +408,20 @@ PROCEDURE Impressao:
        ASSIGN res_dschqcop = "Cheques " +
                            STRING(crapcop.nmrescop,"x(11)") + ":".
 
+
+
+
+
         ASSIGN i-nrlote1 = 11000 + p-nro-lote 
                i-nrlote2 = 23000 + p-nro-lote
                i-nrlote3 = 28000 + p-nro-lote
                i-nrlote4 = 30000 + p-nro-lote
                tot_qtcheque = 0
                tot_vlcheque = 0.
-               
+        
         FOR EACH craplot WHERE 
                  craplot.cdcooper = crapcop.cdcooper    AND
-                 craplot.dtmvtolt = crapdat.dtmvtolt    AND
+                 craplot.dtmvtolt = crapdat.dtmvtocd    AND  /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                  craplot.cdagenci = p-cod-agencia       AND
                  craplot.nrdcaixa = p-nro-lote          AND  /* Nro Caixa */
                 (craplot.nrdolote = i-nrlote1           OR
@@ -441,13 +449,18 @@ PROCEDURE Impressao:
 
         END.  /*  for each crapchd */
 
+        
+
         IF   tot_qtcheque > 0  THEN   DO:
              DISPLAY STREAM str_1
                      /* res_qtchqcop */
+                     
                      /* res_vlchqcop */
+                     
                      tot_qtcheque 
                      tot_vlcheque 
-                   /* res_dschqcop */
+                     
+                     /* res_dschqcop */
                      WITH FRAME f_resumo.
         END.
       
@@ -483,7 +496,7 @@ PROCEDURE proc_lista:
     VIEW STREAM str_1 FRAME f_linha.
     
     FOR EACH crapchd WHERE crapchd.cdcooper = crapcop.cdcooper      AND
-                           crapchd.dtmvtolt = crapdat.dtmvtolt      AND
+                           crapchd.dtmvtolt = crapdat.dtmvtocd      AND /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
                            crapchd.cdagenci = tt-cheque.cdagenci    AND
                            crapchd.cdbccxlt = tt-cheque.cdbccxlt    AND
                            crapchd.nrdolote = tt-cheque.nrdolote    AND
@@ -513,7 +526,7 @@ PROCEDURE proc_lista:
         IF   LINE-COUNTER(str_1) > 80  THEN DO:
              PAGE STREAM str_1.
                         
-             DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+             DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.    /* 22/06/2018 - Alterado para o campo dtmvtocd - Everton(AMCOM).*/
             
              DISPLAY STREAM str_1  
                      tt-cheque.cdagenci 

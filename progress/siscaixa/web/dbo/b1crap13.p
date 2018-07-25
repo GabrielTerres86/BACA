@@ -15,7 +15,11 @@
                              /usr/coop/sistema/siscaixa/web/spool (Fernando).
                              
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
------------------------------------------------------------------------------*/
+                
+                14/06/2018 - Alterado para considerar o campo crapdat.dtmvtocd 
+                             como data de referencia - Everton Deserto(AMCOM).   
+                             
+----------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -71,7 +75,7 @@ PROCEDURE consulta-boletim:
                              NO-LOCK NO-ERROR.
 
     FIND  LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND /* 14/06/2018 - Alterado para o campo dtmvtocd - Everton Deserto(AMCOM).*/
                              crapbcx.cdagenci = p-cod-agencia       AND
                              crapbcx.nrdcaixa = p-nro-caixa         AND
                              crapbcx.cdopecxa = p-cod-operador 

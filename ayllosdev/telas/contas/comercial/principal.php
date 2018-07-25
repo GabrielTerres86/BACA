@@ -17,6 +17,8 @@
  *				  20/09/2017 - Ajuste onde o turno e nivel cargo nao estavam sendos carregados. (PRJ339 - Kelvin) 
  *                21/09/2017 - Ajuste para pegar o tpdrendi e vldrendi na posição correta do xml (Adriano - SD ).
  *                10/10/2017 - Ajuste para chamar fonte principal.php apenas uma vez qnd vem da tela matric. PRJ339 - CRM(Odirlei-AMcom)
+ *                05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
+ *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvn)
  */
 
 	session_start();
@@ -228,6 +230,7 @@
 			
 </script>
 <?php
+	include('busca_informacoes_empresa.php');
 	include('formulario_comercial.php');
 ?>
 <script type='text/javascript'>

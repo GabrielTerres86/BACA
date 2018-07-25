@@ -19,7 +19,11 @@
                13/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)              
-............................................................................ */
+
+               17/04/2018 - Tratamento da abertura do caixa online 
+                            chamada da procedura nova valida-transacao2 
+                            (Fabio Adriano - AMcom).						
+............................................................................ **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -526,7 +530,11 @@ PROCEDURE process-web-request :
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
     RUN dbo/b1crap55.p PERSISTENT SET h-b1crap55.
 
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    /*RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+                                       INPUT v_pac,
+                                       INPUT v_caixa).*/
+									   
+	RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                        INPUT v_pac,
                                        INPUT v_caixa).
 

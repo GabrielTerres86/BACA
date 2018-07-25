@@ -31,6 +31,10 @@ DEFINE TEMP-TABLE ab_unmap
   Author: 
 
   Created: 
+  
+  Alteraçao: 07/06/2018 - Alterado para a procedure valida-transacao2 para que a 
+             rotina possa ser utilizada mesmo com o processo noturno em execuçao 
+             - Everton Deserto(AMCOM).                 
 
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -391,8 +395,8 @@ PROCEDURE process-web-request :
      * RUN assignFields. */
     
      RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-     RUN valida-transacao IN h-b1crap00(INPUT v_coop,
-                                        INPUT INT(v_pac),
+     RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,        /* 07/06/2018 - Alterado para a procedure valida-transacao2 para que a rotina possa ser utilizada */                                                              
+                                        INPUT INT(v_pac),     /*              mesmo com o processo noturno em execuçao - Everton Deserto(AMCOM).                */
                                         INPUT INT(v_caixa)).
      DELETE PROCEDURE h-b1crap00.
  

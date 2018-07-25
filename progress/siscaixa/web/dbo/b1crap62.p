@@ -2,9 +2,10 @@
 
     b1crap62.p - OPERAÇÕES DE RECEBIMENTO DE SMS DE DÉBITO AUTOMÁTICO [PROJ320]
     
-    Alteracoes:
+    Alteracoes: 08/06/2018 - Alteracao do campo crapdat.dtmvtolt para 
+                crapdat.dtmvtocd - Everton Deserto(AMCOM).
                 
-------------------------------------------------------------------------------*/
+------------------------------------------------------------------------------ **/
 {dbo/bo-erro1.i}
 
 { sistema/generico/includes/var_internet.i }
@@ -58,7 +59,7 @@ PROCEDURE opera-telefone-sms-debaut:
                                               INPUT par_nrdconta,
                                               INPUT 1,                /* par_idseqttl */
                                               INPUT aux_flgerlog,     /* par_flgerlog */
-                                              INPUT crapdat.dtmvtolt,
+                                              INPUT crapdat.dtmvtocd,  /* 08/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                                               INPUT par_flgacsms,     /* par_flgacsms */
                                               INPUT-OUTPUT par_nrdddtfc,
                                               INPUT-OUTPUT par_nrtelefo,
@@ -148,7 +149,7 @@ PROCEDURE verifica-cartao:
   RUN verifica_cartao IN h-b1wgen0025(INPUT crapcop.cdcooper,
                                       INPUT 0,
                                       INPUT aux_dscartao, 
-                                      INPUT crapdat.dtmvtolt,
+                                      INPUT crapdat.dtmvtocd, /* 08/06/2018 - Alterado para considerar o campo dtmvtocd - Everton Deserto(AMCOM)*/
                                      OUTPUT p-nro-conta,
                                      OUTPUT aux_cdcooper,
                                      OUTPUT p-nrcartao,

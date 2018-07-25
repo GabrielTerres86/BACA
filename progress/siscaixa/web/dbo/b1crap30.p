@@ -4,7 +4,10 @@
     
     Alteracoes: 31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
                 
-------------------------------------------------------------------------------*/
+                04/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                              norturno rodando (Douglas Pagel - AMcom).
+                
+------------------------------------------------------------------------------ **/
 {dbo/bo-erro1.i}
 
 { sistema/generico/includes/var_internet.i }
@@ -105,7 +108,7 @@ PROCEDURE obtem-autorizacoes-debito:
           INPUT par_nrdconta, 
           INPUT 0, 
           INPUT YES,
-          INPUT crapdat.dtmvtolt,
+          INPUT crapdat.dtmvtocd,
           INPUT "C",
           INPUT "0",
           INPUT 0,
@@ -289,10 +292,10 @@ PROCEDURE inclui-debito-automatico:
           INPUT "I",
           INPUT tt-convenios-codbarras.cdhistor,
           INPUT par_cdrefere,
-          INPUT crapdat.dtmvtolt,
+          INPUT crapdat.dtmvtocd,
           INPUT ?,
           INPUT ?, /*dtlimite*/
-          INPUT crapdat.dtmvtolt,
+          INPUT crapdat.dtmvtocd,
           INPUT ?,
          OUTPUT aux_nmdcampo,
          OUTPUT aux_nmprimtl,
@@ -336,12 +339,12 @@ PROCEDURE inclui-debito-automatico:
           INPUT par_nrdconta,                     /*  par_nrdconta   */
           INPUT 1,                                /*  par_idseqttl   */
           INPUT YES,                              /*  par_flgerlog   */
-          INPUT crapdat.dtmvtolt,                 /*  par_dtmvtolt   */
+          INPUT crapdat.dtmvtocd,                 /*  par_dtmvtolt   */
           INPUT "I",                              /*  par_cddopcao   */         
           INPUT tt-convenios-codbarras.cdhistor,  /*  par_cdhistor   */
           INPUT par_cdrefere,                     /*  par_cdrefere   */
           INPUT 0,                                /*  par_cddddtel   */
-          INPUT crapdat.dtmvtolt,                 /*  par_dtiniatr   */
+          INPUT crapdat.dtmvtocd,                 /*  par_dtiniatr   */
           INPUT ?,                                /*  par_dtfimatr   */
           INPUT ?,                                /*  par_dtultdeb   */
           INPUT ?,                                /*  par_dtvencto   */
@@ -457,7 +460,7 @@ PROCEDURE retorna-conta-cartao:
      RUN verifica_cartao IN h-b1wgen0025(INPUT crapcop.cdcooper,
                                          INPUT 0,
                                          INPUT aux_dscartao, 
-                                         INPUT crapdat.dtmvtolt,
+                                         INPUT crapdat.dtmvtocd,
                                         OUTPUT p-nro-conta,
                                         OUTPUT aux_cdcooper,
                                         OUTPUT p-nrcartao,

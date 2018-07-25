@@ -5,7 +5,10 @@
     Ultima Atualizacao: 
     
     Alteracoes:
-----------------------------------------------------------------------------*/
+                21/06/2018 - utilizaçao do Caixa Online mesmo com o processo 
+                batch (noturno) executando (Fabio Adriano - AMcom).
+
+---------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 { sistema/generico/includes/var_internet.i }
@@ -245,16 +248,16 @@ PROCEDURE gera-arquivo-texto:
             ASSIGN c-arquivo = "/usr/coop/sistema/siscaixa/web/spool/" +
                                crapcop.dsdircop + 
                                STRING(p-cod-agencia,"999") + 
-                               STRING(p-nro-caixa,"999") + STRING(YEAR(crapdat.dtmvtolt),  "9999") + 
-                                                           STRING(MONTH(crapdat.dtmvtolt), "99")   + 
-                                                           STRING(DAY(crapdat.dtmvtolt),   "99")   + 
+                               STRING(p-nro-caixa,"999") + STRING(YEAR(crapdat.dtmvtocd),  "9999") + 
+                                                           STRING(MONTH(crapdat.dtmvtocd), "99")   + 
+                                                           STRING(DAY(crapdat.dtmvtocd),   "99")   + 
                                ".txt".  /* Nome Fixo  */
                                
             ASSIGN p-arquivo = "spool/"  + crapcop.dsdircop + 
                                STRING(p-cod-agencia,"999") + 
-                               STRING(p-nro-caixa,"999") + STRING(YEAR(crapdat.dtmvtolt),  "9999") +
-                                                           STRING(MONTH(crapdat.dtmvtolt), "99")   +
-                                                           STRING(DAY(crapdat.dtmvtolt),   "99")   +                               
+                               STRING(p-nro-caixa,"999") + STRING(YEAR(crapdat.dtmvtocd),  "9999") +
+                                                           STRING(MONTH(crapdat.dtmvtocd), "99")   +
+                                                           STRING(DAY(crapdat.dtmvtocd),   "99")   +                               
                                ".txt".  
                                
             OUTPUT TO VALUE(c-arquivo).                             

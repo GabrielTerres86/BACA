@@ -1,4 +1,4 @@
-/*.............................................................................
+/*..............................................................................
 
    Programa: siscaixa/web/crap022c.w
    Sistema : Caixa On-Line
@@ -12,13 +12,17 @@
 
    Alteracoes: 17/11/2015 #345791 Melhoria no recebimento das variaveis do form
                           (Carlos)
-               
+                          
                27/06/2017 - Retiradas conticoes que tratam a praça do cheque e os números DE 
                            documento 3,4 e 5. PRJ367 - Compe Sessao Unica (Lombardi)
                            
+               
+
                19/04/2018 - Ajuste para apresentar erro corretament (Adriano - INC0012922).
+               
+               25/05/2018 - Alteraçao para utilizar a procedure valida-transacao2 - Everton Deserto(AMCom).
                            
------------------------------------------------------------------------------*/
+-----------------------------------------------------------------------------**/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -648,7 +652,7 @@ PROCEDURE process-web-request :
 
             RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
 
-            RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+            RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,   /* 25/05/2018 Alterada para a procedure valida-transacao2 - Everton Deserto(AMCom)*/
                                                INPUT v_pac,
                                                INPUT v_caixa).
 
@@ -720,30 +724,30 @@ PROCEDURE process-web-request :
                     
                         IF  NOT AVAIL tt-cheques  THEN
                             CREATE tt-cheques.
-                        
+                            
                         IF  crapmdw.cdhistor = 2433  THEN
                             ASSIGN tt-cheques.nrdocmto = 6
                                    tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                   v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                        
+                                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
+                            
                         FIND CURRENT tt-cheques NO-LOCK.
                         
                     END.
 
                     ASSIGN vetorcheque = "".
-                    
+            
                     FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6  NO-LOCK:
-                        
+            
                           IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
                               ASSIGN vetorcheque = vetorcheque + ",".
-                                
+            
                           ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
                                                            + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".
                     END.
-                    
+
                     {&OUT} '<script language="JavaScript">var cheques = new Array(); cheques.push(' + STRING(vetorcheque) + ');</script>'.
-        
+
                     IF  get-value('v_btn_ok') <> '' THEN DO:
                        ASSIGN l-houve-erro = NO.
                     END. /* Final do GET VALUE OK <> "" */
@@ -1152,20 +1156,20 @@ PROCEDURE process-web-request :
             IF  crapmdw.cdhistor = 2433  THEN
                 ASSIGN tt-cheques.nrdocmto = 6
                        tt-cheques.dtlibera = crapmdw.dtlibcom
-                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
+                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                           v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
                 
             FIND CURRENT tt-cheques NO-LOCK.
             
         END.
 
         ASSIGN vetorcheque = "".
-            
+
         FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
-            
+
               IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
                   ASSIGN vetorcheque = vetorcheque + ",".
-                    
+
               ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
                                                + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".                            
         END.

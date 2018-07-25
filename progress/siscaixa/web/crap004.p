@@ -24,7 +24,11 @@
                             a escrita será PA (Guilherme Gielow)
 
                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
-............................................................................ */
+               
+               18/06/2018 - Utilizaçao do Caixa Online mesmo com o processo batch (noturno)
+                            executando (Fabio Adriano - AMcom).
+                            
+............................................................................ **/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
 &ANALYZE-RESUME
@@ -329,7 +333,7 @@ PROCEDURE process-web-request :
     
     
        RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-       RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+       RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                           INPUT v_pac,
                                           INPUT v_caixa).
        DELETE PROCEDURE h-b1crap00.
@@ -428,7 +432,7 @@ PROCEDURE process-web-request :
   ELSE
   DO:
       RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-      RUN valida-transacao
+      RUN valida-transacao2
                     IN h-b1crap00(INPUT v_coop,
                                   INPUT int(v_pac),
                                   INPUT int(v_caixa)).

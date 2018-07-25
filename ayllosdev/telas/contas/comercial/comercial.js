@@ -21,6 +21,9 @@
  *                05/12/2017 - Alteração para buscar o Nome da Empresa a partir do CNPJ digitado e regra de alteração do nome da empresa.
  *                             (Mateus Z - Mouts)
  *                27/02/2018 - Alteração para selecionar o grupoEndereco corretamento no no js (Tiago #844280)
+ *			      05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
+ *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
+ *
  * --------------
  */
 
@@ -189,7 +192,7 @@ function controlaOperacao(operacao, flgConcluir) {
                 controlaFoco(operacao);
             }
 			if(operacao == 'CA' || operacao == 'CAE'){
-                buscaNomePessoa();
+              $("#nmextemp").desabilitaCampo();
             }
             return false;
         }
@@ -454,6 +457,7 @@ function controlaLayout(operacao) {
     var cCodNatOcupacao = $('#cdnatopc', '#' + nomeForm);
     var cCodOcupacao = $('#cdocpttl', '#' + nomeForm);
     var cCodEmpresa = $('#cdempres', '#' + nomeForm);
+	var cCodCnpj = $('#nrcpfemp', '#' + nomeForm);
     var cDescEmpresa = $('#nmresemp', '#' + nomeForm);
     var grupoEmpresa = $('#nmextemp,#nrcpfemp', '#' + nomeForm);
     var grupoSecao = $('#dsproftl,#cdnvlcgo,#nrcadast', '#' + nomeForm);
@@ -591,6 +595,11 @@ function controlaLayout(operacao) {
             if ($('#divPesquisa').css('visibility') == 'visible') { return false; }
             controlaPesquisas();
             controlaOperacao('CAE');
+			buscaInfEmpresa();
+        });
+		
+		cCodCnpj.unbind('blur').bind('blur', function () {
+			buscaNomePessoa();
         });
 
         // Acionar o botao Salvar no enter do ultinmo campo
@@ -622,7 +631,7 @@ function controlaLayout(operacao) {
     layoutPadrao();
     cCadEmp.trigger('blur');
     cCep.trigger('blur');
-    cCnpj.trigger('blur');
+    /*cCnpj.trigger('blur');*/
     hideMsgAguardo();
     bloqueiaFundo(divRotina);
     removeOpacidade('divConteudoOpcao');
@@ -1267,3 +1276,46 @@ function buscaNomePessoa(){
         }
     });
 }
+
+function buscaInfEmpresa(){
+
+    var cdempres = $('#cdempres').val();
+
+    hideMsgAguardo();
+
+    var mensagem = '';
+
+    mensagem = 'Aguarde, buscando informacoes da empresa ...';
+
+    showMsgAguardo(mensagem);
+   
+    // Nao deve buscar nome caso campo esteja zerado/em branco
+    if (cdempres == "" || cdempres == "0" ){        
+        hideMsgAguardo();
+        return false;
+    }
+    
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + 'telas/contas/comercial/busca_informacoes_empresa.php',
+        data: {
+            cdempres: cdempres,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+            }
+        }
+    });
+}
+
