@@ -399,6 +399,11 @@ function validaDados() {
 		return false;
 	}
 
+	if (descontoConvenios && !descontoConvenios.length) {
+		showError("error", "Selecione pelo menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, salvando registro...");
 

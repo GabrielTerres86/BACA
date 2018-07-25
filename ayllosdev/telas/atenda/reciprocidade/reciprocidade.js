@@ -2549,10 +2549,12 @@ function validarExclusaoConvenio() {
     });
 }
 
-function excluirConvenio() {
-    alert('Exclusão...');
-}
+function excluirConvenio(nrconven) {
+    var idx = retornaIndice(descontoConvenios, 'convenio', nrconven);
 
-function alterarConvenio() {
-    alert('Alterar...');
+    // remove do array
+    descontoConvenios.splice(idx, 1);
+
+    // atualizar tabela de convenios
+    sairDescontoConvenio();
 }
