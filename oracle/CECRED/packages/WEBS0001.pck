@@ -812,6 +812,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrdrowid      ROWID;
       vr_exc_saida     EXCEPTION;
       vr_exc_erro_500  EXCEPTION;
+      /*M438*/
+            --PL tables
+      vr_tab_rating_sing      RATI0001.typ_tab_crapras;
+      vr_tab_impress_coop     RATI0001.typ_tab_impress_coop;
+      vr_tab_impress_rating   RATI0001.typ_tab_impress_rating;
+      vr_tab_impress_risco_cl RATI0001.typ_tab_impress_risco;
+      vr_tab_impress_risco_tl RATI0001.typ_tab_impress_risco;      
+      vr_tab_impress_assina   RATI0001.typ_tab_impress_assina;
+      vr_tab_efetivacao       RATI0001.typ_tab_efetivacao;
+      vr_tab_ratings          RATI0001.typ_tab_ratings;
+      vr_tab_crapras          RATI0001.typ_tab_crapras;
+      vr_tab_erro             GENE0001.typ_tab_erro;
+      vr_ind                  PLS_INTEGER; --> Indice da tabela de retorno  
+      vr_rating               VARCHAR2(2);
+      vr_flgcriar             NUMBER;
+      /*Fim 438*/
+      
     BEGIN
       
       -- Buscar os dados da proposta de emprestimo
@@ -945,7 +962,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           RAISE vr_exc_saida;
         END IF;
         
-      END IF;			
+      END IF;		
+      /*Inicio M438*/
+      -- Calcular Rating para atualiza no campo rating original
+      vr_flgcriar := 0;
+      RATI0001.pc_calcula_rating(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
+                                ,pr_cdagenci => 1   --> Codigo Agencia
+                                ,pr_nrdcaixa => 1   --> Numero Caixa
+                                ,pr_cdoperad => '1'   --> Codigo Operador
+                                ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
+                                ,pr_tpctrato => 90   --> Tipo Contrato Rating
+                                ,pr_nrctrato => pr_nrctremp   --> Numero Contrato Rating
+                                ,pr_flgcriar => vr_flgcriar   --> Indicado se deve criar o rating
+                                ,pr_flgcalcu => 1   --> Indicador de calculo
+                                ,pr_idseqttl => 1   --> Sequencial do Titular
+                                ,pr_idorigem => 9   --> Identificador Origem
+                                ,pr_nmdatela => 'WEBS0001'   --> Nome da tela
+                                ,pr_flgerlog => 'N'   --> Identificador de geração de log
+                                ,pr_tab_rating_sing  => vr_tab_rating_sing      --> Registros gravados para rati
+                                ,pr_flghisto => 0
+                                -- OUT
+                                ,pr_tab_impress_coop     => vr_tab_impress_coop     --> Registro impressão da Cooper
+                                ,pr_tab_impress_rating   => vr_tab_impress_rating   --> Registro itens do Rating
+                                ,pr_tab_impress_risco_cl => vr_tab_impress_risco_cl --> Registro Nota e risco do coo
+                                ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do coo
+                                ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do R
+                                ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetiv
+                                ,pr_tab_ratings          => vr_tab_ratings          --> Informacoes com os Ratings d
+                                ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
+                                ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
+                                ,pr_des_reto             => pr_dscritic);           --> Ind. de retorno OK/NOK
+      -- Em caso de erro
+      IF pr_dscritic <> 'OK' THEN
+        --Se não tem erro na tabela
+        IF vr_tab_erro.COUNT = 0 THEN
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Falha ao calcular rating sem tabela de erros.';
+        ELSE
+          pr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+        END IF;
+        pr_status      := pr_cdcritic;
+        pr_msg_detalhe := 'Calculo Rating : '||pr_dscritic;
+        -- Sair
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_ind := vr_tab_impress_risco_cl.first; -- Vai para o primeiro registro            
+      -- loop sobre a tabela de retorno
+      WHILE vr_ind IS NOT NULL LOOP
+        vr_rating := vr_tab_impress_risco_cl(vr_ind).dsdrisco;
+        -- Vai para o proximo registro
+        vr_ind := vr_tab_impress_risco_cl.next(vr_ind);
+      END LOOP;          
+      /*Fim 438*/	
       
       /* Verificar se a analise da proposta expirou na esteira*/      
       IF pr_insitapr = 99 THEN
@@ -1026,6 +1096,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                           ,crawepr.dsnivris)
                 ,crawepr.dtdscore = NVL(pr_dtdscore,nvl(crawepr.dtdscore,trunc(SYSDATE)))
                 ,crawepr.dsdscore = NVL(pr_dsdscore,crawepr.dsdscore)
+                ,crawepr.vlempori = crawepr.vlemprst /*M438*/
+                ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
+                ,crawepr.dsratori = vr_rating /* M438 */
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp

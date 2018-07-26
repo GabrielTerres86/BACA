@@ -8500,7 +8500,7 @@ PROCEDURE altera-valor-proposta:
         DO:
             ASSIGN crawepr.dtdpagto = par_dtdpagto.
         END.       
- /*Inicio M438*/
+      /*Inicio M438*/
       IF par_dsdopcao = "TP" THEN /*Inclusao Proposta*/
       DO:
         IF  NOT VALID-HANDLE(h-b1wgen0043) THEN
@@ -8515,15 +8515,6 @@ PROCEDURE altera-valor-proposta:
         
         FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper.
         
-        /*FIND FIRST craplcr
-             WHERE craplcr.cdcooper = crawepr.cdcooper AND
-                   craplcr.cdlcremp = crawepr.cdlcremp
-        NO-LOCK NO-ERROR.
-         
-        IF AVAIL craplcr THEN
-        DO:      
-          ASSIGN aux_tpctrato = craplcr.tpctrato.
-        END.*/
         RUN gera_rating IN h-b1wgen0043
                         (INPUT par_cdcooper,
                          INPUT par_cdagenci,   /** Pac   **/
@@ -8555,20 +8546,12 @@ PROCEDURE altera-valor-proposta:
             
         IF  RETURN-VALUE = "NOK"  THEN
           ASSIGN aux_dsratori = "".
-          /*UNDO Grava_valor, LEAVE Grava_valor.*/
-          
          
         ASSIGN aux_dsratori = "".
         FIND FIRST tt-impressao-risco NO-LOCK NO-ERROR.
         IF  AVAIL tt-impressao-risco THEN
             aux_dsratori = tt-impressao-risco.dsdrisco.
         
-        IF (crawepr.vlempori = ? OR crawepr.vlempori = 0) THEN
-          ASSIGN crawepr.vlempori = par_vlemprst.
-          
-        IF (crawepr.vlpreori = ? OR crawepr.vlpreori = 0) THEN
-          ASSIGN crawepr.vlpreori = par_vlpreemp.
-          
         IF (crawepr.dsratori = ? OR crawepr.dsratori = " ") AND 
            (aux_dsratori <> "" OR aux_dsratori <> ?) THEN
           ASSIGN crawepr.dsratori = aux_dsratori.
