@@ -66,7 +66,7 @@
 	$xmlObj = getClassXML($xmlResult);
     $root = $xmlObj->roottag;
 
-    
+    // var_dump($confirma);die();
     // Se ocorrer um erro, mostra crítica
 	if ($root->erro){
 		exibeErro(htmlentities($root->erro->registro->dscritic));
