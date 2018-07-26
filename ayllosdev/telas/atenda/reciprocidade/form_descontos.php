@@ -183,7 +183,6 @@ descontoConvenios = [];
 <?php if (count($cnv)) { ?>
 	descontoConvenios = <?php echo json_encode($aux); ?>;
 <?php }?>
-validaEmiteExpede();
 </script>
 <table width="100%" class="tabelaDesconto">
 	<tr>
@@ -363,7 +362,15 @@ validaEmiteExpede();
 </div>
 
 <script type="text/javascript">
+cDataFimContrato = $('#dtfimcontrato', '.tabelaDesconto');
+idcalculo_reciproci = $('#idcalculo_reciproci', '#divConteudoOpcao').val();
+cVldesconto_cee = $('#vldesconto_cee', '.tabelaDesconto');
+cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
+cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
+cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
+
 validaHabilitacaoCamposBtn();
+validaEmiteExpede();
 
 cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn();

@@ -175,13 +175,6 @@ function habilitaSetor(setorLogado) {
 
 			$("#divConteudoOpcao").html(response);
 
-            cDataFimContrato = $('#dtfimcontrato', '.tabelaDesconto');
-            idcalculo_reciproci = $('#idcalculo_reciproci', '#divConteudoOpcao').val();
-            cVldesconto_cee = $('#vldesconto_cee', '.tabelaDesconto');
-            cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
-            cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
-            cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
-
             $('#cddopcao', '#divConteudoOpcao').val(cddopcao);
 
             controlaFoco();
@@ -2648,7 +2641,7 @@ function excluirConvenio(nrconven) {
     sairDescontoConvenio();
 }
 
-function validaEmiteExpede() {	
+function validaEmiteExpede() {
 	cee = false;
     cVldesconto_cee.desabilitaCampo();
     cDataFimAdicionalCee.desabilitaCampo();
