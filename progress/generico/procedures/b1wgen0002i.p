@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 26/05/2018
+   Data    : 23/03/2011                        Ultima atualizacao: 26/07/2018
     
    Dados referentes ao programa:
 
@@ -282,6 +282,8 @@
                             
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+			   26/07/2018 - Ajuste na impressão de contrato com código de contrato do tipo 4 (Andrey Formigari - Mouts)
                             
 .............................................................................*/
 
@@ -1374,7 +1376,7 @@ PROCEDURE gera-impressao-empr:
                             RETURN "NOK".
                     END.
                 ELSE
-                IF  craplcr.tpctrato = 3 THEN
+                IF  craplcr.tpctrato = 3 OR craplcr.tpctrato = 4 THEN
                     DO:
                         RUN trata-impressao-modelo3 (INPUT par_cdcooper,       
                                                      INPUT par_cdoperad,
