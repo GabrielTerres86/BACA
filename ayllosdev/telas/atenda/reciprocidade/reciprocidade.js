@@ -326,8 +326,9 @@ function selecionaConvenio(idrecipr, insitceb) {
       }
       //Valida dois convenios do mesmo tipo ao mesmo tempo.
       foundMesmoTipo = false;
-      $.each(checkboxes.find(':checked'), function (idx, elm){
-        $.each(checkboxes.find(':checked'), function (idx2, elm2){
+      var checkeds = checkboxes.parent().find(':checked');
+      $.each(checkeds, function (idx, elm){
+        $.each(checkeds, function (idx2, elm2){
           
           if($(elm).val() != $(elm2).val() && $(elm).data('tipo') == $(elm2).data('tipo')){  
             foundMesmoTipo = true;
