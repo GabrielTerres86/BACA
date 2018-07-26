@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 11/06/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 27/06/2018
     
    Dados referentes ao programa:
    
@@ -168,7 +168,7 @@
                            
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
-                           
+
               28/03/2017 - Ajustado para utilizar nome resumo se houver. (Ricardo Linhares - 547566)
                            
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
@@ -228,7 +228,7 @@
                            
               03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
                            permite a contrataçao do produto. PRJ366 (Lombardi).
-                           
+
               21/05/2018 - Alterada consulta da craplau na procedure bloqueia_lancamento para pegar apenas pendentes
                            pois acontecia as vezes de trazer mais de um registro (Tiago).
                            
@@ -236,6 +236,8 @@
                            aceitos para debito automatico da PROCEDURE 
                            busca_convenios_codbarras. (Reinert)
                            
+              27/06/2018 - Tratamento para aguas de schoroeder e aguas de guaramirim na procedure 
+                           busca_autorizacoes_cadastradas (Lucas Ranghetti #INC0017908)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1153,7 +1155,7 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:                                 
+            DO:   
                               
                 IF  par_cdrefere = 0 THEN              
                     DO:
@@ -1161,7 +1163,7 @@ PROCEDURE valida-dados:
                                par_nmdcampo = "cdrefere".
                         LEAVE Valida.
                     END.
-                              
+                
                 IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
                     aux_cdprodut = 10. /* Débito Automático */
                 ELSE
@@ -1548,7 +1550,7 @@ PROCEDURE valida-dados:
                             par_cdhistor = 554   OR   /* AGUAS JOINVILLE */
                             par_cdhistor = 961   OR   /* FOZ DO BRASIL */
                             par_cdhistor = 962   OR   /* AGUAS DE MASSARANDUBA */ 
-                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */                           
+                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */
                             DO:        
                                 IF  par_cdrefere > 99999999 THEN /* 8 Dig.*/
                                     DO:
@@ -2551,7 +2553,7 @@ PROCEDURE busca_convenios_codbarras:
         
         /* Cecred */
         ELSE IF  crapcon.tparrecd = 3 THEN
-            DO:      
+            DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2572,17 +2574,17 @@ PROCEDURE busca_convenios_codbarras:
                            crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
                            
-                                         
+
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
-            END.   
-
+            END.
+            
          IF aux_nmresumi <> "" THEN
-          ASSIGN aux_nmempcon = aux_nmresumi.    
+          ASSIGN aux_nmempcon = aux_nmresumi.
 
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
@@ -2619,6 +2621,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
     DEF VAR aux_cdempcon         AS INTE  NO-UNDO.
     DEF VAR aux_cdsegmto         AS INTE  NO-UNDO.
     DEF VAR aux_dssegmto AS CHAR EXTENT 8 NO-UNDO.
+    DEF VAR aux_cdhistor         AS INTE  NO-UNDO.   
     
     ASSIGN aux_dssegmto[1] = "Prefeituras"
            aux_dssegmto[2] = "Saneamento"
@@ -2659,6 +2662,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
             END.
         ELSE
             DO:
+               
                 FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor AND
                                          gnconve.flgativo = TRUE             NO-LOCK NO-ERROR.
                                          
@@ -2669,8 +2673,15 @@ PROCEDURE busca_autorizacoes_cadastradas:
                            aux_inaltera = TRUE WHEN gnconve.cdhisdeb <> 0 AND 
                                                     TRIM(gnconve.nmarqatu) <> "".
                                                     
+                 IF gnconve.cdconven = 87  THEN
+                    aux_cdhistor = 2143. /* Convenio de Aguas de Schroeder */
+                 ELSE IF  gnconve.cdconven = 108 THEN
+                    aux_cdhistor = 2283. /* Convenio de arrecadacao do aguas de guaramirim */
+                 ELSE
+                    aux_cdhistor = gnconve.cdhiscxa.
+                     
                 FIND FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                                         crapcon.cdhistor = gnconve.cdhiscxa NO-LOCK NO-ERROR.
+                                         crapcon.cdhistor = aux_cdhistor NO-LOCK NO-ERROR.
                                          
                 IF  NOT AVAIL crapcon THEN
                     NEXT.
@@ -5998,6 +6009,7 @@ PROCEDURE valida_senha_cooperado:
    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+   DEF  INPUT PARAM par_vlintrnt AS CHAR                           NO-UNDO.
    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.   
    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -6041,8 +6053,8 @@ PROCEDURE valida_senha_cooperado:
            END.
    END.
       END. 
-   /* Amasonas - Supero - Validaçao senha Online*/   
-    IF  aux_flgsevld = FALSE THEN 
+    /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE AND  par_vlintrnt = "s" THEN 
       DO:
           FOR EACH crapsnh FIELDS (cddsenha) 
                            WHERE  crapsnh.cdcooper = par_cdcooper
@@ -6054,9 +6066,9 @@ PROCEDURE valida_senha_cooperado:
                   DO:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
-   END.
-      END. 
-
+              END.
+             END.
+              
       END.
     END.
   /*Fim validaçao senha online */
