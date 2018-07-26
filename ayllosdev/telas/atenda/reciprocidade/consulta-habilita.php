@@ -675,7 +675,6 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
     if ($cddopcao == "I") { // Se eh inclusao
         ?>
         $("#insitceb","#divOpcaoConsulta").prop("disabled",true);
-        $("#flceeexp","#divOpcaoConsulta").prop("checked",false);
 
         $("#dsorgarq","#frmConsulta").css({'width':'150px','background-color':'F3F3F3','font-size':'11px','padding':'2px 4px 1px 4px'});
         <?php

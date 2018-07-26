@@ -2637,6 +2637,7 @@ function excluirConvenio(nrconven) {
     // remove do array
     descontoConvenios.splice(idx, 1);
 
+    validaEmiteExpede();
     // atualizar tabela de convenios
     sairDescontoConvenio();
 }
@@ -2644,11 +2645,15 @@ function excluirConvenio(nrconven) {
 function validaEmiteExpede() {
 	cee = false;
     cVldesconto_cee.desabilitaCampo();
+    cVldesconto_cee.val('');
     cDataFimAdicionalCee.desabilitaCampo();
+    cDataFimAdicionalCee.val('');
     
     coo = false;
     cVldesconto_coo.desabilitaCampo();
+    cVldesconto_coo.val('');
     cDataFimAdicionalCoo.desabilitaCampo();
+    cDataFimAdicionalCoo.val('');
 
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
 		if (descontoConvenios[i].flcooexp == 1) {
