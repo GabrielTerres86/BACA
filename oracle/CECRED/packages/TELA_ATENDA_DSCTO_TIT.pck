@@ -3759,58 +3759,58 @@ END pc_obtem_proposta_aciona_web;
    -- Tratamento de erros
    vr_exc_erro exception;
        
-      CURSOR cr_crapcob IS
-        SELECT rownum numero_linha,
-                    cob.progress_recid, -- numero sequencial do titulo (verificar a utilidade
-             cob.cdcooper,
-             cob.nrdconta,
-             cob.nrctremp, -- numero do contrato de limite.
-             cob.nrcnvcob, -- convênio
-             cob.nrdocmto, -- nr. boleto
-             cob.nrinssac, -- cpf/cnpj do Pagador (Antigo SACADO)
-             sab.nmdsacad, -- nome do pagador (o campo NMDSACAD da crapcob não está preenchido...)
-             cob.dtvencto, -- data de vencimento
-             cob.dtmvtolt, -- data de movimento
-             cob.vltitulo,  -- valor do título
-             cob.nrnosnum, -- nosso numero 
-             cob.flgregis, -- flag registrado.
-             cob.cdtpinsc,  -- Codigo do tipo da inscricao do sacado(0-nenhum/1-CPF/2-CNPJ)
-             nvl((
-                SELECT 
-                   decode(inpossui_criticas,1,'S','N')
-                FROM 
-                   tbdsct_analise_pagador tap 
-                WHERE tap.cdcooper=cob.cdcooper AND tap.nrdconta=cob.nrdconta AND tap.nrinssac=cob.nrinssac
-             ),'A') AS dssituac, -- Situacao do pagador com critica ou nao
-             cob.nrdctabb,
-             cob.cdbandoc
-        FROM cecred.crapcob cob -- titulos
-       INNER JOIN cecred.crapsab sab -- dados do sacado, para pegar o nome do sacado corretamente
-          ON sab.nrinssac = cob.nrinssac 
-         AND sab.cdtpinsc = cob.cdtpinsc
-         AND sab.cdcooper = cob.cdcooper
-         AND sab.nrdconta = cob.nrdconta
-         -- Regras Fixas
-       WHERE cob.nrdconta = pr_nrdconta
-         AND cob.cdcooper = pr_cdcooper
-         AND cob.flgregis > 0 -- Indicador de Registro CIP (0-Sem registro CIP/ 1-Registro Online/ 2-Registro offline)
-         AND cob.incobran = 0
-         -- regras da TAB052
-         -- Valor da tabela crapcob (vltitulo) está menor do que o valor que está na tab052 (Valor mínimo permitido por título) - vlmintgc 
-         AND cob.vltitulo >= decode(cob.cdtpinsc, 1, vr_vlminsacpf, vr_vlminsacpj)
-         -- Prazo calculado entre a data de inclusão e o vencimento é menor do que está na tab052 (prazo mínimo) qtprzmin
-         AND (cob.dtvencto - vr_dtmvtolt) >= decode(cob.cdtpinsc, 1, vr_qtprzminpf, vr_qtprzminpj)
-         -- Prazo calculado entre a data de inclusão e o vencimento é maior do que está na tab052 (prazo máximo) qtprzmax
-         AND (cob.dtvencto - vr_dtmvtolt) <= decode(cob.cdtpinsc, 1, vr_qtprzmaxpf, vr_qtprzmaxpj)
+    CURSOR cr_crapcob IS
+      SELECT rownum numero_linha,
+                  cob.progress_recid, -- numero sequencial do titulo (verificar a utilidade
+           cob.cdcooper,
+           cob.nrdconta,
+           cob.nrctremp, -- numero do contrato de limite.
+           cob.nrcnvcob, -- convênio
+           cob.nrdocmto, -- nr. boleto
+           cob.nrinssac, -- cpf/cnpj do Pagador (Antigo SACADO)
+           sab.nmdsacad, -- nome do pagador (o campo NMDSACAD da crapcob não está preenchido...)
+           cob.dtvencto, -- data de vencimento
+           cob.dtmvtolt, -- data de movimento
+           cob.vltitulo,  -- valor do título
+           cob.nrnosnum, -- nosso numero 
+           cob.flgregis, -- flag registrado.
+           cob.cdtpinsc,  -- Codigo do tipo da inscricao do sacado(0-nenhum/1-CPF/2-CNPJ)
+           nvl((
+              SELECT 
+                 decode(inpossui_criticas,1,'S','N')
+              FROM 
+                 tbdsct_analise_pagador tap 
+              WHERE tap.cdcooper=cob.cdcooper AND tap.nrdconta=cob.nrdconta AND tap.nrinssac=cob.nrinssac
+           ),'A') AS dssituac, -- Situacao do pagador com critica ou nao
+           cob.nrdctabb,
+           cob.cdbandoc
+      FROM cecred.crapcob cob -- titulos
+     INNER JOIN cecred.crapsab sab -- dados do sacado, para pegar o nome do sacado corretamente
+        ON sab.nrinssac = cob.nrinssac 
+       AND sab.cdtpinsc = cob.cdtpinsc
+       AND sab.cdcooper = cob.cdcooper
+       AND sab.nrdconta = cob.nrdconta
+       -- Regras Fixas
+     WHERE cob.nrdconta = pr_nrdconta
+       AND cob.cdcooper = pr_cdcooper
+       AND cob.flgregis > 0 -- Indicador de Registro CIP (0-Sem registro CIP/ 1-Registro Online/ 2-Registro offline)
+       AND cob.incobran = 0
+       -- regras da TAB052
+       -- Valor da tabela crapcob (vltitulo) está menor do que o valor que está na tab052 (Valor mínimo permitido por título) - vlmintgc 
+       AND cob.vltitulo >= decode(cob.cdtpinsc, 1, vr_vlminsacpf, vr_vlminsacpj)
+       -- Prazo calculado entre a data de inclusão e o vencimento é menor do que está na tab052 (prazo mínimo) qtprzmin
+       AND (cob.dtvencto - vr_dtmvtolt) >= decode(cob.cdtpinsc, 1, vr_qtprzminpf, vr_qtprzminpj)
+       -- Prazo calculado entre a data de inclusão e o vencimento é maior do que está na tab052 (prazo máximo) qtprzmax
+       AND (cob.dtvencto - vr_dtmvtolt) <= decode(cob.cdtpinsc, 1, vr_qtprzmaxpf, vr_qtprzmaxpj)
 
-         -- Filtros Variáveis - Tela
-         AND (cob.nrinssac = pr_nrinssac OR nvl(pr_nrinssac,0)=0)
-         AND (cob.vltitulo = pr_vltitulo OR nvl(pr_vltitulo,0)=0)
-         AND (cob.dtvencto = vr_dtvencto OR vr_dtvencto IS NULL)
-                AND (cob.dtmvtolt = pr_dtemissa OR pr_dtemissa IS NULL)
-         AND (cob.nrnosnum LIKE '%'||pr_nrnosnum||'%' OR nvl(pr_nrnosnum,0)=0) -- o campo correto para "Nosso Número"
-         ;
-         rw_crapcob cr_crapcob%ROWTYPE;
+       -- Filtros Variáveis - Tela
+       AND (cob.nrinssac = pr_nrinssac OR nvl(pr_nrinssac,0)=0)
+       AND (cob.vltitulo = pr_vltitulo OR nvl(pr_vltitulo,0)=0)
+       AND (cob.dtvencto = vr_dtvencto OR vr_dtvencto IS NULL)
+       AND (cob.dtmvtolt = pr_dtemissa OR pr_dtemissa IS NULL)
+       AND (cob.nrnosnum LIKE '%'||pr_nrnosnum||'%' OR nvl(pr_nrnosnum,0)=0) -- o campo correto para "Nosso Número"
+       ;
+       rw_crapcob cr_crapcob%ROWTYPE;
          
         
     /*Cursor para verificar se boleto já nao esta em outro bordero*/   

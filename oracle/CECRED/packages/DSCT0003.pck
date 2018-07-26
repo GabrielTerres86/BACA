@@ -3916,7 +3916,7 @@ END pc_inserir_lancamento_bordero;
       vr_dscritic VARCHAR2(10000);
       
       vr_em_contingencia_ibratan boolean;
-      
+      vr_ignora_numero NUMBER;
       
       --============== CURSORES ==================
       -- Cursor para o Loop Principal em Títulos do borderô e Dados de Cobrança Para validações Restritivas
@@ -3993,6 +3993,21 @@ END pc_inserir_lancamento_bordero;
     ;
     rw_check_crapabt cr_check_crapabt%ROWTYPE;
     
+    /*Carrega as criticas do border*/
+    CURSOR cr_check_crapabt_restricao IS
+      SELECT 
+        COUNT(1) AS fl_critica_abt
+      FROM 
+        crapabt abt
+        INNER JOIN tbdsct_criticas cri ON cri.cdcritica=abt.nrseqdig
+      WHERE
+        abt.cdcooper = pr_cdcooper
+        AND abt.nrdconta = pr_nrdconta
+        AND abt.nrborder = pr_nrborder
+        AND cri.tpcritica > 0 
+    ;
+    rw_check_crapabt_restricao cr_check_crapabt_restricao%ROWTYPE;
+    
     CURSOR cr_check_craptdb IS
       SELECT 
         tdb.ROWID AS id,
@@ -4030,6 +4045,10 @@ END pc_inserir_lancamento_bordero;
         AND tdb.nrborder = pr_nrborder
     ;
     rw_check_craptdb cr_check_craptdb%ROWTYPE;
+    
+    -- Retorno da #TAB052
+    vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
+    vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
     BEGIN
       --Iniciar variáveis e Parâmetros de Retorno
       pr_ind_inpeditivo := 0;
@@ -4042,30 +4061,77 @@ END pc_inserir_lancamento_bordero;
         vr_dstransa := 'Analisar o Borderô ' || pr_nrborder || ' de Desconto de Título.';
       END IF;
 
+      -- Verifica se Existe o Associado E Realiza as Validações sobre o Associado
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_cdcritic := 9;
+        vr_dscritic := '';
+        RAISE vr_exc_erro;
+      END IF; 
+      CLOSE cr_crapass;
       --Limpar tabelas
       pr_tab_erro.DELETE;
+      
+      --Selecionar dados da data
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      -- Busca os dados da #TAB052
+      DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                        ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                        ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                        ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                        ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                        ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                        ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                        ,pr_inpessoa          => rw_crapass.inpessoa
+                                        ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                        ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                        ,pr_cdcritic          => vr_cdcritic
+                                        ,pr_dscritic          => vr_dscritic);
       
       -- Verificações Impeditivas Para Títulos
       FOR rw_craptdbcob IN cr_craptdbcob (pr_cdcooper => pr_cdcooper,
                                           pr_nrdconta => pr_nrdconta,
                                           pr_nrborder => pr_nrborder) LOOP
-        IF rw_craptdbcob.dtvencto <= pr_dtmvtolt THEN
+        IF rw_craptdbcob.dtvencto < pr_dtmvtolt THEN
           vr_dscritic := 'Há titulos com data de vencimento igual ou inferior a data do movimento.';
           RAISE vr_exc_erro;
         END IF;
 
         IF rw_craptdbcob.incobran = 5 THEN
           -- Se o Tìtulo já foi pago por COBRANÇA.
-          vr_dscritic := 'Há títulos já pago no Borderô.';
+          vr_dscritic := 'Há títulos já pagos no Borderô.';
           raise vr_exc_erro;
         END IF;
 
         IF rw_craptdbcob.incobran = 3 THEN
           -- Se o Tìtulo já foi baixado por COBRANÇA.
-          vr_dscritic := 'Há Título já baixado no Borderô.';
+          vr_dscritic := 'Há Títulos já baixados no Borderô.';
           raise vr_exc_erro;
         END IF;
         
+        /*Faz calculo de liquidez e concentracao e atualiza as criticas*/
+        DSCT0002.pc_atualiza_calculos_pagador( pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta     => pr_nrdconta
+                                                ,pr_nrinssac     => rw_craptdbcob.nrinssac
+                                                ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                                                ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
+                                                ,pr_qtcarpag     => vr_tab_dados_dsctit(1).cardbtit_c
+                                               --------------> OUT <--------------
+                                               ,pr_pc_cedpag    => vr_ignora_numero
+                                               ,pr_qtd_cedpag   => vr_ignora_numero
+                                               ,pr_pc_conc      => vr_ignora_numero
+                                               ,pr_qtd_conc     => vr_ignora_numero
+                                               ,pr_pc_geral     => vr_ignora_numero
+                                               ,pr_qtd_geral    => vr_ignora_numero
+                                               ,pr_cdcritic     => vr_cdcritic
+                                               ,pr_dscritic     => vr_dscritic
+                              );
         /*Verifica se houve restrições no job diário*/
         OPEN cr_analise_pagador (pr_nrinssac=>rw_craptdbcob.nrinssac);
         FETCH cr_analise_pagador INTO rw_analise_pagador;
@@ -4130,44 +4196,32 @@ END pc_inserir_lancamento_bordero;
         CLOSE cr_craplim;
       END IF;
 
-      -- Verifica se Existe o Associado E Realiza as Validações sobre o Associado
-      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
-                      pr_nrdconta => pr_nrdconta);
-      FETCH cr_crapass INTO rw_crapass;
-
-      IF cr_crapass%NOTFOUND THEN
-        vr_cdcritic := 9;
-        vr_dscritic := '';
+      -- Monta a mensagem da operacao para envio no e-mail
+      vr_dsoperac := 'Tentativa de liberar/pré-analisar os borderôs ' ||
+                     'de descontos de titulos na conta ' || rw_crapass.nrdconta ||
+                     ' - CPF/CNPJ ' || GENE0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa) || '.';
+      -- Verificar se a conta esta no cadastro restritivo, Se estiver, sera enviado um e-mail informando a situacao
+      CADA0004.pc_alerta_fraude (pr_cdcooper => pr_cdcooper         --> Cooperativa
+                                ,pr_cdagenci => pr_cdagenci         --> PA
+                                ,pr_nrdcaixa => pr_nrdcaixa         --> Nr. do caixa
+                                ,pr_cdoperad => pr_cdoperad         --> Cod. operador
+                                ,pr_nmdatela => pr_nmdatela         --> Nome da tela
+                                ,pr_dtmvtolt => pr_dtmvtolt         --> Data de movimento
+                                ,pr_idorigem => pr_idorigem         --> ID de origem
+                                ,pr_nrcpfcgc => rw_crapass.nrcpfcgc --> Nr. do CPF/CNPJ
+                                ,pr_nrdconta => pr_nrdconta         --> Nr. da conta
+                                ,pr_idseqttl => pr_idseqttl         --> Id de sequencia do titular
+                                ,pr_bloqueia => 1                   --> Flag Bloqueia operacao
+                                ,pr_cdoperac => 5                   --> Cod da operacao
+                                ,pr_dsoperac => vr_dsoperac         --> Desc. da operacao
+                                ,pr_cdcritic => vr_cdcritic         --> Cod. da critica
+                                ,pr_dscritic => vr_dscritic         --> Desc. da critica
+                                ,pr_des_erro => vr_des_reto);       --> Retorno de erro  OK/NOK
+      -- Se retornou erro
+      IF vr_des_reto <> 'OK' THEN
+        vr_cdcritic := 0;
+        vr_dscritic := vr_dscritic ||' - Não foi possível verificar o cadastro restritivo.';
         RAISE vr_exc_erro;
-      ELSE
-        -- Monta a mensagem da operacao para envio no e-mail
-        vr_dsoperac := 'Tentativa de liberar/pré-analisar os borderôs ' ||
-                       'de descontos de titulos na conta ' || rw_crapass.nrdconta ||
-                       ' - CPF/CNPJ ' || GENE0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa) || '.';
-        -- Verificar se a conta esta no cadastro restritivo, Se estiver, sera enviado um e-mail informando a situacao
-        CADA0004.pc_alerta_fraude (pr_cdcooper => pr_cdcooper         --> Cooperativa
-                                  ,pr_cdagenci => pr_cdagenci         --> PA
-                                  ,pr_nrdcaixa => pr_nrdcaixa         --> Nr. do caixa
-                                  ,pr_cdoperad => pr_cdoperad         --> Cod. operador
-                                  ,pr_nmdatela => pr_nmdatela         --> Nome da tela
-                                  ,pr_dtmvtolt => pr_dtmvtolt         --> Data de movimento
-                                  ,pr_idorigem => pr_idorigem         --> ID de origem
-                                  ,pr_nrcpfcgc => rw_crapass.nrcpfcgc --> Nr. do CPF/CNPJ
-                                  ,pr_nrdconta => pr_nrdconta         --> Nr. da conta
-                                  ,pr_idseqttl => pr_idseqttl         --> Id de sequencia do titular
-                                  ,pr_bloqueia => 1                   --> Flag Bloqueia operacao
-                                  ,pr_cdoperac => 5                   --> Cod da operacao
-                                  ,pr_dsoperac => vr_dsoperac         --> Desc. da operacao
-                                  ,pr_cdcritic => vr_cdcritic         --> Cod. da critica
-                                  ,pr_dscritic => vr_dscritic         --> Desc. da critica
-                                  ,pr_des_erro => vr_des_reto);       --> Retorno de erro  OK/NOK
-        CLOSE cr_crapass;
-        -- Se retornou erro
-        IF vr_des_reto <> 'OK' THEN
-          vr_cdcritic := 0;
-          vr_dscritic := vr_dscritic ||' - Não foi possível verificar o cadastro restritivo.';
-          RAISE vr_exc_erro;
-        END IF;
       END IF;
         
       -- INÍCIO DA GERAÇÃO DE RESTRIÇÕES
@@ -4383,10 +4437,10 @@ END pc_inserir_lancamento_bordero;
       ELSE
         pr_indrestr := vr_indrestr;
         -- Verifica se tem críticas para o borderô. Se tiver  ele não atualiza nenhum título
-        OPEN cr_check_crapabt;
-        FETCH cr_check_crapabt INTO rw_check_crapabt;
-        CLOSE cr_check_crapabt;
-        IF (rw_check_crapabt.fl_critica_abt > 0) THEN
+        OPEN cr_check_crapabt_restricao;
+        FETCH cr_check_crapabt_restricao INTO rw_check_crapabt_restricao;
+        CLOSE cr_check_crapabt_restricao;
+        IF (rw_check_crapabt_restricao.fl_critica_abt > 0) THEN
           pr_indrestr := 1;
         END IF;
       END IF; -- FIM DA GERAÇÃO DE RESTRIÇÕES
@@ -7774,7 +7828,7 @@ EXCEPTION
       END IF;
       
       vr_vlpagmto := vr_vlpagmto - vr_vlpagtit;
- 
+      
       -- 0-Conta-Corrente  2-COBTIT  3-Tela PAGAR     
       IF pr_cdorigpg IN (0,2,3) THEN
         -- Debita o valor do título se o pagamento vier da conta corrente

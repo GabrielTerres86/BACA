@@ -2619,26 +2619,31 @@ function confirmarInclusao(){
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                var r = $.parseJSON(response);
-                nrbordero = r.nrborder;
-                flrestricao = r.flrestricao;
-                
-                //Caso tenha restricao, mostrar confirmação para analisar
-                if (flrestricao == 1){
-                    showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
-                        "Confirma&ccedil;&atilde;o - Ayllos",
-                        "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
-                        "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
-                        "sim.gif",
-                        "nao.gif"
-                    );                
-                }else{
-                    showError(
-                        "inform",
-                        r.msg,
-                        "Alerta - Ayllos",
-                        "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');"
-                    );
+                try{
+                    var r = $.parseJSON(response);
+                    nrbordero = r.nrborder;
+                    flrestricao = r.flrestricao;
+                    
+                    //Caso tenha restricao, mostrar confirmação para analisar
+                    if (flrestricao == 1){
+                        showConfirmacao("<center>"+r.msg+"<br>Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?</center>",
+                            "Confirma&ccedil;&atilde;o - Ayllos",
+                            "analisarBorderoDscTit(); dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                            "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');",
+                            "sim.gif",
+                            "nao.gif"
+                        );                
+                    }else{
+                        showError(
+                            "inform",
+                            r.msg,
+                            "Alerta - Ayllos",
+                            "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');"
+                        );
+                    }
+                }
+                else{
+                    eval(response);
                 }
             }
         });
