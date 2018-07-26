@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 24/10/2017
+   Data    : Setembro/2004.                  Ultima atualizacao: 19/07/2018
 
    Dados referentes ao programa:
 
@@ -196,6 +196,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
  
                21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
                             PRJ366 (Lombardi).
+                            
+               19/07/2018 - Alterar a atualizacao da gnsequt para trabalhar com pragma
+                            evitando dessa forma as ocorrencias constantes de locks
+                            que aparecem rapidamente no BD no inicio do batch.
+                            (SCTASK0015571) - (Fabricio)
  
 ............................................................................. */
 
@@ -316,14 +321,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                               pr_cdempres     IN gnsequt.cdsequtl%TYPE,
                               pr_tprequis     IN crapreq.tprequis%type) IS
 
-    -- Cursor sobre arquivo de controle
-    CURSOR cr_gnsequt IS
-      SELECT rowid,
-             gnsequt.vlsequtl
-        FROM gnsequt
-       WHERE gnsequt.cdsequtl = 001
-       FOR UPDATE;
-    rw_gnsequt cr_gnsequt%ROWTYPE;
 
     -- Cursor para leitura de requisicoes de talonarios
     CURSOR cr_crapreq(pr_cdcooper     IN crapreq.cdcooper%TYPE,
@@ -537,31 +534,52 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     
     -- variavel para verificacao do dia de processamento de envio da requisicao
     vr_dtcalcul        DATE;
-
-  BEGIN
-
-    -- Verifica arquivo de controle para buscar sequencial do talao.
-    OPEN cr_gnsequt;
-    FETCH cr_gnsequt INTO rw_gnsequt;
-    IF cr_gnsequt%NOTFOUND THEN
-      CLOSE cr_gnsequt;
-      pr_cdcritic := 151;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
-      raise vr_exc_saida;
-    END IF;
-
-    rw_gnsequt.vlsequtl := rw_gnsequt.vlsequtl + 1;
-
-    -- Atualiza arquivo de controle
-    BEGIN
+    
+    -- Número do pedido
+    vr_nrpedido        NUMBER;
+    
+    -- Controla a alteração da gnsequt
+    PROCEDURE pc_altera_gnsequt (pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+       
+      -- Pragma - abre nova sessão para tratar a atualização
+      PRAGMA AUTONOMOUS_TRANSACTION;
+     
+    BEGIN       
+      -- Tenta atualizar o registro de controle de sequencia
       UPDATE gnsequt
-         SET vlsequtl = rw_gnsequt.vlsequtl
-       WHERE ROWID = rw_gnsequt.rowid;
-    EXCEPTION
-    WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao atualizar gnsequt: '||SQLERRM;
+         SET gnsequt.vlsequtl = NVL(gnsequt.vlsequtl,0) + 1
+       WHERE gnsequt.cdsequtl = 001
+       RETURNING gnsequt.vlsequtl INTO vr_nrpedido;
+
+      -- Se não alterar registros, ou alterar mais de 1
+      IF SQL%ROWCOUNT = 0 THEN
+        -- Faz rollback das informações
+        ROLLBACK;
+        -- Define o erro
+        pr_cdcritic := 151;
+        -- Critica 151 - Registro de restart nao encontrado
+        RETURN;
+      END IF;
+       
+      -- Comita os dados desta sessão
+      COMMIT;
+    EXCEPTION 
+      WHEN OTHERS THEN 
+        -- Retornar erro do update
+        pr_dscritic := 'Erro ao atualizar GNSEQUT: '||SQLERRM;
+        ROLLBACK; 
+    END pc_altera_gnsequt;
+
+  BEGIN        
+    
+    -- Rotina para controlar a atualização da gnsequt, sem que a mesma fique em lock
+    pc_altera_gnsequt (pr_cdcritic => pr_cdcritic
+                      ,pr_dscritic => pr_dscritic);
+    
+    IF NVL(pr_cdcritic,0) > 0 OR pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
-    END;
+    END IF;
 
     -- Definição dos nomes dos arquivos UTL_FILE
     IF pr_cdempres = 1 THEN -- InterPrint
@@ -578,10 +596,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       vr_nmarqdadped := 'daRRD' ||to_char(pr_cdcooper,'fm000')||'-ctr-';
     END IF;
 
-    vr_nmarqped    := vr_nmarqped    || to_char(rw_gnsequt.vlsequtl,'fm000000');
-    vr_nmarqtransm := vr_nmarqtransm || to_char(rw_gnsequt.vlsequtl,'fm000000');
-    vr_nmarqctrped := vr_nmarqctrped || to_char(rw_gnsequt.vlsequtl,'fm000000');
-    vr_nmarqdadped := vr_nmarqdadped || to_char(rw_gnsequt.vlsequtl,'fm000000');
+    vr_nmarqped    := vr_nmarqped    || to_char(vr_nrpedido,'fm000000');
+    vr_nmarqtransm := vr_nmarqtransm || to_char(vr_nrpedido,'fm000000');
+    vr_nmarqctrped := vr_nmarqctrped || to_char(vr_nrpedido,'fm000000');
+    vr_nmarqdadped := vr_nmarqdadped || to_char(vr_nrpedido,'fm000000');
     vr_flggerou := FALSE;
 
 
@@ -807,7 +825,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'||rw_gnsequt.vlsequtl||'</vlsequtl>',3);
+                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',3);
           vr_fechapac_req_fc := FALSE;
 
           -- Zera as variaveis de totais
@@ -852,7 +870,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'||rw_gnsequt.vlsequtl||'</vlsequtl>',1);
+                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',1);
           vr_fechapac_req_tl := FALSE;
 
           -- Zera as variaveis de totais
@@ -963,7 +981,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                   vr_nrctaitg,          --nrdctabb
                   vr_nrctaitg,          --nrctachq
                   ' ',                  --nrdctitg
-                  rw_gnsequt.vlsequtl,  --nrpedido
+                  vr_nrpedido,          --nrpedido
                   vr_nrflcheq,          --nrcheque
                   rw_crapass.flchqitg,  --nrseqems
                   vr_nrdigchq,          --nrdigchq
@@ -1325,7 +1343,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'||rw_gnsequt.vlsequtl||'</vlsequtl>',2);
+                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',2);
 
           -- Atualiza indicador informando que houve requisicoes rejeitadas para o PAC
           vr_idrejeit_tl := TRUE;
@@ -1336,7 +1354,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'||rw_gnsequt.vlsequtl||'</vlsequtl>',4);
+                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',4);
 
           -- Atualiza indicador informando que houve requisicoes rejeitadas para o PAC
           vr_idrejeit_fc := TRUE;
@@ -1400,7 +1418,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         UPDATE crapreq
            SET insitreq = vr_insitreq,
                dtpedido = vr_dtmvtolt,
-               nrpedido = rw_gnsequt.vlsequtl,
+               nrpedido = vr_nrpedido,
                cdcritic = decode(vr_cdcritic,0,cdcritic,vr_cdcritic)
          WHERE ROWID = rw_crapreq.rowid;
       EXCEPTION
@@ -1553,7 +1571,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file_ctr --> Handle do arquivo aberto
                                     ,pr_des_text => rpad(rw_crapcop.nmrescop,20,' ') ||       -- IDENTIFIC
                                                     to_char(vr_dtmvtolt,'DD/MM/YYYY')||       -- DATA PEDIDO
-                                                    to_char(rw_gnsequt.vlsequtl,'fm000000')|| -- NR DO PEDIDO
+                                                    to_char(vr_nrpedido,'fm000000')|| -- NR DO PEDIDO
                                                     to_char(rw_crapcop.cdbcoctl,'fm000')||    -- CD BANCO
                                                     to_char(rw_crapcop.cdagectl,'fm0000')||   -- CD AGENCIA
                                                     vr_cddigage||                             -- DIG. AGE.
@@ -1622,7 +1640,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         VALUES
           (pr_cdcooper,
            pr_cdbanchq,
-           rw_gnsequt.vlsequtl,
+           vr_nrpedido,
            1,
            vr_dtmvtolt,
            0,
@@ -1648,7 +1666,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>'||
                    '<crps408>'||
                      '<pedido>'||
-                       '<vlsequtl>'||rw_gnsequt.vlsequtl              ||'</vlsequtl>'||
+                       '<vlsequtl>'||vr_nrpedido                      ||'</vlsequtl>'||
                        '<dtmvtolt>'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>'||
                        '<nmbanco>' ||vr_nmbanco                       ||'</nmbanco>'||
                        '<qttotchq>'||vr_qttotchq_tl                   ||'</qttotchq>'||
@@ -1699,7 +1717,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>'||
                      '<crps408>'||
                        '<pedido>'||
-                         '<vlsequtl>'||rw_gnsequt.vlsequtl              ||'</vlsequtl>'||
+                         '<vlsequtl>'||vr_nrpedido                      ||'</vlsequtl>'||
                          '<dtmvtolt>'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>'||
                          '<nmbanco>' ||vr_nmbanco                       ||'</nmbanco>'||
                          '<qttotchq>'||vr_qttottal_fc                   ||'</qttotchq>'||
@@ -1926,6 +1944,8 @@ BEGIN
                     pr_flg_impri    => 'S',
                     pr_cdempres     => vr_cdempres,
                     pr_tprequis     => 1);
+                    
+  
   -- CECRED
   Pc_Gera_Talonario(pr_cdcooper     => pr_cdcooper,
                     pr_cdbanchq     => rw_crapcop.cdbcoctl,
