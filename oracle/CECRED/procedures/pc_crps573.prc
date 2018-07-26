@@ -2623,8 +2623,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_txeanual := 0;
           END IF; 
 
-        -- 0299 - Emprest -- Renato Cordeiro, dois ELSIF abaixo
-        ELSIF pr_cdmodali = 0299 AND pr_cdorigem = 3 THEN
+        -- 0299 - Emprest -- Renato Cordeiro, ELSIF abaixo, calcula taxa mensal
+        ELSIF pr_cdmodali in (0299,0499) AND pr_cdorigem = 3 THEN
             -- busca sobre o cadastro de emprestimos
             vr_ind_epr := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
             -- Buscaremos a taxa de juros da linha de crédito
@@ -2636,23 +2636,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               vr_txeanual := 0;
             END IF;
         -- 0499 - Financ  com origem 3
-        ELSIF pr_cdmodali = 0499 AND pr_cdorigem = 3 THEN
-          -- Busca sobre o cadastro de emprestimo do bndes
-          IF pr_dsinfaux = 'BNDES' THEN         
-            vr_ind_ebn := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
-            vr_txeanual := vr_tab_crapebn(vr_ind_ebn).txefeanu;
-          ELSE
-            -- busca sobre o cadastro de emprestimos
-            vr_ind_epr := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
-            -- Buscaremos a taxa de juros da linha de crédito
-            IF vr_tab_craplcr.exists(vr_tab_crapepr(vr_ind_epr).cdlcremp) THEN
-              -- Usar taxa da linha
-              vr_txeanual := ROUND((POWER(1 + (vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).txjurfix /100),12) - 1) * 100,2);
-            ELSE
-              -- Não há taxa
-              vr_txeanual := 0;
-            END IF;
-          END IF;
         ELSE
           vr_txeanual := 0;
         END IF;
