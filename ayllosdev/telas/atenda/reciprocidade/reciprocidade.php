@@ -114,6 +114,7 @@ include("../../../includes/carrega_permissoes.php");
 								<div id="divTitular"></div>
 							    <div id="divTestemunhas"></div>
                                 <div id="divLogCeb"></div>
+								<div id="divLogNegociacao"></div>
                                 <div id="divServSMS"></div>
 								<div id="divHabilita_SMS"></div>
 								<div id="divAbaTarifas"></div>

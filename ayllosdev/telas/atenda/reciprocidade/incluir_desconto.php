@@ -69,10 +69,14 @@ $xml .= "</Root>";
 $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "INCLUI_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 $xmlDados = $xmlObject->roottag;
+//print_r($xmlDados);
 
-if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
-    $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-    exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
+    $msgErro = $xmlDados->tags[0]->tags[0]->tags[4]->cdata;
+    if ($msgErro == "") {
+        $msgErro = $xmlDados->tags[0]->cdata;
+    }
+    exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
     $idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");

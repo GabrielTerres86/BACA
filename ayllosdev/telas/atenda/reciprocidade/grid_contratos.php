@@ -52,10 +52,15 @@ $xml .= "</Root>";
 
 $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_CONTRATOS_ATENDA_AUG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObjeto = getObjectXML($xmlResult);
-//print_r($xmlObjeto);
 
 if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
-	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+	
+   $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    if ($msgErro == "") {
+        $msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+    }
+
+    exibeErro($msgErro);
 }
 $contratos = $xmlObjeto->roottag->tags[0]->tags;
 
@@ -86,7 +91,7 @@ $convenio_ativo = 0;
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
 	echo '</script>';
 	exit();
 }		
@@ -110,8 +115,10 @@ function exibeErro($msgErro) {
 			<tbody>
 				<?  for ($i = 0; $i < count($contratos); $i++) {
 					$convenios = getByTagName($contratos[$i]->tags, 'list_cnv');
-					if (strpos($convenios, ';') !== false) {
-						$convenios = str_replace(';', '<br>', $convenios);
+					if (strpos($convenios, ',') !== false) {
+						$conveniosHtml = str_replace(',', '<br>', $convenios);
+					} else {
+						$conveniosHtml = $convenios;
 					}
 					$dtcadast = getByTagName($contratos[$i]->tags, 'dtcadast');
 					$idrecipr = getByTagName($contratos[$i]->tags, 'idrecipr');					
@@ -126,11 +133,11 @@ function exibeErro($msgErro) {
 					if ($insitceb == 1 && $convenio_ativo == 0 ){
 						$convenio_ativo = $insitceb;
 					}
-					$mtdClick = "selecionaConvenio( '".$idrecipr."', '".$insitceb."');";
+					$mtdClick = "selecionaConvenio( '".$idrecipr."', '".$insitceb."', '".$convenios."');";
 				?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
-						<td><? echo $convenios; ?></td>
+						<td><? echo $conveniosHtml; ?></td>
 						<td><? echo $status; ?></td>
 						<td><? echo $dtcadast; ?></td>
 						<td><? echo !empty($dtultaprov) ? $dtultaprov : '-'; ?></td>
@@ -148,6 +155,7 @@ function exibeErro($msgErro) {
 <div id="divBotoes">
 	<input type="hidden" id="dsdmesag" name="dsdmesag" value="<?php echo $dsdmesag; ?>">
 	<input type="hidden" id="idrecipr" name="idrecipr">
+	<input type="hidden" id="convenios" name="convenios">
     
     <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('I');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
 	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('C');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
@@ -160,9 +168,9 @@ function exibeErro($msgErro) {
         		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
 	<?php  } ?>
 	<a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Termo</a>    
-    <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Aprovar</a>
-    <a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Hist. Acesso</a>
-	<a href="#" class="botao" onclick="encerraRotina(true); return false;">Hist. Negocia&ccedil;&atilde;o</a>
+    <a href="#" class="botao" onclick="return false;">Aprovar</a>
+    <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
+	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	
 	<input type="hidden" id= "flsercco" name="flsercco">
 	

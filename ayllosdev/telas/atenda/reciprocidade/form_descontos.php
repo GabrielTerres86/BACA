@@ -178,11 +178,13 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		</table>
 	</div>
 </div>
-<?php if (count($cnv)) { ?>
 <script>
+descontoConvenios = [];
+<?php if (count($cnv)) { ?>
 	descontoConvenios = <?php echo json_encode($aux); ?>;
+<?php }?>
+validaEmiteExpede();
 </script>
-<?php } ?>
 <table width="100%" class="tabelaDesconto">
 	<tr>
 		<td>&nbsp;</td>
@@ -361,10 +363,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 </div>
 
 <script type="text/javascript">
-var cee = false; // debug
-var coo = false; // debug
-var cDataFimContrato = $('#dtfimcontrato', '.tabelaDesconto');
-
 validaHabilitacaoCamposBtn();
 
 cDataFimContrato.change(function (){
@@ -374,197 +372,6 @@ cDataFimContrato.change(function (){
 $('#vldesconto_cee, #vldesconto_coo, #dtfimadicional_cee, #dtfimadicional_coo').bind('enter input', function (){
 	validaHabilitacaoCamposBtn();
 });
-
-function validaDados() {
-	var idcalculo_reciproci = $('#idcalculo_reciproci', '#divConteudoOpcao').val();
-	var cVldesconto_cee = $('#vldesconto_cee', '.tabelaDesconto');
-	var cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
-	var cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
-	var cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
-
-	var vDataFimContrato = cDataFimContrato.val();
-	var vVldesconto_cee = cVldesconto_cee.val();
-	var vVldesconto_coo = cVldesconto_coo.val();
-	var vDataFimAdicionalCee = cDataFimAdicionalCee.find('option:selected').text();
-	var vDataFimAdicionalCoo = cDataFimAdicionalCoo.find('option:selected').text();
-
-	// valida se o campo Data fim do contrato está preenchido
-	if (!vDataFimContrato) {
-		showError("error", "Selecione um valor para a Data fim do contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-
-	if ( (cee && vDataFimContrato < vDataFimAdicionalCee) || (coo && vDataFimContrato < vDataFimAdicionalCoo) ) {
-		showError("error", "Data fim do contrato n&atilde;o pode ser menor que a data do desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-
-	if (descontoConvenios && !descontoConvenios.length) {
-		showError("error", "Selecione pelo menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, salvando registro...");
-
-	if (idcalculo_reciproci) {
-		var url = UrlSite + "telas/atenda/reciprocidade/alterar_desconto.php"
-	} else {
-		var url = UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php";
-	}
-
-	$.ajax({
-		dataType: "html",
-		type: "POST",
-		url: url,
-		data: {
-			idcalculo_reciproci: idcalculo_reciproci,
-			nrdconta:            parseInt($('#nrdconta', '#frmCabAtenda').val().replace(/\W/g, '')),
-			convenios:           JSON.stringify(descontoConvenios),
-			boletos_liquidados:  $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
-			volume_liquidacao:   $('#valvolume_liquidacao', '.tabelaDesconto').val(),
-			qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
-			vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
-			dtfimcontrato:       vDataFimContrato,
-			flgdebito_reversao:  $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
-			redirect:            "script_ajax"
-		},
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
-		},
-        success: function (response) {
-            hideMsgAguardo();
-			eval(response);
-		}
-	});
-
-	return true;
-}
-
-function validaHabilitacaoCamposBtn(cddopcao) {
-	var btnContinuar = $('#btnContinuar');
-	var btnAprovacao = $('#btnAprovacao');
-
-	var cVldesconto_cee         = $('#vldesconto_cee', '.tabelaDesconto');
-	var cVldesconto_ceeOld      = $('#vldesconto_cee_old', '.tabelaDesconto');
-	var cVldesconto_coo         = $('#vldesconto_coo', '.tabelaDesconto');
-	var cVldesconto_cooOld      = $('#vldesconto_coo_old', '.tabelaDesconto');
-	var cDataFimAdicionalCee    = $('#dtfimadicional_cee', '.tabelaDesconto');
-	var cDataFimAdicionalCeeOld = $('#dtfimadicional_cee_old', '.tabelaDesconto');
-	var cDataFimAdicionalCoo    = $('#dtfimadicional_coo', '.tabelaDesconto');
-	var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
-
-	var vVldesconto_cee         = cVldesconto_cee.val();
-	var vVldesconto_ceeOld      = cVldesconto_ceeOld.val();
-	var vVldesconto_coo         = cVldesconto_coo.val();
-	var vVldesconto_cooOld      = cVldesconto_cooOld.val();
-	var vDataFimAdicionalCee    = cDataFimAdicionalCee.find('option:selected').text();
-	var vDataFimAdicionalCeeOld = cDataFimAdicionalCeeOld.val();
-	var vDataFimAdicionalCoo    = cDataFimAdicionalCoo.find('option:selected').text();
-	var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
-
-	if (cee) {
-		cVldesconto_coo.desabilitaCampo();
-		cDataFimAdicionalCoo.desabilitaCampo();
-		cVldesconto_cee.habilitaCampo();
-		cDataFimAdicionalCee.habilitaCampo();
-	} else if (coo) {
-		cVldesconto_cee.desabilitaCampo();
-		cDataFimAdicionalCee.desabilitaCampo();
-		cVldesconto_coo.habilitaCampo();
-		cDataFimAdicionalCoo.habilitaCampo();
-	}
-
-	if (	vVldesconto_cee != vVldesconto_ceeOld ||
-			vVldesconto_coo != vVldesconto_cooOld ||
-			vDataFimAdicionalCee != vDataFimAdicionalCeeOld ||
-			vDataFimAdicionalCoo != vDataFimAdicionalCooOld	) {
-
-		btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-		btnContinuar.prop('disabled', true);
-		btnContinuar.attr('onclick', 'return false;');
-
-		btnAprovacao.removeClass('botaoDesativado');
-		btnAprovacao.prop('disabled', false);
-		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
-
-		$('#txtjustificativa', '.tabelaDesconto').removeClass('campoTelaSemBorda');
-		$('#txtjustificativa', '.tabelaDesconto').prop('disabled', false);
-
-	} else {
-		btnContinuar.removeClass('botaoDesativado');
-		btnContinuar.prop('disabled', false);
-		btnContinuar.attr('onclick', 'validaDados();return false;');
-
-		btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
-		btnAprovacao.prop('disabled', true);
-		btnAprovacao.attr('onclick', 'return false;');
-
-		$('#txtjustificativa', '.tabelaDesconto').removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda');
-		$('#txtjustificativa', '.tabelaDesconto').prop('disabled', true);
-	}
-
-}
-
-function solicitarAprovacao() {
-	validaDados();
-}
-
-function editarConvenio(nrconven) {
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando ...");
-
-	$.ajax({
-		dataType: "json",
-		type: "POST",
-		url: UrlSite + "telas/atenda/reciprocidade/consulta_convenio.php",
-		data: {
-            nrconven: nrconven,
-			redirect: "script_ajax"
-		},
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
-		},
-        success: function (response) {
-            hideMsgAguardo();
-			nrconven = response.nrconven;
-			nrcnvceb = response.nrcnvceb;
-			dsorgarq = response.dsorgarq;
-			insitceb = response.insitceb;
-			inarqcbr = response.inarqcbr;
-			cddemail = response.cddemail;
-			dsdemail = response.dsdemail;
-			flgcruni = response.flgcruni;
-			flgcebhm = response.flgcebhm;
-			qtTitulares = response.qtTitulares;
-			titulares = response.titulares;
-			dsdmesag = response.dsdmesag;
-			flgregon = response.flgregon;
-			flgpgdiv = response.flgpgdiv;
-			flcooexp = response.flcooexp;
-			flceeexp = response.flceeexp;
-			flserasa = response.flserasa;
-			qtdfloat = response.qtdfloat;
-			flprotes = response.flprotes;
-			qtlimmip = response.qtlimmip;
-			qtlimaxp = response.qtlimaxp;
-			qtdecprz = response.qtdecprz;
-			idrecipr = response.idrecipr;
-			inenvcob = response.inenvcob;
-			flsercco = response.flsercco;
-			flgregis = response.flgregis;
-			cddbanco = response.cddbanco;
-
-			var cddopcao = $('#cddopcao', '#divConteudoOpcao').val();
-
-			consulta(cddopcao, nrconven, dsorgarq, 'false', flgregis, cddbanco);
-		}
-	});
-
-	return false;
-}
 
 controlaLayout('divConveniosRegistros');
 

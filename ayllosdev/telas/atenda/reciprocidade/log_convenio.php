@@ -25,8 +25,8 @@ require_once("../../../class/xmlfile.php");
 
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
-$nrcnvceb    = $_POST["nrcnvceb"];
-$nrconven    = $_POST["nrconven"];
+$nrconven    = isset($_POST["nrconven"]) ? str_replace(" ", "", $_POST["nrconven"]) : '';
+var_dump($nrconven);
 
 // Montar o xml de Requisicao
 $xml  = "";
@@ -34,11 +34,10 @@ $xml .= "<Root>";
 $xml .= " <Dados>";	
 $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 $xml .= "   <nrconven>".$nrconven."</nrconven>";
-$xml .= "   <nrcnvceb>".$nrcnvceb."</nrcnvceb>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "CARREGA_LOG_CONV", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "CARREGA_LOG_CONV_AUG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {

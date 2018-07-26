@@ -72,14 +72,13 @@ $xmlObject = getObjectXML($xmlResult);
 
 $xmlDados = $xmlObject->roottag;
 
-
-if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
-    $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
+    $msgErro = $xmlDados->tags[0]->tags[0]->tags[4]->cdata;
     if ($msgErro == "") {
-        $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        $msgErro = $xmlDados->tags[0]->cdata;
     }
 
-    exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+    exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
     $idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");
