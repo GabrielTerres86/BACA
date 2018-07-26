@@ -8208,14 +8208,15 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
         vr_vltliqcp := pr_vltliqcp;
         vr_pcmxctip := pr_pcmxctip;
         vr_dtmvtolt_de := pr_dtmvtolt_de;
+        vr_dtmvtolt_ate:= pr_dtmvtolt_ate;
       END IF;
                                    
       --> Calculo das porcentagens de Liquidez
        DSCT0003.pc_calcula_liquidez(pr_cdcooper
                        ,pr_nrdconta     
                        ,pr_nrinssac     
-                       ,pr_dtmvtolt_de
-                       ,pr_dtmvtolt_ate
+                       ,vr_dtmvtolt_de
+                       ,vr_dtmvtolt_ate
                        ,vr_qtcarpag
                        -- OUT --     
                        --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
