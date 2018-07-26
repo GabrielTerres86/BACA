@@ -196,7 +196,9 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
  
                21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
                             PRJ366 (Lombardi).
-                            
+ 
+               11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)
+
                19/07/2018 - Alterar a atualizacao da gnsequt para trabalhar com pragma
                             evitando dessa forma as ocorrencias constantes de locks
                             que aparecem rapidamente no BD no inicio do batch.
@@ -534,7 +536,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     
     -- variavel para verificacao do dia de processamento de envio da requisicao
     vr_dtcalcul        DATE;
-    
+
     -- Número do pedido
     vr_nrpedido        NUMBER;
     
@@ -545,7 +547,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       -- Pragma - abre nova sessão para tratar a atualização
       PRAGMA AUTONOMOUS_TRANSACTION;
      
-    BEGIN       
+  BEGIN
       -- Tenta atualizar o registro de controle de sequencia
       UPDATE gnsequt
          SET gnsequt.vlsequtl = NVL(gnsequt.vlsequtl,0) + 1
@@ -557,11 +559,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         -- Faz rollback das informações
         ROLLBACK;
         -- Define o erro
-        pr_cdcritic := 151;
+      pr_cdcritic := 151;
         -- Critica 151 - Registro de restart nao encontrado
         RETURN;
-      END IF;
-       
+    END IF;
+
       -- Comita os dados desta sessão
       COMMIT;
     EXCEPTION 
@@ -571,7 +573,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         ROLLBACK; 
     END pc_altera_gnsequt;
 
-  BEGIN        
+    BEGIN
     
     -- Rotina para controlar a atualização da gnsequt, sem que a mesma fique em lock
     pc_altera_gnsequt (pr_cdcritic => pr_cdcritic
@@ -801,7 +803,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       -- Em caso positivo, faz os processos para o mesmo
       IF rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999 THEN
         -- Verifica se é uma agencia diferente do registro anterior
-        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant_fc,0) THEN
+        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant_fc,-1) THEN
 
           -- busca o nome da agencia
           OPEN cr_crapage(pr_cdcooper,
@@ -846,7 +848,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       ELSE -- Se nao for formulario contionuo
 
         -- Verifica se é uma agencia diferente do registro anterior
-        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant,0) THEN
+        IF rw_crapreq.cdagenci <> nvl(vr_cdagenci_ant,-1) THEN
 
           -- busca o nome da agencia
           OPEN cr_crapage(pr_cdcooper,
