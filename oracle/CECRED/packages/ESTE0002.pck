@@ -1113,7 +1113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 20/07/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 26/07/2018
       
         Dados referentes ao programa:
       
@@ -1135,7 +1135,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 								 PJ 450 - Diego Simas - AMcom
 					
 					20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
-							   PJ 450 - Diego Simas - AMcom
+							     PJ 450 - Diego Simas - AMcom
+
+					26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
+  							     PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)	
 
     ..........................................................................*/
     DECLARE
@@ -3559,6 +3562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         INTO vr_nratrmai;
       CLOSE cr_crapris;
       
+	  vr_nratrmai := nvl(vr_nratrmai, 0);
       
       -- Enviar informações do atraso e parcelas calculadas para o JSON
       vr_obj_generic2.put('valorAtrasoEmprest'

@@ -1362,7 +1362,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 25/07/2018
+      Data     : Março/2016.                   Ultima atualizacao: 26/07/2018
 
       Dados referentes ao programa:
 
@@ -1393,6 +1393,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 				  25/07/2018 - Correção para a contagem de dias em atraso
 							   Fluxo Atraso (quantidadeDiasAtraso)
 							   PJ 450 - Diego Simas (AMcom)
+
+                  26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
+							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
 
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -2003,6 +2006,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     FETCH cr_crapris
      INTO vr_qtddiatr;
     CLOSE cr_crapris; 
+
+	vr_qtddiatr := nvl(vr_qtddiatr,0);
 
     -- Enviar flag política de crédito
     IF rw_crawepr.inliquid_operac_atraso = 0 THEN
