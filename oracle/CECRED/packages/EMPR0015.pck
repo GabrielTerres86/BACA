@@ -133,8 +133,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                crawepr c
          WHERE
                c.cdcooper = pr_cdcooper
-           and c.nrdconta = pr_nrdconta
-           and c.nrctremp = pr_nrctremp;
+           AND c.nrdconta = pr_nrdconta
+           AND c.nrctremp = pr_nrctremp
+           AND c.insitest > 0;
         
       -- Variaveis tratamento de erros
       vr_cdcritic             crapcri.cdcritic%TYPE;
@@ -219,7 +220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Diferença',
                                         pr_dsdadant => 'ND',
-                                        pr_dsdadatu => vr_diferenca_parcela);
+                                        pr_dsdadatu => vr_diferenca_valor);
                                         
               GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                         pr_nmdcampo => 'Tolerância',
@@ -653,6 +654,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               w.nrdconta,
               w.nrctremp,
               w.dtaprova,
+              w.nrctaav1,
+              w.nrctaav2,
               w.rowid
           FROM
               crawepr w
@@ -851,17 +854,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             END LOOP;-- Cursor de Avalista terceiro
 
             -- Avalista não terceiro
-            FOR rw_crapavt_nao_terc IN cr_crapavt_nao_terc(rw_crapcop.cdcooper,
+            /*FOR rw_crapavt_nao_terc IN cr_crapavt_nao_terc(rw_crapcop.cdcooper,
                                                            rw_crawepr.nrdconta,
-                                                           rw_crawepr.nrctremp) LOOP
+                                                           rw_crawepr.nrctremp) LOOP*/
               -- Verifica se a quantidade de dias para garantia é maior que a quantidade de dias da variável
               -- de dias de expiração, se for, atribuiu a quantidade de dias da garantia na variável
+            IF rw_crawepr.nrctaav1 > 0 OR rw_crawepr.nrctaav2 > 0 THEN
               IF vr_qtdpaava > vr_qtddiexp THEN
                 -- No caso de um contrato ter mais de uma garantia, considerar do cadastro tab089 o que tem a maior quantidade de dias;                
                 vr_qtddiexp := vr_qtdpaava;
               END IF;
               vr_idencgar := 1;              
-            END LOOP;-- Cursor de Avalista não terceiro
+            END IF;
+            --END LOOP;-- Cursor de Avalista não terceiro
             
             -- Aplicação e poupança
             FOR rw_aplicacao IN cr_aplicacao(rw_crapcop.cdcooper,
