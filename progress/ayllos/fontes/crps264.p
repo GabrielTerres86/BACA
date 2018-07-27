@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 11/05/2018
+    Data    : Marco/07.                       Ultima atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -242,6 +242,10 @@
 			               sendo processados e nao apareciam no Relatorio 219.
 			               Chamado SCTASK0012893 - Gabriel (Mouts).
 
+			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+																					   
+              16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
+                           conforme tarefa SCTASK0010890. (Reinert)
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -2409,7 +2413,7 @@ PROCEDURE gera_arquivo_cecred:
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                               glb_cdprogra + "' --> '" +
                               " PA Sede nao cadastrado." +
-                              " Avise a Equipe de Suporte da CECRED." +
+                              " Avise a Equipe de Suporte do AILOS." +
                               " Coop: " + STRING(p-cdcooper) +
                               " >> log/proc_message.log").
             RETURN "NOK".
@@ -2602,6 +2606,35 @@ PROCEDURE gera_arquivo_cecred:
                      DO:
                          IF   crapdev.indevarq <> 2 THEN
                               NEXT.
+                     END.
+                ELSE
+                IF   p-cddevolu = 6 AND crapdev.cdalinea = 37 THEN
+                     DO:
+                        IF aux_contador = 0 THEN
+                           DO:
+                              ASSIGN aux_contador = aux_contador + 1.
+
+                              ASSIGN aux_nmarqcri = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                                                    STRING(MONTH(glb_dtmvtolt),'99')   +
+                                                    STRING(DAY(glb_dtmvtolt),'99') + '_CRITICADEVOLU.txt'.
+             
+                              OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
+                             
+                          END.          
+                          
+                          ASSIGN aux_linhaarq = STRING(YEAR(glb_dtmvtolt),"9999") + 
+                                                STRING(MONTH(glb_dtmvtolt),"99")   +
+                                                STRING(DAY(glb_dtmvtolt),"99")     + "," +
+                                                STRING(DAY(glb_dtmvtolt),"99") +
+                                                STRING(MONTH(glb_dtmvtolt),"99")  +
+                                                SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + "," +
+                                                "4958,1773," +
+                                                TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) + "," +
+                                                '"' + "VALOR REF. DEVOLUCAO DO CHEQUE N. " + STRING(crapdev.nrcheque,"9999999") + 
+                                                ", PELA ALINEA 37, PARA REGULARIZACAO DE CRITICA DO RELATORIO 526" + '"'.                            
+                                                
+                          PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
                      END.
                 ELSE
                 IF   crapdev.indevarq <> 1 THEN
@@ -3003,6 +3036,7 @@ PROCEDURE gera_arquivo_cecred:
                                                 " (CONFORME CRITICA NO RELATORIO 219)" + '"'.
                                           
                           PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
                        END.
                    
                NEXT.
@@ -3239,11 +3273,11 @@ PROCEDURE gera_arquivo_cecred:
                RUN enviar_email_completo IN h-b1wgen0011(
                                          INPUT p-cdcooper,
                                          INPUT "crps264",
-                                         INPUT "cpd@cecred.coop.br",
+                                         INPUT "cpd@ailos.coop.br",
                                          INPUT 
                                          "suporte@viacredialtovale.coop.br",
                                          INPUT "Relatorio de Devolucoes " + 
-                                               "Cheques CECRED",
+                                               "Cheques AILOS",
                                          INPUT "",
                                          INPUT aux_nmarqdev,
                                          INPUT "",
@@ -3253,10 +3287,10 @@ PROCEDURE gera_arquivo_cecred:
                RUN enviar_email_completo IN h-b1wgen0011(
                                          INPUT p-cdcooper,
                                          INPUT "crps264",
-                                         INPUT "cpd@cecred.coop.br",
+                                         INPUT "cpd@ailos.coop.br",
                                          INPUT "suporte@viacredi.coop.br",
                                          INPUT "Relatorio de Devolucoes " + 
-                                               "Cheques CECRED",
+                                               "Cheques AILOS",
                                          INPUT "",
                                          INPUT aux_nmarqdev,
                                          INPUT "",
@@ -3302,7 +3336,7 @@ PROCEDURE verifica_locks:
                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                   glb_cdprogra + "' --> '" +
                                   " Registro utilizando por " + aux_nmusuari +
-                                  " Avise a Equipe de Suporte da CECRED" +
+                                  " Avise a Equipe de Suporte do AILOS" +
                                   " Coop: " + STRING(p-cdcooper) +
                                   " Banco do Cheque: " + STRING(aux_cdbanchq) +
                                   " Tabela: crapdev " +
@@ -3337,7 +3371,7 @@ PROCEDURE verifica_locks:
                                        " CTA: " + STRING(crapdev.nrdconta) +
                                        " CBS: " + STRING(crapdev.nrdctabb) +
                                        " DOC: " + STRING(crapdev.nrcheque) +
-                                       " Avise a Equipe de Suporte da CECRED" +
+                                       " Avise a Equipe de Suporte do AILOS" +
                                        " >> log/proc_message.log").
                                   glb_cdcritic = 0.
                                   RETURN "NOK".
@@ -3358,7 +3392,7 @@ PROCEDURE verifica_locks:
                                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                                              glb_cdprogra + "' --> '" +
                                                              " Registro utilizando por " + aux_nmusuari +
-                                                             " Avise a Equipe de Suporte da CECRED" +
+                                                             " Avise a Equipe de Suporte do AILOS" +
                                                              " Coop: " + STRING(p-cdcooper) +
                                                              " CTA: " + STRING(crapdev.nrdconta) +
                                                              " CBS: " + STRING(crapdev.nrdctabb) +
@@ -3408,7 +3442,7 @@ PROCEDURE verifica_locks:
                         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                                           glb_cdprogra + "' --> '" +
                                           " Registro utilizando por " + aux_nmusuari +
-                                          " Avise a Equipe de Suporte da CECRED" +
+                                          " Avise a Equipe de Suporte do AILOS" +
                                           " Coop: " + STRING(p-cdcooper) +
                                           " Tabela: craplot " +
                                           " RECID: " + STRING(aux_nrdrecid) +
