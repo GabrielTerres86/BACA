@@ -34,6 +34,9 @@ BEGIN
 
               13/12/2017 - Melhorar performance da rotina filtrando corretamente
                            os acordos, conforme chamado 807093. (Kelvin).
+                           
+              09/07/2018 - Deverá buscar novamente o saldo em conta e utilizar o 
+                           valor final do saldo para pagar o boleto (Renato Darosci - Supero)
 
   ............................................................................. */
   DECLARE
@@ -86,6 +89,7 @@ BEGIN
            , crawepr.dtlibera
            , crawepr.tpemprst
            , crawepr.idcobope
+           , crapass.vllimcre
         FROM crawepr
            , crapass
            , crappep
@@ -175,6 +179,20 @@ BEGIN
          AND tbrecup_acordo_contrato.nrctremp = pr_nrctremp;
     rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
    
+    CURSOR cr_crapdpb(pr_cdcooper   NUMBER
+                     ,pr_nrdconta   NUMBER
+                     ,pr_dtrefere   DATE) IS
+      SELECT nvl(SUM(c.vllanmto),0)
+        FROM craphis x
+           , crapdpb c
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.nrdconta = pr_nrdconta
+         AND x.cdcooper = c.cdcooper
+         AND x.cdhistor = c.cdhistor
+         AND x.inhistor in (3,4,5)
+         AND c.dtliblan = pr_dtrefere
+         AND c.inlibera = 1;
+  
     -- Tabela de Memoria dos detalhes de emprestimo
     vr_tab_crawepr      EMPR0001.typ_tab_crawepr;
     --Tabela de Memoria de Mensagens Confirmadas
@@ -218,7 +236,11 @@ BEGIN
     vr_dstransa         VARCHAR2(1000);
     vr_idacaojd         BOOLEAN := FALSE; -- Indicar Ação Judicial
     vr_vlatrpag         NUMBER;
-
+    vr_flgcrass         BOOLEAN;
+    vr_vllibera         NUMBER;
+    vr_vlsomvld         NUMBER;
+    vr_index_saldo      PLS_INTEGER;
+    
     -- Variaveis de Indices
     vr_cdindice         VARCHAR2(30) := ''; -- Indice da tabela de acordos
     vr_index_crawepr    VARCHAR2(30);
@@ -236,7 +258,10 @@ BEGIN
 
     -- Parametro de bloqueio de resgate de valores em c/c
     vr_blqresg_cc       VARCHAR2(1);
-
+    
+    -- Tabela de Saldos
+    vr_tab_saldos       EXTR0001.typ_tab_saldos;
+    
     -- Parametro de contas que nao podem debitar os emprestimos
     vr_dsctajud         CRAPPRM.dsvlrprm%TYPE;
     -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
@@ -615,19 +640,80 @@ BEGIN
       vr_vlresgat := nvl(vr_vlresgat,0);
       vr_vlsomato := nvl(vr_vlsomato,0);
       vr_vlapagar := nvl(vr_vlapagar,0);
-
+      vr_vlsomvld := 0;
+      
       /* Tem cobertura de aplicação e é necessário resgate pois não há saldo suficiente */
       IF (vr_vlresgat > 0) THEN  
-        /* Se conta estiver negativa o resgate não deve cobrir o estouro de conta apenas pagar a parcela emprestimo/financiamento */  
+      
+        -- Verificar se o BATCH esta rodando
+        IF rw_crapdat.inproces <> 1 THEN
+          -- Se estiver no BATCH, utiliza a verificacao da conta a partir do vetor de contas
+          -- que se nao estiver carregado fara a leitura de todas as contas da cooperativa
+          -- Quando eh BATCH mantem o padrao TRUE
+          vr_flgcrass := TRUE;
+
+          OPEN  cr_crapdpb(pr_cdcooper
+                          ,pr_nrdconta
+                          ,rw_crapdat.dtmvtolt);
+          fetch cr_crapdpb into vr_vllibera;
+          close cr_crapdpb;
+        ELSE 
+          -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
+          vr_flgcrass := FALSE;
+          vr_vllibera := 0;
+        END IF;
+        
+        --Limpar tabela saldos
+        vr_tab_saldos.DELETE;
+        
+        --Obter Saldo do Dia
+        EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
+                                   ,pr_rw_crapdat => rw_crapdat
+                                   ,pr_cdagenci   => pr_cdagenci
+                                   ,pr_nrdcaixa   => 0
+                                   ,pr_cdoperad   => vr_cdoperad -- pr_cdoperad
+                                   ,pr_nrdconta   => pr_nrdconta
+                                   ,pr_vllimcre   => rw_crappep.vllimcre -- rw_crapass.vllimcre
+                                   ,pr_dtrefere   => rw_crapdat.dtmvtolt -- pr_dtrefere
+                                   ,pr_flgcrass   => vr_flgcrass
+                                   ,pr_des_reto   => vr_des_erro
+                                   ,pr_tab_sald   => vr_tab_saldos
+                                   ,pr_tipo_busca => 'A'
+                                   ,pr_tab_erro   => vr_tab_erro);
+        
+        --Buscar Indice
+        vr_index_saldo := vr_tab_saldos.FIRST;
+        IF vr_index_saldo IS NOT NULL THEN
+          --Acumular Saldo
+          vr_vlsomvld := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0) +
+                                nvl(vr_tab_saldos(vr_index_saldo).vlsdchsl, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdbloq, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdblpr, 0) +
+                                --nvl(vr_tab_saldos(vr_index_saldo).vlsdblfp, 0) +
+                                nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0) +
+                                vr_vllibera,2); --Valor liberado no dia
+        END IF;
+        
+      
+        -- Verifica a diferença entre o saldo antes e depois do resgate.. para corrigir o resgate se necessário
+        IF vr_vlsomvld <> vr_vlsomato THEN
+          -- Se a diferenças dos saldos é menor que o valor de resgate
+          IF ABS( vr_vlsomato - vr_vlsomvld ) < vr_vlresgat THEN
+            -- A diferença deve ser utilizada como valor de resgate
+            vr_vlresgat := ABS( vr_vlsomato - vr_vlsomvld );
+          END IF;        
+        END IF;
+      
+        -- Se conta estiver negativa o resgate não deve cobrir o estouro de conta apenas pagar a parcela emprestimo/financiamento 
         IF (vr_vlsomato <= 0) THEN
            vr_vlsomato := vr_vlresgat;
         ELSE
-          /* Resgate parcial pois há saldo mas não suficiente para pagar a parcela de emprestimo/financiamento então somar com 
-          que existe de saldo para cobrir o valor total da parcela que possui garantia de aplicação */  
+          -- Resgate parcial pois há saldo mas não suficiente para pagar a parcela de emprestimo/financiamento então somar com 
+          --que existe de saldo para cobrir o valor total da parcela que possui garantia de aplicação 
           vr_vlsomato := vr_vlsomato + vr_vlresgat;
         END IF;
       END IF;
-        
+      
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
                                 pr_nmdcampo => 'Saldo',
                                 pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
