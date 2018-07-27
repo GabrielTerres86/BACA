@@ -152,7 +152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       vr_ind                  PLS_INTEGER; --> Indice da tabela de retorno  
       vr_pontos               PLS_INTEGER; --> Indice da tabela de retorno  
       vr_rating               VARCHAR2(2);
-      vr_nrdrowid             ROWID;                  
+      vr_nrdrowid             ROWID;  
       
       --PL tables
       vr_tab_rating_sing      RATI0001.typ_tab_crapras;
@@ -167,6 +167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
 
     BEGIN
       pr_idpeapro := 0;
+
       --1ª Regra: Valor Emprestado
       --O Ayllos deverá pegar o valor da proposta alterada e subtrair do valor da proposta original aprovada,
       --essa subtração irá gerar uma diferença, o valor dessa diferença deverá ser verificado com o valor 
@@ -187,9 +188,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         vr_vltolemp := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,60,12)),0);     
         --Aproveitar a leitura da tab089 e puscar o percentual de tolerância da prestação também
         vr_pcaltpar := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,53,6)),0);        
-        IF vr_diferenca_valor >  vr_vltolemp AND c1.vlempori > 0 THEN -- Perde a aprovação
+        /*Regra para realizar a perda de aprovação por valor de emprestimo*/
+        IF vr_diferenca_valor >  vr_vltolemp AND -- A diferenca é maior que o parametro tab089
+           c1.vlempori > 0 AND -- O valor do emprestimo devera ser maior que zero
+           c1.vlempori <> pr_vlemprst THEN -- devera ter alteracao do que esta na base com o que foi alterado
           pr_idpeapro := 1;
-          -- Gerar log
+          -- Gerar log VERLOG
           IF pr_tipoacao = 'S' THEN
               GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
@@ -237,9 +241,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
              vr_diferenca_parcela:= ((nvl(pr_vlpreemp,0)/nvl(c1.vlpreori,0))-1)*100;
           END IF;
           
-          IF vr_diferenca_parcela > vr_pcaltpar AND c1.vlpreori > 0 THEN -- Perde a aprovação
+          IF vr_diferenca_parcela > vr_pcaltpar AND -- A diferenca deve ser maior que esta na TAB089
+             c1.vlpreori > 0 AND -- Valor prestação na base deve ser maior que zero
+             c1.vlpreori <> pr_vlpreemp THEN -- Devera ter diferenca entre a base com o que foi alterado
             pr_idpeapro := 1;            
-            -- Gerar Log
+            -- Gerar Log VERLOG
             IF pr_tipoacao = 'S' THEN
               GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => pr_cdoperad
