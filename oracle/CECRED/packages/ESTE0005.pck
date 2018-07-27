@@ -5799,11 +5799,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_vllimite_alterado tbcrd_limite_atualiza.vllimite_alterado%TYPE;
     
     --Cursor para buscar o ultimo registro do limite
-    CURSOR cr_limultalt IS
+    CURSOR cr_limultalt (pr_nrcontacartao tbcrd_limite_atualiza.nrconta_cartao%TYPE) IS
       SELECT a.vllimite_anterior
       FROM   tbcrd_limite_atualiza a
       WHERE  a.cdcooper = pr_cdcooper
       AND    a.nrdconta = pr_nrdconta
+         AND a.nrconta_cartao = pr_nrcontacartao
+         AND a.tpsituacao = 3 --Concluído com sucesso
       AND    ROWNUM = 1
       ORDER BY a.idatualizacao DESC;
                               
@@ -5951,7 +5953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     END IF;    
     CLOSE cr_limatu;
     
-    OPEN cr_limultalt;
+    OPEN cr_limultalt(pr_nrcontacartao => rw_crawcrd.nrcctitg);
     FETCH cr_limultalt INTO rw_limultalt;
     CLOSE cr_limultalt;
 
@@ -6117,7 +6119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     -- Caso for alteracao de limite - majoracao
     IF (vr_tpprodut = 'MJ') then
       vr_obj_proposta.put('valorLimiteAtivo',este0001.fn_decimal_ibra(rw_crawcrd.vllimcrd));
-      vr_obj_proposta.put('valorLimiteAnterior',este0001.fn_decimal_ibra(rw_limultalt.vllimite_anterior));
+      vr_obj_proposta.put('valorLimiteAnterior',este0001.fn_decimal_ibra(nvl(rw_limultalt.vllimite_anterior,0)));
     END IF;
     
     -- Busca limite maximo da categoria

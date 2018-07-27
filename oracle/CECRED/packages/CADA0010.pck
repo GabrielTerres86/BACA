@@ -3865,7 +3865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
       -- Montar descrição de erro não tratado
       pr_dscritic := 'CADA0010-Erro não tratado na pc_cadast_aprov_saque_cotas: ' ||SQLERRM;
   END pc_cadast_aprov_saque_cotas;   
-
+  
   -- Rotina para Cadastrar de pessoa de referencia
   PROCEDURE pc_revalida_nome_cad_unc(pr_nrcpfcgc  IN tbcadast_pessoa.nrcpfcgc%TYPE --Numero do CPF/CNPJ
                                     ,pr_nmpessoa  IN tbcadast_pessoa.nmpessoa%TYPE --Nome da pessoa entrada 
@@ -3887,7 +3887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
     -- Objetivo  : Rotina para devolver o nome da pessoa de acordo com o tipo da conta
     --             vinculada ao cadastro unificado (INC0018113).
     --
-    -- Alteração :
+    -- Alteração : 
     -- ..........................................................................*/
     CURSOR cr_tbcadast_pessoa(pr_nrcpfcgc tbcadast_pessoa.nrcpfcgc%TYPE) IS
       SELECT cap.nmpessoa
@@ -3902,6 +3902,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
 		vr_exc_erro EXCEPTION;
     
   BEGIN
+
+    /* Quando vir CPFCGC zerado não realiza busca de informação, devido poder ter 
+       o cadastro desta pessoa na base (ALLEN DUNLAP COPELAND)  */  
+    IF pr_nrcpfcgc = 0 THEN
+      pr_nmpesout := pr_nmpessoa;
+      RETURN;
+    END IF;
+
     OPEN cr_tbcadast_pessoa(pr_nrcpfcgc);
       FETCH cr_tbcadast_pessoa     
         INTO rw_tbcadast_pessoa;
@@ -3912,8 +3920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
         
     CLOSE cr_tbcadast_pessoa;
     
-    /*4 = Completo 
-      3 = Intermediario*/
+    /* 4 = Completo 3 = Intermediario */
     IF NVL(rw_tbcadast_pessoa.tpcadastro,0) IN (3,4) THEN
       pr_nmpesout := rw_tbcadast_pessoa.nmpessoa;
     ELSE
@@ -3964,6 +3971,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
 		vr_exc_erro EXCEPTION;
     
   BEGIN
+    /* Quando vir EMPRESA zerado não realiza busca de informação, devido poder ter 
+       o cadastro desta pessoa na base*/  
+    IF pr_cdempres = 0 THEN
+      pr_nrcnpjot := pr_nrdocnpj;
+      RETURN;
+    END IF;
+    
     OPEN cr_crapemp(pr_cdcooper
                    ,pr_cdempres);
       FETCH cr_crapemp     
