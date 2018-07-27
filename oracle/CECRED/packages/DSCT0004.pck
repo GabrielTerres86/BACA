@@ -41,6 +41,8 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
                                     ,pr_nrdctabb_lst IN CLOB                  --> Número da conta base no banco
                                     ,pr_nrcnvcob_lst IN CLOB                  --> Número do convênio de cobrança
                                     ,pr_nrdocmto_lst IN CLOB                  --> Número do documento (boleto)
+                                    ,pr_nriniseq     IN NUMBER DEFAULT 0      --> Paginação - Inicio de sequencia
+                                    ,pr_nrregist     IN NUMBER DEFAULT 0      --> Paginação - Número de registros
                                     ,pr_retxml      OUT XMLType               --> Arquivo de retorno do XML
                                     ,pr_dscritic    OUT VARCHAR2              --> Descrição da crítica
                                     );
@@ -70,6 +72,8 @@ PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> C
 
 PROCEDURE pc_obtem_detalhes_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
                                       ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero
+                                      ,pr_nriniseq  IN NUMBER DEFAULT 0      --> Paginação - Inicio de sequencia
+                                      ,pr_nrregist  IN NUMBER DEFAULT 0      --> Paginação - Número de registros
                                       ,pr_retxml   OUT XMLType               --> Arquivo de retorno do XML
                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                       );
@@ -329,6 +333,7 @@ PROCEDURE pc_obtem_borderos_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE           -
     Data     : Maio/2018
 
     Objetivo  : Listar os Borderôs de Desconto de Títulos da cooperativa
+    SOA       : Recebiveis.obterListaBorderos
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
 
@@ -451,7 +456,7 @@ BEGIN
                                     '<vltitapr>'||to_char(rw_crapbdt_cons.vltitapr,'FM999G999G999G990D00')||'</vltitapr>'||
                                     '<insitbdt>'||rw_crapbdt_cons.insitbdt||'</insitbdt>'||
                                     '<dssitbdt>'||rw_crapbdt_cons.dssitbdt||'</dssitbdt>'||
-                                    '<dtlibbdt>'||rw_crapbdt_cons.dtlibbdt||'</dtlibbdt>'||
+                                    '<dtlibbdt>'||to_char(rw_crapbdt_cons.dtlibbdt,'DD/MM/RRRR')||'</dtlibbdt>'||
                                   '</bordero>';
         END   LOOP;
         CLOSE cr_crapbdt;
@@ -514,6 +519,7 @@ PROCEDURE pc_obtem_titulos_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE --> 
     Data     : Maio/2018
 
     Objetivo  : Listar os títulos da cooperativa aptos de inclusão em um borderô
+    SOA       : Recebiveis.obterListaTitulosPorPagador
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
 
@@ -580,7 +586,7 @@ BEGIN
   LOOP
         pc_escreve_xml('<titulo>'||
                          '<nrcnvcob>'||vr_tab_dados_titulos(vr_index).nrcnvcob||'</nrcnvcob>'||
-                         '<nrborder>'||vr_tab_dados_titulos(vr_index).nrborder||'</nrborder>'||
+                         '<nrborder>'||vr_tab_dados_titulos(vr_index).nrdocmto||'</nrborder>'|| -- numero do boleto na tela
                          '<nmdsacad>'||vr_tab_dados_titulos(vr_index).nmdsacad||'</nmdsacad>'||
                          '<dtvencto>'||to_char(vr_tab_dados_titulos(vr_index).dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
                          '<vltitulo>'||to_char(vr_tab_dados_titulos(vr_index).vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
@@ -622,6 +628,8 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
                                     ,pr_nrdctabb_lst	IN CLOB		                --> Número da conta base no banco
                                     ,pr_nrcnvcob_lst	IN CLOB		                --> Número do convênio de cobrança
                                     ,pr_nrdocmto_lst	IN CLOB		                --> Número do documento (boleto)
+                                    ,pr_nriniseq     IN NUMBER DEFAULT 0      --> Paginação - Inicio de sequencia
+                                    ,pr_nrregist     IN NUMBER DEFAULT 0      --> Paginação - Número de registros
                                     ,pr_retxml      OUT XMLType               --> Arquivo de retorno do XML
                                     ,pr_dscritic    OUT VARCHAR2              --> Descrição da crítica
                                     ) IS
@@ -637,6 +645,7 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
                 Lista de valores separados pelo caracter | (pipe)
 
     Objetivo  : Mostrar um resumo listando os títulos selecionados para inclusão do borderô
+    SOA       : Recebiveis.obterTitulosPorPagador
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
 
@@ -650,6 +659,7 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
   vr_dsbircon     crapbir.dsbircon%TYPE;
   vr_cdmodbir     crapmbr.cdmodbir%TYPE;
   vr_dsmodbir     crapmbr.dsmodbir%TYPE;
+  vr_qtpagina     INTEGER; -- contador para controlar a paginacao
   
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -670,29 +680,31 @@ PROCEDURE pc_obtem_titulos_resumo_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --
   rw_crapcbd  cr_crapcbd%rowtype;
 
 BEGIN
-  pc_busca_crapdat(pr_cdcooper => pr_cdcooper
-                  ,pr_dscritic => vr_dscritic );
-  IF  vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida; 
-  END IF;
-  
-  pc_calcula_limite_disponivel(pr_cdcooper => pr_cdcooper
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_vllimdis => vr_vllimdis);
-
   vr_tab_cdbandoc := gene0002.fn_quebra_string(pr_cdbandoc_lst,'|');
   vr_tab_nrdctabb := gene0002.fn_quebra_string(pr_nrdctabb_lst,'|');
   vr_tab_nrcnvcob := gene0002.fn_quebra_string(pr_nrcnvcob_lst,'|');
   vr_tab_nrdocmto := gene0002.fn_quebra_string(pr_nrdocmto_lst,'|');
 
   IF  vr_tab_nrdocmto.count() > 0 THEN
+      pc_busca_crapdat(pr_cdcooper => pr_cdcooper
+                      ,pr_dscritic => vr_dscritic );
+      IF  vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida; 
+      END IF;
+      
+      pc_calcula_limite_disponivel(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_vllimdis => vr_vllimdis);
+
+      vr_qtpagina := 0;
 
       pc_inicia_xml;
       pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>');
   
       vr_index := vr_tab_nrdocmto.first;
-      WHILE vr_index IS NOT NULL 
+      WHILE vr_index IS NOT NULL
       LOOP
+        IF (pr_nriniseq + pr_nrregist) = 0 OR (vr_qtpagina >= pr_nriniseq AND vr_qtpagina < (pr_nriniseq + pr_nrregist)) THEN
             OPEN  tela_atenda_dscto_tit.cr_crapcob(pr_cdcooper => pr_cdcooper
                                                   ,pr_nrdconta => pr_nrdconta
                                                   ,pr_nrdocmto => vr_tab_nrdocmto(vr_index)
@@ -746,7 +758,7 @@ BEGIN
                   vr_det_xml := vr_det_xml||
                                 '<titulo>'||
                                   '<nrcnvcob>'||tela_atenda_dscto_tit.rw_crapcob.nrcnvcob||'</nrcnvcob>'||
-                                  '<nrborder>'||tela_atenda_dscto_tit.rw_crapcob.nrborder||'</nrborder>'||
+                                  '<nrborder>'||tela_atenda_dscto_tit.rw_crapcob.nrdocmto||'</nrborder>'||-- numero do boleto
                                   '<nmdsacad>'||tela_atenda_dscto_tit.rw_crapcob.nmdsacad||'</nmdsacad>'||
                                   '<dtvencto>'||to_char(tela_atenda_dscto_tit.rw_crapcob.dtvencto,'DD/MM/RRRR')||'</dtvencto>'||
                                   '<vltitulo>'||to_char(tela_atenda_dscto_tit.rw_crapcob.vltitulo,'FM999G999G999G990D00')||'</vltitulo>'||
@@ -754,8 +766,11 @@ BEGIN
                                 '</titulo>';
             END   IF;
             CLOSE tela_atenda_dscto_tit.cr_crapcob;
+        END IF;
+            
+        vr_qtpagina := vr_qtpagina +1;
 
-            vr_index := vr_tab_nrdocmto.next(vr_index);
+        vr_index := vr_tab_nrdocmto.next(vr_index);
       END LOOP;
           
       pc_escreve_xml('<Dados qtregist="'||nvl(vr_tab_nrdocmto.count,0)||'" >');
@@ -1437,6 +1452,7 @@ PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> C
                 Lista de valores separados pelo caracter | (pipe)
 
     Objetivo  : Finalizar o processo de geração do borderô. Criar o borderô com base nos títulos selecionados
+    SOA       : Recebiveis.manterBorderoTitulos
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
                 06/06/2018 - Tranfornado na procedure pc_finalizar_bordero_dscto_tit (Paulo Penteado (GFT)) 
@@ -1498,6 +1514,8 @@ END pc_finalizar_bordero_ib;
 
 PROCEDURE pc_obtem_detalhes_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
                                       ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero
+                                      ,pr_nriniseq  IN NUMBER DEFAULT 0      --> Paginação - Inicio de sequencia
+                                      ,pr_nrregist  IN NUMBER DEFAULT 0      --> Paginação - Número de registros
                                       ,pr_retxml   OUT XMLType               --> Arquivo de retorno do XML
                                       ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                       ) IS
@@ -1509,6 +1527,7 @@ PROCEDURE pc_obtem_detalhes_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE -->
     Data     : Maio/2018
     
     Objetivo  : Visualizar detalhes do borderô quando acionado pelo ícone da coluna "Ação" da tela de Consulta
+    SOA       : Recebiveis.obterListaTitulosBordero
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
 
@@ -1549,6 +1568,8 @@ BEGIN
                                              ,pr_cdoperad        => NULL -- sem utilidade
                                              ,pr_idorigem        => NULL -- sem utilidade
                                              ,pr_nrborder        => pr_nrborder
+                                             ,pr_nriniseq        => pr_nriniseq
+                                             ,pr_nrregist        => pr_nrregist
                                              ,pr_qtregist        => vr_qtregist
                                              ,pr_tab_tit_bordero => vr_tab_tit_bordero
                                              ,pr_cdcritic        => vr_cdcritic
@@ -1571,6 +1592,7 @@ BEGIN
   WHILE vr_index IS NOT NULL 
   LOOP
         pc_escreve_xml('<titulo>'||
+                         '<nrdocmto>'||vr_tab_tit_bordero(vr_index).nrdocmto||'</nrdocmto>'||
                          '<nrcnvcob>'||vr_tab_tit_bordero(vr_index).nrcnvcob||'</nrcnvcob>'||
                          '<nrborder>'||pr_nrborder||'</nrborder>'||
                          '<nmdsacad>'||vr_tab_tit_bordero(vr_index).nmsacado||'</nmdsacad>'||
@@ -1584,7 +1606,6 @@ BEGIN
                          '<cdbandoc>'||vr_tab_tit_bordero(vr_index).cdbandoc||'</cdbandoc>'||
                          '<nrdctabb>'||vr_tab_tit_bordero(vr_index).nrdctabb||'</nrdctabb>'||
                          '<nrcnvcob>'||vr_tab_tit_bordero(vr_index).nrcnvcob||'</nrcnvcob>'||
-                         '<nrdocmto>'||vr_tab_tit_bordero(vr_index).nrdocmto||'</nrdocmto>'||
                        '</titulo>'
                       );
         vr_index := vr_tab_tit_bordero.next(vr_index);
@@ -1627,6 +1648,7 @@ PROCEDURE pc_imprime_bordero_dsctotit_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE -
     Data     : Maio/2018
     
     Objetivo  : Imprimir informações do borderô quando acionado pelo ícone da coluna "Ação" da tela de Consulta
+    SOA       : Recebiveis.obterImpressaoBordero
 
     Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
 
