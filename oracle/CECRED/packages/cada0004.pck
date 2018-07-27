@@ -237,12 +237,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
-  -- Type para armazenar a descrição das situacoes da conta, auxiliar na antiga (b1wgen0001.p/fgetdssitdct)
-  TYPE typ_dssitdct IS VARRAY(9) OF VARCHAR2(50);
-  vr_tab_dssitdct typ_dssitdct := typ_dssitdct( 'NORMAL','ENCERRADA P/ASSOCIADO','ENCERRADA P/COOP',
-                                                'ENCERRADA ~P/DEMISSAO','NAO APROVADA',
-                                                'NORMAL - SEM TALAO','EM PROC. DEMISSAO','EM PROC. DEMISSAO - BACEN','ENCERRADA P/OUTRO MOTIVO');
-    
 	TYPE typ_reg_cadrest IS
 				RECORD(nrdconta crapass.nrdconta%TYPE
 							,nrcpfcgc crapass.nrcpfcgc%TYPE
@@ -4669,6 +4663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
             ,tbrecup_cobranca.nrcnvcob
             ,tbrecup_cobranca.nrboleto
             ,tbrecup_cobranca.nrctremp
+            ,tbrecup_cobranca.tpproduto
             ,crapcob.dtvencto
             ,crapcob.vltitulo
             ,crapcob.incobran
@@ -4677,8 +4672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
             ,crapcob.dtdpagto
         FROM tbrecup_cobranca
             ,crapcob
-       WHERE tbrecup_cobranca.tpproduto = 0
-         AND tbrecup_cobranca.cdcooper = pr_cdcooper
+       WHERE 
+         tbrecup_cobranca.cdcooper = pr_cdcooper
          AND tbrecup_cobranca.nrdconta = pr_nrdconta
          AND crapcob.cdcooper = tbrecup_cobranca.cdcooper
          AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
@@ -5259,7 +5254,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         END IF; 
         
         vr_dsmensag := NULL;
+        vr_flgativo := NULL;
+        
+        -- Verifica contratos de acordos
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => 0
+                                         ,pr_cdorigem => 0
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
 
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        IF vr_flgativo = 1  THEN
+          RAISE vr_exc_next;
+        END IF;
+ 
         IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
         ELSIF (vr_tab_dados_epr(vr_idxepr).qtmesdec - vr_tab_dados_epr(vr_idxepr).qtprecal) >= 0.01  AND
@@ -5288,7 +5301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
             vr_dsmensag := 'Associado com emprestimo em atraso.';
           END IF;    
         END IF;
-        
+        vr_dsmensag := 'Associado com emprestimo em atraso.';
         /* PORTABILIDADE - verifica se o contrato liquidado foi portado para outra instituicao */
         OPEN cr_portabilidade(pr_cdcooper => pr_cdcooper,
                               pr_nrdconta => pr_nrdconta,
@@ -5392,7 +5405,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
       
       vr_dsmensag := NULL;
-                
+      vr_flgativo := NULL;
+   
+      /* Inicio Sugestao de alteração Chamado INC0016984 - Debora Veras */
+      -- Verifica contratos de acordos
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => rw_crapavl.nrctaavd
+                                       ,pr_nrctremp => 0
+                                       ,pr_cdorigem => 0
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_flgativo = 1  THEN
+        continue;
+      END IF;
+
       IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
       ELSIF rw_crapavl.inprejuz = 1 AND rw_crapavl.vlsdprej > 0  THEN
@@ -5771,41 +5803,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     --> buscar boletos de contratos em aberto
     FOR rw_tbrecup_cobranca IN cr_tbrecup_cobranca LOOP
-      -- Em aberto
-      IF rw_tbrecup_cobranca.incobran = 0 THEN
-        vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
-                       ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
-                       ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
-      
-        --> Incluir na temptable
-        pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
-                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
-      -- Pago
-      ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
-        -- Verificar se ret ainda nao foi processado     
-        OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
-                         pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
-                         pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
-                         pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
-                         pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto); 
-        FETCH cr_crapret INTO rw_crapret; 
-               
-        -- Se encontrar apresentar critica
-        IF cr_crapret%FOUND THEN
-          vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| 
-                         ' esta pago pendente de processamento.'||
+      --COBEMP
+      IF (rw_tbrecup_cobranca.tpproduto=0) THEN 
+        -- Em aberto
+        IF rw_tbrecup_cobranca.incobran = 0 THEN
+          vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
                          ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
                          ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
         
           --> Incluir na temptable
           pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
                                pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
-                                 
-        END IF;
-        CLOSE cr_crapret;
+        -- Pago
+        ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
+          -- Verificar se ret ainda nao foi processado     
+          OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
+                           pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
+                           pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
+                           pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
+                           pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto); 
+          FETCH cr_crapret INTO rw_crapret; 
+                 
+          -- Se encontrar apresentar critica
+          IF cr_crapret%FOUND THEN
+            vr_dsmensag := 'Boleto do contrato '|| rw_tbrecup_cobranca.nrctremp|| 
+                           ' esta pago pendente de processamento.'||
+                           ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                           ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+          
+            --> Incluir na temptable
+            pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                                 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
+                                   
+          END IF;
+          CLOSE cr_crapret;
+          
         
-      
-      END IF;                       
+        END IF;
+      ELSE 
+        --COBTIT
+        IF (rw_tbrecup_cobranca.tpproduto=3) THEN 
+          -- Em aberto
+          IF rw_tbrecup_cobranca.incobran = 0 THEN
+            vr_dsmensag := 'Boleto do borderô '|| rw_tbrecup_cobranca.nrctremp|| ' em aberto.'||
+                           ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                           ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+            
+            --> Incluir na temptable
+            pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                                 pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
+          -- Pago
+          ELSIF rw_tbrecup_cobranca.incobran = 5 THEN
+            -- Verificar se ret ainda nao foi processado     
+            OPEN cr_crapret (pr_cdcooper => rw_tbrecup_cobranca.cdcooper,
+                             pr_nrdconta => rw_tbrecup_cobranca.nrdconta,
+                             pr_nrcnvcob => rw_tbrecup_cobranca.nrcnvcob,
+                             pr_nrdocmto => rw_tbrecup_cobranca.nrdocmto,
+                             pr_dtdpagto => rw_tbrecup_cobranca.dtdpagto); 
+            FETCH cr_crapret INTO rw_crapret; 
+                     
+            -- Se encontrar apresentar critica
+            IF cr_crapret%FOUND THEN
+              vr_dsmensag := 'Boleto do borderô '|| rw_tbrecup_cobranca.nrctremp|| 
+                             ' esta pago pendente de processamento.'||
+                             ' Vencto '|| to_char(rw_tbrecup_cobranca.dtvencto,'DD/MM/RRRR')||
+                             ' R$ '|| to_char(rw_tbrecup_cobranca.vltitulo, 'fm999G999G990D00mi') ||'.';
+              
+              --> Incluir na temptable
+              pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                                   pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);  
+                                       
+            END IF;
+            CLOSE cr_crapret;
+              
+            
+          END IF;                       
+        END IF;
+      END IF;
     END LOOP;
     
     --> Apresentar alerta caso o cooperado possuir proposta de cartao rejeitada

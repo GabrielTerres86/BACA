@@ -26,6 +26,7 @@ $vlpagar = 0;
                     <th>Valor Atual</th>
                     <th>Valor a Pagar</th>
                     <th>Valor</th>
+                    <th></th>
                 </tr>           
             </thead>
             <tbody>
@@ -48,6 +49,7 @@ $vlpagar = 0;
                         <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlsldtit)?></td>
                         <td style="border-right:1px dotted #999;"><?=formataMoeda($t->vlpagar)?></td>
                         <td style="border-right:1px dotted #999;"><input type="text" style="width:100px" class="vlpagar monetario campoTelaSemBorda" value="<?=formataMoeda(0)?>" id="vlpagar_<?=$t->nrtitulo?>" name="vlpagar[<?=$t->nrtitulo?>]" readonly/></td>
+                        <td ><a class="pointer" onclick='calculaTotal()'><img src="<? echo $UrlImagens; ?>geral/refresh.png"></a> </td>
                     </tr>
                 <?php } ?>
             </tbody>
