@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0004 AS
      Frequencia: Diária (sempre que chamada)
      Objetivo  : Rotinas genericas para geração de extrato dos lançamentos bloqueado por prejuizo. 
 
-     Alteracoes: 
+     Alteracoes: Criado a procedure para imprimir o extrato web (pc_extrato_lanc_prej_web)
+				 PJ 450 - Diego Simas - AMcom
 
   ..............................................................................*/
   
@@ -40,7 +41,17 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0004 AS
                                        ,pr_nmarqimp OUT VARCHAR2                     --> Retorna nome do relatorio
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Critica encontrada
                                        ,pr_dscritic OUT VARCHAR2 );      
-
+                                       
+  PROCEDURE pc_extrato_lanc_prej_web(pr_cdcooper          IN crapcop.cdcooper%TYPE   --> Coop conectada
+                                    ,pr_nrdconta          IN crapass.nrdconta%TYPE   --> Numero da conta
+                                    ,pr_dtiniper          IN VARCHAR2            --> Data incio do periodo do prejuizo
+                                    ,pr_dtfimper          IN VARCHAR2             --> Data final do periodo do prejuizo 
+                                    ,pr_xmllog            IN VARCHAR2                --> XML com informacoes de LOG
+                                    ,pr_cdcritic          OUT PLS_INTEGER            --> Codigo da critica
+                                    ,pr_dscritic          OUT VARCHAR2               --> Descricao da critica
+                                    ,pr_retxml         IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo          OUT VARCHAR2               --> Nome do campo com erro
+                                    ,pr_des_erro          OUT VARCHAR2);             --> Erros do processo                                                                              
 
 
 end PREJ0004;
@@ -425,9 +436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0004 AS
 
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
-    dbms_lob.freetemporary(vr_des_xml);
-
-    
+    dbms_lob.freetemporary(vr_des_xml);    
    
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -603,6 +612,160 @@ PROCEDURE pc_extrato_lanc_prej_relat_web ( pr_nrdconta          IN crapass.nrdco
       pr_dscritic := 'Erro ao gerar extrato em relatorio(web): ' ||SQLERRM;
 
   END pc_extrato_lanc_prej_relat_web;
+
 --
+
+  PROCEDURE pc_extrato_lanc_prej_web(pr_cdcooper          IN crapcop.cdcooper%TYPE   --> Coop conectada
+                                    ,pr_nrdconta          IN crapass.nrdconta%TYPE   --> Numero da conta
+                                    ,pr_dtiniper          IN VARCHAR2                    --> Data incio do periodo do prejuizo
+                                    ,pr_dtfimper          IN VARCHAR2                    --> Data final do periodo do prejuizo 
+                                    ,pr_xmllog            IN VARCHAR2                --> XML com informacoes de LOG
+                                    ,pr_cdcritic          OUT PLS_INTEGER            --> Codigo da critica
+                                    ,pr_dscritic          OUT VARCHAR2               --> Descricao da critica
+                                    ,pr_retxml         IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo          OUT VARCHAR2               --> Nome do campo com erro
+                                    ,pr_des_erro          OUT VARCHAR2) IS           --> Erros do processo
+    /* .............................................................................
+
+    Programa: pc_extrato_lanc_prej_web
+    Sistema :
+    Sigla   : PREJ
+    Autor   : Diego Simas - AMcom
+    Data    : Julho/2018.                  Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para listar os lançamentos da Conta Transitória (Versao chamada web).
+
+    Alteracoes:
+    
+    ..............................................................................*/
+    
+    ---->> CURSORES <<-----
+    --> Buscar dados do associado 
+    CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
+                       pr_nrdconta IN crapass.nrdconta%TYPE)IS
+      SELECT ass.nmprimtl
+        FROM crapass ass 
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;          
+    rw_crapass cr_crapass%ROWTYPE;
+     
+    ---->> VARIAVEIS <<-----
+    vr_cdcritic    NUMBER(3);
+    vr_dscritic    VARCHAR2(1000);
+    vr_des_reto    VARCHAR2(100);
+    vr_tab_erro    GENE0001.typ_tab_erro;    
+    vr_exc_erro    EXCEPTION;
+
+    rw_crapdat     btch0001.cr_crapdat%ROWTYPE;
+    
+    vr_dscomand    VARCHAR2(4000);
+    vr_typsaida    VARCHAR2(100);
+    vr_nmdirimp    VARCHAR2(100);
+    vr_nmarqimp    VARCHAR2(100);
+    vr_tab_lanctos typ_tab_lanctos;
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+    vr_contador INTEGER := 0;
+    
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+     
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    
+  BEGIN
+    
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    
+    -- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat
+    INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_cdcritic := 1;
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF; 
+        
+    pc_retorna_lancamentos_prej(pr_cdcooper    => pr_cdcooper         --> Coop conectada
+                               ,pr_nrdconta    => pr_nrdconta         --> Numero da conta
+                               ,pr_dtiniper    => to_date(pr_dtiniper, 'DD/MM/YYYY') --> Data incio do periodo do prejuizo
+                               ,pr_dtfimper    => to_date(pr_dtfimper, 'DD/MM/YYYY') --> Data final do periodo do prejuizo 
+                               ,pr_tab_lanctos => vr_tab_lanctos      --> Temp Table 
+                               ,pr_cdcritic    => vr_cdcritic         --> Critica encontrada
+                               ,pr_dscritic    => vr_dscritic);
+        
+    IF nvl(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;    
+    END IF;               
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao  => 0, pr_tag_nova => 'lancamentos', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    
+    IF vr_tab_lanctos.count > 0 THEN
+      FOR idx IN vr_tab_lanctos.first..vr_tab_lanctos.last LOOP
+        
+        IF vr_tab_lanctos(idx).tpregistro = 'SD' THEN
+          continue;
+        END IF;
+        
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamentos', pr_posicao  => 0, pr_tag_nova => 'lancamento', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'tpregistro', pr_tag_cont => vr_tab_lanctos(idx).tpregistro, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'dsextrato', pr_tag_cont => vr_tab_lanctos(idx).dsextrato, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'dtmvtolt', pr_tag_cont => to_char(vr_tab_lanctos(idx).dtmvtolt,'DD/MM/RR'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'nrdocmto', pr_tag_cont => gene0002.fn_mask_contrato(vr_tab_lanctos(idx).nrdocmto), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'cdhistor', pr_tag_cont => vr_tab_lanctos(idx).cdhistor, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'dshistor', pr_tag_cont => vr_tab_lanctos(idx).dshistor, pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'indebcre', pr_tag_cont => vr_tab_lanctos(idx).indebcre, pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'vllamnto', pr_tag_cont => to_char(vr_tab_lanctos(idx).vllamnto,'999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lancamento', pr_posicao  => vr_contador, pr_tag_nova => 'vlslddia', pr_tag_cont => to_char(vr_tab_lanctos(idx).vlslddia,'999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic); 
+        vr_contador := vr_contador + 1;       
+        
+      END LOOP;    
+    END IF;
+        
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+     
+    WHEN OTHERS THEN
+      ROLLBACK; 
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao gerar extrato em relatorio(web): ' ||SQLERRM;
+
+  END pc_extrato_lanc_prej_web;
+
 END PREJ0004;
 /

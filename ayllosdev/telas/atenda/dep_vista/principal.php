@@ -83,17 +83,16 @@
 		exibeErro($xmlGetDepVista->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 
-	//SIMAS
 	//Busca Saldo atual da conta transitória
-	/*$xml  = "";
+	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= "  <Dados>";
 	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";	
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_SALDO_ATUAL_CT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "PREJ0003", "CONSULTAR_SLDPRJ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	$param = $xmlObjeto->roottag->tags[0]->tags[0];
@@ -101,9 +100,8 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false);
 	}else{
-		$sldatuct = getByTagName($param->tags,'sldatuct');
-	}			*/
-	//SIMAS
+		$sldatuct = getByTagName($param->tags,'saldo');		
+	}				
 
 	// Montar o xml de Requisicao das datas de prejuizo
 	$xml = "";
@@ -115,8 +113,8 @@
 	$xml .= "</Root>";
 
 	// Chamada mensageria
-  $xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-  $xmlObjeto = getObjectXML($xmlResult);
+    $xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObjeto = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -238,16 +236,15 @@
 		<br />
 	</fieldset>
 
-  <?php //if($sldatuct > 0){ ?>
-	<fieldset>
-		<legend>Conta Transit&oacute;ria</legend>
+  	<fieldset>
+		<legend><? echo utf8ToHtml('Bloqueado Prejuízo'); ?></legend>
 		<label for="vlsldctr"><? echo utf8ToHtml('Saldo:') ?></label>
 		<input name="vlsldctr" id="vlsldctr" type="text" value="<?php echo number_format(str_replace(",",".",$sldatuct),2,",","."); ?>" />
 		<div style="float: right; padding-right: 5px;">
 			<a href="#" class="botao" id="btDetalhesCT" onClick="mostraDetalhesCT();" style="padding: 3px 6px;">Detalhes</a>
 		</div>
 	</fieldset>
-  <?php// } ?>
+  
 </form>
 
 <script type="text/javascript">
