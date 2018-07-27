@@ -310,14 +310,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB096 IS
     END IF;
     IF (pr_cdcooper <> 0) THEN
       -- Convênio de cobrança para empréstimo
-      IF trim(pr_nrconven) IS NOT NULL THEN
+      IF trim(pr_nrconven) IS NOT NULL AND nvl(pr_nrconven,0)>0 THEN
          atualiza_parametro(pr_cdacesso => txt_nrconven
                            ,pr_dsvlrprm => pr_nrconven
                            ,pr_cdoperad => vr_cdoperad);
       END IF;
 
       -- Conta/DV Beneficiária do Boleto
-      IF trim(pr_nrdconta) IS NOT NULL THEN
+      IF trim(pr_nrdconta) IS NOT NULL AND nvl(pr_nrdconta,0)>0 THEN
          atualiza_parametro(pr_cdacesso => txt_nrdconta_bnf
                            ,pr_dsvlrprm => pr_nrdconta
                            ,pr_cdoperad => vr_cdoperad);

@@ -3755,7 +3755,7 @@ END pc_obtem_proposta_aciona_web;
    pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
    pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
    
-   vr_countpag    INTEGER := 0 ; -- contador para controlar a paginacao
+   vr_countpag    INTEGER := 1 ; -- contador para controlar a paginacao
    -- Tratamento de erros
    vr_exc_erro exception;
        
@@ -3946,7 +3946,7 @@ END pc_obtem_proposta_aciona_web;
          
        close cr_craptdb;
       END LOOP;
-      pr_qtregist := vr_countpag-1;
+      pr_qtregist := nvl(vr_idtabtitulo,0);
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -6223,7 +6223,7 @@ END pc_insere_bordero;
    vr_dsmodbir crapmbr.dsmodbir%TYPE;
    restricao_cnae BOOLEAN;
    
-   vr_countpag    INTEGER := 0 ; -- contador para controlar a paginacao
+   vr_countpag    INTEGER := 1; -- contador para controlar a paginacao
    
    vr_tab_tit_bordero        cecred.dsct0002.typ_tab_tit_bordero; --> retorna titulos do bordero
    vr_tab_tit_bordero_restri cecred.dsct0002.typ_tab_bordero_restri; --> retorna restrições do titulos do bordero
@@ -6352,7 +6352,7 @@ END pc_insere_bordero;
          vr_index := vr_tab_tit_bordero.next(vr_index);
        END LOOP;
 
-       pr_qtregist := vr_countpag;
+       pr_qtregist := vr_countpag-1;
 
     EXCEPTION
       WHEN OTHERS THEN

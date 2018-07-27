@@ -7650,6 +7650,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
       ,pag.nrdconta
       ,pag.nrinssac
       ,pag.cdtpinsc
+      ,ass.inpessoa
     FROM 
       craplim lim 
       INNER JOIN crapsab pag ON pag.nrdconta = lim.nrdconta AND pag.cdcooper = lim.cdcooper
@@ -7658,6 +7659,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                        and    cob.nrinssac = pag.nrinssac
                        and    cob.nrdconta = pag.nrdconta
                        and    cob.cdcooper = pag.cdcooper
+      INNER JOIN crapass ass ON ass.nrdconta = pag.nrdconta AND ass.cdcooper=pag.cdcooper
     WHERE 
       lim.tpctrlim=3
       AND lim.insitlim=2 
@@ -7669,7 +7671,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
       pag.cdcooper
       ,pag.nrdconta
       ,pag.nrinssac
-      ,pag.cdtpinsc;
+      ,pag.cdtpinsc
+      ,ass.inpessoa;
     
     rw_crapsab cr_crapsab%rowtype;
    
@@ -7934,7 +7937,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          fetch cr_crapsab into rw_crapsab;
          exit  when cr_crapsab%NOTFOUND;
          vr_flcrapsab := true;
-         IF (rw_crapsab.cdtpinsc=1) THEN
+         IF (rw_crapsab.inpessoa=1) THEN
             vr_tab_dados_dsctit := vr_tab_dados_dsctit_fis;
          ELSE
             vr_tab_dados_dsctit := vr_tab_dados_dsctit_jur;
