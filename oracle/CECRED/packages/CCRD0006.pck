@@ -11,8 +11,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --  Alteracoes: 14/06/2017 - Criação da rotina.
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
   --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
+  --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
 
-   
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
   vr_dtprocessoexec          crapdat.dtmvtolt%TYPE;
@@ -281,7 +281,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                                     ,pr_cdcritic    OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic    OUT VARCHAR2);
 
-  
+
   -- Busca dados para popular combos de filtragem tela concip
   PROCEDURE pc_busca_filtros(pr_xmllog   IN VARCHAR2             --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -290,7 +290,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                             ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 
-                                    
+
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
                              ,pr_dtfinal  IN VARCHAR2               --> Data final da consulta
@@ -318,7 +318,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                            ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                           
+                           ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_contas(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -341,7 +341,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-                           
+
   -- Rotina para retornar as conciliacoes liquidacao STR
   PROCEDURE pc_lista_conciliacao(pr_dtlcto IN VARCHAR2                 --> Data lcto consulta
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -349,7 +349,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                         
+                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 
   -- Rotina para retornar as regionais para a tela CONSLC
   PROCEDURE pc_lista_regional(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
@@ -660,10 +660,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- executa o processo CCRD0006.gera_arquivo_33
     if (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33,'ddmmyyyyhh24:mi')
-               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi') 
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi')
        ) or     -- Primeiro ciclo do horário retorno arquivo 33
        (
-       sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33_cancel,'ddmmyyyyhh24:mi') 
+       sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33_cancel,'ddmmyyyyhh24:mi')
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440
        )  -- Segundo ciclo do horário retorno arquivo 33
        then
@@ -695,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     END IF;
 
     -- executa o processo CCRD0006.gera_arquivo_33_cancel para enviar informações sobre as antecipações que não foram liquidadas
-    -- somente últimos 10 minutos pois restante do tempo e usado para enviar retorno ainda 
+    -- somente últimos 10 minutos pois restante do tempo e usado para enviar retorno ainda
     IF (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')) or
        (to_char(sysdate,'hh24mi')>=to_char(to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440,'hh24mi') and
@@ -1769,7 +1769,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_dscritic => vr_dscritic);
                 vr_iderro := 1;
              ELSE
-                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 /*cielo*/ THEN
+                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr not in (1027058000191, /*cielo*/
+                                                                       1425787000104) /* Redecard */  then
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    vr_codocorc:='32';
@@ -3801,7 +3802,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_dscritic => vr_dscritic);
                  vr_iderro := 1;
              ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 /*cielo*/ THEN
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr not in (1027058000191, /*cielo*/
+                                                                        1425787000104 /* RedeCard */
+                                                                       ) THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
@@ -5573,7 +5576,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_dscritic => vr_dscritic);
                vr_iderro := 1;
           ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 /*cielo */  THEN
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr not in (1027058000191, /*cielo */
+                                                                        1425787000104 /* Redecard */
+                                                                       ) THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
@@ -7304,7 +7309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           IF vr_TotLancamento<>pr_vlrlancto THEN
              for r in cr_liq_antecip loop
                  vr_TotLancamento:=r.vlLancamento;
-                 if r.vllancamento=pr_vlrlancto then 
+                 if r.vllancamento=pr_vlrlancto then
                     IF pr_idatualiza = 'S' THEN
                        UPDATE tbdomic_liqtrans_msg_ltrstr msg
                        SET insituacao = 1
@@ -7319,7 +7324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_des_log      => 'retorno valida antecipacao COM DIFERENCA vr_TotLancamento='||vr_TotLancamento||'  pr_vlrlancto='||pr_vlrlancto
                                 ,pr_nmarqlog => 'CONSLC');
              return('N');
-             
+
           ELSE
              for r in cr_liq_antecip_sum_update loop
                IF pr_idatualiza = 'S' THEN
@@ -7338,7 +7343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              OPEN cr_liq_slc;
              FETCH cr_liq_slc INTO vr_existe;
              CLOSE cr_liq_slc;
-             
+
              IF vr_existe=0 or vr_existe is null THEN
 
                 btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
@@ -7760,7 +7765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             END IF;
 
             IF rw_tabela.tpforma_transf = 4 OR
-               (rw_tabela.tpforma_transf = 5 AND rw_lancamento.nrcnpj_credenciador<>01027058000191) THEN
+               (rw_tabela.tpforma_transf = 5 AND rw_lancamento.nrcnpj_credenciador not in (01027058000191, /* Cielo */
+                                                                                           01425787000104 /* RedeCard */
+                                                                                          )) THEN
                vr_dserro := 'Indicador de Forma de Transferência 4 (Débito em conta) ou 5 (STR) não tratado nesse processo';
                vr_cdocorr := '32';
                RAISE vr_erro;
@@ -7963,7 +7970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           AND pdv.idcentraliza = ctz.idcentraliza
           -- Registros enviados para CIP/Aguardando Aprovação
           -- No final será alterado a situacao para 2-Processado
-          AND lct.insituacao = 1 
+          AND lct.insituacao = 1
 /*          AND ((lct.insituacao = 1 and
                 pdv.tpforma_transf=3) or
                (lct.insituacao = 2 and
@@ -8876,7 +8883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Efetuar rollback
       ROLLBACK;
   END; -- procedure pc_gerar_lcto_singulares
-  
+
   -- Busca dados para popular combos de filtragem tela concip
   PROCEDURE pc_busca_filtros(pr_xmllog   IN VARCHAR2             --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER         --> Código da crítica
@@ -8884,82 +8891,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                             ,pr_retxml   IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
                             ,pr_nmdcampo OUT VARCHAR2            --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2) IS        --> Erros do processo
-        
+
       vr_xml_temp VARCHAR2(32726) := '';
       vr_clob     CLOB;
 
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
-        
+
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(32000);
       vr_tab_erro      GENE0001.typ_tab_erro;
       vr_des_reto      VARCHAR2(10);
       vr_typ_saida     VARCHAR2(3);
-        
-        
+
+
       -- Consulta credenciadoras
       CURSOR cr_busca_credenciadoras IS
              SELECT DISTINCT upper(lct.nmcredenciador) AS credenciadora
                   , SUBSTR(LPAD(lct.nrcnpj_credenciador, 14, '0'), 1, 8) AS ispb
                FROM CECRED.TBDOMIC_LIQTRANS_LANCTO lct;
-         
-             
-      -- Consulta bancos liquidantes    
+
+
+      -- Consulta bancos liquidantes
       CURSOR cr_busca_liquidante IS
-          SELECT upper(decode(slc.cdispb_if_debitada, '00000000', 'BANCO DO BRASIL', ban.nmresbcc)) AS nome  
+          SELECT upper(decode(slc.cdispb_if_debitada, '00000000', 'BANCO DO BRASIL', ban.nmresbcc)) AS nome
                , slc.cdispb_if_debitada AS ispb
             FROM CECRED.TBDOMIC_LIQTRANS_MENSAGEM_SLC slc
                , CECRED.CRAPBAN ban
            WHERE slc.cdispb_if_debitada IS NOT NULL
-             AND ban.nrispbif = slc.cdispb_if_debitada 
+             AND ban.nrispbif = slc.cdispb_if_debitada
         GROUP BY upper(decode(slc.cdispb_if_debitada, '00000000', 'BANCO DO BRASIL', ban.nmresbcc))
-               , slc.cdispb_if_debitada 
+               , slc.cdispb_if_debitada
         ORDER BY nome;
-                                         
-                               
+
+
       BEGIN
-        
+
           gene0001.pc_informa_acesso(pr_module => 'CCRD0006');
 
           -- Monta documento XML
           dbms_lob.createtemporary(vr_clob, TRUE);
           dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-            
+
           -- Criar cabeçalho do XML
           GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                  ,pr_texto_completo => vr_xml_temp
                                  ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados><credenciadoras>');
-             
-          -- Iteracao credenciadoras                  
-          FOR rw_creden IN cr_busca_credenciadoras() LOOP                         
+
+          -- Iteracao credenciadoras
+          FOR rw_creden IN cr_busca_credenciadoras() LOOP
               GENE0002.pc_escreve_xml(
-                  pr_xml => vr_clob, 
+                  pr_xml => vr_clob,
                   pr_texto_completo => vr_xml_temp,
                   pr_texto_novo => '<item>' ||
                                    '<nome>' || TRIM(rw_creden.credenciadora) ||'</nome>' ||
                                    '<ispb>' || TRIM(rw_creden.ispb) ||'</ispb>' ||
-                                   '</item>');         
+                                   '</item>');
           END LOOP;
-             
+
           -- Escreve delimitador
           GENE0002.pc_escreve_xml(
-                  pr_xml => vr_clob, 
+                  pr_xml => vr_clob,
                   pr_texto_completo => vr_xml_temp,
                   pr_texto_novo => '</credenciadoras><liquidantes>');
-             
+
           -- Iteracao banco liquidante
-          FOR rw_liquid IN cr_busca_liquidante() LOOP                                              
+          FOR rw_liquid IN cr_busca_liquidante() LOOP
                GENE0002.pc_escreve_xml(
-                  pr_xml => vr_clob, 
+                  pr_xml => vr_clob,
                   pr_texto_completo => vr_xml_temp,
-                  pr_texto_novo => '<item>' || 
+                  pr_texto_novo => '<item>' ||
                                    '<nome>' || TRIM(rw_liquid.nome) ||'</nome>' ||
                                    '<ispb>' || TRIM(rw_liquid.ispb) ||'</ispb>' ||
-                                   '</item>');                             
+                                   '</item>');
           END LOOP;
-             
+
           -- Encerrar a tag raiz
           GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                  ,pr_texto_completo => vr_xml_temp
@@ -8992,8 +8999,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             -- Carregar XML padrão para variável de retorno não utilizada.
             -- Existe para satisfazer exigência da interface.
             pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                       
-                              
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
   END pc_busca_filtros;
 
   -- Rotina para retornar os arquivos processados
@@ -9010,14 +9017,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                              ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                             ,pr_des_erro OUT VARCHAR2 ) IS         --> Erros do processo          
+                             ,pr_des_erro OUT VARCHAR2 ) IS         --> Erros do processo
 
     -- Cursor sobre os arquivos processados
     CURSOR cr_tabela(pr_dtinicio DATE, pr_dtfinal DATE) IS
 select y.*
 from (
 select x.*,
-             upper( 
+             upper(
                  (select max(decode(slc.cdispb_if_debitada, '00000000', 'BANCO DO BRASIL',ban.nmresbcc))
                  from tbdomic_liqtrans_mensagem_slc slc
                       ,crapban ban
@@ -9078,7 +9085,7 @@ from  (
          OR   trunc(arq.dharquivo_gerado) BETWEEN pr_dtinicio AND pr_dtfinal)
          AND arq2.nmarquivo_origem(+) = arq.nmarquivo_gerado||'_ERR'
          AND (arq.tparquivo = pr_tparquivo OR (pr_tparquivo = 0 AND arq.tparquivo IN(1, 2, 3))) --filtro de tipo de arquivo
-       GROUP BY  arq.nmarquivo_origem, 
+       GROUP BY  arq.nmarquivo_origem,
                   lct.nmcredenciador,
                  to_char(to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD'),'DD/MM/YYYY'),
                  substr(arq.dharquivo_origem,12,5),
@@ -9089,15 +9096,15 @@ from  (
                  to_char(arq.dharquivo_gerado,'DD/MM/YYYY HH24:MI'),
                  to_char(to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD'),'DD/MM/YYYY'),
                  lct.nrcnpj_credenciador
-       ) x 
+       ) x
        ) y
        where  (SUBSTR(LPAD(y.nrcnpj_credenciador, 14, '0'), 1, 8)= pr_credenciadora OR (pr_credenciadora IS NULL)) --filtro credenciadora
               and (y.bcoliquidante is not null OR (pr_bcoliquidante IS NULL)) --filtro de bco liquidante
              ORDER BY y.nmarquivo;
-    
+
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
-      vr_dscritic   
+      vr_dscritic
          VARCHAR2(32000);
 
       -- Variaveis gerais
@@ -9245,8 +9252,8 @@ from  (
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_lista_arquivos;
-  
-  
+
+
   -- Rotina para exportacao completa dos arquivos da tela concip de acordo com os filtros
   PROCEDURE pc_exporta_arquivos(pr_dtinicio IN VARCHAR2           --> Data inicial do lancamento da consulta
                            ,pr_dtfinal  IN VARCHAR2               --> Data final do lancamento da consulta
@@ -9258,23 +9265,23 @@ from  (
                            ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                            ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo 
-                
+                           ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
           vr_dsdiretorio VARCHAR2(1000);       --> Local onde sera gerado o relatorio
           vr_nmarquivo   VARCHAR2(1000);       --> Nome do relatorio CSV
           vr_linha_csv   VARCHAR2(4000) := ''; --> Linhas csv
-          vr_xml_temp    VARCHAR2(32726):= ''; --> Temp xml/csv 
+          vr_xml_temp    VARCHAR2(32726):= ''; --> Temp xml/csv
           vr_clob        CLOB;                 --> Clob buffer do xml gerado
           vr_dtinicio    DATE;                 --> Data inicio periodo
           vr_dtfinal     DATE;                 --> Data final periodo
-                  
+
           -- Variável de críticas
           vr_cdcritic    crapcri.cdcritic%TYPE;
           vr_dscritic    VARCHAR2(32000);
           vr_tab_erro    GENE0001.typ_tab_erro;
           vr_des_reto    VARCHAR2(10);
           vr_typ_saida   VARCHAR2(3);
-                  
+
           -- Variaveis de log
           vr_cdoperad    VARCHAR2(100);
           vr_cdcooper_conectado NUMBER;
@@ -9283,11 +9290,11 @@ from  (
           vr_cdagenci    VARCHAR2(100);
           vr_nrdcaixa    VARCHAR2(100);
           vr_idorigem    VARCHAR2(100);
-                  
+
           -- Tratamento de erros
           vr_exc_saida   EXCEPTION;
-                  
-                  
+
+
           --busca arquivos recebidos
           CURSOR cr_busca_arquivo(pr_dtinicio DATE, pr_dtfinal DATE, pr_tparquivo NUMBER) IS
                  SELECT arq.nmarquivo_origem AS nmarquivo
@@ -9312,11 +9319,11 @@ from  (
                     AND (to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicio AND pr_dtfinal
                      OR trunc(arq.dharquivo_gerado) BETWEEN pr_dtinicio AND pr_dtfinal)
                     AND arq2.nmarquivo_origem(+) = arq.nmarquivo_gerado||'_ERR'
-                    AND (arq.tparquivo = pr_tparquivo OR (pr_tparquivo = 0 AND arq.tparquivo IN(1, 2, 3))) --filtro de tipo de arquivo  
+                    AND (arq.tparquivo = pr_tparquivo OR (pr_tparquivo = 0 AND arq.tparquivo IN(1, 2, 3))) --filtro de tipo de arquivo
                     AND (SUBSTR(LPAD(lct.nrcnpj_credenciador, 14, '0'), 1, 8) = pr_credenciadora OR (pr_credenciadora IS NULL)) --filtro credenciadora
                     AND slc.nrcnpj_nliquidante_debitado(+) = lct.nrcnpj_credenciador --amarra cpnj do lct com slc
                     AND ban.nrispbif(+) = slc.cdispb_if_debitada --pega nome pelo ispb
-                    AND (slc.cdispb_if_debitada = pr_bcoliquidante OR (pr_bcoliquidante IS NULL)) --filtro de bco liquidante        
+                    AND (slc.cdispb_if_debitada = pr_bcoliquidante OR (pr_bcoliquidante IS NULL)) --filtro de bco liquidante
                GROUP BY arq.nmarquivo_origem, slc.cdispb_if_debitada, ban.nmresbcc, lct.nmcredenciador
                       , to_char(to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD'),'DD/MM/YYYY')
                       , substr(arq.dharquivo_origem,12,5)
@@ -9327,12 +9334,12 @@ from  (
                       , to_char(arq.dharquivo_gerado,'DD/MM/YYYY HH24:MI')
                       , to_char(to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD'),'DD/MM/YYYY')
                ORDER BY arq.nmarquivo_origem;
-                       
-          --busca contas de cada arquivo     
+
+          --busca contas de cada arquivo
           CURSOR cr_busca_contas(pr_nmarquiv VARCHAR2, pr_tplancto VARCHAR2, pr_insituac NUMBER, pr_dtinicio DATE, pr_dtfinal DATE) IS
                  SELECT cop.cdcooper
                       , pag.cddregio AS reg
-                      , pas.cdagenci AS pa    
+                      , pas.cdagenci AS pa
                       , ctz.nrcta_centraliza AS nrdconta
                       , pdv.nmpdv AS nmpdv
                       , pdv.nrcnpjcpf_pdv AS nrcnpjcpf
@@ -9366,10 +9373,10 @@ from  (
                     AND pas.cdcooper = cop.cdcooper
                     AND pas.nrdconta = ctz.nrcta_centraliza
                     AND pag.cdcooper = pas.cdcooper
-                    AND pag.cdagenci = pas.cdagenci;               
-                       
+                    AND pag.cdagenci = pas.cdagenci;
+
       BEGIN
-        
+
       gene0001.pc_informa_acesso(pr_module => 'CCRD0006');
 
       -- Busca os dados do XML padrao
@@ -9382,22 +9389,22 @@ from  (
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
-                
+
          -- Inicializa CLOB
          dbms_lob.createtemporary(vr_clob, TRUE);
-         dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);           
-                 
+         dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+
          -- Diretorio dos arquivos
          vr_dsdiretorio := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'ROOT_DOMICILIO')||'/relatorios';
          vr_nmarquivo := 'CONCIP_'||to_char(SYSDATE,'HHMISS')||'.csv';
-                     
+
          -- Cabecalho do CSV
          GENE0002.pc_escreve_xml(
-            pr_xml => vr_clob, 
-            pr_texto_completo => vr_xml_temp, 
+            pr_xml => vr_clob,
+            pr_texto_completo => vr_xml_temp,
             pr_texto_novo => 'ARQUIVO;BCOLIQUIDANTE;CREDENCIADOR;DTINCLUSAO;DTLIQUIDACAO;ARQUIVO GERADO;COOPERATIVA;REGIONAL;PA;CONTA;NOME;CPF/CNPJ;LCT;DATA LCT;DATA ARQ;VALOR;SITUACAO;ERRO'||chr(10)
          );
-          
+
          -- Popula a data de inicio do lancamento
          IF TRIM(pr_dtinicio) IS NULL THEN
             vr_dtinicio := to_date('01/01/2000','dd/mm/yyyy');
@@ -9411,12 +9418,12 @@ from  (
          ELSE
             vr_dtfinal := to_date(pr_dtfinal,'dd/mm/yyyy');
          END IF;
-                       
+
          --iteracao entre arquivos/consulta liquidacoes
          FOR rw_arquivo IN cr_busca_arquivo(vr_dtinicio, vr_dtfinal, pr_tparquivo) LOOP
-                     
+
              FOR rw_conta IN cr_busca_contas(rw_arquivo.nmarquivo, rw_arquivo.tparquivo, 1, vr_dtinicio, vr_dtfinal) LOOP
-                         
+
                  vr_linha_csv := vr_linha_csv || rw_arquivo.nmarquivo || ';';
                  vr_linha_csv := vr_linha_csv || rw_arquivo.bcoliquidante || ';';
                  vr_linha_csv := vr_linha_csv || rw_arquivo.nmcredenciador || ';';
@@ -9435,74 +9442,74 @@ from  (
                  vr_linha_csv := vr_linha_csv || rw_conta.vllancamento || ';';
                  vr_linha_csv := vr_linha_csv || rw_conta.dssituacao || ';';
                  vr_linha_csv := vr_linha_csv || rw_conta.dserro || chr(10);
-                         
+
                  -- escreve linha no arquivo xml
                  GENE0002.pc_escreve_xml(
-                    pr_xml => vr_clob, 
-                    pr_texto_completo => vr_xml_temp, 
+                    pr_xml => vr_clob,
+                    pr_texto_completo => vr_xml_temp,
                     pr_texto_novo => vr_linha_csv
                  );
-                         
+
                  vr_linha_csv := '';
-                                                                       
+
              END LOOP;
-                     
+
          END LOOP;
-                 
+
          -- Encerrar o Clob
          GENE0002.pc_escreve_xml(
-            pr_xml => vr_clob, 
+            pr_xml => vr_clob,
             pr_texto_completo => vr_xml_temp,
-            pr_texto_novo => ' ', 
+            pr_texto_novo => ' ',
             pr_fecha_xml => TRUE
          );
 
          -- Gera o relatorio
          GENE0002.pc_clob_para_arquivo(
-            pr_clob => vr_clob, 
-            pr_caminho => vr_dsdiretorio, 
-            pr_arquivo => vr_nmarquivo, 
+            pr_clob => vr_clob,
+            pr_caminho => vr_dsdiretorio,
+            pr_arquivo => vr_nmarquivo,
             pr_des_erro => vr_dscritic
          );
-                 
+
          -- testa se tem critica
          IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
          END IF;
-                 
+
          -- copia arquivo do diretorio da cooperativa para servidor web
          GENE0002.pc_efetua_copia_pdf(
-            pr_cdcooper => vr_cdcooper_conectado, 
-            pr_cdagenci => NULL, 
-            pr_nrdcaixa => NULL, 
-            pr_nmarqpdf => vr_dsdiretorio||'/'||vr_nmarquivo, 
-            pr_des_reto => vr_des_reto, 
+            pr_cdcooper => vr_cdcooper_conectado,
+            pr_cdagenci => NULL,
+            pr_nrdcaixa => NULL,
+            pr_nmarqpdf => vr_dsdiretorio||'/'||vr_nmarquivo,
+            pr_des_reto => vr_des_reto,
             pr_tab_erro => vr_tab_erro
          );
-                 
+
          -- Remover relatorio do diretorio padrao da cooperativa
          gene0001.pc_OScommand(
             pr_typ_comando => 'S',
             pr_des_comando => 'rm '||vr_dsdiretorio||'/'||vr_nmarquivo,
             pr_typ_saida   => vr_typ_saida,
             pr_des_saida   => vr_dscritic
-         ); 
-        
+         );
+
          -- Se retornou erro
          IF vr_typ_saida = 'ERR' OR vr_dscritic IS NOT null THEN
             -- Concatena o erro que veio
             vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
             RAISE vr_exc_saida; -- encerra programa
          END IF;
-         
+
          -- Criar XML de retorno para uso na Web
          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqcsv>' || vr_nmarquivo|| '</nmarqcsv>');
-                
+
          -- Libera a memoria do CLOB
          dbms_lob.close(vr_clob);
          dbms_lob.freetemporary(vr_clob);
 
-                 
+
          EXCEPTION
             WHEN vr_exc_saida THEN
 
@@ -9525,7 +9532,7 @@ from  (
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
 
-         
+
   END pc_exporta_arquivos;
 
   -- Rotina para retornar os arquivos processados
@@ -9599,8 +9606,8 @@ from  (
          AND upper(arq.nmarquivo_origem) = nvl(upper(pr_nmarquiv),upper(arq.nmarquivo_origem))
          AND mte.cderro(+) = pdv.dsocorrencia_retorno
          AND arj.cdarranjopagamento = pdv.cdinst_arranjo_pagamento; --amarra arranjo
-           
-        
+
+
       -- Cursor sobre os associados
       CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
                         pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -9642,9 +9649,9 @@ from  (
                                  dserro   tbdomic_arq_lancto_cartoes.dserro%TYPE,
                                  formatransf tbdomic_liqtrans_pdv.tpforma_transf%TYPE,
                                  cdarranjo tbdomic_liqtrans_pdv.cdinst_arranjo_pagamento%TYPE,
-                                 sigarranjo tbdomic_arranjo_pagamento.siglaarranjopagamento%TYPE, 
+                                 sigarranjo tbdomic_arranjo_pagamento.siglaarranjopagamento%TYPE,
                                  nmarranjo tbdomic_arranjo_pagamento.nmarranjopagamento%TYPE);
-                                
+
       type typ_tab_resumo IS TABLE OF typ_resumo INDEX BY VARCHAR2(45);
       vr_resumo       typ_tab_resumo;
       -- O índice da pl/table é nmrescop(20)+cdregio(5)+cdagenci(5)+nrdconta(10)+sequencial(5)
@@ -9891,7 +9898,7 @@ from  (
                                                             '<cdarranjo>'   || vr_resumo(vr_indice).cdarranjo   ||'</cdarranjo>'   ||
                                                             '<sigarranjo>'  || vr_resumo(vr_indice).sigarranjo  ||'</sigarranjo>'  ||
                                                             '<nmarranjo>'   || vr_resumo(vr_indice).nmarranjo   ||'</nmarranjo>'   ||
-                                                         '</inf>');    
+                                                         '</inf>');
             vr_contador := vr_contador + 1;
           END IF;
 
@@ -10018,7 +10025,7 @@ from  (
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_lista_contas;
-  
+
   -- Rotina para retornar as conciliacoes liquidacao STR
   PROCEDURE pc_lista_conciliacao(pr_dtlcto   IN VARCHAR2               --> Data lcto consulta
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -10027,13 +10034,13 @@ from  (
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
-       
+
        vr_xml_temp VARCHAR2(32726) := '';
        vr_clob     CLOB;
 
        -- Tratamento de erros
        vr_exc_saida     EXCEPTION;
-      
+
        -- Variável de críticas
        vr_cdcritic      crapcri.cdcritic%TYPE;
        vr_dscritic      VARCHAR2(32000);
@@ -10042,12 +10049,12 @@ from  (
        vr_typ_saida      VARCHAR2(3);
 
 
-       -- cursor lista liquidacao STR                          
+       -- cursor lista liquidacao STR
        CURSOR cr_lista IS
               SELECT cred.qdecreditado
                    , cred.vlcreditado
                    , rece.qdepagamentos
-                   , rece.vlpagamentos  
+                   , rece.vlpagamentos
                 FROM (SELECT count(1) AS qdecreditado
                            , sum(pdv.vlpagamento) AS vlcreditado
                         FROM cecred.tbdomic_liqtrans_pdv pdv
@@ -10059,34 +10066,34 @@ from  (
                            , sum(str.vllancamento) vlpagamentos
                         FROM cecred.tbdomic_liqtrans_msg_ltrstr str
                        WHERE str.cdmsg = 'STR0006R2'
-                         AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
+                         AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;
 
-                           
+
   BEGIN
        gene0001.pc_informa_acesso(pr_module => 'CCRD0006');
 
        -- Monta documento XML
        dbms_lob.createtemporary(vr_clob, TRUE);
        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-          
+
        -- Criar cabeçalho do XML
        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                               ,pr_texto_completo => vr_xml_temp
                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
-           
-       -- Iteracao liquidacao                  
-       FOR rw_lista IN cr_lista() LOOP                         
+
+       -- Iteracao liquidacao
+       FOR rw_lista IN cr_lista() LOOP
            GENE0002.pc_escreve_xml(
-                pr_xml => vr_clob, 
+                pr_xml => vr_clob,
                 pr_texto_completo => vr_xml_temp,
                 pr_texto_novo => '<item>' ||
                                  '<qdecreditado>' || TRIM(rw_lista.qdecreditado) ||'</qdecreditado>' ||
                                  '<vlcreditado>' || TRIM(rw_lista.vlcreditado) ||'</vlcreditado>' ||
                                  '<qdepagamentos>' || TRIM(rw_lista.qdepagamentos) ||'</qdepagamentos>' ||
                                  '<vlpagamentos>' || TRIM(rw_lista.vlpagamentos) ||'</vlpagamentos>' ||
-                                 '</item>');         
+                                 '</item>');
        END LOOP;
-           
+
        -- Encerrar a tag raiz
        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                               ,pr_texto_completo => vr_xml_temp
@@ -10118,11 +10125,11 @@ from  (
                  -- Carregar XML padrão para variável de retorno não utilizada.
                  -- Existe para satisfazer exigência da interface.
                  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                           
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
-       
-  END pc_lista_conciliacao;                             
-                              
+
+  END pc_lista_conciliacao;
+
 
 
 
@@ -10529,7 +10536,7 @@ from  (
           ,DHSLC
           ,DTMOVIMENTO
           ,INSITUACAO
-          ,TPTRANSACAO_SLC 
+          ,TPTRANSACAO_SLC
           ,NMARQUIVO_SLC
           ,CDCONTROLE_SLC_ORIGINAL
           ,TPDEVOLUCAO_LIQUIDACAO
@@ -10562,7 +10569,7 @@ from  (
           );
 
   EXCEPTION
-     when DUP_VAL_ON_INDEX THEN 
+     when DUP_VAL_ON_INDEX THEN
         NULL;
      WHEN OTHERS THEN
         pr_dscritic := 'ERRO ao tentar incluir registro na tabela TBDOMIC_LIQTRANS_MENSAGEM_SLC: '||SQLERRM;
@@ -10823,585 +10830,6 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
         RETURN;
 
   END;
-/*
-  PROCEDURE pc_processa_reg_pendentes_orig(pr_dtprocesso IN DATE
-                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                          ,pr_dscritic OUT VARCHAR2)  IS
-
-    -- Registro de data
-    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
-    -- Cursor sobre os registros pendentes
-
-    CURSOR cr_lancamento IS
-      SELECT  arq.idarquivo
-             ,lct.nrcnpj_credenciador
-             ,lct.nrcnpjbase_principal
-             ,arq.tparquivo
-             ,to_date(arq.dtreferencia,'YYYY-MM-DD') dtreferencia
-             ,lct.dhprocessamento
-             ,lct.idlancto
-             ,pdv.tpforma_transf
-             ,sum(pdv.vlpagamento) vlpagamento
-         FROM tbdomic_liqtrans_lancto lct
-             ,tbdomic_liqtrans_arquivo arq
-             ,tbdomic_liqtrans_centraliza ctz
-             ,tbdomic_liqtrans_pdv pdv
-        WHERE lct.idarquivo = arq.idarquivo
-          AND ctz.idlancto = lct.idlancto
-          AND pdv.idcentraliza = ctz.idcentraliza
-          AND lct.insituacao = 0 -- Pendente
-                                 -- No final será alterado a situacao para 1-Processado
-     GROUP BY arq.idarquivo, lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, arq.tparquivo, to_date(arq.dtreferencia,'YYYY-MM-DD'), lct.dhprocessamento, lct.idlancto, pdv.tpforma_transf
-     ORDER BY arq.tparquivo,lct.nrcnpj_credenciador, lct.nrcnpjbase_principal, to_date(arq.dtreferencia,'YYYY-MM-DD');
-
-    -- Cursor para informações dos lançamentos
-    CURSOR cr_tabela(pr_idlancto tbdomic_liqtrans_lancto.idlancto%TYPE) IS
-      SELECT pdv.nrliquidacao
-            ,ctz.nrcnpjcpf_centraliza
-            ,ctz.tppessoa_centraliza
-            ,ctz.cdagencia_centraliza
-            ,ctz.nrcta_centraliza
-            ,pdv.vlpagamento
-            ,to_date(pdv.dtpagamento,'YYYY-MM-DD') dtpagamento
-            ,pdv.idpdv
-        FROM tbdomic_liqtrans_centraliza ctz
-            ,tbdomic_liqtrans_pdv pdv
-       WHERE ctz.idlancto = pr_idlancto
-         AND pdv.idcentraliza = ctz.idcentraliza
-       ORDER BY ctz.cdagencia_centraliza,ctz.nrcta_centraliza,to_date(pdv.dtpagamento,'YYYY-MM-DD');
-
-    -- Cursor sobre as agencias
-    CURSOR cr_crapcop IS
-      SELECT cdcooper,
-             cdagectl,
-             nmrescop,
-             flgativo
-        FROM crapcop;
-
-    -- Cursor sobre os associados
-    CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE,
-                      pr_nrdconta crapass.nrdconta%TYPE) IS
-      SELECT nrcpfcgc,
-             inpessoa
-        FROM crapass
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;
-
-    CURSOR cr_craptco (pr_cdcopant IN crapcop.cdcooper%TYPE,
-                       pr_nrctaant IN craptco.nrctaant%TYPE) IS
-      SELECT tco.nrdconta,
-             tco.cdcooper
-        FROM craptco tco
-       WHERE tco.cdcopant = pr_cdcopant
-         AND tco.nrctaant = pr_nrctaant;
-    rw_craptco cr_craptco%ROWTYPE;
-
-    CURSOR cr_antecip IS
-      SELECT  distinct arq.idarquivo
-             ,lct.nrcnpj_credenciador
-             ,to_date(arq.dtreferencia,'YYYY-MM-DD') dtreferencia
-             ,substr(arq.dharquivo_origem,1,10)||' '||substr(arq.dharquivo_origem,12) dharquivo_origem
-         FROM tbdomic_liqtrans_lancto lct
-             ,tbdomic_liqtrans_arquivo arq
-             ,tbdomic_liqtrans_centraliza ctz
-             ,tbdomic_liqtrans_pdv pdv
-        WHERE lct.idarquivo = arq.idarquivo
-          AND ctz.idlancto = lct.idlancto
-          AND pdv.idcentraliza = ctz.idcentraliza
-          AND lct.insituacao = 0
-          AND arq.tparquivo  = 3
-          AND to_date(substr(arq.dharquivo_origem,1,10)||substr(arq.dharquivo_origem,12),'YYYY-MM-DDHH24:MI:SS') < SYSDATE-1/24*1
-        ORDER BY 4;
-
-    -- PL/Table para armazenar as agencias
-    type typ_crapcop IS RECORD (cdcooper crapcop.cdcooper%TYPE,
-                                nmrescop crapcop.nmrescop%TYPE,
-                                flgativo crapcop.flgativo%TYPE);
-    type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
-    vr_crapcop       typ_tab_crapcop;
-
-    -- Variável de críticas
-    vr_cdcritic      crapcri.cdcritic%TYPE;
-    vr_dscritic      VARCHAR2(32000);
-
-    -- Tratamento de erros
-    vr_exc_saida     EXCEPTION;
-    vr_erro          EXCEPTION;
-
-
-    -- Variaveis gerais
-    vr_nrseqdiglcm   craplcm.nrseqdig%TYPE;
-    vr_nrseqdiglau   craplau.nrseqdig%TYPE;
-    vr_dserro        VARCHAR2(100);         --> Variavel de erro
-    vr_dserro_arq    VARCHAR2(100);         --> Variavel de erro do reg arquivo
-    vr_cdocorr       VARCHAR2(2) := NULL;   --> Código de ocorrencia do pdv
-    vr_cdocorr_arq   VARCHAR2(2) := NULL;   --> Código de ocorrencia do reg arquivo
-    vr_inpessoa      crapass.inpessoa%TYPE; --> Indicador de tipo de pessoa
-    vr_cdcooper      crapcop.cdcooper%TYPE; --> Codigo da cooperativa
-    vr_cdhistor      craphis.cdhistor%TYPE; --> Codigo do historico do lancamento
-    vr_nrdolote      craplcm.nrdolote%TYPE; --> Numero do lote
-    vr_qterros       PLS_INTEGER := 0;      --> Quantidade de registros com erro
-    vr_qtprocessados PLS_INTEGER := 0;      --> Quantidade de registros processados
-    vr_qtfuturos     PLS_INTEGER := 0;      --> Quantidade de lancamentos futuros processados
-    vr_inlctfut      VARCHAR2(01);          --> Indicador de lancamento futuro
-
-    vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
-    vr_nrdconta      crapass.nrdconta%TYPE;
-    vr_cdcooper_lcm  craplcm.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
-    vr_cdcooper_lau  craplau.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
-    vr_dtprocesso    crapdat.dtmvtolt%TYPE; --> Data da cooperativa
-
-  BEGIN
-
-    -- Popula a pl/table de agencia
-    FOR rw_crapcop IN cr_crapcop LOOP
-      vr_crapcop(rw_crapcop.cdagectl).cdcooper := rw_crapcop.cdcooper;
-      vr_crapcop(rw_crapcop.cdagectl).nmrescop := rw_crapcop.nmrescop;
-      vr_crapcop(rw_crapcop.cdagectl).flgativo := rw_crapcop.flgativo;
-    END LOOP;
-
-    -- Efetua loop sobre os registros pendentes
-    FOR rw_lancamento IN cr_lancamento LOOP
-
-      -- Limpa variaveis de controle de quebra para gravacao da craplcm e craplau
-      -- Como trata-se de um novo tipo de arquivo precisa-se limpar pois o numero
-      -- do lote será alterado.
-      vr_cdcooper_lcm := 0;
-      vr_cdcooper_lau := 0;
-
-      -- Limpa a variavel de erro
-      vr_dserro_arq   := NULL;
-      vr_cdocorr_arq  := NULL;
-      -- Criticar tipo de arquivo.
-      IF rw_lancamento.tparquivo NOT in (1,2,3) THEN
-        vr_dserro_arq  := 'Tipo de arquivo ('||rw_lancamento.tparquivo||') nao previsto.';
-        vr_cdocorr_arq := '99';
-      END IF;
-
-      IF ((rw_lancamento.tparquivo <> 3) OR
-        (rw_lancamento.tparquivo = 3 AND ccrd0006.fn_valida_liquid_antecipacao(rw_lancamento.vlpagamento, rw_lancamento.nrcnpjbase_principal, rw_lancamento.dtreferencia, rw_lancamento.tpforma_transf, 'S') = 'S')) THEN
-
-        FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto) LOOP
-          -- Limpa a variavel de erro
-          vr_dserro  := NULL;
-          vr_cdocorr := NULL;
-
-          -- Efetua todas as consistencias dentro deste BEGIN
-          BEGIN
-            -- se existe erro a nível de arquivo/lancamento jogará para todos os
-            -- registros PDV este erro
-            IF NVL(vr_cdocorr_arq,'00') <> '00' THEN
-              vr_dserro  := vr_dserro_arq;
-              vr_cdocorr := vr_cdocorr_arq;
-              RAISE vr_erro;
-            END IF;
-
-            -- Atualiza o indicador de inpessoa
-            IF rw_tabela.tppessoa_centraliza = 'F' THEN
-              vr_inpessoa := 1;
-            ELSIF rw_tabela.tppessoa_centraliza = 'J' THEN
-              vr_inpessoa := 2;
-            ELSE
-              vr_dserro := 'Indicador de pessoa ('||rw_tabela.tppessoa_centraliza||') nao previsto.';
-              vr_cdocorr := '99';
-              RAISE vr_erro;
-            END IF;
-
-            -- Verifica se a agencia informada existe
-            IF NOT vr_crapcop.exists(rw_tabela.cdagencia_centraliza) THEN
-              vr_dserro := 'Agencia informada ('||rw_tabela.cdagencia_centraliza||') nao cadastrada.';
-              vr_cdocorr := '08';
-              RAISE vr_erro;
-            END IF;
-
-            IF rw_tabela.vlpagamento = 0 OR rw_tabela.vlpagamento < 0 THEN
-              vr_dserro := 'Valor do lancamento zerado ou negativo';
-              vr_cdocorr := '99';
-              RAISE vr_erro;
-            END IF;
-
-            IF vr_crapcop(rw_tabela.cdagencia_centraliza).flgativo = 0 THEN
-
-              OPEN cr_craptco (pr_cdcopant => vr_crapcop(rw_tabela.cdagencia_centraliza).cdcooper,
-                               pr_nrctaant => rw_tabela.nrcta_centraliza);
-              FETCH cr_craptco INTO rw_craptco;
-
-              IF cr_craptco%FOUND THEN
-                vr_nrdconta := rw_craptco.nrdconta;
-                vr_coopdest := rw_craptco.cdcooper;
-              ELSE
-                vr_nrdconta := 0;
-                vr_coopdest := 0;
-              END IF;
-
-              CLOSE cr_craptco;
-
-            ELSE
-              vr_nrdconta := rw_tabela.nrcta_centraliza;
-              vr_coopdest := vr_crapcop(rw_tabela.cdagencia_centraliza).cdcooper;
-            END IF;
-
-            -- Busca a data da cooperativa
-            -- foi incluido aqui pois pode existir contas transferidas
-            OPEN btch0001.cr_crapdat(vr_coopdest);
-            FETCH btch0001.cr_crapdat INTO rw_crapdat;
-            CLOSE btch0001.cr_crapdat;
-
-            --Alterado para utilizar a data do parâmetro, se for diferente de NULL
-            --IF vr_database_name = 'AYLLOSD' THEN
-            IF pr_dtprocesso IS NULL THEN
-              IF rw_crapdat.inproces > 1 THEN  -- Está executando cadeia
-                vr_dtprocesso := rw_crapdat.dtmvtopr;
-              ELSE
-                vr_dtprocesso := rw_crapdat.dtmvtolt;
-              END IF;
-            ELSE
-              vr_dtprocesso   := nvl(pr_dtprocesso,trunc(sysdate));
-            END IF;
-
-            -- Não pode processar data de pagamento anterior
-            IF rw_tabela.dtpagamento < vr_dtprocesso THEN
-              vr_dserro := 'Data de pagamento menor que a data da cooperativa';
-              vr_cdocorr := '03';
-              RAISE vr_erro;
-            END IF;
-
-            -- Busca os dados do associado
-            OPEN cr_crapass(vr_coopdest, vr_nrdconta);
-            FETCH cr_crapass INTO rw_crapass;
-            IF cr_crapass%NOTFOUND THEN -- Se nao encontrar, deve-se gerar inconsistencia
-              CLOSE cr_crapass;
-              vr_dserro := 'Conta do associado ('||GENE0002.fn_mask_conta(rw_tabela.nrcta_centraliza)||') inexistente para a cooperativa '||
-                           vr_crapcop(rw_tabela.cdagencia_centraliza).nmrescop||'.';
-              vr_cdocorr := '10';
-              RAISE vr_erro;
-            END IF;
-            CLOSE cr_crapass;
-
-            -- Efetua consistencia sobre o associado
-            IF rw_crapass.inpessoa <> vr_inpessoa THEN
-              vr_dserro := 'Associado eh uma pessoa ';
-              IF rw_crapass.inpessoa = 1 THEN
-                vr_dserro := vr_dserro ||'fisica, porem foi enviado um ';
-              ELSE
-                vr_dserro := vr_dserro ||'juridica, porem foi enviado um ';
-              END IF;
-              IF vr_inpessoa = 1 THEN
-                vr_dserro := vr_dserro ||'CPF.';
-              ELSE
-                vr_dserro := vr_dserro ||'CNPJ.';
-              END IF;
-              vr_cdocorr := '11';
-              RAISE vr_erro;
-            ELSIF rw_crapass.nrcpfcgc <> rw_tabela.nrcnpjcpf_centraliza AND rw_crapass.inpessoa = 1 THEN
-              vr_dserro := 'CPF informado ('||GENE0002.fn_mask_cpf_cnpj(rw_tabela.nrcnpjcpf_centraliza,vr_inpessoa)||
-                             ') difere do CPF do associado ('||GENE0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa)||').';
-              vr_cdocorr := '11';
-              RAISE vr_erro;
-            ELSIF substr(lpad(rw_crapass.nrcpfcgc,14,0),1,8) <> substr(lpad(rw_tabela.nrcnpjcpf_centraliza,14,0),1,8) AND rw_crapass.inpessoa = 2 then
-              vr_dserro := 'CNPJ informado ('||substr(lpad(rw_tabela.nrcnpjcpf_centraliza,14,0),1,8)||
-                           ') difere do CNPJ do associado ('||substr(lpad(rw_crapass.nrcpfcgc,14,0),1,8)||').';
-              vr_cdocorr := '11';
-              RAISE vr_erro;
-            END IF;
-
-          EXCEPTION
-            WHEN vr_erro THEN
-              NULL;
-          END;
-
-          vr_nrdolote := 9666;  -- Conforme validado em 22/11/2017
-
-          -- Atualiza os historicos de lancamento
-          IF rw_lancamento.tparquivo = 1 THEN    -- crédito
-             IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
-               vr_cdhistor := 2444;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
-               vr_cdhistor := 2546;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN -- SIPAG
-               vr_cdhistor := 2443;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 01425787000104 THEN -- REDECARD
-               vr_cdhistor := 2442;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 16501555000157 THEN -- STONE
-               vr_cdhistor := 2450;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
-               vr_cdhistor := 2453;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
-               vr_cdhistor := 2478;
-             ELSE  -- OUTROS CREDENCIADORES
-               vr_cdhistor := 2445;
-             END IF;
-          ELSIF rw_lancamento.tparquivo = 2 THEN -- débito
-             IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
-               vr_cdhistor := 2448;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
-               vr_cdhistor := 2547;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN -- SIPAG
-               vr_cdhistor := 2447;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 01425787000104 THEN -- REDECARD
-               vr_cdhistor := 2446;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 16501555000157 THEN -- STONE
-               vr_cdhistor := 2451;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
-               vr_cdhistor := 2413;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
-               vr_cdhistor := 2479;
-             ELSE  -- OUTROS CREDENCIADORES
-               vr_cdhistor := 2449;
-             END IF;
-          ELSE                                 -- antecipação
-             IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN -- BRADESCO
-               vr_cdhistor := 2456;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN -- CIELO
-               vr_cdhistor := 2548;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN -- SIPAG
-               vr_cdhistor := 2455;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 01425787000104 THEN -- REDECARD
-               vr_cdhistor := 2454;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 16501555000157 THEN -- STONE
-               vr_cdhistor := 2452;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN -- ELAVON
-               vr_cdhistor := 2414;
-             ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN -- BANRISUL
-               vr_cdhistor := 2480;
-             ELSE  -- OUTROS CREDENCIADORES
-               vr_cdhistor := 2457;
-             END IF;
-         END IF;
-
-          -- Se nao existir erro, insere o lancamento
-          IF vr_cdocorr IS NULL AND
-             rw_tabela.dtpagamento = vr_dtprocesso THEN -- Integrar na craplcm e atualizar
-                                                        -- dtdebito se existir na craplau
-
-            -- Atualiza a cooperativa
-            vr_cdcooper := vr_coopdest;
-
-            -- procura ultima sequencia do lote pra jogar em vr_nrseqdiglcm
-            pr_cdcritic := null;
-            vr_dscritic := null;
-            vr_cdcooper_lcm := vr_cdcooper; -- salva a nova cooperativa para a quebra
-            pc_procura_ultseq_craplcm (pr_cdcooper    => vr_cdcooper
-                                      ,pr_dtmvtolt    => vr_dtprocesso
-                                      ,pr_cdagenci    => 1
-                                      ,pr_cdbccxlt    => 100
-                                      ,pr_nrdolote    => vr_nrdolote
-                                      ,pr_nrseqdiglcm => vr_nrseqdiglcm
-                                      ,pr_cdcritic    => vr_cdcritic
-                                      ,pr_dscritic    => vr_dscritic);
-
-            IF vr_dscritic is not null then
-              RAISE vr_exc_saida;
-            END IF;
-
-            -- insere o registro na tabela de lancamentos
-            BEGIN
-              INSERT INTO craplcm
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 nrseqdig,
-                 vllanmto,
-                 nrdctabb,
-                 nrdctitg,
-                 cdcooper,
-                 dtrefere,
-                 cdoperad,
-                 CDPESQBB)
-              VALUES
-                (vr_dtprocesso,                                     --dtmvtolt
-                 1,                                                 --cdagenci
-                 100,                                               --cdbccxlt
-                 vr_nrdolote,                                       --nrdolote
-                 vr_nrdconta,                                       --nrdconta
-                 vr_nrseqdiglcm,                                    --nrdocmto
-                 vr_cdhistor,                                       --cdhistor
-                 vr_nrseqdiglcm,                                    --nrseqdig
-                 rw_tabela.vlpagamento,                             --vllanmto
-                 vr_nrdconta,                                       --nrdctabb
-                 GENE0002.fn_mask(vr_nrdconta,'99999999'),          --nrdctitg
-                 vr_cdcooper,                                       --cdcooper
-                 rw_tabela.dtpagamento,                             --dtrefere
-                 '1',                                               --cdoperad
-                 rw_tabela.nrliquidacao);                           --CDPESQBB
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
-
-            -- Atualiza data de débito na craplau
-            BEGIN
-              UPDATE craplau
-                 SET dtdebito = vr_dtprocesso
-               WHERE cdcooper = vr_cdcooper
-                 AND dtmvtopg = rw_tabela.dtpagamento
-                 AND nrdconta = vr_nrdconta
-                 AND cdseqtel = rw_tabela.nrliquidacao;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao atualizar tabela CRAPLAU - dtdebito : '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
-
-            vr_qtprocessados := vr_qtprocessados + 1;
-
-          END IF;
-
-
-          IF vr_cdocorr IS NULL AND
-             rw_tabela.dtpagamento > vr_dtprocesso THEN -- Integrar na craplau
-
-            -- Atualiza a cooperativa
-            vr_cdcooper := vr_coopdest;
-
-            -- procura ultima sequencia do lote pra jogar em vr_nrseqdiglcm
-            vr_cdcritic := null;
-            vr_dscritic := null;
-            vr_cdcooper_lau := vr_cdcooper;
-
-            pc_procura_ultseq_craplau (pr_cdcooper    => vr_cdcooper
-                                      ,pr_dtmvtolt    => vr_dtprocesso
-                                      ,pr_cdagenci    => 1
-                                      ,pr_cdbccxlt    => 100
-                                      ,pr_nrdolote    => vr_nrdolote
-                                      ,pr_nrseqdiglau => vr_nrseqdiglau
-                                      ,pr_cdcritic    => vr_cdcritic
-                                      ,pr_dscritic    => vr_dscritic);
-
-            IF vr_dscritic is not null then
-              RAISE vr_exc_saida;
-            END IF;
-
-            -- insere o registro na tabela de lancamentos
-            BEGIN
-              INSERT INTO craplau
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 nrseqdig,
-                 vllanaut,
-                 nrdctabb,
-                 nrdctitg,
-                 cdcooper,
-                 dtmvtopg,
-  --               cdoperad,
-                 cdseqtel,
-                 dsorigem)
-              VALUES
-                (vr_dtprocesso,                                     --dtmvtolt
-                 1,                                                 --cdagenci
-                 100,                                               --cdbccxlt
-                 vr_nrdolote,                                       --nrdolote
-                 vr_nrdconta,                                       --nrdconta
-                 vr_nrseqdiglau,                                    --nrdocmto
-                 vr_cdhistor,                                       --cdhistor
-                 vr_nrseqdiglau,                                    --nrseqdig
-                 rw_tabela.vlpagamento,                             --vllanaut
-                 vr_nrdconta,                                       --nrdctabb
-                 GENE0002.fn_mask(vr_nrdconta,'99999999'),          --nrdctitg
-                 vr_cdcooper,                                       --cdcooper
-                 rw_tabela.dtpagamento,                             --dtrefere
-  --               '1',                                               --cdoperad
-                 rw_tabela.nrliquidacao,                            --cdseqtel
-                 'DOMICILIO');                                      --dsorigem
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir CRAPLAU: '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
-
-            vr_qtfuturos := vr_qtfuturos + 1;
-
-          END IF;
-
-          IF nvl(vr_cdocorr,'00') <> '00' THEN
-            vr_qterros := vr_qterros + 1;
-          END IF;
-
-          IF nvl(vr_cdocorr,'00') = '00' THEN
-            IF rw_tabela.dtpagamento > vr_dtprocesso THEN
-               IF rw_lancamento.tparquivo = 1 THEN    -- crédito
-                  vr_cdocorr := '01'; -- agendamento de transação efetuado com sucesso --
-               END IF;
-            END IF;
-          END IF;
-
-          -- Efetua a atualizacao da tabela de liquidacao pdv
-
-          BEGIN
-            UPDATE tbdomic_liqtrans_pdv
-               SET cdocorrencia = NVL(vr_cdocorr,'00')
-                  ,dserro = vr_dserro
-             WHERE idpdv = rw_tabela.idpdv;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_pdv: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
-
-        END LOOP;  -- loop cr_tabela
-
-        -- Efetua a atualizacao da situacao na tabela de lancamentos
-        BEGIN
-          UPDATE tbdomic_liqtrans_lancto
-             SET insituacao = 1 -- processado
-                ,dhprocessamento = SYSDATE
-           WHERE idlancto = rw_lancamento.idlancto;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-
-      END IF;
-    END LOOP;  -- loop cr_lancamento
-
-    -- Se possuir algum registro com erro ou processado
-    IF vr_qtprocessados > 0 OR vr_qterros > 0 OR vr_qtfuturos > 0 THEN
-      -- Gera log de quantidade de registros processados
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
-                                ,pr_ind_tipo_log => 1 -- Aviso
-                                ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                 || 'Registros processados com sucesso: '||vr_qtprocessados
-                                                 || '. Registros futuros processados com sucesso: '||vr_qtfuturos
-                                                 || '. Registros com erro: '||vr_qterros||'.'
-                                ,pr_nmarqlog => 'CONSLC');
-    END IF;
-
-    COMMIT;
-
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      ELSE
-        pr_dscritic := vr_dscritic;
-      END IF;
-      pr_cdcritic := vr_cdcritic;
-      -- Efetuar rollback
-      ROLLBACK;
-    WHEN OTHERS THEN
-      -- Efetuar retorno do erro não tratado
-      pr_cdcritic := 0;
-      pr_dscritic := sqlerrm;
-      -- Efetuar rollback
-      ROLLBACK;
-
-  END; -- pc_processa_reg_pendentes --
-*/
   PROCEDURE gera_arquivo_xml_33_cancel (pr_dscritic IN OUT VARCHAR2) IS
 
     CURSOR c0 IS
