@@ -48,16 +48,13 @@
 
 		$xmlResult = mensageria($xml, "PREJ0003", "TRANSF_PREJUIZO_CC", 
 			$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
-			$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");    
+			$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>"); 
 
 		$xmlObjeto = getObjectXML($xmlResult);
 	
-		$error = $xmlObj->Erro->Registro->erro;
-		if ($error == "yes"){
-			$msgErro = utf8_decode($xmlObj->Erro->Registro->dscritic);
-			echo 'hideMsgAguardo();';
-			echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","trocaBotao(\'estadoInicial()\',\'ajustaBotaoContinuar()\',\'Continuar\');$(\'#nrctremp\',\'#frmEstornoPrejuizo\').focus();");';
-			exit();
+		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+			$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibirErro('error',$msgErro,'Alerta - Ayllos','unblockBackground()',false);
 		}else{
 			echo 'hideMsgAguardo();';
 			echo 'showError("inform","Transferência a prejuízo de conta corrente efetuada com sucesso.","Alerta - Ayllos","trocaBotao(\'estadoInicial()\',\'ajustaBotaoContinuar()\',\'Continuar\');$(\'#nrctremp\',\'#frmEstornoPrejuizo\').focus();");';
