@@ -288,6 +288,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --        
   --         28/06/2018 - Remover caracteres especiais ao inserir na tabela craplcm, para o campo dscedent.
   --                      (Alcemir Mout's) - PRB0040107.
+  --
+  --         18/07/2018 - Inclusão de pc_internal_exception nas exceptions others da procedure pc_paga_titulo
+  --                      (André Bohn Mout's) - PRB0040172
   
   
   ---------------------------------------------------------------------------------------------------------------
@@ -9821,8 +9824,35 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         RETURNING craplcm.ROWID INTO rw_craplcm.rowid;
       EXCEPTION
         WHEN Others THEN
+          declare
+            vr_dscomplemento varchar2(4000) := null;
+          begin
+            vr_dscomplemento := rw_crapaut.cdcooper                              -- cdcooper
+                                ||'-'|| rw_crapaut.dtmvtolt 					 -- dtmvtolt
+                                ||'-'|| rw_crapaut.cdagenci                      -- cdagenci
+                                ||'-'|| 11                                       -- cdbccxlt
+                                ||'-'|| 11900                                    -- nrdolote
+                                ||'-'|| rw_crapaut.dtmvtolt                      -- dtrefere
+                                ||'-'|| gene0002.fn_busca_time                   -- hrtransa
+                                ||'-'|| rw_crapaut.cdopecxa                      -- cdoperad
+                                ||'-'|| pr_nrdconta                              -- nrdconta
+                                ||'-'|| pr_nrdconta                              -- nrdctabb
+                                ||'-'|| gene0002.fn_mask(pr_nrdconta,'99999999') -- nrdctitg
+                                ||'-'|| rw_craplot.nrseqdig                      -- nrdocmto
+                                ||'-'|| rw_craplot.nrseqdig                      -- nrsequni
+                                ||'-'|| rw_craplot.nrseqdig                      -- nrseqdig
+                                ||'-'|| rw_crapaut.cdhistor                      -- cdhistor
+                                ||'-'|| rw_crapaut.vldocmto                      -- vllanmto
+                                ||'-'|| rw_crapaut.nrsequen                      -- nrautdoc
+                                ||'-'|| Upper(GENE0007.fn_caract_acento(pr_dscedent,1)) -- dscedent
+                                ||'-'|| pr_cdcoptfn                              -- cdcoptfn
+                                ||'-'|| pr_cdagetfn                              -- cdagetfn
+                                ||'-'|| pr_nrterfin                              -- nrterfin
+                                ||'-'|| vr_cdpesqbb;                             -- cdpesqbb           
+            CECRED.pc_internal_exception (pr_cdcooper => rw_crapcop.cdcooper, pr_compleme => vr_dscomplemento);
+          end;
           vr_cdcritic:= 0;
-          vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
+          vr_dscritic:= 'PAGA0001 - Erro ao inserir na tabela craplcm. '||sqlerrm;
           -- Rollback da transação
           ROLLBACK TO undopoint;
           --Levantar Excecao
