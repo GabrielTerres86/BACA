@@ -721,7 +721,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
                                  ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
                                  ,pr_dscritic              OUT VARCHAR2);                       --> Descrição da crítica
-  
+                                                                       
   PROCEDURE pc_obtem_horarios_pagamentos (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
                                          ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
                                          ,pr_cdcanal     IN NUMBER   -- Codigo de origem
@@ -876,6 +876,10 @@ create or replace package body cecred.PAGA0002 is
                                evitando erro no processamento da mensagem pela cabine.
                                (Wagner - Sustentação - INC0019220).
                                
+                  24/07/2018 - Validar que o numero da conta creditada não tenha mais do que 13 digitos,
+                               evitando erro no processamento da mensagem pela cabine.
+                               (André Bohn - Mout'S - INC0019287).
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1557,10 +1561,20 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_cdageban) > 4 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Agencia deve ser informada sem o digito verificador (Limite de 4 digitos).';
-	    RAISE vr_exc_erro;
+	  RAISE vr_exc_erro;
+    END IF;          
+    -- Fim da validação.	
+
+    -- Validar que a conta creditada contenha no máximo 13 digitos,
+    -- evitando erro no processamento da mensagem pela cabine.
+    -- Início da validação.
+    IF length(pr_nrctatrf) > 13 THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Informe o numero da conta creditada com ate 13 caracteres.';
+	  RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.
-
+    
     -- Tipo da conta:
     --   1 - Conta Corrente;
     --   2 - Poupança;
@@ -1575,7 +1589,7 @@ create or replace package body cecred.PAGA0002 is
         RAISE vr_exc_erro;
       END IF;          
     END IF;  
-    -- Fim da validação.	
+    -- Fim da validação.
 
     /* 
        O codigo identificador deve conter no maximo 25 caracteres, conforme catálago de mensagens do SPB. NO entanto,
