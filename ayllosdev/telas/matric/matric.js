@@ -61,6 +61,7 @@
  * 035: [14/11/2017] Jonta             (RKAM): Inclusão da opção H (P364).
  * 036: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
+ * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
  */
 
 // Definição de algumas variáveis globais 
@@ -697,6 +698,7 @@ function manterRotina() {
         cdtipcta = $('#cdtipcta', '#frmFisico').val();
         nmprimtl = normalizaTexto($('#nmprimtl', '#frmFisico').val());
         nmttlrfb = normalizaTexto($('#nmttlrfb', '#frmFisico').val());
+        nmsocial = normalizaTexto($('#nmsocial', '#frmFisico').val());
         nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#frmFisico').val());
         dtcnscpf = $('#dtcnscpf', '#frmFisico').val();
         nrdocptl = normalizaTexto($('#nrdocptl', '#frmFisico').val());
@@ -817,6 +819,7 @@ function manterRotina() {
 				verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, 
 				inconrfb: inconrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos, 
 				idorigee: idorigee,
+				nmsocial: nmsocial,
                 redirect: 'script_ajax'
             },
             error: function (objAjax, responseError, objExcept) {
@@ -1398,6 +1401,7 @@ function formataPessoaFisica() {
     var cTodosPF1 = $('input,select', '#frmFisico fieldset:eq(0)');
     var cNomeTitular = $('#nmprimtl', '#frmFisico');
     var cNomeRFB = $('#nmttlrfb', '#frmFisico');
+    var cNomeSocial = $('#nmsocial', '#frmFisico');
     var cCPF = $('#nrcpfcgc', '#frmFisico');
     var cDtConsulta = $('#dtcnscpf', '#frmFisico');
     var cSituacao = $('#cdsitcpf', '#frmFisico');
@@ -1413,6 +1417,7 @@ function formataPessoaFisica() {
     cTodosPF1.desabilitaCampo();
     cNomeTitular.addClass('alphanum').css('width', '586px').attr('maxlength', '50');
     cNomeRFB.addClass('alphanum').css('width', '586px');
+    cNomeSocial.css('width', '582px');
     cCPF.addClass('cpf').css('width', '115px');
     cDtConsulta.addClass('data').css('width', '75px');
     cSituacao.css('width', '133px');

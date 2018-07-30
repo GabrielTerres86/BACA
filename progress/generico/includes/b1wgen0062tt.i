@@ -38,6 +38,8 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+				15/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+
 .............................................................................*/
 
 
@@ -74,7 +76,8 @@ DEFINE TEMP-TABLE tt-fcad NO-UNDO
     FIELD cddbloco AS CHAR
     FIELD dtabrres AS CHAR
     FIELD dstemres AS CHAR
-    FIELD dscidade LIKE crapmun.dscidade.
+    FIELD dscidade LIKE crapmun.dscidade
+	FIELD nmsocial LIKE crapass.nmsocial.
 
 DEFINE TEMP-TABLE tt-fcad-telef NO-UNDO
     /* f_telefones */

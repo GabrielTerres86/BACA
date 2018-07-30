@@ -18,6 +18,7 @@
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).   
+ *				  13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)  
  * -------------- 
  */  
 ?>
@@ -61,6 +62,10 @@
 		
 		<label for="nmttlrfb">Nome RFB:</label>
 		<input type="text" name="nmttlrfb" id="nmttlrfb" value="<? echo getByTagName($registro,'nmttlrfb') ?>" />
+		<br />
+		
+		<label for="nmsocial">Nome Social:</label>
+		<input type="text" name="nmsocial" id="nmsocial" value="<? echo getByTagName($titulares,'nmsocial') ?>" />
 		<br />
 		
 		<label for="tpdocptl">Documento:</label>

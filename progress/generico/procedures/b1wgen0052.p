@@ -131,6 +131,8 @@
 
 			   01/12/2017 - Retirado leitura da craplct ( Jonata - RKAM P364).
 
+			   13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+
 ............................................................................*/
 
 
@@ -186,10 +188,20 @@ PROCEDURE Busca_Dados:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-bens.
     DEF OUTPUT PARAM TABLE FOR tt-crapcrl.
-
+	DEF OUTPUT PARAM TABLE FOR tt-crapttl.
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR hb1wgen0052b AS HANDLE                                  NO-UNDO.
+
+	FOR FIRST crapttl FIELDS(nmsocial)
+					  WHERE crapttl.cdcooper = par_cdcooper AND
+							crapttl.nrdconta = par_nrdconta AND
+							crapttl.idseqttl = par_idseqttl 
+							NO-LOCK:
+        END.
+		
+		CREATE tt-crapttl.
+        ASSIGN tt-crapttl.nmsocial = crapttl.nmsocial.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dscritic = ""
@@ -1632,6 +1644,7 @@ PROCEDURE Grava_Dados:
 	DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 
+	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
 	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
@@ -2273,6 +2286,7 @@ PROCEDURE Grava_Dados:
               INPUT TABLE tt-bens,
               INPUT par_idorigee,
               INPUT par_nrlicamb,
+			  INPUT par_nmsocial,
              OUTPUT par_msgretor,
              OUTPUT aux_cdcritic,
              OUTPUT aux_dscritic,

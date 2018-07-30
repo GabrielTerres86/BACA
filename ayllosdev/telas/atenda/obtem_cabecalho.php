@@ -2,7 +2,7 @@
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
-	 Data : Julho/2007                   Última Alteração: 01/12/2017
+	 Data : Julho/2007                   Última Alteração: 16/07/2018
 	                                                                  
 	 Objetivo  : Capturar dados de cabecalho da tela ATENDA           
 	                                                                  
@@ -115,6 +115,8 @@
 				 01/12/2017 - Permitir acesso a produtos para contas demitidas (Joanta - RKAM P364).
 
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
+
+         16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 
  * ********************************************************************************** */
 
@@ -307,6 +309,20 @@ if ( isset($cabecalho[25]->cdata) ) {
 		$cdsitdct = $cabecalho[27]->cdata;
 		echo 'sitaucaoDaContaCrm = "' . $cdsitdct . '";';
 	}
+if ( isset($cabecalho[28]->cdata) ) {
+	echo '$("#nmsocial","#frmCabAtenda").val("' . $cabecalho[28]->cdata . '");';
+	
+	// se for pessoa física
+	if ( isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata > 1) {
+		echo '$("#nmsocial","#frmCabAtenda").hide();';
+		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").hide();';
+		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().hide();';
+	}else{
+		echo '$("#nmsocial","#frmCabAtenda").show();';
+		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").show();';
+		echo '$("label[for=\"nmsocial\"]","#frmCabAtenda").prev().show();';
+	}
+}
 
 	
 	// Dados complementares da conta/dv	
