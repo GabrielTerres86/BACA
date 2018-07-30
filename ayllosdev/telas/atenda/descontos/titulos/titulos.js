@@ -2641,8 +2641,7 @@ function confirmarInclusao(){
                             "carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');"
                         );
                     }
-                }
-                else{
+                }catch{
                     eval(response);
                 }
             }
