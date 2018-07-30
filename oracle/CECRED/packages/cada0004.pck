@@ -4285,6 +4285,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              
     --              27/04/2018 - Buscar descricao da tabela de situacoes. PRJ366 (Lombardi)
     --              
+	--              26/07/2018 - Melhoria na apresentacao de mensagem de atraso de pagamento de emprestimo.
+	--                           Inserido regra para verificar se o acordo esta ativo. Caso esteja, pula
+	--                           para proximo registro.              
+	--                           Chamado INC0016984 (Gabriel - Mouts).
+	--
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -5250,6 +5255,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         END IF; 
         
         vr_dsmensag := NULL;
+        vr_flgativo := NULL;
+        
+        -- Verifica contratos de acordos
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => 0
+                                         ,pr_cdorigem => 0
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        -- Caso contrato esteja ativo pula para proximo registro
+        IF vr_flgativo = 1  THEN
+          RAISE vr_exc_next;
+        END IF;
 
         IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
@@ -5383,6 +5407,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
       
       vr_dsmensag := NULL;
+      vr_flgativo := NULL;
+
+      -- Verifica contratos de acordos
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => rw_crapavl.nrctaavd
+                                       ,pr_nrctremp => 0
+                                       ,pr_cdorigem => 0
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Caso contrato esteja ativo pula para proximo registro
+      IF vr_flgativo = 1 THEN
+        continue;
+      END IF;
                 
       IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
