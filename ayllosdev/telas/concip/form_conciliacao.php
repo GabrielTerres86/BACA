@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Marcos Lucas (Mout's)
  * DATA CRIAÇÃO : 20/02/2018
  * OBJETIVO     : Form selecao periodo
+ * --------------
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 438 - Mateus Z / Mouts)
+ * --------------
  */
 session_start();
 require_once('../../includes/config.php');
@@ -16,6 +19,12 @@ isPostMethod();
 <form id="frmConciliacao" name="frmConciliacao" class="formulario" onSubmit="return false;" style="display: none">
     <label for="dtLcto"><?php echo utf8ToHtml('Data Lançamento:'); ?></label>
     <input type="text" id="dtlcto" name="dtlcto" class="campo" value="<?php echo $glbvars['dtmvtolt']; ?>"/>
+
+    <!-- PRJ 438 -->
+    <label for="credenciadorasstr">&nbsp;<?php echo utf8ToHtml('Credenciadora:'); ?></label>
+    <select id="credenciadorasstr" name="credenciadorasstr" class="campo" style="min-width:100px;max-width:120px;"></select>
+    <!-- Fim PRJ 438 -->
+
     <br style="clear:both" />
 </form>
 

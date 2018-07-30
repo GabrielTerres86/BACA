@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 20/02/2018
  * OBJETIVO     : Consulta conciliacao liquidacao STR
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Credenciadora no Filtro (PRJ 438 - Mateus Z / Mouts)
  * --------------
  */
 //session_cache_limiter("private");
@@ -21,10 +21,12 @@ isPostMethod();
 // Recebe a operação que está sendo realizada
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 $dtlcto = (isset($_POST['dtlcto'])) ? $_POST['dtlcto'] : '';
+$credenciadorasstr = (isset($_POST['credenciadorasstr'])) ? $_POST['credenciadorasstr'] : '';
 
 $xml  = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <dtlcto>".$dtlcto."</dtlcto>";
+$xml .= "   <ispb>".$credenciadorasstr."</ispb>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

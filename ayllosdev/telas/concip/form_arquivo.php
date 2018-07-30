@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Daniel Zimmermann
  * DATA CRIAÇÃO : 14/09/2015
  * OBJETIVO     : Tela do formulario
+ * --------------
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 438 - Mateus Z / Mouts)
+ * --------------
  */
 session_start();
 require_once('../../includes/config.php');
@@ -35,6 +38,13 @@ isPostMethod();
     <!-- Filtro credenciadora -->
     <label for="credenciadora">&nbsp;<?php echo utf8ToHtml('Credenciadora:'); ?></label>
     <select id="credenciadora" name="credenciadora" style="min-width:100px;max-width:120px;"></select>
+
+    <!-- PRJ 486 -->
+    <label for="dtinicioliq"><?php echo utf8ToHtml('Liquidação:') ?></label>
+    <input type="text" id="dtinicioliq" name="dtinicioliq" value="<?php echo $glbvars['dtmvtolt'] ?>"/>
+    <label for="dtfinalliq"><?php echo utf8ToHtml('Ate:') ?></label>
+    <input type="text" id="dtfinalliq" name="dtfinalliq" value="<?php echo $glbvars['dtmvtolt'] ?>"/>
+    <!-- Fim PRJ 486 -->
 
     <!-- Forma transferencia -->
     <label for="formtran">Forma Transf:</label>
