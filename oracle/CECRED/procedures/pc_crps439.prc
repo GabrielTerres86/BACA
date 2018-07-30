@@ -804,62 +804,164 @@ begin
     end if;
 
     -- Gera lançamento em depósito a vista
-    begin
-      insert into craplcm
-             (cdagenci,
-              cdbccxlt,
-              cdhistor,
-              dtmvtolt,
-              cdpesqbb,
-              nrdconta,
-              nrdctabb,
-              nrdctitg,
-              nrdocmto,
-              nrdolote,
-              nrseqdig,
-              cdcooper,
-              vllanmto)
-      values (rw_craplot.cdagenci,
-              rw_craplot.cdbccxlt,
-              rw_crapcsg.cdhstcas##2, -- Historico para debito
-              vr_dtmvtolt,
-              to_char(rw_crapseg.cdsegura),
-              rw_crapseg.nrdconta,
-              rw_crapseg.nrdconta,
-              gene0002.fn_mask(rw_crapseg.nrdconta, '99999999'),
-              rw_crapseg.nrctrseg,
-              rw_craplot.nrdolote,
-              nvl(rw_craplot.nrseqdig,0) + 1,
-              pr_cdcooper,
-              vr_vlpreseg)
-      returning cdhistor,
-                nrdocmto,
-                nrseqdig,
-                vllanmto
-           into vr_lcm_cdhistor,
-                vr_lcm_nrdocmto,
-                vr_lcm_nrseqdig,
-                vr_lcm_vllanmto;
+  BEGIN
+    vr_lcm_cdhistor := rw_crapcsg.cdhstcas##2;
+    vr_lcm_nrdocmto := rw_crapseg.nrctrseg;
+    vr_lcm_nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
+    vr_lcm_vllanmto := vr_vlpreseg;
+
+    --debita apenas se qtde de dias devedor < 60
+    IF rw_crapseg.qtddsdev < 60 THEN
+      LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
+                                        , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
+                                        , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+                                        , pr_dtmvtolt => vr_dtmvtolt
+                                        , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                        , pr_nrdconta => rw_crapseg.nrdconta
+                                        , pr_nrdctabb => rw_crapseg.nrdconta
+                                        , pr_nrdctitg => gene0002.fn_mask(rw_crapseg.nrdconta, '99999999')
+                                        , pr_nrdocmto => rw_crapseg.nrctrseg
+                                        , pr_nrdolote => 4151 --rw_craplot.nrdolote
+                                        , pr_cdcooper => pr_cdcooper
+                                        , pr_vllanmto => vr_vlpreseg
+                                        , pr_inprolot => 1   -- processa o lote na própria procedure
+                                        , pr_tplotmov => 1
+                                        , pr_tab_retorno => vr_tab_retorno
+                                        , pr_incrineg => vr_incrineg
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+    ELSE
+      vr_cdcritic := 1134; -- nao foi possivel realizar debito 
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+	  vr_incrineg := 1;
+    END IF;
+
+    if vr_cdcritic = 92 then -- se critica = Lançamento já existe, então
+      --- lançar novamente somente incrementando o nr doc
+      --- feito isso pois o debitador executa esse programa várias vezes ao dia e se tiver duas parcelas 
+      --- atrasadas, pode ocorrer de na segunda execução do dia, debitar a segunda parcela atrasada e nesse caso 
+      --- dá o erro.
+              LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
+                                        , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
+                                        , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+                                        , pr_dtmvtolt => vr_dtmvtolt
+                                        , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                        , pr_nrdconta => rw_crapseg.nrdconta
+                                        , pr_nrdctabb => rw_crapseg.nrdconta
+                                        , pr_nrdctitg => gene0002.fn_mask(rw_crapseg.nrdconta, '99999999')
+                                        , pr_nrdocmto => rw_crapseg.nrctrseg+1
+                                        , pr_nrdolote => 4151 --rw_craplot.nrdolote
+                                        , pr_cdcooper => pr_cdcooper
+                                        , pr_vllanmto => vr_vlpreseg
+                                        , pr_inprolot => 1   -- processa o lote na própria procedure
+                                        , pr_tplotmov => 1
+                                        , pr_tab_retorno => vr_tab_retorno
+                                        , pr_incrineg => vr_incrineg
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);					
+  end if;    
+    																
+	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+		IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+			RAISE vr_exc_saida;
+		ELSE -- Não foi possível debitar (crítica de negócio)
+          IF (rw_crapseg.tpseguro = 3) THEN
+            vr_dtfimvig := rw_crapdat.dtmvtolt;
+          ELSE
+            vr_dtfimvig := rw_crapseg.dtfimvig;
+          END IF;
+
+          update crapseg
+             set crapseg.dtfimvig = vr_dtfimvig, -- Data de fim de vigencia do seguro
+                 crapseg.dtcancel = rw_crapdat.dtmvtolt, -- Data de cancelamento
+                 crapseg.cdsitseg = 2, -- Situacao do seguro: 2 - Cancelado
+                 crapseg.cdmotcan = 12, -- cancelamento por inadimplencia (SEGU0001)
+                 crapseg.cdopeexc = 1,
+                 crapseg.cdageexc = 1,
+                 crapseg.dtinsexc = rw_crapdat.dtmvtolt,
+                 crapseg.cdopecnl = 1
+           where crapseg.rowid = rw_crapseg.rowid;
+
+          CASE rw_crapseg.tpseguro
+            WHEN 1 THEN vr_dsseguro := 'Residencial';
+            WHEN 11 THEN vr_dsseguro:= 'Residencial';
+            WHEN 2 THEN vr_dsseguro := 'Auto';
+            WHEN 3 THEN vr_dsseguro := 'de Vida';
+            WHEN 4 THEN vr_dsseguro := 'Prestamista';
+            ELSE vr_dsseguro := '';
+          END CASE;
+
+          -- gera mensagem de aviso para o cooperado
+          GENE0003.pc_gerar_mensagem
+								 (pr_cdcooper => pr_cdcooper
+								 ,pr_nrdconta => rw_crapseg.nrdconta
+								 ,pr_idseqttl => 1          -- Primeiro titular da conta
+								 ,pr_cdprogra => 'CRPS439'  -- Programa
+								 ,pr_inpriori => 0          -- prioridade
+								 ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. Dúvidas consulte seu posto de atendimento' -- corpo da mensagem
+								 ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
+								 ,pr_dsdremet => rw_crapcop.nmrescop --nome cooperativa remetente
+								 ,pr_dsdplchv => 'emprestimo'
+								 ,pr_cdoperad => 1
+								 ,pr_cdcadmsg => 0
+								 ,pr_dscritic => vr_dscritic);
+
+          -- gera log do envio da mensagem
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => '1'
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => 'AYLLOS' --vr_dsorigem
+                              ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
+                              ,pr_dttransa => trunc(SYSDATE)
+                              ,pr_flgtrans => 0
+                              ,pr_hrtransa => GENE0002.fn_busca_time
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'crps439'
+                              ,pr_nrdconta => rw_crapseg.nrdconta
+                              ,pr_nrdrowid => vr_rowid_log
+                              );
+                      
+          -- cria notificação push
+          vr_variaveis_notif('#descseguro') := vr_dsseguro;
+       
+          NOTI0001.pc_cria_notificacao( pr_cdorigem_mensagem => 8
+                                       ,pr_cdmotivo_mensagem => 7
+                                       --,pr_dhenvio => SYSDATE   --OPCIONAL: Só passa para agendamento, não precisa passar para SYSDATE
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => rw_crapseg.nrdconta
+                                       ,pr_idseqttl => 1        --OPCIONAL: Se não passar a notificação é gerada para todos os titulares/operadores da conta.
+                                       ,pr_variaveis => vr_variaveis_notif);
+
+          -- proximo registro
+          CONTINUE;
+        END IF;
+    END IF;													
+					
+	IF rw_craplot.rowid IS NULL  THEN
+		-- Posiciona a capa de lote
+		OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+										pr_dtmvtopr => vr_dtmvtolt,
+										pr_cdagenci => 1,
+										pr_cdbccxlt => 100,
+										pr_nrdolote => 4151);
+		FETCH cr_craplot
+		INTO rw_craplot;
+
+		IF cr_craplot%NOTFOUND THEN
+			-- Fechar o cursor pois haverá raise
+			CLOSE cr_craplot;
+			-- Montar mensagem de crítica
+			-- 1172 - Registro de lote não encontrado.
+			vr_cdcritic := 1172;
+			RAISE vr_exc_saida;
+		END IF;
+		
+		CLOSE cr_craplot;
+	END IF;
     exception
       when others then
         vr_cdcritic := 0;
         vr_dscritic := 'Erro ao incluir lançamento em depósito a vista: '||sqlerrm;
-        raise vr_exc_saida;
-    end;
-    -- Atualiza capa do lote
-    begin
-      update craplot
-         set qtinfoln = nvl(qtcompln,0) + 1,
-             qtcompln = nvl(qtcompln,0) + 1,
-             vlinfodb = nvl(vlcompdb,0) + vr_lcm_vllanmto,
-             vlcompdb = nvl(vlcompdb,0) + vr_lcm_vllanmto,
-             nrseqdig = nvl(nrseqdig,0) + 1
-       where rowid = rw_craplot.rowid
-      returning nrseqdig into rw_craplot.nrseqdig;
-    exception
-      when others then
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro ao atualizar a capa do lote: ' || sqlerrm;
         raise vr_exc_saida;
     end;
 
@@ -947,7 +1049,7 @@ begin
     end if;
     -- Salvar as informações já processadas
     commit;
-  end loop; -- FIM -> Gera debito das parcelas normais ou cota unica
+  
   -- Busca informações de seguros
   for rw_crapseg2 in cr_crapseg2 (pr_cdcooper,
                                   vr_dtmvtolt) loop
@@ -1153,7 +1255,7 @@ begin
     if vr_cratseg(vr_ind_cratseg).tpregist <> 3 then
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,
                      '<nrcpfcgc>'||to_char(vr_cratseg(vr_ind_cratseg).nrcpfcgc)||'</nrcpfcgc>'||
-                     '<nrdocptl>'||vr_cratseg(vr_ind_cratseg).nrdocptl||'</nrdocptl>'||
+                     '<nrdocptl>'||SUBSTR(vr_cratseg(vr_ind_cratseg).nrdocptl,1,15)||'</nrdocptl>'||
                      '<cdoedptl>'||vr_cratseg(vr_ind_cratseg).cdoedptl||'</cdoedptl>'||
                      '<dtnasctl>'||to_char(vr_cratseg(vr_ind_cratseg).dtnasctl, 'dd/mm/yyyy')||'</dtnasctl>'||
                      '<dtemdptl>'||to_char(vr_cratseg(vr_ind_cratseg).dtemdptl, 'dd/mm/yyyy')||'</dtemdptl>'||
@@ -1171,7 +1273,7 @@ begin
         vr_nrcpfcgc := gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).nrcpfcgc,'99999999999');
         vr_nrdocptl := rpad(vr_cratseg(vr_ind_cratseg).nrdocptl, 12, ' ');
         vr_dtemdptl := to_char(vr_cratseg(vr_ind_cratseg).dtemdptl,'ddmmyyyy');
-        vr_cdoedptl := rpad(vr_cratseg(vr_ind_cratseg).cdoedptl, 6, ' ');
+        vr_cdoedptl := rpad(nvl(vr_cratseg(vr_ind_cratseg).cdoedptl,' '), 6, ' ');
       else
         vr_nrcpfcgc := rpad('0',11,'0');
         vr_nrdocptl := rpad(' ',12,' ');
@@ -1312,7 +1414,7 @@ begin
                                              to_char(vr_cratseg(vr_ind_cratseg).dtnasctl, 'ddmmyyyy')||
                                              rpad(vr_nrdocptl, 12, ' ')||
                                              vr_dtemdptl||
-                                             vr_cdoedptl||
+                                             substr(vr_cdoedptl,1,6)||
                                              gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).nrdconta,'9999999999')||
                                              gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).nrcepend,'99999999')||
                                              rpad(vr_cratseg(vr_ind_cratseg).dsendres, 50, ' ')||
