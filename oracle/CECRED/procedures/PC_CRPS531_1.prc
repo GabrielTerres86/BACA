@@ -247,7 +247,7 @@ BEGIN
 			   16/03/2018 - Ajustado tamanho de variável (Adriano).
 
 			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
-			   
+
 			   15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
 
 			   18/05/2018 - Ajuste para gerar criticas em contas encerradas (CRAPASS.CDSITDCT = 4)
@@ -256,7 +256,7 @@ BEGIN
 						    > Para pegar corretamente o número de controle
 							> Efetuar devolução para cooperativa coorreta
 							(Adriano - INC0016217 ).
-              
+
          30/05/2018 - Ajustes para retirar a validação de IFs incorporadas, pois
                       como foram desatividas, deverá gearar devolução pela cooperativa central
                       (Adriano)
@@ -268,12 +268,12 @@ BEGIN
 				     > Substituir caracteres especiais;
 					 > Ajuste par anão gerar devolução STR0048 indevidamente;
                      (Adriano - INC0016740/INC0016813).
-        
+
          08/06/2018 - Ajuste para enviar e-mail referente a TEC salário somente se nas devoluções
                      (Adriano - REQ0016678).
-                     
+
 		     13/06/2018 - Ajuste para inicializar variável  de estado de crise (Adriano).
-                     
+
 			 28/06/2018 - Ajuste no controle de envio do arquivo para a pasta "salvar"
 				         (Adriano - INC0018303).
 
@@ -282,7 +282,9 @@ BEGIN
                     variavel global que terá o mesmo horário (HRTRANSA). Evitando erros na
                     impressão do comprovante do extrato na conta do cooperado.
 				           (Wagner - PRB0040144).
-                     
+
+       17/07/2018 - Ler mensagem str0004R2 para AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza (Mouts)
+
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -328,7 +330,7 @@ BEGIN
     rw_crapcop_central cr_crapcop%ROWTYPE;
     rw_crapcop_mensag cr_crapcop%ROWTYPE;
     rw_crapcop_portab cr_crapcop%ROWTYPE;
-    
+
     /* Busca dos dados da cooperativa */
     CURSOR cr_busca_coop(pr_cdagectl IN crapcop.cdagectl%TYPE
                      ,pr_flgativo IN crapcop.flgativo%TYPE DEFAULT NULL) IS
@@ -795,7 +797,7 @@ BEGIN
          WHERE trc.cdcooper = pr_cdcooper
            AND trc.nrdconta = pr_nrdconta;
       rw_conta cr_conta%ROWTYPE;
-      
+
       -- Variaveis locais
       vr_val_cdcooper PLS_INTEGER;
       vr_val_nrdconta NUMBER;
@@ -1020,13 +1022,13 @@ BEGIN
 
     -- Rotina para substituir caracteres
     FUNCTION fn_getValue(pr_conteudo IN xmldom.DOMNode)RETURN VARCHAR2 IS
-      
+
     BEGIN
-    
+
       RETURN gene0007.fn_caract_controle(xmldom.getNodeValue(pr_conteudo));
-      
+
     END fn_getValue;
-    
+
     -- Rotina para verificar se o processo ainda está rodando
     FUNCTION fn_verifica_processo RETURN BOOLEAN IS
       -- Variavies auxiliares
@@ -1924,7 +1926,7 @@ BEGIN
                         ||   '<Hist>' || pr_dsdehist || '</Hist>'
                         ||   '<DtMovto>' || vr_aux_DtMovto || '</DtMovto>'
                         || '</PAG0111>';
-      ELSIF vr_aux_CodMsg = 'STR0047R2' THEN 
+      ELSIF vr_aux_CodMsg = 'STR0047R2' THEN
         vr_aux_cdMsg_dev := 'STR0048';
         -- Continuar XML
         vr_aux_dsarqenv := vr_aux_dsarqenv
@@ -2591,7 +2593,7 @@ BEGIN
 
       PROCEDURE pc_trata_numerario_cir0020(pr_node      IN xmldom.DOMNode
                                           ,pr_dscritic OUT VARCHAR2) IS
-      /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */       
+      /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 
         -- SubItens da STR0047R2
         vr_elem_node xmldom.DOMElement;
@@ -2649,7 +2651,7 @@ BEGIN
 
       PROCEDURE pc_trata_numerario_cir0021(pr_node      IN xmldom.DOMNode
                                           ,pr_dscritic OUT VARCHAR2) IS
-      /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */       
+      /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 
         -- SubItens da STR0047R2
         vr_elem_node xmldom.DOMElement;
@@ -2869,19 +2871,10 @@ PROCEDURE pc_trata_arquivo_slc0005(pr_node      IN xmldom.DOMNode
         vr_item_node xmldom.DOMNode;
         vr_valu_node xmldom.DOMNode;
 
-        -- SubItens de Grupo
-        vr_elem_node_grpsit xmldom.DOMElement;
-        vr_node_list_grpsit xmldom.DOMNodeList;
-        vr_node_name_grpsit VARCHAR2(100);
-        vr_item_node_grpsit xmldom.DOMNode;
-        vr_valu_node_grpsit xmldom.DOMNode;
-
         -- Genéricas
         vr_aux_descrica     VARCHAR2(1000);
 
         vr_ind  NUMBER;
-        vr_ind1 NUMBER;
-        vr_ind2 NUMBER;
 
 BEGIN
     -- Reiniciar globais
@@ -2984,7 +2977,7 @@ BEGIN
                                  ,pr_flgsucesso    => 1
                                  ,pr_cdmensagem    => vr_cdcritic);
     END IF;
-    
+
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'SLC RECEBIDA');
 
@@ -3161,7 +3154,7 @@ BEGIN
                                                                  ,NULL
                                                                  ,NULL
                                                                  ,NULL
-                                                                 ,NULL			
+                                                                 ,NULL
                                                                  ,vr_dscritic);
 
                                 -- Se retornou erro
@@ -3206,7 +3199,7 @@ BEGIN
          END IF;
       END IF;
     END LOOP;
-    
+
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'SLC RECEBIDA');
 
@@ -3237,7 +3230,6 @@ PROCEDURE pc_trata_arquivo_ldl(pr_node      IN xmldom.DOMNode
 
         vr_ind  NUMBER;
         vr_ind1 NUMBER;
-        vr_ind2 NUMBER;
 
 BEGIN
     -- Reiniciar globais
@@ -3247,7 +3239,7 @@ BEGIN
     vr_elem_node := xmldom.makeElement(pr_node);
     -- Faz o get de toda a lista de filhos
     vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
-    
+
     -- Percorrer os elementos
     FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
       -- Buscar o item atual
@@ -3258,27 +3250,27 @@ BEGIN
       IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
          CONTINUE;
       END IF;
-      
+
       IF vr_node_name = 'CodProdt' THEN
-        
+
         -- Buscar primeiro filho do nó para buscar seu valor em lógica única
         vr_valu_node := xmldom.getFirstChild(vr_item_node);
         vr_aux_descrica := fn_getValue(vr_valu_node);
-        
-        -- Numero de Controle do Remetente 
+
+        -- Numero de Controle do Remetente
         vr_aux_CodProdt := vr_aux_descrica;
-        
-      ELSIF vr_node_name = 'DtRef' THEN  
-        
+
+      ELSIF vr_node_name = 'DtRef' THEN
+
         -- Buscar primeiro filho do nó para buscar seu valor em lógica única
         vr_valu_node := xmldom.getFirstChild(vr_item_node);
         vr_aux_descrica := fn_getValue(vr_valu_node);
-        
+
         vr_aux_DtRef := vr_aux_descrica;
-      
+
       END IF;
     END LOOP;
-    
+
     -- Buscar todos os filhos deste nó
     vr_elem_node := xmldom.makeElement(pr_node);
     -- Faz o get de toda a lista de filhos
@@ -3293,7 +3285,7 @@ BEGIN
       IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
          CONTINUE;
       END IF;
-      
+
       IF vr_node_name = 'Grupo_LDL0024_HrioCamr' THEN
          -- Busca filhos
          vr_elem_node_grpsit := xmldom.makeElement(vr_item_node);
@@ -3322,7 +3314,7 @@ BEGIN
               ELSIF vr_node_name_grpsit = 'TpHrio' THEN
                   vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
                   vr_aux_TpHrio := fn_getValue(vr_valu_node_grpsit);
-                  
+
                   IF  vr_aux_CodProdt='SLC' and vr_aux_CodGrdLDL in ('PAG94','PAGE3','PAGD3')  THEN
                       cecred.ccrd0006.pc_insere_horario_grade(vr_aux_codmsg
                                                              ,vr_aux_CodGrdLDL
@@ -3353,7 +3345,7 @@ BEGIN
          END LOOP;
          END IF;
     END LOOP;
-    
+
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'LDL0024 RECEBIDA');
 
@@ -4889,8 +4881,6 @@ END;
       vr_aux_dsdemail  VARCHAR2(4000);
       vr_tipolog       VARCHAR2(100);
       vr_aux_flgreccon BOOLEAN := FALSE;
-      vr_aux_flgrecsal BOOLEAN := FALSE;
-      vr_aux_sal_ant   NUMBER(25,2) := 0;
       vr_aux_nrseqdig   NUMBER;
       vr_idlancto      tbfin_recursos_movimento.idlancto%TYPE;
 
@@ -5002,7 +4992,7 @@ END;
         SELECT craphis.indebcre
           FROM craphis
          WHERE craphis.cdcooper = pr_cdcooper
-           AND craphis.cdhistor = pr_cdhistor; 
+           AND craphis.cdhistor = pr_cdhistor;
       --
       rw_craphis cr_craphis%ROWTYPE;
       --
@@ -5082,14 +5072,14 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
-          
+
           -- Salvar o arquivo
           pc_salva_arquivo;
-          
+
           -- Retornar pois o processo finalizou
           RETURN;
         END IF;
-        
+
       ELSIF vr_aux_CodMsg IN('STR0010R2','PAG0111R2') THEN
         -- Gera devolucao com mesmo numero de documento da mensagem gerada pelo Legado
         vr_aux_nrdocmto := TO_NUMBER(SUBSTR(vr_aux_NumCtrlIF,LENGTH(vr_aux_NumCtrlIF) - 8,8));
@@ -5254,12 +5244,12 @@ END;
             END;
             -- Se não houve erro na gravação acima, nova FOLHAIB e foi Rejeitada pela cabine
             IF vr_dscritic IS NULL AND nvl(vr_aux_nrridflp,0) <> 0 AND vr_aux_tagCABInf THEN
-              
+
               -- Buscar dados da conta em transferencia
               OPEN cr_crapccs(rw_crapcop_mensag.cdcooper,vr_aux_nrctacre);
               FETCH cr_crapccs INTO rw_crapccs;
               CLOSE cr_crapccs;
-              
+
               -- Montar email
               vr_aux_dsdemail := 'Ola, houve rejeicao na cabine da seguinte operacao TEC Salario: <br><br>'
                               || ' Conta/Dv: ' || vr_aux_nrctacre || ' <br>'
@@ -5295,7 +5285,7 @@ END;
                 vr_dscritic := null;
               END IF;
             END IF;
-            
+
           END IF;
         END IF;
 
@@ -5324,13 +5314,13 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             raise vr_exc_saida;
           END IF;
-          
+
           -- Salvar o arquivo
           pc_salva_arquivo;
 
           -- Processo finalizado
           RETURN;
-          
+
         ELSE
           -- Se estava na SPB
           IF vr_aux_tagCABInf  THEN
@@ -5380,10 +5370,10 @@ END;
             -- Gerar LOG
             pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                            ,pr_msgderro  => vr_dscritic);
-            
+
             -- Salvar o arquivo
             pc_salva_arquivo;
-          
+
             -- Retornar a execução
             RETURN;
           END IF;
@@ -5404,10 +5394,10 @@ END;
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
-            
+
             -- Salvar o arquivo
             pc_salva_arquivo;
-            
+
             -- Retornar a execução
             RETURN;
 
@@ -5473,10 +5463,10 @@ END;
               -- Gerar LOG
               pc_gera_log_SPB(pr_tipodlog  => 'RECEBIDA'
                              ,pr_msgderro  => vr_dscritic);
-              
+
               -- Salvar o arquivo
               pc_salva_arquivo;
-            
+
               -- Retornar a execução
               RETURN;
 
@@ -5532,7 +5522,7 @@ END;
 
               -- Salvar o arquivo
               pc_salva_arquivo;
-          
+
               -- Retornar a execução
               RETURN;
             END IF;
@@ -5542,10 +5532,10 @@ END;
 
         -- Caso seja estorno de TED de repasse de convenio entao despreza
         IF vr_aux_CodMsg IN('STR0007','STR0020') THEN
-          
+
           -- Salvar o arquivo
           pc_salva_arquivo;
-            
+
           -- Retornar
           RETURN;
         END IF;
@@ -5594,7 +5584,7 @@ END;
 
           -- Salvar o arquivo
           pc_salva_arquivo;
-            
+
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5630,7 +5620,7 @@ END;
 
           -- Salvar o arquivo
           pc_salva_arquivo;
-            
+
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5670,7 +5660,7 @@ END;
 
           -- Salvar o arquivo
           pc_salva_arquivo;
-            
+
           -- Retornar a execução
           RETURN;
         END IF;
@@ -5706,7 +5696,7 @@ END;
 
             -- Salvar o arquivo
             pc_salva_arquivo;
-            
+
             -- Retornar a execução
             RETURN;
           ELSE
@@ -5771,7 +5761,7 @@ END;
 
             -- Salvar o arquivo
             pc_salva_arquivo;
-            
+
             -- Retornar a execução
             RETURN;
 
@@ -5810,7 +5800,7 @@ END;
 
             -- Salvar o arquivo
             pc_salva_arquivo;
-            
+
             -- Retornar a execução
             RETURN;
 
@@ -5866,7 +5856,7 @@ END;
 
               -- Salvar o arquivo
               pc_salva_arquivo;
-            
+
               -- Retornar a execução
               RETURN;
 
@@ -5943,10 +5933,10 @@ END;
           pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA NAO OK'
                          ,pr_msgderro  => 'DEVOLUCAO BACENJUD');
 
-          
+
           -- Salvar o arquivo
           pc_salva_arquivo;
-            
+
           -- Retornar a execução
           RETURN;
 
@@ -6014,7 +6004,7 @@ END;
 
             -- Salvar o arquivo
             pc_salva_arquivo;
-          
+
             -- Retornar a execução
             RETURN;
 
@@ -6034,7 +6024,7 @@ END;
               IF vr_aux_CodMsg = 'STR0010R2' THEN
                 IF cr_tbfin_rec_con%FOUND THEN
                   vr_aux_cdhistor := 2734;
-                  vr_aux_flgreccon := TRUE; 
+                  vr_aux_flgreccon := TRUE;
                   vr_aux_TPCONTA_CREDITADA := rw_tbfin_rec_con.tpconta;
                   vr_aux_NMTITULAR_CREDITADA := rw_tbfin_rec_con.nmtitular;
                   vr_aux_DSCONTA_CREDITADA := rw_tbfin_rec_con.nrdconta;
@@ -6059,7 +6049,7 @@ END;
 
               -- Se encontrar
               IF cr_tbfin_rec_con%FOUND THEN
-                vr_aux_flgreccon := TRUE; 
+                vr_aux_flgreccon := TRUE;
                 vr_aux_cdhistor := 2622;
                 vr_aux_TPCONTA_CREDITADA := rw_tbfin_rec_con.tpconta;
                 vr_aux_NMTITULAR_CREDITADA := rw_tbfin_rec_con.nmtitular;
@@ -6142,15 +6132,15 @@ END;
             END IF;
 
             ELSE
-                   
+
               vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
                              'nrseqdig',''||rw_crapcop_mensag.cdcooper
                              ||';'||vr_aux_nrctacre||';'||to_char(vr_aux_dtmvtolt,'dd/mm/yyyy')||'');
-              
+
               vr_idlancto := fn_sequence(pr_nmtabela => 'TBFIN_RECURSOS_MOVIMENTO'
                                           ,pr_nmdcampo => 'IDLANCTO'
                                         ,pr_dsdchave => 'IDLANCTO');
-                                                            
+
               -- Gerar lançamento em conta
               BEGIN
 
@@ -6421,7 +6411,7 @@ END;
                                     ,pr_ind_tipo_log => 1
                                     ,pr_des_log      => vr_dscritic
                                     ,pr_nmarqlog     => 'logprt');
-          
+
         ELSE
           -- Conforme o tipo do Empréstimo
           IF vr_aux_tpemprst = 1 THEN -- PP
@@ -6448,7 +6438,7 @@ END;
           IF vr_dscritic IS NOT NULL THEN
             -- Salvar o arquivo
             pc_salva_arquivo;
-          
+
             -- Retornar a execução
             RETURN;
           END IF;
@@ -6732,6 +6722,7 @@ END;
                                ,'SLC0001','SLC0005'                             -- Requisição de Transferência de cliente para IF - Mauricio
                                ,'LDL0024'                                       -- Aviso Alteração Horários Câmara LDL - Alexandre Borgmann - Mouts
                                ,'STR0006R2'                                     -- Cielo finalidade 15 gravar e não gerar STR0010 - Alexandre Borgmann - Mouts
+                               ,'STR0004R2'                                     -- Rede  ISPBIFDebtd=00000000 (BCO DO BRASIL S.A.) e FinlddIF=23 (Transferência de Recursos - REDECARD – 23)
                                ,'PAG0108R2','PAG0143R2'                         -- TED
                                ,'STR0037R2','PAG0137R2'                         -- TEC
                                ,'STR0010R2','PAG0111R2'                         -- Devolucao TED/TEC enviado com erro
@@ -6800,7 +6791,9 @@ END;
 
     -- Antecipaçao de Recebíveis - LTR - Mauricio
     IF vr_aux_CodMsg in ('LTR0005R2','STR0006R2','LTR0005R2',
-                         'LDL0020R2','LDL0022','LTR0004') THEN
+                         'LDL0020R2','LDL0022','LTR0004',
+                         'STR0004R2'
+                        ) THEN
 
           -- Acionar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
@@ -6811,13 +6804,14 @@ END;
                                                       || vr_dscritic
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
-			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15' OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191')) THEN
-			
+			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15'
+                  /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lucas Afonso Lombardi Moreira*/) THEN
+
 			     -- Busca dados da Coope destino
            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
            FETCH cr_busca_coop INTO rw_crapcop_mensag;
            CLOSE cr_busca_coop;
-		     
+
             /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
             vr_aux_codierro := 4;
             vr_aux_dsdehist := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
@@ -6829,6 +6823,14 @@ END;
 
             pc_salva_arquivo;
             RAISE vr_exc_next;
+        ELSIF vr_aux_CodMsg = 'STR0004R2' and (vr_aux_FinlddCli <> '23' OR 
+                                               vr_aux_ISPBIFDebtd<>'60701190' OR
+                                               (vr_aux_CNPJ_CPFDeb<>'01425787000104' and vr_aux_CNPJ_CPFDeb<>'1425787000104')
+                                              ) THEN
+
+            pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
+                           ,pr_msgderro  => 'Mensagem nao prevista');
+           RAISE vr_exc_next;
         ELSE
           ccrd0006.pc_insere_msg_ltr_str(vr_aux_VlrLanc
                                 ,vr_aux_CodMsg
@@ -7098,10 +7100,10 @@ END;
                                                 ,pr_dscritic => vr_dscritic
                                                 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada);
             END IF;
-            
+
             -- Se voltou erro nas criticas
             IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-              
+
               --Deve efetuar rollback, pois ao chamar a PAGA0001 poderá ter efetuado alguma operação na qual deve ser desfeita
 			        ROLLBACK;
 
@@ -7381,14 +7383,14 @@ END;
             -- Busca dados da Coope por cdagectl
             OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd
                            ,pr_flgativo => 1);
-                              
+
             FETCH cr_busca_coop INTO rw_crapcop_mensag;
-            
+
             -- Se não encontrou
             IF cr_busca_coop%NOTFOUND THEN
-              
+
               CLOSE cr_busca_coop;
-              
+
               -- Tratamento incorporacao TRANSULCRED
               IF to_number(vr_aux_AgCredtd) = 116 AND trunc(vr_glb_dataatual) < to_date('21/01/2017','dd/mm/rrrr') THEN
                 -- Usar agencia Incorporada
@@ -7401,11 +7403,11 @@ END;
               ELSE
                 vr_aux_flgderro := TRUE;
               END IF;
-              
+
             ELSE
-              CLOSE cr_busca_coop;  
+              CLOSE cr_busca_coop;
             END IF;
-            
+
           END IF;
 
           -- Se estamos em estado de crise
@@ -7415,10 +7417,10 @@ END;
               vr_aux_dtintegr := vr_tab_estad_crise(rw_crapcop_mensag.cdcooper).dtintegr;
               vr_aux_inestcri := vr_tab_estad_crise(rw_crapcop_mensag.cdcooper).inestcri;
             END IF;
-            
+
           /* IFs incorporadas foram desativadas(crapcop.flgativo = FALSE)
           ELSE
-             -- Tratamento incorporacao CONCREDI e CREDIMILSUL 
+             -- Tratamento incorporacao CONCREDI e CREDIMILSUL
              IF to_number(vr_aux_AgCredtd) = 103 THEN
                vr_aux_cdageinc := to_number(vr_aux_AgCredtd);
                vr_aux_AgCredtd := '0101';
