@@ -2080,9 +2080,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para atualizar pessoa estrangeira na estrutura antiga
     --
-    --  Alteração :
-    --
-    --
+    --  Alteração : 18/07/2018 - Ajuste para não atuaizar o campo DSNATURA da tabela CRAPTTL
+    --                           se pr_estrangeira_new.dsnaturalidade estiver nulo, ocasionando 
+    --                           perda do conteúdo ao mudar o campo obrigação fiscal fora do Brasil,
+    --                           da tela CONTAS->FATCA/CRS (André Bohn Mout's) - INC0019408
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------- 
@@ -2191,7 +2192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                        --  = pr_estrangeira_new.dsestado,
                        --  = pr_estrangeira_new.nrpassaporte,
                        --  = pr_estrangeira_new.tpdeclarado,
-                       ttl.dsnatura  = pr_estrangeira_new.dsnaturalidade
+                       ttl.dsnatura  = nvl(nvl(pr_estrangeira_new.dsnaturalidade, ttl.dsnatura), ' ')
                  WHERE ttl.cdcooper   = vr_tab_contas(idx).cdcooper
                    AND ttl.nrdconta   = vr_tab_contas(idx).nrdconta
                    AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
@@ -4130,7 +4131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               END IF;
               CLOSE cr_crapavt;                              
 
-            END IF;          
+            END IF;
             --> Realizar alteração  
             BEGIN              
               
