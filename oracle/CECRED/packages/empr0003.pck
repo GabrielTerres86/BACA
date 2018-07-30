@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 26/06/2017
+  --  Data     : agosto/2014.                   Ultima atualizacao: 26/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -264,6 +264,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --                           caso tenha valor nestes campos, deve ser pego este campo, caso contrario
   --                           pegar dos campos nrdplaca, ufdplaca, nrrenava, respectivamente.
   --                           (André Mout's) - (INC0019097).
+  --
+  --			  26/07/2018 - Ajuste no xml co-responsabilidade (Andrey Formigari - Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -4024,6 +4026,10 @@ BEGIN
     -- Criar documento XML
     dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
     dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
+        
+	gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?> ');
         
     -- Insere o cabeçalho do XML 
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
