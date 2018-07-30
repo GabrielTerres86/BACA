@@ -625,6 +625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND w.nrdconta = NVL(pr_nrdconta,w.nrdconta)
           AND w.nrctremp = NVL(pr_nrctremp,w.nrctremp)
           AND w.insitapr = 1 -- Aprovado 
+          AND w.dtaprova > to_date('19/07/2018','dd/mm/yyyy') -- Data de inicio
           AND NOT EXISTS (SELECT 
                                 1 
                             FROM 
@@ -950,6 +951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
          AND lim.nrdconta = nvl(prc_nrdconta, lim.nrdconta)
          AND lim.nrctrlim = nvl(prc_nrctrlim,lim.nrctrlim)
          AND lim.insitlim = 5 -- when 5 then 'APROVADA'
+         AND lim.dtaprova > to_date('19/07/2018','dd/mm/yyyy') -- Data de inicio
          AND lim.insitapr IN (1,2,3) --when 1 then 'APROVADA AUTOMATICAMENTE' when 2 then 'APROVADA MANUAL' when 3 then 'APROVADA'
          AND NOT EXISTS (SELECT 1
                            FROM craplim plim
