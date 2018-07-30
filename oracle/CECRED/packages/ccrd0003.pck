@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/05/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -83,6 +83,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
   --                          (Lucas Ranghetti SCTASK0014662)
+  --
+  --             30/07/2018 - Adicionado tratamento para não enviar conta PJ caso a mesma ainda não tenha sido criada 
+  --                          no arquivo gerado na procedure pc_crps671 (Reinert).
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6157,6 +6160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             
           END LOOP;
 
+          -- Zerar variável de conta
+		  vr_nrctarg1 := 0;
+
           -- Executa LOOP em registro de Cartões para gravar DETALHE
           FOR rw_crawcrd IN cr_crawcrd(rw_crapcol.cdcooper) LOOP
             BEGIN
@@ -6550,6 +6556,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Tp. Operac.: Inclusão de Cartão
                   vr_tipooper := '01';
 
+                  -- Guarda o número da conta informado no registro tipo 1
+                  vr_nrctarg1 := rw_crawcrd.nrdconta;
+
                   -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
                   gera_linha_registro_tipo1 (rw_crawcrd,
                                              rw_crapcol,
@@ -6594,6 +6603,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Tp. Operac.: Inclusão de Cartão Adicional
                 vr_tipooper := '04';
                 ELSE
+                  -- Se não for a mesma conta do registro 01 enviado, deve pular o registro
+				  IF NVL(vr_nrctarg1,0) <> NVL(rw_crawcrd.nrdconta,-1) THEN
+					CONTINUE;
+				  END IF;									
+								
                   vr_tipooper := '01';
                 END IF;
 
