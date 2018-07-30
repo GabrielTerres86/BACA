@@ -3,13 +3,15 @@
 
    Programa: xb1wgen0156.p
    Autor   : Jorge I. Hamaguchi
-   Data    : Maio/2013                 Ultima atualizacao:
+   Data    : Maio/2013                 Ultima atualizacao: 30/07/2018
 
    Dados referentes ao programa:
 
    Objetivo  : BO de Comunicacao XML VS BO156 (b1wgen0156.p) [LOTPRC]
 
    Alteracoes: 
+
+  30/07/2018 - SCTASK0021664 Inclusao do campo vlperfin na rotina alterar_lote (Carlos)
 
 ..............................................................................*/
 
@@ -47,6 +49,8 @@ DEF VAR aux_cdmunbce AS INTE                                       NO-UNDO.
 DEF VAR aux_cdsetpro AS INTE                                       NO-UNDO.
 DEF VAR aux_lstavali AS CHAR                                       NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                       NO-UNDO.
+
+DEF VAR aux_vlperfin AS DECI                                       NO-UNDO.
                                                                            
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -91,7 +95,7 @@ PROCEDURE valores_entrada:
             WHEN "lstavali" THEN aux_lstavali = tt-param.valorCampo.
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "inpessoa" THEN aux_inpessoa = INTE(tt-param.valorCampo).
-               
+            WHEN "vlperfin" THEN aux_vlperfin = DECI(tt-param.valorCampo).   
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -510,6 +514,7 @@ PROCEDURE alterar_lote:
                              INPUT aux_dtultamo,
                              INPUT aux_cdmunbce,
                              INPUT aux_cdsetpro,
+                             INPUT aux_vlperfin,
                             OUTPUT aux_nmdcampo,
                             OUTPUT TABLE tt-erro).
     

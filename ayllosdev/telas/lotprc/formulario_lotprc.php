@@ -9,6 +9,7 @@
  *							   Adicionado opcao "W". (Jorge).
  *
  *				  29/10/2013 - Adicionado opcao "R" e ajustes de rotina. (Jorge)
+ *                30/07/2018 - SCTASK0021664 Inclusão do campo vlperfin (percentual financiado) (Carlos)
  * --------------
  */
  
@@ -111,9 +112,14 @@
 		<br />
 		<label for="cdmunbce">C&oacute;d. BACEN do munic&iacute;pio da opera&ccedil;&atilde;o:</label>
 		<input type="text" id="cdmunbce" name="cdmunbce" class="campo" />
-		<label for="cdsetpro">C&oacute;d. do setor de atividade do projeto (CNAE):</label>
+		<label for="cdsetpro">C&oacute;d. CNAE do setor de atividade do proj:</label>
 		<input type="text" id="cdsetpro" name="cdsetpro" class="campo" />
 		<br />
+        
+		<label for="vlperfin">Percentual financiado:</label>
+		<input type="text" id="vlperfin" name="vlperfin" class="campo" />
+		<br />
+        
 	</fieldset>		
 	
 </form>

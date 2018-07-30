@@ -232,7 +232,7 @@ create or replace package body cecred.PCAP0001 is
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Tiago
-    Data    : Setembro/12                            Ultima alteracao: 04/07/2018
+    Data    : Setembro/12                            Ultima alteracao: 30/07/2018
 
     Objetivo  : Procedures referentes ao PROCAP (Programa de capitalização).
 
@@ -257,6 +257,9 @@ create or replace package body cecred.PCAP0001 is
                              
                 04/07/2018 - inc0018454 Inclusão do regime de bens no tipo de registro 1
                              (pc_gerar_arq_enc_brde) (Carlos)
+                             
+                30/07/2018 - sctask0021664 Inclusão do campo vlperfin (percentual financiado)
+                             na geração do arquivo (pc_gerar_arq_enc_brde) (Carlos)
   ............................................................................ */
 
   -- Cursor de associados
@@ -1098,7 +1101,7 @@ create or replace package body cecred.PCAP0001 is
     vr_coopbrde INTEGER;
     vr_cdestcvl INTEGER;
     vr_regime   VARCHAR2(2) := '  ';
-
+    vr_vlperfin craplpc.vlperfin%TYPE;
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
@@ -1136,7 +1139,8 @@ create or replace package body cecred.PCAP0001 is
              craplpc.dtultamo,
              craplpc.cdmunbce,
              craplpc.cdsetpro,
-             craplpc.dtpricar       
+             craplpc.dtpricar,
+             craplpc.vlperfin             
         FROM craplpc
        WHERE craplpc.cdcooper = pr_cdcooper
          AND craplpc.nrdolote = pr_nrdolote
@@ -2126,7 +2130,12 @@ create or replace package body cecred.PCAP0001 is
                                                  pr_tipo      => 'A',
                                                  pr_feriado   => TRUE,
                                                  pr_excultdia => FALSE);                                     
-      
+      IF rw_craplpc.vlperfin = 0 THEN
+        vr_vlperfin := 80;
+      ELSE
+        vr_vlperfin := rw_craplpc.vlperfin;
+      END IF;
+        
       vr_dsdlinha :=  '5'                                                  || --Tipo de registro
                       '05463212000129'                                     || -- cecred --14 CNPJ da instituição conveniada
                       TO_CHAR(vr_nrcpfcgc,'fm00000000000000')              || --CPF/CNPJ do beneficiário
@@ -2185,7 +2194,7 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ',6,' ')                                      || --Filler
                       LPAD(' ',1,' ')                                      || --Indicador FAMPE
                       LPAD(' ',5,' ')                                      || --Percentual garantido pelo FAMPE
-                      '08000'                                              || --Nível de participação
+                      TO_CHAR(vr_vlperfin * 100,'fm00000')                 || -- Percentual financiado (Nível de participação)
                       TO_CHAR(vr_dtpedido,'RRRRMMDD')                      || --Data do protocolo da operação
                       LPAD(' ',1,' ')                                      || --Filler
                       TO_CHAR(rw_craplpc.dtpricar,'RRRRMMDD')              || --Data de início do pagamento dos juros durante o período de carência

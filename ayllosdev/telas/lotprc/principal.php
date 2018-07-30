@@ -9,6 +9,8 @@
 				  
 				  19/12/2013 - Alterado coluna da tabela do form frmListAvali
 							   de "CPF/CGC" para "CPF/CNPJ". (Reinert)
+
+                  30/07/2018 - SCTASK0021664 Inclusão do campo vlperfin (percentual financiado) (Carlos)
  * -------------- 
  */ 	
 	session_start();	
@@ -41,6 +43,7 @@
 	$flgvalid = (isset($_POST['flgvalid'])) 	 ? $_POST['flgvalid'] : false  ;
 	$lstavali = (isset($_POST['lstavali']))		 ? $_POST['lstavali'] : '' ;
 	$flgdload = (isset($_POST['flgdload'])) 	 ? $_POST['flgdload'] : false  ;
+    $vlperfin = (isset($_POST['vlperfin']))      ? $_POST['vlperfin'] : 80  ;
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -101,6 +104,7 @@
 	$xml .= '		<cdsetpro>'.$cdsetpro.'</cdsetpro>';
 	$xml .= '		<lstavali>'.$lstavali.'</lstavali>';
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
+    $xml .= '       <vlperfin>'.$vlperfin.'</vlperfin>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 	

@@ -7,6 +7,7 @@
  * ALTERAÇÕES   : 28/08/2013 - Ajuste para restringir maximo 5 avalistas. (Jorge)
  * 				
  * 				  29/10/2013 - Criado funcao Gera_Impressao() e ajustes de rotina. (Jorge)
+ *                30/07/2018 - SCTASK0021664 Inclusão do campo vlperfin (percentual financiado) (Carlos)
  * --------------
  */
 
@@ -290,6 +291,8 @@ function continuarProcesso(){
     var dtultamo = $("#dtultamo","#"+frmCadLote).val();
     var cdmunbce = $("#cdmunbce","#"+frmCadLote).val();
     var cdsetpro = $("#cdsetpro","#"+frmCadLote).val();
+    
+    var vlperfin = $("#vlperfin","#"+frmCadLote).val();
 	
 	var lstavali = "";
 	var countava = 0;
@@ -310,7 +313,19 @@ function continuarProcesso(){
 			lstavali = lstavali.substring(0,(lstavali.length - 1));
 		}
 	}
-	
+    
+    // Validar percentual financiado
+	if(cddopcao == "W") {
+        cVlperfin = $('#vlperfin', '#'+frmCadLote);
+        percent = parseFloat( cVlperfin.val().replace(',','.') );        
+        
+        if (validaPercentual(percent) == false) {
+            return false;
+        } else {
+            cTodosOpcao.removeClass('campoErro');
+        }
+	}
+    
 	cTodosOpcao.removeClass('campoErro');
 
 	var mensagem = 'Aguarde, verificando dados ...';
@@ -343,6 +358,7 @@ function continuarProcesso(){
 					cdmunbce : cdmunbce,
 					cdsetpro : cdsetpro,
 					lstavali : lstavali,
+                    vlperfin : vlperfin,
 					redirect : 'script_ajax' 
 				},
 		error   : function(objAjax,responseError,objExcept) {
@@ -511,6 +527,8 @@ function formataLayout(opcao){
 	rDtultamo = $('label[for="dtultamo"]', '#'+frmCadLote);
 	rCdmunbce = $('label[for="cdmunbce"]', '#'+frmCadLote);
 	rCdsetpro = $('label[for="cdsetpro"]', '#'+frmCadLote);
+    
+    rVlperfin = $('label[for="vlperfin"]', '#'+frmCadLote);
 	
 	rNrdolote.css({'width':'35px'}).addClass('rotulo');
 	rNrdconta.css({'width':'55px'}).addClass('rotulo-linha');
@@ -532,6 +550,8 @@ function formataLayout(opcao){
 	rDtultamo.css({'width':'260px'}).addClass('rotulo-linha');
 	rCdmunbce.css({'width':'230px'}).addClass('rotulo');
 	rCdsetpro.css({'width':'260px'}).addClass('rotulo-linha');
+    
+    rVlperfin.css({'width':'230px'}).addClass('rotulo');
 	
 	// input
 	cNrdconta = $('#nrdconta', '#'+frmOpcao);
@@ -555,6 +575,8 @@ function formataLayout(opcao){
 	cCdmunbce = $('#cdmunbce', '#'+frmCadLote);
 	cCdsetpro = $('#cdsetpro', '#'+frmCadLote);
 
+    cVlperfin = $('#vlperfin', '#'+frmCadLote);
+    
 	cNrdconta.css({'width':'75px','text-align':'right'}).setMask('INTEGER','zzzz.zzz-z','.-','');
 	cNrdolote.css({'width':'75px','text-align':'right'}).setMask('INTEGER','zzzzzzzz9','','');
 	
@@ -575,6 +597,8 @@ function formataLayout(opcao){
 	cDtultamo.css({'width':'75px','text-align':'right'}).setMask("DATE","","","");
 	cCdmunbce.css({'width':'75px','text-align':'right'}).setMask("INTEGER","zzzzzz","","");
 	cCdsetpro.css({'width':'75px','text-align':'right'}).setMask("INTEGER","zzzzzzz","","");
+    
+    cVlperfin.css({'width':'75px','text-align':'right'}).addClass('monetario');    
 	
 	cNrdolote.focus();
 
@@ -725,14 +749,39 @@ function formataLayout(opcao){
 		if ( divError.css('display') == 'block' ) { return false; }		
 		// Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
+			//btnContinuar();
+            cVlperfin.focus();
+			return false;
+		}
+	});
+
+	cVlperfin.unbind('keydown').bind('keydown', function(e) {
+		if ( divError.css('display') == 'block' ) { return false; }		
+		// Se é a tecla ENTER, 
+		if ( e.keyCode == 13 ) {
 			btnContinuar();
 			return false;
 		}
 	});
-	
+    
+    // Valida Percentual sem Ônus
+    cVlperfin.change(function () {			
+        percent = parseFloat( cVlperfin.val().replace(',','.') );
+        validaPercentual(percent);
+    });	
+    
+
 	layoutPadrao();
 	
 	return false;
+}
+
+function validaPercentual(percent) {
+    // Se maior do que 100, mostra mensagem de erro e retorna o foco no mesmo campo
+    if ( percent < 80 || percent > 100 || isNaN(percent)) {
+        showError('error','O percentual financiado deve estar entre 80% e 100%.','Alerta - Ayllos','focaCampoErro("vlperfin","frmCadLote");');
+        return false;
+    }    
 }
 
 // botoes
@@ -808,7 +857,8 @@ function btnContinuar(){
 		}
 		showConfirmacao('Confirma exclusão de Conta/DV '+nrdconta+' no Lote nº '+nrdolote+' ?','Confirma&ccedil;&atilde;o - Ayllos','continuarProcesso();','','sim.gif','nao.gif');
 		
-	}else if(cddopcao == "W"){
+	}else if(cddopcao == "W"){        
+        
 		if($("#"+frmCadLote).css("display") == "none"){
 			if(!validaNumero(nrdolote,true,0,0)){
 				showError('error','Número inválido!','Alerta - Ayllos','focaCampoErro("nrdolote","frmOpcao");'); 
