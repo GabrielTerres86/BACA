@@ -366,7 +366,7 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
           }
       });
       
-      validaEmiteExpede();
+      validaEmiteExpede(true);
       sairDescontoConvenio();
 }
 
@@ -1791,7 +1791,7 @@ function atualizarConvenios(cddopcao) {
         flgcebhm: flgcebhm
     };
     descontoConvenios[index] = convenio;
-    validaEmiteExpede();
+    validaEmiteExpede(true);
     sairDescontoConvenio();
 }
 
@@ -2117,8 +2117,7 @@ function carregaLogCeb(){
 // Abrir tela de log de negociaçao
 function carregaLogNegociacao(){
 
-    var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
-    var nrconven = $("#nrconven", "#divConteudoOpcao").val();
+    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando ...");
@@ -2130,10 +2129,7 @@ function carregaLogNegociacao(){
 		type: "POST",
 		url: UrlSite + "telas/atenda/reciprocidade/log_negociacao.php",
 		data: {
-            nrcnvceb: nrcnvceb,
-            nrconven: nrconven,
-            nrdconta: nrdconta,
-            inpessoa: inpessoa,
+            idrecipr: idrecipr,
 			redirect: "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -2637,23 +2633,26 @@ function excluirConvenio(nrconven) {
     // remove do array
     descontoConvenios.splice(idx, 1);
 
-    validaEmiteExpede();
+    validaEmiteExpede(true);
     // atualizar tabela de convenios
     sairDescontoConvenio();
 }
 
-function validaEmiteExpede() {
+function validaEmiteExpede(limparCampos) {
 	cee = false;
     cVldesconto_cee.desabilitaCampo();
-    cVldesconto_cee.val('');
     cDataFimAdicionalCee.desabilitaCampo();
-    cDataFimAdicionalCee.val('');
     
     coo = false;
     cVldesconto_coo.desabilitaCampo();
-    cVldesconto_coo.val('');
     cDataFimAdicionalCoo.desabilitaCampo();
-    cDataFimAdicionalCoo.val('');
+    
+    if (limparCampos) {
+        cVldesconto_coo.val('');
+        cVldesconto_cee.val('');
+        cDataFimAdicionalCee.val('');
+        cDataFimAdicionalCoo.val('');
+    }
 
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
 		if (descontoConvenios[i].flcooexp == 1) {
@@ -2667,6 +2666,10 @@ function validaEmiteExpede() {
 			cDataFimAdicionalCee.habilitaCampo();
 		}
 	}
+}
+
+function converteNumero(numero) {
+    return numero.replace('.', '').replace(',', '.');
 }
 
 function validaDados() {
@@ -2718,6 +2721,16 @@ function validaDados() {
 		var url = UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php";
 	}
 
+    var dtfimadicional_coo = $('#dtfimadicional_coo', '.tabelaDesconto').val();
+    var dtfimadicional_cee = $('#dtfimadicional_cee', '.tabelaDesconto').val();
+    
+    if (dtfimadicional_coo == "") {
+        dtfimadicional_coo = 0;
+    }
+    if (dtfimadicional_cee == "") {
+        dtfimadicional_cee = 0;
+    }
+
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -2732,6 +2745,11 @@ function validaDados() {
 			vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
 			dtfimcontrato:       vDataFimContrato,
 			flgdebito_reversao:  $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
+            vldesconto_coo:      converteNumero($('#vldesconto_coo', '.tabelaDesconto').val()),
+            dtfimadicional_coo:  parseInt(dtfimadicional_coo),
+            vldesconto_cee:      converteNumero($('#vldesconto_cee', '.tabelaDesconto').val()),
+            dtfimadicional_cee:  parseInt(dtfimadicional_cee),
+            txtjustificativa:    $('#txtjustificativa', '.tabelaDesconto').val(),
 			redirect:            "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -2760,10 +2778,10 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 	var cDataFimAdicionalCoo    = $('#dtfimadicional_coo', '.tabelaDesconto');
 	var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
 
-	var vVldesconto_cee         = cVldesconto_cee.val();
-	var vVldesconto_ceeOld      = cVldesconto_ceeOld.val();
-	var vVldesconto_coo         = cVldesconto_coo.val();
-	var vVldesconto_cooOld      = cVldesconto_cooOld.val();
+	var vVldesconto_cee         = Number(converteNumero(cVldesconto_cee.val()));
+	var vVldesconto_ceeOld      = Number(converteNumero(cVldesconto_ceeOld.val()));
+	var vVldesconto_coo         = Number(converteNumero(cVldesconto_coo.val()));
+	var vVldesconto_cooOld      = Number(converteNumero(cVldesconto_cooOld.val()));
 	var vDataFimAdicionalCee    = cDataFimAdicionalCee.find('option:selected').text();
 	var vDataFimAdicionalCeeOld = cDataFimAdicionalCeeOld.val();
 	var vDataFimAdicionalCoo    = cDataFimAdicionalCoo.find('option:selected').text();

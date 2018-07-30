@@ -26,7 +26,6 @@ require_once("../../../class/xmlfile.php");
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $nrconven    = isset($_POST["nrconven"]) ? str_replace(" ", "", $_POST["nrconven"]) : '';
-var_dump($nrconven);
 
 // Montar o xml de Requisicao
 $xml  = "";

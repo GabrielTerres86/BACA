@@ -38,6 +38,11 @@ $qtdfloat            = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : nul
 $vlaplicacoes        = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : null );
 $dtfimcontrato       = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
 $flgdebito_reversao  = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
+$vldesconto_coo     = ( (!empty($_POST['vldesconto_coo'])) ? $_POST['vldesconto_coo'] : null );
+$dtfimadicional_coo = ( (!empty($_POST['dtfimadicional_coo'])) ? $_POST['dtfimadicional_coo'] : null );
+$vldesconto_cee     = ( (!empty($_POST['vldesconto_cee'])) ? $_POST['vldesconto_cee'] : null );
+$dtfimadicional_cee = ( (!empty($_POST['dtfimadicional_cee'])) ? $_POST['dtfimadicional_cee'] : null );
+$txtjustificativa = ( (!empty($_POST['txtjustificativa'])) ? $_POST['txtjustificativa'] : null );
 
 $arrConvenios = array();
 if (count($convenios)) {
@@ -64,6 +69,11 @@ $xml .= "   <qtdfloat>".$qtdfloat."</qtdfloat>";
 $xml .= "   <vlaplicacoes>".converteFloat($vlaplicacoes)."</vlaplicacoes>";
 $xml .= "   <dtfimcontrato>".$dtfimcontrato."</dtfimcontrato>";
 $xml .= "   <flgdebito_reversao>".$flgdebito_reversao."</flgdebito_reversao>";
+$xml .= "   <vldesconto_coo>".$vldesconto_coo."</vldesconto_coo>";
+$xml .= "   <dtfimadicional_coo>".$dtfimadicional_coo."</dtfimadicional_coo>";
+$xml .= "   <vldesconto_cee>".$vldesconto_cee."</vldesconto_cee>";
+$xml .= "   <dtfimadicional_cee>".$dtfimadicional_cee."</dtfimadicional_cee>";
+$xml .= "   <txtjustificativa>".$txtjustificativa."</txtjustificativa>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

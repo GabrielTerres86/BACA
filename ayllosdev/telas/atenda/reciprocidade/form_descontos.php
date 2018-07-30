@@ -81,8 +81,13 @@ $vr_flgdebito_reversao = getByTagName($dados->tags,"vr_flgdebito_reversao");
 $vr_qtdfloat           = getByTagName($dados->tags,"vr_qtdfloat");
 $vr_dtfimcontrato      = getByTagName($dados->tags,"vr_dtfimcontrato");
 $vr_aplicacoes         = getByTagName($dados->tags,"vr_aplicacoes");
+$vr_vldesconto_adicional_coo = getByTagName($dados->tags,"vr_vldesconto_adicional_coo");
+$vr_idfim_desc_adicional_coo = getByTagName($dados->tags,"vr_idfim_desc_adicional_coo");
+$vr_vldesconto_adicional_cee = getByTagName($dados->tags,"vr_vldesconto_adicional_cee");
+$vr_idfim_desc_adicional_cee = getByTagName($dados->tags,"vr_idfim_desc_adicional_cee");
+$vr_dsjustificativa_desc_adic = getByTagName($dados->tags,"vr_dsjustificativa_desc_adic");
 
-$convenios = $dados->tags[6]->tags;
+$convenios = $dados->tags[11]->tags;
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -287,8 +292,8 @@ descontoConvenios = [];
 			<td width="60%">Desconto adicional COO</td>
 			<td align="right" width="40%">
 				<span>R$</span>
-				<input name="vldesconto_coo_old" id="vldesconto_coo_old" type="hidden" value="" />
-				<input name="vldesconto_coo" id="vldesconto_coo" class="campo campoTelaSemBorda valor" disabled value="" style="width:153px;" />
+				<input name="vldesconto_coo_old" id="vldesconto_coo_old" type="hidden" value="<?php echo $vr_vldesconto_adicional_coo; ?>" />
+				<input name="vldesconto_coo" id="vldesconto_coo" value="<?php echo $vr_vldesconto_adicional_coo; ?>" class="campo campoTelaSemBorda valor" disabled style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corImpar">
@@ -298,7 +303,7 @@ descontoConvenios = [];
 				<select name="dtfimadicional_coo" id="dtfimadicional_coo" class="campo campoTelaSemBorda" disabled style="width:153px">
 					<option value=""></option>
 					<?php foreach($meses as $mes) {
-						echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
+						echo '<option ' . (($vr_idfim_desc_adicional_coo == getByTagName($mes->tags,"cddominio")) ? 'selected' : '') . ' value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
 					} ?>
 				</select>
 			</td>
@@ -306,8 +311,8 @@ descontoConvenios = [];
 		<tr class="corPar">
 			<td>Desconto adicional CEE</td>
 			<td align="right">
-				<input name="vldesconto_cee_old" id="vldesconto_cee_old" type="hidden" value="" />
-				<input name="vldesconto_cee" id="vldesconto_cee" class="campo campoTelaSemBorda valor" disabled value="" style="width:153px;" />
+				<input name="vldesconto_cee_old" id="vldesconto_cee_old" type="hidden" value="<?php echo $vr_vldesconto_adicional_cee; ?>" />
+				<input name="vldesconto_cee" id="vldesconto_cee" value="<?php echo $vr_vldesconto_adicional_cee; ?>" class="campo campoTelaSemBorda valor" disabled style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corImpar">
@@ -317,7 +322,7 @@ descontoConvenios = [];
 				<select name="dtfimadicional_cee" id="dtfimadicional_cee" class="campo campoTelaSemBorda" disabled style="width:153px">
 					<option value=""></option>
 					<?php foreach($meses as $mes) {
-						echo '<option value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
+						echo '<option ' . (($vr_idfim_desc_adicional_cee == getByTagName($mes->tags,"cddominio")) ? 'selected' : '') . ' value="' . getByTagName($mes->tags,"cddominio") . '">' . getByTagName($mes->tags,"dscodigo") . '</option>';
 					} ?>
 				</select>
 			</td>
@@ -347,7 +352,7 @@ descontoConvenios = [];
 	<table width="100%" class="tabelaDesconto">
 		<tr class="corPar">
 			<td>
-				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"></textarea>
+				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"><?php echo $vr_dsjustificativa_desc_adic; ?></textarea>
 			</td>
 		</tr>
 	</table>
@@ -370,7 +375,7 @@ cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
 cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn();
-validaEmiteExpede();
+validaEmiteExpede(false);
 
 cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn();

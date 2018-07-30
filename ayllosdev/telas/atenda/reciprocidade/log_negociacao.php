@@ -23,22 +23,17 @@ isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");	
 
-$nrdconta    = $_POST["nrdconta"];
-$inpessoa    = $_POST["inpessoa"];
-$nrcnvceb    = $_POST["nrcnvceb"];
-$nrconven    = $_POST["nrconven"];
+$idrecipr    = $_POST["idrecipr"];
 
 // Montar o xml de Requisicao
 $xml  = "";
 $xml .= "<Root>";
 $xml .= " <Dados>";	
-$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-$xml .= "   <nrconven>".$nrconven."</nrconven>";
-$xml .= "   <nrcnvceb>".$nrcnvceb."</nrcnvceb>";
+$xml .= "   <idrecipr>".$idrecipr."</idrecipr>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "CARREGA_LOG_CONV", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "CARREGA_LOG_NEGO_AUG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
@@ -54,7 +49,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
 
 <div id='divRegLogNegociacao'>
     <fieldset id='tabConteudo'>
-    <legend><?= utf8ToHtml('Log da negociação - '); echo formataNumericos("zzz.zzz.zz9",$nrconven,"."); ?></legend>
+    <legend><?= utf8ToHtml('Log da negociação - '); echo formataNumericos("zzz.zzz.zz9",$idrecipr,"."); ?></legend>
 
     <div class='divRegistros'>
         <table>
@@ -62,6 +57,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
             <tr>
             <th>Data/Hora</th>
             <th>Descri&ccedil;&atilde;o</th>
+            <th>Status</th>
             <th>Operador</th>
             </tr>
 
@@ -72,6 +68,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
                 <tr>
                     <td><?= getByTagName($r->tags, 'dthorlog'); ?></td>
                     <td><?= getByTagName($r->tags, 'dscdolog'); ?></td>
+                    <td><?= getByTagName($r->tags, 'dsstatus'); ?></td>
                     <td><?= getByTagName($r->tags, 'nmoperad'); ?></td>	
                 </tr>
 
