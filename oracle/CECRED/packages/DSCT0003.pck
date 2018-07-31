@@ -188,6 +188,12 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
          
   -- Verificar se o bordero está nas novas funcionalidades ou na antiga         
   FUNCTION fn_virada_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN INTEGER;
+                   
+
+  -- Verificar qual a versão do borderô
+  FUNCTION fn_versao_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE
+	              					   ,pr_nrborder IN crapbdt.nrborder%TYPE
+    					               ) RETURN INTEGER;          
                              
   -- Cálculo da Liquidez Geral
   FUNCTION fn_calcula_liquidez_geral (pr_nrdconta      IN crapass.nrdconta%type
@@ -382,7 +388,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                     ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
   
   -- Verificar se o bordero está nas novas funcionalidades ou na antiga
-  PROCEDURE pc_virada_bordero (pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+  PROCEDURE pc_virada_bordero (pr_nrborder  IN crapbdt.nrborder%TYPE DEFAULT 0
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                --------> OUT <--------
                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -818,6 +825,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     END IF;
     RETURN rw_crapprm.dsvlrprm;
   END fn_virada_bordero;
+  
+  -- Verificar qual a versão do borderô
+  FUNCTION fn_versao_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE
+                             ,pr_nrborder IN crapbdt.nrborder%TYPE
+                             ) RETURN INTEGER IS
+  /* .............................................................................
+    Programa: fn_versao_bordero
+    Sistema : AyllosWeb
+    Sigla   : CRED
+    Autor   : Vitor Shimada Assanuma (GFT)
+    Data    : 30/07/2018                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Retorna se o borderô está na versão nova ou antiga.
+                                                 
+  ............................................................................. */
+  CURSOR cr_crapbdt IS
+    SELECT
+      flverbor
+    FROM
+      crapbdt
+    WHERE crapbdt.cdcooper = pr_cdcooper
+        AND crapbdt.nrborder = DECODE(pr_nrborder, 0, crapbdt.nrborder, pr_nrborder)
+  ;rw_crapbdt cr_crapbdt%ROWTYPE;
+
+  BEGIN
+    OPEN cr_crapbdt;
+    FETCH cr_crapbdt INTO rw_crapbdt;
+    IF cr_crapbdt%NOTFOUND THEN
+      RETURN 0;
+    END IF;
+    RETURN rw_crapbdt.flverbor;
+  END fn_versao_bordero;
   
   FUNCTION fn_busca_situacao_bordero (pr_insitbdt crapbdt.insitbdt%TYPE) RETURN VARCHAR2 IS
   /*---------------------------------------------------------------------------------------------------------------------
@@ -6224,14 +6266,15 @@ END pc_inserir_lancamento_bordero;
   END pc_rejeitar_bordero_web;
   
   
-  PROCEDURE pc_virada_bordero (pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                 --------> OUT <--------
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                 ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
-                                 ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
-                                 ,pr_des_erro OUT VARCHAR2      --> Erros do processo
-                               ) IS
+  PROCEDURE pc_virada_bordero (pr_nrborder  IN crapbdt.nrborder%TYPE DEFAULT 0
+                              ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              ) IS
     /* .............................................................................
       Programa: pc_virada_bordero
       Sistema : AyllosWeb
@@ -6242,8 +6285,10 @@ END pc_inserir_lancamento_bordero;
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
-      Objetivo  : Retorna se a cooperativa esta utilizando o sistema novo de bordero
-                                                   
+      Objetivo  : Retorna se a cooperativa esta utilizando o sistema novo de bordero                  
+      Alterações:
+       - 30/07/2018 - Vitor Shimada Assanuma (GFT): Inserção da verificação da versão do borderô
+       
     ............................................................................. */
     -- Tratamento de erros
     vr_exc_erro exception;
@@ -6259,6 +6304,7 @@ END pc_inserir_lancamento_bordero;
     vr_idorigem varchar2(100);
     --Variaveis da procedure
     vr_flgverbor INTEGER;
+    vr_flgnewbor INTEGER;
     BEGIN
       pr_nmdcampo := NULL;
       pr_des_erro := 'OK';
@@ -6277,7 +6323,13 @@ END pc_inserir_lancamento_bordero;
       GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
                                 ,pr_action => vr_nmeacao);	
   	   
+
+  	  -- Flag de versão da cooperativa
       vr_flgverbor := fn_virada_bordero(vr_cdcooper);
+
+      -- Flag se o borderô está na versão nova
+      vr_flgnewbor := fn_versao_bordero(vr_cdcooper, pr_nrborder);
+      
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
@@ -6289,8 +6341,10 @@ END pc_inserir_lancamento_bordero;
       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
                      '<root><dados>');
 
-      pc_escreve_xml('<cdcooper>' || vr_cdcooper || '</cdcooper>' ||
-                     '<flgverbor>' || vr_flgverbor || '</flgverbor>');
+      pc_escreve_xml('<cdcooper>'  || vr_cdcooper  || '</cdcooper>'   ||
+                     '<flgverbor>' || vr_flgverbor || '</flgverbor>'  ||
+                     '<flgnewbor>' || vr_flgnewbor || '</flgnewbor>'
+                    );
                     
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
