@@ -299,7 +299,7 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 
 -- ATENDA->DESCONTOS->TITULOS
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'VIRADA_BORDERO', 'DSCT0003', 'pc_virada_bordero', '', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'VIRADA_BORDERO', 'DSCT0003', 'pc_virada_bordero', 'pr_nrborder', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
      VALUES (SEQACA_NRSEQACA.NEXTVAL, 'REJEITAR_BORDERO_TITULO', 'DSCT0003', 'pc_rejeitar_bordero_web', 'pr_nrdconta,pr_nrborder', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
