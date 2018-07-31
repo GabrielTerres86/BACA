@@ -181,7 +181,7 @@ function habilitaSetor(setorLogado) {
 
             if (cddopcao == 'C') {
                 $('input, select', '.tabelaDesconto').desabilitaCampo();
-                $('#btnConveniosCobranca, #gridDescontoConvenios img:last-child, #btnContinuar, #btnAprovacao').remove();
+                $('#btnConveniosCobranca, #gridDescontoConvenios a:last-child, #btnContinuar, #btnAprovacao').remove();
             }
 		}
 	});
