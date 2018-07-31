@@ -52,6 +52,7 @@
 	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
 	$xml = "<Root>";
 	$xml .= " <Dados>";
+	$xml .= "		<nrborder>".$nrborder."</nrborder>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -63,8 +64,9 @@
 		exit;
 	}
 	$flgverbor = $root->dados->flgverbor->cdata;
+	$flgnewbor = $root->dados->flgnewbor->cdata;
 
-	if($flgverbor){
+	if($flgnewbor){
 		$xml =  "<Root>";
 		$xml .= " <Dados>";
 		$xml .= "		<nrborder>".$nrborder."</nrborder>";
@@ -118,7 +120,7 @@
 	$vlrtotal_cr = 0;
 	$vltotliq_cr = 0;
 	$vlmedtit_cr = 0;
-	if(!$flgverbor){
+	if(!$flgnewbor){
 		$titulos      = $xmlObjTits->roottag->tags[0]->tags;
 		$restricoes   = $xmlObjTits->roottag->tags[1]->tags;
 		$qtRestricoes = count($restricoes);
@@ -148,14 +150,14 @@
 ?>
 
 
-<?if($flgverbor){?>
+<?if($flgnewbor){?>
 	<form class="formulario">
 		<div id="divTitulosBorderos">
 
 			<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
 
 			<fieldset>
-				<legend>Tipo de Cobran&ccedil;a: REGISTRADA</legend>
+				<legend>N. Border&ocirc;: <?=formataNumericos('z.zzz.zz9',$nrborder,'.')?></legend>
 					
 				<div id="divcr" class="divRegistros" >
 						<table  class="tituloRegistros">

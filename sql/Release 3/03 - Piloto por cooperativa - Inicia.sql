@@ -327,5 +327,9 @@ BEGIN
     AND   cdcooper = pr_cdcooper;
     
   END LOOP;
+
+  -- Libera os convêncios de desconto de título para essa cooperativa
+  UPDATE crapcco SET flgativo = 1 WHERE dsorgarq = 'DESCONTO DE TITULO' AND cdcooper = pr_cdcooper;
+  
   COMMIT;
 END;
