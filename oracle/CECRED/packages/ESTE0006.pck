@@ -1861,7 +1861,7 @@ END pc_incluir_bordero_esteira;
              end if;
      
              -- Gerar objeto json para a imagem
-             vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
+             vr_obj_imagem.put('codigo'      , 'BORDERO_TITULO');
              vr_obj_imagem.put('conteudo'    ,vr_json_valor);
              vr_obj_imagem.put('emissaoData' , este0001.fn_data_ibra(sysdate));
              vr_obj_imagem.put('validadeData', '');
