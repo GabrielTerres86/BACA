@@ -130,6 +130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                   WHEN crd.insitcrd = 4 THEN 'Em Uso'   
                   WHEN crd.insitcrd = 5 THEN 'Bloqueado'   
                   WHEN crd.insitcrd = 6 THEN 'Cancelado'                       
+                  WHEN crd.insitcrd = 9 THEN 'Enviado Bancoob'
              END dssitcrd
             ,ass.nmprimtl
             ,ass.inpessoa
@@ -450,6 +451,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
          vr_dssitcrd_ant:= 'Bloqueado';
       ELSIF rw_crawcrd.insitcrd = 6 THEN   
         vr_dssitcrd_ant:= 'Cancelado';         
+      ELSIF rw_crawcrd.insitcrd = 9 THEN   
+        vr_dssitcrd_ant:= 'Enviado Bancoob';         
       END IF;
       
       -- Buscar descição da nova situação
@@ -468,6 +471,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
          vr_dssitcrd:= 'Bloqueado';
       ELSIF vr_insitcrd = 6 THEN   
          vr_dssitcrd:= 'Cancelado';         
+      ELSIF vr_insitcrd = 9 THEN   
+         vr_dssitcrd:= 'Enviado Bancoob';         
       END IF;    
     
       gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
@@ -874,6 +879,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
         vr_dssitcrd:= 'Bloqueado';
       ELSIF rw_crawcrd.insitcrd = 6 THEN
         vr_dssitcrd:= 'Cancelado';
+      ELSIF rw_crawcrd.insitcrd = 9 THEN
+        vr_dssitcrd:= 'Enviado Bancoob';
       END IF;
     
       gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
