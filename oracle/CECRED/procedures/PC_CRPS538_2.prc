@@ -1,6 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2                --> flag de avaliar a execução
                                                ,pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                                ,pr_nmtelant IN VARCHAR2                --> Nome tela anterior
+                                               ,pr_qtdejobs in number                  --> Quantidade de jobs por vez
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
                                                ,pr_dscritic OUT VARCHAR2               --> Descricao da Critica
                                                ) IS   
@@ -12,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 11/08/2017
+   Data    : Agosto/2017.                   Ultima atualizacao: 23/07/2018
    
    Projeto:  Chamado 714566.
 
@@ -42,6 +43,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
        07/02/2018 - se o mês de dtmvtoan é diferente do mês de dtmvtolt então buscar arquivos
                     da pasta win12 - SD#842900 (AJFink)
+                            
+       23/07/2018 - Projeto Revitalizaçao Sistemas (Andreatta - MOUTs)
 
    ................................................................................................*/
 
@@ -945,8 +948,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        BEGIN
          CECRED.PC_CRPS538_2
          ( pr_flavaexe  => ''N''
-         , pr_cdcooper  => ' || pr_cdcooperprog ||
-       ' , pr_nmtelant  => ''DIARIA''
+         , pr_cdcooper  => ' || pr_cdcooperprog || '
+         , pr_nmtelant  => ''DIARIA''
+         , pr_qtdejobs  => '||pr_qtdejobs|| '
          , pr_cdcritic  => vr_cdcritic  
          , pr_dscritic  => vr_dscritic
          );
@@ -1119,7 +1123,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         vr_qtminutos := NVL(gene0001.fn_param_sistema('CRED'
                                                      ,0
                                                      ,'TEMPO_ESPERA_CRPS538_2'),5);
-
+        -- Reprograma este JOB para rodar daqui x minutos novamente
         pc_cria_job(pr_cdcooperprog => pr_cdcooper
                    ,pr_qtminutos    => vr_qtminutos
                    ,pr_cdcritic     => vr_cdcritic
@@ -1221,6 +1225,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
         END IF;
         
+        -- Submete o JOB da Cooperativa
         pc_cria_job(pr_cdcooperprog => rw_crapcop_ativas.cdcooper
                    ,pr_qtminutos    => vr_qtminutos
                    ,pr_cdcritic     => vr_cdcritic

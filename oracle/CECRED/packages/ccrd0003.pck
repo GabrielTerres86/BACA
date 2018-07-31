@@ -173,6 +173,39 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
+	/* Procedimento para o CRPS669 */
+  PROCEDURE pc_gera_saldo_bancoob(pr_cdcooper IN NUMBER                --> Cooperativa Central
+                                 ,pr_cdcoppar IN NUMBER                --> Cooperativa (QUando execução paralela)
+                                 ,pr_idparale IN crappar.idparale%TYPE --> Indicador de processo paralelo
+                                 ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+                                 ,pr_cdprogra IN VARCHAR2              --> Rotina acionadora
+                                 ,pr_qtdEjobs IN NUMBER                --> Programa chamador
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+                      
+	/* Procedimento para o CRPS669 atraves da mensageria PHP */
+  PROCEDURE pc_crps669_web(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro OUT VARCHAR2);           --> Erros do processo                      
+
+  /* Rotina com a os procedimentos para o CRPS670 */
+  PROCEDURE pc_recebe_arq_cet_bancoob(pr_cdcooper IN NUMBER                --> Cooperativa Central
+                                     ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+                                     ,pr_cdprogra IN VARCHAR2              --> Rotina acionadora
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+
+	/* Procedimento para o CRPS670 */
+  PROCEDURE pc_crps670_web(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
 	/* Procedimento para o CRPS671 */
   PROCEDURE pc_crps671(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 											,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -188,22 +221,6 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
 											,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
 											,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 											,pr_des_erro OUT VARCHAR2);           --> Erros do processo                      
-
-	/* Procedimento para o CRPS669 */
-  PROCEDURE pc_crps669(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-
-	/* Procedimento para o CRPS670 */
-  PROCEDURE pc_crps670(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
   /* Procedimento para debito de faturas cartao credito*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Cooperativa
@@ -1598,21 +1615,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
   END pc_consulta_admcrd;
 
-/* Rotina com a os procedimentos para o CRPS669 */
-  PROCEDURE pc_crps669(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+  /* Rotina para chamada do procedimento de geração do arquivo de saldos Cartões Cabal e BANCOOB */
+  PROCEDURE pc_gera_saldo_bancoob(pr_cdcooper IN NUMBER                --> Cooperativa Central
+                                 ,pr_cdcoppar IN NUMBER                --> Cooperativa (QUando execução paralela)
+                                 ,pr_idparale IN crappar.idparale%TYPE --> Indicador de processoparalelo
+                                 ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+                                 ,pr_cdprogra IN VARCHAR2              --> Rotina acionadora
+                                 ,pr_qtdejobs  IN NUMBER                --> Programa chamador
                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                      ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                 ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
   BEGIN
     /* .............................................................................
 
-    Programa: pc_crps669
+    Programa: pc_gera_saldo_bancoob
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 29/09/2016
+    Data    : Maio/14.                    Ultima atualizacao: 16/07/2018
 
     Dados referentes ao programa:
 
@@ -1649,54 +1668,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              nao correr o risco de enviar o arquivo CSDC*
                              incompleto ao parceiro por "demora" na execução do
                              comando. (Chamado 521613) - (Fabricio)
+                             
+                16/07/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)             
+                             
     ..............................................................................*/
     DECLARE
        ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
-      vr_cdprogra   CONSTANT crapprg.cdprogra%TYPE := 'CRPS669';       --> Código do programa
-      vr_dsdireto   VARCHAR2(2000);                                    --> Caminho para gerar
       vr_direto_connect   VARCHAR2(200);                               --> Caminho CONNECT
       vr_nmrquivo    VARCHAR2(2000);                                   --> Nome do arquivo
       vr_dsheader    VARCHAR2(2000);                                   --> HEADER  do arquivo
       vr_dsdetalh    VARCHAR2(2000);                                   --> DETALHE do arquivo
       vr_dstraile    VARCHAR2(2000);                                   --> TRAILER do arquivo
       vr_contador   PLS_INTEGER := 0;                                  --> Contador de linhas DETALHES
-      vr_ind_arquiv utl_file.file_type;                                --> declarando handle do arquivo
       vr_tab_sald   EXTR0001.typ_tab_saldos;                           --> Temp-Table com o saldo do dia
       vr_ind_sald   PLS_INTEGER;                                       --> Indice sobre a temp-table vr_tab_sald
       vr_vlsddisp   NUMBER(17,2);                                      --> Valor de saldo disponivel
       vr_dessinal  VARCHAR2(1);                                        --> Sinal + / - para Saldo Disponível
       vr_nrseqarq   INTEGER;                                           --> Sequencia de Arquivo
-
-      -- Extração dados XML
-      vr_cdcooper   NUMBER;
-      vr_cdoperad   VARCHAR2(100);
-      vr_nmdatela   VARCHAR2(100);
-      vr_nmeacao    VARCHAR2(100);
-      vr_cdagenci   VARCHAR2(100);
-      vr_nrdcaixa   VARCHAR2(100);
-      vr_idorigem   VARCHAR2(100);
+      vr_clob_arq   CLOB;                                              --> DAdos para o Arquivo POUP.txt
+      vr_text_arq   VARCHAR2(32767);                                   --> Dados temporários para o arquivos POUP.txt
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
-      vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
       vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro;
-      -- Comando completo
-      vr_dscomando VARCHAR2(4000);
-      -- Saida da OS Command
-      vr_typ_saida VARCHAR2(4000);
 
       ------------------------------- CURSORES ---------------------------------
       -- Busca listagem das cooperativas
-      CURSOR cr_crapcol IS
+      CURSOR cr_crapcol(pr_cdcooper crapcop.cdcooper%TYPE              DEFAULT 0
+                       ,pr_cdprogra tbgen_batch_controle.cdprogra%TYPE DEFAULT 0 
+                       ,pr_qterro   number                             DEFAULT 0
+                       ,pr_dtmvtolt tbgen_batch_controle.dtmvtolt%TYPE DEFAULT NULL) IS
        SELECT cop.cdcooper
              ,cop.cdagebcb
        FROM crapcop cop
-      WHERE cop.cdcooper <> 3;
+        WHERE cop.cdcooper <> 3
+          AND cop.cdcooper = decode(pr_cdcooper,0,cop.cdcooper,pr_cdcooper)
+          AND cop.flgativo = 1
+          AND (pr_qterro = 0 or
+              (pr_qterro > 0 and exists (select 1
+                                           from tbgen_batch_controle
+                                          where tbgen_batch_controle.cdcooper    = cop.cdcooper
+                                            and tbgen_batch_controle.cdprogra    = pr_cdprogra
+                                            and tbgen_batch_controle.tpagrupador = 1
+                                            and tbgen_batch_controle.cdagrupador = 0
+                                            and tbgen_batch_controle.insituacao  = 1
+                                            and tbgen_batch_controle.dtmvtolt    = pr_dtmvtolt)));
 
       -- Cursor genérico de calendário da Cooperativa em operação
+      rw_crabdat  btch0001.cr_crapdat%ROWTYPE;
       rw_crapdatc btch0001.cr_crapdat%ROWTYPE;
 
       -- cursor para busca de dados do cartão e associado
@@ -1707,19 +1729,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         FROM crapcrd crd
             ,crawcrd pcr
             ,crapass ass
-       WHERE crd.cdcooper = pr_cdcooper  AND
-             crd.dtcancel IS NULL        AND
-            (crd.cdadmcrd >= 10          AND
-             crd.cdadmcrd <= 80)         AND
-             ass.cdcooper = crd.cdcooper AND
-             ass.nrdconta = crd.nrdconta AND
-             pcr.cdadmcrd = crd.cdadmcrd AND
-             pcr.tpcartao = crd.tpcartao AND
-             pcr.nrdconta = crd.nrdconta AND
-             pcr.nrcrcard = crd.nrcrcard AND
-             pcr.nrctrcrd = crd.nrctrcrd AND
-             pcr.insitcrd IN (3,4)       AND -- LIBERADO E EM USO
-             ass.dtdemiss IS NULL
+         WHERE crd.cdcooper = pr_cdcooper  
+           AND crd.dtcancel IS NULL        
+           AND crd.cdadmcrd BETWEEN 10 AND 80
+           AND ass.cdcooper = crd.cdcooper 
+           AND ass.nrdconta = crd.nrdconta 
+           AND pcr.cdadmcrd = crd.cdadmcrd 
+           AND pcr.tpcartao = crd.tpcartao 
+           AND pcr.nrdconta = crd.nrdconta 
+           AND pcr.nrcrcard = crd.nrcrcard 
+           AND pcr.nrctrcrd = crd.nrctrcrd 
+           AND pcr.insitcrd IN (3,4)  -- LIBERADO E EM USO
+           AND ass.dtdemiss IS NULL
              GROUP BY crd.nrdconta
                      ,ass.cdagenci
                      ,ass.vllimcre
@@ -1732,24 +1753,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
          WHERE crapscb.tparquiv = 1;
       rw_crapscb cr_crapscb%ROWTYPE;
 
-      BEGIN
-        -- extrai dados do XML (para uso Ayllos WEB)
-        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                ,pr_cdcooper => vr_cdcooper
-                                ,pr_nmdatela => vr_nmdatela
-                                ,pr_nmeacao  => vr_nmeacao
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_nrdcaixa => vr_nrdcaixa
-                                ,pr_idorigem => vr_idorigem
-                                ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
+      -- Dados das tabela de trabalho de dados do arquivo
+      cursor cr_work_arquv(pr_cdcooper    tbgen_batch_relatorio_wrk.cdcooper%type  
+                          ,pr_cdprograma  tbgen_batch_relatorio_wrk.cdprograma%type 
+                          ,pr_dsrelatorio tbgen_batch_relatorio_wrk.dsrelatorio%type
+                          ,pr_dtmvtolt    tbgen_batch_relatorio_wrk.dtmvtolt%type) IS
+       SELECT cdagenci
+             ,dscritic
+         FROM tbgen_batch_relatorio_wrk
+        WHERE cdcooper    = pr_cdcooper   
+          AND cdprograma  = pr_cdprograma 
+          AND dsrelatorio = pr_dsrelatorio
+          AND dtmvtolt    = pr_dtmvtolt 
+        ORDER BY cdagenci,nrdconta; 
 
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;
+      -- Variavel para arquivo de dados     
+      TYPE vr_typ_texto IS TABLE OF VARCHAR2(4000) INDEX BY PLS_INTEGER;
+      vr_tab_texto vr_typ_texto;
+      
+      -- ID para o paralelismo
+      vr_idparale      INTEGER := 0;
+      -- Qtde parametrizada de Jobs
+      vr_qtdjobs       NUMBER := pr_qtdejobs;
+      -- Job name dos processos criados
+      vr_jobname       varchar2(30);
+      -- Bloco PLSQL para chamar a execução paralela do pc_crps750
+      vr_dsplsql       varchar2(4000);
+      
+      -- Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
+      vr_idcontrole    tbgen_batch_controle.idcontrole%TYPE; 
+      vr_idlog_ini_ger tbgen_prglog.idprglog%type;
+      vr_idlog_ini_par tbgen_prglog.idprglog%type;
+      vr_tpexecucao    tbgen_prglog.tpexecucao%type; 
+      vr_qterro        number := 0; 
+      
+      BEGIN
+
+      -- Na execução principal
+      if nvl(pr_idparale,0) = 0 then
+        -- Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+        vr_idlog_ini_ger := null;
+        pc_log_programa(pr_dstiplog   => 'I'    
+                       ,pr_cdprograma => pr_cdprogra          
+                       ,pr_cdcooper   => pr_cdcooper
+                       ,pr_tpexecucao => 2    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       ,pr_idprglog   => vr_idlog_ini_ger);
+      end if;  
 
         -- Verifica se a cooperativa esta cadastrada
-        OPEN cr_crapcop (pr_cdcooper => vr_cdcooper);
+      OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
         FETCH cr_crapcop INTO rw_crapcop;
 
         -- Se nao encontrar
@@ -1765,8 +1817,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
 
         -- Leitura do calendario da cooperativa
-        OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-        FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crabdat;
 
         -- Se nao encontrar
         IF btch0001.cr_crapdat%NOTFOUND THEN
@@ -1779,6 +1831,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           -- Apenas fechar o cursor
           CLOSE btch0001.cr_crapdat;
         END IF;
+      
+      -- Para execução principal ou sem paralelo
+      IF pr_idparale = 0 THEN
 
         -- Busca sequencial do arquivo
         CCRD0003.pc_ult_seq_arq(pr_tparquiv => 1
@@ -1804,34 +1859,164 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         CLOSE cr_crapscb;
 
         -- buscar caminho de arquivos do Bancoob/CABAL
-        vr_dsdireto := rw_crapscb.dsdirarq;
-
-        -- buscar caminho de arquivos do Bancoob/CABAL
-        vr_direto_connect := vr_dsdireto;
+        vr_direto_connect := rw_crapscb.dsdirarq;
 
         -- monta nome do arquivo
-        vr_nmrquivo := 'CSDC_756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_' || TO_CHAR(rw_crapdat.dtmvtolt,'YYYYMMDD') || '_' || lpad(vr_nrseqarq,7,0) || '.CCB';
-
-        -- criar handle de arquivo de Saldo Disponível dos Associados
-        gene0001.pc_abre_arquivo(pr_nmdireto => vr_direto_connect  --> Diretorio do arquivo
-                                ,pr_nmarquiv => 'TMP_'||vr_nmrquivo        --> Nome do arquivo
-                                ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
-                                ,pr_utlfileh => vr_ind_arquiv      --> handle do arquivo aberto
-                                ,pr_des_erro => vr_dscritic);      --> erro
-        -- em caso de crítica
-        IF vr_dscritic IS NOT NULL THEN
-          --levantar excecao
+        vr_nmrquivo := 'CSDC_756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_' || TO_CHAR(rw_crabdat.dtmvtolt,'YYYYMMDD') || '_' || lpad(vr_nrseqarq,7,0) || '.CCB';      
+        
+        -- monta HEADER do arquivo
+        vr_dsheader := 'CSDC0' || TO_CHAR(rw_crabdat.dtmvtolt,'DDMMYYYY') || lpad(vr_nrseqarq,7,0)  || '0';
+      
+      END IF;
+            
+      /* CAso tenha retornado threads para paralelizar */
+      IF vr_qtdjobs > 0 and pr_cdcoppar = 0 then  
+        
+        -- Gerar o ID para o paralelismo
+        vr_idparale := gene0001.fn_gera_ID_paralelo;
+        
+        -- Se houver algum erro, o id vira zerado
+        IF vr_idparale = 0 THEN
+           -- Levantar exceção
+           vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_ID_paral.';
           RAISE vr_exc_saida;
         END IF;
 
-        -- monta HEADER do arquivo
-        vr_dsheader := 'CSDC0' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYYYY') || lpad(vr_nrseqarq,7,0)  || '0';
+        -- Verifica se algum job paralelo executou com erro
+        vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper
+                                                     ,pr_cdprogra    => pr_cdprogra
+                                                     ,pr_dtmvtolt    => rw_crabdat.dtmvtolt
+                                                     ,pr_tpagrupador => 1
+                                                     ,pr_nrexecucao  => 1);   
 
-        -- escrever HEADER do arquivo
-        gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_dsheader);
+        -- Buscar todas as cooperativas sem erros de execuções anteriores
+        FOR rw_crapcol IN cr_crapcol(pr_cdprogra => pr_cdprogra
+                                    ,pr_qterro   => vr_qterro
+                                    ,pr_dtmvtolt => rw_crabdat.dtmvtolt) LOOP
+          -- Montar o prefixo do código do programa para o jobname
+          vr_jobname := pr_cdprogra ||'_'|| rw_crapcol.cdcooper || '$';  
+        
+          -- Cadastra o programa paralelo
+          gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                    ,pr_idprogra => LPAD(rw_crapcol.cdcooper,3,'0') --> Utiliza coop como id programa
+                                    ,pr_des_erro => vr_dscritic);
+                                    
+          -- Testar saida com erro
+          if vr_dscritic is not null then
+            -- Levantar exceçao
+            raise vr_exc_saida;
+          end if;     
+          
+          -- Montar o bloco PLSQL que será executado
+          -- Ou seja, executaremos a geração dos dados
+          -- para a agência atual atraves de Job no banco
+          vr_dsplsql := 'DECLARE' || chr(13) 
+                     || '  wpr_cdcritic NUMBER;' || chr(13) 
+                     || '  wpr_dscritic VARCHAR2(1500);' || chr(13) 
+                     || 'BEGIN' || chr(13) 
+                     || '  ccrd0003.pc_gera_saldo_bancoob'
+                     || '            ('||pr_cdcooper
+                     || '            ,'||rw_crapcol.cdcooper
+                     || '            ,'||vr_idparale 
+                     || '            ,'||''''||pr_cdoperad||''''
+                     || '            ,'||''''||pr_cdprogra||''''
+                     || '            ,'||pr_qtdejobs
+                     || '            ,wpr_cdcritic, wpr_dscritic);' 
+                     || chr(13) 
+                     || 'END;';   
+           
+           -- Faz a chamada ao programa paralelo atraves de JOB
+           gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                                 ,pr_cdprogra => pr_cdprogra  --> Código do programa
+                                 ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                                 ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                                 ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                 ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                                 ,pr_des_erro => vr_dscritic);    
+                                 
+           -- Testar saida com erro
+           if vr_dscritic is not null then 
+             -- Levantar exceçao
+             raise vr_exc_saida;
+           end if;
+
+           -- Chama rotina que irá pausar este processo controlador
+           -- caso tenhamos excedido a quantidade de JOBS em execuçao
+           gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                       ,pr_qtdproce => vr_qtdjobs --> Máximo de 10 jobs neste processo
+                                       ,pr_des_erro => vr_dscritic);
+
+           -- Testar saida com erro
+           if  vr_dscritic is not null then 
+             -- Levantar exceçao
+             raise vr_exc_saida;
+           end if;
+           
+        end loop;
+        -- Chama rotina de aguardo agora passando 0, para esperarmos
+        -- até que todos os Jobs tenha finalizado seu processamento
+        gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                    ,pr_qtdproce => 0
+                                    ,pr_des_erro => vr_dscritic);
+                                    
+        -- Testar saida com erro
+        if vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;    
+
+        -- Verifica se algum job executou com erro
+        vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper
+                                                     ,pr_cdprogra    => pr_cdprogra
+                                                     ,pr_dtmvtolt    => rw_crabdat.dtmvtolt
+                                                     ,pr_tpagrupador => 1
+                                                     ,pr_nrexecucao  => 1);
+        if vr_qterro > 0 then 
+          vr_cdcritic := 0;
+          vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
+          raise vr_exc_saida;
+        end if;
+      
+      ELSE
+        
+        -- Caso não for execução paralela
+        IF pr_idparale = 0 THEN
+          -- Gerar o Header do arquivo
+          vr_tab_texto(0) := vr_dsheader;
+        END IF;
+        
+        if pr_cdcoppar <> 0 then
+          vr_tpexecucao := 2;
+        else
+          vr_tpexecucao := 1;
+        end if;   
+        
+        -- Grava controle de batch por agência
+        gene0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper      -- Codigo da Cooperativa
+                                        ,pr_cdprogra    => pr_cdprogra      -- Codigo do Programa
+                                        ,pr_dtmvtolt    => rw_crabdat.dtmvtolt  -- Data de Movimento
+                                        ,pr_tpagrupador => 1                -- Tipo de Agrupador (1-PA/ 2-Convenio)
+                                        ,pr_cdagrupador => pr_cdcoppar      -- Codigo do agrupador conforme (tpagrupador)
+                                        ,pr_cdrestart   => null             -- Controle do registro de restart em caso de erro na execucao
+                                        ,pr_nrexecucao  => 1                -- Numero de identificacao da execucao do programa
+                                        ,pr_idcontrole  => vr_idcontrole    -- ID de Controle
+                                        ,pr_cdcritic    => pr_cdcritic      -- Codigo da critica
+                                        ,pr_dscritic    => vr_dscritic);    -- Descricao da critica
+        -- Testar saida com erro
+        if vr_dscritic is not null then 
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if; 
+         
+        -- Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
+        pc_log_programa(pr_dstiplog   => 'I'  
+                       ,pr_cdprograma => pr_cdprogra||'_'||pr_cdcoppar          
+                       ,pr_cdcooper   => pr_cdcooper 
+                       ,pr_tpexecucao => vr_tpexecucao    -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       ,pr_idprglog   => vr_idlog_ini_par);  
 
         -- Executa LOOP para cada Cooperativa
-        FOR rw_crapcol IN cr_crapcol LOOP
+        FOR rw_crapcol IN cr_crapcol(pr_cdcoppar) LOOP
 
           -- Leitura do calendario da cooperativa do LOOP
           OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcol.cdcooper);
@@ -1857,7 +2042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                         pr_rw_crapdat => rw_crapdatc,
                                         pr_cdagenci   => rw_crapcrd.cdagenci,
                                         pr_nrdcaixa   => 0,
-                                        pr_cdoperad   => vr_cdoperad,
+                                        pr_cdoperad   => pr_cdoperad,
                                         pr_nrdconta   => rw_crapcrd.nrdconta,
                                         pr_vllimcre   => rw_crapcrd.vllimcre,
                                         pr_dtrefere   => rw_crapdatc.dtmvtolt,
@@ -1873,10 +2058,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- adquire descrição
                 vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
                 -- grava log
-                btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                            pr_ind_tipo_log => 2, -- Erro tratato
                                            pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -'    ||
-                                                                               vr_cdprogra  || ' --> ' || vr_dscritic);
+                                                                               pr_cdprogra  || ' --> ' || vr_dscritic);
               END IF;
               -- Volta para o inicio do loop
               CONTINUE;
@@ -1905,74 +2090,140 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             lpad((vr_tab_sald(vr_ind_sald).vllimcre * 100), 15, '0')        ||
                             '1');
 
-            -- grava registro de DETALHE no arquivo
-            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_dsdetalh);
-
             -- incremente contador de Linhas
             vr_contador := vr_contador + 1;
 
+            -- Gravar na tab de memória
+            vr_tab_texto(vr_contador) := vr_dsdetalh;
+
           END LOOP;
         END LOOP;
+        
+        -- Se for execucao paralela, gravar pltable na tabela WORK
+        IF pr_cdcoppar > 0 THEN
+          -- Gravar informações na tabela 
+          FOR idx IN vr_tab_texto.first..vr_tab_texto.last LOOP
+            -- Inserir na tabela temporária
+            BEGIN
+              insert into tbgen_batch_relatorio_wrk
+                         (cdcooper
+                         ,cdprograma
+                         ,dsrelatorio
+                         ,dtmvtolt
+                         ,cdagenci
+                         ,nrdconta
+                         ,dscritic)
+                   values(pr_cdcooper
+                         ,pr_cdprogra
+                         ,'dados_arquivo'
+                         ,rw_crabdat.dtmvtolt
+                         ,pr_cdcoppar   
+                         ,idx 
+                         ,vr_tab_texto(idx));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[dados_arquivo]: ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          END LOOP;
+        END IF;
+         
+        -- Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F'  
+                       ,pr_cdprograma => pr_cdprogra||'_'||pr_cdcoppar           
+                       ,pr_cdcooper   => pr_cdcooper
+                       ,pr_tpexecucao => vr_tpexecucao -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       ,pr_idprglog   => vr_idlog_ini_par
+                       ,pr_flgsucesso => 1); 
+               
+      END IF;
+      
+      -- Para execução principal ou sem paralelo
+      IF pr_idparale = 0 THEN
+        
+        -- Caso execução paralela
+        IF vr_idparale > 0 THEN
+          -- Gerar o Header do arquivo
+          vr_tab_texto(0) := vr_dsheader;
+          -- Buscar dados da tabela genérica para a pltable
+          FOR rw_work IN cr_work_arquv(pr_cdcooper    => pr_cdcooper
+                                      ,pr_cdprograma  => pr_cdprogra
+                                      ,pr_dsrelatorio => 'dados_arquivo' 
+                                      ,pr_dtmvtolt    => rw_crabdat.dtmvtolt) LOOP
+            -- Incremente contador de Linhas
+            vr_contador := vr_contador + 1;
+            -- Cada registro é uma linha para o arquivo
+            vr_tab_texto(vr_contador) := rw_work.dscritic;
+          END LOOP;
+        END IF;
 
         -- monta TRAILER do arquivo
         vr_dstraile := 'CSDC9' || lpad(vr_contador,12,'0');
 
         -- escrever TRAILER do arquivo
-        gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_dstraile);
-
-        -- fechar o arquivo
-        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> handle do arquivo aberto;
-
-        -- Executa comando UNIX para converter arq para Dos
-        vr_dscomando := 'ux2dos ' || vr_direto_connect || '/TMP_'||vr_nmrquivo||' > '
-                                  || vr_direto_connect || '/' || vr_nmrquivo || ' 2>/dev/null';
-
-        -- Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_dscomando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-                             
-        IF vr_typ_saida = 'ERR' THEN
+        vr_tab_texto(vr_contador+1) := vr_dstraile;
+        
+        -- Incializar CLOB do arquivo txt
+        dbms_lob.createtemporary(vr_clob_arq, TRUE, dbms_lob.CALL);
+        dbms_lob.open(vr_clob_arq, dbms_lob.lob_readwrite);
+        
+        -- VArrer pltable
+        FOR idx IN vr_tab_texto.first..vr_tab_texto.last LOOP
+          -- Escreve no CLOB
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob_arq
+                                 ,pr_texto_completo => vr_text_arq
+                                 ,pr_texto_novo     => vr_tab_texto(idx)||chr(13)||chr(10));
+        END LOOP;
+        
+        -- Fechar Arquivo
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob_arq
+                               ,pr_texto_completo => vr_text_arq
+                               ,pr_texto_novo     => ''
+                               ,pr_fecha_xml      => TRUE);
+        
+        -- Submeter a geração do arquivo 
+        gene0002.pc_solicita_relato_arquivo(pr_cdcooper   => pr_cdcooper                             --> Cooperativa conectada
+                                           ,pr_cdprogra   => 'CRPS669'                               --> Programa chamador
+                                           ,pr_dtmvtolt   => rw_crabdat.dtmvtolt                     --> Data do movimento atual
+                                           ,pr_dsxml      => vr_clob_arq                             --> Arquivo XML de dados
+                                           ,pr_cdrelato   => '147'                                   --> Código do relatório
+                                           ,pr_dsarqsaid  => vr_direto_connect||'/'||vr_nmrquivo     --> Arquivo final com o path
+                                           ,pr_flg_gerar  => 'S'                                     --> Gerar na hora
+                                           ,pr_dspathcop  => vr_direto_connect||'/envia'             --> Copiar para o diretório
+                                           ,pr_fldoscop   => 'S'                                     --> Executar comando ux2dos
+                                           ,pr_flgremarq  => 'S'                                     --> Após cópia, remover arquivo de origem
+                                           ,pr_des_erro   => vr_dscritic);                         
+        -- Liberar memória alocada
+        dbms_lob.close(vr_clob_arq);
+        dbms_lob.freetemporary(vr_clob_arq);
+        
+        -- Se houve erro na geração
+        IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
         
-        -- Move arquivo convertido para a pasta de envio
-        vr_dscomando := 'mv ' || vr_direto_connect || '/' || vr_nmrquivo || ' '
-                                  || vr_direto_connect||'/envia/'|| vr_nmrquivo || ' 2>/dev/null';
-
-        -- Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_dscomando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-                             
-        IF vr_typ_saida = 'ERR' THEN
-          RAISE vr_exc_saida;
-        END IF;
-
-        -- Remover arquivo tmp
-        vr_dscomando := 'rm ' || vr_direto_connect|| '/TMP_'||vr_nmrquivo;
-
-        -- Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_dscomando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-
-        IF vr_typ_saida = 'ERR' THEN
-          RAISE vr_exc_saida;
+        -- Limpa os registros da tabela de trabalho somente em execução paralela
+        IF vr_idparale > 0 THEN
+          begin    
+            delete from tbgen_batch_relatorio_wrk
+             where cdcooper    = pr_cdcooper
+               and cdprograma  = pr_cdprogra
+               AND dsrelatorio = 'dados_arquivo'
+               and dtmvtolt    = rw_crabdat.dtmvtolt;    
+          exception
+            when others then
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao deletar tabela tbgen_batch_relatorio_wrk: '||sqlerrm;
+              raise vr_exc_saida;            
+          end;
         END IF;
 
         -- ATUALIZA REGISTRO REFERENTE A SEQUENCIA DE ARQUIVOS
         BEGIN
-          UPDATE
-            crapscb
-          SET
-            nrseqarq = vr_nrseqarq,
-            dtultint = SYSDATE
-          WHERE
-            crapscb.tparquiv = 1; -- Arquivo CSDC - Saldo Disponivel de Cooperados
+          UPDATE crapscb
+             SET nrseqarq = vr_nrseqarq
+                ,dtultint = SYSDATE
+           WHERE crapscb.tparquiv = 1; -- Arquivo CSDC - Saldo Disponivel de Cooperados
 
         -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZACAO DE REGISTROS
         EXCEPTION
@@ -1981,6 +2232,204 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             vr_dscritic := 'Problema ao atualizar registro na tabela CRAPSCB: ' || sqlerrm;
             RAISE vr_exc_saida;
         END;
+
+        -- Caso seja o controlador 
+        if vr_idcontrole <> 0 then
+          -- Atualiza finalização do batch na tabela de controle 
+          gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
+                                             ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                             ,pr_dscritic   => vr_dscritic);
+          -- Testar saida com erro
+          if  vr_dscritic is not null then 
+            -- Levantar exceçao
+            raise vr_exc_saida;
+          end if;                                       
+        end if;   
+        
+        -- Grava LOG sobre o fim da execução da procedure na tabela tbgen_prglog
+        pc_log_programa(pr_dstiplog   => 'F'   
+                       ,pr_cdprograma => pr_cdprogra           
+                       ,pr_cdcooper   => pr_cdcooper 
+                       ,pr_tpexecucao => 2 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                       ,pr_idprglog   => vr_idlog_ini_ger
+                       ,pr_flgsucesso => 1);      
+        
+        -- Efetuar commit
+        COMMIT;
+      ELSE
+        -- Atualiza finalização do batch na tabela de controle 
+        gene0001.pc_finaliza_batch_controle(vr_idcontrole   --pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
+                                           ,vr_cdcritic     --pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
+                                           ,vr_dscritic);   --pr_dscritic  OUT crapcri.dscritic%TYPE
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => LPAD(pr_cdcoppar,3,'0')
+                                    ,pr_des_erro => vr_dscritic);  
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Salvar informacoes no banco de dados
+        COMMIT;
+      END IF;  
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        -- Na execução paralela
+        IF nvl(pr_idparale,0) <> 0 THEN
+
+          --Grava data fim para o JOB na tabela de LOG 
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => pr_cdprogra||'_'||pr_cdcoppar,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_par,
+                          pr_flgsucesso => 0);                                     
+          
+          -- Grava LOG de erro com as críticas retornadas                           
+          pc_log_programa(pr_dstiplog      => 'E', 
+                          pr_cdprograma    => pr_cdprogra||'_'||pr_cdcoppar,
+                          pr_cdcooper      => pr_cdcooper,
+                          pr_tpexecucao    => vr_tpexecucao,
+                          pr_tpocorrencia  => 3,
+                          pr_cdcriticidade => 1,
+                          pr_cdmensagem    => pr_cdcritic,
+                          pr_dsmensagem    => pr_dscritic,
+                          pr_flgsucesso    => 0,
+                          pr_idprglog      => vr_idlog_ini_par);  
+                          
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                      ,pr_idprogra => LPAD(pr_cdcoppar,3,'0')
+                                      ,pr_des_erro => vr_dscritic);                        
+                                      
+        ELSE
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || pr_cdprogra || ' --> '
+                                                       || vr_dscritic );
+          END IF;
+        END IF;
+        
+        -- Desfaz as alterações da base
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em ARQBCB/CRPS669: ' || SQLERRM;
+        
+        -- Na execução paralela
+        if nvl(pr_idparale,0) <> 0 then 
+          -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+          pc_log_programa(PR_DSTIPLOG           => 'E',
+                          PR_CDPROGRAMA         => pr_cdprogra||'_'||pr_cdcoppar,
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => vr_tpexecucao,                              -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_tpocorrencia       => 2,
+                          pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                   'pr_dscritic:'||pr_dscritic,
+                          PR_IDPRGLOG           => vr_idlog_ini_par); 
+          --Grava data fim para o JOB na tabela de LOG 
+          pc_log_programa(pr_dstiplog   => 'F',    
+                          pr_cdprograma => pr_cdprogra||'_'||pr_cdcoppar,           
+                          pr_cdcooper   => pr_cdcooper, 
+                          pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                          pr_idprglog   => vr_idlog_ini_par,
+                          pr_flgsucesso => 0);  
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                      ,pr_idprogra => LPAD(pr_cdcoppar,3,'0')
+                                      ,pr_des_erro => vr_dscritic);
+        end if; 
+        
+        -- Desfaz as alterações da base
+        ROLLBACK;
+    END;
+
+  END pc_gera_saldo_bancoob;
+  
+
+  /* Rotina com a os procedimentos para o CRPS669 via mensageria PHP */
+  PROCEDURE pc_crps669_web(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+  BEGIN
+    /* .............................................................................
+
+    Programa: pc_crps669
+    Sistema : Cartoes de Credito - Cooperativa de Credito
+    Sigla   : CRRD
+    Autor   : Lucas Lunelli
+    Data    : Maio/14.                    Ultima atualizacao: 16/07/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado.
+                ATENÇÃO! Esse procedimento é chamado pelo Ayllos WEB 
+
+    Objetivo  : Direcionar para a geração do arquivo de Saldo Disp. dos Associados
+                dos Cartões de Crédito BANCOOB/CABAL.
+
+    Observacao: -----
+
+    Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)             
+                             
+    ..............................................................................*/
+    DECLARE
+      ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
+      -- Extração dados XML
+      vr_cdcooper   NUMBER;
+      vr_cdoperad   VARCHAR2(100);
+      vr_nmdatela   VARCHAR2(100);
+      vr_nmeacao    VARCHAR2(100);
+      vr_cdagenci   VARCHAR2(100);
+      vr_nrdcaixa   VARCHAR2(100);
+      vr_idorigem   VARCHAR2(100);
+
+      -- Tratamento de erros
+      vr_exc_saida  EXCEPTION;
+      vr_cdcritic   PLS_INTEGER;
+      vr_dscritic   VARCHAR2(4000);
+      
+    BEGIN
+      -- extrai dados do XML (para uso Ayllos WEB)
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Chamar rotina executora
+      pc_gera_saldo_bancoob(pr_cdcooper => vr_cdcooper
+                           ,pr_cdcoppar => 0
+                           ,pr_idparale => 0
+                           ,pr_cdoperad => vr_cdoperad
+                           ,pr_cdprogra => vr_nmdatela
+                           ,pr_qtdejobs  => 0
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+      -- Em caso de erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;                           
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -1995,18 +2444,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro><TpException>1</TpException></Root>');
 
-      WHEN vr_exc_fimprg THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-
-        -- Desfaz as alterações da base
-        ROLLBACK;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro><TpException>2</TpException></Root>');
-
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em ARQBCB/CRPS669: ' || SQLERRM;
@@ -2019,19 +2456,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
 
-  END pc_crps669;
+  END pc_crps669_web;
 
   /* Rotina com a os procedimentos para o CRPS670 */
-  PROCEDURE pc_crps670(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+  PROCEDURE pc_recebe_arq_cet_bancoob(pr_cdcooper IN NUMBER                --> Cooperativa Central
+                                     ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+                                     ,pr_cdprogra IN VARCHAR2              --> Rotina acionadora
                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                      ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                     ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
   BEGIN
     /* .............................................................................
 
-    Programa: pc_crps670
+    Programa: pc_recebe_arq_cet_bancoob
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
@@ -2157,7 +2593,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_dsdireto   VARCHAR2(2000);                                    --> Caminho para receber
       vr_direto_connect   VARCHAR2(200);                               --> Caminho CONNECT
       vr_nmrquivo   VARCHAR2(2000);                                    --> Nome do arquivo
-      vr_nmarquiv   VARCHAR2(2000);                                    --> Nome do arquivo Temp
       vr_des_text   VARCHAR2(2000);                                    --> Conteúdo da Linha do Arquivo
       vr_nrseqarq   INTEGER;                                           --> Sequencial do Arquivo
       vr_maior_seq  INTEGER;                                           --> Maior Sequencial do Arquivo
@@ -2165,17 +2600,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_contador   NUMBER:= 0;                                        --> Conta qtd. arquivos
 
       vr_ind_arquiv utl_file.file_type;                                --> declarando handle do arquivo
-      vr_arqhandl   utl_file.file_type;                                --> Handle do arquivo aberto
 
       -- Extração dados XML
       vr_cdcooper   NUMBER;
       vr_cdcopban   NUMBER;
-      vr_cdoperad   VARCHAR2(100);
       vr_nmdatela   VARCHAR2(100);
-      vr_nmeacao    VARCHAR2(100);
-      vr_cdagenci   VARCHAR2(100);
-      vr_nrdcaixa   VARCHAR2(100);
-      vr_idorigem   VARCHAR2(100);
       vr_nrdconta   crapass.nrdconta%type;
       vr_flgrejei   NUMBER;
       -- Numero do documento
@@ -2263,7 +2692,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Vetor para armazenar os arquivos para processamento
       vr_vet_nmarquiv typ_tab_nmarquiv;
 
-
       --temptable para armazenar informações para o relatorio
       TYPE typ_tab_reg_relat IS RECORD
           (cdcooper crapcop.cdcooper%TYPE,
@@ -2326,13 +2754,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         SELECT dcb.rowid,
                dcb.cdhistor
           FROM crapdcb dcb
-         WHERE dcb.cdcooper = pr_cdcooper   AND
-               dcb.nrdconta = pr_nrdconta   AND
-               upper(dcb.tpmensag) = '0200' AND
-               dcb.nrnsuori = pr_nrnsucap   AND
-               dcb.dtdtrgmt = pr_dtdtrgmt   AND
-               dcb.hrdtrgmt = pr_hrdtrgmt   AND
-               dcb.cdhistor = pr_cdhistor ;
+         WHERE dcb.cdcooper = pr_cdcooper   
+           AND dcb.nrdconta = pr_nrdconta   
+           AND upper(dcb.tpmensag) = '0200' 
+           AND dcb.nrnsuori = pr_nrnsucap   
+           AND dcb.dtdtrgmt = pr_dtdtrgmt   
+           AND dcb.hrdtrgmt = pr_hrdtrgmt  
+           AND dcb.cdhistor = pr_cdhistor ;
       rw_crapdcb_200 cr_crapdcb_200%ROWTYPE;
       
       -- busca registro de Credito efetuado com cartão Bancoob
@@ -2344,13 +2772,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              pr_cdhistor IN crapdcb.cdhistor%TYPE) IS
         SELECT dcb.rowid
           FROM crapdcb dcb
-         WHERE dcb.cdcooper = pr_cdcooper   AND
-               dcb.nrdconta = pr_nrdconta   AND
-               upper(dcb.tpmensag) = '0400' AND
-               dcb.nrnsuori = pr_nrnsucap   AND
-               dcb.dtdtrgmt = pr_dtdtrgmt   AND
-               dcb.hrdtrgmt = pr_hrdtrgmt   AND
-               dcb.cdhistor = pr_cdhistor ;
+         WHERE dcb.cdcooper = pr_cdcooper  
+           AND dcb.nrdconta = pr_nrdconta  
+           AND upper(dcb.tpmensag) = '0400'
+           AND dcb.nrnsuori = pr_nrnsucap  
+           AND dcb.dtdtrgmt = pr_dtdtrgmt  
+           AND dcb.hrdtrgmt = pr_hrdtrgmt  
+           AND dcb.cdhistor = pr_cdhistor ;
       rw_crapdcb_400 cr_crapdcb_400%ROWTYPE;
       
        CURSOR cr_crapdcb (pr_nrnsucap IN crapdcb.nrnsuori%TYPE,
@@ -2368,12 +2796,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                dcb.cdhistor,
                dcb.cdtrresp
           FROM crapdcb dcb
-         WHERE dcb.cdcooper = pr_cdcooper AND
-               dcb.nrdconta = pr_nrdconta AND
-               dcb.nrnsuori = pr_nrnsucap AND
-               upper(dcb.tpmensag) in ('0200','0220','0420') AND
-               dcb.vldtrans = pr_vldtrans AND
-              (dcb.nrseqarq = 1 OR ( dcb.nrseqarq < pr_nrseqarq AND dcb.dtdtrgmt = pr_dtdtrgmt )) -- considerar caso venha mais de uma vez a conciliacao
+        WHERE dcb.cdcooper = pr_cdcooper
+          AND dcb.nrdconta = pr_nrdconta
+          AND dcb.nrnsuori = pr_nrnsucap
+          AND upper(dcb.tpmensag) in ('0200','0220','0420') 
+          AND dcb.vldtrans = pr_vldtrans 
+          AND(dcb.nrseqarq = 1 OR ( dcb.nrseqarq < pr_nrseqarq AND dcb.dtdtrgmt = pr_dtdtrgmt )) -- considerar caso venha mais de uma vez a conciliacao
           ORDER BY dcb.tpmensag ASC;
       rw_crapdcb cr_crapdcb%ROWTYPE;
 
@@ -2396,11 +2824,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,lot.vlcompdb
             ,lot.ROWID
         FROM craplot lot
-       WHERE lot.cdcooper = pr_cdcooper             AND
-             lot.dtmvtolt = pr_dtmvtolt             AND
-             lot.cdagenci = pr_cdagenci             AND
-             lot.cdbccxlt = 100                     AND
-             lot.nrdolote = 6902                    ;
+         WHERE lot.cdcooper = pr_cdcooper             
+           AND lot.dtmvtolt = pr_dtmvtolt             
+           AND lot.cdagenci = pr_cdagenci             
+           AND lot.cdbccxlt = 100                     
+           AND lot.nrdolote = 6902;
       rw_craplot cr_craplot%ROWTYPE;
 
        -- cursor para busca dos vinculos da transacao bancoob
@@ -2502,7 +2930,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND lcm.cdpesqbb = pr_cdpesqbb -- NUM CARTÃO
            AND TRIM(substr(lcm.nrdocmto,4,6))= pr_nsuredec --NSU REDE
            AND lcm.vllanmto = pr_vldtrans;
-
       rw_craplcm_dia cr_craplcm_dia%ROWTYPE;
 
        -- Verifica se houve lançamento
@@ -2527,9 +2954,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND TRIM(lcm.cdpesqbb) = TRIM(pr_cdpesqbb) --NUM CARTÃO
            AND TRIM(substr(lcm.nrdocmto,4,6)) = LPAD(pr_nsuredec,6,0)--NSU REDE
           AND lcm.vllanmto = pr_vldtrans;
-          
       rw_craplcm cr_craplcm%ROWTYPE;
       
+      -- Checagem de transferencia de contas
       CURSOR cr_craptco (pr_cdcopant IN crapcop.cdcooper%TYPE,
                          pr_nrctaant IN craptco.nrctaant%TYPE) IS
         SELECT tco.nrdconta,
@@ -2549,34 +2976,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
                                                                       || vr_cdprogra || ' --> '
                                                                       || vr_dscritic );
-
           -- Armazenar as criticas que foram geradas no log para retornar a tela ARQBCB
           vr_dsretorn := vr_dsretorn || vr_dscritic||'<br/>';
-          --controlar se algum dos logs é um erro
+          -- Controlar se algum dos logs é um erro
           IF pr_flgerro THEN
             vr_flgerro := pr_flgerro;
           END IF;
-
           vr_cdcritic := 0;
           vr_dscritic := '';
         END IF;
-        
-        
       END pc_log_batch;
-
-      -- Subrotina para escrever texto na variável CLOB do XML
-      PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
-                               pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
-      BEGIN
-        gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
-      END;
 
 
       -- Rotina para gerar relatorio crrl685
@@ -2598,7 +3013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_vltotonn := 0;          
           --gerar resumo por cooperativa
           vr_idxcop := vr_tab_relat_rescop.first;
-          pc_escreve_xml('<rescop>');
+          gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'<rescop>');
 
           WHILE vr_idxcop is not null LOOP
               IF vr_tab_relat_rescop(vr_idxcop).cdorigem = 7 THEN
@@ -2617,7 +3032,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   vr_dspessoa := 'PJ';
               END IF;
               -- incluir tags de dados
-              pc_escreve_xml('<detalhes>
+            gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,
+                        '<detalhes>
                             <cdtrnbcb>'|| lpad(vr_tab_relat_rescop(vr_idxcop).cdtrnbcb,3,'0') || '</cdtrnbcb>
                             <dstrnbcb>'|| lpad(vr_tab_relat_rescop(vr_idxcop).cdtrnbcb,3,'0')||' - '||
                                           vr_tab_relat_rescop(vr_idxcop).dstrnbcb || '</dstrnbcb>
@@ -2631,12 +3047,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             <dtmvtolt>'|| to_char(vr_tab_relat_rescop(vr_idxcop).dtmvtolt,'dd/mm/yyyy') ||'</dtmvtolt>
                             <vldtrans>'|| vr_tab_relat_rescop(vr_idxcop).vldtrans ||'</vldtrans>                           
                           </detalhes>');
-            
-       
             -- buscar proximo
             vr_idxcop := vr_tab_relat_rescop.next(vr_idxcop);
           END LOOP;
-          pc_escreve_xml('</rescop>');
+          gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</rescop>');
         END pc_resumo_coop;  
 
 
@@ -2648,7 +3062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
         -- Inicilizar as informações do XML
         vr_texto_completo := NULL;
-        pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl685>');
+        gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'<?xml version="1.0" encoding="utf-8"?><crrl685>');
 
         -- Inicializar variaveis de controle
         vr_cdcooper := -1;
@@ -2665,16 +3079,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           IF vr_tab_relat(vr_index).cdcooper <> vr_cdcooper THEN
             -- se não for a primeiro registro , fechar nós abertos
             IF vr_cdcooper <> -1 THEN
-              pc_escreve_xml('</agenci>');
+              gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</agenci>');
               -- gerar resumo por cooperativa
               pc_resumo_coop;
 
-              pc_escreve_xml('</cooper>');
+              gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</cooper>');
 
             END IF;
 
             -- criar nó
-            pc_escreve_xml('<cooper  cdcooper="'||vr_tab_relat(vr_index).cdcooper
+            gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,
+                             '<cooper  cdcooper="'||vr_tab_relat(vr_index).cdcooper
                            ||'" nmrescop="'||vr_tab_relat(vr_index).nmrescop||'">');
             vr_cdcooper := vr_tab_relat(vr_index).cdcooper;
             -- inicializar nós encerrados
@@ -2692,10 +3107,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             
             -- se não for a primeiro registro , fechar nós abertos
             IF vr_cdagenci <> -1 THEN             
-              pc_escreve_xml('</agenci>');
+              gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</agenci>');
             END IF;
             -- criar nó
-            pc_escreve_xml('<agenci cdagenci="'||vr_tab_relat(vr_index).cdagenci||'"
+            gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,
+                                   '<agenci cdagenci="'||vr_tab_relat(vr_index).cdagenci||'"
                                     nmresage="'||vr_tab_relat(vr_index).cdagenci||' - '
                                                ||NVL(vr_tab_relat(vr_index).nmresage,'Nao Cadastrada')||'">');
             vr_cdagenci := vr_tab_relat(vr_index).cdagenci;
@@ -2712,13 +3128,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           ELSE
              vr_dsorigem := 'Critica';
           END IF;      
+           
            IF vr_tab_relat(vr_index).inpessoa = 1 THEN 
               vr_dspessoa := 'PF';               
           ELSE 
               vr_dspessoa := 'PJ';
           END IF;
+          
           -- incluir tags de dados
-          pc_escreve_xml('<detalhes>
+          gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,
+                         '<detalhes>
                             <cdtrnbcb>'|| lpad(vr_tab_relat(vr_index).cdtrnbcb,3,'0') || '</cdtrnbcb>
                             <dstrnbcb>'|| lpad(vr_tab_relat(vr_index).cdtrnbcb,3,'0')||' - '||
                                           vr_tab_relat(vr_index).dstrnbcb || '</dstrnbcb>
@@ -2756,26 +3175,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   vr_tab_relat_rescop(vr_idxcop).flgdebcc := vr_tab_relat(vr_index).flgdebcc;
                   vr_tab_relat_rescop(vr_idxcop).dtdtrans := vr_tab_relat(vr_index).dtdtrans;
                   vr_tab_relat_rescop(vr_idxcop).dtmvtolt := vr_tab_relat(vr_index).dtmvtolt;
-                  vr_tab_relat_rescop(vr_idxcop).vldtrans := nvl(vr_tab_relat_rescop(vr_idxcop).vldtrans,0) +
-                                                             vr_tab_relat(vr_index).vldtrans;
-                
-      
+          vr_tab_relat_rescop(vr_idxcop).vldtrans := nvl(vr_tab_relat_rescop(vr_idxcop).vldtrans,0) + vr_tab_relat(vr_index).vldtrans;
                           
-          --buscar a proxima
+          -- Buscar a proxima
           vr_index := vr_tab_relat.next(vr_index);
         END LOOP;
 
         -- Fechar as tags e descarregar o buffer        
-         pc_escreve_xml('</agenci>');
-      
+        gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</agenci>');
 
         -- GERAR RESUMO POR COOPERATIVA
          pc_resumo_coop;
-         pc_escreve_xml('</cooper>');
-
-         
-        pc_escreve_xml('</crrl685>',TRUE);
-
+        gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</cooper>');        
+        gene0002.pc_escreve_xml(vr_des_xml,vr_texto_completo,'</crrl685>',TRUE);
 
         -- Busca do diretório base da cooperativa para PDF
         vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'     --> /usr/coop
@@ -2825,7 +3237,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                    pr_cdpesqbb IN  craplcm.cdpesqbb%TYPE,
                                    pr_dscritic OUT VARCHAR2) IS
 
-
       BEGIN
 
         -- definir index da temptable
@@ -2851,9 +3262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_tab_craplcm(vr_idxlcm).nrseqdig :=  pr_nrseqdig;
           vr_tab_craplcm(vr_idxlcm).cdpesqbb :=  pr_cdpesqbb;
           vr_tab_craplcm(vr_idxlcm).cdorigem :=  7; /* Origem do lançamento feito pelo programa*/
-
         END IF;
-
       END pc_insert_craplcm;
 
       -- Gravar registro para posteriormente realizar o insert
@@ -2903,17 +3312,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       to_char(pr_dtdtrgmt,'rrrrmmdd')|| lpad(pr_hrdtrgmt,6,'0')||
                      lpad(pr_cdcooper,10,'0')       || lpad(pr_nrdconta,12,'0');
 
-
-
         IF pr_operacao = 'A' THEN
           vr_tab_crapdcb(vr_idxdcb).rowid_dcb := pr_rowid_dcb;
-        ELSE
-          IF vr_tab_crapdcb.exists(vr_idxdcb) THEN
+        ELSIF vr_tab_crapdcb.exists(vr_idxdcb) THEN
             RETURN;
           END IF;
-        END IF;
 
-
+        -- Criar registro na pltable
         vr_tab_crapdcb(vr_idxdcb).operacao := pr_operacao;
         vr_tab_crapdcb(vr_idxdcb).det.tpmensag := pr_tpmensag;
         vr_tab_crapdcb(vr_idxdcb).det.nrnsucap := pr_nrnsucap;
@@ -2951,7 +3356,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_tab_crapdcb(vr_idxdcb).det.dstrorig := pr_dstrorig;
         vr_tab_crapdcb(vr_idxdcb).det.nrnsuori := pr_nrnsuori;
         vr_tab_crapdcb(vr_idxdcb).det.dtmvtolt := pr_dtmvtolt;
-
       END pc_insert_crapdcb;
 
       PROCEDURE pc_log_dados_arquivo(pr_tipodreg IN NUMBER  -- Tipo de registro: 1 - Dados conta cartao / 2- Dados do cartao
@@ -2986,6 +3390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL');
                    
+        -- Gerar log do erro encontrado
         cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
                               ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
                               ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
@@ -3000,33 +3405,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
                               ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
 
+        -- Finalizar a execução
         cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
                               ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
                               ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                                -- Parametros para Ocorrencia
                               ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
-
         vr_dscritic := vr_dstexto;
-        
       END pc_log_dados_arquivo;
 
       BEGIN
-
-        -- extrai dados do XML (para uso Ayllos WEB)
-        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                ,pr_cdcooper => vr_cdcooper
-                                ,pr_nmdatela => vr_nmdatela
-                                ,pr_nmeacao  => vr_nmeacao
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_nrdcaixa => vr_nrdcaixa
-                                ,pr_idorigem => vr_idorigem
-                                ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
-
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;
-
         -- Incluir nome do modulo logado
         GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
                       ,pr_action => 'CCRD0003.pc_crps670');
@@ -3093,10 +3481,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           RAISE vr_exc_saida;
         END IF;
 
-
         -- monta nome do arquivo
         vr_nmrquivo := 'CEXT_756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_%.%';
 
+        -- Trazer todos os arquivos da pasta
         gene0001.pc_lista_arquivos(pr_path     => vr_direto_connect 
                                   ,pr_pesq     => vr_nmrquivo  
                                   ,pr_listarq  => vr_listarq 
@@ -3117,13 +3505,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
 									                           ,pr_delimit => ',');
-
+        -- Nenhum arquivo?
         IF vr_split.count = 0 THEN
           vr_cdcritic := 182;
           vr_dscritic := NULL;
           RAISE vr_exc_fimprg;
           END IF;
 
+        -- Criar vetor com os arquivos encontratos
         FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
           vr_vet_nmarquiv(vr_conarqui) := vr_split(vr_conarqui);    
           vr_contador :=  vr_conarqui; 
@@ -3144,8 +3533,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           vr_tab_relat.DELETE;
           vr_tab_relat_rescop.DELETE;
-          --vr_tab_relat_resger.DELETE;
-          --vr_tab_relat_critic.DELETE;
 
           vr_nrdlinha := 1; -- Linha por arquivo
           vr_nmarqimp:= vr_vet_nmarquiv(i);
@@ -3523,7 +3910,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            vr_cdhistor_on,
                                            vr_vldtrans);
                            FETCH cr_craplcm INTO rw_craplcm;
-
                            IF cr_craplcm%NOTFOUND THEN
                                IF vr_cdcrimsg = '00' THEN
                                   vr_crialcmt := TRUE;
@@ -3532,12 +3918,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                END IF;
                             ELSE
                               vr_crialcmt := FALSE;
-                             
                             END IF;
                             CLOSE cr_craplcm;
                          ELSE
                               vr_crialcmt := FALSE;                             
                          END IF;
+                    
                          CLOSE cr_craplcm_dia;
                          CLOSE cr_crapdcb;
 
@@ -3549,8 +3935,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                       pr_nrdconta => rw_crapass.nrdconta,
                                                       pr_vldtrans => vr_vldtrans,
                                                       pr_nrseqarq => vr_nrseqarq,
-                                                      pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd')
-                                                      ) LOOP
+                                                  pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd')) LOOP
 
                          vr_tpmensag := rw_crapdcb.tpmensag;
                          vr_cdcrimsg := substr(vr_des_text,214,2);
@@ -3655,12 +4040,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 ELSIF vr_tpmensag = '0420' THEN
                                    vr_tpmsg420 := TRUE;
                                 END IF;
-
-                            --   CLOSE cr_craplcm_dia;
                             END IF;
                             CLOSE cr_craplcm_dia;
                         END LOOP;
-
                    END IF;
                    
                   /* EFETUA DÉBITOS*/
@@ -3728,7 +4110,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             RAISE vr_exc_rejeitado;
                           END IF;                        
                         END IF;
-
                       END IF;
 
                    ELSE --ESTORNO DA CONTA = CRÉDITO NA CONTA
@@ -3791,7 +4172,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                                         rw_crapass.cdagenci||';'||
                                                                                         vr_cdbccxlt||';'||
                                                                                         vr_nrdolote||'');
-                                                             
                                 -- Guardar registro para posteriormente inserir
                                 pc_insert_craplcm( pr_cdcooper  => vr_cdcopban,
                                                    pr_dtmvtolt  => vr_dtmvtolt,
@@ -3926,9 +4306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                      pr_nrdconta => rw_crapass.nrdconta,
                                      pr_cdhistor => vr_cdhistor_on);
                 FETCH cr_crapdcb_200 INTO rw_crapdcb_200;
-
                 IF cr_crapdcb_200%NOTFOUND THEN
-                  
                   CLOSE cr_crapdcb_200;
                   -- verifica se já existe debito de cartão bancoob msg 0200 (historico offline)
                   OPEN cr_crapdcb_200 (pr_nrnsucap => substr(vr_des_text,198,6),
@@ -3953,11 +4331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            pr_nrdconta => rw_crapass.nrdconta,
                                            pr_cdhistor => vr_cdhistor_on);
                       FETCH cr_crapdcb_400 INTO rw_crapdcb_400;
-                      
                       IF cr_crapdcb_400%NOTFOUND THEN
-                        
                         CLOSE cr_crapdcb_400;
-                        
                         -- verifica se já existe Credito de cartão bancoob msg 0400 (historico online)
                         OPEN cr_crapdcb_400 (pr_nrnsucap => substr(vr_des_text,198,6),
                                              pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
@@ -3966,9 +4341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                              pr_nrdconta => rw_crapass.nrdconta,
                                              pr_cdhistor => vr_cdhistor_off);
                         FETCH cr_crapdcb_400 INTO rw_crapdcb_400;
-                        
                       END IF;
-                      
                       IF cr_crapdcb_400%NOTFOUND THEN
                          vr_criardcb := TRUE;
                       ELSE
@@ -4170,8 +4543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     vr_tab_relat(vr_index).flgdebcc := vr_flgdebcc;
                     vr_tab_relat(vr_index).dtdtrans := to_date(trim(substr(vr_des_text,31,8)),'ddmmyyyy');
                     vr_tab_relat(vr_index).dtmvtolt := vr_dtmovtoo ;
-                    vr_tab_relat(vr_index).vldtrans := nvl(vr_tab_relat(vr_index).vldtrans,0) +
-                                                         (nvl(trim(substr(vr_des_text,55,11)),0) / 100);
+                  vr_tab_relat(vr_index).vldtrans := nvl(vr_tab_relat(vr_index).vldtrans,0) + (nvl(trim(substr(vr_des_text,55,11)),0) / 100);
                 ELSE                
                    --incluir informações na temptable para o relatorio
                    --gerar index                           
@@ -4388,7 +4760,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               END LOOP;
             END;
 
-
             -- Varrer registros da temptable da crapdcb para inserir
             BEGIN
               vr_idxdcb := vr_tab_crapdcb.first;
@@ -4591,23 +4962,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 -- ATUALIZA REGISTRO REFERENTE A SEQUENCIA DE ARQUIVOS
                 BEGIN
-                    UPDATE
-                        crapscb
-                    SET
-                        nrseqarq = vr_maior_seq,
+        UPDATE crapscb
+        SET nrseqarq = vr_maior_seq,
                         dtultint = SYSDATE
-                    WHERE
-                        crapscb.tparquiv = 2; -- Arquivo CEXT - Conciliação dos Débitos
-
-                -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZACAO DE REGISTROS
+        WHERE crapscb.tparquiv = 2; -- Arquivo CEXT - Conciliação dos Débitos
                 EXCEPTION
                     WHEN OTHERS THEN
                         -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                         vr_dscritic := 'Problema ao atualizar registro na tabela CRAPSCB: ' || sqlerrm;
                         RAISE vr_exc_saida;
                 END;
-
-
 
         --Caso identificar alguma falha retorna critica
         IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -4627,17 +4991,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- retonar a mesma critica gerada no log se for a tela ARQBCB
         -- e gerou algum erro, do contrario a tela irá apresentar a mensagem de sucesso
-        IF TRIM(vr_dsretorn) IS NOT NULL AND
-           upper(vr_nmdatela) = 'ARQBCB' AND
-           vr_flgerro THEN
-          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro><![CDATA[' || vr_dsretorn || ']]></Erro><TpException>1</TpException></Root>');
-          null;
+      IF TRIM(vr_dsretorn) IS NOT NULL AND upper(vr_nmdatela) = 'ARQBCB' AND vr_flgerro THEN
+        pr_dscritic := vr_dsretorn;
         END IF;
-        
-        -- Criar Arquivo de controle para o BI
-        vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'M'                   --> /micros/
-                                              ,pr_cdcooper => 3                     --> CECRED
-                                              ,pr_nmsubdir => '/corvu/controles/'); --> Utilizaremos o corvu
                                               
         --  Nao deve-se mais gerar o arquivo para o BI. 
         --  Ao inves disso, sera alterado o registro na CRAPPRM                                              
@@ -4675,15 +5031,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  RAISE vr_exc_saida;
           END;
         END IF;
-/*      -- Abrir arquivo
-        GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nom_direto --> Diretório do arquivo
-                                ,pr_nmarquiv => 'crrl682.exec' --> Nome do arquivo
-                                ,pr_tipabert => 'W'           --> Modo de abertura (R,W,A)
-                                ,pr_utlfileh => vr_arqhandl   --> Handle do arquivo aberto
-                                ,pr_des_erro => vr_dscritic); --> Erro
                                 
-        -- Fechar o arquivo
-        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandl); --> Handle do arquivo aberto */
+      -- Gravar 
+      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -4708,10 +5058,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                       ' - ' || vr_cdprogra ||
                                                       ' --> ' || pr_dscritic, 
                                    pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro><TpException>1</TpException></Root>');
         ROLLBACK;
       WHEN vr_exc_fimprg THEN
         pr_cdcritic := vr_cdcritic;
@@ -4725,11 +5071,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- Desfaz as alterações da base
         ROLLBACK;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro><TpException>2</TpException></Root>');
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em ARQBCB/CRPS670: ' || SQLERRM;
@@ -4741,15 +5082,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             ,pr_nmdarqui => nvl(vr_nmarqimp,' ')
                             ,pr_nrdlinha => vr_nrdlinha
                             ,pr_dscritic => pr_dscritic);
-
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
     END;
 
-  END pc_crps670;
+  END pc_recebe_arq_cet_bancoob;
+  
+/* Rotina com a os procedimentos para o CRPS670 */
+  PROCEDURE pc_crps670_web(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                          ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+  BEGIN
+    /* .............................................................................
+
+    Programa: pc_crps670_web
+    Sistema : Cartoes de Credito - Cooperativa de Credito
+    Sigla   : CRRD
+    Autor   : Lucas Lunelli
+    Data    : Maio/14.                    Ultima atualizacao: 18/07/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado.
+                ATENÇÃO! Esse procedimento é chamado pelo Ayllos WEB e CRON.
+
+    Objetivo  : Direcionar para a conciliaçãp débitos dos Cartões de Crédito BANCOOB/CABAL.
+
+    Observacao: -----
+
+    Alteracoes: 16/07/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs) 
+    ....................................................................................................*/
+    DECLARE
+      ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
+      -- Extração dados XML
+      vr_cdcooper   NUMBER;
+      vr_cdoperad   VARCHAR2(100);
+      vr_nmdatela   VARCHAR2(100);
+      vr_nmeacao    VARCHAR2(100);
+      vr_cdagenci   VARCHAR2(100);
+      vr_nrdcaixa   VARCHAR2(100);
+      vr_idorigem   VARCHAR2(100);
+      
+      -- Tratamento de erros
+      vr_exc_saida  EXCEPTION;
+      vr_cdcritic   PLS_INTEGER;
+      vr_dscritic   VARCHAR2(4000);
+      
+    BEGIN
+
+      -- extrai dados do XML (para uso Ayllos WEB)
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Acionar rotina para processamento
+      pc_recebe_arq_cet_bancoob(pr_cdcooper => vr_cdcooper
+                               ,pr_cdoperad => vr_cdoperad
+                               ,pr_cdprogra => vr_nmdatela
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+      -- Em caso de erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF; 
+          
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Desfaz as alterações da base
+        ROLLBACK;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro><![CDATA[' || vr_dscritic ||']]></Erro><TpException>1</TpException></Root>');
+   
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em ARQBCB/CRPS670: ' || SQLERRM;
+
+        -- Desfaz as alterações da base
+        ROLLBACK;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro><![CDATA[' || pr_dscritic ||']]></Erro></Root>');
+    END;
+
+  END pc_crps670_web;  
   
   /* Rotina com a os procedimentos para o CRPS671 */
   PROCEDURE pc_crps671(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
