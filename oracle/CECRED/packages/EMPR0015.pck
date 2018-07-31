@@ -282,11 +282,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               --Se não tem erro na tabela
               IF vr_tab_erro.COUNT = 0 THEN
                 vr_cdcritic:= 0;
-                vr_dscritic:= 'Erro ao calcular rating.';
+                vr_dscritic:= 'Falha ao calcular rating sem tabela de erros EMPR0015.';
+              ELSE
+                vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
               END IF;
               -- Sair
               RAISE vr_exc_erro;
             END IF;
+                       
             vr_ind := vr_tab_impress_risco_cl.first; -- Vai para o primeiro registro            
             -- loop sobre a tabela de retorno
             WHILE vr_ind IS NOT NULL LOOP
@@ -378,12 +382,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Diferença',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => to_char(vr_diferenca_valor,'FM999,999,990.99'));
+                                    pr_dsdadatu => to_char(nvl(vr_diferenca_valor,0),'FM999G999G990D00'));
                                             
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Tolerância',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => vr_vltolemp);
+                                    pr_dsdadatu => nvl(vr_vltolemp,0));
                                             
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Valor original da parcela',
@@ -398,12 +402,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => '% da Diferença',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => to_char(vr_diferenca_parcela,'FM999G999G990D00'));
+                                    pr_dsdadatu => to_char(nvl(vr_diferenca_parcela,0),'FM999G999G990D00'));
 
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => '% de Tolerância',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => to_char(vr_pcaltpar,'FM999G999G990D00'));
+                                    pr_dsdadatu => to_char(nvl(vr_pcaltpar,0),'FM999G999G990D00'));
 
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Rating original',
@@ -413,10 +417,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                     pr_nmdcampo => 'Rating atual',
                                     pr_dsdadant => 'ND',
-                                    pr_dsdadatu => vr_rating);
+                                    pr_dsdadatu => nvl(vr_rating,'ND'));
 
         END IF;
       END LOOP;
+      IF pr_tipoacao = 'S' THEN
+        COMMIT;
+      END IF;
       -- Se chegou até o final sem erro retorna OK
       pr_dserro := 'OK';
     EXCEPTION
@@ -625,7 +632,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND w.nrdconta = NVL(pr_nrdconta,w.nrdconta)
           AND w.nrctremp = NVL(pr_nrctremp,w.nrctremp)
           AND w.insitapr = 1 -- Aprovado 
-          AND w.dtaprova > to_date('19/07/2018','dd/mm/yyyy') -- Data de inicio
+          AND w.dtaprova > to_date('18/07/2018','dd/mm/yyyy') -- Data de inicio
           AND NOT EXISTS (SELECT 
                                 1 
                             FROM 
@@ -951,7 +958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
          AND lim.nrdconta = nvl(prc_nrdconta, lim.nrdconta)
          AND lim.nrctrlim = nvl(prc_nrctrlim,lim.nrctrlim)
          AND lim.insitlim = 5 -- when 5 then 'APROVADA'
-         AND lim.dtaprova > to_date('19/07/2018','dd/mm/yyyy') -- Data de inicio
+         AND lim.dtaprova > to_date('18/07/2018','dd/mm/yyyy') -- Data de inicio
          AND lim.insitapr IN (1,2,3) --when 1 then 'APROVADA AUTOMATICAMENTE' when 2 then 'APROVADA MANUAL' when 3 then 'APROVADA'
          AND NOT EXISTS (SELECT 1
                            FROM craplim plim
