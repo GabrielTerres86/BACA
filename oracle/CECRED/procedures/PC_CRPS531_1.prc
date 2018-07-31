@@ -2871,10 +2871,19 @@ PROCEDURE pc_trata_arquivo_slc0005(pr_node      IN xmldom.DOMNode
         vr_item_node xmldom.DOMNode;
         vr_valu_node xmldom.DOMNode;
 
+		-- SubItens de Grupo
+        vr_elem_node_grpsit xmldom.DOMElement;
+        vr_node_list_grpsit xmldom.DOMNodeList;
+        vr_node_name_grpsit VARCHAR2(100);
+        vr_item_node_grpsit xmldom.DOMNode;
+        vr_valu_node_grpsit xmldom.DOMNode;
+
         -- Genéricas
         vr_aux_descrica     VARCHAR2(1000);
 
         vr_ind  NUMBER;
+        vr_ind1 NUMBER;
+        vr_ind2 NUMBER;
 
 BEGIN
     -- Reiniciar globais
@@ -3230,6 +3239,7 @@ PROCEDURE pc_trata_arquivo_ldl(pr_node      IN xmldom.DOMNode
 
         vr_ind  NUMBER;
         vr_ind1 NUMBER;
+		vr_ind2 NUMBER;
 
 BEGIN
     -- Reiniciar globais
@@ -4881,6 +4891,8 @@ END;
       vr_aux_dsdemail  VARCHAR2(4000);
       vr_tipolog       VARCHAR2(100);
       vr_aux_flgreccon BOOLEAN := FALSE;
+      vr_aux_flgrecsal BOOLEAN := FALSE;
+      vr_aux_sal_ant   NUMBER(25,2) := 0;
       vr_aux_nrseqdig   NUMBER;
       vr_idlancto      tbfin_recursos_movimento.idlancto%TYPE;
 
