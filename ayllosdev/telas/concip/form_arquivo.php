@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 14/09/2015
  * OBJETIVO     : Tela do formulario
  * --------------
- * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 438 - Mateus Z / Mouts)
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 session_start();

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 23/01/2018
  * OBJETIVO     : Consulta para popular os filtros de banco liquidante e credenciadora
  * --------------
- * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Credenciadora no Filtro (PRJ 438 - Mateus Z / Mouts)
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Credenciadora no Filtro (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 session_start();

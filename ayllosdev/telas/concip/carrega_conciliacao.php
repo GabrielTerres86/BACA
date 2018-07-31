@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 20/02/2018
  * OBJETIVO     : Consulta conciliacao liquidacao STR
  * --------------
- * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Credenciadora no Filtro (PRJ 438 - Mateus Z / Mouts)
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Credenciadora no Filtro (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 //session_cache_limiter("private");

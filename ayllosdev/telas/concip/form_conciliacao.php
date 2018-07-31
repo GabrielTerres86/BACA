@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 20/02/2018
  * OBJETIVO     : Form selecao periodo
  * --------------
- * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 438 - Mateus Z / Mouts)
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 session_start();
@@ -20,10 +20,10 @@ isPostMethod();
     <label for="dtLcto"><?php echo utf8ToHtml('Data Lançamento:'); ?></label>
     <input type="text" id="dtlcto" name="dtlcto" class="campo" value="<?php echo $glbvars['dtmvtolt']; ?>"/>
 
-    <!-- PRJ 438 -->
+    <!-- PRJ 486 -->
     <label for="credenciadorasstr">&nbsp;<?php echo utf8ToHtml('Credenciadora:'); ?></label>
     <select id="credenciadorasstr" name="credenciadorasstr" class="campo" style="min-width:100px;max-width:120px;"></select>
-    <!-- Fim PRJ 438 -->
+    <!-- Fim PRJ 486 -->
 
     <br style="clear:both" />
 </form>

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 12/08/2015
  * OBJETIVO     : Mostra rotina Cobranca de Emprestimos
  * --------------
- * ALTERAÇÃO    : 23/07/2018 - Adicionado keyrand para o concip.js (PRJ 438 - Mateus Z / Mouts)
+ * ALTERAÇÃO    : 23/07/2018 - Adicionado keyrand para o concip.js (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 session_start();
