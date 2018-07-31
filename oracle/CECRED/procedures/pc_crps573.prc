@@ -361,6 +361,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                - Busca taxa mensal do contrato do empréstimo (Tag taxeft) Renato Cordeiro - AMcom
                                - FINAME - Usar indexador da tabela e não fixo "11" (Guilherme/AMcom)
                                - Inclusão de Exception na inserção da tabela tbhist_ativo_probl (Fernando Ornelas AMcom)
+                               
+                    31/07/2018 - Criacao de regra de data de corte para considerar a Tag '<Inf Tp="1998" />' do
+                                 Colateral Financeiro - Heckmann (AMcom)
 .............................................................................................................................*/
 
     DECLARE
@@ -1206,6 +1209,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       vr_coddindx PLS_INTEGER;
       vr_tpemprst crapepr.tpemprst%TYPE;
       vr_cddindex crawepr.cddindex%TYPE;
+      vr_dtcorte  Date;
       -- Taxas anuais
       vr_txeanual     NUMBER(10,4);
       vr_txeanual_tab NUMBER(10,4);
@@ -3216,13 +3220,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                     ,pr_texto_completo => vr_xml_3040_temp
                                     ,pr_texto_novo     => ' />');
                                     
-             IF vr_inaplicacao_propria = 1
-             OR vr_inpoupanca_propria  = 1 THEN
+             vr_dtcorte := to_date(GENE0001.fn_param_sistema(pr_cdcooper => 0
+                                                               ,pr_nmsistem => 'CRED'
+                                                               ,pr_cdacesso => 'DT_CORTE_COLFIN') ,'DD/MM/RRRR');
+                         
+             IF trunc(sysdate) >= vr_dtcorte THEN                                    
+               IF vr_inaplicacao_propria = 1
+               OR vr_inpoupanca_propria  = 1 THEN
 
-               gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                      ,pr_texto_completo => vr_xml_3040_temp
-                                      ,pr_texto_novo     => '<Inf Tp="1998" />');
-			 END IF;
+                 gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                        ,pr_texto_completo => vr_xml_3040_temp
+                                        ,pr_texto_novo     => '<Inf Tp="1998" />');
+			         END IF;
+             END IF;
              
            END IF;
          END IF;
