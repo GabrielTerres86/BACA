@@ -155,7 +155,7 @@
 			<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
 
 			<fieldset>
-				<legend>Tipo de Cobran&ccedil;a: REGISTRADA</legend>
+				<legend>N. Border&ocirc;: <?=formataNumericos('z.zzz.zz9',$nrborder,'.')?></legend>
 					
 				<div id="divcr" class="divRegistros" >
 						<table  class="tituloRegistros">
