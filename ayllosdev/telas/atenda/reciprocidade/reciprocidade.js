@@ -306,12 +306,16 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
 
         $('<td>' + nrconven + ' - ' + tipo + '</td>').appendTo(tr);
         $('<td>' +
-            '<img src="' + $('#imgEditar').val() + '" onClick="editarConvenio(' + nrconven + '); return false;" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>' +
-			'<img src="' + $('#imgExcluir').val() + '" onClick="excluirConvenio(' + nrconven + '); return false;" border="0" title="Excluir Conv&ecirc;nio"/>' +
+            '<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(' + nrconven + '); return false;"><img src="' + $('#imgEditar').val() + '" style="margin-right:5px;width:12px" /></a>' +
+			'<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(' + nrconven + '); return false;"><img src="' + $('#imgExcluir').val() + '" border="0"/></a>' +
         '</td>').appendTo(tr);
     }
 
 	table.appendTo("#divConveniosRegistros .divRegistros");
+
+    // habilita tooltip
+    $('.imgEditar').tooltip();	
+    $('.imgExcluir').tooltip();
 
     controlaLayout('divConveniosRegistros');
 
@@ -344,7 +348,7 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
 
       });
       if(foundMesmoTipo){
-        showError("error", "N&#227;o &#233; poss&#237;vel selecionar mais de um conv&#234;nios do mesmo tipo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&#227;o &#233; poss&#237;vel selecionar mais de um conv&#234;nio de INTERNET.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
       }
 

@@ -144,6 +144,9 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 }
 
 ?>
+<style>
+img, input[type="image"] { outline: none; }
+</style>
 <input type="hidden" id="idcalculo_reciproci" value="<?php echo $idcalculo_reciproci ?>" />
 <input type="hidden" id="cddopcao" value="C" />
 <input type="hidden" id="imgEditar" value="<?php echo $UrlImagens; ?>icones/ico_editar.png" />
@@ -172,8 +175,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 				<tr>
 					<td width="60%"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
 					<td width="40%">
-						<img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;" style="margin-right:5px;width:12px" title="Editar Conv&ecirc;nio"/>
-						<img src="<?php echo $UrlImagens; ?>geral/excluir.gif" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;" title="Excluir Conv&ecirc;nio"/>
+						<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" style="margin-right:5px;width:12px"/></a>
+						<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.gif"/></a>
 					</td>
 				</tr>
 				<?php
@@ -399,5 +402,8 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 //$('.inteiro').setMask('INTEGER', 'zzz.zzz.zzz', '.', '');
 $('.valor').setMask('DECIMAL', 'zz.zzz.zz9,99', '.', '');
 $('.inteiro').setMask('DECIMAL', 'zz.zzz.zzz', '.', '');
+
+$('.imgEditar').tooltip();	
+$('.imgExcluir').tooltip();
 
 </script>
