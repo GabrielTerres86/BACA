@@ -1100,7 +1100,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               --Sair do programa
               RAISE vr_exc_erro;           
           END;
-           
+          
+          COMMIT;
+          
         END IF;
       END LOOP;
     END LOOP;
