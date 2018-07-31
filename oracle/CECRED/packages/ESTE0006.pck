@@ -6,13 +6,13 @@ create or replace package cecred.ESTE0006 is
       Sigla    : CADA
       Autor    : Andrew Albuquerque (GFT)
       Data     : Abril/2018.                   Ultima atualizacao: 20/04/2018
-
+      
       Dados referentes ao programa:
       Frequencia: Sempre que solicitado
       Objetivo  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
 
-      Alteracoes:
-
+      Alteracoes: 
+  
   ---------------------------------------------------------------------------------------------------------------*/
 
 --> Tratamento de erro
@@ -27,7 +27,7 @@ vr_dscritic varchar2(4000);
 --> Rotina responsavel por verificar o stado de contingencia na esteira
 PROCEDURE pc_verifica_contigenc_esteira(pr_cdcooper in crapcop.cdcooper%type       --> Codigo da cooperativa
                                        ,pr_flctgest out boolean                    --> Flag que indica o status de contigencia do motor.
-                                       ,pr_dsmensag out varchar2                   --> Mensagem
+                                       ,pr_dsmensag out varchar2                   --> Mensagem 
                                        ,pr_dscritic out varchar2                   --> Descricao da critica
                                        );
 
@@ -40,7 +40,7 @@ PROCEDURE pc_enviar_bordero_esteira(pr_cdcooper in  crapbdt.cdcooper%type       
                                    ,pr_nrborder in  crapbdt.nrborder%TYPE             --> Número do Borderô
                                    ,pr_nrdconta in  crapbdt.nrdconta%type             --> Conta do associado
                                    ,pr_dtmovito in  varchar2                          --> Data do movimento atual
-                                   ,pr_dsmensag out varchar2                          --> Mensagem
+                                   ,pr_dsmensag out varchar2                          --> Mensagem 
                                    ,pr_cdcritic out pls_integer                       --> Codigo da critica
                                    ,pr_dscritic out varchar2                          --> Descricao da critica
                                    ,pr_des_erro out varchar2                          --> Erros do processo OK ou NOK
@@ -52,15 +52,15 @@ procedure pc_obrigacao_analise_autom(pr_cdcooper in crapcop.cdcooper%type  --> C
                                     ,pr_cdcritic out pls_integer           --> Cód. da crítica
                                     ,pr_dscritic out varchar2              --> Desc. da crítica
                                     );
-
-procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo da cooperativa
+  
+procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo da cooperativa                                        
                             ,pr_nrdconta  in crapbdt.nrdconta%type  --> Numero da conta do cooperado
                             ,pr_nrborder in  crapbdt.nrborder%TYPE  --> Número do Borderô
                             ,pr_tpenvest  in varchar2 default null  --> Tipo de envio
                             ,pr_cdcritic out number                 --> Codigo da critica
                             ,pr_dscritic out varchar2               --> Descricao da critica
                             );
-
+                             
 --> Rotina responsavel por incluir o borderô na esteira
 procedure pc_incluir_bordero_esteira(pr_cdcooper  in crapbdt.cdcooper%type     --> Codigo da cooperativa
                                     ,pr_cdagenci  in crapbdt.cdagenci%type     --> Codigo da cooperativa
@@ -77,24 +77,24 @@ procedure pc_incluir_bordero_esteira(pr_cdcooper  in crapbdt.cdcooper%type     -
 
 --> Rotina responsavel por enviar borderô para a esteira
 PROCEDURE pc_enviar_analise_bordero(pr_cdcooper    IN crapbdt.cdcooper%type  --> Codigo da cooperativa
-                                   ,pr_cdagenci    IN crapage.cdagenci%type  --> Codigo da agencia
+                                   ,pr_cdagenci    IN crapage.cdagenci%type  --> Codigo da agencia                                          
                                    ,pr_cdoperad    IN crapope.cdoperad%type  --> codigo do operador
                                    ,pr_cdorigem    IN integer                --> Origem da operacao
                                    ,pr_nrdconta    IN crapbdt.nrdconta%type  --> Numero da conta do cooperado
                                    ,pr_nrborder    IN crapbdt.nrborder%type  --> Numero do borderô
-                                   ,pr_dtmvtolt    IN crapdat.dtmvtolt%type  --> Data do movimento
+                                   ,pr_dtmvtolt    IN crapdat.dtmvtolt%type  --> Data do movimento                                      
                                    ,pr_comprecu    IN varchar2               --> Complemento do recuros da URI
                                    ,pr_dsmetodo    IN varchar2               --> Descricao do metodo
                                    ,pr_conteudo    IN clob                   --> Conteudo no Json para comunicacao
                                    ,pr_dsoperacao  IN varchar2               --> Operacao realizada
                                    ,pr_tpenvest    IN VARCHAR2 DEFAULT null  --> Tipo de envio, I-Inclusao C - Consultar(Get)
                                    ,pr_dsprotocolo OUT varchar2              --> Protocolo retornado na requisiçao
-                                   ,pr_dscritic    OUT VARCHAR2
+                                   ,pr_dscritic    OUT VARCHAR2  
                                    );
 
 --> Rotina responsavel por enviar o borderô para a analise manual.
 procedure pc_enviar_analise_manual(pr_cdcooper    in crapbdt.cdcooper%type  --> Codigo da cooperativa
-                                  ,pr_cdagenci    in crapage.cdagenci%type  --> Codigo da agencia
+                                  ,pr_cdagenci    in crapage.cdagenci%type  --> Codigo da agencia                                          
                                   ,pr_cdoperad    in crapope.cdoperad%type  --> codigo do operador
                                   ,pr_cdorigem    in integer                --> Origem da operacao
                                   ,pr_nrdconta    in crapbdt.nrdconta%type  --> Numero da conta do cooperado
@@ -104,10 +104,10 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crapbdt.cdcooper%type  --> 
                                   ,vr_flgdebug  IN VARCHAR2                 --> Flag se debug ativo
                                   ,pr_dsmensag OUT VARCHAR2
                                   ,pr_cdcritic OUT NUMBER                --> Codigo da critica
-                                  ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                  ,pr_dscritic OUT VARCHAR2              --> Descricao da critica 
                                   ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
                                   );
-
+                                  
   PROCEDURE pc_gera_json_bordero(pr_cdcooper in crapbdt.cdcooper%type
                                 ,pr_cdagenci in crapage.cdagenci%type
                                 ,pr_cdoperad in crapope.cdoperad%type
@@ -135,27 +135,27 @@ PROCEDURE pc_verifica_contigenc_esteira(pr_cdcooper in crapcop.cdcooper%type    
    vr_contige_este VARCHAR2(500);
    vr_exc_erro EXCEPTION;
    vr_dscritic VARCHAR2(4000);
-
-BEGIN
+    
+BEGIN  
    pr_flctgest := false;
 
    vr_contige_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'                           --> Nome DO sistema
                                                ,pr_cdcooper => pr_cdcooper                      --> Codigo da cooperativa
-                                               ,pr_cdacesso => 'CONTIGENCIA_ESTEIRA_DESC');     --> Código de acesso.
+                                               ,pr_cdacesso => 'CONTIGENCIA_ESTEIRA_DESC');     --> Código de acesso. 
    if  vr_contige_este is null then
        vr_dscritic := 'Parametro CONTIGENCIA_ESTEIRA_DESC não encontrado.';
-       raise vr_exc_erro;
+       raise vr_exc_erro;      
    end if;
-
+    
    if  vr_contige_este = '1' then
        pr_flctgest := true;
        pr_dsmensag := 'Atençao! O Envio para Esteira está em Contingência';
    end if;
-
+  
 EXCEPTION
-   when vr_exc_erro then
+   when vr_exc_erro then     
         pr_dscritic := vr_dscritic;
-
+    
    when others then
         pr_dscritic := 'Nao foi possível buscar parametros da esteira: '||sqlerrm;
 END;
@@ -168,7 +168,7 @@ PROCEDURE pc_enviar_bordero_esteira(pr_cdcooper in  crapbdt.cdcooper%type       
                                    ,pr_nrborder in  crapbdt.nrborder%TYPE
                                    ,pr_nrdconta in  crapbdt.nrdconta%type             --> Conta do associado
                                    ,pr_dtmovito in  varchar2                          --> Data do movimento atual
-                                   ,pr_dsmensag out varchar2                          --> Mensagem
+                                   ,pr_dsmensag out varchar2                          --> Mensagem 
                                    ,pr_cdcritic out pls_integer                       --> Codigo da critica
                                    ,pr_dscritic out varchar2                          --> Descricao da critica
                                    ,pr_des_erro out varchar2                          --> Erros do processo OK ou NOK
@@ -179,14 +179,14 @@ PROCEDURE pc_enviar_bordero_esteira(pr_cdcooper in  crapbdt.cdcooper%type       
   vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
   vr_inobriga varchar2(1);
   vr_tpenvest varchar2(1);
-
+  
   --> Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
-
+    
   --> Tratamento de erros
   vr_exc_saida EXCEPTION;
-
+  
   --> Busca do nome do associado
   cursor cr_crapass is
   select ass.nmprimtl
@@ -215,17 +215,17 @@ BEGIN
    vr_dtmvtolt := TO_DATE(pr_dtmovito, 'DD/MM/YYYY');
 
    pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper   --> Codigo da Cooperativa
-                                ,pr_flctgest => vr_flctgest   --> Flag de contingencia flag de
+                                ,pr_flctgest => vr_flctgest   --> Flag de contingencia flag de 
                                 ,pr_dsmensag => pr_dsmensag   --> Flag descriçao da mensagem
                                 ,pr_dscritic => pr_dscritic); --> Descriçao da Crítica
-
+                                
    if  vr_flctgest then
        pr_cdcritic := 0;
        pr_dscritic := '';
        pr_dsmensag := 'A esteira está em contingência.';
        return;
    end if;
-
+                          
    open  cr_crapass;
    fetch cr_crapass into rw_crapass;
    if    cr_crapass%notfound then
@@ -234,9 +234,9 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crapass;
-
+   
    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
-
+   
    -- abrindo o cursor de Borderô
    OPEN cr_crapbdt(pr_cdcooper => pr_cdcooper
                   ,pr_nrdconta => pr_nrdconta
@@ -248,27 +248,27 @@ BEGIN
          RAISE vr_exc_saida;
    END IF;
    CLOSE cr_crapbdt;
-
+   
    if  vr_tpenvest = 'I' then
        vr_inobriga := 'N';
-
-       --> Verificar se o borderô devera passar por analise automatica
-       pc_obrigacao_analise_autom(pr_cdcooper => pr_cdcooper    --> Codigo da Cooperativa
-                                 ,pr_inobriga => vr_inobriga    --> Índice de Obrigaçao
+       
+       --> Verificar se o borderô devera passar por analise automatica 
+       pc_obrigacao_analise_autom(pr_cdcooper => pr_cdcooper    --> Codigo da Cooperativa 
+                                 ,pr_inobriga => vr_inobriga    --> Índice de Obrigaçao 
                                  ,pr_cdcritic => vr_cdcritic    --> Codigo da Critica
                                  ,pr_dscritic => vr_dscritic);  --> Descriçao da Critica
-
+                                 
        --> Se: 1 - Ja houve envio para a Esteira (Pelo Status)
        -->     2 - não precisar passar por Analise Automatica
-
+       
        if rw_crapbdt.insitapr = 6 and vr_inobriga <> 'S' THEN
            --> Significa que o borderô jah foi para a Esteira, entao devemos mandar um reinicio de Fluxo
            vr_tpenvest := 'A';
        end if;
    end if;
-
+         
    /***** Verificar se a Esteira esta em contigencia *****/
-   pc_verifica_regras(pr_cdcooper => pr_cdcooper          --> Codigo da Cooperativa
+   pc_verifica_regras(pr_cdcooper => pr_cdcooper          --> Codigo da Cooperativa 
                      ,pr_nrdconta => rw_crapbdt.nrdconta  --> Numero da conta
                      ,pr_nrborder => pr_nrborder          --> Numero de crontrole de bordero
                      ,pr_tpenvest => vr_tpenvest          --> Tipo de Envio para a Esteira
@@ -278,9 +278,9 @@ BEGIN
    if  vr_cdcritic > 0  or vr_dscritic is not null then
        raise vr_exc_saida;
    end if;
-
-   /***** INCLUIR O BORDERÔ NA ESTEIRA *****/
-   pc_incluir_bordero_esteira(pr_cdcooper => pr_cdcooper         --> Codigo da Cooperativa
+       
+   /***** INCLUIR O BORDERÔ NA ESTEIRA *****/ 
+   pc_incluir_bordero_esteira(pr_cdcooper => pr_cdcooper         --> Codigo da Cooperativa 
                           ,pr_cdagenci => vr_cdagenci         --> Numero da agencia
                           ,pr_cdoperad => pr_cdoperad         --> Código DO Operador
                           ,pr_cdorigem => pr_idorigem         --> Código da Origem
@@ -305,14 +305,14 @@ EXCEPTION
            --> Busca descriçao da crítica
            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
        END IF;
-
+        
        --> Atribui exceçao para os parametros de crítica
        pr_cdcritic := vr_cdcritic;
        pr_dscritic := vr_dscritic;
        pr_des_erro := 'NOK';
 
        ROLLBACK;
-
+        
   WHEN OTHERS THEN
        --> Atribui exceçao para os parametros de crítica
        pr_cdcritic := vr_cdcritic;
@@ -324,33 +324,33 @@ END pc_enviar_bordero_esteira;
 
 
 PROCEDURE pc_obrigacao_analise_autom(pr_cdcooper in crapcop.cdcooper%type  --> Cód. cooperativa
-                                    ---- OUT ----
+                                    ---- OUT ----                                          
                                     ,pr_inobriga out varchar2              --> Indicador de obrigaçao de análisa automática ('S' - Sim / 'N' - Nao)
                                     ,pr_cdcritic out pls_integer           --> Cód. da crítica
                                     ,pr_dscritic out varchar2) is          --> Desc. da crítica
 vr_dsmensag varchar2(1000);
-begin
+begin 
 
    pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper        --> Codigo da cooperativa
                                 ,pr_flctgest => vr_flctgest        --> Flag que indica o status de contigencia da esteira.
-                                ,pr_dsmensag => vr_dsmensag        --> Mensagem
+                                ,pr_dsmensag => vr_dsmensag        --> Mensagem 
                                 ,pr_dscritic => pr_dscritic);      --> Descricao da critica
 
-   --> OU Esteira está em contingencia
+   --> OU Esteira está em contingencia 
    --> OU a Cooperativa não Obriga Análise Automática
    if  vr_flctgest then
        pr_inobriga := 'N';
-   else
+   else 
        pr_inobriga := 'S';
    end if;
-
-exception
+      
+exception     
    when others then
         pr_cdcritic := 0;
         pr_dscritic := 'Erro inesperado na rotina que verifica o tipo de análise do borderô: '||sqlerrm;
 end pc_obrigacao_analise_autom;
-
-procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo da cooperativa
+  
+procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo da cooperativa                                        
                             ,pr_nrdconta  in crapbdt.nrdconta%type  --> Numero da conta do cooperado
                             ,pr_nrborder in  crapbdt.nrborder%TYPE  --> Número do Borderô
                             ,pr_tpenvest  in varchar2 default null  --> Tipo de envio
@@ -358,20 +358,20 @@ procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo d
                             ,pr_dscritic out varchar2               --> Descricao da critica
                             ) IS
 /* ..........................................................................
-
-    Programa : pc_verifica_regras_esteira
-    Sistema  :
+    
+    Programa : pc_verifica_regras_esteira        
+    Sistema  : 
     Sigla    : CRED
     Autor    : Paulo Penteado GFT
     Data     : Fevereiro/2018.                   Ultima atualizacao: 16/02/2018
-
+    
     Dados referentes ao programa:
-
+    
     Frequencia: Sempre que for chamado
-    Objetivo  : Procedimento para verificar as regras da esteira
-
-    Alteraçao :
-
+    Objetivo  : Procedimento para verificar as regras da esteira 
+    
+    Alteraçao : 
+        
   ..........................................................................*/
     -----------> CURSORES <-----------
     --> buscar os dados do Borderô de Desconto de Títulos
@@ -386,16 +386,16 @@ procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo d
        AND bdt.nrdconta = pr_nrdconta
        AND bdt.nrborder = pr_nrborder;
     rw_crapbdt cr_crapbdt%ROWTYPE;
-
-
+    
+    
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(4000);
     vr_cdcritic     NUMBER;
-
+    
   BEGIN
     --> Para inclusao, e alteraçao
-    IF nvl(pr_tpenvest,' ') IN ('I','A') THEN
-
+    IF nvl(pr_tpenvest,' ') IN ('I','A') THEN    
+      
       --> Buscar dados do Borderô
       OPEN cr_crapbdt(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -406,7 +406,7 @@ procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo d
             vr_cdcritic := 1166; --> 1166 - Bordero nao encontrado.
             RAISE vr_exc_erro;
       END IF;
-
+      
       --> Somente permitirá se ainda não analisada e ainda não enviada
       IF (rw_crapbdt.insitbdt = 1 AND rw_crapbdt.insitapr = 0) THEN -- insitbdt 1-Em Estudo / insitapr 0-Aguardando Análise
         --> Sair pois pode ser enviada
@@ -416,19 +416,19 @@ procedure pc_verifica_regras(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo d
       vr_dscritic := 'O Borderô não pode ser enviado para Análise de crédito, verifique a situação do Borderô!';
       RAISE vr_exc_erro;
     END IF;
-
+    
   EXCEPTION
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN     
       --> Buscar critica
-      IF nvl(vr_cdcritic,0) > 0 AND
+      IF nvl(vr_cdcritic,0) > 0 AND 
         TRIM(vr_dscritic) IS NULL THEN
-        --> Busca descricao
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
-
+        --> Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-
+    
     WHEN OTHERS THEN
       pr_dscritic := 'Nao foi possível  verificar regras da Análise de Crédito: '||SQLERRM;
 END pc_verifica_regras;
@@ -445,27 +445,27 @@ procedure pc_incluir_bordero_esteira(pr_cdcooper  in crapbdt.cdcooper%type     -
                                     ,pr_cdcritic out number                    --> Codigo da crítica
                                     ,pr_dscritic out varchar2) IS              --> Descriçao da crítica
   /* ...........................................................................
-
+  
     Programa : pc_incluir_bordero_esteira
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrew Albuquerque - GFT-Brasil
     Data     : Abril/2018.          Ultima atualizacao: 20/04/2018
-
+    
     Dados referentes ao programa:
-
+    
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina responsavel por gerar a inclusao do Borderô para a esteira de crédito.
-    Alteraçao :
-
+    Alteraçao :      
+    
   ..........................................................................*/
-
+    
   ----------- VARIAVEIS <-----------
   --> Tratamento de erros
   vr_cdcritic NUMBER := 0;
   vr_dscritic VARCHAR2(4000);
   vr_exc_erro EXCEPTION;
-
+    
   --> Buscar informações do Borderô
   CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
                     ,pr_nrdconta IN crapbdt.nrdconta%TYPE
@@ -492,9 +492,9 @@ procedure pc_incluir_bordero_esteira(pr_cdcooper  in crapbdt.cdcooper%type     -
   --> Variaveis para DEBUG
   vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
   vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
-
-BEGIN
-
+    
+BEGIN    
+    
   --> Se o DEBUG estiver habilitado
   IF vr_flgdebug = 'S' THEN
     --> Gravar dados log acionamento
@@ -506,30 +506,30 @@ BEGIN
                                   pr_nrdconta              => pr_nrdconta,                    --> Numero da Conta
                                   pr_tpacionamento         => 0,  /* 0 - DEBUG */             --> Tipo de Acionamento
                                   pr_dsoperacao            => 'INICIO INCLUIR BORDERO',      --> Descriçao da Operaçao
-                                  pr_dsuriservico          => NULL,                           --> Descriçao DO Serviço
+                                  pr_dsuriservico          => NULL,                           --> Descriçao DO Serviço           
                                   pr_dtmvtolt              => pr_dtmvtolt,                    --> Data DO Movimento
-                                  pr_cdstatus_http         => 0,                              --> Código de STATUS
+                                  pr_cdstatus_http         => 0,                              --> Código de STATUS 
                                   pr_dsconteudo_requisicao => null,                           --> Descriçao DO conteudo da requisiçao
                                   pr_dsresposta_requisicao => null,                           --> Descriçao da Resposta da requisiçao
                                   pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
                                   pr_idacionamento         => vr_idaciona,                    --> Identificadordo acionamento
                                   pr_dscritic              => vr_dscritic);                   --> Descriçao da critica
-
-    --> Sem tratamento de exceçao para DEBUG
+                                 
+    --> Sem tratamento de exceçao para DEBUG                    
     --IF TRIM(vr_dscritic) IS NOT NULL THEN
     -->  RAISE vr_exc_erro;
     --END IF;
-  END IF;
-
+  END IF; 
+  
   --> Buscando as Informações de Bolêto de Desconto de Título.
   OPEN cr_crapbdt (pr_cdcooper => pr_cdcooper
                   ,pr_nrdconta => pr_nrdconta
                   ,pr_nrborder => pr_nrborder);
   FETCH cr_crapbdt INTO rw_crapbdt;
   CLOSE cr_crapbdt;
-
+    
   pc_enviar_analise_manual(pr_cdcooper => pr_cdcooper      --> Codigo da cooperativa
-                          ,pr_cdagenci => pr_cdagenci      --> Codigo da agencia
+                          ,pr_cdagenci => pr_cdagenci      --> Codigo da agencia                                          
                           ,pr_cdoperad => pr_cdoperad      --> codigo do operador
                           ,pr_cdorigem => pr_cdorigem      --> Origem da operacao
                           ,pr_nrdconta => pr_nrdconta      --> Numero da conta do cooperado
@@ -537,30 +537,30 @@ BEGIN
                           ,pr_dtmvtolt => pr_dtmvtolt      --> Data do movimento
                           ,pr_nmarquiv => pr_nmarquiv      --> Indica se deve reiniciar o fluxo de aprovacao na esteira
                           ,vr_flgdebug => vr_flgdebug      --> Diretorio e nome do arquivo pdf do Borderô de Desconto de Tìtulo
-                          ,pr_dsmensag => pr_dsmensag
-                          ,pr_cdcritic => vr_cdcritic
-                          ,pr_dscritic => vr_dscritic      --> Descricao da critica
+                          ,pr_dsmensag => pr_dsmensag      
+                          ,pr_cdcritic => vr_cdcritic      
+                          ,pr_dscritic => vr_dscritic      --> Descricao da critica 
                           ,pr_des_erro => vr_des_erro);    -- Descriçaõ do ee
-
+                                   
   IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-    RAISE vr_exc_erro;
+    RAISE vr_exc_erro;        
   END IF;
-
-  COMMIT;
-
+    
+  COMMIT;   
+    
 EXCEPTION
   WHEN vr_exc_erro THEN
-
+      
     --> Buscar critica
-    IF nvl(vr_cdcritic,0) > 0 AND
+    IF nvl(vr_cdcritic,0) > 0 AND 
       TRIM(vr_dscritic) IS NULL THEN
-      --> Busca descricao
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-    END IF;
-
+      --> Busca descricao        
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+    END IF;  
+      
     pr_cdcritic := vr_cdcritic;
     pr_dscritic := vr_dscritic;
-
+    
   WHEN OTHERS THEN
     pr_cdcritic := 0;
     pr_dscritic := 'Não foi possível realizar a inclusão do Borderô de Desconto de Títulos: '||SQLERRM;
@@ -568,7 +568,7 @@ END pc_incluir_bordero_esteira;
 
   --> Rotina responsavel por gerar a alteracao do Borderô para a esteira
   procedure pc_alterar_bordero(pr_cdcooper  in crapbdt.cdcooper%type  --> Codigo da cooperativa
-                               ,pr_cdagenci  in crapage.cdagenci%type  --> Codigo da agencia
+                               ,pr_cdagenci  in crapage.cdagenci%type  --> Codigo da agencia                                          
                                ,pr_cdoperad  in crapope.cdoperad%type  --> codigo do operador
                                ,pr_cdorigem  in integer                --> Origem da operacao
                                ,pr_nrdconta  in crapbdt.nrdconta%type  --> Numero da conta do cooperado
@@ -577,25 +577,25 @@ END pc_incluir_bordero_esteira;
                                ,pr_flreiflx  in integer                --> Indica se deve reiniciar o fluxo de aprovacao na esteira
                                ,pr_nmarquiv  in varchar2               --> Diretorio e nome do arquivo pdf do Borderô de Desconto de título
                                ,pr_cdcritic out number                 --> Codigo da critica
-                               ,pr_dscritic out varchar2               --> Descricao da critica
+                               ,pr_dscritic out varchar2               --> Descricao da critica 
                                ) is
     /* ..........................................................................
-
-      Programa : pc_alterar_bordero
-      Sistema  :
+    
+      Programa : pc_alterar_bordero        
+      Sistema  : 
       Sigla    : CRED
-      Autor    : Paulo Penteado (GFT)
+      Autor    : Paulo Penteado (GFT) 
       Data     : Fevereiro/2018.                   Ultima atualizacao: 17/02/2018
-
+    
       Dados referentes ao programa:
-
+    
       Frequencia: Sempre que for chamado
-      Objetivo  : Rotina responsavel por gerar a alteracao do borderô para a esteira
-      Alteraçao :
-
+      Objetivo  : Rotina responsavel por gerar a alteracao do borderô para a esteira    
+      Alteraçao : 
+        
     ..........................................................................*/
     -----------> CURSORES <-----------
-
+    
     --> Buscar operador
     CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
                        pr_cdoperad  crapope.cdoperad%TYPE) IS
@@ -603,56 +603,56 @@ END pc_incluir_bordero_esteira;
         FROM crapope ope
        WHERE ope.cdcooper = pr_cdcooper
          AND upper(ope.cdoperad) = upper(pr_cdoperad);
-
+    
     rw_crapope cr_crapope%ROWTYPE;
-
+    
     -----------> VARIAVEIS <-----------
     --> Tratamento de erros
     vr_cdcritic NUMBER := 0;
     vr_dscritic VARCHAR2(4000);
     vr_dsmensag VARCHAR2(4000);
     vr_exc_erro EXCEPTION;
-
+      
     --> Objeto json da bordero
     vr_obj_alter    json := json();
     vr_obj_bordero json := json();
-    vr_obj_agencia  json := json();
+    vr_obj_agencia  json := json();  
     vr_dsprotocolo  VARCHAR2(1000);
     vr_obj_bordero_clob clob;
-
+    
     --> Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
-
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;    
+    
     --> Hora de Envio
     vr_hrenvest crawlim.hrenvest%TYPE;
-  BEGIN
-
+  BEGIN                  
+    
     --> Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
-      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,
-                                    pr_cdagenci              => pr_cdagenci,
-                                    pr_cdoperad              => pr_cdoperad,
-                                    pr_cdorigem              => pr_cdorigem,
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                                    pr_cdagenci              => pr_cdagenci,          
+                                    pr_cdoperad              => pr_cdoperad,          
+                                    pr_cdorigem              => pr_cdorigem,          
                                     pr_nrctrprp              => pr_nrborder,
-                                    pr_nrdconta              => pr_nrdconta,
-                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */
-                                    pr_dsoperacao            => 'INICIO ALTERAR BORDERO',
-                                    pr_dsuriservico          => NULL,
-                                    pr_dtmvtolt              => pr_dtmvtolt,
+                                    pr_nrdconta              => pr_nrdconta,          
+                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                    pr_dsoperacao            => 'INICIO ALTERAR BORDERO',       
+                                    pr_dsuriservico          => NULL,       
+                                    pr_dtmvtolt              => pr_dtmvtolt,       
                                     pr_cdstatus_http         => 0,
                                     pr_dsconteudo_requisicao => null,
                                     pr_dsresposta_requisicao => null,
                                     pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
                                     pr_idacionamento         => vr_idaciona,
                                     pr_dscritic              => vr_dscritic);
-      --> Sem tratamento de exceçao para DEBUG
+      --> Sem tratamento de exceçao para DEBUG                    
       --IF TRIM(vr_dscritic) IS NOT NULL THEN
       -->  RAISE vr_exc_erro;
       --END IF;
-    END IF;
-
+    END IF;   
+  
     --> Gerar informaçoes no padrao JSON do borderô de desconto de títulos
 
              pc_gera_json_bordero(pr_cdcooper  => pr_cdcooper
@@ -667,9 +667,9 @@ END pc_incluir_bordero_esteira;
                                  ,pr_dscritic  => vr_dscritic);
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-
+      RAISE vr_exc_erro;        
+    END IF;  
+    
     --> Buscar dados do operador
     OPEN cr_crapope (pr_cdcooper  => pr_cdcooper,
                      pr_cdoperad  => pr_cdoperad);
@@ -677,53 +677,53 @@ END pc_incluir_bordero_esteira;
     IF cr_crapope%NOTFOUND THEN
       CLOSE cr_crapope;
       vr_cdcritic := 67; --> 067 - Operador nao cadastrado.
-      RAISE vr_exc_erro;
+      RAISE vr_exc_erro; 
     ELSE
       CLOSE cr_crapope;
-    END IF;
-
+    END IF;        
+    
     --> Incluir objeto bordero
     vr_obj_alter.put('dadosAtualizados'      ,vr_obj_bordero);
     vr_obj_alter.put('operadorAlteracaoLogin',lower(pr_cdoperad));
     vr_obj_alter.put('operadorAlteracaoNome' ,rw_crapope.nmoperad) ;
     vr_obj_alter.put('dataHora'              ,este0001.fn_DataTempo_ibra(SYSDATE)) ;
     vr_obj_alter.put('reiniciaFluxo'         ,(pr_flreiflx = 1) ) ;
-
+    
     --> Criar objeto json para agencia do cooperado
     vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
-    vr_obj_agencia.put('PACodigo'            , pr_cdagenci);
+    vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
     vr_obj_alter.put('operadorAlteracaoPA'      , vr_obj_agencia);
-
+    
     --> Criar o CLOB para converter JSON para CLOB
     dbms_lob.createtemporary(vr_obj_bordero_clob, TRUE, dbms_lob.CALL);
     dbms_lob.open(vr_obj_bordero_clob, dbms_lob.lob_readwrite);
     json.to_clob(vr_obj_alter,vr_obj_bordero_clob);
-
+    
     --> Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
-      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,
-                                    pr_cdagenci              => pr_cdagenci,
-                                    pr_cdoperad              => pr_cdoperad,
-                                    pr_cdorigem              => pr_cdorigem,
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                                    pr_cdagenci              => pr_cdagenci,          
+                                    pr_cdoperad              => pr_cdoperad,          
+                                    pr_cdorigem              => pr_cdorigem,          
                                     pr_nrctrprp              => pr_nrborder,
-                                    pr_nrdconta              => pr_nrdconta,
-                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */
-                                    pr_dsoperacao            => 'ANTES ALTERAR BORDERO',
-                                    pr_dsuriservico          => NULL,
-                                    pr_dtmvtolt              => pr_dtmvtolt,
+                                    pr_nrdconta              => pr_nrdconta,          
+                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                    pr_dsoperacao            => 'ANTES ALTERAR BORDERO',       
+                                    pr_dsuriservico          => NULL,       
+                                    pr_dtmvtolt              => pr_dtmvtolt,       
                                     pr_cdstatus_http         => 0,
                                     pr_dsconteudo_requisicao => vr_obj_bordero_clob,
                                     pr_dsresposta_requisicao => null,
                                     pr_tpproduto             => 7, --> Bordero de Desconto de Títulos
                                     pr_idacionamento         => vr_idaciona,
                                     pr_dscritic              => vr_dscritic);
-      --> Sem tratamento de exceçao para DEBUG
+      --> Sem tratamento de exceçao para DEBUG                    
       --IF TRIM(vr_dscritic) IS NOT NULL THEN
       -->  RAISE vr_exc_erro;
       --END IF;
-    END IF;
-
+    END IF;  
+    
     --> Enviar dados para Esteira
     pc_enviar_analise_bordero(pr_cdcooper    => pr_cdcooper
                              ,pr_cdagenci    => pr_cdagenci
@@ -738,10 +738,10 @@ END pc_incluir_bordero_esteira;
                              ,pr_dsoperacao  => 'REENVIO DO BORDERO PARA ANALISE DE CREDITO'
                              ,pr_dsprotocolo => vr_dsprotocolo
                              ,pr_dscritic    => vr_dscritic);
-
+    
     --> Se nao houve erro
-    IF vr_dscritic IS NULL THEN
-
+    IF vr_dscritic IS NULL THEN 
+    
     --> Atualizar bordero
     vr_hrenvest := to_char(SYSDATE,'sssss');
     begin
@@ -755,17 +755,17 @@ END pc_incluir_bordero_esteira;
        where bdt.cdcooper = pr_cdcooper
          and bdt.nrdconta = pr_nrdconta
          and bdt.nrborder = pr_nrborder;
-    exception
+    exception    
       when others then
         vr_dscritic := 'Nao foi possível  atualizar borderô apos envio da Analise de Credito: '||sqlerrm;
-    end;
+    end;         
 
-
+    
     --> Caso tenhamos recebido critica de Borderô jah existente na Esteira
     ELSIF lower(vr_dscritic) LIKE '%bordero nao encontrado%' THEN
 
       --> Tentaremos enviar inclusao novamente na Esteira
-      pc_incluir_bordero_esteira(pr_cdcooper => pr_cdcooper         --> Codigo da Cooperativa
+      pc_incluir_bordero_esteira(pr_cdcooper => pr_cdcooper         --> Codigo da Cooperativa 
                                 ,pr_cdagenci => pr_cdagenci         --> Numero da agencia
                                 ,pr_cdoperad => pr_cdoperad         --> Código DO Operador
                                 ,pr_cdorigem => pr_cdorigem         --> Código da Origem
@@ -776,54 +776,54 @@ END pc_incluir_bordero_esteira;
                                 ,pr_dsmensag => vr_dsmensag         --> Descriao da Mensagem
                                 ,pr_cdcritic => vr_cdcritic         --> Código da Critica
                                 ,pr_dscritic => vr_dscritic);       --> Descriçao da crítica
-    END IF;
+    END IF;  
 
     --> verificar se retornou critica
     IF  vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-    END IF;
-
-
+    END IF; 
+    
+    
     --> Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
-      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,
-                                    pr_cdagenci              => pr_cdagenci,
-                                    pr_cdoperad              => pr_cdoperad,
-                                    pr_cdorigem              => pr_cdorigem,
+      ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                                    pr_cdagenci              => pr_cdagenci,          
+                                    pr_cdoperad              => pr_cdoperad,          
+                                    pr_cdorigem              => pr_cdorigem,          
                                     pr_nrctrprp              => pr_nrborder,
-                                    pr_nrdconta              => pr_nrdconta,
-                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */
-                                    pr_dsoperacao            => 'TERMINO ALTERAR BORDERO',
-                                    pr_dsuriservico          => NULL,
-                                    pr_dtmvtolt              => pr_dtmvtolt,
+                                    pr_nrdconta              => pr_nrdconta,          
+                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                    pr_dsoperacao            => 'TERMINO ALTERAR BORDERO',       
+                                    pr_dsuriservico          => NULL,       
+                                    pr_dtmvtolt              => pr_dtmvtolt,       
                                     pr_cdstatus_http         => 0,
                                     pr_dsconteudo_requisicao => null,
                                     pr_dsresposta_requisicao => null,
                                     pr_tpproduto             => 7, --> Desconto de títulos
                                     pr_idacionamento         => vr_idaciona,
                                     pr_dscritic              => vr_dscritic);
-      --> Sem tratamento de exceçao para DEBUG
+      --> Sem tratamento de exceçao para DEBUG                    
       --IF TRIM(vr_dscritic) IS NOT NULL THEN
       -->  RAISE vr_exc_erro;
       --END IF;
-    END IF;
-
+    END IF;       
+    
     COMMIT;
-
+  
   EXCEPTION
     WHEN vr_exc_erro THEN
-
+      
       --> Buscar critica
-      IF nvl(vr_cdcritic,0) > 0 AND
+      IF nvl(vr_cdcritic,0) > 0 AND 
         TRIM(vr_dscritic) IS NULL THEN
-        --> Busca descricao
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
-
+        --> Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-
+    
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possível  realizar alteracao do Bôrdero de Desconto de Títulos: '||SQLERRM;
@@ -831,12 +831,12 @@ END pc_incluir_bordero_esteira;
 
  --> Rotina responsavel em enviar dos dados para a esteira
   PROCEDURE pc_enviar_analise_bordero(pr_cdcooper    IN crapbdt.cdcooper%type  --> Codigo da cooperativa
-                                     ,pr_cdagenci    IN crapage.cdagenci%type  --> Codigo da agencia
+                                     ,pr_cdagenci    IN crapage.cdagenci%type  --> Codigo da agencia                                          
                                      ,pr_cdoperad    IN crapope.cdoperad%type  --> codigo do operador
                                      ,pr_cdorigem    IN integer                --> Origem da operacao
                                      ,pr_nrdconta    IN crapbdt.nrdconta%type  --> Numero da conta do cooperado
                                      ,pr_nrborder    IN crapbdt.nrborder%type  --> Numero do Borderô de Desconto de Títulos
-                                     ,pr_dtmvtolt    IN crapdat.dtmvtolt%type  --> Data do movimento
+                                     ,pr_dtmvtolt    IN crapdat.dtmvtolt%type  --> Data do movimento                                      
                                      ,pr_comprecu    IN varchar2               --> Complemento do recuros da URI
                                      ,pr_dsmetodo    IN varchar2               --> Descricao do metodo
                                      ,pr_conteudo    IN clob                   --> Conteudo no Json para comunicacao
@@ -851,16 +851,16 @@ END pc_incluir_bordero_esteira;
     vr_dsdirlog      VARCHAR2(500);
     vr_autori_este   VARCHAR2(500);
     vr_chave_aplica  VARCHAR2(500);
-
+    
     vr_dscritic      VARCHAR2(4000);
     vr_dscritic_aux  VARCHAR2(4000);
     vr_exc_erro      EXCEPTION;
-
+    
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
-
+    
     vr_idacionamento  tbgen_webservice_aciona.idacionamento%TYPE;
-
+            
   BEGIN
     pr_dsprotocolo := NULL;
     --> Carregar parametros para a comunicacao com a esteira
@@ -872,49 +872,49 @@ END pc_incluir_bordero_esteira;
                                 ,pr_autori_este  => vr_autori_este
                                 ,pr_chave_aplica => vr_chave_aplica
                                 ,pr_dscritic     => vr_dscritic);
-
+    
     IF vr_dscritic  IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF;
-
+    END IF; 
+    
     --> Atribuir valores necessarios para comunicacao
     vr_request.service_uri := vr_host_esteira;
     vr_request.api_route := vr_recurso_este||pr_comprecu;
     vr_request.method    := pr_dsmetodo;
     vr_request.timeout   := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_IBRA');
-
+    
     vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
     vr_request.headers('Authorization') := vr_autori_este;
-
+    
     --> Se houver ApplicationKey
-    IF vr_chave_aplica IS NOT NULL THEN
+    IF vr_chave_aplica IS NOT NULL THEN 
       vr_request.headers('ApplicationKey') := vr_chave_aplica;
     END IF;
-
+    
     vr_request.content := pr_conteudo;
-
+    
     --> Disparo do REQUEST
     json0001.pc_executa_ws_json(pr_request           => vr_request
                                ,pr_response          => vr_response
                                ,pr_diretorio_log     => vr_dsdirlog
                                ,pr_formato_nmarquivo => 'YYYYMMDDHH24MISSFF3".[api].[method]"'-- Este formato é o formato que deve ser passado, conforme alinhado com o Oscar
-                               ,pr_dscritic          => vr_dscritic);
-
+                               ,pr_dscritic          => vr_dscritic); 
+                               
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-
+            
     --> Gravar dados log acionamento
-    ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,
-                                  pr_cdagenci              => pr_cdagenci,
-                                  pr_cdoperad              => pr_cdoperad,
-                                  pr_cdorigem              => pr_cdorigem,
-                                  pr_nrctrprp              => pr_nrborder,
-                                  pr_nrdconta              => pr_nrdconta,
+    ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                                  pr_cdagenci              => pr_cdagenci,          
+                                  pr_cdoperad              => pr_cdoperad,          
+                                  pr_cdorigem              => pr_cdorigem,          
+                                  pr_nrctrprp              => pr_nrborder,          
+                                  pr_nrdconta              => pr_nrdconta,          
                                   pr_tpacionamento         => 1,  /* 1 - Envio, 2 – Retorno */
-                                  pr_dsoperacao            => pr_dsoperacao,
-                                  pr_dsuriservico          => vr_host_esteira||vr_recurso_este||pr_comprecu,
-                                  pr_dtmvtolt              => pr_dtmvtolt,
+                                  pr_dsoperacao            => pr_dsoperacao,       
+                                  pr_dsuriservico          => vr_host_esteira||vr_recurso_este||pr_comprecu,       
+                                  pr_dtmvtolt              => pr_dtmvtolt,       
                                   pr_cdstatus_http         => vr_response.status_code,
                                   pr_dsconteudo_requisicao => pr_conteudo,
                                   pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
@@ -923,57 +923,57 @@ END pc_incluir_bordero_esteira;
                                   pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
                                   pr_idacionamento         => vr_idacionamento,
                                   pr_dscritic              => vr_dscritic);
-
+                         
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-
+    
     IF vr_response.status_code NOT BETWEEN 200 AND 299 THEN
       --> Definir mensagem de critica
-      CASE
+      CASE 
         WHEN pr_dsmetodo = 'POST' THEN
           vr_dscritic_aux := 'Não foi possível enviar Borderô para Análise.';
-        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu IS NULL THEN
+        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu IS NULL THEN   
           vr_dscritic_aux := 'Não foi possível reenviar a Borderô para Análise.';
-/*        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/numeroProposta' THEN
+/*        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/numeroProposta' THEN   
           vr_dscritic_aux := 'Não foi possível alterar número da Borderô de Desconto de Títulos.';*/
-        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/cancelar' THEN
-          vr_dscritic_aux := 'Não foi possível excluir o Borderô da Análise.';
-        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/efetivar' THEN
+        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/cancelar' THEN   
+          vr_dscritic_aux := 'Não foi possível excluir o Borderô da Análise.';   
+        WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/efetivar' THEN   
           vr_dscritic_aux := 'Não foi possível enviar a efetivação do Borderô de Desconto de Títulos.';
-        WHEN pr_dsmetodo = 'GET' THEN
+        WHEN pr_dsmetodo = 'GET' THEN   
           vr_dscritic_aux := 'Não foi possível solicitar o retorno da Análise Automática de Crédito.';
         ELSE
-          vr_dscritic_aux := 'Não foi possível enviar informações para Análise de Crédito.';
+          vr_dscritic_aux := 'Não foi possível enviar informações para Análise de Crédito.';  
         END CASE;
 
       IF vr_response.status_code = 400 THEN
         pr_dscritic := este0001.fn_retorna_critica('{"Content":'||vr_response.content||'}');
-
+        
         IF pr_dscritic IS NOT NULL THEN
           --> Tratar mensagem específica de Fluxo Atacado:
-          IF pr_dscritic != 'Não será possível enviar o Borderô para análise. Classificação de risco e endividamento fora dos parâmetros da cooperativa' THEN
+          IF pr_dscritic != 'Não será possível enviar o Borderô para análise. Classificação de risco e endividamento fora dos parâmetros da cooperativa' THEN 
             --> Mensagens diferentes dela terao o prefixo, somente ela não terá
-            pr_dscritic := vr_dscritic_aux||' '||pr_dscritic;
-          END IF;
+            pr_dscritic := vr_dscritic_aux||' '||pr_dscritic;            
+          END IF;  
         ELSE
-          pr_dscritic := vr_dscritic_aux;
+          pr_dscritic := vr_dscritic_aux;            
         END IF;
-
-      ELSE
-        pr_dscritic := vr_dscritic_aux;
-      END IF;
-
+        
+      ELSE  
+        pr_dscritic := vr_dscritic_aux;    
+      END IF;                         
+      
     END IF;
-
+            
   EXCEPTION
-    WHEN vr_exc_erro THEN
+    WHEN vr_exc_erro THEN      
       pr_dscritic := vr_dscritic;
-
+    
     WHEN OTHERS THEN
-      pr_dscritic := 'Nao foi possível enviar Borderô para Análise de Crédito: '||SQLERRM;
+      pr_dscritic := 'Nao foi possível enviar Borderô para Análise de Crédito: '||SQLERRM;  
   END pc_enviar_analise_bordero;
-
+      
 
   PROCEDURE pc_enviar_analise_manual(pr_cdcooper  IN crapbdt.cdcooper%TYPE
                                     ,pr_cdagenci  IN crapage.cdagenci%TYPE
@@ -992,23 +992,23 @@ END pc_incluir_bordero_esteira;
 
  /* ...........................................................................
 
-   Programa : pc_enviar_analise_manual
+   Programa : pc_enviar_analise_manual        
    Sistema  : Conta-Corrente - Cooperativa de Credito
    Sigla    : CRED
    Autor    : Luis Fernando - GFT-Brasil
    Data     : Março/2018.          Ultima atualizacao: 05/03/2018
-
+        
    Dados referentes ao programa:
-
+        
    Frequencia: Sempre que for chamado
-   Objetivo  : Rotina responsavel por gerar a geracao e inclusao do Borderô para a esteira
+   Objetivo  : Rotina responsavel por gerar a geracao e inclusao do Borderô para a esteira 
 
  ..........................................................................*/
 
  vr_dtmvtolt DATE;
 
  vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
-
+    
  vr_exc_erro EXCEPTION;
  vr_dscritic VARCHAR2(4000);
  vr_cdcritic NUMBER;
@@ -1018,10 +1018,10 @@ END pc_incluir_bordero_esteira;
 
  vr_obj_bordero json := json();
  vr_obj_bordero_clob clob;
-
+        
  vr_dsprotoc VARCHAR2(1000);
  vr_idaciona tbgen_webservice_aciona.idacionamento%type;
-
+  
   --> Busca do nome do associado
   cursor cr_crapass is
   select ass.nmprimtl
@@ -1037,14 +1037,14 @@ END pc_incluir_bordero_esteira;
                                 ,pr_flctgest => vr_flctgest
                                 ,pr_dsmensag => pr_dsmensag
                                 ,pr_dscritic => vr_dscritic);
-
+                                
    if  vr_flctgest then
        vr_dscritic := pr_dsmensag;
        raise vr_exc_erro;
    end if;
-
+    
   vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
-
+                          
   open  cr_crapass;
   fetch cr_crapass into rw_crapass;
   if    cr_crapass%notfound then
@@ -1053,7 +1053,7 @@ END pc_incluir_bordero_esteira;
         raise vr_exc_erro;
   end   if;
   close cr_crapass;
-
+  
   vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
 
    --> Gerar informaçoes no padrao JSON do borderô de desconto de títulos
@@ -1069,39 +1069,39 @@ END pc_incluir_bordero_esteira;
                         ,pr_dscritic  => vr_dscritic);
 
    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-     RAISE vr_exc_erro;
-   END IF;
+     RAISE vr_exc_erro;        
+   END IF;  
 
    --> Criar o CLOB para converter JSON para CLOB
    dbms_lob.createtemporary(vr_obj_bordero_clob, TRUE, dbms_lob.CALL);
    dbms_lob.open(vr_obj_bordero_clob, dbms_lob.lob_readwrite);
-   json.to_clob(vr_obj_bordero,vr_obj_bordero_clob);
-
+   json.to_clob(vr_obj_bordero,vr_obj_bordero_clob);  
+          
    --> Se o DEBUG estiver habilitado
    IF vr_flgdebug = 'S' THEN
      --> Gravar dados log acionamento
-     ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,
-                                   pr_cdagenci              => vr_cdagenci,
-                                   pr_cdoperad              => pr_cdoperad,
-                                   pr_cdorigem              => pr_cdorigem,
-                                   pr_nrctrprp              => pr_nrborder,
-                                   pr_nrdconta              => pr_nrdconta,
+     ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper,         
+                                   pr_cdagenci              => vr_cdagenci,          
+                                   pr_cdoperad              => pr_cdoperad,          
+                                   pr_cdorigem              => pr_cdorigem,          
+                                   pr_nrctrprp              => pr_nrborder,          
+                                   pr_nrdconta              => pr_nrdconta,          
                                    pr_tpacionamento         => 0,  --> 0 - DEBUG
-                                   pr_dsoperacao            => 'ANTES ENVIAR BORDERO',
-                                   pr_dsuriservico          => NULL,
-                                   pr_dtmvtolt              => vr_dtmvtolt,
+                                   pr_dsoperacao            => 'ANTES ENVIAR BORDERO',       
+                                   pr_dsuriservico          => NULL,       
+                                   pr_dtmvtolt              => vr_dtmvtolt,       
                                    pr_cdstatus_http         => 0,
                                    pr_dsconteudo_requisicao => vr_obj_bordero_clob,
                                    pr_dsresposta_requisicao => null,
                                    pr_tpproduto             => 7, --> Desconto de Título – Borderô      --> Tipo DO Produto
                                    pr_idacionamento         => vr_idaciona,
                                    pr_dscritic              => vr_dscritic);
-     --> Sem tratamento de exceçao para DEBUG
+     --> Sem tratamento de exceçao para DEBUG                    
      --IF TRIM(vr_dscritic) IS NOT NULL THEN
      -->  RAISE vr_exc_erro;
      --END IF;
-   END IF;
-
+   END IF;  
+          
    --> Enviar dados para Esteira
    pc_enviar_analise_bordero (pr_cdcooper    => pr_cdcooper
                              ,pr_cdagenci    => vr_cdagenci
@@ -1117,11 +1117,11 @@ END pc_incluir_bordero_esteira;
                              ,pr_tpenvest    => 'I' -- Não existe derivação para Borderô
                              ,pr_dsprotocolo => vr_dsprotoc
                              ,pr_dscritic    => vr_dscritic);
-
+          
    --> Caso tenhamos recebido critica de Bordero jah existente na Esteira
    IF lower(vr_dscritic) LIKE '%bordero%ja existente na esteira%' THEN
 
-     --> Tentaremos enviar alteraçao com reinício de fluxo para a Esteira
+     --> Tentaremos enviar alteraçao com reinício de fluxo para a Esteira 
      pc_alterar_bordero(pr_cdcooper => pr_cdcooper
                        ,pr_cdagenci => vr_cdagenci
                        ,pr_cdoperad => pr_cdoperad
@@ -1134,24 +1134,24 @@ END pc_incluir_bordero_esteira;
                        ,pr_cdcritic => vr_cdcritic
                        ,pr_dscritic => vr_dscritic);
    END IF;
-
+          
    --> Liberando a memória alocada pro CLOB
    dbms_lob.close(vr_obj_bordero_clob);
-   dbms_lob.freetemporary(vr_obj_bordero_clob);
-
+   dbms_lob.freetemporary(vr_obj_bordero_clob);    
+          
    --> verificar se retornou critica
    IF vr_dscritic IS NOT NULL THEN
      RAISE vr_exc_erro;
-   END IF;
-
+   END IF; 
+          
    vr_hraprova := to_char(SYSDATE,'sssss');
-
+          
    --> Atualizar bordero
    --> atualizar o Borderô como enviado para Esteira.
    begin
      update crapbdt bdt
         set bdt.insitbdt = 1 -- Em Análise
-           ,bdt.insitapr = 6 -- Enviado Esteira
+           ,bdt.insitapr = 6 -- Enviado Esteira 
            ,bdt.cdopeapr = pr_cdoperad
            ,bdt.dtaprova = trunc(sysdate)
            ,bdt.hraprova = vr_hraprova
@@ -1159,17 +1159,17 @@ END pc_incluir_bordero_esteira;
       where bdt.cdcooper = pr_cdcooper
         and bdt.nrdconta = pr_nrdconta
         and bdt.nrborder = pr_nrborder;
-   exception
+   exception    
       when others then
            vr_dscritic := 'Nao foi possível atualizar o borderô apos envio para Análise de Crédito: '||sqlerrm;
            raise vr_exc_erro;
-   end;
-
+   end;     
+          
    pr_dsmensag := 'Borderô Enviado para Analise Manual de Credito.';
-
+          
    --> Efetuar gravaçao
    COMMIT;
-
+        
    EXCEPTION
      WHEN vr_exc_erro THEN
           --> Se possui código de crítica e não foi informado a descriçao
@@ -1177,14 +1177,14 @@ END pc_incluir_bordero_esteira;
               --> Busca descriçao da crítica
               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           END IF;
-
+                
           --> Atribui exceçao para os parametros de crítica
           pr_cdcritic := nvl(vr_cdcritic,0);
           pr_dscritic := vr_dscritic;
           pr_des_erro := 'NOK';
 
           ROLLBACK;
-
+                
      WHEN OTHERS THEN
           --> Atribui exceçao para os parametros de crítica
           pr_cdcritic := nvl(vr_cdcritic,0);
@@ -1195,7 +1195,7 @@ END pc_incluir_bordero_esteira;
    END pc_enviar_analise_manual;
 
   --> Rotina responsavel por gerar o objeto Json do borderô
-
+  
   PROCEDURE pc_gera_json_bordero(pr_cdcooper in crapbdt.cdcooper%type
                                 ,pr_cdagenci in crapage.cdagenci%type
                                 ,pr_cdoperad in crapope.cdoperad%type
@@ -1209,20 +1209,20 @@ END pc_incluir_bordero_esteira;
                                 ,pr_dscritic out varchar2               --> Descricao da critica
                                 ) is
   /* ..........................................................................
-
+    
       Programa : pc_gera_json_bordero
-      Sistema  :
+      Sistema  : 
       Sigla    : CRED
-      Autor    : Paulo Penteado (GFT)
+      Autor    : Paulo Penteado (GFT) 
       Data     : Abril/2018.
-
+    
       Dados referentes ao programa:
-
+    
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
-
+    
       Alteraçao : 24/04/2018 Criação (Paulo Penteado (GFT))
-
+        
     ..........................................................................*/
 
   cursor cr_crapass is
@@ -1257,7 +1257,7 @@ END pc_incluir_bordero_esteira;
           ,decode(ldc.tpctrato, 1, 4, 0) tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
           ,decode(ldc.tpctrato, 1, 'APLICACAO FINANCEIRA', 'SEM GARANTIA') dsctrato 
           ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
-          ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que nao aceita nulo
+          ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que nao aceita nulo 
           ,bdt.cdoperad
           ,ope.nmoperad
           ,0 instatus
@@ -1284,7 +1284,7 @@ END pc_incluir_bordero_esteira;
        AND bdt.cdcooper = pr_cdcooper
        AND bdt.nrdconta = pr_nrdconta
        AND bdt.nrborder = pr_nrborder;
-  rw_crapbdt cr_crapbdt%ROWTYPE;
+  rw_crapbdt cr_crapbdt%ROWTYPE;  
 
   --> Dados de Títulos do Borderô
   CURSOR cr_craptdb (pr_cdcooper IN crapbdt.cdcooper%TYPE
@@ -1305,7 +1305,7 @@ END pc_incluir_bordero_esteira;
           ,tdb.vlliquid -- valor do titulo líquido
           ,tdb.vlliqres -- valor liquido resgate
           ,tdb.insittit -- situação do título
-          ,tdb.insitapr -- situação da aprovação do título. 4-Aprovado  5-Reprovado
+          ,tdb.insitapr -- situação da aprovação do título. 4-Aprovado	5-Reprovado
           ,tdb.nrtitulo -- Numero unico do título no bordero
           ,DECODE(tdb.insitapr,1,'APROVADO',2,'REPROVADO',NULL) as dessitapr
           ,sum(tdb.vltitulo) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder) as vl_border_brt -- Total valor bruto do borderô
@@ -1325,7 +1325,7 @@ END pc_incluir_bordero_esteira;
        AND tdb.nrdocmto = cob.nrdocmto
        AND tdb.nrinssac = cob.nrinssac
      INNER JOIN cecred.crapsab sab -- dados do sacado, para pegar o nome do sacado corretamente
-        ON sab.nrinssac = cob.nrinssac
+        ON sab.nrinssac = cob.nrinssac 
        AND sab.cdtpinsc = cob.cdtpinsc
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
@@ -1333,7 +1333,7 @@ END pc_incluir_bordero_esteira;
        AND tdb.nrborder = pr_nrborder
        AND tdb.nrdconta = pr_nrdconta
       ORDER BY tdb.nrborder, tdb.nrinssac, nrdocmto;
-  rw_craptdb cr_craptdb%ROWTYPE;
+  rw_craptdb cr_craptdb%ROWTYPE; 
 
   -- Buscar Críticas dos Títulos.
   CURSOR cr_crapabt (pr_cdcooper IN crapabt.cdcooper%TYPE
@@ -1343,17 +1343,18 @@ END pc_incluir_bordero_esteira;
     SELECT abt.nrborder
           ,abt.nrdconta
           ,abt.nrdocmto
-          ,abt.dsrestri
+          ,nvl(abt.dsrestri,cri.dscritica) AS dsrestri
           ,abt.dsdetres
           ,abt.nrseqdig as cdchavecri
       FROM crapabt abt
+           INNER JOIN tbdsct_criticas cri ON cri.cdcritica = abt.nrseqdig
      WHERE abt.cdcooper = pr_cdcooper
        AND abt.nrdconta = pr_nrdconta
        AND abt.nrborder = pr_nrborder
        AND abt.nrdocmto = pr_nrdocmto
      ORDER BY abt.progress_recid;
   rw_crapabt cr_crapabt%rowtype;
-
+  
   --> Totais do Borderos Com Análise Aprovada e Não efetivados
   CURSOR cr_border_nefet (pr_cdcooper IN crapabt.cdcooper%TYPE
                          ,pr_nrdconta IN crapabt.nrdconta%TYPE) IS
@@ -1363,13 +1364,13 @@ END pc_incluir_bordero_esteira;
      INNER JOIN craptdb tdb
         ON tdb.cdcooper = bdt.cdcooper
        AND tdb.nrdconta = bdt.nrdconta
-       AND tdb.nrborder = bdt.nrborder
+       AND tdb.nrborder = bdt.nrborder 
      WHERE bdt.cdcooper = pr_cdcooper
        AND bdt.nrdconta = pr_nrdconta
        AND bdt.insitbdt = 2
        AND bdt.insitapr in (3,4);
   rw_border_nefet cr_border_nefet%ROWTYPE;
-
+  
 
   --> Dados de Proposta do Limite Ativa mais recente.
   CURSOR cr_crawlim (pr_cdcooper IN crawlim.cdcooper%TYPE
@@ -1420,7 +1421,7 @@ END pc_incluir_bordero_esteira;
   cursor cr_crawepr_pend is
   select nvl(sum(w.vlemprst),0) vlemprst
   from   crawepr w
-    join craplcr l on l.cdlcremp = w.cdlcremp and
+    join craplcr l on l.cdlcremp = w.cdlcremp and 
                       l.cdcooper = w.cdcooper
   where  w.cdcooper = pr_cdcooper
   and    w.nrdconta = pr_nrdconta
@@ -1465,7 +1466,7 @@ END pc_incluir_bordero_esteira;
   where  col.cdcooper = pr_cdcooper
   and    col.nrcpfcgc = rw_crapass.nrcpfcgc
   and    col.flgativo = 'A';
-
+  
   vr_flgcolab boolean;
   vr_cddcargo tbcadast_colaborador.cdcooper%type;
 
@@ -1513,7 +1514,7 @@ END pc_incluir_bordero_esteira;
   vr_vlborder_brt craptdb.vltitulo%TYPE;
   vl_aprov_nefet NUMBER;
   vr_qtde_titulos PLS_INTEGER;
-
+  
   vr_tab_dados_dsctit_cr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
   vr_tab_dados_dsctit_sr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Sem Registro
   vr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052 para CECRED
@@ -1579,7 +1580,7 @@ END pc_incluir_bordero_esteira;
            raise vr_exc_erro;
      end if;
      close cr_crapbdt;
-
+     
      --> Buscar dados da Proposta de Limite do Borderô
      OPEN cr_crawlim (pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -1592,7 +1593,7 @@ END pc_incluir_bordero_esteira;
        RAISE vr_exc_erro;
      END IF;
      CLOSE cr_crawlim;
-
+     
      --> Buscar o registro de Títulos do Borderô de Desconto
      OPEN cr_craptdb(pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
@@ -1608,7 +1609,7 @@ END pc_incluir_bordero_esteira;
        vr_qtde_titulos := rw_craptdb.qtde_titulos; -- quantidade de títulos nesse borderô.
      end   if;
      close cr_craptdb;
-
+     
      --> Criar objeto json para agencia da proposta
      vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
      vr_obj_agencia.put('PACodigo', pr_cdagenci);
@@ -1633,19 +1634,19 @@ END pc_incluir_bordero_esteira;
      else
          vr_obj_bordero.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
      end if;
-
+    
      vr_obj_bordero.put('numero'             , rw_crapbdt.nrborder);
      vr_obj_bordero.put('valor'              , to_number(vr_vlborder_brt));
-
+     
      vr_obj_bordero.put('valorLimiteAtivo', to_number(rw_crawlim.vllimite));
      vr_obj_bordero.put('valorLimiteMaximoPermitido', to_number(vr_tab_dados_dsctit_sr(1).vllimite));
      vr_obj_bordero.put('numeroPropostaLimite', rw_crawlim.nrctrativo);
-
-     --Preenchendo Lista Títulos e lista de Críticas dos Títulos.
+     
+ 	   --Preenchendo Lista Títulos e lista de Críticas dos Títulos.
      -- limpar os objetos jason
      vr_obj_titulos := json();
      vr_lst_titulos := json_list();
-     rw_craptdb := null;
+     rw_craptdb     := null;
      for rw_craptdb in cr_craptdb (pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nrborder => pr_nrborder) loop
@@ -1670,35 +1671,35 @@ END pc_incluir_bordero_esteira;
          else
              vr_obj_bordero.put('cPCCNPJpagador' , lpad(rw_craptdb.nrinssac,14,'0'));
          end if;
-
-
+         
+                           
          rw_crapabt := null;
-         -- Popular o Objeto de Lista JSON com os dados de críticas dos títulos.
+         -- Popular o Objeto de Lista JSON com os dados de críticas dos títulos.         
          for rw_crapabt IN cr_crapabt(pr_cdcooper => rw_craptdb.cdcooper
                                      ,pr_nrdconta => rw_craptdb.nrdconta
                                      ,pr_nrborder => rw_craptdb.nrborder
                                      ,pr_nrdocmto => rw_craptdb.nrdocmto) loop
-
+                                     
            vr_obj_crit_tit.put('codigo', rw_crapabt.cdchavecri);
            vr_obj_crit_tit.put('descricao', rw_crapabt.dsrestri);
            vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
          end loop;
          vr_obj_titulos.put('criticas',vr_lst_crit_tit.to_json_value());
          vr_lst_titulos.append(vr_obj_titulos.to_json_value());
-
+         
          -- limpar os objetos jason para próxima iteração
          vr_obj_crit_tit := JSON();
          vr_lst_crit_tit := JSON_LIST();
      end loop;
-
+     
      -- Armazenando lista no json de Borderô
-     vr_obj_bordero.put('titulos',vr_lst_titulos.to_json_value());
+     vr_obj_bordero.put('titulos',vr_lst_titulos.to_json_value());    
      vr_obj_bordero.put('titulosQuantidade'  , vr_qtde_titulos);
-
+     
      vr_obj_bordero.put('parcelaQuantidade'  , 1);/*
      vr_obj_bordero.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra(rw_crawlim.dtvencto));
      vr_obj_bordero.put('parcelaValor'       , rw_crawlim.vllimite);*/
-
+     
      --> Data e hora da inclusao da proposta
      vr_data_aux := to_date(to_char(rw_crapbdt.dtmvtolt,'DD/MM/RRRR') ||' '||
                             to_char(to_date(rw_crapbdt.hrinclus,'SSSSS'),'HH24:MI:SS'),
@@ -1710,11 +1711,11 @@ END pc_incluir_bordero_esteira;
 
      vr_obj_bordero.put('linhaCreditoCodigo'    ,rw_crapbdt.cdlcremp);
      vr_obj_bordero.put('linhaCreditoDescricao' ,rw_crapbdt.dslcremp);
-     --vr_obj_bordero.put('finalidadeCodigo'      ,rw_crawlim.cdfinemp);
-     --vr_obj_bordero.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);
+     --vr_obj_bordero.put('finalidadeCodigo'      ,rw_crawlim.cdfinemp);       
+     --vr_obj_bordero.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);      
 
      vr_obj_bordero.put('tipoProduto'           ,rw_crapbdt.tpproduto);
-
+     
      IF rw_crapbdt.tpctrato > 0 THEN
        vr_obj_bordero.put('tipoGarantiaCodigo'   , rw_crapbdt.tpctrato );
        vr_obj_bordero.put('tipoGarantiaDescricao', rw_crapbdt.dsctrato );
@@ -1767,7 +1768,7 @@ END pc_incluir_bordero_esteira;
 
          vr_vllimdis := 0.0;
          vr_vlprapne := 0.0;
-         for rw_crapass_cpfcgc in cr_crapass_cpfcgc(pr_nrcpfcgc => rw_crapass.nrcpfcgc)
+         for rw_crapass_cpfcgc in cr_crapass_cpfcgc(pr_nrcpfcgc => rw_crapass.nrcpfcgc) 
          loop
              rw_crawepr_pend := null;
              open  cr_crawepr_pend;
@@ -1793,10 +1794,10 @@ END pc_incluir_bordero_esteira;
            vl_aprov_nefet := rw_border_nefet.totvltitulo;
          END LOOP;
 
-         -- Na Esteira de Crédito o valor total do endividamento utilizado no fluxo de aprovação será composto por:
+         -- Na Esteira de Crédito o valor total do endividamento utilizado no fluxo de aprovação será composto por: 
          --   Valor do Endividamento da conta + valor do Borderô que está sendo inclusa + o valor de Borderôs aprovados e não efetivados.
          vr_obj_bordero.put('endividamentoContaValor'     ,(nvl(vr_vlutiliz,0) + nvl(vl_aprov_nefet,0)));
-
+         
          vr_obj_bordero.put('propostasPendentesValor'     ,vr_vlprapne );
          vr_obj_bordero.put('limiteCooperadoValor'        ,nvl(vr_vllimdis,0) );
 
@@ -1835,7 +1836,7 @@ END pc_incluir_bordero_esteira;
                                               pr_nmarqpdf => vr_nmarquiv,
                                               pr_cdcritic => vr_cdcritic,
                                               pr_dscritic => vr_dscritic);
-
+ 
              if  trim(vr_dscritic) is not null then
                  raise vr_exc_erro;
              end if;
@@ -1843,7 +1844,7 @@ END pc_incluir_bordero_esteira;
              vr_dsdirarq := gene0001.fn_diretorio(pr_tpdireto => 'C' --> cooper
                                                  ,pr_cdcooper => pr_cdcooper
                                                  ,pr_nmsubdir => '/rl');
-
+             
              --  Se o arquivo nao existir, Remover o conteudo do nome do arquivo para nao enviar
              if  not gene0001.fn_exis_arquivo(vr_dsdirarq || '/' || vr_nmarquiv) then
                  vr_nmarquiv := null;
@@ -1858,7 +1859,7 @@ END pc_incluir_bordero_esteira;
              if  trim(vr_dscritic) is not null then
                  raise vr_exc_erro;
              end if;
-
+     
              -- Gerar objeto json para a imagem
              vr_obj_imagem.put('codigo'      , 'BORDERO_TITULO');
              vr_obj_imagem.put('conteudo'    ,vr_json_valor);
@@ -1872,7 +1873,7 @@ END pc_incluir_bordero_esteira;
                  gene0001.pc_oscommand_shell(pr_des_comando => 'rm '||vr_nmarquiv);
              end if;
          end if;
-
+         
          --  Se encontrou PDF de análise Motor
          if  vr_dsprotoc is not null then
              -- Diretorio para salvar
@@ -1984,7 +1985,7 @@ END pc_incluir_bordero_esteira;
           pr_dscritic := 'Nao foi possivel montar objeto json do borderô: '||sqlerrm;
 
   END pc_gera_json_bordero;
-
+  
 
 END ESTE0006;
 /
