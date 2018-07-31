@@ -8,6 +8,8 @@
    ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
 				 
 				  25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
+				  
+				  31/07/2018 - Ajustado select insitcrd com as devidas situações. (Reinert)
  */		
  
 session_start();
@@ -69,6 +71,7 @@ $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 		<input type="text" id="nmempres" name="nmempres" value="<?php echo $nmempres; ?> " maxlength="40"/>
 		<label for="insitcrd">Situacao:</label>	
 		<select name="" id="insitcrd" class="campo">										
+			<option value='0' <? if($insitcrd == 0){echo " selected";} ?>>EM ESTUDO</option>
 			<option value='1' <? if($insitcrd == 1){echo " selected";} ?>>APROVADO</option>
 			<option value='2' <? if($insitcrd == 2){echo " selected";} ?>>SOLICITADO</option>
 			<option value='3' <? if($insitcrd == 3){echo " selected";} ?>>LIBERADO</option>
@@ -76,6 +79,7 @@ $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 			<option value='5' <? if($insitcrd == 5){echo " selected";} ?>>BLOQUEADO</option>
 			<option value='6' <? if($insitcrd == 6){echo " selected";} ?>>CANCELADO</option>
 			<option value='7' <? if(($insitcrd == 7) || ($insitcrd == 4 && $dtsol2vi != "")){echo " selected";} ?>>SOL.2V</option>
+			<option value='9' <? if($insitcrd == 9){echo " selected";} ?>>ENVIADO BANCOOB</option>
 		</select>		
 		<label for="flgdebit">Funcao Debito:</label>
 		<input type="checkbox" name="flgdebit" style="margin-top:7px !important" <?php if ($flgdebit == 1) { echo "checked "; } ?> />		

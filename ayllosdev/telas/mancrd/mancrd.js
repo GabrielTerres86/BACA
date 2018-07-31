@@ -9,6 +9,8 @@
                  23/07/2018 - Deixar o campo nmempres sempre habilitado. Projeto 345(Lombardi).
  
 				 25/07/2018 - Adicionado campo insitdec na tela. Projeto 345(Lombardi).
+				 
+				 31/07/2018 - Ajustado tamanho das colunas na tabela de listagem dos cartões. (Reinert)
  
   --------------
  */
@@ -150,11 +152,11 @@ function formataGridContrato() {
 
     var arrayLargura = new Array();
     arrayLargura[0] = '90px'; // cpf
-    //arrayLargura[1] = '215px'; // Nome
+    arrayLargura[1] = '215px'; // Nome
 	arrayLargura[2] = '125px'; // cartao
 	arrayLargura[3] = '150px'; // Administradora    
     arrayLargura[4] = '75px'; // validade
-    arrayLargura[5] = '60px'; // situacao
+    //arrayLargura[5] = '120px'; // situacao
     arrayLargura[6] = '45px'; 
     
     var arrayAlinha = new Array();
