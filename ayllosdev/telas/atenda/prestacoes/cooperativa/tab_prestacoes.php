@@ -29,6 +29,10 @@
  *	    
  *			      09/07/2018 - Criado opção para tela de controles (Qualificação da Operação e Contratos Liquidados)	 
  *							   PJ450 - Diego Simas (AMcom)
+ *
+ *                31/07/2018 - Ajuste para bloquear pagamento quando a conta está em prejuízo 
+ *							   PJ450 - Diego Simas (AMcom)
+ *
  * --------------------------------------------------------------------------------------------------
  */
  
@@ -138,7 +142,7 @@
 
 <div id="divBotoes">
     <a href="#" class="botao" id="btVoltar"        onClick="encerraRotina('true');">Voltar</a>
-	<a href="#" class="botao" id="btConsultar"     onClick="direcionaConsulta();">Consultar</a>
+	<a href="#" class="botao" id="btConsultar"     onClick="direcionaConsulta();">Consultar</a>	
 	<a href="#" class="botao" id="btPagar" 	       onClick="validarLiquidacao();">Pagar</a>
  	<!--<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir Prejuízo</a>-->
 	<!--<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Prejuízo</a>-->
@@ -167,7 +171,8 @@
 	
 	function changebtPagar(_this){
 		if ($(_this).find('#inprejuz').val() == 1){
-	   		$('a#btPagar').html('Pagar Prejuizo');
+			$("a#btPagar").hide();
+	   		//$('a#btPagar').html('Pagar Prejuizo');
 		}
 		else{
 			$('a#btPagar').html('Pagar');
@@ -176,7 +181,8 @@
 	
 	if ($('.tituloRegistros tbody tr').length == 1){
 		if ($('.tituloRegistros tbody tr').find('#inprejuz').val() == 1){
-			$('a#btPagar').html('Pagar Prejuizo');
+			$("a#btPagar").hide();
+			//$('a#btPagar').html('Pagar Prejuizo');
 		}
 	}
 
