@@ -201,7 +201,7 @@ descontoConvenios = [];
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
 			<span>Qtd</span>
-			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;" />
+			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">

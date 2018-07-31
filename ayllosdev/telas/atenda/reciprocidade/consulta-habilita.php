@@ -90,7 +90,7 @@ $flcooexp    = retornaFlag($_POST["flcooexp"]);
 $flceeexp    = retornaFlag($_POST["flceeexp"]);
 $flserasa    = retornaFlag($_POST["flserasa"]);
 $cddbanco	 = trim($_POST["cddbanco"]);
-$flgcebhm    = trim($_POST["flgcebhm"]);
+$flgcebhm    = retornaFlag(trim($_POST["flgcebhm"]));
 $cddopcao    = trim($_POST["cddopcao"]);
 $dsdmesag    = $_POST["dsdmesag"];
 $titulares   = $_POST["titulares"];
@@ -233,7 +233,8 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
     <input type="hidden" name="glb_desmensagem"            id="glb_desmensagem" />
     <input type="hidden" name="glb_perdesconto"            id="glb_perdesconto" />
     <input type="hidden" name="glb_idreciproci"            id="glb_idreciproci" />
-    <input type="hidden" name= "flgregis"                  id="flgregis"                   value="<?php echo $flgregis; ?>" />		
+    <input type="hidden" name= "flgregis"                  id="flgregis"                   value="<?php echo $flgregis; ?>" />
+    <input type="hidden" name= "insitceb"                  id="insitceb"                   value="<?php echo $insitceb; ?>" />    
 
 	<fieldset>
 		<legend><? echo utf8ToHtml($dstitulo) ?></legend>
@@ -258,31 +259,6 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
             
                     <label for="dsorgarq"><? echo utf8ToHtml('Origem Convênio:') ?></label>
                     <input name= "dsorgarq" id="dsorgarq" class="campoTelaSemBorda" readonly value = " <?php echo $dsorgarq; ?>" />
-                    <br />
-                    
-                    <label for="insitceb"><? echo utf8ToHtml('Situação Cobrança:') ?></label>               
-                    <select name="insitceb" id="insitceb" class="<?php echo $campo; ?>">					 	
-                      <option value="1" <?php if ($insitceb == "1")  { ?> selected <?php } ?> > ATIVO        </option>
-                      <option value="2" <?php if ($insitceb == "2" ) { ?> selected <?php } ?> > INATIVO      </option>  													
-                      
-                    <?php
-                      // Nao deve exibir opcoes na tela de alterar
-                      if ($cddopcao != "A") { ?>
-                          <option value="3" <?php if ($insitceb == "3" ) { ?> selected <?php } ?> > PENDENTE     </option>
-                          <option value="4" <?php if ($insitceb == "4" ) { ?> selected <?php } ?> > BLOQUEADO    </option>
-                          <option value="5" <?php if ($insitceb == "5" ) { ?> selected <?php } ?> > APROVADO     </option>
-                          <option value="6" <?php if ($insitceb == "6" ) { ?> selected <?php } ?> > <? echo utf8ToHtml('NÃO APROVADO'); ?> </option>
-                      <?php } else if ($insitceb == "5"){ // se for sit aprovado, deve carregar?>
-                          <option value="5" <?php if ($insitceb == "5" ) { ?> selected <?php } ?> > APROVADO     </option>
-                      <?php  }?>
-                    </select>
-                    
-                    <?php
-                      // se nao for consulta e a situacao for aprovado ou inativo, habilita botao
-                      if ($cddopcao != "C" && ($insitceb == 5 || $insitceb == 2)) { ?>
-                          <input type="image" src="<? echo $UrlImagens; ?>botoes/ativar.gif" onClick="confirmaAtivacao(); return false;" id="btnAtivar" />
-                    <?php  }
-                    ?>
                     <br />
                             
                     <?php
@@ -383,7 +359,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                             habilitaSetor('<?php echo $glbvars['cddepart'] ?>');
                         </script>
                         <br />
-                        <label for="flgcebhm"><? echo utf8ToHtml('Convênio Homologado:') ?></label>
+                        <label for="flgcebhm"><? echo utf8ToHtml('Convênio Homologado:'); ?></label>
                         <select name="flgcebhm" id="flgcebhm" class="<?php echo $campo; ?>">
                             <option value="yes" <? if ($flgcebhm == "SIM") { ?> selected <? } ?> >   SIM </option>
                             <option value="no"  <? if ($flgcebhm == "NAO") { ?> selected <? } ?> >  N&Atilde;O </option>

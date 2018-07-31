@@ -341,7 +341,7 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
       $.each(checkeds, function (idx, elm){
         $.each(checkeds, function (idx2, elm2){
           
-          if($(elm).val() != $(elm2).val() && $(elm).data('tipo') == $(elm2).data('tipo')){  
+          if($(elm).val() != $(elm2).val() && $(elm).data('tipo') == $(elm2).data('tipo') && $(elm).data('tipo') != "IMPRESSO PELO SOFTWARE"){  
             foundMesmoTipo = true;
           }
         });  
@@ -2699,9 +2699,9 @@ function validaDados() {
 		return false;
 	}
 
-	coo = false;
-	cee = false;
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
+        coo = false;
+        cee = false;
 		if (descontoConvenios[i].flcooexp == 1) {
 			coo = true;
 		}
@@ -2712,7 +2712,7 @@ function validaDados() {
 	}
 
 	if (coo == false && cee == false) {
-		showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+		showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos em todos os conv&ecirc;nios.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
 		return;
 	}
 
