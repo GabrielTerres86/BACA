@@ -10,6 +10,8 @@
  *					
  *				   20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
  *							    PRJ 450 - Diego Simas (AMcom)	
+ *                
+ *                 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts) 	 
  *                  
  */
 ?>
@@ -86,6 +88,13 @@
 		<input type="text" id="qtdpasem" name="qtdpasem" value="<?php echo $qtdpasem == 0 ? '' : $qtdpasem ?>" maxlength="3" style="text-align:right;"/>	
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
+		
+		<!-- Início PJ438 - Márcio (Mouts)-->
+		<label for="qtdpameq" class='labelPri'>Opera&ccedil;&atilde;o com garantia de M&aacute;quinas e Equipamentos</label>
+		<input type="text" id="qtdpameq" name="qtdpameq" value="<?php echo $qtdpameq == 0 ? '' : $qtdpameq ?>" maxlength="3" style="text-align:right;"/>	
+		<label>&nbsp;dia(s)</label>
+		<br style="clear:both" />
+		<!-- Fim PJ438 - Márcio (Mouts)-->
 	</fieldset>
 
 	<fieldset>
@@ -106,6 +115,27 @@
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
 	</fieldset>   
+				 
+	<!-- Início PJ438 - Márcio (Mouts)-->	
+	<fieldset>
+		<legend>Limite de Descontos de T&iacute;tulos - Prazo de validade da an&aacute;lise para efetiva&ccedil;&atilde;o</legend>
+		
+		<label for="qtditava" class='labelPri'>Opera&ccedil;&atilde;o com garantia de Aval</label>
+		<input type="text" id="qtditava" name="qtditava" value="<?php echo $qtditava == 0 ? '' : $qtditava ?>" maxlength="3" style="text-align:right;"/>	
+		<label>&nbsp;dia(s)</label>
+		<br style="clear:both" />
+
+		<label for="qtditapl" class='labelPri'>Opera&ccedil;&atilde;o com garantia de Aplica&ccedil;&atilde;o</label>
+		<input type="text" id="qtditapl" name="qtditapl" value="<?php echo $qtditapl == 0 ? '' : $qtditapl ?>" maxlength="3" style="text-align:right;"/>	
+		<label>&nbsp;dia(s)</label>
+		<br style="clear:both" />
+
+		<label for="qtditsem" class='labelPri'>Opera&ccedil;&atilde;o sem garantia</label>
+		<input type="text" id="qtditsem" name="qtditsem" value="<?php echo $qtditsem == 0 ? '' : $qtditsem ?>" maxlength="3" style="text-align:right;"/>	
+		<label>&nbsp;dia(s)</label>
+		<br style="clear:both" />
+	</fieldset>    
+    <!-- Fim PJ438 - Márcio (Mouts)-->	
 
 	<fieldset>
 		<legend>Preju&iacute;zo</legend>

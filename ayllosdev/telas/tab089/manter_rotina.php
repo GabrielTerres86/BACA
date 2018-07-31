@@ -6,12 +6,13 @@
  * DATA CRIAÇÃO : 15/01/2018
  * OBJETIVO     : Rotina para controlar as operações da tela TAB089
  * --------------
- * ALTERAÇÕES   :
- *                30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+ * ALTERAÇÕES   : 30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
  *                             PRJ 450 - Diego Simas (AMcom)
  *
  *                20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
  *							   PRJ 450 - Diego Simas (AMcom)
+ *  
+ *                10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts) 	 
  * 
  */
 
@@ -41,9 +42,13 @@ $qtdpaaut = isset($_POST['qtdpaaut']) ? $_POST['qtdpaaut'] : 0;
 $qtdpaava = isset($_POST['qtdpaava']) ? $_POST['qtdpaava'] : 0;
 $qtdpaapl = isset($_POST['qtdpaapl']) ? $_POST['qtdpaapl'] : 0;
 $qtdpasem = isset($_POST['qtdpasem']) ? $_POST['qtdpasem'] : 0;
+$qtdpameq = isset($_POST['qtdpameq']) ? $_POST['qtdpameq'] : 0; //PJ 438 - Márcio (Mouts)
 $qtdibaut = isset($_POST['qtdibaut']) ? $_POST['qtdibaut'] : 0;
 $qtdibapl = isset($_POST['qtdibapl']) ? $_POST['qtdibapl'] : 0;
 $qtdibsem = isset($_POST['qtdibsem']) ? $_POST['qtdibsem'] : 0;
+$qtditava = isset($_POST['qtditava']) ? $_POST['qtditava'] : 0; //PJ 438 - Márcio (Mouts)
+$qtditapl = isset($_POST['qtditapl']) ? $_POST['qtditapl'] : 0; //PJ 438 - Márcio (Mouts)
+$qtditsem = isset($_POST['qtditsem']) ? $_POST['qtditsem'] : 0; //PJ 438 - Márcio (Mouts)
 
 $cdopcao = $cddopcao == 'AC' ? $cdopcao = 'C' : $cdopcao = $cddopcao;
 
@@ -71,8 +76,6 @@ if ($cdopcao == 'C') {
     $xml .= "   <vlmaxest>".str_replace(',','.', $vlmaxest)."</vlmaxest>";
                  
 	$xml .= "   <pcaltpar>".str_replace(',','.', $pcaltpar)."</pcaltpar>";
-    $xml .= "   <pctaxpre>".str_replace(',','.', $pctaxpre)."</pctaxpre>";
-    $xml .= "   <qtdictcc>".$qtdictcc."</qtdictcc>";
     $xml .= "   <vltolemp>".str_replace(',','.', $vltolemp)."</vltolemp>";
                  
 	$xml .= "   <qtdpaimo>".$qtdpaimo."</qtdpaimo>";
@@ -80,11 +83,17 @@ if ($cdopcao == 'C') {
     $xml .= "   <qtdpaava>".$qtdpaava."</qtdpaava>";
     $xml .= "   <qtdpaapl>".$qtdpaapl."</qtdpaapl>";
     $xml .= "   <qtdpasem>".$qtdpasem."</qtdpasem>";
+	$xml .= "   <qtdpameq>".$qtdpameq."</qtdpameq>"; // PJ438 - Márcio (Mouts)
                  
 	$xml .= "   <qtdibaut>".$qtdibaut."</qtdibaut>";
     $xml .= "   <qtdibapl>".$qtdibapl."</qtdibapl>";
     $xml .= "   <qtdibsem>".$qtdibsem."</qtdibsem>";
 
+	$xml .= "   <qtditava>".$qtditava."</qtditava>"; // PJ438 - Márcio (Mouts)
+	$xml .= "   <qtditapl>".$qtditapl."</qtditapl>"; // PJ438 - Márcio (Mouts)
+	$xml .= "   <qtditsem>".$qtditsem."</qtditsem>"; // PJ438 - Márcio (Mouts)	
+    $xml .= "   <pctaxpre>".str_replace(',','.', $pctaxpre)."</pctaxpre>";
+    $xml .= "   <qtdictcc>".$qtdictcc."</qtdictcc>";    
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -126,10 +135,15 @@ if ($cdopcao == 'C') {
         echo '$("#qtdpaava", "#frmTab089").val("' . getByTagName($r->tags, 'qtdpaava') . '");';
         echo '$("#qtdpaapl", "#frmTab089").val("' . getByTagName($r->tags, 'qtdpaapl') . '");';
         echo '$("#qtdpasem", "#frmTab089").val("' . getByTagName($r->tags, 'qtdpasem') . '");';
+		echo '$("#qtdpameq", "#frmTab089").val("' . getByTagName($r->tags, 'qtdpameq') . '");'; // PJ438 - Márcio (Mouts)
 		// NOVOS (3)
         echo '$("#qtdibaut", "#frmTab089").val("' . getByTagName($r->tags, 'qtdibaut') . '");';
         echo '$("#qtdibapl", "#frmTab089").val("' . getByTagName($r->tags, 'qtdibapl') . '");';
         echo '$("#qtdibsem", "#frmTab089").val("' . getByTagName($r->tags, 'qtdibsem') . '");';
+		
+		echo '$("#qtditava", "#frmTab089").val("' . getByTagName($r->tags, 'qtditava') . '");'; // PJ438 - Márcio (Mouts)
+		echo '$("#qtditapl", "#frmTab089").val("' . getByTagName($r->tags, 'qtditapl') . '");'; // PJ438 - Márcio (Mouts)
+		echo '$("#qtditsem", "#frmTab089").val("' . getByTagName($r->tags, 'qtditsem') . '");'; // PJ438 - Márcio (Mouts)		
     }
 }
 
