@@ -6805,7 +6805,8 @@ END;
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15'
-                  /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lucas Afonso Lombardi Moreira*/) THEN
+                  /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
+				  ) THEN
 
 			     -- Busca dados da Coope destino
            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
@@ -6824,9 +6825,7 @@ END;
             pc_salva_arquivo;
             RAISE vr_exc_next;
         ELSIF vr_aux_CodMsg = 'STR0004R2' and (vr_aux_FinlddCli <> '23' OR 
-                                               vr_aux_ISPBIFDebtd<>'60701190' OR
-                                               (vr_aux_CNPJ_CPFDeb<>'01425787000104' and vr_aux_CNPJ_CPFDeb<>'1425787000104')
-                                              ) THEN
+                                               vr_aux_ISPBIFDebtd<>'60701190') THEN
 
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'Mensagem nao prevista');
