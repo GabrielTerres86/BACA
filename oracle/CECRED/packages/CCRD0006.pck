@@ -1768,8 +1768,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                 vr_iderro := 1;
-             ELSE
-                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 /*cielo*/ THEN
+             /*ELSE
+                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    vr_codocorc:='32';
@@ -1779,7 +1779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_cdocorr => 32
                               );
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
              END  IF;
              vr_linhaErro:=895;
 
@@ -3800,8 +3800,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_idcampo => vr_idcampo
                                 ,pr_dscritic => vr_dscritic);
                  vr_iderro := 1;
-             ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 /*cielo*/ THEN
+             /*ELSE
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
@@ -3809,7 +3809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_dscritic => vr_dscritic
                               ,pr_cdocorr => '32');
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
               END IF;
 
               vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
@@ -5572,15 +5572,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                vr_iderro := 1;
-          ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 /*cielo */  THEN
+          /*ELSE
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo *\  THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
             END IF;
 
             vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
