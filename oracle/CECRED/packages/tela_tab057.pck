@@ -1138,17 +1138,14 @@ create or replace package body cecred.tela_tab057 is
     --  Sistema  : Rotinas para listar as arrecadações
     --  Autor    : Odirlei Busana - AMcom
     --  Sigla    : tab057
-    --  Data     : Janeiro/2018.                   Ultima atualizacao: 25/07/2018
+    --  Data     : Janeiro/2018.                   Ultima atualizacao: --/--/----
     --
     --  Dados referentes ao programa:
     --
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Gerar relatorio de criticas de arrecadacao do Bancoob
     --
-    --  Alteracoes: 25/07/2018 - Alterado busca do nome de arquivos de retorno para CECRED
-    --							             devido a mudança de marca ainda não tratada no parceiro Bancoob.
-		--							 						 (Reinert)
-    --
+    --  Alteracoes: 
     -- .............................................................................
     --
     
@@ -1323,8 +1320,7 @@ create or replace package body cecred.tela_tab057 is
                    to_char(rw_gncontr.cdconven,'fm0000000000') ||  
                    to_char(rw_gncontr.dtmvtolt,'RRRRMMDD')     ||
                    substr(LPAD(rw_gncontr.nrsequen,10,0),-3)   ||
---                   '.'||rw_crapcop_central.nmrescop            ||
-                   '.CECRED'            ||
+                   '.'||rw_crapcop_central.nmrescop            ||
                    '.RET';
     
     -- Inicializar o CLOB

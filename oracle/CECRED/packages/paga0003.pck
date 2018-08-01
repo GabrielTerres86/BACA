@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 23/07/2018
+   Data    : 19/07/2016                        Ultima atualizacao: 19/02/2018
   
    Dados referentes ao programa: 
   
@@ -418,9 +418,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        12/04/2018 - Alterada chamada do processo de monitoracao para 
                     AFRA0004.pc_monitora_tributos
                     PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
-										
-			 23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
-			              no Bancoob. (Reinert)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Início -- PRJ406
@@ -7616,7 +7613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --
         --RETURN lpad(pr_cdagectl, 4, '0') || '-' || 'EG'|| lpad(pr_cdempres, 10, '0') || to_char(pr_dtmvtolt, 'YYYYMMDD') || '.CNV';
         RETURN lpad(pr_cdagebcb, 4, '0') || '-' || 'FC'|| lpad(pr_cdempres, 10, '0') || 
-               to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0')||'.CECRED'; --||pr_nmcopcen;
+               to_char(pr_dtmvtolt, 'YYYYMMDD') || '.' || lpad(pr_nrnsa, 3, '0')||'.'||pr_nmcopcen;
         --
       END fn_nm_arquivo;
       
