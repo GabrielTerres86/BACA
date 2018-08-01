@@ -103,11 +103,12 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
   PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE
-                  ,pr_flprepon IN BOOLEAN DEFAULT FALSE
+                                   ,pr_flprepon IN BOOLEAN DEFAULT FALSE
                                    ,pr_vlsalari IN NUMBER  DEFAULT 0
                                    ,pr_persocio IN NUMBER  DEFAULT 0
                                    ,pr_dtadmsoc IN DATE    DEFAULT NULL
                                    ,pr_dtvigpro IN DATE    DEFAULT NULL
+                                   ,pr_tpprodut IN NUMBER  DEFAULT 0
                                    ,pr_dsjsonan OUT json
                                    ,pr_cdcritic OUT NUMBER
                                    ,pr_dscritic OUT VARCHAR2);
@@ -163,6 +164,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                   24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                Campo documentoAval - Diego Simas - AMcom
+                  
+                  01/08/2018 - Adicionado o parâmetro pr_tpprodut na procedure pc_gera_json_pessoa_ass para
+                               distinguir qual configuração da PAREST irá buscar (Paulo Penteado GFT)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1051,11 +1055,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
   PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE
-																	 ,pr_flprepon IN BOOLEAN DEFAULT FALSE
+                                   ,pr_flprepon IN BOOLEAN DEFAULT FALSE
                                    ,pr_vlsalari IN NUMBER  DEFAULT 0
                                    ,pr_persocio IN NUMBER  DEFAULT 0
                                    ,pr_dtadmsoc IN DATE    DEFAULT NULL
                                    ,pr_dtvigpro IN DATE    DEFAULT NULL
+                                   ,pr_tpprodut IN NUMBER  DEFAULT 0
                                    ,pr_dsjsonan OUT json
                                    ,pr_cdcritic OUT NUMBER
                                    ,pr_dscritic OUT VARCHAR2) IS
@@ -1073,6 +1078,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Frequencia: Sempre que for chamado
         Objetivo  : Rotina responsavel por buscar todas as informações cadastrais
                     e das operações da conta parametrizada.
+
+                    pr_tpprodut --> Tipo de produto (0 - Empréstimos e Financiamentos
+                                                     1 - Desconto de Títulos
+                                                     4 - Cartão de Crédito) 
       
         Alteração : 19/10/2017 - Renomear "quantDiasAtrasoEmprest" para "quantDiasMaiorAtrasoEmprest"
                                  Criar campo "quantDiasAtrasoEmprest" com a maior quantidade de dias em atraso (Lombardi)
@@ -1083,6 +1092,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                     24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                  Campo documentoAval - Diego Simas - AMcom
+                  
+                  01/08/2018 - Adicionado o parâmetro pr_tpprodut para distinguir qual configuração da PAREST 
+                               irá buscar (Paulo Penteado GFT)
 
     ..........................................................................*/
     DECLARE
@@ -2688,8 +2700,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('valorAdiantDeposit'
                          ,este0001.fn_decimal_ibra(vr_vladtdep));
     
-			-- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
-			vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_ESTOUROS');
+      -- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
+      IF nvl(pr_tpprodut,1) = 1 THEN
+        vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EST_DESC');
+      ELSE
+        vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_ESTOUROS');
+      END IF;
 		            
       -- Montar objeto para Estrutura Estouros
       vr_lst_generic3 := json_list();
@@ -3369,8 +3385,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         RAISE vr_exc_saida;
       END IF;
 			
-			-- Buscar parâmetro da quantidade de meses para encontro do histórico de empréstimos
-			vr_qthisemp := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EMPREST');
+   	  -- Buscar parâmetro da quantidade de meses para encontro do histórico de empréstimos
+      IF nvl(pr_tpprodut,1) = 1 THEN
+        vr_qthisemp := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EMPRES_DESC');
+      ELSE
+   			  vr_qthisemp := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EMPREST');
+      END IF;
 			
       -- Zerar variaveis auxiliares
       vr_nratrmai := 0;
@@ -3544,8 +3564,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Montar objeto para CheqDevol
       vr_lst_generic3 := json_list();
     
-			-- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
-			vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');		
+      -- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
+      IF nvl(pr_tpprodut,1) = 1 THEN
+        vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEVCHQ_DESC');
+      ELSE
+   		vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');
+      END IF;
 		
       -- Efetuar laço para trazer todos os registros 
       FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq) LOOP
