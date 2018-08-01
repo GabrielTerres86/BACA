@@ -3756,6 +3756,8 @@ END pc_obtem_proposta_aciona_web;
    pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
    
    vr_countpag    INTEGER := 1 ; -- contador para controlar a paginacao
+   
+  vr_tab_criticas dsct0003.typ_tab_critica;
    -- Tratamento de erros
    vr_exc_erro exception;
        
@@ -3908,14 +3910,22 @@ END pc_obtem_proposta_aciona_web;
         FETCH cr_crapcob INTO rw_crapcob;
         EXIT WHEN cr_crapcob%NOTFOUND;
         IF rw_crapcob.dssituac = 'N' THEN
-           IF DSCT0003.fn_calcula_cnae(rw_crapcob.cdcooper
-                                   ,rw_crapcob.nrdconta
-                                   ,rw_crapcob.nrdocmto
-                                   ,rw_crapcob.nrcnvcob
-                                   ,rw_crapcob.nrdctabb
-                                   ,rw_crapcob.cdbandoc) THEN
-              rw_crapcob.dssituac := 'S';
-           END IF;
+          vr_tab_criticas.delete;
+          dsct0003.pc_calcula_restricao_titulo(pr_cdcooper => rw_crapcob.cdcooper
+                          ,pr_nrdconta => rw_crapcob.nrdconta
+                          ,pr_nrdocmto => rw_crapcob.nrdocmto
+                          ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                          ,pr_nrdctabb => rw_crapcob.nrdctabb
+                          ,pr_cdbandoc => rw_crapcob.cdbandoc
+                          ,pr_tab_criticas => vr_tab_criticas
+                          ,pr_cdcritic => vr_cdcritic
+                          ,pr_dscritic => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_erro;
+          END IF;
+          IF (vr_tab_criticas.count>0) THEN
+            rw_crapcob.dssituac := 'S';
+          END IF;
         END IF;
         /*verifica se já nao está em outro bordero*/
        open cr_craptdb (pr_nrdocmto=>rw_crapcob.nrdocmto, pr_nrdctabb => rw_crapcob.nrdctabb, pr_nrcnvcob => rw_crapcob.nrcnvcob, pr_nrborder => pr_nrborder);
