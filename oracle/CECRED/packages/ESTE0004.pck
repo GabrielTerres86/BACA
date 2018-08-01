@@ -714,7 +714,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrctremp => 0
-                                    ,pr_flprepon => false
+                                    ,pr_flprepon => FALSE
+                                    ,pr_tpprodut => 1
                                     ,pr_dsjsonan => vr_obj_generico
                                     ,pr_cdcritic => vr_cdcritic 
                                     ,pr_dscritic => vr_dscritic);
@@ -753,6 +754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                           ,pr_nrctremp => 0
                                           ,pr_flprepon => false
                                           ,pr_vlsalari => rw_crapcje.vlsalari
+                                          ,pr_tpprodut => 1
                                           ,pr_dsjsonan => vr_obj_conjuge
                                           ,pr_cdcritic => vr_cdcritic 
                                           ,pr_dscritic => vr_dscritic);
@@ -899,7 +901,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrctaav1
                                       ,pr_nrctremp => 0
-                                      ,pr_flprepon => false
+                                      ,pr_flprepon => FALSE
+                                      ,pr_tpprodut => 1
                                       ,pr_dsjsonan => vr_obj_avalista
                                       ,pr_cdcritic => vr_cdcritic 
                                       ,pr_dscritic => vr_dscritic);
@@ -922,7 +925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrctaav2
                                       ,pr_nrctremp => 0
-                                      ,pr_flprepon => false
+                                      ,pr_flprepon => FALSE
+                                      ,pr_tpprodut => 1
                                       ,pr_dsjsonan => vr_obj_avalista
                                       ,pr_cdcritic => vr_cdcritic 
                                       ,pr_dscritic => vr_dscritic);
@@ -1012,7 +1016,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
             este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => rw_crapcrl.nrdconta
                                             ,pr_nrctremp => 0
-                                            ,pr_flprepon => false
+                                            ,pr_flprepon => FALSE
+                                            ,pr_tpprodut => 1
                                             ,pr_dsjsonan => vr_obj_responsav
                                             ,pr_cdcritic => vr_cdcritic 
                                             ,pr_dscritic => vr_dscritic); 
@@ -1126,7 +1131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => rw_crapavt.nrdctato
                                           ,pr_nrctremp => 0
-                                          ,pr_flprepon => false
+                                          ,pr_flprepon => FALSE
+                                          ,pr_tpprodut => 1
                                           ,pr_dsjsonan => vr_obj_socio
                                           ,pr_persocio => rw_crapavt.persocio
                                           ,pr_dtadmsoc => rw_crapavt.dtadmsoc
@@ -1181,7 +1187,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => rw_crapepa.nrctasoc
                                           ,pr_nrctremp => 0
-                                          ,pr_flprepon => false
+                                          ,pr_flprepon => FALSE
+                                          ,pr_tpprodut => 1
                                           ,pr_persocio => rw_crapepa.persocio
                                           ,pr_dtadmsoc => rw_crapepa.dtadmiss
                                           ,pr_dtvigpro => to_date('31/12/9999','dd/mm/rrrr')
@@ -1315,7 +1322,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => rw_crapavt.nrdctato
                                         ,pr_nrctremp => 0
-                                        ,pr_flprepon => false
+                                        ,pr_flprepon => FALSE
+                                        ,pr_tpprodut => 1
                                         ,pr_dsjsonan => vr_obj_procurad
                                         ,pr_cdcritic => vr_cdcritic 
                                         ,pr_dscritic => vr_dscritic); 
