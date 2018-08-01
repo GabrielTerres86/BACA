@@ -154,6 +154,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                  pr_nrdocmto IN crapabt.nrdocmto%TYPE DEFAULT NULL,
                  pr_cdcritica IN tbdsct_criticas.cdcritica%TYPE DEFAULT NULL) IS
     SELECT 
+      cri.cdcritica,
       cri.dscritica,
       abt.dsdetres
     FROM 
