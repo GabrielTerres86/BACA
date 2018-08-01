@@ -175,8 +175,8 @@ img, input[type="image"] { outline: none; }
 				<tr>
 					<td width="60%"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
 					<td width="40%">
-						<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" style="margin-right:5px;width:12px"/></a>
-						<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.gif"/></a>
+						<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" style="margin-right:5px;width:14px;margin-top:1px"/></a>
+						<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.gif" style="width:15px;margin-top:1px"/></a>
 					</td>
 				</tr>
 				<?php
@@ -201,7 +201,7 @@ descontoConvenios = [];
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
 			<span>Qtd</span>
-			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;" />
+			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;text-align:left" />
 		</td>
 	</tr>
 	<tr class="corImpar">

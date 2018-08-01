@@ -80,10 +80,9 @@ $flgregis    = trim($_POST["flgregis"]);
 $nrcnvceb    = $_POST["nrcnvceb"];
 $nrconven    = $_POST["nrconven"];
 $dsorgarq    = trim($_POST["dsorgarq"]);
-$insitceb    = trim($_POST["insitceb"]);
+$insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 1;
 $inarqcbr    = $_POST["inarqcbr"];
 $cddemail    = $_POST["cddemail"];
-$dsdemail    = trim($_POST["dsdemail"]);
 $flgregon    = retornaFlag($_POST["flgregon"]);
 $flgpgdiv    = retornaFlag($_POST["flgpgdiv"]);
 $flcooexp    = retornaFlag($_POST["flcooexp"]);
@@ -319,38 +318,16 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
 						<option id="inenvcob" value="1" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 1) { ?> selected <?php }elseif($dsorgarq != 'IMPRESSO PELO SOFTWARE'){ ?> selected <?php } ?>> INTERNET BANK </option>
                         <option id="inenvcob" value="2" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 2) { ?> selected <?php } ?> > FTP </option>					   
 					</select >
-                    <label for="dsdemail"><? echo utf8ToHtml('E-mail Arquivo Retorno:') ?></label>
+                    <label for="dsdemail"><? echo utf8ToHtml('E-mail Arquivo Retorno:'); ?></label>
                     <select name="dsdemail" id="dsdemail" class="<?php echo $campo; ?>">
-                     
-                        <?php if ($dsdemail != "") {  $valor = $cddemail; ?>
-                                <option value="<?php echo "0"; ?>" > <?php echo "SELECIONE O E-MAIL"; ?> </option>							
-                        <?php } else { 									
-                                $dsdemail = "SELECIONE O E-MAIL";
-                                $valor    = "0";									
-                        } ?>
-                        
-                        <option value="<?php echo $valor; ?>" selected > <? echo $dsdemail; ?> </option>
-                                             
-                        <?php   $emails = explode("|",$emails_titular); // Dividir os emails
-                        
-                         foreach ($emails as $email) { 
-                         
-                            $email = explode(",",$email);
-                            $contador = 0;
-                          
-                            foreach ($email as $tag)  {								
-                                if ($contador == 0) 
-                                    $cddemail = $tag; 									
-                                else
-                                    $descricao = $tag;										
-                                $contador++;									
-                            }	
-                            
-                            if ($descricao != $dsdemail) { ?>
-                              <option id="dsdemail" value="<?php echo $cddemail;?>">  <?php echo $descricao; ?> </option>							
-                        <?  } 
-                        
-                        } ?>
+                        <option value="0">SELECIONE O E-MAIL</option>
+                        <?php   
+                        $emails = explode("|",$emails_titular);
+                        foreach ($emails as $email) {
+                           $email = explode(",",$email);
+                           echo "<option value='$email[0]'>$email[1]</option>";
+                        }
+                        ?>
                     </select>		
                     <br />
                     

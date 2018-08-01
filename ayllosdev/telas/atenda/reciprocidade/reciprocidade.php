@@ -46,10 +46,49 @@ $labelRot = $_POST['labelRot'];
 // Carrega permiss&otilde;es do operador
 include("../../../includes/carrega_permissoes.php");	
 	
-	setVarSession("opcoesTela",$opcoesTela);
+setVarSession("opcoesTela",$opcoesTela);
 
+// Monta o xml para a requisicao
+$xmlGetDadosCobranca  = "";
+$xmlGetDadosCobranca .= "<Root>";
+$xmlGetDadosCobranca .= " <Cabecalho>";
+$xmlGetDadosCobranca .= "   <Bo>b1wgen0082.p</Bo>";
+$xmlGetDadosCobranca .= "   <Proc>carrega-convenios-ceb</Proc>";
+$xmlGetDadosCobranca .= " </Cabecalho>";
+$xmlGetDadosCobranca .= " <Dados>";
+$xmlGetDadosCobranca .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>"; 
+$xmlGetDadosCobranca .= "   <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+$xmlGetDadosCobranca .= "   <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+$xmlGetDadosCobranca .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>"; 
+$xmlGetDadosCobranca .= "   <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+$xmlGetDadosCobranca .= "   <idorigem>".$glbvars["idorigem"]."</idorigem>";           
+$xmlGetDadosCobranca .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xmlGetDadosCobranca .= "   <idseqttl>1</idseqttl>";         
+$xmlGetDadosCobranca .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+$xmlGetDadosCobranca .= " </Dados>";      
+$xmlGetDadosCobranca .= "</Root>";   
+
+// Executa script para envio do XML
+$xmlResult = getDataXML($xmlGetDadosCobranca);
+// Cria objeto para classe de tratamento de XML
+$xmlObjDadosCobranca = getObjectXML($xmlResult);
+// Se ocorrer um erro, mostra cr&iacute;tica
+if (isset($xmlObjDadosCobranca->roottag->tags[0]->name) && strtoupper($xmlObjDadosCobranca->roottag->tags[0]->name) == "ERRO") {
+	exibeErro($xmlObjDadosCobranca->roottag->tags[0]->tags[0]->tags[4]->cdata);
+}
+
+$emails = $xmlObjDadosCobranca->roottag->tags[2]->tags;
+
+$emails_titular = '';
+
+// Concatena todos os emails do cooperado
+foreach($emails as $email) {
+   $emails_titular  = ($emails_titular == '') ? '' : $emails_titular . '|';
+   $emails_titular .= $email->tags[0]->cdata . ',' . $email->tags[1]->cdata;
+}
 
 ?>
+<input type="hidden" id= "emails_titular" name="emails_titular" value="<?php echo $emails_titular; ?>">	
 
 <form action="<?php echo $UrlSite; ?>telas/atenda/cobranca/imprimir_relatorio.php" name="frmRelatorio" class="formulario" id="frmRelatorio" method="post">
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>" />
@@ -70,7 +109,8 @@ include("../../../includes/carrega_permissoes.php");
 	<input type="hidden" id="nrconven" name="nrconven" value="">
 	<input type="hidden" id="sidlogin" name="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 	<input type="hidden" id="tpimpres" name="tpimpres" value="">
-</form>	
+</form>
+
 
 <table id="telaInicial" id="telaInicial" cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>

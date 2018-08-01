@@ -501,7 +501,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 	}
 
 	if (trim(cddopcao) != "C") { // Quando for Habilitacao, carregar emails
-        emails = $("#emails_titular", "#divConteudoOpcao").val();
+        emails = $("#emails_titular").val();
 	}
 
     if (flginclu == "true") { // Se esta incluindo , zerar campos
@@ -509,7 +509,6 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 		insitceb = "1";
 		inarqcbr = 0;
 		cddemail = 0;
-		dsdemail = "";
 		flgcebhm = "NAO";
         flprotes = "NAO";
         qtlimmip = "";
@@ -533,7 +532,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var index = retornaIndice(descontoConvenios, 'convenio', nrconven);
     if (index != null) {
         var item = descontoConvenios[index];
-        dsdemail = item.dsdemail;
+        cddemail = item.cddemail;
         flceeexp = item.flceeexp;
         flcooexp = item.flcooexp;
         flgcebhm = item.flgcebhm;
@@ -563,7 +562,6 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             insitceb: insitceb,
             inarqcbr: inarqcbr,
             cddemail: cddemail,
-            dsdemail: dsdemail,
             flgcebhm: flgcebhm,
             flgregis: flgregis,
             flgregon: flgregon,
@@ -2862,7 +2860,6 @@ function editarConvenio(nrconven) {
 			insitceb = response.insitceb;
 			inarqcbr = response.inarqcbr;
 			cddemail = response.cddemail;
-			dsdemail = response.dsdemail;
 			flgcruni = response.flgcruni;
 			flgcebhm = response.flgcebhm;
 			qtTitulares = response.qtTitulares;

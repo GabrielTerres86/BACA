@@ -50,7 +50,6 @@ $dtcadast =  getByTagName($result,'dtcadast');
 $cdoperad =  getByTagName($result,'cdoperad');		
 $inarqcbr =  getByTagName($result,'inarqcbr');
 $cddemail =  getByTagName($result,'cddemail');
-$dsdemail =  getByTagName($result,'dsdemail');
 $flgcruni =  (getByTagName($result,'flgcruni') == "yes") ? "SIM" : "NAO";
 $flgcebhm =  (getByTagName($result,'flgcebhm') == "yes") ? "SIM" : "NAO";
 $flgregis =  (getByTagName($result,'flgregis') == "yes") ? "SIM" : "NAO";
@@ -80,7 +79,6 @@ echo json_encode(
         'cdoperad' => $cdoperad,
         'inarqcbr' => $inarqcbr,
         'cddemail' => $cddemail,
-        'dsdemail' => $dsdemail,
         'flgcruni' => $flgcruni,
         'flgcebhm' => $flgcebhm,
         'flgregis' => $flgregis,
