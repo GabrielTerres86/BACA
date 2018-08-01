@@ -145,7 +145,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 ?>
 <style>
-img, input[type="image"] { outline: none; }
+img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 </style>
 <input type="hidden" id="idcalculo_reciproci" value="<?php echo $idcalculo_reciproci ?>" />
 <input type="hidden" id="cddopcao" value="C" />
@@ -399,7 +399,6 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 // Se a tela foi chamada pela rotina "Produtos" então acessa a opção "Habilitar".
 (executandoProdutos == true) ? consulta('S','','','true','','') : '';
 
-//$('.inteiro').setMask('INTEGER', 'zzz.zzz.zzz', '.', '');
 $('.valor').setMask('DECIMAL', 'zz.zzz.zz9,99', '.', '');
 $('.inteiro').setMask('DECIMAL', 'zz.zzz.zzz', '.', '');
 

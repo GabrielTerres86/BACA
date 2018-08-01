@@ -478,7 +478,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
         // Selecionar convenio
         if ($cddopcao == 'S') {
             ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="consulta('I','','','true','','');return false;" id="btnContinuar" type="image" /><?php
-        } else {
+        } elseif ($cddopcao != 'C') {
             ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" id="btnContinuar" onClick="return false;" type="image" /><?php
         }
 
