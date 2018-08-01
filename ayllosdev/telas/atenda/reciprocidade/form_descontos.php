@@ -57,6 +57,7 @@ include("../../../includes/carrega_permissoes.php");
 
 $idcalculo_reciproci = (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : '';
 $cdcooper            = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
+$cddopcao            = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
 $nrdconta            = (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : $glbvars['nrdconta'];
 
 // Monta o xml para a requisicao
@@ -148,7 +149,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 </style>
 <input type="hidden" id="idcalculo_reciproci" value="<?php echo $idcalculo_reciproci ?>" />
-<input type="hidden" id="cddopcao" value="C" />
+<input type="hidden" id="cddopcao" value="<?php echo $cddopcao; ?>" />
 <input type="hidden" id="imgEditar" value="<?php echo $UrlImagens; ?>icones/ico_editar.png" />
 <input type="hidden" id="imgExcluir" value="<?php echo $UrlImagens; ?>geral/excluir.gif" />
 <div align="center">
@@ -376,16 +377,17 @@ cVldesconto_cee = $('#vldesconto_cee', '.tabelaDesconto');
 cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
 cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
 cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
+cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
 
-validaHabilitacaoCamposBtn();
+validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 validaEmiteExpede(false);
 
 cDataFimContrato.change(function (){
-	validaHabilitacaoCamposBtn();
+	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
 
-$('#vldesconto_cee, #vldesconto_coo, #dtfimadicional_cee, #dtfimadicional_coo').bind('enter input', function (){
-	validaHabilitacaoCamposBtn();
+$('#vldesconto_cee, #vldesconto_coo, #dtfimadicional_cee, #dtfimadicional_coo, #txtjustificativa').bind('enter input', function (){
+	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
 
 controlaLayout('divConveniosRegistros');

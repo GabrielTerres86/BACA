@@ -84,7 +84,7 @@ var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
 
 var cee = false;
 var coo = false;
-var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo;
+var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo, cJustificativaDesc;
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
@@ -162,6 +162,7 @@ function habilitaSetor(setorLogado) {
 		data: {
 			nrdconta: nrdconta,
             idcalculo_reciproci: idrecipr,
+            cddopcao: cddopcao,
 			redirect: "html_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -190,6 +191,7 @@ function habilitaSetor(setorLogado) {
  function voltarParaDesconto() {
     $("#divOpcaoConsulta").css('display', 'none');
     $("#divConteudoOpcao").css('display', 'block');
+    validaHabilitacaoCamposBtn();
  }
 
  //Função para controle de navegação
@@ -323,6 +325,8 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
     $("#divOpcaoConsulta").css("display","none");
     $("#divConteudoOpcao").css('display', 'block');
     controlaFoco();
+
+    validaHabilitacaoCamposBtn();
 
     return false;
  }
@@ -594,6 +598,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 			$("#divOpcaoConsulta").html(response);
             hideMsgAguardo();
             blockBackground($("#divRotina"));
+            validaHabilitacaoCamposBtn();
 		}
 	});
 }
@@ -2641,6 +2646,7 @@ function excluirConvenio(nrconven) {
 }
 
 function validaEmiteExpede(limparCampos) {
+    var cddopcao = $('#cddopcao').val();
 	cee = false;
     cVldesconto_cee.desabilitaCampo();
     cDataFimAdicionalCee.desabilitaCampo();
@@ -2648,24 +2654,32 @@ function validaEmiteExpede(limparCampos) {
     coo = false;
     cVldesconto_coo.desabilitaCampo();
     cDataFimAdicionalCoo.desabilitaCampo();
+
+    cJustificativaDesc.desabilitaCampo();
     
     if (limparCampos) {
-        cVldesconto_coo.val('');
-        cVldesconto_cee.val('');
+        cVldesconto_coo.val('0,00');
+        cVldesconto_cee.val('0,00');
         cDataFimAdicionalCee.val('');
         cDataFimAdicionalCoo.val('');
+        cJustificativaDesc.val('');
     }
+
+    if (cddopcao == 'C')
+        return;
 
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
 		if (descontoConvenios[i].flcooexp == 1) {
 			coo = true;			
 			cVldesconto_coo.habilitaCampo();
-			cDataFimAdicionalCoo.habilitaCampo();		
+			cDataFimAdicionalCoo.habilitaCampo();
+            cJustificativaDesc.habilitaCampo();
 		}
 		if (descontoConvenios[i].flceeexp == 1) {
 			cee = true;			
 			cVldesconto_cee.habilitaCampo();
 			cDataFimAdicionalCee.habilitaCampo();
+            cJustificativaDesc.habilitaCampo();
 		}
 	}
 }
@@ -2680,6 +2694,7 @@ function validaDados() {
 	vVldesconto_coo = cVldesconto_coo.val();
 	vDataFimAdicionalCee = cDataFimAdicionalCee.find('option:selected').text();
 	vDataFimAdicionalCoo = cDataFimAdicionalCoo.find('option:selected').text();
+    vJustificativaDesc = cJustificativaDesc.val();
 
 	// valida se o campo Data fim do contrato está preenchido
 	if (!vDataFimContrato) {
@@ -2696,6 +2711,11 @@ function validaDados() {
 		showError("error", "Selecione pelo menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
+
+    if ( (vDataFimAdicionalCee || vDataFimAdicionalCoo) && !vJustificativaDesc ) {
+        showError("error", "&Eacute; necessário informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
 
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
         coo = false;
@@ -2751,7 +2771,7 @@ function validaDados() {
             dtfimadicional_coo:  parseInt(dtfimadicional_coo),
             vldesconto_cee:      converteNumero($('#vldesconto_cee', '.tabelaDesconto').val()),
             dtfimadicional_cee:  parseInt(dtfimadicional_cee),
-            txtjustificativa:    $('#txtjustificativa', '.tabelaDesconto').val(),
+            txtjustificativa:    vJustificativaDesc,
 			redirect:            "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -2768,6 +2788,9 @@ function validaDados() {
 }
 
 function validaHabilitacaoCamposBtn(cddopcao) {
+    if (cddopcao && cddopcao == 'C') {
+        return;
+    }
 	var btnContinuar = $('#btnContinuar');
 	var btnAprovacao = $('#btnAprovacao');
 
@@ -2779,6 +2802,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 	var cDataFimAdicionalCeeOld = $('#dtfimadicional_cee_old', '.tabelaDesconto');
 	var cDataFimAdicionalCoo    = $('#dtfimadicional_coo', '.tabelaDesconto');
 	var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
+	var cJustificativaDesc      = $('#txtjustificativa', '.tabelaDesconto');
 
 	var vVldesconto_cee         = Number(converteNumero(cVldesconto_cee.val()));
 	var vVldesconto_ceeOld      = Number(converteNumero(cVldesconto_ceeOld.val()));
@@ -2788,15 +2812,26 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 	var vDataFimAdicionalCeeOld = cDataFimAdicionalCeeOld.val();
 	var vDataFimAdicionalCoo    = cDataFimAdicionalCoo.find('option:selected').text();
 	var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
+	var vJustificativaDesc      = cJustificativaDesc.val();
 
-	if (cee) {
-		cVldesconto_coo.desabilitaCampo();
-		cDataFimAdicionalCoo.desabilitaCampo();
+    if (!cee && !coo) {
+        cJustificativaDesc.desabilitaCampo();
+    }
+    
+    if (cee) {
+        if (!coo) {
+            cVldesconto_coo.desabilitaCampo();
+            cDataFimAdicionalCoo.desabilitaCampo();
+        }
 		cVldesconto_cee.habilitaCampo();
 		cDataFimAdicionalCee.habilitaCampo();
-	} else if (coo) {
-		cVldesconto_cee.desabilitaCampo();
-		cDataFimAdicionalCee.desabilitaCampo();
+	}
+
+    if (coo) {
+        if (!cee) {
+            cVldesconto_cee.desabilitaCampo();
+            cDataFimAdicionalCee.desabilitaCampo();
+        }
 		cVldesconto_coo.habilitaCampo();
 		cDataFimAdicionalCoo.habilitaCampo();
 	}
@@ -2804,7 +2839,8 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 	if (	vVldesconto_cee != vVldesconto_ceeOld ||
 			vVldesconto_coo != vVldesconto_cooOld ||
 			vDataFimAdicionalCee != vDataFimAdicionalCeeOld ||
-			vDataFimAdicionalCoo != vDataFimAdicionalCooOld	) {
+			vDataFimAdicionalCoo != vDataFimAdicionalCooOld ||
+            vJustificativaDesc ) {
 
 		btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
 		btnContinuar.prop('disabled', true);
@@ -2814,8 +2850,8 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		btnAprovacao.prop('disabled', false);
 		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
-		$('#txtjustificativa', '.tabelaDesconto').removeClass('campoTelaSemBorda');
-		$('#txtjustificativa', '.tabelaDesconto').prop('disabled', false);
+		cJustificativaDesc.removeClass('campoTelaSemBorda');
+		cJustificativaDesc.prop('disabled', false);
 
 	} else {
 		btnContinuar.removeClass('botaoDesativado');
@@ -2826,8 +2862,8 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		btnAprovacao.prop('disabled', true);
 		btnAprovacao.attr('onclick', 'return false;');
 
-		$('#txtjustificativa', '.tabelaDesconto').removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda');
-		$('#txtjustificativa', '.tabelaDesconto').prop('disabled', true);
+		//cJustificativaDesc.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda');
+		//cJustificativaDesc.prop('disabled', true);
 	}
 
 }
