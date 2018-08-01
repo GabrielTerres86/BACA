@@ -1,11 +1,11 @@
 <?php
 /*!
  * FONTE        : tab_prestacoes.php
- * CRIA«√O      : Jorge I. Hamaguchi
- * DATA CRIA«√O : 01/08/2011 
+ * CRIA√á√ÉO      : Jorge I. Hamaguchi
+ * DATA CRIA√á√ÉO : 01/08/2011 
  * OBJETIVO     : Tabela que apresenta a consulta Prestacoes
  * --------------------------------------------------------------------------------------------------
- * ALTERA«’ES   : 05/06/2014 - Ajuste para armazenar o nome do avalista. (James)
+ * ALTERA√á√ïES   : 05/06/2014 - Ajuste para armazenar o nome do avalista. (James)
  *
  *				  28/07/2014 - Ajustado campo  <th> "contato" para "contrato" (Daniel)	
  *
@@ -14,7 +14,7 @@
  *                25/11/2014 - Incluido um campo hidden "cdorigem". (Jaison)
  *				
  * 				  06/01/2015 - Padronizando a mascara do campo nrctremp.
- *	   	                       10 Digitos - Campos usados apenas para visualizaÁ„o
+ *	   	                       10 Digitos - Campos usados apenas para visualiza√ß√£o
  *			                   8 Digitos - Campos usados para alterar ou incluir novos contratos
  *				               (Kelvin - SD 233714)
  *
@@ -25,14 +25,11 @@
  *
  *                11/05/2017 - Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
 
- *                17/01/2018 - Inclus„o do bot„o "Alterar QualificaÁ„o" ( Diego Simas - AMcom )
+ *                17/01/2018 - Inclus√£o do bot√£o "Alterar Qualifica√ß√£o" ( Diego Simas - AMcom )
  *	    
- *			      09/07/2018 - Criado opÁ„o para tela de controles (QualificaÁ„o da OperaÁ„o e Contratos Liquidados)	 
+ *			      09/07/2018 - Criado op√ß√£o para tela de controles (Qualifica√ß√£o da Opera√ß√£o e Contratos Liquidados)	 
  *							   PJ450 - Diego Simas (AMcom)
- *
- *                31/07/2018 - Ajuste para bloquear pagamento quando a conta est· em prejuÌzo 
- *							   PJ450 - Diego Simas (AMcom)
- *
+ *               
  * --------------------------------------------------------------------------------------------------
  */
  
@@ -111,7 +108,7 @@
 				<?php
 					if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
 					
-					// Se a paginaÁ„o n„o est· na primeira, exibe bot„o voltar
+					// Se a pagina√ß√£o n√£o est√° na primeira, exibe bot√£o voltar
 					if ($nriniseq > 1) { 
 				?> <a class='paginacaoAnt'><<< Anterior</a> <?php
 					} else {
@@ -128,7 +125,7 @@
 			</td>
 			<td>
 				<?php
-					// Se a paginaÁ„o n„o est· na ultima p·gina, exibe bot„o proximo
+					// Se a pagina√ß√£o n√£o est√° na ultima p√°gina, exibe bot√£o proximo
 					if ($qtregist > ($nriniseq + $nrregist - 1)) {
 				?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?php
 					} else {
@@ -144,8 +141,8 @@
     <a href="#" class="botao" id="btVoltar"        onClick="encerraRotina('true');">Voltar</a>
 	<a href="#" class="botao" id="btConsultar"     onClick="direcionaConsulta();">Consultar</a>	
 	<a href="#" class="botao" id="btPagar" 	       onClick="validarLiquidacao();">Pagar</a>
- 	<!--<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir PrejuÌzo</a>-->
-	<!--<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer PrejuÌzo</a>-->
+ 	<!--<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir Preju√≠zo</a>-->
+	<!--<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Preju√≠zo</a>-->
 	<a href="#" class="botao" id="btCancelar"      onClick="controlaOperacao('D_EFETIVA');">Desfazer Efetiva&ccedil;&atilde;o</a>
     <a href="#" class="botao" id="btPortabilidade" onClick="controlaOperacao('PORTAB_CRED');">Portabilidade</a>
 	<? 
@@ -171,8 +168,7 @@
 	
 	function changebtPagar(_this){
 		if ($(_this).find('#inprejuz').val() == 1){
-			$("a#btPagar").hide();
-	   		//$('a#btPagar').html('Pagar Prejuizo');
+			$('a#btPagar').html('Pagar Prejuizo');
 		}
 		else{
 			$('a#btPagar').html('Pagar');
@@ -181,8 +177,7 @@
 	
 	if ($('.tituloRegistros tbody tr').length == 1){
 		if ($('.tituloRegistros tbody tr').find('#inprejuz').val() == 1){
-			$("a#btPagar").hide();
-			//$('a#btPagar').html('Pagar Prejuizo');
+			$('a#btPagar').html('Pagar Prejuizo');
 		}
 	}
 

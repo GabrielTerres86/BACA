@@ -104,7 +104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 24/04/2018
+   Data    : Maio/2017                      Ultima atualizacao: 01/08/2018
 
    Dados referentes ao programa:
 
@@ -121,6 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       2390 -> Multa  atraso
       2475 -> Juros Mora
       2391 -> Abono
+      2701 -> Valor de Pagamento
 
       Estorno
 
@@ -130,9 +131,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       2394 -> EST.PGT MULTA ATRASO
       2476 -> EST.PGT JUROS MORA
       2395 -> ESTORNO ABONO PREJ.
+      2702 -> Estorno de pagamento LEM
 
       *************************************************
-      Alteracoes:
+      
+      Alteracoes: 01/08/2018 - Ajuste para bloquear pagamento quando a conta está em prejuízo
+                              PJ 450 - Diego Simas - AMcom 
+                      
 ..............................................................................*/
 
     vr_cdcritic             NUMBER(3);
@@ -147,7 +152,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    CURSOR C_CRAPEPR(pr_cdcooper in number
                    ,pr_nrdconta in number
                    ,pr_nrctremp in number) IS
-               SELECT * FROM crapepr
+     SELECT * 
+       FROM crapepr
                WHERE crapepr.cdcooper = pr_cdcooper
                  AND crapepr.nrdconta = pr_nrdconta
                  AND crapepr.nrctremp = pr_nrctremp;
@@ -156,7 +162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                        
         
      /* Rotina para estornar pagamento de  prejuizo PP, TR e CC */
-    PROCEDURE pc_estorno_pagamento(pr_cdcooper in number
+            PROCEDURE pc_estorno_pagamento(pr_cdcooper in number
                                   ,pr_cdagenci in number
                                   ,pr_nrdconta in number
                                   ,pr_nrctremp in number
@@ -164,25 +170,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                   ,pr_idtipo in varchar2
                                   ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                   ,pr_tab_erro OUT gene0001.typ_tab_erro) IS
- /* .............................................................................
+      /* .............................................................................
+      
+      Programa: pc_estorno_pagamento
+      Sistema : AyllosWeb
+      Sigla   : PREJ
+      Autor   : Jean Calão - Mout´S
+      Data    : Agosto/2017.                  Ultima atualizacao: 24/04/2018
 
-  Programa: pc_estorno_pagamento
-  Sistema : AyllosWeb
-  Sigla   : PREJ
-  Autor   : Jean Calão - Mout´S
-  Data    : Agosto/2017.                  Ultima atualizacao: 24/04/2018
+      Dados referentes ao programa:
 
-  Dados referentes ao programa:
+      Frequencia: Sempre que for chamado
 
-  Frequencia: Sempre que for chamado
+      Objetivo  : Efetua o estorno de pagamento de prejuizos de contratos PP e TR 
+      Observacao: Rotina chamada pela tela ESTPRJ
 
-  Objetivo  : Efetua o estorno de pagamento de prejuizos de contratos PP e TR 
-  Observacao: Rotina chamada pela tela ESTPRJ
+      Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
+                  (Rafael Monteiro - Mouts)
+                  18/05/2018 - Adicionar o tratamento para histórico 2701 e 2702
+                                   (Rafael - Mouts)              
 
-  Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
-              (Rafael Monteiro - Mouts)
-
-  ..............................................................................*/                              
+      ..............................................................................*/                              
 
        -- Cursor principal da rotina de estorno
        CURSOR c_craplem (prc_cdcooper craplem.cdcooper%TYPE
@@ -196,13 +204,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                    lem.nrctremp,
                    lem.vllanmto,
                    lem.cdagenci,
-                   lem.nrdocmto
+                   lem.nrdocmto,
+                   lem.rowid
               from craplem lem
              where lem.cdcooper = prc_cdcooper
                and lem.nrdconta = prc_nrdconta
                and lem.nrctremp = prc_nrctremp
                and lem.dtmvtolt = prc_dtmvtolt -- ESTORNAR TUDO DO DIA
-               and lem.cdhistor in (2388 --Valor Principal
+               and lem.cdhistor in (2701 -- Valor pagamento
+                                   ,2388 --Valor Principal
                                    ,2473 --Juros +60
                                    ,2389 --Juros atualização
                                    ,2390 --Multa  atraso
@@ -259,6 +269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
            AND crapbpr.flgbaixa = 1           
            AND crapbpr.tpdbaixa = 'A'
            ;
+           
       vr_existbpr PLS_INTEGER := 0;           
       --
       CURSOR cr_crapbpr_baixado(pr_cdcooper IN crapbpr.cdcooper%TYPE,
@@ -269,10 +280,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
          WHERE crapbpr.cdcooper = pr_cdcooper
            AND crapbpr.nrdconta = pr_nrdconta
            AND crapbpr.nrctrpro = pr_nrctremp
+           AND crapbpr.dtdbaixa = pr_dtmvtolt
            AND crapbpr.tpctrpro IN (90,99)
            AND crapbpr.cdsitgrv IN (1,4) -- Em processamento, Baixado
            AND crapbpr.flgbaixa = 1           
-           --AND crapbpr.tpdbaixa = 'A'
+           AND crapbpr.tpdbaixa = 'A'
            ;           
       vr_existbpr_baixado PLS_INTEGER := 0;
       --               
@@ -285,8 +297,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       vr_nrdolote number;
       vr_nrdrowid rowid;
       dt_gerarlcm DATE;
-    vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
-    vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307    
+      vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
+      vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307    
 
       --
       BEGIN
@@ -413,7 +425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                  AND t.dtmvtolt = pr_dtmvtolt;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro na exclusao CRAPLEM, cooper: ' || pr_cdcooper || 
+                vr_dscritic := 'Falha na exclusao CRAPLEM, cooper: ' || pr_cdcooper || 
                                ', conta: ' || pr_nrdconta;
                 RAISE vr_erro;               
             END;                
@@ -428,7 +440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                  AND t.dtmvtolt = r_craplem.dtmvtolt;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro na exclusao CRAPLCM, cooper: ' || pr_cdcooper || 
+                vr_dscritic := 'Falha na exclusao CRAPLCM, cooper: ' || pr_cdcooper || 
                                ', conta: ' || pr_nrdconta;
                 RAISE vr_erro ;              
             END;
@@ -498,13 +510,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                               ,pr_cdagenci => r_craplem.cdagenci
                                               ,pr_cdbccxlt => 100
-                                              ,pr_cdoperad => user
+                                              ,pr_cdoperad => '1'
                                               ,pr_cdpactra => r_craplem.cdagenci
                                               ,pr_nrdolote => vr_nrdolote
                                               ,pr_nrdconta => pr_nrdconta
                                               ,pr_cdhistor => 2387 -- EST.RECUP.PREJUIZO
                                               ,pr_vllanmto => r_craplcm.vllanmto 
-                                              ,pr_nrparepr => 1
+                                              ,pr_nrparepr => 0
                                               ,pr_nrctremp => pr_nrctremp
                                               ,pr_nrseqava => 0
                                               ,pr_idlautom => 0 
@@ -515,11 +527,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                   IF vr_tab_erro.count() > 0 THEN 
                     -- Atribui críticas às variaveis
                     vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-                    vr_dscritic := 'Erro estorno Pagamento '||vr_tab_erro(vr_tab_erro.first).dscritic;
+                    vr_dscritic := 'Falha estorno Pagamento '||vr_tab_erro(vr_tab_erro.first).dscritic;
                     RAISE vr_erro;
                   ELSE
                     vr_cdcritic := 0;
-                    vr_dscritic := 'Erro ao Estornar Pagamento '||sqlerrm;
+                    vr_dscritic := 'Falha ao Estornar Pagamento '||sqlerrm;
                     raise vr_erro;
                   END IF;                      
                 END IF;
@@ -556,7 +568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                ,pr_dscritic => vr_dscritic);
                                                                        
               IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 raise vr_erro;
               END IF;            
@@ -589,7 +601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                ,pr_dscritic => vr_dscritic);
                                                                        
               IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 raise vr_erro;
               END IF;            
@@ -622,7 +634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                ,pr_dscritic => vr_dscritic);
                                                                        
               IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 raise vr_erro;
               END IF;            
@@ -655,7 +667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                ,pr_dscritic => vr_dscritic);
                                                                        
               IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 raise vr_erro;
               END IF;                 
@@ -687,7 +699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                ,pr_dscritic => vr_dscritic);
                                                                        
               IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 raise vr_erro;
               END IF;            
@@ -717,105 +729,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                ,pr_dscritic => vr_dscritic);
                                                                        
               IF vr_dscritic is not null THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 raise vr_erro;
-              END IF;             
+              END IF;     
+              --
+              BEGIN
+                UPDATE craplem lem
+                   SET lem.dtestorn = TRUNC(rw_crapdat.dtmvtolt)
+                 WHERE lem.rowid = r_craplem.rowid;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Ocorreu falha ao registrar data de estorno (2391): ' || vr_dscritic;
+                  pr_des_reto := 'NOK';
+                  raise vr_erro;                  
+              END;                      
+            ELSIF r_craplem.cdhistor = 2701 THEN -- Pagamento
+              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                             ,pr_cdagenci => r_craplem.cdagenci
+                                             ,pr_cdbccxlt => 100
+                                             ,pr_cdoperad => '1'
+                                             ,pr_cdpactra => r_craplem.cdagenci
+                                             ,pr_tplotmov => 5
+                                             ,pr_nrdolote => 600029
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_cdhistor => 2702 -- ESTORNO ABONO PREJ.
+                                             ,pr_nrctremp => pr_nrctremp
+                                             ,pr_vllanmto => r_craplem.vllanmto
+                                             ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                             ,pr_txjurepr => 0
+                                             ,pr_vlpreemp => 0
+                                             ,pr_nrsequni => 0
+                                             ,pr_nrparepr => r_craplem.nrdocmto
+                                             ,pr_flgincre => true
+                                             ,pr_flgcredi => false
+                                             ,pr_nrseqava => 0
+                                             ,pr_cdorigem => 7 -- batch
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+                                                                       
+              IF vr_dscritic is not null THEN
+                vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                pr_des_reto := 'NOK';
+                raise vr_erro;
+              END IF;   
+              
+              BEGIN
+                UPDATE craplem lem
+                   SET lem.dtestorn = TRUNC(rw_crapdat.dtmvtolt)
+                 WHERE lem.rowid = r_craplem.rowid;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Ocorreu falha ao registrar data de estorno (2701): ' || vr_dscritic;
+                  pr_des_reto := 'NOK';
+                  raise vr_erro;                  
+              END;
+                         
             END IF;            
           END IF;
-
-          
-          
-            
-        /*  -- inicio rmm
-          vr_vlsdprej := NULL;
-          vr_vlpgmupr := NULL;
-          vr_vlpgjmpr := NULL;
-          vr_lem_vlsdprej := 0;
-          vr_lem_vlpgjmpr := 0;
-          vr_lem_vlpgmupr := 0;
-            
-          vr_alt_vlsdprej := FALSE;
-          vr_alt_vlpgjmpr := FALSE;
-          vr_alt_vlpgmupr := FALSE;            
-          FOR rw_crapepr IN c_crapepr(pr_cdcooper, pr_nrdconta, pr_nrctremp) LOOP
-             
-\*              rw_crapepr.vlsdprej := r_craplem.vllanmto + rw_crapepr.vlsdprej;
-              
-            IF (rw_crapepr.vlprejuz + 
-                rw_crapepr.vlttmupr + 
-                rw_crapepr.vlttjmpr) = rw_crapepr.vlsdprej THEN
-               rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - rw_crapepr.vlttmupr - rw_crapepr.vlttjmpr;
-               vr_vlttmupr := 0;
-               vr_vlttjmpr := 0;
-            ELSE
-              vr_vlttmupr := rw_crapepr.vlpgmupr;
-              vr_vlttjmpr := rw_crapepr.vlpgjmpr;                 
-            END IF;*\
-            -- RMM
-            -- Soma o valor do saldo com o valor do estorno
-            vr_valor_controle := rw_crapepr.vlsdprej + vr_vllanmto;
-            -- Se o saldo está menor que o prejuízo, devera gerar craplem
-            IF rw_crapepr.vlsdprej < rw_crapepr.vlprejuz THEN
-              vr_alt_vlsdprej := TRUE;
-              -- Verifica se o valor do estorno é maior que o prejuizo
-              IF vr_valor_controle > rw_crapepr.vlprejuz THEN
-                -- Atualizar o valor para descontar em juros e multa
-                vr_valor_controle := vr_valor_controle - rw_crapepr.vlprejuz;
-                -- Valor que deverá ser gravado na CRAPLEM
-                vr_lem_vlsdprej := rw_crapepr.vlprejuz - rw_crapepr.vlsdprej;
-                -- O valor de controle conseguiu quitar o saldo da divida
-                vr_vlsdprej := rw_crapepr.vlprejuz;
-              \*ELSIF vr_valor_controle = rw_crapepr.vlprejuz THEN
-                vr_vlsdprej := vr_valor_controle;
-                vr_lem_vlsdprej := vr_vllanmto;
-                vr_valor_controle := 0;*\
-              ELSE
-                --vr_vlsdprej := rw_crapepr.vlsdprej + vr_valor_controle;
-                vr_vlsdprej := vr_valor_controle;
-                vr_lem_vlsdprej := vr_vllanmto;
-                vr_valor_controle := 0;
-              END IF;
-            ELSE
-              -- desconta o valor do prejuizo da variavel de controle
-              vr_valor_controle := vr_valor_controle - rw_crapepr.vlprejuz;
-              vr_vlsdprej       := rw_crapepr.vlsdprej;
-            END IF;
-            -- Se ainda existir saldo apos pagar o valor da divida, descontar do valor pago do juros
-            IF vr_valor_controle > 0 THEN
-              IF rw_crapepr.vlpgjmpr > 0 THEN
-                vr_alt_vlpgjmpr := TRUE;
-                vr_lem_vlpgjmpr := vr_valor_controle;
-                vr_valor_controle := vr_valor_controle - rw_crapepr.vlpgjmpr;
-                -- Se o valor de pagamento ainda não zerou e a variavel de controle
-                -- tem valor para estornar, gerar craplem                
-                IF vr_valor_controle > 0 THEN
-                  vr_vlpgjmpr := 0;
-                  vr_lem_vlpgjmpr := rw_crapepr.vlttjmpr;
-                ELSE
-                  vr_vlpgjmpr := abs(vr_valor_controle);
-                  vr_valor_controle := 0;
-                END IF;
-              END IF;
-            END IF;
-            -- Verifica se sera estornado a multa              
-            IF vr_valor_controle > 0 THEN
-              vr_lem_vlpgmupr := vr_valor_controle;
-              vr_valor_controle := vr_valor_controle - rw_crapepr.vlpgmupr;
-              -- Se o valor de pagamento ainda não zerou e a variavel de controle
-              -- tem valor para estornar, gerar craplem
-              IF rw_crapepr.vlpgmupr > 0 THEN
-                -- gerar craplem
-                vr_alt_vlpgmupr := TRUE;
-              END IF;
-              IF vr_valor_controle > 0 THEN
-                vr_vlpgmupr := 0;
-                vr_lem_vlpgmupr := rw_crapepr.vlttmupr;
-              ELSE
-                vr_vlpgmupr := abs(vr_valor_controle);
-                vr_valor_controle := 0;
-              END IF;
-            END IF;*/
+         
         END LOOP;
         --
         OPEN cr_crapbpr(pr_cdcooper => pr_cdcooper,
@@ -858,7 +831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
              AND c.cdcooper = pr_cdcooper;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'erro ao atualizar emprestimo para estorno: ' || sqlerrm;
+            vr_dscritic := 'Falha ao atualizar emprestimo para estorno: ' || sqlerrm;
             pr_des_reto := 'NOK';
             RAISE vr_erro;
         END;        
@@ -869,7 +842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
         -- Desfazer alterações
         ROLLBACK;
         IF vr_dscritic IS NULL THEN
-          vr_dscritic := 'Erro na rotina pc_estorno_pagamento: '; 
+          vr_dscritic := 'Falha na rotina pc_estorno_pagamento: '; 
         END IF;
         --
         pr_des_reto := 'NOK';
@@ -900,7 +873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
        when others then
           ROLLBACK;
            if vr_dscritic is null then
-              vr_dscritic := 'Erro geral rotina pc_estorno_pagamento: ' || sqlerrm; 
+              vr_dscritic := 'Falha geral rotina pc_estorno_pagamento: ' || sqlerrm; 
            end if;
            
            -- Retorno não OK
@@ -938,7 +911,7 @@ PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrent
   Sistema : AyllosWeb
   Sigla   : PREJ
   Autor   : Jean Calão - Mout´S
-  Data    : Agosto/2017.                  Ultima atualizacao: 
+  Data    : Agosto/2017.                  Ultima atualizacao: 01/08/2018
 
   Dados referentes ao programa:
 
@@ -948,7 +921,10 @@ PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrent
   Observacao: Rotina chamada pela tela PAGPRJ opçao "Forçar pagamento prejuizo emprestimo"
 
   Alteracoes: 24/04/2018 - Nova Regra para bloqueio de pagamento realizado pela tela chamadora
-              (Rafael Monteiro - Mouts)
+                           (Rafael Monteiro - Mouts)
+              
+              01/08/2018 - Ajuste para bloquear pagamento quando a conta está em prejuízo
+                           PJ 450 - Diego Simas - AMcom
 
   ..............................................................................*/
   -- Variáveis
@@ -1007,6 +983,7 @@ PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrent
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT ass.inpessoa
           ,ass.vllimcre
+          ,ass.inprejuz
       FROM crapass ass
      WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -1184,10 +1161,10 @@ BEGIN
   CLOSE c_crapepr;
       
   /* Gerando Log de Consulta */
-  vr_dstransa := 'PREJ0002-Realizando pagamento de contrato de prejuizo, Cooper: ' || vr_cdcooper || 
+ /* vr_dstransa := '-Realizando pagamento de contrato de prejuizo, Cooper: ' || vr_cdcooper || 
                   ' Conta: ' || pr_nrdconta || ', Contrato: ' || pr_nrctremp || ' Tipo: '
                    || r_crapepr.tpemprst || ' Data: ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY') ||
-                   ', Vlr Pagto: ' || pr_vlpagmto || ', Vlr abono: ' || pr_vldabono;
+                   ', Vlr Pagto: ' || pr_vlpagmto || ', Vlr abono: ' || pr_vldabono || 'Operador: '||vr_cdoperad;
       
   GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                       ,pr_cdoperad => vr_cdoperad
@@ -1202,10 +1179,17 @@ BEGIN
                       ,pr_nrdconta => pr_nrdconta
                       ,pr_nrdrowid => vr_nrdrowid);
   -- Commit do LOG
-  COMMIT;
-      
-  IF nvl(vr_inprejuz,2) = 1 THEN
-         
+  COMMIT;*/
+  
+  -- Início - PJ 450 (Diego Simas - AMcom)
+  IF rw_crapass.inprejuz = 1 THEN    
+     pr_des_erro := 'Conta em prejuízo, pagamento deve ser efetuado através da opção Bloqueado Prejuízo.';
+     RAISE vr_exc_erro;     
+  END IF;
+  -- Fim - PJ 450 (Diego Simas - AMcom)
+  
+  IF nvl(vr_inprejuz,2) = 1 THEN    
+              
      IF vr_vlsdprej > 0 THEN   
          pc_crps780_1(pr_cdcooper => vr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
@@ -1235,8 +1219,12 @@ BEGIN
      RAISE vr_exc_erro;
   END IF;
  
-  vr_dstransa := 'PREJ0002-Pagamento de prejuizo, referente contrato: ' || pr_nrctremp ||
-                 ', realizado com sucesso.'; 
+  /*vr_dstransa := 'Pagamento de prejuizo, referente contrato: ' || pr_nrctremp ||
+                 ', realizado com sucesso.'|| 'Operador: '||vr_cdoperad; */
+  vr_dstransa := 'Pagamento de prejuizo realizado com sucesso, Cooper: ' || vr_cdcooper || 
+                  ' Conta: ' || pr_nrdconta || ', Contrato: ' || pr_nrctremp || ' Tipo: '
+                   || r_crapepr.tpemprst || ' Data: ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/YYYY') ||
+                   ', Vlr Pagto: ' || pr_vlpagmto || ', Vlr abono: ' || pr_vldabono || 'Operador: '||vr_cdoperad;                 
   -- Gerando Log de Consulta
   GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                       ,pr_cdoperad => vr_cdoperad
@@ -1608,6 +1596,7 @@ END pc_pagamento_prejuizo_web;
            AND lem.dtmvtolt = nvl(pr_dtpagto, lem.dtmvtolt)
            AND lem.cdhistor = 2391 -- abono
            AND lem.dtmvtolt >= SYSDATE - 360
+           AND lem.dtmvtolt <= to_date('20/06/2018','dd/mm/yyyy')
            AND NOT EXISTS ( SELECT 1
                               FROM craplem lem2
                              WHERE lem2.cdcooper = lem.cdcooper
@@ -1619,47 +1608,29 @@ END pc_pagamento_prejuizo_web;
            AND epr.cdcooper  = lem.cdcooper
            AND epr.nrdconta  = lem.nrdconta
            AND epr.nrctremp  = decode(pr_nrctremp, 0,epr.nrctremp,pr_nrctremp)
-          -- AND epr.cdlcremp  <> 100 -- Não permitir visualizar contratos linha 100                    
-           ORDER BY lem.vllanmto
+           --
+           UNION -- union com distinct
+           --
+           SELECT lem.dtmvtolt
+                 ,lem.nrctremp
+                 ,lem.vllanmto
+             FROM craplem lem
+            WHERE lem.cdcooper = pr_cdcooper
+              AND lem.nrdconta = decode(pr_nrdconta, 0, lem.nrdconta, pr_nrdconta)
+              AND lem.nrctremp = decode(pr_nrctremp, 0, lem.nrctremp, pr_nrctremp)
+              AND lem.dtmvtolt = nvl(pr_dtpagto, lem.dtmvtolt)
+              AND lem.cdhistor = 2391 -- abono
+              AND lem.dtestorn IS NULL           
+           ORDER BY vllanmto
            ;                     
-/*        SELECT lem.dtmvtolt
-              ,lem.nrctremp
-              ,lem.vllanmto
-          FROM craplem lem
-         WHERE lem.cdcooper = pr_cdcooper
-           AND lem.nrdconta = decode(pr_nrdconta, 0, lem.nrdconta, pr_nrdconta)
-           AND lem.nrctremp = decode(pr_nrctremp, 0, lem.nrctremp, pr_nrctremp)
-           AND lem.dtmvtolt = nvl(pr_dtpagto, lem.dtmvtolt)
-           AND lem.cdhistor = 2391 -- abono
-           AND lem.dtmvtolt >= SYSDATE - 360
-           ORDER BY lem.vllanmto
-           ;*/ 
-      /*CURSOR C4 (pr_cdcooper crapepr.cdcooper%TYPE
-                --,pr_dtpagto  craplem.dtmvtolt%type 
-                ,pr_nrdconta crapepr.nrdconta%TYPE
-                ,pr_nrctremp crapepr.nrctremp%type
-                ) IS
-        SELECT --lem.dtmvtolt
-              --,lem.nrctremp
-              --sum(case when lem.cdhistor in (2395) then lem.vllanmto else 0 end) vllanmto
-              lem.vllanmto
-          FROM craplem lem
-         WHERE lem.cdcooper = pr_cdcooper
-           AND lem.nrdconta = decode(pr_nrdconta, 0, lem.nrdconta, pr_nrdconta)
-           AND lem.nrctremp = decode(pr_nrctremp, 0, lem.nrctremp, pr_nrctremp)
-           --AND lem.dtmvtolt = nvl(pr_dtpagto, lem.dtmvtolt)
-           AND lem.cdhistor = 2395 -- Estorno abono
-           AND lem.dtmvtolt >= SYSDATE - 360
-           ORDER BY lem.vllanmto
-           ;*/   
       --    
       CURSOR C2 (pr_cdcooper crapepr.cdcooper%TYPE
                 ,pr_dtpagto  craplem.dtmvtolt%type 
                 ,pr_nrdconta crapepr.nrdconta%TYPE
                 ,pr_nrctremp crapepr.nrctremp%type
                 ) IS 
-        SELECT lcm.dtmvtolt
-              ,lcm.vllanmto
+        SELECT lcm.dtmvtolt dtmvtolt
+              ,lcm.vllanmto vllanmto
               ,to_number(
                        trim(replace(
                        lcm.cdpesqbb,'.',''))) nrctremp
@@ -1671,6 +1642,7 @@ END pc_pagamento_prejuizo_web;
            AND lcm.cdhistor = 2386-- Pagamento
            AND lcm.dtmvtolt = nvl(pr_dtpagto, lcm.dtmvtolt)
            AND lcm.dtmvtolt >= SYSDATE - 200
+           AND lcm.dtmvtolt <= to_date('20/06/2018','dd/mm/yyyy')
            AND to_number(
                        trim(replace(
                        lcm.cdpesqbb,'.',''))) = decode(pr_nrctremp, 0, to_number(
@@ -1686,49 +1658,24 @@ END pc_pagamento_prejuizo_web;
                                                                                    trim(replace(
                                                                                    lcm.cdpesqbb,'.','')))
                               AND lcm2.vllanmto = lcm.vllanmto
-           AND lcm2.dtmvtolt >= SYSDATE - 200)
+                              AND lcm2.dtmvtolt >= SYSDATE - 200)
            AND epr.cdcooper  = lcm.cdcooper
            AND epr.nrdconta  = lcm.nrdconta
            AND epr.nrctremp  = decode(pr_nrctremp, 0,epr.nrctremp,pr_nrctremp)
-           --AND epr.cdlcremp  <> 100 -- Não permitir visualizar contratos linha 100 
-           ORDER BY lcm.vllanmto;  
-                         
-/*        SELECT lcm.dtmvtolt
-              ,lcm.vllanmto
-              ,to_number(
-                       trim(replace(
-                       lcm.cdpesqbb,'.',''))) nrctremp
-
-          FROM craplcm lcm
-         WHERE lcm.cdcooper = pr_cdcooper
-           AND lcm.nrdconta = decode(pr_nrdconta, 0, lcm.nrdconta, pr_nrdconta)
-           AND lcm.cdhistor = 2386-- Pagamento
-           AND lcm.dtmvtolt = nvl(pr_dtpagto, lcm.dtmvtolt)
-           AND lcm.dtmvtolt >= SYSDATE - 100
-           AND to_number(
-                       trim(replace(
-                       lcm.cdpesqbb,'.',''))) = decode(pr_nrctremp, 0, to_number(
-                                                                       trim(replace(
-                                                                       lcm.cdpesqbb,'.',''))), 
-                                                                       pr_nrctremp)
-           order by lcm.vllanmto;*/
-
-     /*CURSOR C3 (pr_cdcooper crapepr.cdcooper%TYPE
-               -- ,pr_dtpagto  craplem.dtmvtolt%type 
-               ,pr_nrdconta crapepr.nrdconta%TYPE
-               ,pr_nrctremp crapepr.nrctremp%type) IS
-        SELECT lcm.vllanmto
-          FROM craplcm lcm
-         WHERE lcm.cdcooper = pr_cdcooper
-           AND lcm.nrdconta = decode(pr_nrdconta, 0, lcm.nrdconta, pr_nrdconta)
-           AND lcm.cdhistor = 2387 -- estorno de pagamento
-           AND to_number(
-                       trim(replace(
-                       lcm.cdpesqbb,'.',''))) = pr_nrctremp
-           AND lcm.dtmvtolt >= SYSDATE - 100
-           ORDER BY lcm.vllanmto
-          ;*/                                  
-                
+           --
+           UNION
+           --
+           SELECT lem.dtmvtolt dtmvtolt
+                 ,lem.vllanmto vllanmto
+                 ,lem.nrctremp nrctremp
+             FROM craplem lem
+            WHERE lem.cdcooper = pr_cdcooper
+              AND lem.nrdconta = decode(pr_nrdconta, 0, lem.nrdconta, pr_nrdconta)
+              AND lem.nrctremp = decode(pr_nrctremp, 0, lem.nrctremp, pr_nrctremp)
+              AND lem.dtmvtolt = nvl(pr_dtpagto, lem.dtmvtolt)
+              AND lem.cdhistor = 2701 -- pagamento
+              AND lem.dtestorn IS NULL        
+           ORDER BY vllanmto;  
       --
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
