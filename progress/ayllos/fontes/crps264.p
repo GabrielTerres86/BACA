@@ -2639,6 +2639,8 @@ PROCEDURE gera_arquivo_cecred:
                                                 
                           PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
                           
+                          IF   crapdev.indevarq <> 1 THEN
+                               NEXT.                          
                      END.
                 ELSE
                 IF   crapdev.indevarq <> 1 THEN
