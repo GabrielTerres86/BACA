@@ -56,6 +56,9 @@
  * 044: [13/12/2017] Passagem do idcobope e acionamento da GAROPC. (Jaison/Marcos Martini - PRJ404)
  * 045: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 046: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
+ * 047: [07/06/2018} P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti    
+ * 048: [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
+ * 047: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -757,7 +760,7 @@ function controlaLayout(operacao) {
 		var r_Linha1     = $('label[for="cdlcremp"]','#'+nomeForm );
 		var rCet     	 = $('label[for="percetop"]','#'+nomeForm );
 		var rDiasUteis   = $('#duteis','#'+nomeForm );
-		var r_Linha2     = $('label[for="nivcalcu"],label[for="flgimpnp"],label[for="dtdpagto"],label[for="vlpreemp"]','#'+nomeForm );
+		var r_Linha2     = $('label[for="nivcalcu"],label[for="flgimpnp"],label[for="idfiniof"],label[for="vlpreemp"]','#'+nomeForm );
 		var cCodigo		 = $('#cdfinemp,#idquapro,#idquaprc,#cdlcremp','#'+nomeForm);
 		var cDescricao   = $('#dsfinemp,#dsquapro,#dsquaprc,#dslcremp','#'+nomeForm);
 
@@ -780,6 +783,7 @@ function controlaLayout(operacao) {
 		var rLiberar 	 = $('label[for="qtdialib"]','#'+nomeForm);
 
 		var rDtPgmento   = $('label[for="dtdpagto"]','#'+nomeForm);
+        var rIdFinIof   = $('label[for="idfiniof"]','#'+nomeForm);
 		var rProposta    = $('label[for="flgimppr"]','#'+nomeForm);
 		var rNtPromis    = $('label[for="flgimpnp"]','#'+nomeForm);
 		var rLiquidacoes = $('label[for="dsctrliq"]','#'+nomeForm);
@@ -806,6 +810,7 @@ function controlaLayout(operacao) {
 		var cLiberar 	 = $('#qtdialib','#'+nomeForm);
 		var cDtlibera    = $('#dtlibera','#'+nomeForm);
 		var cDtPgmento   = $('#dtdpagto','#'+nomeForm);
+        var cIdFinIof   = $('#idfiniof','#'+nomeForm);
 		var cProposta    = $('#flgimppr','#'+nomeForm);
 		var cNtPromis    = $('#flgimpnp','#'+nomeForm);
 		var cLiquidacoes = $('#dsctrliq','#'+nomeForm);
@@ -856,7 +861,8 @@ function controlaLayout(operacao) {
 		rQualiParc.addClass('').css('width','95px');
         rQualiParcC.addClass('').css('width', '263px');
 		rPercCET.addClass('').css('width','193px');
-		rDtPgmento.addClass('rotulo').css('width','321px');
+        rIdFinIof.addClass('rotulo').css('width','120px');
+		rDtPgmento.addClass('rotulo-linha').css('width','148px');
 		rNtPromis.addClass('rotulo-linha').css('width', '132px');
 		rDiasUteis.addClass('rotulo-linha');
         rIdcarenc.addClass('rotulo').css('width', '75px');
@@ -1864,6 +1870,45 @@ function controlaLayout(operacao) {
 			controlaOperacao('');
 		});		
 		
+	} else if (in_array(operacao, ['C_DEMONSTRATIVO_EMPRESTIMO'])){
+		 nomeForm = 'frmDemonstracaoEmprestimo';
+		 largura = '345px';
+		 altura = '205px';
+
+		 var rVlemprst = $('label[for="vlemprst"]', '#' + nomeForm);
+		 var rVliofepr = $('label[for="vliofepr"]', '#' + nomeForm);
+		 var rVlrtarif = $('label[for="vlrtarif"]', '#' + nomeForm);
+		 var rVlrtotal = $('label[for="vlrtotal"]', '#' + nomeForm);
+		 var rVlpreemp = $('label[for="vlpreemp"]', '#' + nomeForm);
+		 var rPercetop = $('label[for="percetop"]', '#' + nomeForm);
+
+		 var cVlemprst = $('#vlemprst', '#' + nomeForm);
+		 var cVliofepr = $('#vliofepr', '#' + nomeForm);
+		 var cVlrtarif = $('#vlrtarif', '#' + nomeForm);
+		 var cVlrtotal = $('#vlrtotal', '#' + nomeForm);
+		 var cVlpreemp = $('#vlpreemp', '#' + nomeForm);
+		 var cPercetop = $('#percetop', '#' + nomeForm);
+
+		 rVlemprst.addClass('rotulo').css('width', '100px');
+		 rVliofepr.addClass('rotulo').css('width', '100px');
+		 rVlrtarif.addClass('rotulo').css('width', '100px');
+		 rVlrtotal.addClass('rotulo').css('width', '100px');
+		 rVlpreemp.addClass('rotulo').css('width', '100px');
+		 rPercetop.addClass('rotulo').css('width', '100px');
+
+		 cVlemprst.addClass('moeda');
+		 cVliofepr.addClass('moeda');
+		 cVlrtarif.addClass('moeda');
+		 cVlrtotal.addClass('moeda');
+		 cVlpreemp.addClass('moeda');
+		 cPercetop.addClass('moeda');
+
+		 cVlemprst.desabilitaCampo();
+		 cVliofepr.desabilitaCampo();
+		 cVlrtarif.desabilitaCampo();
+		 cVlrtotal.desabilitaCampo();
+		 cVlpreemp.desabilitaCampo();
+		 cPercetop.desabilitaCampo();
 	}
 
 	divRotina.css('width',largura);
@@ -2011,6 +2056,7 @@ function atualizaTela(){
 		$('#percetop','#frmNovaProp').val( arrayProposta['percetop'] );
 		$('#qtdialib','#frmNovaProp').val( arrayProposta['qtdialib'] );
 		$('#dtdpagto','#frmNovaProp').val( arrayProposta['dtdpagto'] );
+        $('#idfiniof','#frmNovaProp').val( arrayProposta['idfiniof'] );
 		$('#flgimppr','#frmNovaProp').val( arrayProposta['flgimppr'] );
 		$('#flgimpnp','#frmNovaProp').val( arrayProposta['flgimpnp'] );
 		$('#dsctrliq','#frmNovaProp').val( arrayProposta['dsctrliq'] );
@@ -2201,6 +2247,13 @@ function atualizaTela(){
 
 		contHipotecas++;
 
+	} else if (in_array(operacao, ['C_DEMONSTRATIVO_EMPRESTIMO'])) {
+			$('#vlemprst', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlemprst']);
+			$('#vliofepr', '#frmDemonstracaoEmprestimo').val(arrayProposta['vliofepr']);
+			$('#vlrtarif', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlrtarif']);
+			$('#vlrtotal', '#frmDemonstracaoEmprestimo').val(arrayRegistros['vlemprst']);
+			$('#percetop', '#frmDemonstracaoEmprestimo').val(arrayProposta['percetop']);
+			$('#vlpreemp', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlpreemp']);
 	}
 
 	return false;
@@ -2894,6 +2947,8 @@ function mostraDivImpressao( operacao ) {
         url: UrlSite + 'telas/atenda/prestacoes/cooperativa/impressao.php',
         data: {
             operacao: operacao,
+            nrdconta: nrdconta,
+            nrctremp: nrctremp,
             flgimppr: flgimppr,
             flgimpnp: flgimpnp,
             cdorigem: cdorigem,
@@ -2924,7 +2979,7 @@ function verificaImpressao(par_idimpres){
     
 	idimpres = par_idimpres;
 
-	if ( idimpres >= 1 && idimpres <= 11 ) {
+	if ( idimpres >= 1 && idimpres <= 57 ) {
 	
 		if ( idimpres == 5 ) {
 
@@ -2954,7 +3009,7 @@ function verificaImpressao(par_idimpres){
 			fechaRotina($('#divUsoGenerico'),metodo);
 		}
 		else
-		if (in_array(idimpres, [7, 8, 9, 11])) { //pre-aprovado
+		if (in_array(idimpres, [7, 8, 9, 11, 57])) { //pre-aprovado
 			carregarImpresso();		
 		}
 		else {
@@ -3064,6 +3119,7 @@ function mostraEmail() {
 
 // Função para envio de formulário de impressao
 function carregarImpresso(){
+	var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmCabAtenda").val());
 
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
 
@@ -3073,6 +3129,7 @@ function carregarImpresso(){
 	$('#nrdrecid','#formEmpres').remove();
 	$('#nrdconta','#formEmpres').remove();
 	$('#sidlogin','#formEmpres').remove();
+	$('#nrcpfcgc','#formEmpres').remove();
 
 	// Insiro input do tipo hidden do formulário para enviá-los posteriormente
 	$('#formEmpres').append('<input type="hidden" id="idimpres" name="idimpres" />');
@@ -3082,6 +3139,7 @@ function carregarImpresso(){
 	$('#formEmpres').append('<input type="hidden" id="nrdconta" name="nrdconta" />');
 	$('#formEmpres').append('<input type="hidden" id="nrctremp" name="nrctremp" />');
 	$('#formEmpres').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
+	$('#formEmpres').append('<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" />');
 
 	// Agora insiro os devidos valores nos inputs criados
 	$('#idimpres','#formEmpres').val( idimpres );
@@ -3091,6 +3149,7 @@ function carregarImpresso(){
 	$('#nrdconta','#formEmpres').val( nrdconta );
 	$('#nrctremp','#formEmpres').val( nrctremp );
 	$('#sidlogin','#formEmpres').val( $('#sidlogin','#frmMenu').val() );
+	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
     
 	var action = UrlSite + 'telas/atenda/prestacoes/cooperativa/imprimir_dados.php';
 
@@ -3337,17 +3396,15 @@ function verificaDesconto(campo , flgantec , parcela) {
 
 }
 
-function verificaDescontoPos(campo , insitpar , parcela , vencto) {
+function verificaDescontoPos(campo , insitpar , parcela) {
 
 	var vlpagan = $("#vlpagan_" + parcela,"#divTabela");
 
 	if (isHabilitado(campo) && retiraMascara(vlpagan.val()) != retiraMascara(campo.val()) && insitpar == 3) { // 3 - A Vencer
         nrparepr_pos = parcela;
         vlpagpar_pos = converteMoedaFloat(campo.val());
-        dtvencto = vencto;
         controlaOperacao("C_DESCONTO_POS");
 	}
-
 	vlpagan.val(campo.val());
 
 }
