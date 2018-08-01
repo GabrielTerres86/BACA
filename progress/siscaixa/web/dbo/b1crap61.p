@@ -56,6 +56,9 @@
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+			   04/05/2018 - Possibilidade de utilizar o caixa on-line mesmo com o processo 
+                            batch (noturno) executando (Fabio Adriano - AMcom)
+
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -208,7 +211,7 @@ PROCEDURE busca_envelopes_deposito:
             IF  par_tpdeposi = 1  THEN
                 ASSIGN tt-depositos-env.vlcomput = DECI(crapmdw.lsdigctr)
                        tt-depositos-env.dssituac = crapmdw.dsdocmc7.
-            ELSE
+           ELSE
                ASSIGN tt-depositos-env.vlcomput = crapenl.vlchqcmp 
                       tt-depositos-env.dssituac = IF  crapenl.cdsitenv = 0  THEN
                                                        "A confirmar"
@@ -886,7 +889,7 @@ PROCEDURE deposita_envelope_dinheiro:
           DO: 
              /** Executa processo normal de Deposito Envelope Dinheiro **/
              FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                                      craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                                      craplot.dtmvtolt = crapdat.dtmvtocd  AND
                                       craplot.cdagenci = p-cod-agencia     AND
                                       craplot.cdbccxlt = 11                AND /* Fixo */
                                       craplot.nrdolote = i-nro-lote 
@@ -897,7 +900,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    CREATE craplot.
        
                    ASSIGN craplot.cdcooper = crapcop.cdcooper
-                          craplot.dtmvtolt = crapdat.dtmvtolt
+                          craplot.dtmvtolt = crapdat.dtmvtocd
                           craplot.cdagenci = p-cod-agencia
                           craplot.cdbccxlt = 11
                           craplot.nrdolote = i-nro-lote
@@ -977,7 +980,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    /*--- Verifica se Lancamento ja Existe ---*/
                    FIND FIRST craplcm WHERE
                               craplcm.cdcooper = crapcop.cdcooper    AND
-                              craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                              craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                               craplcm.cdagenci = p-cod-agencia       AND
                               craplcm.cdbccxlt = 11                  AND
                               craplcm.nrdolote = i-nro-lote          AND
@@ -995,7 +998,7 @@ PROCEDURE deposita_envelope_dinheiro:
                 
                    FIND FIRST craplcm WHERE 
                               craplcm.cdcooper = crapcop.cdcooper    AND
-                              craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                              craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                               craplcm.cdagenci = p-cod-agencia       AND
                               craplcm.cdbccxlt = 11                  AND
                               craplcm.nrdolote = i-nro-lote          AND
@@ -1016,7 +1019,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    CREATE craplcm.
        
                    ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                          craplcm.dtmvtolt = crapdat.dtmvtolt
+                          craplcm.dtmvtolt = crapdat.dtmvtocd
                           craplcm.cdagenci = p-cod-agencia
                           craplcm.cdbccxlt = 11
                           craplcm.dsidenti = p-identifica
@@ -1080,7 +1083,7 @@ PROCEDURE deposita_envelope_dinheiro:
                     c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                                     TRIM(crapcop.nmextcop)
                     c-literal[2]  = " "
-                    c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
+                    c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
                                     STRING(TIME,"HH:MM:SS") +  " PAC " +
                                     STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                                     STRING(p-nro-caixa,"Z99") + "/" +
