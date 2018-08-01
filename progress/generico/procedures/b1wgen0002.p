@@ -8322,10 +8322,13 @@ PROCEDURE altera-valor-proposta:
                            IF par_dsdopcao = "SVP" THEN
            DO:
               /** M438 - Nova regra  para determinar perda de aprovaçao com a 
-                         alteraçao de valor da proposta
+                         alteraçao de valor da proposta quando aprovada e ter 
+                         valores nos campos originais, regra nova senao
+                         regra antiga
               **/
               IF crawepr.vlempori > 0 AND
-                 crawepr.vlpreori > 0 THEN
+                 crawepr.vlpreori > 0 AND
+                 crawepr.insitapr = 1 THEN
               DO:
               
               ASSIGN aux_idpeapro = 0.
@@ -8378,7 +8381,7 @@ PROCEDURE altera-valor-proposta:
                 /*Salvar operador da alteraçao*/
                 ASSIGN crawepr.cdopealt = par_cdoperad.
                 
-                IF NOT aux_contigen AND crawepr.hrenvest > 0 THEN  
+                IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
                 DO:
                   ASSIGN aux_interrup = true. /* Interromper na Esteira*/
                 END.

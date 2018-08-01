@@ -135,7 +135,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                c.cdcooper = pr_cdcooper
            AND c.nrdconta = pr_nrdconta
            AND c.nrctremp = pr_nrctremp
-           AND c.insitest > 0;
+           AND c.insitest > 0
+           AND c.insitapr = 1;
         
       -- Variaveis tratamento de erros
       vr_cdcritic             crapcri.cdcritic%TYPE;
