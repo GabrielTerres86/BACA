@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 27/02/2018
+    Data    : Maio/2010                   Ultima atualizacao: 30/07/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -118,6 +118,9 @@
                              
 			  05/07/2018 - Ajuste realizado para validar a atualização da unificação cadastral
 						   na camada do progress (INC0018113).
+						   
+	          30/07/2018 - Feito a inversao das chamadas da procedures pc_revalida_nome_cad_unc e pc_revalida_cnpj_cad_unc. (Kelvin)
+							
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1101,31 +1104,6 @@ PROCEDURE Grava_Dados:
         IF aux_cdcritic <> 0 THEN
             UNDO Grava, LEAVE Grava.
         
-        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-		
-		RUN STORED-PROCEDURE pc_revalida_nome_cad_unc
-			aux_handproc = PROC-HANDLE NO-ERROR
-									(INPUT par_nrcpfemp,
-									 INPUT par_nmextemp,
-									 OUTPUT "",
-									 OUTPUT 0,           /* Código da crítica */
-									 OUTPUT "").         /* Descrição da crítica */
-		
-		CLOSE STORED-PROC pc_revalida_nome_cad_unc
-			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-	
-		{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-		
-		ASSIGN aux_cdcritic = 0
-			   aux_dscritic = ""
-			   aux_nmpesout = ""
-			   aux_cdcritic = pc_revalida_nome_cad_unc.pr_cdcritic WHEN pc_revalida_nome_cad_unc.pr_cdcritic <> ?
-			   aux_dscritic = pc_revalida_nome_cad_unc.pr_dscritic WHEN pc_revalida_nome_cad_unc.pr_dscritic <> ?
-			   aux_nmpesout = pc_revalida_nome_cad_unc.pr_nmpesout WHEN pc_revalida_nome_cad_unc.pr_nmpesout <> ?.
-	    
-		IF aux_cdcritic <> 0 THEN
-            UNDO Grava, LEAVE Grava.           
-		
 		{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 		
 		RUN STORED-PROCEDURE pc_revalida_cnpj_cad_unc
@@ -1150,7 +1128,32 @@ PROCEDURE Grava_Dados:
 			   aux_nrcnpjot = pc_revalida_cnpj_cad_unc.pr_nrcnpjot WHEN pc_revalida_cnpj_cad_unc.pr_nrcnpjot <> ?.
 		
 		IF aux_cdcritic <> 0 THEN
-            UNDO Grava, LEAVE Grava.   
+            UNDO Grava, LEAVE Grava.
+		
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+		
+		RUN STORED-PROCEDURE pc_revalida_nome_cad_unc
+			aux_handproc = PROC-HANDLE NO-ERROR
+									(INPUT par_nrcpfemp,
+									 INPUT par_nmextemp,
+									 OUTPUT "",
+									 OUTPUT 0,           /* Código da crítica */
+									 OUTPUT "").         /* Descrição da crítica */
+		
+		CLOSE STORED-PROC pc_revalida_nome_cad_unc
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+	
+		{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+		
+		ASSIGN aux_cdcritic = 0
+			   aux_dscritic = ""
+			   aux_nmpesout = ""
+			   aux_cdcritic = pc_revalida_nome_cad_unc.pr_cdcritic WHEN pc_revalida_nome_cad_unc.pr_cdcritic <> ?
+			   aux_dscritic = pc_revalida_nome_cad_unc.pr_dscritic WHEN pc_revalida_nome_cad_unc.pr_dscritic <> ?
+			   aux_nmpesout = pc_revalida_nome_cad_unc.pr_nmpesout WHEN pc_revalida_nome_cad_unc.pr_nmpesout <> ?.
+	    
+		IF aux_cdcritic <> 0 THEN
+            UNDO Grava, LEAVE Grava.           
 		
         ASSIGN 
             aux_cdempres        = crapttl.cdempres
