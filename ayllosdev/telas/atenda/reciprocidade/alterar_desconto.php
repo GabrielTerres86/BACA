@@ -38,11 +38,11 @@ $qtdfloat            = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : nul
 $vlaplicacoes        = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : null );
 $dtfimcontrato       = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
 $flgdebito_reversao  = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
-$vldesconto_coo     = ( (!empty($_POST['vldesconto_coo'])) ? $_POST['vldesconto_coo'] : null );
-$dtfimadicional_coo = ( (!empty($_POST['dtfimadicional_coo'])) ? $_POST['dtfimadicional_coo'] : null );
-$vldesconto_cee     = ( (!empty($_POST['vldesconto_cee'])) ? $_POST['vldesconto_cee'] : null );
-$dtfimadicional_cee = ( (!empty($_POST['dtfimadicional_cee'])) ? $_POST['dtfimadicional_cee'] : null );
-$txtjustificativa = ( (!empty($_POST['txtjustificativa'])) ? $_POST['txtjustificativa'] : null );
+$vldesconto_coo      = ( (!empty($_POST['vldesconto_coo'])) ? floatval($_POST['vldesconto_coo']) : 0 );
+$dtfimadicional_coo  = ( (!empty($_POST['dtfimadicional_coo'])) ? $_POST['dtfimadicional_coo'] : null );
+$vldesconto_cee      = ( (!empty($_POST['vldesconto_cee'])) ? floatval($_POST['vldesconto_cee']) : 0 );
+$dtfimadicional_cee  = ( (!empty($_POST['dtfimadicional_cee'])) ? $_POST['dtfimadicional_cee'] : null );
+$txtjustificativa    = ( (!empty($_POST['txtjustificativa'])) ? $_POST['txtjustificativa'] : null );
 
 $arrConvenios = array();
 if (count($convenios)) {
