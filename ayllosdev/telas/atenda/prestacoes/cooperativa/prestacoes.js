@@ -59,6 +59,7 @@
  * 047: [07/06/2018} P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti    
  * 048: [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
  * 047: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
+ * 049: [01/08/2018] Ajuste para apresentar valores negativos na tela de prejuizo - INC0019253. (Andre Bohn - MoutS)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -674,7 +675,7 @@ function controlaLayout(operacao) {
 		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vliofcpl','#'+nomeForm);
 
 
-		cTodosMoeda.addClass('moeda');
+		cTodosMoeda.addClass('monetario');
 		cTodos.addClass('campo').css('width','123px');
 
 		rRotulos.addClass('rotulo').css('width','95px');
