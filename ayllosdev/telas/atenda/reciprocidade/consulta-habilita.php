@@ -320,12 +320,13 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
 					</select >
                     <label for="dsdemail"><? echo utf8ToHtml('E-mail Arquivo Retorno:'); ?></label>
                     <select name="dsdemail" id="dsdemail" class="<?php echo $campo; ?>">
-                        <option value="0">SELECIONE O E-MAIL</option>
+                        <option value="0" <?php if ($cddemail == 0) { ?> selected <?php } ?>>SELECIONE O E-MAIL</option>
                         <?php   
                         $emails = explode("|",$emails_titular);
                         foreach ($emails as $email) {
                            $email = explode(",",$email);
-                           echo "<option value='$email[0]'>$email[1]</option>";
+                           $selected = ($cddemail == $email[0]) ? 'selected' : '';
+                           echo "<option value='$email[0]' $selected>$email[1]</option>";
                         }
                         ?>
                     </select>		

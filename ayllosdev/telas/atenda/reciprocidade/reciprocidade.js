@@ -306,8 +306,8 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
 
         $('<td>' + nrconven + ' - ' + tipo + '</td>').appendTo(tr);
         $('<td>' +
-            '<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(' + nrconven + '); return false;"><img src="' + $('#imgEditar').val() + '" style="margin-right:5px;width:12px" /></a>' +
-			'<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(' + nrconven + '); return false;"><img src="' + $('#imgExcluir').val() + '" border="0"/></a>' +
+            '<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(' + nrconven + '); return false;"><img src="' + $('#imgEditar').val() + '" style="margin-right:5px;width:14px;margin-top:1px" /></a>' +
+			'<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(' + nrconven + '); return false;"><img src="' + $('#imgExcluir').val() + '" style="width:15px;margin-top:1px" border="0"/></a>' +
         '</td>').appendTo(tr);
     }
 
