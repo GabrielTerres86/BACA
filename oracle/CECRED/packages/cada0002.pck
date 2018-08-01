@@ -202,7 +202,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0002
@@ -4224,7 +4224,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
      Objetivo  : Rotina chamada por job para bloquiar os operadores na tabela crapope que nao 
                  constam na tabela tbcadast_colaborador
 
-     Alteracoes:                 
+     Alteracoes: 01/08/2018 - Ajuste realizado para que o log de inativacao apenas
+                             seja criado quando realmente um operador for inativado.
+                             (INC0018900 - Kelvin)                
     ..............................................................................*/ 
     CURSOR cr_crapope IS        
       SELECT cdoperad
@@ -4274,58 +4276,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         FETCH cr_tbcadast_colaborador
           INTO rw_tbcadast_colaborador;
 
-        --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
-        IF cr_tbcadast_colaborador%NOTFOUND THEN 
-          CLOSE cr_tbcadast_colaborador;         
+      --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
+      IF cr_tbcadast_colaborador%NOTFOUND THEN 
+        CLOSE cr_tbcadast_colaborador;         
 
-          /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
-          em outras cooperativas*/          
-          OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
-            FETCH cr_valida_cecred
-              INTO rw_valida_cecred;
+        /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
+        em outras cooperativas*/          
+        OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
+          FETCH cr_valida_cecred
+            INTO rw_valida_cecred;
 
-          --Nao e CECRED ou está inativo
-          IF cr_valida_cecred%NOTFOUND THEN
-            CLOSE cr_valida_cecred;                       
-            --Inativa operador
-            BEGIN 
-              UPDATE crapope ope
-                 SET ope.cdsitope = 2
-               WHERE ope.cdcooper = rw_crapope.cdcooper
-                 AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
-            EXCEPTION
-              WHEN OTHERS THEN
-                RAISE vr_exc_error;
-            END;
-          --E CECRED
-          ELSE
-            CLOSE cr_valida_cecred;  
-            --Inativa operador
-            BEGIN 
-              UPDATE crapope ope
-                 SET ope.cdsitope = 1
-               WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
-            EXCEPTION
-              WHEN OTHERS THEN
-                RAISE vr_exc_error;
-            END;
-    END IF;
-
-          -- Log de sucesso.
-          CECRED.pc_log_programa(pr_dstiplog => 'O'
-                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
-                               , pr_cdcooper => rw_crapope.cdcooper
-                               , pr_tpexecucao => 0
-                               , pr_tpocorrencia => 4 
-                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
-                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
-                               , pr_idprglog => vr_idprglog);                      
-
-
+        --Nao e CECRED ou está inativo
+        IF cr_valida_cecred%NOTFOUND THEN
+          CLOSE cr_valida_cecred;                       
+          --Inativa operador
+          BEGIN 
+            UPDATE crapope ope
+               SET ope.cdsitope = 2
+             WHERE ope.cdcooper = rw_crapope.cdcooper
+               AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+               
+               -- Log de sucesso.
+               CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                    , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                                    , pr_cdcooper => rw_crapope.cdcooper
+                                    , pr_tpexecucao => 0
+                                    , pr_tpocorrencia => 4 
+                                    , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                       ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                       rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                                    , pr_idprglog => vr_idprglog);            
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+        --E CECRED
         ELSE
-          CLOSE cr_tbcadast_colaborador;
-    END IF;
+          CLOSE cr_valida_cecred;  
+          --Ativa operador
+          BEGIN 
+            UPDATE crapope ope
+               SET ope.cdsitope = 1
+             WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+        END IF;
+
+      ELSE
+        CLOSE cr_tbcadast_colaborador;
+      END IF;
         
                 
 				
@@ -4335,7 +4336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                          , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
                          , pr_idprglog => vr_idprglog);
         
-        COMMIT;
+    COMMIT;
 
   EXCEPTION
     WHEN vr_exc_error THEN
