@@ -13,7 +13,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 02/07/2018
+ Data    : Janeiro/92.                         Ultima atualizacao: 01/08/2018
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -168,6 +168,8 @@ BEGIN
           06/02/2018 - #842836 Inclusão do hint FULL no cursor cr_craplem para melhoria de performance (Carlos)
           
           02/07/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+
+		  01/08/2018 - Remoção de Hint com problema de lentididão - Andreatta (MOUTs)
           
    ............................................................................. */
    DECLARE
@@ -925,8 +927,7 @@ BEGIN
      CURSOR cr_craptdb (pr_cdcooper IN crapcob.cdcooper%TYPE
                        ,pr_dtpagto  IN craptdb.dtdpagto%TYPE
                        ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
-       SELECT /*+ INDEX (craptdb craptdb##craptdb2) */
-              craptdb.cdbandoc
+       SELECT craptdb.cdbandoc
              ,craptdb.nrdctabb
              ,craptdb.nrcnvcob
              ,craptdb.nrdconta
