@@ -1297,6 +1297,7 @@ END pc_incluir_bordero_esteira;
           ,tdb.nrdocmto --número do boleto
           ,tdb.nrdctabb
           ,tdb.nrcnvcob --convenio
+          ,tdb.cdbandoc --banco
           ,sab.nmdsacad -- nome do pagador
           ,sab.cdtpinsc -- Codigo do tipo da inscricao do sacado(0-nenhum/1-CPF/2-CNPJ)
           ,tdb.nrinssac -- cpf cnpj
@@ -1336,7 +1337,7 @@ END pc_incluir_bordero_esteira;
   rw_craptdb cr_craptdb%ROWTYPE; 
 
   -- Buscar Críticas dos Títulos.
-  CURSOR cr_crapabt (pr_cdcooper IN crapabt.cdcooper%TYPE
+  /*CURSOR cr_crapabt (pr_cdcooper IN crapabt.cdcooper%TYPE
                     ,pr_nrdconta IN crapabt.nrdconta%TYPE
                     ,pr_nrborder IN crapabt.nrborder%TYPE
                     ,pr_nrdocmto IN crapabt.nrdocmto%TYPE) IS
@@ -1352,8 +1353,8 @@ END pc_incluir_bordero_esteira;
        AND abt.nrdconta = pr_nrdconta
        AND abt.nrborder = pr_nrborder
        AND abt.nrdocmto = pr_nrdocmto
-     ORDER BY abt.progress_recid;
-  rw_crapabt cr_crapabt%rowtype;
+     ORDER BY abt.progress_recid;*/
+  rw_crapabt dsct0003.cr_crapabt%ROWTYPE;
   
   --> Totais do Borderos Com Análise Aprovada e Não efetivados
   CURSOR cr_border_nefet (pr_cdcooper IN crapabt.cdcooper%TYPE
@@ -1672,16 +1673,26 @@ END pc_incluir_bordero_esteira;
              vr_obj_bordero.put('cPCCNPJpagador' , lpad(rw_craptdb.nrinssac,14,'0'));
          end if;
          
-                           
          rw_crapabt := null;
          -- Popular o Objeto de Lista JSON com os dados de críticas dos títulos.         
-         for rw_crapabt IN cr_crapabt(pr_cdcooper => rw_craptdb.cdcooper
+         for rw_crapabt IN dsct0003.cr_crapabt(pr_cdcooper => rw_craptdb.cdcooper
                                      ,pr_nrdconta => rw_craptdb.nrdconta
                                      ,pr_nrborder => rw_craptdb.nrborder
+                                     ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                     ,pr_nrdctabb => rw_craptdb.nrdctabb
                                      ,pr_nrdocmto => rw_craptdb.nrdocmto) loop
                                      
-           vr_obj_crit_tit.put('codigo', rw_crapabt.cdchavecri);
-           vr_obj_crit_tit.put('descricao', rw_crapabt.dsrestri);
+           vr_obj_crit_tit.put('codigo', rw_crapabt.cdcritica);
+           vr_obj_crit_tit.put('descricao', rw_crapabt.dscritica);
+           vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
+         end loop;     
+         rw_crapabt := null;               
+         -- Popular o Objeto de Lista JSON com os dados de críticas do bordero e do cedente.         
+         for rw_crapabt IN dsct0003.cr_crapabt(pr_cdcooper => rw_craptdb.cdcooper
+                                     ,pr_nrdconta => rw_craptdb.nrdconta
+                                     ,pr_nrborder => rw_craptdb.nrborder) LOOP
+           vr_obj_crit_tit.put('codigo', rw_crapabt.cdcritica);
+           vr_obj_crit_tit.put('descricao', rw_crapabt.dscritica);
            vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
          end loop;
          vr_obj_titulos.put('criticas',vr_lst_crit_tit.to_json_value());
