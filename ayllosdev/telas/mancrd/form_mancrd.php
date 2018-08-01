@@ -6,6 +6,8 @@
    OBJETIVO     : Tela de exibicao detalhamento de cartoes
    --------------
    ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+				 
+				  25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
  */		
  
 session_start();
@@ -27,6 +29,7 @@ $listadm = (isset($_POST['listadm'])) ? $_POST['listadm'] : "";
 $insitcrd = (isset($_POST['insitcrd'])) ? $_POST['insitcrd'] : 0;
 $dtsol2vi = (isset($_POST['dtsol2vi'])) ? $_POST['dtsol2vi'] : "";
 $flgprcrd = (isset($_POST['flgprcrd'])) ? $_POST['flgprcrd'] : 0;
+$insitdec = (isset($_POST['insitdec'])) ? $_POST['insitdec'] : 0;
 $flgdebit = (isset($_POST['flgdebit'])) ? $_POST['flgdebit'] : 0;
 $nrctrcrd = (isset($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0;
 $inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : 0;
@@ -78,6 +81,17 @@ $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 		<input type="checkbox" name="flgdebit" style="margin-top:7px !important" <?php if ($flgdebit == 1) { echo "checked "; } ?> />		
 		<label for="flgprcrd">Titular:</label>
 		<input type="checkbox" name="flgprcrd" style="margin-top:7px !important" <?php if ($flgprcrd == 1) { echo "checked "; } ?> />		
+		<label for="insitdec">Sit. Decisao:</label>	
+		<select name="" id="insitdec" class="campo">										
+			<option value='1' <? if($insitdec == 1){echo " selected";} ?>>SEM APROVACAO</option>
+			<option value='2' <? if($insitdec == 2){echo " selected";} ?>>APROVADA AUTO</option>
+			<option value='3' <? if($insitdec == 3){echo " selected";} ?>>APROVADA MANUAL</option>
+			<option value='4' <? if($insitdec == 4){echo " selected";} ?>>ERRO</option>
+			<option value='5' <? if($insitdec == 5){echo " selected";} ?>>REJEITADA</option>
+			<option value='6' <? if($insitdec == 6){echo " selected";} ?>>REFAZER</option>
+			<option value='7' <? if($insitdec == 7){echo " selected";} ?>>EXPIRADA</option>
+			<option value='8' <? if($insitdec == 8){echo " selected";} ?>>EFETIVADA</option>
+		</select>		
 	</form>
 </div>
 <br/>	
