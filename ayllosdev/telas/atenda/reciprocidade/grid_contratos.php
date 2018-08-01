@@ -135,7 +135,7 @@ function exibeErro($msgErro) {
 					}
 					$mtdClick = "selecionaConvenio( '".$idrecipr."', '".$insitceb."', '".$convenios."');";
 				?>
-					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
+					<tr class="dbclick" id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>" ondblclick="acessaOpcaoDescontos('<?php echo ($insitceb == 1) ? 'A' : 'C';?>');">
 						
 						<td><? echo $conveniosHtml; ?></td>
 						<td><? echo $status; ?></td>

@@ -319,7 +319,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                         <option id="inenvcob" value="2" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 2) { ?> selected <?php } ?> > FTP </option>					   
 					</select >
                     <label for="dsdemail"><? echo utf8ToHtml('E-mail Arquivo Retorno:'); ?></label>
-                    <select name="dsdemail" id="dsdemail" class="<?php echo $campo; ?>">
+                    <select name="dsdemail" id="dsdemail" <?php echo ($inarqcbr == 0) ? 'disabled' : ''; ?> class="<?php echo ($inarqcbr == 0) ? 'campoTelaSemBorda' : $campo; ?>">
                         <option value="0" <?php if ($cddemail == 0) { ?> selected <?php } ?>>SELECIONE O E-MAIL</option>
                         <?php   
                         $emails = explode("|",$emails_titular);
@@ -566,6 +566,13 @@ $("#flprotes","#frmConsulta").unbind('click').bind('click', function(e) {
             return false;
         }
     }
+});
+
+$("#inarqcbr","#frmConsulta").unbind('change').bind('change', function(e) {
+   $("#dsdemail", "#frmConsulta").habilitaCampo();
+   if ($(this).val() == 0) {
+       $("#dsdemail", "#frmConsulta").desabilitaCampo();
+   }
 });
 
 $("#qtlimmip","#frmConsulta").unbind('blur').bind('blur', function(e) {

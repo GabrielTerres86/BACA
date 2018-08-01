@@ -247,6 +247,8 @@ function habilitaSetor(setorLogado) {
 function selecionaConvenio(idrecipr, insitceb, convenios) {
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
     $("#convenios", "#divConteudoOpcao").val(convenios);
+    $("#insitceb", "#divConteudoOpcao").val(insitceb);
+
     if (insitceb == '2') {
         $("#btnAlterarConvenio").hide();
     } else {
@@ -1732,7 +1734,7 @@ function atualizarConvenios(cddopcao) {
     var qtdecprz = $("#qtdecprz", "#divOpcaoConsulta").val();
     var inarqcbr = $("#inarqcbr", "#divOpcaoConsulta").val();
     var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
-    var dsdemail = $("#dsdemail", "#divOpcaoConsulta").val();
+    var cddemail = $("#dsdemail", "#divOpcaoConsulta").val();
     var divCnvHomol = $("#divCnvHomol", "#divOpcaoConsulta").val();
     var flgcebhm = $("#flgcebhm", "#divOpcaoConsulta").val();
 
@@ -1793,7 +1795,7 @@ function atualizarConvenios(cddopcao) {
         qtdecprz: qtdecprz,
         inarqcbr: inarqcbr,
         inenvcob: inenvcob,
-        dsdemail: dsdemail,
+        cddemail: cddemail,
         divCnvHomol: divCnvHomol,
         flgcebhm: flgcebhm
     };
