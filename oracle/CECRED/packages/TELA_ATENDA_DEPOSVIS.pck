@@ -86,7 +86,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para tela ATENDA - Depósitos à Vista
   --
-  -- Alterado:
+  -- Alterado  : 01/08/2018 - Ajustes pagamento Prejuízo
+  --                          PJ 450 - Diego Simas - AMcom
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -105,7 +106,7 @@ FUNCTION fn_soma_dias_uteis_data(pr_cdcooper NUMBER, pr_dtmvtolt DATE, pr_qtddia
         Objetivo  : Soma a quantidade de dias úteis (desconsiderando finais de semana e feriados)
                     à data de referência informada.
         Observacao: -----
-        Alteracoes:
+        Alteracoes: 
     ..............................................................................*/
 
   ----->>> CURSORES <<<-----
@@ -712,7 +713,7 @@ END pc_busca_saldos_devedores;
      Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
      Sigla   : EMPR
      Autor   : Marcel Kohls
-     Data    : Junho/2018.                    Ultima atualizacao:
+     Data    : Junho/2018.                    Ultima atualizacao: 01/08/2018
 
      Dados referentes ao programa:
 
@@ -720,7 +721,9 @@ END pc_busca_saldos_devedores;
 
      Objetivo  : Retorna XML com os valores do prejuizo da conta corrente
 
-     Alteracoes:
+     Alteracoes: 01/08/2018 - Ajustes pagamento Prejuízo
+                              PJ 450 - Diego Simas - AMcom     
+     
      ..............................................................................*/
   PROCEDURE pc_busca_vlrs_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
                                      ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -761,8 +764,7 @@ END pc_busca_saldos_devedores;
     FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
     
     IF cr_tbcc_prejuizo%FOUND THEN
-      vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej;
-      vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
+      vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej + rw_tbcc_prejuizo.vljuprej;
       vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
     END IF;
     
@@ -782,15 +784,6 @@ END pc_busca_saldos_devedores;
                           ,pr_posicao  => 0
                           ,pr_tag_nova => 'vlsdprej'
                           ,pr_tag_cont => to_char(vr_vlsdprej,
-                                                 '9G999G990D00',
-                                                 'nls_numeric_characters='',.''')
-                          ,pr_des_erro => vr_dscritic);
-
-    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                          ,pr_tag_pai  => 'Dados'
-                          ,pr_posicao  => 0
-                          ,pr_tag_nova => 'vlttjurs'
-                          ,pr_tag_cont => to_char(vr_vlttjurs,
                                                  '9G999G990D00',
                                                  'nls_numeric_characters='',.''')
                           ,pr_des_erro => vr_dscritic);
@@ -863,7 +856,7 @@ END pc_busca_saldos_devedores;
     -- PROCEDURE/FUNCAO -> RANGEL (AMcom)
     -- Fazer a chamada de pagamento do prejuizo
     -- Tratamento de erros
-      --vr_dscritic := 'erro teste de erro';
+     -- vr_dscritic := 'erro teste de erro';
       --RAISE vr_exc_erro;
     
     EXCEPTION             

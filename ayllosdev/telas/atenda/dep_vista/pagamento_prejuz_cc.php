@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 28/06/2018
  * OBJETIVO     : Tela para entrada de informacoes de pagamento de prejuizo de conta corrente.
 
-   ALTERACOES   :
+   ALTERACOES   : 01/08/2018 - Ajuste nos campos do pagamento do prejuízo da conta transitória
+			   		   		   PJ450 - Diego Simas - AMcom
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -30,6 +31,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	$dadosPrejuCC = $xmlObjeto->roottag->tags[0]->tags;
+
 ?>
 <table id="tdImp"cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
@@ -56,19 +58,15 @@
 										<form id="frmPagPrejCC" name="frmPagPrejCC" class="formulario">
 											<table width="100%">
 												<tr>
-													<td><label for="vlsdprej">&nbsp;&nbsp;<?php echo utf8ToHtml('Valor Principal:') ?></label></td>
-													<td><input type="text" id="vlsdprej" name="vlsdprej" value="<? echo getByTagName($dadosPrejuCC,'vlsdprej') ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
-												</tr>
+													<td><label for="vlsdprej">&nbsp;&nbsp;<?php echo utf8ToHtml('Saldo Devedor:') ?></label></td>
+													<td><input type="text" id="vlsdprej" name="vlsdprej" value="<? echo getByTagName($dadosPrejuCC,'vlsdprej'); ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
+												</tr>												
 												<tr>
-													<td><label for="vlttjurs">&nbsp;&nbsp;<?php echo utf8ToHtml('Juros:') ?></label></td>
-													<td><input type="text" id="vlttjurs" name="vlttjurs" value="<? echo getByTagName($dadosPrejuCC,'vlttjurs') ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
-												</tr>
-												<tr>
-													<td><label for="vltotiof">&nbsp;&nbsp;<?php echo utf8ToHtml('Valor IOF:') ?></label></td>
+													<td><label for="vltotiof">&nbsp;&nbsp;<?php echo utf8ToHtml('IOF:') ?></label></td>
 													<td><input type="text" id="vltotiof" name="vltotiof" value="<? echo getByTagName($dadosPrejuCC,'vltotiof') ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
 												</tr>
 												<tr>
-													<td><label for="vlpagto">&nbsp;&nbsp;<?php echo utf8ToHtml('Pagamento:') ?></label></td>
+													<td><label for="vlpagto">&nbsp;&nbsp;<?php echo utf8ToHtml('Valor:') ?></label></td>
 													<td><input type="text" id="vlpagto" name="vlpagto" value="" onkeyup="calcularSaldo()" class="moeda campo" /></td>
 												</tr>
 												<tr>
@@ -100,4 +98,5 @@
 <script type="text/javascript">
 	// Formata layout
 	formataPagamentoPrejuzCC();
+	calcularSaldo();
 </script>

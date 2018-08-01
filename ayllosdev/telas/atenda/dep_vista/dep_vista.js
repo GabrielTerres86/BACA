@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  �ltima Altera��o: 26/06/2018
+   Data : Fevereiro/2007                  �ltima Altera��o: 01/08/2018
 
    Objetivo  : Biblioteca de fun��es da rotina Dep. Vista da tela
                ATENDA
@@ -26,6 +26,8 @@
                12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
                26/06/2018 - Campos do pagamento do preju�zo(Conta Transit�ria)
                             P450 - Diego Simas - AMcom
+			   01/08/2018 - Ajuste nos campos do pagamento do prejuízo da conta transitória
+			   				PJ450 - Diego Simas - AMcom
 
  ***********************************************************************/
 
@@ -1244,15 +1246,21 @@ function retiraMascara(numero) {
 }
 
 function calcularSaldo() {
+	
 	var vlsdprej = retiraMascara($('#vlsdprej', '#frmPagPrejCC').val()) || 0;
-	var vlttjurs = retiraMascara($('#vlttjurs', '#frmPagPrejCC').val()) || 0;
 	var vltotiof = retiraMascara($('#vltotiof', '#frmPagPrejCC').val()) || 0;
 	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
 	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;
 
-	var vlsaldo = (vlsdprej + vlttjurs + vltotiof) - (vlpagto + vlabono);
+	var vlsaldo = (vlsdprej + vltotiof) - (vlpagto + vlabono);
+	
+	$('#vlsaldo', '#frmPagPrejCC').val(numberToReal(vlsaldo));
+}
 
-	$('#vlsaldo', '#frmPagPrejCC').val(vlsaldo.toFixed(2).replace(".", ","));
+function numberToReal(numero) {
+	var numero = numero.toFixed(2).split('.');
+	numero[0] = numero[0].split(/(?=(?:...)*$)/).join('.');
+	return numero.join(',');
 }
 
 function efetuaPagamentoPrejuizoCC() {
