@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
+    Data    : Agosto/2006                     Ultima Atualizacao: 24/07/2018
 
     Dados referentes ao programa:
 
@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 21/05/2018
+    Data    : Agosto/2006                     Ultima Atualizacao: 24/07/2018
 
     Dados referentes ao programa:
 
@@ -225,6 +225,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
                21/05/2018 - Alteração no tamanho da variavel de controle de anexos, de VARCHAR2 500 para 4000 
                              Belli (Envolti) - Chamado REQ0014900
+                             
+               24/07/2018 - Tratar estouro do limite de caracteres do conteúdo de e-mail.
+                             Belli (Envolti) - Chamado REQ0021124
 
 ..............................................................................*/
 
@@ -1198,7 +1201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     BEGIN
       -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email');
-
+      
       -- Chamar rotina para separar da lista enviada todos os destinatarios para o vetor
       pc_separa_lista(pr_des_orige => pr_des_destino
                      ,pr_tab_lista => vr_tab_lista);
@@ -1289,7 +1292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 24/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1310,6 +1313,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --                          - Pc_set_modulo, cecred.pc_internal_exception
     --                          - Tratamento erros others
     --                            Chamado 788828 - Ana Volles (Envolti)
+    --                         
+    --               24/07/2018 - Tratar estouro do limite de caracteres do conteúdo de e-mail
+    --                            Belli (Envolti) - Chamado REQ0021124
     -- .............................................................................
     DECLARE
       -- Guardar a lista de anexos e de destinatários
@@ -1329,6 +1335,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_cdcritic integer;
       
       vr_idprglog  tbgen_prglog.idprglog%type;
+      --                         
+      -- Variaveis para tratar estouro do limite de caracteres do conteúdo de e-mail. 24/07/2018 - Chm REQ0021124.      
+      vr_dscorpo          VARCHAR2(4000);
+      vr_qtmaxcon         NUMBER     (4) := 3660;
+      --
     BEGIN
       -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 1');
@@ -1344,6 +1355,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
         RAISE vr_exc_erro;
       END IF;
+      
+      -- Regra para Tratar estouro do limite de caracteres do conteúdo de e-mail. 24/07/2018 - Chm REQ0021124. 
+      -- Calculo dos 4000 caracteres: Ultima linha padrão com 195 caracteres, a mensagem 
+      -- do trunque com 125 caracteres e o conteudo com 3660 caracteres e sobrou 20 caracteres de segurança
+      IF LENGTH(pr_des_corpo) > vr_qtmaxcon THEN
+        vr_dscorpo := SUBSTR(pr_des_corpo,1,vr_qtmaxcon) || '<br><br>' || 
+                      'O conteúdo do e-mail foi truncado pelo motivo de exceder o tamanho limite de '||
+                      vr_qtmaxcon || ', favor acionar o Help Desk(AILOS).';
+        cecred.pc_log_programa(pr_dstiplog      => 'E'
+                              ,pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL' 
+                              ,pr_cdcooper      => pr_cdcooper 
+                              ,pr_tpexecucao    => 0  -- Tipo de execucao (1-Batch/ 2-Job/ 3-Online)
+                              ,pr_tpocorrencia  => 1  -- Erro de negocio
+                              ,pr_cdcriticidade => 0     -- baixa
+                              ,pr_cdmensagem    => 1280 -- O conteúdo do e-mail foi truncado pelo motivo de exceder o tamanho limite
+                              ,pr_dsmensagem    => gene0001.fn_busca_critica( 1280 ) ||
+                                                  ' Pr_cdprogra:'     || pr_cdprogra    || 
+                                                  ', pr_des_assunto:' || pr_des_assunto || 
+                                                  ', vr_qtmaxcon:'          || vr_qtmaxcon   ||
+                                                  ', length(pr_des_corpo):' || LENGTH(pr_des_corpo)
+                              ,pr_flgsucesso    => 0
+                              ,pr_idprglog      => vr_idprglog);
+        -- Retorno nome do módulo logado
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 1');        
+      ELSE
+        vr_dscorpo := pr_des_corpo;  
+      END IF;  
 
       -- Chamar rotina para separar da lista enviada de anexos para o vetor
       pc_separa_lista(pr_des_orige => pr_des_anexo
@@ -1400,8 +1438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              ,pr_cdprogra
                              ,pr_tab_destino(vr_ind)
                              ,pr_des_assunto
-                             ,pr_des_corpo
-                             ,pr_des_anexo
+                             ,vr_dscorpo -- variavel do conteúdo de e-mail tratado. 24/07/2018 - Chm REQ0021124.   
+                             ,pr_des_anexo 
                              ,pr_flg_remete_coop
                              ,pr_des_nome_reply
                              ,pr_des_email_reply
@@ -1578,7 +1616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
             vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crapsle:'||
                    ' dtsolici:'||SYSDATE||', cdcooper:'||pr_cdcooper||
                    ', cdprogra:'||pr_cdprogra||', dsendere:'||pr_tab_destino(vr_ind)||
-                   ', dsassunt:'||pr_des_assunto||', dscorpoe:'||pr_des_corpo||
+                   ', dsassunt:'||pr_des_assunto||', dscorpoe:'||vr_dscorpo||
                    ', dsanexos:'||pr_des_anexo||', flremcop:'||pr_flg_remete_coop||
                    ', dsnmrepl:'||pr_des_nome_reply||', dsemrepl:'||pr_des_email_reply||
                    ', flenviad:N. '||sqlerrm;
