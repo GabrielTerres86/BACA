@@ -3991,6 +3991,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             26/10/2017 - Incluir gravacao de log NPCB0001.pc_gera_log_npc no when others
     --                          dos inserts (SD#769996 - AJFink)
     --
+    --             02/08/2018 - Alterado mensagem de erro ao gravar no LOG (Alcemir - Mouts / PRB0040064).
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4345,7 +4347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_tab_remessa_dda(vr_index).rowidcob
                                          ,pr_cdoperad => '1'
                                          ,pr_dtmvtolt => SYSDATE
-                                         ,pr_dsmensag => 'Erro ao gerar titulo na cabine JDNPC (OPTIT)'
+                                         ,pr_dsmensag => 'Erro ao integrar instrução na cabine JDNPC (OPTIT)'
                                          ,pr_des_erro => vr_des_erro
                                          ,pr_dscritic => vr_dscritic);
             
@@ -4391,7 +4393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
               PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_tab_remessa_dda(vr_index).rowidcob
                                            ,pr_cdoperad => '1'
                                            ,pr_dtmvtolt => SYSDATE
-                                           ,pr_dsmensag => 'Erro ao gerar titulo na cabine JDNPC (CTRL)'
+                                           ,pr_dsmensag => 'Erro ao integrar instrução na cabine JDNPC (CTRL)'
                                            ,pr_des_erro => vr_des_erro
                                            ,pr_dscritic => vr_dscritic);                        
               --Levantar Excecao
@@ -5277,6 +5279,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                              /*    (4)Baixa por Decurso de Prazo */
     -- Frequencia: -----
     -- Objetivo  : Procedure para executar os procedimentos DDA-JD
+    --
+    --            02/08/2018 - valida se ocorreu erro na pltable pr_tab_remessa_dda, depois de executar 
+    --                         a proc pc_remessa_titulos_dda (Alcemir - Mout's / PRB0040064).
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5285,6 +5290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dscritic VARCHAR2(4000);
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
+
+      
     BEGIN
       --Inicializar Parametros Erro
       pr_cdcritic := vr_cdcritic;
@@ -5311,7 +5318,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       DDDA0001.pc_remessa_titulos_dda(pr_tab_remessa_dda => pr_tab_remessa_dda --Remessa dda
                                      ,pr_tab_retorno_dda => pr_tab_retorno_dda --Retorno dda
                                      ,pr_cdcritic        => vr_cdcritic --Codigo de Erro
-                                     ,pr_dscritic        => vr_dscritic); --Descricao de Erro
+                                     ,pr_dscritic        => vr_dscritic); --Descricao de Erro     
+      
+      IF pr_tab_remessa_dda.COUNT > 0 THEN         
+        IF pr_tab_remessa_dda(pr_tab_remessa_dda.FIRST).dscritic IS NOT NULL THEN 
+          
+           vr_dscritic := 'Erro ao integrar instrução, tente novamente mais tarde.';           
+           vr_cdcritic := pr_tab_remessa_dda(pr_tab_remessa_dda.FIRST).cdcritic;
+                      
+           RAISE vr_exc_erro;
+        END IF;
+      END IF;
+                  
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL
          OR vr_dscritic IS NOT NULL THEN
