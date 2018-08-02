@@ -4566,7 +4566,7 @@ END pc_obtem_proposta_aciona_web;
         -- ler os registros de titulos e incluir no xml
         vr_index := vr_tab_dados_titulos.first;
         while vr_index is not null LOOP
-              --Testa se o titulo possui restricao de CNAE
+              /*--Testa se o titulo possui restricao de CNAE
               restricao_cnae := DSCT0003.fn_calcula_cnae(vr_tab_dados_titulos(vr_index).cdcooper
                                                      ,vr_tab_dados_titulos(vr_index).nrdconta
                                                      ,vr_tab_dados_titulos(vr_index).nrdocmto
@@ -4576,13 +4576,30 @@ END pc_obtem_proposta_aciona_web;
               vr_situacao := CASE WHEN restricao_cnae THEN 'S' ELSE 'N' END;
 
               --Caso já tenha restricao do CNAE nao precisa verificar as outras para colocar a flag
-              IF NOT restricao_cnae THEN
+              IF NOT restricao_cnae THEN*/
               SELECT (nvl((SELECT 
                               decode(inpossui_criticas,1,'S','N')
                               FROM 
                                tbdsct_analise_pagador tap 
                             WHERE tap.cdcooper=vr_cdcooper AND tap.nrdconta=pr_nrdconta AND tap.nrinssac=vr_tab_dados_titulos(vr_index).nrinssac
                          ),'A')) INTO vr_situacao FROM DUAL ; -- Situacao do pagador com critica ou nao
+              IF (vr_situacao = 'N') THEN
+                vr_tab_criticas.delete;
+                dsct0003.pc_calcula_restricao_titulo(pr_cdcooper => vr_tab_dados_titulos(vr_index).cdcooper
+                                ,pr_nrdconta => vr_tab_dados_titulos(vr_index).nrdconta
+                                ,pr_nrdocmto => vr_tab_dados_titulos(vr_index).nrdocmto
+                                ,pr_nrcnvcob => vr_tab_dados_titulos(vr_index).nrcnvcob
+                                ,pr_nrdctabb => vr_tab_dados_titulos(vr_index).nrdctabb
+                                ,pr_cdbandoc => vr_tab_dados_titulos(vr_index).cdbandoc
+                                ,pr_tab_criticas => vr_tab_criticas
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);
+                IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_erro;
+                END IF;
+                IF (vr_tab_criticas.count>0) THEN
+                  vr_situacao := 'S';
+                END IF;
               END IF;
               vr_nrinssac := vr_tab_dados_titulos(vr_index).nrinssac;
               
