@@ -4566,17 +4566,6 @@ END pc_obtem_proposta_aciona_web;
         -- ler os registros de titulos e incluir no xml
         vr_index := vr_tab_dados_titulos.first;
         while vr_index is not null LOOP
-              /*--Testa se o titulo possui restricao de CNAE
-              restricao_cnae := DSCT0003.fn_calcula_cnae(vr_tab_dados_titulos(vr_index).cdcooper
-                                                     ,vr_tab_dados_titulos(vr_index).nrdconta
-                                                     ,vr_tab_dados_titulos(vr_index).nrdocmto
-                                                     ,vr_tab_dados_titulos(vr_index).nrcnvcob
-                                                     ,vr_tab_dados_titulos(vr_index).nrdctabb
-                                                     ,vr_tab_dados_titulos(vr_index).cdbandoc);
-              vr_situacao := CASE WHEN restricao_cnae THEN 'S' ELSE 'N' END;
-
-              --Caso já tenha restricao do CNAE nao precisa verificar as outras para colocar a flag
-              IF NOT restricao_cnae THEN*/
               SELECT (nvl((SELECT 
                               decode(inpossui_criticas,1,'S','N')
                               FROM 
