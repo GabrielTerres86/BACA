@@ -1383,7 +1383,7 @@ function controlaLayout(nomeForm) {
         var divRegistro = $('div.divRegistros', '#' + nomeForm);
         var tabela = $('table', divRegistro);
 
-        divRegistro.css('height', '85px');
+        divRegistro.css('height', '165px');
 
 		var ordemInicial = new Array();
 
@@ -1414,7 +1414,7 @@ function controlaLayout(nomeForm) {
 		tabela.zebraTabela(0);
 
         $('#' + nomeForm).css('width', '750px');
-        divRegistro.css('height', '85px');
+        divRegistro.css('height', '165px');
 
 		var ordemInicial = new Array();
 
@@ -2642,6 +2642,9 @@ function excluirConvenio(nrconven) {
     // remove do array
     descontoConvenios.splice(idx, 1);
 
+    // remove tooltip
+    $('#tooltip').hide();
+
     validaEmiteExpede(true);
     // atualizar tabela de convenios
     sairDescontoConvenio();
@@ -2892,6 +2895,9 @@ function editarConvenio(nrconven) {
 		},
         success: function (response) {
             hideMsgAguardo();
+
+            $('#tooltip').hide();
+
 			nrconven = response.nrconven;
 			nrcnvceb = response.nrcnvceb;
 			dsorgarq = response.dsorgarq;
