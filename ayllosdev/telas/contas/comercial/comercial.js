@@ -1,5 +1,5 @@
 /*!
- * FONTE        : comercial.js                              Última alteração: 31/07/2018
+ * FONTE        : comercial.js                              Última alteração: 27/02/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 24/05/2010 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL da tela de CONTAS
@@ -23,7 +23,7 @@
  *                27/02/2018 - Alteração para selecionar o grupoEndereco corretamento no no js (Tiago #844280)
  *			      05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
  *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
- *				  31/07/2018 - Ajuste realizado para que ao carregar a alteração, traga as informações correta da empresa. (Kelvin)	
+ *
  * --------------
  */
 
@@ -193,7 +193,6 @@ function controlaOperacao(operacao, flgConcluir) {
             }
 			if(operacao == 'CA' || operacao == 'CAE'){
               $("#nmextemp").desabilitaCampo();
-			  buscaInfEmpresa();
             }
             return false;
         }
