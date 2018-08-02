@@ -10114,13 +10114,22 @@ from  (
                          AND pdv.cdocorrencia = 0
 						 AND tll.idlancto = tlc.idlancto
                          AND tlc.idcentraliza = pdv.idcentraliza
-                         and SUBSTR(LPAD(tll.nrcnpj_credenciador, 14, '0'), 1, 8) in (pr_ispb) 
+                         and SUBSTR(LPAD(tll.nrcnpj_credenciador, 14, '0'), 1, 8) = pr_ispb 
                       ) cred
                    , (SELECT count(1) AS qdepagamentos
                            , sum(str.vllancamento) vlpagamentos
                         FROM cecred.tbdomic_liqtrans_msg_ltrstr str
                        WHERE str.cdmsg = vr_tipo_msg
-                         AND SUBSTR(LPAD(STR.nrcnpj_cpf_cliente_debitado, 14, '0'), 1, 8) in (pr_ispb)
+                         AND nvl(SUBSTR(LPAD(STR.nrcnpj_cpf_cliente_debitado, 14, '0'), 1, 8),0)  = 
+                                                      DECODE(vr_tipo_msg,'STR0006R2',
+                                                             pr_ispb,                -- CIELO
+                                                             0)                      -- REDECARD
+                         AND str.Cdispb_If_Debitada = DECODE(vr_tipo_msg,'STR0006R2',
+                                                             str.Cdispb_If_Debitada, -- CIELO
+                                                             '60701190')             -- REDECARD
+                         AND nvl(str.cdfinalidade_if,0) = DECODE(vr_tipo_msg,'STR0006R2',
+                                                             0,                      -- CIELO
+                                                             23)                     -- REDECARD               
                          AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;
 
 
