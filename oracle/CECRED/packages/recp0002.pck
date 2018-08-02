@@ -203,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_qtregist    INTEGER;
     
     CURSOR cr_titcyb IS
-    SELECT vlsldtit vlsdeved
+    SELECT (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlsdeved
           ,0 vlsdprej
           ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlatraso
     FROM   craptdb tdb
