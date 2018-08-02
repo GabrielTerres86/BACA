@@ -1232,7 +1232,7 @@ BEGIN
 
         vr_tab_historico('0612CRED PAGSEG').nrctaori := 1179;
         vr_tab_historico('0612CRED PAGSEG').nrctades := 4894;
-        vr_tab_historico('0612CRED PAGSEG').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CERDITO PAGSEGURO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+        vr_tab_historico('0612CRED PAGSEG').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO PAGSEGURO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
 
      END;
 
