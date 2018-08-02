@@ -159,7 +159,7 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 	<div class="divRegistros">
 		<table id="gridDescontoConvenios" style="table-layout: fixed;">
 			<thead>
-				<tr><th>C&ocirc;nvenio</th>
+				<tr><th>Conv&ecirc;nio</th>
 					<th>&nbsp;</th>
 				</tr>			
 			</thead>
