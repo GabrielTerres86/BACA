@@ -6836,7 +6836,7 @@ END;
 
             pc_salva_arquivo;
             RAISE vr_exc_next;
-        ELSIF vr_aux_CodMsg = 'STR0004R2' and (vr_aux_FinlddCli <> '23' OR 
+        ELSIF vr_aux_CodMsg = 'STR0004R2' and (vr_aux_FinlddIF <> '23' OR 
                                                vr_aux_ISPBIFDebtd<>'60701190') THEN
 
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
