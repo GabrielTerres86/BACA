@@ -55,6 +55,13 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0015 IS
                                        ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
                                        ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                        ,pr_dscritic  OUT crapcri.dscritic%TYPE);
+                                       
+  PROCEDURE pc_executa_expiracao(pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                       
 END EMPR0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
@@ -632,7 +639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               w.cdcooper = p_cdcooper
           AND w.nrdconta = NVL(pr_nrdconta,w.nrdconta)
           AND w.nrctremp = NVL(pr_nrctremp,w.nrctremp)
-          AND w.insitapr = 1 -- Aprovado 
+          AND w.insitapr = 1 -- Decisao Aprovado 
           AND w.dtaprova > to_date('18/07/2018','dd/mm/yyyy') -- Data de inicio
           AND NOT EXISTS (SELECT 
                                 1 
@@ -923,18 +930,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                                        ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
                                        ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                        ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
-     /* .............................................................................
-
+    /* .............................................................................
+    
        Programa: pc_processa_titulo_expirada
        Sistema : Crédito - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Rafael Muniz Monteiro
        Data    : julho/2018                         Ultima atualizacao: 
-
+     
        Dados referentes ao programa:
-
+      
        Frequencia: Sempre que for chamado.
-
+     
        Objetivo  : Procedure para procesar as regras de expiração da proposta limite desconto título
 
        Alteracoes: 
@@ -1121,10 +1128,105 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     WHEN OTHERS THEN
       pr_dserro:= 'NOK';
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na procedure EMPR0012.pc_processa_perda_aprovacao: ' || SQLERRM;
+      pr_dscritic := 'Erro na procedure EMPR0012.pc_processa_titulo_expirada: ' || SQLERRM;
     
   END pc_processa_titulo_expirada;
 
+  PROCEDURE pc_executa_expiracao(pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
+    /* .............................................................................
+    
+       Programa: pc_processa_titulo_expirada
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael Muniz Monteiro
+       Data    : Agosto/2018                         Ultima atualizacao: 
+     
+       Dados referentes ao programa:
+      
+       Frequencia: Sempre que for chamado.
+     
+       Objetivo  : Procedure para chamar as expirações da proposta de empréstimo e limite 
+                   desconto título
+
+       Alteracoes: 
+    ............................................................................. */         
+    vr_cdcooper  crapdat.cdcooper%TYPE;
+    vr_nrdconta  crapass.nrdconta%TYPE;
+    vr_nrctremp  crawepr.nrctremp%TYPE;
+    vr_dserro    crapcri.dscritic%TYPE;     --> OK - se processar e NOK - se erro
+    vr_cdcritic  crapcri.cdcritic%TYPE;     --> Codigo da critica
+    vr_dscritic  crapcri.dscritic%TYPE;    
+
+    -- Variaveis Excecao
+    vr_exc_erro    EXCEPTION;    
+                           
+  BEGIN
+    -- Inicializar variaveis 
+    vr_cdcooper := NULL; 
+    vr_nrdconta := NULL;
+    vr_nrctremp := NULL;
+    vr_dserro   := 'OK';
+    vr_cdcritic := NULL;
+    vr_dscritic := NULL;
+    
+    -- tratar parametros
+    IF nvl(pr_cdcooper,0) > 0 THEN
+      vr_cdcooper := pr_cdcooper;
+    END IF;
+    
+    IF nvl(pr_nrdconta,0) > 0 AND 
+       nvl(pr_cdcooper,0) > 0 THEN
+      vr_nrdconta := pr_nrdconta;
+    END IF;
+    
+    IF nvl(pr_nrctremp,0) > 0 AND 
+       nvl(pr_nrdconta,0) > 0 AND 
+       nvl(pr_cdcooper,0) > 0 THEN
+      vr_nrctremp := pr_nrctremp;    
+    END IF;
+    --
+    -- Processar a expiração de proposta de emprestimo
+    EMPR0015.pc_processa_prop_empr_expirada(pr_cdcooper => vr_cdcooper,
+                                            pr_nrdconta => vr_nrdconta,
+                                            pr_nrctremp => vr_nrctremp,
+                                            pr_dserro   => vr_dserro,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+    IF nvl(vr_dserro,'OK') <> 'OK' THEN
+      RAISE vr_exc_erro;
+    END IF;
+    --
+    -- Processar a expiração Limite Desconto Título
+    EMPR0015.pc_processa_titulo_expirada(pr_cdcooper => vr_cdcooper,
+                                         pr_nrdconta => vr_nrdconta,
+                                         pr_nrctremp => vr_nrctremp,
+                                         pr_dserro   => vr_dserro,
+                                         pr_cdcritic => vr_cdcritic,
+                                         pr_dscritic => vr_dscritic);
+    IF nvl(vr_dserro,'OK') <> 'OK' THEN
+      RAISE vr_exc_erro;
+    END IF;                                            
+    
+  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dserro:= 'NOK';
+      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      pr_cdcritic := NVL(vr_cdcritic, 0);
+      pr_dscritic := vr_dscritic;
+                
+    WHEN OTHERS THEN
+      pr_dserro:= 'NOK';
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na procedure EMPR0012.pc_executa_expiracao: ' || SQLERRM;  
+  END pc_executa_expiracao; 
 
 
 END EMPR0015;
