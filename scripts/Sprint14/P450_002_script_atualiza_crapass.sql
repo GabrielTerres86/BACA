@@ -28,7 +28,7 @@ BEGIN
     FOR r1 IN c1 (rw_cop.cdcooper) LOOP
       --Atualiza cooperado
       update crapass ass
-         set ass.nrbase_cpfcgc  = DECODE(ass.inpessoa,1,ass.nrcpfcgc,to_number(SUBSTR(to_char(ass.nrcpfcgc,'FM00000000000000'),1,8) ) )
+         set ass.NRCPFCNPJ_BASE  = DECODE(ass.inpessoa,1,ass.nrcpfcgc,to_number(SUBSTR(to_char(ass.nrcpfcgc,'FM00000000000000'),1,8) ) )
        where ass.rowid = r1.rowid;
       --Inclementa contador
       w_contador := w_contador +1;
