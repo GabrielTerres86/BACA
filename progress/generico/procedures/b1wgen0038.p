@@ -2066,6 +2066,33 @@ PROCEDURE alterar-endereco:
                   
                    IF RETURN-VALUE <> "OK" THEN
                       UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
+
+                    /* Atualizar o cadastro de Avalista */
+                    /* Busca se aquela conta é avalista de algum contrato */
+                    FOR EACH craplim WHERE craplim.cdcooper = par_cdcooper AND
+                                           (craplim.nrctaav1 = par_nrdconta OR
+                                            craplim.nrctaav2 = par_nrdconta)
+                                     EXCLUSIVE-LOCK.
+                        /* Procura pelos borderos das contas encontradas */
+                        FOR EACH crapbdt WHERE crapbdt.cdcooper = craplim.cdcooper AND
+                                               crapbdt.nrdconta = craplim.nrdconta
+                                        EXCLUSIVE-LOCK.
+                            /* Cruza com a tabela de relação da Cyber para pegar o numero sequencial */
+                            FOR EACH tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = crapbdt.cdcooper AND
+                                                               tbdsct_titulo_cyber.nrdconta = crapbdt.nrdconta AND
+                                                               tbdsct_titulo_cyber.nrborder = crapbdt.nrborder
+                                                         EXCLUSIVE-LOCK. 
+                                /* E finalmente acha qual é o contrato cyber que deve ser alterado */
+                                FOR EACH crapcyb WHERE crapcyb.nrctremp = tbdsct_titulo_cyber.nrctrdsc AND  
+                                                       crapcyb.nrdconta = tbdsct_titulo_cyber.nrdconta AND 
+                                                       crapcyb.cdorigem = 4
+                                         EXCLUSIVE-LOCK.
+                                    ASSIGN crapcyb.dtmanavl = par_dtmvtolt. /* Bloqueado */
+                                END.
+                            END.
+                        END.
+                    END.
+                    VALIDATE crapcyb.
                    /* FIM - Atualizar os dados da tabela crapcyb */
 
             END.
