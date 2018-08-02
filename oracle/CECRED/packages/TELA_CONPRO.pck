@@ -842,8 +842,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         pr_tab_crawepr(vr_ind_crawepr).hrmvtolt := gene0002.fn_calc_hora(rw_crawepr.hrinclus);
       
         -- Enviar data e hora do ultimo envio (Motor ou Esteira)
-        IF to_date(to_char(rw_crawepr.dtenvest,'ddmmrrrr')||to_char(rw_crawepr.hrenvest,'fm00000'),'ddmmrrrrsssss')
-         > to_date(to_char(rw_crawepr.dtenvmot,'ddmmrrrr')||to_char(rw_crawepr.hrenvmot,'fm00000'),'ddmmrrrrsssss') THEN 
+        IF to_date(to_char(nvl(rw_crawepr.dtenvest,  to_date('01/01/1900', 'DD/MM/RRRR')),'ddmmrrrr')||to_char(nvl(rw_crawepr.hrenvest, 0),'fm00000'),'ddmmrrrrsssss')
+         > to_date(to_char(nvl(rw_crawepr.dtenvmot,  to_date('01/01/1900', 'DD/MM/RRRR')),'ddmmrrrr')||to_char(nvl(rw_crawepr.hrenvmot, 0),'fm00000'),'ddmmrrrrsssss') THEN 
           -- Envio Esteira foi o ultimo 
           vr_dtenvest := rw_crawepr.dtenvest;
         IF rw_crawepr.hrenvest > 0 THEN
