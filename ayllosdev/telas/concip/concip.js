@@ -1386,6 +1386,9 @@ function selecionaArquivos(tr){
 // PRJ 486 popula combo de filtragem de credenciadorasstr da Opcao S
 function populaCombosConciliacao(){
 
+    //limpa os filtros antes de popular
+    $('#credenciadorasstr').empty();
+
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/concip/carrega_filtros.php",
