@@ -247,6 +247,8 @@
               16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
                            conforme tarefa SCTASK0010890. (Reinert)
 
+              27/07/2018 - Adicionado histórico 5210 na crítica da alínea 37 do arquivo
+                          CRITICASDEVOLU.txt (Reinert).
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -2630,12 +2632,15 @@ PROCEDURE gera_arquivo_cecred:
                                                 STRING(MONTH(glb_dtmvtolt),"99")  +
                                                 SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + "," +
                                                 "4958,1773," +
-                                                TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) + "," +
+                                                TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) + 
+                                                ",5210," +
                                                 '"' + "VALOR REF. DEVOLUCAO DO CHEQUE N. " + STRING(crapdev.nrcheque,"9999999") + 
                                                 ", PELA ALINEA 37, PARA REGULARIZACAO DE CRITICA DO RELATORIO 526" + '"'.                            
                                                 
                           PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
                           
+                          IF   crapdev.indevarq <> 1 THEN
+                               NEXT.                          
                      END.
                 ELSE
                 IF   crapdev.indevarq <> 1 THEN
