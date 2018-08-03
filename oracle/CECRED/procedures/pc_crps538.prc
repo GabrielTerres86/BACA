@@ -894,9 +894,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                 cob.vltitulo,
                 ret.vlrpagto,
                 ret.flcredit,
-                cob.rowid cob_rowid,
-                cob.indpagto,
-                cob.nrctasac
+                cob.rowid cob_rowid
            FROM crapret ret,
                 crapcob cob,
                 tbrecup_cobranca cde,
@@ -924,9 +922,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             AND ass.nrdconta = cde.nrdconta
             --Inclusão do controle de paralelismo
             AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
-         
-         UNION ALL
-         
+            ORDER BY cde.nrdconta, cde.nrctremp;
+       rw_cde cr_cde%ROWTYPE;
+
+       -- buscar boletos da COBTIT pagos na cobranca para serem regularizados
+       CURSOR cr_tit (pr_cdcooper IN crapret.cdcooper%TYPE
+                     ,pr_nrcnvcob IN crapret.nrcnvcob%TYPE
+                     ,pr_dtocorre IN crapret.dtocorre%TYPE
+                     ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
          -- Desconto de Titulos COBTIT
          SELECT ass.cdagenci,
                 cde.cdcooper,
@@ -970,9 +973,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             AND ass.nrdconta = cde.nrdconta
             --Inclusão do controle de paralelismo
             AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
-
-            ORDER BY nrdconta, nrctremp;
-       rw_cde cr_cde%ROWTYPE;
+            ORDER BY cde.nrdconta, cde.nrctremp;
 
        -- Buscar boletos dos acordos pagos na cobranca para serem regularizados
        CURSOR cr_boletos_pagos_acordos (pr_cdcooper IN crapret.cdcooper%TYPE
@@ -2840,7 +2841,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
              ELSIF rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
 
-               FOR rw_cde IN cr_cde (pr_cdcooper => rw_crapcco.cdcooper
+               FOR rw_tit IN cr_tit (pr_cdcooper => rw_crapcco.cdcooper
                                     ,pr_nrcnvcob => rw_crapcco.nrconven
                                     ,pr_dtocorre => vr_dtcredit
                                     ,pr_cdagenci => pr_cdagenci ) 
@@ -2873,15 +2874,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  END IF;
                   
                  -- se o pagto do boleto foi creditado, entao pagar o contrato                     
-                 IF rw_cde.flcredit = 1 THEN                    
+                 IF rw_tit.flcredit = 1 THEN                    
                    BEGIN
-                     dsct0003.pc_processa_liquidacao_cobtit(pr_cdcooper => rw_cde.cdcooper
-                                                           ,pr_nrdconta => rw_cde.nrdconta
-                                                           ,pr_nrcnvcob => rw_cde.nrcnvcob
-                                                           ,pr_nrctasac => rw_cde.nrctasac
-                                                           ,pr_nrdocmto => rw_cde.nrboleto
-                                                           ,pr_vlpagmto => rw_cde.vlrpagto
-                                                           ,pr_indpagto => rw_cde.indpagto
+                     dsct0003.pc_processa_liquidacao_cobtit(pr_cdcooper => rw_tit.cdcooper
+                                                           ,pr_nrdconta => rw_tit.nrdconta
+                                                           ,pr_nrcnvcob => rw_tit.nrcnvcob
+                                                           ,pr_nrctasac => rw_tit.nrctasac
+                                                           ,pr_nrdocmto => rw_tit.nrboleto
+                                                           ,pr_vlpagmto => rw_tit.vlrpagto
+                                                           ,pr_indpagto => rw_tit.indpagto
                                                            ,pr_cdoperad => '1'
                                                            ,pr_cdagenci => 0
                                                            ,pr_nrdcaixa => 0
@@ -2908,18 +2909,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                  -- se ocorreu alguma critica de pagto de emprestimo, registrar no boleto
                  IF vr_dscritic IS NOT NULL THEN
-                   paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cde.cob_rowid               --ROWID da Cobranca
+                   paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_tit.cob_rowid               --ROWID da Cobranca
                                                 ,pr_cdoperad => 'PAGATIT'                      --Operador
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
                                                 ,pr_dsmensag => 'Erro: ' || substr(vr_dscritic,1,100) --Descricao Mensagem
                                                 ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                  --Descricao erro
                  ELSE
-                   paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cde.cob_rowid               --ROWID da Cobranca
+                   paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_tit.cob_rowid               --ROWID da Cobranca
                                                 ,pr_cdoperad => vr_cdoperad                    --Operador
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
                                                 ,pr_dsmensag => 'Pagto realizado ref ao contrato ' ||
-                                                                to_char(rw_cde.nrctremp) || (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
+                                                                to_char(rw_tit.nrboleto) || (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
                                                 ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                  --Descricao erro                                                  
                  END IF;
