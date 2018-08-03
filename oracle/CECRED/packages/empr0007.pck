@@ -212,6 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																		,pr_peracres IN NUMBER DEFAULT 0       --> Percentual de Desconto
                                                                         ,pr_perdesco IN NUMBER DEFAULT 0       --> Percentual de Acrescimo
                                                                         ,pr_vldescto IN NUMBER DEFAULT 0       --> Valor do Desconto
+                                    ,pr_vldevedor IN NUMBER DEFAULT 0
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
 																		,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
 																		);
@@ -1273,7 +1274,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         
         -- Validar se possui valor a ser pago
         -- 5-Saldo Prejuízo/ 6-Parcial Prejuízo/ 7-Saldo Prejuízo Desconto
-        IF rw_cde.tpparcela IN (5,7) THEN -- Saldo Prejuizo
+		-- 4 Quitação do Contrato
+        IF rw_cde.tpparcela IN (4,5,7) THEN -- Saldo Prejuizo
         
       	   
           -- Rotina para pagamento de prejuizo
@@ -3984,6 +3986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																		,pr_peracres IN NUMBER DEFAULT 0       --> Percentual de Desconto
                                     ,pr_perdesco IN NUMBER DEFAULT 0       --> Percentual de Acrescimo
                                     ,pr_vldescto IN NUMBER DEFAULT 0       --> Valor do Desconto
+                                    ,pr_vldevedor IN NUMBER DEFAULT 0
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
 																		,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
 																		) IS
@@ -3994,7 +3997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 30/03/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 10/05/2018
 
       Dados referentes ao programa:
 
@@ -4026,8 +4029,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                e geracao de boleto em prejuizo. (P210.2 - Jaison/Daniel)
                                
                   30/03/2017 - Inclusao do parametro pr_idarquiv e pr_idboleto para
-                               incluir na tabela tbepr_cobranca. (P210.2 - Lombardi)
+                               incluir na tabela tbrecup_cobranca. (P210.2 - Lombardi)
                                
+                  12/12/2017 - Incluso novo parametro pr_vldevedor para gravar na tabela
+				               tbrecup_cobranca o valor devedor do emprestimo na geracao do
+							   boleto (Daniel SM 210.2) 
+                               
+                  10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
+                               
+                  11/06/2018 - Ajuste no insert da tabela crapsab, limitando o numero de caracteres
+                               para 40, numero maximo permitido por esta tabela.
+							   Chamado PRB0040065 - Gabriel (Mouts).
+
   ..............................................................................*/
 
 		DECLARE
@@ -4096,7 +4109,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 											 ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
 				SELECT epr.tpemprst,
                epr.dtdpagto,
-               epr.inprejuz
+               epr.inprejuz,
+               epr.cdfinemp
 				  FROM crapepr epr
 				 WHERE epr.cdcooper = pr_cdcooper
 				   AND epr.nrdconta = pr_nrdconta
@@ -4318,12 +4332,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_qtdiaiof := pr_dtvencto - pr_dtmvtolt;
                               
       --Calcula o IOF
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                       ,pr_cdcooper => pr_cdcooper                            --> Código da cooperativa referente ao contrato de empréstimos
                                         ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
                                         ,pr_nrctremp => pr_nrctremp                            --> Número do contrato de empréstimo
                                         ,pr_vlemprst => pr_vlparepr                            --> Valor do empréstimo para efeito de cálculo
                                         ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
                                         ,pr_cdlcremp => vr_cdlcremp                            --> Linha de crédito do empréstimo
+                                        ,pr_cdfinemp => rw_crapepr.cdfinemp                    --> Finalidade do empréstimo
                                         ,pr_dtmvtolt => pr_dtmvtolt                            --> Data do movimento
                                         ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
                                         ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal
@@ -4725,7 +4741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 														 GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
 														 pr_dtmvtolt,
 														 vr_nrendere,
-                             vr_complend,
+                                 trim(substr(trim(vr_complend),1,40)),
                              1);
 
 			ELSE
@@ -4819,7 +4835,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,idboleto
                                  ,peracrescimo
                                  ,perdesconto
-                                 ,vldesconto)
+                                 ,vldesconto
+                                 ,vldevedor)
 													VALUES(pr_cdcooper
 													      ,pr_nrdconta
 																,pr_nrctremp
@@ -4836,7 +4853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                 ,pr_idboleto
                                 ,pr_peracres
                                 ,pr_perdesco
-                                ,pr_vldescto);
+                                ,pr_vldescto
+                                ,pr_vldevedor);
 
 		  -- Gera log na lgm
 			gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
@@ -5977,7 +5995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Setembro/15.                    Ultima atualizacao: --/--/----
+      Data    : Setembro/15.                    Ultima atualizacao: 10/05/2018
 
       Dados referentes ao programa:
 
@@ -5987,7 +6005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
   ..............................................................................*/																								
 		DECLARE
 		  ------------------------------- VARIAVEIS ---------------------------------
@@ -6030,6 +6048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							,epr.dtultpag
 							,epr.txjuremp
 							,lcr.txdiaria
+              ,epr.cdfinemp
 				  FROM crapepr epr,
 					     craplcr lcr
 				 WHERE epr.cdcooper = pr_cdcooper
@@ -6222,12 +6241,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_qtdiaiof := vr_tab_dados_epr(vr_tab_dados_epr.first).dtdpagto - pr_dtmvtolt;
                               
       --Calcula o IOF
-      TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper                             --> Código da cooperativa referente ao contrato de empréstimos
+      TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2                                      --> Somente o atraso
+                                       ,pr_cdcooper => pr_cdcooper                            --> Código da cooperativa referente ao contrato de empréstimos
                                         ,pr_nrdconta => pr_nrdconta                            --> Número da conta referente ao empréstimo
                                         ,pr_nrctremp => pr_nrctremp                            --> Número do contrato de empréstimo
                                         ,pr_vlemprst => pr_vlsdeved                            --> Valor do empréstimo para efeito de cálculo
                                         ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
                                         ,pr_cdlcremp => vr_cdlcremp                            --> Linha de crédito do empréstimo
+                                        ,pr_cdfinemp => rw_crapepr_tr.cdfinemp                 --> Finalidade do empréstimo
                                         ,pr_dtmvtolt => pr_dtmvtolt                            --> Data do movimento
                                         ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
                                         ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal
@@ -7313,7 +7334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																		 ,pr_cdrelato  => '702'                         --> Cód. relatório
                                      ,pr_flg_gerar => 'S'                           --> gerar PDF
  																		 ,pr_dsmailcop  => pr_dsdemail                  --> Email
-																		 ,pr_dsassmail => 'Boleto Bancario - CECRED 085' --> Assunto do e-mail que enviará o arquivo
+																		 ,pr_dsassmail => 'Boleto Bancario - AILOS 085' --> Assunto do e-mail que enviará o arquivo
 																		 ,pr_dscormail => vr_dscorema                   --> Corpor do email
 																		 ,pr_nmformul  => '132col'                      --> Nome do formulário para impressão
 																		 ,pr_nrcopias  => 1                             --> Número de cópias
