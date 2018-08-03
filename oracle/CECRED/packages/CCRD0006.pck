@@ -1771,9 +1771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                 vr_iderro := 1;
-             ELSE
-                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr not in (1027058000191, /*cielo*/
-                                                                       1425787000104) /* Redecard */  then
+             /*ELSE
+                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    vr_codocorc:='32';
@@ -1783,7 +1782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_cdocorr => 32
                               );
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
              END  IF;
              vr_linhaErro:=895;
 
@@ -2285,7 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
    CURSOR c2 IS
      SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                        ,pr_nmdcampo => 'TPARQUIVO'
-                                       ,pr_dsdchave => 1),4,'0'))  seq
+                                       ,pr_dsdchave => '1;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
        FROM dual;
      r2 c2%ROWTYPE;
 
@@ -3804,10 +3803,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_idcampo => vr_idcampo
                                 ,pr_dscritic => vr_dscritic);
                  vr_iderro := 1;
-             ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr not in (1027058000191, /*cielo*/
-                                                                        1425787000104 /* RedeCard */
-                                                                       ) THEN
+             /*ELSE
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
@@ -3815,7 +3812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_dscritic => vr_dscritic
                               ,pr_cdocorr => '32');
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
               END IF;
 
               vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
@@ -4023,7 +4020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
    CURSOR c2 IS
      SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                        ,pr_nmdcampo => 'TPARQUIVO'
-                                       ,pr_dsdchave => 2),4,'0'))  seq
+                                       ,pr_dsdchave => '2;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
        FROM dual;
      r2 c2%ROWTYPE;
 
@@ -5578,17 +5575,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                vr_iderro := 1;
-          ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr not in (1027058000191, /*cielo */
-                                                                        1425787000104 /* Redecard */
-                                                                       ) THEN
+          /*ELSE
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo *\  THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
             END IF;
 
             vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
@@ -5797,7 +5792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CURSOR c2 IS
       SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                         ,pr_nmdcampo => 'TPARQUIVO'
-                                        ,pr_dsdchave => 3),4,'0'))  seq
+                                        ,pr_dsdchave => '3;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
         FROM dual;
       r2 c2%ROWTYPE;
 
@@ -10941,7 +10936,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
     CURSOR c2 IS
       SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                         ,pr_nmdcampo => 'TPARQUIVO'
-                                        ,pr_dsdchave => 3),4,'0'))  seq
+										,pr_dsdchave => '3;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
+
         FROM dual;
       r2 c2%ROWTYPE;
 
