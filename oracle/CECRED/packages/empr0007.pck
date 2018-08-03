@@ -46,29 +46,29 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		,descprej       crapprm.dsvlrprm%TYPE);
 
 	TYPE typ_reg_cde IS RECORD
-		(cdcooper       tbepr_cobranca.cdcooper%TYPE
+		(cdcooper       tbrecup_cobranca.cdcooper%TYPE
 		,cdagenci       crapass.cdagenci%TYPE
-		,nrctremp       tbepr_cobranca.nrctremp%TYPE
-		,nrdconta       tbepr_cobranca.nrdconta%TYPE
-		,nrcnvcob       tbepr_cobranca.nrcnvcob%TYPE
-		,nrdocmto       tbepr_cobranca.nrboleto%TYPE
+		,nrctremp       tbrecup_cobranca.nrctremp%TYPE
+		,nrdconta       tbrecup_cobranca.nrdconta%TYPE
+		,nrcnvcob       tbrecup_cobranca.nrcnvcob%TYPE
+		,nrdocmto       tbrecup_cobranca.nrboleto%TYPE
 		,dtmvtolt       crapcob.dtmvtolt%TYPE
 		,dtvencto       crapcob.dtvencto%TYPE
 		,vlboleto       crapcob.vldpagto%TYPE
 		,dtdpagto       crapcob.dtdpagto%TYPE
 		,vldpagto       crapcob.vldpagto%TYPE
 		,dstipenv       VARCHAR2(20)
-		,cdopeenv       tbepr_cobranca.cdoperad_envio%TYPE
-		,dtdenvio       tbepr_cobranca.dhenvio%TYPE
+		,cdopeenv       tbrecup_cobranca.cdoperad_envio%TYPE
+		,dtdenvio       tbrecup_cobranca.dhenvio%TYPE
 		,dsdenvio       VARCHAR(60)
 		,dssituac       VARCHAR(20)
 		,dtdbaixa       crapcob.dtdbaixa%TYPE
-		,dsdemail       tbepr_cobranca.dsemail%TYPE
+		,dsdemail       tbrecup_cobranca.dsemail%TYPE
 		,dsdtelef       VARCHAR(20)
-		,nmpescto       tbepr_cobranca.nmcontato%TYPE
-		,nrctacob       tbepr_cobranca.nrdconta_cob%TYPE
+		,nmpescto       tbrecup_cobranca.nmcontato%TYPE
+		,nrctacob       tbrecup_cobranca.nrdconta_cob%TYPE
     ,lindigit       VARCHAR(60)
-    ,dsparcel       tbepr_cobranca.dsparcelas%TYPE);
+    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_cde IS TABLE OF typ_reg_cde INDEX BY BINARY_INTEGER;
@@ -114,10 +114,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
                            ,pr_des_erro OUT VARCHAR2); --> Erros do processo
 
 	-- Procedure de pagamento de boletos de emprestimos
-  PROCEDURE pc_pagar_epr_cobranca(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
-                                 ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE --> Numero da conta
-                                 ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE --> Numero do contrato
-                                 ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE --> Numero do Convenio
+  PROCEDURE pc_pagar_epr_cobranca(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
+                                 ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE --> Numero da conta
+                                 ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE --> Numero do Convenio
                                  ,pr_nrdocmto IN craplat.nrdocmto %TYPE       --> Numero do Documento
                                  ,pr_vldpagto IN craplcm.vllanmto %TYPE       --> Valor do Pagamento
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
@@ -129,8 +129,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 
   -- procedure para lancar o valor para contratos TR
   PROCEDURE pc_gera_lancamento_epr_tr(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                     ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE
-                                     ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE
+                                     ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE
+                                     ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE
                                      ,pr_vllanmto IN craplcm.vllanmto%TYPE
 																		 ,pr_cdoperad IN crapope.cdoperad%TYPE
 																		 ,pr_idorigem IN INTEGER
@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 
   PROCEDURE pc_buscar_boletos_contratos (pr_cdcooper IN crapcop.cdcooper%TYPE                  --> Cooperativa
 																				,pr_cdagenci IN crapass.cdagenci%TYPE DEFAULT 0        --> PA
-																				,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
+																				,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
 																				,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0        --> Nr. da Conta
 																				,pr_dtbaixai IN DATE DEFAULT NULL                      --> Data de baixa inicial
 																				,pr_dtbaixaf IN DATE DEFAULT NULL                      --> Data de baixa final
@@ -156,35 +156,35 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																				,pr_dscritic OUT crapcri.dscritic%TYPE                 --> Descrição da crítica
 																				,pr_tab_cde  OUT typ_tab_cde);	                       --> Pl/Table com os dados de cobrança de emprestimos
 
-  PROCEDURE pc_enviar_boleto(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE              --> Cooperativa
-		                        ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE              --> Nr. da Conta
-														,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE              --> Nr. Contrato
-														,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
-														,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
-														,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE              --> Nr. Documento
-														,pr_cdoperad IN tbepr_cobranca.cdoperad_envio%TYPE        --> Cód. Operador
-														,pr_nmcontat IN tbepr_cobranca.nmcontato%TYPE             --> Nome Contato
-														,pr_tpdenvio IN tbepr_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+  PROCEDURE pc_enviar_boleto(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE              --> Cooperativa
+		                        ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+														,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+														,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+														,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+														,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+														,pr_cdoperad IN tbrecup_cobranca.cdoperad_envio%TYPE        --> Cód. Operador
+														,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+														,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
 														,pr_nmdatela IN VARCHAR2                                  --> Nome da tela
 														,pr_idorigem IN INTEGER                                   --> ID Origem
-														,pr_dsdemail IN tbepr_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
-														,pr_indretor IN tbepr_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
-														,pr_nrdddsms IN tbepr_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
-														,pr_nrtelsms IN tbepr_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+														,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+														,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+														,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+														,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
 														,pr_cdcritic OUT crapcri.cdcritic%TYPE                    --> Cód. Crítica
 														,pr_dscritic OUT crapcri.dscritic%TYPE);                  --> Desc. Crítica
 
-  PROCEDURE pc_enviar_boleto_web(pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE              --> Nr. da Conta
-																,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE              --> Nr. Contrato
-																,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
-																,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
-																,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE              --> Nr. Documento
-																,pr_nmcontat IN tbepr_cobranca.nmcontato%TYPE             --> Nome Contato
-																,pr_tpdenvio IN tbepr_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
-																,pr_dsdemail IN tbepr_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
-																,pr_indretor IN tbepr_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
-																,pr_nrdddsms IN tbepr_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
-																,pr_nrtelsms IN tbepr_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+  PROCEDURE pc_enviar_boleto_web(pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+																,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+																,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+																,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+																,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+																,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+																,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+																,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+																,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+																,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+																,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
 																,pr_xmllog   IN VARCHAR2                                  --> XML com informações de LOG
 																,pr_cdcritic OUT PLS_INTEGER                              --> Código da crítica
 																,pr_dscritic OUT VARCHAR2                                 --> Descrição da crítica
@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		                                 ,pr_nrdconta IN crapass.nrdconta%TYPE                   --> Nr. da Conta
 																		 ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE                   --> Nr. do Convênio de Cobrança
 																	 	 ,pr_nrctremp IN crapcob.nrctremp%TYPE                   --> Nr. do Contrato
-																		 ,pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE DEFAULT 0 --> Nr. do Arquivo (<> 0 = boletagem massiva)
+																		 ,pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE DEFAULT 0 --> Nr. do Arquivo (<> 0 = boletagem massiva)
                                      ,pr_cdcritic OUT PLS_INTEGER                            --> Código da crítica
 																		 ,pr_dscritic OUT VARCHAR2                               --> Descrição da crítica
 																		 ,pr_des_erro OUT VARCHAR2);                             --> Erros do processo
@@ -312,17 +312,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																,pr_nrdocmto IN crapcob.nrdocmto%TYPE --> Nr docmto
 																,pr_cdoperad IN crapope.cdoperad%TYPE --> Cód operador
 																,pr_idorigem IN NUMBER                --> Id origem
-																,pr_tpdenvio IN tbepr_cobranca.tpenvio%TYPE DEFAULT 0  --> Tipo de envio
-																,pr_dsdemail IN tbepr_cobranca.dsemail%TYPE DEFAULT '' --> Email
+																,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE DEFAULT 0  --> Tipo de envio
+																,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT '' --> Email
 																,pr_nmarqpdf OUT VARCHAR2             --> Nome do arquivo em PDF
 																,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
 																,pr_des_erro OUT VARCHAR2);           --> Erros do processo																	 
 
-  PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
+  PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
-                               ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE --> Numero da conta
-                               ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE --> Numero do contrato
+                               ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE --> Numero da conta
+                               ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE --> Numero do contrato
                                ,pr_vlpreemp IN crapepr.vlpreemp %TYPE       --> Valor da prestacao
                                ,pr_dtdpagto IN OUT crapepr.dtdpagto%TYPE    --> Data do pagamento
                                ,pr_dtvencto IN crawepr.dtvencto%TYPE        --> Data vencimento
@@ -1041,10 +1041,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 
   -- procedure de pagamento de boletos de emprestimos
-  PROCEDURE pc_pagar_epr_cobranca(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
-                                 ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE --> Numero da conta
-                                 ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE --> Numero do contrato
-                                 ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob %TYPE --> Numero do Convenio
+  PROCEDURE pc_pagar_epr_cobranca(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
+                                 ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE --> Numero da conta
+                                 ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob %TYPE --> Numero do Convenio
                                  ,pr_nrdocmto IN craplat.nrdocmto %TYPE --> Numero do Documento
                                  ,pr_vldpagto IN craplcm.vllanmto %TYPE --> Valor do Pagamento
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
@@ -1136,9 +1136,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		rw_crapepr cr_crapepr%ROWTYPE;
 
     -- cursor para filtrar os associados que utilizam o servico de malote
-    CURSOR cr_tbepr_cobranca( pr_cdcooper IN crapcop.cdcooper%TYPE
+    CURSOR cr_tbrecup_cobranca( pr_cdcooper IN crapcop.cdcooper%TYPE
                              ,pr_nrdconta IN crapass.nrdconta%TYPE
-                             ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
+                             ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
                              ,pr_nrdocmto IN crapcob.nrdocmto%TYPE
                              ,pr_nrctremp IN crapcob.nrctremp%TYPE ) IS
 			SELECT cde.cdcooper
@@ -1157,7 +1157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 						,ass.cdagenci
             ,cde.idboleto
 				FROM crapcob cob
-						,tbepr_cobranca cde
+						,tbrecup_cobranca cde
 						,crapass ass
 			 WHERE cde.cdcooper = pr_cdcooper
 				 AND cde.nrdconta = pr_nrdconta
@@ -1170,7 +1170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				 AND ass.cdcooper = cde.cdcooper
 				 AND ass.nrdconta = cde.nrdconta
 			 ORDER BY cde.nrdconta, cde.nrctremp;
-		rw_cde cr_tbepr_cobranca%ROWTYPE;
+		rw_cde cr_tbrecup_cobranca%ROWTYPE;
 
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -1204,16 +1204,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			--Fecha cursor
 			CLOSE cr_crapepr;
 
-      OPEN cr_tbepr_cobranca(pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
+      OPEN cr_tbrecup_cobranca(pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
 														,pr_nrdconta => pr_nrdconta  --Numero da Conta
 														,pr_nrcnvcob => pr_nrcnvcob  --Numero Convenio
 														,pr_nrctremp => pr_nrctremp  --Numero do contrato de emprestimo
 														,pr_nrdocmto => pr_nrdocmto); --Numero do Boleto
-      FETCH cr_tbepr_cobranca INTO rw_cde;			
+      FETCH cr_tbrecup_cobranca INTO rw_cde;			
 			
-			IF cr_tbepr_cobranca%NOTFOUND THEN			  
+			IF cr_tbrecup_cobranca%NOTFOUND THEN			  
 				-- Fecha cursor
-				CLOSE cr_tbepr_cobranca; 
+				CLOSE cr_tbrecup_cobranca; 
 				--Atribui críticas
 				vr_cdcritic := 0;
 				vr_dscritic := 'Boleto nao encontrado';
@@ -1221,7 +1221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				RAISE vr_exc_saida;
 			END IF;
 			-- Fecha cursor
-			CLOSE cr_tbepr_cobranca; 
+			CLOSE cr_tbrecup_cobranca; 
 			
 			/* se o valor pago for menor, gerar crítica */
      IF pr_vldpagto < rw_cde.vltitulo THEN
@@ -1866,8 +1866,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
   -- procedure para lancar o valor para contratos TR
   PROCEDURE pc_gera_lancamento_epr_tr(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                     ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE
-                                     ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE
+                                     ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE
+                                     ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE
                                      ,pr_vllanmto IN craplcm.vllanmto%TYPE
 																		 ,pr_cdoperad IN crapope.cdoperad%TYPE
 																		 ,pr_idorigem IN INTEGER
@@ -3199,7 +3199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
   PROCEDURE pc_buscar_boletos_contratos (pr_cdcooper IN crapcop.cdcooper%TYPE                  --> Cooperativa
 																				,pr_cdagenci IN crapass.cdagenci%TYPE DEFAULT 0        --> PA
-																				,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
+																				,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
 																				,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0        --> Nr. da Conta
 																				,pr_dtbaixai IN DATE DEFAULT NULL                      --> Data de baixa inicial
 																				,pr_dtbaixaf IN DATE DEFAULT NULL                      --> Data de baixa final
@@ -3230,7 +3230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Observacao: -----
 
-      Alteracoes: 03/03/2017 - Busca do campo tbepr_cobranca.dsparcelas. (P210.2 - Jaison/Daniel)
+      Alteracoes: 03/03/2017 - Busca do campo tbrecup_cobranca.dsparcelas. (P210.2 - Jaison/Daniel)
 
     ..............................................................................*/
 			DECLARE
@@ -3271,7 +3271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							 ,cde.nmcontato nmpescto
 							 ,cde.nrdconta_cob nrctacob
                ,cde.dsparcelas
-           FROM crapcob cob, tbepr_cobranca cde, crapass ass
+           FROM crapcob cob, tbrecup_cobranca cde, crapass ass
           WHERE cde.cdcooper = pr_cdcooper                            --> Cód. cooperativa
 					  AND (pr_cdagenci = 0     OR ass.cdagenci =  pr_cdagenci)  --> PA
 						AND (pr_nrdconta = 0     OR cde.nrdconta =  pr_nrdconta)  --> Nr. da Conta
@@ -3492,21 +3492,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			END;
 	END pc_buscar_boletos_contratos;
 
-  PROCEDURE pc_enviar_boleto(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE              --> Cooperativa
-		                        ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE              --> Nr. da Conta
-														,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE              --> Nr. Contrato
-														,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
-														,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
-														,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE              --> Nr. Documento
-														,pr_cdoperad IN tbepr_cobranca.cdoperad_envio%TYPE        --> Cód. Operador
-														,pr_nmcontat IN tbepr_cobranca.nmcontato%TYPE             --> Nome Contato
-														,pr_tpdenvio IN tbepr_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+  PROCEDURE pc_enviar_boleto(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE              --> Cooperativa
+		                        ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+														,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+														,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+														,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+														,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+														,pr_cdoperad IN tbrecup_cobranca.cdoperad_envio%TYPE        --> Cód. Operador
+														,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+														,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
 														,pr_nmdatela IN VARCHAR2                                  --> Nome da tela
 														,pr_idorigem IN INTEGER                                   --> ID Origem
-														,pr_dsdemail IN tbepr_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
-														,pr_indretor IN tbepr_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
-														,pr_nrdddsms IN tbepr_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
-														,pr_nrtelsms IN tbepr_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+														,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+														,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+														,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+														,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
 														,pr_cdcritic OUT crapcri.cdcritic%TYPE                    --> Cód. Crítica
 														,pr_dscritic OUT crapcri.dscritic%TYPE) IS                --> Desc. Crítica
 	BEGIN
@@ -3615,7 +3615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				CASE pr_tpdenvio
 					-- EMAIL
 					WHEN 1 THEN
-						UPDATE tbepr_cobranca cde
+						UPDATE tbrecup_cobranca cde
 							 SET cde.dsemail        = pr_dsdemail
 									,cde.nmcontato      = pr_nmcontat
 						 WHERE cde.cdcooper = pr_cdcooper
@@ -3655,13 +3655,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 					   
 					-- SMS
 					WHEN 2 THEN
-						UPDATE tbepr_cobranca cde
+						UPDATE tbrecup_cobranca cde
 							 SET cde.tpenvio        = pr_tpdenvio
 									,cde.cdoperad_envio = pr_cdoperad
 									,cde.dhenvio        = SYSDATE
 									,cde.nrddd_sms      = pr_nrdddsms
 									,cde.nrtel_sms      = pr_nrtelsms
-									,cde.cdenvio_sms    = GENE0002.fn_char_para_number(fn_sequence('TBEPR_COBRANCA','CDENVIO_SMS',TO_CHAR(pr_cdcooper) ||
+									,cde.cdenvio_sms    = GENE0002.fn_char_para_number(fn_sequence('tbrecup_cobranca','CDENVIO_SMS',TO_CHAR(pr_cdcooper) ||
 																																									 TO_CHAR(SYSDATE, 'RRRR') ||
 																																									 TO_CHAR(SYSDATE, 'MM') ||
 																																									 TO_CHAR(SYSDATE, 'DD')))
@@ -3701,12 +3701,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			  WHEN vr_exc_update THEN
 					-- Atribui exceção caso nao seja atualizado nenhum registro
 					vr_cdcritic := 0;
-					vr_dscritic := 'Erro ao atualizar tabela tbepr_cobranca: Dados nao encontrados.';
+					vr_dscritic := 'Erro ao atualizar tabela tbrecup_cobranca: Dados nao encontrados.';
 					RAISE vr_exc_saida;
 				WHEN OTHERS THEN
           -- Atribui exceção para os parametros de crítica
           vr_cdcritic := vr_cdcritic;
-          vr_dscritic := 'Erro nao tratado ao atualizar tabela tbepr_cobranca' ||
+          vr_dscritic := 'Erro nao tratado ao atualizar tabela tbrecup_cobranca' ||
 					               ' na EMPR0007.pc_enviar_boleto: ' || SQLERRM;
 					RAISE vr_exc_saida;
 			END;
@@ -3835,17 +3835,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 	END pc_enviar_boleto;
 
-	PROCEDURE pc_enviar_boleto_web(pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE              --> Nr. da Conta
-																,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE              --> Nr. Contrato
-																,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
-																,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
-																,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE              --> Nr. Documento
-																,pr_nmcontat IN tbepr_cobranca.nmcontato%TYPE             --> Nome Contato
-																,pr_tpdenvio IN tbepr_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
-																,pr_dsdemail IN tbepr_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
-																,pr_indretor IN tbepr_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
-																,pr_nrdddsms IN tbepr_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
-																,pr_nrtelsms IN tbepr_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
+	PROCEDURE pc_enviar_boleto_web(pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
+																,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
+																,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE          --> Nr. Conta Cobrança
+																,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE              --> Nr. Convenio Cobrança
+																,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE              --> Nr. Documento
+																,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
+																,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
+																,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
+																,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
+																,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
+																,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
 																,pr_xmllog   IN VARCHAR2                                  --> XML com informações de LOG
 																,pr_cdcritic OUT PLS_INTEGER                              --> Código da crítica
 																,pr_dscritic OUT VARCHAR2                                 --> Descrição da crítica
@@ -4029,10 +4029,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                e geracao de boleto em prejuizo. (P210.2 - Jaison/Daniel)
                                
                   30/03/2017 - Inclusao do parametro pr_idarquiv e pr_idboleto para
-                               incluir na tabela tbepr_cobranca. (P210.2 - Lombardi)
+                               incluir na tabela tbrecup_cobranca. (P210.2 - Lombardi)
                                
                   12/12/2017 - Incluso novo parametro pr_vldevedor para gravar na tabela
-				               tbepr_cobranca o valor devedor do emprestimo na geracao do
+				               tbrecup_cobranca o valor devedor do emprestimo na geracao do
 							   boleto (Daniel SM 210.2) 
                                
                   10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
@@ -4819,7 +4819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				 RAISE vr_exc_saida;
 			END IF;
 
-      INSERT INTO tbepr_cobranca (cdcooper
+      INSERT INTO tbrecup_cobranca (cdcooper
 			                           ,nrdconta
 																 ,nrctremp
 																 ,nrdconta_cob
@@ -5067,7 +5067,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                      ,pr_nrdconta IN crapass.nrdconta%TYPE                   --> Nr. da Conta
 																		 ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE                   --> Nr. do Convênio de Cobrança
 																	 	 ,pr_nrctremp IN crapcob.nrctremp%TYPE                   --> Nr. do Contrato
-																		 ,pr_idarquiv IN tbepr_boleto_arq.idarquivo%TYPE DEFAULT 0 --> Nr. do Arquivo (<> 0 = boletagem massiva)
+																		 ,pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE DEFAULT 0 --> Nr. do Arquivo (<> 0 = boletagem massiva)
                                      ,pr_cdcritic OUT PLS_INTEGER                            --> Código da crítica
 																		 ,pr_dscritic OUT VARCHAR2                               --> Descrição da crítica
                                      ,pr_des_erro OUT VARCHAR2) IS                           --> Erros do proc esso
@@ -5137,7 +5137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
              AND cob.incobran = 0
              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN 
                  (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                    FROM tbepr_cobranca cde
+                    FROM tbrecup_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
                      AND cde.nrdconta = pr_nrdconta
                      AND cde.nrctremp = pr_nrctremp);
@@ -5155,7 +5155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
              AND cob.dtdpagto = pr_dtmvtolt
              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN 
                  (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                    FROM tbepr_cobranca cde
+                    FROM tbrecup_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
                      AND cde.nrdconta = pr_nrdconta
                      AND cde.nrctremp = pr_nrctremp)
@@ -5188,7 +5188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          WHERE cob.cdcooper = pr_cdcooper
            AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp) IN 
                (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp
-                  FROM tbepr_cobranca cde
+                  FROM tbrecup_cobranca cde
                  WHERE cde.cdcooper = pr_cdcooper
                    AND cde.nrdconta = pr_nrdconta
                    AND cde.nrctremp = pr_nrctremp)
@@ -5198,7 +5198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                      WHERE cob.cdcooper = pr_cdcooper
                                        AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp) IN 
                                            (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp
-                                              FROM tbepr_cobranca cde
+                                              FROM tbrecup_cobranca cde
                                              WHERE cde.cdcooper = pr_cdcooper
                                                AND cde.nrdconta = pr_nrdconta
                                                AND cde.nrctremp = pr_nrctremp)                                   
@@ -5209,7 +5209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                          WHERE cob.cdcooper = pr_cdcooper
                                            AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp) IN 
                                                (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp
-                                                  FROM tbepr_cobranca cde
+                                                  FROM tbrecup_cobranca cde
                                                  WHERE cde.cdcooper = pr_cdcooper
                                                    AND cde.nrdconta = pr_nrdconta
                                                    AND cde.nrctremp = pr_nrctremp)                                   
@@ -5229,7 +5229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
              AND cob.dtdpagto IS NOT NULL
              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp) IN 
                  (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp
-                    FROM tbepr_cobranca cde
+                    FROM tbrecup_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
                      AND cde.nrdconta = pr_nrdconta
                      AND cde.nrctremp = pr_nrctremp);      
@@ -5642,7 +5642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							,cob.vltitulo
 				      ,cob.rowid
 				  FROM crapcob cob,
-					     tbepr_cobranca cde
+					     tbrecup_cobranca cde
 				 WHERE cob.cdcooper = pr_cdcooper
 				   AND cob.nrdconta = pr_nrctacob
 					 AND cob.nrcnvcob = pr_nrcnvcob
@@ -5932,7 +5932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       -- Atualiza a Justificativa
       BEGIN
-        UPDATE tbepr_cobranca
+        UPDATE tbrecup_cobranca
            SET dsjustifica_baixa = vr_dsjustif
          WHERE cdcooper          = vr_cdcooper
            AND nrdconta          = pr_nrdconta
@@ -5942,7 +5942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
            AND nrboleto          = pr_nrdocmto;
 	  EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Problema ao alterar dados na tabela tbepr_cobranca: ' || SQLERRM;
+          vr_dscritic := 'Problema ao alterar dados na tabela tbrecup_cobranca: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
 
@@ -6440,6 +6440,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Observacao: -----
 
       Alteracoes: 07/03/2017 - Inclusao dos campos Contrato, Valor e Vencimento. (P210.2 - Jaison/Daniel)
+                  03/08/2018 - Alterações para funcionar para COBTIT também - Luis Fernando (GFT)
+                   
   ..............................................................................*/																								
   BEGIN
 
@@ -6472,7 +6474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_arquivo_rem utl_file.file_type;      
       vr_arquivo_cfg utl_file.file_type;            
 
-      -- cursores      
+      -- Traz os registros da COBEMP/COBTIT para serem enviados
       CURSOR cr_cde_sms IS
         SELECT cop.cdcooper,               
                cop.nmrescop,
@@ -6487,7 +6489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                cde.rowid rowid_cde,
                ass.nmprimtl
           FROM crapcop cop,
-               tbepr_cobranca cde,
+               tbrecup_cobranca cde,
                crapass ass
          WHERE cop.cdcooper > 0
            AND cop.cdcooper <> 3
@@ -6500,7 +6502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
            AND ass.nrdconta = cde.nrdconta
            ORDER BY cop.cdcooper, cde.nrdconta;
       rw_cde_sms cr_cde_sms%ROWTYPE; 
-      
+      -- pega parametro de configuracao da cobemp/cobtit
       CURSOR cr_param_sms IS
         SELECT * FROM crappbc
          WHERE idtpreme = 'COBEMP';
@@ -6619,7 +6621,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         vr_texto_sms := REPLACE(vr_texto_sms,'#Cooperativa#',rw_cde_sms.nmrescop);
         vr_texto_sms := REPLACE(vr_texto_sms,'#Cooperado#',rw_cde_sms.nmprimtl);
         vr_texto_sms := REPLACE(vr_texto_sms,'#LinhaDigitavel#',vr_tab_cob(1).lindigit);
-        vr_texto_sms := REPLACE(vr_texto_sms,'#Contrato#',to_char(rw_cde_sms.nrctremp));
+        vr_texto_sms := REPLACE(vr_texto_sms,'#Contrato#',to_char(rw_cde_sms.nrctremp)); -- Emprestimo
+        vr_texto_sms := REPLACE(vr_texto_sms,'#Bordero#',to_char(rw_cde_sms.nrctremp)); -- Desconto de titulo
         vr_texto_sms := REPLACE(vr_texto_sms,'#Valor#',vr_tab_cob(1).vltitulo);
         vr_texto_sms := REPLACE(vr_texto_sms,'#Vencimento#',to_char(vr_tab_cob(1).dtvencto,'DD/MM/YYYY'));
         
@@ -6652,7 +6655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                       pr_dscritic => vr_dscritic);
                                       
         -- atualizar registro de controle que o SMS foi enviado;                                      
-        UPDATE tbepr_cobranca 
+        UPDATE tbrecup_cobranca 
            SET indretorno = 2
               ,dtretorno = SYSDATE
          WHERE ROWID = rw_cde_sms.rowid_cde;                                                     
@@ -6814,10 +6817,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                cde.nrcnvcob,
                cde.nrboleto,
                cde.rowid rowid_cde
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
               ,crapcco cco
          WHERE cco.nrconven = pr_nrconven
-           AND cco.dsorgarq = 'EMPRESTIMO'
+           AND cco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO')
            AND cde.cdcooper = cco.cdcooper
            AND cde.nrdconta_cob = pr_nrdconta
            AND cde.nrcnvcob = cco.nrconven
@@ -6964,7 +6967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                                    pr_des_erro => vr_des_erro,
                                                    pr_dscritic => vr_dscritic);                              
                                                    
-                     UPDATE tbepr_cobranca SET indretorno = to_number(vr_tab_string(5))
+                     UPDATE tbrecup_cobranca SET indretorno = to_number(vr_tab_string(5))
                                               ,dtretorno = SYSDATE
                       WHERE ROWID = rw_cde_sms.rowid_cde;
                                                    
@@ -7054,8 +7057,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 																,pr_nrdocmto IN crapcob.nrdocmto%TYPE --> Nr docmto
 																,pr_cdoperad IN crapope.cdoperad%TYPE --> Cód operador
 																,pr_idorigem IN NUMBER                --> Id origem
-																,pr_tpdenvio IN tbepr_cobranca.tpenvio%TYPE DEFAULT 0  --> Tipo de envio
-																,pr_dsdemail IN tbepr_cobranca.dsemail%TYPE DEFAULT '' --> Email
+																,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE DEFAULT 0  --> Tipo de envio
+																,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT '' --> Email
 																,pr_nmarqpdf OUT VARCHAR2             --> Nome do arquivo em PDF
 																,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -7113,12 +7116,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
        vr_flgativo INTEGER := 0;
 			---------------------------- CURSORES -----------------------------------
 			CURSOR cr_tbepr_cde(pr_cdcooper crapcop.cdcooper%TYPE
-												 ,pr_nrctacob tbepr_cobranca.nrdconta_cob%TYPE
-												 ,pr_nrcnvcob tbepr_cobranca.nrcnvcob%TYPE
-												 ,pr_nrdocmto tbepr_cobranca.nrboleto%TYPE) IS
+												 ,pr_nrctacob tbrecup_cobranca.nrdconta_cob%TYPE
+												 ,pr_nrcnvcob tbrecup_cobranca.nrcnvcob%TYPE
+												 ,pr_nrdocmto tbrecup_cobranca.nrboleto%TYPE) IS
 				SELECT cde.nrdconta
               ,cde.nrctremp
-					FROM tbepr_cobranca cde
+					FROM tbrecup_cobranca cde
 				 WHERE cde.cdcooper = pr_cdcooper
 					 AND cde.nrdconta_cob = pr_nrctacob
 					 AND cde.nrcnvcob = pr_nrcnvcob
@@ -7450,10 +7453,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 	END pc_gerar_pdf_boletos;
 
   -- Procedure para calcular a data de pagamento para contratos TR
-  PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
+  PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
-                               ,pr_nrdconta IN tbepr_cobranca.nrdconta%TYPE --> Numero da conta
-                               ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE --> Numero do contrato
+                               ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE --> Numero da conta
+                               ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE --> Numero do contrato
                                ,pr_vlpreemp IN crapepr.vlpreemp %TYPE       --> Valor da prestacao
                                ,pr_dtdpagto IN OUT crapepr.dtdpagto%TYPE    --> Data do pagamento
                                ,pr_dtvencto IN crawepr.dtvencto%TYPE        --> Data vencimento
