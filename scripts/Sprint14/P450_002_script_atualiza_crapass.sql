@@ -20,6 +20,7 @@ declare
        ; -- apenas os que ainda nao foram processados
   --Variáveis de trabalho
   w_contador  number(10) := 0;
+
 --
 BEGIN
   dbms_output.put_line('inicio: ' || to_char(SYSDATE,'hh24:mi:ss'));

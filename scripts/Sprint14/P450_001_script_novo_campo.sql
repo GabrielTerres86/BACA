@@ -23,9 +23,3 @@ create index CECRED.CRAPASS##CRAPASS9 on CECRED.CRAPASS (CDCOOPER, NRCPFCNPJ_BAS
   );
  
  
- -- 
- SELECT nrcpfcgc,nrdconta
-  FROM crapass a
- WHERE a.cdcooper = 1
-   AND a.NRCPFCNPJ_BASE = 3925280
-   ;
