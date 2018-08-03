@@ -15,17 +15,16 @@
 
 	$cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-  $vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(".",",",$_POST['vlrpagto']) : 0;
+    $vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(",",".",$_POST['vlrpagto']) : 0;
   
-  // pagamento de prejuízo via liberação de saque		
+    // pagamento de prejuízo via liberação de saque		
 
 	$xml2  = "<Root>";
 	$xml2 .= " <Dados>";
 	$xml2 .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml2 .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml2 .= "   <tpope>S</tpope>";
-	$xml2 .= "   <cdoperad>" .$glbvars["cdoperad"]."</cdoperad>";
-	$xml2 .= "   <vlrlanc>" .$vlrpagto ."</vlrlanc>";
+	$xml2 .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+	$xml2 .= "   <vlrlanc>".$vlrpagto ."</vlrlanc>";
 	$xml2 .= " </Dados>";
 	$xml2 .= "</Root>";
 
@@ -36,6 +35,8 @@
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos',"",false);
-	}	
+	}else{
+		exibirErro('inform','Liberação efetuada com sucesso!','Alerta - Ayllos',"",false);
+	}
 
 ?>

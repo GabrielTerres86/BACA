@@ -11,8 +11,8 @@
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
-	require_once("../../includes/config.php");
-	require_once("../../includes/funcoes.php");
+	require_once("../../../includes/config.php");
+	require_once("../../../includes/funcoes.php");
 	
 ?>
 

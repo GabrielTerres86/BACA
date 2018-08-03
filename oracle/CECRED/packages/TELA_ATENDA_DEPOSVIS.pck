@@ -61,6 +61,19 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                              ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);  
+                             
+  -- efetua pagamento de empréstimo
+  PROCEDURE pc_paga_emprestimo_ct(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                 ,pr_vlrpagto  IN NUMBER                --> valor pago
+                                 ,pr_vlrabono  IN NUMBER                --> valor de abono pago
+                                 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);                               
                                      
   -- consulta data de inclusão prejuízo
   PROCEDURE pc_consulta_dt_preju(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
@@ -864,7 +877,7 @@ END pc_busca_saldos_devedores;
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
           pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+                                         '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
         WHEN OTHERS THEN
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
@@ -872,6 +885,72 @@ END pc_busca_saldos_devedores;
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
 
   END pc_paga_prejuz_cc;
+  
+  PROCEDURE pc_paga_emprestimo_ct(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                 ,pr_vlrpagto  IN NUMBER                --> valor pago
+                                 ,pr_vlrabono  IN NUMBER                --> valor de abono pago
+                                 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2)  IS                                 
+  /* .............................................................................
+
+  Programa: pc_paga_emprestimo_ct
+  Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+  Sigla   : EMPR
+  Autor   : Diego Simas
+  Data    : Agosto/2018.                    Ultima atualizacao:
+
+  Dados referentes ao programa:
+
+  Frequencia: Sempre que for chamado
+
+  Objetivo  : Efetua pagamento de empréstimo.
+
+  Alteracoes:
+     
+  ..............................................................................*/  
+                                 
+    -- erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+  BEGIN
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    -- PROCEDURE/FUNCAO -> RANGEL (AMcom)
+    -- Fazer a chamada de pagamento do empréstimo
+    -- Tratamento de erros
+    -- vr_dscritic := 'erro teste de erro';
+    -- RAISE vr_exc_erro;
+
+    
+    EXCEPTION             
+        WHEN vr_exc_erro THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
+        WHEN OTHERS THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+
+  END pc_paga_emprestimo_ct;
   
   PROCEDURE pc_consulta_dt_preju(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado

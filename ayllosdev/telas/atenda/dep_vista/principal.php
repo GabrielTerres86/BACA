@@ -16,7 +16,7 @@
                  11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
                  12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
 			 	 26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória)
-				   			  P450 - Diego Simas - AMcom
+				   			  P450 - Diego Simas - AMcom								 
 
 	 ************************************************************************/
 
@@ -241,7 +241,7 @@
 		<label for="vlsldctr"><? echo utf8ToHtml('Saldo:') ?></label>
 		<input name="vlsldctr" id="vlsldctr" type="text" value="<?php echo number_format(str_replace(",",".",$sldatuct),2,",","."); ?>" />
 		<div style="float: right; padding-right: 5px;">
-			<a href="#" class="botao" id="btDetalhesCT" onClick="mostraDetalhesCT();" style="padding: 3px 6px;">Detalhes</a>
+			<a href="#" class="botao" id="btDetalhesCT" onClick="mostraDetalhesCT();return false;" style="padding: 3px 6px;">Detalhes</a>
 		</div>
 	</fieldset>
   

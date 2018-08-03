@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  �ltima Altera��o: 01/08/2018
+   Data : Fevereiro/2007                  �ltima Altera��o: 03/08/2018
 
    Objetivo  : Biblioteca de fun��es da rotina Dep. Vista da tela
                ATENDA
@@ -28,6 +28,8 @@
                             P450 - Diego Simas - AMcom
 			   01/08/2018 - Ajuste nos campos do pagamento do prejuízo da conta transitória
 			   				PJ450 - Diego Simas - AMcom
+			   03/08/2018 - Campos do pagamento do empréstimo (Conta Transitória)
+                            P450 - Diego Simas - AMcom
 
  ***********************************************************************/
 
@@ -1028,7 +1030,7 @@ function mostraLiberacaoCC() {
 	});
 }
 
-function mostraPagamentoEmp(){
+function mostraPagamentoEmp(nrctremp){
 	showMsgAguardo('Aguarde, abrindo detalhes da conta transitoria...');
 
 	exibeRotina($('#divUsoGenerico'));
@@ -1050,6 +1052,9 @@ function mostraPagamentoEmp(){
 			hideMsgAguardo();
 			$('#divUsoGenerico').html(response);
 			bloqueiaFundo($('#divUsoGenerico'));
+			if(nrctremp != null){
+				$('#nrctremp', '#frmEmpCC').val(nrctremp);
+			}
 		}
 	});
 }
@@ -1099,16 +1104,27 @@ function formataEmprestimo() {
 	var Lvlpagto = $('label[for="vlpagto"]', '#frmEmpCC');
 	var Cvlpagto = $('#vlpagto', '#frmEmpCC');
 
-	Lvlpagto.addClass('rotulo').css({ 'width': '45px' });
+	Lvlpagto.addClass('rotulo').css({ 'width': '80px' });
 	Cvlpagto.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
 
 	Cvlpagto.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', '');
 
+	var Lvlabono = $('label[for="vlabono"]', '#frmEmpCC');
+	var Cvlabono = $('#vlabono', '#frmEmpCC');
+
+	Lvlabono.addClass('rotulo').css({ 'width': '80px' });
+	Cvlabono.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+
+	Cvlabono.setMask('DECIMAL', 'zzz.zzz.zz9,99', '.', '');
+
 	var Lnrctremp = $('label[for="nrctremp"]', '#frmEmpCC');
 	var Cnrctremp = $('#nrctremp', '#frmEmpCC');
 
-	Lnrctremp.addClass('rotulo').css({ 'width': '55px' });
-	Cnrctremp.css({ 'width': '110px' }).addClass('inteiro').attr('maxlength', '14');
+	Lnrctremp.addClass('rotulo').css({ 'width': '80px' });
+	Cnrctremp.css({ 'width': '110px', 'text-align': 'right' }).attr('maxlength', '14');
+
+	Cnrctremp.setMask('INTEGER', 'zzz.zzz.zzz.9', '.', '');
+
 }
 
 // início contrato
@@ -1120,7 +1136,7 @@ function mostraContrato(campo, formulario) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/ativpb/contrato.php',
+		url: UrlSite + 'telas/atenda/dep_vista/contrato.php',
 		data: {
 			redirect: 'html_ajax'
 		},
@@ -1129,8 +1145,7 @@ function mostraContrato(campo, formulario) {
 			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
 		},
 		success: function (response) {
-			$('#divRotina').html(response);
-			$('#divRotina').css({ 'z-index': '500' });
+			$('#divUsoGenerico').html(response);
 			buscaContrato(campo, formulario, nrdconta);
 			return false;
 		}
@@ -1146,7 +1161,7 @@ function buscaContrato(campo, formulario, nrdconta) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/ativpb/busca_contrato.php',
+		url: UrlSite + 'telas/atenda/dep_vista/busca_contrato.php',
 		data: {
 			nrdconta: nrdconta,
 			redirect: 'script_ajax'
@@ -1160,7 +1175,7 @@ function buscaContrato(campo, formulario, nrdconta) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
 					$('#divConteudo').html(response);
-					exibeRotina($('#divRotina'));
+					exibeRotina($('#divUsoGenerico'));
 					formataContrato(campo, formulario);
 					return false;
 				} catch (error) {
@@ -1214,7 +1229,7 @@ function formataContrato(campo, formulario) {
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
 	hideMsgAguardo();
-	bloqueiaFundo($('#divRotina'));
+	//bloqueiaFundo($('#divUsoGenerico1'));
 
 	return false;
 }
@@ -1225,16 +1240,15 @@ function selecionaContrato(campo, formulario) {
 
 		$('table > tbody > tr', '#divContrato').each(function () {
 			if ($(this).hasClass('corSelecao')) {
-				if (formulario == "#frmCad") {
-					$('#nrctremp', '#frmCad').val($('#nrctremp', $(this)).val());
-				} else {
-					$('#nrctrato', '#frmFiltro').val($('#nrctremp', $(this)).val());
-				}
+				mostraPagamentoEmp($('#nrctremp', $(this)).val());
 			}
 		});
 	}
 
-	fechaRotina($('#divRotina'));
+	//fechaRotina($('#divUsoGenerico'));
+	//exibeRotina($('#divUsoGenerico'));
+	
+
 	return false;
 
 }
@@ -1264,8 +1278,9 @@ function numberToReal(numero) {
 }
 
 function efetuaPagamentoPrejuizoCC() {
+
 	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
-	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;
+	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0; 
 
 	if (validaPagamentoPreju() == false) {
 		return false;
@@ -1290,9 +1305,9 @@ function efetuaPagamentoPrejuizoCC() {
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1) {
-				showError("inform", 'Pagamento efetuado com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
+				showError("inform", 'Pagamento de Prejuízo efetuado com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
 			} else {
-				showError("error", 'Não foi possível efetuar o pagamento.', "Alerta - Ayllos", mostraDetalhesCT());
+				eval(response);
 			}
 		}
 	});
@@ -1323,10 +1338,40 @@ function efetuaLiberacaoCC(vlPagto) {
 			if (response.indexOf('showError("error"') == -1) {
 				showError("inform", 'Liberação efetuada com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
 			} else {
-				showError("error", 'Não foi possível efetuar a liberação.', "Alerta - Ayllos", mostraDetalhesCT());
+				eval(response);
 			}
 		}
 	});    
+	
+	return false;
+
+}
+
+function efetuaPagamentoEmp(nrctremp, vlpagto, vlabono) {
+	
+	showMsgAguardo('Aguarde, efetuando pagamento...');
+	exibeRotina($('#divUsoGenerico'));
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/paga_emprestimo.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			nrctremp: nrctremp,
+			vlrpagto: vlpagto,
+			vlrabono: vlabono,
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			eval(response);			
+		}
+	});
 	
 	return false;
 

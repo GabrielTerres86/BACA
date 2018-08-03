@@ -13,10 +13,10 @@
  
 <?
 	session_start();
-	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');
-	require_once('../../includes/controla_secao.php');	
-	require_once('../../class/xmlfile.php');
+	require_once('../../../includes/config.php');
+	require_once('../../../includes/funcoes.php');
+	require_once('../../../includes/controla_secao.php');	
+	require_once('../../../class/xmlfile.php');
 	isPostMethod();		
 	
 	// Guardo os parâmetos do POST em variáveis	
@@ -44,7 +44,6 @@
 		
 	$registros = $xmlObjeto->roottag->tags[0]->tags;
 	
-	//$registros = $xmlObj->roottag->tags[0]->tags;
 	include('tab_contrato.php');
 							
 ?>

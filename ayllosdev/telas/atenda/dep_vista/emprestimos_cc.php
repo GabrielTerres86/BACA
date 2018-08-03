@@ -1,9 +1,9 @@
 <?
 /*
- * FONTE        : liberacao_cc.php
+ * FONTE        : emprestimos_cc.php
  * CRIAÇÃO      : Diego Simas (AMcom)
- * DATA CRIAÇÃO : 04/07/2018
- * OBJETIVO     : Tela para entrada de informações de liberação de saque.
+ * DATA CRIAÇÃO : 03/08/2018
+ * OBJETIVO     : Tela para entrada de informações de pagamento de empréstimo.
    ALTERACOES   :
  */
 	session_start();
@@ -23,7 +23,7 @@
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
 								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><?php echo utf8ToHtml('Pagamento de Empréstimo'); ?></td>
-								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="mostraDetalhesCT();"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="mostraDetalhesCT(); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
 						</table>
@@ -34,15 +34,10 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px 2px 8px;">
-									<!-- <div id="divLibCC" align="left" > -->
-                  
 										<form id="frmEmpCC" name="frmEmpCC" class="formulario">
 											
 											<table width="100%"> 
-                                                <tr>
-													<td><label for="vlpagto">&nbsp;&nbsp;<?php echo utf8ToHtml('Valor:') ?></label></td>
-													<td><input type="text" id="vlpagto" name="vlpagto" class="moeda campo" /></td>
-												</tr>												
+                                                												
                                                 <tr>
 													<td><label for="nrctremp">&nbsp;&nbsp;<?php echo utf8ToHtml('Contrato:') ?></label></td>
 													<td><input type="text" id="nrctremp" name="nrctremp" class="campo"/>
@@ -51,16 +46,26 @@
                                                         </a>
                                                     </td>
 												</tr>
+
+												<tr>
+													<td><label for="vlpagto">&nbsp;&nbsp;<?php echo utf8ToHtml('Pagamento:') ?></label></td>
+													<td><input type="text" id="vlpagto" name="vlpagto" class="moeda campo" /></td>
+												</tr>
+
+												<tr>
+													<td><label for="vlabono">&nbsp;&nbsp;<?php echo utf8ToHtml('Abono:') ?></label></td>
+													<td><input type="text" id="vlabono" name="vlabono" class="moeda campo" /></td>
+												</tr>
+
 											</table>
 										
 										</form>
 										
 										<div id="divBotoes">
-											<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"    onClick="mostraDetalhesCT();" />
-											<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="pedeSenha($('#vlpagto', '#frmLibCC').val());" />
+											<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"    onClick="mostraDetalhesCT(); return false;" />
+											<input type="image" id="btSalvar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="pedeSenha($('#nrctremp', '#frmEmpCC').val(),$('#vlpagto', '#frmEmpCC').val(),$('#vlabono', '#frmEmpCC').val());" />
 										</div>                    
-                    
-									<!-- </div> -->
+                    									
 								</td>
 							</tr>
 						</table>
@@ -74,13 +79,12 @@
 <script type="text/javascript">
 
 	// Formata layout
-	formataEmprestimo();
+	formataEmprestimo();  
 
-    /*
-	function pedeSenha(valorPagto){		 
+	function pedeSenha(nrctremp, valorPagto, valorAbono){		 
 		 var vlpagto = retiraMascara(valorPagto) || 0; 
-	     pedeSenhaCoordenador(2,'efetuaLiberacaoCC('+vlpagto+')','');		 
+		 var vlabono = retiraMascara(valorAbono) || 0; 		 
+		 efetuaPagamentoEmp(nrctremp, vlpagto, vlabono);		 	     
 	}
-    */
 	
 </script>
