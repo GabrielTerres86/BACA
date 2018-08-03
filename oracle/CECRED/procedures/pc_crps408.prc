@@ -202,6 +202,10 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                             que aparecem rapidamente no BD no inicio do batch.
                             (SCTASK0015571) - (Fabricio)
  
+               01/08/2018 - Adaptar a regra que envia o literal6 para impressão da frase "Cheque especial"
+                            no talonário, para verificar se o cooperado possui limite de crédito habilitado
+                            na conta. (Renato Darosci)
+
 ............................................................................. */
 
   -- Data do movimento
@@ -1250,7 +1254,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           ELSE
             vr_literal5 := 'Cooperado desde: '||to_char(vr_dtabtcc2,'MM/YYYY')|| '          ';
           END IF;
-          /*
+          
+          -- Se o cooperado tem cheque especial habilitado na conta
+          IF CADA0003.fn_produto_habilitado(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => rw_crapass.nrdconta
+                                           ,pr_cdproduto => 13) = 'S'   THEN
+            vr_literal6 := 'CHEQUE ESPECIAL';
+          END IF;
+          /*  SUBSTITUÍDA A REGRA ANTIGA, PELA VERIFICAÇÃO DO PRODUTO 13 - LIMITE CHEQUE ESPECIAL
           IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
                                      11, --CONJ.ESP.CONV.
                                      13, --ESPECIAL ITG
