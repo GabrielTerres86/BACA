@@ -196,8 +196,13 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
  
                21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
                             PRJ366 (Lombardi).
-                            
-               11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)
+
+               11/07/2018 - Ajuste feito para tratar requisicoes com agencia zerada. (INC0019189 - Kelvin/Wagner)                            
+
+			   01/08/2018 - Adaptar a regra que envia o literal6 para impressão da frase "Cheque especial"
+                            no talonário, para verificar se o cooperado possui limite de crédito habilitado
+                            na conta. (Renato Darosci)
+
 ............................................................................. */
 
   -- Data do movimento
@@ -538,19 +543,19 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     
     -- variavel para verificacao do dia de processamento de envio da requisicao
     vr_dtcalcul        DATE;
-
-  BEGIN
+    
+    BEGIN       
 
     -- Verifica arquivo de controle para buscar sequencial do talao.
     OPEN cr_gnsequt;
     FETCH cr_gnsequt INTO rw_gnsequt;
     IF cr_gnsequt%NOTFOUND THEN
       CLOSE cr_gnsequt;
-      pr_cdcritic := 151;
+        pr_cdcritic := 151;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       raise vr_exc_saida;
-    END IF;
-
+      END IF;
+       
     rw_gnsequt.vlsequtl := rw_gnsequt.vlsequtl + 1;
 
     -- Atualiza arquivo de controle
@@ -558,8 +563,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       UPDATE gnsequt
          SET vlsequtl = rw_gnsequt.vlsequtl
        WHERE ROWID = rw_gnsequt.rowid;
-    EXCEPTION
-    WHEN OTHERS THEN
+    EXCEPTION 
+      WHEN OTHERS THEN 
       pr_dscritic := 'Erro ao atualizar gnsequt: '||SQLERRM;
       RAISE vr_exc_saida;
     END;
@@ -1233,7 +1238,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           ELSE
             vr_literal5 := 'Cooperado desde: '||to_char(vr_dtabtcc2,'MM/YYYY')|| '          ';
           END IF;
-          /*
+          
+          -- Se o cooperado tem cheque especial habilitado na conta
+          IF CADA0003.fn_produto_habilitado(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => rw_crapass.nrdconta
+                                           ,pr_cdproduto => 13) = 'S'   THEN
+            vr_literal6 := 'CHEQUE ESPECIAL';
+          END IF;
+          /*  SUBSTITUÍDA A REGRA ANTIGA, PELA VERIFICAÇÃO DO PRODUTO 13 - LIMITE CHEQUE ESPECIAL
           IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
                                      11, --CONJ.ESP.CONV.
                                      13, --ESPECIAL ITG
