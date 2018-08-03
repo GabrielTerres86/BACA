@@ -51,6 +51,8 @@
   
 			 28/04/2018 - Inclusão de novas colunas na grid de borderô (Alex Sandro  - GFT)
 
+			 03/08/2018 - Inclusão de dois novos campos de risco na tabela de bordero(Vitor Shimada Assanuma - GFT)
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -596,6 +598,8 @@ function formataLayout(nomeForm){
 		var Ltxdiaria = $('label[for="txdiaria"]','#'+nomeForm);
 		var Ldsopelib = $('label[for="dsopelib"]','#'+nomeForm);
 		var Ltxjurmor = $('label[for="txjurmor"]','#'+nomeForm);
+		var Linnivris = $('label[for="innivris"]','#'+nomeForm);
+		var Lqtdiaatr = $('label[for="qtdiaatr"]','#'+nomeForm);
 		
 		var Cdspesqui = $('#dspesqui','#'+nomeForm);
 		var Cnrborder = $('#nrborder','#'+nomeForm);
@@ -609,6 +613,8 @@ function formataLayout(nomeForm){
 		var Ctxdiaria = $('#txdiaria','#'+nomeForm);
 		var Cdsopelib = $('#dsopelib','#'+nomeForm);
 		var Ctxjurmor = $('#txjurmor','#'+nomeForm);
+		var Cinnivris = $('#innivris','#'+nomeForm);
+		var Cqtdiaatr = $('#qtdiaatr','#'+nomeForm);
 		
 		$('#'+nomeForm).css('width','480px');
 		
@@ -625,6 +631,8 @@ function formataLayout(nomeForm){
 		Ltxdiaria.addClass('rotulo').css('width','110px');
 		Ldsopelib.css('width','110px');
 		Ltxjurmor.addClass('rotulo').css('width','110px');
+		Linnivris.css('width','110px');
+		Lqtdiaatr.css('width','110px');
 		
 		Cdspesqui.css({'width':'200px'});
 		Cnrborder.css({'width':'60px','text-align':'right'});
@@ -638,6 +646,8 @@ function formataLayout(nomeForm){
 		Ctxdiaria.css({'width':'100px','text-align':'right'});
 		Cdsopelib.css({'width':'100px'});
 		Ctxjurmor.css({'width':'100px'});
+		Cinnivris.css({'width':'100px'});
+		Cqtdiaatr.css({'width':'100px'});
 		
 		Cdspesqui.desabilitaCampo();
 		Cnrborder.desabilitaCampo();
@@ -651,6 +661,8 @@ function formataLayout(nomeForm){
 		Ctxdiaria.desabilitaCampo();
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
+		Cinnivris.desabilitaCampo();
+		Cqtdiaatr.desabilitaCampo();
 			
 	}else if ( nomeForm == 'divPropostas' ){
 

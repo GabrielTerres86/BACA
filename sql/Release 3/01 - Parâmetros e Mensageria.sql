@@ -535,5 +535,9 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 /*Critica de bordero antigo para importação*/
 INSERT INTO tbgen_motivo (idmotivo,dsmotivo,cdproduto) VALUES (68,'Borderô cadastrado pelo modelo antigo',31);
 
+/* Mensageria Busca dados bordero */
+INSERT INTO CRAPACA(NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) 
+   VALUES (SEQACA_NRSEQACA.NEXTVAL,'BUSCA_DADOS_BORDERO','DSCT0002','pc_busca_dados_bordero_web','pr_nrdconta,pr_nrborder,pr_cddopcao',(SELECT nrseqrdr FROM craprdr WHERE nmprogra ='TELA_ATENDA_DESCTO'));
+
 commit;
 end;
