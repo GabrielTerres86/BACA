@@ -177,8 +177,10 @@ IF  par_flglsext  THEN
                                    "</flgdetal><idlstdom>" +
                                    STRING(tt-extrato_conta.idlstdom) +
                                    "</idlstdom><dscomple>"+
-								   TRIM(STRING(tt-extrato_conta.dscomple)) +
-								  "</dscomple></DADOS>".
+                                   TRIM(STRING(tt-extrato_conta.dscomple)) +
+                                   "</dscomple><dsidenti>" + 
+                                   TRIM(tt-extrato_conta.dsidenti) +
+                                   "</dsidenti></DADOS>".
         
         END. /** Fim do FOR EACH tt-extrato_conta **/
     END.
