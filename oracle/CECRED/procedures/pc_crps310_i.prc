@@ -1752,7 +1752,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   pr_vlprxpar crapris.vlprxpar%TYPE,    --> valor da proxima parcela para o fluxo financeiro
                                   pr_qtparcel crapris.qtparcel%TYPE,    --> quantidade de parcelas para o fluxo financeiro
                                   pr_dtvencop crapris.dtvencop%TYPE,    --> data de vencimento da operacao
-                                  pr_vlsld59d crapris.vlsld59d%TYPE DEFAULT 0, --> Valor do saldo devedor até 59 dias (usado inicialmente apenas para ADP - Reginaldo/AMcom - P450)
                                   pr_des_erro      OUT VARCHAR2,
                                   pr_index_crapris OUT PLS_INTEGER
                                   ) IS
@@ -1765,7 +1764,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_crapris(vr_index_crapris).innivris   := pr_innivris;
         vr_tab_crapris(vr_index_crapris).qtdiaatr   := pr_qtdiaatr;
         vr_tab_crapris(vr_index_crapris).vldivida   := pr_vldivida;
-        vr_tab_crapris(vr_index_crapris).vlsld59d   := pr_vlsld59d;
         vr_tab_crapris(vr_index_crapris).vlvec180   := pr_vlvec180;
         vr_tab_crapris(vr_index_crapris).vlvec360   := pr_vlvec360;
         vr_tab_crapris(vr_index_crapris).vlvec999   := pr_vlvec999;
@@ -5569,7 +5567,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_innivris => vr_risco_aux
                                 ,pr_qtdiaatr => nvl(vr_qtdiaatr,0)
                                 ,pr_vldivida => vr_vlsrisco -- [Contratado - Utilizado]
-                               -- ,pr_vlsld59d => vr_vlsld59d -- Saldo devedor até 59 dias (saldo devedor total menos os juros +60)
                                 ,pr_vlvec180 => nvl(vr_vlvec180,0)
                                 ,pr_vlvec360 => nvl(vr_vlvec360,0)
                                 ,pr_vlvec999 => nvl(vr_vlvec999,0)
@@ -6390,7 +6387,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               innivris,
                               qtdiaatr,
                               vldivida,
-                              vlsld59d,
                               vlvec180,
                               vlvec360,
                               vlvec999,
@@ -6432,7 +6428,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                               vr_tab_crapris(idx).innivris,
                               vr_tab_crapris(idx).qtdiaatr,
                               vr_tab_crapris(idx).vldivida,
-                              vr_tab_crapris(idx).vlsld59d,
                               vr_tab_crapris(idx).vlvec180,
                               vr_tab_crapris(idx).vlvec360,
                               vr_tab_crapris(idx).vlvec999,
@@ -6549,7 +6544,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       innivris,
                       qtdiaatr,
                       vldivida,
-                      vlsld59d,
                       vlvec180,
                       vlvec360,
                       vlvec999,
@@ -6591,7 +6585,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       vr_tab_crapris(idx).innivris,
                       vr_tab_crapris(idx).qtdiaatr,
                       vr_tab_crapris(idx).vldivida,
-                      vr_tab_crapris(idx).vlsld59d,
                       vr_tab_crapris(idx).vlvec180,
                       vr_tab_crapris(idx).vlvec360,
                       vr_tab_crapris(idx).vlvec999,
