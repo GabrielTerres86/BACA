@@ -13,6 +13,7 @@ Alteracoes: 29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Od
 
             06/10/2017 - Ajuste no bloco de transacao da rotina de estorno NPC (Rafael)
 
+            02/08/2018 - Incluir novo parametro na chamada da rotina pc_cancelar_baixa_operac (Renato Darosci)
 ..............................................................................*/
 { sistema/generico/includes/var_oracle.i }
 
@@ -105,6 +106,7 @@ DEFINE VARIABLE p-literal   AS CHARACTER  NO-UNDO.
 DEFINE VARIABLE p-ult-sequencia AS INTEGER    NO-UNDO.
 DEFINE VARIABLE aux_dscritic AS CHARACTER     NO-UNDO.
 DEFINE VARIABLE aux_des_erro AS CHARACTER     NO-UNDO.
+DEFINE VARIABLE v_idpenden   AS INTEGER       NO-UNDO.
 
 DEFINE VARIABLE p-registro  AS RECID      NO-UNDO.
 
@@ -558,7 +560,7 @@ PROCEDURE process-web-request :
         ASSIGN v_tit4      = string(dec(get-value("v_ptit4")),"9").
         ASSIGN v_tit5      = string(dec(get-value("v_ptit5")),"zz,zzz,zzz,zzz999").
         ASSIGN v_cdctrbxo  = get-value("v_pcdctrbxo").
-    
+        
         IF get-value("ok") <> "" THEN
         DO:
             ASSIGN l-houve-erro = NO
@@ -647,6 +649,8 @@ PROCEDURE process-web-request :
                           IF v_cdctrbxo <> "" THEN
                           DO:
                             
+                            ASSIGN v_idpenden = 0.
+                            
                             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                       
 
@@ -656,6 +660,7 @@ PROCEDURE process-web-request :
                                                         ,INPUT "0"          /* pr_idtitdda Id~ entificador Titulo DDA */
                                                         ,INPUT v_cdctrbxo   /* pr_cdctrlcs Numero controle consulta NPC */
                                                         ,INPUT v_codbarras  /* pr_cdcodbar Codigo de barras do titulo */
+                                                        ,INPUT-OUTPUT v_idpenden /*  */
                                                         ,OUTPUT ""          /* pr_des_erro Indicador erro OK/NOK */
                                                         ,OUTPUT "" ).       /* pr_dscritic Descricao erro */
 

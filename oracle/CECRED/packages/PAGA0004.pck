@@ -1640,6 +1640,7 @@ create or replace package body cecred.PAGA0004 is
     vr_dsprotoc      crappro.dsprotoc%TYPE;
     vr_pg            INTEGER;
     
+    vr_idpenden      NUMBER;
     -----------> SubPrograma <------------
    
 
@@ -1985,10 +1986,14 @@ create or replace package body cecred.PAGA0004 is
     --> Requisitar cancelamento da baixa operacional CIP 
     -->  Se possuir codigo de controle de baixa operacional 
     IF TRIM(pr_cdctrbxo) IS NOT NULL THEN
+      
+      vr_idpenden := 0; -- Passa zero, indicando que não está processando pendencias
+    
       DDDA0001.pc_cancelar_baixa_operac ( pr_cdlegado => 'LEGWS'       --> Codigo Legado
                                          ,pr_idtitdda => '0'           --> Identificador Titulo DDA
                                          ,pr_cdctrlcs => pr_cdctrbxo   --> Numero controle consulta NPC
                                          ,pr_cdcodbar => pr_cdbarras   --> Codigo de barras do titulo
+                                         ,pr_idpenden => vr_idpenden   --> Indica o processamento da pendencia
                                          ,pr_des_erro => vr_des_erro   --> Indicador erro OK/NOK
                                          ,pr_dscritic => vr_dscritic); --> Descricao erro
     
