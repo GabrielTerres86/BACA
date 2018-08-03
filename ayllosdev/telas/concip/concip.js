@@ -83,7 +83,9 @@ function estadoInicial() {
     controlaFoco();
 
     $('#dtinicio', '#frmArquivo').val(dtmvtolt);
-    $('#dtafinal', '#frmArquivo').val(dtmvtolt).removeAttr('tabindex');
+    $('#dtafinal', '#frmArquivo').val(dtmvtolt);
+
+    $('input, select', '#frmArquivo').removeAttr('tabindex');
 
     $('#cddopcao', '#frmCab').habilitaCampo().val(cddopcao);
     $('#cddopcao', '#' + frmCab).focus();
@@ -355,6 +357,48 @@ function controlaFoco() {
 
     $('#dtafinal', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#tpArquivo', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#tpArquivo', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#bcoliquidante', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#bcoliquidante', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#credenciadora', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#credenciadora', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#dtinicioliq', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#dtinicioliq', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#dtfinalliq', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#dtfinalliq', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#formtran', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#formtran', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             controlaOperacao('A');
             return false;
         }
@@ -443,7 +487,7 @@ function controlaFoco() {
 
     $('#cdlancto', '#frmConta').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#cddoprod', '#frmConta').focus();
+            $('#nmarquiv', '#frmConta').focus();
             return false;
         }
     });
