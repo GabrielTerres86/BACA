@@ -54,7 +54,7 @@ function estadoInicial() {
     $('#divListaConciliacao').html('');
 
     // PRJ 486 - Ajuste de layout para voltar ao tamanho original da tela
-    $('#divListaArquivo').css('width','800px');
+    $('#divTela').css('width','800px');
 
     trocaBotao('voltaPrincipal');
 
@@ -84,10 +84,6 @@ function estadoInicial() {
 
     $('#dtinicio', '#frmArquivo').val(dtmvtolt);
     $('#dtafinal', '#frmArquivo').val(dtmvtolt).removeAttr('tabindex');
-	// PRJ 486
-    $('#dtinicioliq', '#frmArquivo').val(dtmvtolt);
-    $('#dtfinalliq', '#frmArquivo').val(dtmvtolt);
-	// Fim PRJ 486
 
     $('#cddopcao', '#frmCab').habilitaCampo().val(cddopcao);
     $('#cddopcao', '#' + frmCab).focus();

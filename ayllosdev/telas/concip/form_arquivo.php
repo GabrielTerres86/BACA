@@ -57,7 +57,7 @@ isPostMethod();
     <br style="clear:both" />
 </form>
 
-<div id="divListaArquivo" name="divListaArquivo" style="display:none;" width="1000"></div>
+<div id="divListaArquivo" name="divListaArquivo" style="display:none;"></div>
 
 <div id="divBotoesArquivo" style="display:none; margin-bottom: 15px; text-align:center; margin-top: 15px;">
     <a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Voltar</a>
