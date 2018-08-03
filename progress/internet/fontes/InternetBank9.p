@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2008.                       Ultima atualizacao: 22/02/2016
+   Data    : Marco/2008.                       Ultima atualizacao: 02/08/2018
 
    Dados referentes ao programa:
 
@@ -17,6 +17,9 @@
                             Chamado: 161874 (Jonathan/RKAM).
                22/02/2016 - Alterado chamada da procedure consulta-lancamento-periodo para
                             conulta-lancto-car  - Projeto melhoria 157 (Lucas Ranghetti #330322)              
+                            
+               02/08/2018 - Ajustar para nao gerar mais LOG (Douglas - PRJ 285 Nova Conta Online)
+                               
 ..............................................................................*/
     
 create widget-pool.
@@ -54,7 +57,7 @@ IF  VALID-HANDLE(h-b1wgen0003)  THEN
                                  INPUT 3,
                                  INPUT par_idseqttl,
                                  INPUT "INTERNETBANK",
-                                 INPUT TRUE,
+                                 INPUT FALSE, /* nao gerar mais log */
                                  INPUT par_dtiniper,
                                  INPUT par_dtfimper,
                                  INPUT par_indebcre,

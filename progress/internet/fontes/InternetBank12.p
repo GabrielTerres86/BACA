@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 30/05/2018
+   Data    : Marco/2007                        Ultima atualizacao: 02/08/2018
 
    Dados referentes ao programa:
 
@@ -30,6 +30,8 @@
                             deste servico (Anderson - P285)
               
 			   30/05/2018 - Adicionado campo dscomple no xml (Alcemir Mout's - Prj. 467).
+
+               02/08/2018 - Ajustar para nao gerar mais LOG (Douglas - PRJ 285 Nova Conta Online)
 
 ..............................................................................*/
     
@@ -106,7 +108,7 @@ IF  par_flglsext  THEN
                                               INPUT par_dtfimper,
                                               INPUT par_inirgext,
                                               INPUT par_qtregpag,
-                                              INPUT TRUE,
+                                              INPUT FALSE, /* nao gerar mais log */
                                              OUTPUT aux_qtextrat,
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-extrato_conta).

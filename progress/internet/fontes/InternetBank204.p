@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Douglas Quisinski
-   Data    : Agosto/2017                       Ultima atualizacao:   /  /    
+   Data    : Agosto/2017                       Ultima atualizacao: 02/08/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -13,7 +13,7 @@
                de agendamento de pagamento pela Internet 
                Internet.
    
-   Alteracoes: 
+   Alteracoes: 02/08/2018 - Ajustar para nao gerar mais LOG (Douglas - PRJ 285 Nova Conta Online)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -138,8 +138,6 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
                 ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + 
                                       "</dsmsgerr>".
                 
-                RUN proc_geracao_log (INPUT FALSE).
-                
                 RETURN "NOK".
             END.
             
@@ -198,43 +196,3 @@ ASSIGN xml_operacao.dslinxml = " <LIMITE>" +
                                "   <cdagectl>" + STRING(aux_cdagectl) + "</cdagectl>" + 
                                "   <dtadesao>" + STRING(aux_dtadesao,"99/99/9999") + "</dtadesao>" +                                
                                " </LIMITE>".
-
-RUN proc_geracao_log (INPUT TRUE).
-
-    
-/*................................ PROCEDURES ................................*/
-
-PROCEDURE proc_geracao_log:
-    
-    DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
-    
-    RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
-        SET h-b1wgen0014.
-        
-    IF  VALID-HANDLE(h-b1wgen0014)  THEN
-        DO:
-            RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
-                                          INPUT "996",
-                                          INPUT aux_dscritic,
-                                          INPUT "INTERNET",
-                                          INPUT aux_dstransa,
-                                          INPUT aux_datdodia,
-                                          INPUT par_flgtrans,
-                                          INPUT TIME,
-                                          INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
-                                          INPUT par_nrdconta,
-                                          OUTPUT aux_nrdrowid).
-                                          
-             RUN gera_log_item IN h-b1wgen0014
-                          (INPUT aux_nrdrowid,
-                           INPUT "Origem",
-                           INPUT "",
-                           INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
-                 
-            DELETE PROCEDURE h-b1wgen0014.
-        END.
-    
-END PROCEDURE.
- 
-/*............................................................................*/
