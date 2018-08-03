@@ -8,9 +8,6 @@
  * ALTERAÇÃO    :
  * --------------
  */
-?>
-
-<?php
 session_start();
 
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -107,6 +104,7 @@ include('../../includes/carrega_permissoes.php');
                                                                                     <?php include('form_cabecalho.php'); ?>
                                                                                     <?php include('form_arquivo.php'); ?>
                                                                                     <?php include('form_conta.php'); ?>
+                                                                                    <?php include('form_conciliacao.php'); ?>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
