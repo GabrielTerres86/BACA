@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 01/09/2015
  * OBJETIVO     : Biblioteca de funções da tela CONCIP
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Credenciadora e Liquidação nos Filtros (PRJ 486 - Mateus Z / Mouts)
  *
  * --------------
  */
@@ -53,6 +53,8 @@ function estadoInicial() {
     $('#divBotoesConciliacao').css({'display': 'none'});
     $('#divListaConciliacao').html('');
 
+    // PRJ 486 - Ajuste de layout para voltar ao tamanho original da tela
+    $('#divTela').css('width','800px');
 
     trocaBotao('voltaPrincipal');
 
@@ -81,7 +83,9 @@ function estadoInicial() {
     controlaFoco();
 
     $('#dtinicio', '#frmArquivo').val(dtmvtolt);
-    $('#dtafinal', '#frmArquivo').val(dtmvtolt).removeAttr('tabindex');
+    $('#dtafinal', '#frmArquivo').val(dtmvtolt);
+
+    $('input, select', '#frmArquivo').removeAttr('tabindex');
 
     $('#cddopcao', '#frmCab').habilitaCampo().val(cddopcao);
     $('#cddopcao', '#' + frmCab).focus();
@@ -138,6 +142,9 @@ function controlaOpcao() {
         $('#frmConciliacao').css({'display': 'block'});
         $('#divBotoesConciliacao').css({'display': 'block'});
         $('#dtlcto', '#frmConciliacao').focus();
+
+        //chama o metodo de popular combos ao mostrar o frmConciliacao
+        $('#frmConciliacao').ready(populaCombosConciliacao);
     }
     else {
 
@@ -204,17 +211,35 @@ function formataFrmArquivo() {
     // cabecalho
     rDtinicio = $('label[for="dtinicio"]', '#frmArquivo');
     rDtafinal = $('label[for="dtafinal"]', '#frmArquivo');
+    // PRJ 486
+    rDtinicioliq = $('label[for="dtinicioliq"]', '#frmArquivo');
+    rDtfinalliq  = $('label[for="dtfinalliq"]', '#frmArquivo');
+    rFormtran    = $('label[for="formtran"]', '#frmArquivo');
+    // Fim PRJ 486    
 
     cDtinicio = $('#dtinicio', '#frmArquivo');
     cDtafinal = $('#dtafinal', '#frmArquivo');
+    // PRJ 486
+    cDtinicioliq = $('#dtinicioliq', '#frmArquivo');
+    cDtfinalliq  = $('#dtfinalliq', '#frmArquivo');
+    // Fim PRJ 486
 
     cTodosFrmArquivo = $('input[type="text"],select', '#frmArquivo');
 
     rDtinicio.css({'width': '75'});
     rDtafinal.css({'width': '28px'});
+    // PRJ 486
+    rDtinicioliq.addClass('rotulo').css({'width': '75'});
+    rDtfinalliq.css({'width': '28px'});
+    rFormtran.addClass('rotulo-linha');
+    // Fim PRJ 486
 
     cDtinicio.css({'width': '75px'}).setMask('DATE', '', '', '');
     cDtafinal.css({'width': '75px'}).setMask('DATE', '', '', '');
+    // PRJ 486
+    cDtinicioliq.css({'width': '75px'}).setMask('DATE', '', '', '');
+    cDtfinalliq.css({'width': '75px'}).setMask('DATE', '', '', '');
+    // Fim PRJ 486
 
     cTodosFrmArquivo.habilitaCampo();
     $('#btConsultar', '#divBotoesArquivo').show();
@@ -332,6 +357,48 @@ function controlaFoco() {
 
     $('#dtafinal', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#tpArquivo', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#tpArquivo', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#bcoliquidante', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#bcoliquidante', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#credenciadora', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#credenciadora', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#dtinicioliq', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#dtinicioliq', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#dtfinalliq', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#dtfinalliq', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#formtran', '#frmArquivo').focus();
+            return false;
+        }
+    });
+
+    $('#formtran', '#frmArquivo').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             controlaOperacao('A');
             return false;
         }
@@ -346,10 +413,20 @@ function controlaFoco() {
 
     $('#dtlcto', '#frmConciliacao').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            // PRJ 486
+            $('#credenciadorasstr', '#frmConciliacao').focus();
+            return false;
+        }
+    });
+
+    // PRJ 486
+    $('#credenciadorasstr', '#frmConciliacao').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             controlaOperacao('STR');
             return false;
         }
     });
+    // Fim PRJ 486    
 
     $('#cddregio', '#frmConta').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -410,7 +487,7 @@ function controlaFoco() {
 
     $('#cdlancto', '#frmConta').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#cddoprod', '#frmConta').focus();
+            $('#nmarquiv', '#frmConta').focus();
             return false;
         }
     });
@@ -490,6 +567,10 @@ function buscaArquivos(nriniseq, nrregist) {
     var bcoliquidante = $('#bcoliquidante', '#frmArquivo').val();
     var credenciadora = $('#credenciadora', '#frmArquivo').val();
     var formtran = $('#formtran', '#frmArquivo').val();
+	// PRJ 486
+    var dtinicioliq = $('#dtinicioliq', '#frmArquivo').val();
+    var dtfinalliq = $('#dtfinalliq', '#frmArquivo').val();
+	// Fim PRJ 486
 
     nriniseqAtual = nriniseq;
 
@@ -512,6 +593,10 @@ function buscaArquivos(nriniseq, nrregist) {
                     nriniseq: nriniseq,
                     nrregist: nrregist,
                 formtran: formtran,
+				// PRJ 486
+                dtinicioliq: dtinicioliq,
+                dtfinalliq: dtfinalliq,
+				// Fim PRJ 486
                     redirect: 'script_ajax'
                 },
         error: function(objAjax, responseError, objExcept) {
@@ -555,6 +640,8 @@ function buscaArquivos(nriniseq, nrregist) {
 function buscaConciliacaoSTR(){
     var cddopcao = $('#cddopcao', '#frmCab').val();
     var dtlcto = $('#dtlcto', '#frmConciliacao').val();
+    // PRJ 486
+    var credenciadorasstr = $('#credenciadorasstr', '#frmConciliacao').val();
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando consulta ...");
@@ -568,6 +655,8 @@ function buscaConciliacaoSTR(){
         {
             cddopcao: cddopcao,
             dtlcto: dtlcto,
+            // PRJ 486
+            credenciadorasstr: credenciadorasstr,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -775,7 +864,7 @@ function formataArquivos() {
 
     $('table > tbody > tr:eq(0)', divRegistro).click();
 
-    $('#divListaArquivo').css('width','1000px');
+    $('#divTela').css('width','1000px');
 
     return false;
 }
@@ -819,6 +908,7 @@ function formataConciliacao(){
     cVlPagamentos.css({'text-align': 'right', 'float': 'right'});
     cVlReceber.css({'text-align': 'right', 'float': 'right'});
     cVlPagar.css({'text-align': 'right', 'float': 'right'});
+
 }
 
 
@@ -1331,4 +1421,42 @@ function selecionaArquivos(tr){
     $('#fsqterros').val( $('#qterros', tr ).val() );
     $('#fsvlerros').val( $('#vlerros', tr ).val() );
 
+}
+
+// PRJ 486 popula combo de filtragem de credenciadorasstr da Opcao S
+function populaCombosConciliacao(){
+
+    //limpa os filtros antes de popular
+    $('#credenciadorasstr').empty();
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/concip/carrega_filtros.php",
+        dataType: 'json',
+        data: {
+            redirect: "script_ajax"
+        },
+        error: function(objAjax, responseError, objExcept) {
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                if (response.credenciadorasstr.item.length > 0) {
+                    //popula combo credenciadorasstr
+                    $.each(response.credenciadorasstr.item, function (i, val) {
+                        $('#credenciadorasstr').append($('<option>', { value: val.ispb, text: val.nome }));
+                    });
+                } else {
+                    $('#credenciadorasstr').append($('<option>', { value: response.credenciadorasstr.item.ispb, 
+                                                                   text: response.credenciadorasstr.item.nome }));
+                }
+            }
+            catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+
+    return false;
 }

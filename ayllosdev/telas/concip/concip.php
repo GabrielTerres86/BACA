@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 12/08/2015 
  * OBJETIVO     : Mostra rotina Cobranca de Emprestimos
  * --------------
- * ALTERAÇÃO    :
+ * ALTERAÇÃO    : 23/07/2018 - Adicionado keyrand para o concip.js (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 session_start();
@@ -46,7 +46,7 @@ include('../../includes/carrega_permissoes.php');
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.core.js"></script>
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
         <script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
-        <script type="text/javascript" src="concip.js"></script>
+        <script type="text/javascript" src="concip.js?keyrand=<?php echo mt_rand(); ?>"></script>
 
     </head>
     <body>
