@@ -864,7 +864,7 @@ function formataArquivos() {
 
     $('table > tbody > tr:eq(0)', divRegistro).click();
 
-    $('#divListaArquivo').css('width','1000px');
+    $('#divTela').css('width','1000px');
 
     return false;
 }
