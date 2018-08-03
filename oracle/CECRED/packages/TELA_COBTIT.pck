@@ -425,7 +425,7 @@ create or replace package body cecred.TELA_COBTIT is
           (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insitapr=1) AS qtaprova,
           (SELECT SUM(vltitulo) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insitapr=1) AS vlaprova,
           (SELECT COUNT(1) FROM craptdb tdb WHERE tdb.nrborder = bdt.nrborder AND tdb.nrdconta=bdt.nrdconta AND tdb.cdcooper=bdt.cdcooper AND tdb.insittit=4 AND  gene0005.fn_valida_dia_util(pr_cdcooper, tdb.dtvencto)<pr_dtmvtolt) AS qtvencid,
-          (NVL((SELECT (cyc.flgjudic + cyc.flextjud + cyc.flgehvip)
+          (NVL((SELECT COUNT(1)
             FROM craptdb tdb
               INNER JOIN tbdsct_titulo_cyber ttc ON ttc.cdcooper = tdb.cdcooper AND ttc.nrdconta = tdb.nrdconta AND ttc.nrborder = tdb.nrborder AND ttc.nrtitulo = tdb.nrtitulo
               INNER JOIN crapcyc cyc ON ttc.nrctrdsc = cyc.nrctremp AND ttc.cdcooper = cyc.cdcooper AND ttc.nrdconta = cyc.nrdconta AND cyc.cdorigem = 4
@@ -433,6 +433,7 @@ create or replace package body cecred.TELA_COBTIT is
               AND tdb.nrdconta = bdt.nrdconta
               AND tdb.nrborder = bdt.nrborder
               AND tdb.insittit = 4
+              AND (cyc.flgjudic = 1  OR cyc.flextjud=1 OR cyc.flgehvip=1)
               AND gene0005.fn_valida_dia_util(14, tdb.dtvencto) < pr_dtmvtolt),0)) AS qtjexvip,
           (SELECT SUM(vltitulo) 
             FROM craptdb tdb 
@@ -1043,7 +1044,7 @@ create or replace package body cecred.TELA_COBTIT is
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       when others then
            /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro nao tratado na TELA_COBTIT.pc_buscar_bordero_vencido_web ' ||sqlerrm;
+           pr_dscritic := 'erro nao tratado na TELA_COBTIT.pc_buscar_titulo_vencido_web ' ||sqlerrm;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -1150,8 +1151,9 @@ create or replace package body cecred.TELA_COBTIT is
    vr_dsinform          VARCHAR2(400);
    vr_dstitulo          VARCHAR2(200);
    vr_vltitulo          NUMBER;
-	 vr_dsorigem VARCHAR2(1000) := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
-	 vr_nrdrowid ROWID;
+   vr_dsorigem VARCHAR2(1000) := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
+   vr_nrdrowid ROWID;
+   vr_tpparcela tbrecup_cobranca.tpparcela%TYPE;
    -- Sacado do boleto
    vr_cdtpinsc crapass.inpessoa%TYPE;
    vr_nrinssac crapass.nrcpfcgc%TYPE;
@@ -1216,6 +1218,7 @@ create or replace package body cecred.TELA_COBTIT is
    vr_index_tit := vr_tab_dados_titulos.first;
    vr_dstitulo := '';
    vr_vltitulo := 0;
+   vr_tpparcela := 2;
    while vr_index is not null LOOP
      /*Valida a ordem dos títulos selecionados*/
      IF (pr_titpagar(vr_index).nrtitulo<>vr_tab_dados_titulos(vr_index_tit).nrtitulo) THEN
@@ -1229,6 +1232,7 @@ create or replace package body cecred.TELA_COBTIT is
          vr_dscritic := 'Todos os títulos, com exceção o último, devem ser pagos integralmente.';
          RAISE vr_exc_erro;
        END IF;
+       vr_tpparcela := 3;
      END IF;
      /*Valor acima da dívida*/
      IF (pr_titpagar(vr_index).vlapagar>vr_tab_dados_titulos(vr_index_tit).vlpagar) THEN
@@ -1246,6 +1250,9 @@ create or replace package body cecred.TELA_COBTIT is
      vr_index := pr_titpagar.next(vr_index);
      vr_index_tit := vr_tab_dados_titulos.next(vr_index_tit);
    END LOOP;
+   IF (pr_titpagar.count<vr_tab_dados_titulos.count) THEN 
+     vr_tpparcela := 3;
+   END IF;
    vr_dstitulo := SUBSTR(vr_dstitulo,1,LENGTH(vr_dstitulo)-2);
    
    /* Verifica se o boleto atinge o valor mínimo cadastrado */
@@ -1421,7 +1428,7 @@ create or replace package body cecred.TELA_COBTIT is
 																			 ,pr_cdmensag => 0
 																			 ,pr_dsdoccop => to_char(pr_nrborder)
 																			 ,pr_vltitulo => vr_vltitulo
-                                       ,pr_dsinform => vr_dsinform
+                                                                             ,pr_dsinform => vr_dsinform
 																			 ,pr_cdoperad => 1
 																			 ,pr_cdcritic => vr_cdcritic
 																			 ,pr_dscritic => vr_dscritic
@@ -1433,42 +1440,43 @@ create or replace package body cecred.TELA_COBTIT is
 				 RAISE vr_exc_erro;
 			END IF;
       /*Insere na tabela de ligacao do boleto gerado com os titulos*/
-      INSERT INTO tbrecup_cobranca (cdcooper
-			                           ,nrdconta
-																 ,nrctremp
-																 ,nrdconta_cob
-																 ,nrcnvcob
-																 ,nrboleto
-																 ,dsparcelas
-																 ,dhtransacao
-																 ,tpenvio
-																 ,tpparcela
-																 ,cdoperad
-                                 ,nrcpfava
-                                 ,idarquivo
-                                 ,idboleto
-                                 ,peracrescimo
-                                 ,perdesconto
-                                 ,vldesconto
-                                 ,tpproduto)
-													VALUES(pr_cdcooper
-													      ,pr_nrdconta
-																,pr_nrborder
-																,vr_nrdconta_cob
-																,vr_nrcnvcob
-																,vr_tab_cob(1).nrdocmto
-																,vr_dstitulo
-																,SYSDATE
-																,0
-																,0
-																,pr_cdoperad
-                                ,pr_nrcpfava
-                                ,pr_idarquiv
-                                ,pr_idboleto
-                                ,pr_peracres
-                                ,pr_perdesco
-                                ,pr_vldescto
-                                ,3);--bordero
+      INSERT INTO tbrecup_cobranca
+             (/*01*/ cdcooper
+             ,/*02*/ nrdconta
+             ,/*03*/ nrctremp
+             ,/*04*/ nrdconta_cob
+             ,/*05*/ nrcnvcob
+             ,/*06*/ nrboleto
+             ,/*07*/ dsparcelas
+             ,/*08*/ dhtransacao
+             ,/*09*/ tpenvio
+             ,/*10*/ tpparcela
+             ,/*11*/ cdoperad
+             ,/*12*/ nrcpfava
+             ,/*13*/ idarquivo
+             ,/*14*/ idboleto
+             ,/*15*/ peracrescimo
+             ,/*16*/ perdesconto
+             ,/*17*/ vldesconto
+             ,/*18*/ tpproduto)
+       VALUES(/*01*/ pr_cdcooper
+             ,/*02*/ pr_nrdconta
+             ,/*03*/ pr_nrborder
+             ,/*04*/ vr_nrdconta_cob
+             ,/*05*/ vr_nrcnvcob
+             ,/*06*/ vr_tab_cob(1).nrdocmto
+             ,/*07*/ vr_dstitulo
+             ,/*08*/ SYSDATE
+             ,/*09*/ 0
+             ,/*10*/ vr_tpparcela
+             ,/*11*/ pr_cdoperad
+             ,/*12*/ pr_nrcpfava
+             ,/*13*/ pr_idarquiv
+             ,/*14*/ pr_idboleto
+             ,/*15*/ pr_peracres
+             ,/*16*/ pr_perdesco
+             ,/*17*/ pr_vldescto
+             ,/*18*/ 3);--bordero
                                 
       pr_vltitulo := vr_tab_cob(1).vltitulo;
       pr_nrboleto := vr_tab_cob(1).nrdocmto;
@@ -6143,7 +6151,7 @@ create or replace package body cecred.TELA_COBTIT is
           IF rw_crapbdt.flverbor=0 THEN
             pc_inclui_critica(pr_idarquivo => rw_arquivo.idarquivo,
                               pr_idboleto  => vr_idboleto,
-                              pr_idmotivo  => 67, -- Borderô criado no modelo antigo.
+                              pr_idmotivo  => 68, -- Borderô criado no modelo antigo.
                               pr_vlrcampo  => vr_vet_dado(3));
             vr_lin_nrborder := 0;
           END IF;
