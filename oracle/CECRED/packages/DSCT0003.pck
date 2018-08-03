@@ -7914,7 +7914,7 @@ EXCEPTION
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
                          ,pr_nrdconta => pr_nrdconta
-                         ,pr_vllanmto => (pr_vlpagmto - rw_craptdb.vlsldtit)
+                         ,pr_vllanmto => vr_vlpagmto
                          ,pr_cdhistor => vr_cdhistordsct_credito
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_cdoperad => pr_cdoperad

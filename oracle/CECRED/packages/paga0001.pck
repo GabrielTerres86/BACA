@@ -1619,8 +1619,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
        27/03/2018 - Ajustes referente ao PRJ352
                                      
-
-	   27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. Inclusão de PRAGMA (Mario Bernat - AMcom)
+       27/06/2018 - Incidente INC0017437 - Ajuste no insert CRAPCRE. Inclusão de PRAGMA (Mario Bernat - AMcom)
+    
+       27/07/2018 - Alterado os procedimentos pc_prep_tt_lcm_consolidada e pc_valores_a_creditar para tratar os 
+                    pagamentos realizados pela COBTIT. (Paulo Penteado GFT)
 		
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -15033,12 +15035,15 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --
     --   24/08/2015 - Ajuste no indice de lancamento para adequar ao pagamento de
     --                emprestimo com boleto ref. ao projeto 210. (Rafael)
-	--
-	--   15/02/2016 - Inclusao do parametro para apuração na chamada da
+    --
+    --   15/02/2016 - Inclusao do parametro para apuração na chamada da
     --                TARI0001.pc_busca_dados_tarifa. (Jaison/Marcos)
     --
     --   13/04/2017 - Inclusao do campo cdpesqbb para registrar as informacoes do
     --                titulo, caso precise estornar a tarifa (P340 - Rafael);
+    --
+    --   31/07/2018 - Adicionado tratativa para buscar o número da conta do convênio 
+    --                da COBTIT (Paulo Penteado GFT)
     -- .........................................................................
   BEGIN
     DECLARE
@@ -15056,18 +15061,18 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       rw_crapcco cr_crapcco%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper  IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob  IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob  IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto  IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_tpproduto IN tbrecup_cobranca.tpproduto%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
           FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
            AND cde.nrboleto     = pr_nrdocmto
-           AND cde.tpproduto    = 0;
+           AND cde.tpproduto    = pr_tpproduto;
       rw_cde cr_cde%ROWTYPE;
 
       -- Buscar o número da conta do cooperado no qual foi feito o acordo
@@ -15097,7 +15102,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_tar_cdfvlcop INTEGER;
       vr_inpessoa     INTEGER;
       vr_cdmotivo     craptar.cdmotivo%TYPE;
-	  vr_dsorgarq     crapcco.dsorgarq%TYPE;
+      vr_dsorgarq     crapcco.dsorgarq%TYPE;
       --Variavel Indice tabela
       vr_index VARCHAR2(40);
       --Tabela de memoria de erros
@@ -15112,7 +15117,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
-	  vr_dsorgarq:= NULL;
+      vr_dsorgarq:= NULL;
       --Selecionar registro cobranca
       OPEN cr_crapcob (pr_rowid => pr_idtabcob);
       --Posicionar no proximo registro
@@ -15191,7 +15196,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           vr_vltarifa:= 0;
           vr_cdhistor:= 0;
         ELSE
-		  vr_dsorgarq:= rw_crapcco.dsorgarq;
+          vr_dsorgarq:= rw_crapcco.dsorgarq;
           vr_vltarifa:= pr_vltarifa;
           --Se historico passado = 0
           IF nvl(pr_cdhistor,0) = 0 THEN
@@ -15200,13 +15205,30 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_cdhistor:= pr_cdhistor;
           END IF;
 
-          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN -- boleto de contrato de emprestimo
+          -- Boleto da COBTIT
+          IF rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
 
-             OPEN cr_cde(pr_cdcooper => rw_crapcob.cdcooper
-                        ,pr_nrctacob => rw_crapcob.nrdconta
-                        ,pr_nrcnvcob => rw_crapcob.nrcnvcob
-                        ,pr_nrdocmto => rw_crapcob.nrdocmto
-                        ,pr_nrctremp => rw_crapcob.nrctremp);
+             OPEN cr_cde(pr_cdcooper  => rw_crapcob.cdcooper
+                        ,pr_nrctacob  => rw_crapcob.nrdconta
+                        ,pr_nrcnvcob  => rw_crapcob.nrcnvcob
+                        ,pr_nrdocmto  => rw_crapcob.nrdocmto
+                        ,pr_tpproduto => 3);
+             FETCH cr_cde INTO rw_cde;
+
+             /* atribuir a conta do cooperado para pagto de emprestimo */
+             IF cr_cde%FOUND THEN
+                rw_crapcob.nrdconta := rw_cde.nrdconta;
+             END IF;
+
+             CLOSE cr_cde;
+
+          ELSIF nvl(rw_crapcob.nrctremp,0) > 0 THEN -- boleto de contrato de emprestimo
+
+             OPEN cr_cde(pr_cdcooper  => rw_crapcob.cdcooper
+                        ,pr_nrctacob  => rw_crapcob.nrdconta
+                        ,pr_nrcnvcob  => rw_crapcob.nrcnvcob
+                        ,pr_nrdocmto  => rw_crapcob.nrdocmto
+                        ,pr_tpproduto => 0);
              FETCH cr_cde INTO rw_cde;
 
              /* atribuir a conta do cooperado para pagto de emprestimo */
@@ -15244,7 +15266,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --Se Encontrou tarifa
       IF vr_vltarifa > 0 THEN
         --Montar indice para acessar tabela
-        IF nvl(rw_crapcob.nrctremp,0) > 0 OR vr_dsorgarq = 'ACORDO' THEN
+        IF nvl(rw_crapcob.nrctremp,0) > 0 OR vr_dsorgarq = 'ACORDO' OR vr_dsorgarq = 'DESCONTO DE TITULO' THEN
            vr_index:= LPad(rw_crapcob.cdcooper,3,'0')||
                       LPad(rw_crapcob.nrdconta,10,'0')||
                       LPad(rw_crapcob.nrcnvcob,7,'0')||
@@ -20446,18 +20468,18 @@ end;';
       rw_cursor2 cr_cursor2%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper  IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob  IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob  IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto  IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_tpproduto IN tbrecup_cobranca.tpproduto%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
           FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
            AND cde.nrboleto     = pr_nrdocmto
-           AND cde.tpproduto    = 0;
+           AND cde.tpproduto    = pr_tpproduto;
       rw_cde cr_cde%ROWTYPE;
 
       vr_cdcritic INTEGER;
@@ -20467,13 +20489,6 @@ end;';
       --Variaveis de Excecao
       vr_exc_erro    EXCEPTION;
       vr_erro_update EXCEPTION;
-
-      vr_vldescto NUMBER;
-      vr_vlabatim NUMBER;
-      vr_vlrjuros NUMBER;
-      vr_vlrmulta NUMBER;
-      vr_vlfatura NUMBER;
-      vr_flgvenci BOOLEAN;
 
       -- Variaveis para o valor que deve ser transferido para outra conta
       vr_dstextab_new_lcto craptab.dstextab%TYPE;
@@ -20666,6 +20681,133 @@ end;';
                pr_dscritic:= 'Erro na rotina pc_valores_a_creditar. '||SQLERRM;
           END;
         END pc_verifica_vencto;
+        
+      PROCEDURE pc_trata_histor_pgto(pr_idtabcob IN ROWID
+                                    ,pr_cdhistor IN OUT craphis.cdhistor%TYPE
+                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR2    --> Descricao da critica
+                                    ) IS
+        /*---------------------------------------------------------------------------------------------------------
+          Programa : pc_trata_histor_pgto
+          Sistema  : Ayllos
+          Sigla    : 
+          Autor    : Paulo Penteado (GFT)
+          Data     : Julho/2018
+        
+          Objetivo  : Procedure utilizada para tratamento de código de históricos quando o pagamento do titulo 
+                      for vencido, ou com valor a menor, ou pela COMPEFORA
+        
+          Alteração : 31/07/2018 - Criação (Paulo Penteado (GFT))
+        
+        ----------------------------------------------------------------------------------------------------------*/
+        vr_vldescto NUMBER;
+        vr_vlrjuros NUMBER;
+        vr_vlrmulta NUMBER;
+        vr_vlfatura NUMBER;
+        vr_flgvenci BOOLEAN;
+        
+        -- Variável de críticas
+        vr_cdcritic crapcri.cdcritic%TYPE;
+        vr_dscritic VARCHAR2(10000);
+        
+        -- Tratamento de erros
+        vr_exc_erro EXCEPTION;
+           
+      BEGIN
+        OPEN cr_cursor2 ( pr_idtabcob => pr_idtabcob);
+        FETCH cr_cursor2 INTO rw_cursor2;
+        CLOSE cr_cursor2;
+
+        vr_vlfatura := rw_cursor2.vltitulo;
+
+        --Verificar Vencimento Titulo
+        pc_verifica_vencto (pr_cdcooper => rw_cursor2.cdcooper  --Codigo da cooperativa
+                           ,pr_dtmvtolt => pr_dtmvtolt          --Data para verificacao
+                           ,pr_cddbanco => rw_cursor2.cdbcorec  --Codigo do Banco
+                           ,pr_cdagenci => rw_cursor2.cdagerec  --Codigo da Agencia
+                           ,pr_dtboleto => rw_cursor2.dtvencto  --Data do Titulo
+                           ,pr_flgvenci => vr_flgvenci          --Indicador titulo vencido
+                           ,pr_cdcritic => vr_cdcritic          --Codigo do erro
+                           ,pr_dscritic => vr_dscritic );       --Descricao do erro
+
+        /* calculo de abatimento deve ser antes da aplicacao de juros e multa */
+        IF nvl(rw_cursor2.vlabatim,0) > 0 THEN
+           --Diminuir valor do abatimento na fatura
+           vr_vlfatura:= nvl(rw_cursor2.vltitulo,0) - nvl(rw_cursor2.vlabatim,0);
+        END IF;
+
+        /* trata o desconto se concede apos o vencimeto */
+        IF rw_cursor2.cdmensag = 2 THEN
+           --Valor desconto recebe valor bordero cobranca
+           vr_vldescto:= rw_cursor2.vldescto;
+           --Diminuir valor dodesconto na fatura
+           vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
+        END IF;
+
+        /* verifica se o titulo esta vencido */
+        IF vr_flgvenci THEN
+           /* MULTA PARA ATRASO */
+           CASE rw_cursor2.tpdmulta
+             WHEN 1 THEN /* Valor */
+               vr_vlrmulta:= rw_cursor2.vlrmulta;
+               --Acumular valor dos juros na fatura
+               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
+             WHEN 2 THEN /* % de multa do valor  do boleto */
+               vr_vlrmulta:= (rw_cursor2.vlrmulta * vr_vlfatura) / 100;
+               --Acumular valor dos juros na fatura
+               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
+             ELSE NULL;
+           END CASE;
+           /* MORA PARA ATRASO */
+           CASE rw_cursor2.tpjurmor
+             WHEN 1 THEN /* dias */
+               vr_vlrjuros:= rw_cursor2.vljurdia * (pr_dtmvtolt - rw_cursor2.dtvencto);
+               --Acumular valor dos juros na fatura
+               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
+             WHEN 2 THEN /* mes */
+               vr_vlrjuros:= APLI0001.fn_round((rw_cursor2.vltitulo *
+                                          ((rw_cursor2.vljurdia / 100) / 30) *
+                                           (pr_dtmvtolt - rw_cursor2.dtvencto)),2);
+               --Acumular valor dos juros na fatura
+               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
+             ELSE NULL;
+           END CASE;
+         ELSE
+           /* se concede apos vencto, ja calculou */
+           IF rw_cursor2.cdmensag <> 2  THEN
+             --Valor desconto
+             vr_vldescto:= nvl(rw_cursor2.vldescto,0);
+             --Diminuir o desconto da fatura
+             vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
+           END IF;
+        END IF; --vr_flgvenci
+
+        -- se o boleto foi pago vencido ou a menor, o histórico de pagto
+        -- do boleto de contrato deverá ser o 2001;
+        IF vr_flgvenci OR
+          ( ROUND(rw_cursor2.vlrpagto,2) < ROUND(vr_vlfatura,2) AND
+            rw_cursor2.cdocorre NOT IN (17,77)) THEN
+           pr_cdhistor := 2001; -- CREDITO BOLETO CONTRATO MOTIVO XXX
+        END IF;
+
+        -- se o boleto foi pago e o processo rodou na COMPEFORA, utilizar
+        -- histórico 2002;
+        IF pr_nmtelant = 'COMPEFORA' THEN
+           pr_cdhistor := 2002;
+        END  IF;
+
+      EXCEPTION
+        WHEN vr_exc_erro then
+             IF  vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+             END IF;
+             pr_cdcritic := vr_cdcritic;
+             pr_dscritic := vr_dscritic;
+        
+        WHEN OTHERS THEN
+             pr_cdcritic := nvl(vr_cdcritic,0);
+             pr_dscritic := 'Erro geral na rotina DSCT0001.pc_valores_a_creditar.pc_trata_histor_pgto: '||SQLERRM;
+      END pc_trata_histor_pgto; 
 
     BEGIN
 
@@ -20695,48 +20837,76 @@ end;';
             -- Se o boleto foi pago na 85 e na própria cooperativa, então histórico 987 ou 1689 (VR Boleto),
             -- senão, se VR Boleto então 1688 ou então quem vai decidir o histórico é a pc_prep_tt_lcm_consolidada
             IF rw_cursor1.cdbcorec = 85 AND rw_cursor1.cdagerec = rw_crapcop.cdagectl THEN
-               IF rw_cursor1.vlrpagto >= 250000 THEN
-                  vr_cdhistor := 1689; -- Histórico para pagto de VR Boleto no caixa;
-               ELSE
-                  IF rw_cursor1.cdocorre IN (6,76) THEN
-										IF rw_cursor1.cdmotivo = '08' THEN
-											IF rw_cursor1.cdbandoc = 85 THEN
-												--
-										  vr_cdhistor := 2631; -- liq boleto em cartorio
-												--
-											ELSE
-												--
-												vr_cdhistor := 0;
-												--
-											END IF;
+              IF rw_cursor1.vlrpagto >= 250000 THEN
+                 vr_cdhistor := 1689; -- Histórico para pagto de VR Boleto no caixa;
+              ELSE
+                IF rw_cursor1.cdocorre IN (6,76) THEN
+                  IF rw_cursor1.cdmotivo = '08' THEN
+                    IF rw_cursor1.cdbandoc = 85 THEN
+                      vr_cdhistor := 2631; -- liq boleto em cartorio
                     ELSE
-                  vr_cdhistor := 987;
-										END IF;
-                  ELSIF rw_cursor1.cdocorre IN (17,77) THEN
-                     vr_cdhistor := 1762; -- historico novo - liq apos bx caixa online
+                      vr_cdhistor := 0;
+                    END IF;
                   ELSE
-                     vr_cdhistor := 0;
-                  END IF;
-               END IF;
+                    vr_cdhistor := 987;
+										        END IF;
+                ELSIF rw_cursor1.cdocorre IN (17,77) THEN
+                  vr_cdhistor := 1762; -- historico novo - liq apos bx caixa online
+                ELSE
+                  vr_cdhistor := 0;
+                END IF;
+              END IF;
             ELSE
-               IF rw_cursor1.vlrpagto >= 250000 AND rw_cursor1.cdmotivo = '04' THEN
-                  vr_cdhistor := 1688; -- Histórico para pagto de VR Boleto por STR (SPB);
-               ELSE
-                  IF rw_cursor1.cdocorre NOT IN (17,77) THEN
-                     vr_cdhistor := 0;
-                  ELSE
-                     vr_cdhistor := 1089;
-                  END IF;
-               END IF;
+              IF rw_cursor1.vlrpagto >= 250000 AND rw_cursor1.cdmotivo = '04' THEN
+                vr_cdhistor := 1688; -- Histórico para pagto de VR Boleto por STR (SPB);
+              ELSE
+                IF rw_cursor1.cdocorre NOT IN (17,77) THEN
+                  vr_cdhistor := 0;
+                ELSE
+                  vr_cdhistor := 1089;
+                END IF;
+              END IF;
             END IF;
+            
+            IF rw_cursor1.dsorgarq = 'DESCONTO DE TITULO' THEN
 
-            IF nvl(rw_cursor1.nrctremp,0) > 0 THEN
+              OPEN cr_cde(pr_cdcooper  => rw_cursor1.cdcooper
+                         ,pr_nrctacob  => rw_cursor1.nrdconta
+                         ,pr_nrcnvcob  => rw_cursor1.nrcnvcob
+                         ,pr_nrdocmto  => rw_cursor1.nrdocmto
+                         ,pr_tpproduto => 3);
+              FETCH cr_cde INTO rw_cde;
+              IF cr_cde%FOUND THEN
 
-              OPEN cr_cde(pr_cdcooper => rw_cursor1.cdcooper
-                         ,pr_nrctacob => rw_cursor1.nrdconta
-                         ,pr_nrcnvcob => rw_cursor1.nrcnvcob
-                         ,pr_nrdocmto => rw_cursor1.nrdocmto
-                         ,pr_nrctremp => rw_cursor1.nrctremp);
+                -- Tipo da parcela (1-Normal/ 2-Total do Atraso/ 3-Parcial do atraso/ 4-Quitacao Contrato
+                --                  5-Saldo Prejuízo/ 6-Parcial Prejuízo/ 7-Saldo Prejuízo Desconto)
+                CASE rw_cde.tpparcela
+                  --WHEN 1 THEN vr_cdhistor := vr_cdhistor; Considera como se fosse o ELSE do CASE
+                  WHEN 2 THEN vr_cdhistor := 1998;
+                  WHEN 3 THEN vr_cdhistor := 1999;
+                  --WHEN 4 THEN vr_cdhistor := 2000; Não se aplica para desconto de titulos
+                  --WHEN 5 THEN vr_cdhistor := 2278; Prejuizo será desenvolvido futuramente
+                  --WHEN 6 THEN vr_cdhistor := 2277; Prejuizo será desenvolvido futuramente
+                  --WHEN 7 THEN vr_cdhistor := 2278; Prejuizo será desenvolvido futuramente
+                ELSE
+                  vr_cdhistor := vr_cdhistor;
+                END CASE;
+
+                -- se o boleto foi pago e o processo rodou na COMPEFORA, utilizar
+                -- histórico 2002;
+                IF pr_nmtelant = 'COMPEFORA' THEN
+                   vr_cdhistor := 2002;
+                END  IF;
+              END IF;
+              CLOSE cr_cde;
+
+            ELSIF nvl(rw_cursor1.nrctremp,0) > 0 THEN
+
+              OPEN cr_cde(pr_cdcooper  => rw_cursor1.cdcooper
+                         ,pr_nrctacob  => rw_cursor1.nrdconta
+                         ,pr_nrcnvcob  => rw_cursor1.nrcnvcob
+                         ,pr_nrdocmto  => rw_cursor1.nrdocmto
+                         ,pr_tpproduto => 0);
               FETCH cr_cde INTO rw_cde;
 
               /* atribuir a conta do cooperado para pagto de emprestimo */
@@ -20755,90 +20925,11 @@ end;';
                 ELSE
                   vr_cdhistor := vr_cdhistor;
                 END CASE;
-
-                OPEN cr_cursor2 ( pr_idtabcob => rw_cursor1.rowid_cob);
-                FETCH cr_cursor2 INTO rw_cursor2;
-                CLOSE cr_cursor2;
-
-                vr_vlabatim := rw_cursor2.vlabatim;
-                vr_vlfatura := rw_cursor2.vltitulo;
-
-                --Verificar Vencimento Titulo
-                pc_verifica_vencto (pr_cdcooper => rw_cursor2.cdcooper  --Codigo da cooperativa
-                                   ,pr_dtmvtolt => pr_dtmvtolt          --Data para verificacao
-                                   ,pr_cddbanco => rw_cursor2.cdbcorec  --Codigo do Banco
-                                   ,pr_cdagenci => rw_cursor2.cdagerec  --Codigo da Agencia
-                                   ,pr_dtboleto => rw_cursor2.dtvencto  --Data do Titulo
-                                   ,pr_flgvenci => vr_flgvenci          --Indicador titulo vencido
-                                   ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                   ,pr_dscritic => vr_dscritic );       --Descricao do erro
-
-                /* calculo de abatimento deve ser antes da aplicacao de juros e multa */
-                IF nvl(rw_cursor2.vlabatim,0) > 0 THEN
-                   --Diminuir valor do abatimento na fatura
-                   vr_vlfatura:= nvl(rw_cursor2.vltitulo,0) - nvl(rw_cursor2.vlabatim,0);
-                END IF;
-
-                /* trata o desconto se concede apos o vencimeto */
-                IF rw_cursor2.cdmensag = 2 THEN
-                   --Valor desconto recebe valor bordero cobranca
-                   vr_vldescto:= rw_cursor2.vldescto;
-                   --Diminuir valor dodesconto na fatura
-                   vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
-                END IF;
-
-                /* verifica se o titulo esta vencido */
-                IF vr_flgvenci THEN
-                   /* MULTA PARA ATRASO */
-                   CASE rw_cursor2.tpdmulta
-                     WHEN 1 THEN /* Valor */
-                       vr_vlrmulta:= rw_cursor2.vlrmulta;
-                       --Acumular valor dos juros na fatura
-                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
-                     WHEN 2 THEN /* % de multa do valor  do boleto */
-                       vr_vlrmulta:= (rw_cursor2.vlrmulta * vr_vlfatura) / 100;
-                       --Acumular valor dos juros na fatura
-                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
-                     ELSE NULL;
-                   END CASE;
-                   /* MORA PARA ATRASO */
-                   CASE rw_cursor2.tpjurmor
-                     WHEN 1 THEN /* dias */
-                       vr_vlrjuros:= rw_cursor2.vljurdia * (pr_dtmvtolt - rw_cursor2.dtvencto);
-                       --Acumular valor dos juros na fatura
-                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
-                     WHEN 2 THEN /* mes */
-                       vr_vlrjuros:= APLI0001.fn_round((rw_cursor2.vltitulo *
-                                                  ((rw_cursor2.vljurdia / 100) / 30) *
-                                                   (pr_dtmvtolt - rw_cursor2.dtvencto)),2);
-                       --Acumular valor dos juros na fatura
-                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
-                     ELSE NULL;
-                   END CASE;
-                 ELSE
-                   /* se concede apos vencto, ja calculou */
-                   IF rw_cursor2.cdmensag <> 2  THEN
-                     --Valor desconto
-                     vr_vldescto:= nvl(rw_cursor2.vldescto,0);
-                     --Diminuir o desconto da fatura
-                     vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
-                   END IF;
-                END IF; --vr_flgvenci
-
-                -- se o boleto foi pago vencido ou a menor, o histórico de pagto
-                -- do boleto de contrato deverá ser o 2001;
-                IF vr_flgvenci OR
-                  ( ROUND(rw_cursor2.vlrpagto,2) < ROUND(vr_vlfatura,2) AND
-                    rw_cursor2.cdocorre NOT IN (17,77)) THEN
-                   vr_cdhistor := 2001; -- CREDITO BOLETO CONTRATO MOTIVO XXX
-                END IF;
-
-                -- se o boleto foi pago e o processo rodou na COMPEFORA, utilizar
-                -- histórico 2002;
-                IF pr_nmtelant = 'COMPEFORA' THEN
-                   vr_cdhistor := 2002;
-                END  IF;
-
+                
+                pc_trata_histor_pgto(pr_idtabcob => rw_cursor1.rowid_cob
+                                    ,pr_cdhistor => vr_cdhistor
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic );
               END IF;
 
               CLOSE cr_cde;
