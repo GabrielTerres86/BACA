@@ -355,6 +355,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              crítica para o job; definição de horários de execução: entre 8h e 22h (Carlos)
   --              09/01/2018 - #826598 Tratamento na rotina pc_controle_remessas para enviar e-mail e abrir
   --                           chamado quando ocorrer erro (Carlos)
+  --              
+  --              03/08/2018 - Ajustes e comentários para definir onde estiver COBEMP para funcionar para COBTIT também - Luis Fernando (GFT)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -911,7 +913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     END;
   END fn_chbusca_ppware;
 
-  -- Função para montagem da string de busca da remessa de envio de arquivos COBEMP --
+  -- Função para montagem da string de busca da remessa de envio de arquivos COBEMP/COBTIT --
   FUNCTION fn_chbusca_cobemp(pr_rowid ROWID) return VARCHAR2 IS
   BEGIN
     /* .............................................................................
@@ -7909,7 +7911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             END IF;
           END IF;
 
-          /* Ignorar se for cobemp ou sms e crb.dtmvtolt < (dia util anterior dias_param) */
+          /* Ignorar se for cobemp/cobtit ou sms e crb.dtmvtolt < (dia util anterior dias_param) */
           vr_datautil := SYSDATE;
           FOR i IN 1 .. vr_dias_cobemp_sms LOOP
             vr_datautil := vr_datautil - 1;
