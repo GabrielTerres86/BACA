@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Outubro/2013                     Ultima atualizacao: 09/06/2015
+   Data    : Outubro/2013                     Ultima atualizacao: 16/07/2018
 
    Dados referentes ao programa:
 
@@ -16,6 +16,8 @@
                              procedure (Andre Santos - SUPERO)
                              
                 09/06/2015 - Remocao de parametros nao usados (Marcos-Supero)             
+                  
+                16/07/2018 - Remocao de parametro nao utilizado (Marcos-Envolti)
                   
 .............................................................................*/   
 { includes/var_batch.i } 
@@ -41,7 +43,6 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps660 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
-    INPUT INT(STRING(glb_flgresta,"1/0")),
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 

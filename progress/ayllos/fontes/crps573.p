@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Agosto/2010                       Ultima atualizacao: 05/12/2013
+   Data    : Agosto/2010                       Ultima atualizacao: 16/07/2018
 
    Dados referentes ao programa:
 
@@ -123,8 +123,11 @@
                              para verifica_conta_migracao_573 que despreza
                              as contas migradas (Tiago).
 
-                04/04/2018 - Incluso parametros para agencia (pr_cdagenci) e identificação de paralelo (default 0)
+                04/04/2018 - Incluso parametros para agencia (pr_cdagenci) 
+                             e identificação de paralelo (default 0)
 				             para atender Projeto Ligeirinho.
+
+                16/07/2018 - Remocao de parametros nao mais utilizados (Marcos-Envolti)
 
 
                              
@@ -153,9 +156,6 @@ ETIME(TRUE).
 
 RUN STORED-PROCEDURE pc_crps573 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,
-    INPUT 0,
-	INPUT 0,                                                  
-    INPUT INT(STRING(glb_flgresta,"1/0")),
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 
