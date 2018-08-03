@@ -144,14 +144,8 @@
 		exit();
 	}
 
-	// Verifica se o bordero foi liberado na versão antiga
+	// Data de liberacao para verificar no JS mais abaixo
 	$dtlibbdt = $bordero[5]->cdata;
-	if ($flgnewbor == 0 && $dtlibbdt){
-		echo '<script type="text/javascript">';
-		echo 'hideMsgAguardo();';
-		echo 'showError("inform","ATEN&Ccedil;&Atilde;O: Border&oacute; liberado no processo antigo!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-		echo '</script>';
-	}
 	
 	// Carrega permissões do operador
 	include("../../../../includes/carrega_permissoes.php");	
@@ -240,6 +234,11 @@ hideMsgAguardo();
 
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
+
+<?php if ($flgnewbor == 0 && $dtlibbdt){ ?>
+	hideMsgAguardo();	
+	showError("inform","ATEN&Ccedil;&Atilde;O: Border&ocirc; liberado no processo antigo!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
+<?php }	?>
 
 flgverbor = <?=$flgverbor?>
 
