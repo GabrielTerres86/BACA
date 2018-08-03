@@ -43,6 +43,8 @@
 							  consultar imagem (Lucas Ranghetti #510032)
 
 				07/06/2018 - Inclusão da regra para mostrar a taxa diária dependendo se for bordero novo ou antigo
+
+				03/08/2018 - Inclusão da regra para mostrar mensagem se for bordero novo ou antigo (Vitor Shimada Assanuma - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -119,6 +121,7 @@
 	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
 	$xml = "<Root>";
 	$xml .= " <Dados>";
+	$xml .= " 	<nrborder>".$nrborder."</nrborder>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -130,6 +133,7 @@
 		exit;
 	}
 	$flgverbor = $root->dados->flgverbor->cdata;
+	$flgnewbor = $root->dados->flgnewbor->cdata;
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -138,6 +142,15 @@
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
+	}
+
+	// Verifica se o bordero foi liberado na versão antiga
+	$dtlibbdt = $bordero[5]->cdata;
+	if ($flgnewbor == 0 && $dtlibbdt){
+		echo '<script type="text/javascript">';
+		echo 'hideMsgAguardo();';
+		echo 'showError("inform","ATEN&Ccedil;&Atilde;O: Border&oacute; liberado no processo antigo!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo '</script>';
 	}
 	
 	// Carrega permissões do operador
@@ -188,7 +201,7 @@
 	<?php if ($flgverbor == 1){ ?>
 		<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[3]->cdata)/30,7,",","."). " %"; ?>" />
 	<?php }else{ ?>
-		<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
+	<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
 	<?php } ?>
 	
 	<label for="dsopelib"><? echo utf8ToHtml('') ?></label>
@@ -249,7 +262,7 @@ flgverbor = <?=$flgverbor?>
 				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 			}
 			else{
-				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
 			}
 <?php } elseif ($cddopcao == "E") { ?>
 			showConfirmacao("Deseja excluir o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
