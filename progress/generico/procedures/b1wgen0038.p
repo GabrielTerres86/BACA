@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 26/05/2018
     
     Dados referentes ao programa:
 
@@ -113,6 +113,11 @@
                05/10/2017 - Alterado rotina alterar-endereco-viainternetbank
                             para garantir que nao crie 2 enc com tipo 12. 
 							              PRJ339 -CRM (Odirlei-AMcom).	
+                            
+               13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)             
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 .............................................................................*/
 
 
@@ -1645,6 +1650,7 @@ PROCEDURE alterar-endereco:
     DEF VAR h-b1wgen0056 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
     DEFINE BUFFER bcrapttl FOR crapttl.
     
     EMPTY TEMP-TABLE tt-erro.
@@ -1896,64 +1902,39 @@ PROCEDURE alterar-endereco:
                { sistema/generico/includes/b1wgenalog.i }
             END.
 
-        
-        IF  crapenc.dsendere = par_dsendere OR
-            crapenc.nrendere = par_nrendere OR
-            crapenc.nrcepend = par_nrcepend OR
-            crapenc.nmcidade = par_nmcidade OR
-            crapenc.nmbairro = par_nmbairro OR
-            crapenc.cdufende = par_cdufende THEN
+        /* Verificar se eh o ende. residencial da PF ou comercial da PJ */
+        IF  (crapass.inpessoa = 1  AND par_tpendass = 10) OR 
+            (crapass.inpessoa <> 1 AND par_tpendass = 9) THEN 
             DO:
-                ContadorDoc3: DO aux_contador = 1 TO 10:
+          IF  crapenc.dsendere <> par_dsendere OR
+              crapenc.nrendere <> par_nrendere OR
+              crapenc.nrcepend <> par_nrcepend OR
+              crapenc.nmcidade <> par_nmcidade OR
+              crapenc.nmbairro <> par_nmbairro OR
+              crapenc.cdufende <> par_cdufende THEN
+              DO:
+                  IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                        PERSISTENT SET h-b1wgen0137.
     
-                    FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                             crapdoc.nrdconta = par_nrdconta AND
-                                             crapdoc.tpdocmto = 3            AND
-                                             crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = aux_idseqttl AND
-                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-    
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
-                            IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc3.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT ContadorDoc3.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = aux_idseqttl
-                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                    VALIDATE crapdoc.
+                    RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                              ( INPUT par_cdcooper,
+                                INPUT par_nrdconta,
+                                INPUT aux_idseqttl,
+                                INPUT aux_nrcpfcgc,
+                                INPUT par_dtmvtolt,
+                                INPUT "3",
+                                INPUT par_cdoperad,
+                               OUTPUT aux_cdcritic,
+                               OUTPUT aux_dscritic).
                                             
-                                    LEAVE ContadorDoc3.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN crapdoc.flgdigit = FALSE
-                                   crapdoc.dtmvtolt = par_dtmvtolt.
+                    IF  VALID-HANDLE(h-b1wgen0137) THEN
+                      DELETE OBJECT h-b1wgen0137.
+                    /* Rotina nao gerava critica
+                    IF RETURN-VALUE <> "OK" THEN*/
 
-                            LEAVE ContadorDoc3.
-                        END.
                 END.
             END.
-
         CREATE tt-crapenc-old.
         BUFFER-COPY crapenc TO tt-crapenc-old.
         
@@ -2140,7 +2121,7 @@ PROCEDURE alterar-endereco:
               IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
                 DO:
                   ASSIGN par_msgalert = "Nao foi possivel replicar os dados para o CDC."
-                                      + " Entre em contato com a equipe do CDC da Cecred."
+                                      + " Entre em contato com a equipe do CDC da Ailos."
                          aux_flgtrans = TRUE.
                   LEAVE TRANS_ENDERECO.
                 END.
