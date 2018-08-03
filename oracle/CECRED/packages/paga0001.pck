@@ -20490,6 +20490,13 @@ end;';
       vr_exc_erro    EXCEPTION;
       vr_erro_update EXCEPTION;
 
+      vr_vldescto NUMBER;
+      vr_vlabatim NUMBER;
+      vr_vlrjuros NUMBER;
+      vr_vlrmulta NUMBER;
+      vr_vlfatura NUMBER;
+      vr_flgvenci BOOLEAN;
+
       -- Variaveis para o valor que deve ser transferido para outra conta
       vr_dstextab_new_lcto craptab.dstextab%TYPE;
       vr_index_deb VARCHAR2(100);
@@ -20681,133 +20688,6 @@ end;';
                pr_dscritic:= 'Erro na rotina pc_valores_a_creditar. '||SQLERRM;
           END;
         END pc_verifica_vencto;
-        
-      PROCEDURE pc_trata_histor_pgto(pr_idtabcob IN ROWID
-                                    ,pr_cdhistor IN OUT craphis.cdhistor%TYPE
-                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
-                                    ,pr_dscritic OUT VARCHAR2    --> Descricao da critica
-                                    ) IS
-        /*---------------------------------------------------------------------------------------------------------
-          Programa : pc_trata_histor_pgto
-          Sistema  : Ayllos
-          Sigla    : 
-          Autor    : Paulo Penteado (GFT)
-          Data     : Julho/2018
-        
-          Objetivo  : Procedure utilizada para tratamento de código de históricos quando o pagamento do titulo 
-                      for vencido, ou com valor a menor, ou pela COMPEFORA
-        
-          Alteração : 31/07/2018 - Criação (Paulo Penteado (GFT))
-        
-        ----------------------------------------------------------------------------------------------------------*/
-        vr_vldescto NUMBER;
-        vr_vlrjuros NUMBER;
-        vr_vlrmulta NUMBER;
-        vr_vlfatura NUMBER;
-        vr_flgvenci BOOLEAN;
-        
-        -- Variável de críticas
-        vr_cdcritic crapcri.cdcritic%TYPE;
-        vr_dscritic VARCHAR2(10000);
-        
-        -- Tratamento de erros
-        vr_exc_erro EXCEPTION;
-           
-      BEGIN
-        OPEN cr_cursor2 ( pr_idtabcob => pr_idtabcob);
-        FETCH cr_cursor2 INTO rw_cursor2;
-        CLOSE cr_cursor2;
-
-        vr_vlfatura := rw_cursor2.vltitulo;
-
-        --Verificar Vencimento Titulo
-        pc_verifica_vencto (pr_cdcooper => rw_cursor2.cdcooper  --Codigo da cooperativa
-                           ,pr_dtmvtolt => pr_dtmvtolt          --Data para verificacao
-                           ,pr_cddbanco => rw_cursor2.cdbcorec  --Codigo do Banco
-                           ,pr_cdagenci => rw_cursor2.cdagerec  --Codigo da Agencia
-                           ,pr_dtboleto => rw_cursor2.dtvencto  --Data do Titulo
-                           ,pr_flgvenci => vr_flgvenci          --Indicador titulo vencido
-                           ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                           ,pr_dscritic => vr_dscritic );       --Descricao do erro
-
-        /* calculo de abatimento deve ser antes da aplicacao de juros e multa */
-        IF nvl(rw_cursor2.vlabatim,0) > 0 THEN
-           --Diminuir valor do abatimento na fatura
-           vr_vlfatura:= nvl(rw_cursor2.vltitulo,0) - nvl(rw_cursor2.vlabatim,0);
-        END IF;
-
-        /* trata o desconto se concede apos o vencimeto */
-        IF rw_cursor2.cdmensag = 2 THEN
-           --Valor desconto recebe valor bordero cobranca
-           vr_vldescto:= rw_cursor2.vldescto;
-           --Diminuir valor dodesconto na fatura
-           vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
-        END IF;
-
-        /* verifica se o titulo esta vencido */
-        IF vr_flgvenci THEN
-           /* MULTA PARA ATRASO */
-           CASE rw_cursor2.tpdmulta
-             WHEN 1 THEN /* Valor */
-               vr_vlrmulta:= rw_cursor2.vlrmulta;
-               --Acumular valor dos juros na fatura
-               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
-             WHEN 2 THEN /* % de multa do valor  do boleto */
-               vr_vlrmulta:= (rw_cursor2.vlrmulta * vr_vlfatura) / 100;
-               --Acumular valor dos juros na fatura
-               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
-             ELSE NULL;
-           END CASE;
-           /* MORA PARA ATRASO */
-           CASE rw_cursor2.tpjurmor
-             WHEN 1 THEN /* dias */
-               vr_vlrjuros:= rw_cursor2.vljurdia * (pr_dtmvtolt - rw_cursor2.dtvencto);
-               --Acumular valor dos juros na fatura
-               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
-             WHEN 2 THEN /* mes */
-               vr_vlrjuros:= APLI0001.fn_round((rw_cursor2.vltitulo *
-                                          ((rw_cursor2.vljurdia / 100) / 30) *
-                                           (pr_dtmvtolt - rw_cursor2.dtvencto)),2);
-               --Acumular valor dos juros na fatura
-               vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
-             ELSE NULL;
-           END CASE;
-         ELSE
-           /* se concede apos vencto, ja calculou */
-           IF rw_cursor2.cdmensag <> 2  THEN
-             --Valor desconto
-             vr_vldescto:= nvl(rw_cursor2.vldescto,0);
-             --Diminuir o desconto da fatura
-             vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
-           END IF;
-        END IF; --vr_flgvenci
-
-        -- se o boleto foi pago vencido ou a menor, o histórico de pagto
-        -- do boleto de contrato deverá ser o 2001;
-        IF vr_flgvenci OR
-          ( ROUND(rw_cursor2.vlrpagto,2) < ROUND(vr_vlfatura,2) AND
-            rw_cursor2.cdocorre NOT IN (17,77)) THEN
-           pr_cdhistor := 2001; -- CREDITO BOLETO CONTRATO MOTIVO XXX
-        END IF;
-
-        -- se o boleto foi pago e o processo rodou na COMPEFORA, utilizar
-        -- histórico 2002;
-        IF pr_nmtelant = 'COMPEFORA' THEN
-           pr_cdhistor := 2002;
-        END  IF;
-
-      EXCEPTION
-        WHEN vr_exc_erro then
-             IF  vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
-                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-             END IF;
-             pr_cdcritic := vr_cdcritic;
-             pr_dscritic := vr_dscritic;
-        
-        WHEN OTHERS THEN
-             pr_cdcritic := nvl(vr_cdcritic,0);
-             pr_dscritic := 'Erro geral na rotina DSCT0001.pc_valores_a_creditar.pc_trata_histor_pgto: '||SQLERRM;
-      END pc_trata_histor_pgto; 
 
     BEGIN
 
@@ -20925,11 +20805,90 @@ end;';
                 ELSE
                   vr_cdhistor := vr_cdhistor;
                 END CASE;
-                
-                pc_trata_histor_pgto(pr_idtabcob => rw_cursor1.rowid_cob
-                                    ,pr_cdhistor => vr_cdhistor
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic );
+
+                OPEN cr_cursor2 ( pr_idtabcob => rw_cursor1.rowid_cob);
+                FETCH cr_cursor2 INTO rw_cursor2;
+                CLOSE cr_cursor2;
+
+                vr_vlabatim := rw_cursor2.vlabatim;
+                vr_vlfatura := rw_cursor2.vltitulo;
+
+                --Verificar Vencimento Titulo
+                pc_verifica_vencto (pr_cdcooper => rw_cursor2.cdcooper  --Codigo da cooperativa
+                                   ,pr_dtmvtolt => pr_dtmvtolt          --Data para verificacao
+                                   ,pr_cddbanco => rw_cursor2.cdbcorec  --Codigo do Banco
+                                   ,pr_cdagenci => rw_cursor2.cdagerec  --Codigo da Agencia
+                                   ,pr_dtboleto => rw_cursor2.dtvencto  --Data do Titulo
+                                   ,pr_flgvenci => vr_flgvenci          --Indicador titulo vencido
+                                   ,pr_cdcritic => vr_cdcritic          --Codigo do erro
+                                   ,pr_dscritic => vr_dscritic );       --Descricao do erro
+
+                /* calculo de abatimento deve ser antes da aplicacao de juros e multa */
+                IF nvl(rw_cursor2.vlabatim,0) > 0 THEN
+                   --Diminuir valor do abatimento na fatura
+                   vr_vlfatura:= nvl(rw_cursor2.vltitulo,0) - nvl(rw_cursor2.vlabatim,0);
+                END IF;
+
+                /* trata o desconto se concede apos o vencimeto */
+                IF rw_cursor2.cdmensag = 2 THEN
+                   --Valor desconto recebe valor bordero cobranca
+                   vr_vldescto:= rw_cursor2.vldescto;
+                   --Diminuir valor dodesconto na fatura
+                   vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
+                END IF;
+
+                /* verifica se o titulo esta vencido */
+                IF vr_flgvenci THEN
+                   /* MULTA PARA ATRASO */
+                   CASE rw_cursor2.tpdmulta
+                     WHEN 1 THEN /* Valor */
+                       vr_vlrmulta:= rw_cursor2.vlrmulta;
+                       --Acumular valor dos juros na fatura
+                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
+                     WHEN 2 THEN /* % de multa do valor  do boleto */
+                       vr_vlrmulta:= (rw_cursor2.vlrmulta * vr_vlfatura) / 100;
+                       --Acumular valor dos juros na fatura
+                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrmulta,0);
+                     ELSE NULL;
+                   END CASE;
+                   /* MORA PARA ATRASO */
+                   CASE rw_cursor2.tpjurmor
+                     WHEN 1 THEN /* dias */
+                       vr_vlrjuros:= rw_cursor2.vljurdia * (pr_dtmvtolt - rw_cursor2.dtvencto);
+                       --Acumular valor dos juros na fatura
+                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
+                     WHEN 2 THEN /* mes */
+                       vr_vlrjuros:= APLI0001.fn_round((rw_cursor2.vltitulo *
+                                                  ((rw_cursor2.vljurdia / 100) / 30) *
+                                                   (pr_dtmvtolt - rw_cursor2.dtvencto)),2);
+                       --Acumular valor dos juros na fatura
+                       vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
+                     ELSE NULL;
+                   END CASE;
+                 ELSE
+                   /* se concede apos vencto, ja calculou */
+                   IF rw_cursor2.cdmensag <> 2  THEN
+                     --Valor desconto
+                     vr_vldescto:= nvl(rw_cursor2.vldescto,0);
+                     --Diminuir o desconto da fatura
+                     vr_vlfatura:= nvl(vr_vlfatura,0) - nvl(vr_vldescto,0);
+                   END IF;
+                END IF; --vr_flgvenci
+
+                -- se o boleto foi pago vencido ou a menor, o histórico de pagto
+                -- do boleto de contrato deverá ser o 2001;
+                IF vr_flgvenci OR
+                  ( ROUND(rw_cursor2.vlrpagto,2) < ROUND(vr_vlfatura,2) AND
+                    rw_cursor2.cdocorre NOT IN (17,77)) THEN
+                   vr_cdhistor := 2001; -- CREDITO BOLETO CONTRATO MOTIVO XXX
+                END IF;
+
+                -- se o boleto foi pago e o processo rodou na COMPEFORA, utilizar
+                -- histórico 2002;
+                IF pr_nmtelant = 'COMPEFORA' THEN
+                   vr_cdhistor := 2002;
+                END  IF;
+
               END IF;
 
               CLOSE cr_cde;
