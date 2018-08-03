@@ -45,6 +45,8 @@
 				07/06/2018 - Inclusão da regra para mostrar a taxa diária dependendo se for bordero novo ou antigo
 
 				03/08/2018 - Inclusão da regra para mostrar mensagem se for bordero novo ou antigo (Vitor Shimada Assanuma - GFT)
+							 Inclusão dos campos de Risco
+
 	************************************************************************/
 	
 	session_start();
@@ -84,40 +86,7 @@
 	if (!validaInteiro($nrborder)) {
 		exibeErro("N&uacute;mero do border&ocirc; inv&aacute;lido.");
 	}	
-	
-	// Monta o xml de requisição
-	$xmlGetBordero  = "";
-	$xmlGetBordero .= "<Root>";
-	$xmlGetBordero .= "	<Cabecalho>";
-	$xmlGetBordero .= "		<Bo>b1wgen0030.p</Bo>";
-	$xmlGetBordero .= "		<Proc>busca_dados_bordero</Proc>";
-	$xmlGetBordero .= "	</Cabecalho>";
-	$xmlGetBordero .= "	<Dados>";
-	$xmlGetBordero .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlGetBordero .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlGetBordero .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlGetBordero .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlGetBordero .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xmlGetBordero .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlGetBordero .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlGetBordero .= "		<cddopcao>".$cddopcao."</cddopcao>";
-	$xmlGetBordero .= "		<nrborder>".$nrborder."</nrborder>";
-	$xmlGetBordero .= "	</Dados>";
-	$xmlGetBordero .= "</Root>";
 		
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlGetBordero);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjBordero = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjBordero->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjBordero->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
-	
-	$bordero  = $xmlObjBordero->roottag->tags[0]->tags[0]->tags;
-	
 	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
 	$xml = "<Root>";
 	$xml .= " <Dados>";
@@ -135,6 +104,59 @@
 	$flgverbor = $root->dados->flgverbor->cdata;
 	$flgnewbor = $root->dados->flgnewbor->cdata;
 
+	/* Bordero antigo */
+	if ($flgnewbor ==  0){
+		// Monta o xml de requisição
+		$xmlGetBordero  = "";
+		$xmlGetBordero .= "<Root>";
+		$xmlGetBordero .= "	<Cabecalho>";
+		$xmlGetBordero .= "		<Bo>b1wgen0030.p</Bo>";
+		$xmlGetBordero .= "		<Proc>busca_dados_bordero</Proc>";
+		$xmlGetBordero .= "	</Cabecalho>";
+		$xmlGetBordero .= "	<Dados>";
+		$xmlGetBordero .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xmlGetBordero .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+		$xmlGetBordero .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+		$xmlGetBordero .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+		$xmlGetBordero .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xmlGetBordero .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
+		$xmlGetBordero .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlGetBordero .= "		<cddopcao>".$cddopcao."</cddopcao>";
+		$xmlGetBordero .= "		<nrborder>".$nrborder."</nrborder>";
+		$xmlGetBordero .= "	</Dados>";
+		$xmlGetBordero .= "</Root>";
+
+		// Executa script para envio do XML
+		$xmlResult = getDataXML($xmlGetBordero);
+		
+		// Cria objeto para classe de tratamento de XML
+		$xmlObjBordero = getObjectXML($xmlResult);
+		
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObjBordero->roottag->tags[0]->name) == "ERRO") {
+			exibeErro($xmlObjBordero->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		} 
+	}else{
+		/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+		$xmlGetBordero = "<Root>";
+		$xmlGetBordero .= " <Dados>";	
+		$xmlGetBordero .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlGetBordero .= "		<nrborder>".$nrborder."</nrborder>";
+		$xmlGetBordero .= "		<cddopcao>".$cddopcao."</cddopcao>";
+		$xmlGetBordero .= " </Dados>";
+		$xmlGetBordero .= "</Root>";
+
+		$xmlResult = mensageria($xmlGetBordero,"TELA_ATENDA_DESCTO","BUSCA_DADOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjBordero = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObjBordero->roottag->tags[0]->name) == "ERRO") {
+			exibeErro($xmlObjBordero->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		} 
+	}			
+	
+	$bordero  = $xmlObjBordero->roottag->tags[0]->tags[0]->tags;
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -151,7 +173,6 @@
 	include("../../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
-	
 ?>
 <form id="frmBordero" >
 
@@ -183,12 +204,16 @@
 	<label for="vltitulo"><? echo utf8ToHtml('Valor:') ?></label>
 	<input type="text" name="vltitulo" id="vltitulo" value="<?php echo number_format(str_replace(",",".",$bordero[8]->cdata),2,",","."); ?>" />
 	<br />
+
+	<label for="dtlibbdt"><? echo utf8ToHtml('Liberado em:') ?></label>
+	<input type="text" name="dtlibbdt" id="dtlibbdt" value="<?php echo $bordero[5]->cdata; ?>" />
+	<br />
 	
 	<label for="txmensal"><? echo utf8ToHtml('Taxa mensal:') ?></label>
 	<input type="text" name="txmensal" id="txmensal" value="<?php echo number_format(str_replace(",",".",$bordero[3]->cdata),6,",","."). " %"; ?>" />
 	
-	<label for="dtlibbdt"><? echo utf8ToHtml('Liberado em:') ?></label>
-	<input type="text" name="dtlibbdt" id="dtlibbdt" value="<?php echo $bordero[5]->cdata; ?>" />
+	<label for="dsopelib"><? echo utf8ToHtml('') ?></label>
+	<input type="text" name="dsopelib" id="dsopelib" value="<?php echo $bordero[11]->cdata; ?>" />
 	<br />
 	
 	<label for="txdiaria"><? echo utf8ToHtml('Taxa Diária:') ?></label>
@@ -196,15 +221,23 @@
 		<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[3]->cdata)/30,7,",","."). " %"; ?>" />
 	<?php }else{ ?>
 	<input type="text" name="txdiaria" id="txdiaria" value="<?php echo number_format(str_replace(",",".",$bordero[6]->cdata),7,",","."). " %"; ?>" />
+	<?php } ?>	
+
+	<?php if ($flgnewbor) { ?>
+		<label for="innivris"><? echo utf8ToHtml('Nível Risco') ?></label>
+		<input type="text" name="innivris" id="innivris" value="<?php echo $bordero[16]->cdata; ?>" />
+		<br />
 	<?php } ?>
-	
-	<label for="dsopelib"><? echo utf8ToHtml('') ?></label>
-	<input type="text" name="dsopelib" id="dsopelib" value="<?php echo $bordero[11]->cdata; ?>" />
-	<br />
 	
 	<label for="txjurmor"><? echo utf8ToHtml('Taxa de Mora:') ?></label>
 	<input type="text" name="txjurmor" id="txjurmor" value="<?php echo number_format(str_replace(",",".",$bordero[4]->cdata),7,",","."). " %"; ?>" />
 	
+	<?php if ($flgnewbor) { ?>
+		<label for="qtdiaatr"><? echo utf8ToHtml('Qtd. Dias Atraso') ?></label>
+		<input type="text" name="qtdiaatr" id="qtdiaatr" value="<?php echo $bordero[17]->cdata; ?>" />
+		<br />
+	<?php } ?>
+
 	</fieldset>
 </form>
 <div>
