@@ -764,13 +764,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       vr_idencgar    NUMBER(1):= 0; -- Variável que define que encontrou garantia
       vr_qtdiaute    NUMBER(5):= 0; -- Guarda a quantidade de dias úteis entre a data de aprovação e a data atual
       
-      pr_rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
 
     BEGIN
       FOR rw_crapcop IN cr_crapcop LOOP -- Cursor de Cooperativas
         -- Busca a data do sistema
         OPEN btch0001.cr_crapdat(rw_crapcop.cdcooper);
-        FETCH btch0001.cr_crapdat INTO pr_rw_crapdat;
+        FETCH btch0001.cr_crapdat INTO rw_crapdat;
         CLOSE btch0001.cr_crapdat;        
         
         -- Ler a TAB089 para identificar os dias de expiração para cada garantia.
@@ -879,7 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             -- Verificar a quantidade de dias úteis entre a data de aprovação da proposta e a data atual
             vr_qtdiaute:= GENE0005.fn_calc_qtd_dias_uteis(rw_crapcop.cdcooper,
                                                           rw_crawepr.dtaprova,
-                                                          pr_rw_crapdat.dtmvtolt);
+                                                          rw_crapdat.dtmvtolt);
             -- Se a quantidade de dias úteis entre a data de aprovação e a data atual
             -- for maior que a quantidade de dias de expiração, o sistema deverá realizar
             -- a alteração da situação da proposta para 5 - " expirada por decurso de prazo ".            
@@ -893,6 +893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                       c.dtaprova = null,
                       c.hraprova = 0,
                       c.insitest = 5    -- Situação da proposta - Nova situação "5 - expirada por decurso de prazo"       
+                     ,c.dtexpira = rw_crapdat.dtmvtolt
                  WHERE
                       c.rowid LIKE rw_crawepr.rowid;
               EXCEPTION
@@ -1027,10 +1028,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     IF nvl(pr_cdcooper,0) > 0 THEN
       vr_cdcooper := pr_cdcooper;
     END IF;
-    IF nvl(pr_nrdconta,0) > 0 THEN
+    IF nvl(pr_nrdconta,0) > 0 AND 
+       nvl(pr_cdcooper,0) > 0 THEN
       vr_nrdconta := pr_nrdconta;
     END IF;
-    IF nvl(pr_nrctremp,0)> 0 THEN
+    IF nvl(pr_nrctremp,0) > 0 AND 
+       nvl(pr_nrdconta,0) > 0 AND 
+       nvl(pr_cdcooper,0) > 0 THEN
       vr_nrctremp := pr_nrctremp;
     END IF;
     --
@@ -1101,6 +1105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                   ,lim.cdopeapr = null
                   ,lim.dtaprova = null
                   ,lim.hraprova = 0 
+                  ,lim.dtexpira = rw_crapdat.dtmvtolt
              WHERE lim.rowid LIKE rw_crawlim.rowid;
           EXCEPTION
             WHEN OTHERS THEN
