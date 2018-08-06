@@ -1423,46 +1423,61 @@ PROCEDURE enviar-ted:
                craplot.vlinfocr = craplot.vlinfocr + par_vldocmto
                craplot.nrseqdig = craptvl.nrseqdig.
         VALIDATE craplot.
-
-        RUN sistema/generico/procedures/b1wgen0046.p PERSISTENT SET h-b1wgen0046.
         
-        RUN proc_envia_tec_ted IN h-b1wgen0046 (INPUT crapcop.cdcooper,
-                                                INPUT par_cdageope,
-                                                INPUT par_nrcxaope,
-                                                INPUT par_cdoperad,
-                                                INPUT craptvl.flgtitul,
-                                                INPUT par_vldocmto,
-                                                INPUT aux_nrctrlif,
-                                                INPUT par_nrdconta,
-                                                INPUT par_cdbanfav,
-                                                INPUT aux_cdagefav,
-                                                INPUT par_nrctafav,  
-                                                INPUT par_cdfinali,
-                                                INPUT craptvl.tpdctadb,
-                                                INPUT par_tpctafav,
-                                                INPUT par_nmprimtl,
-                                                INPUT "",
-                                                INPUT par_nrcpfcgc,
-                                                INPUT 0,
-                                                INPUT par_nmfavore,
-                                                INPUT "",
-                                                INPUT par_nrcpffav,
-                                                INPUT 0,
-                                                INPUT par_inpessoa,
-                                                INPUT par_inpesfav,
-                                                INPUT FALSE, /* Conta Salario */
-                                                INPUT par_dstransf,
-                                                INPUT par_idorigem,
-                                                INPUT par_dtagendt,
-                                                INPUT par_nrseqarq,
-                                                INPUT par_cdconven,
-                                                INPUT par_dshistor, /*Dsc do Hist. */
-                                                INPUT TIME,
-                                                INPUT 0, /*par_cdispbif*/
-                                               OUTPUT glb_dscritic).
-                    
-        DELETE PROCEDURE h-b1wgen0046.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_proc_envia_tec_ted_prog 
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                   (INPUT crapcop.cdcooper /* Cooperativa */
+                                   ,INPUT par_cdageope     /* Cod. Agencia */
+                                   ,INPUT par_nrcxaope     /* Numero  Caixa */
+                                   ,INPUT par_cdoperad     /* Operador */
+                                   ,INPUT 1                /* Mesmo Titular */
+                                   ,INPUT par_vldocmto     /* Vlr. DOCMTO */
+                                   ,INPUT aux_nrctrlif     /* NumCtrlIF */
+                                   ,INPUT par_nrdconta     /* Nro Conta */
+                                   ,INPUT par_cdbanfav     /* Codigo Banco */
+                                   ,INPUT aux_cdagefav     /* Cod Agencia */
+                                   ,INPUT par_nrctafav     /* Nr.Ct.destino */
+                                   ,INPUT par_cdfinali     /* Finalidade */
+                                   ,INPUT craptvl.tpdctadb /* Tp. conta deb */
+                                   ,INPUT par_tpctafav     /* Tp conta cred */
+                                   ,INPUT par_nmprimtl     /* Nome Do titular */
+                                   ,INPUT ""               /* Nome De 2TTT */
+                                   ,INPUT par_nrcpfcgc     /* CPF/CNPJ Do titular */
+                                   ,INPUT 0                /* CPF sec TTL */
+                                   ,INPUT par_nmfavore     /* Nome Para */
+                                   ,INPUT ""               /* Nome Para 2TTL */
+                                   ,INPUT par_nrcpffav     /* CPF/CNPJ Para */
+                                   ,INPUT 0                /* CPF Para 2TTL */
+                                   ,INPUT par_inpessoa     /* Tp. pessoa De */
+                                   ,INPUT par_inpesfav     /* Tp. pessoa Para */
+                                   ,INPUT 0                /* FALSE - Conta Salario */
+                                   ,INPUT par_dstransf     /* tipo de transferencia */
+                                   ,INPUT par_idorigem     /* Caixa Online */   
+                                   ,INPUT par_dtagendt     /* data egendamento */
+                                   ,INPUT par_nrseqarq     /* nr. seq arq. */
+                                   ,INPUT par_cdconven     /* Cod. Convenio */
+                                   ,INPUT par_dshistor     /* Dsc do Hist. */
+                                   ,INPUT TIME             /* Hora transacao */
+                                   ,INPUT 0                /* ISPB Banco */;
+                                   ,INPUT 1 /* DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED */
+                                   --------- SAIDA --------
+                                   ,OUTPUT 0    /* Codigo do erro */
+                                   ,OUTPUT ""). /* Descriçao da crítica */
+                                               
         
+    
+        CLOSE STORED-PROC pc_proc_envia_tec_ted_prog
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN glb_cdcritic = 0
+               glb_dscritic = ""
+               glb_cdcritic = pc_proc_envia_tec_ted_prog.pr_cdcritic
+                               WHEN pc_proc_envia_tec_ted_prog.pr_cdcritic <> ?
+               glb_dscritic = pc_proc_envia_tec_ted_prog.pr_dscritic
+                               WHEN pc_proc_envia_tec_ted_prog.pr_dscritic <> ?.
         IF  glb_dscritic <> ""  THEN
         DO:
             MESSAGE glb_dscritic.
