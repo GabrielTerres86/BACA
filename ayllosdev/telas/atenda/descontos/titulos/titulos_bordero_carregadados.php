@@ -72,7 +72,6 @@
 	$nrdconta = $_POST["nrdconta"];
 	$nrborder = $_POST["nrborder"];
 	$cddopcao = $_POST["cddopcao"];
-	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 		exibeErro($msgError);		
 	}	
@@ -233,7 +232,7 @@
 	<input type="text" name="txjurmor" id="txjurmor" value="<?php echo number_format(str_replace(",",".",$bordero[4]->cdata),7,",","."). " %"; ?>" />
 	
 	<?php if ($flgnewbor) { ?>
-		<label for="qtdiaatr"><? echo utf8ToHtml('Qtd. Dias Atraso') ?></label>
+		<label for="qtdiaatr"><? echo utf8ToHtml('Qtd. Dias Risco') ?></label>
 		<input type="text" name="qtdiaatr" id="qtdiaatr" value="<?php echo $bordero[17]->cdata; ?>" />
 		<br />
 	<?php } ?>
@@ -245,8 +244,7 @@
 	<?php if ($cddopcao == "C") { ?>
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/visualizar_titulos.gif" onClick="carregaTitulosBorderoDscTit();return false;" />
 		
-			<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $bordero[14]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&bordero=<?php echo formataNumericos('z.zzz.zz9',$bordero[0]->cdata,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>		
-		
+		<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $bordero[14]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&bordero=<?php echo formataNumericos('z.zzz.zz9',$bordero[0]->cdata,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>		
 	<?php } ?>
 </div>
 
