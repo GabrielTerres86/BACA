@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 22/01/2018
+   Data    : 16/05/2011                        Ultima atualizacao: 25/07/2018
 
    Dados referentes ao programa:
 
@@ -131,7 +131,10 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                             (Belli - Envolti - Chamado 660327 e 664301)              
                             
                22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
-                            (Belli - Envolti - Chamado 828247)             
+                            (Belli - Envolti - Chamado 828247)      
+                      
+               25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
+                            (Belli - Envolti - Chamado REQ0020667)       
                             
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -1100,7 +1103,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 08/06/2018
+   Data    : 27/08/2013                        Ultima atualizacao: 25/07/2018
 
    Dados referentes ao programa:
 
@@ -1218,6 +1221,9 @@ create or replace package body cecred.INSS0001 as
          08/06/2018 - Tratamento para exibir a data no inss_historico.log e tratamento
                       para buscar o log dos registros do arquivo. 
                       (Lucas Ranghetti #INC0016881)
+                      
+         25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
+                      (Belli - Envolti - Chamado REQ0020667)
                       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -2486,7 +2492,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - AMcom
-    Data     : Agosto/2014                           Ultima atualizacao: 27/07/2015
+    Data     : Agosto/2014                           Ultima atualizacao: 25/07/2018
   
     Dados referentes ao programa:
    
@@ -2508,7 +2514,10 @@ create or replace package body cecred.INSS0001 as
                              (Adriano).        
                              
                  27/07/2015 - Ajuste para efetuar o log no arquivo proc_message.log
-                              (Adriano).                            
+                              (Adriano).         
+                      
+                 25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
+                              (Belli - Envolti - Chamado REQ0020667)                   
                 
   ---------------------------------------------------------------------------------------------------------------*/
     --Variaveis de Indices
@@ -2550,8 +2559,7 @@ create or replace package body cecred.INSS0001 as
           vr_cdocorr2:= 'NR C/C - CONTA ENCERRADA -> '||pr_nrdconta;
         WHEN 3 THEN  
           vr_cdocorr1:= 'FALTA_DADOS_CADASTRAIS';
-          vr_cdocorr2:= 'ERRO DADOS CADASTRAIS [AGESIC:'||CASE pr_ercadcop WHEN TRUE THEN 'yes' ELSE 'no' END||
-                                              '][TTL:'||CASE pr_ercadttl WHEN TRUE THEN 'yes' ELSE 'no' END||']';
+          vr_cdocorr2:= 'ERRO DADOS CADASTRAIS -> '||pr_nrcpfcgc; -- 25/07/2018 - Chd REQ0020667
         ELSE NULL;
       END CASE; 
       
