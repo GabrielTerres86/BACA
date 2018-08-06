@@ -782,6 +782,9 @@
 			               deve ser pego este campo, caso contrario pegar do campo nrdplaca.
 						   (Alcemir Mout's) - (PRB0040101).
 
+          12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).     
+              
+          19/07/2018 - Chamar nova rotina para validar perda de aprovaçao quando alterado valor ou valor da prestaçao ou Rating (PRJ 438 - Rafael - Mouts).
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2474,6 +2477,7 @@ PROCEDURE obtem-propostas-emprestimo:
 					WHEN 2 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Man.".
 					WHEN 3 THEN ASSIGN tt-proposta-epr.dssitest = "Analise Finalizada".
 					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitest = "Expirado".
+          WHEN 5 THEN ASSIGN tt-proposta-epr.dssitest = "Expirada por decurso de prazo".
 					OTHERWISE tt-proposta-epr.dssitest = "-".
 				END CASE.
 
@@ -7642,6 +7646,8 @@ PROCEDURE grava-proposta-completa:
                                    INPUT par_dtlibera,
                                    INPUT par_idfiniof,
                                    INPUT par_dscatbem,
+                                   /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
+                                   INPUT par_dtdpagto,
                                    OUTPUT par_flmudfai,
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-msg-confirma).
@@ -7918,6 +7924,8 @@ PROCEDURE altera-valor-proposta:
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dscatbem AS CHAR                           NO-UNDO.
+    /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
+    DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM par_flmudfai AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -7925,9 +7933,11 @@ PROCEDURE altera-valor-proposta:
 
     DEF VAR          aux_contador AS INTE                           NO-UNDO.
     DEF VAR          aux_vlemprst LIKE crawepr.vlemprst             NO-UNDO.
+    DEF VAR          aux_dsratori LIKE crawepr.dsratori             NO-UNDO.
     DEF VAR          aux_vlpreemp LIKE crawepr.vlpreemp             NO-UNDO.
     DEF VAR          aux_insitapr LIKE crawepr.insitapr             NO-UNDO.
     DEF VAR          aux_cdopeapr LIKE crawepr.cdopeapr             NO-UNDO.
+    DEF VAR          aux_tpctrato LIKE craplcr.tpctrato             NO-UNDO.
     DEF VAR          aux_txdiaria AS DECI                           NO-UNDO.
     DEF VAR          aux_txmensal AS DECI                           NO-UNDO.
     DEF VAR          aux_vliofepr AS DECI                           NO-UNDO.
@@ -7951,6 +7961,8 @@ PROCEDURE altera-valor-proposta:
     DEF VAR          aux_insitest LIKE crawepr.insitest             NO-UNDO.
     DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
     DEF VAR          aux_inobriga AS CHAR                           NO-UNDO.
+    DEF VAR          aux_dserro   AS CHAR                           NO-UNDO.
+    DEF VAR          aux_idpeapro AS INT                            NO-UNDO.
     DEF VAR          aux_qtdias_carencia AS INTE                    NO-UNDO.
 
     DEF VAR          h-b1wgen0110 AS HANDLE                         NO-UNDO.
@@ -8309,8 +8321,88 @@ PROCEDURE altera-valor-proposta:
             DO:
                            IF par_dsdopcao = "SVP" THEN
            DO:
-                 /** Novo valor maior que valor original da proposta **/
-                                    IF  par_vlemprst > par_vleprori THEN
+              /** M438 - Nova regra  para determinar perda de aprovaçao com a 
+                         alteraçao de valor da proposta quando aprovada e ter 
+                         valores nos campos originais, regra nova senao
+                         regra antiga
+              **/
+              IF crawepr.vlempori > 0 AND
+                 crawepr.vlpreori > 0 AND
+                 crawepr.insitapr = 1 THEN
+              DO:
+              
+              ASSIGN aux_idpeapro = 0.
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                RUN STORED-PROCEDURE pc_processa_perda_aprov
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /*Codigo da Cooperativa*/
+                                                     INPUT par_nrdconta, /*Numero da conta*/
+                                                     INPUT par_nrctremp, /*Numero do contrato de emprestimo*/
+                                                     INPUT "S",  /* C - Consulta ou P - Processo de perda */
+                                                     INPUT par_vlemprst,
+                                                     INPUT par_vlpreemp,                                                     
+                                                     INPUT par_cdagenci, /*Codigo Agencia*/
+                                                     INPUT par_nrdcaixa, /*Numero Caixa*/
+                                                     INPUT par_cdoperad, /*Codigo Operador*/
+                                                     INPUT 90, /*Tipo Contrato Rating*/
+                                                     INPUT 0,   /*pr_flgcriar Indicado se deve criar o rating*/
+                                                     INPUT 1, /*pr_flgcalcu Indicador de calculo*/
+                                                     INPUT par_idseqttl, /*Sequencial do Titular*/
+                                                     INPUT par_idorigem, /*Identificador Origem*/
+                                                     INPUT par_nmdatela, /*Nome da tela*/
+                                                     INPUT "N", /*pr_flgerlog Identificador de geraçao de log*/
+                                                     INPUT 0,   /*pr_flghisto Indicador se deve gerar historico*/
+                                                     INPUT aux_dsorigem, /*Descriçao da origem*/
+                                                    OUTPUT 0, /*0 - Nao perdeu aprovaçao e 1 - Perdeu aprovaçao*/
+                                                    OUTPUT "", /*OK - se processar e NOK - se erro*/
+                                                    OUTPUT 0, /*Codigo da critica*/
+                                                    OUTPUT ""). /*Descricao da critica*/
+              /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_processa_perda_aprov
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                      
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                      
+                ASSIGN aux_idpeapro = pc_processa_perda_aprov.pr_idpeapro
+                  WHEN pc_processa_perda_aprov.pr_idpeapro <> ?
+                       aux_dserro = pc_processa_perda_aprov.pr_dserro
+                  WHEN pc_processa_perda_aprov.pr_dserro <> ?      
+                       aux_cdcritic = pc_processa_perda_aprov.pr_cdcritic
+                  WHEN pc_processa_perda_aprov.pr_cdcritic <> ?
+                       aux_dscritic = pc_processa_perda_aprov.pr_dscritic
+                  WHEN pc_processa_perda_aprov.pr_dscritic <> ?.
+                      
+               /*Se ocorreu erro*/
+              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                UNDO Grava_valor, LEAVE Grava_valor.
+              
+              /*Se houve a perda de aprovacao*/
+              IF aux_idpeapro = 1 THEN
+              DO:
+                /*Salvar operador da alteraçao*/
+                ASSIGN crawepr.cdopealt = par_cdoperad.
+                
+                IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
+                DO:
+                  ASSIGN aux_interrup = true. /* Interromper na Esteira*/
+                END.
+                /*Realizar perda*/
+                ASSIGN crawepr.insitapr = 0
+                       crawepr.cdopeapr = ""
+                       crawepr.dtaprova = ?
+                       crawepr.hraprova = 0
+                       crawepr.insitest = 0
+                       crawepr.cdopealt = par_cdoperad.
+                       
+                CREATE tt-msg-confirma.
+                ASSIGN tt-msg-confirma.inconfir = 1
+                       tt-msg-confirma.dsmensag =
+                       IF aux_contigen THEN
+                         "Essa proposta deve ser" + " aprovada na tela CMAPRV"
+                       ELSE
+                         "Essa proposta deve ser " + " enviada para Analise de Credito".              
+              END.
+              END.
+              ELSE IF  (par_vlemprst > par_vleprori) THEN /*Regra anterior a 438*/
                                         DO:
                      
                       /* Se nao estiver em contigencia e a proposta estava na Esteira */
@@ -8323,7 +8415,11 @@ PROCEDURE altera-valor-proposta:
                              crawepr.cdopeapr = ""
                              crawepr.dtaprova = ?
                                                   crawepr.hraprova = 0
-                                                  crawepr.insitest = 0.
+                             crawepr.insitest = 0
+                             crawepr.cdopealt = par_cdoperad.
+                   
+                  /*Salvar operador da alteraçao*/
+                  ASSIGN crawepr.cdopealt = par_cdoperad.
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -8402,7 +8498,70 @@ PROCEDURE altera-valor-proposta:
                crawepr.vlemprst = par_vlemprst
                crawepr.vlpreemp = par_vlpreemp.
 
-        IF  crawepr.tpemprst = 1   THEN
+        /* PRJ 438 - Gravar data pagto recebida via parametro quando for opcao de Somente valor proposta */
+        IF par_dsdopcao = "SVP" THEN  
+        DO:
+            ASSIGN crawepr.dtdpagto = par_dtdpagto.
+        END.       
+      /*Inicio M438*/
+      IF par_dsdopcao = "TP" THEN /*Inclusao Proposta*/
+      DO:
+        IF  NOT VALID-HANDLE(h-b1wgen0043) THEN
+            RUN sistema/generico/procedures/b1wgen0043.p
+                PERSISTENT SET h-b1wgen0043.
+        
+        IF  NOT VALID-HANDLE(h-b1wgen0043)  THEN
+        DO:
+                MESSAGE "Handle invalido para BO b1wgen0043.".
+                UNDO Grava_valor, LEAVE Grava_valor.
+        END.
+        
+        FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper.
+        
+        RUN gera_rating IN h-b1wgen0043
+                        (INPUT par_cdcooper,
+                         INPUT par_cdagenci,   /** Pac   **/
+                         INPUT par_nrdcaixa,   /** Caixa **/
+                         INPUT par_cdoperad,
+                         INPUT par_nmdatela,
+                         INPUT par_idorigem,   /** Ayllos  **/
+                         INPUT par_nrdconta,
+                         INPUT par_idseqttl,   /** Titular **/
+                         INPUT crapdat.dtmvtolt,
+                         INPUT crapdat.dtmvtopr,
+                         INPUT crapdat.inproces,
+                         INPUT 90, /*aux_tpctrato*/
+                         INPUT par_nrctremp, /*crawepr.nrctrato,*/
+                         INPUT FALSE,  /* NAO GRAVA */
+                         INPUT TRUE,   /** Log **/
+                        OUTPUT TABLE tt-erro,
+                        OUTPUT TABLE tt-cabrel,
+                        OUTPUT TABLE tt-impressao-coop,
+                        OUTPUT TABLE tt-impressao-rating,
+                        OUTPUT TABLE tt-impressao-risco,
+                        OUTPUT TABLE tt-impressao-risco-tl,
+                        OUTPUT TABLE tt-impressao-assina,
+                        OUTPUT TABLE tt-efetivacao,
+                        OUTPUT TABLE tt-ratings).
+                
+        IF  VALID-HANDLE(h-b1wgen0043) THEN
+            DELETE PROCEDURE h-b1wgen0043.
+            
+        IF  RETURN-VALUE = "NOK"  THEN
+          ASSIGN aux_dsratori = "".
+         
+        ASSIGN aux_dsratori = "".
+        FIND FIRST tt-impressao-risco NO-LOCK NO-ERROR.
+        IF  AVAIL tt-impressao-risco THEN
+            aux_dsratori = tt-impressao-risco.dsdrisco.
+        
+        IF (crawepr.dsratori = ? OR crawepr.dsratori = " ") AND 
+           (aux_dsratori <> "" OR aux_dsratori <> ?) THEN
+          ASSIGN crawepr.dsratori = aux_dsratori.
+                
+      END. /*IF par_dsdopcao = "TP" THEN*/
+      /*Fim M438*/
+      IF  crawepr.tpemprst = 1   THEN /*emprestimo PP*/
             DO:
                 ASSIGN aux_dtlibera     = crawepr.dtlibera
                        crawepr.dtlibera = par_dtlibera.
@@ -8427,7 +8586,10 @@ PROCEDURE altera-valor-proposta:
                      INPUT crawepr.vlemprst,
                      INPUT crawepr.qtpreemp,
                      INPUT crawepr.dtlibera,
-                     INPUT crawepr.dtdpagto,
+                     /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
+                     INPUT (IF par_dsdopcao = "SVP" THEN 
+                               par_dtdpagto
+                            ELSE crawepr.dtdpagto),
                      INPUT crawepr.idfiniof,
                      OUTPUT TABLE tt-erro).
 
@@ -8510,7 +8672,10 @@ PROCEDURE altera-valor-proposta:
                                                          INPUT crawepr.vlemprst,
                                                          INPUT crawepr.qtpreemp,
                                                          INPUT crawepr.dtcarenc,
-                                                         INPUT crawepr.dtdpagto,
+                                                         /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
+                                                         INPUT (IF par_dsdopcao = "SVP" THEN 
+                                                                   par_dtdpagto
+                                                                ELSE crawepr.dtdpagto),
                                                          INPUT aux_qtdias_carencia,
                                                         OUTPUT 0,   /* pr_vlpreemp */
                                                         OUTPUT 0,   /* pr_txdiaria */
@@ -8590,7 +8755,10 @@ PROCEDURE altera-valor-proposta:
                              INPUT crawepr.vlemprst, 
                              INPUT crawepr.vlpreemp,
                              INPUT crawepr.qtpreemp, 
-                             INPUT crawepr.dtdpagto, 
+                             /* PRJ 438 - Ajuste para quando for opcao de Somente valor proposta, passar a data pagto recebida via parametro */
+                             INPUT (IF par_dsdopcao = "SVP" THEN 
+                                       par_dtdpagto
+                                    ELSE crawepr.dtdpagto),
                              INPUT crawepr.cdfinemp, 
                              INPUT par_dscatbem,
                              INPUT par_idfiniof,

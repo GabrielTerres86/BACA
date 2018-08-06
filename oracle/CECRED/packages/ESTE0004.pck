@@ -1470,7 +1470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   where  w.cdcooper = pr_cdcooper
   and    w.nrdconta = pr_nrdconta
   and    w.insitapr in(1,3)        -- já estao aprovadas
-  and    w.insitest <> 4           -- Expiradas
+  and    w.insitest NOT IN(4,5)    -- 4 - Expiradas -- 5 - Expiradas por decurso de prazo -- PJ438 - Márcio (Mouts)
   --AND w.nrctremp <> pr_nrctremp -- desconsiderar a proposta que esta sendo enviada no momento
   and   not exists( select 1
                     from   crapepr p

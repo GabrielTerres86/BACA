@@ -51,28 +51,28 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                     ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
              
 	PROCEDURE pc_retorno_analise_proposta(pr_cdorigem IN NUMBER                --> Origem da Requisição (9-Esteira ou 5-Ayllos)
-                                       ,pr_dsprotoc IN VARCHAR2           --> Protocolo da análise
-                                       ,pr_nrtransa IN NUMBER             --> Transacao do acionamento
-                                       ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
-                                       ,pr_indrisco IN VARCHAR2              --> Nível do risco calculado para a operação
-                                       ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
-                                       ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
-                                       ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
-                                       ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+																			 ,pr_dsprotoc IN VARCHAR2           --> Protocolo da análise
+																			 ,pr_nrtransa IN NUMBER             --> Transacao do acionamento
+																			 ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
+																			 ,pr_indrisco IN VARCHAR2              --> Nível do risco calculado para a operação
+																			 ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
+																		 	 ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
+																		 	 ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
+																		 	 ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
                                        ,pr_inopeatr IN NUMBER                -->   
-                                       ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
-                                       ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
-                                       ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
-                                       ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
-                                       ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
-                                       ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
-                                       ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-
+																			 ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
+																			 ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
+																			 ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
+																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
+																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
+																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+																			 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+																			 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+																			 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+	                             
   PROCEDURE pc_retorno_analise_limdesct(pr_cdorigem in number             --> Origem da Requisição (9-Esteira ou 5-Ayllos)
                                        ,pr_dsprotoc in varchar2           --> Protocolo da análise
                                        ,pr_nrtransa in number             --> Transacao do acionamento
@@ -718,20 +718,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   PROCEDURE pc_atualiza_prop_srv_emprestim(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
                                           ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
                                           ,pr_nrctremp    IN crawepr.nrctremp%TYPE     --> Numero do contrato
-                                          ,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
+																					,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
                                           ,pr_rw_crapdat  IN btch0001.rw_crapdat%TYPE  --> Vetor com dados de parâmetro (CRAPDAT)
                                           ,pr_insitapr    IN crawepr.insitapr%TYPE     --> Situacao da proposta
                                           ,pr_dsobscmt    IN crawepr.dsobscmt%TYPE DEFAULT NULL    --> Observação recebida da esteira de crédito
                                           ,pr_dsdscore    IN crapass.dsdscore%TYPE DEFAULT NULL    --> Consulta do score feita na Boa Vista pela esteira de crédito
                                           ,pr_dtdscore    IN crapass.dtdscore%TYPE DEFAULT NULL    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
-                                          ,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
+																					,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
                                           ,pr_inopeatr    IN crawepr.inliquid_operac_atraso%TYPE DEFAULT NULL --> Identificador da operacao de credito em atraso
-                                          ,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
-                                          ,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
-                                          ,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
-                                          ,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
-                                          ,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
-                                          ,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
+																					,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
+																					,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
+																					,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
+																					,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
+																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
+																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -825,6 +825,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrdrowid      ROWID;
       vr_exc_saida     EXCEPTION;
       vr_exc_erro_500  EXCEPTION;
+      /*M438*/
+            --PL tables
+      vr_tab_rating_sing      RATI0001.typ_tab_crapras;
+      vr_tab_impress_coop     RATI0001.typ_tab_impress_coop;
+      vr_tab_impress_rating   RATI0001.typ_tab_impress_rating;
+      vr_tab_impress_risco_cl RATI0001.typ_tab_impress_risco;
+      vr_tab_impress_risco_tl RATI0001.typ_tab_impress_risco;      
+      vr_tab_impress_assina   RATI0001.typ_tab_impress_assina;
+      vr_tab_efetivacao       RATI0001.typ_tab_efetivacao;
+      vr_tab_ratings          RATI0001.typ_tab_ratings;
+      vr_tab_crapras          RATI0001.typ_tab_crapras;
+      vr_tab_erro             GENE0001.typ_tab_erro;
+      vr_ind                  PLS_INTEGER; --> Indice da tabela de retorno  
+      vr_rating               VARCHAR2(2);
+      vr_flgcriar             NUMBER;
+      /*Fim 438*/
+      
     BEGIN
       
       -- Buscar os dados da proposta de emprestimo
@@ -886,6 +903,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         pr_msg_detalhe := 'Parecer nao foi atualizado, o prazo para analise da proposta exipirou.';
         RAISE vr_exc_saida;
       END IF;
+      
+      -- Início PJ 438 - Márcio (Mouts)
+      -- Proposta Expirada por decurso de prazo
+      IF rw_crawepr.insitest = 5 THEN
+        pr_status      := 202;
+        pr_cdcritic    := 975;
+        pr_msg_detalhe := 'Parecer nao foi atualizado, proposta exipirou por decurso de prazo.';
+        RAISE vr_exc_saida;
+      END IF;
+      -- Fim PJ 438 - Márcio (Mouts)
       
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
@@ -949,6 +976,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         END IF;
         
       END IF;			
+      /*Inicio M438*/
+      -- Calcular Rating para atualiza no campo rating original
+      vr_flgcriar := 0;
+      RATI0001.pc_calcula_rating(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
+                                ,pr_cdagenci => 1   --> Codigo Agencia
+                                ,pr_nrdcaixa => 1   --> Numero Caixa
+                                ,pr_cdoperad => '1'   --> Codigo Operador
+                                ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
+                                ,pr_tpctrato => 90   --> Tipo Contrato Rating
+                                ,pr_nrctrato => pr_nrctremp   --> Numero Contrato Rating
+                                ,pr_flgcriar => vr_flgcriar   --> Indicado se deve criar o rating
+                                ,pr_flgcalcu => 1   --> Indicador de calculo
+                                ,pr_idseqttl => 1   --> Sequencial do Titular
+                                ,pr_idorigem => 9   --> Identificador Origem
+                                ,pr_nmdatela => 'WEBS0001'   --> Nome da tela
+                                ,pr_flgerlog => 'N'   --> Identificador de geração de log
+                                ,pr_tab_rating_sing  => vr_tab_rating_sing      --> Registros gravados para rati
+                                ,pr_flghisto => 0
+                                -- OUT
+                                ,pr_tab_impress_coop     => vr_tab_impress_coop     --> Registro impressão da Cooper
+                                ,pr_tab_impress_rating   => vr_tab_impress_rating   --> Registro itens do Rating
+                                ,pr_tab_impress_risco_cl => vr_tab_impress_risco_cl --> Registro Nota e risco do coo
+                                ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do coo
+                                ,pr_tab_impress_assina   => vr_tab_impress_assina   --> Assinatura na impressao do R
+                                ,pr_tab_efetivacao       => vr_tab_efetivacao       --> Registro dos itens da efetiv
+                                ,pr_tab_ratings          => vr_tab_ratings          --> Informacoes com os Ratings d
+                                ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
+                                ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
+                                ,pr_des_reto             => pr_dscritic);           --> Ind. de retorno OK/NOK
+      -- Em caso de erro
+      IF pr_dscritic <> 'OK' THEN
+        --Se não tem erro na tabela
+        IF vr_tab_erro.COUNT = 0 THEN
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Falha ao calcular rating sem tabela de erros.';
+        ELSE
+          pr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+        END IF;
+        pr_status      := pr_cdcritic;
+        pr_msg_detalhe := 'Calculo Rating : '||pr_dscritic;
+        -- Sair
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_ind := vr_tab_impress_risco_cl.first; -- Vai para o primeiro registro            
+      -- loop sobre a tabela de retorno
+      WHILE vr_ind IS NOT NULL LOOP
+        vr_rating := vr_tab_impress_risco_cl(vr_ind).dsdrisco;
+        -- Vai para o proximo registro
+        vr_ind := vr_tab_impress_risco_cl.next(vr_ind);
+      END LOOP;          
+      /*Fim 438*/	
       
       /* Verificar se a analise da proposta expirou na esteira*/      
       IF pr_insitapr = 99 THEN
@@ -1031,6 +1111,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                                             ,crawepr.inliquid_operac_atraso)
                 ,crawepr.dtdscore = NVL(pr_dtdscore,nvl(crawepr.dtdscore,trunc(SYSDATE)))
                 ,crawepr.dsdscore = NVL(pr_dsdscore,crawepr.dsdscore)
+                ,crawepr.vlempori = crawepr.vlemprst /*M438*/
+                ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
+                ,crawepr.dsratori = vr_rating /* M438 */
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -2355,7 +2438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                      pr_cdagenci                 => 1, 
                                      pr_cdoperad                 => 'ESTEIRA',
                                      pr_cdorigem                 => 9,
-                                     pr_nrctrprp                 => vr_nrctrprp,
+                                    pr_nrctrprp                 => vr_nrctrprp,
                                      pr_nrdconta                 => pr_nrdconta,
                                      pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                      pr_dsoperacao               => 'RETORNO PROPOSTA - '||vr_dssitapr,
@@ -2629,27 +2712,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   END pc_grava_requisicao_erro;
              
 	PROCEDURE pc_retorno_analise_proposta(pr_cdorigem IN NUMBER                --> Origem da Requisição (9-Esteira ou 5-Ayllos)
-                                       ,pr_dsprotoc IN VARCHAR2              --> Protocolo da análise
-                                       ,pr_nrtransa IN NUMBER                --> Transacao do acionamento
-                                       ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
+																			 ,pr_dsprotoc IN VARCHAR2              --> Protocolo da análise
+																			 ,pr_nrtransa IN NUMBER                --> Transacao do acionamento
+																			 ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
                                        ,pr_indrisco IN VARCHAR2              --> Nível do risco calculado para a operação
-                                       ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
-                                       ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
-                                       ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
-                                       ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+																			 ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
+																		 	 ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
+																		 	 ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
+																		 	 ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
                                        ,pr_inopeatr IN NUMBER                --> Contem o identificador da operacao de credito em atraso que vai para esteira
-                                       ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
-                                       ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
-                                       ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
-                                       ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
-                                       ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
-                                       ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
-                                       ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                       ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+																			 ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
+																			 ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
+																			 ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
+																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
+																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
+																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+																			 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+																			 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+																			 ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
   BEGIN
 	/* .............................................................................
 	 Programa: pc_retorno_analise_proposta
@@ -2731,16 +2814,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			
       -- Variaveis temp para ajuste valores recebidos nos indicadores
       vr_indrisco VARCHAR2(100); --> Nível do risco calculado para a operação
-      vr_nrnotrat VARCHAR2(100); --> Valor do rating calculado para a operação
-      vr_nrinfcad VARCHAR2(100); --> Valor do item Informações Cadastrais calculado no Rating
-      vr_nrliquid VARCHAR2(100); --> Valor do item Liquidez calculado no Rating
-      vr_nrgarope VARCHAR2(100); --> Valor das Garantias calculada no Rating
+			vr_nrnotrat VARCHAR2(100); --> Valor do rating calculado para a operação
+			vr_nrinfcad VARCHAR2(100); --> Valor do item Informações Cadastrais calculado no Rating
+			vr_nrliquid VARCHAR2(100); --> Valor do item Liquidez calculado no Rating
+			vr_nrgarope VARCHAR2(100); --> Valor das Garantias calculada no Rating
       vr_inopeatr VARCHAR2(100); --> Identificador da operacao de credito em atraso
-      vr_nrparlvr VARCHAR2(100); --> Valor do Patrimônio Pessoal Livre calculado no Rating
-      vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
+			vr_nrparlvr VARCHAR2(100); --> Valor do Patrimônio Pessoal Livre calculado no Rating
+			vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
       vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
       vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
-
+      
       -- Bloco PLSQL para chamar a execução paralela do pc_crps414
       vr_dsplsql VARCHAR2(4000);
       -- Job name dos processos criados
@@ -3001,12 +3084,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- NEste caso testes retornos obrigatórios
         IF (TRIM(vr_indrisco) IS NULL OR
             TRIM(vr_inopeatr) IS NULL OR
-            TRIM(vr_nrnotrat) IS NULL OR
-            TRIM(vr_nrinfcad) IS NULL OR
-            TRIM(vr_nrliquid) IS NULL OR
-            TRIM(vr_nrgarope) IS NULL OR
-            TRIM(vr_nrparlvr) IS NULL OR
-           (TRIM(vr_nrperger) IS NULL AND vr_inpessoa = 2)) THEN
+				 TRIM(vr_nrnotrat) IS NULL OR
+				 TRIM(vr_nrinfcad) IS NULL OR
+				 TRIM(vr_nrliquid) IS NULL OR
+				 TRIM(vr_nrgarope) IS NULL OR
+				 TRIM(vr_nrparlvr) IS NULL OR
+				(TRIM(vr_nrperger) IS NULL AND vr_inpessoa = 2)) THEN
           -- Montar mensagem de critica
           vr_status      := 500;
           vr_cdcritic    := 978;
@@ -3066,26 +3149,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
 			-- Atualizar proposta de empréstimo
       pc_atualiza_prop_srv_emprestim(pr_cdcooper    => rw_crawepr.cdcooper --> Codigo da cooperativa
-                                    ,pr_nrdconta    => rw_crawepr.nrdconta --> Numero da conta
-                                    ,pr_nrctremp    => rw_crawepr.nrctremp --> Numero do contrato
-                                    ,pr_tpretest    => 'M'            --> Retorno Motor  
-                                    ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
-                                    ,pr_insitapr    => vr_insitapr    --> Situação da Aprovação
-                                    ,pr_indrisco    => vr_indrisco    --> Nível do Risco calculado na Analise 
+																		,pr_nrdconta    => rw_crawepr.nrdconta --> Numero da conta
+																		,pr_nrctremp    => rw_crawepr.nrctremp --> Numero do contrato
+																		,pr_tpretest    => 'M'            --> Retorno Motor  
+																		,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
+																		,pr_insitapr    => vr_insitapr    --> Situação da Aprovação
+																		,pr_indrisco    => vr_indrisco    --> Nível do Risco calculado na Analise 
                                     ,pr_inopeatr    => vr_inopeatr         --> Identificador da operacao de credito em atraso
-                                    ,pr_nrnotrat    => gene0002.fn_char_para_number(vr_nrnotrat)    --> Calculo do Rating na Analise 
-                                    ,pr_nrinfcad    => gene0002.fn_char_para_number(vr_nrinfcad)    --> Informação Cadastral da Analise 
-                                    ,pr_nrliquid    => gene0002.fn_char_para_number(vr_nrliquid)    --> Liquidez da Analise 
-                                    ,pr_nrgarope    => gene0002.fn_char_para_number(vr_nrgarope)    --> Garantia da Analise 
-                                    ,pr_nrparlvr    => gene0002.fn_char_para_number(vr_nrparlvr)    --> Patrimônio Pessoal Livre da Analise 
-                                    ,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
-                                    ,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
-                                    ,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
-                                    ,pr_status      => vr_status      --> Status
-                                    ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
-                                    ,pr_dscritic    => vr_dscritic    --> Descricao da critica
-                                    ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
-                                    ,pr_des_reto    => vr_des_reto);  --> Erros do processo
+																		,pr_nrnotrat    => gene0002.fn_char_para_number(vr_nrnotrat)    --> Calculo do Rating na Analise 
+																		,pr_nrinfcad    => gene0002.fn_char_para_number(vr_nrinfcad)    --> Informação Cadastral da Analise 
+																		,pr_nrliquid    => gene0002.fn_char_para_number(vr_nrliquid)    --> Liquidez da Analise 
+																		,pr_nrgarope    => gene0002.fn_char_para_number(vr_nrgarope)    --> Garantia da Analise 
+																		,pr_nrparlvr    => gene0002.fn_char_para_number(vr_nrparlvr)    --> Patrimônio Pessoal Livre da Analise 
+																		,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
+																		,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
+																		,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
+																		,pr_status      => vr_status      --> Status
+																		,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
+																		,pr_dscritic    => vr_dscritic    --> Descricao da critica
+																		,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
+																		,pr_des_reto    => vr_des_reto);  --> Erros do processo
 			
       -- Gera retorno da proposta para a esteira
       pc_gera_retor_proposta_esteira(pr_status      => vr_status      --> Status

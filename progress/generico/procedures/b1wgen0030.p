@@ -3001,6 +3001,12 @@ PROCEDURE busca_limites:
                             crawlim.tpctrlim = craplim.tpctrlim   AND
                             crawlim.nrctrmnt = craplim.nrctrlim   AND
                             crawlim.insitlim = 6 /*não aprovada*/ )
+                           OR /*438*/
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 8 /*438 - Expirada decurso de prazo*/ )                            
                            NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crawlim  THEN
@@ -18923,6 +18929,12 @@ PROCEDURE busca_dados_limite_manutencao:
                         crawlim.tpctrlim = 3              AND
                         crawlim.nrctrmnt = par_nrctrlim   AND
                         crawlim.insitlim = 6 /*não aprovada*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 8 /*expirada por decurso de prazo*/)
                        NO-LOCK NO-ERROR.
 
     IF  AVAILABLE crawlim  THEN
@@ -18940,6 +18952,9 @@ PROCEDURE busca_dados_limite_manutencao:
             IF  crawlim.insitlim = 6  THEN
                 ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
                                       " com a situação NÃO APROVADA".
+            IF  crawlim.insitlim = 8  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação EXPIRADA DECURSO DE PRAZO".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
