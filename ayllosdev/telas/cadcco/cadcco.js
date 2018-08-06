@@ -1673,6 +1673,7 @@ function formataInformacoes() {
                 cDsorgarq.val() == "PROTESTO"               ||
                 cDsorgarq.val() == "EMPRESTIMO"             ||
                 cDsorgarq.val() == "DESCONTO DE TITULO"     ||
+				cDsorgarq.val() == "CONSIGNADO"             ||
                $('#cddopcao', '#frmCabCadcco').val() == "I") {
 
                 cDsorgarq.habilitaCampo();
