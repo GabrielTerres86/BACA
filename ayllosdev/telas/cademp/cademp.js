@@ -57,6 +57,8 @@
 				  
 	 27/03/2017 - Incluido botão "Acessa DigiDOC" e adicionado function "dossieDigdoc".
 				  (Projeto 357 - Reinert)
+
+     06/08/2018 - Ajuste na formatação do campo e-mail (Andrey Formigari - Mouts)
 ************************************************************************************************/
 
 
@@ -1187,7 +1189,15 @@ function btnVoltar() {
 }
 
 
-
+function monitorarCTRLV(evento, x_dsdemail) {
+    var x_email = "";
+    /*if ( (evento.ctrlKey && evento.keyCode == 86) || (evento.shiftKey && evento.keyCode == 45) || (!evento.shiftKey && !evento.keyCode) ){*/
+    x_email = x_dsdemail.value;
+    x_email = removeAcentos(x_email);
+    x_email = x_email.replace(/[^a-zA-Z._@ 0-9]+/g, '');
+    x_dsdemail.value = x_email;
+    /*}*/
+}
 
 
 function alteraInclui() {
