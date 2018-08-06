@@ -191,7 +191,8 @@ function controlaOperacao(operacao, flgConcluir) {
                 eval(response);
                 controlaFoco(operacao);
             }
-			if(operacao == 'CA' || operacao == 'CAE'){
+			//if(operacao == 'CA' || operacao == 'CAE'){
+		    if(operacao == 'CAE'){
               $("#nmextemp").desabilitaCampo();
 			  buscaInfEmpresa();
             }
