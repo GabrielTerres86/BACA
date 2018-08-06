@@ -187,7 +187,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   dsdlinha  VARCHAR2(200),
                   flgdigit  crapbdt.flgdigit%TYPE,
                   cdtipdoc  VARCHAR2(80),
-                  dsopecoo  VARCHAR2(100)
+                  innivris  crapris.innivris%TYPE, 
+                  dsopecoo  VARCHAR2(100),
+                  qtdiaatr  crapris.qtdiaatr%TYPE
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;  
@@ -619,6 +621,16 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
                                      ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
                                   );
+  
+  PROCEDURE pc_busca_dados_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                   ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                   ,pr_cddopcao IN VARCHAR2               --> Cod opcao
+ 													         ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+													         ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+													         ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+													         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+													         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+													         ,pr_des_erro  OUT VARCHAR2);          --> Erros do processo
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
@@ -674,6 +686,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --   16/07/2018 - Alteracoes para contemplar o novo sistema de criticas do border (Luis Fernando - GFT)
   --
   -------------------------------------------------------------------------------------------------------------
+  -- Variáveis para armazenar as informações em XML
+  vr_des_xml         clob;
+  vr_texto_completo  varchar2(32600);
+  
+  -- Rotina para escrever texto na variável CLOB do XML
+  PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
+                          , pr_fecha_xml in boolean default false
+                          ) is
+  BEGIN
+     gene0002.pc_escreve_xml( vr_des_xml
+                            , vr_texto_completo
+                            , pr_des_dados
+                            , pr_fecha_xml );
+  END pc_escreve_xml;
+
+FUNCTION fn_letra_risco (pr_innivris IN crapris.innivris%TYPE) RETURN VARCHAR2 IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_letra_risco
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Vitor Shimada Assanuma (GFT)
+    Data     : 03/08/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Trocar o número do risco para letra
+  ---------------------------------------------------------------------------------------------------------------------*/
+  BEGIN
+     RETURN (
+       CASE
+         WHEN pr_innivris=2 THEN 'A'
+         WHEN pr_innivris=3 THEN 'B'
+         WHEN pr_innivris=4 THEN 'C'
+         WHEN pr_innivris=5 THEN 'D'
+         WHEN pr_innivris=6 THEN 'E'
+         WHEN pr_innivris=7 THEN 'F'
+         WHEN pr_innivris=8 THEN 'G'
+         WHEN pr_innivris=9 THEN 'H'
+       END
+     );
+END fn_letra_risco;
+
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE           --> Numero da conta do cooperado
@@ -2264,6 +2316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_dscritic := replace(replace('Erro pc_busca_restricoes: ' || SQLERRM, chr(13)),chr(10));   
   END pc_busca_restricoes;
   
+  
   --> Buscar dados de um determinado bordero
   PROCEDURE pc_busca_dados_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                    ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -2292,11 +2345,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Buscar dados de um determinado bordero
     --
     --   Alteração : 25/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    --               03/08/2018 - Inserção dos campos de Risco (Vitor Shimada Assanuma - GFT)
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
     --> Buscar bordero de desconto de titulo
-    CURSOR cr_crapbdt IS
+    CURSOR cr_crapbdt (pr_dtmvtoan crapdat.dtmvtoan%TYPE)IS
       SELECT bdt.insitbdt,
              bdt.cddlinha,
              bdt.dtmvtolt,
@@ -2312,8 +2366,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              bdt.hrtransa,
              bdt.flgdigit,
              bdt.cdopcolb,
-             bdt.cdopcoan
+             bdt.cdopcoan,
+             ris.innivris, 
+             ris.qtdiaatr
         FROM crapbdt bdt
+        LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
+                             AND ris.nrdconta = bdt.nrdconta 
+                             AND bdt.nrborder = ris.nrctremp 
+                             AND ris.cdmodali = 301 
+                             AND ris.dtrefere = pr_dtmvtoan
        WHERE bdt.cdcooper = pr_cdcooper
          AND bdt.nrborder = pr_nrborder;
     rw_crapbdt  cr_crapbdt%ROWTYPE;
@@ -2378,10 +2439,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_blnfound        BOOLEAN;
     vr_cdopecoo        crapope.cdoperad%TYPE;
     
+    -- variaveis de data
+    vr_dtmvtoan crapdat.dtmvtoan%TYPE;
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     
   BEGIN
+    --Selecionar dados da data
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se encontrar
+    IF BTCH0001.cr_crapdat%FOUND THEN
+      vr_dtmvtoan:= rw_crapdat.dtmvtoan;
+    END IF;
+    -- Apenas fechar o cursor
+    CLOSE BTCH0001.cr_crapdat;
+    
     --> Buscar bordero de desconto de titulo
-    OPEN cr_crapbdt;
+    OPEN cr_crapbdt (pr_dtmvtoan => vr_dtmvtoan);
     FETCH cr_crapbdt INTO rw_crapbdt;
     IF cr_crapbdt%NOTFOUND THEN
       CLOSE cr_crapbdt;
@@ -2511,6 +2587,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     pr_tab_dados_border(vr_idxborde).dsdlinha := to_char(rw_crapbdt.cddlinha,'fm000') ||'-'|| rw_crapldc.dsdlinha;
     pr_tab_dados_border(vr_idxborde).flgdigit := rw_crapbdt.flgdigit;
     pr_tab_dados_border(vr_idxborde).cdtipdoc := vr_cdtipdoc;
+    pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.innivris;
+    pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdiaatr, 0);
     
     -- Verifica se tem operador coordenador de liberacao ou analise
     IF TRIM(rw_crapbdt.cdopcolb) IS NOT NULL THEN
@@ -2553,6 +2631,151 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_dscritic := replace(replace('Erro pc_busca_dados_bordero: ' || SQLERRM, chr(13)),chr(10));   
   END pc_busca_dados_bordero;
     
+  PROCEDURE pc_busca_dados_bordero_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                   ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                   ,pr_cddopcao IN VARCHAR2               --> Cod opcao
+ 													         ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+													         ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+													         ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+													         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+													         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+													         ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  /* .........................................................................
+    --
+    --  Programa : pc_busca_dados_bordero_web           
+    --  Sistema  : Cred
+    --  Sigla    : DSCT0002
+    --  Autor    : Vitor Shimada Assanuma (GFT)
+    --  Data     : Agosto/2018.                   Ultima atualizacao: 03/08/2018
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Buscar dados de um determinado bordero
+    --
+    --   Alteração : 
+    -- .........................................................................*/   
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+	
+    -- Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+ 
+    -- variaveis de retorno
+    vr_tab_dados_border typ_tab_dados_border;
+    vr_index    INTEGER;
+    
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+
+    -- variaveis de data
+    vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    BEGIN
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+
+
+      --Selecionar dados da data
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se encontrar
+      IF BTCH0001.cr_crapdat%FOUND THEN
+        vr_dtmvtolt:= rw_crapdat.dtmvtolt;
+      END IF;
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+      
+      pc_busca_dados_bordero (pr_cdcooper => vr_cdcooper
+                             ,pr_cdagenci => vr_cdagenci
+                             ,pr_nrdcaixa => vr_nrdcaixa
+                             ,pr_cdoperad => vr_cdoperad
+                             ,pr_dtmvtolt => vr_dtmvtolt
+                             ,pr_idorigem => vr_idorigem
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrborder => pr_nrborder
+                             ,pr_cddopcao => pr_cddopcao
+                             --------> OUT <--------                                   
+                             ,pr_tab_dados_border => vr_tab_dados_border --> retorna dados do bordero
+                             ,pr_cdcritic => vr_cdcritic           --> Código da crítica
+                             ,pr_dscritic => vr_dscritic);          --> Descrição da crítica
+                             
+      IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      -- Inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);   
+       
+      -- inicilizar as informaçoes do xml
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                             '<root><dados>');
+                             
+       -- Ler os registros de titulos e incluir no xml
+       vr_index := vr_tab_dados_border.first;
+                             
+       -- Leitura dos registros
+       WHILE vr_index IS NOT NULL LOOP 
+         pc_escreve_xml('<inf>'||
+                            '<nrborder>' || vr_tab_dados_border(vr_index).nrborder || '</nrborder>' ||
+                            '<nrctrlim>' || vr_tab_dados_border(vr_index).nrctrlim || '</nrctrlim>' ||
+                            '<insitbdt>' || vr_tab_dados_border(vr_index).insitbdt || '</insitbdt>' ||
+                            '<txmensal>' || vr_tab_dados_border(vr_index).txmensal || '</txmensal>' ||
+                            '<txjurmor>' || vr_tab_dados_border(vr_index).txjurmor || '</txjurmor>' ||
+                            '<dtlibbdt>' || to_char(vr_tab_dados_border(vr_index).dtlibbdt,'DD/MM/RRRR') || '</dtlibbdt>' ||
+                            '<txdiaria>' || vr_tab_dados_border(vr_index).txdiaria || '</txdiaria>' ||
+                            '<qttitulo>' || vr_tab_dados_border(vr_index).qttitulo || '</qttitulo>' ||
+                            '<vltitulo>' || vr_tab_dados_border(vr_index).vltitulo || '</vltitulo>' ||
+                            '<dspesqui>' || vr_tab_dados_border(vr_index).dspesqui || '</dspesqui>' ||
+                            '<dsdlinha>' || vr_tab_dados_border(vr_index).dsdlinha || '</dsdlinha>' ||
+                            '<dsopelib>' || vr_tab_dados_border(vr_index).dsopelib || '</dsopelib>' ||
+                            '<dsopedig>' || vr_tab_dados_border(vr_index).dsopedig || '</dsopedig>' ||
+                            '<flgdigit>' || vr_tab_dados_border(vr_index).flgdigit || '</flgdigit>' ||
+                            '<dsopecoo>' || vr_tab_dados_border(vr_index).dsopecoo || '</dsopecoo>' ||
+                            '<cdtipdoc>' || vr_tab_dados_border(vr_index).cdtipdoc || '</cdtipdoc>' ||
+                            '<innivris>' || fn_letra_risco(vr_tab_dados_border(vr_index).innivris)  || '</innivris>' ||
+                            '<qtdiaatr>' || vr_tab_dados_border(vr_index).qtdiaatr || '</qtdiaatr>' ||
+                        '</inf>'
+                      );
+         vr_index := vr_tab_dados_border.next(vr_index);
+       END LOOP;
+       pc_escreve_xml ('</dados></root>',true);
+       pr_retxml := xmltype.createxml(vr_des_xml); 
+        
+       /* liberando a memória alocada pro clob */
+       dbms_lob.close(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml);         
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+       IF  vr_cdcritic <> 0 THEN
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       END IF;
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+       pr_dscritic := 'Erro geral na rotina dsct0002.pc_busca_dados_bordero_web: '||SQLERRM;                           
+                                      
+  END pc_busca_dados_bordero_web;                                 
+  
   --> Rotina para Carregar dados para a impressao da proposta de bordero
   PROCEDURE pc_carrega_proposta_bordero ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                          ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
