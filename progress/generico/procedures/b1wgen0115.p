@@ -157,7 +157,10 @@
 
                01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
                             (Jaison/Marcos Martini - PRJ404)
-
+							
+			   17/07/2018 - Para impressão de aditivos de contratos, se tpctrato = 90, substituir a
+                  	        utilizacao da data do contrato pela data do aditivo, se existir (aux_dtcontra)
+                            (Ana - Envolti - INC0019463)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -3748,16 +3751,33 @@ PROCEDURE Gera_Impressao:
             END.
             
         IF par_tpctrato = 90 THEN
-           DO:
-        /* Proposta de emprestimo */
-        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
-                           crawepr.nrdconta = par_nrdconta   AND
-                           crawepr.nrctremp = par_nrctremp
-                           NO-LOCK NO-ERROR.
+          DO:
+
+ 		    /* Aditivo de contrato - INC0019463 */
+            FIND crapadt WHERE crapadt.cdcooper = par_cdcooper   AND
+                               crapadt.nrdconta = par_nrdconta   AND
+                               crapadt.nrctremp = par_nrctremp   AND
+	    		  		       crapadt.nraditiv = par_nraditiv
+                             NO-LOCK NO-ERROR.
                            
-              ASSIGN aux_dtcontra = crawepr.dtmvtolt.
-           END.
-        ELSE
+  	  	    IF AVAIL crapadt THEN 
+		      DO:
+			    ASSIGN aux_dtcontra = crapadt.dtmvtolt.
+			  END.
+		    ELSE
+		      DO: 
+
+			    /* Proposta de emprestimo */
+                FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                   crawepr.nrdconta = par_nrdconta   AND
+                                   crawepr.nrctremp = par_nrctremp
+                                 NO-LOCK NO-ERROR.
+                           
+                ASSIGN aux_dtcontra = crawepr.dtmvtolt.
+
+ 	          END.
+          END. 
+		ELSE
            DO:
               /* Contrato de limite */
               FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
