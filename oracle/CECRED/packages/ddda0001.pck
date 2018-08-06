@@ -6408,7 +6408,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         GENE0001.pc_submit_job(pr_cdcooper  => vr_cdcooper
                               ,pr_cdprogra  => 'DDDA0001'
                               ,pr_dsplsql   => vr_dsdplsql
-                              ,pr_dthrexe   => TO_TIMESTAMP(TO_CHAR(vr_dtprxexc,'dd/mm/rrrr hh24:mi:ss'),'dd/mm/rrrr hh24:mi:ss')
+                              ,pr_dthrexe   => TO_TIMESTAMP_TZ(
+                                                   TO_CHAR(vr_dtprxexc,'dd/mm/rrrr hh24:mi:ss')||' '|| to_char( SYSTIMESTAMP, 'TZH:TZM' )
+                                              ,'dd/mm/rrrr hh24:mi:ss TZH:TZM')
                               ,pr_interva   => NULL
                               ,pr_jobname   => vr_dsnomjob          
                               ,pr_des_erro  => vr_dscritic);
