@@ -7,6 +7,10 @@
    --------------
    ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
    				  24/07/2018 - Adicionado situacao ESTUDO no select de Situacao (Mateus Z / Mouts - PRB0040198)
+				 
+				  25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
+				  
+				  31/07/2018 - Ajustado select insitcrd com as devidas situações. (Reinert)
  */		
  
 session_start();
@@ -28,6 +32,7 @@ $listadm = (isset($_POST['listadm'])) ? $_POST['listadm'] : "";
 $insitcrd = (isset($_POST['insitcrd'])) ? $_POST['insitcrd'] : 0;
 $dtsol2vi = (isset($_POST['dtsol2vi'])) ? $_POST['dtsol2vi'] : "";
 $flgprcrd = (isset($_POST['flgprcrd'])) ? $_POST['flgprcrd'] : 0;
+$insitdec = (isset($_POST['insitdec'])) ? $_POST['insitdec'] : 0;
 $flgdebit = (isset($_POST['flgdebit'])) ? $_POST['flgdebit'] : 0;
 $nrctrcrd = (isset($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0;
 $inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : 0;
@@ -75,11 +80,23 @@ $nmempres = (isset($_POST['nmempres'])) ? $_POST['nmempres'] : "";
 			<option value='5' <? if($insitcrd == 5){echo " selected";} ?>>BLOQUEADO</option>
 			<option value='6' <? if($insitcrd == 6){echo " selected";} ?>>CANCELADO</option>
 			<option value='7' <? if(($insitcrd == 7) || ($insitcrd == 4 && $dtsol2vi != "")){echo " selected";} ?>>SOL.2V</option>
+			<option value='9' <? if($insitcrd == 9){echo " selected";} ?>>ENVIADO BANCOOB</option>
 		</select>		
 		<label for="flgdebit">Funcao Debito:</label>
 		<input type="checkbox" name="flgdebit" style="margin-top:7px !important" <?php if ($flgdebit == 1) { echo "checked "; } ?> />		
 		<label for="flgprcrd">Titular:</label>
 		<input type="checkbox" name="flgprcrd" style="margin-top:7px !important" <?php if ($flgprcrd == 1) { echo "checked "; } ?> />		
+		<label for="insitdec">Sit. Decisao:</label>	
+		<select name="" id="insitdec" class="campo">										
+			<option value='1' <? if($insitdec == 1){echo " selected";} ?>>SEM APROVACAO</option>
+			<option value='2' <? if($insitdec == 2){echo " selected";} ?>>APROVADA AUTO</option>
+			<option value='3' <? if($insitdec == 3){echo " selected";} ?>>APROVADA MANUAL</option>
+			<option value='4' <? if($insitdec == 4){echo " selected";} ?>>ERRO</option>
+			<option value='5' <? if($insitdec == 5){echo " selected";} ?>>REJEITADA</option>
+			<option value='6' <? if($insitdec == 6){echo " selected";} ?>>REFAZER</option>
+			<option value='7' <? if($insitdec == 7){echo " selected";} ?>>EXPIRADA</option>
+			<option value='8' <? if($insitdec == 8){echo " selected";} ?>>EFETIVADA</option>
+		</select>		
 	</form>
 </div>
 <br/>	

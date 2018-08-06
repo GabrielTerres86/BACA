@@ -10,7 +10,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANCRD AS
   
       Objetivo  : Package ref. a tela MANCRD (Ayllos Web)
   
-      Alteracoes:                              
+      Alteracoes: 25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
       
   ---------------------------------------------------------------------------------------------------------------*/
   PROCEDURE pc_busca_cartoes(pr_nrdconta IN crapass.nrdconta %TYPE --> Numero de conta
@@ -30,6 +30,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANCRD AS
                                ,pr_flgdebit IN crawcrd.flgdebit%TYPE --> Funcao debito
                                ,pr_nmtitcrd IN crapcrd.nmtitcrd%TYPE --> Nome do plastico
                                ,pr_insitcrd IN crawcrd.insitcrd%TYPE --> Situacao do cartao
+                               ,pr_insitdec IN crawcrd.insitdec%TYPE --> Decisao sobre a analise de credito do cartao
                                ,pr_flgprcrd IN crawcrd.flgprcrd%TYPE --> Titularidade
                                ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Contrato do cartao
                                ,pr_nmempres IN crawcrd.nmempcrd%TYPE --> Empresa
@@ -65,6 +66,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
       Objetivo  : Package ref. a tela MANCRD (Ayllos Web)
   
       Alteracoes: 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)                           
+      
+                  25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
       
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -118,6 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
             ,crd.nrctrcrd
             ,crd.flgprcrd
             ,crd.nmempcrd
+            ,crd.insitdec
             ,CASE WHEN (crd.insitcrd = 4 AND dtsol2vi IS NOT NULL) OR insitcrd = 7 THEN 'Sol.2v'
                   WHEN crd.insitcrd = 0 THEN 'Em Estudo' 
                   WHEN crd.insitcrd = 1 THEN 'Aprovado'   
@@ -126,6 +130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                   WHEN crd.insitcrd = 4 THEN 'Em Uso'   
                   WHEN crd.insitcrd = 5 THEN 'Bloqueado'   
                   WHEN crd.insitcrd = 6 THEN 'Cancelado'                       
+                  WHEN crd.insitcrd = 9 THEN 'Enviado Bancoob'
              END dssitcrd
             ,ass.nmprimtl
             ,ass.inpessoa
@@ -224,6 +229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                                        <flgdebit>' || rw_dados_cartoes.flgdebit || '</flgdebit>
                                        <nmresadm>' || rw_dados_cartoes.nmresadm || '</nmresadm>
                                        <insitcrd>' || rw_dados_cartoes.insitcrd || '</insitcrd>
+                                       <insitdec>' || rw_dados_cartoes.insitdec || '</insitdec>
                                        <dtsol2vi>' || to_char(nvl(rw_dados_cartoes.dtsol2vi,''),'dd/mm/yyyy') || '</dtsol2vi>
                                        <dssitcrd>' || rw_dados_cartoes.dssitcrd || '</dssitcrd>
                                        <dtvalida>' || TO_CHAR(rw_dados_cartoes.dtvalida, 'DD/MM/YYYY') || '</dtvalida>
@@ -288,6 +294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                               ,pr_flgdebit IN crawcrd.flgdebit%TYPE --> Funcao debito
                               ,pr_nmtitcrd IN crapcrd.nmtitcrd%TYPE --> Nome do plastico
                               ,pr_insitcrd IN crawcrd.insitcrd%TYPE --> Situacao do cartao   
+                              ,pr_insitdec IN crawcrd.insitdec%TYPE --> Decisao sobre a analise de credito do cartao
                               ,pr_flgprcrd IN crawcrd.flgprcrd%TYPE --> Titularidade         
                               ,pr_nrctrcrd IN crawcrd.nrctrcrd%TYPE --> Contrato do cartao
                               ,pr_nmempres IN crawcrd.nmempcrd%TYPE --> Empresa
@@ -326,6 +333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     vr_dtsol2vi VARCHAR2(10);
     vr_dssitcrd VARCHAR2(20);
     vr_dssitcrd_ant VARCHAR2(20);
+    vr_dssitdec VARCHAR2(20);
+    vr_dssitdec_ant VARCHAR2(20);
     vr_nmresadm VARCHAR2(25);
     vr_nmresadm_ant VARCHAR2(25);
     vr_nrdrowid ROWID;  
@@ -347,6 +356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
             ,crd.flgdebit 
             ,crd.nmtitcrd 
             ,crd.insitcrd 
+            ,crd.insitdec
             ,crd.flgprcrd
             ,crd.dtsol2vi
             ,crd.nmempcrd
@@ -356,7 +366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
          AND crd.nrcrcard = pr_nrcrcard
          AND crd.nrctrcrd = pr_nrctrcrd;    
     rw_crawcrd cr_crawcrd%ROWTYPE;
-    
+  
     -- Dados do Cartao
     CURSOR cr_crapcrd(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_nrdconta crapass.nrdconta%TYPE
@@ -402,7 +412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                    ,pr_nrcrcard
                    ,pr_nrctrcrd);
       FETCH cr_crawcrd INTO rw_crawcrd;
-    CLOSE cr_crawcrd;   
+    CLOSE cr_crawcrd;    
     
     OPEN cr_crapcrd(vr_cdcooper
                    ,pr_nrdconta
@@ -428,11 +438,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
             ,crd.flgdebit = pr_flgdebit
             ,crd.nmtitcrd = upper(pr_nmtitcrd)
             ,crd.insitcrd = vr_insitcrd
+            ,crd.insitdec = pr_insitdec
             ,crd.dtsol2vi = to_date(nvl(vr_dtsol2vi,''),'dd/mm/rrrr')
             ,crd.flgprcrd = pr_flgprcrd
             ,crd.nmempcrd = upper(pr_nmempres)
        WHERE crd.nrdconta = pr_nrdconta
          AND crd.nrcrcard = pr_nrcrcard
+         AND crd.nrctrcrd = pr_nrctrcrd
          AND crd.cdcooper = vr_cdcooper;    
     EXCEPTION
       WHEN OTHERS THEN
@@ -481,6 +493,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
          vr_dssitcrd_ant:= 'Bloqueado';
       ELSIF rw_crawcrd.insitcrd = 6 THEN   
         vr_dssitcrd_ant:= 'Cancelado';         
+      ELSIF rw_crawcrd.insitcrd = 9 THEN   
+        vr_dssitcrd_ant:= 'Enviado Bancoob';         
       END IF;
       
       -- Buscar descição da nova situação
@@ -499,6 +513,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
          vr_dssitcrd:= 'Bloqueado';
       ELSIF vr_insitcrd = 6 THEN   
          vr_dssitcrd:= 'Cancelado';         
+      ELSIF vr_insitcrd = 9 THEN   
+         vr_dssitcrd:= 'Enviado Bancoob';         
       END IF;    
     
       gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
@@ -518,6 +534,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                                 pr_nmdcampo => 'insitcrd',
                                 pr_dsdadant => vr_dssitcrd_ant,
                                 pr_dsdadatu => vr_dssitcrd);
+    
+    END IF;
+    
+    -- Logar alteracao da situacao do cartao
+    IF (pr_insitdec <> rw_crawcrd.insitdec) THEN
+    
+      -- Pegar descrição da antiga situação
+      IF rw_crawcrd.insitdec = 1 THEN 
+         vr_dssitdec_ant:= 'Sem aprovacao';
+      ELSIF rw_crawcrd.insitdec = 2 THEN
+         vr_dssitdec_ant:= 'Aprovada auto';
+      ELSIF rw_crawcrd.insitdec = 3 THEN
+         vr_dssitdec_ant:= 'Aprovada manual';
+      ELSIF rw_crawcrd.insitdec = 4 THEN
+         vr_dssitdec_ant:= 'Erro';
+      ELSIF rw_crawcrd.insitdec = 5 THEN   
+         vr_dssitdec_ant:= 'Rejeitada';
+      ELSIF rw_crawcrd.insitdec = 6 THEN
+         vr_dssitdec_ant:= 'Refazer';
+      ELSIF rw_crawcrd.insitdec = 7 THEN   
+         vr_dssitdec_ant:= 'Expirada';
+      ELSIF rw_crawcrd.insitdec = 8 THEN   
+         vr_dssitdec_ant:= 'Efetivada';
+      END IF;
+      
+      -- Buscar descição da nova situação
+      IF pr_insitdec = 1 THEN 
+         vr_dssitdec:= 'Sem aprovacao';
+      ELSIF pr_insitdec = 2 THEN
+         vr_dssitdec:= 'Aprovada auto';
+      ELSIF pr_insitdec = 3 THEN
+         vr_dssitdec:= 'Aprovada manual';
+      ELSIF pr_insitdec = 4 THEN
+         vr_dssitdec:= 'Erro';
+      ELSIF pr_insitdec = 5 THEN   
+         vr_dssitdec:= 'Rejeitada';
+      ELSIF pr_insitdec = 6 THEN
+         vr_dssitdec:= 'Refazer';
+      ELSIF pr_insitdec = 7 THEN   
+         vr_dssitdec:= 'Expirada';
+      ELSIF pr_insitdec = 8 THEN   
+         vr_dssitdec:= 'Efetivada';
+      END IF;
+      
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => '',
+                           pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(vr_idorigem)),
+                           pr_dstransa => 'Decisao Do Cartao',
+                           pr_dttransa => TRUNC(SYSDATE),
+                           pr_flgtrans => 1,
+                           pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+                           pr_idseqttl => 0,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'insitdec',
+                                pr_dsdadant => vr_dssitdec_ant,
+                                pr_dsdadatu => vr_dssitdec);
     
     END IF;
     
@@ -748,8 +825,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
         vr_nmresadm:= rw_crapadc.nmresadm;
       ELSE 
         CLOSE cr_crapadc;         
-      END IF;
-   
+    END IF;
+      
       -- Buscar descrição da adiministradora antiga
       OPEN cr_crapadc(vr_cdcooper, 
                       rw_crapcrd.cdadmcrd);
@@ -878,8 +955,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                      ,pr_nrdconta crapass.nrdconta%TYPE
                      ,pr_nrcrcard crawcrd.nrcrcard%TYPE
                      ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE) IS
-      SELECT crd.insitcrd, 
-             crd.dtsol2vi
+      SELECT crd.insitcrd
+            ,crd.insitdec
+            ,crd.dtsol2vi
         FROM crawcrd crd
        WHERE crd.cdcooper = pr_cdcooper
          AND crd.nrdconta = pr_nrdconta
@@ -928,6 +1006,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
       vr_cdcritic := 0;
       vr_dscritic := 'Cartao deve estar com o status Solicitado para reenvio.';
       RAISE vr_exc_erro;        
+    ELSIF rw_crawcrd.insitdec NOT IN (2,3) THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'A Situacao de Decisao do Cartao precisa ser 2 - Aprovada Auto ou 3 - Aprovada Manual!';
+      RAISE vr_exc_erro;        
     ELSE
       UPDATE crawcrd crd
          SET crd.insitcrd = 1
@@ -956,6 +1038,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
         vr_dssitcrd:= 'Bloqueado';
       ELSIF rw_crawcrd.insitcrd = 6 THEN
         vr_dssitcrd:= 'Cancelado';
+      ELSIF rw_crawcrd.insitcrd = 9 THEN
+        vr_dssitcrd:= 'Enviado Bancoob';
       END IF;
     
       gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,

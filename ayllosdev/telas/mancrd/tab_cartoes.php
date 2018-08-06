@@ -6,6 +6,8 @@
   OBJETIVO     : Rotina para controlar as operações da tela MANCRD
   --------------
   ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+				 
+				 25/07/2018 - Adicionado campo insitdec na tela. PRJ345(Lombardi).
   -------------- 
  */
 ?> 
@@ -77,7 +79,8 @@
 																											   , '<?php echo getByTagName($r->tags, 'nrctrcrd') ?>'
 																											   , '<?php echo getByTagName($r->tags, 'inpessoa') ?>'
 																											   , '<?php echo getByTagName($r->tags, 'nmempres') ?>'
-																											   , '<?php echo getByTagName($r->tags, 'flgdebit') ?>' ); return false;" border="0" style="margin-right:5px" title="Editar Cartao"/>
+																											   , '<?php echo getByTagName($r->tags, 'flgdebit') ?>'
+																											   , '<?php echo getByTagName($r->tags, 'insitdec') ?>' ); return false;" border="0" style="margin-right:5px" title="Editar Cartao"/>
 																											   
 						  <img src="<?php echo $UrlImagens; ?>icones/ico_reenviar.png" onClick="confirmaReenviarSolicitacao('<?php echo getByTagName($r->tags, 'nrdconta') ?>'
 																													      , '<?php echo getByTagName($r->tags, 'nrcrcard') ?>'
