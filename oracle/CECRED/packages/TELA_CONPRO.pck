@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
+CREATE OR REPLACE PACKAGE TELA_CONPRO IS
 
   ---------------------------------------------------------------------------
   --
@@ -155,7 +155,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
 END TELA_CONPRO;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
+CREATE OR REPLACE PACKAGE BODY TELA_CONPRO IS
   ---------------------------------------------------------------------------
   --
   --  Programa : TELA_CONPRO
