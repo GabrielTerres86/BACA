@@ -1628,12 +1628,12 @@ END pc_incluir_bordero_esteira;
 
      --Preenchendo Lista Títulos e lista de Críticas dos Títulos.
      -- limpar os objetos jason
-     vr_obj_titulos := json();
      vr_lst_titulos := json_list();
      rw_craptdb := null;
      for rw_craptdb in cr_craptdb (pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nrborder => pr_nrborder) loop
+         vr_obj_titulos := json();
          -- Popular o Objeto de Lista JSON com os dados do Título.
          vr_obj_titulos.put('idTitulo'       , rw_craptdb.nrtitulo);
          vr_obj_titulos.put('convenio'       , rw_craptdb.nrcnvcob);
