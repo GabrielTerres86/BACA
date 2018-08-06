@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 20/07/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 06/08/2018
 
       Dados referentes ao programa:
 
@@ -23,6 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
                   20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
 							   PJ 450 - Diego Simas - AMcom
 
+				  06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
+				               Limite de crédito, Desconto de título e Desconto de cheque
+							   PJ 450 - Diego Simas - AMcom
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -146,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 20/03/2018
+      Data     : Maio/2017.                   Ultima atualizacao: 06/08/2018
 
       Dados referentes ao programa:
 
@@ -170,6 +173,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                   24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                Campo documentoAval - Diego Simas - AMcom
+
+				  06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
+				               Limite de crédito, Desconto de título e Desconto de cheque
+							   PJ 450 - Diego Simas - AMcom
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1113,7 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 26/07/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 06/08/2018
       
         Dados referentes ao programa:
       
@@ -1139,6 +1146,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
 					26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
   							     PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)	
+
+				    06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
+				                 Limite de crédito, Desconto de título e Desconto de cheque
+							     PJ 450 - Diego Simas - AMcom
 
     ..........................................................................*/
     DECLARE
@@ -1665,10 +1676,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
     
       -- Cursor para pegar os contratos em que o cooperado é avalista
-      -- Objeto Contas Avalizada do Proponente
+      -- EMPRÉSTIMOS
+      -- Objeto Contas Avalizada do Proponente 
       -- Diego Simas (AMcom)
-      CURSOR cr_crapavl_contas (pr_cdcooper crapass.cdcooper%TYPE,
-                                pr_nrdconta crapass.nrdconta%TYPE)IS
+      CURSOR cr_aval_emprestimos(pr_cdcooper crapass.cdcooper%TYPE,
+                                 pr_nrdconta crapass.nrdconta%TYPE)IS
       SELECT ass.nrdconta conta, 
              ass.nmprimtl nome,
              ass.nrcpfcgc documento,
@@ -1684,8 +1696,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
          AND emp.nrctremp = ava.nrctravd
          AND emp.inliquid = 0
          AND ass.cdcooper = emp.cdcooper
-          AND ass.nrdconta = emp.nrdconta;
-      rw_crapavl_contas cr_crapavl_contas%ROWTYPE;
+         AND ass.nrdconta = emp.nrdconta;
+      rw_aval_emprestimos cr_aval_emprestimos%ROWTYPE;
+      
+      -- Cursor para pegar os contratos em que o cooperado é avalista
+      -- Limite de Crédito / Limite de desconto de Cheque / Título
+      -- Objeto Contas Avalizada do Proponente 
+      -- Diego Simas (AMcom)
+      CURSOR cr_aval_limites(pr_cdcooper crapass.cdcooper%TYPE,
+                             pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.nrdconta conta, 
+             ass.nmprimtl nome,
+             ass.nrcpfcgc documento,
+             ass.inpessoa tipo_pessoa,
+             lim.nrctrlim contrato
+        FROM crapass ass,        
+             craplim lim
+       WHERE lim.cdcooper = pr_cdcooper
+         AND(lim.nrctaav1 = pr_nrdconta OR 
+             lim.nrctaav2 = pr_nrdconta)
+         AND lim.insitlim = 2
+         AND ass.cdcooper = lim.cdcooper
+         AND ass.nrdconta = lim.nrdconta;
+      rw_aval_limites cr_aval_limites%ROWTYPE;
 
       -- Buscar ultimas ocorrências de Cheques Devolvidos
       CURSOR cr_crapneg_cheq(pr_qtmeschq IN INTEGER) IS
@@ -3352,19 +3385,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Diego Simas (AMcom)
       vr_lst_generic3 := json_list();
       
-      -- Efetuar laço para trazer todos os registros
-      FOR rw_crapavl_contas IN cr_crapavl_contas(pr_cdcooper, pr_nrdconta) LOOP
+      -- Efetuar laço para contas avalizadas (Empréstimos)
+      FOR rw_aval_emprestimos IN cr_aval_emprestimos(pr_cdcooper, pr_nrdconta) LOOP
         -- Criar objeto para as contas avalizadas e enviar suas informações
         vr_obj_generic3 := json();
-        vr_obj_generic3.put('contaAval', rw_crapavl_contas.conta);
-        vr_obj_generic3.put('nomeAval', rw_crapavl_contas.nome);
-        vr_documento := fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavl_contas.documento
-                                        ,pr_inpessoa => rw_crapavl_contas.tipo_pessoa);
+        vr_obj_generic3.put('contaAval', rw_aval_emprestimos.conta);
+        vr_obj_generic3.put('nomeAval', rw_aval_emprestimos.nome);
+        vr_documento := fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_aval_emprestimos.documento
+                                        ,pr_inpessoa => rw_aval_emprestimos.tipo_pessoa);
         vr_obj_generic3.put('documentoAval', vr_documento);
-        vr_obj_generic3.put('contratoAval', rw_crapavl_contas.contrato);
+        vr_obj_generic3.put('contratoAval', rw_aval_emprestimos.contrato);
         -- Adicionar contas avalizadas na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      END LOOP; -- Final da leitura das operações
+      END LOOP;
+      
+      -- Efetuar laço para contas avalizadas (Limite de Crédito/Limite de Desconto de Cheque/Título)
+      FOR rw_aval_limites IN cr_aval_limites(pr_cdcooper, pr_nrdconta) LOOP
+        -- Criar objeto para as contas avalizadas e enviar suas informações
+        vr_obj_generic3 := json();
+        vr_obj_generic3.put('contaAval', rw_aval_limites.conta);
+        vr_obj_generic3.put('nomeAval', rw_aval_limites.nome);
+        vr_documento := fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_aval_limites.documento
+                                        ,pr_inpessoa => rw_aval_limites.tipo_pessoa);
+        vr_obj_generic3.put('documentoAval', vr_documento);
+        vr_obj_generic3.put('contratoAval', rw_aval_limites.contrato);
+        -- Adicionar contas avalizadas na lista
+        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+      END LOOP;
 
       -- Adicionar o array contasAvalizadas no objeto informações adicionais
       vr_obj_generic2.put('contasAvalizadas', vr_lst_generic3);
