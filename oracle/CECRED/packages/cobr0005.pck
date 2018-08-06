@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 13/03/2016 
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -109,6 +109,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
           ,qtdiaprt crapcob.qtdiaprt%TYPE
           ,indiaprt crapcob.indiaprt%TYPE
           ,insitpro crapcob.insitpro%TYPE
+		  ,insrvprt crapcob.insrvprt%TYPE
           ,flgcbdda VARCHAR2(1)
           ,cdocorre INTEGER
           ,dsocorre VARCHAR2(1000)
@@ -565,6 +566,31 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
                                       ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
                                       ,pr_cdcritic OUT NUMBER                          --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
                                       ,pr_dscritic OUT VARCHAR2);                                    
+									    
+  --> Rotina responsavel por gerar o relatorio carta anuencia - Chamada ayllos Web                                    
+  PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
+                                        ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
+	                                      ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+                                        ,pr_dtcatanu    IN VARCHAR2  --> Data quitação divida 
+                                        ,pr_dtmvtolt    IN VARCHAR2  --> data do movimento                                     
+                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
+                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica
+                                        ,pr_retxml IN  OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2               --> Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2);             --> Erros do processo           
+  
+  --> Rotina responsavel por gerar o relatorio carta anuencia                         
+  PROCEDURE pc_relat_carta_anuencia (pr_cdcooper    IN craptab.cdcooper%TYPE  --> Cooperativa                                  
+                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                    ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
+	                                  ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco           
+                                    --------->> OUT <<-----------
+                                    ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
+                                    ,pr_dsxmlrel   OUT CLOB                   --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                                    ,pr_cdcritic   OUT NUMBER                 --> Codigo da critica
+                                    ,pr_dscritic   OUT VARCHAR2);             --> Retorno de critica                                 
 END cobr0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
@@ -575,7 +601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --  Sistema  : Procedimentos gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 22/11/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -592,6 +618,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --
   --              20/02/2018 - Inclusão rotina pc_gera_log
   --                           (Ana - Envolti - Ch 839539)
+  --
+  --              01/04/2018 - Inserido noti0001.pc_cria_notificacao
+  --                              
+  --              27/07/2018 - Ajuste mensagem do Log
+  --                          ( Belli - Envolti - Ch INC0019045 ) 
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -604,6 +635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
                        ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
                        ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_cdprograma    IN tbgen_prglog.cdprograma%type DEFAULT vr_cdprogra
                        ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL) IS
     -----------------------------------------------------------------------------------------------------------
     --
@@ -611,7 +643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --  Sistema  : Rotina para gravar logs em tabelas
     --  Sigla    : CRED
     --  Autor    : Ana Lúcia E. Volles - Envolti
-    --  Data     : Janeiro/2018           Ultima atualizacao: 23/02/2018
+    --  Data     : Janeiro/2018           Ultima atualizacao: 08/05/2018
     --  Chamado  : 788828
     --
     -- Dados referentes ao programa:
@@ -624,11 +656,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     --
   BEGIN         
+
     --> Controlar geração de log de execução dos jobs                                
     CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
                            pr_cdcooper      => pr_cdcooper, 
                            pr_tpocorrencia  => pr_ind_tipo_log, 
-                           pr_cdprograma    => vr_cdprogra, 
+                           pr_cdprograma    => pr_cdprograma, 
                            pr_tpexecucao    => 1, --cadeia
                            pr_cdcriticidade => pr_cdcriticidade,
                            pr_cdmensagem    => pr_cdmensagem,    
@@ -652,18 +685,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: --/--/----
+     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
      Objetivo  : Gerar registro de remessa para o BB
 
-     Alteracoes: ----
-
+     Alteracoes: 10/05/2018 - Revitalização
+                              Grava tabela de log nas exceptions
+                              (Ana - Envolti - Ch REQ0011327)
   ............................................................................ */      
                                    
-
       vr_nrremret crapret.nrremret%TYPE;
       vr_nrseqreg crapret.nrseqreg%TYPE;
       vr_cdcritic INTEGER;
@@ -674,37 +707,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           FROM crapcob cob
          WHERE cob.rowid = pr_rowidcob;
          
-      rw_cob cr_crapcob%ROWTYPE;
-      vr_ret ROWID;
-      
+      rw_cob      cr_crapcob%ROWTYPE;
+      vr_ret      ROWID;
       vr_exc_erro EXCEPTION;
+      vr_dsparame VARCHAR2(2000);
            
   BEGIN    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_pedido_remessa');
 
     BEGIN
+      vr_dsparame := ' - pr_rowidcob:'||pr_rowidcob||
+                     ', pr_dtmvtolt:'||pr_dtmvtolt||
+                     ', pr_cdoperad:'||pr_cdoperad;
       
       OPEN cr_crapcob;
       FETCH cr_crapcob INTO rw_cob;
-      
       IF cr_crapcob%NOTFOUND THEN
          RAISE vr_exc_erro;
       END IF;
-      
       CLOSE cr_crapcob;
           
+      vr_dsparame := vr_dsparame||
+                     ' - rw_cob.cdcooper:'||rw_cob.cdcooper||
+                     ', rw_cob.nrcnvcob:'||rw_cob.nrcnvcob;
+
+      --Gera log na paga0001
       paga0001.pc_prep_remessa_banco( pr_cdcooper => rw_cob.cdcooper
                                      ,pr_nrcnvcob => rw_cob.nrcnvcob
                                      ,pr_dtmvtolt => pr_dtmvtolt
                                      ,pr_cdoperad => pr_cdoperad
                                      ,pr_nrremret => vr_nrremret
-                                    , pr_rowid_ret => vr_ret
+                                     ,pr_rowid_ret => vr_ret
                                      ,pr_nrseqreg => vr_nrseqreg
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);
                                      
+      IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+        --Grava tabela de log como alerta - Ch REQ0011327
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => vr_dscritic||','||vr_dsparame,
+                    pr_cdcriticidade => 0,
+                    pr_cdmensagem    => nvl(vr_cdcritic,0),
+                    pr_ind_tipo_log  => 3);
+      END IF;
+
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_pedido_remessa');
 
       vr_nrseqreg := vr_nrseqreg + 1;
       
+      --Gera log na paga0001
       paga0001.pc_cria_tab_remessa( pr_idregcob => rw_cob.rowid
                                    ,pr_nrremret => vr_nrremret
                                    ,pr_nrseqreg => vr_nrseqreg
@@ -717,16 +771,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
                                  
+      IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+        --Grava tabela de log como alerta - Ch REQ0011327
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => vr_dscritic||','||vr_dsparame,
+                    pr_cdcriticidade => 0,
+                    pr_cdmensagem    => nvl(vr_cdcritic,0),
+                    pr_ind_tipo_log  => 3);
+      END IF;
+
+      -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
        WHEN vr_exc_erro THEN
          NULL;  
        WHEN OTHERS THEN
-         --Ch 839539
+         --Ch REQ0011327
          pr_cdcritic := 9999;
-         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0007.pc_gera_pedido_remessa. '||sqlerrm;
-    END;
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0007.pc_gera_pedido_remessa. '||sqlerrm||vr_dsparame;
 
+        --Grava tabela de log - Ch REQ0011327
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
+
+        --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
+        CECRED.pc_internal_exception;
   END;
+  END pc_gera_pedido_remessa;
   
   PROCEDURE pc_calc_codigo_barras ( pr_dtvencto IN DATE
                                    ,pr_cdbandoc IN INTEGER
@@ -744,25 +820,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: --/--/----
+     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
      Objetivo  : Calcular o código de barras a partir dos parâmetros básicos
 
-     Alteracoes: ----
-
+     Alteracoes: 10/05/2018 - Revitalização
+                              Grava tabela de log nas exceptions
+                              (Ana - Envolti - Ch REQ0011327)
   ............................................................................ */      
                                    
+    vr_aux        VARCHAR2(100);
+    vr_dtini      DATE := to_date('07/10/1997','DD/MM/RRRR');
+    vr_dtnovo     DATE := to_date('22/02/2025','DD/MM/RRRR');
+    vr_ftvencto   INTEGER;
+    vr_flgcbok    BOOLEAN;
+    vr_dsparame   VARCHAR2(2000);
+    vr_cdcritic   INTEGER;
+    vr_dscritic   VARCHAR2(2000);
 
-    vr_aux VARCHAR2(100);
-    vr_dtini  DATE := to_date('07/10/1997','DD/MM/RRRR');
-    vr_dtnovo DATE := to_date('22/02/2025','DD/MM/RRRR');
-    vr_ftvencto INTEGER;
-    vr_flgcbok BOOLEAN;
-    
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_calc_codigo_barras');
 
       IF pr_dtvencto >= to_date('22/02/2025','DD/MM/RRRR') THEN
          vr_ftvencto := (trunc(pr_dtvencto) - trunc(vr_dtnovo)) + 1000;
@@ -770,6 +851,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          vr_ftvencto := (trunc(pr_dtvencto) - trunc(vr_dtini));
       END IF;
 
+    vr_dsparame := ' - pr_dtvencto:'||pr_dtvencto||
+                    ', pr_cdbandoc:'||pr_cdbandoc||
+                    ', pr_vltitulo:'||pr_vltitulo||
+                    ', pr_nrcnvcob:'||pr_nrcnvcob||
+                    ', pr_nrcnvceb:'||pr_nrcnvceb||
+                    ', pr_nrdconta:'||pr_nrdconta||
+                    ', pr_nrdocmto:'||pr_nrdocmto||
+                    ', pr_cdcartei:'||pr_cdcartei;
+  
       IF length(pr_nrcnvcob) <= 6 THEN
         vr_aux := to_char(pr_cdbandoc,'fm000')
                                || '9' /* moeda */
@@ -796,12 +886,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- Calcular Digito Código Barras
       CXON0000.pc_calc_digito_titulo(pr_valor   => vr_aux --> Valor Calculado
                                     ,pr_retorno => vr_flgcbok); --> Retorno digito correto
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_calc_codigo_barras');
+
       -- Retornar Codigo Barras
       pr_cdbarras := gene0002.fn_mask(vr_aux
                                      ,'99999999999999999999999999999999999999999999');    
     
-  END;
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_calc_codigo_barras. '||sqlerrm
+                     ||vr_dsparame;
   
+      --Grava tabela de log - Ch 839539
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 08/05/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception;
+  END pc_calc_codigo_barras;
+
   PROCEDURE pc_calc_linha_digitavel(pr_cdbarras IN  VARCHAR2
                                    ,pr_lindigit OUT VARCHAR2) IS
                                    
@@ -811,32 +924,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: --/--/----
+     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
      Objetivo  : Calcular linha digitavel do código de barras
 
-     Alteracoes: ----
-
+      Alteracoes: 10/05/2018 - Revitalização
+                               Grava tabela de log nas exceptions
+                               (Ana - Envolti - Ch REQ0011327)
   ............................................................................ */      
-                                   
-                                   
-  BEGIN
-
-    DECLARE    
       -- Linha Digitavel
-      vr_titulo1 VARCHAR2(100);
-      vr_titulo2 VARCHAR2(100);
-      vr_titulo3 VARCHAR2(100);
-      vr_titulo4 VARCHAR2(100);
-      vr_titulo5 VARCHAR2(100);    
-      
-      vr_nro_digito     INTEGER;
-      vr_retorno BOOLEAN;      
-    
+      vr_titulo1    VARCHAR2(100);
+      vr_titulo2    VARCHAR2(100);
+      vr_titulo3    VARCHAR2(100);
+      vr_titulo4    VARCHAR2(100);
+      vr_titulo5    VARCHAR2(100);    
+      vr_nro_digito INTEGER;
+      vr_retorno    BOOLEAN;    
+      vr_cdcritic   INTEGER;
+      vr_dscritic   VARCHAR2(2000);
     BEGIN
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_calc_linha_digitavel');
+
       vr_titulo1 := substr(pr_cdbarras,01,04) ||
                     substr(pr_cdbarras,20,01) ||
                     substr(pr_cdbarras,21,04) || '0';
@@ -851,11 +963,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                     ,pr_nro_digito   => vr_nro_digito --> Digito Verificador
                                     ,pr_retorno      => vr_retorno);  --> Retorno digito correto
           
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_calc_linha_digitavel');
+          
       -- Calcula digito - Segunda campo da linha digitavel
       CXON0000.pc_calc_digito_verif (pr_valor        => vr_titulo2    --> Valor Calculado
                                     ,pr_valida_zeros => FALSE         --> Validar Zeros
                                     ,pr_nro_digito   => vr_nro_digito --> Digito Verificador
                                     ,pr_retorno      => vr_retorno);  --> Retorno digito correto
+                                    
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_calc_linha_digitavel');
                                     
       -- Calcula digito - Terceira campo da linha digitavel
       CXON0000.pc_calc_digito_verif (pr_valor        => vr_titulo3    --> Valor Calculado
@@ -863,16 +981,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                     ,pr_nro_digito   => vr_nro_digito --> Digito Verificador
                                     ,pr_retorno      => vr_retorno);  --> Retorno digito correto                              
                                     
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_calc_linha_digitavel');
+                                    
       pr_lindigit := gene0002.fn_mask(gene0002.fn_mask(vr_titulo1, '9999999999'),'99999.99999')   || ' ' ||
                      gene0002.fn_mask(gene0002.fn_mask(vr_titulo2, '99999999999'),'99999.999999') || ' ' ||
                      gene0002.fn_mask(gene0002.fn_mask(vr_titulo3, '99999999999'),'99999.999999') || ' ' ||
                      gene0002.fn_mask(vr_titulo4,'9')                                             || ' ' ||     
                      gene0002.fn_mask(vr_titulo5, '99999999999999');                                  
-    END;  
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_calc_linha_digitavel. '||sqlerrm
+                     ||'. Cod. Barras:'||pr_cdbarras;
+  
+      --Grava tabela de log - Ch 839539
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+  
+      --Gravar tabela especifica de log - 08/05/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception;
   END pc_calc_linha_digitavel;                                   
-  
-  
+
   -- Gera título de cobrança
   PROCEDURE pc_gerar_titulo_cobranca(pr_cdcooper IN crapcob.cdcooper%TYPE /* cooperativa */
                                     ,pr_nrdconta IN crapcob.nrdconta%TYPE /* conta do cooperado */
@@ -923,7 +1061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: 23/02/2018
+     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
 
      Dados referentes ao programa:
 
@@ -947,15 +1085,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_cdbarras VARCHAR2(44);
       vr_nrnosnum crapcob.nrnosnum%TYPE;
       vr_dtdemiss DATE;
-
-      vr_busca VARCHAR2(100);
+      vr_busca    VARCHAR2(100);
       vr_nrdocmto crapcob.nrdocmto%TYPE;
       
       CURSOR cr_cop 
           IS SELECT cdbcoctl, cdagectl 
                FROM crapcop
               WHERE crapcop.cdcooper = pr_cdcooper;
-              
       rw_cop cr_cop%ROWTYPE;
       
       CURSOR cr_crapcob IS 
@@ -968,7 +1104,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              SELECT * FROM crapcco cco
               WHERE cco.cdcooper = pr_cdcooper
                 AND cco.nrconven = pr_nrconven;
-                
       rw_crapcco cr_crapcco%ROWTYPE;
       
       CURSOR cr_crapsab (pr_cdcooper IN crapsab.cdcooper%TYPE
@@ -978,7 +1113,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               WHERE sab.cdcooper = pr_cdcooper
                 AND sab.nrdconta = pr_nrdconta
                 AND sab.nrinssac = pr_nrinssac;
-      
       rw_crapsab cr_crapsab%ROWTYPE;                        
       
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -986,7 +1120,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              SELECT * FROM crapass
               WHERE cdcooper = pr_cdcooper
                 AND nrdconta = pr_nrdconta;
-                
       rw_crapass cr_crapass%ROWTYPE;
       
       CURSOR cr_crappnp ( pr_nmextcid IN crappnp.nmextcid%TYPE
@@ -994,7 +1127,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              SELECT * FROM crappnp
               WHERE nmextcid = pr_nmextcid
                 AND cduflogr = pr_cduflogr;
-      
       rw_crappnp cr_crappnp%ROWTYPE;
       
       CURSOR cr_crapceb (pr_cdcooper IN crapceb.cdcooper%TYPE
@@ -1005,24 +1137,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              WHERE crapceb.cdcooper = pr_cdcooper
                AND crapceb.nrdconta = pr_nrdconta
                AND crapceb.nrconven = pr_nrcnvcob;
-               
       rw_crapceb cr_crapceb%ROWTYPE;                  
       
       vr_exc_critica EXCEPTION;
       vr_exc_erro    EXCEPTION;
+      vr_dsdinstr    crapcob.dsdinstr%TYPE;
+      vr_nrremret    crapret.nrremret%TYPE;
+      vr_des_erro    VARCHAR2(100);
+      vr_flgdprot    INTEGER;
+      vr_qtdiaprt    INTEGER;
+      vr_indiaprt    INTEGER;
+      vr_dsparame    VARCHAR2(2000);
       
-      vr_dsdinstr crapcob.dsdinstr%TYPE;
-      vr_nrremret crapret.nrremret%TYPE;
-      vr_des_erro VARCHAR2(100);
-      
-      vr_flgdprot INTEGER;
-      vr_qtdiaprt INTEGER;
-      vr_indiaprt INTEGER;
-
   BEGIN    
       -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
 
+   vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper||
+                   ', pr_nrdconta:'||pr_nrdconta||
+                   ', pr_idseqttl:'||pr_idseqttl||
+                   ', pr_nrcnvcob:'||pr_nrcnvcob||
+                   ', pr_nrdocmto:'||pr_nrdocmto||
+                   ', pr_flgregis:'||pr_flgregis||
+                   ', pr_flgsacad:'||pr_flgsacad||
+                   ', pr_nrctremp:'||pr_nrctremp||
+                   ', pr_nrpartit:'||pr_nrpartit||
+                   ', pr_inemiten:'||pr_inemiten||
+                   ', pr_cdbandoc:'||pr_cdbandoc||
+                   ', pr_cdcartei:'||pr_cdcartei||
+                   ', pr_cddespec:'||pr_cddespec||
+                   ', pr_nrctasac:'||pr_nrctasac||
+                   ', pr_cdtpinsc:'||pr_cdtpinsc||
+                   ', pr_nrinssac:'||pr_nrinssac||
+                   ', pr_nmdavali:'||pr_nmdavali||
+                   ', pr_cdtpinav:'||pr_cdtpinav||
+                   ', pr_nrinsava:'||pr_nrinsava||
+                   ', pr_dtmvtolt:'||pr_dtmvtolt||
+                   ', pr_dtdocmto:'||pr_dtdocmto||
+                   ', pr_dtvencto:'||pr_dtvencto||
+                   ', pr_vldescto:'||pr_vldescto||
+                   ', pr_vlabatim:'||pr_vlabatim||
+                   ', pr_cdmensag:'||pr_cdmensag||
+                   ', pr_dsdoccop:'||pr_dsdoccop||
+                   ', pr_vltitulo:'||pr_vltitulo||
+                   ', pr_dsinform:'||pr_dsinform||
+                   ', pr_dsdinstr:'||pr_dsdinstr||
+                   ', pr_flgdprot:'||pr_flgdprot||
+                   ', pr_qtdiaprt:'||pr_qtdiaprt||
+                   ', pr_indiaprt:'||pr_indiaprt||
+                   ', pr_vlrmulta:'||pr_vlrmulta||
+                   ', pr_flgaceit:'||pr_flgaceit||
+                   ', pr_tpjurmor:'||pr_tpjurmor||
+                   ', pr_tpdmulta:'||pr_tpdmulta||
+                   ', pr_tpemitir:'||pr_tpemitir||
+                   ', pr_nrremass:'||pr_nrremass||
+                   ', pr_cdoperad:'||pr_cdoperad;                   
+                   
       OPEN cr_crapcco (pr_cdcooper => pr_cdcooper
                       ,pr_nrconven => pr_nrcnvcob);
       FETCH cr_crapcco INTO rw_crapcco;
@@ -1136,7 +1306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
               nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
               insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, inregcip, inenvcip, dtvctori)
-      VALUES ( pr_cdcooper
+      VALUES (pr_cdcooper
               ,pr_nrdconta
               ,vr_nrdocmto
               ,pr_idseqttl
@@ -1200,13 +1370,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   rw_cob.vlabatim, rw_cob.cdmensag, rw_cob.dsdoccop, rw_cob.vltitulo, rw_cob.dsdinstr, rw_cob.dsinform, rw_cob.cdimpcob, rw_cob.flgimpre, rw_cob.nrctasac, rw_cob.nrctremp, 
                   rw_cob.nrnosnum, rw_cob.flgdprot, rw_cob.qtdiaprt, rw_cob.indiaprt, rw_cob.vljurdia, rw_cob.vlrmulta, rw_cob.flgaceit, rw_cob.flgregis, rw_cob.inemiten, rw_cob.insitcrt, 
                   rw_cob.insitpro, rw_cob.flgcbdda, rw_cob.tpjurmor, rw_cob.tpdmulta, rw_cob.idopeleg, rw_cob.idtitleg, rw_cob.inemiexp, rw_cob.rowid;              
+
       EXCEPTION
         WHEN OTHERS THEN
             --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
-            CECRED.pc_internal_exception;
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
-            pr_cdcritic:= 1034;
-            pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic)||'crapcob: '||
+          pr_cdcritic := 1034;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'crapcob: '||
                          'cdcooper:'||pr_cdcooper||           ', nrdconta:'||pr_nrdconta||
                          ', nrdocmto:'||vr_nrdocmto||         ', idseqttl:'||pr_idseqttl||
                          ', dtmvtolt:'||vr_dtdemiss||         ', cdbandoc:'||pr_cdbandoc||
@@ -1241,7 +1412,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       END;
                     
       IF pr_flgregis = 1 THEN
-         
          IF cr_crappnp%FOUND THEN
             CLOSE cr_crappnp;
             paga0001.pc_cria_log_cobranca(rw_cob.rowid
@@ -1259,11 +1429,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
           END IF;
-          
           IF cr_crappnp%ISOPEN THEN
              CLOSE cr_crappnp;
           END IF;
-
       END IF;         
   
       /** Validacoes de Cobranca Registrada **/
@@ -1300,9 +1468,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                              ,pr_vltarifa => 0
                                              ,pr_cdbcoctl => rw_cop.cdbcoctl
                                              ,pr_cdagectl => rw_cop.cdagectl
-                                             ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
-                                             ,pr_cdoperad => pr_cdoperad --Codigo Operador
-                                             ,pr_nrremass => pr_nrremass --Numero Remessa
+                                           ,pr_dtmvtolt => pr_dtmvtolt   --Data Movimento
+                                           ,pr_cdoperad => pr_cdoperad   --Codigo Operador
+                                           ,pr_nrremass => pr_nrremass   --Numero Remessa
                                              ,pr_cdcritic => pr_cdcritic   --Codigo Critica
                                              ,pr_dscritic => pr_dscritic); --Descricao Critica          
 
@@ -1319,7 +1487,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       END IF;
       /*** Criando log do processo - Cobranca Registrada ***/
       IF pr_flgregis = 1 THEN 
-        
          paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cob.rowid
                                      , pr_cdoperad => pr_cdoperad
                                      , pr_dtmvtolt => SYSDATE
@@ -1335,11 +1502,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
          -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
-
       END IF;
 
       IF pr_flgregis = 1 AND pr_inemiten = 3 THEN /* cooperativa emite e expede */ 
-        
           /*** Criando log do boleto – Titulo a enviar para PG ***/
          paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cob.rowid
                                      , pr_cdoperad => pr_cdoperad
@@ -1355,7 +1520,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
         -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
-
       END IF;
       
       cobr0005.pc_buscar_titulo_cobranca(pr_cdcooper => pr_cdcooper
@@ -1377,7 +1541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         END IF;
 
       -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_critica THEN
       IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
@@ -1388,9 +1552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- RETURN "NOK".
       -- Efetuar Rollback
 
-      IF NVL(pr_cdcritic,0) > 0 AND pr_dscritic IS NULL THEN
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-      END IF;
+      --Busca descrição da crítica
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, pr_dscritic)||vr_dsparame;
 
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => pr_cdcooper,
@@ -1407,8 +1570,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
       IF cr_crapsab%ISOPEN THEN CLOSE cr_crapsab; END IF;
       
-      IF NVL(pr_cdcritic,0) > 0 AND pr_dscritic IS NULL THEN
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      --Busca descrição da crítica
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, pr_dscritic);
+      IF pr_cdcritic <> 1034 THEN -- A mensagem do insert já contem os parâmetros utilizados
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, pr_dscritic)||vr_dsparame;
       END IF;
 
       --Grava tabela de log - Ch 788828
@@ -1426,12 +1591,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
       IF cr_crapsab%ISOPEN THEN CLOSE cr_crapsab; END IF;
       
-      --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
-      CECRED.pc_internal_exception;
-
       -- Montar descrição de erro não tratado
       pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0007.pc_inst_pedido_baixa. '||sqlerrm;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_gerar_titulo_cobranca. '||sqlerrm||vr_dsparame;
 
       --Grava tabela de log - Ch 839539
       pc_gera_log(pr_cdcooper      => pr_cdcooper,
@@ -1441,6 +1603,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
       
+      --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_gerar_titulo_cobranca;
   
   PROCEDURE pc_buscar_titulo_cobranca (pr_cdcooper IN crapcop.cdcooper%TYPE              --> Cooperativa
@@ -1482,16 +1646,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: 05/10/2016
+     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
      Objetivo  : Buscar de forma generica titulos de cobrança
 
-     Alteracoes: 05/10/2016 -  Ajustes referente a melhoria M271 (Kelvin).
+     Alteracoes: 05/10/2016 - Ajustes referente a melhoria M271 (Kelvin).
 
 	             10/01/2018 - Buscar se eh carne pelo texto completo (Andrino Mouts)
+
+                 10/05/2018 - Revitalização
+                              Grava tabela de log nas exceptions
+                              (Ana - Envolti - Ch REQ0011327)
   ............................................................................ */      
 
 	DECLARE
@@ -1504,16 +1672,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_dsdemail VARCHAR2(5000);
 			
       -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
+      vr_exc_saida        EXCEPTION;
       vr_exc_semresultado EXCEPTION;
 
-      vr_ind INTEGER := 0;      
-      vr_ind_cob INTEGER := 0;
-      
+      vr_ind        INTEGER := 0;      
+      vr_ind_cob    INTEGER := 0;
       vr_nro_digito INTEGER;      
-      vr_retorno BOOLEAN;      
-      vr_cdagediv INTEGER;
-      vr_dsinform cecred.gene0002.typ_split;
+      vr_retorno    BOOLEAN;      
+      vr_cdagediv   INTEGER;
+      vr_dsinform   cecred.gene0002.typ_split;
+      vr_dsparame   VARCHAR2(2000);
 
 			---------------------------- CURSORES -----------------------------------
 			CURSOR cr_crapcob 
@@ -1615,6 +1783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                ,cob.dtelimin
                ,cob.flserasa 
                ,cob.qtdianeg
+			   ,cob.insrvprt
                ,sab.nmdsacad
                ,sab.dsendsac
                ,sab.nmbaisac
@@ -1703,13 +1872,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       rw_crapcob cr_crapcob%ROWTYPE;                     
   
     BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_buscar_titulo_cobranca');
 
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper||
+                   ', pr_cdagenci:'||pr_cdagenci||
+                   ', pr_nrdconta:'||pr_nrdconta||
+                   ', pr_nrctremp:'||pr_nrctremp||
+                   ', pr_nrcnvcob:'||pr_nrcnvcob||
+                   ', pr_nrdocmto:'||pr_nrdocmto||
+                   ', pr_cdbandoc:'||pr_cdbandoc||
+                   ', pr_dtemissi:'||pr_dtemissi||
+                   ', pr_dtemissf:'||pr_dtemissf||
+                   ', pr_dtvencti:'||pr_dtvencti||
+                   ', pr_dtvenctf:'||pr_dtvenctf||
+                   ', pr_dtbaixai:'||pr_dtbaixai||
+                   ', pr_dtbaixaf:'||pr_dtbaixaf||
+                   ', pr_dtpagtoi:'||pr_dtpagtoi||
+                   ', pr_dtpagtof:'||pr_dtpagtof||
+                   ', pr_vltituli:'||pr_vltituli||
+                   ', pr_vltitulf:'||pr_vltitulf||
+                   ', pr_dsdoccop:'||pr_dsdoccop||
+                   ', pr_incobran:'||pr_incobran||
+                   ', pr_flgcbdda:'||pr_flgcbdda||
+                   ', pr_flcooexp:'||pr_flcooexp||
+                   ', pr_flceeexp:'||pr_flceeexp||
+                   ', pr_flprotes:'||pr_flprotes||
+                   ', pr_fldescon:'||pr_fldescon||
+                   ', pr_cdoperad:'||pr_cdoperad||
+                   ', pr_nriniseq:'||pr_nriniseq||
+                   ', pr_nrregist:'||pr_nrregist||
+                   ', pr_dtmvtolt:'||pr_dtmvtolt;
+           
         -- Gera exceção se informar data de inicio e não informar data final e vice-versa
 		    IF pr_dtbaixai IS NOT NULL AND pr_dtbaixaf IS NULL OR 
 					 pr_dtbaixai IS NULL AND pr_dtbaixaf IS NOT NULL THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Baixa.';
+       vr_cdcritic := 1232;  --Deve ser informado data De e Ate do Campo Data Baixa.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Baixa.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 			  END IF;
@@ -1718,8 +1918,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				IF pr_dtemissi IS NOT NULL AND pr_dtemissf IS NULL OR 
 					 pr_dtemissi IS NULL AND pr_dtemissf IS NOT NULL THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Emissao.';
+       vr_cdcritic := 1232;  --Deve ser informado data De e Ate do Campo Data Emissao.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Emissao.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 			  END IF;
@@ -1728,8 +1928,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				IF pr_dtvencti IS NOT NULL AND pr_dtvenctf IS NULL OR 
 					 pr_dtvencti IS NULL AND pr_dtvenctf IS NOT NULL THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Vencimento.';
+       vr_cdcritic := 1232;  --Deve ser informado data De e Ate do Campo Data Vencimento.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Vencimento.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 			  END IF;
@@ -1738,8 +1938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				IF pr_dtpagtoi IS NOT NULL AND pr_dtpagtof IS NULL OR 
 					 pr_dtpagtoi IS NULL AND pr_dtpagtof IS NOT NULL THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Deve ser informado data De e Ate do Campo Data Pagto.';
+       vr_cdcritic := 1232;  --Deve ser informado data De e Ate do Campo Data Pagto.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Pagto.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 			  END IF;
@@ -1747,8 +1947,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				-- Gera exceção se a data inicial informada for maior que a final
 			  IF pr_dtbaixai > pr_dtbaixaf THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Baixa inicial deve ser menor ou igual a final.';
+       vr_cdcritic := 1233;  --Data Baixa inicial deve ser menor ou igual a final.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Baixa.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1756,8 +1956,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				-- Gera exceção se a data inicial informada for maior que a final				
 		    IF pr_dtemissi > pr_dtemissf THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Emissao inicial deve ser menor ou igual a final.';
+       vr_cdcritic := 1233;  --Data Emissao inicial deve ser menor ou igual a final.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Emissao.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1765,8 +1965,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				-- Gera exceção se a data inicial informada for maior que a final				
 				IF pr_dtvencti > pr_dtvenctf THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Vencimento inicial deve ser menor ou igual a final.';
+       vr_cdcritic := 1233;  --Data Vencimento inicial deve ser menor ou igual a final.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Vencimento.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1774,8 +1974,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				-- Gera exceção se a data inicial informada for maior que a final
  				IF pr_dtpagtoi > pr_dtpagtof THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Pagto inicial deve ser menor ou igual a final.';
+       vr_cdcritic := 1233;  --Data Pagto inicial deve ser menor ou igual a final.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Pagto.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1783,8 +1983,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				-- Gera exceção se a data final ultrapassar 30 dias da data inicial
 			  IF (pr_dtbaixaf - pr_dtbaixai) > 30 THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Baixa final nao deve ultrapassar 30 dias da data inicial.';
+       vr_cdcritic := 1234;  --Data Baixa final nao deve ultrapassar 30 dias da data inicial.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Baixa.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1792,8 +1992,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				-- Gera exceção se a data final ultrapassar 30 dias da data inicial
 			  IF (pr_dtemissf - pr_dtemissi) > 30 THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Emissao final nao deve ultrapassar 30 dias da data inicial.';
+       vr_cdcritic := 1234;  --Data Emissao final nao deve ultrapassar 30 dias da data inicial.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Emissao.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1801,8 +2001,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 			  -- Gera exceção se a data final ultrapassar 30 dias da data inicial
 			  IF (pr_dtvenctf - pr_dtvencti) > 30 THEN
 				   -- Monta Crítica
-					 vr_cdcritic := 0;
-					 vr_dscritic := 'Data Vencimento final nao deve ultrapassar 30 dias da data inicial.';
+       vr_cdcritic := 1234;  --Data Vencimento final nao deve ultrapassar 30 dias da data inicial.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Vencimento.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1810,8 +2010,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 			  -- Gera exceção se a data final ultrapassar 30 dias da data inicial
 			  IF (pr_dtpagtof - pr_dtpagtoi) > 30 THEN
 					 -- Monta Crítica
-				   vr_cdcritic := 0;
-					 vr_dscritic := 'Data Pagto final nao deve ultrapassar 30 dias da data inicial.';
+       vr_cdcritic := 1234;  --Data Pagto final nao deve ultrapassar 30 dias da data inicial.
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Pagto.';
 					 -- Levanta exceção
 					 RAISE vr_exc_saida;
 				END IF;  
@@ -2015,6 +2215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           pr_tab_cob(vr_ind_cob).tpjurmor := rw_crapcob.tpjurmor;
           pr_tab_cob(vr_ind_cob).tpdmulta := rw_crapcob.tpdmulta;
           pr_tab_cob(vr_ind_cob).flgdprot := rw_crapcob.flgdprot;
+		  pr_tab_cob(vr_ind_cob).insrvprt := rw_crapcob.insrvprt;
           pr_tab_cob(vr_ind_cob).qtdiaprt := rw_crapcob.qtdiaprt;
           pr_tab_cob(vr_ind_cob).indiaprt := rw_crapcob.indiaprt;
           pr_tab_cob(vr_ind_cob).insitpro := rw_crapcob.insitpro;
@@ -2041,12 +2242,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 --          ,vltdscti NUMBER
 --          ,nrctrlim craptdb.nrctrlim;
 --          ,nrctrlim_ativo craptdb.nrctrlim;
+
+      --Grava tabela de log na COBR0009
           COBR0009.pc_busca_emails_pagador(pr_cdcooper  => rw_crapcob.cdcooper
                                           ,pr_nrdconta  => rw_crapcob.nrdconta
                                           ,pr_nrinssac  => rw_crapcob.nrinssac
                                           ,pr_dsdemail  => vr_dsdemail
                                           ,pr_des_erro  => vr_des_erro
                                           ,pr_dscritic  => vr_dscritic);
+
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_buscar_titulo_cobranca');
 
           pr_tab_cob(vr_ind_cob).dsdemail := vr_dsdemail;
           pr_tab_cob(vr_ind_cob).flgemail := rw_crapcob.flgemail;
@@ -2132,8 +2338,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           END IF;
           
           IF rw_crapcob.flgdprot = 1 THEN
+             IF rw_crapcob.insrvprt = 1 THEN
+               pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR BOLETO APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS DO VENCIMENTO.';
+             ELSIF rw_crapcob.insrvprt = 2 THEN
              pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
              pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+          END IF;
           END IF;
                     
           IF rw_crapcob.flserasa = 1 AND rw_crapcob.qtdianeg > 0  THEN
@@ -2160,17 +2370,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                  ,pr_cdcartei => rw_crapcob.cdcartei
                                  ,pr_cdbarras => pr_tab_cob(vr_ind_cob).cdbarras);
           
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_buscar_titulo_cobranca');
+          
           pc_calc_linha_digitavel(pr_cdbarras => pr_tab_cob(vr_ind_cob).cdbarras,
                                   pr_lindigit => pr_tab_cob(vr_ind_cob).lindigit);
                                   					
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_buscar_titulo_cobranca');
 				END LOOP;
         
         IF pr_tab_cob.count() = 0 THEN
            RAISE vr_exc_semresultado;
         END IF;
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   
     EXCEPTION
-      
       WHEN vr_exc_semresultado THEN
         --Ch 839539
         pr_cdcritic := 1188;
@@ -2182,16 +2398,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         ', nrdocmto:' || to_char(pr_nrdocmto) || 
         ' Boletos nao encontrados.';
       
+      --Grava tabela de log - Ch 788828
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
       WHEN vr_exc_saida THEN
-        -- Se possui código de crítica e não foi informado a descrição
-        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
            -- Busca descrição da crítica
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-
-        -- Atribui exceção para os parametros de crítica
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic)||vr_dsparame;
 
         --Grava tabela de log - Ch 788828
         pc_gera_log(pr_cdcooper      => pr_cdcooper,
@@ -2202,14 +2420,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                     pr_ind_tipo_log  => 1);
 
       WHEN OTHERS THEN
-    				
-        --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
-        CECRED.pc_internal_exception;
-
         -- Montar descrição de erro não tratado
---        pr_cdcritic := vr_cdcritic;
         pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_buscar_titulo_cobranc. '||sqlerrm;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_buscar_titulo_cobranc. '||sqlerrm||vr_dsparame;
 
         --Grava tabela de log - Ch 839539
         pc_gera_log(pr_cdcooper      => pr_cdcooper,
@@ -2219,17 +2432,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                     pr_cdmensagem    => nvl(pr_cdcritic,0),
                     pr_ind_tipo_log  => 2);
 
+      --Gravar tabela especifica de log - 23/02/2018 - Ch 839539
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
     END;
-      
   END pc_buscar_titulo_cobranca;                                          
   
   --> Rotina para atualizar nome do remetente de SMS de cobrança
-  PROCEDURE pc_atualizar_remetente_sms ( pr_cdcooper IN  crapcop.cdcooper%TYPE                  --> Codigo da cooperativa
+  PROCEDURE pc_atualizar_remetente_sms ( pr_cdcooper IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa
                                         ,pr_nrdconta IN  crapass.nrdconta%TYPE          --> Numero da conta
                                         ,pr_idcontrato IN tbcobran_sms_contrato.idcontrato%TYPE --> Indicador unico do contrato
                                         ,pr_tpnome_emissao IN OUT tbcobran_sms_contrato.tpnome_emissao%TYPE --> Tipo de nome na emissao do boleto (0-outro, 1-nome razao/ 2-nome fantasia) 
                                         ,pr_nmemissao_sms  IN OUT tbcobran_sms_contrato.nmemissao_sms%TYPE --> nome na emissao do boleto
-                                        ,pr_dscritic OUT VARCHAR2) IS                    --> Retorno de critica
+                                        ,pr_dscritic OUT VARCHAR2) IS                   --> Retorno de critica
 
   /* ............................................................................
 
@@ -2237,42 +2451,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para atualizar nome do remetente de SMS de cobrança
 
-       Alteracoes: ----
-
-    ............................................................................ */
+       Alteracoes: 10/05/2018 - Revitalização
+                              - Grava tabela de log nas exceptions
+                              - Inclusão nro contrato novo na variável pr_dsretorn
+                              - Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                              - Inclusão do raise vr_exc_erro se ocorrer erro no update,
+                                pois do modo anterior, a mensagem de erro do update não é visualizada
+                              - Loga aqui porque não tem parâmetro de retorno pr_cdcritic
+                                (Ana - Envolti - Ch REQ0011327)
+    . ........................................................................... */
     --------------->> CURSORES <<----------------
     
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(2000);
-    
+    vr_cdcritic     INTEGER;    
+    vr_dsparame     VARCHAR2(2000);
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atual_remetente_sms');
     
+    vr_dsparame := ' - pr_tpnome_emissao:'||pr_tpnome_emissao||
+                   ', pr_nmemissao_sms:'||pr_nmemissao_sms||
+                   ', pr_cdcooper:'||pr_cdcooper||
+                   ', pr_nrdconta:'||pr_nrdconta||
+                   ', pr_idcontrato:'||pr_idcontrato;
+    BEGIN
+      --Atualizar contrato sms
     UPDATE tbcobran_sms_contrato c
            SET c.tpnome_emissao = pr_tpnome_emissao,
                c.nmemissao_sms  = nvl(pr_nmemissao_sms,c.nmemissao_sms)
-         WHERE c.cdcooper = pr_cdcooper
+       WHERE c.cdcooper   = pr_cdcooper
        AND c.nrdconta   = pr_nrdconta
        AND c.idcontrato = pr_idcontrato;
            
     IF SQL%ROWCOUNT <> 1 THEN
-      vr_dscritic := 'Contrato de SMS nao entontrado.';
+        vr_cdcritic := 1244;  --Contrato de SMS nao encontrado
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||vr_dsparame;
       RAISE vr_exc_erro;
     END IF;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        raise vr_exc_erro;
+      WHEN OTHERS THEN
+          vr_cdcritic := 1035;  --Não foi possivel atualizar remetente do contrato de SMS
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbcobran_sms_contrato:'||
+                  ' tpnome_emissao:'||pr_tpnome_emissao||
+                  ', nmemissao_sms:'||pr_nmemissao_sms||
+                  ' com cdcooper:'  ||pr_cdcooper||
+                  ', nrdconta:'     ||pr_nrdconta||
+                  ', idcontrato:'   ||pr_idcontrato||
+                  '. '||sqlerrm;
   
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+          raise vr_exc_erro;
+    END;
 
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
+      --Loga aqui porque não tem parâmetro de retorno pr_cdcritic
       pr_dscritic := vr_dscritic;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
     WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possivel atualizar remetente do contrato de SMS: '||SQLERRM;  
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_atualizar_remetente_sms. '||sqlerrm||vr_dsparame;
+      ROLLBACK;
+
+      --Loga aqui porque não tem parâmetro de retorno pr_cdcritic
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_atualizar_remetente_sms;
   
   --> Rotina para atualizar nome do remetente de SMS de cobrança  - Chamada ayllos Web
@@ -2293,15 +2566,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para atualizar nome do remetente de SMS de cobrança - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -2323,8 +2599,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     vr_tpnome_emissao tbcobran_sms_contrato.tpnome_emissao%TYPE;
     vr_nmemissao_sms  tbcobran_sms_contrato.nmemissao_sms%TYPE; 
+    vr_dsparame       VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atual_remete_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2337,29 +2616,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
     
+    vr_dsparame := ' - pr_nrdconta:'     ||pr_nrdconta      ||
+                   ', pr_idcontrato:'    ||pr_idcontrato    ||
+                   ', pr_tpnome_emissao:'||pr_tpnome_emissao||
+                   ', pr_nmemissao_sms:' ||pr_nmemissao_sms ||
+                   ', pr_xmllog:'        ||pr_xmllog        ||
+                   ', vr_cdcooper:'      ||vr_cdcooper      ||
+                   ', vr_nmdatela:'      ||vr_nmdatela      ||
+                   ', vr_nmeacao:'       ||vr_nmeacao       ||
+                   ', vr_cdagenci:'      ||vr_cdagenci      ||
+                   ', vr_nrdcaixa:'      ||vr_nrdcaixa      ||
+                   ', vr_idorigem:'      ||vr_idorigem      ||
+                   ', vr_cdoperad:'      ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atual_remete_sms_web');
+    
     vr_tpnome_emissao := pr_tpnome_emissao;
     vr_nmemissao_sms  := pr_nmemissao_sms; 
     
     --> Atualizar remetente
-    pc_atualizar_remetente_sms ( pr_cdcooper   => vr_cdcooper          --> Codigo da cooperativa
-                                ,pr_nrdconta => pr_nrdconta          --> Numero da conta
-                                ,pr_idcontrato => pr_idcontrato
+    pc_atualizar_remetente_sms ( pr_cdcooper       => vr_cdcooper          --> Codigo da cooperativa
+                                ,pr_nrdconta       => pr_nrdconta          --> Numero da conta
+                                ,pr_idcontrato     => pr_idcontrato
                                 ,pr_tpnome_emissao => vr_tpnome_emissao --> Tipo de nome na emissao do boleto (0-outro, 1-nome razao/ 2-nome fantasia) 
                                 ,pr_nmemissao_sms  => vr_nmemissao_sms  --> nome na emissao do boleto
-                                ,pr_dscritic => vr_dscritic);       --> Retorno de critica
-                                        
+                                ,pr_dscritic       => vr_dscritic);       --> Retorno de critica
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;     
                           
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
                                                 
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -2368,10 +2662,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_atualizar_remetente_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_atualizar_remetente_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2381,7 +2680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --> Rotina para verificar se permite enviar linha digitavel na SMS
   PROCEDURE pc_verif_permite_lindigi (pr_cdcooper IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
                                      ,pr_flglinha_digitavel OUT tbcobran_sms_param_coop.flglinha_digitavel%TYPE --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
-                                     ,pr_dscritic            OUT VARCHAR2) IS         --> Retorno de critica
+                                     ,pr_dscritic           OUT VARCHAR2) IS         --> Retorno de critica
 
   /* ............................................................................
 
@@ -2389,15 +2688,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para verificar se permite enviar linha digitavel na SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Retirada exception vr_exc_erro - não é utilizada
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Verificar se permite linha digitavel
@@ -2408,10 +2709,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     rw_sms_param cr_sms_param%ROWTYPE;
     
     -------------->> VARIAVEIS <<----------------
-    vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verif_permite_lindigi');
+
     --> Verificar se permite linha digitavel
     OPEN cr_sms_param;
     FETCH cr_sms_param INTO rw_sms_param;
@@ -2419,11 +2723,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     pr_flglinha_digitavel := nvl(rw_sms_param.flglinha_digitavel,0);
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
-    WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_verif_permite_lindigi : '||SQLERRM;  
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_verif_permite_lindigi. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_verif_permite_lindigi; 
   
   --> Rotina responsavel por gerar o relatorio analitico de envio de SMS
@@ -2447,15 +2764,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina responsavel por gerar o relatorio analitico de envio de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Buscar SMSs enviados 
@@ -2527,6 +2847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Variáveis para armazenar as informações em XML
     vr_des_xml      CLOB;
     vr_txtcompl     VARCHAR2(32600);
+    vr_dsparame     VARCHAR2(2000);
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -2537,7 +2858,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms');
   
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper||
+                   ', pr_nrdconta:' ||pr_nrdconta||
+                   ', pr_dtiniper:' ||pr_dtiniper||
+                   ', pr_dtfimper:' ||pr_dtfimper||
+                   ', pr_idorigem:' ||pr_idorigem||
+                   ', pr_dsiduser:' ||pr_dsiduser||
+                   ', pr_instatus:' ||pr_instatus||
+                   ', pr_tppacote:' ||pr_tppacote;
+
     -- Leitura do calendario da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -2554,7 +2886,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       --> INICIO
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl728 dtiniper="'||to_char(pr_dtiniper,'DD/MM/RRRR')||'"
                                                                      dtfimper="'||to_char(pr_dtfimper,'DD/MM/RRRR')||'">');
-      
     ELSE
       pc_escreve_xml('<crrl728>');
     END IF;
@@ -2580,7 +2911,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     pc_escreve_xml('</crrl728>',TRUE);
     
     IF vr_flexsreg = FALSE THEN
-      vr_dscritic := 'Nenhum registro encontrado para o periodo informado.';
+      vr_cdcritic := 1240;  --Nenhum registro encontrado para o periodo informado
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
     END IF;
     
@@ -2595,6 +2927,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                            pr_cdcooper => pr_cdcooper,
                                            pr_nmsubdir => '/rl');
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms');
       
       vr_dscomand := 'rm '||vr_dsdireto ||'/crrl728_'||pr_dsiduser||'* 2>/dev/null';
       
@@ -2605,13 +2939,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            ,pr_des_saida   => vr_dscritic);
       --Se ocorreu erro dar RAISE
       IF vr_typsaida = 'ERR' THEN
-        vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+        vr_cdcritic := 1156;  --Nao foi possivel remover arquivos: '||vr_dscomand
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscomand||'. Erro: '||vr_dscritic;
         RAISE vr_exc_erro;
       END IF; 
       
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms');
       
       pr_nmarqpdf := 'crrl728_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
-      
       
       --> Solicita geracao do PDF
       gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
@@ -2635,6 +2971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
         RAISE vr_exc_erro; -- encerra programa
       END IF; 
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms');
       
       -- Liberando a memoria alocada pro CLOB
       dbms_lob.close(vr_des_xml);
@@ -2657,6 +2995,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             RAISE vr_exc_erro; -- encerra programa
           END IF;
         END IF;
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms');
 
         -- Remover relatorio do diretorio padrao da cooperativa
         gene0001.pc_OScommand(pr_typ_comando => 'S'
@@ -2666,20 +3006,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         -- Se retornou erro
         IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
           -- Concatena o erro que veio
-          vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+          vr_cdcritic := 1156;  --Erro ao remover arquivo
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||
+                         vr_dsdireto ||'/'||pr_nmarqpdf||'. Erro: '||vr_dscritic;
           RAISE vr_exc_erro; -- encerra programa
         END IF;
-        
       END IF;          
     END IF;  
-    
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := vr_dscritic||vr_dsparame;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_relat_anali_envio_sms : '||SQLERRM;  
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_relat_anali_envio_sms. '||sqlerrm||vr_dsparame;
+      ROLLBACK;
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_relat_anali_envio_sms; 
   
   --> Rotina responsavel por gerar o relatorio analitico de envio de SMS - Chamada ayllos Web
@@ -2701,15 +3049,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina responsavel por gerar o relatorio analitico de envio de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -2735,8 +3086,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Variaveis gerais
     vr_nmarqpdf VARCHAR2(1000);
     vr_dsxmlrel CLOB;
+    vr_dsparame VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_rel_ana_envi_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2749,14 +3103,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
 
-    -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'pc_relat_anali_envio_sms_web'
-                               ,pr_action => NULL);
+    vr_dsparame := ' - pr_nrdconta:'||pr_nrdconta ||
+                   ', pr_dtiniper:' ||pr_dtiniper ||
+                   ', pr_dtfimper:' ||pr_dtfimper ||
+                   ', pr_dsiduser:' ||pr_dsiduser ||
+                   ', pr_instatus:' ||pr_instatus ||
+                   ', pr_xmllog:'   ||pr_xmllog   ||
+                   ', vr_cdcooper:' ||vr_cdcooper ||
+                   ', vr_nmdatela:' ||vr_nmdatela ||
+                   ', vr_nmeacao:'  ||vr_nmeacao  ||
+                   ', vr_cdagenci:' ||vr_cdagenci ||
+                   ', vr_nrdcaixa:' ||vr_nrdcaixa ||
+                   ', vr_idorigem:' ||vr_idorigem ||
+                   ', vr_cdoperad:' ||vr_cdoperad;
                                
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_rel_ana_envi_sms_web');
     
     vr_dtiniper := to_date(pr_dtiniper,'DD/MM/RRRR');
     vr_dtfimper := to_date(pr_dtfimper,'DD/MM/RRRR');
-    
     
     --> Rotina responsavel por gerar o relatorio analitico de envio de SMS
     pc_relat_anali_envio_sms (pr_cdcooper  => vr_cdcooper   --> Codigo da cooperativa                                    
@@ -2771,12 +3136,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                              ,pr_dsxmlrel => vr_dsxmlrel    --> Retorna xml do relatorio quando origem for 3 -InternetBank
                              ,pr_cdcritic => vr_cdcritic    --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
                              ,pr_dscritic => vr_dscritic);  --> Retorno de critica
-                                                          
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_rel_ana_envi_sms_web');
 
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -2795,12 +3162,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_nmarqpdf
                           ,pr_des_erro => vr_dscritic);
   
-  
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -2809,10 +3183,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_relat_anali_envio_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_relat_anali_envio_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2837,7 +3224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
@@ -2847,6 +3234,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Alteracoes: 14/06/2017 - Alterado para sempre cancelar pacote ativo, quando
                                 a validação encontrar críticas. (Renato Darosci)
 
+                   10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                Aqui, a vr_cdcritic será retornada parâmetro pr_cdcritic apenas para 
+                                gravação do campo cdmensagens na tbgen. 
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -2939,11 +3333,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_tot_qtlatpen INTEGER := 0;
     vr_existe       INTEGER := 0; 
     vr_dsalerta     VARCHAR2(2000);
+    vr_dsparame     VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms');
+
     pr_flsitsms := 1;
     pr_dsalerta := NULL;
     vr_dsalerta := NULL;
+  
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_idorigem:'  ||pr_idorigem;
   
     -- Leitura do calendario da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -2957,7 +3360,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     FETCH cr_contrato_sms INTO rw_contrato_sms;
     CLOSE cr_contrato_sms;    
         
-  
     --> Verificar se coop esta habilitada a enviar SMS de cobrança
     rw_sms_param := NULL;
     OPEN cr_sms_param;
@@ -2985,12 +3387,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                              ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
                              ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                              ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
-                                                                  
         -- Se retornou erro
         IF NVL(vr_cdcritic,0) > 0 OR 
            TRIM(vr_dscritic) IS NOT NULL THEN
            RAISE vr_exc_erro;
         END IF;  
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms');
         
         rw_contrato_sms.idcontrato := 0;
       END IF;
@@ -3003,7 +3406,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     FETCH cr_cobran_prm INTO rw_cobran_prm;
     IF cr_cobran_prm%NOTFOUND THEN
       CLOSE cr_cobran_prm;
-      vr_dscritic := 'Não foi possivel encontrar parametro de sms cobrança para esta cooperativa.';
+      vr_cdcritic := 1245;  --Nenhum contrato de SMS de cobrança localizado para a cooperativa
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_cobran_prm;
@@ -3040,6 +3444,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            TRIM(vr_dscritic) IS NOT NULL THEN
            RAISE vr_exc_erro;
         END IF;  
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms');
         
         rw_contrato_sms.idcontrato := 0;
       END IF;
@@ -3049,7 +3455,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END IF;
     CLOSE cr_crapceb;
         
-    
     --> Buscar tarifas de sms já aderidas pelo cooperado
     FOR rw_tarifas IN cr_tarifas LOOP
     
@@ -3059,7 +3464,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       FETCH cr_crapfvl INTO rw_crapfvl;
       CLOSE cr_crapfvl;
       
-       
       --> Verificar se cooperado possui lançamentos pendentes acima 
       --> da quantidade de dias estabelecida pela coop
       OPEN cr_craplat(pr_cdcooper => pr_cdcooper,
@@ -3092,7 +3496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
                                ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
                                -----> OUT <----           
-                               ,pr_dsretorn   => vr_dscritic                --> Mensagem de retorno             
+                               ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
                                ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                                ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
                                                                 
@@ -3101,6 +3505,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;  
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms');
 
         vr_dsalerta := vr_dsalerta||' O Contrato '|| rw_contrato_sms.idcontrato ||' foi cancelado automaticamente.';
         rw_contrato_sms.idcontrato := 0;
@@ -3116,11 +3522,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> Retornar numero do contrato ativo
     pr_idcontrato := rw_contrato_sms.idcontrato;
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic||vr_dsparame;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_verifar_serv_sms : '||SQLERRM;  
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_verifar_serv_sms. '||sqlerrm||vr_dsparame;
+      ROLLBACK;
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_verifar_serv_sms; 
   
   --> Rotina para verificar se serviço de SMS.
@@ -3138,15 +3553,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para verificar se serviço de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -3169,10 +3587,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_idctrativ  tbcobran_sms_contrato.idcontrato%TYPE;
     vr_flsitsms   INTEGER;
     vr_dsalerta   VARCHAR2(4000);
-
-    
+    vr_dsparame   VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -3185,6 +3604,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
 
+    vr_dsparame := ' - pr_nrdconta:'||pr_nrdconta ||
+                   ', pr_xmllog:'   ||pr_xmllog   ||
+                   ', vr_cdcooper:' ||vr_cdcooper ||
+                   ', vr_nmdatela:' ||vr_nmdatela ||
+                   ', vr_nmeacao:'  ||vr_nmeacao  ||
+                   ', vr_cdagenci:' ||vr_cdagenci ||
+                   ', vr_nrdcaixa:' ||vr_nrdcaixa ||
+                   ', vr_idorigem:' ||vr_idorigem ||
+                   ', vr_cdoperad:' ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms_web');
     
     --> Rotina para verificar se serviço de SMS.
     pc_verifar_serv_sms(pr_cdcooper   => vr_cdcooper    --> Codigo da cooperativa
@@ -3197,12 +3628,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        ,pr_dsalerta   =>  vr_dsalerta   --> Retorna alerta para o cooperado
                        ,pr_cdcritic   =>  vr_cdcritic   --> Retorna codigo de critica
                        ,pr_dscritic   =>  vr_dscritic); --> Retorno de critica  
-  
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+   
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_serv_sms_web');
    
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -3235,12 +3668,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_dsalerta
                           ,pr_des_erro => vr_dscritic);
     
-                                               
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -3249,10 +3689,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_verifar_serv_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_verifar_serv_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -3290,15 +3743,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Buscar informações dos contratos de serviço de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -3341,7 +3797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ctr.nrdconta = ass.nrdconta
          AND ctr.cdcooper = pr_cdcooper
          AND ctr.nrdconta = pr_nrdconta
-		  AND ctr.dhcancela IS NULL;
+		 AND ctr.dhcancela IS NULL
       ORDER BY ctr.dhcancela DESC;
     rw_contrato_sms cr_contrato_sms%ROWTYPE;
     
@@ -3373,8 +3829,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_idctrativ    tbcobran_sms_contrato.idcontrato%TYPE;
     vr_nmremsms     VARCHAR2(1000);
     vr_valores_dinamicos VARCHAR2(1000);
+    vr_dsparame     VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dados_serv_sms');
+
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_idorigem:'  ||pr_idorigem;
   
     --> Rotina para verificar se serviço de SMS.
     pc_verifar_serv_sms(pr_cdcooper   => pr_cdcooper    --> Codigo da cooperativa
@@ -3393,6 +3857,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dados_serv_sms');
     
     --> Buscar dados do contrato de sms     
     OPEN cr_contrato_sms;
@@ -3432,7 +3898,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         CLOSE cr_crapjur;      
       END IF;
       
-     
     -- Definir nome de remetente para o SMS
     IF rw_contrato_sms.tpnome_emissao = 3 THEN
       vr_nmremsms := rw_contrato_sms.nmemissao_sms;
@@ -3443,15 +3908,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                       pr_nrdconta => pr_nrdconta);
       FETCH cr_crapass INTO vr_nmremsms;
       CLOSE cr_crapass;
-                    
     -- se selecionou Nome fantasia
     ELSIF rw_contrato_sms.tpnome_emissao = 2 THEN
-                  
       -- Buscar nome na crapjur
       OPEN cr_crapjur;
       FETCH cr_crapjur INTO vr_nmremsms;
       CLOSE cr_crapjur;              
-
     END IF;  
 
  --> Variavel para SMS
@@ -3473,6 +3935,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                ,pr_cdtipo_mensagem => 12
                                ,pr_sms             => 1
                                ,pr_valores_dinamicos => vr_valores_dinamicos);                               
+
+	      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dados_serv_sms');
     END IF;
     
     --> Se estiver cancelado, mandar como inativo, para solicitar
@@ -3492,14 +3957,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE cr_crapfco;
     END IF;
     
-    
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;    --Ch REQ0011327
+      pr_dscritic := vr_dscritic||vr_dsparame;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_ret_dados_serv_sms : '||SQLERRM;  
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_ret_dados_serv_sms. '||sqlerrm||vr_dsparame;
+      ROLLBACK;
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_ret_dados_serv_sms; 
-  
+  --testa ana ok
   --> Buscar informações dos contratos de serviço de SMS - Web
   PROCEDURE pc_ret_dados_serv_sms_web ( pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numer de conta do cooperado                                     
                                        ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
@@ -3515,15 +3988,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Buscar informações dos contratos de serviço de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -3559,10 +4035,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_qtsmsusd   tbcobran_sms_contrato.qtdsms_usados%TYPE;
     vr_dsmsgsemlinddig VARCHAR2(1000);
     vr_dsmsgcomlinddig VARCHAR2(1000);
-
-    
+    vr_dsparame        VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dado_serv_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -3574,6 +4051,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
+
+    vr_dsparame := ' - pr_nrdconta:'||pr_nrdconta ||
+                   ', pr_xmllog:'   ||pr_xmllog   ||
+                   ', vr_cdcooper:' ||vr_cdcooper ||
+                   ', vr_nmdatela:' ||vr_nmdatela ||
+                   ', vr_nmeacao:'  ||vr_nmeacao  ||
+                   ', vr_cdagenci:' ||vr_cdagenci ||
+                   ', vr_nrdcaixa:' ||vr_nrdcaixa ||
+                   ', vr_idorigem:' ||vr_idorigem ||
+                   ', vr_cdoperad:' ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dado_serv_sms_web');
 
     pc_ret_dados_serv_sms (pr_cdcooper  => vr_cdcooper   --> Codigo da cooperativa
                           ,pr_nrdconta  => pr_nrdconta   --> Conta do associado
@@ -3604,6 +4094,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dado_serv_sms_web');
 
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -3636,7 +4129,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_nmemisms
                           ,pr_des_erro => vr_dscritic);
     
-    
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
@@ -3644,15 +4136,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_tpnmemis
                           ,pr_des_erro => vr_dscritic);
                           
-                          
-      
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
                           ,pr_tag_nova => 'flgativo'
                           ,pr_tag_cont => vr_flgativo
                           ,pr_des_erro => vr_dscritic);
-    
     
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
@@ -3668,14 +4157,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_dspacote
                           ,pr_des_erro => vr_dscritic);
     
-      
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
                           ,pr_tag_nova => 'dhadesao'
                           ,pr_tag_cont => to_char(vr_dhadesao,'DD/MM/RRRR')
                           ,pr_des_erro => vr_dscritic);
-    
     
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
@@ -3684,7 +4171,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_idcontrato
                           ,pr_des_erro => vr_dscritic);
     
-      
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
@@ -3693,7 +4179,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                                               'NLS_NUMERIC_CHARACTERS='',.''')
                           ,pr_des_erro => vr_dscritic);
                           
-    
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
@@ -3722,12 +4207,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_qtsmsusd
                           ,pr_des_erro => vr_dscritic);                                            
     
-                                               
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -3736,16 +4228,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_consultar_dados_serv_SMS_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_ret_dados_serv_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
   END pc_ret_dados_serv_sms_web;  
-  
   
   --> Rotina para geração do contrato de SMS
   PROCEDURE pc_gera_contrato_sms (pr_cdcooper    IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -3771,15 +4275,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para geração do contrato de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -3836,18 +4343,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdtarifa     tbcobran_sms_pacotes.cdtarifa%TYPE;
     vr_vltarifa     crapfco.vltarifa%TYPE;
     
-    vr_idastcjt   INTEGER(1) := 0;
-    vr_nrcpfcgc   INTEGER;
-    vr_nmprimtl   VARCHAR2(500);
-    vr_flcartma   INTEGER(1);		
+    vr_idastcjt     INTEGER(1) := 0;
+    vr_nrcpfcgc     INTEGER;
+    vr_nmprimtl     VARCHAR2(500);
+    vr_flcartma     INTEGER(1);		
     
-    vr_tab_pacote TELA_CADSMS.typ_tab_pacote;
-    vr_qtdsmspct  INTEGER := 0;
-    vr_qtdsmsusd  INTEGER := 0;
-    vr_vlunitario NUMBER;
-    vr_vlpacote   NUMBER;
+    vr_tab_pacote   TELA_CADSMS.typ_tab_pacote;
+    vr_qtdsmspct    INTEGER := 0;
+    vr_qtdsmsusd    INTEGER := 0;
+    vr_vlunitario   NUMBER;
+    vr_vlpacote     NUMBER;
+    vr_dsparame     VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
+    
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_idseqttl:'  ||pr_idseqttl||
+                   ', pr_idorigem:'  ||pr_idorigem||
+                   ', pr_cdoperad:'  ||pr_cdoperad||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_nrcpfope:'  ||pr_nrcpfope||
+                   ', pr_inaprpen:'  ||pr_inaprpen||
+                   ', pr_idpacote:'  ||pr_idpacote||
+                   ', pr_tpnmemis:'  ||pr_tpnmemis||
+                   ', pr_nmemissa:'  ||pr_nmemissa||
+                   ', pr_idcontrato:'||pr_idcontrato;
     
     vr_dsorigem  := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dstransa  := 'Inclusão de contrato de servico de SMS.'; 
@@ -3887,13 +4410,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            TRIM(vr_dscritic)IS NOT NULL THEN
           RAISE vr_exc_erro; 
         END IF;           
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
       
       ELSE
-        vr_dscritic := 'Já existe o contrato de numero '||vr_idcontrato||' ativo.';
+        vr_cdcritic := 1246;  -- Já existe o contrato de numero '||vr_idcontrato||' ativo.'
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_idcontrato;
         RAISE vr_exc_erro;
-      
       END IF;
-      
       
     ELSE
       CLOSE cr_contrato_sms;
@@ -3909,7 +4433,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         CLOSE cr_pacotes;
         
         IF vr_idpacote IS NULL THEN
-          vr_dscritic := 'Nenhum pacote de SMS ativo.';
+          vr_cdcritic := 1241;  --Nenhum pacote de SMS ativo
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
       ELSE
@@ -3926,16 +4451,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                        ,pr_dscritic   => vr_dscritic );  --> Descricao da critica
       
         
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
         IF TRIM(vr_dscritic) IS NOT NULL OR 
            nvl(vr_cdcritic,0) > 0 THEN
           RAISE vr_exc_erro;        
         END IF;
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
         
         IF vr_tab_pacote.count() = 0 THEN
-          vr_dscritic := 'Pacote '||vr_idpacote||' não encontrado.';
+          vr_cdcritic := 1248;  --Pacote '||vr_idpacote||' não encontrado
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_idpacote;
           RAISE vr_exc_erro;
         END IF; 
-        
         
         vr_qtdsmspct  := vr_tab_pacote(vr_tab_pacote.first).qtdsms;
         vr_qtdsmsusd  := 0;
@@ -3952,13 +4481,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         FETCH cr_crapfco INTO vr_vlunitario;
         CLOSE cr_crapfco;
       
-      
         vr_qtdsmspct   :=   0;
         vr_qtdsmsusd   :=   0;
         vr_vlpacote    :=   0;
         
       END IF;
-      
       
       -- Se for 3 apenas valida criação do contrato
       IF pr_inaprpen = 3 THEN
@@ -3980,6 +4507,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF; 
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
 
         --Verifica se conta for conta PJ e se exige asinatura multipla
         INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
@@ -3996,11 +4525,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            TRIM(vr_dscritic) IS NOT NULL THEN
            RAISE vr_exc_erro; 
         END IF;                              								
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
       END IF;
       
       --> Inclusao de contrato efetuada por operador ou responsável de assinatura conjunta 
       IF (pr_nrcpfope > 0 OR vr_idastcjt = 1) AND pr_inaprpen = 0 THEN
-        
         
         --> Necessario inclusao de transacao pensente
         INET0002.pc_cria_trans_pend_sms_cobran ( pr_cdagenci  => 90                   --> Codigo do PA
@@ -4024,11 +4554,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                                 ,pr_vlservico => vr_vlpacote          --> valor de tarifa do SMS/Pacote de SMS
                                                 ,pr_cdcritic  => vr_cdcritic          --> Codigo de Critica
                                                 ,pr_dscritic  => vr_dscritic);        --> Descricao de Critica
-      
         IF nvl(vr_cdcritic,0) <> 0 OR
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro; 
         END IF; 
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms');
         
         IF vr_idastcjt = 1 THEN
           pr_dsretorn := 'Serviço de SMS registrado com sucesso. Aguardando aprovacao do registro pelos demais responsaveis.';
@@ -4039,7 +4570,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       ELSE
       
         BEGIN      
-        
           INSERT INTO tbcobran_sms_contrato
                      ( cdcooper
                       ,nrdconta
@@ -4069,12 +4599,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                       ,vr_qtdsmsusd             --> qtdsms_usados
                       ,vr_vlunitario            --> vlunitario   
                       ,vr_vlpacote )            --> vlpacote     
-                      
               RETURNING idcontrato INTO vr_idcontrato;       
-              
         EXCEPTION 
           WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel gravar contrato SMS:'|| SQLERRM;
+            vr_cdcritic := 1249;  --Não foi possivel gravar contrato SMS
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                          ' cdcooper:'         ||pr_cdcooper||
+                          ', nrdconta:'        ||pr_nrdconta||
+                          ', idseqttl:'        ||pr_idseqttl||
+                          ', idpacote:'        ||vr_idpacote||
+                          ', dhadesao:'        ||SYSDATE||
+                          ', dhcancela:'       ||NULL||   
+                          ', cdcanal_adesao:'  ||pr_idorigem||
+                          ', cdcanal_cancela :'||NULL||
+                          ', tpnome_emissao:'  ||pr_tpnmemis||
+                          ', nmemissao_sms:'   ||pr_nmemissa||
+                          ', qtdsms_pacote:'   ||vr_qtdsmspct||
+                          ', qtdsms_usados:'   ||vr_qtdsmsusd||
+                          ', vlunitario:'      ||vr_vlunitario||
+                          ', vlpacote:'        ||vr_vlpacote||
+                          '. '||sqlerrm;
+
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
             RAISE vr_exc_erro;
         END;
         
@@ -4132,19 +4679,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               pr_dsdadant => NULL,
                               pr_dsdadatu => vr_idpacote);
     
-    
-    
     COMMIT;
     
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
-      IF nvl(vr_cdcritic,0) <> 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
-			   pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-			ELSE	
-			   pr_dscritic := vr_dscritic;
-		  END IF;
+      --Loga na rotina chamadora
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic)||vr_dsparame;
       
       ROLLBACK;
       
@@ -4162,12 +4703,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
         
-      
-      
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_gera_contrato_sms : '||SQLERRM; 
-      
+      -- Montar descrição de erro não tratado
+      --Loga na rotina chamadora
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_gera_contrato_sms. '||sqlerrm||vr_dsparame;
       ROLLBACK;
+      
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -4182,8 +4726,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_nmdatela => pr_nmdatela
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
-          
-       
   END pc_gera_contrato_sms; 
   
   --> Rotina para geração do contrato de SMS
@@ -4205,15 +4747,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para geração do contrato de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -4235,8 +4780,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     vr_idcontrato tbcobran_sms_contrato.idcontrato%TYPE;
     vr_dsretorn   VARCHAR2(2000);
+    vr_dsparame   VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4248,6 +4796,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
+
+    vr_dsparame := ' - pr_nrdconta:'||pr_nrdconta ||
+                   ', pr_idseqttl:' ||pr_idseqttl ||
+                   ', pr_nrcpfope:' ||pr_nrcpfope ||
+                   ', pr_inaprpen:' ||pr_inaprpen ||
+                   ', pr_idpacote:' ||pr_idpacote ||
+                   ', pr_xmllog:'   ||pr_xmllog   ||
+                   ', vr_cdcooper:' ||vr_cdcooper ||
+                   ', vr_nmdatela:' ||vr_nmdatela ||
+                   ', vr_nmeacao:'  ||vr_nmeacao  ||
+                   ', vr_cdagenci:' ||vr_cdagenci ||
+                   ', vr_nrdcaixa:' ||vr_nrdcaixa ||
+                   ', vr_idorigem:' ||vr_idorigem ||
+                   ', vr_cdoperad:' ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_contrato_sms_web');
 
     --> Rotina para geração do contrato de SMS
     pc_gera_contrato_sms (pr_cdcooper  => vr_cdcooper  --> Codigo da cooperativa
@@ -4288,12 +4853,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_idcontrato
                           ,pr_des_erro => vr_dscritic);    
                           
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
                                                 
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+      --Loga aqui porque tem várias rotinas que chamam pc_gera_contrato_sms, e as mesmas geram log
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => NVL(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
@@ -4302,8 +4876,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_gera_contrato_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_gera_contrato_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => NVL(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
@@ -4333,15 +4920,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para canlemaneto do contrato de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -4433,9 +5023,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_nrcpfcgc   INTEGER;
     vr_nmprimtl   VARCHAR2(500);
     vr_flcartma   INTEGER(1);	
-    
+    vr_dsparame   VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
+
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_idseqttl:'  ||pr_idseqttl||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_idorigem:'  ||pr_idorigem||
+                   ', pr_cdoperad:'  ||pr_cdoperad||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_nrcpfope:'  ||pr_nrcpfope||
+                   ', pr_inaprpen:'  ||pr_inaprpen;
   
     vr_dsorigem  := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dstransa  := 'Cancelamento de contrato de servico de SMS.';
@@ -4452,9 +5054,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     IF cr_contrato_sms%NOTFOUND THEN
       CLOSE cr_contrato_sms;
       IF nvl(pr_idcontrato,0) > 0 THEN
-        vr_dscritic := 'Contrato '||pr_idcontrato||' não encontrado.';
+        vr_cdcritic := 484;  --Contrato '||pr_idcontrato||' não encontrado
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||pr_idcontrato;
       ELSE
-        vr_dscritic := 'Nenhum contrato ativo foi encontrado.';
+        vr_cdcritic := 1242;  --Nenhum contrato ativo foi encontrado
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||pr_idcontrato;
       END IF;
       RAISE vr_exc_erro;
     ELSE
@@ -4476,11 +5080,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                          ,pr_flvldrep => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE 1 END)                                         
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-
       -- Se houve crítica, gerar exceção
       IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF; 
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
 
       --Verifica se conta for conta PJ e se exige asinatura multipla
       INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
@@ -4497,6 +5102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          TRIM(vr_dscritic) IS NOT NULL THEN
          RAISE vr_exc_erro; 
       END IF;                              								
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
 		END IF;
     
     --> Inclusao de contrato efetuada por operador ou responsável de assinatura conjunta 
@@ -4537,11 +5144,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                               ,pr_vlservico => vr_vltarifa          --> valor de tarifa do SMS/Pacote de SMS
                                               ,pr_cdcritic  => vr_cdcritic          --> Codigo de Critica
                                               ,pr_dscritic  => vr_dscritic);        --> Descricao de Critica
-    
       IF nvl(vr_cdcritic,0) <> 0 OR
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro; 
       END IF; 
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
       
       IF vr_idastcjt = 1 THEN
         pr_dsretorn := 'Solicitação de Cancelamento do serviço de SMS registrado com sucesso. Aguardando aprovacao do registro pelos demais responsaveis.';
@@ -4559,10 +5167,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND idcontrato = rw_contrato_sms.idcontrato;      
-            
       EXCEPTION 
         WHEN OTHERS THEN
-          vr_dscritic := 'Não foi possivel cancelar contrato:'|| SQLERRM;
+          vr_cdcritic := 1035;  --Não foi possivel cancelar contrato
+          vr_dscritic := gene0001.fn_busca_critica(1035)||'tbcobran_sms_contrato:'||
+                        ' dhcancela:'||sysdate||
+                        ', cdcanal_cancela:'||pr_idorigem||
+                        ' com cdcooper:'||pr_cdcooper||
+                        ' ,nrdconta:'||pr_nrdconta||
+                        ' ,idcontrato:'||rw_contrato_sms.idcontrato||
+                        '. '||sqlerrm;
+
+          --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
           RAISE vr_exc_erro;
       END;
       
@@ -4575,7 +5193,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            AND tbcobran_sms.nrdconta = pr_nrdconta;
       EXCEPTION     
         WHEN OTHERS THEN
-          vr_dscritic := 'Não foi possivel cancelar envio de sms:'|| SQLERRM;
+          vr_cdcritic := 1035;  --Não foi possivel cancelar envio de sms
+          vr_dscritic := gene0001.fn_busca_critica(1035)||'tbcobran_sms:'||
+                        ' instatus_sms:3'||
+                        ' com instatus_sms:1'||
+                        ' ,cdcooper:'||pr_cdcooper||
+                        ' ,nrdconta:'||pr_nrdconta||
+                        '. '||sqlerrm;
+
+          --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
           RAISE vr_exc_erro;
       END;    
     
@@ -4594,17 +5222,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                              ,pr_nrremass  => 0                   --> Numero da Remessa
                              ,pr_cdcritic  => vr_cdcritic         --> Codigo da Critica
                              ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
-      
-      
         IF nvl(vr_cdcritic,0) <> 0 OR
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro; 
         END IF;
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
       END LOOP;
       
-      
-    
-      pr_dsretorn   := 'Cancelamento do serviço efetuada com sucesso.';
+      pr_dsretorn   := 'Cancelamento do serviço efetuado com sucesso.';
     END IF;
     
     IF pr_idorigem = 7 THEN
@@ -4617,7 +5243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         -- Fechar o cursor pois havera raise
         CLOSE cr_crapcop;
         -- Montar mensagem de critica
-        vr_cdcritic := 651;
+        vr_cdcritic := 651; --Falta registro de controle da cooperativa - ERRO DE SISTEMA
         RETURN;
       ELSE
         CLOSE cr_crapcop;
@@ -4638,6 +5264,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                    ,pr_sms             => 0
                                    ,pr_valores_dinamicos => NULL);
                                                                                     
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
         --> Insere na tabela de mensagens (CRAPMSG)
         GENE0003.pc_gerar_mensagem
                    (pr_cdcooper => pr_cdcooper
@@ -4652,6 +5280,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                    ,pr_cdoperad => 1
                    ,pr_cdcadmsg => 0
                    ,pr_dscritic => vr_dscritic);                             
+
+        --Ch REQ0011327   
+        --Se retornar com erro, grava na tabela de log como Alerta, e não pára a execução
+        IF vr_dscritic IS NOT NULL THEN
+          --Grava tabela de log - Ch REQ0011327
+          pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 0,
+                      pr_cdmensagem    => 0,
+                      pr_ind_tipo_log  => 3);
+        END IF;
+
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contrato_sms');
       END LOOP; -- Fim loop CRAPSNH 
     
     END IF;
@@ -4675,17 +5318,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               pr_dsdadant => NULL,
                               pr_dsdadatu => rw_contrato_sms.idcontrato);
    
-
     COMMIT;    
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;      
-			IF nvl(vr_cdcritic,0) <> 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
-			   pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-			ELSE	
-			   pr_dscritic := vr_dscritic;
-		  END IF;
+      pr_cdcritic := vr_cdcritic; --Atualização variável Ch REQ0011327
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic)||vr_dsparame;
       
       ROLLBACK;
       
@@ -4709,9 +5346,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 pr_dsdadatu => pr_idcontrato);
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_cancel_contrato_sms : '||SQLERRM;  
-      
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_cancel_contrato_sms. '||sqlerrm||vr_dsparame;
       ROLLBACK;
+      
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -4731,7 +5372,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 pr_nmdcampo => 'contrato',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_idcontrato);
-      
   END pc_cancel_contrato_sms; 
   
   --> Rotina para canlemaneto do contrato de SMS
@@ -4751,15 +5391,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para canlemaneto do contrato de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -4779,8 +5422,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdagenci   VARCHAR2(100);
     vr_nrdcaixa   VARCHAR2(100);
     vr_idorigem   VARCHAR2(100);
+    vr_dsparame   VARCHAR2(2000);
 
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contr_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4792,6 +5438,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
+
+    vr_dsparame := ' - pr_nrdconta:' ||pr_nrdconta  ||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_idseqttl:'  ||pr_idseqttl  ||
+                   ', pr_xmllog:'    ||pr_xmllog    ||
+                   ', vr_cdcooper:'  ||vr_cdcooper  ||
+                   ', vr_nmdatela:'  ||vr_nmdatela  ||
+                   ', vr_nmeacao:'   ||vr_nmeacao   ||
+                   ', vr_cdagenci:'  ||vr_cdagenci  ||
+                   ', vr_nrdcaixa:'  ||vr_nrdcaixa  ||
+                   ', vr_idorigem:'  ||vr_idorigem  ||
+                   ', vr_cdoperad:'  ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_cancel_contr_sms_web');
 
     --> Rotina para canlemaneto do contrato de SMS
     pc_cancel_contrato_sms (pr_cdcooper    => vr_cdcooper    --> Codigo da cooperativa
@@ -4814,12 +5475,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;  
                           
-                                                
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -4828,10 +5496,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_cancel_contrato_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_cancel_contrato_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -4856,19 +5537,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
   /* ............................................................................
 
-       Programa: pc_cancel_contrato_sms
+       Programa: pc_imprim_contrato_sms
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para impressao do contrato de servico de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -4962,7 +5646,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND crl.nrdconta = ass.nrdconta;
     rw_crapcrl cr_crapcrl%ROWTYPE;
     
-    
     --> Buscar Valor tarifa
     CURSOR cr_crapfco(pr_cdcooper crapcop.cdcooper%TYPE,
                       pr_cdtarifa craptar.cdtarifa%TYPE) IS
@@ -4999,6 +5682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Variáveis para armazenar as informações em XML
     vr_des_xml      CLOB;
     vr_txtcompl     VARCHAR2(32600);
+    vr_dsparame     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -5009,9 +5694,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
   
     vr_dsorigem  := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dstransa  := 'Impressao de contrato de servico de SMS.';
+    
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_idorigem:'  ||pr_idorigem||
+                   ', pr_cdoperad:'  ||pr_cdoperad||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_dsiduser:'  ||pr_dsiduser||
+                   ', pr_iddspscp:'  ||pr_iddspscp;
     
     -- Leitura do calendario da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -5024,7 +5720,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     FETCH cr_contrato_sms INTO rw_contrato_sms;
     IF cr_contrato_sms%NOTFOUND THEN
       CLOSE cr_contrato_sms;
-      vr_dscritic := 'Contrato '||pr_idcontrato||' não encontrado.';
+      vr_cdcritic := 484;  --Contrato nao encontrado
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||pr_idcontrato;
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_contrato_sms;
@@ -5067,12 +5764,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         vr_dsdcargo := rw_crapcrl.dsproftl;
          
       END IF;
-    
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
       
     END IF;
     
     IF TRIM(rw_contrato_sms.nmcidade) IS NULL THEN
-      vr_dscritic := 'Endereço do cooperado não encontrados ou incompleto.';
+        vr_cdcritic := 1251; --Endereço do cooperado não encontrado ou incompleto
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
     END IF;
     
@@ -5084,7 +5783,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE cr_crapfco;
     END IF;
     
-    
     -- Inicializar o CLOB
     vr_des_xml := NULL;
     dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -5092,6 +5790,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_txtcompl := NULL;
     
     vr_dtmvtolt_ext := gene0005.fn_data_extenso(pr_dtmvtolt => rw_crapdat.dtmvtolt);
+    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
     
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
     pc_escreve_xml('<contrato>'||
@@ -5132,6 +5833,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper,
                                          pr_nmsubdir => '/rl');
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
       
     vr_dscomand := 'rm '||vr_dsdireto ||'/crrl729_'||pr_dsiduser||'* 2>/dev/null';
       
@@ -5142,13 +5845,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          ,pr_des_saida   => vr_dscritic);
     --Se ocorreu erro dar RAISE
     IF vr_typsaida = 'ERR' THEN
-      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+        vr_cdcritic := 1156;  --Nao foi possivel remover arquivos: '||vr_dscomand
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscomand||'. Erro: '||vr_dscritic;
       RAISE vr_exc_erro;
     END IF; 
-      
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
       
     pr_nmarqpdf := 'crrl729_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
-      
       
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
@@ -5172,12 +5876,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
       RAISE vr_exc_erro; -- encerra programa
     END IF; 
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
     
     -- Liberando a memoria alocada pro CLOB
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
 
-      
     IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino    
     --> AyllosWeb
     IF pr_idorigem = 5 THEN
@@ -5195,6 +5900,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           RAISE vr_exc_erro; -- encerra programa
         END IF;
       END IF;
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
 
       -- Remover relatorio do diretorio padrao da cooperativa
       gene0001.pc_OScommand(pr_typ_comando => 'S'
@@ -5204,7 +5911,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- Se retornou erro
       IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
         -- Concatena o erro que veio
-        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+            vr_cdcritic := 1156;  --Erro ao remover arquivo
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||
+                           vr_dsdireto ||'/'||pr_nmarqpdf||'. Erro: '||vr_dscritic;
         RAISE vr_exc_erro; -- encerra programa
       END IF;
         
@@ -5219,6 +5928,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         -- Gerar excecao
         RAISE vr_exc_erro;
       END IF;
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
     END IF;  
     ELSE
       gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
@@ -5232,6 +5943,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contrato_sms');
     END IF;    
     
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
@@ -5254,9 +5967,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               pr_dsdadatu => pr_idcontrato);
    
     COMMIT;    
+
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic; --Atualização variável Ch REQ0011327
+      pr_dscritic := vr_dscritic||vr_dsparame;
       ROLLBACK;
       
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
@@ -5279,9 +5996,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 pr_dsdadatu => pr_idcontrato);
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_imprim_contrato_sms : '||SQLERRM;  
-      
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_imprim_contrato_sms. '||sqlerrm||vr_dsparame;
       ROLLBACK;
+      
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -5301,7 +6022,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 pr_nmdcampo => 'contrato',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_idcontrato);
-      
   END pc_imprim_contrato_sms;     
   
   --> Rotina para impressao do contrato de servico de SMS - Web
@@ -5321,15 +6041,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para impressao do contrato de servico de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -5348,12 +6071,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdagenci   VARCHAR2(100);
     vr_nrdcaixa   VARCHAR2(100);
     vr_idorigem   VARCHAR2(100);
-    vr_dssrvarq VARCHAR2(200);
-    vr_dsdirarq VARCHAR2(200);    
-
-    vr_nmarqpdf VARCHAR2(100);
+    vr_dssrvarq   VARCHAR2(200);
+    vr_dsdirarq   VARCHAR2(200);    
+    vr_nmarqpdf   VARCHAR2(100);
+    vr_dsparame   VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contr_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -5366,6 +6091,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
 
+    vr_dsparame := ' - pr_nrdconta:' ||pr_nrdconta  ||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_dsiduser:'  ||pr_dsiduser  ||
+                   ', pr_xmllog:'    ||pr_xmllog    ||
+                   ', vr_cdcooper:'  ||vr_cdcooper  ||
+                   ', vr_nmdatela:'  ||vr_nmdatela  ||
+                   ', vr_nmeacao:'   ||vr_nmeacao   ||
+                   ', vr_cdagenci:'  ||vr_cdagenci  ||
+                   ', vr_nrdcaixa:'  ||vr_nrdcaixa  ||
+                   ', vr_idorigem:'  ||vr_idorigem  ||
+                   ', vr_cdoperad:'  ||vr_cdoperad;
+    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contr_sms_web');
     
     --> Rotina para impressao do contrato de servico de SMS
     pc_imprim_contrato_sms (pr_cdcooper    => vr_cdcooper    --> Codigo da cooperativa
@@ -5382,14 +6121,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            ,pr_dsdirarq    => vr_dsdirarq    --> Nome do diretório para download do arquivo                        
                            ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                            ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
-                                   
-                                                          
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;  
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_contr_sms_web');
+
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -5407,12 +6147,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_nmarqpdf
                           ,pr_des_erro => vr_dscritic);
                           
-                                                
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -5421,10 +6168,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_imprim_contrato_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_imprim_contrato_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -5450,15 +6210,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para impressao do termo de cancelamento de servico de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -5558,6 +6321,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Variáveis para armazenar as informações em XML
     vr_des_xml      CLOB;
     vr_txtcompl     VARCHAR2(32600);
+    vr_dsparame     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -5568,9 +6333,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms');
   
     vr_dsorigem  := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dstransa  := 'Impressao de termo de cancelamento de contrato de servico de SMS.';
+    
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_idorigem:'  ||pr_idorigem||
+                   ', pr_cdoperad:'  ||pr_cdoperad||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_dsiduser:'  ||pr_dsiduser;
     
     -- Leitura do calendario da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -5583,12 +6358,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     FETCH cr_contrato_sms INTO rw_contrato_sms;
     IF cr_contrato_sms%NOTFOUND THEN
       CLOSE cr_contrato_sms;
-      vr_dscritic := 'Contrato '||pr_idcontrato||' não encontrado.';
+        vr_cdcritic := 484;  --Contrato '||pr_idcontrato||' não encontrado
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||pr_idcontrato;
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_contrato_sms;
     END IF;
-    
     
     -- Inicializar o CLOB
     vr_des_xml := NULL;
@@ -5623,11 +6398,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     pc_escreve_xml('</raiz>',TRUE);
     
-    
     --Buscar diretorio da cooperativa
     vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
                                          pr_cdcooper => pr_cdcooper,
                                          pr_nmsubdir => '/rl');
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms');
       
     vr_dscomand := 'rm '||vr_dsdireto ||'/crrl730_'||pr_dsiduser||'* 2>/dev/null';
       
@@ -5638,13 +6414,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          ,pr_des_saida   => vr_dscritic);
     --Se ocorreu erro dar RAISE
     IF vr_typsaida = 'ERR' THEN
-      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+        vr_cdcritic := 1156;  --Nao foi possivel remover arquivos: '||vr_dscomand
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscomand||'. Erro: '||vr_dscritic;
       RAISE vr_exc_erro;
     END IF; 
-      
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms');
       
     pr_nmarqpdf := 'crrl730_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
-      
       
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
@@ -5664,10 +6441,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                , pr_nrcopias  => 1
                                , pr_nrvergrl  => 1
                                , pr_des_erro  => vr_dscritic);
-      
     IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
       RAISE vr_exc_erro; -- encerra programa
     END IF; 
+    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms');
     
     -- Liberando a memoria alocada pro CLOB
     dbms_lob.close(vr_des_xml);
@@ -5690,6 +6469,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         END IF;
       END IF;
 
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms');
+
       -- Remover relatorio do diretorio padrao da cooperativa
       gene0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
@@ -5698,12 +6480,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- Se retornou erro
       IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
         -- Concatena o erro que veio
-        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        vr_cdcritic := 1156;  --Erro ao remover arquivo
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||
+                       vr_dsdireto ||'/'||pr_nmarqpdf||'. Erro: '||vr_dscritic;
         RAISE vr_exc_erro; -- encerra programa
       END IF;
-        
     END IF;  
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms');
     
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -5726,9 +6511,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
    
     COMMIT;
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic; --Atualização variável Ch REQ0011327
+      pr_dscritic := vr_dscritic||vr_dsparame;
+
       ROLLBACK;
       
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
@@ -5751,10 +6540,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 pr_dsdadatu => pr_idcontrato);
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_imprim_cancel_sms : '||SQLERRM;  
-      
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_imprim_cancel_sms. '||sqlerrm||vr_dsparame;
       ROLLBACK;
       
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
@@ -5773,7 +6566,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 pr_nmdcampo => 'contrato',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_idcontrato);
-      
   END pc_imprim_cancel_sms; 
   
   --> Rotina para impressao do termo de cancelamento de servico de SMS - Chamada ayllos Web
@@ -5793,15 +6585,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: --/--/----
+       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para impressao do termo de cancelamento de servico de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -5820,10 +6615,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdagenci   VARCHAR2(100);
     vr_nrdcaixa   VARCHAR2(100);
     vr_idorigem   VARCHAR2(100);
+    vr_nmarqpdf   VARCHAR2(100);
+    vr_dsparame   VARCHAR2(2000);
 
-    vr_nmarqpdf VARCHAR2(100);
-    
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -5836,7 +6633,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
 
+    vr_dsparame := ' - pr_nrdconta:' ||pr_nrdconta  ||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_dsiduser:'  ||pr_dsiduser  ||
+                   ', pr_xmllog:'    ||pr_xmllog    ||
+                   ', vr_cdcooper:'  ||vr_cdcooper  ||
+                   ', vr_nmdatela:'  ||vr_nmdatela  ||
+                   ', vr_nmeacao:'   ||vr_nmeacao   ||
+                   ', vr_cdagenci:'  ||vr_cdagenci  ||
+                   ', vr_nrdcaixa:'  ||vr_nrdcaixa  ||
+                   ', vr_idorigem:'  ||vr_idorigem  ||
+                   ', vr_cdoperad:'  ||vr_cdoperad;
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms_web');
+  
     --> Rotina para impressao do contrato de servico de SMS
     pc_imprim_cancel_sms (pr_cdcooper    => vr_cdcooper    --> Codigo da cooperativa
                          ,pr_nrdconta    => pr_nrdconta    --> Conta do associado
@@ -5849,13 +6660,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          ,pr_nmarqpdf    => vr_nmarqpdf    --> Retorna o nome do relatorio gerado
                          ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                          ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
-                                   
-                                                          
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;  
+    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_imprim_cancel_sms_web');
     
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -5874,12 +6686,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_nmarqpdf
                           ,pr_des_erro => vr_dscritic);
                           
-                                                
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
@@ -5888,10 +6707,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_imprim_cancel_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_imprim_cancel_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -5910,7 +6742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: 14/03/2017
+       Data    : novembro/2016                     Ultima atualizacao: 27/07/2018
 
        Dados referentes ao programa:
 
@@ -5920,6 +6752,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
        Alteracoes: 14/03/2017 - Ajuste no select do cursor cr_sms_cobran (Aline)
 
+       Alteracoes: 10/05/2018 - Revitalização
+                              - Grava tabela de log nas exceptions
+                              - Eliminada rotina interna pc_controla_log_batch que chama pc_log_exec_job
+                              - Alterada validação do campo pr_dscritic para vr_dscritic 
+                                no retorno da rotina pc_cria_lote_sms - alinhado com Odirlei em 23/05/2018
+                                (Ana - Envolti - Ch REQ0011327)
+                                
+                   27/07/2018 - Ajuste mensagem do Log
+                                ( Belli - Envolti - Ch INC0019045 )             
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -6041,10 +6882,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dslindig     VARCHAR2(500);
     vr_nmremsms     VARCHAR2(500);
     vr_dsdmensa     VARCHAR2(500);    
+    vr_dsparame     VARCHAR2(2000);    
+    vr_nrdconta     crapass.nrdconta%TYPE := 0; -- Guarda informação para Log - 27/07/2018 - Chd INC0019045
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- procedimento para gerar log da debtar
-    PROCEDURE pc_gera_log(pr_idtiplog IN NUMBER DEFAULT 1,
+    PROCEDURE pc_gera_log_2(pr_idtiplog IN NUMBER DEFAULT 1,
                           pr_dscdolog IN VARCHAR2) IS
     BEGIN
       -- Envio centralizado de log de erro
@@ -6054,22 +6897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                  || vr_nomdojob || ' --> '
                                                  || pr_dscdolog );
-    END pc_gera_log;
-    
-    --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
-      
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => NULL           --> Codigo do programa
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-        
-    END pc_controla_log_batch;
+    END pc_gera_log_2;
     
     --> Procedimento para montar a linha digitavel do boleto
     PROCEDURE pc_ret_linha_digitavel (pr_rowid_cob IN ROWID,
@@ -6102,7 +6930,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            AND cob.nrcnvcob = ceb.nrconven;
       rw_crapcob cr_crapcob%ROWTYPE;
       
-      
       -------------->> VARIAVEIS <<----------------
       vr_vlfatura   crapcob.vltitulo%TYPE;
       vr_vlrmulta   crapcob.vltitulo%TYPE;
@@ -6110,15 +6937,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_cdbarras   VARCHAR2(60);
       vr_dslindig   VARCHAR2(60);
       vr_dtvencto   DATE;
+      vr_dsparame   VARCHAR2(2000);
          
     BEGIN
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_linha_digitavel');
       
+      vr_dsparame := ' - pr_rowid_cob:'||pr_rowid_cob||
+                     ', pr_dtmvtolt:'  ||pr_dtmvtolt||',';
+
       --> Buscar boleto
       OPEN cr_crapcob;
       FETCH cr_crapcob INTO rw_crapcob;
       IF cr_crapcob%NOTFOUND THEN
         CLOSE cr_crapcob;
-        vr_dscritic := 'Cobrança não encontrada.';
+        vr_dscritic := gene0001.fn_busca_critica(1179);--Registro de cobranca não cadastrado
         RAISE vr_exc_erro;
       ELSE
         CLOSE cr_crapcob;
@@ -6173,18 +7006,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_cdcartei => rw_crapcob.cdcartei,
                   pr_cdbarras => vr_cdbarras);
 
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_linha_digitavel');
+
       -- Busca a linha digitavel
       cobr0005.pc_calc_linha_digitavel
                   (pr_cdbarras => vr_cdbarras,
                    pr_lindigit => vr_dslindig);
     
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_linha_digitavel');
     
       pr_dslindig := vr_dslindig;
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION 
       WHEN vr_exc_erro THEN
-        pr_dscritic := vr_dscritic;
+        pr_dscritic := vr_dscritic||vr_dsparame;
       WHEN OTHERS THEN
-        pr_dscritic := 'Não foi possivel gerar linha digitavel: '||SQLERRM;
+        --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        pr_dscritic := gene0001.fn_busca_critica(9999)||'COBR0005.pc_ret_linha_digitavel. '||sqlerrm||vr_dsparame;
+
     END pc_ret_linha_digitavel;
     
     --> Retornar mensagem 
@@ -6201,6 +7044,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_cdtpmens           INTEGER;
       
     BEGIN
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.fn_mensagem_vencto');
       
       IF pr_dslindig IS NOT NULL THEN
         --> Antes do vencimento
@@ -6226,7 +7071,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         END IF;
       END IF;
       
-      
       --> Variavel para SMS
       vr_valores_dinamicos := '#Nome#=' ||pr_nmremsms ||';'|| 
                               '#LinhaDigitavel#='|| pr_dslindig;
@@ -6239,8 +7083,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                  ,pr_sms             => 1
                                  ,pr_valores_dinamicos => vr_valores_dinamicos);
       
-      
-      
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       RETURN vr_dsdmensg;
       
     EXCEPTION
@@ -6249,17 +7093,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END fn_mensagem_vencto;               
     
   BEGIN    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
   
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'I');  
+    vr_dsparame := ' - cdcooper:'||pr_cdcooper;    
    
-    vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
-                                              pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-    
-    
     --> Buscar coops ativas
     FOR rw_crapcop IN cr_crapcop LOOP
     
+      vr_dsparame := ' - cdcooper:'||rw_crapcop.cdcooper;    
       BEGIN
         
         SAVEPOINT trans_coop;
@@ -6274,7 +7116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         CLOSE btch0001.cr_crapdat;  
         
         IF rw_crapdat.inproces > 1 THEN
-          vr_dscritic := 'Processo noturno nao finalizado para esta cooperativa.';
+          vr_cdcritic := 1206; --Processo noturno nao finalizado para esta cooperativa
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Cooper:'||rw_crapcop.cdcooper;
           RAISE vr_next_coop; 
         END IF;
         
@@ -6289,11 +7132,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           RAISE vr_next_coop;
         END IF;
         
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
+        
+        vr_nrdconta := 0; -- Inicializa informação da mensagem para o Log - 27/07/2018 - Ch INC0019045
         ---->>>> Verificar se cooperados estão habilitados a enviar SMS <<<<-----
         --> Buscar cooperados que possuem SMS Pendente
         FOR rw_ass_sms IN cr_ass_sms (pr_cdcooper => rw_crapcop.cdcooper) LOOP
-        
-          
+          vr_nrdconta := rw_ass_sms.nrdconta; -- Ajuste mensagem para o Log - 27/07/2018 - Ch INC0019045
           --> Rotina para verificar se serviço de SMS, caso identifique algum problema
           --> Contrato é cancelado automaticamente
           pc_verifar_serv_sms(pr_cdcooper   => rw_crapcop.cdcooper       --> Codigo da cooperativa
@@ -6310,14 +7156,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           -- Se retornou erro
           IF NVL(vr_cdcritic,0) > 0 OR 
              TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_dscdolog := gene0001.fn_busca_critica(1261); --Erro ao verificar serviço de SMS
+            vr_dscdolog := vr_dscdolog||': '||vr_dscritic; -- os paramentros vem da pc_verifar_srv_sms
 
-            vr_dscdolog := 'Coop: '||rw_crapcop.cdcooper||' Cta: '||rw_ass_sms.nrdconta||
-                           ' -> Erro ao verificar serviço de SMS: '||vr_dscritic;
+            --Grava tabela de log - Ch REQ0011327
+            pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                        pr_dstiplog      => 'E',
+                        pr_dscritic      => vr_dscdolog,
+                        pr_cdcriticidade => 1,
+                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_ind_tipo_log  => 1);
+            vr_cdcritic := NULL;
+            vr_dscdolog := NULL;
 
-            pc_gera_log(pr_idtiplog  => 2,
-                        pr_dscdolog  => vr_dscdolog);
-          
           END IF;
+          -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
           
           --> Armazenar contas que nao possuem contrato de SMS ativo
           IF nvl(vr_idctrati,0) = 0 THEN
@@ -6326,6 +7180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           
         END LOOP;
         --->>> FIM VALIDACAO DOS COOPERADOS <<<----
+        vr_nrdconta := 0; -- Finaliza informação da mensagem para o Log - 27/07/2018 - Ch INC0019045
         
         --Controle de geracao de lote de SMS
         vr_flgerlot   := TRUE;
@@ -6335,16 +7190,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         FOR rw_sms_cobran IN cr_sms_cobran (pr_cdcooper => rw_crapcop.cdcooper) LOOP
         
           BEGIN           
-            
             --> Verificar se o serviço esta inativo para o este cooperado
             IF vr_tab_serv_inativo.exists(rw_sms_cobran.nrdconta) THEN
-              vr_dscritic := 'SMS não enviado, serviço inativo para o cooperado.';
+              vr_cdcritic := 1252; --SMS não enviado, serviço inativo para o cooperado
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+
               RAISE vr_next;              
             END IF;   
             
             IF vr_flgerlot THEN
               vr_flgerlot := FALSE;
-              
               --Gerar lote de SMS
               esms0001.pc_cria_lote_sms(pr_cdproduto     => 19 -- SMS Cobrança
                                        ,pr_idtpreme      => 'SMSCOBRAN'                                   
@@ -6352,18 +7207,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                        ,pr_idlote_sms    => vr_idlote_sms
                                        ,pr_dscritic      => vr_dscritic);
             
-              IF pr_dscritic IS NOT NULL THEN
-                
-                vr_dscritic := 'Erro ao criar lote: '||vr_dscritic;
+              --Alterada validação do campo pr_dscritic para vr_dscritic - alinhado com Odirlei
+              --CH REQ0011327
+              IF vr_dscritic IS NOT NULL THEN
+                vr_cdcritic := 1055;  --Erro ao criar lote
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscritic;
                 RAISE vr_next_coop;              
-                         
               END IF;
             END IF;
             
+            -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
+
             --> Criar savepoint para controle da geracao de SMS
             SAVEPOINT trans_sms;
             
             vr_dslindig := NULL;
+            
             --> Verificar se a cooperativa permite enviar a linah digitavel 
             --> e se o cooperado deseja enviar a linha digitavel
             IF rw_crapcop.flglinha_digitavel = 1 AND 
@@ -6376,9 +7236,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                       pr_dscritic  => vr_dscritic);
             
               IF TRIM(vr_dscritic) IS NOT NULL THEN
-                vr_dscritic := 'Erro ao gerar linha digitavel: '|| vr_dscritic;
+                vr_cdcritic := 1235;  --Erro ao gerar linha digitavel
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscritic;
                 RAISE vr_next_sms;              
               END IF;
+              -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
               
             END IF;
             
@@ -6412,7 +7275,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             
             --> Senao retornou mensagem, gerar critica e buscar proximo
             IF TRIM(vr_nmremsms) IS NULL THEN
-              vr_dscritic := 'Não foi possivel definir nome de remetente para SMS.';
+              vr_cdcritic := 1253; --Não foi possivel definir nome de remetente para SMS
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+
               RAISE vr_next_sms;              
             ELSE
               vr_nmremsms := substr(vr_nmremsms,1,15);
@@ -6433,7 +7298,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
             --> Senao retornou mensagem, gerar critica e buscar proximo
             IF TRIM(vr_dsdmensa) IS NULL THEN
-              vr_dscritic := 'Não foi possivel definir descrição de mensagem para SMS. ';
+              vr_cdcritic := 1254; --Não foi possivel definir descrição de mensagem para SMS
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+
               RAISE vr_next_sms;              
             END IF;
             
@@ -6447,14 +7314,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                    ,pr_nrtelefone => rw_sms_cobran.celular
                                    ,pr_cdtarifa   => rw_sms_cobran.cdtarifa
                                    ,pr_dsmensagem => vr_dsdmensa
-                                   
                                    ,pr_idsms      => vr_idsms
                                    ,pr_dscritic   => vr_dscritic);
                                    
             IF vr_dscritic IS NOT NULL THEN              
-              vr_dscritic := 'Não foi possivel gerar SMS: '|| vr_dscritic;
+              vr_cdcritic := 1236; --Nao foi possivel gerar SMS
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)|| vr_dscritic;
+
               RAISE vr_next_sms;
             END IF;
+            -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
             
             --> Atualizar registro de SMS de cobrança
             BEGIN
@@ -6467,10 +7337,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Não foi possivel atualizar SMS: '||SQLERRM;
+                --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+                CECRED.pc_internal_exception (pr_cdcooper => nvl(rw_crapcop.cdcooper,3));
+                vr_cdcritic := 1035;  --Não foi possivel atualizar SMS
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbcobran_sms:'||
+                        ' idlote_sms:'||vr_idlote_sms||
+                        ', idsms:'||vr_idsms||
+                        ', instatus_sms:2'||
+                        ', idcontrato:'||rw_sms_cobran.idcontrato||
+                        ' com rowid:'||rw_sms_cobran.rowid_sms||
+                        '. '||sqlerrm;
+
                 RAISE vr_next_sms;
             END;          
-          
           
           EXCEPTION
             WHEN vr_next_coop THEN
@@ -6479,14 +7358,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             --> Gerar critica sem rollback  
             WHEN vr_next THEN
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscdolog := 'Coop: '||rw_crapcop.cdcooper||' Cta: '||rw_sms_cobran.nrdconta||
-                               ' idsms: '||rw_sms_cobran.idsms||
-                               ' -> '|| vr_dscritic;
+                vr_dscritic := vr_dscritic||' Cooper:'||rw_crapcop.cdcooper||
+                                           ', Conta:'||rw_sms_cobran.nrdconta||
+                                           ', Idsms:'||rw_sms_cobran.idsms;
 
-                pc_gera_log(pr_idtiplog  => 2,
-                            pr_dscdolog  => vr_dscdolog);
+                --Grava tabela de log - Ch REQ0011327
+                pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 1,
+                            pr_cdmensagem    => nvl(vr_cdcritic,0),
+                            pr_ind_tipo_log  => 1);
+                
+                -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+                GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
               END IF;
               vr_dscritic := NULL;
+              vr_cdcritic := NULL;
               
             --> Gerar critica e rollback    
             WHEN vr_next_sms THEN
@@ -6495,19 +7383,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               ROLLBACK TO trans_sms;
               
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscdolog := 'Coop: '||rw_crapcop.cdcooper||' Cta: '||rw_sms_cobran.nrdconta||
-                               'idsms: '||rw_sms_cobran.idsms||
-                               ' -> '|| vr_dscritic;
+                vr_dscritic := vr_dscritic||' Cooper:'||rw_crapcop.cdcooper||
+                                           ', Conta:'||rw_sms_cobran.nrdconta||
+                                           ', Idsms:'||rw_sms_cobran.idsms;
 
-                pc_gera_log(pr_idtiplog  => 2,
-                            pr_dscdolog  => vr_dscdolog);
+                --Grava tabela de log - Ch REQ0011327
+                pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 1,
+                            pr_cdmensagem    => nvl(vr_cdcritic,0),
+                            pr_ind_tipo_log  => 1);
+
+                -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+                GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
               END IF;
+              vr_cdcritic := NULL;
               vr_dscritic := NULL;
               
             WHEN OTHERS THEN
+                CECRED.pc_internal_exception (pr_cdcooper => nvl(rw_crapcop.cdcooper,3));
                --> rollback da geracao de SMS
                 ROLLBACK TO trans_sms;
-               vr_dscritic := 'Erro ao gerar SMS: '|| SQLERRM;
+                vr_cdcritic := 1236;  --Erro ao gerar SMS
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscritic;
+
                RAISE vr_exc_erro;
           END;     
         END LOOP;
@@ -6525,14 +7425,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               
           IF TRIM(vr_dscritic) IS NOT NULL OR
              nvl(vr_cdcritic,0) > 0 THEN
-            
             --> Caso retorne com erro mecessario atualizar a situacao do lote
             pc_atualiza_status_lote ( pr_idlotsms   => vr_idlote_sms,
                                       pr_idsituacao => 'F');
+
+            -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
             -- Salvar alteração
             COMMIT;
             RAISE vr_next_coop; 
           END IF;   
+          
+          -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
           
           --> Fechar o lote apos o envio
           ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlote_sms
@@ -6542,6 +7447,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             ROLLBACK TO trans_coop;
             RAISE vr_next_coop; 
           END IF;
+          -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
           
           END IF;                   
         
@@ -6553,45 +7460,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         --> Ir para a proxima cooperativa
         WHEN vr_next_coop THEN
           IF vr_dscritic IS NOT NULL THEN
-            vr_dscdolog := 'Coop: '||rw_crapcop.cdcooper ||
-                           ' -> '|| vr_dscritic;
+            --Grava tabela de log - Ch REQ0011327
+            pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                        pr_dstiplog      => 'E',
+                        pr_dscritic      => vr_dscritic,
+                        pr_cdcriticidade => 1,
+                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_ind_tipo_log  => 1);
 
-            pc_gera_log(pr_idtiplog  => 2,
-                        pr_dscdolog  => vr_dscdolog);
+            vr_dscritic := NULL;
+            vr_cdcritic := NULL;
           END IF;
-          vr_dscritic := NULL;
           
         WHEN vr_exc_erro THEN
           RAISE vr_exc_erro;  
-        WHEN OTHERS THEN  
-          vr_dscritic := 'Erro ao enviar SMS de cobrança da coop '||rw_crapcop.cdcooper||': '||SQLERRM;
+        WHEN OTHERS THEN 
+          --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+          vr_cdcritic := 1237;  --Erro ao enviar SMS de cobrança da coop
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                         ' '  || rw_crapcop.cdcooper||
+                         ', nrdconta:' || vr_nrdconta ||
+                         '. '||SQLERRM;  -- Ajuste mensagem do Log - 27/07/2018 - Ch INC0019045
           RAISE vr_exc_erro;
       END;      
     END LOOP;
    
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'F'); 
-    
     COMMIT;       
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
       ROLLBACK;
       
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                          pr_dscritic => vr_dscritic);
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       
       
-    WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_verifica_sms_a_enviar : '||SQLERRM;        
+    WHEN OTHERS THEN      
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_verifica_sms_a_enviar. '||sqlerrm||vr_dsparame;
       ROLLBACK;
       
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => pr_dscritic);
-      
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
   END pc_verifica_sms_a_enviar; 
   
   --> Enviar lote de SMS para o Aymaru
@@ -6605,15 +7532,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Data    : novembro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para envio lote de SMS para o Aymaru
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Para a exception vr_exc_erro, grava log na rotian chamadora
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -------------->> VARIAVEIS <<----------------
@@ -6630,6 +7559,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_Detail   VARCHAR2(4000);
       
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_enviar_lote_SMS');
     
     vr_conteudo.put('CodigoLote', pr_idlotsms);
     AYMA0001.pc_consumir_ws_rest_aymaru
@@ -6641,34 +7572,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                         ,pr_resposta => vr_resposta
                         ,pr_dscritic => vr_dscritic
                         ,pr_cdcritic => vr_cdcritic);
-          
-    
     IF TRIM(vr_dscritic) IS NOT NULL OR
        nvl(vr_cdcritic,0) > 0 THEN
        RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_enviar_lote_SMS');
     
     --> Se retorno diferente de 200 - Sucesso
     IF vr_resposta.status_code <> 200 THEN
-    
     vr_code    := vr_resposta.conteudo.get('Code').to_char();--.print();
     vr_Message := vr_resposta.conteudo.get('Message').get_string();
     vr_Detail  := vr_resposta.conteudo.get('Detail').get_string();
       
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_enviar_lote_SMS');
     IF TRIM(vr_code) IS NOT NULL THEN
         vr_dscritic := gene0007.fn_convert_web_db(vr_Message);
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_enviar_lote_SMS');
         vr_dscritic := REPLACE(vr_dscritic,CHR(14));
         RAISE vr_exc_erro;
       END IF;
     END IF;
       
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_erro THEN
+      --Para a exception vr_exc_erro, grava log na rotina chamadora
       pr_dscritic := vr_dscritic;
       pr_cdcritic := vr_cdcritic;
     WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel enviar SMS: '||SQLERRM;
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_enviar_lote_SMS. '||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
   END pc_enviar_lote_SMS; 
   
   --> Rotina para atualizar situação do lote de SMS de cobrança
@@ -6681,20 +7630,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Data    : novembro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para atualizar situação do lote de SMS de cobrança
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                              - Grava tabela de log nas exceptions
+                              - Incluído tratamento exception para o update, não tinha
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro  EXCEPTION;
     vr_dscritic  VARCHAR2(1000);
+    vr_cdcritic  INTEGER;
     
     vr_dsdemail  VARCHAR2(500);
     vr_dsdcorpo  VARCHAR2(1000);
@@ -6703,7 +7655,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dsassunt  VARCHAR2(100);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atualiza_status_lote');
     
+    BEGIN
     --> Atualizar registro
     UPDATE tbgen_sms_lote lote
        SET lote.idsituacao = pr_idsituacao,
@@ -6712,6 +7667,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        AND lote.idtpreme = 'SMSCOBRAN'
        AND */idlote_sms = pr_idlotsms
      RETURNING lote.cdproduto INTO vr_cdprodut;         
+    --Sem a exception, cai direto na others da procedure
+    --com o tratamento, é desviado para a outra exception
+    --De qualquer maneira, com as 2 situações pára a execução do programa
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(1035)||'tbgen_sms_lote:'||
+                ' idsituacao:'     ||pr_idsituacao||
+                ', dhretorno:'     ||SYSDATE||
+                ' com idlote_sms:' ||pr_idlotsms||
+                '. '||sqlerrm;
+
+        CECRED.pc_internal_exception (pr_cdcooper => 3);
+        raise vr_exc_erro;
+    END;
     
     -- Ajustar mensagem de alerta conforme produto
     IF vr_cdprodut = 19 THEN
@@ -6728,6 +7698,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                                pr_cdcooper => 1,
                                                pr_cdacesso => 'EMAIL_ALERT_SMS_COBRAN');
                                              
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atualiza_status_lote');
     
       vr_dsdcorpo := 'Nao foi possivel realizar a envio do lote '||
                      pr_idlotsms  ||' para a Zenvia'||
@@ -6743,37 +7715,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 ,pr_flg_remete_coop => 'N' 
                                 ,pr_flg_enviar => 'S' --> Enviar o e-mail na hora
                                 ,pr_des_erro => vr_dscritic);
-    
-    
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;  
-      
       END IF;
     END IF;
-     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
      
   EXCEPTION 
     WHEN vr_exc_erro THEN
-      vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
-                                                pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      -- Envio centralizado de log de erro
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
     
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                ,pr_ind_tipo_log => 2
-                                ,pr_nmarqlog     => vr_nmarqlog
-                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
-                                                 || 'COBR0005.pc_atualiza_status_lote --> '
-                                                 || vr_dscritic );
     WHEN OTHERS THEN
-      vr_dscritic := 'Não foi possivel atualizar lote SMS '||pr_idlotsms||': '||SQLERRM;
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                ,pr_ind_tipo_log => 3
-                                ,pr_nmarqlog     => vr_nmarqlog
-                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
-                                                 || 'COBR0005.pc_atualiza_status_lote --> '
-                                                 || vr_dscritic );
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_atualiza_status_lote. '
+                     ||'Lote:'||pr_idlotsms||'.'||sqlerrm;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
                                                  
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
   END pc_atualiza_status_lote; 
   
   --> Rotina para atualizar situação do SMS
@@ -6789,43 +7764,101 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Data    : novembro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para atualizar situação do SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                              - Grava tabela de log nas exceptions
+                              - Inclusão do raise vr_exc_erro se ocorrer erro no update,
+                                pois do modo anterior, a mensagem de erro do update não é visualizada
+                                e a atualização da pr_dscritic na exception sempre ficaria com NULL
+                                - alinhado com Odirlei
+                              - Loga aqui porque não tem o parâmetro de retorno pr_cdcritic pra gravar na tbgen
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro  EXCEPTION;
     vr_dscritic  VARCHAR2(1000);           
+    vr_cdcritic  INTEGER;
+    vr_dsparame  VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atualiza_status_msg');
     
+    vr_dsparame := ' - pr_idlotsms:'||pr_idlotsms||
+                   ', pr_idsms:'    ||pr_idsms||
+                   ', pr_cdretorn:' ||pr_cdretorn||
+                   ', pr_dsretorn:' ||pr_dsretorn;
+    
+    BEGIN
     --> Atualizar registro
     UPDATE tbgen_sms_controle sms
-       SET sms.cdretorno   = pr_cdretorn,
+         SET sms.cdretorno         = pr_cdretorn,
            sms.dsdetalhe_retorno = substr(pr_dsretorn,1,120),
-           sms.dhenvio_sms = SYSDATE
+             sms.dhenvio_sms       = SYSDATE
      WHERE sms.idlote_sms = pr_idlotsms
        AND sms.idsms      = pr_idsms;  
        
      IF SQL%ROWCOUNT <> 1 THEN
-       vr_dscritic := 'Não foi possivel localizar sms a ser atualizada lote/sms:'||pr_idlotsms||'/'||pr_idsms;     
+        vr_cdcritic := 1260;  --Não foi possivel localizar sms a ser atualizada - lote/sms
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||pr_idlotsms||'/'||pr_idsms;
+        raise vr_exc_erro;
      END IF;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        raise vr_exc_erro;
+      WHEN OTHERS THEN
+          vr_cdcritic := 1035;  --Não foi possivel localizar sms a ser atualizada lote/sms
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_sms_controle:'||
+                  ' cdretorno:'         ||pr_cdretorn||
+                  ', dsdetalhe_retorno:'||substr(pr_dsretorn,1,120)||
+                  ', dhenvio_sms:'      ||sysdate||
+                  ' com idlote_sms:'    ||pr_idlotsms||
+                  ', idsms:'            ||pr_idsms||
+                  '. '||sqlerrm;
+
+          CECRED.pc_internal_exception (pr_cdcooper => 3);
+          raise vr_exc_erro;
+    END;
      
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_erro THEN
+      --Loga aqui porque não tem o parâmetro de retorno pr_cdcritic pra gravar na tbgen
       pr_dscritic := vr_dscritic;
       
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
     WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possivel atualizar SMS '||pr_idlotsms||'-'||pr_idsms||': '||SQLERRM;
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_atualiza_status_msg. '
+                     ||'Lote:'||pr_idlotsms||'-'||pr_idsms||'.'||sqlerrm||vr_dsparame;
       
+      --Loga aqui porque não tem o parâmetro de retorno pr_cdcritic pra gravar na tbgen
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
                                                  
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
   END pc_atualiza_status_msg; 
   
   --> Rotina para atualizar situação do SMS - chamada SOA
@@ -6838,15 +7871,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Data    : novembro/2016                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para atualizar situação do SMS - chamada SOA
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -------------->> VARIAVEIS <<----------------
@@ -6855,9 +7889,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdretorn   VARCHAR2(10);
     vr_Detail     VARCHAR2(1000);
     
+    vr_cdcritic   INTEGER;
     vr_dscritic   VARCHAR2(1000);
     vr_exc_erro   EXCEPTION;
     vr_nmarqlog   VARCHAR2(50);
+    vr_idgrvlog   VARCHAR2(1) := 'S';
     
     --Variaveis Documentos DOM
     vr_xmldoc     xmldom.DOMDocument;
@@ -6867,8 +7903,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_tab_campos gene0007.typ_mult_array;
     
-    
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atual_status_msg_soa');
     
     vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi); 
     
@@ -6878,6 +7915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> BUSCAR CONTRATOS DO ACORDO
     -- Listar nós contrado
     vr_lista_nodo:= xmldom.getElementsByTagName(vr_xmldoc,'mensagem');        
+
     FOR vr_linha IN 0..(xmldom.getLength(vr_lista_nodo)-1) LOOP
       --Buscar Nodo Corrente
       vr_nodo:= xmldom.item(vr_lista_nodo,vr_linha);
@@ -6887,7 +7925,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               ,pr_list_nodos => vr_tab_campos--> PL Table com os nodos resgatados
                               ,pr_des_erro   => vr_dscritic);
                       
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atual_status_msg_soa');
       vr_idx := vr_tab_campos.first;
+
       WHILE vr_idx IS NOT NULL LOOP
       
         vr_idsms  := vr_tab_campos(vr_idx)('Id');
@@ -6899,7 +7940,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         ELSIF upper(vr_sucess) = 'FALSE' THEN 
           vr_cdretorn := 10;
         ELSE
-          vr_dscritic := 'Valor invalido para o campo "Sucess": '||vr_sucess;
+          vr_cdcritic := 1255; --Valor invalido para o campo "Sucess": '||vr_sucess;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Sucess: '||vr_sucess;
           RAISE vr_exc_erro;
         END IF;
         
@@ -6910,41 +7952,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                ,pr_dscritic   => vr_dscritic);
         
         IF vr_dscritic IS NOT NULL THEN
+          --Loga na rotina chamada porque a mesma não tem o parâmetro de retorno pr_cdcritic 
+          --para gravar na tbgen
+          vr_idgrvlog := 'N';
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_atual_status_msg_soa');
         
         vr_idx := vr_tab_campos.next(vr_idx);
         
       END LOOP;
     END LOOP;            
                                                    
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_erro THEN
-      vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
-                                                pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-    
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                ,pr_ind_tipo_log => 2
-                                ,pr_nmarqlog     => vr_nmarqlog
-                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
-                                                 || 'COBR0005.pc_atualiza_status_msg_soa --> '
-                                                 || vr_dscritic );
+      IF vr_idgrvlog <> 'N' THEN
+        --Grava tabela de log - Ch REQ0011327
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => vr_dscritic,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => nvl(vr_cdcritic,0),
+                    pr_ind_tipo_log  => 1);
+      END IF;
     WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_atualiza_status_msg_soa. '
+                     ||'Lote:'||pr_idlotsms||'-'||vr_idsms||'. '||sqlerrm;
     
-      vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
-                                                pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+    
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
                                                 
-      vr_dscritic := 'Não foi possivel atualizar SMS '||pr_idlotsms||'-'||vr_idsms||': '||SQLERRM;
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                ,pr_ind_tipo_log => 3
-                                ,pr_nmarqlog     => vr_nmarqlog
-                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
-                                                 || 'COBR0005.pc_atualiza_status_msg_soa --> '
-                                                 || vr_dscritic );
   END pc_atualiza_status_msg_soa; 
-  
   
   --> Rotina para validar a criação do contrato de sms de cobrança
   PROCEDURE pc_valida_contrato_sms( pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -6966,15 +8018,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : otina para validar a criação do contrato de sms de cobrança
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -- cursor genérico de calendário
@@ -7000,11 +8055,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_tab_titulates   INET0002.typ_tab_titulates;
     vr_qtdiaace        INTEGER;
     vr_nmprimtl        crapass.nmprimtl%TYPE;
-    
+    vr_dsparame        VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contrato_sms');
+
     --> Inicializar como não possui senha IBank
     pr_flpossnh := 0;
+  
+    vr_dsparame := ' - pr_cdcooper:' ||pr_cdcooper||
+                   ', pr_cdagenci:'  ||pr_cdagenci||
+                   ', pr_nrdcaixa:'  ||pr_nrdcaixa||
+                   ', pr_cdoperad:'  ||pr_cdoperad||
+                   ', pr_nmdatela:'  ||pr_nmdatela||
+                   ', pr_idorigem:'  ||pr_idorigem||
+                   ', pr_nrdconta:'  ||pr_nrdconta||
+                   ', pr_idpacote:'  ||pr_idpacote;
   
     --> Rotina para verificar se serviço de SMS.
     pc_verifar_serv_sms(pr_cdcooper   => pr_cdcooper    --> Codigo da cooperativa
@@ -7024,6 +8091,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contrato_sms');
+    
     --> Verificar se contem alerta que impede a criação do contrato
     IF vr_dsalerta IS NOT NULL THEN
       vr_dscritic := vr_dsalerta;
@@ -7032,7 +8102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     --> Verificar se o serviço esta ativo para a cooperativa/cooperado
     IF nvl(vr_flsitsms,0) = 0 THEN
-      vr_dscritic := 'Serviço de Cobrança de SMS não esta habilitado para esta cooperativa ou cooperado.';
+       vr_cdcritic := 1256; --Serviço de Cobrança de SMS não esta habilitado para esta cooperativa ou cooperado
+       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
     END IF;
     
@@ -7044,7 +8115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE btch0001.cr_crapdat;
       -- monta msg de critica
       vr_cdcritic := 1;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);     
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);     
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
@@ -7064,9 +8135,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          nvl(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_erro;        
       END IF;
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contrato_sms');
       
       IF vr_tab_pacote.count() = 0 THEN
-        vr_dscritic := 'Pacote '||pr_idpacote||' não encontrado.';
+        vr_cdcritic := 1248;  --Pacote '||vr_idpacote||' não encontrado
+        vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic)||' '||pr_idpacote;
         RAISE vr_exc_erro;
       END IF;      
       
@@ -7086,17 +8160,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         IF vr_tab_erro.COUNT > 0 THEN
           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
         ELSE
-          vr_dscritic := 'Retorno "NOK" na extr0001.pc_obtem_saldo e sem informação na pr_vet_erro, Conta: '||pr_nrdconta;
-
+          vr_cdcritic := 9998;  --Retorno "NOK" na extr0001.pc_obtem_saldo e sem informação na pr_vet_erro, Conta: '||pr_nrdconta
+          vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic)|| ' Conta: '||pr_nrdconta;
         END IF;
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contrato_sms');
       
       IF vr_tab_pacote(vr_tab_pacote.first).vlpacote > (nvl(vr_tab_sald(vr_tab_sald.FIRST).vlsddisp,0) + nvl(vr_tab_sald(vr_tab_sald.FIRST).vllimcre,0)) THEN
-        vr_dscritic := 'Saldo insuficiente para contratação do pacote de SMS.';
+        vr_cdcritic := 1257;  --Saldo insuficiente para contratação do pacote de SMS
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         RAISE vr_exc_erro;
       END IF;  
-      
       
     END IF;    
     --> Carrega titulares
@@ -7111,7 +8187,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                        ,pr_flgerlog  => 1           --> Identificador se gera log  
                                        ,pr_flmobile  => 0           --> identificador se é chamada mobile
                                        ,pr_floperad  => 0           --> identificador se deve carregar operadores                                     
-                                               
                                        ,pr_tab_titulates => vr_tab_titulates --> Retorna titulares com acesso ao Ibank
                                        ,pr_qtdiaace      => vr_qtdiaace      --> Retornar dias do primeiro acesso
                                        ,pr_nmprimtl      => vr_nmprimtl      --> Retornar nome do cooperaro
@@ -7126,20 +8201,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;  
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contrato_sms');
+
     IF vr_tab_titulates.count > 0 THEN
       --> Retornar informação que possui senha internet
       pr_flpossnh := 1;      
     END IF; 
     
-     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic||vr_dsparame;
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Não foi possivel validar criação do contrato: '||SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;  ---- Não foi possivel validar criação do contrato
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_valida_contrato_sms. '||sqlerrm;
       
-                                                 
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_valida_contrato_sms; 
   
   --> Rotina para validar a criação do contrato de sms de cobrança - Chamada ayllos Web
@@ -7158,15 +8241,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para validar a criação do contrato de sms de cobrança - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -7185,10 +8271,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdagenci   VARCHAR2(100);
     vr_nrdcaixa   VARCHAR2(100);
     vr_idorigem   VARCHAR2(100);
+    vr_dsparame   VARCHAR2(2000);
 
     vr_flpossnh   INTEGER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contr_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -7201,6 +8290,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
 
+    vr_dsparame := ' - pr_nrdconta:' ||pr_nrdconta  ||
+                   ', pr_idpacote:'  ||pr_idpacote  ||
+                   ', pr_xmllog:'    ||pr_xmllog    ||
+                   ', vr_cdcooper:'  ||vr_cdcooper  ||
+                   ', vr_nmdatela:'  ||vr_nmdatela  ||
+                   ', vr_nmeacao:'   ||vr_nmeacao   ||
+                   ', vr_cdagenci:'  ||vr_cdagenci  ||
+                   ', vr_nrdcaixa:'  ||vr_nrdcaixa  ||
+                   ', vr_idorigem:'  ||vr_idorigem  ||
+                   ', vr_cdoperad:'  ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contr_sms_web');
+
+    --Loga na rotina chamada
     pc_valida_contrato_sms( pr_cdcooper      => vr_cdcooper --> Codigo da cooperativa
                            ,pr_cdagenci      => vr_cdagenci --> Codigo de agencia
                            ,pr_nrdcaixa      => vr_nrdcaixa --> Numero do caixa
@@ -7213,13 +8317,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            ,pr_flpossnh      => vr_flpossnh    --> Retornar se cooperado possui senha de Internet (1-Ok, 0-NOK)
                            ,pr_cdcritic      => vr_cdcritic    --> Retorna codigo de critica
                            ,pr_dscritic      => vr_dscritic);  --> Retorno de critica
-    
-                                                          
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_valida_contr_sms_web');
 
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -7238,12 +8343,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_flpossnh
                           ,pr_des_erro => vr_dscritic);    
                           
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
                                                 
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
@@ -7252,14 +8365,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_valida_contrato_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_valida_contrato_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+
   END pc_valida_contrato_sms_web; 
   
   --> Rotina para lançar tarifa do pacote de SMS
@@ -7271,15 +8398,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para para lançar tarifa do pacote de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Eliminada rotina interna pc_controla_log_batch que chama pc_log_exec_job
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -7300,7 +8429,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND trunc(ctr.dhadesao) >= gene0005.fn_valida_dia_util(pr_cdcooper => 3, 
                                                                 pr_dtmvtolt => SYSDATE -1 , 
                                                                 pr_tipo     => 'A' );
-    
     
     --> Verificar se lat ja foi criada
     CURSOR cr_craplat ( pr_cdcooper  craplat.cdcooper%TYPE,
@@ -7348,28 +8476,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_vltarsms     craplat.vltarifa%TYPE;
     vr_rowid_lat    ROWID;
     
-    --------------------------- SUBROTINAS INTERNAS --------------------------
- 
-    --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_tarifa_pacote');
       
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => NULL           --> Codigo do programa
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-        
-    END pc_controla_log_batch;
-    
-    
-       
-  BEGIN    
-  
-    
     -->  Validar execução
     gene0004.pc_executa_job(pr_cdcooper => 3, --> Codigo da cooperativa
                             pr_fldiautl => 1,                        --> Flag se deve validar dia util
@@ -7382,10 +8492,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;    
     
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'I');  
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_tarifa_pacote');
    
-    
     -- datas da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -7394,7 +8503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE btch0001.cr_crapdat;
       -- monta msg de critica
       vr_cdcritic := 1;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);     
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1)||' - pr_cdcooper:3';
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
@@ -7424,6 +8533,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                                ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
                                                ,pr_dscritic  => vr_dscritic   -- Descricao Critica
                                                ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+
+        --Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_tarifa_pacote');
+
         -- Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           -- Se possui erro no vetor
@@ -7431,16 +8544,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
             vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
           ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+            vr_cdcritic := 1058;  --Nao foi possivel carregar a tarifa
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);     
           END IF;
           -- Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
       END IF;
         
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_tarifa_pacote');
+        
       vr_vltarsms := rw_smsctr.vlpacote;
-      
       
       --> Verificar se lat ja foi criada
       OPEN cr_craplat (pr_cdcooper => rw_smsctr.cdcooper,
@@ -7482,36 +8597,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
     
+        --Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_tarifa_pacote');
+
+        --Inclusão mensagem de retorno da rotina TARI0001, porém sem parar o processo - Ch REQ0011327
+        --O retorno nas variáveis vr_cdcritic e vr_dscritic não era logado
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Grava tabela de log como Alerta - Ch REQ0011327
+          pc_gera_log(pr_cdcooper      => nvl(rw_smsctr.cdcooper,3),
+                      pr_dstiplog      => 'E',
+                      pr_dscritic      => vr_dscritic,
+                      pr_cdcriticidade => 0,
+                      pr_cdmensagem    => nvl(vr_cdcritic,0),
+                      pr_ind_tipo_log  => 4);
+        END IF;
+        --
+        --Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_tarifa_pacote');
+    
       ELSE 
         --> caso ja exista, ir para o proximo
         CLOSE cr_craplat;
       END IF;
     END LOOP;
     
-   
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'F'); 
-    
     COMMIT;       
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
       ROLLBACK;
       
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
-      
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_gerar_tarifa_pacote : '||SQLERRM;        
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_gerar_tarifa_pacote. '||sqlerrm;
       ROLLBACK;
       
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => pr_dscritic);
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
   END pc_gerar_tarifa_pacote; 
   
   --> Rotina para verificar e renovar os contratos/pacote de SMS
@@ -7523,7 +8666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: 14/06/2017
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
@@ -7536,6 +8679,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                    14/06/2017 - Incluir verificação de pacotes ativos, para que 
                                 seja chamada a rotina de renovação apenas para 
                                 pacotes que ainda estejam ativos. (Renato Darosci)
+
+                   10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Eliminada a rotina interna pc_controla_log_batch que chama pc_log_exec_job
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -7580,32 +8728,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dsretorn     VARCHAR2(2000);
        
     vr_flsitsms     INTEGER;
+    vr_dsparame     VARCHAR2(2000);
     
-    
-    --------------------------- SUBROTINAS INTERNAS --------------------------
- 
-    --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_renovacao_pacote');
       
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => NULL           --> Codigo do programa
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-        
-    END pc_controla_log_batch;
-    
-    
-       
-  BEGIN    
-  
-    
     -->  Validar execução
-    gene0004.pc_executa_job(pr_cdcooper => 3, --> Codigo da cooperativa
+    gene0004.pc_executa_job(pr_cdcooper => 3,                        --> Codigo da cooperativa
                             pr_fldiautl => 1,                        --> Flag se deve validar dia util
                             pr_flproces => 0,                        --> Flag se deve validar se esta no processo 
                             pr_flrepjob => 0,                        --> Flag para reprogramar o job
@@ -7616,9 +8746,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;    
     
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'I');  
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_renovacao_pacote');
    
+    vr_dsparame := ' - pr_cdcooper:3';
     
     -- datas da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
@@ -7628,13 +8759,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE btch0001.cr_crapdat;
       -- monta msg de critica
       vr_cdcritic := 1;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);     
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);     
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
     END IF; 
     
-    
+    vr_cdcritic := NULL;
     vr_dscritic := NULL; 
     
     -->Buscar contratos cujo existe tarifa de pacote a ser cobrada
@@ -7650,12 +8781,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          ,pr_dsalerta   =>  vr_dsalerta   --> Retorna alerta para o cooperado
                          ,pr_cdcritic   =>  vr_cdcritic   --> Retorna codigo de critica
                          ,pr_dscritic   =>  vr_dscritic); --> Retorno de critica  
-    
       -- Se retornou erro
       IF NVL(vr_cdcritic,0) > 0 OR 
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF; 
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_renovacao_pacote');
       
       --> Se serviço estiver habilitado
       IF vr_flsitsms = 1 THEN
@@ -7675,12 +8807,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                ,pr_dsretorn    => vr_dsretorn    --> Mensagem de retorno             
                                ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
                                ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
-                                                                
         -- Se retornou erro
         IF NVL(vr_cdcritic,0) > 0 OR 
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;  
+        -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_renovacao_pacote');
         
         -- Verifica se o pacote a ser renovado existe e está ativo
         OPEN  cr_pacote_ativo(rw_smsctr.cdcooper
@@ -7691,12 +8824,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         IF cr_pacote_ativo%NOTFOUND THEN
           vr_indativo := 0;
         END IF;
-                                                                
         -- Fechar o cursor
         CLOSE cr_pacote_ativo;
         
         -- Se o pacote estiver ativo
         IF NVL(vr_indativo,0) = 1 THEN
+
           --> Rotina para geração do novo contrato de SMS
         pc_gera_contrato_sms (pr_cdcooper  => rw_smsctr.cdcooper  --> Codigo da cooperativa
                              ,pr_nrdconta  => rw_smsctr.nrdconta  --> Conta do associado
@@ -7720,34 +8853,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
           END IF; -- Critica
+          -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_renovacao_pacote');
         END IF; -- Verificar pacote ativo
       END IF; -- Serviço habilitado
      
     END LOOP;
-    
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'F'); 
-    
     COMMIT;       
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := vr_dscritic||vr_dsparame;
       ROLLBACK;
       
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
-      
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_cdprograma    => vr_nomdojob,
+                  pr_ind_tipo_log  => 1);
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_gerar_tarifa_pacote : '||SQLERRM;        
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_verifica_renovacao_pacote. '||sqlerrm||vr_dsparame;
       ROLLBACK;
       
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => pr_dscritic);
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_cdprograma    => vr_nomdojob,
+                  pr_ind_tipo_log  => 2);
       
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
   END pc_verifica_renovacao_pacote; 
   
   --> Rotina para realizar a troca do pacote de SMS
@@ -7770,15 +8917,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para realizar a troca do pacote de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Inclusão nro contrato novo na variável pr_dsretorn
+                                Acrescenta os parâmetros nas exceptions vr_exc_erro e others
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -7812,19 +8962,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dsretorn     VARCHAR2(2000);
        
     vr_flsitsms     INTEGER;
+    vr_dsparame     VARCHAR2(2000);
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
  
-    
-       
   BEGIN    
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms');
   
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper||
+                   ', pr_nrdconta:'||pr_nrdconta||
+                   ', pr_idorigem:'||pr_idorigem||
+                   ', pr_cdoperad:'||pr_cdoperad||
+                   ', pr_nmdatela:'||pr_nmdatela||
+                   ', pr_idpacote:'||pr_idpacote||
+                   ', pr_idctratu:'||pr_idctratu;
     
     --> Rotina para verificar se serviço de SMS.
     pc_verifar_serv_sms(pr_cdcooper   => pr_cdcooper   --> Codigo da cooperativa
                        ,pr_nrdconta   => pr_nrdconta   --> Conta do associado
-                       ,pr_nmdatela   => 'COBR0005'           --> Nome da tela
-                       ,pr_idorigem   => 7                    --> Indicador de sistema origem
+                       ,pr_nmdatela   => 'COBR0005'    --> Nome da tela
+                       ,pr_idorigem   => 7             --> Indicador de sistema origem
                        -----> OUT <----                                                                 
                        ,pr_idcontrato =>  vr_idcontrato --> Retornar Numero do contratro ativo
                        ,pr_flsitsms   =>  vr_flsitsms   --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
@@ -7838,22 +8996,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms');
+    
     IF nvl(vr_idcontrato,0) = 0 THEN  
-      vr_dscritic := 'Não encontrado nenhum contrato ativo.';
+      vr_cdcritic := 1242;  --Não encontrado nenhum contrato ativo
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;    
     ELSIF nvl(vr_idcontrato,0) <> nvl(pr_idctratu,0) THEN
-      vr_dscritic := 'Numero do contrato difere do contrato ativo.';
+      vr_cdcritic := 1258;  --Numero do contrato difere do contrato ativo
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;    
     END IF;
     
     --> Buscar inf do contrato de SMS
-    OPEN cr_smsctr  (pr_cdcooper   => pr_cdcooper  ,  
-                     pr_nrdconta   => pr_nrdconta  ,  
+    OPEN cr_smsctr  (pr_cdcooper   => pr_cdcooper,  
+                     pr_nrdconta   => pr_nrdconta,  
                      pr_idcontrato => pr_idctratu);
     FETCH cr_smsctr INTO rw_smsctr;
     IF cr_smsctr%NOTFOUND THEN
       CLOSE cr_smsctr;
-      vr_dscritic := 'Ccontrato '||pr_idctratu||' não encontrado.';
+      vr_cdcritic := 484;  --Contrato nao encontrado
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||pr_idctratu;
       RAISE vr_exc_erro;    
     END IF;
       
@@ -7879,6 +9043,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF; 
         
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms');
+        
     --> Rotina para geração do contrato de SMS
     pc_gera_contrato_sms (pr_cdcooper  => pr_cdcooper              --> Codigo da cooperativa
                          ,pr_nrdconta  => pr_nrdconta              --> Conta do associado
@@ -7903,19 +9070,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     END IF;
      
-    pr_dsretorn := 'Alteração de pacote de SMS realizada com sucesso.';
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms');
     
+    pr_dsretorn := 'Alteração de pacote de SMS realizada com sucesso. Contrato: '||pr_idctrnov;
+
     COMMIT;       
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic||vr_dsparame;
       ROLLBACK;      
       
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_trocar_pacote : '||SQLERRM;        
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_trocar_pacote_sms. '||sqlerrm||vr_dsparame;
       ROLLBACK;      
       
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_trocar_pacote_sms; 
    
   --> Rotina para realizar a troca do pacote de SMS - Chamada ayllos Web
@@ -7935,15 +9112,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para realizar a troca do pacote de SMS - Chamada ayllos Web
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Acrescenta os parâmetros na exception others, para a vr_exc_erro
+                                os parâmetros são acrescentados na rotina chamada (versão não web)
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -7965,8 +9145,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     vr_idctrnov   INTEGER;
     vr_dsretorn   VARCHAR2(2000);
-    
+    vr_dsparame   VARCHAR2(2000);
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms_web');
   
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -7979,7 +9161,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
 
+    vr_dsparame := ' - pr_nrdconta:' ||pr_nrdconta  ||
+                   ', pr_idcontrato:'||pr_idcontrato||
+                   ', pr_idpacote:'  ||pr_idpacote  ||
+                   ', pr_xmllog:'    ||pr_xmllog    ||
+                   ', vr_cdcooper:'  ||vr_cdcooper  ||
+                   ', vr_nmdatela:'  ||vr_nmdatela  ||
+                   ', vr_nmeacao:'   ||vr_nmeacao   ||
+                   ', vr_cdagenci:'  ||vr_cdagenci  ||
+                   ', vr_nrdcaixa:'  ||vr_nrdcaixa  ||
+                   ', vr_idorigem:'  ||vr_idorigem  ||
+                   ', vr_cdoperad:'  ||vr_cdoperad;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms_web');
     
+    --Gera log na rotina chamada
     pc_trocar_pacote_sms (pr_cdcooper    => vr_cdcooper   --> Codigo da cooperativa
                          ,pr_nrdconta    => pr_nrdconta   --> Conta do associado                             
                          ,pr_idorigem    => vr_idorigem   --> id origem 
@@ -7992,13 +9189,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          ,pr_dsretorn    => vr_dsretorn   --> Mensagem de retorno             
                          ,pr_cdcritic    => vr_cdcritic   --> Retorna codigo de critica
                          ,pr_dscritic    => vr_dscritic );--> Retorno de critica
-    
-                                                          
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_trocar_pacote_sms_web');
 
     -- Criar cabecalho do XML
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -8024,11 +9222,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_dsretorn
                           ,pr_des_erro => vr_dscritic);                          
                                                 
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
-      IF vr_cdcritic <> 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
+      pr_cdcritic := vr_cdcritic;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
 
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
@@ -8037,14 +9244,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela pc_trocar_pacote_sms_web: ' || SQLERRM;
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_trocar_pacote_sms_web. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => nvl(vr_cdcooper,3),
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => nvl(vr_cdcooper,3));
+
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
       
       -- Carregar XML padrao para variavel de retorno
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+
   END pc_trocar_pacote_sms_web; 
   
   --> Rotina para cobrar tarifas das SMSs enviadas 
@@ -8057,15 +9278,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para cobrar tarifas das SMSs enviadas 
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                Eliminada rotina interna pc_gera_log que utilizava pc_gera_log_batch,
+                                foi criada a pc_gera_log externa que utiliza a pc_log_programa.
+                                Eliminada a rotina interna pc_controla_log_batch que chama pc_log_exec_job
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     
     --------------->> CURSORES <<----------------
@@ -8144,22 +9369,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_vltarsms     NUMBER;       
     vr_qtsmsdis     INTEGER;
     vr_qtdsms       INTEGER;
+    vr_dsparame     VARCHAR2(2000);
     
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;     
+        
     --------------------------- SUBROTINAS INTERNAS --------------------------
-    -- procedimento para gerar log da debtar
-    PROCEDURE pc_gera_log( pr_cdcooper IN NUMBER DEFAULT 3,
-                           pr_idtiplog IN NUMBER DEFAULT 1,
-                           pr_dscdolog IN VARCHAR2) IS
-    BEGIN
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => pr_idtiplog
-                                ,pr_nmarqlog     => vr_nmarqlog
-                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
-                                                 || vr_nomdojob || ' --> '
-                                                 || pr_dscdolog );
-    END pc_gera_log;
-    
     -- procedimento para gerar email de alerta 
     PROCEDURE pc_email_critica(pr_dscritic IN VARCHAR2) IS
     
@@ -8167,10 +9384,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_dsdcorpo VARCHAR2(1000);
     
     BEGIN
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_email_critica');
+
       vr_dsdemail := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                                pr_cdcooper => 1,
                                                pr_cdacesso => 'EMAIL_ALERT_SMS_COBRAN');
                                              
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_email_critica');
     
       vr_dsdcorpo := 'Nao foi possivel criar lançamentos de tarifa de SMS :'||pr_dscritic;
       
@@ -8184,22 +9406,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 ,pr_flg_remete_coop => 'N' 
                                 ,pr_flg_enviar => 'S' --> Enviar o e-mail na hora
                                 ,pr_des_erro => vr_dscritic);
+
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     END pc_email_critica;
-    
-    --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
-      
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => NULL           --> Codigo do programa
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-        
-    END pc_controla_log_batch;
     
     --> Rotina para notificar cooperado
     PROCEDURE pc_notifica_cooperado (pr_cdcooper IN crapass.cdcooper%TYPE,
@@ -8226,6 +9436,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_dsdmensg  crapmsg.dsdmensg%TYPE;
     
     BEGIN
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_notifica_cooperado');
     
       vr_dsdassun := 'O limite de SMSs do seu Pacote foi excedido'; 
       vr_dsdplchv := 'Limite de SMSs'; 
@@ -8239,6 +9451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                    ,pr_nrdconta  => pr_nrdconta
                                    ,pr_cdsitsnh  => 1
                                    ,pr_tpdsenha  => 1) LOOP
+
         --> Insere na tabela de mensagens (CRAPMSG)
         GENE0003.pc_gerar_mensagem
                               (pr_cdcooper => pr_cdcooper
@@ -8254,16 +9467,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               ,pr_cdcadmsg => 0
                               ,pr_dscritic => vr_dscritic); 
 
+        -- Cria uma notificação
+        noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                    ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_idseqttl => rw_crapsnh.idseqttl
+                                    ,pr_variaveis => vr_variaveis_notif);        
+        --  
+
       END LOOP;  
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+
     END pc_notifica_cooperado;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_tarifa_sms_enviados');
     
     vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
                                               pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
                                               
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'I'); 
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper;
     
     --> Buscar coops ativas
     FOR rw_crapcop IN cr_crapcop LOOP
@@ -8283,6 +9509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         continue;
       END IF;
       
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_tarifa_sms_enviados');
       
       -- Leitura do calendario da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
@@ -8290,18 +9518,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- Fechar o cursor
       CLOSE btch0001.cr_crapdat;  
       
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_tarifa_sms_enviados');
       
       --> buscar SMSs enviados com sucesso
       FOR rw_sms_cobran IN cr_sms_cobran(pr_cdcooper => rw_crapcop.cdcooper) LOOP
         BEGIN
-          
           --> Localizar contrato ativo
           OPEN cr_smsctr(pr_cdcooper => rw_sms_cobran.cdcooper,
                          pr_nrdconta => rw_sms_cobran.nrdconta);
           FETCH cr_smsctr INTO rw_smsctr;                 
+
           IF cr_smsctr%NOTFOUND THEN
             CLOSE cr_smsctr;
-            vr_dscritic := 'Nenhum contrato de SMS de cobrança localizado para o cooperado '||rw_sms_cobran.nrdconta;
+            vr_cdcritic := 1243;  --Nenhum contrato de SMS de cobrança localizado para o cooperado
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Conta:'||rw_sms_cobran.nrdconta;
             RAISE vr_exc_erro;
           END IF;
 		  CLOSE cr_smsctr;
@@ -8321,7 +9552,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                WHERE ctr.rowid = rw_smsctr.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Nao foi possivel atualizar contrato sms  cooperado '||rw_sms_cobran.nrdconta;
+                vr_cdcritic := 1239;  --Nao foi possivel atualizar contrato sms do cooperado
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Conta:'||rw_sms_cobran.nrdconta
+                               ||', qtdsms:'||rw_sms_cobran.qtdsms
+                               ||', com rowid:'||rw_smsctr.rowid
+                               ||'. '||sqlerrm||vr_dsparame;
+                               
+                --Grava log aqui para não parar a execução - Ch REQ0011327
+                pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                            pr_dstiplog      => 'E',
+                            pr_dscritic      => vr_dscritic,
+                            pr_cdcriticidade => 1,
+                            pr_cdmensagem    => nvl(vr_cdcritic,0),
+                            pr_ind_tipo_log  => 1);
+
+                --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+                CECRED.pc_internal_exception (pr_cdcooper => rw_crapcop.cdcooper);
+
+                --Limpa as variáveis para não interferir na continuidade do processo
+                vr_cdcritic := NULL;
+                vr_dscritic := NULL;
             END;
             
             IF vr_qtsmsdis <= 0 THEN
@@ -8343,9 +9593,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             -- Se possuia qtd de SMSs disponiveis, porem ultrapassou a quantidade
             --> e irá cobrar SMS
             IF vr_qtsmsdis >= 0 AND vr_qtdsms > 0 THEN
+              vr_dsparame := vr_dsparame||
+                           ', pr_nmrescop:'||rw_crapcop.nmrescop||
+                           ', pr_nrdconta:'||rw_sms_cobran.nrdconta;
+
               pc_notifica_cooperado (pr_cdcooper => rw_sms_cobran.cdcooper,
                                      pr_nmrescop => rw_crapcop.nmrescop,
                                      pr_nrdconta => rw_sms_cobran.nrdconta);            
+
+              -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_tarifa_sms_enviados');
             END IF;
           
           --> Individual
@@ -8354,12 +9611,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           
           END IF;
           
-          
           vr_idxtar := rw_sms_cobran.cdtarifa;
           
           --> Se ainda não foi buscada essa tarifa
           IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
-          
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
             --> Carregar Tarifas de pessoa fisica e juridica      
             TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => rw_sms_cobran.cdcooper   -- Codigo Cooperativa
                                                    ,pr_cdtarifa  => rw_sms_cobran.cdtarifa  --Codigo da Tarifa (CRAPTAR) - Ao popular este parâmetro o pr_cdbattar não é necessário
@@ -8381,18 +9638,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                 vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                 vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
               ELSE
-                vr_cdcritic := 0;
-                vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+                vr_cdcritic := 1058;  --Nao foi possivel carregar a tarifa
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
               END IF;
               -- Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
+            -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_tarifa_sms_enviados');
           END IF;
           
           --> Para pacote individual, necessario buscar valor de tarifa atualizado
           IF rw_smsctr.idpacote <= 2 THEN
             vr_vltarsms := vr_qtdsms * vr_tab_tarifa(vr_idxtar).vltarifa;
           END IF;
+          vr_cdcritic := NULL;
+          vr_dscritic := NULL;
           
           -- Criar Lancamento automatico tarifa
           TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => rw_sms_cobran.cdcooper
@@ -8427,60 +9688,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
               vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
             ELSE
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro no lancamento tarifa de sms de cobrança.';
+              vr_cdcritic := 1238;  --Erro no lancamento tarifa de SMS de cobrança
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
             END IF;
             -- Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
+          -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_tarifa_sms_enviados');
         EXCEPTION
           WHEN vr_exc_next THEN
             NULL;
           WHEN vr_exc_erro THEN
-            pc_gera_log( pr_cdcooper => rw_crapcop.cdcooper,
-                         pr_idtiplog => 1,
-                         pr_dscdolog => vr_dscritic);
+            --Substituida chamda da pc_gera_log_batch pela pc_log_programa - Ch REQ0011327
+            pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                        pr_dstiplog      => 'E',
+                        pr_dscritic      => vr_dscritic||vr_dsparame,
+                        pr_cdcriticidade => 1,
+                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_cdprograma    => vr_nomdojob,
+                        pr_ind_tipo_log  => 1);
+
+            vr_cdcritic := NULL;
             vr_dscritic := NULL;                       
           WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel gerar tarifa de SMS para a conta '||
-                            rw_sms_cobran.nrdconta ||': '|| SQLERRM;
-            pc_gera_log( pr_cdcooper => rw_crapcop.cdcooper,
-                         pr_idtiplog => 1,
-                         pr_dscdolog => vr_dscritic);
+            vr_cdcritic := 1259; --Não foi possivel gerar tarifa de SMS para a conta
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||rw_sms_cobran.nrdconta ||'. '|| SQLERRM||vr_dsparame;
+
+            --Substituida chamda da pc_gera_log_batch pela pc_log_programa - Ch REQ0011327
+            pc_gera_log(pr_cdcooper      => rw_crapcop.cdcooper,
+                        pr_dstiplog      => 'E',
+                        pr_dscritic      => vr_dscritic,
+                        pr_cdcriticidade => 2,
+                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_cdprograma    => vr_nomdojob,
+                        pr_ind_tipo_log  => 2);
+
+            CECRED.pc_internal_exception (pr_cdcooper => rw_crapcop.cdcooper);
           
+            vr_cdcritic := NULL;                       
+            vr_dscritic := NULL;                       
         END;  
       END LOOP;
     
     END LOOP; --> Fim loop crapcop
-    
-   
-    --> Controla log proc_batch
-    pc_controla_log_batch(pr_dstiplog => 'F'); 
-    
     COMMIT;       
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
       ROLLBACK;
       
       pc_email_critica(pr_dscritic);
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
+
       --> Commit apos gerar os alertas
       COMMIT;
       
-      
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_gera_tarifa_sms_enviados : '||SQLERRM;        
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_gera_tarifa_sms_enviados. '||sqlerrm||vr_dsparame;
       ROLLBACK;
       
       pc_email_critica(pr_dscritic);
-      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => pr_dscritic);
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_gera_tarifa_sms_enviados; 
   
   --> Rotina responsavel por gerar o relatorio de resumo de envio de SMS
@@ -8489,7 +9772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                       ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
                                       ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
                                       ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
-                                      ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
+                                      ,pr_dsiduser  IN VARCHAR2                        --> id do usuario
                                       ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
                                       --------->> OUT <<-----------
                                       ,pr_nmarqpdf OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
@@ -8503,15 +9786,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina responsavel por gerar o relatorio de resumo de envio de SMS
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                                Grava tabela de log nas exceptions
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Buscar SMSs enviados 
@@ -8571,7 +9855,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND sms.idcontrato = pr_idcontrato
          AND sms.instatus_sms = 4; -- Enviado
        
-    
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
      
@@ -8592,6 +9875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dsdireto     VARCHAR2(4000);
     vr_dscomand     VARCHAR2(4000);
     vr_typsaida     VARCHAR2(100); 
+    vr_dsparame     VARCHAR2(2000);
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml      CLOB;
@@ -8606,6 +9890,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_resumo_envio_sms');
+
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper||
+                   ', pr_nrdconta:'||pr_nrdconta||
+                   ', pr_dtiniper:'||pr_dtiniper||
+                   ', pr_dtfimper:'||pr_dtfimper||
+                   ', pr_idorigem:'||pr_idorigem||
+                   ', pr_dsiduser:'||pr_dsiduser||
+                   ', pr_instatus:'||pr_instatus||
+                   ', pr_nmarqpdf:'||pr_nmarqpdf;
   
     -- Leitura do calendario da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -8628,12 +9923,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pc_escreve_xml('<crrl728>');
     END IF;
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_resumo_envio_sms');
+    
     vr_qtsmspen := 0;
     --> Buscar quantidade de SMSs programadas/pendentes de envio
     OPEN cr_smsprog;
     FETCH cr_smsprog INTO vr_qtsmspen;
     CLOSE cr_smsprog;
-    
     
     --> Buscar SMSs enviados 
     FOR rw_smsctr IN cr_smsctr LOOP
@@ -8686,12 +9983,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        '<vlunitar>'||   to_char(rw_smsctr.vlunitario,'fm999G999G990D00')   ||'</vlunitar>'||
                        '<vltottar>'||   to_char(vr_vltottar,'fm999G999G990D00')            ||'</vltottar>'||
              '        </CONTRATO>');      
+
+      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_resumo_envio_sms');
     END LOOP;
     
     pc_escreve_xml('</crrl728>',TRUE);
     
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_resumo_envio_sms');
+
     IF vr_flexsreg = FALSE THEN
-      vr_dscritic := 'Nenhum registro encontrado para o periodo informado.';
+      vr_cdcritic := 1240;  --Nenhum registro encontrado para o periodo informado
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
     END IF;
     
@@ -8701,14 +10005,479 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_dsxmlrel := vr_des_xml;        
     END IF;  
     
-    
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_relat_resumo_envio_sms. '||sqlerrm||vr_dsparame;
+
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_relat_resumo_envio_sms; 
+  
+  --> Rotina para disponibilizar uma carta de anuencia - Chamada ayllos Web
+  PROCEDURE pc_relat_carta_anuencia_web (pr_cdcooper   IN craptab.cdcooper%TYPE  --> Cooperativa                                  
+                                        ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Número da conta
+                                        ,pr_nrdocmto    IN crapcob.nrdocmto%TYPE  --> Número do documento
+                                        ,pr_cdbancoc    IN crapcob.cdbandoc%TYPE  --> Código do banco
+                                        ,pr_dtcatanu    IN VARCHAR2  --> Data quitação divida
+                                        ,pr_dtmvtolt    IN VARCHAR2  --> data do movimento                                     
+                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
+                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
+                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica
+                                        ,pr_retxml IN  OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo   OUT VARCHAR2               --> Nome do campo com erro
+                                        ,pr_des_erro   OUT VARCHAR2) IS           --> Erros do processo
+  /* ............................................................................
+
+       Programa: pc_relat_carta_anuencia_web
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Hélinton Steffens
+       Data    : Fevereiro/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de carta anuencia - Chamada ayllos Web
+
+       Alteracoes: ----
+
+    ............................................................................ */  
+ 
+    -------------->> VARIAVEIS <<----------------
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_dsretorn VARCHAR2(1000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper   INTEGER;
+    vr_cdoperad   VARCHAR2(100);
+    vr_nmdatela   VARCHAR2(100);
+    vr_nmeacao    VARCHAR2(100);
+    vr_cdagenci   VARCHAR2(100);
+    vr_nrdcaixa   VARCHAR2(100);
+    vr_idorigem   VARCHAR2(100);
+    -- Variaveis gerais
+    vr_nmarqpdf VARCHAR2(1000);
+    vr_dsxmlrel CLOB;
+    
+    
+    cursor cr_crapcob (pr_cdcooper crapcob.cdcooper%TYPE,
+
+                     pr_nrdconta crapcob.nrdconta%TYPE,
+                     pr_cdbandoc crapcob.cdbandoc%TYPE,
+                     pr_nrdocmto crapcob.nrdocmto%TYPE) is
+      SELECT cob.rowid
+        FROM crapass pas, 
+             crapcob cob, 
+             crapsab sab,
+             crapenc enc
+        WHERE
+             cob.cdcooper = pr_cdcooper 
+       AND cob.cdbandoc = pr_cdbandoc 
+       AND cob.nrdconta = pr_nrdconta 
+       AND cob.nrdocmto = pr_nrdocmto;
+    rw_crapcob cr_crapcob%rowtype;
+
+  BEGIN
+    OPEN cr_crapcob(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_cdbandoc => pr_cdbancoc,
+                    pr_nrdocmto => pr_nrdocmto);
+    FETCH cr_crapcob INTO rw_crapcob;
+  
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    pc_relat_carta_anuencia (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa 
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrdocmto => pr_nrdocmto
+                             ,pr_cdbancoc => pr_cdbancoc
+                             --------->> OUT <<-----------
+                             ,pr_nmarqpdf => vr_nmarqpdf    --> Retorna o nome do relatorio gerado
+                             ,pr_dsxmlrel => vr_dsxmlrel    --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                             ,pr_cdcritic => vr_cdcritic    --> Retorna codigo de critica 
+                             ,pr_dscritic => vr_dscritic);  --> Retorno de critica
+    
+   COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                     ,pr_cdocorre => 98   -- Instrucao Rejeitada
+                                     ,pr_cdmotivo => 'F3' -- Motivo
+                                     ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                     ,pr_cdbcoctl => 0
+                                     ,pr_cdagectl => 0
+                                     ,pr_dtmvtolt => TO_DATE(pr_dtmvtolt,'DD/MM/YYYY')
+                                     ,pr_cdoperad => '1'
+                                     ,pr_nrremass => 0
+                                     ,pr_dtcatanu => TO_DATE(pr_dtcatanu,'YYYY-MM-DD')
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);                                                  
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                      ,pr_tag_pai  => 'Dados'
+                      ,pr_posicao  => 0
+                      ,pr_tag_nova => 'nmarqpdf'
+                      ,pr_tag_cont => vr_nmarqpdf
+                      ,pr_des_erro => vr_dscritic);
+                                                
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_relat_carta_anuencia_web: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+  END pc_relat_carta_anuencia_web; 
+  
+  --> Rotina responsavel por gerar o relatorio carta anuência
+  PROCEDURE pc_relat_carta_anuencia (pr_cdcooper  IN craptab.cdcooper%TYPE         --> Cooperativa                                  
+                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE         --> Número da conta
+                                    ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE         --> Número do documento
+                                    ,pr_cdbancoc  IN crapcob.cdbandoc%TYPE         --> Código do banco           
+                                    --------->> OUT <<-----------
+                                    ,pr_nmarqpdf OUT VARCHAR2                      --> Retorna o nome do relatorio gerado
+                                    ,pr_dsxmlrel OUT CLOB                          --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                                    ,pr_cdcritic OUT NUMBER                        --> Retorna codigo de critica
+                                    ,pr_dscritic OUT VARCHAR2) IS                  --> Retorno de critica)
+	/* ............................................................................
+
+       Programa: pc_relat_carta_anuencia
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Hélinton Steffens
+       Data    : Fevereiro/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de carta de anuencia
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    -- Cursor para validação da cooperativa
+    cursor cr_crapcop (pr_nrdconta   crapass.nrdconta%TYPE
+                      ,pr_nrdocmto   crapcob.nrdocmto%TYPE
+                      ,pr_cdbancoc   crapcob.cdbandoc%TYPE) is
+      SELECT nmprimtl as nmcooper, 
+             sab.nmcidsac as dscidade_cooper, 
+             enc.dsendere as dsrua, 
+             enc.nrendere as vlnumero, 
+             enc.nmbairro as dsbairro, 
+             enc.nmcidade as dscidade,
+             enc.cdufende as dsuf, 
+             null as nmsocioadm, 
+             nrcpfcgc as cnpj,
+             sab.nmdsacad as nmpagador,
+             sab.cdufsaca as dsufadm, 
+             sab.nmcidsac as dscidadeadm, 
+             sab.nmbaisac as dsbairroadm, 
+             sab.dsendsac as dsruaadm,
+             sab.nrinssac as iddocumento, 
+             nrendsac as vlnumadm, 
+             cob.vldpagto as vlboleto, 
+             cob.dtvencto as dtvencimento, 
+             cob.dsdoccop as nrboleto,
+             cob.nrnosnum as nrnossonmr
+        FROM crapass pas, 
+             crapcob cob, 
+             crapsab sab,
+             crapenc enc
+        WHERE
+             cob.nrdconta = pas.nrdconta 
+         AND sab.nrdconta = pas.nrdconta 
+         AND sab.nrinssac = cob.nrinssac 
+         AND pas.nrdconta = pr_nrdconta 
+         AND cob.nrdocmto = pr_nrdocmto 
+         AND cob.cdbandoc = pr_cdbancoc;
+    rw_crapcop cr_crapcop%rowtype;
+    --
+    -- PL/Table contendo os tipos de dados
+    type typ_tipo is record (vr_dscidade_cooper      varchar2(50),
+                vr_nmcooper          varchar2(50),
+                vr_cnpj            varchar2(50),
+                vr_dsrua          varchar2(50),
+                vr_vlnumero          varchar2(50),
+                vr_dsbairro          varchar2(50),
+                vr_dscidade          varchar2(50),
+                vr_dsuf            varchar2(50),
+                vr_nmsocioadm        varchar2(50),
+                vr_nmpagador        varchar2(50),
+                vr_iddocumento        varchar2(50),
+                vr_dsruaadm          varchar2(50),
+                vr_vlnumadm          varchar2(50),
+                vr_dsbairroadm        varchar2(50),
+                vr_dscidadeadm        varchar2(50),
+                vr_dsufadm          varchar2(50),
+                vr_nrboleto          varchar2(50),
+                vr_vlboleto          varchar2(50),
+                vr_nrnossonmr        varchar2(50),
+                vr_dtvencimento        CRAPCOB.DTVENCTO%type);
+    -- Definição da tabela para armazenar os tipos de conta
+    type typ_tab_tipo is table of typ_tipo index by binary_integer;
+    -- Instância da tabela. O índice é o tipo de conta
+    vr_tab_tipo      typ_tab_tipo;
+    -- Índice para leitura da PL/Table
+    vr_ind           binary_integer;
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_exc_fimprg EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+    vr_exc_erro     EXCEPTION;
+    vr_tab_erro     GENE0001.typ_tab_erro;
+    -- Data do movimento
+    vr_dtmvtolt      crapdat.dtmvtolt%type;
+    -- Paramentros relatorio
+    vr_dscidade_cooper      varchar2(50);
+    vr_nmcooper          varchar2(50);
+    vr_cnpj            varchar2(50);
+    vr_dsrua          varchar2(50);
+    vr_vlnumero          varchar2(50);
+    vr_dsbairro          varchar2(50);
+    vr_dscidade          varchar2(50);
+    vr_dsuf            varchar2(50);
+    vr_nmsocioadm        varchar2(50);
+    vr_nmpagador        varchar2(50);
+    vr_iddocumento        varchar2(50);
+    vr_dsruaadm          varchar2(50);
+    vr_vlnumadm          varchar2(50);
+    vr_dsbairroadm        varchar2(50);
+    vr_dscidadeadm        varchar2(50);
+    vr_dsufadm          varchar2(50);
+    vr_nrboleto          varchar2(50);
+    vr_vlboleto          varchar2(50);
+    vr_nrnossonmr        varchar2(50);
+    vr_dtvencimento        CRAPCOB.DTVENCTO%type;
+    -- Variável para armazenar as informações em XML
+    vr_des_xml       clob;
+    vr_typsaida     VARCHAR2(100);
+    vr_des_reto     VARCHAR2(100); 
+    -- Variável para o caminho e nome do arquivo base
+    vr_dsdireto varchar2(200);
+    vr_dscomand   varchar2(200);
+    -- Subrotina para escrever texto na variável CLOB do XML
+    procedure pc_escreve_xml(pr_des_dados in clob) is
+    begin
+      dbms_lob.writeappend(vr_des_xml, length(pr_des_dados), pr_des_dados);
+    end;
+    --
+  begin
+    
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN cr_crapcop(pr_nrdconta, pr_nrdocmto, pr_cdbancoc);
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_crapcop;
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapcop;
+    END IF;
+
+    vr_dscidade_cooper := rw_crapcop.dscidade_cooper;
+    vr_nmcooper := rw_crapcop.nmcooper;
+    vr_cnpj := rw_crapcop.cnpj;
+    vr_dsrua := rw_crapcop.dsrua;
+    vr_vlnumero := rw_crapcop.vlnumero;
+    vr_dsbairro := rw_crapcop.dsbairro;
+    vr_dscidade := rw_crapcop.dscidade;
+    vr_dsuf := rw_crapcop.dsuf;
+    vr_nmsocioadm := rw_crapcop.nmsocioadm;
+    vr_nmpagador := rw_crapcop.nmpagador;
+    vr_iddocumento := rw_crapcop.iddocumento;
+    vr_dsruaadm := rw_crapcop.dsruaadm;
+    vr_vlnumadm := rw_crapcop.vlnumadm;
+    vr_dsbairroadm := rw_crapcop.dsbairroadm;
+    vr_dscidadeadm := rw_crapcop.dscidadeadm;
+    vr_dsufadm := rw_crapcop.dsufadm;
+    vr_nrboleto := rw_crapcop.nrboleto;
+    vr_vlboleto := rw_crapcop.vlboleto;
+    vr_nrnossonmr := rw_crapcop.nrnossonmr;
+    vr_dtvencimento := rw_crapcop.dtvencimento;
+
+    -- Inicializar o CLOB para armazenar o arquivo XML
+    vr_des_xml := null;
+    dbms_lob.createtemporary(vr_des_xml, true);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><carta_anuencia>');
+    pc_escreve_xml('<dscidade_cooper>'     ||vr_dscidade_cooper	    ||'</dscidade_cooper>'||
+                   '<nmcooper>'            ||vr_nmcooper            ||'</nmcooper>'||
+                   '<cnpj>'                ||gene0002.fn_mask_cpf_cnpj(vr_cnpj,1)  ||'</cnpj>'||
+                   '<dsrua>'               ||vr_dsrua               ||'</dsrua>'||
+                   '<vlnumero>'            ||vr_vlnumero            ||'</vlnumero>'||
+                   '<dsbairro>'            ||vr_dsbairro            ||'</dsbairro>'||
+                   '<dscidade>'            ||vr_dscidade            ||'</dscidade>'||
+                   '<dsuf>'                ||vr_dsuf                ||'</dsuf>'||
+                   '<nmsocioadm>'          ||vr_nmsocioadm          ||'</nmsocioadm>'||
+                   '<nmpagador>'           ||vr_nmpagador           ||'</nmpagador>'||
+                   '<iddocumento>'         ||gene0002.fn_mask_cpf_cnpj(vr_iddocumento,1)         ||'</iddocumento>'||
+                   '<dsruaadm>'            ||vr_dsruaadm            ||'</dsruaadm>'||
+                   '<vlnumadm>'            ||vr_vlnumadm            ||'</vlnumadm>'||
+                   '<dsbairroadm>'         ||vr_dsbairroadm         ||'</dsbairroadm>'||
+                   '<dscidadeadm>'         ||vr_dscidadeadm         ||'</dscidadeadm>'||
+                   '<dsufadm>'             ||vr_dsufadm             ||'</dsufadm>'||
+                   '<nrboleto>'            ||vr_nrboleto            ||'</nrboleto>'||
+                   '<vlboleto>'            ||gene0002.fn_valor_extenso('M', vr_vlboleto)            ||'</vlboleto>'||
+                   '<nrnossonmr>'          ||vr_nrnossonmr            ||'</nrnossonmr>'||
+                   '<vr_dtvencimento>'     ||to_char(vr_dtvencimento,'DD/MM/RRRR')         ||'</vr_dtvencimento>');
+
+    -- Fecha a tag principal para encerrar o XML
+    pc_escreve_xml('</carta_anuencia>');
+    --Buscar diretorio da cooperativa
+    vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
+                                         pr_cdcooper => pr_cdcooper,
+                                         pr_nmsubdir => '/rl');
+    --vr_dsdireto := '/microsd/cecred/faria'                                     
+      
+    vr_dscomand := 'rm '||vr_dsdireto ||'/crrl738_' ||0 ||'* 2>/dev/null';
+      
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typsaida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF; 
+      
+      
+    pr_nmarqpdf := 'crrl738_'||0 || gene0002.fn_busca_time || '.pdf';
+    
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => 'COBRAN'
+                               , pr_dtmvtolt  => vr_dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/carta_anuencia'
+                               , pr_dsjasper  => 'carta_anuencia.jasper'
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 132
+                               , pr_cdrelato  => 738
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_des_erro  => vr_dscritic);
+      
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF; 
+    
+    -- Liberando a memoria alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+
+      
+    --> AyllosWeb
+    -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+    GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                ,pr_cdagenci => NULL
+                                ,pr_nrdcaixa => NULL
+                                ,pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf
+                                ,pr_des_reto => vr_des_reto
+                                ,pr_tab_erro => vr_tab_erro);
+    -- Se retornou erro
+    IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+      IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros          
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;
+
+    -- Remover relatorio do diretorio padrao da cooperativa
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    -- Se retornou erro
+    IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+      -- Concatena o erro que veio
+      vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;
+
+	EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_relat_resumo_envio_sms : '||SQLERRM;  
-  END pc_relat_resumo_envio_sms; 
+      pr_dscritic := 'Erro geral pc_relat_carta_anuencia : '||SQLERRM;  	                                   
+  END pc_relat_carta_anuencia;
   
   --> Rotina para verificar se é para apresentar popup do serviço de SMS para o cooperado
   PROCEDURE pc_verifar_oferta_sms(pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
@@ -8724,15 +10493,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para verificar se é para apresentar popup do serviço de SMS para o cooperado
 
-       Alteracoes: ----
-
+       Alteracoes: 10/05/2018 - Revitalização
+                              - Grava tabela de log nas exceptions
+                              - Eliminada exception vr_exc_erro, não é utilizada
+                                (Ana - Envolti - Ch REQ0011327)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -8767,7 +10538,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     
     -------------->> VARIAVEIS <<----------------
-    vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(2000);
     vr_cdcritic     INTEGER;
     
@@ -8775,8 +10545,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_tot_qtlatpen INTEGER := 0;
     vr_existe       INTEGER := 0; 
     vr_dsalerta     VARCHAR2(2000);
+    vr_dsparame     VARCHAR2(2000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifar_oferta_sms');
+
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper||
+                   ', pr_nrdconta:'||pr_nrdconta||
+                   ', pr_flofesms:'||pr_flofesms||
+                   ', pr_dsmensag:'||pr_dsmensag;
+  
     pr_dsmensag := NULL;  
   
     --> Verificar se coop esta habilitada a enviar SMS de cobrança
@@ -8794,15 +10573,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     pr_dsmensag := nvl(rw_msg.dsmensagem,'');    
     
+    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
-    WHEN vr_exc_erro THEN
-      pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_verifar_oferta_sms : '||SQLERRM;  
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_verifar_oferta_sms. '||sqlerrm||vr_dsparame;
+  
+      --Grava tabela de log - Ch REQ0011327
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+  
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_verifar_oferta_sms; 
-  
-  
-  
 
 END COBR0005;
 /
