@@ -1756,6 +1756,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                                           ,pr_nrctremp => pr_nrctrlim);
 
          vr_obj_proposta.put('protocoloPolitica'          ,vr_dsprotoc);
+         
+         IF gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') IS NOT NULL THEN
+
+           vr_obj_proposta.put('ambienteTemp','true');
+           vr_obj_proposta.put('urlRetornoTemp', gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') );
+
+         END IF;
 
          -- Copiar parâmetro
          vr_nmarquiv := pr_nmarquiv;
