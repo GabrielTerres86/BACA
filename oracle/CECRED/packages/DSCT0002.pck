@@ -187,8 +187,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   dsdlinha  VARCHAR2(200),
                   flgdigit  crapbdt.flgdigit%TYPE,
                   cdtipdoc  VARCHAR2(80),
-                  innivris  crapris.innivris%TYPE, 
                   dsopecoo  VARCHAR2(100),
+                  innivris  crapris.innivris%TYPE, 
                   qtdiaatr  crapris.qtdiaatr%TYPE
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
@@ -585,8 +585,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_dscritic          OUT VARCHAR2);            --> Descrição da crítica
 
   PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
-                                        ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
-                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+                                        ,pr_nrdconta IN crapsab.nrdconta%TYPE DEFAULT NULL  --> Número da Conta do Pagador       (Sacado)
+                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE DEFAULT NULL  --> Número de Inscrição do Pagador   (Sacado)
                                          --------> OUT <--------
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
@@ -631,6 +631,16 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
 													         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
 													         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
 													         ,pr_des_erro  OUT VARCHAR2);          --> Erros do processo
+                                   
+  PROCEDURE pc_analise_pagador_paralelo (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                 ,pr_dscritic OUT VARCHAR2);
+                                 
+  PROCEDURE pc_analise_pagador_agencia (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                        ,pr_cdagenci IN crapass.cdagenci%TYPE   --> Código da Agencia
+                                        ,pr_idparale IN INTEGER
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                        ,pr_dscritic OUT VARCHAR2);
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
@@ -2391,7 +2401,7 @@ END fn_letra_risco;
          AND ldc.cddlinha = pr_cddlinha
          AND ldc.tpdescto = 3;
     rw_crapldc cr_crapldc%ROWTYPE;
-        
+    
     --> Buscar dados lote
     CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
                       pr_dtmvtolt craplot.dtmvtolt%TYPE,
@@ -2630,7 +2640,7 @@ END fn_letra_risco;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := replace(replace('Erro pc_busca_dados_bordero: ' || SQLERRM, chr(13)),chr(10));   
   END pc_busca_dados_bordero;
-  
+    
   PROCEDURE pc_busca_dados_bordero_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
                                    ,pr_cddopcao IN VARCHAR2               --> Cod opcao
@@ -7801,8 +7811,8 @@ END fn_letra_risco;
   END pc_gera_impressao_bordero; 
 
 PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
-                                        ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
-                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+                                        ,pr_nrdconta IN crapsab.nrdconta%TYPE DEFAULT NULL  --> Número da Conta do Pagador       (Sacado)
+                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE DEFAULT NULL  --> Número de Inscrição do Pagador   (Sacado)
                                          --------------> OUT <--------------
                                         ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
@@ -8530,6 +8540,161 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
        WHEN OTHERS THEN
             pr_cdcritic := vr_cdcritic;
             pr_dscritic := replace(replace('Nao foi calcular os dados dos pagadores: ' || SQLERRM, chr(13)),chr(10));
-  END pc_atualiza_calculos_pagador;  
+  END pc_atualiza_calculos_pagador;
+  
+  PROCEDURE pc_analise_pagador_paralelo (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                 ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
+
+    vr_exc_erro        EXCEPTION; 
+    vr_dstextab        NUMBER;
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
+    
+    --Definicao das tabelas de memoria
+    vr_tab_agendto PAGA0001.typ_tab_agendto;
+   
+    vr_cdprogra VARCHAR2(50) := 'PAGADOR';
+    vr_idparale INTEGER;
+    vr_qtdjobs             number;
+    vr_qterro              number := 0;
+    vr_jobname             varchar2(30); 
+    vr_dsplsql             varchar2(4000); 
+    
+    CURSOR cr_crapage IS 
+      SELECT  crapage.cdagenci
+             ,crapage.nmresage
+      FROM  crapage
+       where crapage.cdcooper = pr_cdcooper
+         AND crapage.cdagenci <> 999
+    ;
+    BEGIN
+      vr_idparale := gene0001.fn_gera_id_paralelo;
+      vr_qtdjobs := 0;
+      FOR reg_crapage in cr_crapage LOOP
+        vr_jobname := vr_cdprogra ||'_'|| reg_crapage.cdagenci || '$';
+        -- Cadastra o programa paralelo
+        gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                    ,pr_idprogra => LPAD(reg_crapage.cdagenci,3,'0') --> Utiliza a agência como id programa
+                                    ,pr_des_erro => vr_dscritic);
+                                
+        -- Testar saida com erro
+        if vr_dscritic is not null then
+          -- Levantar exceçao
+          raise vr_exc_erro;
+        END if;
+        
+        vr_dsplsql := 'declare'            ||chr(13)||
+                      ' wpr_cdcritic  number(5); '     ||chr(13)||
+                      ' wpr_dscritic  varchar2(4000); '||chr(13)||
+                      ' begin '||chr(13)||
+                      '   dsct0002.pc_analise_pagador_agencia('||pr_cdcooper||','||chr(13)||
+                                               reg_crapage.cdagenci||','||chr(13)||
+                                               vr_idparale||','||chr(13)||
+                                               'wpr_cdcritic,' ||chr(13)||
+                                               'wpr_dscritic'  ||chr(13)||
+                                               ');'||chr(13)||
+                      'end;';
+          -- Faz a chamada ao programa paralelo atraves de JOB
+          gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                                ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                                ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                                ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                                ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                                ,pr_des_erro => vr_dscritic);    
+
+          -- Testar saida com erro
+          IF vr_dscritic IS NOT NULL THEN
+            -- Levantar exceçao
+            RAISE vr_exc_erro;
+          END IF;
+      END LOOP;
+      
+      --Chama rotina de aguardo agora passando 0, para esperar
+      --até que todos os Jobs tenha finalizado seu processamento
+      gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                   ,pr_qtdproce => 0
+                                   ,pr_des_erro => vr_dscritic);
+                                  
+      -- Testar saida com erro
+      IF  vr_dscritic IS NOT NULL THEN 
+        -- Levantar exceçao
+        RAISE vr_exc_erro;
+      END IF;
+    EXCEPTION    
+      WHEN vr_exc_erro THEN
+        IF nvl(vr_cdcritic,0) <> 0 AND 
+           TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+        END IF;
+      WHEN OTHERS THEN      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace('Nao foi possivel buscar dados do avalista: ' || SQLERRM, chr(13)),chr(10));     
+      
+  END pc_analise_pagador_paralelo;
+  
+  PROCEDURE pc_analise_pagador_agencia (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                        ,pr_cdagenci IN crapass.cdagenci%TYPE   --> Código da Agencia
+                                        ,pr_idparale IN INTEGER
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                        ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
+                                        
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION; 
+    
+    CURSOR cr_crapass IS
+      SELECT 
+        ass.nrdconta,
+        ass.cdcooper
+      FROM 
+        crapass ass
+        INNER JOIN craplim lim ON lim.nrdconta = ass.nrdconta AND lim.cdcooper = ass.cdcooper
+      WHERE 
+        ass.cdcooper = pr_cdcooper
+        AND ass.cdagenci = pr_cdagenci  
+        AND ass.cdsitdct = 1 -- Situacao normal
+        AND lim.tpctrlim=3
+        AND lim.insitlim=2 
+    ;
+    rw_crapass cr_crapass%ROWTYPE;
+    BEGIN
+      OPEN cr_crapass;
+      LOOP
+      FETCH cr_crapass INTO rw_crapass;
+        EXIT WHEN cr_crapass%NOTFOUND;
+        pc_efetua_analise_pagador(pr_cdcooper  => rw_crapass.cdcooper
+                                  ,pr_nrdconta => rw_crapass.nrdconta
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+      END LOOP;
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro; 
+      END IF;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF nvl(vr_cdcritic,0) <> 0 AND 
+           TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+        END IF;
+      WHEN OTHERS THEN      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace('Erro nao tratado em DSCT0002.pc_analise_pagador_agencia ' || SQLERRM, chr(13)),chr(10));       
+  END pc_analise_pagador_agencia;
 END DSCT0002;
 /
