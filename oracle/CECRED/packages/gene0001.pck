@@ -163,6 +163,12 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
                              ,pr_path          IN VARCHAR2
                              ,pr_pesq          IN VARCHAR2);
 
+  /* Procedimento para mover arquivo */
+  PROCEDURE pc_mv_arquivo(pr_dsarqori IN VARCHAR2 -- arquivo origem
+                         ,pr_dsarqdes IN VARCHAR2 -- arquivo destino
+                         ,pr_typ_saida OUT VARCHAR2
+                         ,pr_des_saida OUT VARCHAR2);
+
   /* Rotina para executar comandos Host pendentes de execução na tabela CRAPCSO */
   PROCEDURE pc_process_OSCommand_penden(pr_nrseqsol  IN crapcso.nrseqsol%TYPE DEFAULT NULL
                                        ,pr_typ_saida  OUT VARCHAR2
@@ -498,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -535,6 +541,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --
   --             18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
   --                          Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)   
+  --
+  --             01/12/2017 - Na rotina pc_submit_job, alterado a forma como é tratado o parâmetro pr_jobname
+  --                          para melhorar os eventuais logs (Carlos)
+  --
+  --             19/02/2018 - #827612 Criado o procedimento pc_mv_arquivo para usar o tipo de comando mv_grid, criado
+  --                          na função fn_type_comando. Este tipo de comando foi criado para usar o user grid no
+  --                          exec_comando_oracle.sh para ganho de performance (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -633,10 +646,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- .............................................................................
     BEGIN
       -- Retornar o usuário através da função SYS_CONTEXT
-      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'CECRED');
+      RETURN NVL(SYS_CONTEXT('USERENV', 'OS_USER'),'AILOS');
     EXCEPTION
       WHEN OTHERS THEN
-        RETURN 'CECRED';
+        RETURN 'AILOS';
     END;
   END fn_OSuser;
 
@@ -1059,6 +1072,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_typ_comando := 'lp';
     ELSIF UPPER(pr_typ_comando) IN ('SR') THEN
       vr_typ_comando := 'shell_remoto';
+    ELSIF UPPER(pr_typ_comando) IN ('MV') THEN
+      vr_typ_comando := 'mv_grid';
     ELSE
       -- Gerar erro
       pr_des_erro := 'PT_TYP_COMANDO :'||pr_typ_comando||' não suportado';
@@ -1067,6 +1082,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- Retornar
     RETURN vr_typ_comando;
   END;
+
+  /* Procedimento para mover arquivo com o user grid no exec_comando_oracle */
+  PROCEDURE pc_mv_arquivo(pr_dsarqori IN VARCHAR2
+                         ,pr_dsarqdes IN VARCHAR2
+                         ,pr_typ_saida  OUT VARCHAR2
+                         ,pr_des_saida  OUT VARCHAR2) IS
+  BEGIN
+    BEGIN
+      pc_OScommand(pr_typ_comando => 'mv'
+                  ,pr_des_comando => pr_dsarqori || ' ' || pr_dsarqdes
+                  ,pr_flg_aguard  => 'S'
+                  ,pr_typ_saida   => pr_typ_saida
+                  ,pr_des_saida   => pr_des_saida);
+      EXCEPTION
+        WHEN OTHERS THEN
+          cecred.pc_internal_exception;
+    END;
+  END pc_mv_arquivo;
 
     /* Rotina para executar o comando solicitado  */
   PROCEDURE pc_executa_OSCommand(pr_nrseqsol    IN crapcso.nrseqsol%TYPE    --> Sequencia da solicitação
@@ -1176,6 +1209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
               pr_typ_saida := 'ERR';
               pr_des_saida := 'Erro gene0001.pc_executa_OSCommand: '||vr_des_erro;
             WHEN OTHERS THEN
+              cecred.pc_internal_exception;
               pr_typ_saida := 'ERR';
               pr_des_saida := 'Erro geral gene0001.pc_executa_OSCommand: '||SQLERRM;
           END;
@@ -1739,7 +1773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: gera_log (Antigo gera_log.i>proc_gerar_log.i)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 02/03/2016
+       Data    : Novembro/2007                      Ultima atualizacao: 03/08/2018
 
        Dados referentes ao programa:
 
@@ -1755,6 +1789,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                 via trigger (Andrino - RKAM)
 
                    02/03/2015 - Tratar para não estourar o campo de dscritic (Odirlei-AMcom)             
+				   
+                   03/08/2018 - Ajuste do tamanho do nome do programa no insert do LOG -- Projeto Debitador Unico 03/08/2018 - AMcom Fabiano B. Dias.
 
     ..............................................................................*/
     BEGIN
@@ -1779,7 +1815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                          ,pr_flgtrans
                          ,pr_hrtransa
                          ,pr_idseqttl
-                         ,pr_nmdatela
+                         ,substr(pr_nmdatela,1,12)
                          ,pr_nrdconta)
                 RETURNING ROWID INTO pr_nrdrowid;
     END;
@@ -2771,7 +2807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       
     EXCEPTION
       WHEN OTHERS THEN
-      cecred.pc_internal_exception(pr_compleme => '_'||pr_jobname ||'_');  
+      cecred.pc_internal_exception(pr_compleme => 'Job:'||pr_jobname);  
       
         ROLLBACK;
         -- Preparar saída com erro
