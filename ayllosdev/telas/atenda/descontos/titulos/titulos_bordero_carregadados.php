@@ -47,6 +47,8 @@
 				03/08/2018 - Inclusão da regra para mostrar mensagem se for bordero novo ou antigo (Vitor Shimada Assanuma - GFT)
 							 Inclusão dos campos de Risco
 
+				06/08/2018 - Impressão de Extrato do Borderô
+
 	************************************************************************/
 	
 	session_start();
@@ -72,6 +74,7 @@
 	$nrdconta = $_POST["nrdconta"];
 	$nrborder = $_POST["nrborder"];
 	$cddopcao = $_POST["cddopcao"];
+	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 		exibeErro($msgError);		
 	}	
@@ -245,7 +248,19 @@
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/visualizar_titulos.gif" onClick="carregaTitulosBorderoDscTit();return false;" />
 		
 		<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $bordero[14]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&bordero=<?php echo formataNumericos('z.zzz.zz9',$bordero[0]->cdata,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>		
-	<?php } ?>
+
+		<?php 
+		if ($flgnewbor){
+			if ($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'X') <> "") {?>
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/extrato.gif" onClick=alert('a');return false;" />		
+	    <?php }else{ ?>
+            <input type="image" src="<?php echo $UrlImagens; ?>botoes/extrato.gif" onClick="gerarImpressao(11,3, 'no');return false;" />		
+        <?php } 
+    	} ?>
+	<?php } 
+	//Form com os dados para fazer a chamada da geração de PDF	
+	include("impressao_form.php"); 
+	?>
 </div>
 
 <script type="text/javascript">

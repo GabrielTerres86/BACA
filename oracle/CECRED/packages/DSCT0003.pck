@@ -178,6 +178,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   
   FUNCTION fn_busca_decisao_bordero (pr_insitapr crapbdt.insitapr%TYPE) RETURN VARCHAR2;
   
+  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE) RETURN VARCHAR2;
+  
   -- Funcao de calculo de restricao do CNAE                                  
   FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
                            ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Conta do associado
@@ -909,6 +911,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
        );
 
    END fn_busca_decisao_bordero;
+   
+  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE) RETURN VARCHAR2 IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_busca_situacao_titulo
+    Sistema  : CRED
+    Sigla    : DSCT0003
+    Autor    : Vitor Shimada Assanuma (GFT)
+    Data     : Agosto/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Função que retorna a descrição da situação do título
+  ---------------------------------------------------------------------------------------------------------------------*/
+   BEGIN 
+     RETURN (
+       CASE
+         WHEN pr_insittit=0 THEN 'Não processado'
+         WHEN pr_insittit=1 THEN 'Resgatado'
+         WHEN pr_insittit=2 THEN 'Processado'
+         WHEN pr_insittit=3 THEN 'Pago após vencimento'
+         WHEN pr_insittit=4 THEN 'Liberado'
+       END
+     );
+  END fn_busca_situacao_titulo;
    
   FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
                           ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Conta do associado

@@ -51,7 +51,6 @@
           <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
-
 	// Verifica se parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || 
 		!isset($_POST["nrctrlim"]) || 
@@ -113,7 +112,9 @@
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7) { // BORDERO DE CHEQUES
+        $idimpres == 7 || // BORDERO DE CHEQUES
+        $idimpres == 11) {// BORDERO EXTRATO
+        
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";

@@ -7908,7 +7908,8 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         bdt.*,
         ldc.dsdlinha,
         ldc.txjurmor,
-        (SELECT COUNT(1) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder) AS qttitbor
+        (SELECT COUNT(1)      FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder) AS qttitbor,
+        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insittit <> 1 AND insitapr <> 2) AS vltitbor
       FROM crapbdt bdt
         INNER JOIN crapldc ldc ON bdt.cdcooper = ldc.cdcooper AND bdt.cddlinha = ldc.cddlinha AND ldc.tpdescto = 3
       WHERE bdt.cdcooper = pr_cdcooper
@@ -8043,18 +8044,19 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
 
     pc_escreve_xml('<Bordero>'||
-                      '<nmrescop>'|| TRIM(rw_crapcop.nmrescop)                    ||'</nmrescop>' ||
-                      '<dtmvtolt>'|| to_char(pr_dtmvtolt, 'DD/MM/RRRR')           ||'</dtmvtolt>' ||
-                      '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta))    ||'</nrdconta>' ||
-                      '<cdagenci>'|| rw_crapbdt.cdagenci                          ||'</cdagenci>' ||
-                      '<dsqrcode>'|| vr_qrcode                                    ||'</dsqrcode>' ||
-                      '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder)) ||'</nrborder>' ||
-                      '<dsdlinha>'|| rw_crapbdt.dsdlinha                          ||'</dsdlinha>' ||
-                      '<qttitbor>'|| rw_crapbdt.qttitbor                          ||'</qttitbor>' ||
+                      '<nmrescop>'|| TRIM(rw_crapcop.nmrescop)                             ||'</nmrescop>' ||
+                      '<dtmvtolt>'|| to_char(pr_dtmvtolt, 'DD/MM/RRRR')                    ||'</dtmvtolt>' ||
+                      '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta))             ||'</nrdconta>' ||
+                      '<cdagenci>'|| rw_crapbdt.cdagenci                                   ||'</cdagenci>' ||
+                      '<dsqrcode>'|| vr_qrcode                                             ||'</dsqrcode>' ||
+                      '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder))          ||'</nrborder>' ||
+                      '<dsdlinha>'|| rw_crapbdt.dsdlinha                                   ||'</dsdlinha>' ||
+                      '<qttitbor>'|| rw_crapbdt.qttitbor                                   ||'</qttitbor>' ||
+                      '<vltitbor>'|| to_char(rw_crapbdt.vltitbor, 'fm999G999G999G990D00')  ||'</vltitbor>' ||
                       '<txmensal>'|| to_char(rw_crapbdt.txmensal, 'fm9999g999g990d000000') ||'</txmensal>' ||
                       '<txjurmor>'|| to_char(rw_crapbdt.txjurmor, 'fm9999g999g990d000000') ||'</txjurmor>' ||
                       '<vltxmult>'|| to_char(rw_crapbdt.vltxmult, 'fm999G999G999G990D00')  ||'</vltxmult>' ||
-                      '<dtlibbdt>'|| to_char(rw_crapbdt.dtlibbdt, 'DD/MM/RRRR')   ||'</dtlibbdt>' 
+                      '<dtlibbdt>'|| to_char(rw_crapbdt.dtlibbdt, 'DD/MM/RRRR')            ||'</dtlibbdt>' 
                   );
     vr_counttit := 0;
     pc_escreve_xml('<titulos>');
@@ -8126,6 +8128,35 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         RAISE vr_exc_erro; -- encerra programa
       END IF; 
       
+      IF pr_idorigem = 5 THEN
+      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => NULL
+                                  ,pr_nrdcaixa => NULL
+                                  ,pr_nmarqpdf => vr_dsdireto ||'/'||pr_nmarqpdf
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se retornou erro
+      IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+          RAISE vr_exc_erro; -- encerra programa
+        END IF;
+      END IF;
+
+      -- Remover relatorio do diretorio padrao da cooperativa
+      gene0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => 'rm '||vr_dsdireto ||'/'||pr_nmarqpdf
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF; 
   EXCEPTION    
     WHEN vr_exc_erro THEN
       
@@ -8904,7 +8935,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
        WHEN OTHERS THEN
             pr_cdcritic := vr_cdcritic;
             pr_dscritic := replace(replace('Nao foi calcular os dados dos pagadores: ' || SQLERRM, chr(13)),chr(10));
-  END pc_atualiza_calculos_pagador;
+  END pc_atualiza_calculos_pagador;  
   
   PROCEDURE pc_analise_pagador_paralelo (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
