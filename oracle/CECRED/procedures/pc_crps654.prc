@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Fabricio
-       Data    : Agosto/2013                     Ultima atualizacao: 02/06/2016
+       Data    : Agosto/2013                     Ultima atualizacao: 27/04/2018
 
        Dados referentes ao programa:
 
@@ -43,7 +43,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                     
                     02/06/2016 - Ajuste para melhora de desempenho, conforne
                                  solicitado no chamado 463036 (Kelvin)             
-                   
+
+                    27/04/2018 - Ajuste no nome do arquivo gerado no relatorio e 
+                                 adicionado hora/minuto/segundo ao nrdocto(Projeto Debitador Unico - Fabiano B. Dias - AMcom).
+																 
     ............................................................................ */
 
     DECLARE
@@ -60,7 +63,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dscritic   VARCHAR2(4000);
       vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro;
-
+      vr_horaminseg NUMBER; -- 27/04/2018-deb.unico.
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -407,6 +410,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
           END;
 
           -- Insere os lancamentos de deposito a vista
+          vr_horaminseg := TO_NUMBER(TO_CHAR(SYSDATE, 'hh24mmss')); -- 27/04/2018-deb.unico.
           BEGIN
             INSERT INTO craplcm
               (cdcooper,
@@ -433,7 +437,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                rw_crappla.nrdconta,
                rw_crappla.nrdconta,
                to_char(rw_crappla.nrdconta,'00000000'),
-               rw_crappla.nrctrpla,
+               rw_crappla.nrctrpla || vr_horaminseg,
                8454,
                rw_craplot.nrseqdig,
                vr_vldebito,
@@ -479,7 +483,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                  1, /* debitado */
                  rw_crappla.nrdconta,
                  rw_crappla.nrctrpla,
-                 rw_craplot.nrseqdig,
+                 rw_craplot.nrseqdig || vr_horaminseg,
                  2,
                  0,
                  0,
@@ -584,7 +588,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                075, /*PG. PLANO C/C*/
                rw_crappla.nrctrpla,
                rw_crappla.nrdconta,
-               rw_crappla.nrctrpla,
+               rw_crappla.nrctrpla || vr_horaminseg,
                rw_craplot.nrseqdig,
                vr_vldebito);
           EXCEPTION
@@ -730,7 +734,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                                   pr_dsxmlnode => '/raiz/pac/plano',              --> No base do XML para leitura dos dados
                                   pr_dsjasper  => 'crrl137.jasper',               --> Arquivo de layout do iReport
                                   pr_dsparams  => null,                           --> Nao enviar parametro
-                                  pr_dsarqsaid => vr_nom_diretorio||'/crrl137.lst',  --> Arquivo final
+                                  pr_dsarqsaid => vr_nom_diretorio||'/crrl137_'||to_char( gene0002.fn_busca_time )||'.lst',  --> Arquivo final
                                   pr_flg_gerar => 'N',                            --> Nao gerar o arquivo na hora
                                   pr_qtcoluna  => 132,                            --> Quantidade de colunas
                                   pr_sqcabrel  => 1,                              --> Sequencia do cabecalho
