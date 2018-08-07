@@ -130,6 +130,16 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                    ,pr_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto de titulo a ser enviado para o cyber
                                    ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
                                    
+  PROCEDURE pc_atualiza_dtava_cyber (pr_nrdconta crapass.nrdconta%TYPE
+                                     --  (OBRIGATÓRIOS E NESSA ORDEM SEMPRE)
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype     --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);
+                                   
 END CYBE0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
@@ -147,7 +157,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
 --    
 --                05/06/2018 - Adicionado procedure para inserir registro na tabela tbdsct_titulo_cyber (Paulo Penteado (GFT))
 ---------------------------------------------------------------------------------------------------------------
-
+  -- Variáveis para armazenar as informações em XML
+  vr_des_xml         clob;
+  vr_texto_completo  varchar2(32600);
+    
+  -- Rotina para escrever texto na variável CLOB do XML
+  PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
+                          , pr_fecha_xml in boolean default false
+                          ) is
+  BEGIN
+     gene0002.pc_escreve_xml( vr_des_xml
+                            , vr_texto_completo
+                            , pr_des_dados
+                            , pr_fecha_xml );
+  END pc_escreve_xml;
+  
   PROCEDURE pc_consultar_assessorias(pr_cdassess   IN INTEGER            --> Código da Assessoria
                                     ,pr_xmllog     IN VARCHAR2           --> XML com informações de LOG
                                     ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
@@ -1262,6 +1286,114 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
          pr_dscritic := 'Erro geral na rotina cybe0003.pc_inserir_titulo_cyber: '||SQLERRM;
 
   END pc_inserir_titulo_cyber;
+  
+  PROCEDURE pc_atualiza_dtava_cyber (pr_nrdconta crapass.nrdconta%TYPE
+                                     --  (OBRIGATÓRIOS E NESSA ORDEM SEMPRE)
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype     --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+      /*---------------------------------------------------------------------------------------------------------------------
+        Programa : pc_atualiza_data_avalista_cyber
+        Sistema  : 
+        Sigla    : CRED
+        Autor    : Vitor Shimada Assanuma (GFT)
+        Data     : 07/08/2018
+        Frequencia: Sempre que for chamado
+        Objetivo  : Atualizar a data de avalista da CRAPCYB
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Exceção
+      vr_exc_erro  EXCEPTION;
+        
+      -- Variáveis de erro
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      
+      -- Variaveis de entrada vindas no xml
+      vr_cdcooper integer;
+      vr_cdoperad varchar2(100);
+      vr_nmdatela varchar2(100);
+      vr_nmeacao  varchar2(100);
+      vr_cdagenci varchar2(100);
+      vr_nrdcaixa varchar2(100);
+      vr_idorigem varchar2(100);
+      
+      -- Informações de data do sistema
+      rw_crapdat     btch0001.rw_crapdat%TYPE; --> Tipo de registro de datas
+      
+      BEGIN
+       -- Leitura dos dados
+       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                               ,pr_cdcooper => vr_cdcooper
+                               ,pr_nmdatela => vr_nmdatela
+                               ,pr_nmeacao  => vr_nmeacao
+                               ,pr_cdagenci => vr_cdagenci
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_idorigem => vr_idorigem
+                               ,pr_cdoperad => vr_cdoperad
+                               ,pr_dscritic => vr_dscritic);
+                               
+       --Selecionar dados da data
+       OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+       -- Apenas fechar o cursor
+       CLOSE BTCH0001.cr_crapdat;
+                               
+        -- Atualiza as datas da crapcyb aonde aquela conta é avalista.
+        BEGIN
+          UPDATE crapcyb 
+          SET dtmanavl = rw_crapdat.dtmvtolt
+          WHERE  cdorigem = 4 
+             AND(nrctremp, nrdconta) IN (
+                   SELECT tbdsct.nrctrdsc, tbdsct.nrdconta -- Quais estão com marcação
+                   FROM   tbdsct_titulo_cyber  tbdsct
+                   WHERE (tbdsct.nrborder, tbdsct.nrdconta, tbdsct.cdcooper) IN (
+                           SELECT nrborder,nrdconta,cdcooper  -- Todos os borderos da conta
+                           FROM   crapbdt 
+                           WHERE (nrdconta,cdcooper) IN (
+                                   SELECT DISTINCT nrdconta,cdcooper -- Pegar quais nrdconta a conta está sendo avalista
+                                   FROM   craplim 
+                                   WHERE  cdcooper = vr_cdcooper 
+                                     AND (nrctaav1 = pr_nrdconta  OR nrctaav2 = pr_nrdconta)
+                           )
+                  )
+           );
+         EXCEPTION
+           WHEN OTHERS THEN
+             pr_dscritic := 'Erro ao atualizar o registro na crapcyb: '|| sqlerrm;
+         END;
+         COMMIT;
+         
+         -- inicializar o clob
+         vr_des_xml := null;
+         dbms_lob.createtemporary(vr_des_xml, true);
+         dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+         -- inicilizar as informaçoes do xml
+         vr_texto_completo := null;
+
+         /*Passou nas validações do bordero, do contrato e listou titulos. Começa a montar o xml*/
+         pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                        '<root><dados>');
+         pc_escreve_xml('<confirmacao>'  || 'OK'  || '</confirmacao>');
+         pc_escreve_xml ('</dados></root>',true);
+         pr_retxml := xmltype.createxml(vr_des_xml);
+
+         /* liberando a memória alocada pro clob */
+         dbms_lob.close(vr_des_xml);
+         dbms_lob.freetemporary(vr_des_xml);
+      EXCEPTION
+       WHEN vr_exc_erro THEN
+         IF  vr_cdcritic <> 0 THEN
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+         pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+         pr_dscritic := 'Erro geral na rotina cybe0003.pc_atualiza_data_avalista_cyber: '||SQLERRM;         
+  END pc_atualiza_dtava_cyber;
 
 END CYBE0003;
 /
