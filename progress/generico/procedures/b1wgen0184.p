@@ -596,7 +596,7 @@ PROCEDURE Busca_Cooperado:
                     
                 END.
             ELSE
-                FOR EACH craphis WHERE CAN-DO("craplct,craplcm,craplem,craplpp,craplap,craplac",
+                FOR EACH craphis WHERE CAN-DO("craplct,craplcm,craplem,craplpp,craplap,craplac,tbdsct_lancamento_bordero",
                                                craphis.nmestrut)               AND
                                        craphis.cdcooper = par_cdcooper         AND 
                                        craphis.cdhistor = par_cdhistor         
