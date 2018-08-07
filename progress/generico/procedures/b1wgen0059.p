@@ -3068,7 +3068,8 @@ PROCEDURE busca-crapcco:
                            crapcco.flgativo = TRUE         AND /* ATIVOS */
                            crapcco.dsorgarq <> "MIGRACAO"  AND 
                            crapcco.dsorgarq <> "EMPRESTIMO" AND
-						   crapcco.dsorgarq <> "ACORDO" NO-LOCK
+                           crapcco.dsorgarq <> "ACORDO"  AND
+                           crapcco.dsorgarq <> "DESCONTO DE TITULO" NO-LOCK
                            BY crapcco.nmdbanco:
 
         IF   par_nrconven <> 0   THEN

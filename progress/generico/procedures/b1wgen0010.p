@@ -748,8 +748,7 @@ PROCEDURE consulta-boleto-2via.
     FIND FIRST crapcco WHERE ROWID(crapcco) = aux_rowidcco NO-LOCK NO-ERROR.
 
     /* nao eh permitido gerar 2via de boleto do convenio EMPRESTIMO */
-    IF  AVAIL(crapcco) AND (crapcco.dsorgarq = "EMPRESTIMO" OR 
-		crapcco.dsorgarq = "ACORDO")THEN 
+    IF  AVAIL(crapcco) AND (crapcco.dsorgarq = "EMPRESTIMO" OR crapcco.dsorgarq = "ACORDO" OR crapcco.dsorgarq = "DESCONTO DE TITULO") THEN 
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Nao eh permitito gerar 2a. via " + 
