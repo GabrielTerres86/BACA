@@ -1,7 +1,24 @@
-CREATE OR REPLACE TRIGGER CECRED.TRGCOBRAN_CANCEL_BAIXA_PENDEN                                 
+CREATE OR REPLACE TRIGGER CECRED.TRGCOBRAN_CANCEL_BAIXA_PENDEN
   AFTER INSERT ON TBCOBRAN_BAIXA_PENDENTE FOR EACH ROW
 DECLARE
   
+  /* ..........................................................................
+
+      Autor    : Renato Darosci
+      Data     : Agosto/2018.                   Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que houver uma inclusão de registro na 
+                  tabela TBCOBRAN_BAIXA_PENDENTE
+
+      Objetivo  : Criar um job para ficar monitorando o registro de pendencia
+                  criado, realizado as devidas tentativas de comunicação de 
+                  cancelamento da Baixa operacional
+
+      Alterações: 
+    ..........................................................................*/
+
   -- CONSTANTES
   vr_cdcooper   CONSTANT NUMBER := 3; -- Rodará sempre como CENTRAL
   vr_nrminuto   CONSTANT NUMBER := 1 / 24 / 60; -- Fator referente à 1 minuto
@@ -29,7 +46,9 @@ BEGIN
   GENE0001.pc_submit_job(pr_cdcooper  => vr_cdcooper
                         ,pr_cdprogra  => 'DDDA0001'
                         ,pr_dsplsql   => vr_dsdplsql
-                        ,pr_dthrexe   => TO_TIMESTAMP(TO_CHAR(vr_dtprxexc,'dd/mm/rrrr hh24:mi:ss'),'dd/mm/rrrr hh24:mi:ss')
+                        ,pr_dthrexe   => TO_TIMESTAMP_TZ(
+                                                   TO_CHAR(vr_dtprxexc,'dd/mm/rrrr hh24:mi:ss')||' '|| to_char( SYSTIMESTAMP, 'TZH:TZM' )
+                                              ,'dd/mm/rrrr hh24:mi:ss TZH:TZM')
                         ,pr_interva   => NULL
                         ,pr_jobname   => vr_dsnomjob          
                         ,pr_des_erro  => vr_dscritic);
