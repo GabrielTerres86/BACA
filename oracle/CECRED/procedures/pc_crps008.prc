@@ -2658,6 +2658,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                          WHERE crapsli.cdcooper = pr_cdcooper
                            AND trunc(crapsli.dtrefere,'MM') = trunc(rw_crapdat.dtmvtolt,'MM');
          EXCEPTION
+           WHEN dup_val_on_index THEN
+             NULL; -- Ignorar pois a virada da SLI já foi feita.
            WHEN OTHERS THEN
              vr_dscritic := 'Erro ao inserir na tabela crapsli. '||SQLERRM;
              -- Sair do programa
