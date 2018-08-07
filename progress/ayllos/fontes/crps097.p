@@ -132,6 +132,7 @@
 { includes/var_batch.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR h-b1wgen0200 AS HANDLE                                       NO-UNDO.
 DEF        VAR res_nrctachq AS INTE                                  NO-UNDO.
@@ -195,7 +196,7 @@ IF   glb_inrestar = 0 THEN
                                 TRANSACTION ON ERROR UNDO TRANS_2, RETURN:
              DELETE crapdev.
          END.
-         
+
      END.
 
 /* Se digito da conta itg do restart for 'X' passa pra '0' */
@@ -519,18 +520,56 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                IF aux_incrineg = 1 THEN
                  DO:
                    /* Tratativas de negocio */  
-                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - INICIO*/
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_cria_lanc_futuro aux_handproc = PROC-HANDLE NO-ERROR
+                    
+                                         (INPUT glb_cdcooper,
+                                          INPUT crapdev.nrdconta,
+                                          INPUT crapdev.nrdctitg,
+                                          INPUT craplot.cdagenci,
+                                          INPUT craplot.dtmvtolt,
+                                          INPUT crapdev.cdhistor ,
+                                          INPUT crapdev.vllanmto,
+                                          INPUT 0,    /*pr_nrctremp*/
+                                          "BLQPREJU", /*pr_dsorigem*/
+                                          OUTPUT "").
+                    
+                    CLOSE STORED-PROC pc_cria_lanc_futuro aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                    
+                    ASSIGN aux_dscritic = pc_cria_lanc_futuro.pr_dscritic
+                                          WHEN pc_cria_lanc_futuro.pr_dscritic <> ?.
+                           
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_dscritic <> "" THEN
+                    DO:
+                       UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                                         " - " + glb_cdprogra + "' --> '" + 
+                                         "'CRITICA: Erro gravaçao lançamento futuro: " +
+                                         aux_dscritic +
+                                         " Cheque: " + STRING(crapdev.nrcheque) +
+                                         "' >> log/proc_batch.log").
+                       UNDO TRANS_1, RETURN.
+                    END.
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - FIM*/
                  END.
                ELSE
                  DO:
-                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
-                   RETURN "NOK".
+                    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                                      " - " + glb_cdprogra + "' --> '" + 
+                                      "'CRITICA: Erro gravaçao lançamento: " +
+                                      aux_dscritic +
+                                      " Cheque: " + STRING(crapdev.nrcheque) +
+                                      "' >> log/proc_batch.log").
+                    UNDO TRANS_1, RETURN.
                  END.
                
              END.
                
-             FIND FIRST tt-ret-lancto.
-             DISP tt-ret-lancto.
+             FIND FIRST tt-ret-lancto NO-LOCK NO-ERROR.
+
              DELETE PROCEDURE h-b1wgen0200.       
 
 /* final chamada rotina*/

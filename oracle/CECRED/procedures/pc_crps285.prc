@@ -80,6 +80,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps285(pr_cdcooper IN crapcop.cdcooper%TY
                            
               10/07/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
                            lancamentos na CRAPLCM (Teobaldo J, AMcom)
+
+              06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                           após chamada da rotina de geraçao de lançamento em CONTA CORRENTE
+                           (Renato Cordeiro - AMcom)
                        
   ............................................................................. */
   
@@ -853,7 +857,23 @@ BEGIN
             IF vr_incrineg = 0 THEN -- Erro de sistema/BD
               vr_dscritic := 'Erro ao inserir lancamento na craplcm: '||vr_dscritic;
               RAISE vr_exc_saida;
-            END If;
+            ELSE
+              tela_lautom.pc_cria_lanc_futuro(pr_cdcooper => pr_cdcooper, 
+                                              pr_nrdconta => rw_crablcm.nrdconta, 
+                                              pr_nrdctitg => gene0002.fn_mask(rw_crablcm.nrdconta,'99999999'), 
+                                              pr_cdagenci => rw_craplot.cdagenci, 
+                                              pr_dtmvtolt => rw_craplot.dtmvtolt, 
+                                              pr_cdhistor => 89, 
+                                              pr_vllanaut => vr_vldebcta, 
+                                              pr_nrctremp => 0, 
+                                              pr_dsorigem => 'BLQPREJU', 
+                                              pr_dscritic => vr_dscritic);
+                IF vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+                end if;
+
+            end if;
+            
           END IF;
 
           --Atualizar capa do Lote

@@ -72,6 +72,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
 
               23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
               Renato Cordeiro (AMcom)         
+
+  --          06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                       após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                       Alteração específica neste programa acrescentando o tratamento para a origem
+  --                       BLQPREJU
+  --                       (Renato Cordeiro - AMcom)
+
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -156,6 +163,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
                                 ,'BLOQJUD'
                                 ,'DAUT BANCOOB'
                                 ,'TRMULTAJUROS'
+                                ,'BLQPREJU'
                                 ,'ADIOFJUROS')
         ORDER BY lau.cdhistor;
   
@@ -312,17 +320,17 @@ BEGIN
                                pr_dtmvtopr => rw_crapdat.dtmvtopr,
                                pr_nrctares => vr_nrctares) LOOP 
                                
-    -- Leitura dos lançamentos automaticos                           
+    -- Leitura dos lançamentos automaticos
     FOR rw_craplau IN cr_craplau(pr_cdcooper => rw_crablot.cdcooper,
                                  pr_dtmvtolt => rw_crablot.dtmvtolt,
                                  pr_cdagenci => rw_crablot.cdagenci,
                                  pr_cdbccxlt => rw_crablot.cdbccxlt,
                                  pr_nrdolote => rw_crablot.nrdolote,
-                                 pr_dsrestar => vr_dsrestar) LOOP  
+                                 pr_dsrestar => vr_dsrestar) LOOP
                              
       -- Desprezar a fatura do dia 01/01/2013 
       -- Lancamento automatico existirá na  Viacredi,
-      -- porém débito será na Altovale (craplau tb foi crida na Altovale)                                         
+      -- porém débito será na Altovale (craplau tb foi crida na Altovale)
       IF rw_craplau.cdhistor = 293 THEN 
         
         -- Verifica se Conta Migrada

@@ -242,6 +242,12 @@ BEGIN
                  16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
 							  (Mauricio - Mouts)
 
+  --             06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                          após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                          Alteração específica neste programa acrescentando o tratamento para a origem
+  --                          BLQPREJU
+  --                          (Renato Cordeiro - AMcom)
+
   ............................................................................................*/
   
   DECLARE
@@ -384,6 +390,7 @@ BEGIN
                                  ,'CAPTACAO'
                                  ,'DEBAUT'
                                  ,'TRMULTAJUROS'
+                                 ,'BLQPREJU'
                                  ,'ADIOFJUROS'
                                  ,'DOMICILIO') -- ORIGEM DA OPERACAO
          AND lau.cdhistor NOT IN( 1019,1230,1231,1232,1233,1234) --> 1019 será processado pelo crps642, consorcio no debcns

@@ -113,6 +113,13 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
                    02/03/2017 - Incluido nas consultas da craplau 
                                 craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
+  --               06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                            após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                            Alteração específica neste programa acrescentando o tratamento para a origem
+  --                            BLQPREJU
+  --                            (Renato Cordeiro - AMcom)
+
     ............................................................................ */
 
     DECLARE
@@ -186,6 +193,7 @@ SELECT nrdconta
                                ,'BLOQJUD'
                                ,'DAUT BANCOOB'
                                ,'TRMULTAJUROS'
+                               ,'BLQPREJU'
                                ,'ADIOFJUROS');
 
       -- busca cadastro de associados

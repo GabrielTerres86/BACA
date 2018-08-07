@@ -113,6 +113,12 @@ BEGIN
                 12/07/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
                                     na tabela CRAPLCM e também na CRAPLOT - Josiane (AMcom) 
                              
+  --            06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                         após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                         Alteração específica neste programa acrescentando o tratamento para a origem
+  --                         BLQPREJU
+  --                         (Renato Cordeiro - AMcom)
+
   ............................................................................. */
   DECLARE
     --Busca os dados da cooperativa
@@ -154,7 +160,8 @@ BEGIN
                                   'CARTAOBB',
                                   'BLOQJUD',
                                   'DAUT BANCOOB',
-                                  'TRMULTAJUROS')
+                                  'TRMULTAJUROS',
+                                  'BLQPREJU')
        order by cdcooper, nrdconta, dtmvtopg, cdhistor, nrdocmto; -- índice craplau2
     rw_craplau cr_craplau%ROWTYPE;
     --Cursor para buscar o associado

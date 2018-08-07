@@ -163,6 +163,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            
               01/03/2018 - Incluir tratamento para validar autorizacao somente para novas
                            inclusoes de debitos(Lucas Ranghetti #849505)
+
+  --          06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+  --                       após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+  --                       Alteração específica neste programa acrescentando o tratamento para a origem
+  --                       BLQPREJU
+  --                       (Renato Cordeiro - AMcom)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -1030,7 +1036,7 @@ BEGIN
                      AND (nrdocmto  = rw_crapatr.cdrefere
                       OR nrcrcard  = rw_crapatr.cdrefere)
                      AND insitlau  = 1               
-                     AND dsorigem NOT IN('INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','TRMULTAJUROS');
+                     AND dsorigem NOT IN('INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','TRMULTAJUROS','BLQPREJU');
                 EXCEPTION
                   WHEN OTHERS THEN 
                   vr_dscritic := 'Erro ao atualizar lançamentos futuros da nova autorizacao --> '||sqlerrm;

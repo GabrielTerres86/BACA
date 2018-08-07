@@ -234,6 +234,7 @@ FOR EACH craplau WHERE craplau.cdcooper  = glb_cdcooper   AND
                        craplau.dsorigem <> "BLOQJUD"      AND
                        craplau.dsorigem <> "DAUT BANCOOB" AND
                        craplau.dsorigem <> "TRMULTAJUROS" AND
+                       craplau.dsorigem <> "BLQPREJU"     AND
                        craplau.dsorigem <> "ADIOFJUROS",
          crapass WHERE crapass.cdcooper  = glb_cdcooper   AND
                        crapass.nrdconta  = craplau.nrdconta

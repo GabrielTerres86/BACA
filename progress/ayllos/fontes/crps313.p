@@ -28,11 +28,19 @@
                09/07/2018 - PRJ450 - Chamada de rotina para consistir lançamentos em conta 
                             corrente (LANC0001) na tabela CRAPLCM  (Teobaldo J. - AMcom)
                             
+               06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                            após chamada da rotina de geraçao de lançamento em CONTA CORRENTE
+                            (Renato Cordeiro - AMcom)
+
+               06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                            após chamada da rotina de geraçao de lançamento em CONTA CORRENTE
+                            (Renato Cordeiro - AMcom)
+
 ............................................................................ */
- 
+
 { includes/var_batch.i } 
 { sistema/generico/includes/b1wgen0200tt.i }
-
+{ sistema/generico/includes/var_oracle.i }
 
 DEF BUFFER crablcm FOR craplcm.
 
@@ -201,6 +209,51 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper  AND
                 ,OUTPUT aux_dscritic).                       /* Descricao da critica                          */             
              
              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                IF aux_incrineg = 1 THEN
+                DO:
+
+                    /* Posicionando no registro da craplcm criado acima */
+                    FIND FIRST tt-ret-lancto.
+                    FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - INICIO*/
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_cria_lanc_futuro aux_handproc = PROC-HANDLE NO-ERROR
+                    
+                                         (INPUT glb_cdcooper,
+                                          INPUT crablcm.nrdconta,
+                                          INPUT STRING(crablcm.nrdconta,"99999999"),
+                                          INPUT craplot.cdagenci,
+                                          INPUT craplot.dtmvtolt,
+                                          INPUT 380,
+                                          INPUT aux_vllanmto,
+                                          INPUT 0,    /*pr_nrctremp*/
+                                          "BLQPREJU", /*pr_dsorigem*/
+                                          OUTPUT "").
+                    
+                    CLOSE STORED-PROC pc_cria_lanc_futuro aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                    
+                    ASSIGN aux_dscritic = pc_cria_lanc_futuro.pr_dscritic
+                                          WHEN pc_cria_lanc_futuro.pr_dscritic <> ?.
+                           
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_dscritic <> "" THEN
+                    DO:
+                       ASSIGN glb_cdcritic = aux_cdcritic.
+                       RUN fontes/critic.p.
+                       UNIX SILENT VALUE ("echo " + 
+                            STRING(TIME,"HH:MM:SS") +
+                            " - " + glb_cdprogra + "' --> '" +
+                            aux_dscritic + " Conta " +
+                            STRING(crablcm.nrdconta) + " >> log/proc_batch.log").
+                       UNDO TRANS_1, RETURN.
+                    END.
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - FIM*/
+                   END.
+                
+                ELSE
                 DO: 
                     /* Tratamento de erro relativo banco de dados */
                     ASSIGN glb_cdcritic = aux_cdcritic.
