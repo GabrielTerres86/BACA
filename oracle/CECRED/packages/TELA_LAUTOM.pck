@@ -1030,6 +1030,9 @@ PROCEDURE pc_efetiva_lcto_pendente_sld(pr_cdcooper  IN crapcop.cdcooper%TYPE   -
 
     Objetivo  : Rotina para efetivar o lancamento na contas em situação 7, somente históricos 37,38 e 2323
 
+    Alterações: 03/085/2018 - Modificado o forma de compor o numero do documento no momento de efetivar 
+                              o lançamento pois estava impactando no batch que faz o mesmo numero de 
+                              documento no lancamento. (Tiago SCTASK0023646).
     ..............................................................................*/
                                         
      --Selecionar informacoes dos saldos dos associados
@@ -1397,7 +1400,7 @@ PROCEDURE pc_efetiva_lcto_pendente_sld(pr_cdcooper  IN crapcop.cdcooper%TYPE   -
                           ,rw_crapsld.nrdconta
                           ,rw_crapsld.nrdconta
                           ,GENE0002.FN_MASK(rw_crapsld.nrdconta, '99999999')
-                          ,99999937
+                          ,TO_NUMBER(Nvl(rw_craplot.nrseqdig,0) + 1||99999937)
                           ,37
                           ,Nvl(rw_craplot.nrseqdig,0) + 1
                           ,vr_vlsmnmes
