@@ -1487,7 +1487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 08/11/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 01/08/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1495,6 +1495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Objetivo   : Procedure para consultar extrato do capital 
   --
   -- Alterações : 16/07/2014 - Conversão Progress -> Oracle (Alisson - AMcom)  --
+  --              01/08/2018 - Ajuste do tamanho nrdocmto devido a tela limitar em 9 posicoes - AMcom Fabiano B. Dias
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Selecionar Dados para Geracao Extrato Imposto Renda      
@@ -1526,7 +1527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                ,craplct.cdagenci
                ,craplct.cdbccxlt
                ,craplct.nrdolote
-               ,craplct.nrdocmto
+               ,substr(craplct.nrdocmto,1,9) nrdocmto -- Debitador Unico 08/2018
                ,craplct.nrctrpla
                ,craplct.progress_recid
         FROM craplct craplct
