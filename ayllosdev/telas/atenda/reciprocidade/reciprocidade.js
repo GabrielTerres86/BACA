@@ -1087,8 +1087,8 @@ function onChangeProtesto() {
 	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').habilitaCampo();
 		        
 	} else {
-	    $('#qtlimmip', '#divOpcaoSerasaProtesto').desabilitaCampo();
-	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').desabilitaCampo();
+	    $('#qtlimmip', '#divOpcaoSerasaProtesto').val('').desabilitaCampo();
+	    $('#qtlimaxp', '#divOpcaoSerasaProtesto').val('').desabilitaCampo();
 	}	
 }
 
@@ -1414,7 +1414,7 @@ function controlaLayout(nomeForm) {
 		tabela.zebraTabela(0);
 
         $('#' + nomeForm).css('width', '750px');
-        divRegistro.css('height', '165px');
+        divRegistro.css('height', '365px');
 
 		var ordemInicial = new Array();
 
@@ -1745,37 +1745,40 @@ function atualizarConvenios(cddopcao) {
     if (index == null) 
         return false;
 
-
-
     if ($("#flgregon", "#divOpcaoConsulta").prop("checked") == true) {
-		var flgregon = 1;
+		flgregon = 1;
     } else {
-		var flgregon = 0;
+		flgregon = 0;
 	}
     if ($("#flgpgdiv", "#divOpcaoConsulta").prop("checked") == true) {
-		var flgpgdiv = 1;
+		flgpgdiv = 1;
     } else {
-		var flgpgdiv = 0;
+		flgpgdiv = 0;
 	}
     if ($("#flcooexp", "#divOpcaoConsulta").prop("checked") == true) {
-		var flcooexp = 1;
+		flcooexp = 1;
     } else {
-		var flcooexp = 0;
+		flcooexp = 0;
 	}
     if ($("#flceeexp", "#divOpcaoConsulta").prop("checked") == true) {
-		var flceeexp = 1;
+		flceeexp = 1;
     } else {
-		var flceeexp = 0;
+		flceeexp = 0;
 	}
     if ($("#flserasa", "#divOpcaoConsulta").prop("checked") == true) {
-	    var flserasa = 1;
+	    flserasa = 1;
     } else {
-	    var flserasa = 0;
+	    flserasa = 0;
 	}
     if ($("#flprotes", "#divOpcaoConsulta").prop("checked") == true) {
-	    var flprotes = 1;
+	    flprotes = 1;
     } else {
-	    var flprotes = 0;
+	    flprotes = 0;
+	}
+    if ($("#flgcebhm", "#divOpcaoConsulta").val() == 'yes') {
+	    flgcebhm = 1;
+    } else {
+	    flgcebhm = 0;
 	}
 
     var convenio = {
@@ -2091,7 +2094,7 @@ function ativarConvenio(){
 // Abrir tela de log ceb
 function carregaLogCeb(){
 
-    var nrconven = $("#convenios", "#divConteudoOpcao").val();
+    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando ...");
@@ -2103,9 +2106,7 @@ function carregaLogCeb(){
 		type: "POST",
 		url: UrlSite + "telas/atenda/reciprocidade/log_convenio.php",
 		data: {
-            nrconven: nrconven,
-            nrdconta: nrdconta,
-            inpessoa: inpessoa,
+            idrecipr: idrecipr,
 			redirect: "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -2170,7 +2171,7 @@ function formataLogConv() {
     $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
 
     divRegistro.css('width', '640px');
-    divRegistro.css('height','100px');
+    divRegistro.css('height','250px');
 
     var ordemInicial = new Array();
 
@@ -2205,7 +2206,7 @@ function formataLogNegociacao() {
     $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
 
     divRegistro.css('width', '640px');
-    divRegistro.css('height','100px');
+    divRegistro.css('height','130px');
 
     var ordemInicial = new Array();
 

@@ -23,16 +23,13 @@ isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");	
 
-$nrdconta    = $_POST["nrdconta"];
-$inpessoa    = $_POST["inpessoa"];
-$nrconven    = isset($_POST["nrconven"]) ? str_replace(" ", "", $_POST["nrconven"]) : '';
+$idrecipr    = !empty($_POST["idrecipr"]) ? $_POST["idrecipr"] : '';
 
 // Montar o xml de Requisicao
 $xml  = "";
 $xml .= "<Root>";
 $xml .= " <Dados>";	
-$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-$xml .= "   <nrconven>".$nrconven."</nrconven>";
+$xml .= "   <idrecipr>".$idrecipr."</idrecipr>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
@@ -52,7 +49,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
 
 <div id='divRegLogCeb'>
 <fieldset id='tabConteudo'>
-<legend><?= utf8ToHtml('Log do Convênio de Cobrança - '); echo formataNumericos("zzz.zzz.zz9",$nrconven,"."); ?></legend>
+<legend><?= utf8ToHtml('Log do Convênio de Cobrança - '); echo formataNumericos("zzz.zzz.zz9",$idrecipr,"."); ?></legend>
 
 <div class='divRegistros'>
 <table>
@@ -74,7 +71,7 @@ foreach ($registros as $r) {
 
     <tr>
         <td><?= getByTagName($r->tags, 'dthorlog'); ?></td>
-        <td><?= getByTagName($r->tags, 'dscdolog'); ?></td>
+        <td><?= utf8_encode(str_replace('[br]', '</br>', getByTagName($r->tags, 'dscdolog'))); ?></td>
         <td><?= getByTagName($r->tags, 'nmoperad'); ?></td>	
     </tr>
 <?php

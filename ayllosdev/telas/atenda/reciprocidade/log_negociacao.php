@@ -23,7 +23,7 @@ isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");	
 
-$idrecipr    = $_POST["idrecipr"];
+$idrecipr    = !empty($_POST["idrecipr"]) ? $_POST["idrecipr"] : '';
 
 // Montar o xml de Requisicao
 $xml  = "";
