@@ -526,7 +526,20 @@ DECLARE
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)
+               AND crapcon.cdcooper = craplau.cdcooper
+                UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )
       Union
       --DEBSIC - crps642 - programa de convenios terceiroS - SICREDI, menos agua e luz
       SELECT DISTINCT
@@ -578,7 +591,20 @@ DECLARE
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)          
+               AND crapcon.cdcooper = craplau.cdcooper
+               UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )          
       union
       -- pc_crps145 - Poupanca Programada - craprpp - pendentes
       SELECT craprpp.cdcooper coope,
@@ -1234,7 +1260,20 @@ BEGIN
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)
+               AND crapcon.cdcooper = craplau.cdcooper
+                UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )
       Union
       --DEBSIC - crps642 - programa de convenios terceiroS - SICREDI, menos agua e luz
       SELECT DISTINCT
@@ -1286,7 +1325,20 @@ BEGIN
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)          
+               AND crapcon.cdcooper = craplau.cdcooper
+                UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )          
       union
       -- pc_crps145 - Poupanca Programada - craprpp - pendentes
       SELECT craprpp.cdcooper coope,
