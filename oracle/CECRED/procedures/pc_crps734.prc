@@ -27,6 +27,7 @@ BEGIN
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Codigo do programa
     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS734';
+    vr_qtdjobs             number;
     vr_dtultdia DATE;                  -- Variavel para armazenar o ultimo dia util do ano
     vr_idparale INTEGER;
     vr_jobname             varchar2(30); 
@@ -97,6 +98,14 @@ BEGIN
     -- ainda não comecou a rodar o paralelismo
     IF (pr_idparale=0) THEN
       vr_idparale := gene0001.fn_gera_id_paralelo;
+      -- Buscar quantidade parametrizada de Jobs
+      vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
+                                                   ,vr_cdprogra --> Código do programa
+                                                   );
+      IF (vr_qtdjobs = 0) THEN
+        vr_dscritic := 'Nao foi possivel encontrar o parametro de quantidade de Jobs';
+        RAISE vr_exc_saida;
+      END IF;
       FOR reg_crapage in cr_crapage LOOP
         vr_jobname := vr_cdprogra ||'_'|| reg_crapage.cdagenci || '$';
         -- Cadastra o programa paralelo
@@ -137,6 +146,9 @@ BEGIN
             -- Levantar exceçao
             RAISE vr_exc_saida;
           END IF;
+          gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                   ,pr_qtdproce => vr_qtdjobs
+                                   ,pr_des_erro => vr_dscritic);
       END LOOP;
       
       --Chama rotina de aguardo agora passando 0, para esperar
