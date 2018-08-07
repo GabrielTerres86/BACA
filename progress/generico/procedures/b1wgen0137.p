@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 06/06/2018
+    Data      : Abril/2012                      Ultima Atualizacao: 06/08/2018
     
     Dados referentes ao programa:
 
@@ -331,9 +331,8 @@
                 06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
-
-				
-
+							 
+				06/08/2018 - Adicionando novos documentos (132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 167, 168, 169). (RITM0021012 - Kelvin)
 
 .............................................................................*/
 
@@ -1303,8 +1302,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdempres = 00               AND         
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
-
-                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
+                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,132,133,134,135,136,137,138,139,140,141,145,146,147,148,149,150,151,152,167,168,169,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1447,7 +1445,34 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 62. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
                     WHEN 63 THEN
                         ASSIGN aux_conttabs = 63. /*DOCUMENTO NIF - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
-
+					
+					WHEN 65 THEN
+                        ASSIGN aux_conttabs = 65. /*Comprovante de Renda - Admissão de Cooperados*/
+					WHEN 66 THEN
+                        ASSIGN aux_conttabs = 66. /*Comprovante de Endereço - Admissão de Cooperados*/
+					WHEN 67 THEN
+						ASSIGN aux_conttabs = 67. /*Documento de Identificação - Admissão de Cooperados*/
+					WHEN 68 THEN
+						ASSIGN aux_conttabs = 68. /*Comprovante de Estado Civil - Admissão de Cooperados*/
+					WHEN 69 THEN
+						ASSIGN aux_conttabs = 69. /*Documentos do Cônjugue - Admissão de Cooperados*/ 
+					WHEN 70 THEN
+						ASSIGN aux_conttabs = 70. /*Documentos de Procuradores - Admissão de Cooperados*/
+					WHEN 71 THEN
+						ASSIGN aux_conttabs = 71. /*Cartão de Assinatura - Admissão de Cooperados*/	 
+					WHEN 72 THEN
+						ASSIGN aux_conttabs = 72. /*Matrícula - Admissão de Cooperados*/
+					WHEN 73 THEN
+						ASSIGN aux_conttabs = 73. /*Ficha Cadastral - Admissão de Cooperados*/
+					WHEN 74 THEN
+						ASSIGN aux_conttabs = 74. /*Ficha de Pré-cadastro - Admissão de Cooperados*/
+					WHEN 75 THEN
+						ASSIGN aux_conttabs = 75. /*Demonstrativo Financeiro - Admissão de Cooperados*/
+					WHEN 76 THEN
+						ASSIGN aux_conttabs = 76. /*Cartão de CNPJ - Admissão de Cooperados*/
+					WHEN 77 THEN
+						ASSIGN aux_conttabs = 77. /*Documentos Sócios / Administradores - Admissão de Cooperados  */
+						
                     OTHERWISE
                         NEXT.
                 END CASE.
@@ -5873,5 +5898,6 @@ PROCEDURE  gera_pend_digitalizacao_seqdoc:
 END PROCEDURE.
 
 /*...........................................................................*/
+
 
 
