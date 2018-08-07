@@ -31,32 +31,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0009 IS
 
 	PROCEDURE pc_efetiva_lcto_pendente_job (pr_cdcooper IN crapcop.cdcooper%TYPE default 0);
   
-    PROCEDURE pc_efetiva_pag_atraso_tr_prc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
-                                    ,pr_cdagenci  IN crapass.cdagenci%TYPE --> Agencia
-                                    ,pr_cdoperad  IN craplot.cdoperad%TYPE --> Operador
-                                    ,pr_nmdatela  IN crapprg.cdprogra%TYPE --> Nome da Tela
-                                    ,pr_idorigem  IN INTEGER               --> Origem
-                                    ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta
-                                    ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Contrato
-                                    ,pr_vlpreapg  IN crapepr.vlpreemp%TYPE --> Valor a pagar
-                                    ,pr_nrparcela IN tbepr_tr_parcelas.nrparcela%TYPE --> Numero da parcela a pagar
-                                    ,pr_dtdpagto  IN tbepr_tr_parcelas.dtdpagto%TYPE  --> Data de pagamento original - vencimento parcela
-                                    ,pr_vlpagpar  IN crapepr.vlpreemp%TYPE --> Valor de pagamento da parcela
-                                    ,pr_vlsldisp  IN NUMBER DEFAULT NULL   --> Valor Saldo Disponivel
-                                    ,pr_cdhismul OUT INTEGER               --> Historico da Multa
-                                    ,pr_vldmulta OUT NUMBER                --> Valor da Multa
-                                    ,pr_cdhismor OUT INTEGER               --> Historico Juros de Mora
-                                    ,pr_vljumora OUT NUMBER                --> Valor Juros de Mora
-                                    ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
-                                    ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica  
-    	
-  --> Grava informações para resolver erro de programa/ sistema
-  PROCEDURE pc_grava_erro_programa(pr_cdcooper IN PLS_INTEGER           --> Cooperativa
-                                  ,pr_dstiplog IN VARCHAR2              --> Tipo Log
-                                  ,pr_nmrotina IN VARCHAR2              --> Nome da Rotina
-                                  ,pr_dscritic IN VARCHAR2 DEFAULT NULL --> Descricao da critica
-                                  );
-  
 END EMPR0009;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
@@ -82,7 +56,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   --                          ( Belli - Envolti - Chamados 697089 758606 ) 
   --
   --             15/02/2018 - Ajustar Cálculo juros/multa - Chamado 771668
-
   --             17/04/2018 - Incluido o parametro pr_cdcooper na rotina pc_efetiva_lcto_pendnete_job
   --                          Projeto debitador único - Josiane Stiehler (Amcom)
   ---------------------------------------------------------------------------
