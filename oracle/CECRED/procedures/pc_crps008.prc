@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 28/06/2018
+   Data    : Janeiro/92.                     Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -156,10 +156,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
 
                28/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
                             
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
+                            
      ............................................................................. */
 
      DECLARE
-
+       
        --- ################################ Variáveis ################################# ----
        
        --Variaveis das taxas de juros
@@ -262,7 +264,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
        vr_nrdolote_ajt craplot.nrdolote%TYPE := 8476;
        
        --- ################################ Tipos e Registros de memória ################################# ----
-
+       
        -- Definicao do tipo de registro de lançamentos
        TYPE typ_reg_craplcm IS
        RECORD (dtmvtolt craplcm.dtmvtolt%TYPE
@@ -302,7 +304,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
        vr_tab_craplcm  typ_tab_craplcm;
        vr_tab_crapsld  typ_tab_crapsld;
        vr_tab_crapjur  typ_tab_crapjur;
-
+       
        --Tipo da tabela de saldos
        vr_tab_saldo EXTR0001.typ_tab_saldos;
        vr_tab_erro  GENE0001.typ_tab_erro;
@@ -336,7 +338,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
          FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
        rw_crapcop cr_crapcop%ROWTYPE;
-
+       
        -- Cursor genérico de calendário
        rw_crapdat btch0001.cr_crapdat%ROWTYPE;
        
@@ -534,7 +536,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
             AND crapass.nrdconta(+) = crapsld.nrdconta   
             AND crapass.cdcooper(+) = crapsld.cdcooper   
             AND crapass.cdagenci    = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
-            AND crapsld.cdcooper    = pr_cdcooper;
+            AND crapsld.cdcooper    = pr_cdcooper;  
        -- PLTABLE para fazer bulk collect e acelerar as leituras  
        TYPE typ_CRAPSLD IS TABLE OF cr_crapsld%ROWTYPE INDEX BY PLS_INTEGER;
        rw_crapsld typ_CRAPSLD;              
@@ -562,7 +564,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                         , craplim.nrctrlim)
           ORDER BY nrlinha DESC;  -- Order by realizado para simular o FIND LAST do progress
        rw_craplim cr_craplim%ROWTYPE;
-
+ 
        -- Selecionar Cadastro de linhas de credito rotativos
        CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE) IS
          SELECT craplrt.ROWID
@@ -641,7 +643,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
            AND jur.cdcooper = ass.cdcooper
            AND jur.nrdconta = ass.nrdconta
            AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci); 
-
+     
       -- Cursor para buscar valores e atualizar a capa do lote na tabela l            
       cursor cr_work_lot(pr_cdcooper    tbgen_batch_relatorio_wrk.cdcooper%type  
                         ,pr_cdprograma  tbgen_batch_relatorio_wrk.cdprograma%type 
@@ -659,7 +661,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
            and a.dsrelatorio = pr_dsrelatorio
            and a.dtmvtolt    = pr_dtmvtolt;    
       vr_tab_work_lot cr_work_lot%rowtype; 
-
+     
      ---------------------------------------
      -- Inicio Bloco Principal pc_crps008
      ---------------------------------------
@@ -671,7 +673,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
        -- Incluir nome do módulo logado
        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS008'
                                  ,pr_action => pr_cdcooper);
-
+                                 
        -- Na execução principal
        if nvl(pr_idparale,0) = 0 then
          -- Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
@@ -744,7 +746,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
             vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_ID_paral.';
             RAISE vr_exc_saida;
          END IF;
-       
+                                               
          -- Verifica se algum job paralelo executou com erro
          vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper
                                                       ,pr_cdprogra    => vr_cdprogra
@@ -874,214 +876,214 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                         ,pr_idprglog   => vr_idlog_ini_par);  
        
        
-       -- Procedimento padrão de busca de informações de CPMF
-       gene0005.pc_busca_cpmf(pr_cdcooper => pr_cdcooper
+         -- Procedimento padrão de busca de informações de CPMF
+         gene0005.pc_busca_cpmf(pr_cdcooper => pr_cdcooper
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                             ,pr_dtinipmf => vr_dtinipmf
-                             ,pr_dtfimpmf => vr_dtfimpmf
-                             ,pr_txcpmfcc => vr_txcpmfcc
-                             ,pr_txrdcpmf => vr_txrdcpmf
-                             ,pr_indabono => vr_indabono
-                             ,pr_dtiniabo => vr_dtiniabo
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic);
-       -- Se retornou erro
-       IF vr_dscritic IS NOT NULL THEN
-         -- Gerar raise
-         RAISE vr_exc_saida;
-       END IF;
-
+                               ,pr_dtinipmf => vr_dtinipmf
+                               ,pr_dtfimpmf => vr_dtfimpmf
+                               ,pr_txcpmfcc => vr_txcpmfcc
+                               ,pr_txrdcpmf => vr_txrdcpmf
+                               ,pr_indabono => vr_indabono
+                               ,pr_dtiniabo => vr_dtiniabo
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+         -- Se retornou erro
+         IF vr_dscritic IS NOT NULL THEN
+           -- Gerar raise
+           RAISE vr_exc_saida;
+         END IF;
+         
          -- Buscar data parametro de referencia para calculo de juros
          BEGIN  
            vr_dtcorte_prm := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
                                                                ,pr_nmsistem => 'CRED'
                                                                ,pr_cdacesso => 'DT_CORTE_REGCRE')
                                                                ,'DD/MM/RRRR');
-
+        
          EXCEPTION
            WHEN OTHERS THEN
              vr_dtcorte_prm := rw_crapdat.dtmvtolt;
          END; 
 
-       --Carregar tabela memoria com as linhas de credito
-       FOR rw_craplrt IN cr_craplrt (pr_cdcooper => pr_cdcooper) LOOP
-         vr_tab_craplrt(rw_craplrt.cddlinha):= rw_craplrt.txmensal;
-       END LOOP;
-       
-       --Carregar tabela memoria de associados
+         --Carregar tabela memoria com as linhas de credito
+         FOR rw_craplrt IN cr_craplrt (pr_cdcooper => pr_cdcooper) LOOP
+           vr_tab_craplrt(rw_craplrt.cddlinha):= rw_craplrt.txmensal;
+         END LOOP;
+         
+         --Carregar tabela memoria de associados
          FOR rw_crapjur IN cr_crapjur (pr_cdcooper => pr_cdcooper
                                       ,pr_cdagenci => pr_cdagenci) LOOP
-         vr_tab_crapjur(rw_crapjur.nrdconta).natjurid := rw_crapjur.natjurid;
-         vr_tab_crapjur(rw_crapjur.nrdconta).tpregtrb := rw_crapjur.tpregtrb;
-       END LOOP;
+           vr_tab_crapjur(rw_crapjur.nrdconta).natjurid := rw_crapjur.natjurid;
+           vr_tab_crapjur(rw_crapjur.nrdconta).tpregtrb := rw_crapjur.tpregtrb;
+         END LOOP;
 
-       --Se a data do movimento estiver entre a data de inicio e fim da cpmf
+         --Se a data do movimento estiver entre a data de inicio e fim da cpmf
          IF rw_crapdat.dtmvtolt BETWEEN vr_dtinipmf AND vr_dtfimpmf THEN
            -- flag cpmf recebe true
-         vr_flgdcpmf:= TRUE;
-       ELSE
+           vr_flgdcpmf:= TRUE;
+         ELSE
            -- flag cpmf recebe false
-         vr_flgdcpmf:= FALSE;
-       END IF;
+           vr_flgdcpmf:= FALSE;
+         END IF;
 
          -- Carrega a taxa da CPMF para os juros do cheque especial
-       OPEN cr_craphis (pr_cdcooper => pr_cdcooper
-                       ,pr_cdhistor => 38) ;
+         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
+                         ,pr_cdhistor => 38) ;
          -- Posicionar no proximo registro
-       FETCH cr_craphis INTO rw_craphis;
+         FETCH cr_craphis INTO rw_craphis;
          -- Se nao encontrar
-       IF cr_craphis%NOTFOUND THEN
+         IF cr_craphis%NOTFOUND THEN
            -- Buscar mensagem de erro da critica
-         vr_cdcritic := 93;
-         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' HST 38';
+           vr_cdcritic := 93;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' HST 38';
            -- Fechar Cursor
-         CLOSE cr_craphis;
+           CLOSE cr_craphis;
            -- Sair do programa
-         RAISE vr_exc_saida;
-       END IF;
+           RAISE vr_exc_saida;
+         END IF;
          -- Fechar Cursor
-       CLOSE cr_craphis;
+         CLOSE cr_craphis;
 
          -- Carrega a taxa da CPMF para a multa sobre o conta corrente
-       OPEN cr_craphis (pr_cdcooper => pr_cdcooper
-                       ,pr_cdhistor => 37) ;
+         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
+                         ,pr_cdhistor => 37) ;
          -- Posicionar no proximo registro
-       FETCH cr_craphis INTO rw_craphis;
+         FETCH cr_craphis INTO rw_craphis;
          -- Se nao encontrar
-       IF cr_craphis%NOTFOUND THEN
+         IF cr_craphis%NOTFOUND THEN
            -- Buscar mensagem de erro da critica
-         vr_cdcritic := 93;
-         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' HST 37';
+           vr_cdcritic := 93;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' HST 37';
            -- Fechar Cursor
-         CLOSE cr_craphis;
+           CLOSE cr_craphis;
            -- Sair do programa
-         RAISE vr_exc_saida;
-       ELSE
+           RAISE vr_exc_saida;
+         ELSE
            -- taxa cpmf conta corrente recebe taxa cpmf conta corrente
-         vr_txipmneg:= vr_txcpmfcc;
-       END IF;
+           vr_txipmneg:= vr_txcpmfcc;
+         END IF;
          -- Fechar Cursor
-       CLOSE cr_craphis;
+         CLOSE cr_craphis;
 
          -- Carrega a taxa da CPMF para a multa sobre o saque bloqueado
-       OPEN cr_craphis (pr_cdcooper => pr_cdcooper
-                       ,pr_cdhistor => 57) ;
+         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
+                         ,pr_cdhistor => 57) ;
          -- Posicionar no proximo registro
-       FETCH cr_craphis INTO rw_craphis;
+         FETCH cr_craphis INTO rw_craphis;
          -- Se nao encontrar
-       IF cr_craphis%NOTFOUND THEN
+         IF cr_craphis%NOTFOUND THEN
            -- Buscar mensagem de erro da critica
-         vr_cdcritic := 93;
-         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' HST 57';
+           vr_cdcritic := 93;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' HST 57';
            -- Fechar Cursor
-         CLOSE cr_craphis;
+           CLOSE cr_craphis;
            -- Sair do programa
-         RAISE vr_exc_saida;
-       ELSE
+           RAISE vr_exc_saida;
+         ELSE
            -- taxa cpmf saque recebe taxa cpmf conta corrente
-         vr_txipmsaq:= vr_txcpmfcc;
-       END IF;
+           vr_txipmsaq:= vr_txcpmfcc;
+         END IF;
          -- Fechar Cursor
-       CLOSE cr_craphis;
+         CLOSE cr_craphis;
 
-       -- Buscar configuração na tabela
-       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                       ,pr_nmsistem => 'CRED'
-                       ,pr_tptabela => 'USUARI'
-                       ,pr_cdempres => 0
-                       ,pr_cdacesso => 'DIASCREDLQ'
-                       ,pr_tpregist => 0);
-       
+         -- Buscar configuração na tabela
+         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                  ,pr_nmsistem => 'CRED'
+                                                  ,pr_tptabela => 'USUARI'
+                                                  ,pr_cdempres => 0
+                                                  ,pr_cdacesso => 'DIASCREDLQ'
+                                                  ,pr_tpregist => 0);
+         
          -- Se nao encontrou entao
-       IF TRIM(vr_dstextab) IS NULL THEN
+         IF TRIM(vr_dstextab) IS NULL THEN
            -- Buscar mensagem de erro da critica
-         vr_cdcritic:= 210;
+           vr_cdcritic:= 210;
            -- Sair do programa
-         RAISE vr_exc_saida;
-       ELSE
+           RAISE vr_exc_saida;
+         ELSE
            -- Atribuir quantidade de dias devedor
-         vr_qtddsdev:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,1,3));
-       END IF;
+           vr_qtddsdev:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,1,3));
+         END IF;
 
          -- Verificar se é dia de encerramento
-       OPEN cr_crapper (pr_cdcooper => pr_cdcooper
+         OPEN cr_crapper (pr_cdcooper => pr_cdcooper
                          ,pr_dtiniper => rw_crapdat.dtmvtoan
                          ,pr_dtfimper => rw_crapdat.dtmvtopr
-                       ,pr_infimper => 2);
+                         ,pr_infimper => 2);
          -- Posicionar no proximo registro
-       FETCH cr_crapper INTO rw_crapper;
+         FETCH cr_crapper INTO rw_crapper;
          -- Se nao encontrar
-       IF cr_crapper%FOUND THEN
+         IF cr_crapper%FOUND THEN
            -- Atribuir true para encerramento
-         vr_flgencer:= TRUE;
-       ELSE
+           vr_flgencer:= TRUE;
+         ELSE
            -- Atribuir false para encerramento
-         vr_flgencer:= FALSE;
-       END IF;
+           vr_flgencer:= FALSE;
+         END IF;
          -- Fechar Cursor
-       CLOSE cr_crapper;
+         CLOSE cr_crapper;
 
-       -- Buscar configuração na tabela
-       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                       ,pr_nmsistem => 'CRED'
-                       ,pr_tptabela => 'USUARI'
-                       ,pr_cdempres => 11
-                       ,pr_cdacesso => 'JUROSNEGAT'
-                       ,pr_tpregist => 1);
-       
-       --Se nao encontrou entao
-       IF TRIM(vr_dstextab) IS NULL THEN
-         --Montar mensagem de erro com base na critica
-         vr_cdcritic:= 162;
-         --Sair do programa
-         RAISE vr_exc_saida;
-       ELSE
-         --Atribuir Taxa Juros conta negativa
-         vr_txjurneg:= GENE0002.fn_char_para_number(SubStr(vr_dstextab,1,10)) / 100;
-       END IF;
+         -- Buscar configuração na tabela
+         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                         ,pr_nmsistem => 'CRED'
+                         ,pr_tptabela => 'USUARI'
+                         ,pr_cdempres => 11
+                         ,pr_cdacesso => 'JUROSNEGAT'
+                         ,pr_tpregist => 1);
+         
+         --Se nao encontrou entao
+         IF TRIM(vr_dstextab) IS NULL THEN
+           --Montar mensagem de erro com base na critica
+           vr_cdcritic:= 162;
+           --Sair do programa
+           RAISE vr_exc_saida;
+         ELSE
+           --Atribuir Taxa Juros conta negativa
+           vr_txjurneg:= GENE0002.fn_char_para_number(SubStr(vr_dstextab,1,10)) / 100;
+         END IF;
 
-       -- Buscar configuração na tabela
-       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                       ,pr_nmsistem => 'CRED'
-                       ,pr_tptabela => 'USUARI'
-                       ,pr_cdempres => 11
-                       ,pr_cdacesso => 'JUROSSAQUE'
-                       ,pr_tpregist => 1);
-       
-       --Se nao encontrou entao
-       IF TRIM(vr_dstextab) IS NULL THEN
-         --Montar mensagem de erro com base na critica
-         vr_cdcritic:= 162;
-         --Sair do programa
-         RAISE vr_exc_saida;
-       ELSE
-         --Atribuir Taxa Juros conta negativa
-         vr_txjursaq:= GENE0002.fn_char_para_number(SubStr(vr_dstextab,1,10)) / 100;
+         -- Buscar configuração na tabela
+         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                         ,pr_nmsistem => 'CRED'
+                         ,pr_tptabela => 'USUARI'
+                         ,pr_cdempres => 11
+                         ,pr_cdacesso => 'JUROSSAQUE'
+                         ,pr_tpregist => 1);
+         
+         --Se nao encontrou entao
+         IF TRIM(vr_dstextab) IS NULL THEN
+           --Montar mensagem de erro com base na critica
+           vr_cdcritic:= 162;
+           --Sair do programa
+           RAISE vr_exc_saida;
+         ELSE
+           --Atribuir Taxa Juros conta negativa
+           vr_txjursaq:= GENE0002.fn_char_para_number(SubStr(vr_dstextab,1,10)) / 100;
 
-       END IF;
+         END IF;
 
-       --Selecionar informacoes da moeda
-       OPEN cr_crapmfx (pr_cdcooper => pr_cdcooper
+         --Selecionar informacoes da moeda
+         OPEN cr_crapmfx (pr_cdcooper => pr_cdcooper
                          ,pr_dtmvtolt => rw_crapdat.dtmvtopr
-                       ,pr_tpmoefix => 2);
-       --Posicionar no proximo registro
-       FETCH cr_crapmfx INTO rw_crapmfx;
-       --Se nao encontrar
-       IF cr_crapmfx%NOTFOUND THEN
-         --Montar mensagem de erro com base na critica
-         vr_cdcritic:= 140;
+                         ,pr_tpmoefix => 2);
+         --Posicionar no proximo registro
+         FETCH cr_crapmfx INTO rw_crapmfx;
+         --Se nao encontrar
+         IF cr_crapmfx%NOTFOUND THEN
+           --Montar mensagem de erro com base na critica
+           vr_cdcritic:= 140;
+           --Fechar Cursor
+           CLOSE cr_crapmfx;
+           --Sair do programa
+           RAISE vr_exc_saida;
+         END IF;
          --Fechar Cursor
          CLOSE cr_crapmfx;
-         --Sair do programa
-         RAISE vr_exc_saida;
-       END IF;
-       --Fechar Cursor
-       CLOSE cr_crapmfx;
 
-       -- Buscar dias corridos para a cobrança de juros
-       vr_qtdiacor:= gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
-                                               pr_cdcooper => pr_cdcooper,
-                                               pr_cdacesso => 'PARLIM_QTDIACOR');
+         -- Buscar dias corridos para a cobrança de juros
+         vr_qtdiacor:= gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                 pr_cdcooper => pr_cdcooper,
+                                                 pr_cdacesso => 'PARLIM_QTDIACOR');
 
          -- Retornar todos os registros de saldos dos Cooperados
          OPEN cr_crapsld (pr_cdcooper => pr_cdcooper
@@ -1092,384 +1094,381 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
            FETCH cr_crapsld BULK COLLECT INTO rw_crapsld LIMIT 50;
            EXIT WHEN rw_crapsld.COUNT = 0;            
            FOR idx IN rw_crapsld.first..rw_crapsld.last LOOP 
-           --Se não encontrou o associado
+             --Se não encontrou o associado
              IF rw_crapsld(idx).ass_nrdconta IS NULL THEN
-             --Montar mensagem de erro com base na critica
-             vr_cdcritic:= 251;
-             --Sair do programa
-             RAISE vr_exc_saida;
-           END IF;
+               --Montar mensagem de erro com base na critica
+               vr_cdcritic:= 251;
+               vr_dscritic := 'Idx '||idx||' --> '||gene0001.fn_busca_critica(vr_cdcritic);
+               --Sair do programa
+               RAISE vr_exc_saida;
+             END IF;
 
-           --Zerar valor juros cheque especial
+             --Zerar valor juros cheque especial
              rw_crapsld(idx).vljuresp:= 0;
-           --Zerar valor juros mes
+             --Zerar valor juros mes
              rw_crapsld(idx).vljurmes:= 0;
-           --Zerar valor juros saque
+             --Zerar valor juros saque
              rw_crapsld(idx).vljursaq:= 0;
 
-           --Zerar valor do impf
-           vr_vldoipmf:= 0;
-           --Zerar valor da base do impf
-           vr_vlbasipm:= 0;
-           --Zerar valor dos juros
-           vr_vldjuros:= 0;
-           --Zerar valor dos juros acumulados
-           vr_vlajulcm:= 0;
-           --Zerar valor ajustado do impf
-           vr_vlajuipm:= 0;
-           --Zerar valor base do iof
-           vr_vlbasiof:= 0;
-           --Flag ajuste recebe false
-           vr_flgajust:= FALSE;
-           
-           -- Condicao para verificar se a empresa existe
+             --Zerar valor do impf
+             vr_vldoipmf:= 0;
+             --Zerar valor da base do impf
+             vr_vlbasipm:= 0;
+             --Zerar valor dos juros
+             vr_vldjuros:= 0;
+             --Zerar valor dos juros acumulados
+             vr_vlajulcm:= 0;
+             --Zerar valor ajustado do impf
+             vr_vlajuipm:= 0;
+             --Zerar valor base do iof
+             vr_vlbasiof:= 0;
+             --Flag ajuste recebe false
+             vr_flgajust:= FALSE;
+               
+             -- Condicao para verificar se a empresa existe
              IF vr_tab_crapjur.EXISTS(rw_crapsld(idx).nrdconta) THEN
-             -- Natureza Juridica
+               -- Natureza Juridica
                vr_natjurid := vr_tab_crapjur(rw_crapsld(idx).nrdconta).natjurid;
-             -- Regime de Tributacao
+               -- Regime de Tributacao
                vr_tpregtrb := vr_tab_crapjur(rw_crapsld(idx).nrdconta).tpregtrb;
-           ELSE
-             -- Natureza Juridica             
-             vr_natjurid := 0;
-             -- Regime de Tributacao
-             vr_tpregtrb := 0;
-           END IF;
+             ELSE
+               -- Natureza Juridica             
+               vr_natjurid := 0;
+               -- Regime de Tributacao
+               vr_tpregtrb := 0;
+             END IF;
 
-           --Se for primeiro dia util e tiver IOF a cobrar
+             --Se for primeiro dia util e tiver IOF a cobrar
              IF rw_crapsld(idx).vlsmnesp < 0 THEN
 
                -- Selecionar informacoes dos limites(1-em estudo) de credito do associado
-             OPEN cr_craplim (pr_cdcooper => pr_cdcooper
-                               ,pr_nrdconta => rw_crapsld(idx).nrdconta
-                             ,pr_tpctrlim => 1
-                             ,pr_insitlim => 2);
-             --Posicionar no proximo registro
-             FETCH cr_craplim INTO rw_craplim;
-             --Se nao encontrar
-             IF cr_craplim%NOTFOUND THEN
-               --Fechar cursor
-               CLOSE cr_craplim;
-               --Selecionar informacoes dos limites(3-cancelado) de credito do associado
                OPEN cr_craplim (pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => rw_crapsld(idx).nrdconta
+                               ,pr_nrdconta => rw_crapsld(idx).nrdconta
                                ,pr_tpctrlim => 1
-                               ,pr_insitlim => 3);
+                               ,pr_insitlim => 2);
                --Posicionar no proximo registro
                FETCH cr_craplim INTO rw_craplim;
-               --Se nao encontrou
+               --Se nao encontrar
                IF cr_craplim%NOTFOUND THEN
-                 --Montar mensagem de erro com base na critica
-                 vr_cdcritic:= 105;
-                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-                 
-                 -- Envio centralizado de log de erro
-                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                           ,pr_ind_tipo_log => 2 -- Erro tratato
-                                           ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'NOME_ARQ_LOG_MESSAGE')
-                                           ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                              || vr_cdprogra || ' --> '
-                                                                              || vr_dscritic );                 
+                 --Fechar cursor
+                 CLOSE cr_craplim;
+                 --Selecionar informacoes dos limites(3-cancelado) de credito do associado
+                 OPEN cr_craplim (pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => rw_crapsld(idx).nrdconta
+                                 ,pr_tpctrlim => 1
+                                 ,pr_insitlim => 3);
+                 --Posicionar no proximo registro
+                 FETCH cr_craplim INTO rw_craplim;
+                 --Se nao encontrou
+                 IF cr_craplim%NOTFOUND THEN
+                   --Montar mensagem de erro com base na critica
+                   vr_cdcritic:= 105;
+                   vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+                     
+                   -- Envio centralizado de log de erro
+                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                             ,pr_ind_tipo_log => 2 -- Erro tratato
+                                             ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'NOME_ARQ_LOG_MESSAGE')
+                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
+                                                                                || vr_cdprogra || ' --> '
+                                                                                || vr_dscritic );                 
+                 END IF;
                END IF;
-             END IF;
-             --Fechar Cursor
-             CLOSE cr_craplim;
+               --Fechar Cursor
+               CLOSE cr_craplim;
 
-             IF vr_cdcritic = 105 THEN             
-                 
+               IF vr_cdcritic = 105 THEN             
+                     
                  -- zerar variaveis para o processo continuar normalmente                                                                          
                  vr_cdcritic := 0;
                  vr_dscritic := '';   
-                 
-             ELSE  --Selecionar Cadastro de linhas de credito rotativos
+                     
+               ELSE  --Selecionar Cadastro de linhas de credito rotativos
 
-                --Se nao encontrar mostra erro e aborta programa
-                IF NOT vr_tab_craplrt.EXISTS(rw_craplim.cddlinha) THEN
+                 --Se nao encontrar mostra erro e aborta programa
+                 IF NOT vr_tab_craplrt.EXISTS(rw_craplim.cddlinha) THEN
                    --Buscar mensagem de erro da critica
                    vr_cdcritic := 363;
-                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+                   vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)|| ' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                    --Sair do programa
                    RAISE vr_exc_saida;
-                END IF;
+                 END IF;
 
-                --Valor juros cheque especial recebe valor juros * txmensal /100 * -1
+                 --Valor juros cheque especial recebe valor juros * txmensal /100 * -1
                  rw_crapsld(idx).vljuresp:= (rw_crapsld(idx).vlsmnesp * (vr_tab_craplrt(rw_craplim.cddlinha) / 100)) * -1;
+               END IF;
+
              END IF;
 
-           END IF;
-
-           --Se valor negativo no mes menor zero
+             --Se valor negativo no mes menor zero
              IF rw_crapsld(idx).vlsmnmes < 0 THEN
-             --valor juros do saldo devedor recebe valor negativo no mes * taxa juros negativo * -1.
+               --valor juros do saldo devedor recebe valor negativo no mes * taxa juros negativo * -1.
                rw_crapsld(idx).vljurmes:= (rw_crapsld(idx).vlsmnmes * vr_txjurneg) * -1;
-           END IF;
+             END IF;
 
-           --Se valor media saque s/ bloqueado menor zero
+             --Se valor media saque s/ bloqueado menor zero
              IF rw_crapsld(idx).vlsmnblq < 0   THEN
-             --Valor juro saque recebe valor media saque s/ bloqueado * taxa juros saque * -1.
+               --Valor juro saque recebe valor media saque s/ bloqueado * taxa juros saque * -1.
                rw_crapsld(idx).vljursaq:= (rw_crapsld(idx).vlsmnblq * vr_txjursaq) * -1;
-           END IF;
+             END IF;
 
-           --Valor saldo anterior recebe valor saldo disponivel + valor saldo cheque salario
+             --Valor saldo anterior recebe valor saldo disponivel + valor saldo cheque salario
              vr_vlsldant:= Nvl(rw_crapsld(idx).vlsddisp,0) + Nvl(rw_crapsld(idx).vlsdchsl,0);
-           --Valor saldo atual recebe valor saldo anterior - valor juros cheque especial - juros mes - juros de saque
+             --Valor saldo atual recebe valor saldo anterior - valor juros cheque especial - juros mes - juros de saque
              vr_vlsldatu:= vr_vlsldant - Nvl(rw_crapsld(idx).vljurmes,0) - Nvl(rw_crapsld(idx).vljursaq,0);
 
-           --Verificar se existe cota para o associado
+             --Verificar se existe cota para o associado
              IF rw_crapsld(idx).rowidcot IS NULL THEN
-             --Buscar mensagem de erro da critica
-             vr_cdcritic := 169;
-               vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+               --Buscar mensagem de erro da critica
+               vr_cdcritic := 169;
+               vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ;
 
-             --Sair do programa
-             RAISE vr_exc_saida;
-           ELSE
-             --Atribuir o rowid da tabela de memoria para o registro
+               --Sair do programa
+               RAISE vr_exc_saida;
+             ELSE
+               --Atribuir o rowid da tabela de memoria para o registro
                vr_crapcot := rw_crapsld(idx).rowidcot; 
-           END IF;
+             END IF;
 
-           --Se os juros cheque especial ou juros do mes ou juros de saque for maior zero e for pessoa fisica ou juridica
+             --Se os juros cheque especial ou juros do mes ou juros de saque for maior zero e for pessoa fisica ou juridica
              IF (rw_crapsld(idx).vljuresp > 0  OR rw_crapsld(idx).vljurmes > 0  OR rw_crapsld(idx).vljursaq > 0)  AND
                 (rw_crapsld(idx).ass_inpessoa < 3)                THEN 
 
-             --Acumular em quantidade juros em MFX os juros do cheque especial + juros no mes + juros saque dividido pelo valor moeda
+               --Acumular em quantidade juros em MFX os juros do cheque especial + juros no mes + juros saque dividido pelo valor moeda
 
-             --Quantidade juros recebe juros ch. especial + juros mes + juros saque dividido valor moeda
+               --Quantidade juros recebe juros ch. especial + juros mes + juros saque dividido valor moeda
                vr_qtjurmfx:= Round(((Round(Nvl(rw_crapsld(idx).vljuresp,0),2)  +
                                      Round(Nvl(rw_crapsld(idx).vljurmes,0),2)  +
                                      Round(Nvl(rw_crapsld(idx).vljursaq,0),2)
-                                  ) / Nvl(rw_crapmfx.vlmoefix,0)),4); 
-                    
-             --Acumular a quantidade de juros calculada
+                                    ) / Nvl(rw_crapmfx.vlmoefix,0)),4); 
+                        
+               --Acumular a quantidade de juros calculada
                rw_crapsld(idx).qtjramfx:= Nvl(rw_crapsld(idx).qtjramfx,0) + Nvl(vr_qtjurmfx,0);
 
 
-             --Valor total saldo anterior recebe:
-             --vlsdblfp = valor do saldo bloqueado fora da praca
-             --vlsdbloq = valor saldo bloqueado
-             --vlsdblpr = valor do saldo bloqueado praca
-             --vlsdchsl = valor do saldo cheque salario
-             --vlsddisp = valor do saldo disponivel
-             --vllimcre = valor do limite de credito do associado
+               --Valor total saldo anterior recebe:
+               --vlsdblfp = valor do saldo bloqueado fora da praca
+               --vlsdbloq = valor saldo bloqueado
+               --vlsdblpr = valor do saldo bloqueado praca
+               --vlsdchsl = valor do saldo cheque salario
+               --vlsddisp = valor do saldo disponivel
+               --vllimcre = valor do limite de credito do associado
                vr_tot_vlsldant:= Nvl(rw_crapsld(idx).vlsddisp,0) + Nvl(rw_crapsld(idx).vlsdchsl,0) +
                                  Nvl(rw_crapsld(idx).vlsdbloq,0) + Nvl(rw_crapsld(idx).vlsdblpr,0) +
                                  Nvl(rw_crapsld(idx).vlsdblfp,0) + Nvl(rw_crapsld(idx).ass_vllimcre,0);
 
-             --Zerar Numero sequencial tabela
-             vr_nrseqneg:= 0;
-             --Atribuir false para flag existe saldo negativo
-             vr_flghaneg:= FALSE;
-             --Se a data do movimento estiver entre inicio e fim de iof  ou calcula cpmf
+               --Zerar Numero sequencial tabela
+               vr_nrseqneg:= 0;
+               --Atribuir false para flag existe saldo negativo
+               vr_flghaneg:= FALSE;
+               --Se a data do movimento estiver entre inicio e fim de iof  ou calcula cpmf
                IF (rw_crapdat.dtmvtolt BETWEEN vr_dtinifis AND vr_dtfimfis) OR vr_flgdcpmf THEN
-               --Flag ajuste recebe false
-               vr_flgajust:= FALSE;
-             ELSE
-               --Flag ajuste recebe true
-               vr_flgajust:= TRUE;
-             END IF;
-
-             --Se tem saldo negativo no crapneg
-             IF vr_tot_vlsldant < 0 THEN
-               --Flag saldo negativo recebe true
-               vr_flghaneg:= TRUE;
-
-               --Selecionar informacoes de saldos negativos e controles de cheque
-               OPEN cr_crapneg2 (pr_cdcooper  => pr_cdcooper
-                                  ,pr_nrdconta  => rw_crapsld(idx).nrdconta
-                                ,pr_cdhisest => 5
-                                ,pr_vlestour => (vr_tot_vlsldant * -1));
-               --Posicionar no proximo registro
-               FETCH cr_crapneg2  INTO rw_crapneg2;
-               --Se nao encontrar
-               IF cr_crapneg2%NOTFOUND  THEN
-                 --Buscar mensagem de erro da critica
-                 vr_cdcritic := 419;
-                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
-                 -- Fechar Cursor
-                 CLOSE cr_crapneg2;
-                 --Sair do programa
-                 RAISE vr_exc_saida;
+                 --Flag ajuste recebe false
+                 vr_flgajust:= FALSE;
                ELSE
-                 --Inicializar numero sequencial lancamento com o já existente
-                 vr_nrseqneg:= Nvl(rw_crapneg2.nrseqdig,0);
+                 --Flag ajuste recebe true
+                 vr_flgajust:= TRUE;
                END IF;
-               --Fechar Cursor
-               CLOSE cr_crapneg2;
-             ELSE
-               -- Usar cadastro sequenciador para geração da crapneg
-                 vr_nrseqneg := fn_sequence('CRAPNEG','NRSEQDIG',pr_cdcooper||';'||rw_crapsld(idx).nrdconta);
-             END IF;
 
-             --Atualizar os juros pagos no registro de cotas
-             BEGIN
-               --Quantidade juros recebe juros ch. especial + juros mes + juros saque dividido valor moeda
+               --Se tem saldo negativo no crapneg
+               IF vr_tot_vlsldant < 0 THEN
+                 --Flag saldo negativo recebe true
+                 vr_flghaneg:= TRUE;
+
+                 --Selecionar informacoes de saldos negativos e controles de cheque
+                 OPEN cr_crapneg2 (pr_cdcooper  => pr_cdcooper
+                                  ,pr_nrdconta  => rw_crapsld(idx).nrdconta
+                                  ,pr_cdhisest => 5
+                                  ,pr_vlestour => (vr_tot_vlsldant * -1));
+                 --Posicionar no proximo registro
+                 FETCH cr_crapneg2  INTO rw_crapneg2;
+                 --Se nao encontrar
+                 IF cr_crapneg2%NOTFOUND  THEN
+                   --Buscar mensagem de erro da critica
+                   vr_cdcritic := 419;
+                   vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                   -- Fechar Cursor
+                   CLOSE cr_crapneg2;
+                   --Sair do programa
+                   RAISE vr_exc_saida;
+                 ELSE
+                   --Inicializar numero sequencial lancamento com o já existente
+                   vr_nrseqneg:= Nvl(rw_crapneg2.nrseqdig,0);
+                 END IF;
+                 --Fechar Cursor
+                 CLOSE cr_crapneg2;
+               ELSE
+                 -- Usar cadastro sequenciador para geração da crapneg
+                 vr_nrseqneg := fn_sequence('CRAPNEG','NRSEQDIG',pr_cdcooper||';'||rw_crapsld(idx).nrdconta);
+               END IF;
+
+               --Atualizar os juros pagos no registro de cotas
+               BEGIN
+                 --Quantidade juros recebe juros ch. especial + juros mes + juros saque dividido valor moeda
                  vr_qtjurmfx:= Round(((Round(Nvl(rw_crapsld(idx).vljuresp,0),2)  +
                                        Round(Nvl(rw_crapsld(idx).vljurmes,0),2)  +
                                        Round(Nvl(rw_crapsld(idx).vljursaq,0),2)
-                                    ) / Nvl(rw_crapmfx.vlmoefix,0)),4);
-                     
-               --Atualizar quantidade juros na tabela cotas
-               UPDATE crapcot SET crapcot.qtjurmfx = Nvl(crapcot.qtjurmfx,0) + Nvl(vr_qtjurmfx,0)
-               WHERE crapcot.ROWID = vr_crapcot;
-             EXCEPTION
-               WHEN OTHERS THEN
-                 vr_dscritic := 'Erro ao inserir na tabela crapcot. '||SQLERRM;
-                 --Sair do programa
-                 RAISE vr_exc_saida;
-             END;
+                                      ) / Nvl(rw_crapmfx.vlmoefix,0)),4);
+                         
+                 --Atualizar quantidade juros na tabela cotas
+                 UPDATE crapcot SET crapcot.qtjurmfx = Nvl(crapcot.qtjurmfx,0) + Nvl(vr_qtjurmfx,0)
+                  WHERE crapcot.ROWID = vr_crapcot;
+               EXCEPTION
+                 WHEN OTHERS THEN
+                   vr_dscritic := 'Erro ao Atualizar tabela crapcot Rowid '||vr_crapcot||' --> '||SQLERRM;
+                   --Sair do programa
+                   RAISE vr_exc_saida;
+               END;
 
-             --Se a multa sobre o saldo devedor for maior zero
+               --Se a multa sobre o saldo devedor for maior zero
                IF rw_crapsld(idx).vljurmes > 0 THEN
-             
-                -- Verificar Saldo do cooperado
-                extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper, 
-                                            pr_rw_crapdat => rw_crapdat, 
-                                            pr_cdagenci => 1, 
-                                            pr_nrdcaixa => 0, 
-                                            pr_cdoperad => '1', 
+                 
+                  -- Verificar Saldo do cooperado
+                  extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper, 
+                                              pr_rw_crapdat => rw_crapdat, 
+                                              pr_cdagenci => 1, 
+                                              pr_nrdcaixa => 0, 
+                                              pr_cdoperad => '1', 
                                               pr_nrdconta => rw_crapsld(idx).nrdconta, 
                                               pr_vllimcre => rw_crapsld(idx).ass_vllimcre, 
-                                            pr_dtrefere => rw_crapdat.dtmvtolt, 
-                                            pr_flgcrass => FALSE, 
-                                            pr_tipo_busca => 'A', -- Tipo Busca(A-dtmvtoan)
-                                            pr_des_reto => vr_des_erro, 
-                                            pr_tab_sald => vr_tab_saldo, 
-                                            pr_tab_erro => vr_tab_erro);
-                                                                
-                --Se ocorreu erro
-                IF vr_des_erro = 'NOK' THEN
-                  -- Tenta buscar o erro no vetor de erro
-                  IF vr_tab_erro.COUNT > 0 THEN
-                    vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-                      vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_crapsld(idx).nrdconta;
+                                              pr_dtrefere => rw_crapdat.dtmvtolt, 
+                                              pr_flgcrass => FALSE, 
+                                              pr_tipo_busca => 'A', -- Tipo Busca(A-dtmvtoan)
+                                              pr_des_reto => vr_des_erro, 
+                                              pr_tab_sald => vr_tab_saldo, 
+                                              pr_tab_erro => vr_tab_erro);
+                                                                    
+                  --Se ocorreu erro
+                  IF vr_des_erro = 'NOK' THEN
+                    -- Tenta buscar o erro no vetor de erro
+                    IF vr_tab_erro.COUNT > 0 THEN
+                      vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                      vr_dscritic:= ' Conta: '||rw_crapsld(idx).nrdconta || ' --> '||vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                    ELSE
+                      vr_cdcritic:= 0;
+                      vr_dscritic:= 'Conta: '||rw_crapsld(idx).nrdconta||' --> Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro';
+                    END IF;                              
+
+                    --Levantar Excecao
+                    RAISE vr_exc_saida;
                   ELSE
-                    vr_cdcritic:= 0;
-                      vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapsld(idx).nrdconta;
+                    vr_dscritic:= NULL;
                   END IF;
-                                  
-                  IF vr_cdcritic <> 0 THEN
-                      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' Conta: '||rw_crapsld(idx).nrdconta;
-                  END IF;                              
+                  --Verificar o saldo retornado
+                  IF vr_tab_saldo.Count = 0 THEN
+                    --Montar mensagem erro
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Nao foi possivel consultar o saldo para a operacao.';                                              
+                    --Levantar Excecao
+                    RAISE vr_exc_saida;
+                  ELSE
+                    vr_vlsddisp := nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
+                                   nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
+                  END IF; 
 
-                  --Levantar Excecao
-                  RAISE vr_exc_saida;
-                ELSE
-                  vr_dscritic:= NULL;
-                END IF;
-                --Verificar o saldo retornado
-                IF vr_tab_saldo.Count = 0 THEN
-                  --Montar mensagem erro
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';                                              
-                  --Levantar Excecao
-                  RAISE vr_exc_saida;
-                ELSE
-                  vr_vlsddisp := nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-                                 nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
-                END IF; 
-
-               -- Se saldo do cooperado não suprir o lançamento e qtd dias corridos for > 0 
-               -- vamos agendar o lançamento na LAUTOM
+                 -- Se saldo do cooperado não suprir o lançamento e qtd dias corridos for > 0 
+                 -- vamos agendar o lançamento na LAUTOM
                  IF rw_crapsld(idx).vljurmes > vr_vlsddisp AND vr_qtdiacor > 0 THEN                   
-                    
+                        
                    vr_nrseqdig:= fn_sequence('CRAPLAU','NRSEQDIG',''||pr_cdcooper||';'||TO_CHAR(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||'');
-                   
-                 BEGIN
-                  INSERT INTO craplau
-                              (craplau.cdcooper
-                              ,craplau.dtmvtopg
-                              ,craplau.cdagenci
-                              ,craplau.cdbccxlt
-                              ,craplau.cdhistor
-                              ,craplau.dtmvtolt
-                              ,craplau.insitlau
-                              ,craplau.nrdconta
-                              ,craplau.nrdctabb
-                              ,craplau.nrdolote
-                              ,craplau.nrseqdig
-                              ,craplau.tpdvalor
-                              ,craplau.vllanaut
-                              ,craplau.nrdocmto
-                              ,craplau.dttransa
-                              ,craplau.hrtransa
-                              ,craplau.dsorigem)
-                       VALUES (pr_cdcooper            -- craplau.cdcooper
+                       
+                   BEGIN
+                    INSERT INTO craplau
+                                (craplau.cdcooper
+                                ,craplau.dtmvtopg
+                                ,craplau.cdagenci
+                                ,craplau.cdbccxlt
+                                ,craplau.cdhistor
+                                ,craplau.dtmvtolt
+                                ,craplau.insitlau
+                                ,craplau.nrdconta
+                                ,craplau.nrdctabb
+                                ,craplau.nrdolote
+                                ,craplau.nrseqdig
+                                ,craplau.tpdvalor
+                                ,craplau.vllanaut
+                                ,craplau.nrdocmto
+                                ,craplau.dttransa
+                                ,craplau.hrtransa
+                                ,craplau.dsorigem)
+                         VALUES (pr_cdcooper            -- craplau.cdcooper
                                 ,rw_crapdat.dtmvtolt    -- craplau.dtmvtopg
                                 ,vr_cdagenci            -- craplau.cdagenci
                                 ,vr_cdbccxlt            -- craplau.cdbccxlt
                                 ,37                     -- craplau.cdhistor
                                 ,rw_crapdat.dtmvtolt    -- craplau.dtmvtolt
-                              ,1                      -- craplau.insitlau
+                                ,1                      -- craplau.insitlau
                                 ,rw_crapsld(idx).nrdconta    -- craplau.nrdconta
                                 ,rw_crapsld(idx).nrdconta    -- craplau.nrdctabb
                                 ,vr_nrdolote            -- craplau.nrdolote
-                              ,nvl(vr_nrseqdig,0) + 1 -- craplau.nrseqdig
-                              ,1                      -- craplau.tpdvalor
+                                ,nvl(vr_nrseqdig,0) + 1 -- craplau.nrseqdig
+                                ,1                      -- craplau.tpdvalor
                                 ,rw_crapsld(idx).vljurmes    -- craplau.vllanaut
-                              ,99999937               -- craplau.nrdocmto
+                                ,99999937               -- craplau.nrdocmto
                                 ,rw_crapdat.dtmvtolt            -- craplau.dttransa
-                              ,gene0002.fn_busca_time -- craplau.hrtransa
-                              ,'ADIOFJUROS')          -- craplau.dsorigem
-                    RETURNING idlancto 
-                         INTO vr_idlancto; 
-                  EXCEPTION
-                    WHEN OTHERS THEN
-                      vr_dscritic := 'Erro ao inserir craplau: '||SQLERRM;
-                      RAISE vr_exc_saida;
-                  END;
-                     
-                 -- Para cada craplau vamos criar um registro de controle
-                 OPEN cr_tbcc_lautom_controle(pr_idlancto => vr_idlancto);
-                 FETCH cr_tbcc_lautom_controle INTO rw_tbcc_lautom_controle;
-                     
-                 IF cr_tbcc_lautom_controle%NOTFOUND THEN
-                   CLOSE cr_tbcc_lautom_controle;
-                       
-                   BEGIN
-                     INSERT INTO tbcc_lautom_controle(cdcooper, 
-                                                      nrdconta, 
-                                                      dtmvtolt, 
-                                                      vloriginal, 
-                                                      idlautom, 
-                                                      insit_lancto, 
-                                                      cdhistor) 
-                                               VALUES(pr_cdcooper
+                                ,gene0002.fn_busca_time -- craplau.hrtransa
+                                ,'ADIOFJUROS')          -- craplau.dsorigem
+                      RETURNING idlancto 
+                           INTO vr_idlancto; 
+                    EXCEPTION
+                      WHEN OTHERS THEN
+                        vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir craplau: '||SQLERRM;
+                        RAISE vr_exc_saida;
+                    END;
+                         
+                   -- Para cada craplau vamos criar um registro de controle
+                   OPEN cr_tbcc_lautom_controle(pr_idlancto => vr_idlancto);
+                   FETCH cr_tbcc_lautom_controle INTO rw_tbcc_lautom_controle;
+                         
+                   IF cr_tbcc_lautom_controle%NOTFOUND THEN
+                     CLOSE cr_tbcc_lautom_controle;
+                           
+                     BEGIN
+                       INSERT INTO tbcc_lautom_controle(cdcooper, 
+                                                        nrdconta, 
+                                                        dtmvtolt, 
+                                                        vloriginal, 
+                                                        idlautom, 
+                                                        insit_lancto, 
+                                                        cdhistor) 
+                                                 VALUES(pr_cdcooper
                                                        ,rw_crapsld(idx).nrdconta
                                                        ,rw_crapdat.dtmvtolt
                                                        ,rw_crapsld(idx).vljurmes
-                                                     ,vr_idlancto
-                                                     ,1
-                                                     ,37);
-                     EXCEPTION  
-                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir cr_tbcc_lautom_controle: '||SQLERRM;
-                        RAISE vr_exc_saida;
-                    END;
-                       
-                 ELSE
-                   CLOSE cr_tbcc_lautom_controle;
-                 END IF;
-                 
-                 --Diminuir o valor do lancamento nos juros
+                                                       ,vr_idlancto
+                                                       ,1
+                                                       ,37);
+                       EXCEPTION  
+                         WHEN OTHERS THEN
+                          vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir cr_tbcc_lautom_controle: '||SQLERRM;
+                          RAISE vr_exc_saida;
+                      END;
+                           
+                   ELSE
+                     CLOSE cr_tbcc_lautom_controle;
+                   END IF;
+                     
+                   --Diminuir o valor do lancamento nos juros
                    vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_crapsld(idx).vljurmes,0);
-               ELSE -- Caso contrario segue criando registro na conta corrente  
-             
+                 ELSE -- Caso contrario segue criando registro na conta corrente  
+                 
                    -- Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
-               BEGIN
-                 INSERT INTO craplcm (cdcooper
-                                     ,dtmvtolt
-                                     ,cdagenci
-                                     ,cdbccxlt
-                                     ,nrdolote
-                                     ,nrdconta
-                                     ,nrdctabb
-                                     ,nrdctitg
-                                     ,nrdocmto
-                                     ,cdhistor
-                                     ,nrseqdig
-                                     ,vllanmto
-                                     ,vldoipmf
-                                     ,cdcoptfn)
-                             VALUES  (pr_cdcooper  
+                   BEGIN
+                     INSERT INTO craplcm (cdcooper
+                                         ,dtmvtolt
+                                         ,cdagenci
+                                         ,cdbccxlt
+                                         ,nrdolote
+                                         ,nrdconta
+                                         ,nrdctabb
+                                         ,nrdctitg
+                                         ,nrdocmto
+                                         ,cdhistor
+                                         ,nrseqdig
+                                         ,vllanmto
+                                         ,vldoipmf
+                                         ,cdcoptfn)
+                                 VALUES  (pr_cdcooper  
                                          ,rw_crapdat.dtmvtolt
                                          ,vr_cdagenci
                                          ,vr_cdbccxlt
@@ -1477,73 +1476,73 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                          ,rw_crapsld(idx).nrdconta
                                          ,rw_crapsld(idx).nrdconta
                                          ,GENE0002.FN_MASK(rw_crapsld(idx).nrdconta, '99999999')
-                                     ,99999937
-                                     ,37
+                                         ,99999937
+                                         ,37
                                          ,CRAPLOT_8450_SEQ.NEXTVAL
                                          ,rw_crapsld(idx).vljurmes
                                          ,TRUNC(rw_crapsld(idx).vljurmes * vr_txipmneg,2)
-                                     ,0)
-                             RETURNING vllanmto
-                                      ,vldoipmf
-                                      ,ROWID
-                             INTO     rw_craplcm.vllanmto
-                                     ,rw_craplcm.vldoipmf
-                                     ,rw_craplcm.rowid;
+                                         ,0)
+                                 RETURNING vllanmto
+                                          ,vldoipmf
+                                          ,ROWID
+                                 INTO     rw_craplcm.vllanmto
+                                         ,rw_craplcm.vldoipmf
+                                         ,rw_craplcm.rowid;
 
-               EXCEPTION
-                 WHEN OTHERS THEN
-                   vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
-                   --Sair do programa
-                   RAISE vr_exc_saida;
-               END;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir na tabela craplcm. '||SQLERRM;
+                       --Sair do programa
+                       RAISE vr_exc_saida;
+                   END;
 
                    -- Incrementar o total a debito
                    vr_vlinfodb:= Nvl(vr_vlinfodb,0) + Nvl(rw_craplcm.vllanmto,0);
-               --Incrementar o total a debito compensado
+                   --Incrementar o total a debito compensado
                    vr_vlcompdb:= Nvl(vr_vlcompdb,0) + Nvl(rw_craplcm.vllanmto,0);
-               --Incrementar a quantidade total de lancamentos
+                   --Incrementar a quantidade total de lancamentos
                    vr_qtinfoln:= Nvl(vr_qtinfoln,0) + 1;
-               --Incrementar a quantidade total de lancamentos compensados
+                   --Incrementar a quantidade total de lancamentos compensados
                    vr_qtcompln:= Nvl(vr_qtcompln,0) + 1;
                    
-               --Incrementar a quantidade de lancamentos no mes
+                   --Incrementar a quantidade de lancamentos no mes
                    rw_crapsld(idx).qtlanmes:= Nvl(rw_crapsld(idx).qtlanmes,0) + 1;
-               --Diminuir do saldo disponivel o valor do lancamento
+                   --Diminuir do saldo disponivel o valor do lancamento
                    rw_crapsld(idx).vlsddisp:= Nvl(rw_crapsld(idx).vlsddisp,0) - Nvl(rw_craplcm.vllanmto,0);
-               --Diminuir o valor do lancamento nos juros
-               vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
+                   --Diminuir o valor do lancamento nos juros
+                   vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
 
-               --Se cobrar cpmf
-               IF vr_flgdcpmf THEN
-                 --Acumular o valor do lancamento no valor base ipmf
-                 vr_vlbasipm:= vr_vlbasipm + Nvl(rw_craplcm.vllanmto,0);
-                 --Acumular no valor do ipmf o valor do ipmf existente no lancamento
-                 vr_vldoipmf:= vr_vldoipmf + Nvl(rw_craplcm.vldoipmf,0);
+                   --Se cobrar cpmf
+                   IF vr_flgdcpmf THEN
+                     --Acumular o valor do lancamento no valor base ipmf
+                     vr_vlbasipm:= vr_vlbasipm + Nvl(rw_craplcm.vllanmto,0);
+                     --Acumular no valor do ipmf o valor do ipmf existente no lancamento
+                     vr_vldoipmf:= vr_vldoipmf + Nvl(rw_craplcm.vldoipmf,0);
+                   END IF;
+
+                 END IF;
+
                END IF;
 
-             END IF;
-
-             END IF;
-
-             --Se o juros sobre o saque bloqueado for maior zero
+               --Se o juros sobre o saque bloqueado for maior zero
                IF rw_crapsld(idx).vljursaq > 0 THEN
-               --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
-               BEGIN
-                 INSERT INTO craplcm (cdcooper
-                                     ,dtmvtolt
-                                     ,cdagenci
-                                     ,cdbccxlt
-                                     ,nrdolote
-                                     ,nrdconta
-                                     ,nrdctabb
-                                     ,nrdctitg
-                                     ,nrdocmto
-                                     ,cdhistor
-                                     ,nrseqdig
-                                     ,vllanmto
-                                     ,vldoipmf
-                                     ,cdcoptfn)
-                             VALUES  (pr_cdcooper
+                 --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+                 BEGIN
+                   INSERT INTO craplcm (cdcooper
+                                       ,dtmvtolt
+                                       ,cdagenci
+                                       ,cdbccxlt
+                                       ,nrdolote
+                                       ,nrdconta
+                                       ,nrdctabb
+                                       ,nrdctitg
+                                       ,nrdocmto
+                                       ,cdhistor
+                                       ,nrseqdig
+                                       ,vllanmto
+                                       ,vldoipmf
+                                       ,cdcoptfn)
+                               VALUES  (pr_cdcooper
                                        ,rw_crapdat.dtmvtolt
                                        ,vr_cdagenci
                                        ,vr_cdbccxlt
@@ -1551,233 +1550,147 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                        ,rw_crapsld(idx).nrdconta
                                        ,rw_crapsld(idx).nrdconta
                                        ,GENE0002.FN_MASK(rw_crapsld(idx).nrdconta, '99999999')
-                                     ,99999957
-                                     ,57
+                                       ,99999957
+                                       ,57
                                        ,CRAPLOT_8450_SEQ.NEXTVAL
                                        ,rw_crapsld(idx).vljursaq
                                        ,TRUNC(rw_crapsld(idx).vljursaq * vr_txipmsaq,2)
-                                     ,0)
-                             RETURNING vllanmto
-                                      ,vldoipmf
-                                      ,ROWID
-                             INTO     rw_craplcm.vllanmto
-                                     ,rw_craplcm.vldoipmf
-                                     ,rw_craplcm.rowid;
+                                       ,0)
+                               RETURNING vllanmto
+                                        ,vldoipmf
+                                        ,ROWID
+                               INTO     rw_craplcm.vllanmto
+                                       ,rw_craplcm.vldoipmf
+                                       ,rw_craplcm.rowid;
 
-               EXCEPTION
-                 WHEN OTHERS THEN
-                   vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
-                   --Sair do programa
-                   RAISE vr_exc_saida;
-               END;
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                     vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir na tabela craplcm. '||SQLERRM;
+                     --Sair do programa
+                     RAISE vr_exc_saida;
+                 END;
 
                  -- Incrementar o total a debito
                  vr_vlinfodb:= Nvl(vr_vlinfodb,0) + Nvl(rw_craplcm.vllanmto,0);
-               --Incrementar o total a debito compensado
+                 --Incrementar o total a debito compensado
                  vr_vlcompdb:= Nvl(vr_vlcompdb,0) + Nvl(rw_craplcm.vllanmto,0);
-               --Incrementar a quantidade total de lancamentos
+                 --Incrementar a quantidade total de lancamentos
                  vr_qtinfoln:= Nvl(vr_qtinfoln,0) + 1;
-               --Incrementar a quantidade total de lancamentos compensados
+                 --Incrementar a quantidade total de lancamentos compensados
                  vr_qtcompln:= Nvl(vr_qtcompln,0) + 1;
 
-               --Incrementar a quantidade de lancamentos no mes
+                 --Incrementar a quantidade de lancamentos no mes
                  rw_crapsld(idx).qtlanmes:= Nvl(rw_crapsld(idx).qtlanmes,0) + 1;
-               --Diminuir do saldo disponivel o valor do lancamento
+                 --Diminuir do saldo disponivel o valor do lancamento
                  rw_crapsld(idx).vlsddisp:= Nvl(rw_crapsld(idx).vlsddisp,0) - Nvl(rw_craplcm.vllanmto,0);
-               --Diminuir o valor do lancamento nos juros
-               vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
+                 --Diminuir o valor do lancamento nos juros
+                 vr_vldjuros:= Nvl(vr_vldjuros,0) + Nvl(rw_craplcm.vllanmto,0);
+
+                 --Se cobrar cpmf
+                 IF vr_flgdcpmf THEN
+                   --Acumular o valor do lancamento no valor base ipmf
+                   vr_vlbasipm:= Nvl(vr_vlbasipm,0) + Nvl(rw_craplcm.vllanmto,0);
+                   --Acumular no valor do ipmf o valor do ipmf existente no lancamento
+                   vr_vldoipmf:= Nvl(vr_vldoipmf,0) + Nvl(rw_craplcm.vldoipmf,0);
+                 END IF;
+               END IF;
 
                --Se cobrar cpmf
                IF vr_flgdcpmf THEN
-                 --Acumular o valor do lancamento no valor base ipmf
-                 vr_vlbasipm:= Nvl(vr_vlbasipm,0) + Nvl(rw_craplcm.vllanmto,0);
-                 --Acumular no valor do ipmf o valor do ipmf existente no lancamento
-                 vr_vldoipmf:= Nvl(vr_vldoipmf,0) + Nvl(rw_craplcm.vldoipmf,0);
-               END IF;
-             END IF;
+                 --Se valor base ipmf > 0
+                 IF vr_vlbasipm > 0 THEN
+                   --Se for encerramento
+                   IF vr_flgencer THEN
 
-             --Se cobrar cpmf
-             IF vr_flgdcpmf THEN
-               --Se valor base ipmf > 0
-               IF vr_vlbasipm > 0 THEN
-                 --Se for encerramento
-                 IF vr_flgencer THEN
+                     --Atualizar informacoes debitos de cpmf
+                     BEGIN
 
-                   --Atualizar informacoes debitos de cpmf
-                   BEGIN
-
-                     --Acumula valor do ipmf no valor do ipmf a pagar
+                       --Acumula valor do ipmf no valor do ipmf a pagar
                        rw_crapsld(idx).vlipmfpg:= Nvl(rw_crapsld(idx).vlipmfpg,0) + Nvl(vr_vldoipmf,0);
 
-                     --Atualizar informacoes de debitos de ipmf
-                     UPDATE crapipm SET crapipm.vlbasipm = Nvl(crapipm.vlbasipm,0) + Nvl(vr_vlbasipm,0)
-                                       ,crapipm.vldoipmf = Nvl(crapipm.vldoipmf,0) + Nvl(vr_vldoipmf,0)
-                     WHERE crapipm.cdcooper = pr_cdcooper
-                     AND   crapipm.nrdconta = rw_craplcm.nrdconta
-                     AND   crapipm.dtdebito = rw_crapper.dtdebito
-                     AND   crapipm.indebito = 1;
+                       --Atualizar informacoes de debitos de ipmf
+                       UPDATE crapipm SET crapipm.vlbasipm = Nvl(crapipm.vlbasipm,0) + Nvl(vr_vlbasipm,0)
+                                         ,crapipm.vldoipmf = Nvl(crapipm.vldoipmf,0) + Nvl(vr_vldoipmf,0)
+                       WHERE crapipm.cdcooper = pr_cdcooper
+                       AND   crapipm.nrdconta = rw_craplcm.nrdconta
+                       AND   crapipm.dtdebito = rw_crapper.dtdebito
+                       AND   crapipm.indebito = 1;
 
-                     --Se não atualizou nada entao cria registro
-                     IF SQL%ROWCOUNT = 0 THEN
-                       BEGIN
-                         INSERT INTO crapipm (crapipm.dtdebito
-                                             ,crapipm.indebito
-                                             ,crapipm.nrdconta
-                                             ,crapipm.vlbasipm
-                                             ,crapipm.vldoipmf
-                                             ,crapipm.cdcooper)
-                                     VALUES  (rw_crapper.dtdebito
-                                             ,1
-                                             ,rw_craplcm.nrdconta
-                                             ,vr_vlbasipm
-                                             ,vr_vldoipmf
-                                             ,pr_cdcooper);
-                       EXCEPTION
-                         WHEN OTHERS THEN
-                         vr_dscritic := 'Erro ao inserir na tabela crapipm. '||SQLERRM;
+                       --Se não atualizou nada entao cria registro
+                       IF SQL%ROWCOUNT = 0 THEN
+                         BEGIN
+                           INSERT INTO crapipm (crapipm.dtdebito
+                                               ,crapipm.indebito
+                                               ,crapipm.nrdconta
+                                               ,crapipm.vlbasipm
+                                               ,crapipm.vldoipmf
+                                               ,crapipm.cdcooper)
+                                       VALUES  (rw_crapper.dtdebito
+                                               ,1
+                                               ,rw_craplcm.nrdconta
+                                               ,vr_vlbasipm
+                                               ,vr_vldoipmf
+                                               ,pr_cdcooper);
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             vr_dscritic := ' Conta: '||rw_craplcm.nrdconta || ' --> Erro ao inserir na tabela crapipm. '||SQLERRM;
+                             --Sair do programa
+                             RAISE vr_exc_saida;
+                         END;
+                       END IF;
+
+                     EXCEPTION
+                       WHEN vr_exc_saida THEN
+                         RAISE vr_exc_saida;
+                       WHEN OTHERS THEN
+                         vr_dscritic := ' Conta: '||rw_craplcm.nrdconta || ' --> Erro ao atualizar tabela crapipm. '||SQLERRM;
                          --Sair do programa
                          RAISE vr_exc_saida;
-                       END;
-                     END IF;
+                     END;
+                   ELSE
+                     --Acumular no Valor ipmf a pagar o valor do ipmf
+                     rw_crapsld(idx).vlipmfap:= Nvl(rw_crapsld(idx).vlipmfap,0) + Nvl(vr_vldoipmf,0);
+                     --Acumular no valor base do ipmf o valor base do ipmf
+                     rw_crapsld(idx).vlbasipm:= Nvl(rw_crapsld(idx).vlbasipm,0) + Nvl(vr_vlbasipm,0);
 
+                   END IF; --vr_flgencer
+                 END IF; --vr_vlbasipm > 0
+               END IF; --vr_flgdcpmf
+
+               --Valor total atual recebe total saldo anterior - juros mes - juros cheque especial - juros saque
+               vr_tot_vlsldatu:= Nvl(vr_tot_vlsldant,0) -
+                                 Nvl(rw_crapsld(idx).vljurmes,0) -
+                                 Nvl(rw_crapsld(idx).vljursaq,0);
+
+               --Se o valor total saldo atual for negativo e diferente do valor total saldo anterior
+               IF vr_tot_vlsldatu < 0 AND vr_tot_vlsldatu <> vr_tot_vlsldant THEN
+                 --Se for negativo
+                 IF vr_flghaneg THEN
+
+                   --Atualizar informacoes  de saldos negativos e controles de cheque
+                   BEGIN
+                     UPDATE crapneg SET crapneg.vlestour = (vr_tot_vlsldatu * -1)
+                     WHERE crapneg.cdcooper = pr_cdcooper
+                     AND   crapneg.nrdconta = rw_crapsld(idx).nrdconta
+                     AND   crapneg.nrseqdig = vr_nrseqneg;
+
+                     --Se nao atualizou nada
+                     IF SQL%ROWCOUNT = 0 THEN
+                       --Buscar mensagem de erro da critica
+                       vr_cdcritic := 419;
+                       vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                       --Sair do programa
+                       RAISE vr_exc_saida;
+                     END IF;
                    EXCEPTION
+                     WHEN vr_exc_saida THEN
+                       RAISE vr_Exc_saida;
                      WHEN OTHERS THEN
-                       vr_dscritic := 'Erro ao atualizar tabela crapipm. '||SQLERRM;
+                       vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> Erro ao atualizar tabela crapneg. '||SQLERRM;
                        --Sair do programa
                        RAISE vr_exc_saida;
                    END;
                  ELSE
-                   --Acumular no Valor ipmf a pagar o valor do ipmf
-                     rw_crapsld(idx).vlipmfap:= Nvl(rw_crapsld(idx).vlipmfap,0) + Nvl(vr_vldoipmf,0);
-                   --Acumular no valor base do ipmf o valor base do ipmf
-                     rw_crapsld(idx).vlbasipm:= Nvl(rw_crapsld(idx).vlbasipm,0) + Nvl(vr_vlbasipm,0);
-
-                 END IF; --vr_flgencer
-               END IF; --vr_vlbasipm > 0
-             END IF; --vr_flgdcpmf
-
-             --Valor total atual recebe total saldo anterior - juros mes - juros cheque especial - juros saque
-             vr_tot_vlsldatu:= Nvl(vr_tot_vlsldant,0) -
-                                 Nvl(rw_crapsld(idx).vljurmes,0) -
-                                 Nvl(rw_crapsld(idx).vljursaq,0);
-
-             --Se o valor total saldo atual for negativo e diferente do valor total saldo anterior
-             IF vr_tot_vlsldatu < 0 AND vr_tot_vlsldatu <> vr_tot_vlsldant THEN
-               --Se for negativo
-               IF vr_flghaneg THEN
-
-                 --Atualizar informacoes  de saldos negativos e controles de cheque
-                 BEGIN
-                   UPDATE crapneg SET crapneg.vlestour = (vr_tot_vlsldatu * -1)
-                   WHERE crapneg.cdcooper = pr_cdcooper
-                     AND   crapneg.nrdconta = rw_crapsld(idx).nrdconta
-                   AND   crapneg.nrseqdig = vr_nrseqneg;
-
-                   --Se nao atualizou nada
-                   IF SQL%ROWCOUNT = 0 THEN
-                     --Buscar mensagem de erro da critica
-                     vr_cdcritic := 419;
-                       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
-                     --Sair do programa
-                     RAISE vr_exc_saida;
-                   END IF;
-                 EXCEPTION
-                   WHEN OTHERS THEN
-                     vr_dscritic := 'Erro ao atualizar tabela crapneg. '||SQLERRM;
-                     --Sair do programa
-                     RAISE vr_exc_saida;
-                 END;
-               ELSE
-                 --Inserir saldos e cheques
-                 BEGIN
-                   INSERT INTO crapneg (crapneg.nrdconta
-                                       ,crapneg.nrseqdig
-                                       ,crapneg.cdhisest
-                                       ,crapneg.cdobserv
-                                       ,crapneg.dtiniest
-                                       ,crapneg.nrdctabb
-                                       ,crapneg.nrdocmto
-                                       ,crapneg.qtdiaest
-                                       ,crapneg.vlestour
-                                       ,crapneg.vllimcre
-                                       ,crapneg.cdtctant
-                                       ,crapneg.cdtctatu
-                                       ,crapneg.dtfimest
-                                       ,crapneg.cdbanchq
-                                       ,crapneg.cdagechq
-                                       ,crapneg.nrctachq
-                                       ,crapneg.cdcooper)
-                                VALUES   (rw_crapsld(idx).ass_nrdconta 
-                                       ,vr_nrseqneg
-                                       ,5
-                                       ,0
-                                         ,rw_crapdat.dtmvtolt
-                                       ,0
-                                       ,0
-                                       ,1
-                                       ,(vr_tot_vlsldatu * -1)
-                                         ,rw_crapsld(idx).ass_vllimcre
-                                       ,0
-                                       ,0
-                                         ,rw_crapdat.dtmvtolt
-                                       ,0
-                                       ,0
-                                       ,0
-                                       ,pr_cdcooper);
-                 EXCEPTION
-                   WHEN OTHERS THEN
-                   vr_dscritic := 'Erro ao  inserir na tabela crapneg. Cdhisest=5 '||SQLERRM;
-                   --Levantar Exceção
-                   RAISE vr_exc_saida;
-                 END;
-
-                -- Regra para cálculo de dias úteis ou dias corridos - Daniel(AMcom)
-                   vr_dtrisclq_aux := nvl(rw_crapsld(idx).dtrisclq, rw_crapdat.dtmvtolt);
-                --
-                IF vr_dtrisclq_aux <= vr_dtcorte_prm THEN 
-                   -- Considerar dias úteis -- Regra atual
-                 --Incrementar quantidade dias devedor
-                   rw_crapsld(idx).qtddsdev:= Nvl(rw_crapsld(idx).qtddsdev,0) + 1;
-                 --Incrementar quantidade total dias conta devedora
-                   rw_crapsld(idx).qtddtdev:= Nvl(rw_crapsld(idx).qtddtdev,0) + 1;
-                 --Incrementar quantidade dias saldo negativo risco
-                   rw_crapsld(idx).qtdriclq:= Nvl(rw_crapsld(idx).qtdriclq,0) + 1;
-                 ELSE
-                   -- Considerar dias corridos -- Daniel(AMcom)
-                   -- Guardar posição inicial de quantidade de dias SLD
-                     vr_qtddsdev_aux     := nvl(rw_crapsld(idx).qtddsdev,0);
-                   --
-                   IF rw_crapdat.dtmvtolt = vr_dtrisclq_aux THEN
-                     -- Incrementar quantidade dias corridos devedor 
-                       rw_crapsld(idx).qtddsdev := 1;
-                     -- Incrementar quantidade total dias corridos conta devedora
-                       rw_crapsld(idx).qtddtdev := nvl(rw_crapsld(idx).qtddtdev,0)+1;
-                     -- Incrementar quantidade dias corridos saldo negativo risco
-                       rw_crapsld(idx).qtdriclq := 1;
-                   ELSE 
-                     -- Incrementar quantidade dias corridos devedor 
-                       rw_crapsld(idx).qtddsdev := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);
-                     -- Incrementar quantidade total dias corridos conta devedora
-                       rw_crapsld(idx).qtddtdev := nvl(rw_crapsld(idx).qtddtdev,0)+(rw_crapsld(idx).qtddsdev-vr_qtddsdev_aux);
-                     -- Incrementar quantidade dias corridos saldo negativo risco
-                       rw_crapsld(idx).qtdriclq := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);                   
-                   END IF;
-                 END IF;
-
-                 --Se quantidade dias saldo negativo risco > quantidade dias risco
-                   IF rw_crapsld(idx).qtdriclq >= 1 THEN
-                   --quantidade dias saldo negativo risco recebe a data do movimento
-                      rw_crapsld(idx).dtrisclq:= rw_crapdat.dtmvtolt;
-                 END IF;
-
-                 --Se a quantidade existente na saldo de dias devedor maior ou igual a qdade dias devedor calculado
-                   IF rw_crapsld(idx).qtddsdev >= vr_qtddsdev THEN
-                   --data saldo devedor liquida recebe a data do movimento
-                     rw_crapsld(idx).dtdsdclq:= rw_crapdat.dtmvtolt;
-
-                   -- Usar cadastro sequenciador para geração da crapneg
-                     vr_nrseqneg := fn_sequence('CRAPNEG','NRSEQDIG',pr_cdcooper||';'||rw_crapsld(idx).nrdconta);
-
                    --Inserir saldos e cheques
                    BEGIN
                      INSERT INTO crapneg (crapneg.nrdconta
@@ -1797,109 +1710,199 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                          ,crapneg.cdagechq
                                          ,crapneg.nrctachq
                                          ,crapneg.cdcooper)
-                                  VALUES   (rw_crapsld(idx).ass_nrdconta 
+                                VALUES   (rw_crapsld(idx).ass_nrdconta 
                                          ,vr_nrseqneg
-                                         ,4
+                                         ,5
                                          ,0
-                                           ,rw_crapdat.dtmvtolt
-                                         ,0
-                                         ,0
+                                         ,rw_crapdat.dtmvtolt
                                          ,0
                                          ,0
-                                           ,rw_crapsld(idx).ass_vllimcre 
+                                         ,1
+                                         ,(vr_tot_vlsldatu * -1)
+                                         ,rw_crapsld(idx).ass_vllimcre
                                          ,0
                                          ,0
-                                         ,NULL
+                                         ,rw_crapdat.dtmvtolt
                                          ,0
                                          ,0
                                          ,0
                                          ,pr_cdcooper);
                    EXCEPTION
                      WHEN OTHERS THEN
-                     vr_dscritic := 'Erro ao  inserir na tabela crapneg. Cdhisest=4 '||SQLERRM;
-                     --Levantar Exceção
-                     RAISE vr_exc_saida;
+                       vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).ass_nrdconta)||' --> Erro ao  inserir na tabela crapneg. Cdhisest=5 '||SQLERRM;
+                       --Levantar Exceção
+                       RAISE vr_exc_saida;
                    END;
+                     
+                   -- Regra para cálculo de dias úteis ou dias corridos - Daniel(AMcom)
+                   vr_dtrisclq_aux := nvl(rw_crapsld(idx).dtrisclq, rw_crapdat.dtmvtolt);
+                  --
+                  IF vr_dtrisclq_aux <= vr_dtcorte_prm THEN 
+                     -- Considerar dias úteis -- Regra atual
+                   --Incrementar quantidade dias devedor
+                   rw_crapsld(idx).qtddsdev:= Nvl(rw_crapsld(idx).qtddsdev,0) + 1;
+                   --Incrementar quantidade total dias conta devedora
+                   rw_crapsld(idx).qtddtdev:= Nvl(rw_crapsld(idx).qtddtdev,0) + 1;
+                   --Incrementar quantidade dias saldo negativo risco
+                   rw_crapsld(idx).qtdriclq:= Nvl(rw_crapsld(idx).qtdriclq,0) + 1;
+                   ELSE
+                     -- Considerar dias corridos -- Daniel(AMcom)
+                     -- Guardar posição inicial de quantidade de dias SLD
+                     vr_qtddsdev_aux     := nvl(rw_crapsld(idx).qtddsdev,0);
+                     --
+                     IF rw_crapdat.dtmvtolt = vr_dtrisclq_aux THEN
+                       -- Incrementar quantidade dias corridos devedor 
+                       rw_crapsld(idx).qtddsdev := 1;
+                       -- Incrementar quantidade total dias corridos conta devedora
+                       rw_crapsld(idx).qtddtdev := nvl(rw_crapsld(idx).qtddtdev,0)+1;
+                       -- Incrementar quantidade dias corridos saldo negativo risco
+                       rw_crapsld(idx).qtdriclq := 1;
+                     ELSE 
+                       -- Incrementar quantidade dias corridos devedor 
+                       rw_crapsld(idx).qtddsdev := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);
+                       -- Incrementar quantidade total dias corridos conta devedora
+                       rw_crapsld(idx).qtddtdev := nvl(rw_crapsld(idx).qtddtdev,0)+(rw_crapsld(idx).qtddsdev-vr_qtddsdev_aux);
+                       -- Incrementar quantidade dias corridos saldo negativo risco
+                       rw_crapsld(idx).qtdriclq := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);                   
+                     END IF;
+                   END IF;
 
+                   --Se quantidade dias saldo negativo risco > quantidade dias risco
+                   IF rw_crapsld(idx).qtdriclq >= 1 THEN
+                     --quantidade dias saldo negativo risco recebe a data do movimento
+                      rw_crapsld(idx).dtrisclq:= rw_crapdat.dtmvtolt;
+                   END IF;
+
+                   --Se a quantidade existente na saldo de dias devedor maior ou igual a qdade dias devedor calculado
+                   IF rw_crapsld(idx).qtddsdev >= vr_qtddsdev THEN
+                     --data saldo devedor liquida recebe a data do movimento
+                     rw_crapsld(idx).dtdsdclq:= rw_crapdat.dtmvtolt;
+
+                     -- Usar cadastro sequenciador para geração da crapneg
+                     vr_nrseqneg := fn_sequence('CRAPNEG','NRSEQDIG',pr_cdcooper||';'||rw_crapsld(idx).nrdconta);
+
+                     --Inserir saldos e cheques
+                     BEGIN
+                       INSERT INTO crapneg (crapneg.nrdconta
+                                           ,crapneg.nrseqdig
+                                           ,crapneg.cdhisest
+                                           ,crapneg.cdobserv
+                                           ,crapneg.dtiniest
+                                           ,crapneg.nrdctabb
+                                           ,crapneg.nrdocmto
+                                           ,crapneg.qtdiaest
+                                           ,crapneg.vlestour
+                                           ,crapneg.vllimcre
+                                           ,crapneg.cdtctant
+                                           ,crapneg.cdtctatu
+                                           ,crapneg.dtfimest
+                                           ,crapneg.cdbanchq
+                                           ,crapneg.cdagechq
+                                           ,crapneg.nrctachq
+                                           ,crapneg.cdcooper)
+                                  VALUES   (rw_crapsld(idx).ass_nrdconta 
+                                           ,vr_nrseqneg
+                                           ,4
+                                           ,0
+                                           ,rw_crapdat.dtmvtolt
+                                           ,0
+                                           ,0
+                                           ,0
+                                           ,0
+                                           ,rw_crapsld(idx).ass_vllimcre 
+                                           ,0
+                                           ,0
+                                           ,NULL
+                                           ,0
+                                           ,0
+                                           ,0
+                                           ,pr_cdcooper);
+                     EXCEPTION
+                       WHEN OTHERS THEN
+                         vr_dscritic := 'Conta '||rw_crapsld(idx).ass_nrdconta ||' --> Erro ao  inserir na tabela crapneg. Cdhisest=4 '||SQLERRM;
+                       --Levantar Exceção
+                       RAISE vr_exc_saida;
+                     END;
+
+                   END IF;
                  END IF;
                END IF;
              END IF;
-           END IF;
 
-           /*  Atualiza os saldos mensais  */
+             /*  Atualiza os saldos mensais  */
 
-           --Valor saldo disponivel extrato recebe saldo disponivel anterior
+             --Valor saldo disponivel extrato recebe saldo disponivel anterior
              rw_crapsld(idx).vldisext:= Nvl(rw_crapsld(idx).vldisant,0);
-           --Valor saldo bloqueado extrato recebe saldo bloqueado anterior
+             --Valor saldo bloqueado extrato recebe saldo bloqueado anterior
              rw_crapsld(idx).vlblqext:= Nvl(rw_crapsld(idx).vlblqant,0);
-           --Valor saldo bloqueado na praca extrato recebe bloqueado praca anterior
+             --Valor saldo bloqueado na praca extrato recebe bloqueado praca anterior
              rw_crapsld(idx).vlblpext:= Nvl(rw_crapsld(idx).vlblpant,0);
-           --Valor saldo bloqueado fora praca recebe valor bloqueado fora praca anterior
+             --Valor saldo bloqueado fora praca recebe valor bloqueado fora praca anterior
              rw_crapsld(idx).vlblfext:= Nvl(rw_crapsld(idx).vlblfant,0);
-           --Valor saldo cheque salario extrato recebe valor cheque salario anterior
+             --Valor saldo cheque salario extrato recebe valor cheque salario anterior
              rw_crapsld(idx).vlchsext:= Nvl(rw_crapsld(idx).vlchsant,0);
-           --Valor saldo bloqueado praca recebe saldo bloqueado praca anterior
+             --Valor saldo bloqueado praca recebe saldo bloqueado praca anterior
              rw_crapsld(idx).vlindext:= Nvl(rw_crapsld(idx).vlindant,0);
-           --Saldo disponivel mes anterior recebe valor saldo disponivel
+             --Saldo disponivel mes anterior recebe valor saldo disponivel
              rw_crapsld(idx).vldisant:= Nvl(rw_crapsld(idx).vlsddisp,0);
-           --Saldo bloqueado no mes anterior recebe valor saldo bloqueado
+             --Saldo bloqueado no mes anterior recebe valor saldo bloqueado
              rw_crapsld(idx).vlblqant:= Nvl(rw_crapsld(idx).vlsdbloq,0);
-           --Saldo bloquaedo praca mes anterior recebe valor bloqueado praca
+             --Saldo bloquaedo praca mes anterior recebe valor bloqueado praca
              rw_crapsld(idx).vlblpant:= Nvl(rw_crapsld(idx).vlsdblpr,0);
-           --Saldo bloqueado fora praca mes anterior recebe valor bloqueado fora praca
+             --Saldo bloqueado fora praca mes anterior recebe valor bloqueado fora praca
              rw_crapsld(idx).vlblfant:= Nvl(rw_crapsld(idx).vlsdblfp,0);
-           --Saldo cheque salario mes anterior recebe valor saldo cheque salario
+             --Saldo cheque salario mes anterior recebe valor saldo cheque salario
              rw_crapsld(idx).vlchsant:= Nvl(rw_crapsld(idx).vlsdchsl,0);
-           --Saldo indisponivel do mes anterior recebe valor saldo indisponivel
+             --Saldo indisponivel do mes anterior recebe valor saldo indisponivel
              rw_crapsld(idx).vlindant:= Nvl(rw_crapsld(idx).vlsdindi,0);
-           --Saldo inicio do mes anterior recebe saldo final do mes anterior
+             --Saldo inicio do mes anterior recebe saldo final do mes anterior
              rw_crapsld(idx).vlsdextr:= Nvl(rw_crapsld(idx).vlsdmesa,0);
-           --Salario liquido mes anterior recebe salario liquido
+             --Salario liquido mes anterior recebe salario liquido
              rw_crapsld(idx).vltsalan:= Nvl(rw_crapsld(idx).vltsallq,0);
-           --saldo final do mes anterior recebe valor disponivel + bloqueado + salario liquido + bloqueado praca + bloqueado fora praca
+             --saldo final do mes anterior recebe valor disponivel + bloqueado + salario liquido + bloqueado praca + bloqueado fora praca
              rw_crapsld(idx).vlsdmesa:= Nvl(rw_crapsld(idx).vlsddisp,0) + Nvl(rw_crapsld(idx).vlsdbloq,0) +
                                    Nvl(rw_crapsld(idx).vlsdchsl,0) + Nvl(rw_crapsld(idx).vlsdblpr,0) +
                                    Nvl(rw_crapsld(idx).vlsdblfp,0);
-           --Data referencia extrato recebe o ultimo dia do mes
+             --Data referencia extrato recebe o ultimo dia do mes
              rw_crapsld(idx).dtrefext:= rw_crapdat.dtultdia;         /* Para uso do sist. CASH  */
-           --Referencia do saldo para extrato recebe a data referencia saldo anterior
+             --Referencia do saldo para extrato recebe a data referencia saldo anterior
              rw_crapsld(idx).dtsdexes:= rw_crapsld(idx).dtsdanes;
-           --data referencia saldo anterior recebe o ultimo dia util
+             --data referencia saldo anterior recebe o ultimo dia util
              rw_crapsld(idx).dtsdanes:= rw_crapdat.dtultdia;
-           --Saldo para extrato especial recebe o saldo anterior para extrato
+             --Saldo para extrato especial recebe o saldo anterior para extrato
              rw_crapsld(idx).vlsdexes:= Nvl(rw_crapsld(idx).vlsdanes,0);
-           --saldo anterior para extrato recebe saldo final do mes anterior
+             --saldo anterior para extrato recebe saldo final do mes anterior
              rw_crapsld(idx).vlsdanes:= Nvl(rw_crapsld(idx).vlsdmesa,0);
-           --Acumular anual mfx com saldo medio no mes / valor da moeda
+             --Acumular anual mfx com saldo medio no mes / valor da moeda
              rw_crapsld(idx).qtsmamfx:= Nvl(rw_crapsld(idx).qtsmamfx,0) + Round((Round(Nvl(rw_crapsld(idx).vlsmpmes,0),2)
-                                                                     / Nvl(rw_crapmfx.vlmoefix,0)),4);
+                                                                       / Nvl(rw_crapmfx.vlmoefix,0)),4);
 
-           /*  Faz ajuste no valor do lcm289  */
+             /*  Faz ajuste no valor do lcm289  */
 
-           --Executar loop enquanto flag ajuste estiver verdadeiro
-           WHILE vr_flgajust LOOP
+             --Executar loop enquanto flag ajuste estiver verdadeiro
+             WHILE vr_flgajust LOOP
                -- Se o vetor estiver vazio entao popula
-             IF vr_tab_craplcm.Count = 0 THEN
-               --Selecionar informacoes de lancamento historico 289 e montar tabela memoria
-               FOR rw_craplcm IN cr_craplcm (pr_cdcooper => pr_cdcooper
+               IF vr_tab_craplcm.Count = 0 THEN
+                 --Selecionar informacoes de lancamento historico 289 e montar tabela memoria
+                 FOR rw_craplcm IN cr_craplcm (pr_cdcooper => pr_cdcooper
                                               ,pr_cdagenci => pr_cdagenci
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                            ,pr_cdhistor => 289) LOOP
-                 vr_tab_craplcm(rw_craplcm.nrdconta).dtmvtolt:= rw_craplcm.dtmvtolt;
-                 vr_tab_craplcm(rw_craplcm.nrdconta).cdagenci:= rw_craplcm.cdagenci;
-                 vr_tab_craplcm(rw_craplcm.nrdconta).cdbccxlt:= rw_craplcm.cdbccxlt;
-                 vr_tab_craplcm(rw_craplcm.nrdconta).nrdolote:= rw_craplcm.nrdolote;
-                 vr_tab_craplcm(rw_craplcm.nrdconta).vllanmto:= rw_craplcm.vllanmto;
-                 vr_tab_craplcm(rw_craplcm.nrdconta).vrrowid := rw_craplcm.rowid;
-               END LOOP;
-             END IF;
+                                              ,pr_cdhistor => 289) LOOP
+                   vr_tab_craplcm(rw_craplcm.nrdconta).dtmvtolt:= rw_craplcm.dtmvtolt;
+                   vr_tab_craplcm(rw_craplcm.nrdconta).cdagenci:= rw_craplcm.cdagenci;
+                   vr_tab_craplcm(rw_craplcm.nrdconta).cdbccxlt:= rw_craplcm.cdbccxlt;
+                   vr_tab_craplcm(rw_craplcm.nrdconta).nrdolote:= rw_craplcm.nrdolote;
+                   vr_tab_craplcm(rw_craplcm.nrdconta).vllanmto:= rw_craplcm.vllanmto;
+                   vr_tab_craplcm(rw_craplcm.nrdconta).vrrowid := rw_craplcm.rowid;
+                 END LOOP;
+               END IF;
 
-             BEGIN
-               --Selecionar informacoes dos lancamentos da conta do saldo
+               BEGIN
+                 --Selecionar informacoes dos lancamentos da conta do saldo
                  IF NOT vr_tab_craplcm.EXISTS(rw_crapsld(idx).nrdconta) THEN
-                 RAISE vr_exc_fim;
-               ELSE
-                 --Atribuir valores do vetor para o registro
+                   RAISE vr_exc_fim;
+                 ELSE
+                   --Atribuir valores do vetor para o registro
                    rw_craplcm.dtmvtolt:= vr_tab_craplcm(rw_crapsld(idx).nrdconta).dtmvtolt;
                    rw_craplcm.cdagenci:= vr_tab_craplcm(rw_crapsld(idx).nrdconta).cdagenci;
                    rw_craplcm.cdbccxlt:= vr_tab_craplcm(rw_crapsld(idx).nrdconta).cdbccxlt;
@@ -1907,50 +1910,50 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                    rw_craplcm.vllanmto:= vr_tab_craplcm(rw_crapsld(idx).nrdconta).vllanmto;
                    rw_craplcm.rowid   := vr_tab_craplcm(rw_crapsld(idx).nrdconta).vrrowid;
 
-                 -- Se o valor do saldo mes anterior for negativo
+                   -- Se o valor do saldo mes anterior for negativo
                    IF rw_crapsld(idx).vlsdmesa < 0 THEN
-                   -- Se o valor do saldo mes anterior + valor dos juros >= 0
+                     -- Se o valor do saldo mes anterior + valor dos juros >= 0
                      IF (rw_crapsld(idx).vlsdmesa + vr_vldjuros) >= 0   THEN
-                     --Valor ajuste lancamento recebe valor saldo mes anterior * -1
+                       --Valor ajuste lancamento recebe valor saldo mes anterior * -1
                        vr_vlajulcm:= rw_crapsld(idx).vlsdmesa * -1;
-                   ELSE
-                     --Valor ajuste lancamento recebe valor dos juros
-                     vr_vlajulcm:= vr_vldjuros;
-                   END IF;
+                     ELSE
+                       --Valor ajuste lancamento recebe valor dos juros
+                       vr_vlajulcm:= vr_vldjuros;
+                     END IF;
 
-                   -- Se o valor do lancamento menos o valor ajuste lancamento for > 0
-                   IF (rw_craplcm.vllanmto - vr_vlajulcm) > 0 THEN
-                     --Diminuir do valor do lancamento o valor do ajuste calculado
-                     BEGIN
-                       UPDATE craplcm SET craplcm.vllanmto = craplcm.vllanmto - Nvl(vr_vlajulcm,0)
-                       WHERE craplcm.ROWID = rw_craplcm.ROWID;
-                     EXCEPTION
-                       WHEN OTHERS THEN
-                         vr_dscritic := 'Erro ao atualizar tabela craplcm. '||SQLERRM;
-                         --Sair do programa
-                         RAISE vr_exc_saida;
-                     END;
+                     -- Se o valor do lancamento menos o valor ajuste lancamento for > 0
+                     IF (rw_craplcm.vllanmto - vr_vlajulcm) > 0 THEN
+                       --Diminuir do valor do lancamento o valor do ajuste calculado
+                       BEGIN
+                         UPDATE craplcm SET craplcm.vllanmto = craplcm.vllanmto - Nvl(vr_vlajulcm,0)
+                         WHERE craplcm.ROWID = rw_craplcm.ROWID;
+                       EXCEPTION
+                         WHEN OTHERS THEN
+                           vr_dscritic := 'Erro ao atualizar tabela craplcm Rowid '||rw_craplcm.ROWID||' --> '||SQLERRM;
+                           --Sair do programa
+                           RAISE vr_exc_saida;
+                       END;
                        
                        -- Atualizar lote
                        vr_vlcompcr_ajt := nvl(vr_vlcompcr_ajt,0) - Nvl(vr_vlajulcm,0);
                        vr_vlinfocr_ajt := nvl(vr_vlinfocr_ajt,0) - Nvl(vr_vlajulcm,0);
                        
-                     --Se cobrar cpmf
-                     IF vr_flgdcpmf THEN
-                       --Valor ajuste ipmf recebe valor do ipmf - (valor lancamento * taxa cpmf)
-                       vr_vlajuipm:= rw_craplcm.vldoipmf - TRUNC(rw_craplcm.vllanmto * vr_txcpmfcc,2);
+                       --Se cobrar cpmf
+                       IF vr_flgdcpmf THEN
+                         --Valor ajuste ipmf recebe valor do ipmf - (valor lancamento * taxa cpmf)
+                         vr_vlajuipm:= rw_craplcm.vldoipmf - TRUNC(rw_craplcm.vllanmto * vr_txcpmfcc,2);
 
-                       BEGIN
-                         UPDATE craplcm SET craplcm.vldoipmf = craplcm.vldoipmf - Nvl(vr_vlajuipm,0)
-                         WHERE craplcm.ROWID = rw_craplcm.ROWID;
-                       EXCEPTION
-                         WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao atualizar tabela craplcm. '||SQLERRM;
-                           --Sair do programa
-                           RAISE vr_exc_saida;
-                       END;
-                     END IF;
-                   ELSE
+                         BEGIN
+                           UPDATE craplcm SET craplcm.vldoipmf = craplcm.vldoipmf - Nvl(vr_vlajuipm,0)
+                           WHERE craplcm.ROWID = rw_craplcm.ROWID;
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             vr_dscritic :=  'Erro ao atualizar tabela craplcm Rowid '||rw_craplcm.ROWID||' --> '||SQLERRM;
+                             --Sair do programa
+                             RAISE vr_exc_saida;
+                         END;
+                       END IF;
+                     ELSE
                        
                        -- Atualizar lote
                        vr_vlcompcr_ajt := nvl(vr_vlcompcr_ajt,0) - Nvl(vr_vlajulcm,0);
@@ -1958,308 +1961,311 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                        vr_qtcompln_ajt := nvl(vr_qtcompln_ajt,0) - 1;
                        vr_qtinfoln_ajt := nvl(vr_qtinfoln_ajt,0) - 1;
                        
-                     --Se cobrar cpmf
-                     IF vr_flgdcpmf THEN
-                       --Valor ajuste lancamento recebe valor do lancamento
-                       vr_vlajulcm:= Nvl(rw_craplcm.vllanmto,0);
-                       --Valor ajuste do ipmf recebe valor do ipmf
-                       vr_vlajuipm:= Nvl(rw_craplcm.vldoipmf,0);
-                     END IF;
+                       --Se cobrar cpmf
+                       IF vr_flgdcpmf THEN
+                         --Valor ajuste lancamento recebe valor do lancamento
+                         vr_vlajulcm:= Nvl(rw_craplcm.vllanmto,0);
+                         --Valor ajuste do ipmf recebe valor do ipmf
+                         vr_vlajuipm:= Nvl(rw_craplcm.vldoipmf,0);
+                       END IF;
 
-                     --Excluir o lancamento
-                     BEGIN
-                       DELETE craplcm
-                       WHERE craplcm.ROWID = rw_craplcm.ROWID;
-                     EXCEPTION
-                       WHEN OTHERS THEN
-                         vr_dscritic := 'Erro ao excluir lancamento. '||SQLERRM;
-                         --Sair do programa
-                         RAISE vr_exc_saida;
-                     END;
-                   END IF;
-
-                   --Se cobrar cpmf
-                   IF vr_flgdcpmf THEN
-                     --Se for encerramento
-                     IF vr_flgencer THEN
+                       --Excluir o lancamento
                        BEGIN
-
-                         --Valor do ipmf a pagar recebe valor ipmf a pagar menos juros ipmf
-                           rw_crapsld(idx).vlipmfpg:= Nvl(rw_crapsld(idx).vlipmfpg,0) - Nvl(vr_vlajuipm,0);
-
-                         --Atualizar informacoes de debitos de ipmf
-                         UPDATE crapipm SET crapipm.vlbasipm = Nvl(crapipm.vlbasipm,0) - Nvl(vr_vlajulcm,0)
-                                           ,crapipm.vldoipmf = Nvl(crapipm.vldoipmf,0) - Nvl(vr_vlajuipm,0)
-                         WHERE crapipm.cdcooper = pr_cdcooper
-                           AND   crapipm.nrdconta = rw_crapsld(idx).nrdconta
-                         AND   crapipm.dtdebito = rw_crapper.dtdebito
-                         AND   crapipm.indebito = 1;
-
-                         --Se não atualizou nada
-                         IF SQL%ROWCOUNT = 0 THEN
-                           --Buscar mensagem de erro da critica
-                           vr_dscritic :=  'ERRO! - CRAPIPM NAO ENCONTRADO -'||
-                                             ' CONTA: '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||
-                                           ' PERIODO: '||To_Char(rw_crapper.dtdebito,'DD/MM/YYYY');
-                           --Sair do programa
-                           RAISE vr_exc_saida;
-                         END IF;
+                         DELETE craplcm
+                         WHERE craplcm.ROWID = rw_craplcm.ROWID;
                        EXCEPTION
                          WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao atualizar crapipm. '||SQLERRM;
+                           vr_dscritic := 'Erro ao excluir lancamento Rowid '||rw_craplcm.ROWID||' --> '||SQLERRM;
                            --Sair do programa
                            RAISE vr_exc_saida;
                        END;
-                     ELSE --nao for encerramento
-                       --Valor base ipmf recebe valor base ipmf - valor ajuste do lancamento
+                     END IF;
+
+                     --Se cobrar cpmf
+                     IF vr_flgdcpmf THEN
+                       --Se for encerramento
+                       IF vr_flgencer THEN
+                         BEGIN
+
+                           --Valor do ipmf a pagar recebe valor ipmf a pagar menos juros ipmf
+                           rw_crapsld(idx).vlipmfpg:= Nvl(rw_crapsld(idx).vlipmfpg,0) - Nvl(vr_vlajuipm,0);
+
+                           --Atualizar informacoes de debitos de ipmf
+                           UPDATE crapipm SET crapipm.vlbasipm = Nvl(crapipm.vlbasipm,0) - Nvl(vr_vlajulcm,0)
+                                             ,crapipm.vldoipmf = Nvl(crapipm.vldoipmf,0) - Nvl(vr_vlajuipm,0)
+                           WHERE crapipm.cdcooper = pr_cdcooper
+                           AND   crapipm.nrdconta = rw_crapsld(idx).nrdconta
+                           AND   crapipm.dtdebito = rw_crapper.dtdebito
+                           AND   crapipm.indebito = 1;
+
+                           --Se não atualizou nada
+                           IF SQL%ROWCOUNT = 0 THEN
+                             --Buscar mensagem de erro da critica
+                             vr_dscritic :=  ' CONTA: '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||
+                                             ' PERIODO: '||To_Char(rw_crapper.dtdebito,'DD/MM/YYYY')||
+                                             ' --> ERRO! - CRAPIPM NAO ENCONTRADO -';
+                             --Sair do programa
+                             RAISE vr_exc_saida;
+                           END IF;
+                         EXCEPTION
+                           WHEN vr_exc_saida THEN
+                             RAISE vr_Exc_saida;
+                           WHEN OTHERS THEN
+                             vr_dscritic := ' CONTA: '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> Erro ao atualizar crapipm. '||SQLERRM;
+                             --Sair do programa
+                             RAISE vr_exc_saida;
+                         END;
+                       ELSE --nao for encerramento
+                         --Valor base ipmf recebe valor base ipmf - valor ajuste do lancamento
                          rw_crapsld(idx).vlbasipm:= Nvl(rw_crapsld(idx).vlbasipm,0) - Nvl(vr_vlajulcm,0);
-                       --Valor ipmf apurado recebe valor ipmf apurado menos valor ajuste ipmf
+                         --Valor ipmf apurado recebe valor ipmf apurado menos valor ajuste ipmf
                          rw_crapsld(idx).vlipmfap:= Nvl(rw_crapsld(idx).vlipmfap,0) - Nvl(vr_vlajuipm,0);
+                       END IF;
                      END IF;
                    END IF;
                  END IF;
-               END IF;
-               --Sair do while
-               EXIT;
-             EXCEPTION
-               WHEN vr_exc_fim THEN
-                 --Atribuir false para flag fazendo sair do loop
-                 vr_flgajust:= FALSE;
-             END;
-           END LOOP; --While
+                 --Sair do while
+                 EXIT;
+               EXCEPTION
+                 WHEN vr_exc_fim THEN
+                   --Atribuir false para flag fazendo sair do loop
+                   vr_flgajust:= FALSE;
+               END;
+             END LOOP; --While
 
-           --Variavel recebe o mes do movimento 1..12
+             --Variavel recebe o mes do movimento 1..12
              vr_mesmovto:= to_number(To_Char(rw_crapdat.dtmvtolt,'MM'));
-           --Se passou da metade do ano
-           IF vr_mesmovto > 6 THEN
-             --Diminuir 6 do mes encontrado
-             vr_mesmovto:= vr_mesmovto-6;
-           END IF;
+             --Se passou da metade do ano
+             IF vr_mesmovto > 6 THEN
+               --Diminuir 6 do mes encontrado
+               vr_mesmovto:= vr_mesmovto-6;
+             END IF;
 
-           --Valor do saldo medio mensal recebe o valor positivo no mes
-           CASE vr_mesmovto
-             WHEN 1 THEN
+             --Valor do saldo medio mensal recebe o valor positivo no mes
+             CASE vr_mesmovto
+               WHEN 1 THEN
                  rw_crapsld(idx).vlsmstre##1:= Nvl(rw_crapsld(idx).vlsmpmes,0);
-             WHEN 2 THEN
+               WHEN 2 THEN
                  rw_crapsld(idx).vlsmstre##2:= Nvl(rw_crapsld(idx).vlsmpmes,0);
-             WHEN 3 THEN
+               WHEN 3 THEN
                  rw_crapsld(idx).vlsmstre##3:= Nvl(rw_crapsld(idx).vlsmpmes,0);
-             WHEN 4 THEN
+               WHEN 4 THEN
                  rw_crapsld(idx).vlsmstre##4:= Nvl(rw_crapsld(idx).vlsmpmes,0);
-             WHEN 5 THEN
+               WHEN 5 THEN
                  rw_crapsld(idx).vlsmstre##5:= Nvl(rw_crapsld(idx).vlsmpmes,0);
-             WHEN 6 THEN
+               WHEN 6 THEN
                  rw_crapsld(idx).vlsmstre##6:= Nvl(rw_crapsld(idx).vlsmpmes,0);
-           END CASE;
+             END CASE;
 
-           --Variavel recebe o mes do movimento 1..12
+             --Variavel recebe o mes do movimento 1..12
              vr_mesmovto:= to_number(To_Char(rw_crapdat.dtmvtolt,'MM'));
 
-           --Atualizar informacoes na tabela de saldo para cada mes
-           --smposano = Valor do saldo medio positivo no ano recebe o valor positivo no mes
-           --smnegano = Valor do saldo medio negativo no ano recebe o valor negativo no mes
-           --smblqano = Valor do saldo medio bloqueado no ano recebe o valor media saque
-           --smespano = Valor do saldo medio ch. especial no ano recebe valor negativo especial no mes
-           CASE vr_mesmovto
-             WHEN 1 THEN
+             --Atualizar informacoes na tabela de saldo para cada mes
+             --smposano = Valor do saldo medio positivo no ano recebe o valor positivo no mes
+             --smnegano = Valor do saldo medio negativo no ano recebe o valor negativo no mes
+             --smblqano = Valor do saldo medio bloqueado no ano recebe o valor media saque
+             --smespano = Valor do saldo medio ch. especial no ano recebe valor negativo especial no mes
+             CASE vr_mesmovto
+               WHEN 1 THEN
                  rw_crapsld(idx).smposano##1:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##1:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##1:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##1:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 2 THEN
+               WHEN 2 THEN
                  rw_crapsld(idx).smposano##2:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##2:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##2:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##2:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 3 THEN
+               WHEN 3 THEN
                  rw_crapsld(idx).smposano##3:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##3:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##3:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##3:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 4 THEN
+               WHEN 4 THEN
                  rw_crapsld(idx).smposano##4:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##4:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##4:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##4:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 5 THEN
+               WHEN 5 THEN
                  rw_crapsld(idx).smposano##5:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##5:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##5:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##5:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 6 THEN
+               WHEN 6 THEN
                  rw_crapsld(idx).smposano##6:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##6:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##6:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##6:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 7 THEN
+               WHEN 7 THEN
                  rw_crapsld(idx).smposano##7:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##7:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##7:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##7:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 8 THEN
+               WHEN 8 THEN
                  rw_crapsld(idx).smposano##8:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##8:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##8:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##8:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 9 THEN
+               WHEN 9 THEN
                  rw_crapsld(idx).smposano##9:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##9:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##9:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##9:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 10 THEN
+               WHEN 10 THEN
                  rw_crapsld(idx).smposano##10:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##10:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##10:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##10:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 11 THEN
+               WHEN 11 THEN
                  rw_crapsld(idx).smposano##11:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##11:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##11:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##11:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-             WHEN 12 THEN
+               WHEN 12 THEN
                  rw_crapsld(idx).smposano##12:= Nvl(rw_crapsld(idx).vlsmpmes,0);
                  rw_crapsld(idx).smnegano##12:= Nvl(rw_crapsld(idx).vlsmnmes,0);
                  rw_crapsld(idx).smblqano##12:= Nvl(rw_crapsld(idx).vlsmnblq,0);
                  rw_crapsld(idx).smespano##12:= Nvl(rw_crapsld(idx).vlsmnesp,0);
-           END CASE;
+             END CASE;
 
 
-           --Incrementar a quantidade de lancamentos no ano com os lancamentos do mes
+             --Incrementar a quantidade de lancamentos no ano com os lancamentos do mes
              rw_crapsld(idx).qtlanano:= Nvl(rw_crapsld(idx).qtlanano,0) + Nvl(rw_crapsld(idx).qtlanmes,0);
-           --Zerar quantidade de lancamentos do mes
+             --Zerar quantidade de lancamentos do mes
              rw_crapsld(idx).qtlanmes:= 0;
-           --Zerar valor negativo especial no mes
+             --Zerar valor negativo especial no mes
              rw_crapsld(idx).vlsmnesp:= 0;
-           --Zerar valor negativo no mes
+             --Zerar valor negativo no mes
              rw_crapsld(idx).vlsmnmes:= 0;
-           --Zerar media saque s/ bloqueado
+             --Zerar media saque s/ bloqueado
              rw_crapsld(idx).vlsmnblq:= 0;
-           --Zerar valor positivo no mes
+             --Zerar valor positivo no mes
              rw_crapsld(idx).vlsmpmes:= 0;
-           --Zerar valor salario liquido
+             --Zerar valor salario liquido
              rw_crapsld(idx).vltsallq:= 0;
 
-           /*--- Calculo do IOF ---*/
-           --Se taxa IOF > 0 e valor saldo disponivel < 0
+             /*--- Calculo do IOF ---*/
+             --Se taxa IOF > 0 e valor saldo disponivel < 0
              IF rw_crapsld(idx).vlsddisp < 0  THEN
-             --Zerar valor base iof
-             vr_vlbasiof:= 0;
+               --Zerar valor base iof
+               vr_vlbasiof:= 0;
 
-             --Selecionar informacoes do saldo da conta dos associados (usando dtmvtoan)
+               --Selecionar informacoes do saldo da conta dos associados (usando dtmvtoan)
                IF rw_crapsld(idx).vlsldoan IS NOT NULL THEN
                  vr_vlsldoan := rw_crapsld(idx).vlsldoan;
-             ELSE
-               --Buscar mensagem de erro da critica
-               vr_cdcritic:= 10;
-                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
-               --Sair do programa
-               RAISE vr_exc_saida;
-             END IF;
-
-             --Selecionar informacoes do saldo da conta dos associados (usando dtmvtolt)
-               IF rw_crapsld(idx).vlsldolt IS NOT NULL THEN
-                 vr_vlsldolt := rw_crapsld(idx).vlsldolt;
-             ELSE
-               --Buscar mensagem de erro da critica
-               vr_cdcritic := 10;
-                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA == '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
-               --Sair do programa
-               RAISE vr_exc_saida;
-             END IF;
-
-             --Se o valor disponivel maior igual a zero
-             IF vr_vlsldolt >= 0 THEN
-               --Se valor disponivel maior ou igual a zero
-               IF vr_vlsldoan >= 0  THEN
-                 --Valor base iof recebe valor disponivel * -1
-                   vr_vlbasiof:= rw_crapsld(idx).vlsddisp * -1;
-                 ELSIF  rw_crapsld(idx).vlsddisp < vr_vlsldoan  THEN
-                 --Valor base iof recebe valor disponivel na data do movimento menos o disponivel na anterior
-                   vr_vlbasiof:= Nvl(vr_vlsldoan,0) - Nvl(rw_crapsld(idx).vlsddisp,0);
-               END IF;
-             ELSE
-               --Se valor disponivel na saldo for menor que o saldo disponivel do associado no movto atual
-               --   valor disponivel na saldo for menor que o saldo disponivel do associado no movto anterior
-                 IF rw_crapsld(idx).vlsddisp < vr_vlsldolt  AND
-                    rw_crapsld(idx).vlsddisp < vr_vlsldoan  THEN
-                 --Se saldo disponivel do associado no movto atual maior saldo disponivel no movto anterior
-                 IF vr_vlsldolt > vr_vlsldoan THEN
-                   --Valor base iof recebe saldo disponivel do associado no movimento anterior menos saldo disponivel
-                     vr_vlbasiof:= Nvl(vr_vlsldoan,0) - Nvl(rw_crapsld(idx).vlsddisp,0);
-                 ELSE
-                   --Valor base iof recebe saldo disponivel do associado no movimento atual menos saldo disponivel
-                     vr_vlbasiof:= Nvl(vr_vlsldolt,0) - Nvl(rw_crapsld(idx).vlsddisp,0);
-                 END IF;
-               END IF;
-             END IF;
-             
-             --Se valor base iof for maior zero
-             IF vr_vlbasiof > 0 THEN
-               --Atualizar valor base iof na tabela saldo
-                 rw_crapsld(idx).vlbasiof := Nvl(rw_crapsld(idx).vlbasiof,0) + Nvl(vr_vlbasiof,0);
-               -----------------------------------------------------------------------------------------------
-               -- Calcula o Valor do IOF Adicional
-               -----------------------------------------------------------------------------------------------
-               TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5           --> Adiantamento a Depositante
-                                            ,pr_tpoperacao => 1           --> Calculo de Inclusao/Atraso
-                                            ,pr_cdcooper   => pr_cdcooper
-                                              ,pr_nrdconta   => rw_crapsld(idx).nrdconta
-                                              ,pr_inpessoa   => rw_crapsld(idx).ass_inpessoa
-                                            ,pr_natjurid   => vr_natjurid
-                                            ,pr_tpregtrb   => vr_tpregtrb
-                                            ,pr_dtmvtolt   => rw_crapdat.dtmvtolt
-                                            ,pr_qtdiaiof   => 1
-                                            ,pr_vloperacao => ROUND(vr_vlbasiof,2)
-                                              ,pr_vltotalope => NVL(ABS(rw_crapsld(idx).vlsddisp),0) + NVL(rw_crapsld(idx).ass_vllimcre,0)
-                                            ,pr_vliofpri   => vr_vliofpri
-                                            ,pr_vliofadi   => vr_vliofadi
-                                            ,pr_vliofcpl   => vr_vliofcpl
-                                            ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
-                                            ,pr_flgimune   => vr_flgimune
-                                            ,pr_dscritic   => vr_dscritic);
-                 
-               -- Condicao para verificar se houve critica                             
-               IF vr_dscritic IS NOT NULL THEN
+               ELSE
+                 --Buscar mensagem de erro da critica
+                 vr_cdcritic:= 10;
+                 vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                 --Sair do programa
                  RAISE vr_exc_saida;
                END IF;
-               
-                 -- Atualizar valor do iof no mes na tabela de saldo
-               IF vr_flgimune = 0 THEN
-                 rw_crapsld(idx).vliofmes:= Nvl(rw_crapsld(idx).vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
-               ELSE
-                    rw_crapsld(idx).vliofmes:= Nvl(rw_crapsld(idx).vliofmes,0);
-               END IF;
-             END IF;
-             
-           END IF;
 
-           --Atualizar tabela de cotas
-           BEGIN
-             --Atualizar valor base Conta Corrente IOF e valor IOF sobre a Conta Corrente
+               --Selecionar informacoes do saldo da conta dos associados (usando dtmvtolt)
+               IF rw_crapsld(idx).vlsldolt IS NOT NULL THEN
+                 vr_vlsldolt := rw_crapsld(idx).vlsldolt;
+               ELSE
+                 --Buscar mensagem de erro da critica
+                 vr_cdcritic := 10;
+                 vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                 --Sair do programa
+                 RAISE vr_exc_saida;
+               END IF;
+
+               --Se o valor disponivel maior igual a zero
+               IF vr_vlsldolt >= 0 THEN
+                 --Se valor disponivel maior ou igual a zero
+                 IF vr_vlsldoan >= 0  THEN
+                   --Valor base iof recebe valor disponivel * -1
+                   vr_vlbasiof:= rw_crapsld(idx).vlsddisp * -1;
+                 ELSIF  rw_crapsld(idx).vlsddisp < vr_vlsldoan  THEN
+                   --Valor base iof recebe valor disponivel na data do movimento menos o disponivel na anterior
+                   vr_vlbasiof:= Nvl(vr_vlsldoan,0) - Nvl(rw_crapsld(idx).vlsddisp,0);
+                 END IF;
+               ELSE
+                 --Se valor disponivel na saldo for menor que o saldo disponivel do associado no movto atual
+                 --   valor disponivel na saldo for menor que o saldo disponivel do associado no movto anterior
+                 IF rw_crapsld(idx).vlsddisp < vr_vlsldolt  AND
+                    rw_crapsld(idx).vlsddisp < vr_vlsldoan  THEN
+                   --Se saldo disponivel do associado no movto atual maior saldo disponivel no movto anterior
+                   IF vr_vlsldolt > vr_vlsldoan THEN
+                     --Valor base iof recebe saldo disponivel do associado no movimento anterior menos saldo disponivel
+                     vr_vlbasiof:= Nvl(vr_vlsldoan,0) - Nvl(rw_crapsld(idx).vlsddisp,0);
+                   ELSE
+                     --Valor base iof recebe saldo disponivel do associado no movimento atual menos saldo disponivel
+                     vr_vlbasiof:= Nvl(vr_vlsldolt,0) - Nvl(rw_crapsld(idx).vlsddisp,0);
+                   END IF;
+                 END IF;
+               END IF;
+                 
+               --Se valor base iof for maior zero
+               IF vr_vlbasiof > 0 THEN
+                 --Atualizar valor base iof na tabela saldo
+                 rw_crapsld(idx).vlbasiof := Nvl(rw_crapsld(idx).vlbasiof,0) + Nvl(vr_vlbasiof,0);
+                 -----------------------------------------------------------------------------------------------
+                 -- Calcula o Valor do IOF Adicional
+                 -----------------------------------------------------------------------------------------------
+                 TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5           --> Adiantamento a Depositante
+                                              ,pr_tpoperacao => 1           --> Calculo de Inclusao/Atraso
+                                              ,pr_cdcooper   => pr_cdcooper
+                                              ,pr_nrdconta   => rw_crapsld(idx).nrdconta
+                                              ,pr_inpessoa   => rw_crapsld(idx).ass_inpessoa
+                                              ,pr_natjurid   => vr_natjurid
+                                              ,pr_tpregtrb   => vr_tpregtrb
+                                              ,pr_dtmvtolt   => rw_crapdat.dtmvtolt
+                                              ,pr_qtdiaiof   => 1
+                                              ,pr_vloperacao => ROUND(vr_vlbasiof,2)
+                                              ,pr_vltotalope => NVL(ABS(rw_crapsld(idx).vlsddisp),0) + NVL(rw_crapsld(idx).ass_vllimcre,0)
+                                              ,pr_vliofpri   => vr_vliofpri
+                                              ,pr_vliofadi   => vr_vliofadi
+                                              ,pr_vliofcpl   => vr_vliofcpl
+                                              ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                              ,pr_flgimune   => vr_flgimune
+                                              ,pr_dscritic   => vr_dscritic);
+                     
+                 -- Condicao para verificar se houve critica                             
+                 IF vr_dscritic IS NOT NULL THEN
+                   vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||vr_dscritic;
+                   RAISE vr_exc_saida;
+                 END IF;
+                   
+                 -- Atualizar valor do iof no mes na tabela de saldo
+                 IF vr_flgimune = 0 THEN
+                 rw_crapsld(idx).vliofmes:= Nvl(rw_crapsld(idx).vliofmes,0) + ROUND(NVL(vr_vliofadi,0),2) + ROUND(NVL(vr_vliofpri,0),2);
+                 ELSE
+                    rw_crapsld(idx).vliofmes:= Nvl(rw_crapsld(idx).vliofmes,0);
+                 END IF;
+               END IF;
+                 
+             END IF;
+
+             --Atualizar tabela de cotas
+             BEGIN
+               --Atualizar valor base Conta Corrente IOF e valor IOF sobre a Conta Corrente
                UPDATE crapcot SET crapcot.vlbsicct = Nvl(crapcot.vlbsicct,0) + Nvl(rw_crapsld(idx).vlbasiof,0)
                                  ,crapcot.vliofcct = Nvl(crapcot.vliofcct,0) + Nvl(rw_crapsld(idx).vliofmes,0)
-              WHERE crapcot.ROWID = vr_crapcot;
-           EXCEPTION
-             WHEN OTHERS THEN
-             vr_dscritic := 'Erro ao atualizar tabela crapcot. '||SQLERRM;
-             --Sair do programa
-             RAISE vr_exc_saida;
-           END;
+                WHERE crapcot.ROWID = vr_crapcot;
+             EXCEPTION
+               WHEN OTHERS THEN
+                 vr_dscritic := 'Erro ao atualizar tabela crapcot Rowid '||vr_crapcot||' --> '||SQLERRM;
+                 --Sair do programa
+                 RAISE vr_exc_saida;
+             END;
 
-           --Atualizar valor disponivel na tabela de saldos
-           BEGIN
+             --Atualizar valor disponivel na tabela de saldos
+             BEGIN
                UPDATE crapsda SET crapsda.vlsddisp = Nvl(rw_crapsld(idx).vlsddisp,0)
-             WHERE crapsda.cdcooper = pr_cdcooper
+               WHERE crapsda.cdcooper = pr_cdcooper
                AND   crapsda.nrdconta = rw_crapsld(idx).nrdconta
                AND   crapsda.dtmvtolt = rw_crapdat.dtmvtolt;
-           EXCEPTION
-             WHEN OTHERS THEN
-             vr_dscritic := 'Erro ao atualizar tabela crapsda. '||SQLERRM;
-             --Sair do programa
-             RAISE vr_exc_saida;
-           END;
+             EXCEPTION
+               WHEN OTHERS THEN
+                 vr_dscritic := 'Conta '||rw_crapsld(idx).nrdconta||' --> Erro ao atualizar tabela crapsda: '||SQLERRM;
+                 --Sair do programa
+                 RAISE vr_exc_saida;
+             END;
 
-           --Atualizar a tabela Saldos
+             --Atualizar a tabela Saldos
              vr_idx := vr_idx + 1;
              vr_tab_crapsld(vr_idx).nrdconta := rw_crapsld(idx).nrdconta;
              vr_tab_crapsld(vr_idx).vljuresp := rw_crapsld(idx).vljuresp;
@@ -2362,7 +2368,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
            END LOOP; -- Bulk
          END LOOP; --rw_crapsld(idx)
          CLOSE cr_crapsld;
-
+         
          -- Atualiza a tabela de saldos com os registros restantes ainda não gravados
          BEGIN
            FORALL idx IN INDICES OF vr_tab_crapsld SAVE EXCEPTIONS
@@ -2472,16 +2478,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
               -- Sair do programa
               RAISE vr_exc_saida;
          END;
-
+         
          -- Para execuções paralelas
          IF pr_cdagenci > 0 THEN 
-
+         
            -- Gravar informações do lote 8450
            IF vr_vlinfocr > 0 OR vr_vlcompcr > 0 
            OR vr_vlinfodb > 0 OR vr_vlcompdb > 0 
            OR vr_qtinfoln > 0 OR vr_qtcompln > 0 THEN  
              -- Rotina para inserir em tabela de trabalho para atualização da crplot no CRPS148
-               BEGIN
+             BEGIN
                insert into tbgen_batch_relatorio_wrk(cdcooper
                                                     ,cdprograma
                                                     ,dsrelatorio
@@ -2501,14 +2507,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                                           vr_vlcompdb||';'||
                                                           vr_qtinfoln||';'||
                                                           vr_qtcompln||';');
-
+             
              EXCEPTION
                WHEN OTHERS THEN 
                  vr_dscritic := 'Erro ao inserir tbgen_batch_relatorio_wrk 8450: '||sqlerrm;  
                  raise vr_exc_saida; 
              END;
-                 END IF;
-
+           END IF;
+           
            -- Gravar informações do lote 8476
            IF vr_vlinfocr_ajt > 0 OR vr_vlcompcr_ajt > 0 
            OR vr_vlinfodb_ajt > 0 OR vr_vlcompdb_ajt > 0 
@@ -2535,14 +2541,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                                           vr_qtinfoln_ajt||';'||
                                                           vr_qtcompln_ajt||';');
              
-               EXCEPTION
-                 WHEN OTHERS THEN
+             EXCEPTION
+               WHEN OTHERS THEN 
                  vr_dscritic := 'Erro ao inserir tbgen_batch_relatorio_wrk 8476: '||sqlerrm;  
                  raise vr_exc_saida; 
-               END;
+             END;
            END IF;
          END IF;
-
+         
          -- Grava data fim para o JOB na tabela de LOG 
          pc_log_programa(pr_dstiplog   => 'F'  
                         ,pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci           
@@ -2550,13 +2556,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                         ,pr_tpexecucao => vr_tpexecucao -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         ,pr_idprglog   => vr_idlog_ini_par
                         ,pr_flgsucesso => 1); 
-
-             END IF;
-           
+         
+       END IF;
+         
        -- Verificar se ocorreram críticas
        IF vr_cdcritic > 0 THEN
          RAISE vr_exc_saida;
-           END IF;
+       END IF;
 
        -- Se for o programa principal ou sem paralelismo
        if nvl(pr_idparale,0) = 0 then
@@ -2595,7 +2601,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
              --Fecha cursor
              close cr_work_lot;  
            end if;   
-
+           
            -- Restaurar dados do lote 8476
            open cr_work_lot(pr_cdcooper    => pr_cdcooper
                            ,pr_cdprograma  => vr_cdprogra
@@ -2618,7 +2624,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
              --Fecha cursor
              close cr_work_lot;  
            end if; 
-
+         
            -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
            pc_log_programa(PR_DSTIPLOG           => 'O'
                           ,PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$'
@@ -2628,7 +2634,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                           ,pr_dsmensagem         => 'Fim - Restauração valores das execuções anteriores.'
                           ,PR_IDPRGLOG           => vr_idlog_ini_ger);         
          END IF;
-
+       
          -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
          pc_log_programa(pr_dstiplog     => 'O'
                         ,pr_cdprograma   => vr_cdprogra ||'_'|| pr_cdagenci || '$'
@@ -2637,27 +2643,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                         ,pr_tpocorrencia => 4
                         ,pr_dsmensagem   => 'Inicio - Geração Saldo Conta Investimento e gravação Lotes'
                         ,pr_idprglog     => vr_idlog_ini_ger); 
-
-         -- Executar virada dos saldos das contas investimento
-       BEGIN
-         INSERT INTO crapsli (crapsli.dtrefere
-                             ,crapsli.nrdconta
-                             ,crapsli.vlsddisp
-                             ,crapsli.cdcooper)
-                         SELECT Last_Day(rw_crapdat.dtmvtopr) -- Data do ultimo dia do mes baseado no proximo dia util
-                             ,crapsli.nrdconta
-                             ,crapsli.vlsddisp
-                             ,pr_cdcooper
-                     FROM crapsli  crapsli
-                     WHERE crapsli.cdcooper = pr_cdcooper
-                           AND trunc(crapsli.dtrefere,'MM') = trunc(rw_crapdat.dtmvtolt,'MM');
-       EXCEPTION
-         WHEN OTHERS THEN
-           vr_dscritic := 'Erro ao inserir na tabela crapsli. '||SQLERRM;
-             -- Sair do programa
-           RAISE vr_exc_saida;
-       END;
        
+         -- Executar virada dos saldos das contas investimento
+         BEGIN
+           INSERT INTO crapsli (crapsli.dtrefere
+                               ,crapsli.nrdconta
+                               ,crapsli.vlsddisp
+                               ,crapsli.cdcooper)
+                         SELECT Last_Day(rw_crapdat.dtmvtopr) -- Data do ultimo dia do mes baseado no proximo dia util
+                               ,crapsli.nrdconta
+                               ,crapsli.vlsddisp
+                               ,pr_cdcooper
+                          FROM crapsli  crapsli
+                         WHERE crapsli.cdcooper = pr_cdcooper
+                           AND trunc(crapsli.dtrefere,'MM') = trunc(rw_crapdat.dtmvtolt,'MM');
+         EXCEPTION
+           WHEN OTHERS THEN
+             vr_dscritic := 'Erro ao inserir na tabela crapsli. '||SQLERRM;
+             -- Sair do programa
+             RAISE vr_exc_saida;
+         END;
+         
          -- Se há informações para gravação do lote 8450
          IF vr_vlinfocr > 0 OR vr_vlcompcr > 0 
          OR vr_vlinfodb > 0 OR vr_vlcompdb > 0 
@@ -2712,7 +2718,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                raise vr_exc_saida;            
            END;
          END IF;
-
+         
          -- Se há informações para gravação do lote 8476
          IF vr_vlinfocr_ajt > 0 OR vr_vlcompcr_ajt > 0 
          OR vr_vlinfodb_ajt > 0 OR vr_vlcompdb_ajt > 0 
@@ -2766,8 +2772,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                vr_dscritic := 'Erro ao gerar/atualizar tabela craplot 8476: '||sqlerrm;
                raise vr_exc_saida;            
            END;
-       END IF;
-
+         END IF;
+           
          -- Grava LOG de ocorrência final
          pc_log_programa(PR_DSTIPLOG           => 'O'
                         ,PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$'
@@ -2777,12 +2783,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                         ,pr_dsmensagem         => 'Fim - Geração Saldo Conta Investimento e gravação Lotes.'
                         ,PR_IDPRGLOG           => vr_idlog_ini_ger); 
        
-       -- Processo OK, devemos chamar a fimprg
-       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                ,pr_cdprogra => vr_cdprogra
-                                ,pr_infimsol => pr_infimsol
-                                ,pr_stprogra => pr_stprogra);
-
+         -- Processo OK, devemos chamar a fimprg
+         btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdprogra => vr_cdprogra
+                                  ,pr_infimsol => pr_infimsol
+                                  ,pr_stprogra => pr_stprogra);
+       
          -- Caso seja o controlador 
          if vr_idcontrole <> 0 then
            -- Atualiza finalização do batch na tabela de controle 
@@ -2817,10 +2823,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                      ,pr_des_erro => vr_dscritic);  
        
          -- Salvar informacoes no banco de dados
-       COMMIT;
+         COMMIT;
        END IF; 
        
-     EXCEPTION
+    EXCEPTION
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -2854,20 +2860,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                           pr_flgsucesso    => 0,
                           pr_idprglog      => vr_idlog_ini_par);  
                           
+          -- Gera Log no Batch cfme solicitação Rodrigo Siewert
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
+                          
           -- Encerrar o job do processamento paralelo dessa agência
           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                       ,pr_des_erro => vr_dscritic);                        
                                       
         ELSE
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic );
-        END IF;
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> '
+                                                       || vr_dscritic );
+          END IF;
         END IF;
         
         -- Efetuar rollback
@@ -2895,6 +2906,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                           pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                           pr_idprglog   => vr_idlog_ini_par,
                           pr_flgsucesso => 0);  
+          
+          -- Gera Log no Batch cfme solicitação Rodrigo Siewert
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
+                                    
           -- Encerrar o job do processamento paralelo dessa agência
           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
