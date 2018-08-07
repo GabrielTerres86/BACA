@@ -21,8 +21,8 @@
 				  12/09/2016 - Alteracao para chamar a rotina do Oracle na
 							   geracao da impressao. (Jaison/Daniel)
           
-          23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
-                       PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
+                  23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
+                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)	
 
                   12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
                   			   restrição no report de borderô de desct. de tít
@@ -51,7 +51,6 @@
           <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
-
 	// Verifica se parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || 
 		!isset($_POST["nrctrlim"]) || 
@@ -113,7 +112,9 @@
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7) { // BORDERO DE CHEQUES
+        $idimpres == 7 || // BORDERO DE CHEQUES
+        $idimpres == 11) {// BORDERO EXTRATO
+        
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";

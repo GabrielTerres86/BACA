@@ -178,6 +178,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   
   FUNCTION fn_busca_decisao_bordero (pr_insitapr crapbdt.insitapr%TYPE) RETURN VARCHAR2;
   
+  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE) RETURN VARCHAR2;
+  
   -- Funcao de calculo de restricao do CNAE                                  
   FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
                            ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Conta do associado
@@ -189,7 +191,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
          
   -- Verificar se o bordero está nas novas funcionalidades ou na antiga         
   FUNCTION fn_virada_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN INTEGER;
-                             
+                   
 
   -- Verificar qual a versão do borderô
   FUNCTION fn_versao_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -909,6 +911,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
        );
 
    END fn_busca_decisao_bordero;
+   
+  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE) RETURN VARCHAR2 IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_busca_situacao_titulo
+    Sistema  : CRED
+    Sigla    : DSCT0003
+    Autor    : Vitor Shimada Assanuma (GFT)
+    Data     : Agosto/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Função que retorna a descrição da situação do título
+  ---------------------------------------------------------------------------------------------------------------------*/
+   BEGIN 
+     RETURN (
+       CASE
+         WHEN pr_insittit=0 THEN 'Não processado'
+         WHEN pr_insittit=1 THEN 'Resgatado'
+         WHEN pr_insittit=2 THEN 'Processado'
+         WHEN pr_insittit=3 THEN 'Pago após vencimento'
+         WHEN pr_insittit=4 THEN 'Liberado'
+       END
+     );
+  END fn_busca_situacao_titulo;
    
   FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
                           ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Conta do associado
@@ -6269,13 +6293,13 @@ END pc_inserir_lancamento_bordero;
   
   PROCEDURE pc_virada_bordero (pr_nrborder  IN crapbdt.nrborder%TYPE DEFAULT 0
                               ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                 --------> OUT <--------
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                 ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
-                                 ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
-                                 ,pr_des_erro OUT VARCHAR2      --> Erros do processo
-                               ) IS
+                              --------> OUT <--------
+                              ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                              ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                              ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                              ) IS
     /* .............................................................................
       Programa: pc_virada_bordero
       Sistema : AyllosWeb
@@ -6286,10 +6310,10 @@ END pc_inserir_lancamento_bordero;
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
-      Objetivo  : Retorna se a cooperativa esta utilizando o sistema novo de bordero
+      Objetivo  : Retorna se a cooperativa esta utilizando o sistema novo de bordero                  
       Alterações:
        - 30/07/2018 - Vitor Shimada Assanuma (GFT): Inserção da verificação da versão do borderô
-                                                   
+       
     ............................................................................. */
     -- Tratamento de erros
     vr_exc_erro exception;
@@ -6342,7 +6366,7 @@ END pc_inserir_lancamento_bordero;
       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
                      '<root><dados>');
 
-      pc_escreve_xml('<cdcooper>' || vr_cdcooper || '</cdcooper>' ||
+      pc_escreve_xml('<cdcooper>'  || vr_cdcooper  || '</cdcooper>'   ||
                      '<flgverbor>' || vr_flgverbor || '</flgverbor>'  ||
                      '<flgnewbor>' || vr_flgnewbor || '</flgnewbor>'
                     );
@@ -7884,7 +7908,7 @@ EXCEPTION
       
       vr_vlpagmto := vr_vlpagmto - vr_vlpagtit;
       
-      -- 0-Conta-Corrente  2-COBTIT  3-Tela PAGAR     
+      -- 0-Conta-Corrente  2-COBTIT  3-Tela PAGAR
       IF pr_cdorigpg IN (0,2,3) THEN
         -- Debita o valor do título se o pagamento vier da conta corrente
         pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
