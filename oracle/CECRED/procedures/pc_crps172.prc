@@ -108,6 +108,9 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
                19/12/2017 - Desconsiderar do valor pendente o que foi debitado no mes
                             Demetrius (Mouts) - Chamado 813105
 							 
+               11/07/2018 - Ao fazer update Controle restart, se não encontrar o registro, criar,
+                            pois programa passou a executar durante o dia no Debitador.
+                            (Elton - AMcom)               
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -747,8 +750,23 @@ BEGIN
        where cdcooper = pr_cdcooper
          and cdprogra = vr_cdprogra;
       if sql%rowcount = 0 then
-        vr_cdcritic := 151;
-        raise vr_exc_saida;
+        -- Criar o registro se não existir
+        BEGIN
+          INSERT INTO crapres (cdprogra
+                              ,nrdconta
+                              ,dsrestar
+                              ,cdcooper)
+                      VALUES  (vr_cdprogra
+                              ,rw_crappla.nrdconta
+                              ,' '
+                              ,pr_cdcooper);
+        EXCEPTION
+          WHEN OTHERS THEN
+            --Montar mensagem de erro
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao inserir na tabela crapres. '||sqlerrm;
+            raise vr_exc_saida;
+        END;
       end if;
     exception
       when vr_exc_saida then
