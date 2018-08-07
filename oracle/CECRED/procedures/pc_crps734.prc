@@ -96,7 +96,7 @@ BEGIN
     vr_datacalc DATE;
   BEGIN
     -- ainda não comecou a rodar o paralelismo
-    IF (pr_idparale=0) THEN
+    IF (nvl(pr_idparale,0)=0) THEN
       vr_idparale := gene0001.fn_gera_id_paralelo;
       -- Buscar quantidade parametrizada de Jobs
       vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
