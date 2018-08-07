@@ -233,6 +233,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                
                27/04/2018 - P450 - Novo tratamento para IOF a Debitar (Guilherme/AMcom)
 			         
+			   03/07/2018 - Tratar conta corrente invalida no cadastro de lançamento.
+			                craplcm - (Belli - Envolti - Chamado REQ0018868).
+                      
                25/07/2018 - Deverá buscar novamente o saldo em conta e utilizar o 
                             valor final da diferença (Renato Darosci - Supero)
 							
@@ -997,7 +1000,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        --Carregar tabela memoria com as contas com lancamento no dia
        FOR rw_craplcm IN cr_craplcm2(pr_cdcooper => pr_cdcooper
                                     ,pr_dtmvtolt => vr_dtmvtolt) LOOP
+		     --	 Tratar conta corrente invalida no cadastro de lançamento - 03/07/2018 - Chamado REQ0018868
+         BEGIN
            vr_tab_craplcm(rw_craplcm.nrdconta):= rw_craplcm.nrdconta;
+         EXCEPTION
+           WHEN OTHERS THEN
+             CECRED.pc_internal_exception(pr_cdcooper);
+             BEGIN
+               cecred.pc_log_programa(pr_dstiplog      => 'E'
+                                     ,pr_cdprograma    => 'CRPS001'
+                                     ,pr_cdcooper      => pr_cdcooper
+                                     ,pr_tpocorrencia  => 1 -- Erro de negocio
+                                     ,pr_cdcriticidade => 2
+                                     ,pr_cdmensagem    => 9999
+                                     ,pr_dsmensagem    => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                                          'Lançamento com conta invalida.' ||
+                                                          '  dtmvtolt:'   || vr_dtmvtolt   ||
+                                                          ', nrdconta:'   || rw_craplcm.nrdconta ||
+                                                          '.' || SQLERRM
+                                     ,pr_idprglog     => vr_idprglog);
+             EXCEPTION
+               WHEN OTHERS THEN
+                 CECRED.pc_internal_exception(pr_cdcooper);
+             END;
+         END;
        END LOOP;
 
        --Carregar tabela memoria com os limites de credito das contas
