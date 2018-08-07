@@ -133,7 +133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
   --  Programa  : GEN_DEBITADOR_UNICO
   --  Sistema   : Pacote de Rotinas genéricas focando nas funcionalidades do Debitador Único
   --  Autor     : Marcelo Elias Gonçalves - AMcom Sistemas de Informação
-  --  Data      : Maio/2018                               Última atualização:
+  --  Data      : Maio/2018                               Última atualização: 07/08/2018
   --  Frequência: Conforme chamada
   --  Objetivo  : Empacotar as rotinas referente ao Debitador Único
   --
@@ -167,6 +167,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                  pr_nmarqlog     => vr_nmarqlog,
                                  pr_cdprograma   => SubStr(pr_nmprgexe,4));
     END IF;
+    
+    --Provisório (Revisão dos LOgs) 07/08/2018
+    vr_nmarqlog := 'proc_message.log';
 
     -- Logs Programas Gerais
     -- Incluir log no proc_batch.log
@@ -177,6 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1,
                                  pr_des_log      => vr_desdolog,
+                                 pr_nmarqlog     => vr_nmarqlog, --Provisório (Revisão dos LOgs) 07/08/2018
                                  pr_dstiplog     => 'I',
                                  pr_cdprograma   => pr_nmprgexe);
 
@@ -185,6 +189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1,
                                  pr_des_log      => vr_desdolog,
+                                 pr_nmarqlog     => vr_nmarqlog, --Provisório (Revisão dos LOgs) 07/08/2018
                                  pr_dstiplog     => 'O',
                                  pr_cdprograma   => pr_nmprgexe);
 
@@ -193,6 +198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1,
                                  pr_des_log      => vr_desdolog,
+                                 pr_nmarqlog     => vr_nmarqlog, --Provisório (Revisão dos LOgs) 07/08/2018
                                  pr_dstiplog     => 'E',
                                  pr_cdprograma   => pr_nmprgexe);
 
@@ -201,6 +207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1,
                                  pr_des_log      => vr_desdolog,
+                                 pr_nmarqlog     => vr_nmarqlog, --Provisório (Revisão dos LOgs) 07/08/2018
                                  pr_dstiplog     => 'F',
                                  pr_cdprograma   => pr_nmprgexe);
     END IF;
