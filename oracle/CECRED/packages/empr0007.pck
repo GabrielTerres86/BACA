@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 30/03/2017
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 07/08/2018
   --
   -- Dados referentes ao programa:
   --
@@ -165,14 +165,14 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 														,pr_cdoperad IN tbrecup_cobranca.cdoperad_envio%TYPE        --> Cód. Operador
 														,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE             --> Nome Contato
 														,pr_tpdenvio IN tbrecup_cobranca.tpenvio%TYPE               --> Tipo de Envio (1 = EMAIL, 2 = SMS, 3 = IMPRESSAO)
-														,pr_nmdatela IN VARCHAR2                                    --> Nome da tela
-														,pr_idorigem IN INTEGER                                     --> ID Origem
+														,pr_nmdatela IN VARCHAR2                                  --> Nome da tela
+														,pr_idorigem IN INTEGER                                   --> ID Origem
 														,pr_dsdemail IN tbrecup_cobranca.dsemail%TYPE DEFAULT NULL  --> Email
 														,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
 														,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
 														,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
-														,pr_cdcritic OUT crapcri.cdcritic%TYPE                      --> Cód. Crítica
-														,pr_dscritic OUT crapcri.dscritic%TYPE);                    --> Desc. Crítica
+														,pr_cdcritic OUT crapcri.cdcritic%TYPE                    --> Cód. Crítica
+														,pr_dscritic OUT crapcri.dscritic%TYPE);                  --> Desc. Crítica
 
   PROCEDURE pc_enviar_boleto_web(pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE              --> Nr. da Conta
 																,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE              --> Nr. Contrato
@@ -185,13 +185,13 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																,pr_indretor IN tbrecup_cobranca.indretorno%TYPE DEFAULT 0  --> Indicador de retorno
 																,pr_nrdddsms IN tbrecup_cobranca.nrddd_sms%TYPE DEFAULT 0   --> DDD
 																,pr_nrtelsms IN tbrecup_cobranca.nrtel_sms%TYPE DEFAULT 0   --> Telefone
-																,pr_xmllog   IN VARCHAR2                                    --> XML com informações de LOG
-																,pr_cdcritic OUT PLS_INTEGER                                --> Código da crítica
-																,pr_dscritic OUT VARCHAR2                                   --> Descrição da crítica
-																,pr_retxml   IN OUT NOCOPY XMLType                          --> Arquivo de retorno do XML
-																,pr_nmdcampo OUT VARCHAR2                                   --> Nome do campo com erro
-																,pr_des_erro OUT VARCHAR2);                                 --> Erros do processo
-  
+																,pr_xmllog   IN VARCHAR2                                  --> XML com informações de LOG
+																,pr_cdcritic OUT PLS_INTEGER                              --> Código da crítica
+																,pr_dscritic OUT VARCHAR2                                 --> Descrição da crítica
+																,pr_retxml   IN OUT NOCOPY XMLType                        --> Arquivo de retorno do XML
+																,pr_nmdcampo OUT VARCHAR2                                 --> Nome do campo com erro
+																,pr_des_erro OUT VARCHAR2);                               --> Erros do processo
+
   PROCEDURE pc_gera_boleto_contrato (pr_cdcooper IN  crapcob.cdcooper%TYPE --> Código da cooperativa;
 																		,pr_nrdconta IN  crapcob.nrdconta%TYPE --> Conta do cooperado do contrato;
 																		,pr_nrctremp IN  crapcob.nrctremp%TYPE --> Número do contrato de empréstimo;
@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		                                 ,pr_nrdconta IN crapass.nrdconta%TYPE                   --> Nr. da Conta
 																		 ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE                   --> Nr. do Convênio de Cobrança
 																	 	 ,pr_nrctremp IN crapcob.nrctremp%TYPE                   --> Nr. do Contrato
-                                     ,pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE DEFAULT 0 --> Nr. do Arquivo (<> 0 = boletagem massiva)
+																		 ,pr_idarquiv IN tbrecup_boleto_arq.idarquivo%TYPE DEFAULT 0 --> Nr. do Arquivo (<> 0 = boletagem massiva)
                                      ,pr_cdcritic OUT PLS_INTEGER                            --> Código da crítica
 																		 ,pr_dscritic OUT VARCHAR2                               --> Descrição da crítica
 																		 ,pr_des_erro OUT VARCHAR2);                             --> Erros do processo
@@ -320,14 +320,14 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 																,pr_des_erro OUT VARCHAR2);           --> Erros do processo																	 
 
   PROCEDURE pc_gera_data_pag_tr(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE --> Codigo da Cooperativa
-                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE          --> Data do Movimento
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE        --> Data do Movimento
                                ,pr_nrdconta IN tbrecup_cobranca.nrdconta%TYPE --> Numero da conta
                                ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE --> Numero do contrato
-                               ,pr_vlpreemp IN crapepr.vlpreemp %TYPE         --> Valor da prestacao
-                               ,pr_dtdpagto IN OUT crapepr.dtdpagto%TYPE      --> Data do pagamento
-                               ,pr_dtvencto IN crawepr.dtvencto%TYPE          --> Data vencimento
-                               ,pr_cdcritic OUT PLS_INTEGER                   --> Codigo da critica
-                               ,pr_dscritic OUT VARCHAR2);                    --> Descricao da critica
+                               ,pr_vlpreemp IN crapepr.vlpreemp %TYPE       --> Valor da prestacao
+                               ,pr_dtdpagto IN OUT crapepr.dtdpagto%TYPE    --> Data do pagamento
+                               ,pr_dtvencto IN crawepr.dtvencto%TYPE        --> Data vencimento
+                               ,pr_cdcritic OUT PLS_INTEGER                 --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2);                --> Descricao da critica
 
 END EMPR0007;
 /
@@ -361,6 +361,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --
   --             05/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
   --                          pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
+  --
+  --             07/08/2018  - 9318:Pagamento de Emprestimo  Transferencia para conta 
+  --                           transitoria quando a origem da tela for BLQPREJU 
+  --                          -pc_gera_lancamento_epr_tr Rangel Decker (AMcom)               
 
   ---------------------------------------------------------------------------
 
@@ -1884,7 +1888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Carlos Rafael Tanholi
-      Data    : Agosto/15.                    Ultima atualizacao: 05/07/2018
+      Data    : Agosto/15.                    Ultima atualizacao: 24/02/2017
 
       Dados referentes ao programa:
 
@@ -1919,10 +1923,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       24/02/2017 - Contratos do produto TR nao devera cobrar multa e juros de mora
                    quando o contrato estiver com acordo ativo. (Jaison/James)
-                    
-      05/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
-                   pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
-
+      
+     07/08/2018  - 9318:Pagamento de Emprestimo  Transferencia para conta 
+                                 transitoria quando a origem da tela for BLQPREJU  Rangel Decker (AMcom)
+                                 
+ 
     ..............................................................................*/
 
     DECLARE
@@ -1945,10 +1950,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       -- Variaveis para gravação da craplot
       vr_cdagenci CONSTANT PLS_INTEGER := 1;
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
-
-      -- PJ450
-      vr_incrineg      INTEGER;
-      vr_tab_retorno   LANC0001.typ_reg_retorno;
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -2391,17 +2392,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           CLOSE cr_crawepr;
         END IF;      
       
-      
-        -- PJ450 - Verificar se pode debitar (Regra de Negocio)
-        IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_crapepr.nrdconta
-                                       ,pr_cdhistor => 108) THEN
-            vr_dscritic := 'Lançamento de debito não efetuado. Cooperativa: '||pr_cdcooper
-                            || ' - Nr. Conta: ' || rw_crapepr.nrdconta 
-                            || ' - Cod. historico: 108' ;
-            RAISE vr_exc_undo;                
-        END IF; 
-      
 				-- Busca do cadastro de linhas de crédito de empréstimo
 				FOR rw_craplcr IN cr_craplcr(rw_crapepr.cdlcremp) LOOP
 					-- Guardamos a taxa e o indicador de emissão de boletos
@@ -2588,6 +2578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           END IF;
 
           vr_vldescto := pr_vllanmto;
+					
 					-- Não permitir antecipação de parcela quando não estiver em acordo ativo
           -- Utilizar o quantidade de meses e parcelas calculadas para saber se esta em atraso
           -- Os campos da tabela podem esta desatualizados
@@ -2792,70 +2783,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             -- Testar se já retornado o registro de capas de lote para o 8457
             IF rw_craplot_8457.rowid IS NULL THEN
               -- Chamar rotina para buscá-lo, e se não encontrar, irá criá-lo
-              pc_cria_craplot(pr_dtmvtolt   => rw_crapdat.dtmvtolt
-                             ,pr_nrdolote   => 8457
-                             ,pr_tplotmov   => 1
-                             ,pr_rw_craplot => rw_craplot_8457
-                             ,pr_dscritic   => vr_dscritic);
-              -- Se houve retorno de erro
-              IF vr_dscritic IS NOT NULL THEN
-                -- Sair do processo
-                RAISE vr_exc_undo;
-              END IF;
+              IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
+                pc_cria_craplot(pr_dtmvtolt   => rw_crapdat.dtmvtolt
+                               ,pr_nrdolote   => 8457
+                               ,pr_tplotmov   => 1
+                               ,pr_rw_craplot => rw_craplot_8457
+                               ,pr_dscritic   => vr_dscritic);
+                -- Se houve retorno de erro
+                IF vr_dscritic IS NOT NULL THEN
+                  -- Sair do processo
+                  RAISE vr_exc_undo;
+                END IF;
+              END IF;  
             END IF;
 
             vr_nrdoclcm := rw_craplot_8457.nrseqdig + 1;
-
-            -- PJ450 - Insere Lancamento 
-            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
-                                              ,pr_dtmvtolt => rw_craplot_8457.dtmvtolt 
-                                              ,pr_cdagenci => rw_craplot_8457.cdagenci 
-                                              ,pr_cdbccxlt => rw_craplot_8457.cdbccxlt
-                                              ,pr_nrdolote => rw_craplot_8457.nrdolote
-                                              ,pr_nrdconta => rw_crapepr.nrdconta 
-                                              ,pr_nrdctabb => rw_crapepr.nrdconta 
-                                              ,pr_nrdctitg => to_char(rw_crapepr.nrdconta,'fm00000000')
-                                              ,pr_nrdocmto => vr_nrdoclcm
-                                              ,pr_cdpesqbb => to_char(rw_crapepr.nrctremp)
-                                              ,pr_cdhistor => 108 --  Prest Empr. 
-                                              ,pr_nrseqdig => vr_nrdoclcm 
-                                              ,pr_vllanmto => vr_vldescto
-                                              ,pr_inprolot => 0                    -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                              ,pr_tplotmov => 0                    -- Tipo Movimento 
-                                              ,pr_cdcritic => vr_cdcritic          -- Codigo Erro
-                                              ,pr_dscritic => vr_dscritic          -- Descricao Erro
-                                              ,pr_incrineg => vr_incrineg          -- Indicador de crítica de negócio
-                                              ,pr_tab_retorno => vr_tab_retorno    -- Registro com dados do retorno
-                                              );
-
-            -- Conforme tipo de erro realiza acao diferenciada
-            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-              IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                 vr_dscritic := 'Erro ao criar lancamento de sobras para a conta corrente (CRAPLCM) '
-                               || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                               || '. Detalhes: '||vr_dscritic;
-                RAISE vr_exc_undo;  
-              ELSE --vr_incrineg = 1 -- Erro de Negócio
-                RAISE vr_exc_undo;  
-              END If;
-            END IF;            
-          
-          /*  
+            
             -- Efetuar lancamento na conta-corrente
+            IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
             BEGIN
               INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,cdpesqbb
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,vllanmto)
+                                  ,dtmvtolt
+                                  ,cdagenci
+                                  ,cdbccxlt
+                                  ,nrdolote
+                                  ,cdpesqbb
+                                  ,nrdconta
+                                  ,nrdctabb
+                                  ,nrdctitg
+                                  ,nrdocmto
+                                  ,cdhistor
+                                  ,nrseqdig
+                                  ,vllanmto)
                            VALUES(pr_cdcooper                               -- cdcooper
                                  ,rw_craplot_8457.dtmvtolt                  -- dtmvtolt
                                  ,rw_craplot_8457.cdagenci                  -- cdagenci
@@ -2876,7 +2835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                             || '. Detalhes: '||sqlerrm;
                 RAISE vr_exc_undo;
             END;
-            */
+
             --> Armazenar valores 
             pr_vltotpag := nvl(pr_vltotpag,0) + nvl(vr_vldescto,0);
             
@@ -2952,7 +2911,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                 vr_dscritic := 'Erro ao atualizar capas de lotes (craplot), lote: '||rw_craplot_8457.nrdolote||'. Detalhes: '||sqlerrm;
                 RAISE vr_exc_undo;
             END;
-
+         END IF; -- Lançamento conta corrente
+         
+         --Lançamento na conta transitoria
+         IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
+            PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
+                                          pr_nrdconta => rw_crapepr.nrdconta ,
+                                          pr_cdoperad => pr_cdoperad,
+                                          pr_vlrlanc  => vr_vldescto,
+                                          pr_dtmvtolt => rw_craplot_8457.dtmvtolt ,
+                                          pr_cdcritic => vr_cdcritic,
+                                          pr_dscritic => vr_dscritic);
+                                               
+             -- Verifica se houve retorno de crítica
+            IF vr_dscritic IS NOT NULL THEN
+             pr_cdcritic := 0;
+             pr_dscritic := 'Erro PC_GERA_DEBT_CTA_PRJ: '||vr_dscritic;
+             RAISE vr_exc_erro;
+            END IF;
+      
+         END IF; --Lançamento na conta tr
+  
             -- Testar se já retornado o registro de capas de lote para o 8453
             IF rw_craplot_8453.rowid IS NULL THEN
               -- Chamar rotina para buscá-lo, e se não encontrar, irá criálo
@@ -3251,6 +3230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 
   END pc_gera_lancamento_epr_tr;
+
 
   PROCEDURE pc_buscar_boletos_contratos (pr_cdcooper IN crapcop.cdcooper%TYPE                  --> Cooperativa
 																				,pr_cdagenci IN crapass.cdagenci%TYPE DEFAULT 0        --> PA
