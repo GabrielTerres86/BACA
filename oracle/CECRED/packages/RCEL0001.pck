@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Programa: RCEL0001
   --    Autor   : Lucas Reinert
-  --    Data    : Janeiro/2017                   Ultima Atualizacao: 03/11/2017
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 09/02/2018
   --
   --    Dados referentes ao programa:
   --
@@ -301,14 +301,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 	--
 	--                08/11/2017 - Ajustado tempo para nova solicitação de recarga para 5 minutos na procedure
   --                             pc_confirma_recarga_ib. (Reinert)
+  --
+	--                09/02/2018 - Alterado para verificar operação de recarga duplicada;
+	--                           - Alterada crítica para solicitações de recargas repetidas no TAA. (Reinert)
+  --                16/04/2018 - Incluido a chamada do programa gen_debitador_unico.pc_qt_hora_prg_debitador
+  --                             para  atualizar a quantidade de execução que esta agendada no Debitador
+  --                             Projeto Debitador Unico - Josiane Stiehler (AMcom)
+
   ---------------------------------------------------------------------------------------------------------------
   
   -- Objetos para armazenar as variáveis da notificação
   vr_variaveis_notif NOTI0001.typ_variaveis_notif;
   
   /* CONSTANTES */
-  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 7;
+  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 5;
+  MOTIVO_RECARGA_CELULAR     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3;
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
                                      ,pr_dtrefere IN DATE) RETURN DATE IS
@@ -1227,6 +1234,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
            vr_dserrlog := 'Você já possui um agendamento cadastrado com os mesmos dados informados.'
 					             || ' O agendamento de recarga para o mesmo telefone e valor devem ser feitos em datas diferentes.'
 											 || ' Consulte suas recargas agendadas.';
+					
+				  -- Se for pelo TAA
+					IF pr_idorigem = 4 THEN
+						-- Utilizaremos a crítica sem o CDATA/tagas
+						vr_dscritic := 'Você já possui um agendamento cadastrado para a mesma Data, Telefone e Valor.'
+   											 || ' Consulte suas recargas agendadas.';
+					END IF;											 
 					-- Levantar exceção
 					RAISE vr_exc_erro;					 
 			END IF;
@@ -1812,6 +1826,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
          WHERE opr.cdoperadora = pr_cdoperadora;
       rw_operadora cr_operadora%ROWTYPE;
       
+			-- Buscar outras operações de recarga com os mesmos dados
+			CURSOR cr_operacao_repetida(pr_cdcooper  IN tbrecarga_operacao.cdcooper%TYPE
+			                           ,pr_nrdconta  IN tbrecarga_operacao.nrdconta%TYPE
+																 ,pr_dtrecarga IN tbrecarga_operacao.dtrecarga%TYPE
+																 ,pr_nrdddtel  IN tbrecarga_operacao.nrddd%TYPE
+																 ,pr_nrcelular IN tbrecarga_operacao.nrcelular%TYPE
+																 ,pr_vlrecarga IN tbrecarga_operacao.vlrecarga%TYPE
+																 ,pr_nsuopera  IN tbrecarga_operacao.dsnsu_operadora%TYPE) IS
+			  SELECT 1
+				  FROM tbrecarga_operacao tope
+				 WHERE tope.cdcooper = pr_cdcooper
+					 AND tope.nrdconta = pr_nrdconta
+					 AND tope.dtrecarga = pr_dtrecarga
+					 AND tope.nrddd = pr_nrdddtel
+					 AND tope.nrcelular = pr_nrcelular
+					 AND tope.vlrecarga = pr_vlrecarga
+					 AND tope.dsnsu_operadora = pr_nsuopera;  /* retornado da operadora */
+			rw_operacao_repetida cr_operacao_repetida%ROWTYPE;
+			
 			rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 			rw_craplcm craplcm%ROWTYPE;
 			
@@ -2320,6 +2353,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Atribuir Nsu da operadora e RedeTendencia
 				vr_nsuoperadora := replace(vr_resposta.conteudo.get('IdFornecedor').to_char(), '"', '');
 				vr_nsutendencia  := replace(vr_resposta.conteudo.get('IdMidlware').to_char(), '"', '');
+				
+				-- Verificar se existe alguma operação de recarga com os mesmos dados
+				OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
+			                           ,pr_nrdconta  => pr_nrdconta
+																 ,pr_dtrecarga => TRUNC(SYSDATE)
+																 ,pr_nrdddtel  => pr_nrdddtel
+																 ,pr_nrcelular => pr_nrtelefo
+																 ,pr_vlrecarga => pr_vlrecarga
+																 ,pr_nsuopera  => vr_nsuoperadora);
+				FETCH cr_operacao_repetida INTO rw_operacao_repetida;
+				
+				-- Se encontrou, operação já existe
+				IF cr_operacao_repetida%FOUND THEN
+					-- Fechar cursor
+					CLOSE cr_operacao_repetida;
+					-- Gerar crítica
+					vr_cdcritic := 0;
+					vr_dscritic := ''; -- Limpar a crítica
+					vr_dserrlog := 'NSU já processado.';
+					pr_nsuopera := vr_nsuoperadora;
+					
+					-- Se for registro em processamento
+					IF rw_operacao.insit_operacao = 0 THEN
+						-- Devemos atualizar o registro de operação de recarga
+						UPDATE tbrecarga_operacao 
+							 SET insit_operacao = 8 -- Transação abortada
+						 WHERE idoperacao = rw_operacao.idoperacao;
+						-- Efetuar commit
+						COMMIT;
+					END IF;
+					
+					-- Gerar log
+					pc_gera_log_erro(pr_cdcooper => pr_cdcooper
+													,pr_nrdconta => pr_nrdconta
+													,pr_idorigem => pr_idorigem
+													,pr_idseqttl => pr_idseqttl
+													,pr_cdoperadora => pr_cdopetel
+													,pr_nrdddtel => pr_nrdddtel
+													,pr_nrtelefo => pr_nrtelefo
+													,pr_vlrecarga => pr_vlrecarga
+													,pr_idoperacao => pr_idoperac												
+													,pr_dserrlog => vr_dserrlog);
+									
+					-- Levantar exceção
+					RAISE vr_exc_erro;
+						
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_operacao_repetida;				
 				
         -- Buscar a próxima data de repasse de valores para o fornecedor
         vr_dtrepasse := fn_calcula_proximo_repasse(pr_cdcooper => pr_cdcooper
@@ -4097,9 +4179,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 						 vr_dscritic := 'Recarga de mesmo valor já solicitada. Consulte extrato ou tente novamente em 5 min.';
            RAISE vr_exc_erro;    
         END IF;
-        END IF;      
       END IF;
-      
+      END IF;
+
       -- Validar recarga
       RCEL0001.pc_valida_recarga(pr_cdcooper  => pr_cdcooper
                                 ,pr_nrdconta  => pr_nrdconta
@@ -4506,6 +4588,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                 02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
                              crapass, crapttl, crapjur 
              		  				   (Adriano - P339).
+                16/04/2018 - Incluido a chamada do programa gen_debitador_unico.pc_qt_hora_prg_debitador
+                             para  atualizar a quantidade de execução que esta agendada no Debitador
+                             Projeto Debitador Unico - Josiane Stiehler (AMcom)
   
     ..............................................................................*/
     DECLARE
@@ -4600,6 +4685,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         CLOSE BTCH0001.cr_crapdat;
       END IF;
       
+      -- Verifica se o programa que chamou é o Debitador
+      IF pr_nmdatela = 'JOBAGERCEL' AND
+         pr_cdcooper <> 3 THEN
+         -- Atualiza a quantidade de execução que estão agendadas no Debitador
+         -- Projeto Debitador Único
+         gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper    => pr_cdcooper   --Cooperativa
+                                                     ,pr_cdprocesso => 'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA' --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                     ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;
+
+         -- registrar a quantidade de execução
+         -- Projeto debitador unico
+         SICR0001.pc_controle_exec_deb (pr_cdcooper   => pr_cdcooper         --> Código da coopertiva
+                                       ,pr_cdtipope  => 'I'                 --> Tipo de operacao I-incrementar e C-Consultar
+                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
+                                       ,pr_cdprogra  => pr_nmdatela         --> Codigo do programa
+                                       ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento
+                                       ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade
+                                       ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro
+                                       ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer
+
+           IF nvl(vr_cdcritic,0) > 0 OR
+              TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+           --Commit para garantir o
+           --controle de execucao do programa
+           COMMIT;
+      END IF;
+      
       --> Verificar a execução da DEBNET/DEBSIC 
       SICR0001.pc_controle_exec_deb(pr_cdcooper => pr_cdcooper         --> Código da coopertiva
                                    ,pr_cdtipope => 'C'                 --> Tipo de operacao I-incrementar e C-Consultar
@@ -4686,12 +4803,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           vr_variaveis_notif('#dataagendamento') := to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY');
           vr_variaveis_notif('#valor') := to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
           vr_variaveis_notif('#operadora') := rw_tbrecarga.nmoperadora;
-          vr_variaveis_notif('#numerocelular') := '('||lpad(rw_tbrecarga.nrddd,2,'0')||') '|| gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999');
+          vr_variaveis_notif('#ddd') := '('||lpad(rw_tbrecarga.nrddd,2,'0')||') ';
+          vr_variaveis_notif('#numerocelular') := gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999');
           vr_variaveis_notif('#motivo') := '';
-          
+          vr_variaveis_notif('#datadebito') := to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY');
           -- Se for critica de saldo insuficiente
           IF vr_dscritic = 'Não há saldo suficiente para a operação.' THEN
-            
+
             -- Verifica se é a ultima execução do JOB
             IF vr_flultexe = 1 THEN
               BEGIN
@@ -4796,9 +4914,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             -- Cria uma notificação
             NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                         ,pr_cdmotivo_mensagem => MOTIVO_RECARGA_CELULAR
-                                      --,pr_dhenvio => SYSDATE
                                         ,pr_cdcooper => pr_cdcooper
-                                               ,pr_nrdconta => rw_tbrecarga.nrdconta
+                                        ,pr_nrdconta => rw_tbrecarga.nrdconta
                                         ,pr_variaveis => vr_variaveis_notif);
            END IF;   
           
