@@ -1338,6 +1338,8 @@ END pc_incluir_bordero_esteira;
 
   -- Buscar Críticas dos Títulos.
   rw_crapabt dsct0003.cr_crapabt%ROWTYPE;
+  vr_tab_criticas dsct0003.typ_tab_critica;
+  vr_index_critica PLS_INTEGER;
 
   --> Totais do Borderos Com Análise Aprovada e Não efetivados
   CURSOR cr_border_nefet (pr_cdcooper IN crapabt.cdcooper%TYPE
@@ -1698,6 +1700,28 @@ END pc_incluir_bordero_esteira;
            vr_obj_crit_tit.put('descricao', rw_crapabt.dscritica);
            vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
          end loop;
+         -- Busca as criticas do Pagador
+         vr_tab_criticas.delete;
+         dsct0003.pc_calcula_restricao_pagador(pr_cdcooper => rw_craptdb.cdcooper
+                          ,pr_nrdconta => rw_craptdb.nrdconta
+                          ,pr_nrinssac => rw_craptdb.nrinssac
+                          ,pr_cdbandoc => rw_craptdb.cdbandoc
+                          ,pr_nrdctabb => rw_craptdb.nrdctabb
+                          ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                          ,pr_nrdocmto => rw_craptdb.nrdocmto
+                          ,pr_tab_criticas => vr_tab_criticas
+                          ,pr_cdcritic => vr_cdcritic
+                          ,pr_dscritic => vr_dscritic);
+         IF (vr_tab_criticas.count > 0) THEN
+           vr_index_critica := vr_tab_criticas.first;
+           WHILE vr_index_critica IS NOT NULL LOOP  
+             vr_obj_crit_tit.put('codigo', vr_tab_criticas(vr_index_critica).cdcritica);
+             vr_obj_crit_tit.put('descricao', vr_tab_criticas(vr_index_critica).dscritica);
+             vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
+             vr_index_critica := vr_tab_criticas.next(vr_index_critica);
+           END LOOP;
+         END IF;
+          
          vr_ibratan := 'N';
          /*Verifica se possui alguma restricao, se existir, adiciona critica informando*/
          open cr_crapcbd (pr_nrinssac=>rw_craptdb.nrinssac);
