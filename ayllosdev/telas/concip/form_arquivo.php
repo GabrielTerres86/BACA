@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Daniel Zimmermann
  * DATA CRIAÇÃO : 14/09/2015
  * OBJETIVO     : Tela do formulario
+ * --------------
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo de Liquidação no Filtro (PRJ 486 - Mateus Z / Mouts)
+ * --------------
  */
 session_start();
 require_once('../../includes/config.php');
@@ -36,6 +39,13 @@ isPostMethod();
     <label for="credenciadora">&nbsp;<?php echo utf8ToHtml('Credenciadora:'); ?></label>
     <select id="credenciadora" name="credenciadora" style="min-width:100px;max-width:120px;"></select>
 
+    <!-- PRJ 486 -->
+    <label for="dtinicioliq"><?php echo utf8ToHtml('Liquidação:') ?></label>
+    <input type="text" id="dtinicioliq" name="dtinicioliq" value="<?php echo $glbvars['dtmvtolt'] ?>"/>
+    <label for="dtfinalliq"><?php echo utf8ToHtml('Ate:') ?></label>
+    <input type="text" id="dtfinalliq" name="dtfinalliq" value="<?php echo $glbvars['dtmvtolt'] ?>"/>
+    <!-- Fim PRJ 486 -->
+
     <!-- Forma transferencia -->
     <label for="formtran">Forma Transf:</label>
     <select id="formtran" name="formtran">
@@ -47,7 +57,7 @@ isPostMethod();
     <br style="clear:both" />
 </form>
 
-<div id="divListaArquivo" name="divListaArquivo" style="display:none;" width="1000"></div>
+<div id="divListaArquivo" name="divListaArquivo" style="display:none;"></div>
 
 <div id="divBotoesArquivo" style="display:none; margin-bottom: 15px; text-align:center; margin-top: 15px;">
     <a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Voltar</a>

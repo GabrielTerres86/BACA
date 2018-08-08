@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 02/07/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 17/07/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -282,6 +282,10 @@ BEGIN
                     variavel global que terá o mesmo horário (HRTRANSA). Evitando erros na
                     impressão do comprovante do extrato na conta do cooperado.
 				           (Wagner - PRB0040144).
+                     
+			 05/07/2018 - Ajuste para considerar cooperativa ativa (Adriano - PRB0040134).
+
+             17/07/2018 - Ler mensagem str0004R2 para AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza (Mouts)
                      
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -6656,7 +6660,8 @@ END;
         -- enviada pela cooperativa
         IF vr_aux_tagCABInf THEN
           -- Busca cooperativa da destino
-          OPEN cr_busca_coop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4));
+          OPEN cr_busca_coop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4)
+                            ,pr_flgativo => 1);
           FETCH cr_busca_coop
            INTO rw_crapcop_mensag;
           -- Se encontrar
@@ -6732,6 +6737,7 @@ END;
                                ,'SLC0001','SLC0005'                             -- Requisição de Transferência de cliente para IF - Mauricio
                                ,'LDL0024'                                       -- Aviso Alteração Horários Câmara LDL - Alexandre Borgmann - Mouts
                                ,'STR0006R2'                                     -- Cielo finalidade 15 gravar e não gerar STR0010 - Alexandre Borgmann - Mouts
+                               ,'STR0004R2'                                     -- Rede  ISPBIFDebtd=00000000 (BCO DO BRASIL S.A.) e FinlddIF=23 (Transferência de Recursos - REDECARD – 23)
                                ,'PAG0108R2','PAG0143R2'                         -- TED
                                ,'STR0037R2','PAG0137R2'                         -- TEC
                                ,'STR0010R2','PAG0111R2'                         -- Devolucao TED/TEC enviado com erro
@@ -6800,7 +6806,9 @@ END;
 
     -- Antecipaçao de Recebíveis - LTR - Mauricio
     IF vr_aux_CodMsg in ('LTR0005R2','STR0006R2','LTR0005R2',
-                         'LDL0020R2','LDL0022','LTR0004') THEN
+                         'LDL0020R2','LDL0022','LTR0004',
+                         'STR0004R2'
+                        ) THEN
 
           -- Acionar log
           BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
@@ -6811,7 +6819,9 @@ END;
                                                       || vr_dscritic
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
-			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15' OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191')) THEN
+			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15'
+                  /* OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') removido solicitado por Lombardi a pedido de Jonathan Hasse*/
+				  ) THEN
 			
 			     -- Busca dados da Coope destino
            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
@@ -6828,6 +6838,12 @@ END;
                             ,vr_dscritic);
 
             pc_salva_arquivo;
+            RAISE vr_exc_next;
+        ELSIF vr_aux_CodMsg = 'STR0004R2' and (vr_aux_FinlddIF <> '23' OR 
+                                               vr_aux_ISPBIFDebtd<>'60701190') THEN
+
+            pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
+                           ,pr_msgderro  => 'Mensagem nao prevista');
             RAISE vr_exc_next;
         ELSE
           ccrd0006.pc_insere_msg_ltr_str(vr_aux_VlrLanc
