@@ -281,7 +281,7 @@ function formataCabecalho() {
     cCdufdemp.attr('maxlength', '2');
     cNrfonemp.attr('maxlength', '15');
     cNrfaxemp.attr('maxlength', '15');
-    cDsdemail.attr('maxlength', '60');
+    cDsdemail.attr('maxlength', '300');
 
     cDdmesnov.attr('maxlength', '2');
     cDdpgtmes.attr('maxlength', '2');
