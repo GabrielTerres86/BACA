@@ -9220,6 +9220,7 @@ PROCEDURE altera_limcred_cartao:
         IF f_verifica_adm(crawcrd.cdadmcrd) <> 2 THEN
           DO:
              
+              /*
               FIND craptlc WHERE craptlc.cdcooper = par_cdcooper        AND
                                   craptlc.cdadmcrd = crawcrd.cdadmcrd   AND
                                   craptlc.tpcartao = crawcrd.tpcartao   AND
@@ -9242,6 +9243,7 @@ PROCEDURE altera_limcred_cartao:
                       UNDO TRANS_ALTERACAO, RETURN "NOK".
        
                   END.
+             */
              
              ASSIGN crapcrd.cdlimcrd = craptlc.cdlimcrd
                            crapcrd.dtaltlim = par_dtmvtolt
