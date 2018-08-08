@@ -27,6 +27,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
      - relatorio 686 - "MOVIMENTO FLOAT - 085"
 
    Alteracoes: 
+     
+   - Incluído tratativa para efetivação de pagamento por recurso de prazo para boletos da COBTIT
+     ( Paulo Penteado GFT - 03/08/2018)
               
    .............................................................................*/
 
@@ -1390,7 +1393,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                 (rw_crapcob.dtvencto + rw_crapcob.qtdecprz) <= vr_dtmvtaux) OR
                            
                 -- se o boleto eh de emprestimo, venceu no dia e nao foi pago, baixar por decurso de prazo
-                (rw_crapcco.dsorgarq = 'EMPRESTIMO' AND rw_crapcob.dtvencto <= rw_crapdat.dtmvtolt) ) AND
+                (rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') AND rw_crapcob.dtvencto <= rw_crapdat.dtmvtolt) ) AND
                            
                 -- Se o boleto é de acordo, não será baixado por decurso de prazo, pois a baixa 
                 -- acontece apenas no momento de quebra do acordo
@@ -1401,7 +1404,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                 -- 5 (Negativada) ou 7 (Ação Judicial)
                 rw_crapcob.inserasa NOT IN (1,2,3,4,5,7) THEN                           
 
-                IF rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
+                IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
                   IF pr_nmtelant = 'COMPEFORA' THEN
                     vr_dtmvtpro:= rw_crapdat.dtmvtoan;
                   ELSE
