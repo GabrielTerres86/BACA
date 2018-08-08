@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Abril/2010                         Ultima atualizacao: 06/09/2017
+   Data    : Abril/2010                         Ultima atualizacao: 03/08/2018
 
    Dados referentes ao programa:
 
@@ -41,6 +41,9 @@
 
 			   06/09/2017 - Ajuste para que as agencias do banco 128 permancecam ativos
 						   (Adriano - SD 72388).
+
+			   03/08/2018 - Ajuste para não desativar as agencias dos bancos 91,130
+						   (Adriano - REQ0022269).
 
 ..............................................................................*/
 
@@ -295,7 +298,9 @@ FOR EACH crapcop
                     DO:       
                         IF   crapagb.cdsitagb <> aux_cdsitagb AND
                              crapagb.cddbanco <> 7            AND  /*Nao faz para o banco 7 - BNDS*/
-							 crapagb.cddbanco <> 128          THEN /*Nao faz para o banco 128 - BCAM MS BANK*/
+							 crapagb.cddbanco <> 128          AND  /*Nao faz para o banco 128 - BCAM MS BANK*/
+							 crapagb.cddbanco <> 91           AND  /* Não faz para o banco 91 - CC Unicred Central RS */
+							 crapagb.cddbanco <> 130          THEN /*Não faz para o banco 130 - CARUANA*/
                              ASSIGN crapagb.cdsitagb = aux_cdsitagb
                                     crapagb.dtmvtolt = glb_dtmvtolt 
                                     crapagb.cdoperad = glb_cdoperad.
@@ -323,7 +328,9 @@ FOR EACH crapcop
             END. /*** Fim do DO WHILE TRUE ***/
 
             IF aux_cdbccxlt <> 7   AND  /*Nao faz para o banco 7 - BNDS*/
-			   aux_cdbccxlt <> 128 THEN /*Nao faz para o banco 128 - BCAM MS BANK*/
+			   aux_cdbccxlt <> 128 AND  /*Nao faz para o banco 128 - BCAM MS BANK*/
+			   aux_cdbccxlt <> 91  AND  /* Não faz para o banco 91 - CC Unicred Central RS */
+			   aux_cdbccxlt <> 130 THEN /*Não faz para o banco 130 - CARUANA*/
                DO:
 				  /* Se a agencia em questao eh "9999" */  
 				  IF aux_cdageban = 9999 THEN
