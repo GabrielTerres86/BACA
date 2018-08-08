@@ -287,10 +287,8 @@ BEGIN
 
              17/07/2018 - Ler mensagem str0004R2 para AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza (Mouts)
              
-             08/08/2018 - INC0021763 - Remover regra que foi solicitada no projeto 366, onde TEDs deveriam ser
-                          devolvidas automáticamente para contas encerradas. Esta regra não deve existir, pois 
-                          mesmo uma conta sendo encerrada, ela ainda deve poder receber TEDS,  sendo que a devolução 
-                          segue a regra da data de demissão, para realizar esse tratamento. (Renato Darosci)
+             08/08/2018 - INC0021763 - Ajustar a regra de devolução de TEDs para que a mesma seja devolvidas 
+                          automáticamente para contas encerradas, independente do tipo. (Renato Darosci)
                   
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -976,14 +974,10 @@ BEGIN
         ELSIF rw_crapass.dtelimin IS NOT NULL THEN
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN;
-        
-        /*
-          *** INC0021763 - Removida regra ***
-        ELSIF vr_aux_CodMsg IN('PAG0108R2','PAG0143R2')-- TED
-        AND rw_crapass.cdsitdct = 4  THEN
-          pr_cdcritic := 1;  -- Conta encerrada 
+          
+        ELSIF rw_crapass.cdsitdct = 4  THEN -- INC0021763 - Removida a validação dos tipos de TEDs
+          pr_cdcritic := 1;  /* Conta encerrada */
           RETURN; 
-        */
         
         ELSE
           CLOSE cr_crapass;
