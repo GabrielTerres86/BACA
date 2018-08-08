@@ -58,6 +58,6 @@
 </div>
 
 <div id="divBotoes" style="margin-bottom:10px">
-	<a href="#" class="botao" id="btVoltar" onClick="mostraPagamentoEmp(); cNrctremp.focus(); return false;">Voltar</a>
+	<a href="#" class="botao" id="btVoltar" onClick="mostraPagamentoEmp(); return false;">Voltar</a>
 	<a href="#" class="botao" id="btSalvar" onClick="selecionaContrato(); return false;">Continuar</a>
 </div>

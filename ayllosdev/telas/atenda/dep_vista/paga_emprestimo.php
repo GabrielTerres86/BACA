@@ -12,12 +12,11 @@
 	require_once('../../../includes/controla_secao.php');
 	require_once('../../../class/xmlfile.php');
 
-
 	$cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-    $vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(",",".",$_POST['vlrpagto']) : 0;
-    $vlrabono = (isset($_POST['vlrabono'])) ? str_replace(",",".",$_POST['vlrabono']) : 0;
-    $nrctremp = (isset($_POST['nrctremp'])) ? str_replace(",",".",$_POST['nrctremp']) : 0;
+    $nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
+	$vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(".",",",$_POST['vlrpagto']) : 0;    
+	$vlrabono = (isset($_POST['vlrabono'])) ? str_replace(".",",",$_POST['vlrabono']) : 0;    
   
     // pagamento de empréstimo	
 
@@ -25,9 +24,9 @@
 	$xml2 .= " <Dados>";
 	$xml2 .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml2 .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml2 .= "   <nrctremp>".$nrctremp."</nrctremp>";
-	$xml2 .= "   <vlrabono>".$vlrpagto."</vlrabono>";
-    $xml2 .= "   <vlrpagto>".$vlrpagto."</vlrpagto>";
+	$xml2 .= "   <nrctremp>".$nrctremp."</nrctremp>";	
+	$xml2 .= "   <vlrabono>".$vlrabono."</vlrabono>";
+	$xml2 .= "   <vlrpagto>".$vlrpagto."</vlrpagto>";
 	$xml2 .= " </Dados>";
 	$xml2 .= "</Root>";
 

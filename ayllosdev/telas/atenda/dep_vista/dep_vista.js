@@ -1121,9 +1121,12 @@ function formataEmprestimo() {
 	var Cnrctremp = $('#nrctremp', '#frmEmpCC');
 
 	Lnrctremp.addClass('rotulo').css({ 'width': '80px' });
-	Cnrctremp.css({ 'width': '110px', 'text-align': 'right' }).attr('maxlength', '14');
+	Cnrctremp.css({ 'width': '110px', 'text-align': 'right' }).attr('maxlength', '13');
 
-	Cnrctremp.setMask('INTEGER', 'zzz.zzz.zzz.9', '.', '');
+	Cnrctremp.setMask('INTEGER', 'z.zzz.zzz.zz9', '.', '');
+
+	Lvlabono.hide();
+	Cvlabono.hide();
 
 }
 
@@ -1239,15 +1242,12 @@ function selecionaContrato(campo, formulario) {
 	if ($('table > tbody > tr', '#divContrato').hasClass('corSelecao')) {
 
 		$('table > tbody > tr', '#divContrato').each(function () {
-			if ($(this).hasClass('corSelecao')) {
-				mostraPagamentoEmp($('#nrctremp', $(this)).val());
+			if ($(this).hasClass('corSelecao')) {				
+               	mostraPagamentoEmp($('#nrctremp', $(this)).val());				
+                consultaSituacaoEmpr($('#nrctremp', $(this)).val());
 			}
 		});
 	}
-
-	//fechaRotina($('#divUsoGenerico'));
-	//exibeRotina($('#divUsoGenerico'));
-	
 
 	return false;
 
@@ -1347,7 +1347,7 @@ function efetuaLiberacaoCC(vlPagto) {
 
 }
 
-function efetuaPagamentoEmp(nrctremp, vlpagto, vlabono) {
+function efetuaPagamentoEmp(nrctrato, vlpagto, vlabono) {
 	
 	showMsgAguardo('Aguarde, efetuando pagamento...');
 	exibeRotina($('#divUsoGenerico'));
@@ -1359,7 +1359,7 @@ function efetuaPagamentoEmp(nrctremp, vlpagto, vlabono) {
 		data: {
 			nrdconta: nrdconta,
 			cdcooper: cdcooper,
-			nrctremp: nrctremp,
+			nrctremp: nrctrato,
 			vlrpagto: vlpagto,
 			vlrabono: vlabono,
 			redirect: 'html_ajax'
@@ -1369,6 +1369,31 @@ function efetuaPagamentoEmp(nrctremp, vlpagto, vlabono) {
 			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
+			eval(response);			
+		}
+	});
+	
+	return false;
+
+}
+
+function consultaSituacaoEmpr(nrctremp){
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/dep_vista/consulta_situacao_empr.php',
+		data: {
+			nrdconta: nrdconta,
+			cdcooper: cdcooper,
+			nrctremp: nrctremp,			
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {			
 			eval(response);			
 		}
 	});
@@ -1402,7 +1427,6 @@ function validaLiberacaoSaque() {
 		return true;
 	}
 }
-
 
 /*
 Final das rotinas relacionadas ao pagamento de prejuizo

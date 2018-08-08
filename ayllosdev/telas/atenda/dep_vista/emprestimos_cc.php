@@ -81,10 +81,16 @@
 	// Formata layout
 	formataEmprestimo();  
 
-	function pedeSenha(nrctremp, valorPagto, valorAbono){		 
-		 var vlpagto = retiraMascara(valorPagto) || 0; 
-		 var vlabono = retiraMascara(valorAbono) || 0; 		 
-		 efetuaPagamentoEmp(nrctremp, vlpagto, vlabono);		 	     
+	function pedeSenha(nrctremp, valorPagto, valorAbono){	
+		var vlpagto = retiraMascara(valorPagto) || 0; 
+		var vlabono = retiraMascara(valorAbono) || 0; 
+		var nrctrato = retiraMascara(nrctremp) || 0; 		 
+		efetuaPagamentoEmp(nrctrato, vlpagto, vlabono);		 	     
 	}
+
+	$("#nrctremp", "#frmEmpCC").blur(function() {
+		var nrctremp = $('#nrctremp', '#frmEmpCC').val();
+		consultaSituacaoEmpr(nrctremp);
+	});	
 	
 </script>
