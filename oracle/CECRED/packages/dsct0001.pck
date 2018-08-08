@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   --  Programa:  DSCT0001                       Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Alisson
-  --  Data    : Julho/2013                     Ultima Atualizacao: 19/07/2018
+  --  Data    : Julho/2013                     Ultima Atualizacao: 16/02/2018
   --
   --  Dados referentes ao programa:
   --
@@ -3969,6 +3969,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                           Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
     --                        (Paulo Penteado (GFT))
     --
+    --           08/08/2018 - Zerar o saldo devedor quando resgatado.
+    --                        (Vitor Shimada Assanuma [GFT])          
+    --
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
     --Buscar informacoes de lote
@@ -4844,6 +4847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ,craptdb.dtresgat = pr_dtresgat
               ,craptdb.cdoperes = pr_cdoperad
               ,craptdb.vlliqres = vr_vlliqnov
+              ,craptdb.vlsldtit = 0
          WHERE craptdb.rowid = rw_craptdb.rowid;
       EXCEPTION
         WHEN OTHERS THEN
