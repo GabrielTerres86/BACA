@@ -3,11 +3,11 @@
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+----------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                    |
+  | Rotina Progress                     | Rotina Oracle PLSQL                  |
   +-------------------------------------+----------------------------------------+
-  | busca-crapope			            | ZOOM0001.pc_busca_operadores           |
-  | busca-crapban					    | ZOOM0001.pc_busca_bancos               |
-  | busca-historico                     | ZOOM0001.pc_busca_historico            |
+  | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
+  | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
+  | busca-historico                     | ZOOM0001.pc_busca_historico          |
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
@@ -29,7 +29,7 @@
 
     Programa: b1wgen0059.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao:  02/08/2017
+    Data    : Marco/2010                   Ultima atualizacao:  31/10/2017
 
     Objetivo  : Buscar os dados p/ telas de pesquisas ou zoom's
 
@@ -190,6 +190,9 @@
 				             da busca_gncdnto e da busca-gncdocp
 							 (Adriano - SD 614408).
 							 				
+                29/03/2017 - Criacao de filtro por tpprodut na busca-craplcr.
+                             (Jaison/James - PRJ298)
+							 				
                  07/06/2016 - Adicionar validacao para nao exibir o historico 
                               1019 na tela autori (Lucas Ranghetti #464211)
 
@@ -202,6 +205,15 @@
 
 				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
 
+                31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+
+                13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
+                             PRJ366 (Lombardi).
+
+				10/05/2018 - P404 - Inclusao do tipo 4 aplicacao na descricao na da garantia 
+				             na procedure busca-craplcr (Lucas Skroch - Supero)
+                
+                08/08/2018 - Adicionado para não permitir listagem do convenio de desconto de títulos para a inserção de convenio para o cooperado (Luis Fernando - GFT)
 .............................................................................*/
 
 
@@ -1781,66 +1793,6 @@ PROCEDURE busca-crapdes:
 
 END PROCEDURE.
 
-
-PROCEDURE busca-craptip:
-    /* Pesquisa para TIPO DA CONTA */
-                                              
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dstipcta AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-craptip.
-
-    ASSIGN aux_nrregist = par_nrregist.
-
-    DO ON ERROR UNDO, LEAVE:
-        EMPTY TEMP-TABLE tt-crapagb.
-
-        ASSIGN par_dstipcta = TRIM(par_dstipcta).
-
-        FOR EACH craptip WHERE 
-                         craptip.cdcooper = par_cdcooper AND
-                         (IF par_cdtipcta <> 0 THEN
-                          craptip.cdtipcta = par_cdtipcta ELSE TRUE) AND
-                         craptip.dstipcta MATCHES("*" + par_dstipcta + "*") 
-                         NO-LOCK:
-
-            /* DESPREZAR TIPOS DE CONTA BB QUE UTILIZAM CHEQUE - GUILHERME */
-            IF  craptip.cdtipcta >= 12  AND
-                craptip.cdtipcta <= 15  THEN
-                NEXT.
-                          
-            ASSIGN par_qtregist = par_qtregist + 1.
-
-            /* controles da paginaçao */
-            IF  (par_qtregist < par_nriniseq) OR
-                (par_qtregist > (par_nriniseq + par_nrregist)) THEN
-                NEXT.
-
-            IF  aux_nrregist > 0 THEN
-                DO:
-                   FIND FIRST tt-craptip OF craptip NO-ERROR.
-    
-                   IF   NOT AVAILABLE tt-craptip THEN
-                        DO:
-                           CREATE tt-craptip.
-                           BUFFER-COPY craptip TO tt-craptip.
-                        END.
-                END.
-
-             ASSIGN aux_nrregist = aux_nrregist - 1.
-        END.
-
-        LEAVE.
-    END.
-
-    RETURN "OK".
-
-END PROCEDURE.
-
 PROCEDURE zoom-associados:
 
     
@@ -3114,6 +3066,7 @@ PROCEDURE busca-craplcr:
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdmodali AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_tpprodut AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-craplcr.
@@ -3141,8 +3094,11 @@ PROCEDURE busca-craplcr:
 									    craplch.cdlcrhab = par_cdlcremp  
 									   ELSE 
 									    craplch.cdlcrhab >= par_cdlcremp ) AND 
-                                      (IF par_flgstlcr THEN craplcr.flgstlcr = par_flgstlcr ELSE TRUE)   AND
-                                       craplcr.dslcremp MATCHES("*" + par_dslcremp + "*")
+                    (IF par_flgstlcr THEN 
+                        craplcr.flgstlcr = par_flgstlcr 
+                     ELSE TRUE) AND
+                     craplcr.dslcremp MATCHES("*" + par_dslcremp + "*") AND
+                    (IF par_tpprodut <> ? THEN craplcr.tpprodut = par_tpprodut ELSE TRUE)
                                        NO-LOCK:
         
                     ASSIGN par_qtregist = par_qtregist + 1.
@@ -3176,6 +3132,7 @@ PROCEDURE busca-craplcr:
                                        WHEN 1 THEN ASSIGN tt-craplcr.dsgarant = "AVAL".
                                        WHEN 2 THEN ASSIGN tt-craplcr.dsgarant = "VEICULOS".
                                        WHEN 3 THEN ASSIGN tt-craplcr.dsgarant = "IMOVEIS".
+									   WHEN 4 THEN ASSIGN tt-craplcr.dsgarant = "APLICACAO".
                                        OTHERWISE ASSIGN tt-craplcr.dsgarant = "NAO CADASTRADO".
                                    END CASE.                                   
                                        
@@ -3196,8 +3153,8 @@ PROCEDURE busca-craplcr:
                          craplcr.cdlcremp = par_cdlcremp ELSE TRUE)   AND
                          (IF par_flgstlcr THEN 
                          craplcr.flgstlcr = par_flgstlcr ELSE TRUE)   AND
-                         craplcr.dslcremp MATCHES("*" + par_dslcremp + 
-                                                                "*")  NO-LOCK:
+                         craplcr.dslcremp MATCHES("*" + par_dslcremp + "*") AND
+                         (IF par_tpprodut <> ? THEN craplcr.tpprodut = par_tpprodut ELSE TRUE) NO-LOCK:
         
                     ASSIGN par_qtregist = par_qtregist + 1.
         
@@ -3230,6 +3187,7 @@ PROCEDURE busca-craplcr:
                                        WHEN 1 THEN ASSIGN tt-craplcr.dsgarant = "AVAL".
                                        WHEN 2 THEN ASSIGN tt-craplcr.dsgarant = "VEICULOS".
                                        WHEN 3 THEN ASSIGN tt-craplcr.dsgarant = "IMOVEIS".
+									   WHEN 4 THEN ASSIGN tt-craplcr.dsgarant = "APLICACAO".
                                        OTHERWISE ASSIGN tt-craplcr.dsgarant = "NAO CADASTRADO".
                                    END CASE.                                   
 
@@ -3620,6 +3578,7 @@ PROCEDURE busca-crapadt:
     DEF  INPUT PARAM par_cdcooper AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                              NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                              NO-UNDO.
                                                                      
@@ -3636,7 +3595,8 @@ PROCEDURE busca-crapadt:
 
         FOR EACH crapadt WHERE crapadt.cdcooper = par_cdcooper AND
                                crapadt.nrdconta = par_nrdconta AND
-                               crapadt.nrctremp = par_nrctremp NO-LOCK:
+                               crapadt.nrctremp = par_nrctremp AND
+                               crapadt.tpctrato = par_tpctrato NO-LOCK:
 
             ASSIGN par_qtregist = par_qtregist + 1.
 

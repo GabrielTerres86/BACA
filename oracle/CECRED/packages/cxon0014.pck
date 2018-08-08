@@ -5109,6 +5109,8 @@ END pc_gera_titulos_iptu_prog;
   --               01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
   --
   --               30/10/2017 - Nao validar valor maximo do boleto ao verificar multiplos pagamentos. (Rafael)
+  --               
+  --               08/08/2018 - Adicionado teste para não permitir pagamentos vencidos de boletos da cobtit (Luis Fernando - GFT)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -6621,9 +6623,13 @@ END pc_gera_titulos_iptu_prog;
 
           /* verifica se o titulo esta vencido */
           IF vr_critica_data THEN
-            /* nao eh permitido receber boleto de emprestimo vencido */
+            /* nao eh permitido receber boleto de emprestimo ou de cobtit vencido */
             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
-              vr_des_erro:= 'Cob. Emprestimo. - Boleto Vencido.';
+              CASE WHEN rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
+                  vr_des_erro:= 'Cob. Emprestimo. - Boleto Vencido.';
+                WHEN rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
+                  vr_des_erro:= 'Cob. Desc. de Tititulo - Boleto Vencido.';
+              END CASE;
               pr_msgalert := vr_des_erro;
               --Criar erro
               CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
@@ -6793,7 +6799,12 @@ END pc_gera_titulos_iptu_prog;
           ELSIF ROUND(pr_valor_informado,2) > ROUND(pr_vlfatura,2) AND
                 rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
             IF vr_critica_data THEN
-              vr_des_erro:= 'Cob. Emprestimo. - Valor informado '||
+              CASE WHEN rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
+                  vr_des_erro:= 'Cob. Emprestimo. - Valor informado ';
+                WHEN rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
+                  vr_des_erro:= 'Cob. Desc. de Tititulo - Valor informado ';
+              END CASE;
+              vr_des_erro:= vr_des_erro ||
                             to_char(pr_valor_informado, 'fm999g999g990d00')||
                             ' maior que valor doc. '||
                             to_char(pr_vlfatura,'fm999g999g990D00');
