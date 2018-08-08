@@ -22957,7 +22957,7 @@ end;';
     --  Sistema  : Rotinas Internet
     --  Sigla    : CRED
     --  Autor    : Douglas Quisinski
-    --  Data     : Julho/2015.                   Ultima atualizacao: 17/02/2017
+    --  Data     : Julho/2015.                   Ultima atualizacao: 23/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -22972,6 +22972,10 @@ end;';
     --
     --              17/02/2017 - Incluir chamada da rotina PGTA0001.pc_gera_retorno_tit_pago
     --                           conforme o programa crps509 ja faz (Lucas Ranghetti #590601)
+    --
+    --              23/07/2018 - Passar para a pc_efetua_debitos o indicador de segundo
+    --                           processo que chega nesta rotina - pr_flsgproc.
+    --                           (INC0019629) - (Fabrício)
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -22981,6 +22985,8 @@ end;';
       vr_flultexe INTEGER;
       vr_qtdexec  INTEGER;
 
+      vr_flsgproc BOOLEAN;
+
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
 
@@ -22988,6 +22994,7 @@ end;';
       vr_tab_agendto PAGA0001.typ_tab_agendto;
 
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
     BEGIN
        -- Verifica se a data esta cadastrada
        OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -23034,13 +23041,20 @@ end;';
       
 
       IF vr_tab_agendto.count() > 0 THEN
+        
+        IF pr_flsgproc = 1 THEN
+          vr_flsgproc := TRUE;
+        ELSE
+          vr_flsgproc := FALSE;
+        END IF;         
+        
         -- Chama procedure para efetuar os débitos
         PAGA0001.pc_efetua_debitos(pr_cdcooper => pr_cdcooper
                                   ,pr_tab_agendto => vr_tab_agendto
                                   ,pr_cdprogra => pr_cdprogra
                                   ,pr_dtmvtopg => pr_dtmvtopg
                                   ,pr_inproces => pr_inproces
-                                  ,pr_flsgproc => false
+                                  ,pr_flsgproc => vr_flsgproc
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic );
 

@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 27/06/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2018
     
    Dados referentes ao programa:
    
@@ -238,6 +238,10 @@
                            
               27/06/2018 - Tratamento para aguas de schoroeder e aguas de guaramirim na procedure 
                            busca_autorizacoes_cadastradas (Lucas Ranghetti #INC0017908)
+						 
+              20/07/2018 - Incluir tratamento para caso for inclusao manual na verificacao
+                           da critica "Operacao nao finalizada, tente novamente." 
+                           (Lucas Ranghetti INC0019645)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2170,11 +2174,12 @@ PROCEDURE grava-dados:
                         IF  aux_tparrecd = 1 THEN
                             DO:
                                 /* Caso a empresa e segmento estejam zerados ou a empresa seja diferente 
-                                   da do codigo de barras */
+                                   da do codigo de barras somente se for atraves de codigo de barras */
                                 IF  INT(aux_cdempcon) = 0 OR 
                                     INT(aux_cdsegmto) = 0 OR 
-                                    aux_cdempcon <> aux_emconbar OR
-                                    aux_cdsegmto <> aux_segmtbar THEN
+                                    ((aux_cdempcon <> aux_emconbar OR
+                                    aux_cdsegmto <> aux_segmtbar)  AND 
+                                    aux_vlrcalcu <> "") THEN
                                     DO:
                                         ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
                                         UNDO Grava, LEAVE Grava.
