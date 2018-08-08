@@ -1462,6 +1462,23 @@ END pc_incluir_bordero_esteira;
   where  cdcooper = pr_cdcooper
   and    nrdconta = pr_nrdconta;
   rw_crapjfn cr_crapjfn%rowtype;
+  -->     Utilizado para verificar restricoes do pagador
+  vr_ibratan char(1) := 'N';
+  vr_cdbircon crapbir.cdbircon%TYPE;
+  vr_dsbircon crapbir.dsbircon%TYPE;
+  vr_cdmodbir crapmbr.cdmodbir%TYPE;
+  vr_dsmodbir crapmbr.dsmodbir%TYPE;
+
+  CURSOR cr_crapcbd (pr_nrinssac craptdb.nrinssac%TYPE) IS
+    SELECT crapcbd.nrconbir,
+           crapcbd.nrseqdet
+      FROM crapcbd
+     WHERE crapcbd.cdcooper = pr_cdcooper
+       AND crapcbd.nrdconta = pr_nrdconta 
+       AND crapcbd.nrcpfcgc = pr_nrinssac
+       AND crapcbd.inreterr = 0  -- Nao houve erros
+     ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
+  rw_crapcbd  cr_crapcbd%rowtype;
 
   -----------> VARIAVEIS <-----------
   -- Tratamento de erros
@@ -1681,6 +1698,20 @@ END pc_incluir_bordero_esteira;
            vr_obj_crit_tit.put('descricao', rw_crapabt.dscritica);
            vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
          end loop;
+         vr_ibratan := 'N';
+         /*Verifica se possui alguma restricao, se existir, adiciona critica informando*/
+         open cr_crapcbd (pr_nrinssac=>rw_craptdb.nrinssac);
+         fetch cr_crapcbd into rw_crapcbd;
+         IF (cr_crapcbd%NOTFOUND) THEN
+           SSPC0001.pc_verifica_situacao(rw_crapcbd.nrconbir,rw_crapcbd.nrseqdet,vr_cdbircon,vr_dsbircon,vr_cdmodbir,vr_dsmodbir,vr_ibratan);
+         END IF;
+         close cr_crapcbd;
+         IF (vr_ibratan='S') THEN --possui restricao
+           vr_obj_crit_tit.put('codigo', 21);
+           vr_obj_crit_tit.put('descricao', dsct0003.fn_ds_critica(21));
+           vr_lst_crit_tit.append(vr_obj_crit_tit.to_json_value());
+         END IF; 
+         
          vr_obj_titulos.put('criticas',vr_lst_crit_tit.to_json_value());
          vr_lst_titulos.append(vr_obj_titulos.to_json_value());
 

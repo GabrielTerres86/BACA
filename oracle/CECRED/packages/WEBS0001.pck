@@ -1917,9 +1917,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           --> a contagem de aprovados e reprovados.
           IF (vr_Aprovados + vr_Reprovados) > 0 THEN
             IF vr_aprovados > 0 THEN
-              v_insitapr := 1;
+              v_insitapr := 4;
             ELSIF (vr_aprovados = 0) and (vr_reprovados >0) THEN
-              v_insitapr := 2;
+              v_insitapr := 5;
             END IF;
             BEGIN
               UPDATE crapbdt bdt
