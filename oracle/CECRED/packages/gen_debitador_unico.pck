@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE cecred.gen_debitador_unico AS
+CREATE OR REPLACE PACKAGE CECRED.gen_debitador_unico AS
 
   -----------------------------------------------------------------------------------------------
   --
@@ -92,7 +92,7 @@ CREATE OR REPLACE PACKAGE cecred.gen_debitador_unico AS
                                       
 END gen_debitador_unico;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS 
+CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                                  
   -----------------------------------------------------------------------------------------------
   --
@@ -995,6 +995,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                                       ,pr_nrprioridade_prg_erro IN tbgen_debitador_param.nrprioridade%TYPE) IS
                                       
     /*
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+    | Alterações                                                                                                                                                                 |
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+    | 08/08/2108 - Vitor Shimada Assanuma (GFT) - Inclusão da PC_CRPS735                                                                                                         |
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+        
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- | 
     | Programa                                                                                                                 | Debita Sem Saldo | Debita Parcial | Repescagem  | 
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- | 
@@ -1011,12 +1017,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
     | OK - PC_CRPS674 - DEBITO DE FATURA - LANCAMENTO DE DEBITO AUTOMATICO - BANCOOB/CABAL                                     | Não              | Sim            | 1 = Repique |
     | OK - PC_CRPS688 - EFETUAR RESGATE DE APLICAÇÕES AGENDADAS PELO INTERNET BANK                                             | Não              | Não            | Não         |    
     | OK - RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA - EFETIVAR OS AGENDAMENTOS DE RECARGA DE CELULAR                            | Não              | Não            | Não         |    
-    | OK - EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA | Não              | Não            | Não         |    
+    | OK - TELA_LAUTOM.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA | Não              | Não            | Não         |    
     | OK - PC_CRPS123 - EFETUAR OS LANCAMENTOS AUTOMATICOS NO SISTEMA REF. A DEBITO EM CONTA                                   | Sim              | Não            | Não         |    
     | OK - PC_CRPS724 - PAGAR AS PARCELAS DOS CONTRATOS DO PRODUTO POS-FIXADO                                                  | Não              | Sim            | Não         |    
     | OK - PC_CRPS663 - DEBCNS - EFETUAR DEBITOS DE CONSORCIOS PENDENTES                                                       | Não              | Não            | Não         |
     | OK - PC_CRPS268 - DEBITO EM CONTA REFERENTE SEGURO DE VIDA EM GRUPO                                                      | Sim              | Não            | Não         |
     | OK - PAGA0003.PC_PROCESSA_AGEND_BANCOOB - DEBITO AGENDADOS DE PAGAMENTO BONCOOB                                          | Não              | Não            | Não         |
+    | OK - PC_CRPS735 - DESCONTO DE TÍTULOS                                                                                    | Não              | Sim            | Não         |
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- |     
     */                                      
           
@@ -1073,8 +1080,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
     vr_ds_bloco_plsql           VARCHAR2(30000);
     vr_dtvalida                 DATE;                              
     vr_dtdiahoje                DATE;
-    vr_stprogra                 PLS_INTEGER;--Não utilizada
-    vr_infimsol                 PLS_INTEGER;--Não utilizada     
+    vr_stprogra                 PLS_INTEGER;
+    vr_infimsol                 PLS_INTEGER;    
     vr_email_dest               VARCHAR2(1000); 
     vr_conteudo                 VARCHAR2(4000);
     vr_dh_erro                  DATE;
@@ -1084,7 +1091,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
     vr_inexecutou_integra_abbc  VARCHAR2(1) := 'N'; 
     vr_job_name_running         dba_scheduler_jobs.job_name%TYPE;
     vr_start_date               VARCHAR2(18);
-         
   BEGIN 
     --
     -- Verificação do calendário
@@ -1144,7 +1150,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                                 ,pr_cd_prg_erro        => vr_cd_prg_erro
                                 ,pr_nrprioridade       => vr_nrprioridade
                                 ,pr_cd_erro            => vr_cdcritic          
-                                ,pr_ds_erro            => vr_dscritic);                                                            
+                                ,pr_ds_erro            => vr_dscritic);
       -- Tratamento Erro
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN        
         RAISE vr_exc_email;              
@@ -1234,7 +1240,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                           ,pr_idtiplog => 'O'); 
                 
       -- Se a Cooperativa ainda estiver executando o Processo Batch (Noturna) ou a integração ABBC (CRPS538) ainda não foi processada 
-      IF rw_crapdat.inproces > 1 OR Nvl(vr_inexecutou_integra_abbc,'N') = 'N' THEN   
+      IF rw_crapdat.inproces > 1 OR Nvl(vr_inexecutou_integra_abbc,'N') = 'N' THEN
         
         -- Log de ocorrência
         pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
@@ -1313,11 +1319,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
         FOR r_processo_horario IN cr_processo_horario(pr_idhora_processamento  => pr_idhora_processamento
                                                      ,pr_ds_cdprocesso         => pr_ds_cdprocesso
                                                      ,pr_nrprioridade_prg_erro => pr_nrprioridade_prg_erro) LOOP
-                                       
+          vr_cdprogra := '';
           --TARI0001.PC_DEB_TARIFA_PEND - COBRANCA DE TARIFAS PENDENTES          
           IF Upper(r_processo_horario.cdprocesso) = 'TARI0001.PC_DEB_TARIFA_PEND' THEN     
             vr_cdprogra := 'TARI0001.PC_DEB_TARIFA_PEND';  
-            
+          ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS735' THEN     
+            vr_cdprogra := 'PC_CRPS735';              
+          END IF;
+          
+          IF LENGTH(vr_cdprogra) > 0 THEN
             -- Log de ocorrência
             pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
                                 ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
@@ -1333,14 +1343,22 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                                 ,pr_tpexecuc => NULL
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                 ,pr_idtiplog => 'I');                                     
-             
-            -- Executa processo/programa   
-            tari0001.pc_deb_tarifa_pend(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                       ,pr_dtinicio => NULL          --IN DATE                    --> data de inicio para verificação das tarifas
-                                       ,pr_dtafinal => NULL          --IN DATE                    --> data final para verificação das tarifas
-                                       ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                                       ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Texto de erro/critica encontrada                                                   
-            
+             IF Upper(vr_cdprogra) = 'TARI0001.PC_DEB_TARIFA_PEND' THEN     
+                -- Executa processo/programa   
+                tari0001.pc_deb_tarifa_pend(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                           ,pr_dtinicio => NULL          --IN DATE                    --> data de inicio para verificação das tarifas
+                                           ,pr_dtafinal => NULL          --IN DATE                    --> data final para verificação das tarifas
+                                           ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                           ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Texto de erro/critica encontrada                                                   
+             ELSIF Upper(vr_cdprogra) = 'PC_CRPS735' THEN     
+                CECRED.PC_CRPS735(pr_cdcooper => pr_cdcooper,
+                                  pr_stprogra => vr_stprogra,
+                                  pr_infimsol => vr_infimsol,
+                                  pr_cdcritic => vr_cdcritic,
+                                  pr_dscritic => vr_dscritic
+                                  );
+             END IF;
+           
             -- Tratamento de erro                                 
             IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
               --
