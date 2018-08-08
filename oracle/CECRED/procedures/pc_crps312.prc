@@ -201,21 +201,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
       rw_craplot cr_craplot%ROWTYPE;
 
       -- Buscar os lançamento de pagamento e abono
-      /*CURSOR cr_craplem(pr_cdcooper IN craplem.cdcooper%type,
-                        pr_nrdconta IN craplem.nrdconta%type,
-                        pr_nrctremp IN craplem.nrctremp%type,
-                        pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-        SELECT craplem.vllanmto,
-               craplem.dtmvtolt,
-               craplem.cdhistor
-          FROM craplem
-         WHERE craplem.cdcooper  = pr_cdcooper
-           AND craplem.nrdconta  = pr_nrdconta
-           AND craplem.nrctremp  = pr_nrctremp
-           AND craplem.dtmvtolt <= pr_dtmvtolt
-           AND (craplem.cdhistor = 382 \* Pagamentos *\
-             OR craplem.cdhistor = 383 \* Abonos *\
-             OR craplem.cdhistor = 2388);*/ /* Pagamento Prejuizo */
       CURSOR cr_craplem(pr_cdcooper IN craplem.cdcooper%type,
                         pr_nrdconta IN craplem.nrdconta%type,
                         pr_nrctremp IN craplem.nrctremp%type,
@@ -230,20 +215,34 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
            AND craplem.dtmvtolt <= pr_dtmvtolt
            AND craplem.cdhistor IN (382, /* Pagamentos */
                                     383, /* Abonos */
-                                    384,
+                                    --384,
                                     2388, /* 2388 - PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
                                     2473, /* 2473 - PAGAMENTO JUROS +60 PREJUIZO */
                                     --2389, /* 2389 - PAGAMENTO JUROS PREJUIZO */
-                                    2390, /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
-                                    2475, /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
-                                    2391, /* 2391 - ABONO DE PREJUIZO */
+                                    --2390, /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
+                                    --2475, /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
+                                    --2391, /* 2391 - ABONO DE PREJUIZO */
                                     2392, /* 2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
-                                    2474, /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
+                                    2474 /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
                                     --2393, /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
-                                    2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
-                                    2476, /* 2476 - ESTORNO PAGAMENTO JUROS MORA PREJUIZO */
-                                    2395); /* 2395 - ESTORNO ABONO DE PREJUIZO */                                     
+                                    --2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
+                                    --2476, /* 2476 - ESTORNO PAGAMENTO JUROS MORA PREJUIZO */
+                                    --2395 /* 2395 - ESTORNO ABONO DE PREJUIZO */
+                                    );                                      
       rw_craplem cr_craplem%ROWTYPE;
+
+      CURSOR cr_crapvri (prc_cdcooper IN crapvri.cdcooper%TYPE,
+                         prc_nrdconta IN crapvri.nrdconta%TYPE,
+                         prc_nrctremp IN crapvri.nrctremp%TYPE,
+                         prc_dtrefere IN crapdat.dtultdia%TYPE) IS    
+        SELECT SUM(DECODE(vri.cdvencto, 310, vldivida,0) ) vlsaldo12
+              ,SUM(DECODE(vri.cdvencto, 320, vldivida,  0)) vlsaldo13
+              ,SUM(DECODE(vri.cdvencto, 330, vldivida, 0) ) vlsaldo49
+          FROM crapvri vri
+         WHERE vri.cdcooper = prc_cdcooper
+           AND vri.nrdconta = prc_nrdconta
+           AND vri.nrctremp = prc_nrctremp
+           AND vri.dtrefere = prc_dtrefere;      
 
       -- Buscar nome da agência
       CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
@@ -507,7 +506,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
             -- Atualiza os campos da tabela crapepr
             UPDATE crapepr
                SET crapepr.vlsprjat = crapepr.vlsdprej
-				  ,crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
+                  ,crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
                   ,crapepr.vljraprj = crapepr.vljraprj + vr_vljurmes
                   ,crapepr.vljrmprj = vr_vljurmes
             WHERE crapepr.ROWID = rw_crapepr_crapass.ROWID
@@ -646,9 +645,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
                                         pr_nrctremp => rw_crapepr_crapass.nrctremp,
                                         pr_dtmvtolt => vr_dtrefere) LOOP
             /* Historico de Abono */
-            IF rw_craplem.cdhistor IN (383,2391) THEN
+            IF rw_craplem.cdhistor IN (383) THEN -- Somente abono antigo
               vr_vlrabono := vr_vlrabono + rw_craplem.vllanmto;
-            ELSIF rw_craplem.cdhistor IN (2392,2474,2393,2394,2476,2395) THEN /* Historico de Estorno*/
+            ELSIF rw_craplem.cdhistor IN (2392,2474) THEN /* Historico de Estorno*/
               vr_vlrestor := vr_vlrestor + rw_craplem.vllanmto;
             ELSE  /* Historico de Pagamento */
               vr_vlrpagos := vr_vlrpagos + rw_craplem.vllanmto;
@@ -663,46 +662,43 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
             END IF;
 
           END LOOP; /* END FOR rw_craplem */
+          -- Define se o contrato esta em prejuizo
+          IF rw_crapepr_crapass.vlprejuz - vr_vlrpagos > 0 THEN
+            vr_dspconta := ' ';
+          ELSE
+            vr_dspconta := '*';
+          END IF;
 
-          /* Se nao houve pagamento dentro do mes, e o valor do prejuizo e o valor do juros for igual a 0, nao vamos listar no relatorio */
-          IF NOT(NOT vr_flgpgmes AND rw_crapepr_crapass.vlsdprej = 0 AND rw_crapepr_crapass.vljrmprj = 0) THEN
+          vr_credbx12 := 0; -- Valor transferido a 12 meses
+          vr_credbx13 := 0; -- Valor transferido mais de 12 meses
+          vr_credbx49 := 0; -- Valor transferido mais de 48 meses
+          vr_tpmespre := 0; -- Define o tipo de mês do prejuizo (1-Dentro do Mês;2-Mais de 48 meses)
 
-            -- Define se o contrato esta em prejuizo
-            IF rw_crapepr_crapass.vlprejuz - vr_vlrpagos > 0 THEN
-              vr_dspconta := ' ';
-            ELSE
-              vr_dspconta := '*';
+          -- Condicao para verificar se o contrato em prejuizo entrou dentro do mes ou eh maior que 48 meses
+          IF to_char(rw_crapepr_crapass.dtprejuz,'mmrrrr') = to_char(rw_crapdat.dtmvtolt,'mmrrrr') THEN
+            vr_tpmespre := 1;
+          END IF;
+          --
+          FOR rw_crapvri IN cr_crapvri(prc_cdcooper => pr_cdcooper,
+                                       prc_nrdconta => rw_crapepr_crapass.nrdconta,
+                                       prc_nrctremp => rw_crapepr_crapass.nrctremp,
+                                       prc_dtrefere => rw_crapdat.dtultdia) LOOP
+            vr_credbx12 := rw_crapvri.vlsaldo12;
+            vr_credbx13 := rw_crapvri.vlsaldo13;
+            vr_credbx49 := rw_crapvri.vlsaldo49;
+            IF vr_credbx49 > 0 THEN 
+              vr_tpmespre := 2;
             END IF;
+          END LOOP;
 
-            vr_credbx12 := 0; -- Valor transferido a 12 meses
-            vr_credbx13 := 0; -- Valor transferido mais de 12 meses
-            vr_credbx49 := 0; -- Valor transferido mais de 48 meses
-            vr_tpmespre := 0; -- Define o tipo de mês do prejuizo (1-Dentro do Mês;2-Mais de 48 meses)
-
-            -- Condicao para verificar se o contrato em prejuizo entrou dentro do mes ou eh maior que 48 meses
-            IF to_char(rw_crapepr_crapass.dtprejuz,'mmrrrr') = to_char(rw_crapdat.dtmvtolt,'mmrrrr') THEN
-              vr_tpmespre := 1;
-            END IF;
-
-            -- Condicao para somar o valor transferido ate 12 meses
-            IF rw_crapepr_crapass.vlprejuz - vr_vlrpagos - vr_vlrabono > 0 THEN
-              IF months_between(trunc(rw_crapdat.dtmvtolt,'MM'), trunc(rw_crapepr_crapass.dtprejuz,'MM')) +1 <= 12 THEN
-                vr_credbx12 := rw_crapepr_crapass.vlprejuz - vr_vlrpagos - vr_vlrabono;
-              ELSIF months_between(trunc(rw_crapdat.dtmvtolt,'MM'), trunc(rw_crapepr_crapass.dtprejuz,'MM')) +1 BETWEEN 13 AND 48  THEN
-                -- Condicao para somar o valor transferido mais de 12 meses até 48 meses
-                vr_credbx13 := rw_crapepr_crapass.vlprejuz - vr_vlrpagos - vr_vlrabono;
-              ELSE
-                -- Condicao para somar o valor transferido mais de 48 meses
-                vr_credbx49 := rw_crapepr_crapass.vlprejuz - vr_vlrpagos - vr_vlrabono;
-                vr_tpmespre := 2;
-              END IF;
-            END IF;
-
-            -- Se o valor for zerado, nao deve ser impresso
-            IF vr_vlrpagos = 0 THEN
-              vr_vlrpagos := NULL;
-            END IF;
-
+          -- Se o valor for zerado, nao deve ser impresso
+          IF vr_vlrpagos = 0 THEN
+            vr_vlrpagos := NULL;
+          END IF;
+          --
+          IF vr_credbx12 <> 0 OR
+             vr_credbx13 <> 0 OR
+             vr_credbx49 <> 0 THEN 
             --Montar tag do contrato para arquivo XML do relatorio 264.lst
             pc_escreve_xml(vr_des_xml_lst,'
                            <contrato>
@@ -989,4 +985,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps312;
 /
-
