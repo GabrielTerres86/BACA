@@ -168,7 +168,7 @@ function exibeErro($msgErro) {
         		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
 	<?php  } ?>
 	<a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Termo</a>    
-    <a href="#" class="botao" onclick="return false;">Aprovar</a>
+    <a href="#" id="btnAbrirAprovacao" class="botao" onclick="abrirAprovacao(); return false;">Aprovar</a>
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	
@@ -187,6 +187,6 @@ hideMsgAguardo();
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
 // Se a tela foi chamada pela rotina "Produtos" então acessa a opção "Habilitar".
-(executandoProdutos == true) ? consulta('S','','','true','','') : '';
+(executandoProdutos == true) ? consulta('S','','',true,'','') : '';
 
 </script>

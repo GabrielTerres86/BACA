@@ -249,8 +249,13 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
     $("#convenios", "#divConteudoOpcao").val(convenios);
     $("#insitceb", "#divConteudoOpcao").val(insitceb);
 
+    $('#btnAbrirAprovacao').hide();
+
     if (insitceb == '2') {
         $("#btnAlterarConvenio").hide();
+    } else if (insitceb == '3') {
+        $("#btnAlterarConvenio").show();
+        $('#btnAbrirAprovacao').show();
     } else {
         $("#btnAlterarConvenio").show();
     }
@@ -445,9 +450,9 @@ function realizaExclusao(inapurac) {
 }
 
 // Exibe a opcao de Consulta ou Habilitacao
-function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
+function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, idaba) {
 
-	gFlginclu = flginclu == 'true';
+	gFlginclu = flginclu;
 
     /*var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
@@ -590,6 +595,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 			inenvcob: inenvcob,
             nrdconta: nrdconta,
             inpessoa: inpessoa,
+            idaba: idaba,
 			redirect: "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -2928,9 +2934,40 @@ function editarConvenio(nrconven) {
 
 			var cddopcao = $('#cddopcao', '#divConteudoOpcao').val();
 
-			consulta(cddopcao, nrconven, dsorgarq, 'false', flgregis, cddbanco);
+			consulta(cddopcao, nrconven, dsorgarq, false, flgregis, cddbanco);
 		}
 	});
 
 	return false;
+}
+
+function abrirAprovacao() {
+    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+
+    blockBackground(parseInt($("#divRotina").css("z-index")));
+
+    $.ajax({
+        type: "POST",
+        dataType: 'html',
+        url: UrlSite + "telas/cadres/tela_aprovacao.php",
+        data: {
+            cdcooper: cdcooper,
+            idrecipr: idrecipr,
+            dsmetodo: "$('#divConteudoOpcao').show();$('#telaAprovacao').hide();",
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + objExcept.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+        },
+        beforeSend: function () {
+            showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+        },
+        success: function (response) {
+            $("#divConteudoOpcao").hide();
+            $("#telaAprovacao").html(response);
+            /*$('#divUsoGenerico').html(response);
+            exibeRotina($('#divUsoGenerico'));*/
+        }
+    });
 }

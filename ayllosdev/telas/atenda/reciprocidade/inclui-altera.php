@@ -61,7 +61,7 @@ $cddopcao = "A"; // Por padrao Alteracao
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="limpaCampos();$('#divConteudoOpcao').css('display','block');$('#divOpcaoIncluiAltera').css('display','none');return false;" />
 	<input id="btnIncluir" name="btnIncluir" type="image" src="<?php echo $UrlImagens; ?>botoes/incluir.gif" onClick="habilitaCampoConvenio();return false;" />
 	<? if ($nrconven != "") { // Se algum convenio selecionado , mostrar botao de alteracao  ?>
-		<input id="btnAlterar" name="btnAlterar" type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="consulta('<? echo $cddopcao; ?> ', <?php echo $nrconven; ?> ,' <?php echo $dsorgarq; ?> ' , '<?php echo "false"; ?> ',' <?php echo $flgregis; ?> ', '<?php echo $cddbanco; ?>' );return false;" />
+		<input id="btnAlterar" name="btnAlterar" type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="consulta('<? echo $cddopcao; ?> ', <?php echo $nrconven; ?> ,' <?php echo $dsorgarq; ?> ' , false,' <?php echo $flgregis; ?> ', '<?php echo $cddbanco; ?>' );return false;" />
 	<? } ?>
 	<? if ($nrconven != "") { // Se algum convenio selecionado , mostrar botao de impressao ?>
 		<input id="btnImprime" name="btnImprime" type="image" src="<?php echo $UrlImagens; ?>botoes/impressao.gif" onClick="confirmaImpressao('<? echo $flgregis; ?>','<? echo "1"; ?>');return false;" />	

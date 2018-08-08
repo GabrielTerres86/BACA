@@ -159,6 +159,7 @@ foreach($emails as $email) {
 								<div id="divHabilita_SMS"></div>
 								<div id="divAbaTarifas"></div>
 								<div id="divConvenios"></div>
+								<div id="telaAprovacao"></div>
 							</td>							
 						</tr>
 						

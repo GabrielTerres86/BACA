@@ -366,7 +366,7 @@ descontoConvenios = [];
 <div id="divBotoes" style="margin:5px">
     <a href="#" id="btnContinuar" class="botao">Continuar</a>
     <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
-    <a href="#" class="botao" onclick="consulta('A','','','true','','');return false;">Tarifas instru&ccedil;&atilde;o</a>
+    <a href="#" class="botao" onclick="consulta('A','','',true,'','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>
 </div>
 
@@ -399,7 +399,7 @@ hideMsgAguardo();
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
 // Se a tela foi chamada pela rotina "Produtos" então acessa a opção "Habilitar".
-(executandoProdutos == true) ? consulta('S','','','true','','') : '';
+(executandoProdutos == true) ? consulta('S','','',true,'','') : '';
 
 $('.valor').setMask('DECIMAL', 'zz.zzz.zz9,99', '.', '');
 $('.inteiro').setMask('DECIMAL', 'zz.zzz.zzz', '.', '');

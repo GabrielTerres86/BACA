@@ -105,6 +105,7 @@ $insrvprt    = trim($_POST["insrvprt"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
 $idrecipr	 = trim($_POST["idrecipr"]);
 $inenvcob	 = trim($_POST["inenvcob"]);
+$idaba       = isset($_POST["idaba"]) ? (int)$_POST["idaba"] : 0;
 
 // Monta o xml de requisição
 $xml  = "";
@@ -346,14 +347,14 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                 </div>
 
                 <div id="divAba1" class="clsAbas">
-                    <fieldset>
+                    <!--<fieldset>
                         <legend align="left">Reciprocidade</legend>
                         <div align="center">
                             <a href="#" class="botao" style="float:none; padding: 3px 6px;" id="btnCalculo">C&aacute;lculo</a>
                             <a href="#" class="botao" style="float:none; padding: 3px 6px;" id="btnAcompanhamento">Acompanhamento</a>
                             <a href="#" class="botao" style="float:none; padding: 3px 6px;" id="btnAjuda" onClick="gera_ajuda();return false;">Ajuda</a>
                         </div>
-                    </fieldset>
+                    </fieldset>-->
                     <?php
                         // Listagem dos subgrupos
                         $cont = 0;
@@ -378,7 +379,8 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                             $cat_dscatego = getByTagName($cat->tags,'DSCATEGO');
                                             $cat_flcatcoo = getByTagName($cat->tags,'FLCATCOO');
                                             $cat_flcatcee = getByTagName($cat->tags,'FLCATCEE');
-                                            $cat_fldesman = getByTagName($cat->tags,'FLDESMAN');
+                                            // $cat_fldesman = getByTagName($cat->tags,'FLDESMAN');
+                                            $cat_fldesman = 1;
                                             $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');
                                             $cat_percdesc = getByTagName($cat->tags,'PERDESCONTO');
                                             ?>
@@ -478,7 +480,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
     <?php
         // Selecionar convenio
         if ($cddopcao == 'S') {
-            ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="consulta('I','','','true','','');return false;" id="btnContinuar" type="image" /><?php
+            ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="consulta('I','','',true,'','');return false;" id="btnContinuar" type="image" /><?php
         } elseif ($cddopcao != 'C') {
             ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" id="btnContinuar" onClick="return false;" type="image" /><?php
         }
@@ -629,7 +631,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         // Esconde as abas
         $('.clsAbas','#frmConsulta').hide();
         // Mostra a aba
-        acessaAba('0','<?php echo $cddopcao; ?>');
+        acessaAba('<?php echo $idaba; ?>','<?php echo $cddopcao; ?>');
         <?php
     }
 
