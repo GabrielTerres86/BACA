@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 08/05/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -601,7 +601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --  Sistema  : Procedimentos gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 08/05/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -620,6 +620,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --                           (Ana - Envolti - Ch 839539)
   --
   --              01/04/2018 - Inserido noti0001.pc_cria_notificacao
+  --                              
+  --              27/07/2018 - Ajuste mensagem do Log
+  --                          ( Belli - Envolti - Ch INC0019045 ) 
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -6739,7 +6742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: 08/05/2018
+       Data    : novembro/2016                     Ultima atualizacao: 27/07/2018
 
        Dados referentes ao programa:
 
@@ -6755,6 +6758,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               - Alterada validação do campo pr_dscritic para vr_dscritic 
                                 no retorno da rotina pc_cria_lote_sms - alinhado com Odirlei em 23/05/2018
                                 (Ana - Envolti - Ch REQ0011327)
+                                
+                   27/07/2018 - Ajuste mensagem do Log
+                                ( Belli - Envolti - Ch INC0019045 )             
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -6876,7 +6882,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dslindig     VARCHAR2(500);
     vr_nmremsms     VARCHAR2(500);
     vr_dsdmensa     VARCHAR2(500);    
-    vr_dsparame     VARCHAR2(2000);
+    vr_dsparame     VARCHAR2(2000);    
+    vr_nrdconta     crapass.nrdconta%TYPE := 0; -- Guarda informação para Log - 27/07/2018 - Chd INC0019045
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- procedimento para gerar log da debtar
@@ -7017,10 +7024,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic||vr_dsparame;
       WHEN OTHERS THEN
-        pr_dscritic := gene0001.fn_busca_critica(9999)||'COBR0005.pc_ret_linha_digitavel. '||sqlerrm||vr_dsparame;
-
         --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        pr_dscritic := gene0001.fn_busca_critica(9999)||'COBR0005.pc_ret_linha_digitavel. '||sqlerrm||vr_dsparame;
+
     END pc_ret_linha_digitavel;
     
     --> Retornar mensagem 
@@ -7127,13 +7134,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         
         -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_verifica_sms_a_enviar');
-
+        
+        vr_nrdconta := 0; -- Inicializa informação da mensagem para o Log - 27/07/2018 - Ch INC0019045
         ---->>>> Verificar se cooperados estão habilitados a enviar SMS <<<<-----
         --> Buscar cooperados que possuem SMS Pendente
         FOR rw_ass_sms IN cr_ass_sms (pr_cdcooper => rw_crapcop.cdcooper) LOOP
-        
-          vr_dsparame := vr_dsparame||
-                         ', nrdconta: '||rw_ass_sms.nrdconta;
+          vr_nrdconta := rw_ass_sms.nrdconta; -- Ajuste mensagem para o Log - 27/07/2018 - Ch INC0019045
           --> Rotina para verificar se serviço de SMS, caso identifique algum problema
           --> Contrato é cancelado automaticamente
           pc_verifar_serv_sms(pr_cdcooper   => rw_crapcop.cdcooper       --> Codigo da cooperativa
@@ -7174,6 +7180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           
         END LOOP;
         --->>> FIM VALIDACAO DOS COOPERADOS <<<----
+        vr_nrdconta := 0; -- Finaliza informação da mensagem para o Log - 27/07/2018 - Ch INC0019045
         
         --Controle de geracao de lote de SMS
         vr_flgerlot   := TRUE;
@@ -7330,6 +7337,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+                CECRED.pc_internal_exception (pr_cdcooper => nvl(rw_crapcop.cdcooper,3));
                 vr_cdcritic := 1035;  --Não foi possivel atualizar SMS
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbcobran_sms:'||
                         ' idlote_sms:'||vr_idlote_sms||
@@ -7339,8 +7348,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                         ' com rowid:'||rw_sms_cobran.rowid_sms||
                         '. '||sqlerrm;
 
-                --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
-                CECRED.pc_internal_exception (pr_cdcooper => nvl(rw_crapcop.cdcooper,3));
                 RAISE vr_next_sms;
             END;          
           
@@ -7395,12 +7402,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               vr_dscritic := NULL;
               
             WHEN OTHERS THEN
+                CECRED.pc_internal_exception (pr_cdcooper => nvl(rw_crapcop.cdcooper,3));
                --> rollback da geracao de SMS
                 ROLLBACK TO trans_sms;
                 vr_cdcritic := 1236;  --Erro ao gerar SMS
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscritic;
-
-                CECRED.pc_internal_exception (pr_cdcooper => nvl(rw_crapcop.cdcooper,3));
 
                RAISE vr_exc_erro;
           END;     
@@ -7468,12 +7474,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           
         WHEN vr_exc_erro THEN
           RAISE vr_exc_erro;  
-        WHEN OTHERS THEN  
-          vr_cdcritic := 1237;  --Erro ao enviar SMS de cobrança da coop
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||rw_crapcop.cdcooper||'. '||SQLERRM;
-
+        WHEN OTHERS THEN 
           --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+          vr_cdcritic := 1237;  --Erro ao enviar SMS de cobrança da coop
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||
+                         ' '  || rw_crapcop.cdcooper||
+                         ', nrdconta:' || vr_nrdconta ||
+                         '. '||SQLERRM;  -- Ajuste mensagem do Log - 27/07/2018 - Ch INC0019045
           RAISE vr_exc_erro;
       END;      
     END LOOP;
@@ -7496,7 +7504,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_ind_tipo_log  => 1);
       
       
-    WHEN OTHERS THEN
+    WHEN OTHERS THEN      
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
       -- Montar descrição de erro não tratado
       vr_cdcritic := 9999;
       pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_verifica_sms_a_enviar. '||sqlerrm||vr_dsparame;
@@ -7509,9 +7519,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(vr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
-      
-      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_verifica_sms_a_enviar; 
   
   --> Enviar lote de SMS para o Aymaru

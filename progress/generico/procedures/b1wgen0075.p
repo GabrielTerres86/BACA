@@ -120,6 +120,10 @@
 						   na camada do progress (INC0018113).
 						   
 	          30/07/2018 - Feito a inversao das chamadas da procedures pc_revalida_nome_cad_unc e pc_revalida_cnpj_cad_unc. (Kelvin)
+            
+            06/08/2018 - Ajuste para nao gerar critica se o nome passado da empresa estiver em branco
+                         Sera branco para as empresas especiais, ex. 80 - Aposentados
+                         INC0020549 - Heitor (Mouts)
 							
 .............................................................................*/
 
@@ -577,8 +581,7 @@ PROCEDURE Valida_Dados:
         /* se o TPCTTRAB for igual a 3 nao precisa validar os campos abaixo */
 
         /* validacoes p/ tpcttrab = 1 ou = 2 */
-        IF  par_nmextemp = "" OR 
-            NOT CAN-FIND(crapemp WHERE crapemp.cdcooper = par_cdcooper AND 
+        IF  NOT CAN-FIND(crapemp WHERE crapemp.cdcooper = par_cdcooper AND 
                                        crapemp.cdempres = par_cdempres) THEN
             DO:
                ASSIGN 

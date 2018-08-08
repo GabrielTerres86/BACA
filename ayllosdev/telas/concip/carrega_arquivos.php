@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 11/09/2015
  * OBJETIVO     : Efetua busca de arquivos
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 23/07/2018 - Adicionado campo Liquidação nos Filtros (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 ?>
@@ -34,11 +34,19 @@ $tparquivo = (isset($_POST['tparquivo'])) ? $_POST['tparquivo'] : 0;
 $credenciadora = (isset($_POST['credenciadora'])) ? $_POST['credenciadora'] : 0;
 $bcoliquidante = (isset($_POST['bcoliquidante'])) ? $_POST['bcoliquidante'] : 0;
 $formtran = (isset($_POST['formtran'])) ? $_POST['formtran'] : '0';
+// PRJ 486
+$dtinicioliq = (isset($_POST['dtinicioliq'])) ? $_POST['dtinicioliq'] : '';
+$dtfinalliq = (isset($_POST['dtfinalliq'])) ? $_POST['dtfinalliq'] : '';
+// Fim PRJ 486
 
 $xml  = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <dtinicio>" . $dtinicio . "</dtinicio>";
 $xml .= "   <dtfinal>" . $dtafinal . "</dtfinal>";
+// PRJ 486
+$xml .= "   <dtinicioliq>" . $dtinicioliq . "</dtinicioliq>";
+$xml .= "   <dtfinalliq>" . $dtfinalliq . "</dtfinalliq>";
+// Fim PRJ 486
 $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
 $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
 $xml .= "   <tparquivo>" . $tparquivo . "</tparquivo>";
@@ -73,3 +81,4 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
 }
 
 include('tab_arquivos.php');
+ 

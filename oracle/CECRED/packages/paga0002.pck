@@ -699,7 +699,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
-  
+                                      
   /* Realizar a apuração diária dos lançamentos dos históricos de pagamento de empréstimos */
   PROCEDURE pc_apura_lcm_his_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE -- Codigo da cooperativa
                                        ,pr_dtrefere IN DATE   );             -- Data de referencia para processamento
@@ -721,7 +721,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                  ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
                                  ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
                                  ,pr_dscritic              OUT VARCHAR2);                       --> Descrição da crítica
-  
+                                                                       
   PROCEDURE pc_obtem_horarios_pagamentos (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
                                          ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       
                                          ,pr_cdcanal     IN NUMBER   -- Codigo de origem
@@ -871,6 +871,11 @@ create or replace package body cecred.PAGA0002 is
                                contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
                                pela cabine
                                (Adriano - INC0017772).
+                               
+                  19/07/2018 - Validar que a agencia do banco creditada não seja zero (0),
+                               evitando erro no processamento da mensagem pela cabine.
+                               (Wagner - Sustentação - INC0019220).
+                               
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -1552,9 +1557,25 @@ create or replace package body cecred.PAGA0002 is
     IF length(pr_cdageban) > 4 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Agencia deve ser informada sem o digito verificador (Limite de 4 digitos).';
-	  RAISE vr_exc_erro;
+	    RAISE vr_exc_erro;
     END IF;          
     -- Fim da validação.
+
+    -- Tipo da conta:
+    --   1 - Conta Corrente;
+    --   2 - Poupança;
+    --   3 - Conta de pagamento.
+    -- Validar que a agencia do banco creditada não seja zero (0),
+    -- evitando erro no processamento da mensagem pela cabine.
+    -- Início da validação.
+    IF pr_intipcta <> 3 THEN
+      IF pr_cdageban = 0 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Agencia invalida.';
+        RAISE vr_exc_erro;
+      END IF;          
+    END IF;  
+    -- Fim da validação.	
 
     /* 
        O codigo identificador deve conter no maximo 25 caracteres, conforme catálago de mensagens do SPB. NO entanto,
@@ -2181,7 +2202,7 @@ create or replace package body cecred.PAGA0002 is
       IF cr_craphec%FOUND THEN 
         -- Fechar cursor
         CLOSE cr_craphec;    
-        IF pr_cdtiptra IN(1,5) THEN          
+        IF pr_cdtiptra IN(1,5) THEN
           -- Pegar os minutos em múltiplos de 5, arredondando para baixo (ex.: 21:04 -> 21:00)
           vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'hh24') || ':' ||
                         to_char(trunc(to_char(to_date(rw_craphec.hriniexe,'SSSSS'),'mi') / 5) * 5, 'fm00');
@@ -2541,7 +2562,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-
+    
     CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT a.inpessoa
@@ -2566,7 +2587,7 @@ create or replace package body cecred.PAGA0002 is
            ' para '||DECODE(NVL(pr_idagenda,0),1,NULL,'agendamento de ')||'pagamento'
     INTO vr_dstransa
     FROM dual;
-
+    
     -- Buscar tipo de pessoa da conta
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta);
@@ -2584,7 +2605,7 @@ create or replace package body cecred.PAGA0002 is
     vr_lindigi5 := pr_lindigi5;
     vr_cdbarras := pr_cdbarras;
     vr_dtmvtopg := pr_dtmvtopg;
-
+    
     IF NVL(pr_vlapagar,0) > 0 THEN
 		   vr_vlapagar := pr_vlapagar;
   	ELSE
@@ -3244,7 +3265,7 @@ create or replace package body cecred.PAGA0002 is
         RAISE vr_exc_erro;
       END IF;
     END IF;
-    
+
     IF NVL(pr_vllanmto,0) <= 0 THEN
       -- Gerar mensagem de erro para não permitir o pagamento
       vr_dscritic := 'Valor não permitido para pagamento.';
@@ -6494,6 +6515,25 @@ create or replace package body cecred.PAGA0002 is
           -- Se ocorrer erro
           IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
+        END IF;
+
+          IF pr_dsorigem LIKE '%AYLLOS%' THEN
+            vr_cdprodut := 10; -- Débito automático
+          ELSE
+            vr_cdprodut := 29; -- Débito Automático Fácil
+          END IF;
+          
+          -- Verifica se o tipo de conta permite a contratação do produto
+          CADA0006.pc_permite_produto_tipo(pr_cdprodut => vr_cdprodut
+                                          ,pr_cdtipcta => rw_crapass.cdtipcta
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_inpessoa => rw_crapass.inpessoa
+                                          ,pr_possuipr => vr_possuipr
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          -- Se ocorrer erro
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
           END IF;
 
           OPEN cr_crapcop2 (pr_cdcooper => pr_cdcooper);
@@ -7831,8 +7871,8 @@ create or replace package body cecred.PAGA0002 is
                 lcm.nrdolote = pr_nrdolote AND
                 lcm.nrdctabb = pr_nrdctabb AND
                 lcm.nrdocmto = pr_nrdocmto;
-     rw_craplcm cr_craplcm%ROWTYPE;     
-     
+     rw_craplcm cr_craplcm%ROWTYPE;
+
      rw_craplot lote0001.cr_craplot%ROWTYPE;
     ---------------> VARIAVEIS <-----------------
     --Variaveis de erro
@@ -8065,7 +8105,7 @@ create or replace package body cecred.PAGA0002 is
         rw_craplot.vlinfodb := rw_craplot.vlinfodb + rw_craplcm.vllanmto;
 
         pr_rw_craplot := rw_craplot;
-         
+
         CXON0022.pc_gera_log (pr_cdcooper          --Codigo Cooperativa
                              ,rw_crapccs.cdagenci  --Codigo Agencia
                              ,pr_nrdcaixa          --Numero do caixa
@@ -8853,7 +8893,7 @@ create or replace package body cecred.PAGA0002 is
     --  
     --              06/03/2018 - Ajuste de filtros para não buscar GPS se não for epecificado 
     --                           P285. (Ricardo Linhares)
-    --
+    --  
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -9537,7 +9577,7 @@ create or replace package body cecred.PAGA0002 is
         
         -- Se for GPS
         IF rw_craplau.nrseqagp > 0 THEN
-
+        
           vr_dstiptra := 'GPS';
                   
           OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
@@ -9580,7 +9620,7 @@ create or replace package body cecred.PAGA0002 is
              vr_dscrilau := NVL(rw_craplau.dscritic,'');
            END IF;
         END IF;
-
+        
         vr_cdindice := vr_tab_dados_agendamento.COUNT() + 1;
 
         vr_tab_dados_agendamento(vr_cdindice).dtmvtopg := rw_craplau.dtmvtopg;
@@ -10056,6 +10096,12 @@ create or replace package body cecred.PAGA0002 is
       vr_idorigem := 4;
     ELSIF pr_dsorigem = 'ANTIFRAUDE' THEN
       vr_idorigem := 12;   
+    END IF;
+
+    --> Caso for informado a origem do estorno, 
+    --> deve utilizar esta
+    IF nvl(pr_idoriest,0) <> 0 THEN
+      vr_idorigem := pr_idoriest;
     END IF;
 
     --> Caso for informado a origem do estorno, 
@@ -10581,7 +10627,7 @@ create or replace package body cecred.PAGA0002 is
       -- Gravar a solictação do e-mail para envio posterior
       COMMIT;
   END pc_apura_lcm_his_emprestimo;
-  
+
   
   PROCEDURE pc_obtem_horarios_pagamentos (pr_cdcooper    IN NUMBER   -- Codigo da cooperativa
                                          ,pr_cdagenci    IN NUMBER   -- Codigo de agencia                                       

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 20/02/2018
  * OBJETIVO     : Tabela que apresenta conciliacao de liquidacao STR0006R2
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 23/07/2018 - Alterado texto de legenda dos Fieldsets (PRJ 486 - Mateus Z / Mouts)
  * --------------
  */
 session_start();
@@ -39,7 +39,7 @@ $vl_receber = ($vlCreditado > $vlPagamentos) ? ($vlCreditado - $vlPagamentos) : 
 
         <!-- recebidos STR0006R2 -->
         <fieldset class="boxes">
-            <legend style="font-weight: 600"><?php echo utf8ToHtml('Liquidação recebida Cielo') ?></legend>
+            <legend style="font-weight: 600"><?php echo utf8ToHtml('Liquidação recebida') ?></legend>
 
             <label for="txtQdeRecebido"><?php echo utf8ToHtml('Quantidade:') ?></label>
             <input type="text" id="txtQdeRecebido" name="txtQdeRecebido" value="<?php echo (empty($qdePagamentos)) ? '0' : $qdePagamentos;?>"/>
@@ -63,7 +63,7 @@ $vl_receber = ($vlCreditado > $vlPagamentos) ? ($vlCreditado - $vlPagamentos) : 
 
         <!-- saldo diferencial valores -->
         <fieldset class="boxes">
-            <legend style="font-weight: 600"><?php echo utf8ToHtml('Saldo Cielo') ?></legend>
+            <legend style="font-weight: 600"><?php echo utf8ToHtml('Saldo') ?></legend>
 
             <label for="txtVlReceber"><? echo utf8ToHtml('A Receber:') ?></label>
             <input type="text" id="txtVlReceber" name="txtVlReceber" value="<?php echo formataMoeda($vl_receber);?>"/>
