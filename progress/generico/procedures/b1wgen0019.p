@@ -321,6 +321,8 @@
 
 				 26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+				 08/08/2018 - Ajustes na busca do contrato de limite de crédito (INC0021296 - Andrey Formigari).
+
 ..............................................................................*/
 
 
@@ -8344,7 +8346,12 @@ PROCEDURE obtem-dados-proposta:
                           OUTPUT TABLE tt-dados-avais,
                           OUTPUT TABLE tt-erro).
 
-    CREATE tt-dados-prp.
+	FIND craplim WHERE craplim.cdcooper = par_cdcooper AND
+					   craplim.nrdconta = par_nrdconta AND
+					   craplim.nrctrlim = par_nrctrlim AND
+					   craplim.tpctrlim = 1            NO-LOCK NO-ERROR.
+    
+	CREATE tt-dados-prp.
     ASSIGN tt-dados-prp.nmextcop = crapcop.nmextcop 
            tt-dados-prp.nmexcop1 = aux_nmexcop1    
            tt-dados-prp.nmexcop2 = aux_nmexcop2
