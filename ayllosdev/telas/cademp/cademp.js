@@ -281,7 +281,7 @@ function formataCabecalho() {
     cCdufdemp.attr('maxlength', '2');
     cNrfonemp.attr('maxlength', '15');
     cNrfaxemp.attr('maxlength', '15');
-    cDsdemail.attr('maxlength', '300');
+    cDsdemail.attr('maxlength', '60');
 
     cDdmesnov.attr('maxlength', '2');
     cDdpgtmes.attr('maxlength', '2');
@@ -1194,6 +1194,7 @@ function monitorarCTRLV(evento, x_dsdemail) {
     /*if ( (evento.ctrlKey && evento.keyCode == 86) || (evento.shiftKey && evento.keyCode == 45) || (!evento.shiftKey && !evento.keyCode) ){*/
     x_email = x_dsdemail.value;
     x_email = removeAcentos(x_email);
+    x_email = x_email.replace(/[;]+/g, ',');
     x_email = x_email.replace(/[^a-zA-Z._,;@ 0-9]+/g, '');
     x_dsdemail.value = x_email;
     /*}*/
