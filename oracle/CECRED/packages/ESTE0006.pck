@@ -1702,7 +1702,7 @@ END pc_incluir_bordero_esteira;
          /*Verifica se possui alguma restricao, se existir, adiciona critica informando*/
          open cr_crapcbd (pr_nrinssac=>rw_craptdb.nrinssac);
          fetch cr_crapcbd into rw_crapcbd;
-         IF (cr_crapcbd%NOTFOUND) THEN
+         IF (cr_crapcbd%FOUND) THEN
            SSPC0001.pc_verifica_situacao(rw_crapcbd.nrconbir,rw_crapcbd.nrseqdet,vr_cdbircon,vr_dsbircon,vr_cdmodbir,vr_dsmodbir,vr_ibratan);
          END IF;
          close cr_crapcbd;
