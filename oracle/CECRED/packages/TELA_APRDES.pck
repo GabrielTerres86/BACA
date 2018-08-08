@@ -1014,6 +1014,8 @@ create or replace package body cecred.TELA_APRDES is
     Objetivo  : Conclui o processo da mesa de checagem, atualiza o bordero e os titulos
     Alterações:
      - 21/07/2018 - Vitor Shimada Assanuma: Close do cursor de data e alteração do cursor de verificação de crítica
+     - 08/08/2018 - Vitor Shimada Assanuma: Alteração da verificação de críticas e envio de bordero para a esteira mesmo quando um titulo 
+                                            é reprovado.
   ---------------------------------------------------------------------------------------------------------------------*/
                              
     /* tratamento de erro */
@@ -1051,7 +1053,6 @@ create or replace package body cecred.TELA_APRDES is
    vr_cdopeapr crapbdt.cdopeapr%TYPE;
    rw_crapdat  btch0001.rw_crapdat%TYPE;
    vr_em_contingencia_ibratan BOOLEAN;
-   vr_aprovar BOOLEAN;
    vr_msgfinal VARCHAR2(1000);
    
    -- Criticas diferentes da do CNAE
@@ -1080,7 +1081,21 @@ create or replace package body cecred.TELA_APRDES is
           AND crapbdt.cdcooper = vr_cdcooper;
    rw_crapbdt cr_crapbdt%rowtype;
    
+   -- Cursor dos títulos
+   CURSOR cr_craptdb IS
+     SELECT 
+        *
+     FROM
+        craptdb tdb
+     WHERE tdb.cdcooper = vr_cdcooper
+       AND tdb.nrdconta = pr_nrdconta
+       AND tdb.nrborder = pr_nrborder
+   ;rw_craptdb cr_craptdb%ROWTYPE;
+   
    vr_qtd_aprovados INTEGER;
+   fl_critica INTEGER;
+   vr_tab_criticas dsct0003.typ_tab_critica;
+   
    BEGIN
      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
@@ -1136,9 +1151,6 @@ create or replace package body cecred.TELA_APRDES is
             AND craptdb.nrdconta = pr_nrdconta
             AND craptdb.cdcooper = vr_cdcooper
            ;
-           IF (vr_tab_chaves(5)='S') THEN
-              vr_aprovar := TRUE;
-           END IF;
          END IF;
          vr_index := vr_tab_cobs.next(vr_index);
        end loop;
@@ -1148,16 +1160,46 @@ create or replace package body cecred.TELA_APRDES is
      vr_dtaprova := rw_crapdat.dtmvtolt;
      vr_hraprova := to_char(SYSDATE, 'SSSSS');
      vr_cdopeapr := vr_cdoperad;
-     IF (vr_aprovar) THEN
+
+     -- Verifica se existe algum título que não esteja reprovado
+     SELECT COUNT(1) INTO vr_qtd_aprovados FROM craptdb WHERE cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta AND nrborder = pr_nrborder AND insitapr <> 2;
+     IF (vr_qtd_aprovados > 0) THEN
        /*Atualizar o bordero*/    
        open  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
        fetch btch0001.cr_crapdat into rw_crapdat;
        CLOSE btch0001.cr_crapdat;
+       
        /*Analisa pra onde manda o bordero*/
+       fl_critica := 0;
+       OPEN cr_craptdb();
+       LOOP
+         FETCH cr_craptdb INTO rw_craptdb;
+         EXIT WHEN cr_craptdb%NOTFOUND OR fl_critica = 1;
+           -- Busca as criticas do Pagador
+           dsct0003.pc_calcula_restricao_pagador(pr_cdcooper => vr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrinssac => rw_craptdb.nrinssac
+                            ,pr_cdbandoc => rw_craptdb.cdbandoc
+                            ,pr_nrdctabb => rw_craptdb.nrdctabb
+                            ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                            ,pr_nrdocmto => rw_craptdb.nrdocmto
+                            ,pr_tab_criticas => vr_tab_criticas
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+            IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+               RAISE vr_exc_erro;
+            END IF;
+            -- Caso ache alguma crítica cai fora do loop
+            IF vr_tab_criticas.count > 0 THEN 
+               fl_critica := 1; 
+            END IF;
+       END LOOP;
+       CLOSE cr_craptdb;
+       
        OPEN cr_craptdb_restri;
        FETCH cr_craptdb_restri INTO rw_craptdb_restri;
        /*Nao possui criticas diferentes do CNAE, aprova!*/
-       IF (cr_craptdb_restri%NOTFOUND OR rw_craptdb_restri.totcrit=0) THEN
+       IF (cr_craptdb_restri%NOTFOUND OR rw_craptdb_restri.totcrit=0 OR vr_tab_criticas.count=0) THEN
          vr_insitbdt := 2;
          vr_insitapr := 4;
        /*Criticas diferentes do CNAE, envia para a esteira*/
@@ -1188,13 +1230,6 @@ create or replace package body cecred.TELA_APRDES is
      ELSE /*Nenhum titulo aprovado muda a decisao para nao aprovado*/
        vr_insitbdt := 1;
        vr_insitapr := 5;
-       
-       -- Se alguns dos titulos já estiver aprovado, a situação do bordero deve ser EM ESTUDO e decisão EM ANÁLISE
-       SELECT COUNT(*) INTO vr_qtd_aprovados FROM craptdb WHERE cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta AND nrborder = pr_nrborder AND insitapr = 1;
-       IF vr_qtd_aprovados > 0 THEN
-         vr_insitbdt := 1;
-         vr_insitapr := 0;
-       END IF;
      END IF;
      /*FAZ O UPDATE NO BORDERO SETANDO CONFORME AS VARIAVEIS.. SE O INSITBDT FOR 6 IGNORA O UPDATE NO BORDERO*/
      IF (vr_insitapr<>6) THEN
