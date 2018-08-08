@@ -325,7 +325,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
 			   19/06/2018 - Removida a alteração realizada em 18/05/2018, pois foi realizado a solicitação para retirada 
 							do requisito do projeto. (Renato Darosci - Supero)
-                           
+
+               08/08/2018 - Melhoria referente a devolucoes de cheques.
+                            Chamado PRB0040059 (Gabriel - Mouts).
+
 ............................................................................. */
 
      DECLARE
@@ -1426,7 +1429,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ,nvl(pr_cdoperad,' ')      --cdoperad
                                      ,nvl(pr_cdhistor,0)        --cdhistor
                                      ,'TCO'                     --cdpesqui
-                                     ,0                         --insitdev 
+                                     ,2                         --insitdev 
                                      ,nvl(rw_crapcop.cdbcoctl,0)--cdbanchq
                                      ,nvl(pr_cdagechq,0)        --cdagechq
                                      ,nvl(pr_nrctachq,0)        --nrctachq
@@ -3770,7 +3773,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                 ,pr_cdprogra => pr_cdprogra
                                                                 ,pr_nrdrecid => 0
                                                                 ,pr_vlchqvlb => pr_vlchqvlb
-                                                                ,pr_insitdev => 0 
+                                                                ,pr_insitdev => 2 
                                                                 ,pr_cdcritic => vr_cdcritic
                                                                 ,pr_des_erro => vr_des_erro);
 

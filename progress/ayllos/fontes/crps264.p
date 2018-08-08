@@ -248,7 +248,11 @@
                            conforme tarefa SCTASK0010890. (Reinert)
                            
               27/07/2018 - Adicionado histórico 5210 na crítica da alínea 37 do arquivo
-                          CRITICASDEVOLU.txt (Reinert).
+                           CRITICASDEVOLU.txt (Reinert).
+
+              08/08/2018 - Melhoria referente a devolucoes de cheques.
+                           Chamado PRB0040059 (Gabriel - Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -1598,6 +1602,23 @@ PROCEDURE gera_impressao:
     OUTPUT STREAM str_1 TO VALUE(aux_nmarquiv) PAGED PAGE-SIZE 80.
 
     VIEW STREAM str_1 FRAME f_cabrel080_1.
+
+    /* Compatibilizar Dev. (Insitdev = 1) com Dev. Auto. (Insitdev = 2) */
+
+    FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper          AND
+                           crapdev.cdbanchq = aux_cdbanchq        AND
+                           crapdev.insitdev = 2                   EXCLUSIVE-LOCK,
+        EACH crapass WHERE crapass.cdcooper = p-cdcooper          AND
+                           crapass.nrdconta = crapdev.nrdconta    AND
+                         ((p-cddevolu = 1)                        OR
+                          (p-cddevolu = 2                         AND
+                           crapass.nrdctitg <> crapdev.nrdctitg)  OR
+                          (p-cddevolu = 3                         AND
+                           crapass.nrdctitg = crapdev.nrdctitg)):
+
+      ASSIGN crapdev.insitdev = 1.
+
+    END.  /** Fim FOR EACH crapdev - Compatibilizacao **/
 
     /*  Relacao para o envio ao Banco do Brasil (sem Desconto e Custodia)  */
     
