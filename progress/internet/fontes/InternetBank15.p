@@ -406,7 +406,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     
     FOR EACH tt-saldo-rdca NO-LOCK:
       
-      ASSIGN aux_vlsldtot = aux_vlsldtot + tt-saldo-rdca.sldresga
+      ASSIGN aux_vlsldtot = aux_vlsldtot + tt-saldo-rdca.vllanmto
              aux_flgstapl = FALSE
 			 aux_rsgtdisp = TRUE.
 
@@ -463,14 +463,11 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
           /* Totalizar o valor BLQRGT */
           IF NOT aux_flgstapl THEN
-              ASSIGN aux_vlsldblq = aux_vlsldblq + tt-saldo-rdca.sldresga.
+              ASSIGN aux_vlsldblq = aux_vlsldblq + tt-saldo-rdca.vllanmto.
 
           /* Totalizar o valor de aplicações novas */
           IF par_dtmvtolt = tt-saldo-rdca.dtmvtolt THEN
-              ASSIGN aux_vlsldnew = aux_vlsldnew + tt-saldo-rdca.sldresga.
-
-          /* Totalizar o saldo de todas as aplicações */
-         /* ASSIGN aux_vlsldtot = aux_vlsldtot + tt-saldo-rdca.sldresga.*/
+              ASSIGN aux_vlsldnew = aux_vlsldnew + tt-saldo-rdca.vllanmto.
          
          /* Saldo resgatavel nos canais de autoatendimento
             Mesma condicao da tag <apli_disp_resg> */
@@ -548,6 +545,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                "<dtcarenc>" + 
                    STRING(tt-saldo-rdca.dtcarenc,"99/99/9999") +
                "</dtcarenc>" + 
+               "<txaplmax>" + TRIM(STRING(DEC(tt-saldo-rdca.txaplmax),"zz9.99")) + "%" + "</txaplmax>" +
                "</APLICACAO>".
                    
     END.
