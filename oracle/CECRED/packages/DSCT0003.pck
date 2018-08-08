@@ -790,8 +790,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     OPEN cr_tbdsct_criticas(pr_cdcritica=>pr_cdcritica);
     FETCH cr_tbdsct_criticas INTO rw_tbdsct_criticas;
     IF (cr_tbdsct_criticas%FOUND) THEN
+      CLOSE cr_tbdsct_criticas;
       RETURN rw_tbdsct_criticas.dscritica;
     END IF;
+    CLOSE cr_tbdsct_criticas;
     RETURN '';
   END fn_ds_critica;
     
@@ -5853,20 +5855,8 @@ END pc_inserir_lancamento_bordero;
           IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_erro;
           END IF;
-          /*                                
-          pc_calcula_restricao_titulo(pr_cdcooper => pr_cdcooper
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_cdbandoc => rw_craptdb.cdbandoc
-                          ,pr_nrdctabb => rw_craptdb.nrdctabb
-                          ,pr_nrcnvcob => rw_craptdb.nrcnvcob
-                          ,pr_nrdocmto => rw_craptdb.nrdocmto
-                          ,pr_tab_criticas => vr_tab_criticas
-                          ,pr_cdcritic => vr_cdcritic
-                          ,pr_dscritic => vr_dscritic);
-                          
-          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-             RAISE vr_exc_erro;
-          END IF;*/
+    
+          
           IF (vr_tab_criticas.count > 0) THEN
             vr_index := vr_tab_criticas.first;
             WHILE vr_index IS NOT NULL LOOP  
