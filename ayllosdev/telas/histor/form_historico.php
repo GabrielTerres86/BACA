@@ -15,6 +15,8 @@
 	*                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
 	*							  "Debita após o estouro de conta corrente (60 dias)".
 	*							  Diego Simas (AMcom) - Prj 450
+	*
+	*				 08/08/2018 - Adicionado TBDSCT_LANCAMENTO_BORDERO na estrutura - Luis Fernando (GFT)
 	*							  			
 	* --------------
 	*/ 
