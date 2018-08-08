@@ -438,7 +438,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 ,cdsitdct crapass.cdsitdct%type
                 ,cdagenci crapass.cdagenci%type
                 ,cdsitdtl crapass.cdsitdtl%TYPE
-                ,vllimcre crapass.vllimcre%TYPE);
+                ,vllimcre crapass.vllimcre%TYPE
+                ,inprejuz crapass.inprejuz%TYPE);
 
        --Tipo de tabela para associados
        TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
@@ -484,6 +485,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.cdagenci
                ,crapass.cdsitdtl
                ,crapass.vllimcre
+               ,crapass.inprejuz
           FROM crapass crapass
          WHERE crapass.cdcooper = pr_cdcooper;
        rw_crapass cr_crapass%ROWTYPE;
@@ -3943,7 +3945,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         -- Caso encontre registro de devolucao automatica
                         IF cr_tbchq_param_conta%FOUND THEN
                           -- se for devolucao automatica
-                          IF rw_tbchq_param_conta.flgdevolu_autom = 1 THEN
+                          if (rw_tbchq_param_conta.flgdevolu_autom = 0 and vr_tab_crapass(nvl(vr_nrdconta_incorp,vr_nrdconta)).inprejuz = 1) or
+                             (rw_tbchq_param_conta.flgdevolu_autom = 1) then
                             extr0001.pc_obtem_saldo_dia(pr_cdcooper => vr_cdcooper,
                                                         pr_rw_crapdat => rw_crapdat,
                                                         pr_cdagenci => vr_tab_crapass(nvl(vr_nrdconta_incorp,vr_nrdconta)).cdagenci,
@@ -6005,3 +6008,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
         ROLLBACK;
      END;
    END pc_crps533;
+/

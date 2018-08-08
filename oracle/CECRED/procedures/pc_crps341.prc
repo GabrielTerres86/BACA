@@ -113,11 +113,11 @@ BEGIN
                 12/07/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001)
                                     na tabela CRAPLCM e também na CRAPLOT - Josiane (AMcom) 
                              
-  --            06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
-  --                         após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
-  --                         Alteração específica neste programa acrescentando o tratamento para a origem
-  --                         BLQPREJU
-  --                         (Renato Cordeiro - AMcom)
+                06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                             após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+                             Alteração específica neste programa acrescentando o tratamento para a origem
+                             BLQPREJU. Tratamento crítica 695 para também verificar conta em prejuízo
+                             (Renato Cordeiro - AMcom)
 
   ............................................................................. */
   DECLARE
@@ -169,7 +169,8 @@ BEGIN
                       pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT ass.nrdconta,
              ass.dtelimin,
-             ass.cdsitdtl
+             ass.cdsitdtl,
+             ass.inprejuz
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -1568,7 +1569,7 @@ BEGIN
         ELSIF NOT rw_crapass.dtelimin IS NULL THEN  --Se associado jah foi eliminado
           -- Montar mensagem de critica
           vr_cdcritic := 410;
-        ELSIF rw_crapass.cdsitdtl IN (5, 6, 7, 8) THEN
+        ELSIF rw_crapass.cdsitdtl IN (5, 6, 7, 8) or rw_crapass.inprejuz = 1 THEN
           -- Montar mensagem de critica
           vr_cdcritic := 695;
         ELSIF rw_crapass.cdsitdtl IN (2, 4) THEN
