@@ -543,5 +543,11 @@ INSERT INTO tbgen_motivo (idmotivo,dsmotivo,cdproduto) VALUES (68,'Borderô cadas
 INSERT INTO CRAPACA(NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) 
    VALUES (SEQACA_NRSEQACA.NEXTVAL,'BUSCA_DADOS_BORDERO','DSCT0002','pc_busca_dados_bordero_web','pr_nrdconta,pr_nrborder,pr_cddopcao',(SELECT nrseqrdr FROM craprdr WHERE nmprogra ='TELA_ATENDA_DESCTO'));
 
+/*Arruma os nomes dos históricos*/
+UPDATE craphis his SET his.nmestrut = 'TBDSCT_LANCAMENTO_BORDERO'
+ WHERE cdhistor IN (2665, 2666, 2667, 2668, 2669, 2671, 2672, 2673, 2675, 2677, 2678, 2679, 2682, 2684, 2686, 2688);   
+    
+ 
+
 commit;
 end;
