@@ -403,11 +403,8 @@ DO:
 
     IF aux_dscritic <> ""  THEN
     DO:
-        ASSIGN aux_dslinxml = "<MSGCONFIRMA>" + 
-                                  "<inconfir>" + '2' + "</inconfir>" +
-                                  "<dsmensag>" + STRING(aux_dscritic) + "</dsmensag>" +
-                              "</MSGCONFIRMA>".
-
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".  
     END. 
     
     
