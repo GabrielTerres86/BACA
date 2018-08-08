@@ -5685,6 +5685,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- PROCEDURE PARA ATUALIZACAO DE TARIFAS
     PROCEDURE pc_atualiza_tarifa_vigente IS
       
+  /*............................................................................ 	
+    05/07/2018 - Alterado para considerar data de vigencia maior que a data do movimento 
+                    anterior da cooperativa e menor ou igual a data atual da cooperativa
+                  (Elton Giusti)
+  ............................................................................ */	
       -- Buscar todas as faixas que devem entrar em vigencia
       CURSOR cr_crapfco IS
         SELECT cdfaixav,
@@ -5694,8 +5699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                rowid
           FROM crapfco
          WHERE crapfco.cdcooper = pr_cdcooper
-           AND crapfco.dtvigenc > rw_crapdat.dtmvtolt
-           AND crapfco.dtvigenc <= rw_crapdat.dtmvtopr
+         AND crapfco.dtvigenc > rw_crapdat.dtmvtoan  
+         AND crapfco.dtvigenc <= rw_crapdat.dtmvtolt 
            ORDER BY dtvigenc;
            
       TYPE typ_tab_crapfco IS TABLE OF cr_crapfco%rowtype INDEX BY PLS_INTEGER;
@@ -5818,6 +5823,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       RETURN;                               
     END IF;                               
 
+	-- para fazer somente na primeira execução do dia
+    IF vr_qtdexec = 1 then
+        -- CHAMADA DE FUNCAO PARA ATUALIZACAO DE TARIFA
+		pc_atualiza_tarifa_vigente;
+    end if; 
 
    -- PROCEDURE PARA BUSCAR TARIFA VIGENTE
     tari0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => pr_cdcooper,
@@ -6034,11 +6044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         RAISE vr_exc_saida;
     END;
 
-    -- para fazer somente na primeira execução do dia
-    IF vr_qtdexec = 1 then
-        -- CHAMADA DE FUNCAO PARA ATUALIZACAO DE TARIFA
-		pc_atualiza_tarifa_vigente;
-    end if;  
+ 
 	
 	
     -- informar no log o final do processo    
