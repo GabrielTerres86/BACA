@@ -23,4 +23,5 @@ INSERT INTO tbdsct_criticas (cdcritica,dscritica,tpcritica) VALUES (17,'Quantida
 INSERT INTO tbdsct_criticas (cdcritica,dscritica,tpcritica) VALUES (18,'Concentracao',0);
 INSERT INTO tbdsct_criticas (cdcritica,dscritica,tpcritica) VALUES (19,'Liquidez Cedente Pagador',0);
 INSERT INTO tbdsct_criticas (cdcritica,dscritica,tpcritica) VALUES (20,'Liquidez Geral',0);
+INSERT INTO tbdsct_criticas (cdcritica,dscritica,tpcritica) VALUES (21,'Pagador Possui Restricoes',0);
 
