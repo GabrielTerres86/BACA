@@ -6,6 +6,18 @@
 	* OBJETIVO     : Formulario de alteração e inclusão dos históricos da Tela HISTOR
 	* --------------
 	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
+	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+	*                26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts
+	*                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+    *                             Diego Simas - AMcom  
+	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+	*
+	*                11/06/2018 - Alterado o label "Estourar a conta corrente" para 
+	*							  "Debita após o estouro de conta corrente (60 dias)".
+	*							  Diego Simas (AMcom) - Prj 450
+	*
+	*				 08/08/2018 - Adicionado TBDSCT_LANCAMENTO_BORDERO na estrutura - Luis Fernando (GFT)
+	*							  			
 	* --------------
 	*/ 
 
@@ -15,6 +27,28 @@
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
+
+	$nmestrutLst = array(
+		'CRAPCBB',
+		'CRAPCHD',
+		'CRAPLAC',
+		'CRAPLAP',
+		'CRAPLCI',
+		'CRAPLCM',
+		'CRAPLCS',
+		'CRAPLCT',
+		'CRAPLCX',
+		'CRAPLEM',
+		'CRAPLFT',
+		'CRAPLGP',
+		'CRAPLPI',
+		'CRAPLPP',
+		'CRAPLTR',
+		'CRAPTIT',
+		'CRAPTVL',
+		'TBCC_PREJUIZO_LANCAMENTO',
+		'TBDSCT_LANCAMENTO_BORDERO'
+	);
 ?>
 
 <form id="frmHistorico" name="frmHistorico" class="formulario condensado">
@@ -46,7 +80,7 @@
 				<tr>
 					<td>
 						<label for="indebcre">D&eacute;bito/Cr&eacute;dito:</label>
-						<select name="indebcre" id="indebcre">
+						<select name="indebcre" id="indebcre" onchange="liberaMonitoramento(); return false;">
 							<option value="D">D&eacute;bito</option> 
 							<option value="C">Cr&eacute;dito</option> 
 						</select>
@@ -75,7 +109,15 @@
 				<tr>
 					<td colspan="3">
 						<label for="nmestrut">Nome da Estrutura:</label>
-						<input id="nmestrut" name="nmestrut" type="text"/>
+						<select id="nmestrut" name="nmestrut">
+							<option value="">&nbsp;</option>
+						<?php
+						foreach ($nmestrutLst as $nmestrut) { 
+						?>
+							<option value="<?php echo $nmestrut;?>"><?php echo $nmestrut;?></option>
+						<?php
+						}
+						?>
 					</td>
 				</tr>
 			</table>
@@ -130,11 +172,18 @@
 					</td>
 				</tr>
 				<tr>
-					<td colspan="2">
+					<td>
 						<label for="incremes">Ind. p/Estat. Cr&eacute;dito do M&ecirc;s:</label>
 						<select id="incremes" name="incremes">
 							<option value="1">Soma na estat&iacute;stica </option>
 							<option value="0">N&atilde;o soma </option>
+						</select>
+					</td>
+					<td>
+						<label for="inmonpld">Ind. Monitoramento:</label>
+						<select id="inmonpld" name="inmonpld">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 				</tr>
@@ -214,6 +263,15 @@
 						<input id="nrctatrd" name="nrctatrd" type="text"/>
 					</td>
 				</tr>
+				<tr class='estouraConta'>
+					<td colspan="2">
+						<label for="inestocc">Debita ap&oacute;s o estouro de conta corrente (60 dias) :</label>
+						<select id="inestocc" name="inestocc">
+							<option value="0">0 - N&atilde;o</option>
+							<option value="1">1 - Sim</option>
+						</select>
+					</td>
+				</tr>
 			</table>
 		</fieldset>
 
@@ -245,6 +303,23 @@
 		</fieldset>
 
 		<!-- Fieldset para os campos de TARIFAS do historico -->
+		<fieldset id="fsetTarifas" name="fsetTarifas" style="padding-bottom:10px;">
+			
+			<legend>Situa&ccedil;&otilde;es de Conta</legend>
+
+			<table width="100%">
+				<tr>
+					<td>
+						<label for="cdgrupo_historico">Grupo de Hist&oacute;rico:</label>
+						<input name="cdgrupo_historico" id="cdgrupo_historico" type="text"/>
+						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaGrupoHistorico('frmHistorico'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+						<input name="dsgrupo_historico" id="dsgrupo_historico" type="text"/>
+					</td>
+				<tr>
+			</table>
+		</fieldset>
+		
+		<!-- Fieldset para os campos de TARIFAS do historico -->
 		<fieldset id="fsetOutros" name="fsetOutros" style="padding-bottom:10px;">
 			
 			<legend>Outros</legend>
@@ -258,9 +333,20 @@
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
+					<!-- Início PJ 416 - BacenJud -->									
+					<td>
+						<label for="indutblq">Considerar para Bloquei Judicial?</label>
+						<select id="indutblq" name="indutblq">
+							<option value="S">Sim </option>
+							<option value="N">N&atilde;o </option>
+						</select>
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<input type="hidden" name="operauto" id="operauto" value="">
+					</td>
+                    <!-- Fim PJ 416 - BacenJud -->
 				</tr>
 				<tr>
-					<td>
+					<td colspan="2">
 						<label for="cdprodut">Produto:</label>
 						<input name="cdprodut" id="cdprodut" type="text"/>
 						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaProduto(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
@@ -268,13 +354,34 @@
 					</td>
 				</tr>
 				<tr>
-					<td>
+					<td colspan="2">
 						<label for="cdagrupa">Agrupamento:</label>
 						<input name="cdagrupa" id="cdagrupa" type="text"/>
 						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaAgrupamento(); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
 						<input name="dsagrupa" id="dsagrupa" type="text"/>
 					</td>
 				<tr>
+				<tr>
+					<td>
+						<label for="idmonpld">Monitorar PLD:</label>
+						<select id="idmonpld" name="idmonpld">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
+						</select>
+					</td>
+
+				    <!-- Inicio SM 5 - 364 - RMM -->
+					<td>
+						<label for="inperdes">Permitir Desligar Conta?</label>
+						<select id="inperdes" name="inperdes">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
+						</select>
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<!-- <input type="hidden" name="operauto" id="operauto" value=""> -->
+					</td>
+                    <!-- Inicio SM 5 - 364 - RMM -->					
+				</tr>
 			</table>
 		</fieldset>
 	</div>
