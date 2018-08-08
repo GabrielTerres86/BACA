@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 26/05/2018
+    Data    : Marco/07.                       Ultima atualizacao: 27/07/2018 
     
     Dados referentes ao programa:
 
@@ -243,7 +243,12 @@
 			               Chamado SCTASK0012893 - Gabriel (Mouts).
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
+																					   
+              16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
+                           conforme tarefa SCTASK0010890. (Reinert)
+                           
+              27/07/2018 - Adicionado histórico 5210 na crítica da alínea 37 do arquivo
+                          CRITICASDEVOLU.txt (Reinert).
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -2606,6 +2611,38 @@ PROCEDURE gera_arquivo_cecred:
                               NEXT.
                      END.
                 ELSE
+                IF   p-cddevolu = 6 AND crapdev.cdalinea = 37 THEN
+                     DO:
+                        IF aux_contador = 0 THEN
+                           DO:
+                              ASSIGN aux_contador = aux_contador + 1.
+
+                              ASSIGN aux_nmarqcri = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                                                    STRING(MONTH(glb_dtmvtolt),'99')   +
+                                                    STRING(DAY(glb_dtmvtolt),'99') + '_CRITICADEVOLU.txt'.
+             
+                              OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
+                             
+                          END.          
+                          
+                          ASSIGN aux_linhaarq = STRING(YEAR(glb_dtmvtolt),"9999") + 
+                                                STRING(MONTH(glb_dtmvtolt),"99")   +
+                                                STRING(DAY(glb_dtmvtolt),"99")     + "," +
+                                                STRING(DAY(glb_dtmvtolt),"99") +
+                                                STRING(MONTH(glb_dtmvtolt),"99")  +
+                                                SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + "," +
+                                                "4958,1773," +
+                                                TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) + 
+                                                ",5210," +
+                                                '"' + "VALOR REF. DEVOLUCAO DO CHEQUE N. " + STRING(crapdev.nrcheque,"9999999") + 
+                                                ", PELA ALINEA 37, PARA REGULARIZACAO DE CRITICA DO RELATORIO 526" + '"'.                            
+                                                
+                          PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
+                          IF   crapdev.indevarq <> 1 THEN
+                               NEXT.                          
+                     END.
+                ELSE
                 IF   crapdev.indevarq <> 1 THEN
                      NEXT.
 
@@ -3005,6 +3042,7 @@ PROCEDURE gera_arquivo_cecred:
                                                 " (CONFORME CRITICA NO RELATORIO 219)" + '"'.
                                           
                           PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                          
                        END.
                    
                NEXT.
