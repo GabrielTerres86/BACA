@@ -61,6 +61,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
       13/06/2018 - Criado assinatura da fn_datamov para ser chamada no CRPS618.
                    Chamado SCTASK0015832 - Gabriel (Mouts).
 
+      08/08/2018 - Adicionado o conveio de desconto de titulo para seguir a mesma regra do de emprestimo na definicao da data (Luis Fernando - GFT)
   ..............................................................................*/
 
 
