@@ -1103,7 +1103,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 25/07/2018
+   Data    : 27/08/2013                        Ultima atualizacao: 08/08/2018
 
    Dados referentes ao programa:
 
@@ -1225,6 +1225,10 @@ create or replace package body cecred.INSS0001 as
          25/07/2018 - Rotina pc benef inss xml div pgto incluido o CFP/CNPJ na mensagem de critica
                       (Belli - Envolti - Chamado REQ0020667)
                       
+         08/08/2018 - Em certas situações a variavel vr_nmdireto_salvar estava nula
+                      então foi feito tratamento na procedure pc_proces_pagto_benef_inss
+                      para jogar pro salvar da CRECRED (Tiago PRB0040214).
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -4400,6 +4404,10 @@ create or replace package body cecred.INSS0001 as
 				 07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina para tentarmos
 				              identificar lentidões que estão ocorrendo na rotina
 							 (Adriano).
+               
+                 08/08/2018 - Em certas situações a variavel vr_nmdireto_salvar estava nula
+                              então foi feito tratamento para jogar pro salvar da CRECRED 
+                              (Tiago PRB0040214).
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -5149,7 +5157,18 @@ create or replace package body cecred.INSS0001 as
         senao, na proxima execucao do script ela sera novamente 
         enviada como rejeicao e isso ira travar a fila
         de processamento do Sicredi pois, o NB em questao ja foi tratado... 
+        
+        08/08/2018 - Em certas situações a variavel vr_nmdireto_salvar estava nula
+        então foi feito tratamento para jogar pro salvar da CRECRED evitando o problema
+        descrito logo aqui em cima.
         */
+        IF TRIM(vr_nmdireto_salvar) IS NULL THEN
+           vr_nmdireto_salvar := gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
+                                                       ,pr_cdcooper => 3 -- Ailos
+                                                       ,pr_nmsubdir => null);
+           vr_nmdireto_salvar := vr_nmdireto_salvar || '/salvar/inss';
+        END IF;        
+        
         -- Comando para mover arquivo
         gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
                               ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
