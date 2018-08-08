@@ -111,7 +111,7 @@
 
 
 	    /****/
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){  
@@ -151,7 +151,7 @@
 	    $xml .= "</Root>";
 
 	    // FAZER O INSERT CRAPRDR e CRAPACA
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SENHA_ENVIAR_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SENHA_ENVIAR_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 		$registros = $xmlObj->roottag->tags[0]->tags;
@@ -183,7 +183,7 @@
 
 
 
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONFIRMAR_NOVO_LIMITE_TIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONFIRMAR_NOVO_LIMITE_TIT", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 
 
 	    $xmlObj = getObjectXML($xmlResult);
@@ -240,7 +240,7 @@
 	    $xml .= "</Root>";
 
 	    // FAZER O INSERT CRAPRDR e CRAPACA
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ACEITAR_REJEICAO_LIM_TIT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ACEITAR_REJEICAO_LIM_TIT", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 
@@ -270,7 +270,7 @@
 		$xml .= "		<nrinssac>".$nrinssac."</nrinssac>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
-		$xmlResult = mensageria($xml, "COBRAN", "COBR_OBTER_PAGADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "COBRAN", "COBR_OBTER_PAGADOR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObjeto 	= getObjectXML($xmlResult);		
 
 		// Se ocorrer um erro, mostra mensagem
@@ -305,7 +305,7 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getClassXML($xmlResult);
     	$root = $xmlObj->roottag;
 
@@ -434,7 +434,7 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","INSERIR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","INSERIR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 	    // Se ocorrer um erro, mostra mensagem
@@ -466,7 +466,7 @@
 			$xmlGetDados .= "	</Cabecalho>";
 			$xmlGetDados .= "	<Dados>";
 			$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-			$xmlGetDados .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+			$xmlGetDados .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
 			$xmlGetDados .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 			$xmlGetDados .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 			$xmlGetDados .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
@@ -519,7 +519,7 @@
 		    $xml .= " </Dados>";
 		    $xml .= "</Root>";
 
-		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ALTERAR_PROPOSTA_MANUTENCAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ALTERAR_PROPOSTA_MANUTENCAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 
 		    $xmlObj = getObjectXML($xmlResult);
 
@@ -559,7 +559,7 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ALTERAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ALTERAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
 	    // Se ocorrer um erro, mostra mensagem
@@ -591,7 +591,7 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_RESGATE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_RESGATE", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getClassXML($xmlResult);
 	    $root = $xmlObj->roottag;
 	    // Se ocorrer um erro, mostra crítica
@@ -667,7 +667,7 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","RESGATAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","RESGATAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getClassXML($xmlResult);
 	    $root = $xmlObj->roottag;
 	    // Se ocorrer um erro, mostra crítica
@@ -695,7 +695,7 @@
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 
-		$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getObjectXML($xmlResult);
 		$html = '';
 
@@ -794,7 +794,7 @@
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 		
-		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CALCULA_POSSUI_SALDO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CALCULA_POSSUI_SALDO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getClassXML($xmlResult);
 	    $root = $xmlObj->roottag;
 	    // Se ocorrer um erro, mostra crítica
@@ -827,7 +827,7 @@
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 		
-		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "PAGAR_TITULOS_VENCIDOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "PAGAR_TITULOS_VENCIDOS", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObj = getClassXML($xmlResult);
 	    $root = $xmlObj->roottag;
 	    // Se ocorrer um erro, mostra crítica

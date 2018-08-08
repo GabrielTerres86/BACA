@@ -46,7 +46,7 @@
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","OBTEM_DADOS_CONTRATO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","OBTEM_DADOS_CONTRATO_LIMITE", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
     $dados = $xmlObj->roottag->tags[0]->tags[0];
 
