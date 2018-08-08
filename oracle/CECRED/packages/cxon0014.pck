@@ -6628,7 +6628,7 @@ END pc_gera_titulos_iptu_prog;
               CASE WHEN rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
                   vr_des_erro:= 'Cob. Emprestimo. - Boleto Vencido.';
                 WHEN rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
-                  vr_des_erro:= 'Cob. Desc. de Tititulo - Boleto Vencido.';
+                  vr_des_erro:= 'Cob. Desc. de Titulo - Boleto Vencido.';
               END CASE;
               pr_msgalert := vr_des_erro;
               --Criar erro
@@ -6802,7 +6802,7 @@ END pc_gera_titulos_iptu_prog;
               CASE WHEN rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
                   vr_des_erro:= 'Cob. Emprestimo. - Valor informado ';
                 WHEN rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
-                  vr_des_erro:= 'Cob. Desc. de Tititulo - Valor informado ';
+                  vr_des_erro:= 'Cob. Desc. de Titulo - Valor informado ';
               END CASE;
               vr_des_erro:= vr_des_erro ||
                             to_char(pr_valor_informado, 'fm999g999g990d00')||

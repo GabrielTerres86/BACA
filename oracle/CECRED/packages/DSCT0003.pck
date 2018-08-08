@@ -3867,17 +3867,6 @@ END pc_inserir_lancamento_bordero;
                 AND nrdconta = pr_nrdconta
                 AND nrborder = pr_nrborder
                 AND insitapr <> 2; -- Diferente de Rejeitado 
-              /*FOR rw_craptdb_restri IN
-                cr_craptdb_restri (pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta
-                                  ,pr_nrborder => pr_nrborder) LOOP
-                -- aproveita o loop de títulos para alterar o status para Enviado para Esteira IBRATAN.
-                UPDATE craptdb
-                   set craptdb.insitapr = 0 -- 0-Aguardando Análise
-                      ,craptdb.cdoriapr = 2 -- 2-Esteira IBRATAN
-                 WHERE craptdb.rowid = rw_craptdb_restri.rowid;
-              END LOOP;*/
-
               -- Altera o Borderô setando como enviado para a mesa de checagem.
               pc_altera_status_bordero(pr_cdcooper => pr_cdcooper -- Código da Cooperativa
                                       ,pr_nrborder => pr_nrborder -- Número do Borderô
@@ -4325,15 +4314,6 @@ END pc_inserir_lancamento_bordero;
         IF vr_indrestr = 0 AND pr_ind_inpeditivo = 0 THEN -- SEM RESTRIÇÃO E SEM IMPEDITIVOS, APROVADO AUTOMATICAMENTE.
           --Verificando se Ocorreram Restrições, para Gerar Crítica se Foi "Aprovado Automaticamente"
           --ou se deve verificar se vai para esteira ou mesa de checagem.
-/*          pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
-                                     ,pr_cdoperad => pr_cdoperad
-                                     ,pr_nrdconta => pr_nrdconta
-                                     ,pr_dsrestri => '' 
-                                     ,pr_nrseqdig => 21 --Borderô Aprovado Automaticamente
-                                     ,pr_cdcooper => pr_cdcooper
-                                     ,pr_flaprcoo => 1
-                                     ,pr_dsdetres => ('Borderô ' || pr_nrborder ||' Analisado Sem Restrições.')
-                                     ,pr_dscritic => vr_dscritic);*/
           pr_tab_retorno_analise(0).dssitres := 'Borderô Aprovado Automaticamente.';
           
           -- ALTERO STATUS DO BORDERÔ PARA APROVADO AUTOMATICAMENTE.
