@@ -475,6 +475,10 @@ BEGIN
   EXCEPTION
 
     WHEN vr_exc_erro THEN
+      ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
       vr_cdcritic := NVL(vr_cdcritic, 0);
       IF vr_cdcritic > 0 THEN
         vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
@@ -485,6 +489,10 @@ BEGIN
       ROLLBACK;
 
     WHEN OTHERS THEN
+      ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
       -- Efetuar rollback
