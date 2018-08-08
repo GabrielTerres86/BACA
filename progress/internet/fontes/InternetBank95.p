@@ -350,7 +350,8 @@ DO:
                                                "<idtipapl>A</idtipapl>" +  /* Fixo, tratar futuramente */
                                                "<tpresgat>" +
                                                    TRIM(STRING(aux_tpresgat,"9")) +
-                                               "</tpresgat>" +                                                                                             
+                                               "</tpresgat>" +
+											   "<txaplmax>" + TRIM(STRING(DEC(tt-saldo-rdca.txaplmax),"zzz,zz9.99")) + "</txaplmax>" +
                                            "</APLICACAO>".
 
         END.

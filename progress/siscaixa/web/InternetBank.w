@@ -2420,6 +2420,12 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 217 THEN /* Obter Detalhe Titulo Cobranca (SOA) */
                 RUN proc_operacao217.
+        ELSE
+            IF  aux_operacao = 218 THEN /* Identificar/retornar o tipo de pagamento do Codigo de Barras */
+                RUN proc_operacao218.
+        ELSE
+            IF  aux_operacao = 219 THEN /* Retornar lista com horários limite de todos os tipos de pagamento */
+                RUN proc_operacao219.
 
             
     END.

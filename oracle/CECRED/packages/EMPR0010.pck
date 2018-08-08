@@ -267,7 +267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
       END;
       
       pr_flgderro := 'OK';
-      pr_dsmsgsai := 'Recebemos a sua solicitação, vamos retornar o contato.' ;
+      pr_dsmsgsai := 'Em breve nossa equipe entrará em contato com mais informações.' ;
 
     EXCEPTION
       WHEN vr_exc_saida THEN

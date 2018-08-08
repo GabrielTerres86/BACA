@@ -253,7 +253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
  							
       END IF;
       
-			IF pr_cdtipmod = 5 THEN -- Recarga de Celular
+			IF pr_cdtipmod = 5 OR pr_cdtipmod = 0 THEN -- Recarga de Celular
 				
 				rcel0001.pc_carrega_agend_recarga(pr_cdcooper        => pr_cdcooper
 															           ,pr_nrdconta        => pr_nrdconta
