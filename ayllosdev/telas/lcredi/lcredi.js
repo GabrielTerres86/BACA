@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: lcredi.js                                                  
  Autor: Andrei - RKAM
- Data : JULHO/2016                Última Alteração: 28/05/2018
+ Data : JULHO/2016                Última Alteração: 10/07/2018
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela LCREDI
                                                                    	 
@@ -14,7 +14,9 @@
  			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado opção 4 no campo Modelo. (Lombardi - PRJ404)
 
               28/05/2018 - Aumentado o limite de 3 para 4 o campo Grupo. (Andrey Formigari- Mout's)
-						  
+              
+              10/07/2018 - sctask0014375 uso da funcao removeCaracteresInvalidos (Carlos)
+
 ************************************************************************/
 
 var RegLinha = new Object();
@@ -1398,7 +1400,7 @@ function alterarLinhaCredito() {
 
     var cdlcremp = $('#cdlcremp', '#frmFiltro').val();
     var cddopcao = $('#cddopcao', '#frmCab').val();
-    var dslcremp = $("#dslcremp", "#frmConsulta").val();
+    var dslcremp = removeCaracteresInvalidos($("#dslcremp", "#frmConsulta").val(), true);
     var dsoperac = $('#dsoperac', '#frmConsulta').val();
     var tplcremp = $('#tplcremp', '#frmConsulta').val();
     var tpdescto = $('#tpdescto', '#frmConsulta').val();
@@ -1521,7 +1523,7 @@ function incluirLinhaCredito() {
 
     var cdlcremp = $('#cdlcremp', '#frmFiltro').val();
     var cddopcao = $('#cddopcao', '#frmCab').val();
-    var dslcremp = $("#dslcremp", "#frmConsulta").val();
+    var dslcremp = removeCaracteresInvalidos($("#dslcremp", "#frmConsulta").val(), true);
     var dsoperac = $('#dsoperac', '#frmConsulta').val();
     var tplcremp = $('#tplcremp', '#frmConsulta').val();
     var tpdescto = $('#tpdescto', '#frmConsulta').val();
