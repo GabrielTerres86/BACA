@@ -281,13 +281,13 @@ function formataCabecalho() {
     cCdufdemp.attr('maxlength', '2');
     cNrfonemp.attr('maxlength', '15');
     cNrfaxemp.attr('maxlength', '15');
-    cDsdemail.attr('maxlength', '60');
+    cDsdemail.attr('maxlength', '300');
 
     cDdmesnov.attr('maxlength', '2');
     cDdpgtmes.attr('maxlength', '2');
     cDdpgthor.attr('maxlength', '2');
 
-    cDsdemail.addClass('email');
+    //cDsdemail.addClass('email');
     cDtfchfol.addClass('campo').css({ 'width': '30px' }).attr('maxlength', '2').setMask("INTEGER", "99");
     cCdempfol.addClass('campo').css({'width':'130px'}).attr('maxlength', '4').setMask("INTEGER", "99");
 
@@ -447,7 +447,7 @@ function formataInfEmpresas() {
     cNrfaxemp.css({width: '131px'});
     cDsdemail.css({width: '423px'});
 
-	cDsdemail.addClass('email');
+	//cDsdemail.addClass('email');
 
     highlightObjFocus($('#frmInfEmpresa'));
     /*Formatando Formulario empresa*/
@@ -1194,7 +1194,7 @@ function monitorarCTRLV(evento, x_dsdemail) {
     /*if ( (evento.ctrlKey && evento.keyCode == 86) || (evento.shiftKey && evento.keyCode == 45) || (!evento.shiftKey && !evento.keyCode) ){*/
     x_email = x_dsdemail.value;
     x_email = removeAcentos(x_email);
-    x_email = x_email.replace(/[^a-zA-Z._@ 0-9]+/g, '');
+    x_email = x_email.replace(/[^a-zA-Z._,;@ 0-9]+/g, '');
     x_dsdemail.value = x_email;
     /*}*/
 }
