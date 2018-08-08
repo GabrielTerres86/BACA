@@ -202,6 +202,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   --                          NOT IN dos tipos de contas que tem a modalidade 3 – Conta Aplicação.
   --                          PRJ366 (Lombardi).
   --
+  --             27/02/2018 - Procedure pc_analise_individual alterada para buscar descricao da situacao 
+  --                          da tabela. PRJ366 (Lombardi).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina que indica se deve habilitar / desabilitar o parecer da analise de credito
@@ -1642,16 +1645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                crapass.nrcpfcgc,
                crapass.cdsitdct,
                crapass.cdagenci,
-               crapass.nmprimtl,
-               decode(crapass.cdsitdct,1,'NORMAL',
-                                       2,'ENCERRADA PELO ASSOCIADO',
-                                       3,'ENCERRADA PELA COOP',
-                                       4,'ENCERRADA PELA DEMISSAO',
-                                       5,'NAO APROVADA',
-                                       6,'NORMAL - SEM TALAO',
-                                       8,'OUTROS MOTIVOS',
-                                       9,'ENCERRADA P/ OUTRO MOTIVO',
-                                         'OUTROS') dssitdct                
+               crapass.nmprimtl
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
@@ -1876,6 +1870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_qtmeschq    PLS_INTEGER;           -- Quantidade de meses para analise de cheques sem fundos
       vr_qtmesest    PLS_INTEGER;           -- Quantidade de meses para analise do estouro da conta
       vr_qtmesatr    PLS_INTEGER;           -- Quantidade de meses para analise do atraso na cooperativa
+      vr_dssitdct    tbcc_situacao_conta.dssituacao%TYPE; -- Descricao da situacao de conta
 
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -2220,7 +2215,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           -- Se for indicador de SITUACAO DA CONTA
           ELSIF rw_crapiac.nrseqiac = 7 THEN
             -- Atualiza o conteudo do parametro 1
-            vr_tab_crapdac.vlparam1 := rw_crapass.cdsitdct||'-'||rw_crapass.dssitdct;
+            
+            CADA0006.pc_descricao_situacao_conta(pr_cdsituacao => rw_crapass.cdsitdct
+                                                ,pr_dssituacao => vr_dssitdct
+                                                ,pr_des_erro   => vr_des_reto
+                                                ,pr_dscritic   => vr_dscritic);
+            
+            IF vr_des_reto <> 'NOK' THEN
+              RAISE vr_exc_saida;
+            END IF;
+            
+            vr_tab_crapdac.vlparam1 := rw_crapass.cdsitdct||'-'||vr_dssitdct;
 
             -- Verifica se o tipo esta dentre os escolhidos
             IF instr(';'||rw_crapqac.vlparam1||';',';'||rw_crapass.cdsitdct||';') <> 0 THEN
@@ -2523,23 +2528,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       rw_crapcje cr_crapcje%ROWTYPE;
       
       -- Cursor para busca das contas do grupo economico
-      CURSOR cr_grupo_economico IS
-        SELECT DISTINCT 
-               crapass.nrdconta,
+      CURSOR cr_crapgrp IS
+        SELECT DISTINCT crapass.nrdconta,
                crapass.inpessoa,
                crapass.nrcpfcgc
-               ,gi.idgrupo
-          FROM crapass
-               --,crapgrp
-               ,tbcc_grupo_economico_integ  gi
-               ,tbcc_grupo_economico_integ  gi2
-         WHERE gi.cdcooper = pr_cdcooper
-           AND gi.nrdconta = pr_nrdconta
-           and gi2.cdcooper = gi.cdcooper
-           and gi2.idgrupo = gi.idgrupo
-           AND gi2.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
-           AND crapass.cdcooper = gi2.cdcooper
-           AND crapass.nrdconta = gi2.nrdconta
+          FROM crapass,
+               crapgrp
+         WHERE crapgrp.cdcooper = pr_cdcooper
+           AND crapgrp.nrdconta = pr_nrdconta
+           AND crapgrp.nrctasoc <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
+           AND crapass.cdcooper = crapgrp.cdcooper
+           AND crapass.nrdconta = crapgrp.nrctasoc
            AND crapass.dtelimin IS NULL -- Somente ativos
            AND crapass.inpessoa = 1; -- Somente PF
 
@@ -2742,14 +2741,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         CLOSE cr_crapcje;
       ELSE
         -- Busca os cooperados que fazem parte do GRUPO ECONOMICO
-        FOR rw_grupo_economico IN cr_grupo_economico LOOP
+        FOR rw_crapgrp IN cr_crapgrp LOOP
           -- Insere o integrante do grupo economico para ser consultado
           vr_ind := vr_ind + 1;
-          vr_tab_consulta(vr_ind).nrdconta := rw_grupo_economico.nrdconta;
-          vr_tab_consulta(vr_ind).nrcpfcgc := rw_grupo_economico.nrcpfcgc;
-          vr_tab_consulta(vr_ind).inpessoa := rw_grupo_economico.inpessoa;
+          vr_tab_consulta(vr_ind).nrdconta := rw_crapgrp.nrdconta;
+          vr_tab_consulta(vr_ind).nrcpfcgc := rw_crapgrp.nrcpfcgc;
+          vr_tab_consulta(vr_ind).inpessoa := rw_crapgrp.inpessoa;
           vr_tab_consulta(vr_ind).intippes := 4; -- Grupo economico
-          vr_tab_contas(rw_grupo_economico.nrdconta).nrdconta := rw_grupo_economico.nrdconta;
+          vr_tab_contas(rw_crapgrp.nrdconta).nrdconta := rw_crapgrp.nrdconta;
           -- Informa que tem grupo economico
           vr_ingrpeco := 'S';
         END LOOP;      
@@ -3396,6 +3395,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       END IF;
     
     END IF;
+    
+    RISC0004.pc_busca_risco_inclusao(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_dsctrliq => pr_dsctrliq
+                                    ,pr_rw_crapdat => rw_crapdat 
+                                    ,pr_innivris => vr_innivris 
+                                    ,pr_cdcritic => vr_cdcritic 
+                                    ,pr_dscritic => vr_dscritic);
     
     --> Somente vamos verificar a cessao de credito, caso possui a finalidade
     IF pr_cdfinemp > 0 THEN
