@@ -1,16 +1,14 @@
- /***********************************************************************************
+/****************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-----------------------------------------+--------------------------------------+
   | Rotina Progress                         | Rotina Oracle PLSQL                  |
   +-----------------------------------------+--------------------------------------+
-  |sistema/generico/procedures/b1wgen0084.p | EMPR0001                             |
-  | Dias360                                 | EMPR0001.pc_calc_dias360             |
-  | fnBuscaDataDoUltimoDiaUtilMes           | gene0005.fn_valida_dia_util          |
-  | busca_parcelas_proposta                 | EMPR0004.pc_busca_parcelas_proposta  |
-  | calcula_emprestimo                      | EMPR0004.pc_calcula_emprestimo       |
-  | calcula_data_parcela                    | EMPR0004.pc_calcula_data_parcela     |
-  | gera_parcelas_emprestimo                | EMPR0004.pc_gera_parcelas_emprest    |
+|sistema/generico/procedures/b1wgen0084.p | EMPR0001                             |
+| Dias360                                 | EMPR0001.pc_calc_dias360             |
+| fnBuscaDataDoUltimoDiaUtilMes           | gene0005.fn_valida_dia_util          |
+| busca_parcelas_proposta                 | EMPR0004.pc_busca_parcelas_proposta  |
+| calcula_data_parcela                    | EMPR0004.pc_calcula_data_parcela     |
   +-----------------------------------------+--------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -31,7 +29,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 12/04/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 27/06/2018
 
     Dados referentes ao programa:
 
@@ -233,17 +231,21 @@
                            "obtem_emprestimo_risco". (James)
                            											 
 			  10/07/2015 - Alterada PROCEDURE grava_efetivacao_proposta para 
-                           tratar operacoes de portabilidade de credito. (Reinert)
+                           tratar operacoes de portabilidade de credito.
+                            (Reinert)
 
-              30/09/2015 - Desenvolvimento do Projeto 215 - Estorno. (James/Reinert)
+              30/09/2015 - Desenvolvimento do Projeto 215 - Estorno.
+                           (James/Reinert)
               
               05/11/2015 - Incluso novo parametro "par_idorigem" na chamada das procedures
                            "cria_lancamento_lem" e "lanca_juro_contrato" (Daniel)
                            
-              15/12/2015 - Não deverá ser considerado o prazo informado no parâmetro da tela 
-                           Tab090 para a cooperativa Viacredi(Chamado: 374261). (James)
+              15/12/2015 - Nao devera ser considerado o prazo informado no 
+                           parametro da tela Tab090 para a cooperativa
+                           Viacredi(Chamado: 374261). (James)
                            
-              16/02/2016 - Adicionado verificacao se chassi informado ja se encontra em outro
+              16/02/2016 - Adicionado verificacao se chassi informado ja se
+                           encontra em outro
                            emprestimo em aberto. (Jorge/Gielow) - SD 391096             
                            
               21/03/2016 - Incluido validacao da situacao esteira na valida_dados_efetivacao_proposta             
@@ -305,6 +307,8 @@
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                            
+              27/06/2018 - P450 - Calculo e gravacao Risco Refin no emprestimo
+                           (Guilherme/AMcom)
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -654,6 +658,7 @@ PROCEDURE calcula_emprestimo:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_qtparepr AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
@@ -681,6 +686,8 @@ PROCEDURE calcula_emprestimo:
     DEF VAR vr_ind                AS INTE                           NO-UNDO.
     DEF VAR vr_saldo_devedor      AS DECI                           NO-UNDO.
     DEF VAR aux_dscatbem          AS CHAR                           NO-UNDO.
+    DEF VAR aux_dsctrliq          AS CHAR                           NO-UNDO.
+    DEF VAR i                     AS INTE                           NO-UNDO.
 
     DEF BUFFER crabepr FOR crawepr.
 
@@ -712,8 +719,9 @@ PROCEDURE calcula_emprestimo:
                    crabepr.nrdconta = par_nrdconta AND
                    crabepr.nrctremp = par_nrctremp NO-ERROR.
 
-       IF  AVAIL crabepr          AND
-           crabepr.tpemprst <> 1  THEN
+       IF  AVAIL crabepr THEN
+           DO:
+           IF crabepr.tpemprst <> 1  THEN
            DO:
                 ASSIGN aux_cdcritic = 946
                        aux_dscritic = "".
@@ -727,6 +735,26 @@ PROCEDURE calcula_emprestimo:
 
                 RETURN "NOK".
            END.
+
+               /* Montar contratos para liquidação */
+               ASSIGN aux_dsctrliq = "".
+               
+               DO i = 1 TO 10:
+
+                 IF  crabepr.nrctrliq[i] > 0  THEN
+                   aux_dsctrliq = aux_dsctrliq +
+                      (IF  aux_dsctrliq = ""  THEN
+                           TRIM(STRING(crabepr.nrctrliq[i],
+                                       "z,zzz,zz9"))
+                       ELSE
+                           ", " +
+                           TRIM(STRING(crabepr.nrctrliq[i],
+                                       "z,zzz,zz9"))).
+
+               END. /** Fim do DO ... TO **/    
+               
+           END.
+           
 
        FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
                           craplcr.cdlcremp = par_cdlcremp
@@ -779,41 +807,44 @@ PROCEDURE calcula_emprestimo:
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
            
            /* Efetuar a chamada a rotina Oracle  */
-           RUN STORED-PROCEDURE pc_calcula_iof_epr_parcela
+           RUN STORED-PROCEDURE pc_calcula_iof_epr
                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                    ,INPUT par_nrdconta
-                                                    ,INPUT par_nrctremp
-                                                    ,INPUT par_dtmvtolt
-                                                    ,INPUT crapass.inpessoa
-                                                    ,INPUT par_cdlcremp
-                                                    ,INPUT par_qtparepr
-                                                    ,INPUT aux_vlparepr
-                                                    ,INPUT par_vlemprst
-                                                    ,INPUT par_dtdpagto
-                                                    ,INPUT par_dtlibera
-                                                    ,INPUT 1
-                                                    ,INPUT par_dtmvtolt /* xxxxxxxx */
-                                                    ,INPUT 0             /* xxxxxxxxxxx  */
-                                                    ,INPUT aux_dscatbem 
-                                                    ,INPUT par_idfiniof
-                                                    ,OUTPUT 0
-                                                    ,OUTPUT 0  /* pr_vliofpri */
-                                                    ,OUTPUT 0  /* pr_vliofadi */
-                                                    ,OUTPUT 0  /* pr_flgimune */
-                                                    ,OUTPUT 0
-                                                    ,OUTPUT "").
+                                                   ,INPUT par_nrctremp
+                                                   ,INPUT par_dtmvtolt
+                                                   ,INPUT crapass.inpessoa
+                                                   ,INPUT par_cdlcremp
+                                                   ,INPUT par_cdfinemp
+                                                   ,INPUT par_qtparepr
+                                                   ,INPUT aux_vlparepr
+                                                   ,INPUT par_vlemprst
+                                                   ,INPUT par_dtdpagto
+                                                   ,INPUT par_dtlibera
+                                                   ,INPUT 1
+                                                   ,INPUT par_dtmvtolt /* xxxxxxxx */
+                                                   ,INPUT 0             /* xxxxxxxxxxx  */
+                                                   ,INPUT aux_dscatbem 
+                                                   ,INPUT par_idfiniof
+                                                   ,INPUT aux_dsctrliq
+                                                   ,INPUT "N" /* Nao grava valor nas parcelas ainda */
+                                                   ,OUTPUT 0  /* pr_vlpreclc */
+                                                   ,OUTPUT 0  /* pr_vliofpri */
+                                                   ,OUTPUT 0  /* pr_vliofadi */
+                                                   ,OUTPUT 0  /* pr_flgimune */
+                                                   ,OUTPUT 0
+                                                   ,OUTPUT "").
 
            /* Fechar o procedimento para buscarmos o resultado */ 
-           CLOSE STORED-PROC pc_calcula_iof_epr_parcela
+           CLOSE STORED-PROC pc_calcula_iof_epr
                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
           
            ASSIGN aux_dscritic = ""
-                  aux_dscritic = pc_calcula_iof_epr_parcela.pr_dscritic
-                                 WHEN pc_calcula_iof_epr_parcela.pr_dscritic <> ?
-                  aux_vlparepr = pc_calcula_iof_epr_parcela.pr_vlpreempcalc
-                                 WHEN pc_calcula_iof_epr_parcela.pr_vlpreempcalc <> ?.
+                  aux_dscritic = pc_calcula_iof_epr.pr_dscritic
+                                 WHEN pc_calcula_iof_epr.pr_dscritic <> ?
+                  aux_vlparepr = pc_calcula_iof_epr.pr_vlpreclc
+                                 WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?.
                                
         END.
         ELSE
@@ -1016,6 +1047,7 @@ PROCEDURE busca_parcelas_proposta:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_qtparepr AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
@@ -1064,6 +1096,7 @@ PROCEDURE busca_parcelas_proposta:
                                        INPUT  par_flgerlog,
                                        INPUT  par_nrctremp,
                                        INPUT  par_cdlcremp,
+                                       INPUT  par_cdfinemp,
                                        INPUT  par_vlemprst,
                                        INPUT  par_qtparepr,
                                        INPUT  par_dtmvtolt,
@@ -1185,6 +1218,7 @@ PROCEDURE grava_parcelas_proposta:
     DEF INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF INPUT PARAM par_qtparepr AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_dtlibera AS DATE                           NO-UNDO.
@@ -1235,6 +1269,7 @@ PROCEDURE grava_parcelas_proposta:
                               INPUT  par_flgerlog,
                               INPUT  par_nrctremp,
                               INPUT  par_cdlcremp,
+                              INPUT  par_cdfinemp,
                               INPUT  par_vlemprst,
                               INPUT  par_qtparepr,
                               INPUT  par_dtmvtolt,
@@ -3315,6 +3350,8 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vltrfgar AS DECI                                      NO-UNDO.    
     DEF VAR aux_vltarifa AS DECI                                      NO-UNDO.
     DEF VAR aux_vltaxiof AS DECI                                      NO-UNDO.    
+    DEF VAR aux_dtrisref AS DATE /* DATA RISCO REFIN */               NO-UNDO.
+    DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -3454,9 +3491,11 @@ PROCEDURE grava_efetivacao_proposta:
             END.
        ****/
 
-       FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin) WHERE crappre.cdcooper = par_cdcooper     
-                                                              AND crappre.inpessoa = crapass.inpessoa
-                                                              AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK: END.
+       FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin)
+           WHERE crappre.cdcooper = par_cdcooper     
+             AND crappre.inpessoa = crapass.inpessoa
+             AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK:
+       END.
                                                               /*AND (crappre.cdfinemp = crawepr.cdfinemp
                                                                OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
 
@@ -3603,6 +3642,7 @@ PROCEDURE grava_efetivacao_proposta:
                                           ,INPUT aux_dscatbem       /* Bens em garantia */
                                           ,INPUT crawepr.idfiniof   /* Indicador de financiamento de iof e tarifa */
                                           ,INPUT aux_dsctrliq       /* pr_dsctrliq */
+                                          ,INPUT "S"                /* Gravar valor do IOF p/parcela nas parcelas */
                                           ,OUTPUT 0                 /* Valor calculado da Parcela */
                                           ,OUTPUT 0                 /* Retorno do valor do IOF */
                                           ,OUTPUT 0                 /* pr_vliofpri Valor calculado do iof principal */
@@ -3688,8 +3728,7 @@ PROCEDURE grava_efetivacao_proposta:
      
      
      /* Se for Pos-Fixado */
-     IF  crawepr.tpemprst = 2  THEN
-		     DO:
+     IF  crawepr.tpemprst = 2  THEN DO:
              ASSIGN aux_nrdolote_cred = 650004.
 
              IF   aux_floperac   THEN             /* Financiamento*/
@@ -3989,7 +4028,8 @@ PROCEDURE grava_efetivacao_proposta:
                                                INPUT par_nrdconta,
                                                INPUT par_nrctremp,
                                                INPUT par_dtmvtolt,
-                                               INPUT par_nrctremp,
+                                               INPUT crawepr.cdlcremp,
+                                               INPUT crawepr.cdfinemp,
                                                INPUT crawepr.vlemprst,
                                                OUTPUT "",
                                                OUTPUT "",
@@ -4108,6 +4148,52 @@ PROCEDURE grava_efetivacao_proposta:
                  END.
 
           END.
+       /***********************
+          CALCULO DATA RISCO REFIN
+          Se houve alguma liquidacao de contrato
+       ***********************/
+       IF (crawepr.nrctrliq[1]  > 0
+       OR  crawepr.nrctrliq[2]  > 0
+       OR  crawepr.nrctrliq[3]  > 0
+       OR  crawepr.nrctrliq[4]  > 0
+       OR  crawepr.nrctrliq[5]  > 0
+       OR  crawepr.nrctrliq[6]  > 0
+       OR  crawepr.nrctrliq[7]  > 0
+       OR  crawepr.nrctrliq[8]  > 0
+       OR  crawepr.nrctrliq[9]  > 0
+       OR  crawepr.nrctrliq[10] > 0
+       OR  crawepr.nrliquid     > 0) THEN DO:
+
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+           /* Verifica se ha contratos de acordo */
+           RUN STORED-PROCEDURE pc_dias_atraso_liquidados
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                 ,INPUT par_nrdconta
+                                                 ,INPUT crawepr.nrctremp
+                                                 ,OUTPUT 0
+                                                 ,OUTPUT "").
+    
+           CLOSE STORED-PROC pc_dias_atraso_liquidados
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+           ASSIGN aux_qtdiaatr = 0
+                  aux_dscritic = ""
+                  aux_dscritic = pc_dias_atraso_liquidados.pr_dscritic WHEN pc_dias_atraso_liquidados.pr_dscritic <> ?
+                  aux_qtdiaatr = INT(pc_dias_atraso_liquidados.pr_qtdatref).
+            
+           IF (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+              ASSIGN aux_dtrisref = par_dtmvtolt
+                     aux_qtdiaatr = 0.
+
+           ASSIGN aux_dtrisref = par_dtmvtolt - aux_qtdiaatr.
+       END.
+       ELSE 
+           ASSIGN aux_dtrisref = ?.
+       /***********************/
+
 
        CREATE crapepr.
        ASSIGN crapepr.dtmvtolt = par_dtmvtolt
@@ -4147,16 +4233,19 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.dtinipag = ?
               crapepr.tpdescto = crawepr.tpdescto
               crapepr.vliofepr = aux_vltotiof
+              crapepr.vlpagiof = aux_vliofpri
+              crapepr.vliofadc = aux_vliofadi
               crapepr.cdcooper = par_cdcooper
               crapepr.qttolatr = crawepr.qttolatr
               crapepr.vltarifa = aux_vltarifa
               crapepr.vlaqiofc = aux_vlaqiofc
               crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
-              crapepr.idfiniof = crawepr.idfiniof.
+              crapepr.idfiniof = crawepr.idfiniof
+              crapepr.dtinicio_atraso_refin = aux_dtrisref
+              .
 				
-			  if crawepr.idfiniof > 0 then
-			  do:
+              if crawepr.idfiniof > 0 then do:
 			     assign crapepr.vlsdeved = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
 			            crapepr.vlemprst = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
 			  end.

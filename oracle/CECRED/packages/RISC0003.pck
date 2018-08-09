@@ -160,7 +160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
 
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : risc0003
+  --  Programa : RISC0003
   --  Sistema  : Rotinas para Riscos de Garantia e Provisão
   --  Sigla    : RISC
   --  Autor    : Andrei Vieira - MOUTs
@@ -174,9 +174,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   --
   -- Atualizações: 09/04/2018 - Incluída procedure para cálculo dos dados Brutos do Risco - Daniel(AMcom)
   --                            pc_risco_central_ocr - tabela TBRISCO_CENTRAL_OCR
-	--               
-	--               04/07/2018 - Alteração na "pc_risco_central_ocr" para chamada da 
-	--                            RISC0004.pc_carrega_tabela_riscos - Reginaldo(AMcom)
+  --
+  --               04/07/2018 - Alteração na "pc_risco_central_ocr" para chamada da
+  --                            RISC0004.pc_carrega_tabela_riscos - Reginaldo(AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -699,7 +699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                             ', Valor taxa de juros: ' || to_char(rw_movto.vltaxa_juros,'990D0000000','NLS_NUMERIC_CHARACTERS='',.''') ||
                                                             ', Dt. Lib. Op: ' || to_char(rw_movto.dtlib_operacao,'dd/mm/rrrr') ||
                                                             ', Valor Operacao: ' || to_char(0.00,'990D00','NLS_NUMERIC_CHARACTERS='',.''') ||
-                                                            ', Nat. Operacao: ' || risc0003.fn_valor_opcao_dominio(rw_movto.idnat_operacao) ||
+                                                            ', Nat. Operacao: ' || RISC0003.fn_valor_opcao_dominio(rw_movto.idnat_operacao) ||
                                                             ', Dt. Venc. Op: ' || to_char(rw_movto.dtvenc_operacao,'dd/mm/rrrr') ||
                                                             ', Classificacao da operacao: ' ||rw_movto.cdclassifica_operacao  ||
                                                             ', Qtd. Parcelas: ' || to_char(rw_movto.qtdparcelas,'999G999G990','NLS_NUMERIC_CHARACTERS='',.''') ||
@@ -720,12 +720,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         IF cr_movto%ISOPEN THEN
           CLOSE cr_movto;
         END IF;
-        pr_dscritic := 'risc0003.pc_cria_contratos_novo_mes - Erro tratado -> '||vr_dscritic;
+        pr_dscritic := 'RISC0003.pc_cria_contratos_novo_mes - Erro tratado -> '||vr_dscritic;
       WHEN OTHERS THEN
         IF cr_movto%ISOPEN THEN
           CLOSE cr_movto;
         END IF;
-        pr_dscritic := 'risc0003.pc_cria_contratos_novo_mes - Erro nao tratado -> '||sqlerrm;
+        pr_dscritic := 'RISC0003.pc_cria_contratos_novo_mes - Erro nao tratado -> '||sqlerrm;
     END;
   END pc_cria_contratos_novo_mes;
 
@@ -1044,9 +1044,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
 
     EXCEPTION
       WHEN vr_excsaida THEN
-        pr_dscritic := 'risc0003.pc_exporta_dados_csv - Erro tratado -> '||vr_dscritic;
+        pr_dscritic := 'RISC0003.pc_exporta_dados_csv - Erro tratado -> '||vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'risc0003.pc_exporta_dados_csv - Erro nao tratado -> '||sqlerrm;
+        pr_dscritic := 'RISC0003.pc_exporta_dados_csv - Erro nao tratado -> '||sqlerrm;
     END;
   END pc_exporta_dados_csv;
 
@@ -1423,7 +1423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       WHEN vr_excsaida THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'risc0003.pc_importa_arq_layout_brde --> Erro nao tratado: '||SQLERRM;
+        pr_dscritic := 'RISC0003.pc_importa_arq_layout_brde --> Erro nao tratado: '||SQLERRM;
     END;
   END pc_importa_arq_layout_brde;
 
@@ -1609,7 +1609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       WHEN vr_excsaida THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'risc0003.pc_leitura_registros_bancoob --> Erro nao tratado: '||SQLERRM;
+        pr_dscritic := 'RISC0003.pc_leitura_registros_bancoob --> Erro nao tratado: '||SQLERRM;
     END;
   END pc_leitura_registros_bancoob;
 
@@ -1842,7 +1842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       WHEN vr_excsaida THEN
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'risc0003.pc_leitura_registros_bb --> Erro nao tratado: '||SQLERRM;
+        pr_dscritic := 'RISC0003.pc_leitura_registros_bb --> Erro nao tratado: '||SQLERRM;
     END;
   END pc_leitura_registros_bb;
 
@@ -1897,7 +1897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           -- Importações só podem ser feitas na central
           IF pr_cdcooper <> 3 THEN
             -- Gerar critica
-            pr_dscritic := 'Problema na Importacao -> Favor selecionar a Cooperativa 3 - Cecred (Central)!';
+            pr_dscritic := 'Problema na Importacao -> Favor selecionar a Cooperativa 3 - Ailos (Central)!';
             RETURN;
           END IF;
           -- Para Bancoob
@@ -1940,7 +1940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
-        pr_dscritic := 'risc0003.pc_importa_arquivo --> Problema na Importacao -> '||SQLERRM;
+        pr_dscritic := 'RISC0003.pc_importa_arquivo --> Problema na Importacao -> '||SQLERRM;
         -- Desfazer alterações e retornar
         ROLLBACK;
     END;
@@ -2521,7 +2521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         -- Descricao do erro
-        pr_dscritic := 'Erro nao tratado na risc0003.pc_efetua_arrasto_docto5 ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na RISC0003.pc_efetua_arrasto_docto5 ' || SQLERRM;
     END;
 
   END pc_efetua_arrasto_docto5;
@@ -3170,7 +3170,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
            SET insituacao = pr_situacao -- 1-Erro  2-Sucesso
              , dtmvtolt   = rw_dat.dtmvtolt
          WHERE cdcooper   = pr_cdcooper
-           AND cdprogra   = 'risc0003.PC_RISCO_CENTRAL_OCR';
+           AND cdprogra   = 'RISC0003.PC_RISCO_CENTRAL_OCR';
       EXCEPTION
         WHEN OTHERS THEN
           pr_cdcritic := 0;
@@ -3220,37 +3220,37 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                           ,pr_cdcritic => vr_cdcritic  -- Código da crítica
                           ,pr_dscritic => vr_dscritic);-- Erros do processo
 
-        -- Verifica erro no DELETE
-        IF vr_cdcritic = 0 THEN
-          RAISE vr_exc_saida;
-        ELSE
-          COMMIT;
-        END IF;
+      -- Verifica erro no DELETE
+      IF vr_cdcritic = 0 THEN
+        RAISE vr_exc_saida;
+      ELSE
+        COMMIT;
+      END IF;
 
       --
-			-- Carrega os dados da CRAPRIS para a TBRISCO_CENTRAL_OCR
-			RISC0004.pc_carrega_tabela_riscos(pr_cdcooper => pr_cdcooper
-			                               , pr_cdcritic => vr_cdcritic
-																		 , pr_dscritic => vr_dscritic);
+      -- Carrega os dados da CRAPRIS para a TBRISCO_CENTRAL_OCR
+     RISC0004.pc_carrega_tabela_riscos(pr_cdcooper => pr_cdcooper
+                                     , pr_cdcritic => vr_cdcritic
+                                     , pr_dscritic => vr_dscritic);
 
-			-- Verifica erro no carregamento dos dados do risco para a TBRISCO_CENTRAL_OCR
-			IF nvl(vr_cdcritic, 0) > 0 THEN
-				RAISE vr_exc_saida;
-			ELSE
-				COMMIT;
-			END IF;
+     -- Verifica erro no carregamento dos dados do risco para a TBRISCO_CENTRAL_OCR
+     IF nvl(vr_cdcritic, 0) > 0 THEN
+       RAISE vr_exc_saida;
+     ELSE
+       COMMIT;
+     END IF;
 
-      --
-      -- Atualiza Controle BI
-      pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
-                          ,pr_situacao => 2            -- Situação da execução(1-Erro  2-Sucesso)
-                          ,pr_cdcritic => vr_cdcritic  -- Código da crítica
-                          ,pr_dscritic => vr_dscritic);-- Erros do processo
+     --
+     -- Atualiza Controle BI
+     pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
+                         ,pr_situacao => 2            -- Situação da execução(1-Erro  2-Sucesso)
+                         ,pr_cdcritic => vr_cdcritic  -- Código da crítica
+                         ,pr_dscritic => vr_dscritic);-- Erros do processo
 
-        -- Verifica erro na atualização controle BI
-        IF vr_cdcritic = 0 THEN
-          RAISE vr_exc_saida;
-        END IF;
+     -- Verifica erro na atualização controle BI
+     IF vr_cdcritic = 0 THEN
+        RAISE vr_exc_saida;
+     END IF;
    EXCEPTION
       WHEN vr_exc_saida THEN
       IF vr_cdcritic <> 0 THEN
