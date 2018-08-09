@@ -42,8 +42,8 @@
  *
  * 014: 16/01/2018 - Lucas Reinert			   : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  *
- * 015: 08/08/2018 - Gabriel (Mouts)           : Ajuste nos campos dschassi, ufdplaca, uflicenc e nrdplaca para formatar os caracteres 
- *                                               para caracteres  maiusculos - Chamado PRB0040116.
+ * 015: 08/08/2018 - Gabriel (Mouts)           : Ajuste nos campos dschassi, ufdplaca, uflicenc, nrdplaca, dscorbem e dsbemfin para 
+ *                                               formatar os caracteres para caracteres maiusculos - Chamado PRB0040116.
  *
  * --------------
  *
@@ -1249,13 +1249,13 @@ function formataTipo5() {
         cNrcpfcgc   = $('#nrcpfcgc','#'+frmTipo5);
 
 		cDtmvtolt.addClass('data').css({'width':'140px'});
-		cDsbemfin.css({'width':'220px'}).attr('maxlength','40');
+		cDsbemfin.css({'width':'220px','text-transform': 'uppercase'}).attr('maxlength','40');
 		cNrrenava.addClass('renavan').css({'width':'140px'});
 		cTpchassi.addClass('inteiro').css({'width':'40px'}).attr('maxlength','1');
 		cDschassi.css({'width':'140px','text-transform': 'uppercase'}).attr('maxlength','20');
 		cNrdplaca.addClass('placa').css({'width':'140px','text-transform': 'uppercase'});
 		cUfdplaca.css({'width':'30px','text-transform': 'uppercase'}).attr('maxlength','2');
-		cDscorbem.css({'width':'220px'}).attr('maxlength','25');
+		cDscorbem.css({'width':'220px','text-transform': 'uppercase'}).attr('maxlength','25');
 		cNranobem.addClass('inteiro').css({'width':'40px'}).attr('maxlength','4');
 		cNrmodbem.addClass('inteiro').css({'width':'40px'}).attr('maxlength','4');
 		cUflicenc.css({'width':'40px','text-transform': 'uppercase'}).attr('maxlength','2');

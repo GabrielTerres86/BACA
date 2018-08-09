@@ -162,8 +162,8 @@
                   	        utilizacao da data do contrato pela data do aditivo, se existir (aux_dtcontra)
                             (Ana - Envolti - INC0019463)
 
-               08/08/2018 - Ajuste no campo nrdplaca, ufdplaca e uflicenc para formatar os caracteres para
-                            caracteres maiusculos. Chamado PRB0040116 (Gabriel - Mouts).
+               08/08/2018 - Ajuste no campo nrdplaca, ufdplaca, uflicenc, dsbemfin e dscorbem para formatar
+                            os caracteres para caracteres maiusculos. Chamado PRB0040116 (Gabriel - Mouts).
 
 ............................................................................*/
 
@@ -1252,7 +1252,9 @@ PROCEDURE Grava_Dados:
            par_dschassi = CAPS(par_dschassi)
            par_ufdplaca = CAPS(par_ufdplaca)
            par_uflicenc = CAPS(par_uflicenc)
-           par_nrdplaca = CAPS(par_nrdplaca).
+           par_nrdplaca = CAPS(par_nrdplaca)
+           par_dsbemfin = CAPS(par_dsbemfin)
+           par_dscorbem = CAPS(par_dscorbem).
 
     Grava: DO TRANSACTION
         ON ERROR  UNDO Grava, LEAVE Grava
