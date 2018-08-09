@@ -44,6 +44,7 @@
  * 027: [14/05/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao mostrarBorderoPagar(), pagarTitulosVencidos() e efetuarPagamentoTitulosVencidos()
  * 028: [30/05/2018] Vitor Shimada Assanuma (GFT): Inclusão do css para alinhar a direita na Manutenção e 
  * 029: [02/06/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao calculaValoresResumoBordero() para calculo do resumo dos valores do bordero
+ * 030: [09/08/2018] Vitor Shimada Assanuma (GFT): Validação do parâmetro da #TAB052 de quantidade máxima de títulos ao incluir um título ao borderô
  */
 
  // variaveis propostas
@@ -323,6 +324,14 @@ function incluiTituloBordero(td){
     var td = $(td);
     var tr = td.parent();
     var id = tr.attr("id");
+
+    //Verifica se ultrapassou o limite de numero de títulos no bordero
+    if (selecionados.find('tr').length > qtmaxtit){
+        showError("error", "Quantidade de t&iacute;tulos excedida por border&ocirc;("+qtmaxtit+").", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+
+    //Verifica se já está inserido na tabela de selecionados
     if (selecionados.find("#"+id).length>0){
         showError("error", "T&iacute;tulo j&aacute; incluso na lista de selecionados.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
@@ -700,14 +709,14 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
         imprimirRating(false,3,nrctrlim,"divOpcoesDaOpcao3",fnfinish);
         return false;       
     }
-    
+
     $("#nrdconta","#frmImprimirDscTit").val(nrdconta);
     $("#idimpres","#frmImprimirDscTit").val(idimpres);
     $("#flgemail","#frmImprimirDscTit").val(flgemail);
     $("#nrctrlim","#frmImprimirDscTit").val(nrctrlim);
     $("#nrborder","#frmImprimirDscTit").val(nrbordero);     
     $("#limorbor","#frmImprimirDscTit").val(limorbor);
-    
+
     var action = $("#frmImprimirDscTit").attr("action");
     var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
     

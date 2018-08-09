@@ -5,6 +5,8 @@
 	 Data : 09/04/2018                Última Alteração: 
 	                                                                  
 	 Objetivo  : Alteração de um novo Bordero
+	 Alteração :
+	  - 09/08/2018 - Vitor Shimada Assanuma(GFT) - Inclusão do parametro vindo da #TAB052 de quantidade máxima de títulos por borderô
 
 	************************************************************************/
 	
@@ -64,6 +66,7 @@
 	$titulos 	= $dados->findFirst("titulos");
 	$quantidade = $titulos->getAttribute("qtregist");
 	$arrTitulos = $titulos->find("titulo");
+	$qtmaxtit   = $bordero->qtmaxtit;
 
 	$vlutiliz = $contrato->vlutiliz;
 	$vllimite = $contrato->vllimite;
@@ -222,6 +225,9 @@
 <script type="text/javascript">
 	dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao1;divOpcoesDaOpcao2");
 
+	//Envio para o Javascript da quantidade máxima de títulos por borderô
+	qtmaxtit = <?=$qtmaxtit?>;
+	
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDERO - INCLUIR");
 

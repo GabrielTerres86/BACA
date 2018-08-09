@@ -3990,7 +3990,7 @@ END pc_obtem_proposta_aciona_web;
                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                 ) IS
-
+                                
     -- variaveis de retorno
     vr_tab_dados_titulos typ_tab_dados_titulos;
 
@@ -4011,7 +4011,7 @@ END pc_obtem_proposta_aciona_web;
     -- Variável de críticas
      vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
      vr_dscritic varchar2(1000);        --> Desc. Erro
-
+     
     BEGIN
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
@@ -4046,8 +4046,8 @@ END pc_obtem_proposta_aciona_web;
                                ,pr_cdcritic          => vr_cdcritic --> Código da crítica
                                ,pr_dscritic          => vr_dscritic --> Descrição da crítica
                        );
-      
-      -- inicializar o clob
+                       
+      -- inicializar o clob    
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -4084,7 +4084,6 @@ END pc_obtem_proposta_aciona_web;
         vr_qtregist := vr_qtregist + 1;
         vr_index := vr_tab_dados_titulos.next(vr_index);
       end LOOP;
-      
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
 
@@ -4281,8 +4280,11 @@ END pc_obtem_proposta_aciona_web;
                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                   ) IS
-         
-    
+    /* -------------------------------------------------------------------------------------------------------
+    - Alterações
+    -   09/08/2018 - Vitor Shimada Assanuma - Inclusão do paramentro da TAB052 de QtdMaxTit.
+    -
+     ------------------------------------------------------------------------------------------------------- */
     pr_tab_dados_limite  typ_tab_dados_limite;          --> retorna dos dados
     
     /* tratamento de erro */
@@ -4297,6 +4299,21 @@ END pc_obtem_proposta_aciona_web;
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
 
+    -- Cursor para buscar o tipo de pessoa.
+    CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT 
+        crapass.inpessoa
+      FROM 
+        crapass
+      WHERE 
+        crapass.cdcooper = pr_cdcooper
+        AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+        
+    vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
+    vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
+    
     -- Variável de críticas
      vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
      vr_dscritic varchar2(1000);        --> Desc. Erro
@@ -4322,9 +4339,29 @@ END pc_obtem_proposta_aciona_web;
                               vr_cdcritic,
                               vr_dscritic
                              );
+                             
+       -- busca os dados do associado/cooperado para só então encontrar seus dados na tabela de parâmetros
+       OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
+                      pr_nrdconta => pr_nrdconta);
+       FETCH cr_crapass INTO rw_crapass;
+       CLOSE cr_crapass;
+       -- Busca os Parâmetros para o Cooperado e Cobrança Com Registro
+       dsct0002.pc_busca_parametros_dsctit(vr_cdcooper, --pr_cdcooper,
+                                            NULL, --Agencia de operação
+                                            NULL, --Número do caixa
+                                            NULL, --Operador
+                                            NULL, -- Data da Movimentação
+                                            NULL, --Identificação de origem
+                                            1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                            rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                            vr_tab_dados_dsctit,
+                                            vr_tab_cecred_dsctit,
+                                            vr_cdcritic,
+                                            vr_dscritic);
       IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
         raise vr_exc_erro;
       END IF;
+ 
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
@@ -4348,6 +4385,7 @@ END pc_obtem_proposta_aciona_web;
                               '<qtutiliz>' || pr_tab_dados_limite(0).qtutiliz || '</qtutiliz>' ||
                               '<dtfimvig>' || to_char(pr_tab_dados_limite(0).dtfimvig,'dd/mm/rrrr') || '</dtfimvig>' ||
                               '<pctolera>' || pr_tab_dados_limite(0).pctolera || '</pctolera>' ||
+                              '<qtmaxtit>' || vr_tab_dados_dsctit(1).qtmxtbay || '</qtmaxtit>' ||
                            '</inf>'
                           );
       pc_escreve_xml ('</dados></root>',true);
@@ -6581,6 +6619,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure que busca os dados do bordero e de seus titulos  e monta o xml para a tela 
+    Alterações
+      -   09/08/2018 - Vitor Shimada Assanuma - Inclusão do paramentro da TAB052 de QtdMaxTit.
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -6626,6 +6666,21 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       ;
     rw_crapbdt cr_crapbdt%rowtype;
 
+    -- Cursor para buscar o tipo de pessoa.
+    CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT 
+        crapass.inpessoa
+      FROM 
+        crapass
+      WHERE 
+        crapass.cdcooper = pr_cdcooper
+        AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+        
+    vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
+    vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
+    
     BEGIN
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
@@ -6683,8 +6738,26 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                            ,pr_dscritic => vr_dscritic );
       IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
          raise vr_exc_erro;
-      END IF;       
-      
+      END IF;    
+         
+      -- busca os dados do associado/cooperado para só então encontrar seus dados na tabela de parâmetros
+      OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
+                     pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      CLOSE cr_crapass;
+      -- Busca os Parâmetros para o Cooperado e Cobrança Com Registro
+      dsct0002.pc_busca_parametros_dsctit(vr_cdcooper, --pr_cdcooper,
+                                            NULL, --Agencia de operação
+                                            NULL, --Número do caixa
+                                            NULL, --Operador
+                                            NULL, -- Data da Movimentação
+                                            NULL, --Identificação de origem
+                                            1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                            rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                            vr_tab_dados_dsctit,
+                                            vr_tab_cecred_dsctit,
+                                            vr_cdcritic,
+                                            vr_dscritic);
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
@@ -6748,6 +6821,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                           '<qttitulo>' || vr_qtregist || '</qttitulo>' ||
                           '<vltitulo>' || vr_vltitulo || '</vltitulo>' ||
                           '<cdoperad>' || rw_crapbdt.cdoperad || '</cdoperad>' ||
+                          '<qtmaxtit>' || vr_tab_dados_dsctit(1).qtmxtbay || '</qtmaxtit>' ||
                      '</bordero>');
       
                   
