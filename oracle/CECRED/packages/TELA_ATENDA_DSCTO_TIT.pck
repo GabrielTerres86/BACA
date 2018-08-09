@@ -3856,6 +3856,7 @@ END pc_obtem_proposta_aciona_web;
         AND craptdb.nrdctabb = pr_nrdctabb
         AND craptdb.nrcnvcob = pr_nrcnvcob
         AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
+        AND craptdb.dtresgat IS NULL
         -- Retirar os titulos que ja foram aprovados em algum bordero
    ;rw_craptdb cr_craptdb%ROWTYPE;
    BEGIN
@@ -5055,7 +5056,8 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
           AND craptdb.cdbandoc = pr_cdbandoc
           AND craptdb.nrdctabb = pr_nrdctabb
           AND craptdb.nrcnvcob = pr_nrcnvcob
-          AND crapbdt.insitbdt <= 4;  -- borderos que estao em estudo, analisados, liberados, liquidados
+          AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
+          AND craptdb.dtresgat IS NULL;
     rw_craptdb cr_craptdb%rowtype;
           
 BEGIN
