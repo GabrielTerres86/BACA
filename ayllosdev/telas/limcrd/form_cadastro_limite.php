@@ -75,7 +75,7 @@
 			<label for="cdlimcrd"  class="rotulo txtNormalBold"><? echo utf8ToHtml("Cód. Limite") ?>:</label>
 		<td>
 		<td>
-			<input type="text" id="cdlimcrd" name="cdlimcrd" class=" "disabled> 
+			<input type="text" id="cdlimcrd" name="cdlimcrd" class=" campoTelaSemBorda "> 
 		</td>
 		<td>
 			<label for="tpcartao"  class="rotulo txtNormalBold"><? echo utf8ToHtml("Tipo Cartão") ?>:</label>
@@ -110,7 +110,7 @@
 			<label for="DDDEBITO" class="rotulo txtNormalBold"><? echo utf8ToHtml("Dia de Débito") ?>:</label>
 		<td>
 		<td colspan="4">
-			<input type="text" id="DDDEBITO" name="DDDEBITO" class=" "disabled> 
+			<input type="text" id="DDDEBITO" name="DDDEBITO" class="campoTelaSemBorda "> 
 		</td>
 	</tr>
 </table>
