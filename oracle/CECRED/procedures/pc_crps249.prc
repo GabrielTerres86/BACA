@@ -11071,7 +11071,7 @@ BEGIN
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                      vr_nrctadeb||','||
                      vr_nrctacrd||','||
-                     trim(to_char(vr_tdbtotop, '99999999999990.00'))||','||
+                     trim(to_char(vr_tdbjurop, '99999999999990.00'))||','||
                      vr_cdhstctb||','||
                      '"('||vr_cdhistor||') '||vr_dsexthst||'"';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
