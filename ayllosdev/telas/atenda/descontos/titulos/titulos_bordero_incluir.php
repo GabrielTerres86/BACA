@@ -6,6 +6,8 @@
 	 Data : 22/03/2018                Última Alteração: 
 	                                                                  
 	 Objetivo  : Inclusão de um novo Bordero
+	 Alteração :
+	  - 09/08/2018 - Vitor Shimada Assanuma(GFT) - Inclusão do parametro vindo da #TAB052 de quantidade máxima de títulos por borderô
 
 	************************************************************************/
 	
@@ -46,7 +48,7 @@
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","OBTEM_DADOS_CONTRATO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","OBTEM_DADOS_CONTRATO_LIMITE", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
     $dados = $xmlObj->roottag->tags[0]->tags[0];
 
@@ -64,6 +66,7 @@
 	$vllimite = getByTagName($dados->tags,'vllimite');
 	$pctolera = getByTagName($dados->tags,'pctolera');
 	$dtfimvig = getByTagName($dados->tags,'dtfimvig');
+	$qtmaxtit = getByTagName($dados->tags,'qtmaxtit');
 	if (diffData($dtfimvig,$glbvars["dtmvtolt"])<0){
 		exibeErro("Data de vig&ecirc;ncia do contrato deve ser maior que a data de movimenta&ccedil;&atilde;o do sistema");
 	}
@@ -186,6 +189,9 @@
 </div>
 <script type="text/javascript">
 	dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao1;divOpcoesDaOpcao2");
+
+	//Envio para o Javascript da quantidade máxima de títulos por borderô
+	qtmaxtit = <?=$qtmaxtit?>;
 
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDERO - INCLUIR");
