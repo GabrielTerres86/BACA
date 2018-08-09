@@ -3792,6 +3792,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
   --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
+  --
+  --              09/08/2018 - Alterado forma para da busca de lançamentos futuros para emprestimos e 
+  --                           Fatura de cartão de crédito : (Alcemir - Mout's / PRB0040071).  
   -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
@@ -4043,7 +4046,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       --> Buscar faturas de cartoes 
       CURSOR cr_fatura  (pr_cdcooper IN crapsdc.cdcooper%type
-                        ,pr_nrdconta IN crapsdc.nrdconta%TYPE) IS
+                        ,pr_nrdconta IN crapsdc.nrdconta%TYPE
+                        ,pr_dtiniper IN tbcrd_fatura.dtvencimento%TYPE
+						            ,pr_dtfimper IN tbcrd_fatura.dtvencimento%TYPE) IS
         SELECT fatura.dtvencimento
               ,fatura.dsdocumento
               ,fatura.vlpendente
@@ -4053,7 +4058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND fatura.nrdconta = pr_nrdconta
          AND fatura.insituacao = 1
          AND fatura.vlpendente > 0
-         AND ((fatura.dtvencimento >= pr_dtiniper
+         AND ((fatura.dtvencimento > pr_dtiniper
          AND fatura.dtvencimento <= pr_dtfimper) 
           OR pr_dtiniper IS NULL 
          AND pr_dtfimper IS NULL); 
@@ -4446,6 +4451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_vldpagto NUMBER;
       vr_qtdpagto INTEGER;
       vr_dtfatura DATE;
+      vr_dtiniper DATE;
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
       vr_dscedent VARCHAR(300);
@@ -5294,6 +5300,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Sair com erro
         RAISE vr_exc_erro;
       END IF;  
+      
+      
+      IF pr_dtiniper IS NOT NULL THEN 
+         vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');    
+      END IF;
            
       --Buscar primeiro registro da tabela de emprestimos
       vr_index_epr:= vr_tab_dados_epr.FIRST;
@@ -5316,9 +5327,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             /* Valor da parcela vencida */
             IF vr_tab_dados_epr(vr_index_epr).vlprvenc > 0 THEN
               -- Se os periodos foram informados, filtrar por eles
-              IF (pr_dtiniper IS NULL   AND
+              IF (vr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
-                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
+                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >  vr_dtiniper   AND
                   vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN  
                             
               --Incrementar contador lancamentos na tabela
@@ -5343,9 +5354,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                     TO_CHAR(rw_crapdat.dtmvtolt,'MMYYYY'),'DDMMYYYY');
               
               -- Se os periodos foram informados, filtrar por eles
-              IF (pr_dtiniper IS NULL   AND
+              IF (vr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
-                  (vr_dtdpagto >= pr_dtiniper   AND
+                  (vr_dtdpagto >  vr_dtiniper   AND
                    vr_dtdpagto <= pr_dtfimper)  THEN
   
               --Incrementar contador lancamentos na tabela
@@ -5398,9 +5409,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF; 
             
             /* Se os periodos foram informados, filtrar por eles */
-            IF pr_dtiniper IS NOT NULL   AND
+            IF vr_dtiniper IS NOT NULL   AND
                pr_dtfimper IS NOT NULL   AND
-              (vr_tab_dados_epr(vr_index_epr).dtdpagto < pr_dtiniper   OR
+              (vr_tab_dados_epr(vr_index_epr).dtdpagto < vr_dtiniper   OR
                vr_tab_dados_epr(vr_index_epr).dtdpagto > pr_dtfimper)  THEN
               --Proximo registro
               RAISE vr_next_reg;
@@ -5795,10 +5806,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END IF;     
         END IF;    
       END LOOP;
+      
+      IF pr_dtiniper IS NOT NULL THEN  
+         --buscar dia ultil anterior
+	       vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');
+      END IF;
             
       /*FATURAS DE CARTAO DE CREDITO SICOOB*/
       FOR rw_fatura IN cr_fatura  (pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta) LOOP
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dtiniper => vr_dtiniper
+								                  ,pr_dtfimper => pr_dtfimper) LOOP
         
         --Selecionar Historicos
         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
