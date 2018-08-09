@@ -1,4 +1,4 @@
---Script para ser aplicado para tirar programa da cadeia (CRPS132, CRPS145, CRPS172, CRPS654, CRPS509, CRPS642):
+--Script para ser aplicado para tirar programa da cadeia (CRPS132, CRPS145, CRPS172, CRPS654, CRPS509, CRPS642)
 UPDATE crapprg
 SET crapprg.nrsolici = 999
 ,crapprg.nrordprg =

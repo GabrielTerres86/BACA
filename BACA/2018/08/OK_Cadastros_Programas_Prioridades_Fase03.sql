@@ -6,7 +6,7 @@ declare
           ,job.next_run_date
     FROM   dba_scheduler_jobs job
     WHERE  job.owner = 'CECRED'
-    AND    job.job_name LIKE p_like_nm_job 
+    AND    job.job_name LIKE p_like_nm_job
     ORDER BY job.job_name;
     
 begin    
@@ -73,7 +73,7 @@ insert into tbgen_debitador_param (CDPROCESSO, DSPROCESSO, INDEB_SEM_SALDO, INDE
 values ('PAGA0003.PC_PROCESSA_AGEND_BANCOOB', 'DEBITOS PAGAMENTO PENDENTES BANCOOB (FGTS)', 'N', 'N', null, 12, 'N', 2);
 
 insert into tbgen_debitador_param (CDPROCESSO, DSPROCESSO, INDEB_SEM_SALDO, INDEB_PARCIAL, QTDIAS_REPESCAGEM, NRPRIORIDADE, INEXEC_CADEIA_NOTURNA, INCONTROLE_EXEC_PROG)
-values ('TARI0001.PC_DEB_TARIFA_PEND', 'COBRANCA DE TARIFAS PENDENTES', 'N', 'S', null, 13, 'N', 0);
+values ('TARI0001.PC_DEB_TARIFA_PEND', 'COBRANCA DE TARIFAS PENDENTES', 'N', 'S', null, 13, 'N', 1);
 
 insert into tbgen_debitador_param (CDPROCESSO, DSPROCESSO, INDEB_SEM_SALDO, INDEB_PARCIAL, QTDIAS_REPESCAGEM, NRPRIORIDADE, INEXEC_CADEIA_NOTURNA, INCONTROLE_EXEC_PROG)
 values ('RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA', 'EFETIVAR OS AGENDAMENTOS DE RECARGA DE CELULAR', 'N', 'N', null, 14, 'N', 2);
