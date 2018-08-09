@@ -1,6 +1,6 @@
 declare
 -- Busca os JOB's do Debitador Único
-  CURSOR u_job_debitador(p_like_nm_job IN VARCHAR2) IS 
+  CURSOR u_job_debitador(p_like_nm_job IN VARCHAR2) IS
     SELECT job.owner
           ,job.job_name
           ,job.next_run_date
@@ -20,7 +20,7 @@ end;
 commit;
 
 --Exclui horários dos programas existentes
-DELETE TBGEN_DEBITADOR_HORARIO_PROC;
+DELETE TBGEN_DEBITADOR_HORARIO_PROC;;;
 COMMIT;
 
 --Exclui programas e prioridades existentes
