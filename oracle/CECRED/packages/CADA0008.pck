@@ -244,6 +244,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
                                       
   PROCEDURE pc_busca_inf_emp_xml(pr_cdempres IN crapemp.cdempres%TYPE,
                                  pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                 pr_nrdconta IN crapass.nrdconta%TYPE,
+                                 pr_idseqttl IN crapttl.idseqttl%TYPE,
                                  pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
                                  pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
                                  pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
@@ -253,6 +255,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
 
   PROCEDURE pc_busca_inf_emp(pr_cdcooper IN crapemp.cdcooper%TYPE,
                              pr_cdempres IN crapemp.cdempres%TYPE,    
+                             pr_nrdconta IN crapass.nrdconta%TYPE,
+                             pr_idseqttl IN crapttl.idseqttl%TYPE,   
                              pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
                              pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
                              pr_nrdocnpj OUT crapemp.nrdocnpj%TYPE,
@@ -1720,6 +1724,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
   -- Rotina para buscar informacoes da empresa 
   PROCEDURE pc_busca_inf_emp(pr_cdcooper IN crapemp.cdcooper%TYPE,
                              pr_cdempres IN crapemp.cdempres%TYPE,    
+                             pr_nrdconta IN crapass.nrdconta%TYPE,
+                             pr_idseqttl IN crapttl.idseqttl%TYPE,
                              pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
                              pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
                              pr_nrdocnpj OUT crapemp.nrdocnpj%TYPE,
@@ -1753,6 +1759,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       
     rw_crapemp cr_crapemp%ROWTYPE;
   
+    CURSOR cr_crapttl (pr_cdcooper IN crapemp.cdcooper%TYPE,
+                       pr_nrdconta IN crapemp.cdempres%TYPE,
+                       pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+      SELECT ttl.nrcpfemp
+           , ttl.nmextemp
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = pr_idseqttl;
+
+    rw_crapttl cr_crapttl%ROWTYPE;
+  
     --Variaveis
     vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
     vr_idaltera PLS_INTEGER;
@@ -1769,12 +1787,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
         INTO rw_crapemp;
     CLOSE cr_crapemp;
     
-    
     --Significa que é alguma empresa especial ou empresas diversas
     IF rw_crapemp.nrdocnpj = 0 THEN
       pr_nmpessoa := '';
       pr_idaltera := 1; --Permite alterar
     
+      IF pr_cdempres = 80 THEN
+        pr_nmpessoa := 'APOSENTADOS';
+        pr_nrdocnpj := rw_crapemp.nrdocnpj;
+      ELSE
+        OPEN cr_crapttl(pr_cdcooper, pr_nrdconta, pr_idseqttl);
+        FETCH cr_crapttl INTO rw_crapttl;
+        CLOSE cr_crapttl;
+            
+        IF nvl(rw_crapttl.nrcpfemp,0) <> 0
+        OR nvl(rw_crapttl.nmextemp,' ') <> ' ' THEN
+          pr_nrdocnpj := rw_crapttl.nrcpfemp;
+          pr_nmpessoa := rw_crapttl.nmextemp;
+        ELSE
+          pr_nrdocnpj := rw_crapemp.nrdocnpj;
+        END IF;
+      END IF;
     ELSE
       -- Busca o nome da empresa
       CADA0008.pc_busca_nome_pessoa(pr_nrcpfcgc => rw_crapemp.nrdocnpj,
@@ -1787,12 +1820,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
      
      pr_nmpessoa := vr_nmpessoa;
      pr_idaltera := vr_idaltera;
-    
-    END IF;
-   
     pr_nrdocnpj := rw_crapemp.nrdocnpj;    
-    
-    
+    END IF;
   EXCEPTION
     WHEN OTHERS THEN
       CECRED.pc_internal_exception();
@@ -1802,6 +1831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
   -- Rotina para buscar informacoes da empresa 
   PROCEDURE pc_busca_inf_emp_xml(pr_cdempres IN crapemp.cdempres%TYPE,
                                  pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                 pr_nrdconta IN crapass.nrdconta%TYPE,
+                                 pr_idseqttl IN crapttl.idseqttl%TYPE,
                                  pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
                                  pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
                                  pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
@@ -1849,6 +1880,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     -- Busca informacoes da empresa
     CADA0008.pc_busca_inf_emp(pr_cdcooper => pr_cdcooper,
                               pr_cdempres => pr_cdempres,
+                              pr_nrdconta => pr_nrdconta,
+                              pr_idseqttl => pr_idseqttl,
                               pr_nmpessoa => vr_nmpessoa,
                               pr_nrdocnpj => vr_nrdocnpj,
                               pr_idaltera => vr_idaltera,
