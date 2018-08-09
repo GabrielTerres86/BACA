@@ -1,12 +1,12 @@
 <?
 /*!
  * FONTE        	: tabela_cadidr.php
- * CRIAÇÃO      	: Lucas Reinert
- * DATA CRIAÇÃO 	: Fevereiro/2016
+ * CRIAï¿½ï¿½O      	: Lucas Reinert
+ * DATA CRIAï¿½ï¿½O 	: Fevereiro/2016
  * OBJETIVO     	: Form da tela CADIDR
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ï¿½LTIMA ALTERAï¿½ï¿½O : --/--/----
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAï¿½ï¿½ES   	: 
  * --------------
  */ 
 ?>
@@ -23,7 +23,7 @@
 		<tbody>
 			<?php
 			foreach($registros as $indicador) {
-				// Recebo todos valores em variáveis
+				// Recebo todos valores em variï¿½veis
 				$idindicador = getByTagName($indicador->tags,'idindicador');
 				$nmindicador = getByTagName($indicador->tags,'nmindicador');
 				$dsindicador = getByTagName($indicador->tags,'dsindicador');
@@ -37,11 +37,11 @@
 				<td width="50"><?php echo $flgativo;?></td>
 				<td><?php echo $tpindicador;?></td>				
 				<td style="display:none">
-				<input type="hidden" id="dsindicador" value="<? echo $dsindicador ?>" />
-				<input type="hidden" id="idindicador" value="<? echo $idindicador ?>" />
-				<input type="hidden" id="nmindicador" value="<? echo $nmindicador ?>" />
-				<input type="hidden" id="flgativo" value="<? echo ($flgativo == 'Sim') ? '1' : '0'; ?>" />
-				<input type="hidden" id="tpindicador" value="<? echo $tpindicador ?>" />
+					<input type="hidden" id="dsindicador" value="<? echo $dsindicador ?>" />
+					<input type="hidden" id="idindicador" value="<? echo $idindicador ?>" />
+					<input type="hidden" id="nmindicador" value="<? echo $nmindicador ?>" />
+					<input type="hidden" id="flgativo" value="<? echo ($flgativo == 'Sim') ? '1' : '0'; ?>" />
+					<input type="hidden" id="tpindicador" value="<? echo $tpindicador ?>" />
 				</td>
 			</tr>
 			<?php 
