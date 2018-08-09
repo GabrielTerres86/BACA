@@ -6,6 +6,7 @@
 	                                                                  
 	 Objetivo  : Lista os títulos de um borderô passíveis de análise na mesa de checagem
      - 01/06/2018 | Vitor Shimada Assanuma (GFT): Inclusão de todos os titulos do borderô, mas com o campo de decisão bloqueado quando não tem crítica CNAE
+     - 09/08/2018 | Vitor Shimada Assanuma (GFT): Esconder o campo de Sim/Não quando não possuir crítica CNAE
 	************************************************************************/
 	
 	session_start();
@@ -176,7 +177,7 @@
 															                	<td>N&atilde;o Analisado</td>
 															                <? } ?>
 																			<td style="text-align:center;">
-																				<select name="insitmch" style="float:none;" <?=$checagem && $t->flgenvmc->cdata == 1?"":" disabled "?>>
+																				<select name="insitmch" style="float:none;" <?=$checagem && $t->flgenvmc->cdata == 1?"":" hidden "?>>
 																					<option value=""></option>
 																					<option value="S" <?=$t->insitmch=='1'?'selected':''?>>Sim</option>
 																					<option value="N" <?=$t->insitmch=='2'?'selected':''?>>N&atilde;o</option>

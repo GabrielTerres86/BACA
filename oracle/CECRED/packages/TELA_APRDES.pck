@@ -1256,7 +1256,7 @@ create or replace package body cecred.TELA_APRDES is
      ELSE 
        IF (vr_insitbdt=1 ) THEN
          IF (vr_em_contingencia_ibratan) THEN
-           vr_msgfinal := ' analisado. Esteria de crédito em contingência';
+           vr_msgfinal := ' analisado. Esteira de crédito em contingência';
          ELSE
            vr_msgfinal := ' não Aprovado.';
          END IF;
