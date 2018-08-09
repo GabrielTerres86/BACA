@@ -3732,6 +3732,7 @@ END pc_obtem_proposta_aciona_web;
     Alteração : ??/03/2018 - Criação Luis Fernando (GFT) / Andrew Albuquerque (GFT)
                 15/05/2018 - Adicionado o parâmetro pr_dt
                 15/05/2018 - Adicionado os parâmetros pr_dtemissa, pr_nriniseq e pr_nrregist (Paulo Penteado (GFT))
+                09/08/2018 - Problema com titulos que estavam não aparecendo quando resgatado. (Vitor Shimada Assanuma (GFT))
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -3821,31 +3822,34 @@ END pc_obtem_proposta_aciona_web;
         craptdb.nrdocmto,
         craptdb.nrborder,
         craptdb.insitapr,
-        CASE WHEN (SELECT nrdocmto FROM craptdb INNER JOIN crapbdt ON craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
+        CASE WHEN (SELECT COUNT(1) FROM craptdb INNER JOIN crapbdt ON craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
           WHERE craptdb.nrdconta = pr_nrdconta
             AND craptdb.cdcooper = pr_cdcooper
             AND craptdb.nrdocmto = pr_nrdocmto
             AND craptdb.nrdctabb = pr_nrdctabb
             AND craptdb.nrcnvcob = pr_nrcnvcob
             AND craptdb.nrborder <> nvl(pr_nrborder,0)
+            AND craptdb.dtresgat IS NULL
             AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
-            AND craptdb.insitapr = 0) IS NOT NULL THEN 1 ELSE 0 END AS fl_aberto, --Somente titulos aprovados
-        CASE WHEN (SELECT nrdocmto FROM craptdb INNER JOIN crapbdt ON craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
+            AND craptdb.insitapr = 0) > 0 THEN 1 ELSE 0 END AS fl_aberto, --Somente titulos aprovados
+        CASE WHEN (SELECT COUNT(1) FROM craptdb INNER JOIN crapbdt ON craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
           WHERE craptdb.nrdconta = pr_nrdconta
             AND craptdb.cdcooper = pr_cdcooper
             AND craptdb.nrdocmto = pr_nrdocmto
             AND craptdb.nrdctabb = pr_nrdctabb
             AND craptdb.nrcnvcob = pr_nrcnvcob
+            AND craptdb.dtresgat IS NULL
             AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
-            AND craptdb.insitapr = 1) IS NOT NULL THEN 1 ELSE 0 END AS fl_aprovado, --Somente titulos aprovados
-         CASE WHEN (SELECT nrborder FROM craptdb 
+            AND craptdb.insitapr = 1) > 0 THEN 1 ELSE 0 END AS fl_aprovado, --Somente titulos aprovados
+         CASE WHEN (SELECT COUNT(1) FROM craptdb 
            WHERE craptdb.nrdconta = pr_nrdconta
              AND craptdb.cdcooper = pr_cdcooper
              AND craptdb.nrdocmto = pr_nrdocmto
              AND craptdb.nrdctabb = pr_nrdctabb
              AND craptdb.nrcnvcob = pr_nrcnvcob
+             AND craptdb.dtresgat IS NULL
              AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
-             AND craptdb.nrborder = pr_nrborder) IS NOT NULL THEN 1 ELSE 0 END AS fl_bordero --Somente titulos aprovados
+             AND craptdb.nrborder = pr_nrborder) > 0 THEN 1 ELSE 0 END AS fl_bordero --Somente titulos aprovados
      FROM
         craptdb
         INNER JOIN crapbdt ON  craptdb.nrborder=crapbdt.nrborder AND craptdb.cdcooper=crapbdt.cdcooper
@@ -3855,8 +3859,8 @@ END pc_obtem_proposta_aciona_web;
         AND craptdb.nrdocmto = pr_nrdocmto
         AND craptdb.nrdctabb = pr_nrdctabb
         AND craptdb.nrcnvcob = pr_nrcnvcob
-        AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
         AND craptdb.dtresgat IS NULL
+        AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
         -- Retirar os titulos que ja foram aprovados em algum bordero
    ;rw_craptdb cr_craptdb%ROWTYPE;
    BEGIN
