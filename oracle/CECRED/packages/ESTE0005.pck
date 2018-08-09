@@ -6815,6 +6815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                                       ,pr_tpsituac => 4 --> Crítica
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
+													  ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_dsmensag
