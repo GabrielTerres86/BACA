@@ -161,6 +161,10 @@
 			   17/07/2018 - Para impressão de aditivos de contratos, se tpctrato = 90, substituir a
                   	        utilizacao da data do contrato pela data do aditivo, se existir (aux_dtcontra)
                             (Ana - Envolti - INC0019463)
+
+               08/08/2018 - Ajuste no campo nrdplaca, ufdplaca e uflicenc para formatar os caracteres para
+                            caracteres maiusculos. Chamado PRB0040116 (Gabriel - Mouts).
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -1245,7 +1249,10 @@ PROCEDURE Grava_Dados:
            aux_cdcritic = 0
            aux_returnvl = "NOK"
            aux_uladitiv = par_nraditiv
-           par_dschassi = CAPS(par_dschassi).
+           par_dschassi = CAPS(par_dschassi)
+           par_ufdplaca = CAPS(par_ufdplaca)
+           par_uflicenc = CAPS(par_uflicenc)
+           par_nrdplaca = CAPS(par_nrdplaca).
 
     Grava: DO TRANSACTION
         ON ERROR  UNDO Grava, LEAVE Grava
