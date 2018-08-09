@@ -2971,3 +2971,7 @@ function abrirAprovacao() {
         }
     });
 }
+
+function carregaCobranca() {
+    acessaRotina("#labelRot21", "COBRANCA", "Cobran&ccedil;a", "cobranca", "0");
+}

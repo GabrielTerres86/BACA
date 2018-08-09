@@ -171,6 +171,7 @@ function exibeErro($msgErro) {
     <a href="#" id="btnAbrirAprovacao" class="botao" onclick="abrirAprovacao(); return false;">Aprovar</a>
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
+	<a href="#" class="botao" onclick="carregaCobranca(); return false;">Recip. Antigo</a>
 	
 	<input type="hidden" id= "flsercco" name="flsercco">
 	

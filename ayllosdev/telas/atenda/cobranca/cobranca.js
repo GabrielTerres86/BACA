@@ -2232,3 +2232,7 @@ function HabilitaSMS() {
         });
     }
 }
+
+function carregaReciprocidade() {
+    acessaRotina("#labelRot20", "RECIPROCIDADE", "Reciprocidade", "reciprocidade", "0");
+}
