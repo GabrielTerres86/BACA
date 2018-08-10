@@ -480,9 +480,9 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
     <?php
         // Selecionar convenio
         if ($cddopcao == 'S') {
-            ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="consulta('I','','',true,'','');return false;" id="btnContinuar" type="image" /><?php
+            ?><!--<input src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="consulta('I','','',true,'','');return false;" id="btnContinuar" type="image" />--><?php
         } elseif ($cddopcao != 'C') {
-            ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" id="btnContinuar" onClick="return false;" type="image" /><?php
+            ?><!--<input src="<? echo $UrlImagens; ?>botoes/continuar.gif" id="btnContinuar" onClick="return false;" type="image" />--><?php
         }
 
         // Se convenio INTERNET e tem mais titulares
