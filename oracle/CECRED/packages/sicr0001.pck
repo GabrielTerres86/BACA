@@ -3879,6 +3879,14 @@ create or replace package body cecred.SICR0001 is
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapprm;
+    
+    --> Pode ocorrer situação com data de agendamento de horarios para o próximo dia.
+    --> debitador. Exemplo 4#09/08/2018#3 ou 4 (normal)
+    BEGIN
+      SELECT to_number(TRIM(substr(rw_crapprm_qtd.dsvlrprm,1,decode(instr(rw_crapprm_qtd.dsvlrprm,'#'),0,length(rw_crapprm_qtd.dsvlrprm),instr(rw_crapprm_qtd.dsvlrprm,'#')-1))))
+        INTO rw_crapprm_qtd.dsvlrprm
+        FROM dual;
+    END;    
 
     --  Se tipo de operação for Incrementar
     IF pr_cdtipope = 'I' THEN
