@@ -1,11 +1,11 @@
 <?
 /*!
  * FONTE        : DEVOLU.php
- * CRIA«√O      : Andre Santos - SUPERO
- * DATA CRIA«√O : 25/09/2013
- * OBJETIVO     : RequisiÁ„o de Conta da tela DEVOLU
+ * CRIAÔøΩÔøΩO      : Andre Santos - SUPERO
+ * DATA CRIAÔøΩÔøΩO : 25/09/2013
+ * OBJETIVO     : RequisiÔøΩÔøΩo de Conta da tela DEVOLU
  * --------------
- * ALTERA«’ES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
+ * ALTERAÔøΩÔøΩES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
  *
  * --------------
  */
@@ -19,7 +19,7 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 
-    // Verifica se tela foi chamada pelo mÈtodo POST
+    // Verifica se tela foi chamada pelo mÔøΩtodo POST
 	isPostMethod();
 
     // Classe para leitura do xml de retorno
@@ -29,7 +29,7 @@
 	$retornoAposErro = '';
 	$cddopcao = '';
 	
-	// Recebe a operaÁ„o que est· sendo realizada
+	// Recebe a operaÔøΩÔøΩo que estÔøΩ sendo realizada
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$cdagenci = (isset($_POST['cdagenci'])) ? $_POST['cdagenci'] : 0;
 	$nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 30;
@@ -48,7 +48,7 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 
-	// Monta o xml din‚mico de acordo com a operaÁ„o
+	// Monta o xml dinÔøΩmico de acordo com a operaÔøΩÔøΩo
 	$xml = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
@@ -88,8 +88,28 @@
 	$qtregist   = $xmlObjeto->roottag->tags[1]->attributes["QTREGIST"];
 	$nmprimtl	= $xmlObjeto->roottag->tags[1]->attributes['NMPRIMTL'];
 	
-	include('form_devolu.php');
+	//Mensageria referente a situa√ß√£o da conta
+	$xml  = ""; 
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
 
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "CONSULTA_PREJU_CC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$retornoAposErro,false);
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+	}
+
+	include('form_devolu.php');
+	
 	if ( $nrdconta == 0 ) {
 		$devolucoes = $xmlObjeto->roottag->tags[0]->tags;
 		include('tab_devolu_dados.php');

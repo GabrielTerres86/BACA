@@ -1,12 +1,12 @@
 /*! 
  * FONTE        : DEVOLU.php
- * CRIAÇÃO      : Andre Santos - SUPERO
- * DATA CRIAÇÃO : 25/09/2013
+ * CRIAï¿½ï¿½O      : Andre Santos - SUPERO
+ * DATA CRIAï¿½ï¿½O : 25/09/2013
  * OBJETIVO     : Mostrar tela DEVOLU
  * --------------
- * ALTERAÇÕES   : #273953 Alinhamento das colunas das tabelas (Carlos)
+ * ALTERAï¿½ï¿½ES   : #273953 Alinhamento das colunas das tabelas (Carlos)
  * --------------
- *                12/07/2016 #451040 Retirar o botão "Executar Devolução" (Carlos)
+ *                12/07/2016 #451040 Retirar o botï¿½o "Executar Devoluï¿½ï¿½o" (Carlos)
  *
  *				  19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques(Lucas Ranghetti #484923)
  * 
@@ -17,7 +17,7 @@
  *			  	  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
  */
 
-// Definição de algumas variáveis globais
+// Definiï¿½ï¿½o de algumas variï¿½veis globais
 var nrdconta  =  0 ;
 var cdagenci  =  0 ;
 var nmprimtl  =  '';
@@ -43,11 +43,11 @@ var dstabela;
 
 var camposDc, dadosDc;
 
-// Formulários
+// Formulï¿½rios
 var frmCab   	= 'frmCab';
     frmDevolu   = 'frmDevolu';
 
-// Labels/Campos do Cabeçalho
+// Labels/Campos do Cabeï¿½alho
 var rNmprimtl, rNrdconta, rCdagenci,
     cNmprimtl, cNrdconta, cCdagenci, cTodosCabecalho, btnCab;
 
@@ -98,7 +98,7 @@ function estadoInicial() {
 	$('#divResultado').css({'display':'none'});
 	$('#divPesquisaRodape').remove();
 
-	// Inicializa Variaveis do Cabeçalho
+	// Inicializa Variaveis do Cabeï¿½alho
 	cCdagenci.val( '' );
 	cNrdconta.val( '' );
 	cNmprimtl.val( nmprimtl );
@@ -123,7 +123,7 @@ function estadoInicial() {
 }
 
 
-// Formata Cabeçalho Principal
+// Formata Cabeï¿½alho Principal
 function formataCabecalho() {
 
 	// Labels
@@ -137,7 +137,7 @@ function formataCabecalho() {
 	cNmprimtl       = $('#nmprimtl','#'+frmCab);
 	cTodosCabecalho	= $('input[type="text"],select','#'+frmCab);
 
-	//Rótulos
+	//Rï¿½tulos
 	rCdagenci.addClass('rotulo-linha').css({'width':'40px'});
 	rNrdconta.addClass('rotulo-linha').css({'width':'60px'});
     rNmprimtl.addClass('rotulo-linha').css({'width':'0px'});
@@ -277,7 +277,7 @@ function controlaFoco() {
             $('#nrdconta','#'+frmCab).desabilitaCampo();
 			btnContinuar('CI');
             return false;
-        }else {// Seta máscara ao campo
+        }else {// Seta mï¿½scara ao campo
             return $('#nrdconta','#'+frmCab).setMask('INTEGER','zzzz.zzz-z','.-','');
         }
 	});
@@ -388,7 +388,7 @@ function BuscaDevolu(nriniseq, nrregist,opcao) {
                 },
         error   : function(objAjax,responseError,objExcept) {
                     hideMsgAguardo();
-                    showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+                    showError('error','N&atilde;o foi possï¿½vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
                 },
         success : function(response) {
             try {
@@ -488,12 +488,12 @@ function formataTabelaDevolu() {
 	  EVENTO COMPLEMENTO
 	*********************/
 
-    // seleciona o registro que é clicado
+    // seleciona o registro que ï¿½ clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaTabela($(this)); 
 	});
 
-    // seleciona o registro que é focado
+    // seleciona o registro que ï¿½ focado
 	$('table > tbody > tr', divRegistro).focus( function() { 
 		selecionaTabela($(this));
 	});
@@ -568,7 +568,7 @@ function formataTabelaLancto() {
 	  EVENTO COMPLEMENTO
 	*********************/
 	
-    // seleciona o registro que é clicado
+    // seleciona o registro que ï¿½ clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaTabela($(this));
 		
@@ -582,7 +582,7 @@ function formataTabelaLancto() {
 		}
 	});
 
-    // seleciona o registro que é focado
+    // seleciona o registro que ï¿½ focado
 	$('table > tbody > tr', divRegistro).focus( function() { 
 		selecionaTabela($(this));
 	});
@@ -590,7 +590,7 @@ function formataTabelaLancto() {
 	// Se der dois clicks na tabela, altera alinea
 	$('table > tbody > tr', divRegistro).dblclick( function() {
 		
-		// Se tiver alinea e não for devolvido e não for alineas de contra-ordem(20,21,28,70) e altera alinea para devoluções 35 somente quando haver craplcm
+		// Se tiver alinea e nï¿½o for devolvido e nï¿½o for alineas de contra-ordem(20,21,28,70) e altera alinea para devoluï¿½ï¿½es 35 somente quando haver craplcm
 		if (alinea != 0  && cddsitua != 1 &&
 		    alinea != 20 && alinea != 21 && 
 			alinea != 28 && alinea != 70){
@@ -634,7 +634,7 @@ function selecionaTabela(tr) {
 // Processo de Devolucao - Por Conta
 function marcar_cheque_devolu() {
 
-	//Adquire as informações das checkbox selecionadas
+	//Adquire as informaï¿½ï¿½es das checkbox selecionadas
 	$('#indice','#tabDevoluConta').each(function() { 
 		if ($(this).prop('checked')) { 
 			arrayRegDados[arrayRegDados.length] = arrayRegLinha[$(this).val()];
@@ -669,13 +669,13 @@ function marcar_cheque_devolu() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
 			try {
 				hideMsgAguardo();
 				eval(response);
-				// validar horario para devolução de acordo com o parametrizado na TAB055
+				// validar horario para devoluï¿½ï¿½o de acordo com o parametrizado na TAB055
                 if(execucao == 'yes'){                   
                     showError('inform',dscritic,'Alerta - Ayllos','estadoInicial();');                
                 }else{				   
@@ -697,7 +697,7 @@ function mostraSenhaCoord() {
 
 	showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
+	// Executa script de confirmaï¿½ï¿½o atravï¿½s de ajax
 	$.ajax({
 		type    : 'POST',
 		dataType: 'html',
@@ -708,7 +708,7 @@ function mostraSenhaCoord() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -720,7 +720,7 @@ function mostraSenhaCoord() {
 	return false;
 }
 
-// Chamada de Formulário de Senha - Autorizacao do Coordenador
+// Chamada de Formulï¿½rio de Senha - Autorizacao do Coordenador
 function buscaSenhaCoord() {
 
 	hideMsgAguardo();
@@ -736,7 +736,7 @@ function buscaSenhaCoord() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -854,7 +854,7 @@ function verifica_folha_cheque() {
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
             try {
@@ -898,7 +898,7 @@ function mostraAlinea(opcao) {
 
     showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
+	// Executa script de confirmaï¿½ï¿½o atravï¿½s de ajax
 	$.ajax({
 		type    : 'POST',
 		dataType: 'html',
@@ -909,7 +909,7 @@ function mostraAlinea(opcao) {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -921,7 +921,7 @@ function mostraAlinea(opcao) {
 	return false;
 }
 
-// Chamada de Formulário de Alinea
+// Chamada de Formulï¿½rio de Alinea
 function buscaAlinea(opcao) {
 
 	hideMsgAguardo();
@@ -937,7 +937,7 @@ function buscaAlinea(opcao) {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -1004,7 +1004,7 @@ function verifica_alinea(opcao) {
 					},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+				showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 			},
 			success: function(response) {
 				try {
@@ -1063,7 +1063,7 @@ function alteraAlinea(){
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
 			try {
@@ -1111,7 +1111,7 @@ function geracao_devolu() {
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
             try {
@@ -1178,7 +1178,7 @@ function gera_log() {
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
             try {
@@ -1216,7 +1216,7 @@ function mostraBanco() {
 
     showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa Script de Confirmação Através de Ajax
+	// Executa Script de Confirmaï¿½ï¿½o Atravï¿½s de Ajax
 	$.ajax({
 		type    : 'POST',
 		dataType: 'html',
@@ -1227,7 +1227,7 @@ function mostraBanco() {
                 },
 		error: function(objAjax,responseError,objExcept) {
                 hideMsgAguardo();
-                showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+                showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -1240,7 +1240,7 @@ function mostraBanco() {
 }
 
 // Processo de Execucao de Devolucoes
-// Chamada de Formulário de Opcoes de Banco - Executar Devolucao
+// Chamada de Formulï¿½rio de Opcoes de Banco - Executar Devolucao
 function buscaBanco() {
 
 	hideMsgAguardo();
@@ -1256,7 +1256,7 @@ function buscaBanco() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
 
@@ -1309,7 +1309,7 @@ function verifica_solicitacao_processo() {
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
             if ( response.indexOf('showError("error"') == -1) {
@@ -1342,7 +1342,7 @@ function mostraSenhaSistema() {
 
 	showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
+	// Executa script de confirmaï¿½ï¿½o atravï¿½s de ajax
 	$.ajax({
 		type    : 'POST',
 		dataType: 'html',
@@ -1353,7 +1353,7 @@ function mostraSenhaSistema() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -1366,7 +1366,7 @@ function mostraSenhaSistema() {
 }
 
 // Processo de Execucao de Devolucoes
-// Chamada de Formulário de Senha - Autorizacao do Sistema
+// Chamada de Formulï¿½rio de Senha - Autorizacao do Sistema
 function buscaSenhaSistema() {
 
 	hideMsgAguardo();
@@ -1382,7 +1382,7 @@ function buscaSenhaSistema() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
 
@@ -1441,7 +1441,7 @@ function grava_processo_solicitacao() {
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
             if ( response.indexOf('showError("error"') == -1) {
@@ -1486,7 +1486,7 @@ function executa_processo_devolu() {
                 },
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+            showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
         },
         success: function(response) {
             if ( response.indexOf('showError("error"') == -1) {
@@ -1522,7 +1522,7 @@ function mostraContatos() {
 
 	showMsgAguardo('Aguarde, abrindo...');
 
-	// Executa script de confirmação através de ajax
+	// Executa script de confirmaï¿½ï¿½o atravï¿½s de ajax
 	$.ajax({
 		type    : 'POST',
 		dataType: 'html',
@@ -1533,7 +1533,7 @@ function mostraContatos() {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -1550,13 +1550,13 @@ function acessaOpacaAba(nropcoes,id){
 	// Mostra mensagem de aguardo
 	showMsgAguardo('Aguarde, carregando...');
 	
-	// Atribui cor de destaque para aba da opção
+	// Atribui cor de destaque para aba da opï¿½ï¿½o
 	for (var i = 0; i < nropcoes; i++) {
 		if ($('#linkAba' + id).length == false) {
 			continue;
 		}
 		
-		if (id == i) { // Atribui estilos para foco da opção			
+		if (id == i) { // Atribui estilos para foco da opï¿½ï¿½o			
 			$('#linkAba'   + id).attr('class','txtBrancoBold');
 			$('#imgAbaEsq' + id).attr('src',UrlImagens + 'background/mnu_sle.gif');				
 			$('#imgAbaDir' + id).attr('src',UrlImagens + 'background/mnu_sld.gif');
@@ -1597,7 +1597,7 @@ function buscaContatos(id) {
                 },
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Nï¿½o foi possï¿½vel concluir a requisiï¿½ï¿½o.','Alerta - Ayllos',"unblockBackground();");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -1715,7 +1715,7 @@ function consultaCheque(cdagechq,nrctachq,nrcheque) {
 	imgchqF = false; //Frente
 	imgchqV = false; // Verso
 	
-	// Executa script de consulta através de ajax
+	// Executa script de consulta atravï¿½s de ajax
 	$.ajax({		
 		type: 'POST',
 		dataType: 'html',
@@ -1746,7 +1746,7 @@ function consultaCheque(cdagechq,nrctachq,nrcheque) {
 }
 
 function limpaChequeTemp(imgrefe,frente, verso) {
-	// Executa script de consulta através de ajax
+	// Executa script de consulta atravï¿½s de ajax
 	// Apaga arquivos do temp apenas quando as duas imagens , frente e verso do cheque forem carregadas e nao for gerar pdf
 	if(imgrefe == 'imgchqF'){
 		imgchqF = true;
@@ -1781,10 +1781,14 @@ function limpaChequeTemp(imgrefe,frente, verso) {
 }
 
 
-function validaSelecao(linhaSelec){
+function validaSelecao(linhaSelec,inprejuz){
 
     iqtSelecao = 0;
 	
+    if (inprejuz == 1) {
+		showError("inform","Conta em Prejuizo","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+	}
+
     $('input:checkbox:checked', '#tabDevoluConta').each(function() {
         iqtSelecao++;
     });    

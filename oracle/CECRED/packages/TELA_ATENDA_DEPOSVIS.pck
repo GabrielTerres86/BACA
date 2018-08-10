@@ -570,14 +570,15 @@ END pc_busca_saldos_devedores;
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Diego Simas
-    Data     : Maio/2018                          Ultima atualizacao:
+    Data     : Maio/2018                          Ultima atualizacao: 10/08/2018
 
     Dados referentes ao programa:
 
     Frequencia: -----
     Objetivo   : Consulta para verificar se a conta corrente houve prejuizo ou se esta em prejuizo.
 
-    Alterações :
+    Alterações : PJ450 - Adicionado campo indicador de prejuizo da conta
+	             (Renato Cordeiro - AMCOM)
 
     -------------------------------------------------------------------------------------------------------------*/
     
@@ -706,7 +707,13 @@ END pc_busca_saldos_devedores;
                            pr_tag_nova => 'despreju',
                            pr_tag_cont => vr_despreju,
                            pr_des_erro => vr_dscritic);
-
+                           
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'inf',
+                           pr_posicao  => vr_qtregist,
+                           pr_tag_nova => 'inprejuz',
+                           pr_tag_cont => rw_crapass.inprejuz,
+                           pr_des_erro => vr_dscritic);                           
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1375,4 +1382,3 @@ EXCEPTION
   END pc_consulta_sit_empr; 
   
 END TELA_ATENDA_DEPOSVIS;
-/
