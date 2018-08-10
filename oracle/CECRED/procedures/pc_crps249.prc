@@ -8410,7 +8410,7 @@ btch0001.rw_crapdat.dtultdma := to_date('30/04/2018', 'DD/MM/RRRR');
     else
       -- Incluir nome do módulo logado
       gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_1', pr_action => vr_cdprogra);
-      pc_crps249_1_RANGEL(pr_cdcooper,
+      pc_crps249_1(pr_cdcooper,
                    vr_dtmvtolt,
                    rw_craphis.nmestrut,
                    rw_craphis.cdhistor,
