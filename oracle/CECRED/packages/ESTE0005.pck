@@ -6410,19 +6410,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;
     vr_exc_cont EXCEPTION;
-    vr_majoraca boolean := FALSE;
+    vr_majoraca BOOLEAN := FALSE;
 
     vr_obj_proposta      json := json();
-    vr_obj_proposta_clob clob;
+    vr_obj_proposta_clob CLOB;
 
     vr_dsprotoc VARCHAR2(1000);
     vr_dsmensag VARCHAR2(4000);
     vr_retxml   xmltype;
     vr_xmllog   VARCHAR2(32000);
     vr_nmdcampo VARCHAR2(4000);
+    vr_vllimite NUMBER;
     
     -- Tipo Envio Esteira
-    vr_tpenvest varchar2(1);
+    vr_tpenvest VARCHAR2(1);
     vr_nrdrowid ROWID;
 
     -- Variaveis para DEBUG
@@ -6486,6 +6487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       OPEN cr_limatu;
       FETCH cr_limatu INTO rw_limatu;
       IF cr_limatu%FOUND THEN      
+        vr_vllimite := rw_limatu.vllimite_anterior;
         vr_majoraca := TRUE;
       END IF;
       CLOSE cr_limatu;
@@ -6587,6 +6589,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     FETCH cr_crawcrd INTO rw_crawcrd;
     CLOSE cr_crawcrd;
     
+    /* Ajuste Anderson: Procedimento copiado do WEBS0001, para verificar 
+       se está sendo enviado alteracao de limite para a esteira. 
+       REVISAR DEPOIS DA ENTREGA 3 - precisamos de uma foma melhor de
+       identificar isso. */  
+    vr_majoraca := FALSE;
+    
+    OPEN cr_limatu;
+    FETCH cr_limatu INTO rw_limatu;
+    IF cr_limatu%FOUND THEN      
+      
+      vr_majoraca := TRUE;
+    END IF;
+    CLOSE cr_limatu;
+   /* fim verificacao alteracao limite */
+    
     --> Gerar informações no padrao JSON da proposta do cartão
     pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
                           pr_cdagenci  => pr_cdagenci,  --> Codigo da agencia
@@ -6677,20 +6694,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       RAISE vr_exc_erro;
     END IF;
 
-    /* Ajuste Anderson: Procedimento copiado do WEBS0001, para verificar 
-       se está sendo enviado alteracao de limite para a esteira. 
-       REVISAR DEPOIS DA ENTREGA 3 - precisamos de uma foma melhor de
-       identificar isso. */  
-    vr_majoraca := FALSE;
-    OPEN cr_limatu;
-    FETCH cr_limatu INTO rw_limatu;
-    IF cr_limatu%FOUND THEN      
-      vr_majoraca := TRUE;
-    END IF;
-    CLOSE cr_limatu;
-   /* fim verificacao alteracao limite */
-
-    
     /* Se nao for alteracao limite, vamos adequar a situacao da proposta
        Valido para solicitacao de cartao e upgrade */
     IF NOT vr_majoraca THEN
@@ -6798,6 +6801,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
+      IF vr_majoraca THEN
+        --Atualiza Histórico do Limite de Crédito
+        tela_atenda_cartaocredito.pc_altera_limite_crd(pr_cdcooper => pr_cdcooper
+                                                      ,pr_cdoperad => pr_cdoperad
+                                                      ,pr_nrdconta => pr_nrdconta
+                                                      ,pr_nrctrcrd => pr_nrctrcrd
+                                                      ,pr_vllimite => vr_vllimite
+                                                      ,pr_dsprotoc => vr_dsprotoc
+                                                      ,pr_dsjustif => NULL
+                                                      ,pr_flgtplim => 'A'
+                                                      ,pr_idorigem => 5
+                                                      ,pr_tpsituac => 4 --> Crítica
+                                                      ,pr_insitdec => NULL
+                                                      ,pr_nmdatela => NULL
+													  ,pr_cdopesup => NULL
+                                                      ,pr_cdcritic => vr_cdcritic
+                                                      ,pr_dscritic => vr_dscritic
+                                                      ,pr_des_erro => vr_dsmensag
+                                                      );
+      END IF;    
     WHEN vr_exc_cont THEN
       pr_dsmensag := vr_dsmensag;
     
