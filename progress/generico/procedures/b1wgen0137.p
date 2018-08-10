@@ -1302,7 +1302,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdempres = 00               AND         
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
-                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,132,133,134,135,136,137,138,139,140,141,145,146,147,148,149,150,151,152,167,168,169,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
+                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,132,133,134,135,136,137,138,139,140,141,145,146,147,148,149,150,151,152,162,167,168,169,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1432,7 +1432,9 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
                         ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/ 
-                    WHEN 58 THEN
+                    WHEN 55 THEN
+                        ASSIGN aux_conttabs = 55. /*DECLARACAO DO SIMPLES NACIONAL*/
+					WHEN 58 THEN
                         ASSIGN aux_conttabs = 58. /*TERMO DE ALTERACAO DE TITULARIDADE*/
                     WHEN 59 THEN
                         ASSIGN aux_conttabs = 59. /*DOCUMENTO DE EMANCIPACAO*/
