@@ -2758,7 +2758,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     -- Tratamento de exceções
     vr_exc_erro EXCEPTION;
     vr_dscritic VARCHAR2(4000);
-    vr_dscritic_aux VARCHAR2(4000);
 
     vr_idx pls_integer;
   BEGIN
@@ -2819,14 +2818,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
     vr_dsprotoc      crawcrd.dsprotoc%TYPE;
     vr_usrkey        VARCHAR2(200);
     vr_method        VARCHAR2(100);
-    vr_conta_cartao  crawcrd.nrcctitg%TYPE;
-    vr_nrcartao      crawcrd.nrcrcard%TYPE;
-    vr_idusuario     VARCHAR2(300);
 
     vr_obj_retorno json      := json();
-    vr_obj_lst     json_list := json_list();
     vr_request     json0001.typ_http_request;
-    vr_request2    json0001.typ_http_request;
     vr_response    json0001.typ_http_response;
 
     -- Cursores
@@ -3310,6 +3304,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                      ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
     
+    /* ..........................................................................
+
+      Programa : pc_alterar_cartao_bancoob
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Paulo Silva
+      Data     : Maio/2018.                   Ultima atualizacao: 12/05/2018
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Solicita alteração de limite de crédito ao Bancoob
+      Alteração : 30/07/2018 - Paulo Silva (Supero) - Ajuste nas mensagens de retorno.
+
+    ..........................................................................*/
+    
     -- Tratamento de exceções
     vr_exc_erro     EXCEPTION;
     vr_cdcritic     PLS_INTEGER;
@@ -3446,7 +3455,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3533,7 +3541,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
-                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -3589,17 +3596,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
       
       -- Código Retorno
       IF vr_obj_conteudo.exist('codRetorno') THEN
-        pr_des_erro := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('codRetorno').to_char(),'"'),'"'),'\u','\')));
+        vr_dscritic := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('codRetorno').to_char(),'"'),'"'),'\u','\')));
       END IF;
         
       -- Mensagem Retorno
       IF vr_obj_conteudo.exist('mensagemRetorno') THEN
-        pr_des_erro := pr_des_erro ||' - '|| gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('mensagemRetorno').to_char(),'"'),'"'),'\u','\')));
+        vr_dscritic := vr_dscritic ||' - '|| gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('mensagemRetorno').to_char(),'"'),'"'),'\u','\')));
       END IF;
       
       -- ID Usuário
       IF vr_obj_conteudo.exist('idUsuario') THEN
         vr_idusuari := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_conteudo.get('idUsuario').to_char(),'"'),'"'),'\u','\')));
+      END IF;
+      
+      IF vr_dscritic LIKE '%500%' THEN
+        RAISE vr_exc_erro;
       END IF;
       
       --Monta consulta Adicionais
@@ -3735,7 +3746,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3803,7 +3813,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
-                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -3845,7 +3854,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -3871,7 +3879,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4027,7 +4034,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4114,7 +4120,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
-                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -4317,7 +4322,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 2 --> Enviado ao Bancoob
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4364,7 +4368,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                       ,pr_tpsituac => 3 --> Concluído com Sucesso
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
-                                                      ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_des_mensagem
@@ -4406,7 +4409,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem
@@ -4432,7 +4434,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0007 IS
                                                     ,pr_tpsituac => 4 --> Crítica
                                                     ,pr_insitdec => NULL
                                                     ,pr_nmdatela => NULL
-                                                    ,pr_cdopesup => NULL
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic
                                                     ,pr_des_erro => vr_des_mensagem

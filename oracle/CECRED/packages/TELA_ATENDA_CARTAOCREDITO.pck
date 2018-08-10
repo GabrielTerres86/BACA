@@ -126,7 +126,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_dsprotoc      IN tbgen_webservice_aciona.dsprotocolo%TYPE
                                           ,pr_dsjustif      IN crawcrd.dsjustif%TYPE
                                           ,pr_idproces      IN VARCHAR2
-                                          ,pr_cdopesup      IN crawcrd.cdoperad%TYPE
                                           ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
                                           ,pr_dscritic      OUT VARCHAR2             --> Descrição da crítica
@@ -199,7 +198,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                    ,pr_flgtplim  IN VARCHAR2
                                    ,pr_tpsituac  IN NUMBER
                                    ,pr_insitdec  IN NUMBER
-                                   ,pr_cdopesup  IN crawcrd.cdoperad%TYPE
                                    ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -220,7 +218,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                 ,pr_tpsituac  IN NUMBER
                                 ,pr_insitdec  IN NUMBER
                                 ,pr_nmdatela  IN craptel.nmdatela%TYPE  --> Nome da Tela
-                                ,pr_cdopesup  IN crawcrd.cdoperad%TYPE
                                 ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                 ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
                                 ,pr_des_erro  OUT VARCHAR2);
@@ -1353,7 +1350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
         Observacao: -----
 
-        Alteracoes:
+        Alteracoes: 30/07/2018 - Paulo Silva (Supero) - Removida a consulta do código do supervisor.
     ..............................................................................*/
     
     ---------> CURSORES <--------
@@ -1408,7 +1405,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
             ,inupgrad
             ,dsprotoc
             ,dsjustif
-            ,cdopesup
         FROM crawcrd
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -1532,7 +1528,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'inupgrad', pr_tag_cont => rw_crawcrd.inupgrad                  , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'dsprotoc', pr_tag_cont => rw_crawcrd.dsprotoc                  , pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'dsjustif', pr_tag_cont => rw_crawcrd.dsjustif                  , pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante', pr_posicao => vr_contador, pr_tag_nova => 'cdopesup', pr_tag_cont => rw_crawcrd.cdopesup                  , pr_des_erro => vr_dscritic);
 
           vr_contador := vr_contador + 1;
             
@@ -1563,7 +1558,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'inupgrad', pr_tag_cont => rw_crawcrd.inupgrad, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'dsprotoc', pr_tag_cont => rw_crawcrd.dsprotoc, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'dsjustif', pr_tag_cont => rw_crawcrd.dsjustif, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'representante' , pr_posicao => vr_contador, pr_tag_nova => 'cdopesup', pr_tag_cont => rw_crawcrd.cdopesup, pr_des_erro => vr_dscritic);
       END IF;
         
     END LOOP;
@@ -1815,13 +1809,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_dsprotoc      IN tbgen_webservice_aciona.dsprotocolo%TYPE
                                           ,pr_dsjustif      IN crawcrd.dsjustif%TYPE
                                           ,pr_idproces      IN VARCHAR2
-                                          ,pr_cdopesup      IN crawcrd.cdoperad%TYPE
                                           ,pr_xmllog        IN VARCHAR2              --> XML com informações de LOG
                                           ,pr_cdcritic      OUT PLS_INTEGER          --> Código da crítica
                                           ,pr_dscritic      OUT VARCHAR2             --> Descrição da crítica
                                           ,pr_retxml        IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                           ,pr_nmdcampo      OUT VARCHAR2             --> Nome do campo com erro
                                           ,pr_des_erro      OUT VARCHAR2) IS         --> Erros do processo
+
+    /* .............................................................................
+
+        Programa: pc_atualiza_contrato_suges_mot
+        Sistema : CECRED
+        Sigla   : CRD
+        Autor   : Paulo Silva - supero
+        Data    : Abril/2018                 Ultima atualizacao: 09/04/2018
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Atualiza número de contratao para sugestão do motor
+
+        Observacao: -----
+
+        Alteracoes: 30/07/2018 - Paulo Silva (Supero) - removido supervisor dos parâmetros, dos updates da crawcrd e da geração de log.
+    ..............................................................................*/
                                     
     --Verifica se Proposta já possui Justificativa
     CURSOR cr_crawcrd IS
@@ -1841,9 +1853,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     --Gerais
     vr_contador NUMBER := 0;
     vr_dsjustif crawcrd.dsjustif%TYPE;
-    vr_insircrd crawcrd.insitcrd%TYPE;
-    vr_dsorigem VARCHAR2(1000);
-    vr_nrdrowid ROWID;
     
     -- Variaveis retornadas da gene0004.pc_extrai_dados
     vr_cdcooper INTEGER;
@@ -1902,7 +1911,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
              SET insitcrd = 1 --Aprovado
                 ,insitdec = 1 --Sem Aprovação
                 ,dtmvtolt = SYSDATE
-                ,cdopesup = pr_cdopesup
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
              AND nrctrcrd = pr_nrctrcrd;
@@ -1923,7 +1931,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
              SET insitcrd = 1 --Aprovado
                 ,insitdec = 2 --Aprovado Automaticamente
                 ,dtmvtolt = SYSDATE
-                ,cdopesup = pr_cdopesup
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
              AND nrctrcrd = pr_nrctrcrd;
@@ -1943,32 +1950,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'atualizacoes', pr_posicao => 0, pr_tag_nova => 'atualizacao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'atualizacao', pr_posicao => vr_contador, pr_tag_nova => 'status'  , pr_tag_cont => 'Atualização realizada com sucesso', pr_des_erro => vr_dscritic);
       
-    IF pr_cdopesup IS NOT NULL THEN
-      IF vr_idorigem = 15 THEN
-        vr_dsorigem := 'BANCOOB';
-      ELSE
-        vr_dsorigem := gene0001.vr_vet_des_origens(vr_idorigem);
-      END IF;
-      
-      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-                         pr_cdoperad => vr_cdoperad, 
-                         pr_dscritic => NULL, 
-                         pr_dsorigem => vr_dsorigem, 
-                         pr_dstransa => 'Aprovacao Coordenador', 
-                         pr_dttransa => trunc(SYSDATE),
-                         pr_flgtrans =>  1, -- True
-                         pr_hrtransa => gene0002.fn_busca_time, 
-                         pr_idseqttl => 1, 
-                         pr_nmdatela => vr_nmdatela, 
-                         pr_nrdconta => pr_nrdconta, 
-                         pr_nrdrowid => vr_nrdrowid);
-                             
-      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
-                                pr_nmdcampo => 'cdopesup', 
-                                pr_dsdadant => null,
-                                pr_dsdadatu => pr_cdopesup);
-    END IF;
-
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_cdcritic := vr_cdcritic;
@@ -2186,6 +2167,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                           ,pr_nmdcampo      OUT VARCHAR2             --> Nome do campo com erro
                                           ,pr_des_erro      OUT VARCHAR2) IS         --> Erros do processo
                                     
+    /* .............................................................................
+
+        Programa: pc_atualiza_just_updown_cartao
+        Sistema : CECRED
+        Sigla   : CRD
+        Autor   : Paulo Silva - supero
+        Data    : Abril/2018                 Ultima atualizacao: 09/04/2018
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado
+
+        Objetivo  : Atualiza a justificativa
+
+        Alteracoes: 30/07/2018 - Paulo Silva (Supero) - atualizar insitdec para 2 e 
+                    remover a chamada da esteira no Upgrade
+    ..............................................................................*/
+    
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000); --> Desc. Erro
@@ -2274,13 +2273,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     CLOSE cr_crawcrd_up;    
     
     IF rw_crawcrd.flgprcrd = 1 AND rw_crawcrd.cdadmcrd < pr_cdadmnov THEN
-      
       -- Atualizar
       BEGIN
         UPDATE CRAWCRD t
         SET    t.dsjustif = pr_ds_justif
               ,t.dtmvtolt = SYSDATE
-              ,t.insitdec = 1
+              ,t.insitdec = 2
         WHERE  t.rowid = rw_crawcrd_up.rowid;
 
       EXCEPTION
@@ -2289,20 +2287,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
           vr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_atualiza_just_updown_cartao: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
-      
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-	  
-	  este0005.pc_incluir_proposta_est(pr_cdcooper => pr_cdcooper
-                                      ,pr_cdagenci => vr_cdagenci
-                                      ,pr_cdoperad => vr_cdoperad
-                                      ,pr_cdorigem => vr_idorigem
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_nrctrcrd => rw_crawcrd_up.nrctrcrd
-                                      ,pr_dsmensag => vr_dsmensag
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic);
                                           
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
@@ -2815,7 +2799,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                    ,pr_flgtplim  IN VARCHAR2
                                    ,pr_tpsituac  IN NUMBER
                                    ,pr_insitdec  IN NUMBER
-                                   ,pr_cdopesup      IN crawcrd.cdoperad%TYPE
                                    ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
@@ -2889,7 +2872,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                                   ,pr_tpsituac => pr_tpsituac
                                                   ,pr_insitdec => pr_insitdec
                                                   ,pr_nmdatela => vr_nmdatela
-                                                  ,pr_cdopesup => pr_cdopesup
                                                   ---- OUT ----
                                                   ,pr_cdcritic => vr_cdcritic
                                                   ,pr_dscritic => vr_dscritic
@@ -2956,7 +2938,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                                 ,pr_tpsituac  IN NUMBER
                                 ,pr_insitdec  IN NUMBER
                                 ,pr_nmdatela  IN craptel.nmdatela%TYPE  --> Nome da Tela
-                                ,pr_cdopesup  IN crawcrd.cdoperad%TYPE
                                 ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                 ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
                                 ,pr_des_erro  OUT VARCHAR2) IS
@@ -2998,7 +2979,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       SELECT crd.nrcctitg
             ,crd.vllimcrd
             ,crd.cdadmcrd
-            ,crd.cdopesup
         FROM crawcrd crd
        WHERE crd.cdcooper = pr_cdcooper
          AND crd.nrdconta = pr_nrdconta
@@ -3065,19 +3045,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                           ,pr_nmdcampo => 'NRCTRCRD'
                           ,pr_dsdchave => pr_cdcooper
                           ,pr_sequence => vr_propoest);
-
-      BEGIN
-        UPDATE crawcrd
-           SET cdopesup = pr_cdopesup
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           ANd nrctrcrd = pr_nrctrcrd;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar operador do supervisor de aprovação.';
-          RAISE vr_exc_erro;
-      END;
-
     ELSIF pr_tpsituac = 3 THEN
       vr_dtretorno := SYSDATE;
       vr_vllimite_ant := rw_limatu.vllimite_anterior;
@@ -3170,11 +3137,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                               pr_nmdcampo => 'insitdec', 
                               pr_dsdadant => rw_limatu.insitdec,
                               pr_dsdadatu => pr_insitdec);
-    
-    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
-                              pr_nmdcampo => 'cdopersup', 
-                              pr_dsdadant => rw_crawcrd.cdopesup, 
-                              pr_dsdadatu => pr_cdopesup);
     
     COMMIT;   
     
@@ -4009,7 +3971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Paulo Silva (Supero)
-      Data     : Maio/2018.                   Ultima atualizacao: 05/05/2018
+      Data     : Maio/2018.                   Ultima atualizacao: 25/07/2018
 
       Dados referentes ao programa:
 
