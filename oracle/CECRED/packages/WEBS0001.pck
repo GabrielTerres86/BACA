@@ -4211,6 +4211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                     ,pr_nrinfcad => pr_nrinfcad
                     ,pr_nrliquid => pr_nrliquid
                     ,pr_nrgarope => pr_nrgarope
+                    ,pr_inopeatr => NULL
                     ,pr_nrparlvr => pr_nrparlvr
                     ,pr_nrperger => pr_nrperger
                     ,pr_desscore => pr_desscore
