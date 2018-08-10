@@ -670,7 +670,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       from craphis
      where craphis.cdcooper = pr_cdcooper
        and craphis.cdhstctb > 0
-       and craphis.cdhistor = 2408
        and craphis.cdhistor NOT IN (1154, -- Hist.Sicredi
                                     1019, -- Hist. Debito Automatico Sicredi
                                     1414,
@@ -8301,13 +8300,6 @@ BEGIN
   OPEN  btch0001.cr_crapdat(pr_cdcooper);
   FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
   CLOSE btch0001.cr_crapdat;
-
-
-btch0001.rw_crapdat.dtmvtolt := to_date('12/07/2018', 'DD/MM/RRRR');
-btch0001.rw_crapdat.dtmvtopr := to_date('16/05/2018', 'DD/MM/RRRR');
-btch0001.rw_crapdat.dtmvtoan := to_date('14/05/2018', 'DD/MM/RRRR');
-btch0001.rw_crapdat.dtultdia := to_date('31/05/2018', 'DD/MM/RRRR');
-btch0001.rw_crapdat.dtultdma := to_date('30/04/2018', 'DD/MM/RRRR');
 
   -- Carrega as variáveis
   vr_dtmvtolt := btch0001.rw_crapdat.dtmvtolt;
