@@ -29,12 +29,13 @@ BEGIN
               08/08/2017 - #728202 Não logar críticas 995 (Carlos)
               
               31/10/2017 - #778578 Não logar críticas 1033 (Carlos)
-
+              
               07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
 
               13/12/2017 - Melhorar performance da rotina filtrando corretamente
                            os acordos, conforme chamado 807093. (Kelvin).
 
+              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).						   
   ............................................................................. */
   DECLARE
 
@@ -242,7 +243,9 @@ BEGIN
     -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
     vr_dsctactrjud      CRAPPRM.dsvlrprm%TYPE := NULL;
 
-  ----------------------------------------------------------------------------------
+    -- Debitador Unico	
+    vr_flultexe     NUMBER;
+    vr_qtdexec      NUMBER;	
   
     -- Procedure para limpar os dados das tabelas de memoria
     PROCEDURE pc_limpa_tabela IS
@@ -350,6 +353,22 @@ BEGIN
       CLOSE BTCH0001.cr_crapdat;
     END IF;
 
+    --> Verificar/controlar a execução. 
+    SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
+                                    ,pr_cdtipope  => 'C'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
+                                    ,pr_cdprogra  => substr(vr_cdprogra,1,7)     --> Codigo do programa                                  
+                                    ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                    ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                    ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                    ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+    END IF;
+	
+   
     /*No ultimo dia util do ano, nao havera debito de parcelas em atraso no
     processo, mesmo que houver saldo em conta. Nesta data nenhum lancamento
     e feito na conta. Comunicado 08/2011.*/
@@ -380,9 +399,9 @@ BEGIN
     
       vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
                      LPAD(rw_ctr_acordo.nrctremp,10,'0');
-
+    
       vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
-
+    
     END LOOP;
 
 
@@ -519,7 +538,7 @@ BEGIN
       /* Se tem cobertura e está em atraso calcular o valor com atraso antes pois o resgate é feito 
       dentro da procedure e pc_valida_pagamentos_geral */
       IF ((rw_crappep.idcobope > 0) AND (NOT vr_flgemdia)) THEN
-
+        
          -- Buscar pagamentos Parcela
         EMPR0001.pc_busca_pgto_parcelas(pr_cdcooper => pr_cdcooper                --> Cooperativa conectada
                                        ,pr_cdagenci => pr_cdagenci                --> Código da agência
@@ -539,16 +558,16 @@ BEGIN
                                        ,pr_tab_pgto_parcel => vr_tab_pgto_parcel  --> Tabela com registros de pagamentos
                                        ,pr_tab_calculado   => vr_tab_calculado);  --> Tabela com totais calculados
         -- Se ocorreu erro
-      IF vr_des_erro <> 'OK' THEN
-        -- Se tem erro
-        IF vr_tab_erro.count > 0 THEN
+        IF vr_des_erro <> 'OK' THEN
+          -- Se tem erro
+          IF vr_tab_erro.count > 0 THEN
             
-          -- Envio centralizado de log de erro
+            -- Envio centralizado de log de erro
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || vr_dscritic );
+                                                          || vr_cdprogra || ' --> '
+                                                          || vr_dscritic );
           END IF;
         END IF;
 
@@ -604,12 +623,12 @@ BEGIN
           CONTINUE;
         END IF;
       END IF;
-
+      
       vr_vlsomato_tmp := nvl(vr_vlsomato,0); -- apenas para log
       vr_vlresgat := nvl(vr_vlresgat,0);
       vr_vlsomato := nvl(vr_vlsomato,0);
       vr_vlapagar := nvl(vr_vlapagar,0);
-      
+
       /* Tem cobertura de aplicação e é necessário resgate pois não há saldo suficiente */
       IF (vr_vlresgat > 0) THEN  
         /* Se conta estiver negativa o resgate não deve cobrir o estouro de conta apenas pagar a parcela emprestimo/financiamento */  
@@ -634,7 +653,7 @@ BEGIN
                                   pr_dsdadant => NULL,
                                   pr_dsdadatu => to_char(vr_vlresgat,'fm999G999G990D00'));
       END IF;
-
+      
       -- Se há trava devido a existencia de bloqueio por ação judicial
       IF vr_idacaojd THEN
         vr_vlsomato_tmp := 0;
@@ -646,8 +665,9 @@ BEGIN
         /* 229243 Definido pela area de negocio que serão pagas apenas
         parcelas vencidas no processo on-line */
         
-        IF rw_crapdat.inproces <> 1 THEN
-          /* Primeiro processamento */
+        --IF rw_crapdat.inproces <> 1 THEN  /*primeiro processamento*/
+        IF vr_flultexe = 1 THEN 
+          /*ultimo processamento*/
 
           --Criar savepoint
           SAVEPOINT sav_trans_750;
@@ -735,7 +755,8 @@ BEGIN
             vr_ehmensal:= rw_crappep.dtvencto > vr_dtcalcul;
 
             /* 229243 Juros não devem ser lançados no processamento on line */
-            IF rw_crapdat.inproces <> 1 THEN
+            --IF rw_crapdat.inproces <> 1 THEN
+            IF vr_flultexe = 1 THEN
               --Lancar Juro Contrato
               EMPR0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper         --> Codigo Cooperativa
                                              ,pr_cdagenci    => pr_cdagenci         --> Codigo Agencia
@@ -803,7 +824,7 @@ BEGIN
 
             -- Proximo Registro
             CONTINUE;
-
+          
           END IF; --NOT vr_flgpagpa
                 
           /* Verifica se tem uma parcela anterior nao liquida e ja vencida */
@@ -1028,7 +1049,7 @@ BEGIN
                                                           || vr_dscritic );
             -- Desfazer transacao
             ROLLBACK TO SAVEPOINT sav_trans_750;
-
+            
             --Proximo registro
             CONTINUE;
           END IF;
@@ -1076,7 +1097,7 @@ BEGIN
                                     pr_nmdcampo => 'Saldo',
                                     pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
                                     pr_dsdadatu => to_char(vr_vlsomato,'fm999G999G990D00'));
-        
+
           -- Se possuir valor de resgate
           IF NVL(vr_vlresgat,0) > 0 THEN
             gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
@@ -1111,7 +1132,7 @@ BEGIN
 
 		      -- Desfazer transacao
           ROLLBACK TO SAVEPOINT sav_trans_750;
-
+          
           IF vr_tab_erro.count > 0 AND
              vr_tab_erro(vr_tab_erro.FIRST).cdcritic NOT IN (995, 1033) THEN
             vr_cdcritic := 0;            
@@ -1149,7 +1170,7 @@ BEGIN
         -- Buscar a descricao da critica
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
-
+      
       -- Se foi gerada critica para envio ao log
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
         -- Envio centralizado de log de erro
@@ -1173,7 +1194,7 @@ BEGIN
         -- Buscar a descricao
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
-
+      
       -- Devolvemos codigo e critica encontradas
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;

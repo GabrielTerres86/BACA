@@ -37,7 +37,9 @@ BEGIN
               07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
 
               06/04/2018 - Remover o resgate de aplicação pois a funcionalidade não deve ser aplicada para
-                           empréstimos TR (Renato - Supero).
+                           empréstimos TR (Renato - Supero). 
+
+              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
     ............................................................................. */
 
   DECLARE
@@ -806,7 +808,9 @@ BEGIN
       -- Variaveis para gravação da craplot
       vr_cdagenci INTEGER := pr_cdagenci;
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
-      
+      vr_qtd_reg  NUMBER:=0;
+      vr_inliquid crapepr.inliquid%TYPE;
+
       ------------------------------- CURSORES ---------------------------------
 
       -- Buscar o cadastro dos associados da Cooperativa
@@ -1026,7 +1030,7 @@ BEGIN
       vr_flgprc       INTEGER;
       vr_cdagencia    tbepr_tr_parcelas.cdagenci%TYPE;
       vr_seqdig       NUMBER(10);
-      
+            
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
@@ -1206,6 +1210,23 @@ BEGIN
       --
       -- Busca do Empréstimo  
       FOR rw_crapepr IN cr_crapepr LOOP
+
+        -- Debitador Unico: validar se a parcela continua em aberto (pode ter sido paga via boleto apos o inicio da execucao deste programa).
+        vr_inliquid := 0;
+        BEGIN
+          SELECT inliquid
+            INTO vr_inliquid
+            FROM crapepr
+           WHERE ROWID = rw_crapepr.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao verificar se a parcela continua em aberto (CRAPEPR) '
+                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
+                            || '. Detalhes: '||sqlerrm;
+            RAISE vr_exc_erro;
+        END;
+        IF vr_inliquid = 0 THEN
+
         --
         -- se parcelas com vencimento anterior já rejeitadas, nem entra no cálculo
         IF vr_flgprc = 1 then
@@ -1836,11 +1857,19 @@ BEGIN
           WHEN OTHERS THEN
             -- Gerar erro e fazer rollback
             vr_dscritic := 'Erro ao atualizar a parcela/empréstimo (TBEPR_TR_PARCELAS).'
-                        || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
+                          || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp|| ' agencia:'||pr_cdagenci
                         || '. Detalhes: '||sqlerrm;
             RAISE vr_exc_erro;
         END;  
         --   
+          -- Debitador Unico:
+          vr_qtd_reg := vr_qtd_reg + 1;
+          IF MOD(vr_qtd_reg,500) = 0 THEN
+            COMMIT;
+          END IF;
+          --
+        END IF; -- vr_inliquid = 0  (Debitador Unico: se a parcela continua em aberto).
+
       END LOOP;
       --
     EXCEPTION
@@ -2204,7 +2233,7 @@ BEGIN
                                      ,pr_dsxmlnode => '/pac/rejeitos'                      --> Nó base do XML para leitura dos dados
                                      ,pr_dsjasper  => 'crrl135.jasper'                     --> Arquivo de layout do iReport
                                      ,pr_dsparams  => null                                 --> Sem parâmetros
-                                     ,pr_dsarqsaid => vr_nom_direto||'/rl/crrl135_'||to_char(rw_craprej.cdagenci,'fm000')||'.lst' --> Arquivo final com o path
+                                     ,pr_dsarqsaid => vr_nom_direto||'/rl/crrl135_'||to_char(rw_craprej.cdagenci,'fm000')||to_char( gene0002.fn_busca_time )||'.lst' --> Arquivo final com o path
                                      ,pr_qtcoluna  => 132                                  --> 132 colunas
                                      ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
                                      ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
@@ -2236,7 +2265,7 @@ BEGIN
                                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
                                            ,pr_dsxml     => vr_clobarq                           --> Arquivo XML de dados
                                            ,pr_cdrelato  => '135'                                --> Código do relatório
-                                           ,pr_dsarqsaid => vr_nom_direto||'/salvar/crrl135_'||to_char(pr_cdagenci,'fm000')||'.txt' --> Arquivo final com o path
+                                           ,pr_dsarqsaid => vr_nom_direto||'/salvar/crrl135_'||to_char(pr_cdagenci,'fm000')||to_char( gene0002.fn_busca_time )||'.txt' --> Arquivo final com o path
                                            ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
                                            ,pr_dspathcop => vr_dspathcopia                       --> Copiar para o diretório
                                            ,pr_fldoscop  => 'S'                                  --> Copia convertendo para DOS
@@ -2298,12 +2327,12 @@ BEGIN
       END IF;
       --
       -- se processo for na diária, pega os empréstimos vencidos no dia
-      IF rw_crapdat.inproces > 2 then
+      --IF rw_crapdat.inproces > 2 then
         vr_dtcursor := rw_crapdat.dtmvtolt;
-      -- se processo não for na diária, pega somente os empréstimos atrasados
-      ELSE
-        vr_dtcursor := rw_crapdat.dtmvtolt - 1;
-      END IF;
+      ---- se processo não for na diária, pega somente os empréstimos atrasados
+      --ELSE
+      --  vr_dtcursor := rw_crapdat.dtmvtolt - 1;
+      --END IF;
       --  
       IF pr_faseprocesso = 1 THEN
         pc_gera_tabela_parcelas(pr_cdcooper);
