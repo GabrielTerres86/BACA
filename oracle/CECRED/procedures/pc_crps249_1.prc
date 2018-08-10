@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                                ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
 
-/* ..........................................................................
+/* .......................................................................... 
 
    Programa: pc_crps249_1 (antigo Fontes/crps249_1.p)
    Sistema : Conta-Corrente - Cooperativa de Credito
