@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 16/07/2018 ***//
+//*** Data : Agosto/2007                  Última Alteração: 26/03/2018 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -85,8 +85,6 @@
 				  22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
 				   
                   26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
-				   
-                  16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 				   
 ***************************************************************************/
 
@@ -613,7 +611,6 @@ function formataCabecalho() {
     rDtaltera = $('label[for="dtaltera"]', '#frmCabAtenda');
     rDtdemiss = $('label[for="dtdemiss"]', '#frmCabAtenda');
     rNmprimtl = $('label[for="nmprimtl"]', '#frmCabAtenda');
-    rNmSocial = $('label[for="nmsocial"]', '#frmCabAtenda');
     rDsnatopc = $('label[for="dsnatopc"]', '#frmCabAtenda');
     rNrramfon = $('label[for="nrramfon"]', '#frmCabAtenda');
     rDsnatura = $('label[for="dsnatura"]', '#frmCabAtenda');
@@ -643,7 +640,6 @@ function formataCabecalho() {
     rDtaltera.addClass('rotulo-linha').css({ 'width': '137px' });
     rDtdemiss.addClass('rotulo-linha').css({ 'width': '75px' });
     rNmprimtl.addClass('rotulo').css({ 'width': '111px' });
-    rNmSocial.addClass('rotulo').css({ 'width': '111px' });
     rDsnatopc.addClass('rotulo').css({ 'width': '111px' });
     rNrramfon.addClass('rotulo-linha').css({ 'width': '55px' });
     rDsnatura.addClass('rotulo').css({ 'width': '111px' });
@@ -674,7 +670,6 @@ function formataCabecalho() {
     cDtaltera = $('#dtaltera', '#frmCabAtenda');
     cDtdemiss = $('#dtdemiss', '#frmCabAtenda');
     cNmprimtl = $('#nmprimtl', '#frmCabAtenda');
-    cNmSocial = $('#nmsocial', '#frmCabAtenda');
     cDsnatopc = $('#dsnatopc', '#frmCabAtenda');
     cNrramfon = $('#nrramfon', '#frmCabAtenda');
     cDsnatura = $('#dsnatura', '#frmCabAtenda');
@@ -704,7 +699,6 @@ function formataCabecalho() {
     cDtaltera.css({ 'width': '75px' });
     cDtdemiss.css({ 'width': '63px' });
     cNmprimtl.css({ 'width': '425px' });
-    cNmSocial.css({ 'width': '425px' });
     cDsnatopc.css({ 'width': '194px' });
     cNrramfon.css({ 'width': '170px' });
     cDsnatura.css({ 'width': '194px' });

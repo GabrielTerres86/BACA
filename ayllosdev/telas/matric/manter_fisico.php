@@ -15,7 +15,6 @@
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 				  16/10/2017 - Removendo o campo caixa postal. (PRJ339 - Kelvin).
  *                17/10/2017 - Ajuste para carregar idade ao validadr dados. PRJ339-CRM (Odirle/AMcom).
- *				  13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
  */
 ?> 
 
@@ -31,7 +30,6 @@
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '' ;	
 	$nmprimtl = (isset($_POST['nmprimtl'])) ? $_POST['nmprimtl'] : '' ;	
-	$nmsocial = (isset($_POST['nmsocial'])) ? $_POST['nmsocial'] : '' ;	
 	$nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : '' ;
 	$dtcnscpf = (isset($_POST['dtcnscpf'])) ? $_POST['dtcnscpf'] : '' ;
 	$cdsitcpf = (isset($_POST['cdsitcpf'])) ? $_POST['cdsitcpf'] : '' ;

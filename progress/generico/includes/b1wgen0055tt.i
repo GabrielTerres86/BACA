@@ -25,8 +25,6 @@
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)          
 
-				18/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
-
 ..............................................................................*/
 
                                                                              
@@ -80,8 +78,7 @@ DEFINE TEMP-TABLE tt-dados-fis NO-UNDO
     FIELD nrdmeses AS INT
     FIELD dsdidade AS CHAR
     FIELD idorgexp AS INT 
-    FIELD cdnacion AS INTEGER
-	FIELD nmsocial LIKE crapttl.nmsocial.
+    FIELD cdnacion AS INTEGER.
                 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 

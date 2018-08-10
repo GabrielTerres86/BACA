@@ -34,8 +34,6 @@
 				14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
 						     para pesquisa e retornar valor total da pesquisa
 							 (Jonata - RKAM P364). 		
-							 
-				13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari) 		
 .............................................................................*/
 
                                                                              
@@ -138,7 +136,6 @@ DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
 DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlrtotal AS DEC											   NO-UNDO.
-DEF VAR aux_nmsocial AS CHAR                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -242,7 +239,7 @@ PROCEDURE valores_entrada:
             WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
 			WHEN "nrregist"  THEN aux_nrregist  = INTE(tt-param.valorCampo).
             WHEN "nriniseq"  THEN aux_nriniseq  = INTE(tt-param.valorCampo).
-			WHEN "nmsocial" THEN aux_nmsocial = tt-param.valorCampo.
+
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -641,8 +638,7 @@ PROCEDURE Busca_Dados:
                            OUTPUT TABLE tt-alertas,
                            OUTPUT TABLE tt-erro,
                            OUTPUT TABLE tt-bens,
-                           OUTPUT TABLE tt-crapcrl,
-						   OUTPUT TABLE tt-crapttl) NO-ERROR .
+                           OUTPUT TABLE tt-crapcrl) NO-ERROR .
 
     IF  ERROR-STATUS:ERROR  THEN
         DO:
@@ -683,8 +679,6 @@ PROCEDURE Busca_Dados:
                             INPUT "Alertas").
            RUN piXmlExport (INPUT TEMP-TABLE tt-crapcrl:HANDLE,
                             INPUT "Responsavel"). 
-		   RUN piXmlExport (INPUT TEMP-TABLE tt-crapttl:HANDLE,
-							INPUT "Titulares").
            RUN piXmlSave.
         END.
 
@@ -1064,7 +1058,6 @@ PROCEDURE Grava_Dados:
                             INPUT TABLE tt-bens,
                             INPUT aux_idorigee,
                             INPUT aux_nrlicamb,
-							INPUT aux_nmsocial,
                            OUTPUT aux_msgretor,
                            OUTPUT aux_tpatlcad,
                            OUTPUT aux_msgatcad,

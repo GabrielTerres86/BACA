@@ -88,9 +88,6 @@
                              
                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)             
-							 
-				15/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
-				             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -222,7 +219,7 @@ PROCEDURE Busca_Impressao:
                                    ELSE (STRING(crapass.cdagenci,"999") + 
                                         " - NAO CADASTRADO")).
 
-        FOR FIRST crapttl FIELDS(nmextttl inpolexp nmsocial)
+        FOR FIRST crapttl FIELDS(nmextttl inpolexp)
                           WHERE crapttl.cdcooper = par_cdcooper AND
                                 crapttl.nrdconta = par_nrdconta AND
                                 crapttl.idseqttl = par_idseqttl 
@@ -235,8 +232,7 @@ PROCEDURE Busca_Impressao:
         ELSE
             ASSIGN tt-fcad.nmprimtl = crapass.nmprimtl.
 
-        ASSIGN tt-fcad.dsmvtolt = "DATA: " + STRING(par_dtmvtolt,"99/99/9999")
-			   tt-fcad.nmsocial = crapttl.nmsocial.
+        ASSIGN tt-fcad.dsmvtolt = "DATA: " + STRING(par_dtmvtolt,"99/99/9999").
 
         /* f_responsa */
         FOR FIRST crapope FIELDS(nmoperad)

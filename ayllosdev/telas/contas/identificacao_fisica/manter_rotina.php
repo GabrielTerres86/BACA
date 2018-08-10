@@ -14,10 +14,9 @@
  * 005: [27/02/2015] Jaison/Gielow       : Substituicao de caracteres especiais. (SD: 257871)
  * 006: [17/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
  * 007: [20/04/2017] Adriano             : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 							
- * 008: [25/04/2017] Odirlei(AMcom)	     : Alterado campo dsnacion para cdnacion. (Projeto 339)
+ * 008: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  * 009: [28/08/2017] Lucas Reinert		 : Alterado tipos de documento para utilizarem CI, CN, 
  *										   CH, RE, PP E CT. (PRJ339 - Reinert)
- * 010: [18/07/2018] Andrey Formigari	 : Novo campo Nome Social (#SCTASK0017525 - Mouts) 
  */
 ?>
  
@@ -72,7 +71,6 @@
 	$verrespo = (isset($_POST['verrespo'])) ? $_POST['verrespo'] : '';
 	$permalte = (isset($_POST['permalte'])) ? $_POST['permalte'] : '';
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';
-	$nmsocial = (isset($_POST['nmsocial'])) ? $_POST['nmsocial'] : '';
 	$flgContinuar = (isset($_POST['flgContinuar'])) ? $_POST['flgContinuar'] : '';
 	$arrayFilhos  = (isset($_POST['arrayFilhos'])) ? $_POST['arrayFilhos'] : '';
 
@@ -158,7 +156,6 @@
 	$xml .= '		<dtadmemp>'.$dtadmemp.'</dtadmemp>';
 	$xml .= '		<vlsalari>'.$vlsalari.'</vlsalari>';
     $xml .= '		<inpessoa>'.$inpessoa.'</inpessoa>'; 	
-	$xml .= '		<nmsocial>'.$nmsocial.'</nmsocial>';
 	
 	if($procedure == "valida_dados"){ 
 		$xml .= '		<verrespo>'.$verrespo.'</verrespo>'; 	

@@ -21,7 +21,6 @@
  * 010: [09/08/2017] Mateus Zimmermann (MOUTS): Ajustes para inclusão do Desligamento (P364).
  * 011: [14/11/2017] Jonata (RKAM)    : Retirado botão de envio TED (P364).
  * 012: [27/12/2017] Renato (Supero)  : Alterado para incluir os botões Desligar e Saque Parcial conforme tela CADMAT (M329)
- * 013: [18/07/2018] Andrey Formigari : Novo campo Nome Social (#SCTASK0017525 - Mouts)
  */ 
 
 	session_start();	
@@ -105,7 +104,6 @@
 		$bens		  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
 		$alertas      = ( isset($xmlObjeto->roottag->tags[4]->tags) ) ? $xmlObjeto->roottag->tags[4]->tags : array();
 		$responsaveis = ( isset($xmlObjeto->roottag->tags[5]->tags) ) ? $xmlObjeto->roottag->tags[5]->tags : array();
-    $titulares 	  = ( isset($xmlObjeto->roottag->tags[6]->tags) ) ? $xmlObjeto->roottag->tags[6]->tags[0] : array();
 
 		$tpPessoa	  = ( getByTagName($registro,'inpessoa') == '' ) ? 1 : getByTagName($registro,'inpessoa');	
 		

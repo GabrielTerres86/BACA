@@ -57,8 +57,6 @@
 			                     crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
                   09/10/2017 - Removendo os campos nrdoapto cddbloco nrcxapst do relatorio. (PRJ339 - Kelvin)
-
-				  15/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)  
  */	 
 ?>
 <?
@@ -185,9 +183,6 @@
 	escreveTitulo('IDENTIFICACAO');
 	
 	$linha = preencheString(getByTagName($pfisica,'nmextttl'),76,' ','C');
-	escreveLinha( $linha );
-
-	$linha = preencheString('Nome Social: ' . getByTagName($registros,'nmsocial'),76,' ','C');
 	escreveLinha( $linha );
 
 	$linha = preencheString('Tp.Natureza: '.getByTagName($pfisica,'inpessoa').' - '.getByTagName($pfisica,'dspessoa'),76);
