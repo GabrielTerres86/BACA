@@ -72,6 +72,7 @@
 	$dsrepres = $_POST["dsrepres"];
 	$nmempres = $_POST["nmempres"];
 	$flgdebit = $_POST['flgdebit'];
+	$cdadmcrd = $_POST['cdadmcrd'];
 	
 	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
 	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Ayllos',$funcaoAposErro,false);
@@ -140,7 +141,9 @@
 	$xmlObjCartao = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
+	$ignorarErro =  $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata =="Situacao de Conta nao permite produtos de credito." && $cdadmcrd == '16';
+	
+	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO" && !$ignorarErro ) {
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
 	} 	
 
@@ -176,7 +179,7 @@
 		
 
 		// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB
-		if ($idconfir == 1) {
+		if ($idconfir == 1  && $dsmensag != 0) {
 			$executar .= "showError(\"inform\",\"".$dsmensag."\",\"Alerta - Ayllos\",\"bloqueiaFundo(divRotina,\\\"nrctaav1\\\",\\\"frmNovoCartao\\\",false)\");";
 		} 	
 		} 	
