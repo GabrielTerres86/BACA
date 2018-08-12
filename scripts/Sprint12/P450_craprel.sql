@@ -28,4 +28,6 @@ cop.cdcooper,                                             --> CDCOOPER
 1                                                         --> INGERPDF      
 
 FROM crapcop cop                                              
-WHERE cop.cdcooper <> 1
+WHERE cop.flgativo = 1;
+
+commit;
