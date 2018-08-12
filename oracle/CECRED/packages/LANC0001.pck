@@ -728,8 +728,6 @@ BEGIN
      nvl(vr_cdcritic,0) > 0 THEN
     RAISE vr_exc_erro;
   END IF;
-	
-	COMMIT;
 
   -- Criar documento XML
   dbms_lob.createtemporary(pr_dsretorn_xml, TRUE);
