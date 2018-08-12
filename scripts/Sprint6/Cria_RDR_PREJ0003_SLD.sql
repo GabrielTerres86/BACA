@@ -71,7 +71,7 @@ begin
                  VALUES('CONSULTAR_SLDPRJ',
                         'PREJ0003',
                         'pc_consulta_sld_cta_prj',
-                        'pr_cdcooper, pr_nrdconta, pr_nrctremp',
+                        'pr_cdcooper, pr_nrdconta',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> CONSULTAR_SLDPRJ -> PREJ0003.pc_consulta_sld_cta_prj');
