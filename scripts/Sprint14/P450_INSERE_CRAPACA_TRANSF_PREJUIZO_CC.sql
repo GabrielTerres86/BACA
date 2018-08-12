@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-102
 declare 
 
   CURSOR cr_craprdr(pr_nmprogra IN craprdr.nmprogra%TYPE) IS
