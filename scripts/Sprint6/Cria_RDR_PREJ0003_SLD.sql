@@ -101,7 +101,7 @@ begin
                  VALUES('GERA_LCM',
                         'PREJ0003',
                         'pc_gera_lcm_cta_prj',
-                        'pr_cdcooper, pr_nrdconta, pr_tpope, pr_cdcoperad, pr_vlrlanc',
+                        'pr_cdcooper, pr_nrdconta, pr_tpope, pr_cdoperad, pr_vlrlanc',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> GERA_LCM -> PREJ0003.pc_gera_lcm_cta_prj');
