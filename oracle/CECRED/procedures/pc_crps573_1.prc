@@ -4170,6 +4170,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                              ,vr_idtipo_envio);
         --
           EXCEPTION
+            WHEN DUP_VAL_ON_INDEX THEN
+              NULL;
             WHEN OTHERS THEN
               pr_cdcritic := 0;
               pr_dscritic := 'Erro INSERT HISTORICO ATIVO PROBLEMATICO: '||SQLERRM;
