@@ -632,22 +632,22 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 			UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
 							" - " + glb_cdprogra + "' --> '" +
 						glb_dscritic + " >> log/proc_batch.log").
-			RETURN.
+			NEXT.
         END.
   
         IF  VALID-HANDLE(h-b1wgen0200) THEN
             DELETE PROCEDURE h-b1wgen0200.
         ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                 craplot.qtcompln = craplot.qtcompln + 1
-                craplot.nrseqdig = craplcm.nrseqdig.
+                craplot.nrseqdig = craplot.nrseqdig + 1.
 
 
         IF   aux_indebcre = "D" THEN
-            ASSIGN craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                    craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
+            ASSIGN craplot.vlinfodb = craplot.vlinfodb + aux_vllanmto 
+                    craplot.vlcompdb = craplot.vlcompdb + aux_vllanmto .
         ELSE 
-            ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-                    craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.
+            ASSIGN craplot.vlinfocr = craplot.vlinfocr + aux_vllanmto 
+                    craplot.vlcompcr = craplot.vlcompcr + aux_vllanmto .
 
         RUN cria_integrado.    
 
