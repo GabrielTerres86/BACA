@@ -791,7 +791,7 @@ PROCEDURE obtem-resgate:
                craplci.nrseqdig = craplot.nrseqdig + 1
                craplci.cdcooper = par_cdcooper
                crapsli.vlsddisp = crapsli.vlsddisp - par_vlresgat
-               /* craplcm.cdpesqbb = STRING(craplci.nrdocmto) */
+               craplcm.cdpesqbb = STRING(craplci.nrdocmto)
           
                /** Debito **/
                craplot.qtinfoln = craplot.qtinfoln + 1

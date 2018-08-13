@@ -2525,7 +2525,6 @@ PROCEDURE efetua_liber_anali_bordero:
               ,OUTPUT aux_dscritic).        /* Descriçao da crítica                          */
 
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-               /* Tratamento erro Banco Dados */
                UNDO LIBERACAO, LEAVE.
             ELSE 
                /* Se criou lancamento entao atualiza dados do Lote */
@@ -2540,7 +2539,6 @@ PROCEDURE efetua_liber_anali_bordero:
                           craplot.vlcompcr = craplot.vlcompcr + aux_vlborder.    
                      
                    VALIDATE craplot.
-                   VALIDATE craplcm.
                END.
 
             /* Apagar handle associado */
