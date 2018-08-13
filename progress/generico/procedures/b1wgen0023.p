@@ -688,36 +688,12 @@ PROCEDURE baixa_epr_titulo:
                        ,OUTPUT aux_dscritic).
 
                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                        DO:  
-                          IF aux_incrineg = 1 THEN
-                           DO:
-                            /* Tratativas de negocio */ 
-                            NEXT.
-                           END.
-                          ELSE
-                           DO:
-                            RETURN "NOK".
-                           END. 
-                        END.  
+                        DO: 
+                            RETURN 'NOK'.
+                        END.   
 
-            /* Credita na conta da cooperativa o valor do pagamento do boleto 
-            CREATE craplcm.
-            ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                   craplcm.cdagenci = craplot.cdagenci
-                   craplcm.cdbccxlt = craplot.cdbccxlt
-                   craplcm.nrdolote = craplot.nrdolote
-                   craplcm.nrdconta = par_nrdconta
-                   craplcm.nrdctabb = par_nrdconta
-                   craplcm.cdcooper = par_cdcooper
-                   craplcm.nrdocmto = DECIMAL(aux_nrdocmto)
-                   craplcm.cdhistor = 266
-                   craplcm.nrseqdig = craplot.nrseqdig + 1
-                   craplcm.vllanmto = par_vllanmto
-                   craplcm.cdpesqbb = "Pagador " + STRING(par_nrctasac)
-            VALIDATE craplcm. */      
-
-             ASSIGN craplot.vlinfodb = craplot.vlinfocr + craplcm.vllanmto
-                    craplot.vlcompdb = craplot.vlcompcr + craplcm.vllanmto
+             ASSIGN craplot.vlinfodb = craplot.vlinfocr + par_vllanmto
+                    craplot.vlcompdb = craplot.vlcompcr + par_vllanmto
                     craplot.qtinfoln = craplot.qtinfoln + 1
                     craplot.qtcompln = craplot.qtcompln + 1
                     craplot.nrseqdig = craplot.nrseqdig + 1.
@@ -823,38 +799,11 @@ PROCEDURE baixa_epr_titulo:
 
                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                         DO:  
-                          IF aux_incrineg = 1 THEN
-                           DO:
-                            /* Tratativas de negocio */ 
-                            NEXT.
-                           END.
-                          ELSE
-                           DO:
-                            RETURN "NOK".
-                           END. 
-                        END.  
+                           RETURN 'NOK'.
+                        END.     
 
-
-
-    /* Debita na conta da cooperativa o valor do pagamento do boleto 
-    CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-           craplcm.cdagenci = craplot.cdagenci
-           craplcm.cdbccxlt = craplot.cdbccxlt
-           craplcm.nrdolote = craplot.nrdolote
-           craplcm.nrdconta = par_nrdconta
-           craplcm.nrdctitg = STRING(crapepr.nrdconta,"99999999")           
-           craplcm.nrdctabb = par_nrdconta
-           craplcm.cdcooper = par_cdcooper
-           craplcm.nrdocmto = DECIMAL(aux_nrdocmto)
-           craplcm.cdhistor = 302
-           craplcm.nrseqdig = craplot.nrseqdig + 1
-           craplcm.vllanmto = par_vllanmto
-           craplcm.cdpesqbb = STRING(par_nrctasac,"99999999")
-    VALIDATE craplcm.   */        
-
-    ASSIGN   craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-             craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+    ASSIGN   craplot.vlinfodb = craplot.vlinfodb + par_vllanmto
+             craplot.vlcompdb = craplot.vlcompdb + par_vllanmto
              craplot.qtinfoln = craplot.qtinfoln + 1
              craplot.qtcompln = craplot.qtcompln + 1
              craplot.nrseqdig = craplot.nrseqdig + 1.
