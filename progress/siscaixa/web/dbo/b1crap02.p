@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -83,8 +83,20 @@
              
                17/07/2017 - Ajustes para nao buscar IDORGEXP para pessoa jur.
                             PRJ339 - CRM (Odirlei-AMcom)  
+                            
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)                      
              
-........................................................................... */
+               15/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
+                            PRJ366 (Lombardi) 
+                            
+               17/04/2018 -  Verifica lançamentos/saldo para computar os lançamentos
+                             efetuados no último dia, para que esse saldo esteja 
+                             atualizado para efetivar ou negar a operaçao, utilizado
+							 na abertura do caixa online mesmo quando o processo 
+							 batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
+             
+............................................................................ **/
 
 /*---------------------------------------------------------------*/
 /*  b1crap02.p - Consulta Conta                                  */
@@ -107,11 +119,15 @@ DEF  VAR aux_nrcpfcgc    AS CHAR                               NO-UNDO.
 DEF  VAR aux_vltotrda    AS DEC                                NO-UNDO.    
 
 DEF VAR h-b1wgen0155 AS HANDLE                                 NO-UNDO.
+DEF VAR h-b1wgen0112 AS HANDLE                                 NO-UNDO.
 DEF VAR h-b1wgen0052b AS HANDLE                                NO-UNDO.
 DEF VAR aux_vlblqjud AS DECI                                   NO-UNDO.
 DEF VAR aux_vlblqpop AS DECI                                   NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                   NO-UNDO.
 DEF VAR aux_vlrespop AS DECI                                   NO-UNDO.
+DEF VAR aux_vlblqapl_gar  AS DECI                              NO-UNDO.
+DEF VAR aux_vlblqpou_gar  AS DECI                              NO-UNDO.          
+
 
 DEF  TEMP-TABLE tt-erro  NO-UNDO     LIKE craperr. 
 DEF  TEMP-TABLE craterr  NO-UNDO     LIKE craperr.   
@@ -182,6 +198,10 @@ PROCEDURE consulta-conta:
     
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
     DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
+	DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
+    DEF VAR aux_dssitdct   AS CHAR                          NO-UNDO.
+    DEF VAR aux_des_erro   AS CHAR                          NO-UNDO.
+    DEF VAR aux_dscritic   AS CHAR                          NO-UNDO.
 
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -214,11 +234,12 @@ PROCEDURE consulta-conta:
     ASSIGN tt-conta.nome-tit     = crapass.nmprimtl
            tt-conta.magnetico    = 0.
 
+    
     FOR EACH crapcrm WHERE crapcrm.cdcooper = crapcop.cdcooper  AND
                            crapcrm.nrdconta = crapass.nrdconta  NO-LOCK:
                            
         IF  crapcrm.cdsitcar = 2                   AND
-            crapcrm.dtvalcar >= crapdat.dtmvtolt   THEN
+            crapcrm.dtvalcar >= crapdat.dtmvtocd   THEN
             tt-conta.magnetico = tt-conta.magnetico + 1.
     END.
     
@@ -266,7 +287,7 @@ PROCEDURE consulta-conta:
                  ASSIGN tt-conta.nome-seg-tit = crapttl.nmextttl.
 		    END.
 
-        END.
+        END. 
     ELSE
         DO:
             FIND crapjur WHERE crapjur.cdcooper = crapcop.cdcooper  AND
@@ -302,111 +323,64 @@ PROCEDURE consulta-conta:
 
     IF  crapass.cdtipcta > 0   THEN 
         DO:
-            /* FIND craptip OF crapass NO-LOCK NO-ERROR. */
-            FIND craptip WHERE craptip.cdcooper = crapcop.cdcooper  AND
-                               craptip.cdtipcta = crapass.cdtipcta 
-                               NO-LOCK NO-ERROR.
             
-            IF  AVAIL craptip   THEN
-                DO:
-                    ASSIGN tt-conta.tipo-conta = 
-                           STRING(crapass.cdtipcta,"z9") + 
-                           " - " + craptip.dstipcta.
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+            RUN STORED-PROCEDURE pc_descricao_tipo_conta
+              aux_handproc = PROC-HANDLE NO-ERROR
+                                      (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                       INPUT crapass.cdtipcta, /* Tipo de conta */
+                                      OUTPUT "",               /* Descriçao do Tipo de conta */
+                                      OUTPUT "",               /* Flag Erro */
+                                      OUTPUT "").              /* Descriçao da crítica */
+            
+            CLOSE STORED-PROC pc_descricao_tipo_conta
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-                   IF  crapass.cdtipcta = 8  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Normal Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Normal Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                   IF  crapass.cdtipcta = 9  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Espec. Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Espec. Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                   IF  crapass.cdtipcta = 10  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj. Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj. Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                   IF  crapass.cdtipcta = 11  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj.Esp.Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj.Esp.Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                       ASSIGN tt-conta.tipo-conta = 
-                              STRING(crapass.cdtipcta,"z9") + " - " +
-                              craptip.dstipcta.
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                END.
+            ASSIGN aux_dstipcta = ""
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                   WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                   aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                   WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                   aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                   WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
 
-            ELSE
+            IF aux_des_erro = "NOK"  THEN
                 ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9").
+            ELSE
+                ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
+            
         END.
     ELSE
         ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9").
 
-    ASSIGN tt-conta.situacao = STRING(crapass.cdsitdct,"9") + " " +
-                               IF crapass.cdsitdct = 1 THEN
-                                  "NORMAL"
-                               ELSE IF crapass.cdsitdct = 2 THEN
-                                       "ENCERRADA P/ASSOCIADO"
-                                    ELSE IF crapass.cdsitdct = 3 THEN
-                                            "ENCERRADA P/COOP"
-                                         ELSE IF crapass.cdsitdct = 4 THEN
-                                                 "ENCERRADA P/DEMISSAO"
-                                              ELSE IF crapass.cdsitdct = 5 THEN
-                                                      "NAO APROVADA"
-                                                   ELSE 
-                                                   IF crapass.cdsitdct = 6 THEN                                                       "NORMAL - SEM TALAO"
-                                                   ELSE
-                                                      IF crapass.cdsitdct = 9
-                                                         THEN 
-                                                      "ENCERRADA P/OUTRO MOTIVO"
-                                                      ELSE "".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",               /* pr_dssituacao */
+                                        OUTPUT "",               /* pr_des_erro   */
+                                        OUTPUT "").              /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dssitdct = ""
+           aux_des_erro = ""
+           aux_dssitdct = UPPER(pc_descricao_situacao_conta.pr_dssituacao)
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?.
+    
+    IF aux_des_erro = "NOK" THEN 
+        ASSIGN aux_dssitdct = "".
+    
+    ASSIGN tt-conta.situacao = aux_dssitdct.
 
     ASSIGN tt-conta.estouros = 0.
 
@@ -522,20 +496,20 @@ PROCEDURE consulta-conta:
            tab_dtfimpmf = DATE(INT(SUBSTRING(craptab.dstextab,15,2)),
                                INT(SUBSTRING(craptab.dstextab,12,2)),
                                INT(SUBSTRING(craptab.dstextab,18,4)))
-           tab_txcpmfcc = IF  crapdat.dtmvtolt >= tab_dtinipmf  AND
-                              crapdat.dtmvtolt <= tab_dtfimpmf  THEN
+           tab_txcpmfcc = IF  crapdat.dtmvtocd >= tab_dtinipmf  AND
+                              crapdat.dtmvtocd <= tab_dtfimpmf  THEN
                               DECIMAL(SUBSTR(craptab.dstextab,23,13))
                           ELSE
                               0
-           tab_txrdcpmf = IF  crapdat.dtmvtolt >= tab_dtinipmf  AND
-                              crapdat.dtmvtolt <= tab_dtfimpmf  THEN
+           tab_txrdcpmf = IF  crapdat.dtmvtocd >= tab_dtinipmf  AND
+                              crapdat.dtmvtocd <= tab_dtfimpmf  THEN
                               DECIMAL(SUBSTR(craptab.dstextab,38,13))
                           ELSE 
                               1.
 
-    FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND
+    FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND     
                            craplcm.nrdconta  = crapsld.nrdconta     AND
-                           craplcm.dtmvtolt  = crapdat.dtmvtolt     AND
+                           craplcm.dtmvtolt  = crapdat.dtmvtocd     AND
                            craplcm.cdhistor <> 289                  
                            USE-INDEX craplcm2 NO-LOCK:
 
@@ -734,6 +708,8 @@ PROCEDURE impressao-saldo:
     DEF INPUT  PARAM p-tipo-impressao    AS INT                       NO-UNDO.
     DEF OUTPUT PARAM p-literal-autentica AS CHAR                      NO-UNDO.
                  
+	DEF VAR aux_dscritic                 AS CHAR                      NO-UNDO.
+                 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
  
     FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
@@ -754,14 +730,16 @@ PROCEDURE impressao-saldo:
             ASSIGN aux_vlblqjud = 0
                    aux_vlblqpop = 0
                    aux_vlresblq = 0
-                   aux_vlrespop = 0.
+                   aux_vlrespop = 0
+                   aux_vlblqapl_gar = 0
+                   aux_vlblqpou_gar = 0.
             
             RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT crapcop.cdcooper,
                                                      INPUT p-nro-conta,
                                                      INPUT 0, 
                                                      INPUT 0, 
                                                      INPUT 2, /*2 - Aplicacao*/
-                                                     INPUT crapdat.dtmvtolt,
+                                                     INPUT crapdat.dtmvtocd,
                                                      OUTPUT aux_vlblqjud,
                                                      OUTPUT aux_vlresblq).
                    
@@ -773,12 +751,28 @@ PROCEDURE impressao-saldo:
                                                      INPUT 0, 
                                                      INPUT 0, 
                                                      INPUT 3, /*3- poup prog*/
-                                                     INPUT crapdat.dtmvtolt,
+                                                     INPUT crapdat.dtmvtocd,
                                                      OUTPUT aux_vlblqpop,
                                                      OUTPUT aux_vlrespop).
                    
             IF  RETURN-VALUE <> "OK" THEN
                 RETURN "NOK".
+            
+			/*** Busca Saldo Bloqueado Garantia ***/
+            IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+                RUN sistema/generico/procedures/b1wgen0112.p 
+                    PERSISTENT SET h-b1wgen0112.
+
+            RUN calcula_bloq_garantia IN h-b1wgen0112
+                                     ( INPUT crapcop.cdcooper,
+                                       INPUT p-nro-conta,                                             
+                                      OUTPUT aux_vlblqapl_gar,
+                                      OUTPUT aux_vlblqpou_gar,
+                                      OUTPUT aux_dscritic).
+                
+            IF  VALID-HANDLE(h-b1wgen0112) THEN
+                DELETE PROCEDURE h-b1wgen0112.
+                
         END.    
     ELSE
         DO:
@@ -790,7 +784,7 @@ PROCEDURE impressao-saldo:
                                                      INPUT 0, 
                                                      INPUT 0, 
                                                      INPUT 1, /*1- Dep. Vista*/
-                                                     INPUT crapdat.dtmvtolt,
+                                                     INPUT crapdat.dtmvtocd,
                                                      OUTPUT aux_vlblqjud,
                                                      OUTPUT aux_vlresblq).
             
@@ -831,7 +825,7 @@ PROCEDURE impressao-saldo:
            c-literal[1]  = TRIM(crapcop.nmrescop) +  " - " + 
                            TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
+           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PAC " + 
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +
@@ -857,19 +851,29 @@ PROCEDURE impressao-saldo:
                                     STRING(aux_vlblqjud,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
                                 ELSE
                                     " "   
-                c-literal[13] = " " 
+                c-literal[13] = IF  aux_vlblqapl_gar > 0 THEN 
+                                    "VALOR BLOQ. GARANTIA:      " +
+                                    STRING(aux_vlblqapl_gar,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
+                                ELSE
+                                    " "
                 c-literal[14] = " "
-                c-literal[15] = "SALDO POUPANCA PROGRAMADA: " +
+                c-literal[15] = " "
+                c-literal[16] = "SALDO POUPANCA PROGRAMADA: " +
                                 STRING(p-valor-poupanca,"ZZZ,ZZZ,ZZZ,ZZ9.99-") 
-                c-literal[16] = IF  aux_vlblqpop > 0 THEN 
+                c-literal[17] = IF  aux_vlblqpop > 0 THEN 
                                     "VALOR BLOQ. JUDICIALMENTE: " +
                                     STRING(aux_vlblqpop,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
                                 ELSE
                                     " "
-                c-literal[17] = " " 
-                c-literal[18] = " "
+                c-literal[18] = IF  aux_vlblqpou_gar > 0 THEN 
+                                    "VALOR BLOQ. GARANTIA:      " +
+                                    STRING(aux_vlblqpou_gar,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
+                                ELSE
+                                    " "                    
                 c-literal[19] = " "
-                c-literal[20] = " ".
+                c-literal[20] = " "
+                c-literal[21] = " "
+                c-literal[22] = " ".
     ELSE
          ASSIGN c-literal[11] = "               DISPONIVEL: " + 
                                 STRING(p-valor-disponivel,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
@@ -1177,7 +1181,7 @@ DEF VAR aux_nrdrowid AS ROWID.
                                  INPUT crapass.nrdconta, /* Número da Conta */
                                  INPUT 1,                /* Titular da Conta */
                                  INPUT 0,                /* Número da Aplicação / Parâmetro Opcional */
-                                 INPUT crapdat.dtmvtolt, /* Data de Movimento */
+                                 INPUT crapdat.dtmvtocd, /* Data de Movimento */
                                  INPUT 0,                /* Código do Produto */
                                  INPUT 1,            /* Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas) */
                                  INPUT 0,            /* Identificador de Log (0 – Não / 1 – Sim) */
@@ -1286,7 +1290,7 @@ PROCEDURE calcula_poupanca:
                rpp_vlsdrdpp = craprpp.vlsdrdpp
                rpp_dtcalcul = craprpp.dtiniper
                rpp_dtrefere = craprpp.dtfimper
-               rpp_dtmvtolt = crapdat.dtmvtolt + 1. /*Calculo ate dia do mvto*/
+               rpp_dtmvtolt = crapdat.dtmvtocd + 1. /*Calculo ate dia do mvto*/ 
 
         /*  Leitura dos lancamentos de resgate da aplicacao  */
 
