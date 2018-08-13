@@ -4372,40 +4372,13 @@ PROCEDURE trata_lancamentos.
                       ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                       ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
                       
-                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                      DO:  
-                          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                          RETURN "NOK".
-                      END.   
-                      
                     IF  VALID-HANDLE(h-b1wgen0200) THEN
                       DELETE PROCEDURE h-b1wgen0200.
-
-                    
-                    /* Credita valor da TED na conta do cooperado */
-                    /*CREATE craplcm.
-                    ASSIGN craplcm.cdcooper = b-crabcop.cdcooper
-                           craplcm.dtmvtolt = b-craplot.dtmvtolt
-                           craplcm.cdagenci = b-craplot.cdagenci
-                           craplcm.cdbccxlt = b-craplot.cdbccxlt
-                           craplcm.nrdolote = b-craplot.nrdolote
-                           craplcm.nrdconta = tbepr_portabilidade.nrdconta
-                           craplcm.nrdctabb = tbepr_portabilidade.nrdconta
-                           craplcm.nrdocmto = aux_nrctremp
-               
-                           craplcm.cdhistor = 1918
-                           craplcm.vllanmto = DEC(aux_VlrLanc)
-                           craplcm.nrseqdig = b-craplot.nrseqdig + 1
-                           craplcm.cdpesqbb = "CRED TED PORT"
-                           craplcm.cdoperad = "1"
-                           craplcm.hrtransa = aux_hrtransa.
-    
-                    VALIDATE craplcm.*/
                  
                     ASSIGN b-craplot.vlcompcr = b-craplot.vlcompcr + 
-                                                craplcm.vllanmto
+                                                DEC(aux_VlrLanc)
                            b-craplot.vlinfocr = b-craplot.vlinfocr +
-                                                craplcm.vllanmto
+                                                DEC(aux_VlrLanc)
                            b-craplot.nrseqdig = b-craplot.nrseqdig + 1.  
                         
                     /* Atualiza data da liquidacao do contrato por portabilidade */ 
@@ -4746,36 +4719,10 @@ PROCEDURE processa_conta_transferida:
           IF  VALID-HANDLE(h-b1wgen0200) THEN
             DELETE PROCEDURE h-b1wgen0200.
 
-
-
-    /*CREATE craplcm.
-    ASSIGN craplcm.cdcooper = b-crapcop.cdcooper
-           craplcm.dtmvtolt = crablot.dtmvtolt
-           craplcm.cdagenci = crablot.cdagenci
-           craplcm.cdbccxlt = crablot.cdbccxlt
-           craplcm.nrdolote = crablot.nrdolote
-           craplcm.nrdconta = craptco.nrdconta
-           craplcm.nrdctabb = craplcm.nrdconta
-           craplcm.nrdocmto = aux_nrdocmto
-
-           craplcm.cdhistor = 
-                       /* Credito TEC */ 
-                  IF   CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg)  THEN
-                       799
-                  ELSE /* Credito TED */ 
-                       578
-
-           craplcm.vllanmto = par_vlrlanct
-           craplcm.nrseqdig = crablot.nrseqdig + 1
-           craplcm.cdpesqbb = aux_dadosdeb /* Dados do Remetente */
-           craplcm.cdoperad = "1"
-           craplcm.hrtransa = aux_hrtransa.
-    VALIDATE craplcm.*/
-
     ASSIGN crablot.vlcompcr = crablot.vlcompcr + 
-                              craplcm.vllanmto
+                              par_vlrlanct
            crablot.vlinfocr = crablot.vlinfocr +
-                              craplcm.vllanmto.
+                              par_vlrlanct.
     
 
     ASSIGN  crablot.nrseqdig = crablot.nrseqdig + 1
@@ -5267,159 +5214,128 @@ PROCEDURE liquida_contrato_emprestimo_antigo.
                              INPUT crapepr.nrdconta,
                              INPUT 108) THEN
                 DO:
-                    ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
-                    craplot.qtcompln = craplot.qtcompln + 1
-                    craplot.qtinfoln = craplot.qtcompln
-                    craplot.vlcompdb = craplot.vlcompdb + DEC(aux_VlrLanc)
-                    craplot.vlinfodb = craplot.vlcompdb.
+                ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                craplot.qtcompln = craplot.qtcompln + 1
+                craplot.qtinfoln = craplot.qtcompln
+                craplot.vlcompdb = craplot.vlcompdb + DEC(aux_VlrLanc)
+                craplot.vlinfodb = craplot.vlcompdb.
 
-                    RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                      (INPUT par_dtmvtolt                   /* par_dtmvtolt */
-                      ,INPUT craplot.cdagenci               /* par_cdagenci */
-                      ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-                      ,INPUT craplot.nrdolote               /* par_nrdolote */
-                      ,INPUT crapepr.nrdconta               /* par_nrdconta */
-                      ,INPUT crapepr.nrctremp               /* par_nrdocmto */
-                      ,INPUT 108                            /* par_cdhistor */
-                      ,INPUT craplot.nrseqdig               /* par_nrseqdig */
-                      ,INPUT DEC(aux_VlrLanc)               /* par_vllanmto */
-                      ,INPUT crapepr.nrdconta               /* par_nrdctabb */
-                      ,INPUT ""                             /* par_cdpesqbb */
-                      ,INPUT 0                              /* par_vldoipmf */
-                      ,INPUT 0                              /* par_nrautdoc */
-                      ,INPUT 0                              /* par_nrsequni */
-                      ,INPUT 0                              /* par_cdbanchq */
-                      ,INPUT 0                              /* par_cdcmpchq */
-                      ,INPUT 0                              /* par_cdagechq */
-                      ,INPUT 0                              /* par_nrctachq */
-                      ,INPUT 0                              /* par_nrlotchq */
-                      ,INPUT 0                              /* par_sqlotchq */
-                      ,INPUT ""                             /* par_dtrefere */
-                      ,INPUT ""                             /* par_hrtransa */
-                      ,INPUT 0                              /* par_cdoperad */
-                      ,INPUT 0                              /* par_dsidenti */
-                      ,INPUT par_cdcooper                   /* par_cdcooper */
-                      ,INPUT ""                             /* par_nrdctitg */
-                      ,INPUT STRING(crapepr.nrdconta,"99999999")/* par_dscedent */
-                      ,INPUT 0                              /* par_cdcoptfn */
-                      ,INPUT 0                              /* par_cdagetfn */
-                      ,INPUT 0                              /* par_nrterfin */
-                      ,INPUT 0                              /* par_nrparepr */
-                      ,INPUT 0                              /* par_nrseqava */
-                      ,INPUT 0                              /* par_nraplica */
-                      ,INPUT 0                              /* par_cdorigem */
-                      ,INPUT 0                              /* par_idlautom */
-                      /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
-                      ,INPUT 0                              /* Processa lote                                 */
-                      ,INPUT 0                              /* Tipo de lote a movimentar                     */ 
-                      /* CAMPOS DE SAÍDA                                                                     */                                            
-                      ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
-                      ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
-                      ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
-                      ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-                      
-                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                      DO:  
-                          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                          RETURN "NOK".
-                      END.   
+                RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+                    (INPUT par_dtmvtolt                   /* par_dtmvtolt */
+                    ,INPUT craplot.cdagenci               /* par_cdagenci */
+                    ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+                    ,INPUT craplot.nrdolote               /* par_nrdolote */
+                    ,INPUT crapepr.nrdconta               /* par_nrdconta */
+                    ,INPUT crapepr.nrctremp               /* par_nrdocmto */
+                    ,INPUT 108                            /* par_cdhistor */
+                    ,INPUT craplot.nrseqdig               /* par_nrseqdig */
+                    ,INPUT DEC(aux_VlrLanc)               /* par_vllanmto */
+                    ,INPUT crapepr.nrdconta               /* par_nrdctabb */
+                    ,INPUT ""                             /* par_cdpesqbb */
+                    ,INPUT 0                              /* par_vldoipmf */
+                    ,INPUT 0                              /* par_nrautdoc */
+                    ,INPUT 0                              /* par_nrsequni */
+                    ,INPUT 0                              /* par_cdbanchq */
+                    ,INPUT 0                              /* par_cdcmpchq */
+                    ,INPUT 0                              /* par_cdagechq */
+                    ,INPUT 0                              /* par_nrctachq */
+                    ,INPUT 0                              /* par_nrlotchq */
+                    ,INPUT 0                              /* par_sqlotchq */
+                    ,INPUT ""                             /* par_dtrefere */
+                    ,INPUT ""                             /* par_hrtransa */
+                    ,INPUT 0                              /* par_cdoperad */
+                    ,INPUT 0                              /* par_dsidenti */
+                    ,INPUT par_cdcooper                   /* par_cdcooper */
+                    ,INPUT ""                             /* par_nrdctitg */
+                    ,INPUT STRING(crapepr.nrdconta,"99999999")/* par_dscedent */
+                    ,INPUT 0                              /* par_cdcoptfn */
+                    ,INPUT 0                              /* par_cdagetfn */
+                    ,INPUT 0                              /* par_nrterfin */
+                    ,INPUT 0                              /* par_nrparepr */
+                    ,INPUT 0                              /* par_nrseqava */
+                    ,INPUT 0                              /* par_nraplica */
+                    ,INPUT 0                              /* par_cdorigem */
+                    ,INPUT 0                              /* par_idlautom */
+                    /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                    ,INPUT 0                              /* Processa lote                                 */
+                    ,INPUT 0                              /* Tipo de lote a movimentar                     */ 
+                    /* CAMPOS DE SAÍDA                                                                     */                                            
+                    ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+                    ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+                    ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+                    ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
                   
-                      IF  VALID-HANDLE(h-b1wgen0200) THEN
-                      DELETE PROCEDURE h-b1wgen0200.
-          
-                     /*CREATE craplcm.
-                     ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
-                            craplot.qtcompln = craplot.qtcompln + 1
-                            craplot.qtinfoln = craplot.qtcompln
-                            craplot.vlcompdb = craplot.vlcompdb + DEC(aux_VlrLanc)
-                            craplot.vlinfodb = craplot.vlcompdb
+                    IF  VALID-HANDLE(h-b1wgen0200) THEN
+                    DELETE PROCEDURE h-b1wgen0200.
+
               
-                            craplcm.cdagenci = craplot.cdagenci
-                            craplcm.cdbccxlt = craplot.cdbccxlt
-                            craplcm.cdhistor = 108
-                            craplcm.dtmvtolt = par_dtmvtolt
-                            craplcm.cdpesqbb = ""
-                            craplcm.nrdconta = crapepr.nrdconta
-                            craplcm.nrdctabb = crapepr.nrdconta
-                            craplcm.nrdctitg = STRING(crapepr.nrdconta,"99999999")
-                            craplcm.nrdocmto = crapepr.nrctremp
-                            craplcm.nrdolote = craplot.nrdolote
-                            craplcm.nrseqdig = craplot.nrseqdig
-                            craplcm.vllanmto = DEC(aux_VlrLanc)
-                            craplcm.cdcooper = par_cdcooper.
-                     VALIDATE craplcm.*/
+                    /* Eliminar avisos de débito pendentes */ 
+                    FOR EACH crapavs WHERE crapavs.cdcooper = par_cdcooper     AND
+                                        crapavs.nrdconta = crapepr.nrdconta  AND
+                                        crapavs.cdhistor = 108              AND
+                                        crapavs.insitavs = 0                AND 
+                                        crapavs.dtrefere >= par_dtmvtolt
+                                        EXCLUSIVE-LOCK:
+                        DELETE crapavs.
+                    END.
               
-                     /* Eliminar avisos de débito pendentes */ 
-                     FOR EACH crapavs WHERE crapavs.cdcooper = par_cdcooper     AND
-                                            crapavs.nrdconta = craplcm.nrdconta AND
-                                            crapavs.cdhistor = 108              AND
-                                            crapavs.insitavs = 0                AND 
-                                            crapavs.dtrefere >= par_dtmvtolt
-                                            EXCLUSIVE-LOCK:
-                         DELETE crapavs.
-                     END.
+                    RUN sistema/generico/procedures/b1wgen0043.p
+                                        PERSISTENT SET h-b1wgen0043.
               
-                     RUN sistema/generico/procedures/b1wgen0043.p
-                                          PERSISTENT SET h-b1wgen0043.
-              
-                     /* Desativar o Rating associado a esta operaçao */
-                     RUN desativa_rating IN h-b1wgen0043 
-                                     (INPUT par_cdcooper,
-                                      INPUT 0,
-                                      INPUT 0,
-                                      INPUT "1",
-                                      INPUT b-crabdat.dtmvtolt,
-                                      INPUT b-crabdat.dtmvtopr,
-                                      INPUT crapepr.nrdconta,
-                                      INPUT 90, /* Emprestimo*/ 
-                                      INPUT crapepr.nrctremp,
-                                      INPUT TRUE,
-                                      INPUT 1,
-                                      INPUT 1,
-                                      INPUT "crps531_1",
-                                      INPUT b-crabdat.inproces,
-                                      INPUT FALSE,
-                                      OUTPUT TABLE tt-erro-bo).
+                    /* Desativar o Rating associado a esta operaçao */
+                    RUN desativa_rating IN h-b1wgen0043 
+                                    (INPUT par_cdcooper,
+                                    INPUT 0,
+                                    INPUT 0,
+                                    INPUT "1",
+                                    INPUT b-crabdat.dtmvtolt,
+                                    INPUT b-crabdat.dtmvtopr,
+                                    INPUT crapepr.nrdconta,
+                                    INPUT 90, /* Emprestimo*/ 
+                                    INPUT crapepr.nrctremp,
+                                    INPUT TRUE,
+                                    INPUT 1,
+                                    INPUT 1,
+                                    INPUT "crps531_1",
+                                    INPUT b-crabdat.inproces,
+                                    INPUT FALSE,
+                                    OUTPUT TABLE tt-erro-bo).
                          
-                     IF VALID-HANDLE(h-b1wgen0043) THEN
-                         DELETE PROCEDURE h-b1wgen0043.
+                    IF VALID-HANDLE(h-b1wgen0043) THEN
+                        DELETE PROCEDURE h-b1wgen0043.
               
-                     FIND FIRST tt-erro-bo NO-ERROR.
+                    FIND FIRST tt-erro-bo NO-ERROR.
               
-                     IF  AVAIL tt-erro-bo THEN
-                         DO:
-                             UNIX SILENT VALUE("echo '" + STRING(par_dtmvtolt, "99/99/9999") + " "
-                                               + STRING(TIME,"HH:MM:SS") +
-                                               " => Liquidacao " + 
-                                               "|" + TRIM(STRING(crapepr.cdagenci, "zzz9")) +
-                                               "|" + TRIM(STRING(crapepr.nrdconta, "zzzz,zz9,9")) +
-                                               "|" + TRIM(STRING(crapepr.nrctremp, "zzzzzzzzz9")) +
-                                               "|" + TRIM(STRING(DECIMAL(aux_NUPortdd), "zzzzzzzzzzzzzzzzzzzz9")) +
-                                               "|" + tt-erro-bo.dscritic  + 
-                                               "' >> " + aux_nmlogprt).
+                    IF  AVAIL tt-erro-bo THEN
+                        DO:
+                            UNIX SILENT VALUE("echo '" + STRING(par_dtmvtolt, "99/99/9999") + " "
+                                            + STRING(TIME,"HH:MM:SS") +
+                                            " => Liquidacao " + 
+                                            "|" + TRIM(STRING(crapepr.cdagenci, "zzz9")) +
+                                            "|" + TRIM(STRING(crapepr.nrdconta, "zzzz,zz9,9")) +
+                                            "|" + TRIM(STRING(crapepr.nrctremp, "zzzzzzzzz9")) +
+                                            "|" + TRIM(STRING(DECIMAL(aux_NUPortdd), "zzzzzzzzzzzzzzzzzzzz9")) +
+                                            "|" + tt-erro-bo.dscritic  + 
+                                            "' >> " + aux_nmlogprt).
                                                
-                             UNDO.
-                         END.
+                            UNDO.
+                        END.
               
-                     RUN sistema/generico/procedures/b1wgen0171.p
-                              PERSISTENT SET h-b1wgen0171.
+                    RUN sistema/generico/procedures/b1wgen0171.p
+                            PERSISTENT SET h-b1wgen0171.
               
-                     /* GRAVAMES */ 
-                     RUN solicita_baixa_automatica IN h-b1wgen0171
-                                  (INPUT par_cdcooper,
-                                   INPUT crapepr.nrdconta,
-                                   INPUT crapepr.nrctremp,
-                                   INPUT par_dtmvtolt,
-                                  OUTPUT TABLE tt-erro-bo).
+                    /* GRAVAMES */ 
+                    RUN solicita_baixa_automatica IN h-b1wgen0171
+                                (INPUT par_cdcooper,
+                                INPUT crapepr.nrdconta,
+                                INPUT crapepr.nrctremp,
+                                INPUT par_dtmvtolt,
+                                OUTPUT TABLE tt-erro-bo).
                      
-                     IF VALID-HANDLE(h-b1wgen0171) THEN
-                         DELETE PROCEDURE h-b1wgen0171.
+                    IF VALID-HANDLE(h-b1wgen0171) THEN
+                        DELETE PROCEDURE h-b1wgen0171.
               
-                     ASSIGN aux_flgerro = FALSE.     
-               END.
-              ELSE
-                 MESSAGE "Nao Pode." VIEW-AS ALERT-BOX.
-            
+                    ASSIGN aux_flgerro = FALSE.     
            END.
     END.
 
