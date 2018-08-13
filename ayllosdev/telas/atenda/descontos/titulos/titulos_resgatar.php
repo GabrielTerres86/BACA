@@ -5,6 +5,8 @@
 	 Data : 14/04/2018                Última Alteração: 
 	                                                                  
 	 Objetivo  : Resgate de títulos de borderôes
+	 Alterações: 
+	  - 13/08/2018 - Vitor Shimada Assanuma (GFT) - Remoção do cabeçalho e verificação do número de contrato de limite no resgate.
 
 	************************************************************************/
 	
@@ -40,39 +42,6 @@
 		exibeErro("Contrato inv&aacute;lido.");
 	}
 
-
-	$xml = "<Root>";
-    $xml .= " <Dados>";
-    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "	<tpctrlim>3</tpctrlim>";
-	$xml .= "	<insitlim>2</insitlim>";
-	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
-
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","OBTEM_DADOS_CONTRATO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getClassXML($xmlResult);
-    $root = $xmlObj->roottag;
-    // Se ocorrer um erro, mostra crítica
-	if ($root->erro){
-		exibeErro(htmlentities($root->erro->registro->dscritic));
-		exit;
-	}
-
-	$dados 		= $root->dados;
-	$contrato 	= $dados->inf;
-	$vlutiliz = $contrato->vlutiliz;
-	$vllimite = $contrato->vllimite;
-	$pctolera = $contrato->pctolera;
-	$dtfimvig = $contrato->dtfimvig;
-
-	if (diffData($dtfimvig,$glbvars["dtmvtolt"])<0){
-		exibeErro("Data de vig&ecirc;ncia do contrato deve ser maior que a data de movimenta&ccedil;&atilde;o do sistema");
-	}
-
-	$pctolera = $pctolera ? $pctolera : 0;
-
-	$vldispon = formataMoeda(converteFloat($vllimite)-converteFloat($vlutiliz));
 	// Função para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -89,24 +58,6 @@
 		<input type="hidden" id="pctolera" name="pctolera" value="<? echo $pctolera; ?>" />
 		<input type="hidden" id="vllimite" name="vllimite" value="<? echo $vllimite; ?>" />
 		<div id="divFiltros">
-			<fieldset id="divDadosContrato">
-				<legend>Dados do Contrato</legend>
-				<label for="nrctrlim">Contrato</label>
-			    <input type="text" id="nrctrlim" name="nrctrlim" value="<?php echo $contrato->nrctrlim ?>"/>
-
-				<label for="vlutiliz">Valor Descontado</label>
-			    <input type="text" id="vlutiliz" name="vlutiliz" value="<?php echo formataMoeda($vlutiliz) ?>"/>
-
-				<label for="vldispon">Limite Dispon&iacute;vel</label>
-			    <input type="text" id="vldispon" name="vldispon" value="<?php echo $vldispon ?>"/>
-
-				<label for="qtseleci">Quantidade T&iacute;tulos</label>
-			    <input type="text" id="qtseleci" name="qtseleci" value="0"/>
-
-				<label for="vlseleci">Valor Resgatados</label>
-			    <input type="text" id="vlseleci" name="vlseleci" value="0"/>
-
-			</fieldset>
 			<fieldset>
 				<legend>Filtrar T&iacute;tulos</legend>
 

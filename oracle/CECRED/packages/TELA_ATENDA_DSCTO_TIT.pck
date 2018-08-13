@@ -3990,7 +3990,6 @@ END pc_obtem_proposta_aciona_web;
                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                 ) IS
-                                
     -- variaveis de retorno
     vr_tab_dados_titulos typ_tab_dados_titulos;
 
@@ -4047,7 +4046,7 @@ END pc_obtem_proposta_aciona_web;
                                ,pr_dscritic          => vr_dscritic --> Descrição da crítica
                        );
                        
-      -- inicializar o clob    
+    
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -7660,7 +7659,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       Data     : Abril/2018
 
       Objetivo  : Procedure para os resgates dos títulos chamada pelo Ayllos WEB
-
+      Alterações:
+         - 13/08/2018 - Vitor Shimada Assanuma (GFT) - Remoção da verificação do contrato ativo.
     ---------------------------------------------------------------------------------------------------------------------*/
                                        
 
@@ -7684,27 +7684,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       vr_exc_erro exception;
      
       vr_nrborder crapbdt.nrborder%TYPE;
-      /*Contrato do limite*/
-      CURSOR cr_craplim IS      
-        SELECT 
-          craplim.dtpropos,
-          craplim.dtinivig,
-          craplim.nrctrlim,
-          craplim.vllimite,
-          craplim.qtdiavig,
-          craplim.cddlinha,
-          craplim.tpctrlim,
-          craplim.dtfimvig
-        FROM 
-          craplim
-        where 
-          craplim.cdcooper = vr_cdcooper
-          AND craplim.tpctrlim = 3
-          AND craplim.nrdconta = pr_nrdconta
-          AND craplim.nrctrlim = pr_nrctrlim
-        ;
-      rw_craplim cr_craplim%rowtype;
-      
+            
       /*Cooperado*/
       CURSOR cr_crapass IS
          SELECT
@@ -7780,15 +7760,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                  ,pr_idorigem => vr_idorigem
                                  ,pr_cdoperad => vr_cdoperad
                                  ,pr_dscritic => vr_dscritic);
-                                          
-          /*VERIFICA SE O CONTRATO EXISTE E AINDA ESTÁ ATIVO*/
-         OPEN cr_craplim;
-         FETCH cr_craplim INTO rw_craplim;
-         IF (cr_craplim%NOTFOUND) THEN
-           vr_dscritic := 'Contrato não encontrado.';
-           raise vr_exc_erro;
-         END IF;
-         
+     
          OPEN cr_crapass;
          FETCH cr_crapass INTO rw_crapass;
          IF (cr_crapass%NOTFOUND) THEN
@@ -7930,6 +7902,11 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                   ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                   ) IS
+      /* ------------------------------------------------------------------------------------------------------------------
+      *   Alterações
+      * -------------------------------------------------------------------------------------------------------------------
+      *   13/08/2018 - Vitor Shimada Assanuma - Retirada a regra de número de contrato de limite na pesquisa.
+      --------------------------------------------------------------------------------------------------------------------- */
       
       -- Variável de críticas
       vr_dscritic varchar2(1000);        --> Desc. Erro
@@ -7985,7 +7962,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          AND tdb.insittit = 4
          AND bdt.insitbdt = 3
          AND tdb.dtvencto > vr_dtmvtolt
-         AND tdb.nrctrlim = pr_nrctrlim
+--         AND tdb.nrctrlim = pr_nrctrlim
        GROUP BY
          cob.progress_recid,
          cob.cdcooper,
