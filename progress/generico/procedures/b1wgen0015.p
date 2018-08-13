@@ -4797,33 +4797,6 @@ PROCEDURE estorna-transferencia:
         IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.
 
-        /*CREATE crablcm.
-        ASSIGN crablcm.cdcooper = par_cdcooper
-               crablcm.dtmvtolt = par_dtmvtocd
-               crablcm.cdagenci = craplot.cdagenci
-               crablcm.cdbccxlt = craplot.cdbccxlt
-               crablcm.nrdolote = craplot.nrdolote
-               crablcm.dtrefere = par_dtmvtocd
-               crablcm.hrtransa = TIME
-               crablcm.cdoperad = par_cdoperad
-               crablcm.nrdconta = par_nrdconta
-               crablcm.nrdctabb = par_nrdconta
-               crablcm.nrdctitg = STRING(par_nrdconta,"99999999")
-               crablcm.nrdocmto = craplot.nrseqdig
-               crablcm.nrsequni = craplot.nrseqdig
-               crablcm.nrseqdig = craplot.nrseqdig
-               crablcm.cdhistor = IF  par_cdhisdeb = 537  THEN
-                                      567
-                                  ELSE
-                                  IF  par_cdhisdeb = 538  THEN
-                                      568
-                                  ELSE
-                                      773
-               crablcm.vllanmto = craplcm.vllanmto
-               crablcm.nrautdoc = aux_sequenci
-               crablcm.cdpesqbb = "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " +
-                                  "- CONTA " + STRING(par_nrctadst,"99999999").
-        VALIDATE crablcm.*/
 
         /** Busca registro de lancamento do credito da transferencia **/
         FIND craplcm WHERE craplcm.cdcooper = par_cdcooper AND
