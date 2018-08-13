@@ -750,59 +750,6 @@ FUNCTION retorna-situacao RETURNS CHAR
 
 END FUNCTION.
 
-FUNCTION retorna-situacao-antigo RETURNS CHAR
-    (INPUT par_insitcrd AS INTE,
-     INPUT par_dtsol2vi AS DATE,
-     INPUT par_cdadmcrd AS INTE):
-
-    DEF VAR aux_dssitcrd AS CHARACTER                       NO-UNDO.
-   
-    ASSIGN aux_dssitcrd = IF (par_insitcrd  = 4  AND 
-                              par_dtsol2vi <> ?) OR
-                              par_insitcrd  = 7  THEN 
-                              "Aguard. Bancoob"
-							  /*"Sol.2v"*/
-                          ELSE
-                          IF  par_insitcrd = 0   THEN 
-                              "Estudo"
-                          ELSE
-                          IF  par_insitcrd = 1   THEN 
-                              "Aprov."
-                          ELSE             
-                          IF  par_insitcrd = 2   THEN 
-                              "Solic."
-                          ELSE
-                          IF  par_insitcrd = 3  THEN 
-                              "Liber."
-                          ELSE
-                          IF   par_insitcrd = 4 AND
-                               f_verifica_adm(par_cdadmcrd) = 1
-                               THEN "Prc.BB"
-                          ELSE
-                          IF   par_insitcrd = 4  THEN 
-                               "Em uso"
-                          ELSE
-                          IF   par_insitcrd = 5  THEN 
-                               IF f_verifica_adm(par_cdadmcrd) = 1 OR 
-                                  f_verifica_adm(par_cdadmcrd) = 2 THEN 
-                                  "Bloque"
-                               ELSE
-                                  "Cancel"
-                          ELSE
-                          IF   par_insitcrd = 6  THEN 
-                               IF f_verifica_adm(par_cdadmcrd) = 2 THEN 
-                                  "Em Analise"
-                               ELSE
-                                  "Encer."
-                          ELSE
-                                                  IF   par_insitcrd = 7  THEN 
-                               "Enviado Bancoob"
-                          ELSE "??????".  
-
-    RETURN aux_dssitcrd.
-
-END FUNCTION.
-
 /**************************
     PROCEDURES GERAIS
 **************************/    
@@ -25159,12 +25106,6 @@ PROCEDURE verifica-pa-piloto-ws-bancob:
         ELSE
            ASSIGN par_flpiloto = TRUE.
       END.
-   
-  /* Inverte para fins de homologacao */
-  IF par_flpiloto THEN
-    ASSIGN par_flpiloto = FALSE.
-  ELSE 
-    ASSIGN par_flpiloto = TRUE.
    
 END.
 
