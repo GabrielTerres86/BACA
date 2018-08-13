@@ -5604,6 +5604,7 @@ END pc_insere_bordero;
     --  03/05/2018 - Vitor Shimada Assanuma - Alterado a regra de CNAE, adicionado funcao DSCT0003.fn_calcula_cnae()
     --  30/05/2018 - Vitor Shimada Assanuma - Inserção da verificação se o borderô é antigo e tratamento de erro
     --  09/07/2018 - Vitor Shimada Assanuma - Validação de críticas repetidas
+    --  13/08/2018 - Luis Fernando (GFT) - Adicionados mais parametros no calculo de liquidez
     ---------------------------------------------------------------------------------------------------------------------
    
     ----------------> VARIÁVEIS <----------------
@@ -6001,6 +6002,8 @@ END pc_insere_bordero;
                                                 ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
                                                 ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
                                                 ,pr_qtcarpag     => vr_tab_dados_dsctit(1).cardbtit_c
+                                                ,pr_qtmitdcl     => vr_tab_dados_dsctit(1).qtmitdcl
+                                                ,pr_vlmintcl     => vr_tab_dados_dsctit(1).vlmintcl
                                                --------------> OUT <--------------
                                                ,pr_pc_cedpag    => vr_liqpagcd
                                                ,pr_qtd_cedpag   => pr_qtd_cedpag

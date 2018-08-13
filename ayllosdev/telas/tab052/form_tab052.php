@@ -276,7 +276,7 @@
 
 			<!-- qtmitdcl -->
 			<tr>
-				<td width="300px"><label for="qtmitdcl" class='labelPri'><?php echo utf8ToHtml('Qtd. Mínima de Títulos Descontados para Cálculo de Liquidez:') ?></label></td>
+				<td width="300px"><label for="qtmitdcl" class='labelPri'><?php echo utf8ToHtml('Qtd. Mínima de Títulos para Cálculo de Liquidez:') ?></label></td>
 				<td width="170px"><input type="text" id="qtmitdcl" name="qtmitdcl" value="<?php echo $qtmitdcl == 0 ? '' : $qtmitdcl ?>" maxlength="3" style="text-align:right;"/></td>
 				<td width="170px"><input type="text" id="qtmitdcl_c" name="qtmitdcl_c" value="<?php echo $qtmitdcl_c == 0 ? '' : $qtmitdcl_c ?>" maxlength="3" style="text-align:right;"/></td>
 			</tr>

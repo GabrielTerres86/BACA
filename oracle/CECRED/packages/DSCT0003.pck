@@ -204,6 +204,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                       ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
                                       ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                                       ,pr_qtcarpag     IN NUMBER
+                                      ,pr_qtmitdcl     IN INTEGER
+                                      ,pr_vlmintcl     IN NUMBER 
                                       )RETURN NUMBER;
           
   -- Cálculo da Concentração do título do pagador
@@ -213,6 +215,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                           ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                                           ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                                           ,pr_qtcarpag     IN NUMBER
+                                          ,pr_qtmitdcl     IN INTEGER
+                                          ,pr_vlmintcl     IN NUMBER 
                                           ) RETURN NUMBER;
                                 
   -- Cálculo da Liquidez do Pagador
@@ -222,6 +226,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                        ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                                        ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                                        ,pr_qtcarpag     IN NUMBER
+                                       ,pr_qtmitdcl     IN INTEGER
+                                       ,pr_vlmintcl     IN NUMBER 
                                         ) RETURN NUMBER;
 
   FUNCTION fn_cobranca_cobtit(pr_cdcooper IN crapbdt.cdcooper%TYPE --> Código da Cooperativa
@@ -457,14 +463,15 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                             ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                             ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                             ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0 
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0  
                             -- OUT --
                             ,pr_pc_cedpag    OUT NUMBER
                             ,pr_qtd_cedpag   OUT NUMBER
                             ,pr_pc_conc      OUT NUMBER
                             ,pr_qtd_conc     OUT NUMBER
                             ,pr_pc_geral     OUT NUMBER
-                            ,pr_qtd_geral    OUT NUMBER
-                            );
+                            ,pr_qtd_geral    OUT NUMBER);
                             
  PROCEDURE pc_calcula_juros_simples_tit(pr_cdcooper  IN craptdb.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
@@ -1045,6 +1052,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                      ,pr_dtmvtolt_de  in crapdat.dtmvtolt%type
                                      ,pr_dtmvtolt_ate in crapdat.dtmvtolt%TYPE
                                      ,pr_qtcarpag     in NUMBER
+                                     ,pr_qtmitdcl     IN INTEGER
+                                     ,pr_vlmintcl     IN NUMBER  
           ) RETURN NUMBER IS
    /*---------------------------------------------------------------------------------------------------------------------
      Programa : fn_calcula_liquidez_geral
@@ -1069,12 +1078,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
    pr_qtd_geral    NUMBER;
    
    BEGIN       
-     pc_calcula_liquidez(pr_cdcooper            
-                     ,pr_nrdconta     
-                     ,NULL     
-                     ,pr_dtmvtolt_de  
-                     ,pr_dtmvtolt_ate 
-                     ,pr_qtcarpag     
+     pc_calcula_liquidez(pr_cdcooper => pr_cdcooper            
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrinssac => NULL     
+                     ,pr_dtmvtolt_de => pr_dtmvtolt_de  
+                     ,pr_dtmvtolt_ate => pr_dtmvtolt_ate 
+                     ,pr_qtcarpag => pr_qtcarpag
+                     ,pr_qtmitdcl => pr_qtmitdcl
+                     ,pr_vlmintcl => pr_vlmintcl
                     -- OUT --
                     ,pr_pc_cedpag    => pr_pc_cedpag
                     ,pr_qtd_cedpag   => pr_qtd_cedpag
@@ -1092,6 +1103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                           ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                                           ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                                           ,pr_qtcarpag     IN NUMBER
+                                          ,pr_qtmitdcl     IN INTEGER
+                                          ,pr_vlmintcl     IN NUMBER  
                                        ) RETURN NUMBER IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : fn_concentracao_titulo_pagador
@@ -1117,6 +1130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                      ,pr_dtmvtolt_de  
                      ,pr_dtmvtolt_ate 
                      ,pr_qtcarpag     
+                     ,pr_qtmitdcl
+                     ,pr_vlmintcl
                     -- OUT --
                     ,pr_pc_cedpag    => pr_pc_cedpag
                     ,pr_qtd_cedpag   => pr_qtd_cedpag
@@ -1135,6 +1150,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                         ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                                         ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                                         ,pr_qtcarpag     IN NUMBER
+                                        ,pr_qtmitdcl     IN INTEGER
+                                        ,pr_vlmintcl     IN NUMBER  
                                         ) RETURN NUMBER IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : fn_liquidez_pagador_cedente
@@ -1164,7 +1181,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                      ,pr_nrinssac     
                      ,pr_dtmvtolt_de  
                      ,pr_dtmvtolt_ate 
-                     ,pr_qtcarpag     
+                     ,pr_qtcarpag
+                     ,pr_qtmitdcl
+                     ,pr_vlmintcl
                     -- OUT --
                     ,pr_pc_cedpag    => pr_pc_cedpag
                     ,pr_qtd_cedpag   => pr_qtd_cedpag
@@ -3284,6 +3303,8 @@ END pc_inserir_lancamento_bordero;
                            ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30  
                            ,rw_crapdat.dtmvtolt 
                            ,vr_tab_dados_dsctit(1).cardbtit_c
+                           ,vr_tab_dados_dsctit(1).qtmitdcl
+                           ,vr_tab_dados_dsctit(1).vlmintcl
                            -- OUT --     
                            ,pr_pc_cedpag    => vr_liqpagcd
                            ,pr_qtd_cedpag   => vr_qtd_cedpag
@@ -4184,6 +4205,8 @@ END pc_inserir_lancamento_bordero;
                                                 ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
                                                 ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
                                                 ,pr_qtcarpag     => vr_tab_dados_dsctit(1).cardbtit_c
+                                                ,pr_qtmitdcl     => vr_tab_dados_dsctit(1).qtmitdcl
+                                                ,pr_vlmintcl     => vr_tab_dados_dsctit(1).vlmintcl
                                                --------------> OUT <--------------
                                                ,pr_pc_cedpag    => vr_ignora_numero
                                                ,pr_qtd_cedpag   => vr_ignora_numero
@@ -5893,6 +5916,8 @@ END pc_inserir_lancamento_bordero;
                                       ,vr_tab_dados_dsctit(1).qttliqcp
                                       ,vr_tab_dados_dsctit(1).vltliqcp
                                       ,vr_tab_dados_dsctit(1).pcmxctip
+                                      ,vr_tab_dados_dsctit(1).qtmitdcl
+                                      ,vr_tab_dados_dsctit(1).vlmintcl
                                       --------------> OUT <--------------
                                       ,vr_liqpagcd
                                       ,vr_qtd_cedpag
@@ -6901,6 +6926,8 @@ EXCEPTION
                             ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
                             ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
                             ,pr_qtcarpag     IN NUMBER
+                            ,pr_qtmitdcl     IN INTEGER  DEFAULT 0 
+                            ,pr_vlmintcl     IN NUMBER   DEFAULT 0  
                             -- OUT --
                             ,pr_pc_cedpag    OUT NUMBER
                             ,pr_qtd_cedpag   OUT NUMBER
@@ -6916,7 +6943,9 @@ EXCEPTION
     Data     : 24/05/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure para centralizar os calculos de Liquidez retornando a quantidade e porcentagens
-    Alterações: Alterado a regra do calculo de liquidez cedente pagador para quando não ache titulos seja 100%
+    Alterações: 
+              Alterado a regra do calculo de liquidez cedente pagador para quando não ache titulos seja 100% - Vitor Shimada Assanuma (GFT)
+              Adicionado minimo de titulos e valor minimo do titulo para calculo da liquidez - Luis Fernando (GFT) 
     ---------------------------------------------------------------------------------------------------------------------*/
     -- CALCULO DA CONCENTRACAO DO PAGADOR
     CURSOR cr_concentracao IS
@@ -6953,6 +6982,7 @@ EXCEPTION
        AND    cob.cdcooper = pr_cdcooper
        AND    cob.nrdconta = pr_nrdconta
        AND    cob.nrinssac = pr_nrinssac
+       AND    cob.vltitulo >= nvl(pr_vlmintcl,0)
        --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
        AND    NOT EXISTS( SELECT 1
                           FROM   craptit tit
@@ -6968,6 +6998,7 @@ EXCEPTION
     -- CALCULO  DA LIQUIDEZ GERAL
     CURSOR cr_liquidez_geral IS
       SELECT 
+        COUNT(1) AS qtd_titulos,
         (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_geral,
         (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_geral
        FROM   crapcob cob -- Titulos do Bordero
@@ -6976,6 +7007,7 @@ EXCEPTION
 --       AND    cob.dtlibbdt IS NOT NULL                   -- Somente os titulos que realmente foram descontados
        AND    cob.cdcooper = pr_cdcooper
        AND    cob.nrdconta = pr_nrdconta
+       AND    cob.vltitulo >= nvl(pr_vlmintcl,0)
        --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
        AND    NOT EXISTS( SELECT 1
                           FROM   craptit tit
@@ -6999,7 +7031,7 @@ EXCEPTION
       OPEN cr_liquidez_pagador;
       FETCH cr_liquidez_pagador INTO rw_liquidez_pagador;
       CLOSE cr_liquidez_pagador;
-      IF (rw_liquidez_pagador.qtd_titulos = 0) AND (nvl(rw_liquidez_pagador.pc_cedpag,0) = 0) THEN
+      IF (rw_liquidez_pagador.qtd_titulos < pr_qtmitdcl OR (nvl(rw_liquidez_pagador.pc_cedpag,0) = 0 AND rw_liquidez_pagador.qtd_titulos = 0)) THEN
         pr_pc_cedpag  := 100;
         pr_qtd_cedpag := 100;
       ELSE
@@ -7017,8 +7049,14 @@ EXCEPTION
     FETCH cr_liquidez_geral INTO rw_liquidez_geral;
     CLOSE cr_liquidez_geral;
     
-    pr_pc_geral   := CASE WHEN nvl(rw_liquidez_geral.pc_geral,0) = 0 THEN 100 ELSE rw_liquidez_geral.pc_geral END;
-    pr_qtd_geral  := CASE WHEN nvl(rw_liquidez_geral.qtd_geral,0) = 0 THEN 100 ELSE rw_liquidez_geral.qtd_geral END;
+    IF (rw_liquidez_geral.qtd_titulos < pr_qtmitdcl OR (nvl(rw_liquidez_geral.pc_geral,0) = 0 AND rw_liquidez_geral.qtd_titulos = 0)) THEN
+      pr_pc_geral  := 100;
+      pr_qtd_geral := 100;
+    ELSE
+      pr_pc_geral  := rw_liquidez_geral.pc_geral;
+      pr_qtd_geral :=  rw_liquidez_geral.qtd_geral; 
+    END IF;
+    
  END pc_calcula_liquidez;
   
   PROCEDURE pc_calcula_atraso_tit(pr_cdcooper    IN crapcop.cdcooper%TYPE      --Codigo Cooperativa
