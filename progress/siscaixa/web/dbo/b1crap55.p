@@ -1649,7 +1649,15 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                             DO:  
                               IF aux_incrineg = 0 THEN
                                DO:
-                                 RETURN "NOK".
+									ASSIGN i-cod-erro  = aux_cdcritic
+										   c-desc-erro = aux_dscritic.           
+									RUN cria-erro (INPUT p-cooper,
+												INPUT p-cod-agencia,
+												INPUT p-nro-caixa,
+												INPUT i-cod-erro,
+												INPUT c-desc-erro,
+												INPUT YES).
+									RETURN "NOK".
                                END. 
                             END. 
                            
