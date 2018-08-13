@@ -156,161 +156,130 @@ FOR EACH crablot WHERE crablot.cdcooper  = glb_cdcooper  AND
                   LEAVE.
           
         END.  /*  Fim do DO WHILE TRUE  */
-
-        /* Verificar se pode realizar o debito debitar  */
-        IF DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                            INPUT 1, 
-                            INPUT 3019373,
-                            INPUT 100)                        THEN 
-           DO:
-		
-           RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-             (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
-             ,INPUT craplot.cdagenci               /* par_cdagenci */
-             ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-             ,INPUT craplot.nrdolote               /* par_nrdolote */
-             ,INPUT craplau.nrdconta               /* par_nrdconta */
-             ,INPUT aux_nrcheque                   /* par_nrdocmto */
-             ,INPUT craplau.cdhistor               /* par_cdhistor */
-             ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
-             ,INPUT craplau.vllanaut               /* par_vllanmto */
-             ,INPUT craplau.nrdconta               /* par_nrdctabb */
-             ,INPUT ""                             /* par_cdpesqbb */
-             ,INPUT 0                              /* par_vldoipmf */
-             ,INPUT 0                              /* par_nrautdoc */
-             ,INPUT 0                              /* par_nrsequni */
-             ,INPUT 0                              /* par_cdbanchq */
-             ,INPUT 0                              /* par_cdcmpchq */
-             ,INPUT 0                              /* par_cdagechq */
-             ,INPUT 0                              /* par_nrctachq */
-             ,INPUT 0                              /* par_nrlotchq */
-             ,INPUT 0                              /* par_sqlotchq */
-             ,INPUT ""                             /* par_dtrefere */
-             ,INPUT ""                             /* par_hrtransa */
-             ,INPUT 0                              /* par_cdoperad */
-             ,INPUT 0                              /* par_dsidenti */
-             ,INPUT glb_cdcooper                   /* par_cdcooper */
-             ,INPUT STRING(craplau.nrdconta,"99999999")   /* par_nrdctitg */
-             ,INPUT ""                             /* par_dscedent */
-             ,INPUT 0                              /* par_cdcoptfn */
-             ,INPUT 0                              /* par_cdagetfn */
-             ,INPUT 0                              /* par_nrterfin */
-             ,INPUT 0                              /* par_nrparepr */
-             ,INPUT 0                              /* par_nrseqava */
-             ,INPUT 0                              /* par_nraplica */
-             ,INPUT 0                              /* par_cdorigem */
-             ,INPUT 0                              /* par_idlautom */
-             /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
-             ,INPUT 0                              /* Processa lote                                 */
-             ,INPUT 0                              /* Tipo de lote a movimentar                     */
-             /* CAMPOS DE SAÍDA                                                                     */                                            
-             ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
-             ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
-             ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
-             ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+	
+        RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+            (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
+            ,INPUT craplot.cdagenci               /* par_cdagenci */
+            ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+            ,INPUT craplot.nrdolote               /* par_nrdolote */
+            ,INPUT craplau.nrdconta               /* par_nrdconta */
+            ,INPUT aux_nrcheque                   /* par_nrdocmto */
+            ,INPUT craplau.cdhistor               /* par_cdhistor */
+            ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
+            ,INPUT craplau.vllanaut               /* par_vllanmto */
+            ,INPUT craplau.nrdconta               /* par_nrdctabb */
+            ,INPUT ""                             /* par_cdpesqbb */
+            ,INPUT 0                              /* par_vldoipmf */
+            ,INPUT 0                              /* par_nrautdoc */
+            ,INPUT 0                              /* par_nrsequni */
+            ,INPUT 0                              /* par_cdbanchq */
+            ,INPUT 0                              /* par_cdcmpchq */
+            ,INPUT 0                              /* par_cdagechq */
+            ,INPUT 0                              /* par_nrctachq */
+            ,INPUT 0                              /* par_nrlotchq */
+            ,INPUT 0                              /* par_sqlotchq */
+            ,INPUT ""                             /* par_dtrefere */
+            ,INPUT ""                             /* par_hrtransa */
+            ,INPUT 0                              /* par_cdoperad */
+            ,INPUT 0                              /* par_dsidenti */
+            ,INPUT glb_cdcooper                   /* par_cdcooper */
+            ,INPUT STRING(craplau.nrdconta,"99999999")   /* par_nrdctitg */
+            ,INPUT ""                             /* par_dscedent */
+            ,INPUT 0                              /* par_cdcoptfn */
+            ,INPUT 0                              /* par_cdagetfn */
+            ,INPUT 0                              /* par_nrterfin */
+            ,INPUT 0                              /* par_nrparepr */
+            ,INPUT 0                              /* par_nrseqava */
+            ,INPUT 0                              /* par_nraplica */
+            ,INPUT 0                              /* par_cdorigem */
+            ,INPUT 0                              /* par_idlautom */
+            /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+            ,INPUT 0                              /* Processa lote                                 */
+            ,INPUT 0                              /* Tipo de lote a movimentar                     */
+            /* CAMPOS DE SAÍDA                                                                     */                                            
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
   
-           IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-             IF aux_incrineg = 1 THEN DO:
-                 /* Tratativas de negocio */ 
-                 NEXT.   
-               END.
-             ELSE   
-               DO:
-                 RETURN "NOK".
-               END.
-           END.
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
+            glb_cdcritic = 1065.
+            RUN fontes/critic.p.
+            UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                            " - " + glb_cdprogra + "' --> '" +
+                        glb_dscritic + " >> log/proc_batch.log").
+            RETURN.
+        END.
   
-           IF  VALID-HANDLE(h-b1wgen0200) THEN
-             DELETE PROCEDURE h-b1wgen0200.
-		
-/*
-        CREATE craplcm.
-        ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-               craplcm.cdagenci = craplot.cdagenci
-               craplcm.cdbccxlt = craplot.cdbccxlt
-               craplcm.nrdolote = craplot.nrdolote
-               craplcm.nrdconta = craplau.nrdconta
-               craplcm.nrdctabb = craplau.nrdconta
-               craplcm.nrdctitg = STRING(craplau.nrdconta,"99999999")
-               craplcm.nrdocmto = aux_nrcheque
-               craplcm.cdhistor = craplau.cdhistor
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.vllanmto = craplau.vllanaut
-               craplcm.cdpesqbb = ""
-               craplcm.cdcooper = glb_cdcooper
-*/
-           ASSIGN craplau.dtdebito = glb_dtmvtolt
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
+            DELETE PROCEDURE h-b1wgen0200.
 
-               craplot.vlinfodb = craplot.vlinfodb + craplau.vllanaut /* craplcm.vllanmto */
-               craplot.vlcompdb = craplot.vlcompdb + craplau.vllanaut /* craplcm.vllanmto */
-               craplot.qtinfoln = craplot.qtinfoln + 1
-               craplot.qtcompln = craplot.qtcompln + 1
-               craplot.nrseqdig = craplot.nrseqdig + 1.
-        /* VALIDATE craplcm. */
+        ASSIGN craplau.dtdebito = glb_dtmvtolt
 
-           DO WHILE TRUE:
+            craplot.vlinfodb = craplot.vlinfodb + craplau.vllanaut /* craplcm.vllanmto */
+            craplot.vlcompdb = craplot.vlcompdb + craplau.vllanaut /* craplcm.vllanmto */
+            craplot.qtinfoln = craplot.qtinfoln + 1
+            craplot.qtcompln = craplot.qtcompln + 1
+            craplot.nrseqdig = craplot.nrseqdig + 1.
+        
+        DO WHILE TRUE:
 
-                 FIND crapdcd WHERE crapdcd.cdcooper = glb_cdcooper       AND
-                                 crapdcd.nrdconta = craplau.nrdconta   AND
-                                 crapdcd.nrcrcard = craplau.nrcrcard   AND
-                                 crapdcd.dtdebito = glb_dtmvtolt
-                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                FIND crapdcd WHERE crapdcd.cdcooper = glb_cdcooper       AND
+                                crapdcd.nrdconta = craplau.nrdconta   AND
+                                crapdcd.nrcrcard = craplau.nrcrcard   AND
+                                crapdcd.dtdebito = glb_dtmvtolt
+                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-              IF   NOT AVAILABLE crapdcd   THEN
-                   IF   LOCKED crapdcd   THEN
-                        DO:
-                            PAUSE 2 NO-MESSAGE.
-                            NEXT.
-                        END.
-                   ELSE
-                        DO:
-                            CREATE crapdcd.
-                            ASSIGN crapdcd.dtdebito = glb_dtmvtolt
-                                   crapdcd.nrdconta = craplau.nrdconta
-                                   crapdcd.nrcrcard = craplau.nrcrcard
-                                   crapdcd.cdcooper = glb_cdcooper.
-                            VALIDATE crapdcd.
-                        END.
+            IF   NOT AVAILABLE crapdcd   THEN
+                IF   LOCKED crapdcd   THEN
+                    DO:
+                        PAUSE 2 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    DO:
+                        CREATE crapdcd.
+                        ASSIGN crapdcd.dtdebito = glb_dtmvtolt
+                                crapdcd.nrdconta = craplau.nrdconta
+                                crapdcd.nrcrcard = craplau.nrcrcard
+                                crapdcd.cdcooper = glb_cdcooper.
+                        VALIDATE crapdcd.
+                    END.
 
-              LEAVE.
+            LEAVE.
 
-           END.  /*  Fim do DO WHILE TRUE  */
+        END.  /*  Fim do DO WHILE TRUE  */
 
-           crapdcd.vldebito = crapdcd.vldebito + craplcm.vllanmto.
+        crapdcd.vldebito = crapdcd.vldebito + craplcm.vllanmto.
 
-           DO WHILE TRUE:
+        DO WHILE TRUE:
 
-              FIND crapres WHERE crapres.cdcooper = glb_cdcooper   AND
-                                 crapres.cdprogra = glb_cdprogra
-                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            FIND crapres WHERE crapres.cdcooper = glb_cdcooper   AND
+                                crapres.cdprogra = glb_cdprogra
+                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-              IF   NOT AVAILABLE crapres   THEN
-                   IF   LOCKED crapres   THEN
-                        DO:
-                            PAUSE 1 NO-MESSAGE.
-                            NEXT.
-                        END.
-                   ELSE
-                        DO:
-                            glb_cdcritic = 151.
-                            RUN fontes/critic.p.
-                            UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
-                                               " - " + glb_cdprogra + "' --> '" +
-                                          glb_dscritic + " >> log/proc_batch.log").
-                            RETURN.
-                        END.
+            IF   NOT AVAILABLE crapres   THEN
+                IF   LOCKED crapres   THEN
+                    DO:
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    DO:
+                        glb_cdcritic = 151.
+                        RUN fontes/critic.p.
+                        UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
+                                            " - " + glb_cdprogra + "' --> '" +
+                                        glb_dscritic + " >> log/proc_batch.log").
+                        RETURN.
+                    END.
 
-              LEAVE.
+            LEAVE.
 
-           END.  /*  Fim do DO WHILE TRUE  */
+        END.  /*  Fim do DO WHILE TRUE  */
 
-           ASSIGN crapres.nrdconta = craplau.nrdolote
-                  crapres.dsrestar = STRING(craplau.nrseqlan).
-
-           END. /* if pode debitar*/
-		  
-        ELSE
-           MESSAGE "Nao Pode debitar." VIEW-AS ALERT-BOX.    				  
+        ASSIGN crapres.nrdconta = craplau.nrdolote
+                crapres.dsrestar = STRING(craplau.nrseqlan).	  
 				  
     END.  /*  Fim do FOR EACH e da transacao  */
 END.  /* FOR EACH craplot */
