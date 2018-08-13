@@ -704,22 +704,7 @@ PROCEDURE obtem-resgate:
 
         IF  VALID-HANDLE(h-b1wgen0200) THEN
             DELETE PROCEDURE h-b1wgen0200.
-                                          
-        /*
-        CREATE craplcm.
-        ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-               craplcm.cdagenci = craplot.cdagenci
-               craplcm.cdbccxlt = craplot.cdbccxlt
-               craplcm.nrdolote = craplot.nrdolote
-               craplcm.nrdconta = par_nrdconta
-               craplcm.nrdctabb = par_nrdconta
-               craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
-               craplcm.nrdocmto = craplot.nrseqdig + 1
-               craplcm.cdhistor = 483
-               craplcm.vllanmto = par_vlresgat 
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.cdcooper = par_cdcooper
-        */      
+                                              
                /** Credito **/
         ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                craplot.qtcompln = craplot.qtcompln + 1
