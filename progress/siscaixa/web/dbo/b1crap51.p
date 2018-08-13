@@ -4631,7 +4631,7 @@ PROCEDURE atualiza-deposito-com-captura:
 
 
         /* Guarda o sequencial usado no lancamento */
-        ASSIGN tt-cheques.nrseqlcm = craplcm.nrseqdig.
+               tt-cheques.nrseqlcm = craplot.nrseqdig + 1.
 
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
@@ -5878,7 +5878,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
 
 
         /* Guarda o sequencial usado no lancamento */
-        ASSIGN tt-cheques.nrseqlcm = craplcm.nrseqdig.
+               tt-cheques.nrseqlcm = craplot.nrseqdig + 1.
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
@@ -7243,7 +7243,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
 
                
         /* Guarda o sequencial usado no lancamento */
-        ASSIGN tt-cheques.nrseqlcm = craplcm.nrseqdig.
+               tt-cheques.nrseqlcm = craplot.nrseqdig + 1.
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
