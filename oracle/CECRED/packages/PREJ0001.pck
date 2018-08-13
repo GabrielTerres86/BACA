@@ -2241,7 +2241,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
              
     /* Verifica se existe boleto em aberto ou pago, pendente de processamento, para o contrato */
     FOR r_busca_boleto in c_busca_boleto LOOP
-      IF r_busca_boleto.incobran = 0 THEN -- boleto aberto
+      /* SCTASK0023671 - Foi solicitado para que esse filtro fosse retirado
+	  IF r_busca_boleto.incobran = 0 THEN -- boleto aberto
         vr_cdcritic := 0;
         vr_dscritic := 'Boleto da conta: ' || r_busca_boleto.nrdconta_cob ||
                        ', Contrato: ' || r_busca_boleto.nrctremp ||
@@ -2251,7 +2252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                        '. Está EM ABERTO!';
 
         RAISE vr_erro;   
-      END IF;
+      END IF;*/
       --
       IF r_busca_boleto.incobran = 5 THEN -- boleto pago
           
