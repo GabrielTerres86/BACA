@@ -2114,21 +2114,6 @@ PROCEDURE efetua_liber_anali_bordero:
                RUN sistema/generico/procedures/b1wgen0200.p 
                PERSISTENT SET h-b1wgen0200.
 
-            ASSIGN aux_podedebi = 1. 
-            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
-                                    INPUT par_cdcooper, 
-                                    INPUT par_nrdconta,
-                                    INPUT 686) THEN
-               DO:
-                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
-                      QUE MENSAGEM DE CRITICA DEVE GERAR?      */
-                  ASSIGN aux_podedebi = 0.
-               END.
-               
-            /* Se nao pode debitar entao abandona o bloco transacao LIBERACAO */
-            IF aux_podedebi = 0 THEN 
-               UNDO LIBERACAO, LEAVE.
-
             /*  Liberacao do bordero .....................................*/
             DO aux_contador = 1 TO 10:
 
