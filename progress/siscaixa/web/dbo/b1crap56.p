@@ -1554,27 +1554,19 @@ PROCEDURE atualiza-outros:
             
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:  
-                MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                RETURN "NOK".
+				ASSIGN i-cod-erro  = aux_cdcritic
+                       c-desc-erro = aux_dscritic.           
+                RUN cria-erro (INPUT p-cooper,
+                                INPUT p-cod-agencia,
+                                INPUT p-nro-caixa,
+                                INPUT i-cod-erro,
+                                INPUT c-desc-erro,
+                                INPUT YES).
+                RETURN "NOK".					
               END.   
               
             IF  VALID-HANDLE(h-b1wgen0200) THEN
                 DELETE PROCEDURE h-b1wgen0200.
-                                
-             /*CREATE craplcm.
-             ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                    craplcm.dtmvtolt = crapdat.dtmvtolt
-                    craplcm.cdagenci = p-cod-agencia
-                    craplcm.cdbccxlt  = 11
-                    craplcm.nrdolote = i-nro-lote
-                    craplcm.nrdconta = aux_nrdconta
-                    craplcm.nrdocmto = p-nro-docto
-                    craplcm.vllanmto = p-valor
-                    craplcm.cdhistor = p-cdhistor
-                    craplcm.nrseqdig = craplot.nrseqdig + 1 
-                    craplcm.nrdctabb = aux_nrdconta
-                    craplcm.nrdctitg = glb_dsdctitg
-                    craplcm.cdpesqbb = "CRAP056," + p-cod-liberador.*/
            
            ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
                   craplot.qtcompln  = craplot.qtcompln + 1
