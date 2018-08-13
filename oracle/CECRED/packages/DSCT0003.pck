@@ -3125,6 +3125,10 @@ END pc_inserir_lancamento_bordero;
     vr_liqgeral   NUMBER(25,2);
     vr_qtd_geral  NUMBER(25,2);
     BEGIN
+      --    Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
       -- busca os dados do associado/cooperado para só então encontrar seus dados na tabela de parâmetros
       OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta);
@@ -3277,7 +3281,7 @@ END pc_inserir_lancamento_bordero;
       pc_calcula_liquidez(pr_cdcooper            
                            ,pr_nrdconta     
                            ,NULL
-                           ,rw_crapdat.dtmvtolt - vr_tab_cecred_dsctit(1).qtmesliq*30  
+                           ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30  
                            ,rw_crapdat.dtmvtolt 
                            ,vr_tab_dados_dsctit(1).cardbtit_c
                            -- OUT --     
@@ -7000,7 +7004,7 @@ EXCEPTION
         pr_qtd_cedpag := 100;
       ELSE
         pr_pc_cedpag  := rw_liquidez_pagador.pc_cedpag;
-        pr_qtd_cedpag := rw_liquidez_pagador.qtd_cedpag; 
+        pr_qtd_cedpag :=  rw_liquidez_pagador.qtd_cedpag; 
       END IF;
     ELSE 
       pr_pc_conc    := 0;
