@@ -46,6 +46,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --	10/05/2018 - Ajuste para considerar os novos contratos do PJ404 a com a data da proposta
   --				 para contratos de desconto de título e cheque (Lucas Skroch - Supero)
+  --
+  --    13/08/2018 - Adicionados novos campos para o calculo de liquidez (Luis Fernando - GFT)     
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Registro para armazenar parametros para desconto de titulo
@@ -603,23 +605,25 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
                                      
   PROCEDURE pc_atualiza_calculos_pagador ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
-                                     ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
-                                     ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
-	                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez
-                                     ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
-                                     ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
-                                     ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
-                                     ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
-                                     ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
-                                     --------------> OUT <--------------
-                                     ,pr_pc_cedpag    OUT NUMBER
-                                     ,pr_qtd_cedpag   OUT NUMBER
-                                     ,pr_pc_conc      OUT NUMBER
-                                     ,pr_qtd_conc     OUT NUMBER
-                                     ,pr_pc_geral     OUT NUMBER
-                                     ,pr_qtd_geral    OUT NUMBER
-                                     ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
-                                     ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
+                                   ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
+                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez 
+                                   ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
+                                   ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
+                                   ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
+                                   ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
+                                   ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
+                                   ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
+                                   ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
+                                   --------------> OUT <--------------
+                                   ,pr_pc_cedpag    OUT NUMBER
+                                   ,pr_qtd_cedpag   OUT NUMBER
+                                   ,pr_pc_conc      OUT NUMBER
+                                   ,pr_qtd_conc     OUT NUMBER
+                                   ,pr_pc_geral     OUT NUMBER
+                                   ,pr_qtd_geral    OUT NUMBER
+                                   ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
+                                   ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
                                   );
   
   PROCEDURE pc_busca_dados_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -717,6 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --   16/07/2018 - Alteracoes para contemplar o novo sistema de criticas do border (Luis Fernando - GFT)
   --
+  --   13/08/2018 - Adicionados mais parametros no calculo de liquidez - Luis Fernando (GFT)
   -------------------------------------------------------------------------------------------------------------
   -- Variáveis para armazenar as informações em XML
   vr_des_xml         clob;
@@ -8659,6 +8664,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                                       ,vr_tab_dados_dsctit(1).qttliqcp
                                       ,vr_tab_dados_dsctit(1).vltliqcp
                                       ,vr_tab_dados_dsctit(1).pcmxctip
+                                      ,vr_tab_dados_dsctit(1).qtmitdcl
+                                      ,vr_tab_dados_dsctit(1).vlmintcl
                                       --------------> OUT <--------------
                                       ,vr_vlliquidez
                                       ,vr_qtliquidez
@@ -8706,6 +8713,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                                    ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
                                    ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
                                    ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
+                                   ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
+                                   ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
                                    --------------> OUT <--------------
                                    ,pr_pc_cedpag    OUT NUMBER
                                    ,pr_qtd_cedpag   OUT NUMBER
@@ -8729,6 +8738,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     --   Frequencia: Sempre que chamado
     --   Objetivo  : Procedure para recalcular concentracao e liquidez de determinado pagador na conta.
     --               Atualiza caso tenha dado crítica no valor da crítica. Atualiza os valores atuais na tabela de analise de pagador 
+    --
+    --   Alteracoes: 13/08/2018 - Adicionado novos parametros para o calculo de liquidez - Luis Fernando (GFT)
     -------------------------------------------------------------------------------------------------
     
     -- Variáveis de críticas
@@ -8789,6 +8800,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     vr_qttliqcp  NUMBER;
     vr_vltliqcp  NUMBER;
     vr_pcmxctip  NUMBER;
+    vr_qtmitdcl  INTEGER;
+    vr_vlmintcl  NUMBER;
     vr_dtmvtolt_de crapdat.dtmvtolt%TYPE;
     vr_dtmvtolt_ate crapdat.dtmvtolt%TYPE;
     vr_tab_dados_dsctit    typ_tab_dados_dsctit;
@@ -8797,7 +8810,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
     BEGIN
-      IF (pr_qtcarpag IS NULL OR pr_qttliqcp IS NULL OR pr_vltliqcp IS NULL OR pr_pcmxctip IS NULL OR vr_dtmvtolt_de IS NULL) THEN
+      IF (pr_qtcarpag IS NULL OR pr_qttliqcp IS NULL OR pr_vltliqcp IS NULL OR pr_pcmxctip IS NULL OR pr_dtmvtolt_de IS NULL OR pr_qtmitdcl IS NULL OR pr_vlmintcl is NULL) THEN
         OPEN cr_crapsab;
         FETCH cr_crapsab INTO rw_crapsab;
         IF cr_crapsab%NOTFOUND THEN
@@ -8831,6 +8844,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          vr_qttliqcp  := vr_tab_dados_dsctit(1).qttliqcp;
          vr_vltliqcp  := vr_tab_dados_dsctit(1).vltliqcp;
          vr_pcmxctip  := vr_tab_dados_dsctit(1).pcmxctip;
+         vr_qtmitdcl  := vr_tab_dados_dsctit(1).qtmitdcl;
+         vr_vlmintcl  := vr_tab_dados_dsctit(1).vlmintcl;
          vr_dtmvtolt_de := rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30;
          vr_dtmvtolt_ate := rw_crapdat.dtmvtolt;
       ELSE
@@ -8840,6 +8855,8 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
         vr_pcmxctip := pr_pcmxctip;
         vr_dtmvtolt_de := pr_dtmvtolt_de;
         vr_dtmvtolt_ate:= pr_dtmvtolt_ate;
+        vr_qtmitdcl  := pr_qtmitdcl;
+        vr_vlmintcl  := pr_vlmintcl;
       END IF;
                                    
       --> Calculo das porcentagens de Liquidez
@@ -8849,7 +8866,9 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                        ,vr_dtmvtolt_de
                        ,vr_dtmvtolt_ate
                        ,vr_qtcarpag
-                       -- OUT --     
+                       ,vr_qtmitdcl
+                       ,vr_vlmintcl
+                       -- OUT --
                        --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
                        ,pr_pc_cedpag
                        ,pr_qtd_cedpag
@@ -8935,7 +8954,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
        WHEN OTHERS THEN
             pr_cdcritic := vr_cdcritic;
             pr_dscritic := replace(replace('Nao foi calcular os dados dos pagadores: ' || SQLERRM, chr(13)),chr(10));
-  END pc_atualiza_calculos_pagador;  
+  END pc_atualiza_calculos_pagador;
   
   PROCEDURE pc_analise_pagador_paralelo (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
