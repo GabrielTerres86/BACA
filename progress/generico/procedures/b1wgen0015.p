@@ -4869,92 +4869,59 @@ PROCEDURE estorna-transferencia:
           RUN sistema/generico/procedures/b1wgen0200.p 
             PERSISTENT SET h-b1wgen0200.
 
-        IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                             INPUT par_cdcooper, 
-                             INPUT par_nrctadst,
-                             INPUT aux_cdhistor) THEN
-             DO:
-              RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                (INPUT par_dtmvtocd                   /* par_dtmvtolt */
-                ,INPUT craplot.cdagenci               /* par_cdagenci */
-                ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-                ,INPUT craplot.nrdolote               /* par_nrdolote */
-                ,INPUT par_nrctadst                   /* par_nrdconta */
-                ,INPUT craplot.nrseqdig               /* par_nrdocmto */
-                ,INPUT aux_cdhistor                   /* par_cdhistor */
-                ,INPUT craplot.nrseqdig               /* par_nrseqdig */
-                ,INPUT craplcm.vllanmto               /* par_vllanmto */
-                ,INPUT par_nrctadst                   /* par_nrdctabb */
-                ,INPUT "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " + "- CONTA " + STRING(par_nrdconta,"99999999")/* par_cdpesqbb */
-                ,INPUT 0                              /* par_vldoipmf */
-                ,INPUT aux_sequenci                 /* par_nrautdoc */
-                ,INPUT craplot.nrseqdig               /* par_nrsequni */
-                ,INPUT 0                              /* par_cdbanchq */
-                ,INPUT 0                              /* par_cdcmpchq */
-                ,INPUT 0                              /* par_cdagechq */
-                ,INPUT 0                              /* par_nrctachq */
-                ,INPUT 0                              /* par_nrlotchq */
-                ,INPUT 0                              /* par_sqlotchq */
-                ,INPUT par_dtmvtocd                   /* par_dtrefere */
-                ,INPUT TIME                           /* par_hrtransa */
-                ,INPUT par_cdoperad                   /* par_cdoperad */
-                ,INPUT 0                              /* par_dsidenti */
-                ,INPUT par_cdcooper                   /* par_cdcooper */
-                ,INPUT STRING(par_nrctadst,"99999999")/* par_nrdctitg */
-                ,INPUT ""                             /* par_dscedent */
-                ,INPUT 0                              /* par_cdcoptfn */
-                ,INPUT 0                              /* par_cdagetfn */
-                ,INPUT 0                              /* par_nrterfin */
-                ,INPUT 0                              /* par_nrparepr */
-                ,INPUT 0                              /* par_nrseqava */
-                ,INPUT 0                              /* par_nraplica */
-                ,INPUT 0                              /* par_cdorigem */
-                ,INPUT 0                              /* par_idlautom */
-                /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
-                ,INPUT 0                              /* Processa lote                                 */
-                ,INPUT 0                              /* Tipo de lote a movimentar                     */ 
-                /* CAMPOS DE SAÍDA                                                                     */                                            
-                ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
-                ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
-                ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
-                ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+            RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
+            (INPUT par_dtmvtocd                   /* par_dtmvtolt */
+            ,INPUT craplot.cdagenci               /* par_cdagenci */
+            ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
+            ,INPUT craplot.nrdolote               /* par_nrdolote */
+            ,INPUT par_nrctadst                   /* par_nrdconta */
+            ,INPUT craplot.nrseqdig               /* par_nrdocmto */
+            ,INPUT aux_cdhistor                   /* par_cdhistor */
+            ,INPUT craplot.nrseqdig               /* par_nrseqdig */
+            ,INPUT craplcm.vllanmto               /* par_vllanmto */
+            ,INPUT par_nrctadst                   /* par_nrdctabb */
+            ,INPUT "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " + "- CONTA " + STRING(par_nrdconta,"99999999")/* par_cdpesqbb */
+            ,INPUT 0                              /* par_vldoipmf */
+            ,INPUT aux_sequenci                 /* par_nrautdoc */
+            ,INPUT craplot.nrseqdig               /* par_nrsequni */
+            ,INPUT 0                              /* par_cdbanchq */
+            ,INPUT 0                              /* par_cdcmpchq */
+            ,INPUT 0                              /* par_cdagechq */
+            ,INPUT 0                              /* par_nrctachq */
+            ,INPUT 0                              /* par_nrlotchq */
+            ,INPUT 0                              /* par_sqlotchq */
+            ,INPUT par_dtmvtocd                   /* par_dtrefere */
+            ,INPUT TIME                           /* par_hrtransa */
+            ,INPUT par_cdoperad                   /* par_cdoperad */
+            ,INPUT 0                              /* par_dsidenti */
+            ,INPUT par_cdcooper                   /* par_cdcooper */
+            ,INPUT STRING(par_nrctadst,"99999999")/* par_nrdctitg */
+            ,INPUT ""                             /* par_dscedent */
+            ,INPUT 0                              /* par_cdcoptfn */
+            ,INPUT 0                              /* par_cdagetfn */
+            ,INPUT 0                              /* par_nrterfin */
+            ,INPUT 0                              /* par_nrparepr */
+            ,INPUT 0                              /* par_nrseqava */
+            ,INPUT 0                              /* par_nraplica */
+            ,INPUT 0                              /* par_cdorigem */
+            ,INPUT 0                              /* par_idlautom */
+            /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+            ,INPUT 0                              /* Processa lote                                 */
+            ,INPUT 0                              /* Tipo de lote a movimentar                     */ 
+            /* CAMPOS DE SAÍDA                                                                     */                                            
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
          
-                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                DO:  
-                  MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                  RETURN "NOK".
-                END.   
-              END.
-              IF  VALID-HANDLE(h-b1wgen0200) THEN
-                DELETE PROCEDURE h-b1wgen0200.
-                          
-               /* CREATE crablcm.
-                ASSIGN crablcm.cdcooper = par_cdcooper
-                       crablcm.dtmvtolt = par_dtmvtocd
-                       crablcm.cdagenci = craplot.cdagenci
-                       crablcm.cdbccxlt = craplot.cdbccxlt
-                       crablcm.nrdolote = craplot.nrdolote
-                       crablcm.dtrefere = par_dtmvtocd
-                       crablcm.hrtransa = TIME
-                       crablcm.cdoperad = par_cdoperad
-                       crablcm.nrdconta = par_nrctadst
-                       crablcm.nrdctabb = par_nrctadst
-                       crablcm.nrdctitg = STRING(par_nrctadst,"99999999")
-                       crablcm.nrdocmto = craplot.nrseqdig
-                       crablcm.nrsequni = craplot.nrseqdig
-                       crablcm.nrseqdig = craplot.nrseqdig
-                       crablcm.cdhistor = IF  par_cdhiscre = 539  THEN
-                                              569
-                                          ELSE
-                                              774
-                       crablcm.vllanmto = craplcm.vllanmto
-                       crablcm.nrautdoc = aux_sequenci
-                       crablcm.cdpesqbb = "INTERNET - ESTORNO TRANSFERENCIA ON-LINE " +
-                                          "- CONTA " + STRING(par_nrdconta,"99999999").
-                VALIDATE crablcm.*/
-                          
-       ELSE
-                  MESSAGE "Nao Pode." VIEW-AS ALERT-BOX.                          
+            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+            DO:  
+                MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
+                RETURN "NOK".
+            END.   
+              
+            IF  VALID-HANDLE(h-b1wgen0200) THEN
+            DELETE PROCEDURE h-b1wgen0200.                      
                                   
     END. /** Fim do DO TRANSACTION - TRANSACAO **/
     
