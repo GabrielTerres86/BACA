@@ -16,7 +16,11 @@ var btnConcluir;
 var btnExcluir;
 var btnOKPressed;
 $(document).ready(function () {
-    // Estado Inicial da tela
+    estadoInicial();
+});
+
+function estadoInicial() {
+	// Estado Inicial da tela
     waiting = $("#waiting");
     btnVoltar = $("#btVoltar");
     btnConcluir = $("#btConcluir");
@@ -44,7 +48,7 @@ $(document).ready(function () {
     triggerBtnOK();
     waiting.hide();
     btnVoltar.hide();
-});
+}
 
 function carregarFormulario() {
     $.ajax({
@@ -52,6 +56,7 @@ function carregarFormulario() {
         dataType: "html",
         url: UrlSite + "telas/limcrd/form_cadastro_limite.php",
         data: {
+			cddopcao: $("#cddotipo").val(),
             admcrd: $("#mainAdmCrd").val()
         },
         error: function (objAjax, responseError, objExcept) {
@@ -59,6 +64,11 @@ function carregarFormulario() {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
+			if (typeof response === 'string' && response.substr(0,14) == 'hideMsgAguardo') {
+				estadoInicial();
+				eval(response);
+				return;
+			}
             $("#cadastros").html(response);
         }
     });
@@ -78,8 +88,13 @@ function triggerBtnOK() {
         if (opt == "I") {
 			var madm = parseInt($("#mainAdmCrd").val());
 			if(madm > 10 && madm < 18){				
-				$.post("busca_limites.php", {"action": "C", "admcrd": madm}, function (resp) {
+				$.post("busca_limites.php", {"action": opt, "admcrd": madm}, function (resp) {
 					
+					if (typeof resp === 'string' && resp.substr(0,14) == 'hideMsgAguardo') {
+						estadoInicial();
+						eval(resp);
+						return;
+					}
 					if(resp[0].totalregistros > 0){
 						//alertaLinhaExistente
 						showError("error",labels.alertaLinhaExistente , "Alerta - Ayllos", "");
@@ -146,8 +161,13 @@ function getLimites(edit) {
     waiting.show();
     admcrd = $('#mainAdmCrd').val();
     $(".rls").remove();
-    $.post("busca_limites.php", {"action": "C", "admcrd": admcrd}, function (resp) {
-        gerenciarResultados(resp, globalEdit);
+    $.post("busca_limites.php", {"action": $("#cddotipo").val(), "admcrd": admcrd}, function (resp) {
+		if (typeof resp === 'string' && resp.substr(0,14) == 'hideMsgAguardo') {
+			estadoInicial();
+			eval(resp);
+			return;
+		}
+		gerenciarResultados(resp, globalEdit);
     });
 }
 
@@ -225,6 +245,7 @@ function editarLimite(index, edit) {
         dataType: "html",
         url: UrlSite + "telas/limcrd/form_cadastro_limite.php",
         data: {
+			cddopcao: $("#cddotipo").val(),
             admcrd: $("#mainAdmCrd").val()
         },
         error: function (objAjax, responseError, objExcept) {
@@ -233,6 +254,13 @@ function editarLimite(index, edit) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
+			
+			if (typeof response === 'string' && response.substr(0,14) == 'hideMsgAguardo') {
+				estadoInicial();
+				eval(response);
+				return;
+			}
+			
             $("#cadastros").html("");
             $("#cadastros").html(response);
 

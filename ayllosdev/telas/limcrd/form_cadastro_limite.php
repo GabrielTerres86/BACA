@@ -1,27 +1,35 @@
-
-
 <?php
-	/*!
-    * FONTE        : form_cadastro_limite.php
-	* CRIAÇÃO      : Amasonas Borges Vieira Junior(Supero)
-	* DATA CRIAÇÃO : 19/02/2018
-	* OBJETIVO     : Formulário para a tela LIMCRD
-	* --------------
-	* ALTERAÇÕES   :
-	* --------------
-	*/
-	session_start();
-	require_once('../../includes/config.php');
-	require_once('../../includes/funcoes.php');
-	require_once('../../includes/controla_secao.php');
-	require_once('../../class/xmlfile.php');
-	require_once('supfn.php');
-	isPostMethod();
-	$admcrd = intval($_POST['admcrd']);
-	$CECRED = (($admcrd > 10) && ($admcrd < 81));
+/*!
+* FONTE        : form_cadastro_limite.php
+* CRIAÇÃO      : Amasonas Borges Vieira Junior(Supero)
+* DATA CRIAÇÃO : 19/02/2018
+* OBJETIVO     : Formulário para a tela LIMCRD
+* --------------
+* ALTERAÇÕES   :
+* --------------
+*/
+session_start();
+require_once('../../includes/config.php');
+require_once('../../includes/funcoes.php');
+require_once('../../includes/controla_secao.php');
+require_once('../../class/xmlfile.php');
 
-	if($CECRED){
-	?>
+isPostMethod();
+
+$cddopcao = ((!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'I');
+
+if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao, false)) <> '') {
+   exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+   exit;
+}
+
+require_once('supfn.php');
+
+$admcrd = intval($_POST['admcrd']);
+$CECRED = (($admcrd > 10) && ($admcrd < 81));
+
+if($CECRED){
+?>
 <table class="tableform hideable" style="padding-top: 10px; padding-botton: 10px; ">
 
 	<tr>
