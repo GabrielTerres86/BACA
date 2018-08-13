@@ -4346,7 +4346,6 @@ PROCEDURE atualiza-deposito-com-captura:
                                                  crapmrw.vldepdin              
                              craplot.vlinfocr  = craplot.vlinfocr +  
                                                  crapmrw.vldepdin.
-                      VALIDATE craplcm.
                   END.
              
              /* Cheque Cooperativa */
@@ -4488,7 +4487,6 @@ PROCEDURE atualiza-deposito-com-captura:
                                                  crapmrw.vlchqcop
                              craplot.vlinfocr  = craplot.vlinfocr +  
                                                  crapmrw.vlchqcop.
-                      /* VALIDATE craplcm. */
                   END.
              
          END. /* if  avail crapmrw */
