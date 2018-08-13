@@ -2132,6 +2132,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     Alteracoes: 27/01/2017 - Identação do código e ajustes conforme SM 6 M324 
                (Rafael Monteiro - Mout'S)
 
+    Alteracoes: 13/08/2018 - No chamado SCTASK0023671 Foi solicitado para que o 
+				filtro que verifica se tem boleto em aberto fosse retirado.
+				(Felipe Fronza - Mout'S)
+
    ..............................................................................*/                                          
     --   
     CURSOR c_busca_prx_lote(pr_cdhistor number) is
