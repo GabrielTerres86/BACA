@@ -1606,15 +1606,8 @@ PROCEDURE gera_impressao:
     /* Compatibilizar Dev. (Insitdev = 1) com Dev. Auto. (Insitdev = 2) */
 
     FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper          AND
-                           crapdev.cdbanchq = aux_cdbanchq        AND
-                           crapdev.insitdev = 2                   EXCLUSIVE-LOCK,
-        EACH crapass WHERE crapass.cdcooper = p-cdcooper          AND
-                           crapass.nrdconta = crapdev.nrdconta    AND
-                         ((p-cddevolu = 1)                        OR
-                          (p-cddevolu = 2                         AND
-                           crapass.nrdctitg <> crapdev.nrdctitg)  OR
-                          (p-cddevolu = 3                         AND
-                           crapass.nrdctitg = crapdev.nrdctitg)):
+                           crapdev.cdbanchq = aux_cdbanchq        AND /* <-- Impede att de cheques 085. */
+                           crapdev.insitdev = 2                   EXCLUSIVE-LOCK:
 
       ASSIGN crapdev.insitdev = 1.
 
