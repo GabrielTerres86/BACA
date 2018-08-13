@@ -288,7 +288,10 @@ BEGIN
              17/07/2018 - Ler mensagem str0004R2 para AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza (Mouts)
              
              08/08/2018 - INC0021763 - Ajustar a regra de devolução de TEDs para que a mesma seja devolvidas 
-                          automáticamente para contas encerradas, independente do tipo. (Renato Darosci)
+                          automáticamente para contas encerradas, independente do tipo. (Renato Darosci)				
+             
+             10/08/2018 - Salvar arquivos STR0004R2 recusados e gravar historico nulo nas mensagens
+                          STR0004R2 e STR0006R2. PRJ486 (Lombardi)
                   
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -6848,6 +6851,8 @@ END;
 
             pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'Mensagem nao prevista');
+            
+            pc_salva_arquivo;
             RAISE vr_exc_next;
         ELSE
           ccrd0006.pc_insere_msg_ltr_str(vr_aux_VlrLanc
@@ -6862,7 +6867,8 @@ END;
                                 ,vr_aux_AgCredtd
                                 ,vr_aux_CtCredtd
                                 ,vr_aux_AgDebtd
-                                ,vr_aux_Hist
+                                ,CASE WHEN vr_aux_CodMsg IN ('STR0004R2','STR0006R2') THEN NULL
+                                                                                      ELSE vr_aux_Hist END
                                 ,vr_aux_FinlddIF
                                 ,vr_aux_TpPessoaDebtd_Remet
                                 ,vr_aux_CNPJ_CPFDeb
