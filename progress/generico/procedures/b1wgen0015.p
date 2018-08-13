@@ -4790,16 +4790,8 @@ PROCEDURE estorna-transferencia:
         
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
         DO:  
-        /*IF aux_incrineg = 1 THEN
-         DO:
-          /* Tratativas de negocio */ 
-          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-         END.
-        ELSE
-         DO:*/
-          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-          RETURN "NOK".
-         /*END. */
+            ASSIGN par_dscritic = aux_dscritic.
+            UNDO, RETURN "NOK".
         END.   
         
         IF  VALID-HANDLE(h-b1wgen0200) THEN
