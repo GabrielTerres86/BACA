@@ -18,7 +18,6 @@
 		$dsjustif  		=  $_POST['dsjustif'];
 		$idproces       = $_POST['idproces'];
 		$cdadmcrd       = $_POST['cdadmcrd'];
-		$faprovador     = $_POST['faprovador'];
 		//if(!($cdadmcrd == 16 || $cdadmcrd == 17)){
 		if(TRUE){
 			$updContratoXML .= "<Root>";
@@ -29,8 +28,6 @@
 			$updContratoXML .= "   <dsprotoc>".$idacionamento."</dsprotoc>";
 			$updContratoXML .= "   <dsjustif>".$dsjustif."</dsjustif>";
 			$updContratoXML .= "   <idproces>".$idproces."</idproces>";
-			if(isset($faprovador) && (strlen($faprovador) > 0))
-					$updContratoXML .= "   <cdopesup>".$faprovador."</cdopesup>";
 			$updContratoXML .= " </Dados>";
 			$updContratoXML .= "</Root>";
 			$admresult = mensageria($updContratoXML, "ATENDA_CRD",

@@ -196,6 +196,13 @@ $vlsugmot = number_format(0,2,",",".");
 	$objXml = simplexml_load_string($xmlResult);
 	echo "<!-- SUGESTAO_LIMITE_CRD_ALT \n   $xmlResult  \n -->";
 		
+	
+	
+	if(isset($objXml->Erro) && (strlen($objXml->Erro->Registro->dscritic) > 0)){
+		$mssg = str_replace(" ]"," ]<br>", $objXml->Erro->Registro->dscritic);
+		$mssg =  str_replace("\u00C3\u0192\u00C2\u00A1","a",$mssg);
+			echo"<script>showError('error', '".utf8ToHtml($mssg)."', 'Alerta - Ayllos', 'voltaDiv(0, 1, 4);') </script>";
+	}
 	$xmlObj = getObjectXML($xmlResult);
 	
 	$mensagem = $objXml->Dados->sugestoes->sugestao->mensagem;
@@ -528,7 +535,7 @@ $vlsugmot = number_format(0,2,",",".");
 			var vllimmin  = <? echo strToNm($vllimmin);?>;
 			var valorSugerido = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
             console.log("valorSugerido > vllimmax = "+valorSugerido > vllimmax);
-            if(valorSugerido > vllimmax || (cdadmcrd == 12 && valorSugerido == 0 )){
+            if(valorSugerido > vllimmax ){ 
 			//if(valorSugerido > limiteatualCC || (cdadmcrd == 12 && valorSugerido == 0 )){ item 169 - homol prj
 				$("#justificativaRow").show();
 				obgjustificativa = true;
@@ -599,7 +606,8 @@ $vlsugmot = number_format(0,2,",",".");
 					if($("#justificativa").val().length == 0)
 						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					else
-						senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
+						alterarBancoob(false,inpessoa,tipo );
+						//senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
 				}else{
 					//alterarBancoob(false,inpessoa,tipo );
 					alterarBancoob(true,inpessoa,tipo );

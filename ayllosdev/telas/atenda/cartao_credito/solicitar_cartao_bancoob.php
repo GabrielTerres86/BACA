@@ -36,7 +36,7 @@
 					$admresult = mensageria($bancoobXML, "ATENDA_CRD", "INCLUIR_PROPOSTA_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);
 					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Ayllos\", \"voltarParaTelaPrincipal();\");";
-					echo "/* Encaminhado para a esteira \n $bancoobXML \n*/";
+					echo "/* Encaminhado para a esteira \n $bancoobXML \n Retorno \n $admresult */";
 				}else{
 					$admresult = mensageria($bancoobXML, "CCRD0007", "SOLICITAR_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);
@@ -98,7 +98,7 @@
 			$protocolo       = $_POST['protocolo'];
 			$vlLimiteMaximo  = $_POST['vlLimiteMaximo'];
 			$limiteatualCC   = $_POST['limiteatualCC'];
-			$faprovador      = $_POST['faprovador'];
+			
 			if($titular == 'n'){
 				$idseqttl = 0;
 			}else
@@ -134,8 +134,6 @@
 			$logXML .= "   <flgtplim>".$tipo."</flgtplim>";
 			$logXML .= "   <tpsituac>6</tpsituac  >";
 			$logXML .= "   <insitdec>".$insitdec."</insitdec  >";
-			if(isset($faprovador) && (strlen($faprovador) > 0))
-				$logXML .= "   <cdopesup>".$faprovador."</cdopesup  >";
 			$logXML .= " </Dados>";
 			$logXML .= "</Root>";
 			$logResult = mensageria($logXML, "ATENDA_CRD", "ALTERAR_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -166,7 +164,7 @@
 						
 					}else
 						echo "/* Encaminhado direto para o bancoob (Adicional e  PF)*/";
-				}else if((( !($cdadmcrd == 12 && $sugestao == 0)  ) && ( $sugestao <= $vllimmax))   ){
+				}else if((/*( !($cdadmcrd == 12 && $sugestao == 0)  ) &&*/ ( $sugestao <= $vllimmax))   ){
 					// todo : ALTERAR_CARTAO_BANCOOB
 					$admresult = mensageria($bancoobXML, "CCRD0007", "ALTERAR_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);
