@@ -161,6 +161,27 @@
 		}
 	}
 
+	//Mensageria referente a situação da conta e se já foi transferido para prejuízo
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "PREJ0003", "BUSCA_SIT_BLOQ_PREJU", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata); 
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+		$ocopreju = getByTagName($param->tags,'ocopreju');	    
+	}
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
@@ -235,7 +256,8 @@
 		<input name="dtultlcr" id="dtultlcr" type="text" value="<?php echo getByTagName($depvista,"dtultlcr"); ?>" />
 		<br />
 	</fieldset>
-
+	
+	<? if($inprejuz == 1 || $ocopreju == 'S'){ ?>
   	<fieldset>
 		<legend><? echo utf8ToHtml('Bloqueado Prejuízo'); ?></legend>
 		<label for="vlsldctr"><? echo utf8ToHtml('Saldo:') ?></label>
@@ -244,7 +266,8 @@
 			<a href="#" class="botao" id="btDetalhesCT" onClick="mostraDetalhesCT();return false;" style="padding: 3px 6px;">Detalhes</a>
 		</div>
 	</fieldset>
-  
+	<? } ?>
+   
 </form>
 
 <script type="text/javascript">

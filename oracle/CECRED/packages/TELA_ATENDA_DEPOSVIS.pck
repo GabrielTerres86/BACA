@@ -1057,7 +1057,7 @@ BEGIN
 
       FETCH cr_prejuizo_s INTO rw_prejuizo_s;   
       IF cr_prejuizo_s%FOUND THEN 
-        vr_dataprej := to_char(rw_prejuizo_s.dtinclusao,'DD/MM/YYYY');
+        vr_dataprej := rw_prejuizo_s.dtinclusao;
       END IF;
     ELSE
       -- Conta Corrente não está em Prejuízo

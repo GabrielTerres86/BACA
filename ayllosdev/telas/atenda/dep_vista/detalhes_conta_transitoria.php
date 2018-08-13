@@ -1,66 +1,86 @@
 <?php
-/*!
- * FONTE        : detalhes_atraso.php
- * CRIAÇÃO      : Marcel Kohls (AMCom)
- * DATA CRIAÇÃO : 15/03/2018
- * OBJETIVO     : Exibe detalhes dos valores de atraso
- */
+	/*!
+	* FONTE        : detalhes_atraso.php
+	* CRIAÇÃO      : Marcel Kohls (AMCom)
+	* DATA CRIAÇÃO : 15/03/2018
+	* OBJETIVO     : Exibe detalhes dos valores de atraso
+	*/
 
-session_start();
-require_once('../../../includes/config.php');
-require_once('../../../includes/funcoes.php');
-require_once('../../../includes/controla_secao.php');
-require_once('../../../class/xmlfile.php');
+	session_start();
+	require_once('../../../includes/config.php');
+	require_once('../../../includes/funcoes.php');
+	require_once('../../../includes/controla_secao.php');
+	require_once('../../../class/xmlfile.php');
 
-//Mensageria referente a data de inclusão de prejuízo
-$xml  = "";
-$xml .= "<Root>";
-$xml .= "  <Dados>";
-$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-$xml .= "    <nrdconta>".$_POST["nrdconta"]."</nrdconta>";
-$xml .= "  </Dados>";
-$xml .= "</Root>";
+	//Mensageria referente a data de inclusão de prejuízo
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$_POST["nrdconta"]."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "BUSCA_DT_INCLUSAO_PREJU", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
-$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "BUSCA_DT_INCLUSAO_PREJU", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
 
-$param = $xmlObjeto->roottag->tags[0]->tags[0];
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
 
-if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-  exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
-}else{
-  $datpreju = getByTagName($param->tags,'datpreju');	    
-  $datatual = getByTagName($param->tags,'datatual');  
-  $inprejuz = getByTagName($param->tags,'inprejuz');  
-}
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+	}else{
+		$datpreju = getByTagName($param->tags,'datpreju');	    
+		$datatual = getByTagName($param->tags,'datatual');  		
+	}
 
-//Recebe as datas da tela, quando informadas
-if(!empty($_POST['dtiniper'])){
-  $datpreju = $_POST["dtiniper"];
-}
-if(!empty($_POST["dtfimper"])){
-  $datatual = $_POST['dtfimper'];
-}
+	//Recebe as datas da tela, quando informadas
+	if(!empty($_POST['dtiniper'])){
+		$datpreju = $_POST["dtiniper"];
+	}
+	if(!empty($_POST["dtfimper"])){
+		$datatual = $_POST['dtfimper'];
+	}
 
-//Mensageria referente a lançamentos da conta transitória
-$xml  = "";
-$xml .= "<Root>";
-$xml .= "  <Dados>";
-$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-$xml .= "    <nrdconta>".$_POST["nrdconta"]."</nrdconta>";
-$xml .= "    <dtiniper>".$datpreju."</dtiniper>";
-$xml .= "    <dtfimper>".$datatual."</dtfimper>";
-$xml .= "  </Dados>";
-$xml .= "</Root>";
+	//Mensageria referente a lançamentos da conta transitória
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$_POST["nrdconta"]."</nrdconta>";
+	$xml .= "    <dtiniper>".$datpreju."</dtiniper>";
+	$xml .= "    <dtfimper>".$datatual."</dtfimper>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "PREJ0004", "LISTA_LANCAMENTOS_CT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
-$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlResult = mensageria($xml, "PREJ0004", "LISTA_LANCAMENTOS_CT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
 
-$lancamentos = '';
+	$lancamentos = '';
 
-if(strtoupper($xmlObjeto->roottag->tags[0]->name) != "ERRO") {  
-  $lancamentos = $xmlObjeto->roottag->tags[0]->tags[4]->tags; 
-}
+	if(strtoupper($xmlObjeto->roottag->tags[0]->name) != "ERRO") {  
+		$lancamentos = $xmlObjeto->roottag->tags[0]->tags[4]->tags; 
+	}
+
+	//Mensageria referente a situação da conta e se já foi transferido para prejuízo
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "    <nrdconta>".$_POST["nrdconta"]."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "PREJ0003", "BUSCA_SIT_BLOQ_PREJU", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+	$xmlObjeto = getObjectXML($xmlResult);	
+
+	$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+	}else{
+		$inprejuz = getByTagName($param->tags,'inprejuz');	    
+		$ocopreju = getByTagName($param->tags,'ocopreju');	    
+	}
 
 ?>
 
@@ -135,12 +155,15 @@ if(strtoupper($xmlObjeto->roottag->tags[0]->name) != "ERRO") {
 											</fieldset>
 										</form>
 										<div id="divBotoes">
-											<?php if ($inprejuz == 1){ ?>
+											<?php if($inprejuz == 1){ ?>
 												<a href="#" class="botao" id="btDetVoltar" onClick="mostraPagamentoEmp();"><?php echo utf8_decode('Pagamento de Empréstimo'); ?></a>											  
 												<a href="#" class="botao" id="btDetVoltar" onClick="mostraLiberacaoCC();"><?php echo utf8_decode('Liberação de Saque'); ?></a>
 												<a href="#" class="botao" id="btDetVoltar" onClick="mostraPagamentoPrejuzCC();"><?php echo utf8_decode('Pagamento Prejuízo C/C'); ?></a>											  												
-											<?php }                    ?>  
-											<a href="#" class="botao" id="btDetVoltar" onClick="imprimeExtratoLancamentosCT();">Imprimir Extrato</a>
+												<a href="#" class="botao" id="btDetVoltar" onClick="imprimeExtratoLancamentosCT();">Imprimir Extrato</a>
+											<?php } ?>
+											<?php if($inprejuz == 0 && $ocopreju == 'S'){ ?>
+											   	<a href="#" class="botao" id="btDetVoltar" onClick="imprimeExtratoLancamentosCT();">Imprimir Extrato</a>
+											<?php } ?>
 											</br></br>
 											<a href="#" class="botao" id="btDetVoltar" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">Voltar</a>
 										</div>
