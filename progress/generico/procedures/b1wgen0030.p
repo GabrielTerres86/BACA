@@ -2317,72 +2317,7 @@ PROCEDURE efetua_liber_anali_bordero:
 
             IF aux_vltarifa /* tt-tarifas_dsctit.vltarbdt */ > 0  THEN
                DO:
-                   /* Gera a tarifa de bordero */ /*
-                   DO aux_contador = 1 TO 10:
-
-                      FIND crablot WHERE
-                           crablot.cdcooper = par_cdcooper  AND 
-                           crablot.dtmvtolt = par_dtmvtolt  AND
-                           crablot.cdagenci = 1             AND
-                           crablot.cdbccxlt = 100           AND
-                           /* crablot.nrdolote = 8452 */
-                           crablot.nrdolote = 19000 + aux_cdpactra
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-      
-                      IF NOT AVAILABLE crablot   THEN
-                         IF LOCKED crablot   THEN
-                            DO:
-                                ASSIGN aux_cdcritic = 341.
-                                PAUSE 1 NO-MESSAGE.
-                                NEXT.
-
-                            END.
-                         ELSE
-                            DO:                           
-                                CREATE crablot.
-
-                                ASSIGN crablot.dtmvtolt = par_dtmvtolt
-                                       crablot.cdagenci = 1
-                                       crablot.cdbccxlt = 100
-                                       /* crablot.nrdolote = 8452 */
-                                       crablot.nrdolote = 19000 + aux_cdpactra
-                                       crablot.tplotmov = 1
-                                       crablot.cdoperad = par_cdoperad
-                                       crablot.cdhistor = 594
-                                       crablot.cdcooper = par_cdcooper.
-                            END.
-                      ELSE
-                         ASSIGN aux_cdcritic = 0.
-                    
-                      LEAVE.
-
-                   END.   /*  Fim do DO .. TO  */
-         
-                   IF aux_cdcritic > 0   THEN
-                      UNDO LIBERACAO, LEAVE.
-					
-                   CREATE craplcm.
-                   ASSIGN craplcm.dtmvtolt = crablot.dtmvtolt
-                          craplcm.cdagenci = crablot.cdagenci
-                          craplcm.cdbccxlt = crablot.cdbccxlt
-                          craplcm.nrdolote = crablot.nrdolote
-                          craplcm.nrdconta = crapbdt.nrdconta
-                          craplcm.nrdctabb = crapbdt.nrdconta
-                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
-                                                    "99999999")
-                          craplcm.nrdocmto = crablot.nrseqdig + 1
-                          craplcm.cdhistor = 594
-                          craplcm.nrseqdig = crablot.nrseqdig + 1
-                          craplcm.vllanmto = tt-tarifas_dsctit.vltarbdt
-                          craplcm.cdcooper = par_cdcooper
-                
-                          crablot.vlinfodb = crablot.vlinfodb + 
-                                                 craplcm.vllanmto
-                          crablot.vlcompdb = crablot.vlcompdb + 
-                                                 craplcm.vllanmto
-                          crablot.qtinfoln = crablot.qtinfoln + 1
-                          crablot.qtcompln = crablot.qtcompln + 1
-                          crablot.nrseqdig = crablot.nrseqdig + 1.  */
+                   /* Gera a tarifa de bordero */ 
 
                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
 
@@ -2559,20 +2494,6 @@ PROCEDURE efetua_liber_anali_bordero:
                RUN sistema/generico/procedures/b1wgen0200.p 
                PERSISTENT SET h-b1wgen0200.
 
-            ASSIGN aux_podedebi = 1. 
-            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
-                                    INPUT par_cdcooper, 
-                                    INPUT crapbdt.nrdconta,
-                                    INPUT 2330) THEN
-               DO:
-                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
-                      QUE MENSAGEM DE CRITICA DEVE GERAR?      */
-                  ASSIGN aux_podedebi = 0.
-               END.
-               
-            /* Se nao pode debitar entao abandona o bloco transacao LIBERACAO */
-            IF aux_podedebi = 0 THEN 
-               UNDO LIBERACAO, LEAVE.
 
             /*  Cobranca do IOF de desconto  */
             IF  aux_vltotiof > 0 THEN         
@@ -10817,82 +10738,7 @@ PROCEDURE efetua_resgate_tit_bordero:
                 ASSIGN aux_vltarres = tt-tarifas_dsctit.vltressr.
                */                    
             IF  aux_vltarres > 0  THEN
-                DO: /*
-                    DO  aux_contador = 1 TO 10:
-
-                        FIND cra2lot WHERE cra2lot.cdcooper = par_cdcooper AND 
-                                           cra2lot.dtmvtolt = par_dtresgat AND
-                                           cra2lot.cdagenci = 1            AND
-                                           cra2lot.cdbccxlt = 100          AND
-                                           cra2lot.nrdolote = 8452
-                                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-      
-                        IF  NOT AVAILABLE cra2lot   THEN
-                            IF  LOCKED cra2lot   THEN
-                                DO:
-                                    aux_cdcritic = 341.
-                                    PAUSE 1 NO-MESSAGE.
-                                    NEXT.
-                                END.
-                            ELSE
-                                DO:
-                                    CREATE cra2lot.
-                                    ASSIGN cra2lot.dtmvtolt = par_dtresgat
-                                           cra2lot.cdagenci = 1 
-                                           cra2lot.cdbccxlt = 100 
-                                           cra2lot.nrdolote = 8452 
-                                           cra2lot.tplotmov = 1
-                                           cra2lot.cdoperad = par_cdoperad
-                                           cra2lot.cdhistor = 598
-                                           cra2lot.cdcooper = par_cdcooper.
-                                END.
- 
-                        aux_cdcritic = 0.
-                        LEAVE.
-            
-                    END.   /*  Fim do DO .. TO  */
-
-                    IF  aux_cdcritic > 0   THEN
-                        DO:
-                            ASSIGN aux_dscritic = "".
-            
-                            RUN gera_erro (INPUT par_cdcooper,
-                                           INPUT par_cdagenci,
-                                           INPUT par_nrdcaixa,
-                                           INPUT 1,            /** Sequencia **/
-                                           INPUT aux_cdcritic,
-                                           INPUT-OUTPUT aux_dscritic).
-                    
-                            UNDO RESGATE, RETURN "NOK".
-                        END.
-
-                    CREATE craplcm.
-                    ASSIGN craplcm.dtmvtolt = par_dtresgat
-                           craplcm.cdagenci = 1
-                           craplcm.cdbccxlt = 100 
-                           craplcm.nrdolote = 8452
-                           craplcm.nrdconta = craptdb.nrdconta
-                           craplcm.nrdctabb = craptdb.nrdctabb
-                           craplcm.nrdocmto = cra2lot.nrseqdig + 1
-                           craplcm.cdhistor = 598 
-                           craplcm.nrseqdig = cra2lot.nrseqdig + 1
-                           craplcm.vllanmto = aux_vltarres
-                           craplcm.cdpesqbb = "Docto " + 
-                                              STRING(craptdb.nrdocmto) +
-                                              "Trf de resg " +
-                                              STRING(aux_vltarres,
-                                                     "999.99")
-                           craplcm.vldoipmf = 0
-                           craplcm.cdcooper = par_cdcooper
-                           cra2lot.nrseqdig = craplcm.nrseqdig
-                           cra2lot.vlinfodb = cra2lot.vlinfodb + 
-                                                            craplcm.vllanmto
-                           cra2lot.vlcompdb = cra2lot.vlcompdb + 
-                                                            craplcm.vllanmto
-                           cra2lot.qtinfoln = cra2lot.qtinfoln + 1
-                           cra2lot.qtcompln = cra2lot.qtcompln + 1
-                           cra2lot.nrseqdig = cra2lot.nrseqdig + 1.
-                    */
+                DO: 
                     IF NOT VALID-HANDLE(h-b1wgen0153) THEN
                         RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
 
@@ -14799,20 +14645,6 @@ PROCEDURE efetua_baixa_titulo:
             ELSE
                ASSIGN aux_cdhistor = 591.
             
-            ASSIGN aux_podedebi = 1. 
-            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
-                                    INPUT par_cdcooper, 
-                                    INPUT crapbdt.nrdconta,
-                                    INPUT aux_cdhistor) THEN
-               DO:
-                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
-                      QUE MENSAGEM DE CRITICA DEVE GERAR?      */
-                  ASSIGN aux_podedebi = 0.
-               END.
-               
-            /* Se nao pode debitar entao abandona o bloco transacao BAIXA */
-            IF aux_podedebi = 0 THEN 
-               UNDO BAIXA, RETURN "NOK".
                
             /* ... fim do bloco da verificacao Pode realizar debito */
 
@@ -15649,20 +15481,6 @@ PROCEDURE efetua_baixa_titulo:
                RUN sistema/generico/procedures/b1wgen0200.p 
                PERSISTENT SET h-b1wgen0200.
 
-            ASSIGN aux_podedebi = 1. 
-            IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
-                                    INPUT par_cdcooper, 
-                                    INPUT crapbdt.nrdconta,
-                                    INPUT 597) THEN
-               DO:
-                   /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
-                      QUE MENSAGEM DE CRITICA DEVE GERAR?       */
-                  ASSIGN aux_podedebi = 0.
-               END.
-               
-            /* Se nao pode debitar entao abandona o bloco transacao BAIXA */
-            IF aux_podedebi = 0 THEN 
-               UNDO BAIXA, RETURN "NOK".
 
             
             IF  aux_vltotjur > 0  THEN
@@ -15955,37 +15773,6 @@ PROCEDURE efetua_baixa_titulo:
                     IF (aux_vlttitcr /* tt-tarifas_dsctit.vlttitcr */ * aux_tottitul_cr) > 0 OR
                        (aux_vlttitsr /* tt-tarifas_dsctit.vlttitsr */ * aux_tottitul_sr) > 0 THEN
                         DO:
-                            /* Gera Tarifa de titulos descontados */ /*
-                            CREATE craplcm.
-                            ASSIGN craplcm.dtmvtolt = crablot.dtmvtolt 
-                                   craplcm.cdagenci = crablot.cdagenci
-                                   craplcm.cdbccxlt = crablot.cdbccxlt 
-                                   craplcm.nrdolote = crablot.nrdolote
-                                   craplcm.nrdconta = craptdb.nrdconta
-                                   craplcm.nrdocmto = crablot.nrseqdig + 1 
-                                   craplcm.vllanmto = (tt-tarifas_dsctit.vlttitcr * aux_tottitul_cr +
-                                                       tt-tarifas_dsctit.vlttitsr * aux_tottitul_sr   )
-                                   craplcm.cdhistor = 595
-                                   craplcm.nrseqdig = crablot.nrseqdig + 1 
-                                   craplcm.nrdctabb = craptdb.nrdconta
-
-                                   craplcm.nrautdoc = 0
-                                   craplcm.cdpesqbb = IF aux_tottitul_cr > 1 OR
-                                                         aux_tottitul_sr > 1 THEN
-                                                         "Tarifa de titulos " +
-                                                         "descontados"
-                                                      ELSE
-                                                        STRING(craptdb.nrdocmto)
-                                   craplcm.cdcooper = par_cdcooper
-                
-                                   crablot.nrseqdig = craplcm.nrseqdig
-                                   crablot.vlinfodb = crablot.vlinfodb + 
-                                                        aux_vllanmto
-                                   crablot.vlcompdb = crablot.vlcompdb + 
-                                                        aux_vllanmto
-                                   crablot.qtinfoln = crablot.qtinfoln + 1
-                                   crablot.qtcompln = crablot.qtcompln + 1 */
-
                             /* Gera Tarifa de titulos descontados */
                             RUN cria_lan_auto_tarifa IN h-b1wgen0153
                                (INPUT par_cdcooper,
