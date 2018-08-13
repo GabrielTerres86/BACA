@@ -2577,25 +2577,7 @@ PROCEDURE atualiza-pagto-cheque:
 
     IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.
-/*    
-    CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = crapdat.dtmvtocd
-           craplcm.cdagenci = p-cod-agencia
-           craplcm.cdbccxlt = 11
-           craplcm.nrdolote = i-nro-lote
-           craplcm.nrdconta = aux_nrdconta
-           craplcm.nrdocmto = i_cheque
-           craplcm.vllanmto = p-valor
-           craplcm.cdhistor = i-cdhistor
-           craplcm.nrseqdig = craplot.nrseqdig + 1 
-           craplcm.nrdctabb = p-nro-conta
-           craplcm.cdpesqbb = "CRAP53," + p-cod-liberador 
-           craplcm.cdcooper = crapcop.cdcooper
-           craplcm.nrdctitg = glb_dsdctitg
-           craplcm.cdbanchq = crapfdc.cdbanchq
-           craplcm.cdagechq = crapfdc.cdagechq
-           craplcm.nrctachq = crapfdc.nrctachq.
-*/
+
     ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
            craplot.qtcompln  = craplot.qtcompln + 1
            craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -3188,26 +3170,6 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.
     
-    /*
-    /* Criar o lancamento na cooperativa nova */
-    CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = crapdat.dtmvtocd
-           craplcm.cdagenci = p-cod-agencia
-           craplcm.cdbccxlt = 11
-           craplcm.nrdolote = i-nro-lote
-           craplcm.nrdconta = p-nro-conta-nova
-           craplcm.nrdocmto = i_cheque
-           craplcm.vllanmto = p-valor
-           craplcm.cdhistor = i-cdhistor
-           craplcm.nrseqdig = craplot.nrseqdig + 1 
-           craplcm.nrdctabb = p-nro-conta
-           craplcm.cdpesqbb = "CRAP53," + p-cod-liberador 
-           craplcm.cdcooper = crapcop.cdcooper
-           craplcm.nrdctitg = glb_dsdctitg
-           craplcm.cdbanchq = crapfdc.cdbanchq
-           craplcm.cdagechq = crapfdc.cdagechq
-           craplcm.nrctachq = crapfdc.nrctachq.
-    */
     ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
            craplot.qtcompln  = craplot.qtcompln + 1
            craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -3829,26 +3791,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
 
     IF  VALID-HANDLE(h-b1wgen0200) THEN
         DELETE PROCEDURE h-b1wgen0200.
-/*    
-    CREATE craplcm.
-    ASSIGN craplcm.cdcooper = craplot.cdcooper
-           craplcm.dtmvtolt = crapdat.dtmvtocd
-           craplcm.cdagenci = craplot.cdagenci
-           craplcm.cdbccxlt = craplot.cdbccxlt
-           craplcm.nrdolote = craplot.nrdolote
-           craplcm.nrdconta = p-nro-conta-nova
-           craplcm.nrdocmto = i_cheque
-           craplcm.vllanmto = p-valor
-           craplcm.cdhistor = 521
-           craplcm.nrseqdig = craplot.nrseqdig + 1 
-           craplcm.nrdctabb = p-nro-conta
-           craplcm.cdpesqbb = "CRAP53," + p-cod-liberador 
-           craplcm.cdcooper = craplot.cdcooper
-           craplcm.nrdctitg = glb_dsdctitg
-           craplcm.cdbanchq = crapfdc.cdbanchq
-           craplcm.cdagechq = crapfdc.cdagechq
-           craplcm.nrctachq = crapfdc.nrctachq.
-*/
+
     ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1 
            craplot.qtcompln  = craplot.qtcompln + 1
            craplot.qtinfoln  = craplot.qtinfoln + 1
