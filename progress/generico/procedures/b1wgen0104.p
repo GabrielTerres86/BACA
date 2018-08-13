@@ -2,14 +2,14 @@
 
     Programa: sistema/generico/procedures/b1wgen0104.p
     Autor   : Guilherme/Gabriel
-    Data    : Julho/2011                        Ultima Atualizacao: 28/10/2015
+    Data    : Julho/2011                        Ultima Atualizacao: 12/04/2018
      
     Dados referentes ao programa:
    
     Objetivo  : BO referente as tela CMEDEP/CMESAQ.
                  
-    Alteracoes: 22/02/2012 - Alterações para informar conta/dv na tela CMESAQ 
-                             (quando tipo 0) e, dessa forma, não permitir 
+    Alteracoes: 22/02/2012 - Alteraç?es para informar conta/dv na tela CMESAQ 
+                             (quando tipo 0) e, dessa forma, n?o permitir 
                              encontrar registros duplicados. (Lucas)
                              
                 19/07/2012 - Ajustes para telas cmesaq, cmedep e traesp quando
@@ -24,6 +24,11 @@
                              
                 28/10/2015 - #318705 Adicionado sequencial na descricao da 
                              critica 90 (Carlos)
+                
+                04/12/2017 - Melhoria 458 ajustes de procs - Antonio R. JR (Mouts)
+
+				08/03/2018 - Alterado tipo do parametro docmto de INT para DECIMAL
+                             Chamado 851313 (Antonio R JR)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0104tt.i } 
@@ -51,7 +56,7 @@ PROCEDURE busca_dados:
     DEFINE INPUT  PARAMETER par_cdbccxlt AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cdopecxa AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdolote AS INTE               NO-UNDO.
-    DEFINE INPUT  PARAMETER par_nrdocmto AS INTE               NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdocmto AS DECIMAL            NO-UNDO.
     DEFINE INPUT  PARAMETER par_tpdocmto AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddopcao AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdconta AS INTE               NO-UNDO.
@@ -135,13 +140,8 @@ PROCEDURE busca_dados:
                                         craplcm.nrdconta = par_nrdconta   
                                         NO-LOCK NO-ERROR.
 
-               IF   NOT AVAIL craplcm   THEN
+              IF AVAIL craplcm THEN
                     DO:
-                        ASSIGN aux_cdcritic = 90
-                               aux_dscritic = "(#01)".
-                        LEAVE.
-                    END.
-
                IF   par_nmdatela = "CMEDEP"   THEN
                     DO:
                         IF   craplcm.cdhistor <> 1   THEN
@@ -162,6 +162,35 @@ PROCEDURE busca_dados:
                              END.
                     END.
            END.
+       ELSE
+                DO:
+                  FIND FIRST craplft WHERE craplft.cdcooper = par_cdcooper AND
+                                           craplft.dtmvtolt = par_dtmvtolt AND
+                                           craplft.cdagenci = par_cdagenci AND
+                                           craplft.cdbccxlt = par_cdbccxlt AND
+                                           craplft.nrdolote = par_nrdolote AND
+                                           craplft.nrseqdig = par_nrdocmto AND
+                                           craplft.nrdconta = par_nrdconta
+                                           NO-LOCK NO-ERROR.
+                  IF NOT AVAIL craplft THEN
+                    DO:
+                      FIND FIRST craptit WHERE craptit.cdcooper = par_cdcooper AND
+                                               craptit.dtmvtolt = par_dtmvtolt AND
+                                               craptit.cdagenci = par_cdagenci AND
+                                               craptit.cdbccxlt = par_cdbccxlt AND
+                                               craptit.nrdolote = par_nrdolote AND
+                                               craptit.nrseqdig = par_nrdocmto AND
+                                               craptit.nrdconta = par_nrdconta
+                                               NO-LOCK NO-ERROR.
+                      IF NOT AVAIL craptit THEN
+                        DO:
+                          ASSIGN aux_cdcritic = 90
+                          aux_dscritic = "(#01)".
+                          LEAVE.
+                        END.
+                    END.
+                END.
+           END.                              
        ELSE
        IF   CAN-DO("1,2,3",STRING(par_tpdocmto))    THEN   
             DO:
@@ -215,6 +244,7 @@ PROCEDURE busca_dados:
             DO:
                 IF   par_tpdocmto = 0 THEN
                      DO:
+                  IF AVAIL craplcm THEN
                          FIND crapcme WHERE 
                               crapcme.cdcooper = par_cdcooper       AND
                               crapcme.dtmvtolt = craplcm.dtmvtolt   AND
@@ -224,6 +254,26 @@ PROCEDURE busca_dados:
                               crapcme.nrdctabb = craplcm.nrdctabb   AND
                               crapcme.nrdocmto = craplcm.nrdocmto
                               NO-LOCK NO-ERROR.
+                  IF AVAIL craplft THEN
+                    FIND crapcme WHERE
+                         crapcme.cdcooper = par_cdcooper AND
+                         crapcme.dtmvtolt = craplft.dtmvtolt AND
+                         crapcme.cdagenci = craplft.cdagenci AND
+                         crapcme.cdbccxlt = craplft.cdbccxlt AND
+                         crapcme.nrdolote = craplft.nrdolote AND
+                         crapcme.nrdctabb = craplft.nrdconta AND
+                         crapcme.nrdocmto = craplft.nrseqdig
+                         NO-LOCK NO-ERROR.
+                  IF AVAIL craptit THEN
+                    FIND crapcme WHERE
+                         crapcme.cdcooper = par_cdcooper AND
+                         crapcme.dtmvtolt = craptit.dtmvtolt AND
+                         crapcme.cdagenci = craptit.cdagenci AND
+                         crapcme.cdbccxlt = craptit.cdbccxlt AND
+                         crapcme.nrdolote = craptit.nrdolote AND
+                         crapcme.nrdctabb = craptit.nrdconta AND
+                         crapcme.nrdocmto = craptit.nrseqdig
+                         NO-LOCK NO-ERROR.
                      END.
                 ELSE
                      DO:
@@ -269,7 +319,12 @@ PROCEDURE busca_dados:
                     END.
 
                IF   par_nmdatela = "CMEDEP" THEN
-                    ASSIGN par_nrdconta = craplcm.nrdconta.
+                    ASSIGN par_nrdconta = IF AVAIL craplcm THEN
+                                               craplcm.nrdconta
+                                          ELSE IF AVAIL craplft THEN
+                                               craplft.nrdconta
+                                          ELSE
+                                               craptit.nrdconta.
 
                FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                                   crapass.nrdconta = par_nrdconta 
@@ -295,7 +350,13 @@ PROCEDURE busca_dados:
                              IF   AVAIL craptvl   THEN
                                   craptvl.vldocrcb  
                              ELSE
-                                  craplcx.vldocmto.
+                             IF   AVAIL craplcx   THEN
+                                  craplcx.vldocmto
+                             ELSE
+                             IF   AVAIL craplft THEN
+                                  craplft.vllanmto
+                             ELSE
+                                  craptit.vldpagto.
 
               aux_nrseqaut = IF   AVAIL craplcm   THEN 
                                   craplcm.nrautdoc
@@ -303,7 +364,13 @@ PROCEDURE busca_dados:
                              IF   AVAIL craptvl   THEN
                                   craptvl.nrautdoc
                              ELSE
-                                  craplcx.vldocmto. 
+                             IF   AVAIL craplcx   THEN
+                                  craplcx.vldocmto
+                             ELSE
+                                  IF avail craplft then
+                                   craplft.nrautdoc
+                             ELSE
+                                  craptit.nrautdoc.
 
        IF   AVAIL crapcme   THEN
             ASSIGN aux_nrccdrcb = crapcme.nrccdrcb                                                          
@@ -489,7 +556,9 @@ PROCEDURE busca_dados_assoc:
 
     IF par_tpdocmto <> 4 THEN
        DO:
-         /* Procura Prim.ttl. da Conta para exibição */
+         /* Procura Prim.ttl. da Conta para exibiçao */
+         IF par_nrdconta <> 0 THEN
+           DO:
          RELEASE crapass.
          FIND crapass WHERE crapass.cdcooper = par_cdcooper AND 
                             crapass.nrdconta = par_nrdconta
@@ -508,6 +577,7 @@ PROCEDURE busca_dados_assoc:
                                  INPUT-OUTPUT aux_dscritic).
                   RETURN "NOK".
               END.
+       END.
        END.
 
     CREATE tt-crapcme.               
@@ -657,7 +727,7 @@ PROCEDURE inclui_altera_dados:
     DEFINE INPUT  PARAMETER par_cdopecxa AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cdbccxlt AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdolote AS INTE               NO-UNDO.
-    DEFINE INPUT  PARAMETER par_nrdocmto AS INTE               NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdocmto AS DECIMAL            NO-UNDO.
     DEFINE INPUT  PARAMETER par_tpdocmto AS INTE               NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddopcao AS CHAR               NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgimpri AS LOGI               NO-UNDO.
@@ -748,6 +818,26 @@ PROCEDURE inclui_altera_dados:
                                           craplcm.nrdocmto = par_nrdocmto   AND 
                                           craplcm.nrdconta = par_nrdconta
                                           NO-LOCK NO-ERROR.
+                 
+                 IF NOT AVAIL craplcm THEN
+                   FIND FIRST craplft WHERE craplft.cdcooper = par_cdcooper AND
+                                            craplft.dtmvtolt = par_dtmvtolt AND
+                                            craplft.cdagenci = par_cdagenci AND
+                                            craplft.cdbccxlt = par_cdbccxlt AND
+                                            craplft.nrdolote = par_nrdolote AND
+                                            craplft.nrseqdig = par_nrdocmto AND
+                                            craplft.nrdconta = par_nrdconta
+                                            NO-LOCK NO-ERROR.
+                                            
+                  IF NOT AVAIL craplft THEN
+                    FIND FIRST craptit WHERE craptit.cdcooper = par_cdcooper AND
+                                             craptit.dtmvtolt = par_dtmvtolt AND
+                                             craptit.cdagenci = par_cdagenci AND
+                                             craptit.cdbccxlt = par_cdbccxlt AND
+                                             craptit.nrdolote = par_nrdolote AND
+                                             craptit.nrseqdig = par_nrdocmto AND
+                                             craptit.nrdconta = par_nrdconta
+                                             NO-LOCK NO-ERROR.
              END.                       
         ELSE
         IF   CAN-DO("1,2,3",STRING(par_tpdocmto))   THEN /* Transferencia */
@@ -778,6 +868,8 @@ PROCEDURE inclui_altera_dados:
 
         IF   NOT AVAIL craplcm   AND   
              NOT AVAIL craptvl   AND 
+             NOT AVAIL craplft AND
+             NOT AVAIL craptit AND 
              NOT AVAIL craplcx   THEN
              DO:
                  ASSIGN aux_cdcritic = 90
@@ -814,6 +906,27 @@ PROCEDURE inclui_altera_dados:
                     aux_vllanmto = craplcx.vldocmto 
                     aux_nrautdoc = craplcx.nrautdoc 
                     aux_dtmvtolt = craplcx.dtmvtolt.
+
+        ELSE
+        IF   AVAIL craplft THEN
+             ASSIGN aux_nrdconta = craplft.nrdconta
+                    aux_cdagenci = craplft.cdagenci
+                    aux_cdbccxlt = craplft.cdbccxlt
+                    aux_nrdctabb = craplft.nrdconta
+                    aux_nrseqdig = craplft.nrseqdig
+                    aux_vllanmto = craplft.vllanmto
+                    aux_nrautdoc = craplft.nrautdoc
+                    aux_dtmvtolt = craplft.dtmvtolt.
+        ELSE
+        IF   AVAIL craptit THEN
+             ASSIGN aux_nrdconta = craptit.nrdconta
+                    aux_cdagenci = craptit.cdagenci
+                    aux_cdbccxlt = craptit.cdbccxlt
+                    aux_nrdctabb = craptit.nrdconta
+                    aux_nrseqdig = craptit.nrseqdig
+                    aux_vllanmto = craptit.vldpagto
+                    aux_nrautdoc = craptit.nrautdoc
+                    aux_dtmvtolt = craptit.dtmvtolt. 
 
         IF   aux_nrdconta <> 0   THEN
              DO:
@@ -876,9 +989,13 @@ PROCEDURE inclui_altera_dados:
                         crapcme.vllanmto = aux_vllanmto
                         crapcme.nrseqaut = aux_nrautdoc
                         crapcme.tpoperac = IF   par_nmdatela = "CMEDEP"   THEN 
+                                             IF AVAIL craplft OR AVAIL craptit THEN
+                                                3 /* pagamento */
+                                             ELSE
                                                 1  /* deposito */
                                            ELSE
                                                 2. /* Saque */
+
                  VALIDATE crapcme.
         END.
              
@@ -1011,7 +1128,7 @@ PROCEDURE imprimir_dados:
     DEFINE VARIABLE aux_nrdcaixa AS INTE                       NO-UNDO.
     DEFINE VARIABLE aux_nrdolote AS INTE                       NO-UNDO.
     DEFINE VARIABLE aux_nrautdoc AS INTE                       NO-UNDO.
-    DEFINE VARIABLE aux_nrdocmto AS INTE                       NO-UNDO.
+    DEFINE VARIABLE aux_nrdocmto AS DECIMAL                    NO-UNDO.
     DEFINE VARIABLE aux_flgdelcm AS LOGI                       NO-UNDO.
     DEFINE VARIABLE aux_data_inf AS INTE                       NO-UNDO.
     DEFINE VARIABLE aux_flgtrans AS LOGI                       NO-UNDO.
@@ -1059,6 +1176,22 @@ PROCEDURE imprimir_dados:
                     aux_nrautdoc = craplcx.nrautdoc
                     aux_nrdocmto = craplcx.nrdocmto
                     aux_flgdelcm = YES.
+        ELSE  
+        IF   AVAIL craplft THEN
+             ASSIGN aux_cdagenci = craplft.cdagenci
+                    aux_nrdcaixa = craplot.nrdcaixa
+                    aux_nrdolote = craplot.nrdolote
+                    aux_nrautdoc = craplft.nrautdoc
+                    aux_nrdocmto = craplft.nrseqdig
+                    aux_flgdelcm = NO.
+        ELSE            
+        IF   AVAIL craptit THEN
+             ASSIGN aux_cdagenci = craptit.cdagenci
+             aux_nrdcaixa = craplot.nrdcaixa
+             aux_nrdolote = craplot.nrdolote
+             aux_nrautdoc = craptit.nrautdoc 
+             aux_nrdocmto = craptit.nrseqdig
+             aux_flgdelcm = NO.
 
         IF   par_cddopcao = "A"   THEN
              ASSIGN aux_data_inf = INTE(STRING(DAY(par_dtmvtolt),"99") +
@@ -1210,4 +1343,5 @@ END PROCEDURE.
 
 
 /* ......................................................................... */
+
 
