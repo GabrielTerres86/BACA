@@ -203,21 +203,6 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                 UNDO TRANS_1, RETURN.
              END.
 
-/*
-             CREATE craplcm.
-             ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                    craplcm.cdagenci = craplot.cdagenci
-                    craplcm.cdbccxlt = craplot.cdbccxlt
-                    craplcm.nrdolote = craplot.nrdolote
-                    craplcm.nrdconta = crablcm.nrdconta
-                    craplcm.nrdctabb = crablcm.nrdconta
-                    craplcm.nrdctitg = STRING(crablcm.nrdconta,"99999999")
-                    craplcm.nrdocmto = craplot.nrseqdig + 1
-                    craplcm.cdhistor = 352
-                    craplcm.nrseqdig = craplot.nrseqdig + 1
-                    craplcm.vllanmto = aux_vllanmto
-                    craplcm.cdcooper = glb_cdcooper
- */
             ASSIGN  craplot.vlinfodb = craplot.vlinfodb + aux_vllanmto
                     craplot.vlcompdb = craplot.vlcompdb + aux_vllanmto
                     craplot.qtinfoln = craplot.qtinfoln + 1
@@ -226,7 +211,6 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
 
                     aux_vllanmto = 0.
             
-/*             VALIDATE craplcm.*/
              VALIDATE craplot.
         
             /* Cria registro de restart  */
