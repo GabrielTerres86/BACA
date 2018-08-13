@@ -121,17 +121,16 @@ PROCEDURE inclui-registro:
   
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:  
-                MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                RETURN "NOK".
+                IF aux_incrineg > 0 THEN
+					par_dscritic = "Não foi possível efetuar o lançamento de débito.".
+				ELSE
+					par_dscritic = "Transferencia nao efetivada, tente novamente (03).".
+
+				RETURN "NOK".
               END.   
               
             IF  VALID-HANDLE(h-b1wgen0200) THEN
                 DELETE PROCEDURE h-b1wgen0200.
-         
-    /* Cria o registro */
-    /*CREATE craplcm.
-    BUFFER-COPY cratlcm TO craplcm.
-    VALIDATE craplcm.*/
 
       /*Bloco para tratamento de erro do create da lcm try catch*/
       CATCH eSysError AS Progress.Lang.SysError:
