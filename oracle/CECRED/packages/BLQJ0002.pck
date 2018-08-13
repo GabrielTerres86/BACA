@@ -585,10 +585,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                       ,pr_idseqttl => pr_idseqttl 
                                       ,pr_tab_saldo_rdca => vr_saldo_rdca
                                       ,pr_tpaplica => 0 -- Todos
-                                      ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                      ,pr_dtmvtolt => (CASE pr_idorigem
+                                                         WHEN 6 THEN
+                                                           rw_crapdat.dtmvtolt                                                                   
+                                                         ELSE
+                                                           rw_crapdat.dtmvtocd
+                                                      END)
                                       ,pr_dtmvtopr => rw_crapdat.dtmvtopr
                                       ,pr_inproces => rw_crapdat.inproces
-                                      ,pr_dtresgat => rw_crapdat.dtmvtocd
+                                      ,pr_dtresgat => (CASE pr_idorigem
+                                                         WHEN 6 THEN
+                                                           rw_crapdat.dtmvtolt                                                                   
+                                                         ELSE
+                                                           rw_crapdat.dtmvtocd
+                                                      END)
                                       ,pr_cdprogra => pr_nmdatela
                                       ,pr_flgerlog => 1
                                       ,pr_tab_dados_resgate => vr_tab_dados_resgate
@@ -651,7 +661,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                     ,pr_nraplica => vr_tab_dados_resgate(vr_indice).saldo_rdca.nraplica
                                     ,pr_idseqttl => pr_idseqttl 
                                     ,pr_cdprogra => pr_nmdatela 
-                                    ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                                    ,pr_dtmvtolt => (CASE pr_idorigem
+                                                         WHEN 6 THEN
+                                                           rw_crapdat.dtmvtolt                                                                   
+                                                         ELSE
+                                                           rw_crapdat.dtmvtocd
+                                                      END)
                                     ,pr_dtmvtopr => rw_crapdat.dtmvtopr
                                     ,pr_inproces => rw_crapdat.inproces
                                     ,pr_vlresgat => (CASE vr_tab_dados_resgate(vr_indice).tpresgat
@@ -660,7 +675,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                                          ELSE
                                                            0
                                                       END) 
-                                    ,pr_dtresgat => rw_crapdat.dtmvtocd
+                                    ,pr_dtresgat => (CASE pr_idorigem
+                                                         WHEN 6 THEN
+                                                           rw_crapdat.dtmvtolt                                                                   
+                                                         ELSE
+                                                           rw_crapdat.dtmvtocd
+                                                      END)
                                     ,pr_flmensag => 0
                                     ,pr_tpresgat => (CASE vr_tab_dados_resgate(vr_indice).tpresgat
                                                          WHEN 1 THEN
@@ -713,7 +733,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                        ,pr_cdcoptfn  =>  0                --> Cooperativa do Terminal
                        ,pr_cdagetfn  =>  0                --> Agencia do Terminal
                        ,pr_nrterfin  =>  0                --> Numero do Terminal Financeiro
-                       ,pr_dtmvtolt  => rw_crapdat.dtmvtocd  --> Data do movimento     
+                       ,pr_dtmvtolt  => (CASE pr_idorigem
+                                              WHEN 6 THEN
+                                                 rw_crapdat.dtmvtolt                                                                   
+                                              ELSE
+                                                 rw_crapdat.dtmvtocd
+                                              END)  --> Data do movimento    
                        ,pr_cdcooper  => pr_cdcooper       --> Codigo da cooperativa
                        ,pr_nrdconta  => pr_nrdconta       --> Numero da Conta
                        ,pr_idoperac  =>  2                --> Identifica tipo da operacao (1 – Cancelamento Aplicacao / 2 – Resgate / 3 – Agendamento Resgate / 4 – Cancelamento Total Agendamento / 5 – Cancelamento Item Agendamento)
