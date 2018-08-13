@@ -44,7 +44,7 @@
                29/05/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
 
-               22/06/2018 - Alteraçao Tratamento de Históricos de Credito/Debito - Fabiano B. Dias AMcom	
+               22/06/2018 - Alteraçao Tratamento de Históricos de Credito/Debito - Fabiano B. Dias AMcom        
 
 ............................................................................. */
 
@@ -387,7 +387,7 @@ DO WHILE TRUE:
                             INPUT tel_nrdconta,
                             INPUT tel_cdhistor)                        THEN 
             DO:
-		
+                
                 RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
                 (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
                 ,INPUT craplot.cdagenci               /* par_cdagenci */
@@ -433,16 +433,11 @@ DO WHILE TRUE:
                 ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                 ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
   
-                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                    IF aux_incrineg = 1 THEN DO:
-                        /* Tratativas de negocio */ 
-                        NEXT.   
+                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN    
+                   DO:
+                      MESSAGE "Erro ao gerar lançamento: " + STRING(aux_cdcritic) 
+                      + ": " +  aux_dscritic VIEW-AS ALERT-BOX.  
                     END.
-                ELSE   
-                    DO:
-                        RETURN "NOK".
-                    END.
-                END.
   
                 IF  VALID-HANDLE(h-b1wgen0200) THEN
                     DELETE PROCEDURE h-b1wgen0200.
