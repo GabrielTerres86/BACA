@@ -331,9 +331,9 @@
                 06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
-
+							 
 				06/08/2018 - Adicionando novos documentos (132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 167, 168, 169). (RITM0021012 - Kelvin)
-				
+
 .............................................................................*/
 
 
@@ -1302,7 +1302,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdempres = 00               AND         
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
-                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,132,133,134,135,136,137,138,139,140,141,145,146,147,148,149,150,151,152,167,168,169,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
+                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,132,133,134,135,136,137,138,139,140,141,145,146,147,148,149,150,151,152,162,167,168,169,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1432,6 +1432,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
                         ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/ 
+                    WHEN 55 THEN
+                        ASSIGN aux_conttabs = 55. /*DECLARACAO DO SIMPLES NACIONAL*/
                     WHEN 58 THEN
                         ASSIGN aux_conttabs = 58. /*TERMO DE ALTERACAO DE TITULARIDADE*/
                     WHEN 59 THEN
@@ -1445,7 +1447,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 62. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
                     WHEN 63 THEN
                         ASSIGN aux_conttabs = 63. /*DOCUMENTO NIF - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
-
+					
 					WHEN 65 THEN
                         ASSIGN aux_conttabs = 65. /*Comprovante de Renda - Admissão de Cooperados*/
 					WHEN 66 THEN
