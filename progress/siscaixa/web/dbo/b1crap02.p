@@ -95,6 +95,9 @@
                              atualizado para efetivar ou negar a operaçao, utilizado
 							 na abertura do caixa online mesmo quando o processo 
 							 batch noturno ainda esteja em execução - (Fabio Adriano AMcom).
+               
+               15/03/2018 - Incluido 1 numero na mascara de CNPJ(pessoa juridica). 
+				  		              PRJ420 (Mateus Z - Mouts)
              
 ............................................................................ **/
 
@@ -451,7 +454,7 @@ PROCEDURE consulta-conta:
                 aux_nrcpfcgc = STRING(aux_nrcpfcgc,"999.999.999-99").
     ELSE
         ASSIGN aux_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999999")
-               aux_nrcpfcgc = STRING(aux_nrcpfcgc,"99.999.999/999-99").
+               aux_nrcpfcgc = STRING(aux_nrcpfcgc,"99.999.999/9999-99").
    
     ASSIGN tt-conta.cpfcgc          = aux_nrcpfcgc
            tt-conta.disponivel      = crapsld.vlsddisp

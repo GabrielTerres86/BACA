@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 08/11/2017
  * OBJETIVO     : Tela cadastro PRVSAQ
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   :  13/08/2018 - PRJ420 - Incluido validação de data e alteracao de labels. (Mateus Z - Mouts)
  * --------------
  */ 
  
@@ -35,7 +35,7 @@
 			<legend><? echo utf8ToHtml('Dados da provisão') ?></legend>												
 		
 			<label for="dtSaqPagto"><? echo utf8ToHtml('Data do saque:') ?></label>
-			<input id="dtSaqPagto" name="dtSaqPagto" class='campo data' type="text" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
+			<input id="dtSaqPagto" name="dtSaqPagto" class='campo data' type="text" onchange="validarData('inclusao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
 
 			<label for="hrSaqPagto"><? echo utf8ToHtml('Horário saque:') ?></label>
 			<input id="hrSaqPagto" name="hrSaqPagto" class = 'campo inteiro' type="time" maxlength="5" value="<? echo utf8ToHtml($hrSaqPagto); ?>"/>
@@ -48,7 +48,7 @@
 
 			<div id="divCheque" style="display:block">
 				<label for="selSaqCheq"><? echo utf8ToHtml('Saque com cheque:') ?></label>
-				<select id="selSaqCheq" name="selSaqCheq" class="campo" onchange="liberaDadosCheque(); return false;" style="width: 50px;">
+				<select id="selSaqCheq" name="selSaqCheq" class="campo" return false;" style="width: 50px;">
 					<option value="1"><? echo utf8ToHtml('Sim') ?></option>
 					<option id="optNaoCheq" value="0" selected><? echo utf8ToHtml('Não') ?></option>
 				</select>	
@@ -73,7 +73,7 @@
 		</fieldset>
 
 		<fieldset>	
-			<legend><? echo utf8ToHtml('Dados Solicitante') ?></legend>												
+			<legend><? echo utf8ToHtml('Dados Titular') ?></legend>												
 		
 			<label for="nrContTit" id="lbNrContTit" class="lbSolic"><? echo utf8ToHtml('Conta Titular:') ?></label>
 			<input id="nrContTit" name="nrContTit" type="text" class="campo conta" value="<? echo utf8ToHtml($nrContTit); ?>"/>
