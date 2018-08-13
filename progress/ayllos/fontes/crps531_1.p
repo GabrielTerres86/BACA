@@ -4131,138 +4131,73 @@ PROCEDURE trata_lancamentos.
 									  ASSIGN aux_cdpesqbb = aux_dadosdeb. /* Dados do Remetente */        
                    
                    
-                /* Verificar se pode realizar o debito debitar  */
-                IF  DYNAMIC-FUNCTION("PodeDebitar"    IN h-b1wgen0200, 
-                                  INPUT crabcop.cdcooper, 
-                                  INPUT craplcm.nrdconta,
-                                  INPUT aux_cdhistor) THEN
-                DO:
-                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200
-                      (INPUT craplot.dtmvtolt      /*par_dtmvtolt*/
-                      ,INPUT craplot.cdagenci      /*par_cdagenci*/
-                      ,INPUT craplot.cdbccxlt      /*par_cdbccxlt*/
-                      ,INPUT craplot.nrdolote      /*par_nrdolote*/
-                      ,INPUT craplot.cdbccxlt      /*par_nrdconta*/
-                      ,INPUT aux_nrdocmto          /*par_nrdocmto*/
-                      ,INPUT aux_cdhistor          /*par_cdhistor*/
-                      ,INPUT craplot.nrseqdig + 1  /*par_nrseqdig*/
-                      ,INPUT DEC(aux_VlrLanc)      /*par_vllanmto*/
-                      ,INPUT craplcm.nrdconta      /*par_nrdctabb*/
-                      ,INPUT aux_cdpesqbb          /*par_cdpesqbb*/
-                      ,INPUT 0                     /*par_vldoipmf*/
-                      ,INPUT 0                     /*par_nrautdoc*/
-                      ,INPUT 0                     /*par_nrsequni*/
-                      ,INPUT 0                     /*par_cdbanchq*/
-                      ,INPUT 0                     /*par_cdcmpchq*/
-                      ,INPUT 0                     /*par_cdagechq*/
-                      ,INPUT 0                     /*par_nrctachq*/
-                      ,INPUT 0                     /*par_nrlotchq*/
-                      ,INPUT 0                     /*par_sqlotchq*/
-                      ,INPUT TODAY                 /*par_dtrefere*/
-                      ,INPUT aux_hrtransa          /*par_hrtransa*/
-                      ,INPUT 1                     /*par_cdoperad*/
-                      ,INPUT ""                    /*par_dsidenti*/
-                      ,INPUT crabcop.cdcooper      /*par_cdcooper*/
-                      ,INPUT ""                    /*par_nrdctitg*/
-                      ,INPUT ""                    /*par_dscedent*/
-                      ,INPUT 0                     /*par_cdcoptfn*/
-                      ,INPUT 0                     /*par_cdagetfn*/
-                      ,INPUT 0                     /*par_nrterfin*/
-                      ,INPUT 0                     /*par_nrparepr*/
-                      ,INPUT 0                     /*par_nrseqava*/
-                      ,INPUT 0                     /*par_nraplica*/
-                      ,INPUT 0                     /*par_cdorigem*/
-                      ,INPUT 0                     /*par_idlautom*/
-                      /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
-                      ,INPUT 0                              /* Processa lote                                 */
-                      ,INPUT 0                              /* Tipo de lote a movimentar                     */
+
+                    RUN gerar_lancamento_conta_comple IN h-b1wgen0200
+                    (INPUT craplot.dtmvtolt      /*par_dtmvtolt*/
+                    ,INPUT craplot.cdagenci      /*par_cdagenci*/
+                    ,INPUT craplot.cdbccxlt      /*par_cdbccxlt*/
+                    ,INPUT craplot.nrdolote      /*par_nrdolote*/
+                    ,INPUT craplot.cdbccxlt      /*par_nrdconta*/
+                    ,INPUT aux_nrdocmto          /*par_nrdocmto*/
+                    ,INPUT aux_cdhistor          /*par_cdhistor*/
+                    ,INPUT craplot.nrseqdig + 1  /*par_nrseqdig*/
+                    ,INPUT DEC(aux_VlrLanc)      /*par_vllanmto*/
+                    ,INPUT craplcm.nrdconta      /*par_nrdctabb*/
+                    ,INPUT aux_cdpesqbb          /*par_cdpesqbb*/
+                    ,INPUT 0                     /*par_vldoipmf*/
+                    ,INPUT 0                     /*par_nrautdoc*/
+                    ,INPUT 0                     /*par_nrsequni*/
+                    ,INPUT 0                     /*par_cdbanchq*/
+                    ,INPUT 0                     /*par_cdcmpchq*/
+                    ,INPUT 0                     /*par_cdagechq*/
+                    ,INPUT 0                     /*par_nrctachq*/
+                    ,INPUT 0                     /*par_nrlotchq*/
+                    ,INPUT 0                     /*par_sqlotchq*/
+                    ,INPUT TODAY                 /*par_dtrefere*/
+                    ,INPUT aux_hrtransa          /*par_hrtransa*/
+                    ,INPUT 1                     /*par_cdoperad*/
+                    ,INPUT ""                    /*par_dsidenti*/
+                    ,INPUT crabcop.cdcooper      /*par_cdcooper*/
+                    ,INPUT ""                    /*par_nrdctitg*/
+                    ,INPUT ""                    /*par_dscedent*/
+                    ,INPUT 0                     /*par_cdcoptfn*/
+                    ,INPUT 0                     /*par_cdagetfn*/
+                    ,INPUT 0                     /*par_nrterfin*/
+                    ,INPUT 0                     /*par_nrparepr*/
+                    ,INPUT 0                     /*par_nrseqava*/
+                    ,INPUT 0                     /*par_nraplica*/
+                    ,INPUT 0                     /*par_cdorigem*/
+                    ,INPUT 0                     /*par_idlautom*/
+                    /* CAMPOS OPCIONAIS DO LOTE                                                            */ 
+                    ,INPUT 0                              /* Processa lote                                 */
+                    ,INPUT 0                              /* Tipo de lote a movimentar                     */
                                           
-                      ,OUTPUT TABLE tt-ret-lancto
-                               ,OUTPUT aux_incrineg
-                               ,OUTPUT aux_cdcritic
-                               ,OUTPUT aux_dscritic).
-                               
-                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                      DO:  
-                        MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                        RETURN "NOK".
-                      END.   
+                    ,OUTPUT TABLE tt-ret-lancto
+                            ,OUTPUT aux_incrineg
+                            ,OUTPUT aux_cdcritic
+                            ,OUTPUT aux_dscritic).
                       
-                      IF  VALID-HANDLE(h-b1wgen0200) THEN
-                        DELETE PROCEDURE h-b1wgen0200.
-                      
-                          /*CREATE craplcm.
-                          ASSIGN craplcm.cdcooper = crabcop.cdcooper
-                             craplcm.dtmvtolt = craplot.dtmvtolt
-                             craplcm.cdagenci = craplot.cdagenci
-                             craplcm.cdbccxlt = craplot.cdbccxlt
-                             craplcm.nrdolote = craplot.nrdolote
-                             craplcm.nrdconta = aux_nrctacre
-                             craplcm.nrdctabb = craplcm.nrdconta
-                             craplcm.nrdocmto = aux_nrdocmto
-                        
-                             craplcm.cdhistor = 
-                                   /* Estorno TED */ 
-                                IF   CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg) THEN 
-                                   600
-                                ELSE /* Estorno TED Rejeitada*/
-                                IF   aux_tagCABInf  THEN
-                                   887
-                                ELSE
-                                   /* Credito TEC */ 
-                                IF   CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg)  THEN
-                                   799
-                                ELSE 
-                                IF   aux_CodMsg = "STR0047R2"  THEN
-                                   1921
-                                ELSE
-                                  /* Credito TED */ 
-                                   578
-                        
-                             craplcm.vllanmto = DEC(aux_VlrLanc)
-                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                             craplcm.cdpesqbb = 
-                               IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg)  THEN
-                                 aux_CodDevTransf /*Cod. estorno*/
-                               ELSE 
-                               IF  aux_tagCABInf  THEN
-                                 "TED/TEC rejeitado coop"
-                               ELSE
-                               IF  aux_CodMsg = "STR0047R2" THEN
-                                 "CRED TED PORT"
-                               ELSE
-                                 aux_dadosdeb /* Dados do Remetente */
-                             craplcm.cdoperad = "1"
-                             craplcm.hrtransa = aux_hrtransa.
-
-                        VALIDATE craplcm.*/
-
-                                       
-                        ASSIGN craplot.vlcompcr = craplot.vlcompcr + 
-                                      craplcm.vllanmto
-                             craplot.vlinfocr = craplot.vlinfocr +
-                                      craplcm.vllanmto.
+                    IF  VALID-HANDLE(h-b1wgen0200) THEN
+                    DELETE PROCEDURE h-b1wgen0200.
+                                                            
+                    ASSIGN craplot.vlcompcr = craplot.vlcompcr + 
+                                    DEC(aux_VlrLanc)
+                            craplot.vlinfocr = craplot.vlinfocr +
+                                    DEC(aux_VlrLanc).
                           
-                        IF   aux_tagCABInf THEN
-                           ASSIGN aux_CodMsg = "MSGREJ".
+                    IF   aux_tagCABInf THEN
+                        ASSIGN aux_CodMsg = "MSGREJ".
                           
-                        /* Cria registro das movimentacoes no SPB */
-                        RUN cria_gnmvcen (INPUT crabcop.cdagectl,
-                                  INPUT aux_dtmvtolt,
-                                  INPUT aux_CodMsg,
-                                  INPUT "C",
-                                  INPUT DEC(aux_VlrLanc)).
-                              
-                      
+                    /* Cria registro das movimentacoes no SPB */
+                    RUN cria_gnmvcen (INPUT crabcop.cdagectl,
+                                INPUT aux_dtmvtolt,
+                                INPUT aux_CodMsg,
+                                INPUT "C",
+                                INPUT DEC(aux_VlrLanc)).
                           
-                     ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
-                            craplot.qtcompln = craplot.qtcompln + 1
-                            craplot.qtinfoln = craplot.qtinfoln + 1.
-                                
-                  END.
-                ELSE
-                  MESSAGE "Nao Pode." VIEW-AS ALERT-BOX.                   
-                END.  
+                    ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
+                        craplot.qtcompln = craplot.qtcompln + 1
+                        craplot.qtinfoln = craplot.qtinfoln + 1.
                         
    /* SUCESSO */ 
    
