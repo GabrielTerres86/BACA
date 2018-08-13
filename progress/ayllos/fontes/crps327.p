@@ -465,7 +465,7 @@ IF   NOT AVAILABLE craptab   THEN
 ELSE
      aux_lscontas = craptab.dstextab.
 
-ASSIGN  aux_nmarqdeb = "./integra/1" + string(crapcop.cdagebcb,"9999") + "*DV*".
+ASSIGN  aux_nmarqdeb = "integra/1" + string(crapcop.cdagebcb,"9999") + "*DV*".
         aux_contador = 0.
 
 
@@ -807,11 +807,11 @@ DO  i = 1 TO aux_contador:
             /* CAMPOS OPCIONAIS DO LOTE                                                            */
             ,INPUT 0                              /* Processa lote                                 */
             ,INPUT 0                              /* Tipo de lote a movimentar                     */
-            /* CAMPOS DE SA�DA                                                                     */
-            ,OUTPUT TABLE tt-ret-lancto           /* Collection que cont�m o retorno do lan�amento */
-            ,OUTPUT aux_incrineg                  /* Indicador de cr�tica de neg�cio               */
-            ,OUTPUT aux_cdcritic                  /* C�digo da cr�tica                             */
-            ,OUTPUT aux_dscritic).                /* Descri�ao da cr�tica                          */
+            /* CAMPOS DE SAÍDA                                                                     */
+            ,OUTPUT TABLE tt-ret-lancto           /* Collection que contém o retorno do lançamento */
+            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
+            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
+            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
 
           IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
