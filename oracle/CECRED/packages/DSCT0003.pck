@@ -6912,6 +6912,7 @@ EXCEPTION
     Data     : 24/05/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure para centralizar os calculos de Liquidez retornando a quantidade e porcentagens
+    Alterações: Alterado a regra do calculo de liquidez cedente pagador para quando não ache titulos seja 100%
     ---------------------------------------------------------------------------------------------------------------------*/
     -- CALCULO DA CONCENTRACAO DO PAGADOR
     CURSOR cr_concentracao IS
@@ -6938,6 +6939,7 @@ EXCEPTION
     -- CALCULO DA LIQUIDEZ CEDENTE PAGADOR
     CURSOR cr_liquidez_pagador IS
       SELECT 
+        COUNT(1) AS qtd_titulos,
         (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN 1 ELSE 0 END)/COUNT(1))*100 AS qtd_cedpag,
         (SUM(CASE WHEN (cob.dtdpagto IS NOT NULL AND (cob.dtdpagto<=(cob.dtvencto+pr_qtcarpag))) THEN vltitulo ELSE 0 END)/SUM(vltitulo))*100 AS pc_cedpag
        FROM   crapcob cob -- Titulos do Bordero
@@ -6993,8 +6995,13 @@ EXCEPTION
       OPEN cr_liquidez_pagador;
       FETCH cr_liquidez_pagador INTO rw_liquidez_pagador;
       CLOSE cr_liquidez_pagador;
-      pr_pc_cedpag  := CASE WHEN nvl(rw_liquidez_pagador.pc_cedpag,0) = 0 THEN 100 ELSE rw_liquidez_pagador.pc_cedpag END;
-      pr_qtd_cedpag := CASE WHEN nvl(rw_liquidez_pagador.qtd_cedpag,0) = 0 THEN 100 ELSE rw_liquidez_pagador.qtd_cedpag END;
+      IF (rw_liquidez_pagador.qtd_titulos = 0) AND (nvl(rw_liquidez_pagador.pc_cedpag,0) = 0) THEN
+        pr_pc_cedpag  := 100;
+        pr_qtd_cedpag := 100;
+      ELSE
+        pr_pc_cedpag  := rw_liquidez_pagador.pc_cedpag;
+        pr_qtd_cedpag := rw_liquidez_pagador.qtd_cedpag; 
+      END IF;
     ELSE 
       pr_pc_conc    := 0;
       pr_qtd_conc   := 0;
