@@ -208,7 +208,7 @@ FOR EACH crablot WHERE crablot.cdcooper  = glb_cdcooper  AND
             UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
                             " - " + glb_cdprogra + "' --> '" +
                         glb_dscritic + " >> log/proc_batch.log").
-            RETURN.
+            NEXT.
         END.
   
         IF  VALID-HANDLE(h-b1wgen0200) THEN
