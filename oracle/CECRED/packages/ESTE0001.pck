@@ -267,7 +267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Março/2016.                   Ultima atualizacao: 02/04/2018
+      Data     : Março/2016.                   Ultima atualizacao: 25/07/2018
 
       Dados referentes ao programa:
 
@@ -1833,13 +1833,6 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                        ,pr_nrctremp => pr_nrctremp);
 
       vr_obj_proposta.put('protocoloPolitica'          ,vr_dsprotoc);
-
-      IF gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') IS NOT NULL THEN
-
-        vr_obj_proposta.put('ambienteTemp','true');
-        vr_obj_proposta.put('urlRetornoTemp', gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_ESTEIRA_HOMOL') );
-
-      END IF;
 
       -- Copiar parâmetro
       vr_nmarquiv := pr_nmarquiv;
