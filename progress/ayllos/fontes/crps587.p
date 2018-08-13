@@ -456,8 +456,11 @@ PROCEDURE gera_lancamento:
                 
                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                    DO:  
-                     MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                     RETURN "NOK".
+                       UNIX SILENT VALUE("echo " + 
+                          STRING(TIME,"HH:MM:SS") +
+                          " - " + glb_cdprogra + "' --> '"
+                           + aux_dscritic +  
+                        " >> log/proc_batch.log").                       
                    END.   
                 ELSE 
                    DO:
