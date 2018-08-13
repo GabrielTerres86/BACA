@@ -4049,6 +4049,7 @@ function carregarRepresentante(cddopcao, idrepres, nrcpfrep) {
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/representantes_carregar.php",
+        async: false,
         data: {
             cddopcao: cddopcao,
             idrepres: idrepres,

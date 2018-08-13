@@ -68,7 +68,7 @@
 			echo  "<script>idastcjt = $value;</script>";
 		}
 		if($key == 'flgdebit' && (strlen($value) > 0) ){
-			echo  "<script> flgdebitp = $value;</script>";
+			echo  "<script> typeof flgdebitp !== 'undefined' && (flgdebitp = $value);</script>";
 		}
 		if(!$jaTemEssencial && $key == 'multesseti' && (strlen($value) > 0) ){
 			echo"<!-- \n Já tem Essencial >$value<   \n -->";
