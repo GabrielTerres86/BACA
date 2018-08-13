@@ -33,7 +33,7 @@
 { includes/var_batch.i  } 
 { sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
 
-DEF VAR h-b1wgen0200 AS HANDLE                                       NO-UNDO./*renato PJ450*/
+DEF VAR h-b1wgen0200 AS HANDLE        NO-UNDO.
 DEF BUFFER crablcm FOR craplcm.
 
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
@@ -42,6 +42,10 @@ DEF        VAR tab_cdhistor AS INT                                   NO-UNDO.
 
 DEF        VAR aux_vllanmto AS DECI                                  NO-UNDO.
 DEF        VAR aux_lscontas AS CHAR                                  NO-UNDO.
+
+DEF        VAR aux_cdcritic AS INT  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR NO-UNDO.
+DEF        VAR aux_incrineg AS INT  NO-UNDO.
 
 glb_cdprogra = "crps284".
 
@@ -187,20 +191,16 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                          ,OUTPUT aux_incrineg
                          ,OUTPUT aux_cdcritic
                          ,OUTPUT aux_dscritic).
-/*  ver com a Josi como tratar a crítica */               
              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
              DO:   
-               IF aux_incrineg = 1 THEN
-                 DO:
-                   /* Tratativas de negocio */  
-                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
-                 END.
-               ELSE
-                 DO:
-                   MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.     
-                   RETURN "NOK".
-                 END.
-               
+             /* historico marcado para debitar incondicionalmente */
+                glb_cdcritic = aux_cdcritic.
+                RUN fontes/critic.p.
+                UNIX SILENT VALUE ("echo " + 
+                  STRING(TIME,"HH:MM:SS") +
+                       " - " + aux_dscritic + "' --> '" + 
+                         " >> log/proc_batch.log").
+                UNDO TRANS_1, RETURN.
              END.
 
 /*
@@ -218,12 +218,12 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                     craplcm.vllanmto = aux_vllanmto
                     craplcm.cdcooper = glb_cdcooper
  */
-                    craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                    craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto
+            ASSIGN  craplot.vlinfodb = craplot.vlinfodb + aux_vllanmto
+                    craplot.vlcompdb = craplot.vlcompdb + aux_vllanmto
                     craplot.qtinfoln = craplot.qtinfoln + 1
                     craplot.qtcompln = craplot.qtcompln + 1
                     craplot.nrseqdig = craplot.nrseqdig + 1
-*/
+
                     aux_vllanmto = 0.
             
 /*             VALIDATE craplcm.*/
